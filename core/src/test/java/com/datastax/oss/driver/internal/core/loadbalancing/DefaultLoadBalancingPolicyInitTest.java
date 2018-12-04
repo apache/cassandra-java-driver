@@ -21,6 +21,8 @@ import static org.mockito.Mockito.atLeast;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -35,7 +37,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   public void should_infer_local_dc_if_no_explicit_contact_points() {
     // Given
     DefaultLoadBalancingPolicy policy =
-        new DefaultLoadBalancingPolicy("test", null, filter, context, true);
+        new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
 
     // When
     policy.init(
@@ -50,8 +52,12 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   @Test
   public void should_require_local_dc_if_explicit_contact_points() {
     // Given
+    Mockito.when(
+            defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null))
+        .thenReturn(null);
     DefaultLoadBalancingPolicy policy =
-        new DefaultLoadBalancingPolicy("test", null, filter, context, true);
+        new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
+
     thrown.expect(IllegalStateException.class);
     thrown.expectMessage("You provided explicit contact points, the local DC must be specified");
 
@@ -65,7 +71,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     Mockito.when(node2.getDatacenter()).thenReturn("dc2");
     Mockito.when(node3.getDatacenter()).thenReturn("dc3");
     DefaultLoadBalancingPolicy policy =
-        new DefaultLoadBalancingPolicy("test", "dc1", filter, context, true);
+        new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
 
     // When
     policy.init(
@@ -89,7 +95,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   public void should_include_nodes_from_local_dc() {
     // Given
     DefaultLoadBalancingPolicy policy =
-        new DefaultLoadBalancingPolicy("test", "dc1", filter, context, true);
+        new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
 
     // When
     policy.init(
@@ -110,7 +116,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     Mockito.when(node2.getDatacenter()).thenReturn("dc2");
     Mockito.when(node3.getDatacenter()).thenReturn("dc3");
     DefaultLoadBalancingPolicy policy =
-        new DefaultLoadBalancingPolicy("test", "dc1", filter, context, true);
+        new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
 
     // When
     policy.init(
@@ -128,11 +134,11 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   @Test
   public void should_ignore_nodes_excluded_by_filter() {
     // Given
-    Mockito.when(filter.test(node2)).thenReturn(false);
-    Mockito.when(filter.test(node3)).thenReturn(false);
+    Mockito.when(context.getNodeFilter(DriverExecutionProfile.DEFAULT_NAME))
+        .thenReturn(node -> node.equals(node1));
 
     DefaultLoadBalancingPolicy policy =
-        new DefaultLoadBalancingPolicy("test", "dc1", filter, context, true);
+        new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
 
     // When
     policy.init(
