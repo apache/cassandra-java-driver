@@ -20,17 +20,23 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import java.util.function.Predicate;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPolicyTestBase {
+
+  @Mock private Predicate<Node> filter;
 
   private DefaultLoadBalancingPolicy policy;
 
@@ -39,7 +45,10 @@ public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPo
   public void setup() {
     super.setup();
 
-    policy = new DefaultLoadBalancingPolicy("test", "dc1", filter, context, true);
+    Mockito.when(filter.test(Mockito.any(Node.class))).thenReturn(true);
+    Mockito.when(context.getNodeFilter(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(filter);
+
+    policy = new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
     policy.init(
         ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2),
         distanceReporter,

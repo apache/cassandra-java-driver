@@ -24,9 +24,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
@@ -37,7 +37,6 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.function.Predicate;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -67,7 +66,7 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
 
     // Use a subclass to disable shuffling, we just spy to make sure that the shuffling method was
     // called (makes tests easier)
-    policy = Mockito.spy(new NonShufflingPolicy("dc1", filter, context));
+    policy = Mockito.spy(new NonShufflingPolicy(context, DriverExecutionProfile.DEFAULT_NAME));
     policy.init(
         ImmutableMap.of(
             ADDRESS1, node1,
@@ -185,9 +184,8 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
   }
 
   static class NonShufflingPolicy extends DefaultLoadBalancingPolicy {
-    NonShufflingPolicy(
-        String localDcFromConfig, Predicate<Node> filterFromConfig, DriverContext context) {
-      super("test", localDcFromConfig, filterFromConfig, context, true);
+    NonShufflingPolicy(DriverContext context, String profileName) {
+      super(context, profileName);
     }
 
     @Override

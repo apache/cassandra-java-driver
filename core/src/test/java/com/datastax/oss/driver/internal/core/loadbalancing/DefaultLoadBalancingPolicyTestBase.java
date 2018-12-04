@@ -15,17 +15,20 @@
  */
 package com.datastax.oss.driver.internal.core.loadbalancing;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.net.InetSocketAddress;
-import java.util.function.Predicate;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -55,7 +58,8 @@ public abstract class DefaultLoadBalancingPolicyTestBase {
   @Mock protected Node node4;
   @Mock protected Node node5;
   @Mock protected InternalDriverContext context;
-  @Mock protected Predicate<Node> filter;
+  @Mock protected DriverConfig config;
+  @Mock protected DriverExecutionProfile defaultProfile;
   @Mock protected LoadBalancingPolicy.DistanceReporter distanceReporter;
   @Mock protected Appender<ILoggingEvent> appender;
 
@@ -65,7 +69,15 @@ public abstract class DefaultLoadBalancingPolicyTestBase {
 
   @Before
   public void setup() {
-    Mockito.when(filter.test(any(Node.class))).thenReturn(true);
+    Mockito.when(context.getSessionName()).thenReturn("test");
+    Mockito.when(context.getConfig()).thenReturn(config);
+    Mockito.when(config.getProfile(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(defaultProfile);
+
+    Mockito.when(
+            defaultProfile.getString(
+                eq(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER), nullable(String.class)))
+        .thenReturn("dc1");
+
     logger = (Logger) LoggerFactory.getLogger(DefaultLoadBalancingPolicy.class);
     logger.addAppender(appender);
 
