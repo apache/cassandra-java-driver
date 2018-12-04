@@ -40,6 +40,7 @@ public class GuavaSessionBuilder extends SessionBuilder<GuavaSessionBuilder, Gua
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
       RequestTracker requestTracker,
+      Map<String, String> localDatacenters,
       Map<String, Predicate<Node>> nodeFilters,
       ClassLoader classLoader) {
     return new GuavaDriverContext(
@@ -48,6 +49,7 @@ public class GuavaSessionBuilder extends SessionBuilder<GuavaSessionBuilder, Gua
         nodeStateListener,
         schemaChangeListener,
         requestTracker,
+        localDatacenters,
         nodeFilters,
         classLoader);
   }

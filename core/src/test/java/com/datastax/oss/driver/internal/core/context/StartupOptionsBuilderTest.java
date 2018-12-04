@@ -50,6 +50,7 @@ public class StartupOptionsBuilderTest {
   @Mock private NodeStateListener nodeStateListener;
   @Mock private SchemaChangeListener schemaChangeListener;
   @Mock private RequestTracker requestTracker;
+  private Map<String, String> localDatacenters = Maps.newHashMap();
   private Map<String, Predicate<Node>> nodeFilters = Maps.newHashMap();
   @Mock private ClassLoader classLoader;
   @Mock private DriverConfig driverConfig;
@@ -70,6 +71,7 @@ public class StartupOptionsBuilderTest {
             nodeStateListener,
             schemaChangeListener,
             requestTracker,
+            localDatacenters,
             nodeFilters,
             classLoader);
   }

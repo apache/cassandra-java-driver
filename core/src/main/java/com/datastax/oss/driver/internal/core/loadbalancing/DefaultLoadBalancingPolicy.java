@@ -90,12 +90,7 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
 
     this.logPrefix = context.getSessionName() + "|" + profileName;
     DriverExecutionProfile config = context.getConfig().getProfile(profileName);
-    String localDcFromConfig =
-        config.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null);
-    if (localDcFromConfig != null) {
-      LOG.debug("[{}] Local DC set from configuration: {}", logPrefix, localDcFromConfig);
-      this.localDc = localDcFromConfig;
-    }
+    this.localDc = getLocalDcFromConfig(internalContext, profileName, config);
     this.isDefaultPolicy = profileName.equals(DriverExecutionProfile.DEFAULT_NAME);
 
     this.metadataManager = internalContext.getMetadataManager();
@@ -296,9 +291,24 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
     // nothing to do
   }
 
+  private String getLocalDcFromConfig(
+      InternalDriverContext internalContext,
+      @NonNull String profileName,
+      DriverExecutionProfile config) {
+    String localDc = internalContext.getLocalDatacenter(profileName);
+    if (localDc != null) {
+      LOG.debug("[{}] Local DC set from builder: {}", logPrefix, localDc);
+    } else {
+      localDc = config.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null);
+      if (localDc != null) {
+        LOG.debug("[{}] Local DC set from configuration: {}", logPrefix, localDc);
+      }
+    }
+    return localDc;
+  }
+
   @SuppressWarnings("unchecked")
-  private static Predicate<Node> getFilterFromConfig(
-      InternalDriverContext context, String profileName) {
+  private Predicate<Node> getFilterFromConfig(InternalDriverContext context, String profileName) {
     Predicate<Node> filterFromBuilder = context.getNodeFilter(profileName);
     return (filterFromBuilder != null)
         ? filterFromBuilder

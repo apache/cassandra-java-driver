@@ -105,6 +105,16 @@ datastax-java-driver.basic.load-balancing-policy {
 This option is required, except when you didn't specify any contact points and let the driver
 default to 127.0.0.1:9042 (this is mostly for convenience during the development phase).
 
+Note that the local datacenter can also be provided programmatically when building the session:
+
+```java
+CqlSession session = CqlSession.builder()
+    .withLocalDatacenter("datacenter1")
+    .build();
+```
+
+If both are provided, the programmatic value takes precedence.
+
 #### Token-aware
 
 The default policy is **token-aware** by default: requests will be routed in priority to the

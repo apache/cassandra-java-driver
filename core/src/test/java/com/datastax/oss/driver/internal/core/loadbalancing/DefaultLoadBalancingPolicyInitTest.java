@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.loadbalancing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.filter;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.never;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -34,8 +35,41 @@ import org.mockito.Mockito;
 public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPolicyTestBase {
 
   @Test
+  public void should_use_local_dc_if_provided_via_config() {
+    // Given
+    Mockito.when(
+            defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null))
+        .thenReturn("dc1");
+
+    // When
+    DefaultLoadBalancingPolicy policy =
+        new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
+
+    // Then
+    assertThat(policy.localDc).isEqualTo("dc1");
+  }
+
+  @Test
+  public void should_use_local_dc_if_provided_via_context() {
+    // Given
+    Mockito.when(context.getLocalDatacenter(DriverExecutionProfile.DEFAULT_NAME)).thenReturn("dc1");
+
+    // When
+    DefaultLoadBalancingPolicy policy =
+        new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
+
+    // Then
+    assertThat(policy.localDc).isEqualTo("dc1");
+    Mockito.verify(defaultProfile, never())
+        .getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null);
+  }
+
+  @Test
   public void should_infer_local_dc_if_no_explicit_contact_points() {
     // Given
+    Mockito.when(
+            defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null))
+        .thenReturn(null);
     DefaultLoadBalancingPolicy policy =
         new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
 

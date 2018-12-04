@@ -115,6 +115,14 @@ public interface InternalDriverContext extends DriverContext {
   MetricsFactory getMetricsFactory();
 
   /**
+   * The value that was passed to {@link SessionBuilder#withLocalDatacenter(String,String)} for this
+   * particular profile. If it was specified through the configuration instead, this method will
+   * return {@code null}.
+   */
+  @Nullable
+  String getLocalDatacenter(@NonNull String profileName);
+
+  /**
    * This is the filter from {@link SessionBuilder#withNodeFilter(String, Predicate)}. If the filter
    * for this profile was specified through the configuration instead, this method will return
    * {@code null}.
