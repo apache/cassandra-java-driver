@@ -16,7 +16,7 @@ If you are looking to create a bootstrapped project, you can skip down to
 
 ### Archetype Metadata
 The [archetype-metadata.xml][1] conforms to the [Maven Archetype Descriptor Model][2]. It defines
-properties that must be set to generate a bootstrapped project as well as fileset rules that control
+properties that must be set to generate a bootstrapped project as well as file set rules that control
 how source files are generated. The file must live in `src/main/resources/META-INF/maven` of _this_
 project.
 

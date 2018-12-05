@@ -13,7 +13,7 @@ public class Main {
   public static void main(String[] args) {
     CqlSessionBuilder builder = CqlSession.builder();
     // Set the host and port of the Cassandra server here
-    builder.addContactPoint(InetSocketAddress.createUnresolved("${cassandra-host}", ${cassandra-port}));
+    builder.addContactPoint(new InetSocketAddress("${cassandra-host}", ${cassandra-port}));
     try (CqlSession session = builder.build()) {
       ResultSet rs = session.execute("SELECT release_version FROM system.local");
       LOG.info("Cassandra release version: {}", rs.one().getString(0));
