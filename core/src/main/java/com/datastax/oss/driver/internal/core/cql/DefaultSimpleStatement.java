@@ -29,6 +29,7 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -693,5 +694,59 @@ public class DefaultSimpleStatement implements SimpleStatement {
       builder.put(CqlIdentifier.fromCql(entry.getKey()), entry.getValue());
     }
     return builder.build();
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (other == this) {
+      return true;
+    } else if (other instanceof DefaultSimpleStatement) {
+      DefaultSimpleStatement that = (DefaultSimpleStatement) other;
+      return this.query.equals(that.query)
+          && this.positionalValues.equals(that.positionalValues)
+          && this.namedValues.equals(that.namedValues)
+          && Objects.equals(this.executionProfileName, that.executionProfileName)
+          && Objects.equals(this.executionProfile, that.executionProfile)
+          && Objects.equals(this.keyspace, that.keyspace)
+          && Objects.equals(this.routingKeyspace, that.routingKeyspace)
+          && Objects.equals(this.routingKey, that.routingKey)
+          && Objects.equals(this.routingToken, that.routingToken)
+          && Objects.equals(this.customPayload, that.customPayload)
+          && Objects.equals(this.idempotent, that.idempotent)
+          && this.tracing == that.tracing
+          && this.timestamp == that.timestamp
+          && Objects.equals(this.pagingState, that.pagingState)
+          && this.pageSize == that.pageSize
+          && Objects.equals(this.consistencyLevel, that.consistencyLevel)
+          && Objects.equals(this.serialConsistencyLevel, that.serialConsistencyLevel)
+          && Objects.equals(this.timeout, that.timeout)
+          && Objects.equals(this.node, that.node);
+    } else {
+      return false;
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        query,
+        positionalValues,
+        namedValues,
+        executionProfileName,
+        executionProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
+        node);
   }
 }

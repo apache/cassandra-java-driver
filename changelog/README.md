@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta3 (in progress)
 
+- [improvement] JAVA-2053: Cache results of session.prepare()
 - [improvement] JAVA-2058: Make programmatic config reloading part of the public API
 - [improvement] JAVA-1943: Fail fast in execute() when the session is closed
 - [improvement] JAVA-2056: Reduce HashedWheelTimer tick duration

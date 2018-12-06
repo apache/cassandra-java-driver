@@ -22,19 +22,25 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
-import java.nio.ByteBuffer;
-import java.util.concurrent.ConcurrentMap;
+import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
+import java.util.concurrent.CompletableFuture;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class CqlPrepareSyncProcessor
     implements RequestProcessor<PrepareRequest, PreparedStatement> {
 
-  private final ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache;
+  private final CqlPrepareAsyncProcessor asyncProcessor;
 
-  public CqlPrepareSyncProcessor(
-      ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache) {
-    this.preparedStatementsCache = preparedStatementsCache;
+  /**
+   * Note: if you also register a {@link CqlPrepareAsyncProcessor} with your session, make sure that
+   * you pass that same instance to this constructor. This is necessary for proper behavior of the
+   * prepared statement cache.
+   */
+  public CqlPrepareSyncProcessor(CqlPrepareAsyncProcessor asyncProcessor) {
+    this.asyncProcessor = asyncProcessor;
   }
 
   @Override
@@ -48,9 +54,14 @@ public class CqlPrepareSyncProcessor
       DefaultSession session,
       InternalDriverContext context,
       String sessionLogPrefix) {
-    return new CqlPrepareSyncHandler(
-            request, preparedStatementsCache, session, context, sessionLogPrefix)
-        .handle();
+
+    BlockingOperation.checkNotDriverThread();
+    return CompletableFutures.getUninterruptibly(
+        asyncProcessor.process(request, session, context, sessionLogPrefix));
+  }
+
+  public Cache<PrepareRequest, CompletableFuture<PreparedStatement>> getCache() {
+    return asyncProcessor.getCache();
   }
 
   @Override

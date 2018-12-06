@@ -88,6 +88,17 @@ boundSelect = boundSelect.setInt("k", key);
 Note that, as indicated in the previous section, the public API exposes these types as interfaces:
 if for some reason you prefer a mutable implementation, it's possible to write your own.
 
+#### Prepared statement cache
+
+In 3.x, calling `session.prepare()` multiple times with the same query was considered an
+anti-pattern, and the driver would log a warning. Client applications were encouraged to cache
+`PreparedStatement` instances on their own.
+
+This cache is now built in: the driver will cache the first `prepare()` call and return the same
+instance on subsequent invocations. Calling the method multiple times is no longer an anti-pattern.
+See [prepared statements](../manual/core/statements/prepared/) for more details. 
+
+
 #### Dual result set APIs
 
 In 3.x, both synchronous and asynchronous execution models shared a common result set
