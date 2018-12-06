@@ -40,8 +40,8 @@ public interface RequestProcessor<RequestT extends Request, ResultT> {
    */
   boolean canProcess(Request request, GenericType<?> resultType);
 
-  /** Builds a new handler to process a given request. */
-  RequestHandler<RequestT, ResultT> newHandler(
+  /** Processes the given request, producing a result. */
+  ResultT process(
       RequestT request,
       DefaultSession session,
       InternalDriverContext context,
