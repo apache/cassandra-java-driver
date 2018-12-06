@@ -53,15 +53,17 @@ generate the project, and all can be modified interactively after executing the 
 The following properties are used during the bootstrap project generation. They can be specified
 when executing the generate command, or in interactive mode during bootstrap project generation:
 
-| Property       | Default               | Example             | Description |
-| -------------- | --------------------- | ------------------- | ------------| 
-| groupId        | &lt;no default&gt;    | com.mycompany.group | Sets the Maven `groupId` value in the pom.xml of the bootstrapped project |
-| artifactId     | &lt;no default&gt;    | myArtifact          | Sets the Maven 'artifactId' value in the pom.xml of the bootstrapped project |
-| version        | 1.0-SNAPSHOT          | 1.2.3               | Sets the Maven `version` value in the pom.xml of the bootstrapped project |
-| package        | &lt;groupId value&gt; | com.mycompany.poc   | Controls the base package for all generated source code |
-| cassandra-host | 127.0.0.1             | 10.10.1.16          | The host or IP address of the Cassandra instance to which to connect |
-| cassandra-port | 9042                  | 9042                | The port to use for the Cassandra connection |
-| datacenter     | datacenter1           | datacenter1         | The name of the local datacenter |
+| Property            | Default               | Example             | Description |
+| ------------------- | --------------------- | ------------------- | ------------| 
+| groupId             | &lt;no default&gt;    | com.mycompany.group | Sets the Maven `groupId` value in the pom.xml of the bootstrapped project |
+| artifactId          | &lt;no default&gt;    | myArtifact          | Sets the Maven 'artifactId' value in the pom.xml of the bootstrapped project |
+| version             | 1.0-SNAPSHOT          | 1.2.3               | Sets the Maven `version` value in the pom.xml of the bootstrapped project |
+| package             | &lt;groupId value&gt; | com.mycompany.poc   | Controls the base package for all generated source code |
+| java-driver-version | 4.0.0-beta3-SNAPSHOT  | 4.0.0               | The Java Driver version to use (NOTE: only version 4.x or greater is supported) |
+| cassandra-host      | 127.0.0.1             | 10.10.1.16          | The host or IP address of the Cassandra instance to which to connect |
+| cassandra-port      | 9042                  | 9042                | The port to use for the Cassandra connection |
+| datacenter          | datacenter1           | datacenter1         | The name of the local datacenter |
+| logging             | logback-classic       | log4j               | The SLF4J logging implementation to use (NOTE: only `logback-classic` or `log4j` are supported)
 
 ### Example generate commands
 
@@ -76,7 +78,7 @@ values are used to setup your bootstrap project `pom.xml` and generate source co
 
 #### Specify everything command
 ```
-mvn archetype:generate -DarchetypeGroupId=com.datastax.oss -DarchetypeArtifactId=java-driver-archetype -Dversion=4.0.0-SNAPSHOT -DgroupId=com.mycompany.group -DartifactId=myArtifact -Dpackage=com.mycompany.poc -Dcassandra-host=127.0.0.1 -Dcassandra-port=9042 -Ddatacenter=datacenter1
+mvn archetype:generate -DarchetypeGroupId=com.datastax.oss -DarchetypeArtifactId=java-driver-archetype -Dversion=4.0.0-SNAPSHOT -DgroupId=com.mycompany.group -DartifactId=myArtifact -Dpackage=com.mycompany.poc -Dcassandra-host=127.0.0.1 -Dcassandra-port=9042 -Ddatacenter=datacenter1 -Djava-driver-version=4.0.0-beta3-SNAPSHOT -Dlogging=logback-classic
 ```
 The above will generate a project with all properties set, though you can still override them
 interactively.
@@ -95,7 +97,9 @@ Downloading from datastax-artifactory: https://repo.datastax.com/dse/com/datasta
 [INFO] Using property: package = com.mycompany.poc
 [INFO] Using property: cassandra-host = 127.0.0.1
 [INFO] Using property: cassandra-port = 9042
-[INFO] Using property: logging-level = TRACE
+[INFO] Using property: datacenter = datacenter1
+[INFO] Using property: java-driver-version = 4.0.0-beta3-SNAPSHOT
+[INFO] Using property: logging = logback-classic
 Confirm properties configuration:
 groupId: com.mycompany.group
 artifactId: myArtifact
@@ -104,6 +108,8 @@ package: com.mycompany.poc
 cassandra-host: 127.0.0.1
 cassandra-port: 9042
 datacenter: datacenter1
+java-driver-version: 4.0.0-beta3-SNAPSHOT
+logging: logback-classic
  Y: : 
 ```
 
@@ -124,22 +130,6 @@ This should produce output similar to:
 15:57:33.200 [myArtifact-admin-0] INFO  c.d.o.d.internal.core.time.Clock - Using native clock for microsecond precision
 15:57:33.431 [com.mycompany.poc.Main.main()] INFO  com.mycompany.poc.Main - Cassandra release version: 3.11.3
 ```
-
-The default logging use `logback-classic` as the implementation for SLF4J. You can switch to `log4j`
-if you want by specifying the `logging` property set to `log4j`:
-
-```
-mvn compile exec:java -Dexec.mainClass=com.mycompany.poc.Main -Dlogging-log4j
-```
-
-```
-16:00:07.838 [com.mycompany.poc.Main.main()] INFO  nternal.core.DefaultMavenCoordinates - DataStax Java driver for Apache Cassandra(R) (com.datastax.oss:java-driver-core) version 4.0.0-beta3-SNAPSHOT
-16:00:08.047 [myArtifact-admin-0] INFO  .oss.driver.internal.core.time.Clock - Using native clock for microsecond precision
-16:00:08.316 [com.mycompany.poc.Main.main()] INFO  com.mycompany.poc.Main - Cassandra release version: 3.11.3
-```
-
-The logging config files are setup to be as close to identical as possible and can be customized in
-the generated bootstrap project after it is generated.
 
 [1]: ../blob/master/src/main/resources/META-INF/maven/archetype-metadata.xml
 [2]: http://maven.apache.org/archetype/archetype-models/archetype-descriptor/archetype-descriptor.html

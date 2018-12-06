@@ -26,10 +26,13 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <junit.version>4.12</junit.version>
     <slf4j.version>1.7.25</slf4j.version>
+#if (${logging} == 'logback-classic')
     <logback.version>1.2.3</logback.version>
+#elseif (${logging} == 'log4j')
     <log4j.version>1.2.17</log4j.version>
     <slf.log4j.version>1.7.25</slf.log4j.version>
-    <java.driver.version>4.0.0-beta3-SNAPSHOT</java.driver.version>
+#end
+    <java.driver.version>${java-driver-version}</java.driver.version>
     <maven.compiler.plugin.version>3.8.0</maven.compiler.plugin.version>
   </properties>
   <dependencyManagement>
@@ -45,11 +48,13 @@
         <artifactId>slf4j-api</artifactId>
         <version>${slf4j.version}</version>
       </dependency>
+#if (${logging} == 'logback-classic')
       <dependency>
         <groupId>ch.qos.logback</groupId>
         <artifactId>logback-classic</artifactId>
         <version>${logback.version}</version>
       </dependency>
+#elseif (${logging} == 'log4j')
       <dependency>
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
@@ -60,6 +65,7 @@
         <artifactId>slf4j-log4j12</artifactId>
         <version>${slf.log4j.version}</version>
       </dependency>
+#end
       <dependency>
         <groupId>com.datastax.oss</groupId>
         <artifactId>java-driver-core</artifactId>
@@ -80,57 +86,22 @@
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-core</artifactId>
     </dependency>
+#if (${logging} == 'logback-classic')
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+#elseif (${logging} == 'log4j')
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+    </dependency>
+#end
   </dependencies>
-  <profiles>
-    <profile>
-      <id>default-logging</id>
-      <activation>
-        <property>
-          <name>!logging</name>
-        </property>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>ch.qos.logback</groupId>
-          <artifactId>logback-classic</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>logback-classic</id>
-      <activation>
-        <property>
-          <name>logging</name>
-          <value>logback-classic</value>
-        </property>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>ch.qos.logback</groupId>
-          <artifactId>logback-classic</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>log4j</id>
-      <activation>
-        <property>
-          <name>logging</name>
-          <value>log4j</value>
-        </property>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>log4j</groupId>
-          <artifactId>log4j</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
   <build>
     <pluginManagement>
       <plugins>

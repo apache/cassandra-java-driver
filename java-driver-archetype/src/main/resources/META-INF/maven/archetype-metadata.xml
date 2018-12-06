@@ -25,10 +25,6 @@
     <!--
     Sets the logging level of the archetype project. Can be overridden when generating the project.
     -->
-    <requiredProperty key="logging-level">
-      <defaultValue>DEBUG</defaultValue>
-      <validationRegex>TRACE|DEBUG|INFO|WARN|ERROR</validationRegex>
-    </requiredProperty>
     <requiredProperty key="cassandra-host">
       <defaultValue>127.0.0.1</defaultValue>
     </requiredProperty>
@@ -37,6 +33,13 @@
     </requiredProperty>
     <requiredProperty key="datacenter">
       <defaultValue>datacenter1</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="logging">
+      <defaultValue>logback-classic</defaultValue>
+      <validationRegex>logback-classic|log4j</validationRegex>
+    </requiredProperty>
+    <requiredProperty key="java-driver-version">
+      <defaultValue>4.0.0-beta3-SNAPSHOT</defaultValue>
     </requiredProperty>
   </requiredProperties>
 
