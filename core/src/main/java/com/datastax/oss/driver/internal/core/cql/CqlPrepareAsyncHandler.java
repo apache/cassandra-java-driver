@@ -19,16 +19,13 @@ import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
-import com.datastax.oss.driver.internal.core.session.RequestHandler;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
-public class CqlPrepareAsyncHandler extends CqlPrepareHandlerBase
-    implements RequestHandler<PrepareRequest, CompletionStage<PreparedStatement>> {
+public class CqlPrepareAsyncHandler extends CqlPrepareHandlerBase {
 
   public CqlPrepareAsyncHandler(
       PrepareRequest request,
@@ -39,7 +36,6 @@ public class CqlPrepareAsyncHandler extends CqlPrepareHandlerBase
     super(request, preparedStatementsCache, session, context, sessionLogPrefix);
   }
 
-  @Override
   public CompletableFuture<PreparedStatement> handle() {
     return result;
   }

@@ -203,7 +203,7 @@ public class DefaultSession implements CqlSession {
         processorRegistry.processorFor(request, resultType);
     return isClosed()
         ? processor.newFailure(new IllegalStateException("Session is closed"))
-        : processor.newHandler(request, this, context, logPrefix).handle();
+        : processor.process(request, this, context, logPrefix);
   }
 
   @Nullable

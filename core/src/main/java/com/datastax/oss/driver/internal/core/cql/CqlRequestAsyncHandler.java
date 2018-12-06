@@ -19,13 +19,11 @@ import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
-import com.datastax.oss.driver.internal.core.session.RequestHandler;
 import java.util.concurrent.CompletionStage;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
-public class CqlRequestAsyncHandler extends CqlRequestHandlerBase
-    implements RequestHandler<Statement<?>, CompletionStage<AsyncResultSet>> {
+public class CqlRequestAsyncHandler extends CqlRequestHandlerBase {
 
   public CqlRequestAsyncHandler(
       Statement<?> statement,
@@ -35,7 +33,6 @@ public class CqlRequestAsyncHandler extends CqlRequestHandlerBase
     super(statement, session, context, sessionLogPrefix);
   }
 
-  @Override
   public CompletionStage<AsyncResultSet> handle() {
     return result;
   }
