@@ -73,7 +73,8 @@ public class GuavaDriverContext extends DefaultDriverContext {
 
     CqlRequestAsyncProcessor cqlRequestAsyncProcessor = new CqlRequestAsyncProcessor();
     CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor = new CqlPrepareAsyncProcessor();
-    CqlRequestSyncProcessor cqlRequestSyncProcessor = new CqlRequestSyncProcessor();
+    CqlRequestSyncProcessor cqlRequestSyncProcessor =
+        new CqlRequestSyncProcessor(cqlRequestAsyncProcessor);
 
     return new RequestProcessorRegistry(
         getSessionName(),

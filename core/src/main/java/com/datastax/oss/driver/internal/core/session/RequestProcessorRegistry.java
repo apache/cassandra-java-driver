@@ -32,13 +32,19 @@ public class RequestProcessorRegistry {
   private static final Logger LOG = LoggerFactory.getLogger(RequestProcessorRegistry.class);
 
   public static RequestProcessorRegistry defaultCqlProcessors(String logPrefix) {
+    CqlRequestAsyncProcessor requestAsyncProcessor = new CqlRequestAsyncProcessor();
+    CqlRequestSyncProcessor requestSyncProcessor =
+        new CqlRequestSyncProcessor(requestAsyncProcessor);
     CqlPrepareAsyncProcessor prepareAsyncProcessor = new CqlPrepareAsyncProcessor();
+    CqlPrepareSyncProcessor prepareSyncProcessor =
+        new CqlPrepareSyncProcessor(prepareAsyncProcessor);
+
     return new RequestProcessorRegistry(
         logPrefix,
-        new CqlRequestSyncProcessor(),
-        new CqlRequestAsyncProcessor(),
-        new CqlPrepareSyncProcessor(prepareAsyncProcessor),
-        prepareAsyncProcessor);
+        requestAsyncProcessor,
+        requestSyncProcessor,
+        prepareAsyncProcessor,
+        prepareSyncProcessor);
   }
 
   private final String logPrefix;

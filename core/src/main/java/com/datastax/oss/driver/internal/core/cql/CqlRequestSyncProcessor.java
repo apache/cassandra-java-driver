@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.session.Request;
@@ -22,10 +23,18 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
+import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class CqlRequestSyncProcessor implements RequestProcessor<Statement<?>, ResultSet> {
+
+  private final CqlRequestAsyncProcessor asyncProcessor;
+
+  public CqlRequestSyncProcessor(CqlRequestAsyncProcessor asyncProcessor) {
+    this.asyncProcessor = asyncProcessor;
+  }
 
   @Override
   public boolean canProcess(Request request, GenericType<?> resultType) {
@@ -38,7 +47,12 @@ public class CqlRequestSyncProcessor implements RequestProcessor<Statement<?>, R
       DefaultSession session,
       InternalDriverContext context,
       String sessionLogPrefix) {
-    return new CqlRequestSyncHandler(request, session, context, sessionLogPrefix).handle();
+
+    BlockingOperation.checkNotDriverThread();
+    AsyncResultSet firstPage =
+        CompletableFutures.getUninterruptibly(
+            asyncProcessor.process(request, session, context, sessionLogPrefix));
+    return ResultSets.newInstance(firstPage);
   }
 
   @Override

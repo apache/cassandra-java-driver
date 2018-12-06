@@ -54,8 +54,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
           harness.getContext().getSpeculativeExecutionPolicy(DriverExecutionProfile.DEFAULT_NAME);
 
-      new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
-          .handle();
+      new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test").handle();
 
       node1Behavior.verifyWrite();
 
@@ -95,8 +94,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
                   any(Node.class), eq(null), eq(statement), eq(3)))
           .thenReturn(-1L);
 
-      new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
-          .handle();
+      new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test").handle();
 
       node1Behavior.verifyWrite();
       node1Behavior.setWriteSuccess();
@@ -151,8 +149,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
                   any(Node.class), eq(null), eq(statement), eq(1)))
           .thenReturn(firstExecutionDelay);
 
-      CqlRequestAsyncHandler requestHandler =
-          new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test");
+      CqlRequestHandler requestHandler =
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test");
       CompletionStage<AsyncResultSet> resultSetFuture = requestHandler.handle();
       node1Behavior.verifyWrite();
       node1Behavior.setWriteSuccess();
@@ -210,7 +208,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
 
       harness.nextScheduledTimeout(); // Discard the timeout task
@@ -241,7 +239,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
       node1Behavior.verifyWrite();
       node1Behavior.setWriteSuccess();
@@ -294,7 +292,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
       node1Behavior.verifyWrite();
       node1Behavior.setWriteSuccess();
@@ -350,7 +348,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
       node1Behavior.verifyWrite();
       node1Behavior.setWriteSuccess();
@@ -399,7 +397,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
                   any(Node.class), eq(null), eq(statement), eq(1)))
           .thenReturn(firstExecutionDelay);
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
       node1Behavior.verifyWrite();
       node1Behavior.setWriteSuccess();

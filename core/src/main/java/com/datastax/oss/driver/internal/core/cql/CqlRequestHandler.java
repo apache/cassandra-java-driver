@@ -82,6 +82,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -90,9 +91,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ThreadSafe
-public abstract class CqlRequestHandlerBase implements Throttled {
+public class CqlRequestHandler implements Throttled {
 
-  private static final Logger LOG = LoggerFactory.getLogger(CqlRequestHandlerBase.class);
+  private static final Logger LOG = LoggerFactory.getLogger(CqlRequestHandler.class);
   private static final long NANOTIME_NOT_MEASURED_YET = -1;
 
   private final long startTimeNanos;
@@ -133,7 +134,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   // We don't use a map because nodes can appear multiple times.
   private volatile List<Map.Entry<Node, Throwable>> errors;
 
-  protected CqlRequestHandlerBase(
+  protected CqlRequestHandler(
       Statement<?> statement,
       DefaultSession session,
       InternalDriverContext context,
@@ -208,6 +209,10 @@ public abstract class CqlRequestHandlerBase implements Throttled {
                 .getLoadBalancingPolicyWrapper()
                 .newQueryPlan(statement, executionProfile.getName(), session);
     sendRequest(null, queryPlan, 0, 0, true);
+  }
+
+  public CompletionStage<AsyncResultSet> handle() {
+    return result;
   }
 
   private Timeout scheduleTimeout(Duration timeoutDuration) {
@@ -289,7 +294,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     // Use a local variable to do only a single single volatile read in the nominal case
     List<Map.Entry<Node, Throwable>> errorsSnapshot = this.errors;
     if (errorsSnapshot == null) {
-      synchronized (CqlRequestHandlerBase.this) {
+      synchronized (CqlRequestHandler.this) {
         errorsSnapshot = this.errors;
         if (errorsSnapshot == null) {
           this.errors = errorsSnapshot = new CopyOnWriteArrayList<>();
@@ -512,13 +517,12 @@ public abstract class CqlRequestHandlerBase implements Throttled {
                   if (!result.isDone()) {
                     LOG.trace(
                         "[{}] Starting speculative execution {}",
-                        CqlRequestHandlerBase.this.logPrefix,
+                        CqlRequestHandler.this.logPrefix,
                         index);
                     activeExecutionsCount.incrementAndGet();
                     startedSpeculativeExecutionsCount.incrementAndGet();
                     // Note that `node` is the first node of the execution, it might not be the
-                    // "slow"
-                    // one if there were retries, but in practice retries are rare.
+                    // "slow" one if there were retries, but in practice retries are rare.
                     ((DefaultNode) node)
                         .getMetricUpdater()
                         .incrementCounter(
