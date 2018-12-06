@@ -9,6 +9,6 @@
   </root>
   <!-- Adjust the Cassandra Driver logging level here if you want more(DEBUG) or less(WARN) logs -->
   <logger name="com.datastax.oss.driver" level="INFO" />
-  <!-- Set the log level for all logs in the archetype project to DEBUG -->
-  <logger name="${package}" level="${logging-level}" />
+  <!-- Set the log level for all logs in the archetype project -->
+  <logger name="${package}" level="DEBUG" />
 </configuration>

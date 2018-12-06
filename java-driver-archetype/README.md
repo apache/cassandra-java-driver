@@ -32,7 +32,7 @@ Additionally in `archetype-resources` is the typical Maven project directory str
 
 ```
 archetype-resources/src/main/java
-archetype-resources/src/main/rescource
+archetype-resources/src/main/resource
 archetype-resources/src/test/java
 archetype-resources/src/test/resources
 ```
@@ -53,16 +53,15 @@ generate the project, and all can be modified interactively after executing the 
 The following properties are used during the bootstrap project generation. They can be specified
 when executing the generate command, or in interactive mode during bootstrap project generation:
 
-| Property | Default | Example | Description |
-| --- | --- | --- | ---| 
-| groupId | &lt;no default&gt; | com.mycompany.group | Sets the Maven `groupId` value in the pom.xml of the bootstrapped project |
-| artifactId | &lt;no default&gt; | myArtifact | Sets the Maven 'artifactId' value in the pom.xml of the bootstrapped project |
-| version | 1.0-SNAPSHOT | 1.2.3 | Sets the Maven `version` value in the pom.xml of the bootstrapped project |
-| package | &lt;groupId value&gt; | com.mycompany.poc | Controls the base package for all generated source code |
-| logging-level | DEBUG | WARN | Controls the logging level of the generated project (values must be one of &lt;TRACE&vert;DEBUG&vert;INFO&vert;WARN&vert;ERROR&gt; |
-| cassandra-host | 127.0.0.1 | 10.10.1.16 | The host or IP address of the Cassandra instance to which to connect |
-| cassandra-port | 9042 | 9042 | The port to use for the Cassandra connection |
-| datacenter | datacenter1 | datacenter1 | The name of the local datacenter |
+| Property       | Default               | Example             | Description |
+| -------------- | --------------------- | ------------------- | ------------| 
+| groupId        | &lt;no default&gt;    | com.mycompany.group | Sets the Maven `groupId` value in the pom.xml of the bootstrapped project |
+| artifactId     | &lt;no default&gt;    | myArtifact          | Sets the Maven 'artifactId' value in the pom.xml of the bootstrapped project |
+| version        | 1.0-SNAPSHOT          | 1.2.3               | Sets the Maven `version` value in the pom.xml of the bootstrapped project |
+| package        | &lt;groupId value&gt; | com.mycompany.poc   | Controls the base package for all generated source code |
+| cassandra-host | 127.0.0.1             | 10.10.1.16          | The host or IP address of the Cassandra instance to which to connect |
+| cassandra-port | 9042                  | 9042                | The port to use for the Cassandra connection |
+| datacenter     | datacenter1           | datacenter1         | The name of the local datacenter |
 
 ### Example generate commands
 
@@ -77,7 +76,7 @@ values are used to setup your bootstrap project `pom.xml` and generate source co
 
 #### Specify everything command
 ```
-mvn archetype:generate -DarchetypeGroupId=com.datastax.oss -DarchetypeArtifactId=java-driver-archetype -Dversion=4.0.0-SNAPSHOT -DgroupId=com.mycompany.group -DartifactId=myArtifact -Dpackage=com.mycompany.poc -Dlogging-level=TRACE -Dcassandra-host=127.0.0.1 -Dcassandra-port=9042 -Ddatacenter=datacenter1
+mvn archetype:generate -DarchetypeGroupId=com.datastax.oss -DarchetypeArtifactId=java-driver-archetype -Dversion=4.0.0-SNAPSHOT -DgroupId=com.mycompany.group -DartifactId=myArtifact -Dpackage=com.mycompany.poc -Dcassandra-host=127.0.0.1 -Dcassandra-port=9042 -Ddatacenter=datacenter1
 ```
 The above will generate a project with all properties set, though you can still override them
 interactively.
@@ -105,7 +104,6 @@ package: com.mycompany.poc
 cassandra-host: 127.0.0.1
 cassandra-port: 9042
 datacenter: datacenter1
-logging-level: TRACE
  Y: : 
 ```
 
