@@ -56,7 +56,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
             .build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestAsyncHandler(
+          new CqlRequestHandler(
                   UNDEFINED_IDEMPOTENCE_STATEMENT,
                   harness.getSession(),
                   harness.getContext(),
@@ -90,7 +90,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
             .build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestAsyncHandler(
+          new CqlRequestHandler(
                   UNDEFINED_IDEMPOTENCE_STATEMENT,
                   harness.getSession(),
                   harness.getContext(),
@@ -111,7 +111,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestAsyncHandler(
+          new CqlRequestHandler(
                   UNDEFINED_IDEMPOTENCE_STATEMENT,
                   harness.getSession(),
                   harness.getContext(),
@@ -143,7 +143,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
             .build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestAsyncHandler(
+          new CqlRequestHandler(
                   UNDEFINED_IDEMPOTENCE_STATEMENT,
                   harness.getSession(),
                   harness.getContext(),
@@ -186,8 +186,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
       Mockito.when(harness.getSession().getRepreparePayloads()).thenReturn(repreparePayloads);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestAsyncHandler(
-                  boundStatement, harness.getSession(), harness.getContext(), "test")
+          new CqlRequestHandler(boundStatement, harness.getSession(), harness.getContext(), "test")
               .handle();
 
       // Before we proceed, mock the PREPARE exchange that will occur as soon as we complete the

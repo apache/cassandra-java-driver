@@ -50,7 +50,7 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
       Mockito.when(harness.getContext().getRequestTracker()).thenReturn(requestTracker);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestAsyncHandler(
+          new CqlRequestHandler(
                   UNDEFINED_IDEMPOTENCE_STATEMENT,
                   harness.getSession(),
                   harness.getContext(),
@@ -100,7 +100,7 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
       Mockito.when(harness.getContext().getRequestTracker()).thenReturn(requestTracker);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestAsyncHandler(
+          new CqlRequestHandler(
                   UNDEFINED_IDEMPOTENCE_STATEMENT,
                   harness.getSession(),
                   harness.getContext(),
