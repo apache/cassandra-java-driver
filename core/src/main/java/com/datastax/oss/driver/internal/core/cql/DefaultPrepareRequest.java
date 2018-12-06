@@ -199,4 +199,21 @@ public class DefaultPrepareRequest implements PrepareRequest {
   public boolean areBoundStatementsTracing() {
     return statement.isTracing();
   }
+
+  @Override
+  public boolean equals(Object other) {
+    if (other == this) {
+      return true;
+    } else if (other instanceof DefaultPrepareRequest) {
+      DefaultPrepareRequest that = (DefaultPrepareRequest) other;
+      return this.statement.equals(that.statement);
+    } else {
+      return false;
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return statement.hashCode();
+  }
 }

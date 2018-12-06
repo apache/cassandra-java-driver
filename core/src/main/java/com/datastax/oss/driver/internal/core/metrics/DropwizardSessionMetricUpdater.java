@@ -23,8 +23,13 @@ import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor;
+import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
+import com.datastax.oss.driver.internal.core.session.RequestProcessor;
 import com.datastax.oss.driver.internal.core.session.throttling.ConcurrencyLimitingRequestThrottler;
 import com.datastax.oss.driver.internal.core.session.throttling.RateLimitingRequestThrottler;
+import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Set;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -62,6 +67,23 @@ public class DropwizardSessionMetricUpdater extends DropwizardMetricUpdater<Sess
           buildFullName(DefaultSessionMetric.THROTTLING_QUEUE_SIZE, null),
           buildQueueGauge(context.getRequestThrottler(), context.getSessionName()));
     }
+    if (enabledMetrics.contains(DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE)) {
+      Cache<?, ?> cache = getPreparedStatementCache(context);
+      Gauge<Long> gauge;
+      if (cache == null) {
+        LOG.warn(
+            "[{}] Metric {} is enabled in the config, "
+                + "but it looks like no CQL prepare processor is registered. "
+                + "The gauge will always return 0",
+            context.getSessionName(),
+            DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE.getPath());
+        gauge = () -> 0L;
+      } else {
+        gauge = cache::size;
+      }
+      this.registry.register(
+          buildFullName(DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE, null), gauge);
+    }
     initializeHdrTimer(
         DefaultSessionMetric.CQL_REQUESTS,
         context.getConfig().getDefaultProfile(),
@@ -96,5 +118,19 @@ public class DropwizardSessionMetricUpdater extends DropwizardMetricUpdater<Sess
           requestThrottler.getClass().getName());
       return () -> 0;
     }
+  }
+
+  @Nullable
+  private static Cache<?, ?> getPreparedStatementCache(InternalDriverContext context) {
+    // By default, both the sync processor and the async one are registered and they share the same
+    // cache. But with a custom processor registry, there could be only one of the two present.
+    for (RequestProcessor<?, ?> processor : context.getRequestProcessorRegistry().getProcessors()) {
+      if (processor instanceof CqlPrepareAsyncProcessor) {
+        return ((CqlPrepareAsyncProcessor) processor).getCache();
+      } else if (processor instanceof CqlPrepareSyncProcessor) {
+        return ((CqlPrepareSyncProcessor) processor).getCache();
+      }
+    }
+    return null;
   }
 }

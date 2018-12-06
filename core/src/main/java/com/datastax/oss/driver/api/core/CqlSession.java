@@ -123,6 +123,21 @@ public interface CqlSession extends Session {
    *
    * If you want to customize this behavior, you can write your own implementation of {@link
    * PrepareRequest} and pass it to {@link #prepare(PrepareRequest)}.
+   *
+   * <p>The result of this method is cached: if you call it twice with the same {@link
+   * SimpleStatement}, you will get the same {@link PreparedStatement} instance. We still recommend
+   * keeping a reference to it (for example by caching it as a field in a DAO); if that's not
+   * possible (e.g. if query strings are generated dynamically), it's OK to call this method every
+   * time: there will just be a small performance overhead to check the internal cache. Note that
+   * caching is based on:
+   *
+   * <ul>
+   *   <li>the query string exactly as you provided it: the driver does not perform any kind of
+   *       trimming or sanitizing.
+   *   <li>all other execution parameters: for example, preparing two statements with identical
+   *       query strings but different {@linkplain SimpleStatement#getConsistencyLevel() consistency
+   *       levels} will yield distinct prepared statements.
+   * </ul>
    */
   @NonNull
   default PreparedStatement prepare(@NonNull SimpleStatement statement) {
@@ -134,6 +149,9 @@ public interface CqlSession extends Session {
   /**
    * Prepares a CQL statement synchronously (the calling thread blocks until the statement is
    * prepared).
+   *
+   * <p>The result of this method is cached (see {@link #prepare(SimpleStatement)} for more
+   * explanations).
    */
   @NonNull
   default PreparedStatement prepare(@NonNull String query) {
@@ -150,6 +168,9 @@ public interface CqlSession extends Session {
    * customize how attributes are propagated when you prepare a {@link SimpleStatement} (see {@link
    * #prepare(SimpleStatement)} for more explanations). Otherwise, you should rarely have to deal
    * with {@link PrepareRequest} directly.
+   *
+   * <p>The result of this method is cached (see {@link #prepare(SimpleStatement)} for more
+   * explanations).
    */
   @NonNull
   default PreparedStatement prepare(@NonNull PrepareRequest request) {
@@ -165,6 +186,9 @@ public interface CqlSession extends Session {
    * <p>Note that the bound statements created from the resulting prepared statement will inherit
    * some of the attributes of {@code query}; see {@link #prepare(SimpleStatement)} for more
    * details.
+   *
+   * <p>The result of this method is cached (see {@link #prepare(SimpleStatement)} for more
+   * explanations).
    */
   @NonNull
   default CompletionStage<? extends PreparedStatement> prepareAsync(
@@ -177,6 +201,9 @@ public interface CqlSession extends Session {
   /**
    * Prepares a CQL statement asynchronously (the call returns as soon as the prepare query was
    * sent, generally before the statement is prepared).
+   *
+   * <p>The result of this method is cached (see {@link #prepare(SimpleStatement)} for more
+   * explanations).
    */
   @NonNull
   default CompletionStage<? extends PreparedStatement> prepareAsync(@NonNull String query) {
@@ -193,6 +220,9 @@ public interface CqlSession extends Session {
    * customize how attributes are propagated when you prepare a {@link SimpleStatement} (see {@link
    * #prepare(SimpleStatement)} for more explanations). Otherwise, you should rarely have to deal
    * with {@link PrepareRequest} directly.
+   *
+   * <p>The result of this method is cached (see {@link #prepare(SimpleStatement)} for more
+   * explanations).
    */
   @NonNull
   default CompletionStage<? extends PreparedStatement> prepareAsync(PrepareRequest request) {

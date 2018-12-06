@@ -29,6 +29,7 @@ public enum DefaultSessionMetric implements SessionMetric {
   THROTTLING_DELAY("throttling.delay"),
   THROTTLING_QUEUE_SIZE("throttling.queue-size"),
   THROTTLING_ERRORS("throttling.errors"),
+  CQL_PREPARED_CACHE_SIZE("cql-prepared-cache-size"),
   ;
 
   private static final Map<String, DefaultSessionMetric> BY_PATH = sortByPath();

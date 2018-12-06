@@ -18,10 +18,12 @@ package com.datastax.oss.driver.api.core.cql;
 import static junit.framework.TestCase.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.codahale.metrics.Gauge;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
@@ -62,6 +64,9 @@ public class PreparedStatementIT {
               SessionUtils.configLoaderBuilder()
                   .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 2)
                   .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+                  .withStringList(
+                      DefaultDriverOption.METRICS_SESSION_ENABLED,
+                      ImmutableList.of(DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE.getPath()))
                   .build())
           .build();
 
@@ -356,5 +361,76 @@ public class PreparedStatementIT {
     assertThat(row.isNull("d")).isTrue();
     assertThat(ps.getResultSetDefinitions()).hasSize(0);
     assertThat(Bytes.toHexString(ps.getResultMetadataId())).isEqualTo(Bytes.toHexString(idBefore));
+  }
+
+  @Test
+  public void should_return_same_instance_when_repreparing_query() {
+    // Given
+    CqlSession session = sessionRule.session();
+    assertThat(getPreparedCacheSize(session)).isEqualTo(0);
+    String query = "SELECT * FROM prepared_statement_test WHERE a = ?";
+
+    // When
+    PreparedStatement preparedStatement1 = session.prepare(query);
+    PreparedStatement preparedStatement2 = session.prepare(query);
+
+    // Then
+    assertThat(preparedStatement1).isSameAs(preparedStatement2);
+    assertThat(getPreparedCacheSize(session)).isEqualTo(1);
+  }
+
+  /** Just to illustrate that the driver does not sanitize query strings. */
+  @Test
+  public void should_create_separate_instances_for_differently_formatted_queries() {
+    // Given
+    CqlSession session = sessionRule.session();
+    assertThat(getPreparedCacheSize(session)).isEqualTo(0);
+
+    // When
+    PreparedStatement preparedStatement1 =
+        session.prepare("SELECT * FROM prepared_statement_test WHERE a = ?");
+    PreparedStatement preparedStatement2 =
+        session.prepare("select * from prepared_statement_test where a = ?");
+
+    // Then
+    assertThat(preparedStatement1).isNotSameAs(preparedStatement2);
+    assertThat(getPreparedCacheSize(session)).isEqualTo(2);
+  }
+
+  @Test
+  public void should_create_separate_instances_for_different_statement_parameters() {
+    // Given
+    CqlSession session = sessionRule.session();
+    assertThat(getPreparedCacheSize(session)).isEqualTo(0);
+    SimpleStatement statement =
+        SimpleStatement.newInstance("SELECT * FROM prepared_statement_test");
+
+    // When
+    PreparedStatement preparedStatement1 = session.prepare(statement.setPageSize(1));
+    PreparedStatement preparedStatement2 = session.prepare(statement.setPageSize(4));
+
+    // Then
+    assertThat(preparedStatement1).isNotSameAs(preparedStatement2);
+    assertThat(getPreparedCacheSize(session)).isEqualTo(2);
+    // Each bound statement uses the page size it was prepared with
+    assertThat(firstPageOf(session.executeAsync(preparedStatement1.bind()))).hasSize(1);
+    assertThat(firstPageOf(session.executeAsync(preparedStatement2.bind()))).hasSize(4);
+  }
+
+  private static Iterable<Row> firstPageOf(CompletionStage<? extends AsyncResultSet> stage) {
+    return CompletableFutures.getUninterruptibly(stage).currentPage();
+  }
+
+  @SuppressWarnings("unchecked")
+  private static long getPreparedCacheSize(CqlSession session) {
+    return session
+        .getMetrics()
+        .flatMap(metrics -> metrics.getSessionMetric(DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE))
+        .map(metric -> ((Gauge<Long>) metric).getValue())
+        .orElseThrow(
+            () ->
+                new AssertionError(
+                    "Could not access metric "
+                        + DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE.getPath()));
   }
 }
