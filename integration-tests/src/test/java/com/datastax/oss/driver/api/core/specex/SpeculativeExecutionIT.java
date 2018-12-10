@@ -49,7 +49,7 @@ import org.junit.experimental.categories.Category;
 public class SpeculativeExecutionIT {
 
   // Note: it looks like shorter delays cause precision issues with Netty timers
-  private static final long SPECULATIVE_DELAY = 500;
+  private static final long SPECULATIVE_DELAY = 1000;
 
   private static String QUERY_STRING = "select * from foo";
   private static final SimpleStatement QUERY = SimpleStatement.newInstance(QUERY_STRING);
