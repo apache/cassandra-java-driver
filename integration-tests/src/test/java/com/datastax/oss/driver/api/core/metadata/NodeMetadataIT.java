@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.context.EventBus;
@@ -31,55 +31,49 @@ import java.util.Collection;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 public class NodeMetadataIT {
 
-  private static CcmRule ccmRule = CcmRule.getInstance();
-
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
-
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule public static CcmRule ccmRule = CcmRule.getInstance();
 
   @Test
   public void should_expose_node_metadata() {
-    CqlSession session = sessionRule.session();
-    Node node = getUniqueNode(session);
+    try (CqlSession session = SessionUtils.newSession(ccmRule)) {
+      Node node = getUniqueNode(session);
+      // Run a few basic checks given what we know about our test environment:
+      assertThat(node.getConnectAddress()).isNotNull();
+      node.getBroadcastAddress()
+          .ifPresent(
+              broadcastAddress ->
+                  assertThat(broadcastAddress.getAddress())
+                      .isEqualTo(node.getConnectAddress().getAddress()));
+      assertThat(node.getListenAddress().get().getAddress())
+          .isEqualTo(node.getConnectAddress().getAddress());
+      assertThat(node.getDatacenter()).isEqualTo("dc1");
+      assertThat(node.getRack()).isEqualTo("r1");
+      if (!CcmBridge.DSE_ENABLEMENT) {
+        // CcmBridge does not report accurate C* versions for DSE, only approximated values
+        assertThat(node.getCassandraVersion()).isEqualTo(ccmRule.getCassandraVersion());
+      }
+      assertThat(node.getState()).isSameAs(NodeState.UP);
+      assertThat(node.getDistance()).isSameAs(NodeDistance.LOCAL);
+      assertThat(node.getHostId()).isNotNull();
+      assertThat(node.getSchemaVersion()).isNotNull();
+      long upTime1 = node.getUpSinceMillis();
+      assertThat(upTime1).isGreaterThan(-1);
 
-    // Run a few basic checks given what we know about our test environment:
-    assertThat(node.getConnectAddress()).isNotNull();
-    node.getBroadcastAddress()
-        .ifPresent(
-            broadcastAddress ->
-                assertThat(broadcastAddress.getAddress())
-                    .isEqualTo(node.getConnectAddress().getAddress()));
-    assertThat(node.getListenAddress().get().getAddress())
-        .isEqualTo(node.getConnectAddress().getAddress());
-    assertThat(node.getDatacenter()).isEqualTo("dc1");
-    assertThat(node.getRack()).isEqualTo("r1");
-    if (!CcmBridge.DSE_ENABLEMENT) {
-      // CcmBridge does not report accurate C* versions for DSE, only approximated values
-      assertThat(node.getCassandraVersion()).isEqualTo(ccmRule.getCassandraVersion());
+      // Note: open connections and reconnection status are covered in NodeStateIT
+
+      // Force the node down and back up to check that upSinceMillis gets updated
+      EventBus eventBus = ((InternalDriverContext) session.getContext()).getEventBus();
+      eventBus.fire(TopologyEvent.forceDown(node.getConnectAddress()));
+      ConditionChecker.checkThat(() -> node.getState() == NodeState.FORCED_DOWN).becomesTrue();
+      assertThat(node.getUpSinceMillis()).isEqualTo(-1);
+      eventBus.fire(TopologyEvent.forceUp(node.getConnectAddress()));
+      ConditionChecker.checkThat(() -> node.getState() == NodeState.UP).becomesTrue();
+      assertThat(node.getUpSinceMillis()).isGreaterThan(upTime1);
     }
-    assertThat(node.getState()).isSameAs(NodeState.UP);
-    assertThat(node.getDistance()).isSameAs(NodeDistance.LOCAL);
-    assertThat(node.getHostId()).isNotNull();
-    assertThat(node.getSchemaVersion()).isNotNull();
-    long upTime1 = node.getUpSinceMillis();
-    assertThat(upTime1).isGreaterThan(-1);
-
-    // Note: open connections and reconnection status are covered in NodeStateIT
-
-    // Force the node down and back up to check that upSinceMillis gets updated
-    EventBus eventBus = ((InternalDriverContext) session.getContext()).getEventBus();
-    eventBus.fire(TopologyEvent.forceDown(node.getConnectAddress()));
-    ConditionChecker.checkThat(() -> node.getState() == NodeState.FORCED_DOWN).becomesTrue();
-    assertThat(node.getUpSinceMillis()).isEqualTo(-1);
-    eventBus.fire(TopologyEvent.forceUp(node.getConnectAddress()));
-    ConditionChecker.checkThat(() -> node.getState() == NodeState.UP).becomesTrue();
-    assertThat(node.getUpSinceMillis()).isGreaterThan(upTime1);
   }
 
   private static Node getUniqueNode(CqlSession session) {
