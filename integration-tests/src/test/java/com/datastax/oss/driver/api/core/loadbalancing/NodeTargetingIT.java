@@ -34,9 +34,8 @@ import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.codec.ConsistencyLevel;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import com.datastax.oss.simulacron.server.BoundNode;
+import java.net.InetSocketAddress;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -62,11 +61,9 @@ public class NodeTargetingIT {
 
   @Test
   public void should_use_node_on_statement() {
-    Collection<Node> nodeCol = sessionRule.session().getMetadata().getNodes().values();
-    List<Node> nodes = new ArrayList<>(nodeCol);
     for (int i = 0; i < 10; i++) {
       int nodeIndex = i % 3 + 1;
-      Node node = nodes.get(nodeIndex);
+      Node node = getNode(nodeIndex);
 
       // given a statement with node explicitly set.
       Statement statement = SimpleStatement.newInstance("select * system.local").setNode(node);
@@ -82,30 +79,25 @@ public class NodeTargetingIT {
   @Test
   public void should_fail_if_node_fails_query() {
     String query = "mock";
-    Collection<Node> nodeCol = sessionRule.session().getMetadata().getNodes().values();
-    List<Node> nodes = new ArrayList<>(nodeCol);
     simulacron.cluster().node(3).prime(when(query).then(unavailable(ConsistencyLevel.ALL, 1, 0)));
 
     // given a statement with a node configured to fail the given query.
-    Node node1 = nodes.get(3);
-    Statement statement = SimpleStatement.newInstance(query).setNode(node1);
+    Node node3 = getNode(3);
+    Statement statement = SimpleStatement.newInstance(query).setNode(node3);
     // when statement is executed an error should be raised.
     try {
       sessionRule.session().execute(statement);
       fail("Should have thrown AllNodesFailedException");
     } catch (AllNodesFailedException e) {
       assertThat(e.getErrors().size()).isEqualTo(1);
-      assertThat(e.getErrors().get(node1)).isInstanceOf(UnavailableException.class);
+      assertThat(e.getErrors().get(node3)).isInstanceOf(UnavailableException.class);
     }
   }
 
   @Test
   public void should_fail_if_node_is_not_connected() {
     // given a statement with node explicitly set that for which we have no active pool.
-
-    Collection<Node> nodeCol = sessionRule.session().getMetadata().getNodes().values();
-    List<Node> nodes = new ArrayList<>(nodeCol);
-    Node node4 = nodes.get(4);
+    Node node4 = getNode(4);
 
     Statement statement = SimpleStatement.newInstance("select * system.local").setNode(node4);
     try {
@@ -115,5 +107,14 @@ public class NodeTargetingIT {
     } catch (NoNodeAvailableException e) {
       assertThat(e.getErrors()).isEmpty();
     }
+  }
+
+  private Node getNode(int id) {
+    BoundNode boundNode = simulacron.cluster().node(id);
+    assertThat(boundNode).isNotNull();
+    InetSocketAddress address = (InetSocketAddress) boundNode.getAddress();
+    Node node = sessionRule.session().getMetadata().getNodes().get(address);
+    assertThat(node).isNotNull();
+    return node;
   }
 }
