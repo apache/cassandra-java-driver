@@ -340,7 +340,9 @@ public class SpeculativeExecutionIT {
         SessionUtils.configLoaderBuilder()
             .withDuration(
                 DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofMillis(SPECULATIVE_DELAY * 10))
-            .withBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE, true);
+            .withBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE, true)
+            .withClass(
+                DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS, SortingLoadBalancingPolicy.class);
 
     if (defaultMaxSpeculativeExecutions != -1 || defaultSpeculativeDelayMs != -1) {
       builder =
@@ -433,6 +435,13 @@ public class SpeculativeExecutionIT {
             ? ConstantSpeculativeExecutionPolicy.class
             : NoSpeculativeExecutionPolicy.class;
     assertThat(policy1).isInstanceOf(expectedProfile1PolicyClass);
+
+    System.out.println(
+        session
+            .getContext()
+            .getConfig()
+            .getProfile("profile1")
+            .getString(DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS));
 
     return session;
   }
