@@ -436,13 +436,6 @@ public class SpeculativeExecutionIT {
             : NoSpeculativeExecutionPolicy.class;
     assertThat(policy1).isInstanceOf(expectedProfile1PolicyClass);
 
-    System.out.println(
-        session
-            .getContext()
-            .getConfig()
-            .getProfile("profile1")
-            .getString(DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS));
-
     return session;
   }
 
