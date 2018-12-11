@@ -29,12 +29,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
-
-  private static Logger logger = LoggerFactory.getLogger(SortingLoadBalancingPolicy.class);
 
   @SuppressWarnings("unused")
   public SortingLoadBalancingPolicy(DriverContext context, String profileName) {
@@ -85,7 +81,6 @@ public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
       @NonNull Set<InetSocketAddress> contactPoints) {
     this.nodes.addAll(nodes.values());
     this.nodes.forEach(n -> distanceReporter.setDistance(n, NodeDistance.LOCAL));
-    logger.error("Order is {}", nodes);
   }
 
   @NonNull
