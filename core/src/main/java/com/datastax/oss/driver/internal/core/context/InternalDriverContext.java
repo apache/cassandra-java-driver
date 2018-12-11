@@ -128,7 +128,7 @@ public interface InternalDriverContext extends DriverContext {
    * {@code null}.
    */
   @Nullable
-  Predicate<Node> getNodeFilter(String profileName);
+  Predicate<Node> getNodeFilter(@NonNull String profileName);
 
   /**
    * The {@link ClassLoader} to use to reflectively load class names defined in configuration. If

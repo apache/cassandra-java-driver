@@ -730,7 +730,7 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   @Nullable
   @Override
-  public Predicate<Node> getNodeFilter(String profileName) {
+  public Predicate<Node> getNodeFilter(@NonNull String profileName) {
     return nodeFiltersFromBuilder.get(profileName);
   }
 
