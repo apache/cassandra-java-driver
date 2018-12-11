@@ -18,10 +18,16 @@ builder.addContactPoint(InetSocketAddress.createUnresolved("${cassandra-host}", 
 ### Compiling and running the example
 
 Once you have a local Cassandra running (or have changed `Main.java` to point to some other instance
-that is running), you can build and run this project by executing the following:
+that is running), you can build this project by executing the following:
 
 ```
-mvn compile exec:java -Dexec.mainClass=${package}.Main
+mvn clean install
+```
+
+Then run the CQL demo with:
+
+```
+mvn exec:java -Dexec.mainClass=${package}.Main -pl ${artifactId}-cql
 ```
 
 Running this example project should connect to Cassandra and log out the version:
@@ -35,7 +41,7 @@ Running this example project should connect to Cassandra and log out the version
 You will be left at a simple prompt that supports some basic CQL queries and commands.
 
 ```
-This is a CQL demo. Type 'EXIT' to quit.
+This is a CQL demo. See https://docs.datastax.com/en/cql/3.3/cql/cql_reference/cqlCommandsTOC.html for more info on CQL commands. Type 'EXIT' to quit.
 
 cql-demo>
 ```
@@ -46,9 +52,9 @@ Please refer to the [cql command docs][1] for more on CQL queries and syntax.
 
 #### Driver Configuration
 
-A basic `application.conf` file is included in the `resources` directory of this project. This file
-can be modified to customize driver configuration to suit your needs. Please reference the
+A basic `application.conf` file is included in the `resources` directory of the `core` project. This
+file can be modified to customize driver configuration to suit your needs. Please reference the
 [Java Driver configuration documentation][2] for configuring this file.
 
-[1]: https://docs.datastax.com/en/cql/3.3/cql/cql_reference/cqlReferenceTOC.html
+[1]: https://docs.datastax.com/en/cql/3.3/cql/cql_reference/cqlCommandsTOC.html
 [2]: https://docs.datastax.com/en/developer/java-driver/4.0-beta/manual/core/configuration/

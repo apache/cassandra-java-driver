@@ -19,19 +19,20 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>${groupId}</groupId>
-  <artifactId>${artifactId}</artifactId>
+  <artifactId>${rootArtifactId}</artifactId>
   <version>${version}</version>
+  <packaging>pom</packaging>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <junit.version>4.12</junit.version>
     <slf4j.version>1.7.25</slf4j.version>
-#if (${logging} == 'logback-classic')
+    #if (${logging} == 'logback-classic')
     <logback.version>1.2.3</logback.version>
-#elseif (${logging} == 'log4j')
+    #elseif (${logging} == 'log4j')
     <log4j.version>1.2.17</log4j.version>
     <slf.log4j.version>1.7.25</slf.log4j.version>
-#end
+    #end
     <java.driver.version>${java-driver-version}</java.driver.version>
     <maven.compiler.plugin.version>3.8.0</maven.compiler.plugin.version>
   </properties>
@@ -48,13 +49,13 @@
         <artifactId>slf4j-api</artifactId>
         <version>${slf4j.version}</version>
       </dependency>
-#if (${logging} == 'logback-classic')
+      #if (${logging} == 'logback-classic')
       <dependency>
         <groupId>ch.qos.logback</groupId>
         <artifactId>logback-classic</artifactId>
         <version>${logback.version}</version>
       </dependency>
-#elseif (${logging} == 'log4j')
+      #elseif (${logging} == 'log4j')
       <dependency>
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
@@ -65,7 +66,7 @@
         <artifactId>slf4j-log4j12</artifactId>
         <version>${slf.log4j.version}</version>
       </dependency>
-#end
+      #end
       <dependency>
         <groupId>com.datastax.oss</groupId>
         <artifactId>java-driver-core</artifactId>
@@ -73,35 +74,6 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datastax.oss</groupId>
-      <artifactId>java-driver-core</artifactId>
-    </dependency>
-#if (${logging} == 'logback-classic')
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-    </dependency>
-#elseif (${logging} == 'log4j')
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-    </dependency>
-#end
-  </dependencies>
   <build>
     <pluginManagement>
       <plugins>
@@ -123,4 +95,9 @@
       </plugin>
     </plugins>
   </build>
+  <modules>
+    <module>${rootArtifactId}-core</module>
+    <module>${rootArtifactId}-cql</module>
+    <module>${rootArtifactId}-web</module>
+  </modules>
 </project>

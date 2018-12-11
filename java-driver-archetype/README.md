@@ -26,15 +26,25 @@ located in `src/main/resources/archetype-resources` directory of _this_ project.
 generated `pom.xml` is located in this directory, as well as a basic README.md. Any other files that
 should be copied into the root of the generated project should be placed here. Adding files here
 will require updates to [archetype-metadata.xml][1] to ensure they are explicitly listed in the
-fileset that is copied during project generation.
+`&lt;fileSet&gt;` that is copied during project generation.
 
-Additionally in `archetype-resources` is the typical Maven project directory structure:
+Additionally in `archetype-resources` is a template Maven multi-module project directory structure:
 
 ```
-archetype-resources/src/main/java
-archetype-resources/src/main/resource
-archetype-resources/src/test/java
-archetype-resources/src/test/resources
+archetype-resources/__rootArtifactId__-core
+archetype-resources/__rootArtifactId__-cql
+archetype-resources/__rootArtifactId__-web
+```
+
+The `__rootArtifactId__` template will be replaced by the `artifactId` value chosed when the
+`archetype:generate` goal is executed (example: `myArtifact-core`). Each of the directories above
+will have the typical module directroy structure:
+
+```
+archetype-resources/__rootArtifactId__-core/src/main/java
+archetype-resources/__rootArtifactId__-core/src/main/resources
+archetype-resources/__rootArtifactId__-core/src/test/java
+archetype-resources/__rootArtifactId__-core/src/test/resources
 ```
 
 The only difference is that the Java source and test class files are not in packaged subdirectories,
@@ -54,7 +64,7 @@ The following properties are used during the bootstrap project generation. They 
 when executing the generate command, or in interactive mode during bootstrap project generation:
 
 | Property            | Default               | Example             | Description |
-| ------------------- | --------------------- | ------------------- | ------------| 
+| ------------------- | --------------------- | ------------------- | ------------|
 | groupId             | &lt;no default&gt;    | com.mycompany.group | Sets the Maven `groupId` value in the pom.xml of the bootstrapped project |
 | artifactId          | &lt;no default&gt;    | myArtifact          | Sets the Maven 'artifactId' value in the pom.xml of the bootstrapped project |
 | version             | 1.0-SNAPSHOT          | 1.2.3               | Sets the Maven `version` value in the pom.xml of the bootstrapped project |
@@ -110,7 +120,7 @@ cassandra-port: 9042
 datacenter: datacenter1
 java-driver-version: 4.0.0-beta3-SNAPSHOT
 logging: logback-classic
- Y: : 
+ Y: :
 ```
 
 ### Test the Bootstrap project
@@ -120,7 +130,8 @@ Once you complete the archetype generation, you should have a simple Maven proje
 working directory. Change into that directory and execute the following:
 
 ```
-mvn compile exec:java -Dexec.mainClass=com.mycompany.poc.Main
+mvn clean install
+mvn compile exec:java -Dexec.mainClass=com.mycompany.poc.Main -pl myArtifact-cql
 ```
 
 This should produce output similar to:

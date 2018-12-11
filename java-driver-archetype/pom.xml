@@ -45,6 +45,6 @@
         <artifactId>archetype-packaging</artifactId>
         <version>${maven.archetype.ext.version}</version>
       </extension>
-    </extensions>  
+    </extensions> 
   </build>
 </project>

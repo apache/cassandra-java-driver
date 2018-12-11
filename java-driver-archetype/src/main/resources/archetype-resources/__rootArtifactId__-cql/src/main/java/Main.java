@@ -16,6 +16,10 @@ import org.slf4j.LoggerFactory;
 public class Main {
 
   private static final Logger LOG = LoggerFactory.getLogger(Main.class);
+  private static final String WELCOME =
+      "This is a CQL demo. " +
+      "See https://docs.datastax.com/en/cql/3.3/cql/cql_reference/cqlCommandsTOC.html " +
+      "for more info on CQL commands. Type 'EXIT' to quit.";
 
   private final PrintStream output;
 
@@ -38,7 +42,7 @@ public class Main {
    */
   private void cqlshLite(CqlSession session, LineNumberReader input) throws IOException {
     // provide a prompt
-    promptForQuery("This is a CQL demo. Type 'EXIT' to quit.");
+    promptForQuery(WELCOME);
     // get the query
     String query = input.readLine();
     ResultSet rs;

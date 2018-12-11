@@ -44,38 +44,16 @@
   </requiredProperties>
 
   <fileSets>
-    <!-- 
+    <!--
     setting "filtered" to "true" means the selected files will be used as Velocity templates.
     setting "packaged" to "true" means the selected files will be generated/copied in a
     directory structure that is prepended by the package property.
     -->
-    <fileSet filtered="true" packaged="true" encoding="UTF-8" >
-      <directory>src/main/java</directory>
-      <includes>
-        <include>**/*.java</include>
-      </includes>
-      <excludes/>
-    </fileSet>
     <fileSet filtered="true" packaged="false" encoding="UTF-8" >
       <directory>src/main/resources</directory>
       <includes>
-        <include>**/*</include>
+        <include>*</include>
       </includes>
-      <excludes/>
-    </fileSet>
-    <fileSet filtered="true" packaged="true" encoding="UTF-8" >
-      <directory>src/test/java</directory>
-      <includes>
-        <include>**/*.java</include>
-      </includes>
-      <excludes/>
-    </fileSet>
-    <fileSet filtered="true" packaged="false" encoding="UTF-8" >
-      <directory>src/test/resources</directory>
-      <includes>
-        <include>**/*</include>
-      </includes>
-      <excludes/>
     </fileSet>
     <fileSet filtered="true" packaged="false" encoding="UTF-8" >
       <directory/>
@@ -85,5 +63,90 @@
       <excludes/>
     </fileSet>
   </fileSets>
-  <modules/>
+  <modules>
+    <module id="${rootArtifactId}-core" dir="__rootArtifactId__-core" name="${rootArtifactId}-core">
+      <fileSets>
+        <fileSet filtered="true" packaged="true" encoding="UTF-8" >
+          <directory>/src/main/java</directory>
+          <includes>
+            <include>**/*.java</include>
+          </includes>
+        </fileSet>
+        <fileSet filtered="true" packaged="false" encoding="UTF-8" >
+          <directory>/src/main/resources</directory>
+          <includes>
+            <include>*</include>
+          </includes>
+        </fileSet>
+        <fileSet filtered="true" packaged="true" encoding="UTF-8" >
+          <directory>/src/test/java</directory>
+          <includes>
+            <include>**/*.java</include>
+          </includes>
+        </fileSet>
+        <fileSet filtered="true" packaged="false" encoding="UTF-8" >
+          <directory>/src/test/resources</directory>
+          <includes>
+            <include>*</include>
+          </includes>
+        </fileSet>
+      </fileSets>
+    </module>
+    <module id="${rootArtifactId}-cql" dir="__rootArtifactId__-cql" name="${rootArtifactId}-cql">
+      <fileSets>
+        <fileSet filtered="true" packaged="true" encoding="UTF-8" >
+          <directory>/src/main/java</directory>
+          <includes>
+            <include>**/*.java</include>
+          </includes>
+        </fileSet>
+        <fileSet filtered="true" packaged="false" encoding="UTF-8" >
+          <directory>/src/main/resources</directory>
+          <includes>
+            <include>*</include>
+          </includes>
+        </fileSet>
+        <fileSet filtered="true" packaged="true" encoding="UTF-8" >
+          <directory>/src/test/java</directory>
+          <includes>
+            <include>**/*.java</include>
+          </includes>
+        </fileSet>
+        <fileSet filtered="true" packaged="false" encoding="UTF-8" >
+          <directory>/src/test/resources</directory>
+          <includes>
+            <include>*</include>
+          </includes>
+        </fileSet>
+      </fileSets>
+    </module>
+    <module id="${rootArtifactId}-web" dir="__rootArtifactId__-web" name="${rootArtifactId}-web">
+      <fileSets>
+        <fileSet filtered="true" packaged="true" encoding="UTF-8" >
+          <directory>__rootArtifactId__-web/src/main/java</directory>
+          <includes>
+            <include>**/*.java</include>
+          </includes>
+        </fileSet>
+        <fileSet filtered="true" packaged="false" encoding="UTF-8" >
+          <directory>/src/main/resources</directory>
+          <includes>
+            <include>*</include>
+          </includes>
+        </fileSet>
+        <fileSet filtered="true" packaged="true" encoding="UTF-8" >
+          <directory>/src/test/java</directory>
+          <includes>
+            <include>**/*.java</include>
+          </includes>
+        </fileSet>
+        <fileSet filtered="true" packaged="false" encoding="UTF-8" >
+          <directory>/src/test/resources</directory>
+          <includes>
+            <include>*</include>
+          </includes>
+        </fileSet>
+      </fileSets>
+    </module>
+  </modules>
 </archetype-descriptor>
