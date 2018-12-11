@@ -45,9 +45,13 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Category(ParallelizableTests.class)
 public class SpeculativeExecutionIT {
+
+  private static Logger logger = LoggerFactory.getLogger(SpeculativeExecutionIT.class);
 
   // Note: it looks like shorter delays cause precision issues with Netty timers
   private static final long SPECULATIVE_DELAY = 1000;
@@ -68,6 +72,7 @@ public class SpeculativeExecutionIT {
   @Before
   public void clear() {
     simulacron.cluster().clearPrimes(true);
+    logger.error("Simulacron Nodes: {}", simulacron.cluster().getNodes());
   }
 
   @Test
