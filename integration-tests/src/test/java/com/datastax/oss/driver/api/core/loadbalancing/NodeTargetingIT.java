@@ -111,6 +111,12 @@ public class NodeTargetingIT {
       fail("Query should have failed");
     } catch (NoNodeAvailableException e) {
       assertThat(e.getErrors()).isEmpty();
+    } catch (AllNodesFailedException e) {
+      // its also possible that the query is tried.  This can happen if the node was marked
+      // down, but not all connections have been closed yet.  In this case, just verify that
+      // the expected host failed.
+      assertThat(e.getErrors().size()).isEqualTo(1);
+      assertThat(e.getErrors()).containsOnlyKeys(node4);
     }
   }
 
