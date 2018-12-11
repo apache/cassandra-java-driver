@@ -45,9 +45,14 @@ public class QueryCounter {
   private final AtomicInteger totalCount = new AtomicInteger(0);
   private final ConcurrentHashMap<Integer, Integer> countMap = new ConcurrentHashMap<>();
 
+  public enum NotificationMode {
+    BEFORE_PROCESSING,
+    AFTER_PROCESSING
+  }
+
   private QueryCounter(
       BoundTopic topic,
-      boolean after,
+      NotificationMode notificationMode,
       Predicate<QueryLog> queryLogFilter,
       long beforeTimeout,
       TimeUnit beforeUnit) {
@@ -58,7 +63,8 @@ public class QueryCounter {
           totalCount.incrementAndGet();
           countMap.merge(boundNode.getId().intValue(), 1, Integer::sum);
         };
-    topic.registerQueryListener(listener, after, queryLogFilter);
+    topic.registerQueryListener(
+        listener, notificationMode == NotificationMode.AFTER_PROCESSING, queryLogFilter);
   }
 
   /** Creates a builder that tracks counts for the given {@link BoundTopic} (cluster, dc, node). */
@@ -111,7 +117,7 @@ public class QueryCounter {
 
     private Predicate<QueryLog> queryLogFilter = DEFAULT_FILTER;
     private BoundTopic topic;
-    private boolean after;
+    private NotificationMode notificationMode = NotificationMode.BEFORE_PROCESSING;
     private long beforeTimeout = 1;
     private TimeUnit beforeUnit = TimeUnit.SECONDS;
 
@@ -128,12 +134,9 @@ public class QueryCounter {
       return this;
     }
 
-    /**
-     * Whether or not simulacron should notify before (false) or after (true) the message is
-     * processed.
-     */
-    public QueryCounterBuilder withAfter(boolean after) {
-      this.after = after;
+    /** Whether or not simulacron should notify before or after the message is processed. */
+    public QueryCounterBuilder withNotification(NotificationMode notificationMode) {
+      this.notificationMode = notificationMode;
       return this;
     }
 
@@ -148,7 +151,7 @@ public class QueryCounter {
     }
 
     public QueryCounter build() {
-      return new QueryCounter(topic, after, queryLogFilter, beforeTimeout, beforeUnit);
+      return new QueryCounter(topic, notificationMode, queryLogFilter, beforeTimeout, beforeUnit);
     }
   }
 }
