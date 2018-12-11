@@ -85,7 +85,7 @@ public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
       @NonNull Set<InetSocketAddress> contactPoints) {
     this.nodes.addAll(nodes.values());
     this.nodes.forEach(n -> distanceReporter.setDistance(n, NodeDistance.LOCAL));
-    logger.error("Order is {}", this.nodes);
+    logger.error("Order is {}", nodes);
   }
 
   @NonNull
