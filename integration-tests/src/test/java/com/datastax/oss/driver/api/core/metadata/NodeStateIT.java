@@ -58,6 +58,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Before;
@@ -112,8 +113,24 @@ public class NodeStateIT {
   public void setup() {
     inOrder = Mockito.inOrder(nodeStateListener);
 
+    AtomicBoolean nonInitialEvent = new AtomicBoolean(false);
     driverContext = (InternalDriverContext) sessionRule.session().getContext();
-    driverContext.getEventBus().register(NodeStateEvent.class, stateEvents::add);
+    driverContext
+        .getEventBus()
+        .register(
+            NodeStateEvent.class,
+            (e) -> {
+              // Skip transition from unknown to up if we haven't received any other events,
+              // these may just be the initial events that have typically fired by now, but
+              // may not have depending on timing.
+              if (!nonInitialEvent.get()
+                  && e.oldState == NodeState.UNKNOWN
+                  && e.newState == NodeState.UP) {
+                return;
+              }
+              nonInitialEvent.set(true);
+              stateEvents.add(e);
+            });
 
     defaultLoadBalancingPolicy =
         (ConfigurableIgnoresPolicy)
