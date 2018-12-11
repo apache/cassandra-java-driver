@@ -8,12 +8,36 @@ for advanced users, or keeping them hidden to limit the API surface.
 Starting with 4.0, we adopt a package naming convention to address those issues:
 
 * Everything under `com.datastax.oss.driver.api` is part of the "official" public API of the driver,
-  that can be used by regular client applications to execute queries. It follows
-  [semantic versioning] and binary compatibility is guaranteed across minor and patch versions.
-* Everything under `com.datastax.oss.driver.internal` is the "internal" API, primarily used by 
-  driver components to communicate with each other. It also exposes hooks for expert tweaking or
-  framework implementors. We'll do our best to also keep that API stable, but full compatibility is
-  not strictly guaranteed.
+  intended for regular client applications to execute queries. It follows [semantic versioning]:
+  binary compatibility is guaranteed across minor and patch versions.
+  
+* Everything under `com.datastax.oss.driver.internal` is the "internal" API, intended primarily for
+  internal communication between driver components, and secondarily for advanced customization. If
+  you use it from your code, the rules are:
+    1. with great power comes great responsibility: this stuff is more involved, and has the
+       potential to break the driver. You should probably have some familiarity with the source
+       code.
+    2. backward compatibility is "best-effort" only: we'll try to preserve it as much as possible,
+       but it's not formally guaranteed.
 
+The public API never exposes internal types (this is enforced automatically by our build). You'll
+generally have to go through an explicit cast:
+
+```java
+import com.datastax.oss.driver.api.core.context.DriverContext;
+
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.config.ForceReloadConfigEvent;
+
+// Public API:
+DriverContext context = session.getContext();
+
+// Switch to the internal API to force a reload of the configuration:
+InternalDriverContext internalContext = (InternalDriverContext) context;
+internalContext.getEventBus().fire(ForceReloadConfigEvent.INSTANCE);
+```
+
+So the risk of unintentionally using the internal API is very low. To double-check, you can always
+grep `import com.datastax.oss.driver.internal` in your source files.
 
 [semantic versioning]: http://semver.org/
