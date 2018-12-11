@@ -1,9 +1,13 @@
 package ${package};
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
+import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
@@ -36,6 +40,61 @@ public class Main {
     output.print("cql-demo> ");
   }
 
+  private void printKeyspaceTables(KeyspaceMetadata ksMetadata) {
+    System.out.println();
+    final String ksOutput = "Keyspace " + ksMetadata.getName().asInternal();
+    System.out.println(ksOutput);
+    for (int i = 0; i < ksOutput.length(); ++i) {
+      System.out.print("-");
+    }
+    System.out.println();
+    for (CqlIdentifier cqlId : ksMetadata.getTables().keySet()) {
+      System.out.println(cqlId.asInternal());
+    }
+  }
+
+  private void handleDescribe(CqlSession session, String query) {
+    // strip the describe command off the query
+    String describeTarget = query.substring("describe".length() + 1);
+    // get the metadata
+    Metadata metadata = session.getMetadata();
+    if (describeTarget.startsWith("keyspaces") || describeTarget.startsWith("KEYSPACES")) {
+      System.out.println();
+      for (CqlIdentifier cqlId : metadata.getKeyspaces().keySet()) {
+        System.out.print(cqlId.asInternal() + "  ");
+      }
+      System.out.println();
+    } else if (describeTarget.startsWith("tables") || describeTarget.startsWith("TABLES")) {
+      // dump all tables from the current keyspace or all keyspaces if no current keyspace
+      if (session.getKeyspace().isPresent()) {
+        // get the tables from the current keyspace
+        printKeyspaceTables(metadata.getKeyspace(session.getKeyspace().get()).get());
+      } else {
+        for (KeyspaceMetadata ksMetadata : metadata.getKeyspaces().values()) {
+          printKeyspaceTables(ksMetadata);
+        }
+      }
+    } else {
+      System.out.println("\nDescribe target not implemented: '" + describeTarget + "'");
+    }
+  }
+
+  private void executeQuery(CqlSession session, String query) {
+    try {
+      ResultSet rs = session.execute(query);
+      Iterator<Row> iterator = rs.iterator();
+      while (iterator.hasNext()) {
+        Row row = iterator.next();
+        ColumnDefinitions cd = row.getColumnDefinitions();
+        for (int i = 0; i < cd.size(); ++i) {
+          System.out.println(cd.get(i).getName() + ":  " + row.getObject(i).toString());
+        }
+      }
+    } catch (Exception ex) {
+      // something went wrong with the query, just dump the stacktrace to the output
+      ex.printStackTrace(output);
+    }
+  }
   /**
    * Basic cqlsh-like prompt. It loops until the user types "EXIT", executing queries and dumping
    * the response to the console (System.out).
@@ -45,19 +104,12 @@ public class Main {
     promptForQuery(WELCOME);
     // get the query
     String query = input.readLine();
-    ResultSet rs;
     // execute the query
     while (!"exit".equalsIgnoreCase(query)) {
-      try {
-        rs = session.execute(query);
-        Iterator<Row> iterator = rs.iterator();
-        while (iterator.hasNext()) {
-          Row row = iterator.next();
-          System.out.println("Response: '" + row.getObject(0).toString() + "'");
-        }
-      } catch (Exception ex) {
-        // something went wrong with the query, just dump the stacktrace to the output
-        ex.printStackTrace(output);
+      if (query.startsWith("describe") || query.startsWith("DESCRIBE")) {
+        handleDescribe(session, query);
+      } else {
+        executeQuery(session, query);
       }
       // provide another prompt
       promptForQuery(null);
@@ -78,8 +130,7 @@ public class Main {
       // run the cqlsh demo
       main.cqlshLite(session, commandLine);
       // demo exited
-      System.out.println();
-      System.out.println("Done. Good Bye!");
+      System.out.println("\nGood Bye!");
     } catch (IOException ioe) {
       ioe.printStackTrace(main.output);
     }

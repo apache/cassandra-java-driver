@@ -46,7 +46,8 @@ This is a CQL demo. See https://docs.datastax.com/en/cql/3.3/cql/cql_reference/c
 cql-demo>
 ```
 
-Please refer to the [cql command docs][1] for more on CQL queries and syntax.
+This demo supports running `DESCRIBE KEYSPACES`, `DESCRIBE TABLES` and executing simple `SELECT`
+statements. Please refer to the [cql command docs][1] for more on CQL queries and syntax.
 
 ### Customizing the Driver
 
