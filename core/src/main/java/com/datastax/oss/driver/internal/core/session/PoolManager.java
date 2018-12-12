@@ -351,6 +351,7 @@ public class PoolManager implements AsyncAutoCloseable {
     private void createOrReconnectPool(Node node) {
       ChannelPool pool = pools.get(node);
       if (pool == null) {
+        LOG.debug("Creating pool for {}", node);
         CompletionStage<ChannelPool> poolFuture =
             channelPoolFactory.init(node, keyspace, node.getDistance(), context, logPrefix);
         pending.put(node, poolFuture);
@@ -358,6 +359,7 @@ public class PoolManager implements AsyncAutoCloseable {
             .thenAcceptAsync(this::onPoolInitialized, adminExecutor)
             .exceptionally(UncaughtExceptions::log);
       } else {
+        LOG.debug("Requesting pool reconnect for {}", node);
         pool.reconnectNow();
       }
     }
