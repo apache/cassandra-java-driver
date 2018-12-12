@@ -671,7 +671,7 @@ class ControlConnection implements Connection.Owner {
     // policy.
     // For that, we remove and re-add the node against the policy. Not the most elegant, and assumes
     // that the policy will update correctly, but in practice this should work.
-    if (!isInitialConnection) cluster.loadBalancingPolicy().onDown(host);
+    if (!isInitialConnection) cluster.loadBalancingPolicy().onRemove(host);
     host.setLocationInfo(datacenter, rack);
     if (!isInitialConnection) cluster.loadBalancingPolicy().onAdd(host);
   }
