@@ -146,6 +146,29 @@ Duration requestTimeout = defaultProfile.getDuration(DefaultDriverOption.REQUEST
 int maxRequestsPerConnection = defaultProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS);
 ```
 
+#### Manual reloading
+
+In addition to periodic reloading, you can trigger a reload programmatically. This returns a
+`CompletionStage` that you can use for example to register a callback when the reload is complete: 
+
+```java
+DriverConfigLoader loader = session.getContext().getConfigLoader();
+if (loader.supportsReloading()) {
+  CompletionStage<Boolean> reloaded = loader.reload();
+  reloaded.whenComplete(
+      (configChanged, error) -> {
+        if (error != null) {
+          // handle error
+        } else if (configChanged) {
+          // do something after the config change
+        }
+      });
+}
+```
+
+Manual reloading is optional, this can be checked with `supportsReloading()`; the driver's built-in
+loader supports it.
+
 #### Derived profiles
 
 Execution profiles are hard-coded in the configuration, and can't be changed at runtime (except
@@ -325,37 +348,33 @@ Note that the option getters (`DriverExecutionProfile.getInt` and similar) are i
 frequently on the hot code path; if your implementation is slow, consider caching the results
 between reloads.
 
-#### Configuration change events
+#### Configuration change event
 
-You can force an immediate reload instead of waiting for the next interval:
+If you're writing your own policies, you might want them to be reactive to configuration changes.
+You can register a callback to `ConfigChangeEvent`, which gets emitted any time a manual or periodic
+reload detects changes since the last reload:
 
 ```java
-import com.datastax.oss.driver.internal.core.config.ForceReloadConfigEvent;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-
-// DANGER ZONE: this gives you access to the driver internals, which allow very nasty things.
-// Use responsibly.
-InternalDriverContext context = (InternalDriverContext) session.getContext();
-
-EventBus eventBus = context.getEventBus();
-eventBus.fire(ForceReloadConfigEvent.INSTANCE);
-```
-
-An event is also fired when we detect that the configuration changed after a reload. You can
-register a callback to listen to it: 
-
-```java
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
+
+InternalDriverContext context = (InternalDriverContext) session.getContext();
 
 Object key =
     eventBus.register(
-        ConfigChangeEvent.class, (e) -> System.out.println("The configuration changed"));
+        ConfigChangeEvent.class, (e) -> {
+          System.out.println("The configuration changed");
+          // re-read the config option(s) you're interested in, and apply changes if needed
+        });
 
 // If your component has a shorter lifecycle than the driver, make sure to unregister when it closes
 eventBus.unregister(key, ConfigChangeEvent.class);
 ```
 
-Both events are managed by the config loader. If you write a custom loader, study the source of
+For example, the driver uses this mechanism internally to resize connection pools if you change the
+options in `advanced.connection.pool`.
+
+The event is emitted by the config loader. If you write a custom loader, study the source of
 `DefaultDriverConfigLoader` to reproduce the behavior.
 
 #### Policies
@@ -468,7 +487,7 @@ config.getDefaultProfile().getInt(MyCustomOption.AWESOMENESS_FACTOR);
 ```
 
 [DriverConfig]:                     https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfig.html
-[DriverConfigProfile]:              https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigProfile.html
+[DriverExecutionProfile]:           https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverExecutionProfile.html
 [DriverContext]:                    https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/context/DriverContext.html
 [DriverOption]:                     https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverOption.html
 [DefaultDriverOption]:              https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DefaultDriverOption.html

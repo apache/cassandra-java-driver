@@ -16,13 +16,13 @@
 package com.datastax.oss.driver.internal.core.config.typesafe;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.Mockito.never;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
-import com.datastax.oss.driver.internal.core.config.ForceReloadConfigEvent;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
@@ -31,6 +31,7 @@ import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCaptur
 import com.typesafe.config.ConfigFactory;
 import io.netty.channel.EventLoopGroup;
 import java.time.Duration;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Before;
@@ -97,7 +98,7 @@ public class DefaultDriverConfigLoaderTest {
   }
 
   @Test
-  public void should_reload_if_config_has_changed() {
+  public void should_detect_config_change_from_periodic_reload() {
     DefaultDriverConfigLoader loader =
         new DefaultDriverConfigLoader(() -> ConfigFactory.parseString(configSource.get()));
     DriverConfig initialConfig = loader.getInitialConfig();
@@ -117,7 +118,7 @@ public class DefaultDriverConfigLoaderTest {
   }
 
   @Test
-  public void should_reload_if_forced() {
+  public void should_detect_config_change_from_manual_reload() {
     DefaultDriverConfigLoader loader =
         new DefaultDriverConfigLoader(() -> ConfigFactory.parseString(configSource.get()));
     DriverConfig initialConfig = loader.getInitialConfig();
@@ -128,15 +129,16 @@ public class DefaultDriverConfigLoaderTest {
 
     configSource.set("int1 = 43");
 
-    eventBus.fire(ForceReloadConfigEvent.INSTANCE);
+    CompletionStage<Boolean> reloaded = loader.reload();
     adminExecutor.waitForNonScheduledTasks();
 
     assertThat(initialConfig).hasIntOption(MockOptions.INT1, 43);
     Mockito.verify(eventBus).fire(ConfigChangeEvent.INSTANCE);
+    assertThatStage(reloaded).isSuccess(changed -> assertThat(changed).isTrue());
   }
 
   @Test
-  public void should_not_notify_if_config_has_not_changed() {
+  public void should_not_notify_from_periodic_reload_if_config_has_not_changed() {
     DefaultDriverConfigLoader loader =
         new DefaultDriverConfigLoader(() -> ConfigFactory.parseString(configSource.get()));
     DriverConfig initialConfig = loader.getInitialConfig();
@@ -152,5 +154,22 @@ public class DefaultDriverConfigLoaderTest {
     task.run();
 
     Mockito.verify(eventBus, never()).fire(ConfigChangeEvent.INSTANCE);
+  }
+
+  @Test
+  public void should_not_notify_from_manual_reload_if_config_has_not_changed() {
+    DefaultDriverConfigLoader loader =
+        new DefaultDriverConfigLoader(() -> ConfigFactory.parseString(configSource.get()));
+    DriverConfig initialConfig = loader.getInitialConfig();
+    assertThat(initialConfig).hasIntOption(MockOptions.INT1, 42);
+
+    loader.onDriverInit(context);
+    adminExecutor.waitForNonScheduledTasks();
+
+    CompletionStage<Boolean> reloaded = loader.reload();
+    adminExecutor.waitForNonScheduledTasks();
+
+    Mockito.verify(eventBus, never()).fire(ConfigChangeEvent.INSTANCE);
+    assertThatStage(reloaded).isSuccess(changed -> assertThat(changed).isFalse());
   }
 }

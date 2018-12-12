@@ -17,13 +17,19 @@ package com.datastax.oss.driver.api.core.config;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.concurrent.CompletionStage;
 
 /**
  * Manages the initialization, and optionally the periodic reloading, of the driver configuration.
  */
 public interface DriverConfigLoader extends AutoCloseable {
 
-  /** Loads the first configuration that will be used to initialize the driver. */
+  /**
+   * Loads the first configuration that will be used to initialize the driver.
+   *
+   * <p>If this loader {@linkplain #supportsReloading() supports reloading}, this object should be
+   * mutable and reflect later changes when the configuration gets reloaded.
+   */
   @NonNull
   DriverConfig getInitialConfig();
 
@@ -32,6 +38,25 @@ public interface DriverConfigLoader extends AutoCloseable {
    * updates, this is a good time to grab an internal executor and schedule a recurring task.
    */
   void onDriverInit(@NonNull DriverContext context);
+
+  /**
+   * Triggers an immediate reload attempt.
+   *
+   * @return a stage that completes once the attempt is finished, with a boolean indicating whether
+   *     the configuration changed as a result of this reload. If so, it's also guaranteed that
+   *     internal driver components have been notified by that time; note however that some react to
+   *     the notification asynchronously, so they may not have completely applied all resulting
+   *     changes yet. If this loader does not support programmatic reloading &mdash; which you can
+   *     check by calling {@link #supportsReloading()} before this method &mdash; the returned
+   *     object will fail immediately with an {@link UnsupportedOperationException}.
+   */
+  @NonNull
+  CompletionStage<Boolean> reload();
+
+  /**
+   * Whether this implementation supports programmatic reloading with the {@link #reload()} method.
+   */
+  boolean supportsReloading();
 
   /**
    * Called when the cluster closes. This is a good time to release any external resource, for

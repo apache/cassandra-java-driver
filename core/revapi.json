@@ -665,6 +665,28 @@
         "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3-SNAPSHOT",
         "elementKind": "method",
         "justification": "JAVA-2049: Add shorthand method to SessionBuilder to specify local DC"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method java.util.concurrent.CompletionStage<java.lang.Boolean> com.datastax.oss.driver.api.core.config.DriverConfigLoader::reload()",
+        "package": "com.datastax.oss.driver.api.core.config",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.config.DriverConfigLoader",
+        "classSimpleName": "DriverConfigLoader",
+        "methodName": "reload",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3-SNAPSHOT",
+        "elementKind": "method",
+        "justification": "JAVA-2058: Make programmatic config reloading part of the public API"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method boolean com.datastax.oss.driver.api.core.config.DriverConfigLoader::supportsReloading()",
+        "package": "com.datastax.oss.driver.api.core.config",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.config.DriverConfigLoader",
+        "classSimpleName": "DriverConfigLoader",
+        "methodName": "supportsReloading",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3-SNAPSHOT",
+        "elementKind": "method",
+        "justification": "JAVA-2058: Make programmatic config reloading part of the public API"
       }
     ]
   }

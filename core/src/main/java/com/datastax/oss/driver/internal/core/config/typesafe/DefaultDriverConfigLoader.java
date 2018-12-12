@@ -22,9 +22,9 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
-import com.datastax.oss.driver.internal.core.config.ForceReloadConfigEvent;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -32,6 +32,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import net.jcip.annotations.ThreadSafe;
@@ -83,6 +85,19 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
     this.singleThreaded = new SingleThreaded((InternalDriverContext) driverContext);
   }
 
+  @NonNull
+  @Override
+  public CompletionStage<Boolean> reload() {
+    CompletableFuture<Boolean> result = new CompletableFuture<>();
+    RunOrSchedule.on(singleThreaded.adminExecutor, () -> singleThreaded.reload(result));
+    return result;
+  }
+
+  @Override
+  public boolean supportsReloading() {
+    return true;
+  }
+
   /** For internal use only, this leaks a Typesafe config type. */
   @NonNull
   public Supplier<Config> getConfigSupplier() {
@@ -123,10 +138,9 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
     private final EventExecutor adminExecutor;
     private final EventBus eventBus;
     private final DriverExecutionProfile config;
-    private final Object forceLoadListenerKey;
 
     private Duration reloadInterval;
-    private ScheduledFuture<?> reloadFuture;
+    private ScheduledFuture<?> periodicTaskHandle;
     private boolean closeWasCalled;
 
     private SingleThreaded(InternalDriverContext context) {
@@ -140,48 +154,69 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
               .getDefaultProfile()
               .getDuration(DefaultDriverOption.CONFIG_RELOAD_INTERVAL);
 
-      forceLoadListenerKey =
-          this.eventBus.register(
-              ForceReloadConfigEvent.class, e -> RunOrSchedule.on(adminExecutor, this::reload));
-
-      RunOrSchedule.on(adminExecutor, this::scheduleReloadTask);
+      RunOrSchedule.on(adminExecutor, this::schedulePeriodicReload);
     }
 
-    private void scheduleReloadTask() {
+    private void schedulePeriodicReload() {
       assert adminExecutor.inEventLoop();
       // Cancel any previously running task
-      if (reloadFuture != null) {
-        reloadFuture.cancel(false);
+      if (periodicTaskHandle != null) {
+        periodicTaskHandle.cancel(false);
       }
       if (reloadInterval.isZero()) {
         LOG.debug("[{}] Reload interval is 0, disabling periodic reloading", logPrefix);
       } else {
         LOG.debug("[{}] Scheduling periodic reloading with interval {}", logPrefix, reloadInterval);
-        reloadFuture =
+        periodicTaskHandle =
             adminExecutor.scheduleAtFixedRate(
-                this::reload,
+                this::reloadInBackground,
                 reloadInterval.toNanos(),
                 reloadInterval.toNanos(),
                 TimeUnit.NANOSECONDS);
       }
     }
 
-    private void reload() {
+    /**
+     * @param reloadedFuture a future to complete when the reload is complete (might be null if the
+     *     caller is not interested in being notified)
+     */
+    private void reload(CompletableFuture<Boolean> reloadedFuture) {
       assert adminExecutor.inEventLoop();
       if (closeWasCalled) {
+        if (reloadedFuture != null) {
+          reloadedFuture.completeExceptionally(new IllegalStateException("session is closing"));
+        }
         return;
       }
-      if (driverConfig.reload(configSupplier.get())) {
-        LOG.info("[{}] Detected a configuration change", logPrefix);
-        eventBus.fire(ConfigChangeEvent.INSTANCE);
-        Duration newReloadInterval = config.getDuration(DefaultDriverOption.CONFIG_RELOAD_INTERVAL);
-        if (!newReloadInterval.equals(reloadInterval)) {
-          reloadInterval = newReloadInterval;
-          scheduleReloadTask();
+      try {
+        boolean changed = driverConfig.reload(configSupplier.get());
+        if (changed) {
+          LOG.info("[{}] Detected a configuration change", logPrefix);
+          eventBus.fire(ConfigChangeEvent.INSTANCE);
+          Duration newReloadInterval =
+              config.getDuration(DefaultDriverOption.CONFIG_RELOAD_INTERVAL);
+          if (!newReloadInterval.equals(reloadInterval)) {
+            reloadInterval = newReloadInterval;
+            schedulePeriodicReload();
+          }
+        } else {
+          LOG.debug("[{}] Reloaded configuration but it hasn't changed", logPrefix);
         }
-      } else {
-        LOG.debug("[{}] Reloaded configuration but it hasn't changed", logPrefix);
+        if (reloadedFuture != null) {
+          reloadedFuture.complete(changed);
+        }
+      } catch (Error | RuntimeException e) {
+        if (reloadedFuture != null) {
+          reloadedFuture.completeExceptionally(e);
+        } else {
+          Loggers.warnWithException(
+              LOG, "[{}] Unexpected exception during scheduled reload", logPrefix, e);
+        }
       }
+    }
+
+    private void reloadInBackground() {
+      reload(null);
     }
 
     private void close() {
@@ -190,9 +225,8 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
         return;
       }
       closeWasCalled = true;
-      eventBus.unregister(forceLoadListenerKey, ForceReloadConfigEvent.class);
-      if (reloadFuture != null) {
-        reloadFuture.cancel(false);
+      if (periodicTaskHandle != null) {
+        periodicTaskHandle.cancel(false);
       }
     }
   }
