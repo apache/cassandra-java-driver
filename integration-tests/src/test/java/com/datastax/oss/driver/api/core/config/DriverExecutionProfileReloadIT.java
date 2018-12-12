@@ -27,7 +27,6 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
-import com.datastax.oss.driver.internal.core.config.ForceReloadConfigEvent;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
@@ -109,9 +108,7 @@ public class DriverExecutionProfileReloadIT {
 
       // Bump up request timeout to 10 seconds and trigger a manual reload.
       configSource.set("basic.request.timeout = 10s");
-      ((InternalDriverContext) session.getContext())
-          .getEventBus()
-          .fire(ForceReloadConfigEvent.INSTANCE);
+      session.getContext().getConfigLoader().reload();
       waitForConfigChange(session, 500, TimeUnit.MILLISECONDS);
 
       // Execute again, should not timeout.
