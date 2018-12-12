@@ -184,7 +184,20 @@ public class DefaultLoadBalancingPolicyIT {
       if (replica.getDatacenter().equals(LOCAL_DC)) {
         localReplicas.add(replica);
         context.getEventBus().fire(TopologyEvent.forceDown(replica.getConnectAddress()));
-        ConditionChecker.checkThat(() -> assertThat(replica.getOpenConnections()).isZero())
+        ConditionChecker.checkThat(
+                () -> {
+                  System.out.println(
+                      "Open connections: "
+                          + replica.getOpenConnections()
+                          + " for "
+                          + replica
+                          + " is reconnecting?: "
+                          + replica.isReconnecting()
+                          + " control connection "
+                          + "is: "
+                          + context.getControlConnection().channel());
+                  assertThat(replica.getOpenConnections()).isZero();
+                })
             .becomesTrue();
       }
     }
