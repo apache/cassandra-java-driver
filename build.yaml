@@ -13,6 +13,7 @@ build:
     goals: verify --batch-mode
     properties: |
       ccm.version=$CCM_CASSANDRA_VERSION
+      driverLevel=DEBUG
   - xunit:
     - "**/target/surefire-reports/TEST-*.xml"
     - "**/target/failsafe-reports/TEST-*.xml"
