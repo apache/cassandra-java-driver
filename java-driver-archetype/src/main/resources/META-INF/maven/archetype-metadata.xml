@@ -39,7 +39,7 @@
       <validationRegex>logback-classic|log4j</validationRegex>
     </requiredProperty>
     <requiredProperty key="java-driver-version">
-      <defaultValue>latest</defaultValue>
+      <defaultValue>[4.0.0-beta1,)</defaultValue>
     </requiredProperty>
   </requiredProperties>
 

@@ -69,7 +69,7 @@ when executing the generate command, or in interactive mode during bootstrap pro
 | artifactId          | &lt;no default&gt;    | myArtifact          | Sets the Maven 'artifactId' value in the pom.xml of the bootstrapped project |
 | version             | 1.0-SNAPSHOT          | 1.2.3               | Sets the Maven `version` value in the pom.xml of the bootstrapped project |
 | package             | &lt;groupId value&gt; | com.mycompany.poc   | Controls the base package for all generated source code |
-| java-driver-version | &lt;latest 4.x&gt;    | 4.0.0               | The Java Driver version to use (NOTE: only 4.x versions are supported) |
+| java-driver-version | [4.0.0-beta1,)        | 4.0.0               | The Java Driver version to use (NOTE: only 4.x and newer versions are supported) |
 | cassandra-host      | 127.0.0.1             | 10.10.1.16          | The host or IP address of the Cassandra instance to which to connect |
 | cassandra-port      | 9042                  | 9042                | The port to use for the Cassandra connection |
 | datacenter          | datacenter1           | datacenter1         | The name of the local datacenter |
@@ -88,7 +88,7 @@ values are used to setup your bootstrap project `pom.xml` and generate source co
 
 #### Specify everything command
 ```
-mvn archetype:generate -DarchetypeGroupId=com.datastax.oss -DarchetypeArtifactId=java-driver-archetype -Dversion=1.0.0-SNAPSHOT -DgroupId=com.mycompany.group -DartifactId=myArtifact -Dpackage=com.mycompany.poc -Dcassandra-host=127.0.0.1 -Dcassandra-port=9042 -Ddatacenter=datacenter1 -Djava-driver-version=latest -Dlogging=logback-classic
+mvn archetype:generate -DarchetypeGroupId=com.datastax.oss -DarchetypeArtifactId=java-driver-archetype -Dversion=1.0.0-SNAPSHOT -DgroupId=com.mycompany.group -DartifactId=myArtifact -Dpackage=com.mycompany.poc -Dcassandra-host=127.0.0.1 -Dcassandra-port=9042 -Ddatacenter=datacenter1 -Djava-driver-version="[4.0.0-beta1,)" -Dlogging=logback-classic
 ```
 The above will generate a project with all properties set, though you can still override them
 interactively.
@@ -108,7 +108,7 @@ Downloading from datastax-artifactory: https://repo.datastax.com/dse/com/datasta
 [INFO] Using property: cassandra-host = 127.0.0.1
 [INFO] Using property: cassandra-port = 9042
 [INFO] Using property: datacenter = datacenter1
-[INFO] Using property: java-driver-version = latest
+[INFO] Using property: java-driver-version = [4.0.0-beta1,)
 [INFO] Using property: logging = logback-classic
 Confirm properties configuration:
 groupId: com.mycompany.group
@@ -118,7 +118,7 @@ package: com.mycompany.poc
 cassandra-host: 127.0.0.1
 cassandra-port: 9042
 datacenter: datacenter1
-java-driver-version: latest
+java-driver-version: [4.0.0-beta1,)
 logging: logback-classic
  Y: :
 ```
@@ -137,7 +137,7 @@ mvn compile exec:java -Dexec.mainClass=com.mycompany.poc.Main -pl myArtifact-cql
 This should produce output similar to:
 
 ```
-15:57:32.944 [com.mycompany.poc.Main.main()] INFO  c.d.o.d.i.c.DefaultMavenCoordinates - DataStax Java driver for Apache Cassandra(R) (com.datastax.oss:java-driver-core) version 4.0.0-beta3-SNAPSHOT
+15:57:32.944 [com.mycompany.poc.Main.main()] INFO  c.d.o.d.i.c.DefaultMavenCoordinates - DataStax Java driver for Apache Cassandra(R) (com.datastax.oss:java-driver-core) version 4.0.0-beta1-SNAPSHOT
 15:57:33.200 [myArtifact-admin-0] INFO  c.d.o.d.internal.core.time.Clock - Using native clock for microsecond precision
 15:57:33.431 [com.mycompany.poc.Main.main()] INFO  com.mycompany.poc.Main - Cassandra release version: 3.11.3
 ```

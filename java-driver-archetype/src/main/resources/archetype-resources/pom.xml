@@ -33,11 +33,7 @@
     <log4j.version>1.2.17</log4j.version>
     <slf.log4j.version>1.7.25</slf.log4j.version>
     #end
-    #if (${java-driver-version} == 'latest')
-    <java.driver.version>[4.0.0-beta1,5)</java.driver.version>
-    #else
     <java.driver.version>${java-driver-version}</java.driver.version>
-    #end
     <maven.compiler.plugin.version>3.8.0</maven.compiler.plugin.version>
   </properties>
   <dependencyManagement>
