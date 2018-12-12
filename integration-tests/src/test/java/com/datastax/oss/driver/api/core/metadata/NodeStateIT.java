@@ -347,7 +347,7 @@ public class NodeStateIT {
           (DefaultNode)
               session.getMetadata().getNodes().get(localSimulacronNode.inetSocketAddress());
       // UP fired a first time as part of the init process
-      Mockito.verify(localNodeStateListener).onUp(localMetadataNode);
+      Mockito.verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode);
 
       localSimulacronNode.stop();
 
