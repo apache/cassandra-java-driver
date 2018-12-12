@@ -338,9 +338,17 @@ public class PoolManager implements AsyncAutoCloseable {
       if (event.type == TopologyEvent.Type.SUGGEST_UP) {
         Node node = context.getMetadataManager().getMetadata().getNodes().get(event.address);
         if (node.getDistance() != NodeDistance.IGNORED) {
-          LOG.debug(
-              "[{}] Received a SUGGEST_UP event for {}, reconnecting pool now", logPrefix, node);
-          createOrReconnectPool(node);
+          if (pending.containsKey(node)) {
+            LOG.debug(
+                "[{}] Received a SUGGEST_UP event for {} while pool was already initializing, "
+                    + "ignoring",
+                logPrefix,
+                node);
+          } else {
+            LOG.debug(
+                "[{}] Received a SUGGEST_UP event for {}, reconnecting pool now", logPrefix, node);
+            createOrReconnectPool(node);
+          }
         }
       }
     }
