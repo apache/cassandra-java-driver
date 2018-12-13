@@ -24,14 +24,22 @@ import com.datastax.oss.simulacron.server.BoundNode;
 import com.datastax.oss.simulacron.server.Inet4Resolver;
 import com.datastax.oss.simulacron.server.Server;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class SimulacronRule extends CassandraResourceRule {
   // TODO perhaps share server some other way
+  // TODO: Temporarily do not release addresses to ensure IPs are always ordered
   public static final Server server =
-      Server.builder().withAddressResolver(new Inet4Resolver(9043)).build();
+      Server.builder()
+          .withAddressResolver(
+              new Inet4Resolver(9043) {
+                @Override
+                public void release(SocketAddress address) {}
+              })
+          .build();
 
   private final ClusterSpec clusterSpec;
   private BoundCluster boundCluster;

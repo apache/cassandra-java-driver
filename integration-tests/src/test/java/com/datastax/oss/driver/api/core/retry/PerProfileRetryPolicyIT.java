@@ -36,6 +36,7 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
+import com.datastax.oss.driver.api.testinfra.simulacron.QueryCounter;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
@@ -83,6 +84,12 @@ public class PerProfileRetryPolicyIT {
 
   private static String QUERY_STRING = "select * from foo";
   private static final SimpleStatement QUERY = SimpleStatement.newInstance(QUERY_STRING);
+
+  @SuppressWarnings("deprecation")
+  private final QueryCounter counter =
+      QueryCounter.builder(simulacron.cluster())
+          .withFilter((l) -> l.getQuery().equals(QUERY_STRING))
+          .build();
 
   @Before
   public void clear() {
@@ -139,21 +146,7 @@ public class PerProfileRetryPolicyIT {
     assertThat(errors).hasSize(1);
     assertThat(errors.get(0).getValue()).isInstanceOf(UnavailableException.class);
 
-    assertQueryCount(0, 1);
-    assertQueryCount(1, 1);
-  }
-
-  private void assertQueryCount(int node, int expected) {
-    assertThat(
-            simulacron
-                .cluster()
-                .node(node)
-                .getLogs()
-                .getQueryLogs()
-                .stream()
-                .filter(l -> l.getQuery().equals(QUERY_STRING)))
-        .as("Expected query count to be %d for node %d", expected, node)
-        .hasSize(expected);
+    counter.assertNodeCounts(1, 1);
   }
 
   // A policy that simply rethrows always.
