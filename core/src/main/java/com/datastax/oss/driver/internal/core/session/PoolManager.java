@@ -340,7 +340,10 @@ public class PoolManager implements AsyncAutoCloseable {
         if (node.getDistance() != NodeDistance.IGNORED) {
           LOG.debug(
               "[{}] Received a SUGGEST_UP event for {}, reconnecting pool now", logPrefix, node);
-          createOrReconnectPool(node);
+          ChannelPool pool = pools.get(node);
+          if (pool != null) {
+            pool.reconnectNow();
+          }
         }
       }
     }
