@@ -4,7 +4,7 @@
 
 ### 4.0.0-beta3 (in progress)
 
-- [bug] JAVA-2057: Ignore SUGGEST\_UP TopologyEvent if pool is pending
+- [bug] JAVA-2057: Do not create pool when SUGGEST\_UP topology event received
 - [improvement] JAVA-2049: Add shorthand method to SessionBuilder to specify local DC
 - [bug] JAVA-2037: Fix NPE when preparing statement with no bound variables
 - [improvement] JAVA-2014: Schedule timeouts on a separate Timer
