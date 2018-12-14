@@ -54,7 +54,8 @@ import net.jcip.annotations.Immutable;
  * identifier is in. Driver clients will generally want to create instances from the CQL form with
  * {@link #fromCql(String)}.
  *
- * <p>There is no internal caching; if you reuse the same identifiers often,
+ * <p>There is no internal caching; if you reuse the same identifiers often, consider caching them
+ * in your application.
  */
 @Immutable
 public class CqlIdentifier implements Serializable {
