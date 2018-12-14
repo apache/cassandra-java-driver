@@ -84,14 +84,21 @@ public class RemoteEndpointAwareJdkSSLOptions extends JdkSSLOptions
     return engine;
   }
 
-  /** Helper class to build JDK-based SSL options. */
+  /** Helper class to build {@link RemoteEndpointAwareJdkSSLOptions} instances. */
   public static class Builder extends JdkSSLOptions.Builder {
 
-    /**
-     * Builds a new instance based on the parameters provided to this builder.
-     *
-     * @return the new instance.
-     */
+    @Override
+    public RemoteEndpointAwareJdkSSLOptions.Builder withSSLContext(SSLContext context) {
+      super.withSSLContext(context);
+      return this;
+    }
+
+    @Override
+    public RemoteEndpointAwareJdkSSLOptions.Builder withCipherSuites(String[] cipherSuites) {
+      super.withCipherSuites(cipherSuites);
+      return this;
+    }
+
     @Override
     public RemoteEndpointAwareJdkSSLOptions build() {
       return new RemoteEndpointAwareJdkSSLOptions(context, cipherSuites);

@@ -3,6 +3,7 @@
 ### 3.7.0 (In progress)
 
 - [improvement] JAVA-2025: Include exception message in Abstract*Codec.accepts(null).
+- [improvement] JAVA-1980: Use covariant return types in RemoteEndpointAwareJdkSSLOptions.Builder methods.
 
 
 ### 3.6.0
