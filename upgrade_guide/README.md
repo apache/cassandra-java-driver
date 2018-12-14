@@ -113,6 +113,15 @@ programming][4.x async programming] and [paging][4.x paging].
 [4.x async programming]: http://docs.datastax.com/en/developer/java-driver/4.0/manual/core/async/
 [4.x paging]: http://docs.datastax.com/en/developer/java-driver/4.0/manual/core/paging/
 
+#### CQL to Java type mappings
+
+Since the driver now has access to Java 8 types, some of the [CQL to Java type
+mappings] have changed, particularly when it comes to [temporal types] such
+as `date` and `timestamp`.
+
+[CQL to Java type mappings]: ../manual/core#cql-to-java-type-mapping
+[temporal types]: ../manual/core/temporal_types
+
 #### Simplified request timeout
 
 The driver-side request timeout -- defined by the `request.timeout` configuration option -- now
