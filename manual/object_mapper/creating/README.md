@@ -372,11 +372,11 @@ Frozen collections in Cassandra are serialized as a single cell value where
 non-frozen collections serialize each individual element in a collection as a
 cell.
 
-Since `Mapper.save` provides the entire collection for a entity field value on
+Since `Mapper.save` provides the entire collection for an entity field value on
 each invocation, it is more efficient to use frozen collections as the entire
 collection is serialized as one cell.
 
-Also, when using non-frozen collections, on INSERT cassandra must
+Also, when using non-frozen collections, on INSERT Cassandra must
 create a tombstone to invalidate all existing collection elements, even if
 there are none. When using frozen collections, no such tombstone is needed.
 
