@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -35,6 +36,7 @@ import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.Collections;
 import java.util.Map;
+import org.junit.AssumptionViolatedException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -179,18 +181,28 @@ public class SchemaIT {
   @Test
   public void should_get_virtual_metadata() {
     Metadata md = sessionRule.session().getMetadata();
+    // Special case: DSE 6.0 reports C* 4.0 but does not support virtual tables
+    if (ccmRule.getDseVersion().isPresent()) {
+      Version dseVersion = ccmRule.getDseVersion().get();
+      if (dseVersion.compareTo(Version.parse("6.7.0")) < 0) {
+        throw new AssumptionViolatedException("DSE 6.0 does not support virtual tables");
+      }
+    }
     KeyspaceMetadata kmd = md.getKeyspace("system_views").get();
 
-    // Keyspace name should be set, marked as virtual, and have a clients table.
+    // Keyspace name should be set, marked as virtual, and have at least sstable_tasks table.
     // All other values should be defaulted since they are not defined in the virtual schema tables.
-    assertThat(kmd.getTables().size()).isGreaterThanOrEqualTo(2);
+    assertThat(kmd.getTables().size()).isGreaterThanOrEqualTo(1);
     assertThat(kmd.isVirtual()).isTrue();
     assertThat(kmd.isDurableWrites()).isFalse();
     assertThat(kmd.getName().asCql(true)).isEqualTo("system_views");
+
+    // Virtual tables lack User Types, Functions, Views and Aggregates
     assertThat(kmd.getUserDefinedTypes().size()).isEqualTo(0);
     assertThat(kmd.getFunctions().size()).isEqualTo(0);
     assertThat(kmd.getViews().size()).isEqualTo(0);
     assertThat(kmd.getAggregates().size()).isEqualTo(0);
+
     assertThat(kmd.describe(true))
         .isEqualTo(
             "/* VIRTUAL KEYSPACE system_views WITH replication = { 'class' : 'null' } "

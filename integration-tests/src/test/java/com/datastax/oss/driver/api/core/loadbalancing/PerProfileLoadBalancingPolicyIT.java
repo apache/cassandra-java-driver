@@ -31,7 +31,6 @@ import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
-import com.datastax.oss.driver.internal.core.loadbalancing.DefaultLoadBalancingPolicy;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -88,13 +87,10 @@ public class PerProfileLoadBalancingPolicyIT {
         .hasSize(3)
         .containsKeys(DriverExecutionProfile.DEFAULT_NAME, "profile1", "profile2");
 
-    DefaultLoadBalancingPolicy defaultPolicy =
-        (DefaultLoadBalancingPolicy)
-            context.getLoadBalancingPolicy(DriverExecutionProfile.DEFAULT_NAME);
-    DefaultLoadBalancingPolicy policy1 =
-        (DefaultLoadBalancingPolicy) context.getLoadBalancingPolicy("profile1");
-    DefaultLoadBalancingPolicy policy2 =
-        (DefaultLoadBalancingPolicy) context.getLoadBalancingPolicy("profile2");
+    LoadBalancingPolicy defaultPolicy =
+        context.getLoadBalancingPolicy(DriverExecutionProfile.DEFAULT_NAME);
+    LoadBalancingPolicy policy1 = context.getLoadBalancingPolicy("profile1");
+    LoadBalancingPolicy policy2 = context.getLoadBalancingPolicy("profile2");
 
     assertThat(defaultPolicy).isSameAs(policy2).isNotSameAs(policy1);
 

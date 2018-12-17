@@ -53,7 +53,9 @@ public class DriverExecutionProfileReloadIT {
         new DefaultDriverConfigLoader(
             () ->
                 ConfigFactory.parseString(
-                        "basic.config-reload-interval = 2s\n" + configSource.get())
+                        "basic.config-reload-interval = 0\n"
+                            + "basic.request.timeout = 2s\n"
+                            + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()));
     try (CqlSession session =
         (CqlSession)
@@ -63,7 +65,7 @@ public class DriverExecutionProfileReloadIT {
                 .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
-      // Expect timeout since default timeout is 2s
+      // Expect timeout since default session timeout is 2s
       try {
         session.execute(query);
         fail("DriverTimeoutException expected");
@@ -88,7 +90,10 @@ public class DriverExecutionProfileReloadIT {
     DefaultDriverConfigLoader loader =
         new DefaultDriverConfigLoader(
             () ->
-                ConfigFactory.parseString("basic.config-reload-interval = 0\n" + configSource.get())
+                ConfigFactory.parseString(
+                        "basic.config-reload-interval = 0\n"
+                            + "basic.request.timeout = 2s\n"
+                            + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()));
     try (CqlSession session =
         (CqlSession)
@@ -98,7 +103,7 @@ public class DriverExecutionProfileReloadIT {
                 .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
-      // Expect timeout since default timeout is 2s
+      // Expect timeout since default session timeout is 2s
       try {
         session.execute(query);
         fail("DriverTimeoutException expected");
@@ -144,7 +149,7 @@ public class DriverExecutionProfileReloadIT {
       }
 
       // Bump up request timeout to 10 seconds on profile and wait for config to reload.
-      configSource.set("profiles.slow.basic.request.timeout = 2s");
+      configSource.set("profiles.slow.basic.request.timeout = 10s");
       waitForConfigChange(session, 3, TimeUnit.SECONDS);
 
       // Execute again, should expect to fail again because doesn't allow to dynamically define

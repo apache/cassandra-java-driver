@@ -60,7 +60,7 @@ public class DriverConfigValidationIT {
               assertThat(error).isInstanceOf(DriverExecutionException.class);
               assertThat(error.getCause())
                   .isInstanceOf(IllegalArgumentException.class)
-                  .hasMessage(
+                  .hasMessageContaining(
                       "Can't find class AClassThatDoesNotExist "
                           + "(specified by "
                           + option.getPath()
