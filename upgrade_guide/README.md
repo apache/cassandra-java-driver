@@ -116,11 +116,26 @@ programming][4.x async programming] and [paging][4.x paging].
 #### CQL to Java type mappings
 
 Since the driver now has access to Java 8 types, some of the [CQL to Java type
-mappings] have changed, particularly when it comes to [temporal types] such
-as `date` and `timestamp`.
+mappings] have changed when it comes to [temporal types] such as `date` and
+`timestamp`.  These changes are:
+
+* `getDate` has been replaced by `getLocalDate` and returns
+  [java.time.LocalDate]
+* `getTime` has been replaced by `getLocalTime` and returns
+  [java.time.LocalTime] instead of a `long` representing nanoseconds since
+  midnight
+* `getTimestamp` has been replaced by `getInstant` and returns
+  [java.time.Instant] instead of [java.util.Date]
+
+The corresponding setter methods were also changed to expect these new types
+as inputs.
 
 [CQL to Java type mappings]: ../manual/core#cql-to-java-type-mapping
 [temporal types]: ../manual/core/temporal_types
+[java.time.LocalDate]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalDate.html
+[java.time.LocalTime]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalTime.html
+[java.time.Instant]: https://docs.oracle.com/javase/8/docs/api/java/time/Instant.html
+[java.util.Date]: https://docs.oracle.com/javase/8/docs/api/java/util/Date.html
 
 #### Simplified request timeout
 
