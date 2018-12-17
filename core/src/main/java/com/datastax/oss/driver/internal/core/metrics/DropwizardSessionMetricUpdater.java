@@ -49,9 +49,9 @@ public class DropwizardSessionMetricUpdater extends DropwizardMetricUpdater<Sess
     this.metricNamePrefix = context.getSessionName() + ".";
 
     if (enabledMetrics.contains(DefaultSessionMetric.CONNECTED_NODES)) {
-      this.registry.register(
+      this.registry.gauge(
           buildFullName(DefaultSessionMetric.CONNECTED_NODES, null),
-          (Gauge<Integer>)
+          () ->
               () -> {
                 int count = 0;
                 for (Node node : context.getMetadataManager().getMetadata().getNodes().values()) {
@@ -63,26 +63,29 @@ public class DropwizardSessionMetricUpdater extends DropwizardMetricUpdater<Sess
               });
     }
     if (enabledMetrics.contains(DefaultSessionMetric.THROTTLING_QUEUE_SIZE)) {
-      this.registry.register(
+      this.registry.gauge(
           buildFullName(DefaultSessionMetric.THROTTLING_QUEUE_SIZE, null),
-          buildQueueGauge(context.getRequestThrottler(), context.getSessionName()));
+          () -> buildQueueGauge(context.getRequestThrottler(), context.getSessionName()));
     }
     if (enabledMetrics.contains(DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE)) {
-      Cache<?, ?> cache = getPreparedStatementCache(context);
-      Gauge<Long> gauge;
-      if (cache == null) {
-        LOG.warn(
-            "[{}] Metric {} is enabled in the config, "
-                + "but it looks like no CQL prepare processor is registered. "
-                + "The gauge will always return 0",
-            context.getSessionName(),
-            DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE.getPath());
-        gauge = () -> 0L;
-      } else {
-        gauge = cache::size;
-      }
-      this.registry.register(
-          buildFullName(DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE, null), gauge);
+      this.registry.gauge(
+          buildFullName(DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE, null),
+          () -> {
+            Cache<?, ?> cache = getPreparedStatementCache(context);
+            Gauge<Long> gauge;
+            if (cache == null) {
+              LOG.warn(
+                  "[{}] Metric {} is enabled in the config, "
+                      + "but it looks like no CQL prepare processor is registered. "
+                      + "The gauge will always return 0",
+                  context.getSessionName(),
+                  DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE.getPath());
+              gauge = () -> 0L;
+            } else {
+              gauge = cache::size;
+            }
+            return gauge;
+          });
     }
     initializeHdrTimer(
         DefaultSessionMetric.CQL_REQUESTS,
