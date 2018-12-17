@@ -19,8 +19,8 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
-import com.datastax.oss.driver.internal.core.session.RequestHandler;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.concurrent.CompletionStage;
@@ -56,36 +56,24 @@ public class GuavaRequestAsyncProcessor<T extends Request, U>
   }
 
   @Override
-  public RequestHandler<T, ListenableFuture<U>> newHandler(
+  public ListenableFuture<U> process(
       T request, DefaultSession session, InternalDriverContext context, String sessionLogPrefix) {
-    return new GuavaRequestHandler(
-        subProcessor.newHandler(request, session, context, sessionLogPrefix));
+    SettableFuture<U> future = SettableFuture.create();
+    subProcessor
+        .process(request, session, context, sessionLogPrefix)
+        .whenComplete(
+            (r, ex) -> {
+              if (ex != null) {
+                future.setException(ex);
+              } else {
+                future.set(r);
+              }
+            });
+    return future;
   }
 
-  class GuavaRequestHandler implements RequestHandler<T, ListenableFuture<U>> {
-
-    private final RequestHandler<T, CompletionStage<U>> subHandler;
-
-    GuavaRequestHandler(RequestHandler<T, CompletionStage<U>> subHandler) {
-      this.subHandler = subHandler;
-    }
-
-    @Override
-    public ListenableFuture<U> handle() {
-      // convert CompletionStage to ListenableFuture by adding a whenComplete listener that sets the
-      // listenable future's result.
-      SettableFuture<U> future = SettableFuture.create();
-      subHandler
-          .handle()
-          .whenComplete(
-              (r, ex) -> {
-                if (ex != null) {
-                  future.setException(ex);
-                } else {
-                  future.set(r);
-                }
-              });
-      return future;
-    }
+  @Override
+  public ListenableFuture<U> newFailure(RuntimeException error) {
+    return Futures.immediateFailedFuture(error);
   }
 }

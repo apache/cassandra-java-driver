@@ -135,6 +135,7 @@ public class DefaultTableMetadata implements TableMetadata {
           && Objects.equals(this.name, that.getName())
           && Objects.equals(Optional.ofNullable(this.id), that.getId())
           && this.compactStorage == that.isCompactStorage()
+          && this.virtual == that.isVirtual()
           && Objects.equals(this.partitionKey, that.getPartitionKey())
           && Objects.equals(this.clusteringColumns, that.getClusteringColumns())
           && Objects.equals(this.columns, that.getColumns())
@@ -147,7 +148,15 @@ public class DefaultTableMetadata implements TableMetadata {
   @Override
   public int hashCode() {
     return Objects.hash(
-        keyspace, name, id, compactStorage, partitionKey, clusteringColumns, columns, indexes);
+        keyspace,
+        name,
+        id,
+        compactStorage,
+        virtual,
+        partitionKey,
+        clusteringColumns,
+        columns,
+        indexes);
   }
 
   @Override

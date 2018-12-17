@@ -17,5 +17,7 @@ package com.datastax.oss.driver.internal.core.config;
 
 /** An event triggered when the configuration was changed. */
 public enum ConfigChangeEvent {
+  // Implementation note: to find where this event is consumed, look for references to the class
+  // itself, not INSTANCE (EventBus.register takes a class not an object).
   INSTANCE
 }

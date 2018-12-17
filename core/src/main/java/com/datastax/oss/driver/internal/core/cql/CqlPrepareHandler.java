@@ -55,7 +55,6 @@ import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
-import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -65,7 +64,6 @@ import java.util.Queue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import net.jcip.annotations.ThreadSafe;
@@ -74,14 +72,13 @@ import org.slf4j.LoggerFactory;
 
 /** Handles the lifecycle of the preparation of a CQL statement. */
 @ThreadSafe
-public abstract class CqlPrepareHandlerBase implements Throttled {
+public class CqlPrepareHandler implements Throttled {
 
-  private static final Logger LOG = LoggerFactory.getLogger(CqlPrepareHandlerBase.class);
+  private static final Logger LOG = LoggerFactory.getLogger(CqlPrepareHandler.class);
 
   private final long startTimeNanos;
   private final String logPrefix;
   private final PrepareRequest request;
-  private final ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache;
   private final DefaultSession session;
   private final InternalDriverContext context;
   private final DriverExecutionProfile executionProfile;
@@ -100,9 +97,8 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
   // We don't use a map because nodes can appear multiple times.
   private volatile List<Map.Entry<Node, Throwable>> errors;
 
-  protected CqlPrepareHandlerBase(
+  protected CqlPrepareHandler(
       PrepareRequest request,
-      ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache,
       DefaultSession session,
       InternalDriverContext context,
       String sessionLogPrefix) {
@@ -112,7 +108,6 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     LOG.trace("[{}] Creating new handler for prepare request {}", logPrefix, request);
 
     this.request = request;
-    this.preparedStatementsCache = preparedStatementsCache;
     this.session = session;
     this.context = context;
     this.executionProfile = Conversions.resolveExecutionProfile(request, context);
@@ -171,6 +166,10 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     sendRequest(null, 0);
   }
 
+  public CompletableFuture<PreparedStatement> handle() {
+    return result;
+  }
+
   private Timeout scheduleTimeout(Duration timeoutDuration) {
     if (timeoutDuration.toNanos() > 0) {
       return this.timer.newTimeout(
@@ -221,7 +220,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     // Use a local variable to do only a single single volatile read in the nominal case
     List<Map.Entry<Node, Throwable>> errorsSnapshot = this.errors;
     if (errorsSnapshot == null) {
-      synchronized (CqlPrepareHandlerBase.this) {
+      synchronized (CqlPrepareHandler.this) {
         errorsSnapshot = this.errors;
         if (errorsSnapshot == null) {
           this.errors = errorsSnapshot = new CopyOnWriteArrayList<>();
@@ -236,58 +235,28 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     // Whatever happens below, we're done with this stream id
     throttler.signalSuccess(this);
 
-    DefaultPreparedStatement newStatement =
+    DefaultPreparedStatement preparedStatement =
         Conversions.toPreparedStatement(prepared, request, context);
 
-    DefaultPreparedStatement cachedStatement = cache(newStatement);
-
-    if (cachedStatement != newStatement) {
-      // The statement already existed in the cache, assume it's because the client called
-      // prepare() twice, and therefore it's already been prepared on other nodes.
-      result.complete(cachedStatement);
+    session
+        .getRepreparePayloads()
+        .put(preparedStatement.getId(), preparedStatement.getRepreparePayload());
+    if (prepareOnAllNodes) {
+      prepareOnOtherNodes()
+          .thenRun(
+              () -> {
+                LOG.trace(
+                    "[{}] Done repreparing on other nodes, completing the request", logPrefix);
+                result.complete(preparedStatement);
+              })
+          .exceptionally(
+              error -> {
+                result.completeExceptionally(error);
+                return null;
+              });
     } else {
-      session
-          .getRepreparePayloads()
-          .put(cachedStatement.getId(), cachedStatement.getRepreparePayload());
-      if (prepareOnAllNodes) {
-        prepareOnOtherNodes()
-            .thenRun(
-                () -> {
-                  LOG.trace(
-                      "[{}] Done repreparing on other nodes, completing the request", logPrefix);
-                  result.complete(cachedStatement);
-                })
-            .exceptionally(
-                error -> {
-                  result.completeExceptionally(error);
-                  return null;
-                });
-      } else {
-        LOG.trace("[{}] Prepare on all nodes is disabled, completing the request", logPrefix);
-        result.complete(cachedStatement);
-      }
-    }
-  }
-
-  private DefaultPreparedStatement cache(DefaultPreparedStatement preparedStatement) {
-    DefaultPreparedStatement previous =
-        preparedStatementsCache.putIfAbsent(preparedStatement.getId(), preparedStatement);
-    if (previous != null) {
-      LOG.warn(
-          "Re-preparing already prepared query. "
-              + "This is generally an anti-pattern and will likely affect performance. "
-              + "The cached version of the PreparedStatement will be returned, which may use "
-              + "different bound statement execution parameters (CL, timeout, etc.) from the "
-              + "current session.prepare call. Consider preparing the statement only once. "
-              + "Query='{}'",
-          preparedStatement.getQuery());
-
-      // The one object in the cache will get GCed once it's not referenced by the client anymore
-      // since we use a weak reference. So we need to make sure that the instance we do return to
-      // the user is the one that is in the cache.
-      return previous;
-    } else {
-      return preparedStatement;
+      LOG.trace("[{}] Prepare on all nodes is disabled, completing the request", logPrefix);
+      result.complete(preparedStatement);
     }
   }
 

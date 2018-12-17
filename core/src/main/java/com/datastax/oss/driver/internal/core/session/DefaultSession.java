@@ -199,10 +199,11 @@ public class DefaultSession implements CqlSession {
   @Override
   public <RequestT extends Request, ResultT> ResultT execute(
       @NonNull RequestT request, @NonNull GenericType<ResultT> resultType) {
-    return processorRegistry
-        .processorFor(request, resultType)
-        .newHandler(request, this, context, logPrefix)
-        .handle();
+    RequestProcessor<RequestT, ResultT> processor =
+        processorRegistry.processorFor(request, resultType);
+    return isClosed()
+        ? processor.newFailure(new IllegalStateException("Session is closed"))
+        : processor.process(request, this, context, logPrefix);
   }
 
   @Nullable

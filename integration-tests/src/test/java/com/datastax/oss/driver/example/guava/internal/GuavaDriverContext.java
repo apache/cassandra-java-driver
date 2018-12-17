@@ -72,14 +72,14 @@ public class GuavaDriverContext extends DefaultDriverContext {
         new MapMaker().weakValues().makeMap();
 
     CqlRequestAsyncProcessor cqlRequestAsyncProcessor = new CqlRequestAsyncProcessor();
-    CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor =
-        new CqlPrepareAsyncProcessor(preparedStatementsCache);
-    CqlRequestSyncProcessor cqlRequestSyncProcessor = new CqlRequestSyncProcessor();
+    CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor = new CqlPrepareAsyncProcessor();
+    CqlRequestSyncProcessor cqlRequestSyncProcessor =
+        new CqlRequestSyncProcessor(cqlRequestAsyncProcessor);
 
     return new RequestProcessorRegistry(
         getSessionName(),
         cqlRequestSyncProcessor,
-        new CqlPrepareSyncProcessor(preparedStatementsCache),
+        new CqlPrepareSyncProcessor(cqlPrepareAsyncProcessor),
         new GuavaRequestAsyncProcessor<>(
             cqlRequestAsyncProcessor, Statement.class, GuavaSession.ASYNC),
         new GuavaRequestAsyncProcessor<>(

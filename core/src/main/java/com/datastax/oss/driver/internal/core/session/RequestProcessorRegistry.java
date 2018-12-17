@@ -21,10 +21,7 @@ import com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestAsyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
-import com.datastax.oss.driver.internal.core.cql.DefaultPreparedStatement;
-import com.datastax.oss.driver.shaded.guava.common.collect.MapMaker;
-import java.nio.ByteBuffer;
-import java.util.concurrent.ConcurrentMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,15 +32,19 @@ public class RequestProcessorRegistry {
   private static final Logger LOG = LoggerFactory.getLogger(RequestProcessorRegistry.class);
 
   public static RequestProcessorRegistry defaultCqlProcessors(String logPrefix) {
-    ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache =
-        new MapMaker().weakValues().makeMap();
+    CqlRequestAsyncProcessor requestAsyncProcessor = new CqlRequestAsyncProcessor();
+    CqlRequestSyncProcessor requestSyncProcessor =
+        new CqlRequestSyncProcessor(requestAsyncProcessor);
+    CqlPrepareAsyncProcessor prepareAsyncProcessor = new CqlPrepareAsyncProcessor();
+    CqlPrepareSyncProcessor prepareSyncProcessor =
+        new CqlPrepareSyncProcessor(prepareAsyncProcessor);
 
     return new RequestProcessorRegistry(
         logPrefix,
-        new CqlRequestSyncProcessor(),
-        new CqlRequestAsyncProcessor(),
-        new CqlPrepareSyncProcessor(preparedStatementsCache),
-        new CqlPrepareAsyncProcessor(preparedStatementsCache));
+        requestAsyncProcessor,
+        requestSyncProcessor,
+        prepareAsyncProcessor,
+        prepareSyncProcessor);
   }
 
   private final String logPrefix;
@@ -71,5 +72,10 @@ public class RequestProcessorRegistry {
       }
     }
     throw new IllegalArgumentException("No request processor found for " + request);
+  }
+
+  /** This creates a defensive copy on every call, do not overuse. */
+  public Iterable<RequestProcessor<?, ?>> getProcessors() {
+    return ImmutableList.copyOf(processors);
   }
 }

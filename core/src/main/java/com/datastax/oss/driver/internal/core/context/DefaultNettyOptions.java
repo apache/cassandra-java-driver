@@ -132,8 +132,7 @@ public class DefaultNettyOptions implements NettyOptions {
             ioShutdownQuietPeriod, ioShutdownTimeout, ioShutdownUnit));
     DefaultPromise<Void> closeFuture = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
     combiner.finish(closeFuture);
-    // stop the timer as well
-    timer.stop();
+    closeFuture.addListener(f -> timer.stop());
     return closeFuture;
   }
 
