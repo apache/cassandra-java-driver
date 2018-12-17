@@ -117,15 +117,15 @@ programming][4.x async programming] and [paging][4.x paging].
 
 Since the driver now has access to Java 8 types, some of the [CQL to Java type
 mappings] have changed when it comes to [temporal types] such as `date` and
-`timestamp`.  These changes are:
+`timestamp`. These changes are:
 
 * `getDate` has been replaced by `getLocalDate` and returns
-  [java.time.LocalDate]
+  [java.time.LocalDate];
 * `getTime` has been replaced by `getLocalTime` and returns
   [java.time.LocalTime] instead of a `long` representing nanoseconds since
-  midnight
+  midnight;
 * `getTimestamp` has been replaced by `getInstant` and returns
-  [java.time.Instant] instead of [java.util.Date]
+  [java.time.Instant] instead of [java.util.Date].
 
 The corresponding setter methods were also changed to expect these new types
 as inputs.
