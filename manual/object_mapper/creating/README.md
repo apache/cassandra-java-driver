@@ -363,6 +363,26 @@ private Map<String, List<Address>> frozenValueMap;
 [frozenkey]:http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/annotations/FrozenKey.html
 [frozenvalue]:http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/annotations/FrozenValue.html
 
+#### Prefer Frozen Collections
+
+If `Mapper.save` is used to create and update entities, it is recommended to
+use frozen collections over non-frozen collections.
+
+Frozen collections in Cassandra are serialized as a single cell value where
+non-frozen collections serialize each individual element in a collection as a
+cell.
+
+Since `Mapper.save` provides the entire collection for an entity field value on
+each invocation, it is more efficient to use frozen collections as the entire
+collection is serialized as one cell.
+
+Also, when using non-frozen collections, on INSERT Cassandra must
+create a tombstone to invalidate all existing collection elements, even if
+there are none. When using frozen collections, no such tombstone is needed.
+
+See [Freezing collection types] for more information about the frozen keyword.
+
+[Freezing collection types]: https://docs.datastax.com/en/dse/6.7/cql/cql/cql_using/refCollectionType.html
 
 ### Polymorphism support
 
