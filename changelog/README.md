@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta3 (in progress)
 
+- [documentation] JAVA-2061: Add section to upgrade guide about updated type mappings
 - [improvement] JAVA-2038: Add jitter to delays between reconnection attempts
 - [improvement] JAVA-2053: Cache results of session.prepare()
 - [improvement] JAVA-2058: Make programmatic config reloading part of the public API
