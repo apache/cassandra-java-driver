@@ -23,7 +23,6 @@ import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
-import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -61,7 +60,7 @@ public class CaseSensitiveUdtIT {
 
   @Test
   public void should_expose_metadata_with_correct_case() {
-    boolean supportsFunctions = CcmBridge.VERSION.compareTo(Version.V2_2_0) >= 0;
+    boolean supportsFunctions = ccmRule.getCassandraVersion().compareTo(Version.V2_2_0) >= 0;
 
     CqlSession session = sessionRule.session();
 
