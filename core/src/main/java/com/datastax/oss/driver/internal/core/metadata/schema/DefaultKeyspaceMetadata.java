@@ -122,6 +122,7 @@ public class DefaultKeyspaceMetadata implements KeyspaceMetadata {
       KeyspaceMetadata that = (KeyspaceMetadata) other;
       return Objects.equals(this.name, that.getName())
           && this.durableWrites == that.isDurableWrites()
+          && this.virtual == that.isVirtual()
           && Objects.equals(this.replication, that.getReplication())
           && Objects.equals(this.types, that.getUserDefinedTypes())
           && Objects.equals(this.tables, that.getTables())
@@ -136,7 +137,7 @@ public class DefaultKeyspaceMetadata implements KeyspaceMetadata {
   @Override
   public int hashCode() {
     return Objects.hash(
-        name, durableWrites, replication, types, tables, views, functions, aggregates);
+        name, durableWrites, virtual, replication, types, tables, views, functions, aggregates);
   }
 
   @Override
