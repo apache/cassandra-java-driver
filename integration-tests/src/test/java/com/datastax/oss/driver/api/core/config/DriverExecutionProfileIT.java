@@ -78,6 +78,7 @@ public class DriverExecutionProfileIT {
   public void should_use_profile_request_timeout() {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
+            .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(2))
             .withProfile(
                 "olap",
                 DefaultDriverConfigLoaderBuilder.profileBuilder()
@@ -89,7 +90,7 @@ public class DriverExecutionProfileIT {
       // configure query with delay of 4 seconds.
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
-      // Execute query without profile, should timeout with default (2s).
+      // Execute query without profile, should timeout with default session timeout (2s).
       try {
         session.execute(query);
         fail("Should have timed out");

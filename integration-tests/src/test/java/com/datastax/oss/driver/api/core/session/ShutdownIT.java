@@ -19,8 +19,8 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.NoNodeAvailableException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -81,7 +81,7 @@ public class ShutdownIT {
                     .whenComplete(
                         (ignoredResult, error) -> {
                           semaphore.release();
-                          // Three things can happen:
+                          // Four things can happen:
                           // - DefaultSession.execute() detects that it's closed and fails the
                           //   request immediately
                           // - the request was in flight and gets aborted when its channel is
@@ -89,12 +89,26 @@ public class ShutdownIT {
                           // - the request races with the shutdown: it gets past execute() but by
                           //   the time it tries to acquire a channel the pool was closed
                           //   => NoNodeAvailableException
+                          // - the request races with the channel closing: it acquires a channel,
+                          //   but by the time it tries to write on it is closing
+                          //   => AllNodesFailedException wrapping IllegalStateException
                           if (error instanceof IllegalStateException
                               && "Session is closed".equals(error.getMessage())) {
                             gotSessionClosedError.countDown();
+                          } else if (error instanceof AllNodesFailedException) {
+                            AllNodesFailedException anfe = (AllNodesFailedException) error;
+                            // if there were 0 errors, its a NoNodeAvailableException which is
+                            // acceptable.
+                            if (anfe.getErrors().size() > 0) {
+                              assertThat(anfe.getErrors()).hasSize(1);
+                              error = anfe.getErrors().values().iterator().next();
+                              if (!(error instanceof IllegalStateException)
+                                  && !error.getMessage().endsWith("is closing")) {
+                                unexpectedErrors.add(error.toString());
+                              }
+                            }
                           } else if (error != null
-                              && !(error instanceof ClosedConnectionException
-                                  || error instanceof NoNodeAvailableException)) {
+                              && !(error instanceof ClosedConnectionException)) {
                             unexpectedErrors.add(error.toString());
                           }
                         });
