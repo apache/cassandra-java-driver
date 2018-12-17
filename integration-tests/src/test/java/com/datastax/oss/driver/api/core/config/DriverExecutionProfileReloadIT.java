@@ -53,7 +53,7 @@ public class DriverExecutionProfileReloadIT {
         new DefaultDriverConfigLoader(
             () ->
                 ConfigFactory.parseString(
-                        "basic.config-reload-interval = 0\n"
+                        "basic.config-reload-interval = 2s\n"
                             + "basic.request.timeout = 2s\n"
                             + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()));
