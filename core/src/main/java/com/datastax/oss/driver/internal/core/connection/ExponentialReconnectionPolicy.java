@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
+import java.util.concurrent.ThreadLocalRandom;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +34,10 @@ import org.slf4j.LoggerFactory;
  *
  * <p>It uses the same schedule implementation for individual nodes or the control connection:
  * reconnection attempt {@code i} will be tried {@code Math.min(2^(i-1) * getBaseDelayMs(),
- * getMaxDelayMs())} milliseconds after the previous one.
+ * getMaxDelayMs())} milliseconds after the previous one. A random amount of jitter (+/- 15%) will
+ * be added to the pure exponential delay value to avoid situations where many clients are in the
+ * reconnection process at exactly the same time. The jitter will never cause the delay to be less
+ * than the base delay, or more than the max delay.
  *
  * <p>To activate this policy, modify the {@code advanced.reconnection-policy} section in the driver
  * configuration, for example:
@@ -137,11 +141,22 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
     @NonNull
     @Override
     public Duration nextDelay() {
-      long delay =
-          (attempts > maxAttempts)
-              ? maxDelayMs
-              : Math.min(baseDelayMs * (1L << attempts++), maxDelayMs);
+      long delay = (attempts > maxAttempts) ? maxDelayMs : calculateDelayWithJitter();
       return Duration.ofMillis(delay);
+    }
+
+    private long calculateDelayWithJitter() {
+      // assert we haven't hit the max attempts
+      assert attempts <= maxAttempts;
+      // get the pure exponential delay based on the attempt count
+      long delay = Math.min(baseDelayMs * (1L << attempts++), maxDelayMs);
+      // calculate up to 15% jitter, plus or minus (i.e. 85 - 115% of the pure value)
+      int jitter = ThreadLocalRandom.current().nextInt(85, 116);
+      // apply jitter
+      delay = (jitter * delay) / 100;
+      // ensure the final delay is between the base and max
+      delay = Math.min(maxDelayMs, Math.max(baseDelayMs, delay));
+      return delay;
     }
   }
 }
