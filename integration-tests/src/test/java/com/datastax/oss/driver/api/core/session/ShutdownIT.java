@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.NoNodeAvailableException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -96,18 +95,21 @@ public class ShutdownIT {
                           if (error instanceof IllegalStateException
                               && "Session is closed".equals(error.getMessage())) {
                             gotSessionClosedError.countDown();
-                          } else if (error != null
-                              && !(error instanceof ClosedConnectionException
-                                  || error instanceof NoNodeAvailableException)) {
-                            unexpectedErrors.add(error.toString());
                           } else if (error instanceof AllNodesFailedException) {
                             AllNodesFailedException anfe = (AllNodesFailedException) error;
-                            assertThat(anfe.getErrors()).hasSize(1);
-                            error = anfe.getErrors().values().iterator().next();
-                            if (!(error instanceof IllegalStateException)
-                                && !error.getMessage().endsWith("is closing")) {
-                              unexpectedErrors.add(error.toString());
+                            // if there were 0 errors, its a NoNodeAvailabeException which is
+                            // acceptable.
+                            if (anfe.getErrors().size() > 0) {
+                              assertThat(anfe.getErrors()).hasSize(1);
+                              error = anfe.getErrors().values().iterator().next();
+                              if (!(error instanceof IllegalStateException)
+                                  && !error.getMessage().endsWith("is closing")) {
+                                unexpectedErrors.add(error.toString());
+                              }
                             }
+                          } else if (error != null
+                              && !(error instanceof ClosedConnectionException)) {
+                            unexpectedErrors.add(error.toString());
                           }
                         });
               }
