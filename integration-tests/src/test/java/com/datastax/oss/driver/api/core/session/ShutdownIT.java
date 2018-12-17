@@ -97,7 +97,7 @@ public class ShutdownIT {
                             gotSessionClosedError.countDown();
                           } else if (error instanceof AllNodesFailedException) {
                             AllNodesFailedException anfe = (AllNodesFailedException) error;
-                            // if there were 0 errors, its a NoNodeAvailabeException which is
+                            // if there were 0 errors, its a NoNodeAvailableException which is
                             // acceptable.
                             if (anfe.getErrors().size() > 0) {
                               assertThat(anfe.getErrors()).hasSize(1);
