@@ -195,7 +195,7 @@ public class PreparedStatementIT {
       try {
         row.getInt("d");
         fail("expected an error");
-      } catch (ArrayIndexOutOfBoundsException e) {
+      } catch (IllegalArgumentException e) {
         /*expected*/
       }
     }
