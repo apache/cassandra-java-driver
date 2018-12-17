@@ -105,7 +105,7 @@ public class ShutdownIT {
                             assertThat(anfe.getErrors()).hasSize(1);
                             error = anfe.getErrors().values().iterator().next();
                             if (!(error instanceof IllegalStateException)
-                                && !"Driver channel is closing".equals(error.getMessage())) {
+                                && !error.getMessage().endsWith("is closing")) {
                               unexpectedErrors.add(error.toString());
                             }
                           }
