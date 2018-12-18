@@ -333,12 +333,13 @@ public class DefaultBoundStatement implements BoundStatement {
         return getBytesUnsafe(indices.get(0));
       } else {
         ByteBuffer[] components = new ByteBuffer[indices.size()];
-        for (Integer index : indices) {
+        for (int i = 0; i < components.length; i++) {
           ByteBuffer value;
+          int index = indices.get(i);
           if (!isSet(index) || (value = getBytesUnsafe(index)) == null) {
             return null;
           } else {
-            components[index] = value;
+            components[i] = value;
           }
         }
         return RoutingKey.compose(components);

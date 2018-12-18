@@ -31,6 +31,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
+import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -40,6 +41,7 @@ import com.datastax.oss.driver.internal.core.DefaultProtocolFeature;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.type.codec.CqlIntToStringCodec;
+import com.datastax.oss.driver.internal.core.util.RoutingKey;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.Message;
@@ -58,8 +60,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -71,14 +71,13 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class BoundStatementIT {
 
-  @ClassRule
-  public static SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(1));
+  @Rule public SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private CcmRule ccm = CcmRule.getInstance();
 
-  private static final boolean atLeastV4 = ccm.getHighestProtocolVersion().getCode() >= 4;
+  private final boolean atLeastV4 = ccm.getHighestProtocolVersion().getCode() >= 4;
 
-  private static SessionRule<CqlSession> sessionRule =
+  private SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccm)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
@@ -86,7 +85,7 @@ public class BoundStatementIT {
                   .build())
           .build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @Rule public TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
   @Rule public TestName name = new TestName();
 
@@ -96,8 +95,8 @@ public class BoundStatementIT {
 
   private static final int VALUE = 7;
 
-  @BeforeClass
-  public static void setupSchema() {
+  @Before
+  public void setupSchema() {
     // table where every column forms the primary key.
     sessionRule
         .session()
@@ -120,6 +119,17 @@ public class BoundStatementIT {
         .session()
         .execute(
             SimpleStatement.builder("CREATE TABLE IF NOT EXISTS test2 (k text primary key, v0 int)")
+                .withExecutionProfile(sessionRule.slowProfile())
+                .build());
+
+    // table with composite partition key
+    sessionRule
+        .session()
+        .execute(
+            SimpleStatement.builder(
+                    "CREATE TABLE IF NOT EXISTS test3 "
+                        + "(pk1 int, pk2 int, v int, "
+                        + "PRIMARY KEY ((pk1, pk2)))")
                 .withExecutionProfile(sessionRule.slowProfile())
                 .build());
   }
@@ -474,6 +484,25 @@ public class BoundStatementIT {
       assertThat(boundStatement.getKeyspace()).isNull();
       // Should not be propagated
       assertThat(boundStatement.getTimestamp()).isEqualTo(Long.MIN_VALUE);
+    }
+  }
+
+  // Test for JAVA-2066
+  @Test
+  @CassandraRequirement(min = "2.2")
+  public void should_compute_routing_key_when_indices_randomly_distributed() {
+    try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
+
+      PreparedStatement ps = session.prepare("INSERT INTO test3 (v, pk2, pk1) VALUES (?,?,?)");
+
+      List<Integer> indices = ps.getPartitionKeyIndices();
+      assertThat(indices).containsExactly(2, 1);
+
+      BoundStatement bs = ps.bind(1, 2, 3);
+      ByteBuffer routingKey = bs.getRoutingKey();
+
+      assertThat(routingKey)
+          .isEqualTo(RoutingKey.compose(bs.getBytesUnsafe(2), bs.getBytesUnsafe(1)));
     }
   }
 
