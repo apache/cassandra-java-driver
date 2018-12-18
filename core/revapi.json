@@ -638,7 +638,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.cql.ResultSet",
         "classSimpleName": "ResultSet",
         "methodName": "getAvailableWithoutFetching",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3",
         "elementKind": "method",
         "justification": "JAVA-2011: Re-add ResultSet.getAvailableWithoutFetching() and isFullyFetched()"
       },
@@ -649,7 +649,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.cql.ResultSet",
         "classSimpleName": "ResultSet",
         "methodName": "isFullyFetched",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3",
         "elementKind": "method",
         "justification": "JAVA-2011: Re-add ResultSet.getAvailableWithoutFetching() and isFullyFetched()"
       },
@@ -662,7 +662,7 @@
         "classSimpleName": "SessionBuilder",
         "methodName": "buildContext",
         "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3",
         "elementKind": "method",
         "justification": "JAVA-2049: Add shorthand method to SessionBuilder to specify local DC"
       },
@@ -673,7 +673,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.config.DriverConfigLoader",
         "classSimpleName": "DriverConfigLoader",
         "methodName": "reload",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3",
         "elementKind": "method",
         "justification": "JAVA-2058: Make programmatic config reloading part of the public API"
       },
@@ -684,7 +684,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.config.DriverConfigLoader",
         "classSimpleName": "DriverConfigLoader",
         "methodName": "supportsReloading",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3",
         "elementKind": "method",
         "justification": "JAVA-2058: Make programmatic config reloading part of the public API"
       }
