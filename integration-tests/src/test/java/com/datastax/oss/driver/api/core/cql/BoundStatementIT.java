@@ -40,6 +40,7 @@ import com.datastax.oss.driver.internal.core.DefaultProtocolFeature;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.type.codec.CqlIntToStringCodec;
+import com.datastax.oss.driver.internal.core.util.RoutingKey;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.Message;
@@ -74,11 +75,11 @@ public class BoundStatementIT {
   @ClassRule
   public static SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule ccm = CcmRule.getInstance();
 
   private static final boolean atLeastV4 = ccm.getHighestProtocolVersion().getCode() >= 4;
 
-  private static SessionRule<CqlSession> sessionRule =
+  private static final SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccm)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
@@ -120,6 +121,17 @@ public class BoundStatementIT {
         .session()
         .execute(
             SimpleStatement.builder("CREATE TABLE IF NOT EXISTS test2 (k text primary key, v0 int)")
+                .withExecutionProfile(sessionRule.slowProfile())
+                .build());
+
+    // table with composite partition key
+    sessionRule
+        .session()
+        .execute(
+            SimpleStatement.builder(
+                    "CREATE TABLE IF NOT EXISTS test3 "
+                        + "(pk1 int, pk2 int, v int, "
+                        + "PRIMARY KEY ((pk1, pk2)))")
                 .withExecutionProfile(sessionRule.slowProfile())
                 .build());
   }
@@ -474,6 +486,24 @@ public class BoundStatementIT {
       assertThat(boundStatement.getKeyspace()).isNull();
       // Should not be propagated
       assertThat(boundStatement.getTimestamp()).isEqualTo(Long.MIN_VALUE);
+    }
+  }
+
+  // Test for JAVA-2066
+  @Test
+  public void should_compute_routing_key_when_indices_randomly_distributed() {
+    try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
+
+      PreparedStatement ps = session.prepare("INSERT INTO test3 (v, pk2, pk1) VALUES (?,?,?)");
+
+      List<Integer> indices = ps.getPartitionKeyIndices();
+      assertThat(indices).containsExactly(2, 1);
+
+      BoundStatement bs = ps.bind(1, 2, 3);
+      ByteBuffer routingKey = bs.getRoutingKey();
+
+      assertThat(routingKey)
+          .isEqualTo(RoutingKey.compose(bs.getBytesUnsafe(2), bs.getBytesUnsafe(1)));
     }
   }
 
