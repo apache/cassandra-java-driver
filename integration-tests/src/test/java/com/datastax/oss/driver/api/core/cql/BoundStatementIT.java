@@ -75,11 +75,11 @@ public class BoundStatementIT {
   @ClassRule
   public static SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
-  private static final CcmRule ccm = CcmRule.getInstance();
+  private static CcmRule ccm = CcmRule.getInstance();
 
   private static final boolean atLeastV4 = ccm.getHighestProtocolVersion().getCode() >= 4;
 
-  private static final SessionRule<CqlSession> sessionRule =
+  private static SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccm)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
