@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta3 (in progress)
 
+- [bug] JAVA-2066: Array index range error when fetching routing keys on bound statements
 - [documentation] JAVA-2061: Add section to upgrade guide about updated type mappings
 - [improvement] JAVA-2038: Add jitter to delays between reconnection attempts
 - [improvement] JAVA-2053: Cache results of session.prepare()
