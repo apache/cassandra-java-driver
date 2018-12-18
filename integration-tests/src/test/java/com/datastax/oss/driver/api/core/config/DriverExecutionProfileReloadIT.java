@@ -169,7 +169,9 @@ public class DriverExecutionProfileReloadIT {
         new DefaultDriverConfigLoader(
             () ->
                 ConfigFactory.parseString(
-                        "profiles.slow.basic.request.consistency = ONE\nbasic.config-reload-interval = 2s\n"
+                        "profiles.slow.basic.request.consistency = ONE\n"
+                            + "basic.config-reload-interval = 2s\n"
+                            + "basic.request.timeout = 2s\n"
                             + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()));
     try (CqlSession session =
