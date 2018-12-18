@@ -31,6 +31,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
+import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -59,8 +60,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -72,14 +71,13 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class BoundStatementIT {
 
-  @ClassRule
-  public static SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(1));
+  @Rule public SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private CcmRule ccm = CcmRule.getInstance();
 
-  private static final boolean atLeastV4 = ccm.getHighestProtocolVersion().getCode() >= 4;
+  private final boolean atLeastV4 = ccm.getHighestProtocolVersion().getCode() >= 4;
 
-  private static SessionRule<CqlSession> sessionRule =
+  private SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccm)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
@@ -87,7 +85,7 @@ public class BoundStatementIT {
                   .build())
           .build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @Rule public TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
   @Rule public TestName name = new TestName();
 
@@ -97,8 +95,8 @@ public class BoundStatementIT {
 
   private static final int VALUE = 7;
 
-  @BeforeClass
-  public static void setupSchema() {
+  @Before
+  public void setupSchema() {
     // table where every column forms the primary key.
     sessionRule
         .session()
@@ -491,6 +489,7 @@ public class BoundStatementIT {
 
   // Test for JAVA-2066
   @Test
+  @CassandraRequirement(min = "2.2")
   public void should_compute_routing_key_when_indices_randomly_distributed() {
     try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
 
