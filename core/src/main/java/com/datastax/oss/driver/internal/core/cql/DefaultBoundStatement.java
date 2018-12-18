@@ -335,7 +335,8 @@ public class DefaultBoundStatement implements BoundStatement {
         ByteBuffer[] components = new ByteBuffer[indices.size()];
         for(int i = 0; i< components.length; i++){
           ByteBuffer value;
-          if (!isSet(indices.get(i)) || (value = getBytesUnsafe(indices.get(i))) == null) {
+          int index = indices.get(i);
+          if (!isSet(index) || (value = getBytesUnsafe(index)) == null) {
             return null;
           } else {
             components[i] = value;
