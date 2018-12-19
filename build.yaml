@@ -9,7 +9,7 @@ schedules:
         # Exclude java8 with all versions except latest
         - java: openjdk8
           cassandra: ['2.2', '3.0']
-        # Exclude java8 with all versions except latest
+        # Exclude java11 with all versions except latest
         - java: openjdk11
           cassandra: ['2.1', '2.2', '3.0']
     env_vars: |
