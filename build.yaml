@@ -47,6 +47,8 @@ java:
   - openjdk7
   - openjdk8
   - openjdk11
+os:
+  - ubuntu/bionic64/java-driver
 cassandra:
   - '2.1'
   - '2.2'
