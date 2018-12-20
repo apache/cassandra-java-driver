@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.control;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
+import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -45,6 +46,7 @@ import com.datastax.oss.protocol.internal.response.event.TopologyChangeEvent;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Queue;
@@ -273,12 +275,29 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
               firstConnectionAttemptFuture.complete(null);
             },
             error -> {
-              if (reconnectOnFailure && !closeWasCalled) {
+              boolean authFailure = true;
+              if (error instanceof AllNodesFailedException) {
+
+                Collection<Throwable> errors =
+                    ((AllNodesFailedException) error).getErrors().values();
+                for (Throwable nodeError : errors) {
+                  if (!(nodeError instanceof AuthenticationException)) {
+                    authFailure = false;
+                  }
+                }
+              }
+              if (reconnectOnFailure && !closeWasCalled && !authFailure) {
                 reconnection.start();
               } else {
                 // Special case for the initial connection: reword to a more user-friendly error
                 // message
-                if (error instanceof AllNodesFailedException) {
+                if (authFailure) {
+                  error =
+                      ((AllNodesFailedException) error)
+                          .reword(
+                              "Could not authenticate with any contact point, "
+                                  + "make sure you've provided valid credentials");
+                } else if (error instanceof AllNodesFailedException) {
                   error =
                       ((AllNodesFailedException) error)
                           .reword(
