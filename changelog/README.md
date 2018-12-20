@@ -2,6 +2,10 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.0.0-rc1 (In progress)
+
+- [documentation] JAVA-2075: Document preference for LZ4 over Snappy
+
 ### 4.0.0-beta3
 
 - [bug] JAVA-2066: Array index range error when fetching routing keys on bound statements
