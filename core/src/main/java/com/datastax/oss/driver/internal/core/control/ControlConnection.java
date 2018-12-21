@@ -277,7 +277,6 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
             error -> {
               boolean authFailure = true;
               if (error instanceof AllNodesFailedException) {
-
                 Collection<Throwable> errors =
                     ((AllNodesFailedException) error).getErrors().values();
                 for (Throwable nodeError : errors) {
