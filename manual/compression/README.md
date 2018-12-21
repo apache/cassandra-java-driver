@@ -19,7 +19,7 @@ to load and
 suggest that it offers better performance and compression ratios over Snappy.
 Both rely on third-party libraries, declared by the driver as *optional*
 dependencies. So if you use a build tool like Maven, you'll need to declare an
-explicit dependency to pull theappropriate library in your application's
+explicit dependency to pull the appropriate library in your application's
 classpath. Then you configure compression at driver startup.
 
 ### LZ4
