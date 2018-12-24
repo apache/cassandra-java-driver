@@ -382,7 +382,7 @@ class RequestHandler {
       GuavaCompatibility.INSTANCE.addCallback(
           connectionFuture,
           new FutureCallback<Connection>() {
-            private void speculativeError(Connection connection, Throwable ex) {
+            private void onSpeculativeError(Connection connection, Throwable ex) {
                 if (connection != null) connection.release();
                 logError(host.getSocketAddress(), ex);
                 findNextHostAndQuery();
@@ -404,14 +404,14 @@ class RequestHandler {
               } catch (ConnectionException e) {
                 // If we have any problem with the connection, move to the next node.
                 if (metricsEnabled()) metrics().getErrorMetrics().getConnectionErrors().inc();
-                speculativeError(connection, e);
+                onSpeculativeError(connection, e);
               } catch (BusyConnectionException e) {
                 // The pool shouldn't have give us a busy connection unless we've maxed up the pool,
                 // so move on to the next host.
-                speculativeError(connection, e);
+                onSpeculativeError(connection, e);
               } catch (RuntimeException e) {
                 logger.error("Unexpected error while querying {}", host.getAddress(), e);
-                speculativeError(connection, e);
+                onSpeculativeError(connection, e);
               }
             }
 
