@@ -475,6 +475,7 @@ public class QueryOptions {
     return maxPendingRefreshNodeRequests;
   }
 
+  @Override
   public boolean equals(Object that) {
     if (that == null || !(that instanceof QueryOptions)) {
       return false;
@@ -494,9 +495,10 @@ public class QueryOptions {
         && this.refreshNodeIntervalMillis == other.refreshNodeIntervalMillis
         && this.refreshSchemaIntervalMillis == other.refreshSchemaIntervalMillis
         && this.reprepareOnUp == other.reprepareOnUp
-        && this.prepareOnAllHosts == prepareOnAllHosts);
+        && this.prepareOnAllHosts == other.prepareOnAllHosts);
   }
 
+  @Override
   public int hashCode() {
     return MoreObjects.hashCode(
         consistency,

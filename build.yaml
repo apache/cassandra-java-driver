@@ -4,13 +4,14 @@ schedules:
     schedule: per_commit
     matrix:
       exclude:
-        # Exclude all builds on old jdk versions (which are done on trusty)
-        - os: ubuntu/trusty64/java-driver
-        - os: ubuntu/bionic64/java-driver
-          java: ['openjdk6','openjdk7']
-        # Exclude java8 with all versions exception 2.1 and latest
+        # Exclude all builds on old jdk versions
+        - java: ['openjdk6','openjdk7']
+        # Exclude java8 with all versions except latest
         - java: openjdk8
           cassandra: ['2.2', '3.0']
+        # Exclude java11 with all versions except latest
+        - java: openjdk11
+          cassandra: ['2.1', '2.2', '3.0']
     env_vars: |
       TEST_GROUP="short"
     disable_commit_status: true
@@ -20,13 +21,6 @@ schedules:
   nightly:
     # Run full suite nightly on change for all primary branches if they have changes.
     schedule: nightly
-    matrix:
-      exclude:
-        # Run jdk8 on bionic, 6 and 7 on trusty
-        - os: ubuntu/trusty64/java-driver
-          java: ['openjdk8']
-        - os: ubuntu/bionic64/java-driver
-          java: ['openjdk6','openjdk7']
     branches:
       # regex matches primary branch format (2.1, 3.x, 3.0.x, 3.1.x, etc).
       include: ["/\\d+(\\.[\\dx]+)+/"]
@@ -39,13 +33,6 @@ schedules:
   adhoc:
     # Adhoc job for non-primary braches that doesn't have a schedule but may be used to run all configs.
     schedule: adhoc
-    matrix:
-      exclude:
-        # Run jdk8 on bionic, 6 and 7 on trusty
-        - os: ubuntu/trusty64/java-driver
-          java: ['openjdk8']
-        - os: ubuntu/bionic64/java-driver
-          java: ['openjdk6','openjdk7']
     branches:
       # regex matches primary branch format (2.1, 3.x, 3.0.x, 3.1.x, etc).
       exclude: ["/\\d+(\\.[\\dx]+)+/"]
@@ -59,8 +46,8 @@ java:
   - openjdk6
   - openjdk7
   - openjdk8
+  - openjdk11
 os:
-  - ubuntu/trusty64/java-driver
   - ubuntu/bionic64/java-driver
 cassandra:
   - '2.1'
