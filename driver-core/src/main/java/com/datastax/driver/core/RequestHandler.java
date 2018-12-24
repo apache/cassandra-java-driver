@@ -382,6 +382,12 @@ class RequestHandler {
       GuavaCompatibility.INSTANCE.addCallback(
           connectionFuture,
           new FutureCallback<Connection>() {
+            private void speculativeError(Connection connection, Throwable ex) {
+                if (connection != null) connection.release();
+                logError(host.getSocketAddress(), ex);
+                findNextHostAndQuery();
+            }
+
             @Override
             public void onSuccess(Connection connection) {
               if (isDone.get()) {
@@ -398,34 +404,27 @@ class RequestHandler {
               } catch (ConnectionException e) {
                 // If we have any problem with the connection, move to the next node.
                 if (metricsEnabled()) metrics().getErrorMetrics().getConnectionErrors().inc();
-                if (connection != null) connection.release();
-                logError(host.getSocketAddress(), e);
-                findNextHostAndQuery();
+                speculativeError(connection, e);
               } catch (BusyConnectionException e) {
                 // The pool shouldn't have give us a busy connection unless we've maxed up the pool,
                 // so move on to the next host.
-                connection.release();
-                logError(host.getSocketAddress(), e);
-                findNextHostAndQuery();
+                speculativeError(connection, e);
               } catch (RuntimeException e) {
-                if (connection != null) connection.release();
-                logger.error("Unexpected error while querying " + host.getAddress(), e);
-                logError(host.getSocketAddress(), e);
-                findNextHostAndQuery();
+                logger.error("Unexpected error while querying {}", host.getAddress(), e);
+                speculativeError(connection, e);
               }
             }
 
             @Override
             public void onFailure(Throwable t) {
-              if (t instanceof BusyPoolException) {
-                logError(host.getSocketAddress(), t);
-              } else {
-                logger.error("Unexpected error while querying " + host.getAddress(), t);
-                logError(host.getSocketAddress(), t);
+              if (! (t instanceof BusyPoolException)) {
+                logger.error("Unexpected error while querying {}", host.getAddress(), t);
               }
+              logError(host.getSocketAddress(), t);
               findNextHostAndQuery();
             }
           });
+
       return true;
     }
 
