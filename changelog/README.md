@@ -2,10 +2,13 @@
 
 ### 3.7.0 (In progress)
 
+- [improvement] JAVA-2025: Include exception message in Abstract*Codec.accepts(null).
 - [improvement] JAVA-2025: Include exception message in Abstract\*Codec.accepts(null).
 - [improvement] JAVA-1980: Use covariant return types in RemoteEndpointAwareJdkSSLOptions.Builder methods.
 - [documentation] JAVA-2062: Document frozen collection preference with Mapper.
 - [bug] JAVA-2071: Fix NPE in ArrayBackedRow.toString().
+- [bug] JAVA-2070: Call onRemove instead of onDown when rack and/or DC information changes for a host.
+- [improvement] JAVA-1256: Log parameters of BuiltStatement in QueryLogger.
 
 
 ### 3.6.0
