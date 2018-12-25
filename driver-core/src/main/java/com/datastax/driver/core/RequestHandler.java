@@ -383,9 +383,9 @@ class RequestHandler {
           connectionFuture,
           new FutureCallback<Connection>() {
             private void onSpeculativeError(Connection connection, Throwable ex) {
-                if (connection != null) connection.release();
-                logError(host.getSocketAddress(), ex);
-                findNextHostAndQuery();
+              if (connection != null) connection.release();
+              logError(host.getSocketAddress(), ex);
+              findNextHostAndQuery();
             }
 
             @Override
@@ -417,7 +417,7 @@ class RequestHandler {
 
             @Override
             public void onFailure(Throwable t) {
-              if (! (t instanceof BusyPoolException)) {
+              if (!(t instanceof BusyPoolException)) {
                 logger.error("Unexpected error while querying {}", host.getAddress(), t);
               }
               logError(host.getSocketAddress(), t);
