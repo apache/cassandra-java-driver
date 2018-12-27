@@ -56,7 +56,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
         MockChannelFactoryHelper.builder(channelFactory).success(node1, channel1).build();
 
     // When
-    CompletionStage<Void> initFuture = controlConnection.init(false, false);
+    CompletionStage<Void> initFuture = controlConnection.init(false, false, false);
     factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
 
@@ -76,9 +76,9 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
         MockChannelFactoryHelper.builder(channelFactory).success(node1, channel1).build();
 
     // When
-    CompletionStage<Void> initFuture1 = controlConnection.init(false, false);
+    CompletionStage<Void> initFuture1 = controlConnection.init(false, false, false);
     factoryHelper.waitForCall(node1);
-    CompletionStage<Void> initFuture2 = controlConnection.init(false, false);
+    CompletionStage<Void> initFuture2 = controlConnection.init(false, false, false);
 
     // Then
     assertThatStage(initFuture1).isEqualTo(initFuture2);
@@ -97,7 +97,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
             .build();
 
     // When
-    CompletionStage<Void> initFuture = controlConnection.init(false, false);
+    CompletionStage<Void> initFuture = controlConnection.init(false, false, false);
     factoryHelper.waitForCall(node1);
     factoryHelper.waitForCall(node2);
     waitForPendingAdminTasks();
@@ -123,7 +123,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
             .build();
 
     // When
-    CompletionStage<Void> initFuture = controlConnection.init(false, false);
+    CompletionStage<Void> initFuture = controlConnection.init(false, false, false);
     factoryHelper.waitForCall(node1);
     factoryHelper.waitForCall(node2);
     waitForPendingAdminTasks();
@@ -151,7 +151,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
             .success(node2, channel2)
             .build();
 
-    CompletionStage<Void> initFuture = controlConnection.init(false, false);
+    CompletionStage<Void> initFuture = controlConnection.init(false, false, false);
     factoryHelper.waitForCall(node1);
 
     waitForPendingAdminTasks();
@@ -190,7 +190,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
             .success(node2, channel2)
             .build();
 
-    CompletionStage<Void> initFuture = controlConnection.init(false, false);
+    CompletionStage<Void> initFuture = controlConnection.init(false, false, false);
     factoryHelper.waitForCall(node1);
 
     waitForPendingAdminTasks();
@@ -238,7 +238,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
             .success(node2, channel2)
             .build();
 
-    CompletionStage<Void> initFuture = controlConnection.init(false, false);
+    CompletionStage<Void> initFuture = controlConnection.init(false, false, false);
     factoryHelper.waitForCall(node1);
 
     waitForPendingAdminTasks();
@@ -282,7 +282,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
             .success(node1, channel3)
             .build();
 
-    CompletionStage<Void> initFuture = controlConnection.init(false, false);
+    CompletionStage<Void> initFuture = controlConnection.init(false, false, false);
     factoryHelper.waitForCall(node1);
 
     waitForPendingAdminTasks();
@@ -339,7 +339,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
             .success(node1, channel3)
             .build();
 
-    CompletionStage<Void> initFuture = controlConnection.init(false, false);
+    CompletionStage<Void> initFuture = controlConnection.init(false, false, false);
     factoryHelper.waitForCall(node1);
 
     waitForPendingAdminTasks();
@@ -383,7 +383,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
             .success(node2, channel2)
             .build();
 
-    CompletionStage<Void> initFuture = controlConnection.init(false, false);
+    CompletionStage<Void> initFuture = controlConnection.init(false, false, false);
     factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
     assertThatStage(initFuture).isSuccess();
@@ -421,7 +421,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
             .success(node2, channel2)
             .build();
 
-    CompletionStage<Void> initFuture = controlConnection.init(false, false);
+    CompletionStage<Void> initFuture = controlConnection.init(false, false, false);
     factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
     assertThatStage(initFuture).isSuccess();
@@ -459,7 +459,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     DriverChannel channel1 = newMockDriverChannel(1);
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory).success(node1, channel1).build();
-    CompletionStage<Void> initFuture = controlConnection.init(false, false);
+    CompletionStage<Void> initFuture = controlConnection.init(false, false, false);
     factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
     assertThatStage(initFuture).isSuccess();
@@ -483,7 +483,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory).success(node1, channel1).build();
 
-    CompletionStage<Void> initFuture = controlConnection.init(false, false);
+    CompletionStage<Void> initFuture = controlConnection.init(false, false, false);
     factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
     assertThatStage(initFuture).isSuccess();
@@ -514,7 +514,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
             .pending(node2, channel2Future)
             .build();
 
-    CompletionStage<Void> initFuture = controlConnection.init(false, false);
+    CompletionStage<Void> initFuture = controlConnection.init(false, false, false);
     factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
     assertThatStage(initFuture).isSuccess();
@@ -561,7 +561,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
             .success(node2, channel2)
             .build();
 
-    CompletionStage<Void> initFuture = controlConnection.init(false, false);
+    CompletionStage<Void> initFuture = controlConnection.init(false, false, false);
     factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
     assertThatStage(initFuture).isSuccess();

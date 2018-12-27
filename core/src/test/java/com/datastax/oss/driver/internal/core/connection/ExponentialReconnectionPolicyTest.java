@@ -52,7 +52,7 @@ public class ExponentialReconnectionPolicyTest {
   @Test
   public void should_generate_exponential_delay_with_jitter() throws Exception {
     ExponentialReconnectionPolicy policy = new ExponentialReconnectionPolicy(driverContext);
-    ReconnectionPolicy.ReconnectionSchedule schedule = policy.newControlConnectionSchedule();
+    ReconnectionPolicy.ReconnectionSchedule schedule = policy.newControlConnectionSchedule(false);
     // generate a number of delays and make sure they are all within the base/max values range
     for (int i = 0; i < 128; ++i) {
       // compute the min and max delays based on attempt count (i)

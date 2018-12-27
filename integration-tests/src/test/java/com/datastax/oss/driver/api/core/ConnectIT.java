@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
@@ -29,6 +30,7 @@ import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.connection.ConstantReconnectionPolicy;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.server.RejectScope;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -79,7 +81,7 @@ public class ConnectIT {
         SessionUtils.configLoaderBuilder()
             .withBoolean(DefaultDriverOption.RECONNECT_ON_INIT, true)
             .withClass(
-                DefaultDriverOption.RECONNECTION_POLICY_CLASS, ConstantReconnectionPolicy.class)
+                DefaultDriverOption.RECONNECTION_POLICY_CLASS, InitOnlyReconnectionPolicy.class)
             // Use a short delay so we don't have to wait too long:
             .withDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY, Duration.ofMillis(500))
             .build();
@@ -132,5 +134,29 @@ public class ConnectIT {
         .addContactPoints(serverRule.getContactPoints())
         .withConfigLoader(loader)
         .buildAsync();
+  }
+
+  /**
+   * Test policy that fails if a "runtime" control connection schedule is requested.
+   *
+   * <p>This is just to check that {@link #newControlConnectionSchedule(boolean)} is called with the
+   * correct boolean parameter.
+   */
+  public static class InitOnlyReconnectionPolicy extends ConstantReconnectionPolicy {
+
+    public InitOnlyReconnectionPolicy(DriverContext context) {
+      super(context);
+    }
+
+    @NonNull
+    @Override
+    public ReconnectionSchedule newControlConnectionSchedule(boolean isInitialConnection) {
+      if (isInitialConnection) {
+        return super.newControlConnectionSchedule(true);
+      } else {
+        throw new UnsupportedOperationException(
+            "should not be called with isInitialConnection==false");
+      }
+    }
   }
 }

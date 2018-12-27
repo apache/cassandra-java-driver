@@ -698,6 +698,19 @@
         "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1-SNAPSHOT",
         "elementKind": "method",
         "justification": "JAVA-2103: Expose partitioner name in TokenMap API"
+      },
+      {
+        "code": "java.method.numberOfParametersChanged",
+        "old": "method com.datastax.oss.driver.api.core.connection.ReconnectionPolicy.ReconnectionSchedule com.datastax.oss.driver.api.core.connection.ReconnectionPolicy::newControlConnectionSchedule()",
+        "new": "method com.datastax.oss.driver.api.core.connection.ReconnectionPolicy.ReconnectionSchedule com.datastax.oss.driver.api.core.connection.ReconnectionPolicy::newControlConnectionSchedule(boolean)",
+        "package": "com.datastax.oss.driver.api.core.connection",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.connection.ReconnectionPolicy",
+        "classSimpleName": "ReconnectionPolicy",
+        "methodName": "newControlConnectionSchedule",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1-SNAPSHOT",
+        "elementKind": "method",
+        "justification": "JAVA-2077: Allow reconnection policy to detect first connection attempt"
       }
     ]
   }
