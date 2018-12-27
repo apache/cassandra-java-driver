@@ -4,7 +4,7 @@
 
 ### 4.0.0-rc1 (in progress)
 
-
+- [improvement] JAVA-2077: Allow reconnection policy to detect first connection attempt
 
 ### 4.0.0-beta3
 

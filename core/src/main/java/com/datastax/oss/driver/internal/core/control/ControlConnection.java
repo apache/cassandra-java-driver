@@ -17,7 +17,8 @@ package com.datastax.oss.driver.internal.core.control;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
-import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy.ReconnectionSchedule;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
@@ -218,6 +219,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
     private boolean closeWasCalled;
     private final Reconnection reconnection;
+    private final boolean reconnectOnInit;
     private DriverChannelOptions channelOptions;
     // The last events received for each node
     private final Map<Node, DistanceEvent> lastDistanceEvents = new WeakHashMap<>();
@@ -225,13 +227,10 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
     private SingleThreaded(InternalDriverContext context) {
       this.context = context;
-      ReconnectionPolicy reconnectionPolicy = context.getReconnectionPolicy();
       this.reconnection =
-          new Reconnection(
-              logPrefix,
-              adminExecutor,
-              reconnectionPolicy::newControlConnectionSchedule,
-              this::reconnect);
+          new Reconnection(logPrefix, adminExecutor, this::newSchedule, this::reconnect);
+      this.reconnectOnInit =
+          context.getConfig().getDefaultProfile().getBoolean(DefaultDriverOption.RECONNECT_ON_INIT);
       // In "reconnect-on-init" mode, handle cancellation of the initFuture by user code
       CompletableFutures.whenCancelled(
           this.initFuture,
@@ -292,6 +291,15 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
       } catch (Throwable t) {
         initFuture.completeExceptionally(t);
       }
+    }
+
+    private ReconnectionSchedule newSchedule() {
+      boolean isInitialConnection =
+          reconnectOnInit
+              // This is always set after the initial attempt, regardless of its outcome.
+              // If the first attempt failed, we create the schedule before setting it.
+              && !firstConnectionAttemptFuture.isDone();
+      return context.getReconnectionPolicy().newControlConnectionSchedule(isInitialConnection);
     }
 
     private CompletionStage<Boolean> reconnect() {
