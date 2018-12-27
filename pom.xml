@@ -35,6 +35,8 @@
     <module>core</module>
     <module>core-shaded</module>
     <module>query-builder</module>
+    <module>mapper-runtime</module>
+    <module>mapper-processor</module>
     <module>test-infra</module>
     <module>integration-tests</module>
     <module>distribution</module>
