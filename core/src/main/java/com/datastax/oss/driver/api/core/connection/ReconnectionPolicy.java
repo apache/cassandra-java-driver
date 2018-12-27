@@ -36,8 +36,10 @@ import java.time.Duration;
  *       for a node does not have its configured number of connections (see {@code
  *       advanced.connection.pool.*.size} in the configuration), a reconnection starts for that
  *       pool.
- *   <li>{@linkplain #newControlConnectionSchedule() for the control connection}: when the control
- *       node goes down, a reconnection starts to find another node to replace it.
+ *   <li>{@linkplain #newControlConnectionSchedule(boolean) for the control connection}: when the
+ *       control node goes down, a reconnection starts to find another node to replace it. This is
+ *       also used if the configuration option {@code advanced.reconnect-on-init} is set and the
+ *       driver has to retry the initial connection.
  * </ul>
  *
  * This interface defines separate methods for those two cases, but implementations are free to
@@ -49,9 +51,21 @@ public interface ReconnectionPolicy extends AutoCloseable {
   @NonNull
   ReconnectionSchedule newNodeSchedule(@NonNull Node node);
 
-  /** Creates a new schedule for the control connection. */
+  /**
+   * Creates a new schedule for the control connection.
+   *
+   * @param isInitialConnection whether this schedule is generated for the driver's initial attempt
+   *     to connect to the cluster.
+   *     <ul>
+   *       <li>{@code true} means that the configuration option {@code advanced.reconnect-on-init}
+   *           is set, the driver failed to reach any contact point, and it is now scheduling
+   *           reattempts.
+   *       <li>{@code false} means that the driver was already initialized, lost connection to the
+   *           control node, and is now scheduling attempts to connect to another node.
+   *     </ul>
+   */
   @NonNull
-  ReconnectionSchedule newControlConnectionSchedule();
+  ReconnectionSchedule newControlConnectionSchedule(boolean isInitialConnection);
 
   /** Called when the cluster that this policy is associated with closes. */
   @Override

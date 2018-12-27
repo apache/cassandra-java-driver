@@ -19,6 +19,9 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.addresstranslation.PassThroughAddressTranslator;
@@ -57,6 +60,8 @@ abstract class ControlConnectionTestBase {
   protected static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
 
   @Mock protected InternalDriverContext context;
+  @Mock protected DriverConfig config;
+  @Mock protected DriverExecutionProfile defaultProfile;
   @Mock protected ReconnectionPolicy reconnectionPolicy;
   @Mock protected ReconnectionPolicy.ReconnectionSchedule reconnectionSchedule;
   @Mock protected NettyOptions nettyOptions;
@@ -95,8 +100,14 @@ abstract class ControlConnectionTestBase {
               return channelFuture;
             });
 
+    Mockito.when(context.getConfig()).thenReturn(config);
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
+    Mockito.when(defaultProfile.getBoolean(DefaultDriverOption.RECONNECT_ON_INIT))
+        .thenReturn(false);
+
     Mockito.when(context.getReconnectionPolicy()).thenReturn(reconnectionPolicy);
-    Mockito.when(reconnectionPolicy.newControlConnectionSchedule())
+    // Child classes only cover "runtime" reconnections when the driver is already initialized
+    Mockito.when(reconnectionPolicy.newControlConnectionSchedule(false))
         .thenReturn(reconnectionSchedule);
     // By default, set a large reconnection delay. Tests that care about reconnection will override
     // it.
