@@ -17,9 +17,11 @@ package com.datastax.driver.core.querybuilder;
 
 import com.datastax.driver.core.CodecRegistry;
 import com.google.common.collect.Lists;
+
+import java.io.Serializable;
 import java.util.List;
 
-public abstract class Clause extends Utils.Appendeable {
+public abstract class Clause extends Utils.Appendeable implements Serializable {
 
   abstract String name();
 
