@@ -38,12 +38,12 @@ public abstract class ClassGenerator {
 
   public static final ClassName SESSION_TYPE = ClassName.get(Session.class);
 
-  public void generate(Filer filer) throws IOException {
+  public void generate(Filer filer, String indent) throws IOException {
     ClassName className = getClassName();
     JavaFileObject file =
         filer.createSourceFile(className.packageName() + "." + className.simpleName());
     try (Writer writer = file.openWriter()) {
-      getContents().indent("  ").build().writeTo(writer);
+      getContents().indent(indent).build().writeTo(writer);
     }
   }
 

@@ -28,6 +28,10 @@ public class DecoratedMessager {
     this.messager = messager;
   }
 
+  public void warn(String template, Object... arguments) {
+    messager.printMessage(Diagnostic.Kind.WARNING, String.format(template, arguments));
+  }
+
   public void error(Element element, String template, Object... arguments) {
     messager.printMessage(Diagnostic.Kind.ERROR, String.format(template, arguments), element);
   }

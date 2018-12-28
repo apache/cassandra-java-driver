@@ -34,13 +34,13 @@ public class ManagerGenerator {
     annotation = baseElement.getAnnotation(MappingManager.class);
   }
 
-  public void generate(Filer filer) throws IOException {
+  public void generate(Filer filer, String indent) throws IOException {
     ClassName builderName = generateBuilderName();
     ManagerImplementationGenerator implementation =
         new ManagerImplementationGenerator(interfaceName, builderName);
-    implementation.generate(filer);
+    implementation.generate(filer, indent);
     new ManagerBuilderGenerator(builderName, interfaceName, implementation.getClassName())
-        .generate(filer);
+        .generate(filer, indent);
   }
 
   private ClassName generateBuilderName() {

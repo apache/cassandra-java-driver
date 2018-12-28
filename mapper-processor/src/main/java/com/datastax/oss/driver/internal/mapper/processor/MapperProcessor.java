@@ -16,8 +16,10 @@
 package com.datastax.oss.driver.internal.mapper.processor;
 
 import com.datastax.oss.driver.api.mapper.annotations.MappingManager;
+import com.datastax.oss.driver.shaded.guava.common.base.Strings;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.google.auto.service.AutoService;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -34,14 +36,20 @@ import javax.lang.model.element.TypeElement;
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class MapperProcessor extends AbstractProcessor {
 
+  private static final String INDENT_AMOUNT_OPTION = "com.datastax.oss.driver.mapper.indent";
+  private static final String INDENT_WITH_TABS_OPTION =
+      "com.datastax.oss.driver.mapper.indentWithTabs";
+
   private DecoratedMessager messager;
   private Filer filer;
+  private String indent;
 
   @Override
   public synchronized void init(ProcessingEnvironment processingEnvironment) {
     super.init(processingEnvironment);
     messager = new DecoratedMessager(processingEnvironment.getMessager());
     filer = processingEnvironment.getFiler();
+    indent = computeIndent(processingEnvironment.getOptions());
   }
 
   @Override
@@ -57,7 +65,7 @@ public class MapperProcessor extends AbstractProcessor {
         // Safe cast given that we checked the kind above
         TypeElement typeElement = (TypeElement) element;
         try {
-          new ManagerGenerator(typeElement).generate(filer);
+          new ManagerGenerator(typeElement).generate(filer, indent);
         } catch (Exception e) {
           messager.error(
               element, "Unexpected error while writing generated code: %s", e.toString());
@@ -70,5 +78,26 @@ public class MapperProcessor extends AbstractProcessor {
   @Override
   public Set<String> getSupportedAnnotationTypes() {
     return ImmutableSet.of(MappingManager.class.getName());
+  }
+
+  @Override
+  public Set<String> getSupportedOptions() {
+    return ImmutableSet.of(INDENT_AMOUNT_OPTION, INDENT_WITH_TABS_OPTION);
+  }
+
+  private String computeIndent(Map<String, String> options) {
+    boolean tabs = options.containsKey(INDENT_WITH_TABS_OPTION);
+    String amountSpec = options.get(INDENT_AMOUNT_OPTION);
+    if (amountSpec != null) {
+      try {
+        int amount = Integer.parseInt(amountSpec);
+        return Strings.repeat(tabs ? "\t" : " ", amount);
+      } catch (NumberFormatException e) {
+        messager.warn(
+            "Could not parse %s: expected a number, got '%s'. Defaulting to %s.",
+            INDENT_AMOUNT_OPTION, amountSpec, tabs ? "1 tab" : "2 spaces");
+      }
+    }
+    return tabs ? "\t" : "  ";
   }
 }
