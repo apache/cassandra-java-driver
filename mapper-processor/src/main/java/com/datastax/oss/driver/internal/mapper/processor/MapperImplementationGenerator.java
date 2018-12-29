@@ -15,46 +15,41 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor;
 
+import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
 
-public class ManagerBuilderGenerator extends ClassGenerator {
+/** Generates the implementation of a {@link Mapper}-annotated interface. */
+public class MapperImplementationGenerator extends ClassGenerator {
 
-  private final ClassName builderName;
   private final ClassName interfaceName;
   private final ClassName implementationName;
 
-  public ManagerBuilderGenerator(
-      ClassName builderName,
-      ClassName interfaceName,
-      ClassName implementationName,
-      GenerationContext context) {
+  public MapperImplementationGenerator(TypeElement interfaceType, GenerationContext context) {
     super(context);
-    this.builderName = builderName;
-    this.interfaceName = interfaceName;
-    this.implementationName = implementationName;
+    interfaceName = ClassName.get(interfaceType);
+    implementationName =
+        ClassName.get(interfaceName.packageName(), interfaceName.simpleName() + "_Impl");
+    context.getGeneratedMappers().put(interfaceName, implementationName);
   }
 
   @Override
   protected ClassName getClassName() {
-    return builderName;
+    return implementationName;
   }
 
   @Override
   protected JavaFile.Builder getContents() {
     TypeSpec.Builder contents =
-        TypeSpec.classBuilder(builderName)
-            .addJavadoc(
-                "Builds an instance of {@link $T} wrapping a driver {@link $T}.",
-                interfaceName,
-                SESSION_TYPE)
-            .addJavadoc(JAVADOC_PARAGRAPH_SEPARATOR)
+        TypeSpec.classBuilder(implementationName)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
             .addModifiers(Modifier.PUBLIC)
+            .addSuperinterface(interfaceName)
             .addField(
                 FieldSpec.builder(SESSION_TYPE, "session", Modifier.PRIVATE, Modifier.FINAL)
                     .build())
@@ -63,13 +58,7 @@ public class ManagerBuilderGenerator extends ClassGenerator {
                     .addModifiers(Modifier.PUBLIC)
                     .addParameter(SESSION_TYPE, "session")
                     .addStatement("this.session = session")
-                    .build())
-            .addMethod(
-                MethodSpec.methodBuilder("build")
-                    .addModifiers(Modifier.PUBLIC)
-                    .returns(interfaceName)
-                    .addStatement("return new $T(session)", implementationName)
                     .build());
-    return JavaFile.builder(builderName.packageName(), contents.build());
+    return JavaFile.builder(implementationName.packageName(), contents.build());
   }
 }

@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.mapper;
 
-import com.datastax.oss.driver.api.mapper.annotations.MappingManager;
+import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 
-@MappingManager
-public interface TestMappingManager {}
+@Mapper
+public interface ProductMapper {}

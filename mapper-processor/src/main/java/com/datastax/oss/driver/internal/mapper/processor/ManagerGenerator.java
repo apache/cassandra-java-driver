@@ -17,8 +17,6 @@ package com.datastax.oss.driver.internal.mapper.processor;
 
 import com.datastax.oss.driver.api.mapper.annotations.MappingManager;
 import com.squareup.javapoet.ClassName;
-import java.io.IOException;
-import javax.annotation.processing.Filer;
 import javax.lang.model.element.TypeElement;
 
 /**
@@ -26,21 +24,25 @@ import javax.lang.model.element.TypeElement;
  */
 public class ManagerGenerator {
 
+  private final TypeElement interfaceElement;
   private final ClassName interfaceName;
   private final MappingManager annotation;
+  private final GenerationContext context;
 
-  public ManagerGenerator(TypeElement baseElement) {
-    interfaceName = ClassName.get(baseElement);
-    annotation = baseElement.getAnnotation(MappingManager.class);
+  public ManagerGenerator(TypeElement interfaceElement, GenerationContext context) {
+    this.interfaceElement = interfaceElement;
+    interfaceName = ClassName.get(interfaceElement);
+    annotation = interfaceElement.getAnnotation(MappingManager.class);
+    this.context = context;
   }
 
-  public void generate(Filer filer, String indent) throws IOException {
+  public void generate() {
     ClassName builderName = generateBuilderName();
     ManagerImplementationGenerator implementation =
-        new ManagerImplementationGenerator(interfaceName, builderName);
-    implementation.generate(filer, indent);
-    new ManagerBuilderGenerator(builderName, interfaceName, implementation.getClassName())
-        .generate(filer, indent);
+        new ManagerImplementationGenerator(interfaceName, interfaceElement, builderName, context);
+    implementation.generate();
+    new ManagerBuilderGenerator(builderName, interfaceName, implementation.getClassName(), context)
+        .generate();
   }
 
   private ClassName generateBuilderName() {

@@ -15,12 +15,15 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor;
 
+import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.MappingManager;
 import com.datastax.oss.driver.shaded.guava.common.base.Strings;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.google.auto.service.AutoService;
+import java.lang.annotation.Annotation;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -31,6 +34,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Types;
 
 @AutoService(Processor.class)
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
@@ -41,6 +45,7 @@ public class MapperProcessor extends AbstractProcessor {
       "com.datastax.oss.driver.mapper.indentWithTabs";
 
   private DecoratedMessager messager;
+  private Types typeUtils;
   private Filer filer;
   private String indent;
 
@@ -48,6 +53,7 @@ public class MapperProcessor extends AbstractProcessor {
   public synchronized void init(ProcessingEnvironment processingEnvironment) {
     super.init(processingEnvironment);
     messager = new DecoratedMessager(processingEnvironment.getMessager());
+    typeUtils = processingEnvironment.getTypeUtils();
     filer = processingEnvironment.getFiler();
     indent = computeIndent(processingEnvironment.getOptions());
   }
@@ -55,29 +61,40 @@ public class MapperProcessor extends AbstractProcessor {
   @Override
   public boolean process(
       Set<? extends TypeElement> annotations, RoundEnvironment roundEnvironment) {
-    for (Element element : roundEnvironment.getElementsAnnotatedWith(MappingManager.class)) {
+    GenerationContext context = new GenerationContext(messager, typeUtils, filer, indent);
+    processAnnotatedInterfaces(
+        roundEnvironment,
+        Mapper.class,
+        e -> new MapperImplementationGenerator(e, context).generate());
+    processAnnotatedInterfaces(
+        roundEnvironment, MappingManager.class, e -> new ManagerGenerator(e, context).generate());
+    return true;
+  }
+
+  private void processAnnotatedInterfaces(
+      RoundEnvironment roundEnvironment,
+      Class<? extends Annotation> annotationClass,
+      Consumer<TypeElement> action) {
+    for (Element element : roundEnvironment.getElementsAnnotatedWith(annotationClass)) {
       if (element.getKind() != ElementKind.INTERFACE) {
         messager.error(
-            element,
-            "Only interfaces can be annotated with %s",
-            MappingManager.class.getSimpleName());
+            element, "Only interfaces can be annotated with %s", annotationClass.getSimpleName());
       } else {
         // Safe cast given that we checked the kind above
         TypeElement typeElement = (TypeElement) element;
         try {
-          new ManagerGenerator(typeElement).generate(filer, indent);
+          action.accept(typeElement);
         } catch (Exception e) {
           messager.error(
               element, "Unexpected error while writing generated code: %s", e.toString());
         }
       }
     }
-    return true;
   }
 
   @Override
   public Set<String> getSupportedAnnotationTypes() {
-    return ImmutableSet.of(MappingManager.class.getName());
+    return ImmutableSet.of(MappingManager.class.getName(), Mapper.class.getName());
   }
 
   @Override

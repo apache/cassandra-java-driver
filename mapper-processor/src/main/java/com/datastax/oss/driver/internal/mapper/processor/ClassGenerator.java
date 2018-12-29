@@ -19,8 +19,8 @@ import com.datastax.oss.driver.api.core.session.Session;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.io.Writer;
-import javax.annotation.processing.Filer;
 import javax.tools.JavaFileObject;
 
 /**
@@ -38,12 +38,24 @@ public abstract class ClassGenerator {
 
   public static final ClassName SESSION_TYPE = ClassName.get(Session.class);
 
-  public void generate(Filer filer, String indent) throws IOException {
-    ClassName className = getClassName();
-    JavaFileObject file =
-        filer.createSourceFile(className.packageName() + "." + className.simpleName());
-    try (Writer writer = file.openWriter()) {
-      getContents().indent(indent).build().writeTo(writer);
+  protected final GenerationContext context;
+
+  protected ClassGenerator(GenerationContext context) {
+    this.context = context;
+  }
+
+  public void generate() {
+    try {
+      ClassName className = getClassName();
+      JavaFileObject file =
+          context
+              .getFiler()
+              .createSourceFile(className.packageName() + "." + className.simpleName());
+      try (Writer writer = file.openWriter()) {
+        getContents().indent(context.getIndent()).build().writeTo(writer);
+      }
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
   }
 
