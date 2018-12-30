@@ -98,6 +98,10 @@ public class Reconnection {
 
   /** This is a no-op if the reconnection is already running. */
   public void start() {
+    start(null);
+  }
+
+  public void start(ReconnectionSchedule customSchedule) {
     assert executor.inEventLoop();
     switch (state) {
       case SCHEDULED:
@@ -109,7 +113,7 @@ public class Reconnection {
         state = State.ATTEMPT_IN_PROGRESS;
         break;
       case STOPPED:
-        reconnectionSchedule = scheduleSupplier.get();
+        reconnectionSchedule = (customSchedule == null) ? scheduleSupplier.get() : customSchedule;
         onStart.run();
         scheduleNextAttempt();
         break;
