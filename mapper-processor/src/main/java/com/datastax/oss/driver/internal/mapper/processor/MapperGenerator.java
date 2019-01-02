@@ -15,33 +15,31 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor;
 
-import com.datastax.oss.driver.api.mapper.annotations.MappingManager;
+import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.squareup.javapoet.ClassName;
 import javax.lang.model.element.TypeElement;
 
-/**
- * Entry point to generate all the types related to a {@link MappingManager}-annotated interface.
- */
-public class ManagerGenerator {
+/** Entry point to generate all the types related to a {@link Mapper}-annotated interface. */
+public class MapperGenerator {
 
   private final TypeElement interfaceElement;
   private final ClassName interfaceName;
-  private final MappingManager annotation;
+  private final Mapper annotation;
   private final GenerationContext context;
 
-  public ManagerGenerator(TypeElement interfaceElement, GenerationContext context) {
+  public MapperGenerator(TypeElement interfaceElement, GenerationContext context) {
     this.interfaceElement = interfaceElement;
     interfaceName = ClassName.get(interfaceElement);
-    annotation = interfaceElement.getAnnotation(MappingManager.class);
+    annotation = interfaceElement.getAnnotation(Mapper.class);
     this.context = context;
   }
 
   public void generate() {
     ClassName builderName = generateBuilderName();
-    ManagerImplementationGenerator implementation =
-        new ManagerImplementationGenerator(interfaceName, interfaceElement, builderName, context);
+    MapperImplementationGenerator implementation =
+        new MapperImplementationGenerator(interfaceName, interfaceElement, builderName, context);
     implementation.generate();
-    new ManagerBuilderGenerator(builderName, interfaceName, implementation.getClassName(), context)
+    new MapperBuilderGenerator(builderName, interfaceName, implementation.getClassName(), context)
         .generate();
   }
 

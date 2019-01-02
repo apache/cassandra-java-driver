@@ -22,13 +22,13 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import javax.lang.model.element.Modifier;
 
-public class ManagerBuilderGenerator extends ClassGenerator {
+public class MapperBuilderGenerator extends ClassGenerator {
 
   private final ClassName builderName;
   private final ClassName interfaceName;
   private final ClassName implementationName;
 
-  public ManagerBuilderGenerator(
+  public MapperBuilderGenerator(
       ClassName builderName,
       ClassName interfaceName,
       ClassName implementationName,

@@ -15,8 +15,9 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor;
 
+import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
-import com.datastax.oss.driver.api.mapper.annotations.MappingManager;
+import com.datastax.oss.driver.api.mapper.annotations.Table;
 import com.datastax.oss.driver.shaded.guava.common.base.Strings;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.google.auto.service.AutoService;
@@ -62,12 +63,21 @@ public class MapperProcessor extends AbstractProcessor {
   public boolean process(
       Set<? extends TypeElement> annotations, RoundEnvironment roundEnvironment) {
     GenerationContext context = new GenerationContext(messager, typeUtils, filer, indent);
+
+    for (Element element : roundEnvironment.getElementsAnnotatedWith(Table.class)) {
+      if (element.getKind() != ElementKind.CLASS) {
+        messager.error(
+            element, "Only classes can be annotated with %s", Table.class.getSimpleName());
+      } else {
+        EntityParser parser = new EntityParser((TypeElement) element, context);
+        context.getEntityDefinitions().put(parser.getClassName(), parser.getDefinition());
+      }
+    }
+
     processAnnotatedInterfaces(
-        roundEnvironment,
-        Mapper.class,
-        e -> new MapperImplementationGenerator(e, context).generate());
+        roundEnvironment, Dao.class, e -> new DaoImplementationGenerator(e, context).generate());
     processAnnotatedInterfaces(
-        roundEnvironment, MappingManager.class, e -> new ManagerGenerator(e, context).generate());
+        roundEnvironment, Mapper.class, e -> new MapperGenerator(e, context).generate());
     return true;
   }
 
@@ -94,7 +104,7 @@ public class MapperProcessor extends AbstractProcessor {
 
   @Override
   public Set<String> getSupportedAnnotationTypes() {
-    return ImmutableSet.of(MappingManager.class.getName(), Mapper.class.getName());
+    return ImmutableSet.of(Mapper.class.getName(), Dao.class.getName());
   }
 
   @Override

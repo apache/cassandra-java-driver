@@ -15,9 +15,9 @@
  */
 package com.datastax.oss.driver.mapper;
 
-import com.datastax.oss.driver.api.mapper.annotations.MappingManager;
+import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 
-@MappingManager
-public interface InventoryMappingManager {
-  ProductMapper getProductMapper();
+@Mapper
+public interface InventoryMapper {
+  ProductDao getProductDao();
 }

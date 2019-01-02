@@ -22,4 +22,14 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.CLASS)
-public @interface Mapper {}
+public @interface Mapper {
+
+  /**
+   * The fully-qualified name of the builder class that will get generated in order to create
+   * instances of the manager, for example "com.mycompany.MyCustomBuilder".
+   *
+   * <p>If this is left empty (the default), the builder will use the name of the original interface
+   * with the suffix "Builder", and reside in the same package.
+   */
+  String builderName() default "";
+}
