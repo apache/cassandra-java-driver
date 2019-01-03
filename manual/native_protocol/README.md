@@ -16,11 +16,12 @@ Cassandra when the first connection is established. Both sides are
 backward-compatible with older versions:
 
 <table border="1" style="text-align:center; width:100%;margin-bottom:1em;">
-<tr><td>&nbsp;</td><td>Cassandra: 1.2.x<br/>(DSE 3.2)</td><td>2.0.x<br/>(DSE 4.0 to 4.6)</td><td>2.1.x<br/>(DSE 4.7)</td><td>2.2.x</td><td>3.0.x</td></tr>
-<tr><td>Driver: 1.0.x</td> <td>v1</td> <td>v1</td>  <td>v1</td> <td>v1</td>  <td>Unsupported <i>(1)</i></td> </tr>
-<tr><td>2.0.x to 2.1.1</td> <td>v1</td> <td>v2</td>  <td>v2</td> <td>v2</td> <td>Unsupported <i>(1)</i></td> </tr>
-<tr><td>2.1.2 to 2.1.x</td> <td>v1</td> <td>v2</td>  <td>v3</td> <td>v3</td> <td>Unsupported <i>(2)</i></td> </tr>
-<tr><td>3.x</td> <td>v1</td> <td>v2</td>  <td>v3</td> <td>v4</td> <td>v4</td> </tr>
+<tr><th>Driver Version</th><th>Cassandra: 1.2.x<br/>(DSE 3.2)</th><th>2.0.x<br/>(DSE 4.0 to 4.6)
+</th><th>2.1.x<br/>(DSE 4.7)</th><th>2.2.x</th><th>3.0.x &amp; 3.x<br/>(DSE 5.0+)</th></tr>
+<tr><th>1.0.x</th> <td>v1</td> <td>v1</td>  <td>v1</td> <td>v1</td>  <td>Unsupported <i>(1)</i></td> </tr>
+<tr><th>2.0.x to 2.1.1</th> <td>v1</td> <td>v2</td>  <td>v2</td> <td>v2</td> <td>Unsupported <i>(1)</i></td> </tr>
+<tr><th>2.1.2 to 2.1.x</th> <td>v1</td> <td>v2</td>  <td>v3</td> <td>v3</td> <td>Unsupported <i>(2)</i></td> </tr>
+<tr><th>3.x</th> <td>v1</td> <td>v2</td>  <td>v3</td> <td>v4</td> <td>v4</td> </tr>
 </table>
 
 *(1) Cassandra 3.0 does not support protocol versions v1 and v2*
