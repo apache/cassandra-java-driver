@@ -105,8 +105,7 @@ Cluster cluster = Cluster.builder()
         ).build();
 ```
 
-This policy queries nodes of the local data-center in a round-robin fashion; optionally, it can also try a configurable
-number of hosts in remote data centers if all local hosts failed.
+This policy queries nodes of the local data-center in a round-robin fashion.
 
 Call `withLocalDc` to specify the name of your local datacenter. You can also leave it out, and the driver will use the
 datacenter of the first contact point that was reached [at initialization](../#cluster-initialization). However,
@@ -115,42 +114,6 @@ local datacenter. In general, providing the datacenter name explicitly is a safe
 
 Hosts belonging to the local datacenter are at distance `LOCAL`, and appear first in query plans (in a round-robin
 fashion).
-
-#### Configuring Remote DCs as Local DCs
-__NOTE: This capability is deprecated and will be removed from the next major release of the driver. We firmly believe
-that DC failover shouldn't be done in the driver, which does not have the necessary context to know what makes sense
-considering application semantics__
-
-In rare situations, you may want to configure remote data centers for "failover" scenarios when the local data center
-is not available (or even a few nodes in the local DC are not available). To do so, you can create your cluster like
-this:
-
-```java
-Cluster cluster = Cluster.builder()
-        .addContactPoint("127.0.0.1")
-        .withLoadBalancingPolicy(
-                DCAwareRoundRobinPolicy.builder()
-                        .withLocalDc("myLocalDC")
-                        .withUsedHostsPerRemoteDc(2)
-                        .allowRemoteDCsForLocalConsistencyLevel()
-                        .build()
-        ).build();
-```
-
-If you call `withUsedHostsPerRemoteDc`, the policy will pick that number of hosts for each remote DC, and add them at
-the end of query plans. To illustrate this, let's assume that the value is 2, there are 3 datacenters and 3 hosts in the
-local datacenter. Query plans would look like this:
-
-* query 1: localHost1, localHost2, localHost3, host1InRemoteDc1, host2InRemoteDc1, host1InRemoteDc2, host2InRemoteDc2
-* query 2: localHost2, localHost3, localHost1, host1InRemoteDc1, host2InRemoteDc1, host1InRemoteDc2, host2InRemoteDc2
-* query 3: localHost3, localHost1, localHost2, host1InRemoteDc1, host2InRemoteDc1, host1InRemoteDc2, host2InRemoteDc2
-
-Hosts selected by this option are at distance `REMOTE`. Note that they always appear in the same order.
-
-Finally, `allowRemoteDCsForLocalConsistencyLevel` controls whether remote hosts included by the previous option are
-included when the consistency level of the query is `LOCAL_ONE` or `LOCAL_QUORUM`. By default, it is off (remote hosts
-are not included for local CLs).
-
 
 ### [TokenAwarePolicy]
 
