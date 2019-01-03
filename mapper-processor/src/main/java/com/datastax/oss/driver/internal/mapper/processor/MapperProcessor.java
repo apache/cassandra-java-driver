@@ -35,6 +35,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 @AutoService(Processor.class)
@@ -47,6 +48,7 @@ public class MapperProcessor extends AbstractProcessor {
 
   private DecoratedMessager messager;
   private Types typeUtils;
+  private Elements elementUtils;
   private Filer filer;
   private String indent;
 
@@ -55,6 +57,7 @@ public class MapperProcessor extends AbstractProcessor {
     super.init(processingEnvironment);
     messager = new DecoratedMessager(processingEnvironment.getMessager());
     typeUtils = processingEnvironment.getTypeUtils();
+    elementUtils = processingEnvironment.getElementUtils();
     filer = processingEnvironment.getFiler();
     indent = computeIndent(processingEnvironment.getOptions());
   }
@@ -62,7 +65,8 @@ public class MapperProcessor extends AbstractProcessor {
   @Override
   public boolean process(
       Set<? extends TypeElement> annotations, RoundEnvironment roundEnvironment) {
-    GenerationContext context = new GenerationContext(messager, typeUtils, filer, indent);
+    GenerationContext context =
+        new GenerationContext(messager, typeUtils, elementUtils, filer, indent);
 
     for (Element element : roundEnvironment.getElementsAnnotatedWith(Table.class)) {
       if (element.getKind() != ElementKind.CLASS) {

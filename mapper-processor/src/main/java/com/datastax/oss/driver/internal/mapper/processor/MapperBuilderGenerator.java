@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor;
 
+import com.datastax.oss.driver.api.core.session.Session;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -51,17 +52,17 @@ public class MapperBuilderGenerator extends ClassGenerator {
             .addJavadoc(
                 "Builds an instance of {@link $T} wrapping a driver {@link $T}.",
                 interfaceName,
-                SESSION_TYPE)
+                Session.class)
             .addJavadoc(JAVADOC_PARAGRAPH_SEPARATOR)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
             .addModifiers(Modifier.PUBLIC)
             .addField(
-                FieldSpec.builder(SESSION_TYPE, "session", Modifier.PRIVATE, Modifier.FINAL)
+                FieldSpec.builder(Session.class, "session", Modifier.PRIVATE, Modifier.FINAL)
                     .build())
             .addMethod(
                 MethodSpec.constructorBuilder()
                     .addModifiers(Modifier.PUBLIC)
-                    .addParameter(SESSION_TYPE, "session")
+                    .addParameter(Session.class, "session")
                     .addStatement("this.session = session")
                     .build())
             .addMethod(

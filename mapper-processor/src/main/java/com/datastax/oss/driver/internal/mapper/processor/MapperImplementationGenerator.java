@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor;
 
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -116,13 +117,13 @@ public class MapperImplementationGenerator extends ClassGenerator {
             .addModifiers(Modifier.PUBLIC)
             .addSuperinterface(interfaceName)
             .addField(
-                FieldSpec.builder(SESSION_TYPE, "session", Modifier.PRIVATE, Modifier.FINAL)
+                FieldSpec.builder(Session.class, "session", Modifier.PRIVATE, Modifier.FINAL)
                     .build());
 
     MethodSpec.Builder constructorContents =
         MethodSpec.constructorBuilder()
             .addModifiers(Modifier.PUBLIC)
-            .addParameter(SESSION_TYPE, "session")
+            .addParameter(Session.class, "session")
             .addStatement("this.session = session");
 
     for (MapperMethod method : mapperMethods) {

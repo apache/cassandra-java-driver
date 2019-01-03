@@ -15,11 +15,12 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor;
 
-import com.datastax.oss.driver.api.mapper.annotations.Mapper;
+import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.squareup.javapoet.ClassName;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.processing.Filer;
+import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 /**
@@ -28,26 +29,36 @@ import javax.lang.model.util.Types;
  */
 public class GenerationContext {
 
-  private final Map<ClassName, ClassName> generatedMappers = new HashMap<>();
+  private final Map<ClassName, EntityDefinition> entityDefinitions = new HashMap<>();
+  private final Map<ClassName, ClassName> generatedDaos = new HashMap<>();
   private final DecoratedMessager messager;
   private final Types typeUtils;
+  private final Elements elementUtils;
   private final Filer filer;
   private final String indent;
 
   public GenerationContext(
-      DecoratedMessager messager, Types typeUtils, Filer filer, String indent) {
+      DecoratedMessager messager,
+      Types typeUtils,
+      Elements elementUtils,
+      Filer filer,
+      String indent) {
     this.messager = messager;
     this.typeUtils = typeUtils;
+    this.elementUtils = elementUtils;
     this.filer = filer;
     this.indent = indent;
   }
 
+  public Map<ClassName, EntityDefinition> getEntityDefinitions() {
+    return entityDefinitions;
+  }
+
   /**
-   * The {@link Mapper}-annotated interfaces processed so far (interface name => implementation
-   * name).
+   * The {@link Dao}-annotated interfaces processed so far (interface name => implementation name).
    */
-  public Map<ClassName, ClassName> getGeneratedMappers() {
-    return generatedMappers;
+  public Map<ClassName, ClassName> getGeneratedDaos() {
+    return generatedDaos;
   }
 
   public DecoratedMessager getMessager() {
@@ -56,6 +67,10 @@ public class GenerationContext {
 
   public Types getTypeUtils() {
     return typeUtils;
+  }
+
+  public Elements getElementUtils() {
+    return elementUtils;
   }
 
   public Filer getFiler() {
