@@ -9,7 +9,7 @@
 - [bug] JAVA-2070: Call onRemove instead of onDown when rack and/or DC information changes for a host.
 - [improvement] JAVA-1256: Log parameters of BuiltStatement in QueryLogger.
 - [documentation] JAVA-2074: Document preference for LZ4 over Snappy.
-
+- [documentation] JAVA-1159: Document workaround for using tuple with udt field in Mapper.
 
 ### 3.6.0
 
