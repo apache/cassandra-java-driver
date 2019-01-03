@@ -9,6 +9,7 @@
 - [bug] JAVA-2070: Call onRemove instead of onDown when rack and/or DC information changes for a host.
 - [improvement] JAVA-1256: Log parameters of BuiltStatement in QueryLogger.
 - [documentation] JAVA-2074: Document preference for LZ4 over Snappy.
+- [bug] JAVA-1612: Include netty-common jar in binary tarball.
 
 
 ### 3.6.0
