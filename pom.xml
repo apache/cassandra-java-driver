@@ -311,8 +311,6 @@
           </compilerArgs>
           <showWarnings>true</showWarnings>
           <failOnWarning>true</failOnWarning>
-          <!-- this actually means: use incremental compilation -->
-          <useIncrementalCompilation>false</useIncrementalCompilation>
         </configuration>
         <dependencies>
           <dependency>
