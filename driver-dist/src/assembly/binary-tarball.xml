@@ -45,6 +45,15 @@
                             <!-- platform-dependent -->
                             <exclude>io.netty:netty-transport-native-epoll:*</exclude>
                         </excludes>
+                        <useTransitiveFiltering>true</useTransitiveFiltering>
+                    </dependencySet>
+                    <dependencySet>
+                        <outputDirectory>lib</outputDirectory>
+                        <includes>
+                            <!-- include netty-common as it is excluded in other dependencySet by excluding netty-transport-native-epoll -->
+                            <include>io.netty:netty-common:*</include>
+                        </includes>
+                        <useTransitiveFiltering>true</useTransitiveFiltering>
                     </dependencySet>
                 </dependencySets>
             </binaries>
