@@ -33,7 +33,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
 /** Generates the implementation of a {@link Dao}-annotated interface. */
-public class DaoImplementationGenerator extends ClassGenerator {
+public class DaoImplementationGenerator extends FileGenerator {
 
   private final ClassName interfaceName;
   private final ClassName implementationName;
@@ -68,8 +68,8 @@ public class DaoImplementationGenerator extends ClassGenerator {
   }
 
   @Override
-  protected ClassName getClassName() {
-    return implementationName;
+  protected String getFileName() {
+    return implementationName.packageName() + "." + implementationName.simpleName();
   }
 
   @Override

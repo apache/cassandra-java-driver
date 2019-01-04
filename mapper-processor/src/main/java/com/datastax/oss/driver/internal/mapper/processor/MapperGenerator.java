@@ -39,7 +39,8 @@ public class MapperGenerator {
     MapperImplementationGenerator implementation =
         new MapperImplementationGenerator(interfaceName, interfaceElement, builderName, context);
     implementation.generate();
-    new MapperBuilderGenerator(builderName, interfaceName, implementation.getClassName(), context)
+    new MapperBuilderGenerator(
+            builderName, interfaceName, implementation.getGeneratedClassName(), context)
         .generate();
   }
 

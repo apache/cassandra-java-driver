@@ -31,10 +31,11 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /** Generates the implementation of a {@link Mapper}-annotated interface. */
-public class MapperImplementationGenerator extends ClassGenerator {
+public class MapperImplementationGenerator extends FileGenerator {
 
   private final ClassName interfaceName;
   private final ClassName builderName;
@@ -102,7 +103,11 @@ public class MapperImplementationGenerator extends ClassGenerator {
   }
 
   @Override
-  public ClassName getClassName() {
+  protected String getFileName() {
+    return className.packageName() + "." + className.simpleName();
+  }
+
+  public ClassName getGeneratedClassName() {
     return className;
   }
 

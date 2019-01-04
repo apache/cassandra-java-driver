@@ -23,7 +23,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import javax.lang.model.element.Modifier;
 
-public class MapperBuilderGenerator extends ClassGenerator {
+public class MapperBuilderGenerator extends FileGenerator {
 
   private final ClassName builderName;
   private final ClassName interfaceName;
@@ -41,8 +41,8 @@ public class MapperBuilderGenerator extends ClassGenerator {
   }
 
   @Override
-  protected ClassName getClassName() {
-    return builderName;
+  protected String getFileName() {
+    return builderName.packageName() + "." + builderName.simpleName();
   }
 
   @Override

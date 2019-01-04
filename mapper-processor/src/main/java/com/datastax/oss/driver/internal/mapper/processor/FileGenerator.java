@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor;
 
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -23,11 +22,11 @@ import java.io.Writer;
 import javax.tools.JavaFileObject;
 
 /**
- * Handles the generation of a particular class or interface created by the processor.
+ * Handles the generation of an individual file created by the processor.
  *
  * <p>There can be multiple ones for a single annotated element.
  */
-public abstract class ClassGenerator {
+public abstract class FileGenerator {
 
   /** A generic warning that can get added to the javadoc of any generated type. */
   public static final String JAVADOC_GENERATED_WARNING =
@@ -37,17 +36,13 @@ public abstract class ClassGenerator {
 
   protected final GenerationContext context;
 
-  protected ClassGenerator(GenerationContext context) {
+  protected FileGenerator(GenerationContext context) {
     this.context = context;
   }
 
   public void generate() {
     try {
-      ClassName className = getClassName();
-      JavaFileObject file =
-          context
-              .getFiler()
-              .createSourceFile(className.packageName() + "." + className.simpleName());
+      JavaFileObject file = context.getFiler().createSourceFile(getFileName());
       try (Writer writer = file.openWriter()) {
         getContents().indent(context.getIndent()).build().writeTo(writer);
       }
@@ -56,7 +51,11 @@ public abstract class ClassGenerator {
     }
   }
 
-  protected abstract ClassName getClassName();
+  /**
+   * Canonical (fully qualified) name of the principal type being declared in this file or a package
+   * name followed by {@code ".package-info"} for a package information file.
+   */
+  protected abstract String getFileName();
 
   protected abstract JavaFile.Builder getContents();
 }
