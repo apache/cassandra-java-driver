@@ -26,6 +26,7 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.MockChannelFactoryHelper;
 import io.netty.channel.ChannelPromise;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import org.junit.Test;
@@ -36,7 +37,8 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
 
   @Test
   public void should_close_all_channels_when_closed() throws Exception {
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
 
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
         .thenReturn(3);
@@ -73,7 +75,7 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
     inOrder.verify(eventBus, times(1)).fire(ChannelEvent.channelClosed(node));
 
     // Reconnection should have kicked in and started to open channel4, do not complete it yet
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
     factoryHelper.waitForCalls(node, 1);
 
     CompletionStage<Void> closeFuture = pool.closeAsync();
@@ -108,7 +110,8 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
 
   @Test
   public void should_force_close_all_channels_when_force_closed() throws Exception {
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
 
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
         .thenReturn(3);
@@ -145,7 +148,7 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
     inOrder.verify(eventBus, times(1)).fire(ChannelEvent.channelClosed(node));
 
     // Reconnection should have kicked in and started to open a channel, do not complete it yet
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
     factoryHelper.waitForCalls(node, 1);
 
     CompletionStage<Void> closeFuture = pool.forceCloseAsync();

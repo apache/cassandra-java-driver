@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -61,7 +62,7 @@ public class ExponentialReconnectionPolicyTest {
       long minJitterDelay = Math.min(baseDelay, (exponentialDelay * 85) / 100);
       // max will be 115% of the pure exponential delay (with a ceiling of maxDelay)
       long maxJitterDelay = Math.max(maxDelay, (exponentialDelay * 115) / 100);
-      long delay = schedule.nextDelay().toMillis();
+      long delay = schedule.nextDelay(Optional.empty()).get().toMillis();
       assertThat(delay).isBetween(minJitterDelay, maxJitterDelay);
     }
   }

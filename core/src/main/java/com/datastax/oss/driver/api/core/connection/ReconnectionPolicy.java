@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.connection;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
+import java.util.Optional;
 
 /**
  * Decides how often the driver tries to re-establish lost connections.
@@ -78,6 +79,6 @@ public interface ReconnectionPolicy extends AutoCloseable {
   interface ReconnectionSchedule {
     /** How long to wait before the next reconnection attempt. */
     @NonNull
-    Duration nextDelay();
+    Optional<Duration> nextDelay(Optional<Throwable> throwable);
   }
 }

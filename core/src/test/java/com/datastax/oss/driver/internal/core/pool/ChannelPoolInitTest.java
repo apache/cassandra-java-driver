@@ -30,6 +30,7 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.MockChannelFactoryHelper;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import org.junit.Test;
@@ -148,7 +149,8 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
   @Test
   public void should_reconnect_when_init_incomplete() throws Exception {
     // Short delay so we don't have to wait in the test
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
 
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
         .thenReturn(2);
@@ -178,7 +180,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
     inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(node));
 
     // A reconnection should have been scheduled
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
     inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
 
     channel2Future.complete(channel2);

@@ -25,6 +25,7 @@ import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.util.concurrent.EventExecutor;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -74,13 +75,14 @@ public class ReconnectionTest {
   @Test
   public void should_schedule_first_attempt_on_start() {
     // Given
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofSeconds(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofSeconds(1)));
 
     // When
     reconnection.start();
 
     // Then
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
     assertThat(reconnection.isRunning()).isTrue();
     Mockito.verify(onStartCallback).run();
   }
@@ -88,9 +90,10 @@ public class ReconnectionTest {
   @Test
   public void should_ignore_start_if_already_started() {
     // Given
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofSeconds(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofSeconds(1)));
     reconnection.start();
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
     Mockito.verify(onStartCallback).run();
 
     // When
@@ -103,9 +106,10 @@ public class ReconnectionTest {
   @Test
   public void should_stop_if_first_attempt_succeeds() {
     // Given
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
     reconnection.start();
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
 
     // When
     // the reconnection task is scheduled:
@@ -123,9 +127,10 @@ public class ReconnectionTest {
   @Test
   public void should_reschedule_if_first_attempt_fails() {
     // Given
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
     reconnection.start();
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
 
     // When
     // the reconnection task is scheduled:
@@ -137,7 +142,7 @@ public class ReconnectionTest {
 
     // Then
     // schedule was called again
-    Mockito.verify(reconnectionSchedule, times(2)).nextDelay();
+    Mockito.verify(reconnectionSchedule, times(2)).nextDelay(Optional.empty());
     runPendingTasks();
     // task was called again
     assertThat(reconnectionTask.callCount()).isEqualTo(2);
@@ -157,9 +162,10 @@ public class ReconnectionTest {
   @Test
   public void should_reconnect_now_if_next_attempt_not_started() {
     // Given
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofDays(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofDays(1)));
     reconnection.start();
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
 
     // When
     reconnection.reconnectNow(false);
@@ -171,13 +177,14 @@ public class ReconnectionTest {
     // if that attempt fails, another reconnection should be scheduled
     reconnectionTask.complete(false);
     runPendingTasks();
-    Mockito.verify(reconnectionSchedule, times(2)).nextDelay();
+    Mockito.verify(reconnectionSchedule, times(2)).nextDelay(Optional.empty());
   }
 
   @Test
   public void should_reconnect_now_if_stopped_and_forced() {
     // Given
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofDays(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofDays(1)));
     assertThat(reconnection.isRunning()).isFalse();
 
     // When
@@ -190,14 +197,15 @@ public class ReconnectionTest {
     // if that attempt failed, another reconnection was scheduled
     reconnectionTask.complete(false);
     runPendingTasks();
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
   }
 
   @Test
   @UseDataProvider(location = TestDataProviders.class, value = "booleans")
   public void should_reconnect_now_when_attempt_in_progress(boolean force) {
     // Given
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
     reconnection.start();
     runPendingTasks();
     // the next scheduled attempt has started, but not completed yet
@@ -233,10 +241,11 @@ public class ReconnectionTest {
   @Test
   public void should_stop_between_attempts() {
     // Given
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofSeconds(10));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofSeconds(10)));
     reconnection.start();
     runPendingTasks();
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
 
     // When
     reconnection.stop();
@@ -250,10 +259,11 @@ public class ReconnectionTest {
   @Test
   public void should_restart_after_stopped_between_attempts() {
     // Given
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofSeconds(10));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofSeconds(10)));
     reconnection.start();
     runPendingTasks();
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
     reconnection.stop();
     runPendingTasks();
     assertThat(reconnection.isRunning()).isFalse();
@@ -263,7 +273,7 @@ public class ReconnectionTest {
     runPendingTasks();
 
     // Then
-    Mockito.verify(reconnectionSchedule, times(2)).nextDelay();
+    Mockito.verify(reconnectionSchedule, times(2)).nextDelay(Optional.empty());
     assertThat(reconnection.isRunning()).isTrue();
   }
 
@@ -271,7 +281,8 @@ public class ReconnectionTest {
   @UseDataProvider(location = TestDataProviders.class, value = "booleans")
   public void should_stop_while_attempt_in_progress(boolean outcome) {
     // Given
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
     reconnection.start();
     runPendingTasks();
     // the next scheduled attempt has started, but not completed yet
@@ -295,7 +306,8 @@ public class ReconnectionTest {
   @Test
   public void should_restart_after_stopped_while_attempt_in_progress() {
     // Given
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
     reconnection.start();
     runPendingTasks();
     // the next scheduled attempt has started, but not completed yet

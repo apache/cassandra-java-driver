@@ -300,8 +300,8 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
             error -> {
               if (reconnectOnFailure && !closeWasCalled) {
                 reconnection.start(
-                    reconnectionPolicy.newControlConnectionSchedule(
-                        useInitialReconnectionSchedule));
+                    reconnectionPolicy.newControlConnectionSchedule(useInitialReconnectionSchedule),
+                    error);
               } else {
                 // Special case for the initial connection: reword to a more user-friendly error
                 // message

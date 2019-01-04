@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -141,9 +142,9 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
 
     @NonNull
     @Override
-    public Duration nextDelay() {
+    public Optional<Duration> nextDelay(Optional<Throwable> throwable) {
       long delay = (attempts > maxAttempts) ? maxDelayMs : calculateDelayWithJitter();
-      return Duration.ofMillis(delay);
+      return Optional.of(Duration.ofMillis(delay));
     }
 
     private long calculateDelayWithJitter() {

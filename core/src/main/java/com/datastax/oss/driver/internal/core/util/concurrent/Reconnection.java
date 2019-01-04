@@ -21,6 +21,7 @@ import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionStage;
@@ -98,10 +99,10 @@ public class Reconnection {
 
   /** This is a no-op if the reconnection is already running. */
   public void start() {
-    start(null);
+    start(null, null);
   }
 
-  public void start(ReconnectionSchedule customSchedule) {
+  public void start(ReconnectionSchedule customSchedule, Throwable throwable) {
     assert executor.inEventLoop();
     switch (state) {
       case SCHEDULED:
@@ -115,7 +116,7 @@ public class Reconnection {
       case STOPPED:
         reconnectionSchedule = (customSchedule == null) ? scheduleSupplier.get() : customSchedule;
         onStart.run();
-        scheduleNextAttempt();
+        scheduleNextAttempt(throwable);
         break;
     }
   }
@@ -150,7 +151,7 @@ public class Reconnection {
       } catch (Exception e) {
         Loggers.warnWithException(
             LOG, "[{}] Uncaught error while starting reconnection attempt", logPrefix, e);
-        scheduleNextAttempt();
+        scheduleNextAttempt(e);
       }
     }
   }
@@ -181,28 +182,36 @@ public class Reconnection {
     reconnectionSchedule = null;
   }
 
-  private void scheduleNextAttempt() {
+  private void scheduleNextAttempt(Throwable throwable) {
     assert executor.inEventLoop();
     state = State.SCHEDULED;
     if (reconnectionSchedule == null) { // happens if reconnectNow() while we were stopped
       reconnectionSchedule = scheduleSupplier.get();
     }
-    Duration nextInterval = reconnectionSchedule.nextDelay();
-    LOG.debug("[{}] Scheduling next reconnection in {}", logPrefix, nextInterval);
-    nextAttempt = executor.schedule(reconnectionTask, nextInterval.toNanos(), TimeUnit.NANOSECONDS);
-    nextAttempt.addListener(
-        (Future<CompletionStage<Boolean>> f) -> {
-          if (f.isSuccess()) {
-            onNextAttemptStarted(f.getNow());
-          } else if (!f.isCancelled()) {
-            Loggers.warnWithException(
-                LOG,
-                "[{}] Uncaught error while starting reconnection attempt",
-                logPrefix,
-                f.cause());
-            scheduleNextAttempt();
-          }
-        });
+    Optional<Duration> nextInterval =
+        reconnectionSchedule.nextDelay(Optional.ofNullable(throwable));
+    if (nextInterval.isPresent()) {
+
+      LOG.debug("[{}] Scheduling next reconnection in {}", logPrefix, nextInterval);
+      nextAttempt =
+          executor.schedule(reconnectionTask, nextInterval.get().toNanos(), TimeUnit.NANOSECONDS);
+      nextAttempt.addListener(
+          (Future<CompletionStage<Boolean>> f) -> {
+            if (f.isSuccess()) {
+              onNextAttemptStarted(f.getNow());
+            } else if (!f.isCancelled()) {
+              Loggers.warnWithException(
+                  LOG,
+                  "[{}] Uncaught error while starting reconnection attempt",
+                  logPrefix,
+                  f.cause());
+              scheduleNextAttempt(null);
+            }
+          });
+    } else {
+      Loggers.warnWithException(
+          LOG, "Reconnection attempt aborted, at discretion of reconnection policy", logPrefix);
+    }
   }
 
   // When the Callable runs this means the caller has started the attempt, we have yet to wait on
@@ -229,7 +238,7 @@ public class Reconnection {
         reallyStop();
       } else {
         assert state == State.ATTEMPT_IN_PROGRESS;
-        scheduleNextAttempt();
+        scheduleNextAttempt(error);
       }
     }
   }

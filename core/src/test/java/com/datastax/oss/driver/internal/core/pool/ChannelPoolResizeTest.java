@@ -27,6 +27,7 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.MockChannelFactoryHelper;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import org.junit.Test;
@@ -78,7 +79,8 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
   @Test
   public void should_shrink_during_reconnection() throws Exception {
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
 
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_REMOTE_SIZE))
         .thenReturn(4);
@@ -116,7 +118,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     assertThat(pool.channels).containsOnly(channel1, channel2);
 
     // A reconnection should have been scheduled to add the missing channels, don't complete yet
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
     inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
 
     pool.resize(NodeDistance.LOCAL);
@@ -141,7 +143,8 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
   @Test
   public void should_grow_outside_of_reconnection() throws Exception {
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
 
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
         .thenReturn(2);
@@ -178,7 +181,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     waitForPendingAdminTasks();
 
     // The resizing should have triggered a reconnection
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
     inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
 
     factoryHelper.waitForCalls(node, 2);
@@ -193,7 +196,8 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
   @Test
   public void should_grow_during_reconnection() throws Exception {
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
 
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
         .thenReturn(2);
@@ -232,7 +236,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     assertThat(pool.channels).containsOnly(channel1);
 
     // A reconnection should have been scheduled to add the missing channel, don't complete yet
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
     inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
 
     pool.resize(NodeDistance.REMOTE);
@@ -248,7 +252,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     assertThat(pool.channels).containsOnly(channel1, channel2);
 
     // A second attempt should have been scheduled since we're now still under the target size
-    Mockito.verify(reconnectionSchedule, times(2)).nextDelay();
+    Mockito.verify(reconnectionSchedule, times(2)).nextDelay(Optional.empty());
     // Same reconnection is still running, no additional events
     inOrder.verify(eventBus, never()).fire(ChannelEvent.reconnectionStopped(node));
     inOrder.verify(eventBus, never()).fire(ChannelEvent.reconnectionStarted(node));
@@ -268,7 +272,8 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
   @Test
   public void should_resize_outside_of_reconnection_if_config_changes() throws Exception {
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
 
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
         .thenReturn(2);
@@ -306,7 +311,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     waitForPendingAdminTasks();
 
     // It should have triggered a reconnection
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
     inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
 
     factoryHelper.waitForCalls(node, 2);
@@ -321,7 +326,8 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
   @Test
   public void should_resize_during_reconnection_if_config_changes() throws Exception {
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
 
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
         .thenReturn(2);
@@ -358,7 +364,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     assertThat(pool.channels).containsOnly(channel1);
 
     // A reconnection should have been scheduled to add the missing channel, don't complete yet
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
     inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
 
     // Simulate a configuration change
@@ -376,7 +382,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     assertThat(pool.channels).containsOnly(channel1, channel2);
 
     // A second attempt should have been scheduled since we're now still under the target size
-    Mockito.verify(reconnectionSchedule, times(2)).nextDelay();
+    Mockito.verify(reconnectionSchedule, times(2)).nextDelay(Optional.empty());
     // Same reconnection is still running, no additional events
     inOrder.verify(eventBus, never()).fire(ChannelEvent.reconnectionStopped(node));
     inOrder.verify(eventBus, never()).fire(ChannelEvent.reconnectionStarted(node));
@@ -396,7 +402,8 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
   @Test
   public void should_ignore_config_change_if_not_relevant() throws Exception {
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
 
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
         .thenReturn(2);
@@ -428,7 +435,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     waitForPendingAdminTasks();
 
     // It should not have triggered a reconnection
-    Mockito.verify(reconnectionSchedule, never()).nextDelay();
+    Mockito.verify(reconnectionSchedule, never()).nextDelay(Optional.empty());
 
     factoryHelper.verifyNoMoreCalls();
   }

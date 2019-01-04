@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,8 +54,9 @@ public class ConstantReconnectionPolicy implements ReconnectionPolicy {
   public ConstantReconnectionPolicy(DriverContext context) {
     this.logPrefix = context.getSessionName();
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
-    Duration delay = config.getDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY);
-    if (delay.isNegative()) {
+    Optional<Duration> delay =
+        Optional.of(config.getDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY));
+    if (delay.get().isNegative()) {
       throw new IllegalArgumentException(
           String.format(
               "Invalid negative delay for "
@@ -62,7 +64,7 @@ public class ConstantReconnectionPolicy implements ReconnectionPolicy {
                   + " (got %d)",
               delay));
     }
-    this.schedule = () -> delay;
+    this.schedule = (Optional<Throwable> error) -> delay;
   }
 
   @NonNull

@@ -43,6 +43,7 @@ import io.netty.channel.EventLoop;
 import io.netty.util.concurrent.Future;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Exchanger;
@@ -111,7 +112,8 @@ abstract class ControlConnectionTestBase {
         .thenReturn(reconnectionSchedule);
     // By default, set a large reconnection delay. Tests that care about reconnection will override
     // it.
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofDays(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofDays(1)));
 
     Mockito.when(context.getLoadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
 

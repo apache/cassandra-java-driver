@@ -25,6 +25,7 @@ import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.MockChannelFactoryHelper;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import org.junit.Test;
@@ -69,7 +70,8 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
 
   @Test
   public void should_switch_keyspace_on_pending_channels() throws Exception {
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
 
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
         .thenReturn(2);
@@ -98,7 +100,7 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
     ChannelPool pool = poolFuture.toCompletableFuture().get();
 
     // Check that reconnection has kicked in, but do not complete it yet
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
     Mockito.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
     factoryHelper.waitForCalls(node, 2);
 

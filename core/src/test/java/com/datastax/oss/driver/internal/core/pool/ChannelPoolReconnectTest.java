@@ -28,6 +28,7 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.MockChannelFactoryHelper;
 import io.netty.channel.ChannelPromise;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -39,7 +40,8 @@ public class ChannelPoolReconnectTest extends ChannelPoolTestBase {
 
   @Test
   public void should_reconnect_when_channel_closes() throws Exception {
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
 
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
         .thenReturn(2);
@@ -75,7 +77,7 @@ public class ChannelPoolReconnectTest extends ChannelPoolTestBase {
     waitForPendingAdminTasks();
     inOrder.verify(eventBus).fire(ChannelEvent.channelClosed(node));
 
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
     inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
     factoryHelper.waitForCall(node);
 
@@ -91,7 +93,8 @@ public class ChannelPoolReconnectTest extends ChannelPoolTestBase {
 
   @Test
   public void should_reconnect_when_channel_starts_graceful_shutdown() throws Exception {
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
 
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
         .thenReturn(2);
@@ -126,7 +129,7 @@ public class ChannelPoolReconnectTest extends ChannelPoolTestBase {
     waitForPendingAdminTasks();
     inOrder.verify(eventBus).fire(ChannelEvent.channelClosed(node));
 
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
     inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
     factoryHelper.waitForCall(node);
 
@@ -143,7 +146,8 @@ public class ChannelPoolReconnectTest extends ChannelPoolTestBase {
   @Test
   public void should_let_current_attempt_complete_when_reconnecting_now()
       throws ExecutionException, InterruptedException {
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
 
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
         .thenReturn(1);
@@ -176,7 +180,7 @@ public class ChannelPoolReconnectTest extends ChannelPoolTestBase {
     waitForPendingAdminTasks();
     inOrder.verify(eventBus).fire(ChannelEvent.channelClosed(node));
     inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
-    Mockito.verify(reconnectionSchedule).nextDelay();
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
     factoryHelper.waitForCalls(node, 1);
 
     // Force a reconnection, should not try to create a new channel since we have a pending one
