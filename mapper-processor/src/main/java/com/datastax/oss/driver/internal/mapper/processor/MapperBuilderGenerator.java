@@ -22,21 +22,22 @@ import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
 
 public class MapperBuilderGenerator extends FileGenerator {
 
   private final ClassName builderName;
-  private final ClassName interfaceName;
+  private final TypeElement interfaceElement;
   private final ClassName implementationName;
 
   public MapperBuilderGenerator(
       ClassName builderName,
-      ClassName interfaceName,
+      TypeElement interfaceElement,
       ClassName implementationName,
       GenerationContext context) {
     super(context);
     this.builderName = builderName;
-    this.interfaceName = interfaceName;
+    this.interfaceElement = interfaceElement;
     this.implementationName = implementationName;
   }
 
@@ -51,7 +52,7 @@ public class MapperBuilderGenerator extends FileGenerator {
         TypeSpec.classBuilder(builderName)
             .addJavadoc(
                 "Builds an instance of {@link $T} wrapping a driver {@link $T}.",
-                interfaceName,
+                interfaceElement,
                 Session.class)
             .addJavadoc(JAVADOC_PARAGRAPH_SEPARATOR)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
@@ -68,7 +69,7 @@ public class MapperBuilderGenerator extends FileGenerator {
             .addMethod(
                 MethodSpec.methodBuilder("build")
                     .addModifiers(Modifier.PUBLIC)
-                    .returns(interfaceName)
+                    .returns(ClassName.get(interfaceElement))
                     .addStatement("return new $T(session)", implementationName)
                     .build());
     return JavaFile.builder(builderName.packageName(), contents.build());

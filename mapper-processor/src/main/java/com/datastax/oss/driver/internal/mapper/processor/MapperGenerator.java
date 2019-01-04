@@ -23,31 +23,28 @@ import javax.lang.model.element.TypeElement;
 public class MapperGenerator {
 
   private final TypeElement interfaceElement;
-  private final ClassName interfaceName;
-  private final Mapper annotation;
   private final GenerationContext context;
 
   public MapperGenerator(TypeElement interfaceElement, GenerationContext context) {
     this.interfaceElement = interfaceElement;
-    interfaceName = ClassName.get(interfaceElement);
-    annotation = interfaceElement.getAnnotation(Mapper.class);
     this.context = context;
   }
 
   public void generate() {
     ClassName builderName = generateBuilderName();
     MapperImplementationGenerator implementation =
-        new MapperImplementationGenerator(interfaceName, interfaceElement, builderName, context);
+        new MapperImplementationGenerator(interfaceElement, builderName, context);
     implementation.generate();
     new MapperBuilderGenerator(
-            builderName, interfaceName, implementation.getGeneratedClassName(), context)
+            builderName, interfaceElement, implementation.getGeneratedClassName(), context)
         .generate();
   }
 
   private ClassName generateBuilderName() {
-    String custom = annotation.builderName();
+    String custom = interfaceElement.getAnnotation(Mapper.class).builderName();
     if (custom.isEmpty()) {
-      return ClassName.get(interfaceName.packageName(), interfaceName.simpleName() + "Builder");
+      return ClassName.get(interfaceElement)
+          .peerClass(interfaceElement.getSimpleName() + "Builder");
     } else {
       int i = custom.lastIndexOf('.');
       return ClassName.get(custom.substring(0, i), custom.substring(i + 1));

@@ -17,13 +17,13 @@ package com.datastax.oss.driver.internal.mapper.processor;
 
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import java.util.ArrayList;
 import java.util.List;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -35,37 +35,17 @@ import javax.lang.model.type.TypeMirror;
 /** Generates the implementation of a {@link Mapper}-annotated interface. */
 public class MapperImplementationGenerator extends FileGenerator {
 
-  private final ClassName interfaceName;
+  private TypeElement interfaceElement;
   private final ClassName builderName;
   private final ClassName className;
-  private final List<MapperMethod> mapperMethods;
 
   public MapperImplementationGenerator(
-      ClassName interfaceName,
-      TypeElement interfaceElement,
-      ClassName builderName,
-      GenerationContext context) {
+      TypeElement interfaceElement, ClassName builderName, GenerationContext context) {
     super(context);
-    this.interfaceName = interfaceName;
-    className = ClassName.get(interfaceName.packageName(), interfaceName.simpleName() + "_Impl");
+    this.interfaceElement = interfaceElement;
+    className =
+        ClassName.get(interfaceElement).peerClass(interfaceElement.getSimpleName() + "_Impl");
     this.builderName = builderName;
-
-    // Find all interface methods that return mappers
-    ImmutableList.Builder<MapperMethod> mapperMethodsBuilder = ImmutableList.builder();
-    for (Element child : interfaceElement.getEnclosedElements()) {
-      if (child.getKind() == ElementKind.METHOD) {
-        ExecutableElement methodElement = (ExecutableElement) child;
-        TypeMirror returnType = methodElement.getReturnType();
-        ClassName mapperImplementationName = context.getGeneratedDaos().get(returnType);
-        if (mapperImplementationName != null) {
-          MapperMethod mapperMethod =
-              new MapperMethod(methodElement, returnType, mapperImplementationName);
-          context.getMessager().warn("add %s", mapperMethod);
-          mapperMethodsBuilder.add(mapperMethod);
-        }
-      }
-    }
-    mapperMethods = mapperMethodsBuilder.build();
   }
 
   @Override
@@ -79,6 +59,22 @@ public class MapperImplementationGenerator extends FileGenerator {
 
   @Override
   protected JavaFile.Builder getContents() {
+    // Find all interface methods that return mappers
+    List<MapperMethod> mapperMethods = new ArrayList<>();
+    for (Element child : interfaceElement.getEnclosedElements()) {
+      if (child.getKind() == ElementKind.METHOD) {
+        ExecutableElement methodElement = (ExecutableElement) child;
+        TypeMirror returnType = methodElement.getReturnType();
+        ClassName mapperImplementationName = context.getGeneratedDaos().get(returnType);
+        if (mapperImplementationName != null) {
+          MapperMethod mapperMethod =
+              new MapperMethod(methodElement, returnType, mapperImplementationName);
+          context.getMessager().warn("add %s", mapperMethod);
+          mapperMethods.add(mapperMethod);
+        }
+      }
+    }
+
     TypeSpec.Builder classContents =
         TypeSpec.classBuilder(className)
             .addJavadoc(
@@ -86,7 +82,7 @@ public class MapperImplementationGenerator extends FileGenerator {
             .addJavadoc(JAVADOC_PARAGRAPH_SEPARATOR)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
             .addModifiers(Modifier.PUBLIC)
-            .addSuperinterface(interfaceName)
+            .addSuperinterface(ClassName.get(interfaceElement))
             .addField(
                 FieldSpec.builder(Session.class, "session", Modifier.PRIVATE, Modifier.FINAL)
                     .build());

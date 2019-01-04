@@ -19,13 +19,13 @@ import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.annotations.SaveQuery;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -35,35 +35,14 @@ import javax.lang.model.element.TypeElement;
 /** Generates the implementation of a {@link Dao}-annotated interface. */
 public class DaoImplementationGenerator extends FileGenerator {
 
-  private final ClassName interfaceName;
+  private final TypeElement interfaceElement;
   private final ClassName implementationName;
-  private final Set<DaoMethodGenerator> methods;
 
-  public DaoImplementationGenerator(TypeElement interfaceType, GenerationContext context) {
+  public DaoImplementationGenerator(TypeElement interfaceElement, GenerationContext context) {
     super(context);
-    interfaceName = ClassName.get(interfaceType);
+    this.interfaceElement = interfaceElement;
     implementationName =
-        ClassName.get(interfaceName.packageName(), interfaceName.simpleName() + "_Impl");
-
-    ImmutableSet.Builder<DaoMethodGenerator> methodsBuilder = ImmutableSet.builder();
-    for (Element child : interfaceType.getEnclosedElements()) {
-      if (child.getKind() == ElementKind.METHOD) {
-        ExecutableElement method = (ExecutableElement) child;
-        try {
-          SaveQuery saveQuery = method.getAnnotation(SaveQuery.class);
-          if (saveQuery != null) {
-            methodsBuilder.add(new SaveQueryGenerator(method, saveQuery, context));
-          }
-          Query query = method.getAnnotation(Query.class);
-          if (query != null) {
-            methodsBuilder.add(new QueryGenerator(method, query, context));
-          }
-        } catch (SkipGenerationException e) {
-          // nothing to do (throwing code should have issued an error message already)
-        }
-      }
-    }
-    methods = methodsBuilder.build();
+        ClassName.get(interfaceElement).peerClass(interfaceElement.getSimpleName() + "_Impl");
   }
 
   @Override
@@ -78,11 +57,30 @@ public class DaoImplementationGenerator extends FileGenerator {
   @Override
   protected JavaFile.Builder getContents() {
 
+    List<DaoMethodGenerator> methods = new ArrayList<>();
+    for (Element child : interfaceElement.getEnclosedElements()) {
+      if (child.getKind() == ElementKind.METHOD) {
+        ExecutableElement method = (ExecutableElement) child;
+        try {
+          SaveQuery saveQuery = method.getAnnotation(SaveQuery.class);
+          if (saveQuery != null) {
+            methods.add(new SaveQueryGenerator(method, saveQuery, context));
+          }
+          Query query = method.getAnnotation(Query.class);
+          if (query != null) {
+            methods.add(new QueryGenerator(method, query, context));
+          }
+        } catch (SkipGenerationException e) {
+          // nothing to do (throwing code should have issued an error message already)
+        }
+      }
+    }
+
     TypeSpec.Builder classBuilder =
         TypeSpec.classBuilder(implementationName)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
             .addModifiers(Modifier.PUBLIC)
-            .addSuperinterface(interfaceName)
+            .addSuperinterface(ClassName.get(interfaceElement))
             .addField(
                 FieldSpec.builder(Session.class, "session", Modifier.PRIVATE, Modifier.FINAL)
                     .build());
