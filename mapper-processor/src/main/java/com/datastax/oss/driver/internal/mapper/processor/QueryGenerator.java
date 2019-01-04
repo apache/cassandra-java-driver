@@ -22,7 +22,6 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
-import com.datastax.oss.driver.api.mapper.annotations.Table;
 import com.datastax.oss.driver.internal.core.cql.DefaultPrepareRequest;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -30,11 +29,8 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import java.util.ArrayList;
 import java.util.List;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -92,8 +88,12 @@ public class QueryGenerator implements DaoMethodGenerator {
                 Statement.class);
 
     if (isList(returnType)) {
-      ClassName elementType = getType(returnType.getTypeArguments().get(0));
+      TypeMirror elementType = returnType.getTypeArguments().get(0);
       EntityDefinition entityDefinition = context.getEntityDefinitions().get(elementType);
+      if (entityDefinition == null) {
+        context.getMessager().error(methodElement, "Missing definition for %s", elementType);
+        throw new SkipGenerationException();
+      }
 
       methodBuilder.addStatement(
           "$T<$T> result = new $T<>()", List.class, elementType, ArrayList.class);
@@ -123,24 +123,6 @@ public class QueryGenerator implements DaoMethodGenerator {
         context.getElementUtils().getTypeElement(List.class.getCanonicalName()).asType();
     TypeMirror erased = context.getTypeUtils().erasure(type);
     return context.getTypeUtils().isAssignable(list, erased);
-  }
-
-  private ClassName getType(TypeMirror mirror) {
-    Element element = context.getTypeUtils().asElement(mirror);
-    if (element == null || element.getKind() != ElementKind.CLASS) {
-      context.getMessager().error(methodElement, "Expected entity class, got %s", mirror);
-      throw new SkipGenerationException();
-    }
-    TypeElement typeElement = (TypeElement) element;
-    if (typeElement.getAnnotation(Table.class) == null) {
-      context
-          .getMessager()
-          .error(
-              methodElement,
-              "Return type should be an instance of a class annotated with %s",
-              Table.class.getSimpleName());
-    }
-    return ClassName.get(typeElement);
   }
 
   @Override

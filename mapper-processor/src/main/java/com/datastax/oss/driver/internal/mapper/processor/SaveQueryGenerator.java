@@ -40,7 +40,7 @@ public class SaveQueryGenerator implements DaoMethodGenerator {
 
   private final String methodName;
   private final String parameterName;
-  private final ClassName parameterType;
+  private final TypeMirror parameterType;
   private final String preparedStatementFieldName;
   private final String tableName;
   private final EntityDefinition entityDefinition;
@@ -57,12 +57,10 @@ public class SaveQueryGenerator implements DaoMethodGenerator {
     }
     VariableElement parameter = parameters.get(0);
     parameterName = parameter.getSimpleName().toString();
-    parameterType = getType(parameter, context);
+    parameterType = parameter.asType();
     entityDefinition = context.getEntityDefinitions().get(parameterType);
     if (entityDefinition == null) {
-      context
-          .getMessager()
-          .error(methodElement, "Could not find definition of entity %s", parameterType);
+      context.getMessager().error(methodElement, "Missing definition of entity %s", parameterType);
       throw new SkipGenerationException();
     }
   }
@@ -108,7 +106,7 @@ public class SaveQueryGenerator implements DaoMethodGenerator {
         MethodSpec.methodBuilder(methodName)
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
-            .addParameter(parameterType, parameterName)
+            .addParameter(ClassName.get(parameterType), parameterName)
             .addStatement(
                 "$T boundStatement = $L.bind()", BoundStatement.class, preparedStatementFieldName);
 

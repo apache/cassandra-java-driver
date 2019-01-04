@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.mapper.processor;
 
 import com.datastax.oss.driver.api.core.session.Session;
-import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
@@ -31,7 +30,6 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /** Generates the implementation of a {@link Mapper}-annotated interface. */
@@ -56,50 +54,18 @@ public class MapperImplementationGenerator extends FileGenerator {
     ImmutableList.Builder<MapperMethod> mapperMethodsBuilder = ImmutableList.builder();
     for (Element child : interfaceElement.getEnclosedElements()) {
       if (child.getKind() == ElementKind.METHOD) {
-        ExecutableElement method = (ExecutableElement) child;
-        TypeElement returnType = getReturnType(method, context);
-        if (returnType != null && returnType.getAnnotation(Dao.class) != null) {
-          if (!method.getParameters().isEmpty()) {
-            context.getMessager().error(child, "Expected no arguments");
-            continue;
-          }
-          TypeName mapperInterfaceName = ClassName.get(returnType);
-          @SuppressWarnings("SuspiciousMethodCalls") // if not a ClassName, will produce null
-          ClassName mapperImplementationName = context.getGeneratedDaos().get(mapperInterfaceName);
-          if (mapperImplementationName == null) {
-            context
-                .getMessager()
-                .error(method, "Found no implementation class matching %s", mapperInterfaceName);
-            continue;
-          }
+        ExecutableElement methodElement = (ExecutableElement) child;
+        TypeMirror returnType = methodElement.getReturnType();
+        ClassName mapperImplementationName = context.getGeneratedDaos().get(returnType);
+        if (mapperImplementationName != null) {
           MapperMethod mapperMethod =
-              new MapperMethod(
-                  method.getSimpleName().toString(), mapperInterfaceName, mapperImplementationName);
+              new MapperMethod(methodElement, returnType, mapperImplementationName);
           context.getMessager().warn("add %s", mapperMethod);
           mapperMethodsBuilder.add(mapperMethod);
         }
       }
     }
     mapperMethods = mapperMethodsBuilder.build();
-  }
-
-  /*
-   * TODO revisit that when we deal with generic types, e.g. CompletionStage<SomeMapper>
-   *
-   * A generic type invocation is not a TypeElement, the mirror will be a DeclaredType.
-   */
-  private TypeElement getReturnType(ExecutableElement method, GenerationContext context) {
-    TypeMirror mirror = method.getReturnType();
-    Element element = context.getTypeUtils().asElement(mirror);
-    if (element == null) {
-      context.getMessager().error(method, "Could not resolve return type %s", mirror);
-      return null;
-    }
-    if (!(element instanceof TypeElement)) {
-      context.getMessager().error(method, "Return type %s should be TypeElement", element);
-      return null;
-    }
-    return (TypeElement) element;
   }
 
   @Override
@@ -132,16 +98,18 @@ public class MapperImplementationGenerator extends FileGenerator {
             .addStatement("this.session = session");
 
     for (MapperMethod method : mapperMethods) {
-      String fieldName = method.methodName + "Instance";
+      String methodName = method.overriddenMethodElement.getSimpleName().toString();
+      String fieldName = methodName + "Instance";
+      TypeName returnTypeName = ClassName.get(method.returnType);
       classContents
           .addField(
-              FieldSpec.builder(method.interfaceName, fieldName, Modifier.PRIVATE, Modifier.FINAL)
+              FieldSpec.builder(returnTypeName, fieldName, Modifier.PRIVATE, Modifier.FINAL)
                   .build())
           .addMethod(
-              MethodSpec.methodBuilder(method.methodName)
+              MethodSpec.methodBuilder(methodName)
                   .addAnnotation(Override.class)
                   .addModifiers(Modifier.PUBLIC)
-                  .returns(method.interfaceName)
+                  .returns(returnTypeName)
                   .addStatement("return $L", fieldName)
                   .build());
       constructorContents.addStatement(
@@ -154,19 +122,18 @@ public class MapperImplementationGenerator extends FileGenerator {
   }
 
   static class MapperMethod {
-    final String methodName;
-    final TypeName interfaceName;
+
+    final ExecutableElement overriddenMethodElement;
+    final TypeMirror returnType;
     final TypeName implementationName;
 
-    public MapperMethod(String methodName, TypeName interfaceName, TypeName implementationName) {
-      this.methodName = methodName;
-      this.interfaceName = interfaceName;
+    MapperMethod(
+        ExecutableElement overriddenMethodElement,
+        TypeMirror returnType,
+        TypeName implementationName) {
+      this.overriddenMethodElement = overriddenMethodElement;
+      this.returnType = returnType;
       this.implementationName = implementationName;
-    }
-
-    @Override
-    public String toString() {
-      return String.format("%s %s() returns %s", interfaceName, methodName, implementationName);
     }
   }
 }

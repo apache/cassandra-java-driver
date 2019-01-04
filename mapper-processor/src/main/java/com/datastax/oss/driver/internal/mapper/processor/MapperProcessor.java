@@ -74,12 +74,18 @@ public class MapperProcessor extends AbstractProcessor {
             element, "Only classes can be annotated with %s", Table.class.getSimpleName());
       } else {
         EntityParser parser = new EntityParser((TypeElement) element, context);
-        context.getEntityDefinitions().put(parser.getClassName(), parser.getDefinition());
+        context.getEntityDefinitions().put(element.asType(), parser.parse());
       }
     }
 
     processAnnotatedInterfaces(
-        roundEnvironment, Dao.class, e -> new DaoImplementationGenerator(e, context).generate());
+        roundEnvironment,
+        Dao.class,
+        e -> {
+          DaoImplementationGenerator generator = new DaoImplementationGenerator(e, context);
+          context.getGeneratedDaos().put(e.asType(), generator.getGeneratedClassName());
+          generator.generate();
+        });
     processAnnotatedInterfaces(
         roundEnvironment, Mapper.class, e -> new MapperGenerator(e, context).generate());
     return true;

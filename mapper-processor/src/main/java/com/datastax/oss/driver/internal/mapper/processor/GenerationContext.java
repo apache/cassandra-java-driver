@@ -20,6 +20,7 @@ import com.squareup.javapoet.ClassName;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.processing.Filer;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
@@ -29,8 +30,8 @@ import javax.lang.model.util.Types;
  */
 public class GenerationContext {
 
-  private final Map<ClassName, EntityDefinition> entityDefinitions = new HashMap<>();
-  private final Map<ClassName, ClassName> generatedDaos = new HashMap<>();
+  private final Map<TypeMirror, EntityDefinition> entityDefinitions = new HashMap<>();
+  private final Map<TypeMirror, ClassName> generatedDaos = new HashMap<>();
   private final DecoratedMessager messager;
   private final Types typeUtils;
   private final Elements elementUtils;
@@ -50,14 +51,14 @@ public class GenerationContext {
     this.indent = indent;
   }
 
-  public Map<ClassName, EntityDefinition> getEntityDefinitions() {
+  public Map<TypeMirror, EntityDefinition> getEntityDefinitions() {
     return entityDefinitions;
   }
 
   /**
    * The {@link Dao}-annotated interfaces processed so far (interface name => implementation name).
    */
-  public Map<ClassName, ClassName> getGeneratedDaos() {
+  public Map<TypeMirror, ClassName> getGeneratedDaos() {
     return generatedDaos;
   }
 

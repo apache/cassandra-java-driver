@@ -44,7 +44,6 @@ public class DaoImplementationGenerator extends FileGenerator {
     interfaceName = ClassName.get(interfaceType);
     implementationName =
         ClassName.get(interfaceName.packageName(), interfaceName.simpleName() + "_Impl");
-    context.getGeneratedDaos().put(interfaceName, implementationName);
 
     ImmutableSet.Builder<DaoMethodGenerator> methodsBuilder = ImmutableSet.builder();
     for (Element child : interfaceType.getEnclosedElements()) {
@@ -70,6 +69,10 @@ public class DaoImplementationGenerator extends FileGenerator {
   @Override
   protected String getFileName() {
     return implementationName.packageName() + "." + implementationName.simpleName();
+  }
+
+  public ClassName getGeneratedClassName() {
+    return implementationName;
   }
 
   @Override

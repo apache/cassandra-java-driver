@@ -25,12 +25,15 @@ import javax.lang.model.element.VariableElement;
 
 public class EntityParser {
 
-  private final ClassName className;
-  private final EntityDefinition definition;
+  private final TypeElement element;
+  private final GenerationContext context;
 
   public EntityParser(TypeElement element, GenerationContext context) {
-    className = ClassName.get(element);
+    this.element = element;
+    this.context = context;
+  }
 
+  public EntityDefinition parse() {
     ImmutableList.Builder<FieldDefinition> fields = ImmutableList.builder();
     for (Element child : element.getEnclosedElements()) {
       // Minimal implementation: this makes A LOT of assumptions, it will be much more complex:
@@ -45,14 +48,6 @@ public class EntityParser {
         fields.add(new FieldDefinition(name, getterName, setterName, type));
       }
     }
-    definition = new EntityDefinition(fields.build());
-  }
-
-  public ClassName getClassName() {
-    return className;
-  }
-
-  public EntityDefinition getDefinition() {
-    return definition;
+    return new EntityDefinition(fields.build());
   }
 }
