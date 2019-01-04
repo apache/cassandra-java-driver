@@ -473,9 +473,8 @@ public class CCMBridge implements CCMAccess {
     // interface slightly before it joins the cluster.
     if (this.cassandraVersion.getMajor() == 1) {
       return " --wait-other-notice";
-    } else {
-      return " --no-wait";
     }
+    return "";
   }
 
   @Override

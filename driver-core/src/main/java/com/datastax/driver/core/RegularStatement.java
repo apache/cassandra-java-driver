@@ -22,7 +22,6 @@ import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.schemabuilder.SchemaStatement;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -201,8 +200,7 @@ public abstract class RegularStatement extends Statement {
             if (usesNamedValues()) {
               size += CBUtil.sizeOfNamedValueList(getNamedValues(protocolVersion, codecRegistry));
             } else {
-              size +=
-                  CBUtil.sizeOfValueList(Arrays.asList(getValues(protocolVersion, codecRegistry)));
+              size += CBUtil.sizeOfValueList(getValues(protocolVersion, codecRegistry));
             }
           }
           // Fetch size, serial CL and default timestamp also depend on session-level defaults

@@ -56,6 +56,8 @@ public interface ResultSet extends PagingIterable<ResultSet, Row> {
    * rs.one().getBool("[applied]");
    * </pre>
    *
+   * Except that this method peeks at the next row without consuming it.
+   *
    * <p>For consistency, this method always returns {@code true} for non-conditional queries
    * (although there is no reason to call the method in that case). This is also the case for
    * conditional DDL statements ({@code CREATE KEYSPACE... IF NOT EXISTS}, {@code CREATE TABLE... IF

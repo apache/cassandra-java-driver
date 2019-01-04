@@ -123,12 +123,15 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
       if (i != 0) sb.append(", ");
       ByteBuffer bb = data.get(i);
       if (bb == null) sb.append("NULL");
-      else
-        sb.append(
-            getCodecRegistry()
-                .codecFor(metadata.getType(i))
-                .deserialize(bb, protocolVersion)
-                .toString());
+      else {
+        Object o =
+            getCodecRegistry().codecFor(metadata.getType(i)).deserialize(bb, protocolVersion);
+        if (o == null) {
+          sb.append("NULL");
+        } else {
+          sb.append(o.toString());
+        }
+      }
     }
     sb.append(']');
     return sb.toString();
