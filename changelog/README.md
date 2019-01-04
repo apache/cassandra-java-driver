@@ -12,6 +12,7 @@
 - [bug] JAVA-1612: Include netty-common jar in binary tarball.
 - [improvement] JAVA-2003: Simplify CBUtil internal API to improve performance.
 - [improvement] JAVA-2002: Reimplement TypeCodec.accepts to improve performance.
+- [documentation] JAVA-2041: Deprecate cross-DC failover in DCAwareRoundRobinPolicy.
 
 
 ### 3.6.0
