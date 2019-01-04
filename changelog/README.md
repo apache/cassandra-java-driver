@@ -2,7 +2,6 @@
 
 ### 3.7.0 (In progress)
 
-- [documentation] JAVA-2041: Deprecate cross-DC failover in DCAwareRoundRobinPolicy
 - [improvement] JAVA-2025: Include exception message in Abstract\*Codec.accepts(null).
 - [improvement] JAVA-1980: Use covariant return types in RemoteEndpointAwareJdkSSLOptions.Builder methods.
 - [documentation] JAVA-2062: Document frozen collection preference with Mapper.
@@ -10,6 +9,7 @@
 - [bug] JAVA-2070: Call onRemove instead of onDown when rack and/or DC information changes for a host.
 - [improvement] JAVA-1256: Log parameters of BuiltStatement in QueryLogger.
 - [documentation] JAVA-2074: Document preference for LZ4 over Snappy.
+- [documentation] JAVA-2041: Deprecate cross-DC failover in DCAwareRoundRobinPolicy.
 
 
 ### 3.6.0
