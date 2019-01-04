@@ -10,6 +10,7 @@
 - [improvement] JAVA-1256: Log parameters of BuiltStatement in QueryLogger.
 - [documentation] JAVA-2074: Document preference for LZ4 over Snappy.
 - [bug] JAVA-1612: Include netty-common jar in binary tarball.
+- [improvement] JAVA-2003: Simplify CBUtil internal API to improve performance.
 
 
 ### 3.6.0

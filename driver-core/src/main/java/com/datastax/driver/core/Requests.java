@@ -19,12 +19,11 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.netty.buffer.ByteBuf;
 import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 class Requests {
+
+  static final ByteBuffer[] EMPTY_BB_ARRAY = new ByteBuffer[0];
 
   private Requests() {}
 
@@ -290,7 +289,7 @@ class Requests {
         new QueryProtocolOptions(
             Message.Request.Type.QUERY,
             ConsistencyLevel.ONE,
-            Collections.<ByteBuffer>emptyList(),
+            EMPTY_BB_ARRAY,
             Collections.<String, ByteBuffer>emptyMap(),
             false,
             -1,
@@ -301,7 +300,7 @@ class Requests {
     private final EnumSet<QueryFlag> flags = EnumSet.noneOf(QueryFlag.class);
     private final Message.Request.Type requestType;
     final ConsistencyLevel consistency;
-    final List<ByteBuffer> positionalValues;
+    final ByteBuffer[] positionalValues;
     final Map<String, ByteBuffer> namedValues;
     final boolean skipMetadata;
     final int pageSize;
@@ -312,7 +311,7 @@ class Requests {
     QueryProtocolOptions(
         Message.Request.Type requestType,
         ConsistencyLevel consistency,
-        List<ByteBuffer> positionalValues,
+        ByteBuffer[] positionalValues,
         Map<String, ByteBuffer> namedValues,
         boolean skipMetadata,
         int pageSize,
@@ -320,7 +319,7 @@ class Requests {
         ConsistencyLevel serialConsistency,
         long defaultTimestamp) {
 
-      Preconditions.checkArgument(positionalValues.isEmpty() || namedValues.isEmpty());
+      Preconditions.checkArgument(positionalValues.length == 0 || namedValues.isEmpty());
 
       this.requestType = requestType;
       this.consistency = consistency;
@@ -333,7 +332,9 @@ class Requests {
       this.defaultTimestamp = defaultTimestamp;
 
       // Populate flags
-      if (!positionalValues.isEmpty()) flags.add(QueryFlag.VALUES);
+      if (positionalValues.length > 0) {
+        flags.add(QueryFlag.VALUES);
+      }
       if (!namedValues.isEmpty()) {
         flags.add(QueryFlag.VALUES);
         flags.add(QueryFlag.VALUE_NAMES);
@@ -434,7 +435,7 @@ class Requests {
       return String.format(
           "[cl=%s, positionalVals=%s, namedVals=%s, skip=%b, psize=%d, state=%s, serialCl=%s]",
           consistency,
-          positionalValues,
+          Arrays.toString(positionalValues),
           namedValues,
           skipMetadata,
           pageSize,
@@ -461,7 +462,7 @@ class Requests {
               if (q instanceof String) CBUtil.writeLongString((String) q, dest);
               else CBUtil.writeShortBytes(((MD5Digest) q).bytes, dest);
 
-              CBUtil.writeValueList(msg.values.get(i), dest);
+              CBUtil.writeValueList(msg.values[i], dest);
             }
 
             msg.options.encode(dest, version);
@@ -478,7 +479,7 @@ class Requests {
                           ? CBUtil.sizeOfLongString((String) q)
                           : CBUtil.sizeOfShortBytes(((MD5Digest) q).bytes));
 
-              size += CBUtil.sizeOfValueList(msg.values.get(i));
+              size += CBUtil.sizeOfValueList(msg.values[i]);
             }
             size += msg.options.encodedSize(version);
             return size;
@@ -500,13 +501,13 @@ class Requests {
 
     final BatchStatement.Type type;
     final List<Object> queryOrIdList;
-    final List<List<ByteBuffer>> values;
+    final ByteBuffer[][] values;
     final BatchProtocolOptions options;
 
     Batch(
         BatchStatement.Type type,
         List<Object> queryOrIdList,
-        List<List<ByteBuffer>> values,
+        ByteBuffer[][] values,
         BatchProtocolOptions options,
         boolean tracingRequested) {
       super(Message.Request.Type.BATCH, tracingRequested);
@@ -533,10 +534,7 @@ class Requests {
       sb.append("BATCH of [");
       for (int i = 0; i < queryOrIdList.size(); i++) {
         if (i > 0) sb.append(", ");
-        sb.append(queryOrIdList.get(i))
-            .append(" with ")
-            .append(values.get(i).size())
-            .append(" values");
+        sb.append(queryOrIdList.get(i)).append(" with ").append(values[i].length).append(" values");
       }
       sb.append("] with options ").append(options);
       return sb.toString();
