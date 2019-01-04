@@ -30,7 +30,6 @@ import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import java.io.DataInput;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -592,7 +591,11 @@ public abstract class TypeCodec<T> {
   /**
    * Return {@code true} if this codec is capable of serializing the given {@code javaType}.
    *
-   * <p>This implementation simply calls {@link #accepts(TypeToken)}.
+   * <p>This implementation simply compares the given type against this codec's runtime (raw) type
+   * for equality; it is <em>invariant</em> with respect to the passed argument (through the usage
+   * of {@link Class#equals(Object)} and <em>it's strongly recommended not to modify this
+   * behavior</em>. This means that a codec will only ever return {@code true} for the
+   * <em>exact</em> runtime (raw) Java type that it has been created for.
    *
    * @param javaType The Java type this codec should serialize from and deserialize to; cannot be
    *     {@code null}.
@@ -602,7 +605,26 @@ public abstract class TypeCodec<T> {
    */
   public boolean accepts(Class<?> javaType) {
     checkNotNull(javaType, "Parameter javaType cannot be null");
-    return accepts(TypeToken.of(javaType));
+    if (javaType.isPrimitive()) {
+      if (javaType == Boolean.TYPE) {
+        javaType = Boolean.class;
+      } else if (javaType == Character.TYPE) {
+        javaType = Character.class;
+      } else if (javaType == Byte.TYPE) {
+        javaType = Byte.class;
+      } else if (javaType == Short.TYPE) {
+        javaType = Short.class;
+      } else if (javaType == Integer.TYPE) {
+        javaType = Integer.class;
+      } else if (javaType == Long.TYPE) {
+        javaType = Long.class;
+      } else if (javaType == Float.TYPE) {
+        javaType = Float.class;
+      } else if (javaType == Double.TYPE) {
+        javaType = Double.class;
+      }
+    }
+    return this.javaType.getRawType().equals(javaType);
   }
 
   /**
@@ -621,7 +643,7 @@ public abstract class TypeCodec<T> {
 
   /**
    * Return {@code true} if this codec is capable of serializing the given object. Note that the
-   * object's Java type is inferred from the object' runtime (raw) type, contrary to {@link
+   * object's Java type is inferred from the object's runtime (raw) type, contrary to {@link
    * #accepts(TypeToken)} which is capable of handling generic types.
    *
    * <p>This method is intended mostly to be used by the QueryBuilder when no type information is
@@ -631,10 +653,9 @@ public abstract class TypeCodec<T> {
    *
    * <ol>
    *   <li>The default implementation is <em>covariant</em> with respect to the passed argument
-   *       (through the usage of {@link TypeToken#isAssignableFrom(TypeToken)} or {@link
-   *       TypeToken#isSupertypeOf(Type)}) and <em>it's strongly recommended not to modify this
-   *       behavior</em>. This means that, by default, a codec will accept <em>any subtype</em> of
-   *       the Java type that it has been created for.
+   *       (through the usage of {@link Class#isAssignableFrom(Class)}) and <em>it's strongly
+   *       recommended not to modify this behavior</em>. This means that, by default, a codec will
+   *       accept <em>any subtype</em> of the Java type that it has been created for.
    *   <li>The base implementation provided here can only handle non-parameterized types; codecs
    *       handling parameterized types, such as collection types, must override this method and
    *       perform some sort of "manual" inspection of the actual type parameters.
@@ -651,7 +672,7 @@ public abstract class TypeCodec<T> {
    */
   public boolean accepts(Object value) {
     checkNotNull(value, "Parameter value cannot be null");
-    return GuavaCompatibility.INSTANCE.isSupertypeOf(this.javaType, TypeToken.of(value.getClass()));
+    return javaType.getRawType().isAssignableFrom(value.getClass());
   }
 
   @Override

@@ -11,6 +11,7 @@
 - [documentation] JAVA-2074: Document preference for LZ4 over Snappy.
 - [bug] JAVA-1612: Include netty-common jar in binary tarball.
 - [improvement] JAVA-2003: Simplify CBUtil internal API to improve performance.
+- [improvement] JAVA-2002: Reimplement TypeCodec.accepts to improve performance.
 
 
 ### 3.6.0
