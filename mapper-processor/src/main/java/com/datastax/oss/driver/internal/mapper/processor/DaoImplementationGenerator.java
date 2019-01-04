@@ -57,7 +57,7 @@ public class DaoImplementationGenerator extends FileGenerator {
   @Override
   protected JavaFile.Builder getContents() {
 
-    List<DaoMethodGenerator> methods = new ArrayList<>();
+    List<PartialClassGenerator> methods = new ArrayList<>();
     for (Element child : interfaceElement.getEnclosedElements()) {
       if (child.getKind() == ElementKind.METHOD) {
         ExecutableElement method = (ExecutableElement) child;
@@ -91,7 +91,7 @@ public class DaoImplementationGenerator extends FileGenerator {
             .addParameter(Session.class, "session")
             .addStatement("this.session = session");
 
-    for (DaoMethodGenerator method : methods) {
+    for (PartialClassGenerator method : methods) {
       method.addConstructorInstructions(constructorBuilder);
       method.addMembers(classBuilder);
     }

@@ -36,7 +36,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
-public class SaveQueryGenerator implements DaoMethodGenerator {
+public class SaveQueryGenerator implements PartialClassGenerator {
 
   private final String methodName;
   private final String parameterName;

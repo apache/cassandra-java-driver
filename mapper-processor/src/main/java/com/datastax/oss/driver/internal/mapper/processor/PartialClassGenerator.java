@@ -18,7 +18,13 @@ package com.datastax.oss.driver.internal.mapper.processor;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
-public interface DaoMethodGenerator {
+/**
+ * A construct that affects multiple elements in an existing generated file.
+ *
+ * <p>For example, a final field with the corresponding initialization statements in the constructor
+ * and getter.
+ */
+public interface PartialClassGenerator {
 
   void addMembers(TypeSpec.Builder classBuilder);
 

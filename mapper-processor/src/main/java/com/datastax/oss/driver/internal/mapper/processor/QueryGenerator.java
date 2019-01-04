@@ -35,7 +35,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
-public class QueryGenerator implements DaoMethodGenerator {
+public class QueryGenerator implements PartialClassGenerator {
 
   private final ExecutableElement methodElement;
   private final String preparedStatementFieldName;
