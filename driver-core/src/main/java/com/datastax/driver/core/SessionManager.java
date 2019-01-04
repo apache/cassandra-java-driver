@@ -37,7 +37,6 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -608,10 +607,8 @@ class SessionManager extends AbstractSession {
       if (protocolVersion == ProtocolVersion.V2 && rawNamedValues != null)
         throw new UnsupportedFeatureException(protocolVersion, "Named values are not supported");
 
-      List<ByteBuffer> positionalValues =
-          rawPositionalValues == null
-              ? Collections.<ByteBuffer>emptyList()
-              : Arrays.asList(rawPositionalValues);
+      ByteBuffer[] positionalValues =
+          rawPositionalValues == null ? Requests.EMPTY_BB_ARRAY : rawPositionalValues;
       Map<String, ByteBuffer> namedValues =
           rawNamedValues == null ? Collections.<String, ByteBuffer>emptyMap() : rawNamedValues;
 
@@ -650,7 +647,7 @@ class SessionManager extends AbstractSession {
           new Requests.QueryProtocolOptions(
               Message.Request.Type.EXECUTE,
               consistency,
-              Arrays.asList(bs.wrapper.values),
+              bs.wrapper.values,
               Collections.<String, ByteBuffer>emptyMap(),
               skipMetadata,
               fetchSize,

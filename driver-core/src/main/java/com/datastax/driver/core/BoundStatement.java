@@ -23,7 +23,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -325,7 +324,7 @@ public class BoundStatement extends Statement
           size += CBUtil.sizeOfConsistencyLevel(getConsistencyLevel());
           size += QueryFlag.serializedSize(protocolVersion);
           if (wrapper.values.length > 0) {
-            size += CBUtil.sizeOfValueList(Arrays.asList(wrapper.values));
+            size += CBUtil.sizeOfValueList(wrapper.values);
           }
           // Fetch size, serial CL and default timestamp also depend on session-level defaults
           // (QueryOptions).
