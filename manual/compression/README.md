@@ -12,12 +12,15 @@ will likely be beneficial when you have larger payloads.
 
 Two algorithms are available:
 [LZ4](https://github.com/jpountz/lz4-java) and
-[Snappy](https://code.google.com/p/snappy/).
+[Snappy](https://code.google.com/p/snappy/).  The LZ4 implementation is a good
+first choice; it offers fallback implementations in case native libraries fail
+to load and
+[benchmarks](http://java-performance.info/performance-general-compression/)
+suggest that it offers better performance and compression ratios over Snappy.
 Both rely on third-party libraries, declared by the driver as *optional*
-dependencies. So If you use a build tool like Maven, you'll need to
-declare an explicit dependency to pull the appropriate library in your
-application's classpath. Then you configure compression at driver
-startup.
+dependencies. So if you use a build tool like Maven, you'll need to declare an
+explicit dependency to pull the appropriate library in your application's
+classpath. Then you configure compression at driver startup.
 
 ### LZ4
 

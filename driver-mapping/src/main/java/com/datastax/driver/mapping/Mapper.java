@@ -257,10 +257,9 @@ public class Mapper<T> {
       T entity, final EnumMap<Option.Type, Option> options) {
     final Map<AliasedMappedProperty, Object> columnToValue =
         new TreeMap<AliasedMappedProperty, Object>();
-    final boolean useUnsetForNullValue =
-        !shouldSaveNullFields(options) && manager.protocolVersionAsInt >= 4;
-    final boolean includeColumnsWithNullValue =
-        shouldSaveNullFields(options) || useUnsetForNullValue;
+    final boolean shouldSaveNullFields = shouldSaveNullFields(options);
+    final boolean useUnsetForNullValue = !shouldSaveNullFields && manager.protocolVersionAsInt >= 4;
+    final boolean includeColumnsWithNullValue = shouldSaveNullFields || useUnsetForNullValue;
 
     for (AliasedMappedProperty col : mapper.allColumns) {
       Object value = col.mappedProperty.getValue(entity);

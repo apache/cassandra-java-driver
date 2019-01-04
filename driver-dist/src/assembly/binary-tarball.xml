@@ -45,7 +45,6 @@
                             <!-- platform-dependent -->
                             <exclude>io.netty:netty-transport-native-epoll:*</exclude>
                         </excludes>
-                        <useTransitiveFiltering>true</useTransitiveFiltering>
                     </dependencySet>
                 </dependencySets>
             </binaries>

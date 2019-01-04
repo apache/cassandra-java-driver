@@ -51,8 +51,8 @@ UUID userId = ...;
 User u = mapper.get(userId);
 ```
 
-`get`'s arguments must match the partition key components (number of
-arguments and their types).
+`get`'s arguments must match the primary key components (number of
+arguments, their types, and order).
 
 --------------
 
@@ -274,6 +274,10 @@ executed:
     <tr>
       <td><code>ListenableFuture&lt;Result&lt;T&gt;&gt;</code></td>
       <td><code>T</code> must be a mapped class.<br/>Asynchronous execution, returns a list of mapped objects.</td>
+    </tr>
+    <tr>
+      <td><code>Statement</code></td>
+      <td>Object mapper doesn't execute query, but returns an instance of <code>BoundStatement</code> that could be executed via <code>Session</code> object. </td>
     </tr>
 </table>
 
