@@ -8,7 +8,7 @@ matrix:
       jdk: openjdk8
     # 11
     - env: JDK='OpenJDK 11'
-      install: $TRAVIS_BUILD_DIR/ci/install-jdk.sh -F 11 -L GPL
+      install: . $TRAVIS_BUILD_DIR/ci/install-jdk.sh -F 11 -L GPL
 before_install:
   - git clone --depth 1 https://github.com/datastax/native-protocol.git
   - pushd native-protocol
@@ -18,4 +18,4 @@ before_install:
 script: mvn test -B -Dmaven.main.skip=true  -Dmaven.test.skip=true
 cache:
   directories:
-  - $HOME/.m2
+    - $HOME/.m2
