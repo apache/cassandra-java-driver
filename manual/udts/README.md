@@ -78,7 +78,7 @@ corrupt data, that you won't be able to read back.
 Once you have the type, call `newValue()` and set the fields:
 
 ```java
-UdtValue udtValue = udt.newValue().setInt(0, 1).setString(1, "hello").setFloat(2, 2.3f);
+UDTValue udtValue = udt.newValue().setInt(0, 1).setString(1, "hello").setFloat(2, 2.3f);
 ```
 
 And bind your UDT value like any other type:
