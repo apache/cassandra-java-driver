@@ -1,13 +1,21 @@
 language: java
-jdk:
-- oraclejdk8
 sudo: false
+# see https://sormuras.github.io/blog/2018-03-20-jdk-matrix.html
+matrix:
+  include:
+    # 8
+    - env: JDK='OpenJDK 8'
+      jdk: openjdk8
+    # 11
+    - env: JDK='OpenJDK 11'
+      install: . $TRAVIS_BUILD_DIR/ci/install-jdk.sh -F 11 -L GPL
 before_install:
   - git clone --depth 1 https://github.com/datastax/native-protocol.git
   - pushd native-protocol
   - mvn install -Dmaven.javadoc.skip=true -B -V
   - popd
   - rm -rf native-protocol
+script: mvn test -B -Dmaven.main.skip=true  -Dmaven.test.skip=true
 cache:
   directories:
   - $HOME/.m2
