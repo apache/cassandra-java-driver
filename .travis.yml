@@ -18,4 +18,4 @@ before_install:
 script: mvn test -B -Dmaven.main.skip=true  -Dmaven.test.skip=true
 cache:
   directories:
-    - $HOME/.m2
+  - $HOME/.m2
