@@ -12,9 +12,8 @@ matrix:
     - env: JDK='Oracle JDK 11'
       install: . ./install-jdk.sh -F 11 -L BCL
     - env: JDK='OpenJDK 11'
-      install: . ./install-jdk.sh -F 11 -L GPL
+      install: $TRAVIS_BUILD_DIR/ci/install-jdk.sh -F 11 -L GPL
 before_install:
-  - wget https://github.com/sormuras/bach/raw/master/install-jdk.sh
   - git clone --depth 1 https://github.com/datastax/native-protocol.git
   - pushd native-protocol
   - mvn install -Dmaven.javadoc.skip=true -B -V
