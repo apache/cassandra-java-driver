@@ -13,6 +13,7 @@
 - [improvement] JAVA-2003: Simplify CBUtil internal API to improve performance.
 - [improvement] JAVA-2002: Reimplement TypeCodec.accepts to improve performance.
 - [documentation] JAVA-2041: Deprecate cross-DC failover in DCAwareRoundRobinPolicy.
+- [documentation] JAVA-1159: Document workaround for using tuple with udt field in Mapper.
 
 
 ### 3.6.0
