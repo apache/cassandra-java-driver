@@ -4,13 +4,9 @@ sudo: false
 matrix:
   include:
     # 8
-    - env: JDK='Oracle JDK 8'
-      jdk: oraclejdk8
     - env: JDK='OpenJDK 8'
       jdk: openjdk8
     # 11
-    - env: JDK='Oracle JDK 11'
-      install: . ./install-jdk.sh -F 11 -L BCL
     - env: JDK='OpenJDK 11'
       install: $TRAVIS_BUILD_DIR/ci/install-jdk.sh -F 11 -L GPL
 before_install:
