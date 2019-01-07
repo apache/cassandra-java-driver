@@ -342,7 +342,11 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
      *
      * @param usedHostsPerRemoteDc the number.
      * @return this builder.
+     * @deprecated This functionality will be removed in the next major release of the driver. DC
+     *     failover shouldn't be done in the driver, which does not have the necessary context to
+     *     know what makes sense considering application semantics.
      */
+    @Deprecated
     public Builder withUsedHostsPerRemoteDc(int usedHostsPerRemoteDc) {
       Preconditions.checkArgument(
           usedHostsPerRemoteDc >= 0, "usedHostsPerRemoteDc must be equal or greater than 0");
@@ -363,7 +367,11 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
      * you do.
      *
      * @return this builder.
+     * @deprecated This functionality will be removed in the next major release of the driver. DC
+     *     failover shouldn't be done in the driver, which does not have the necessary context to
+     *     know what makes sense considering application semantics.
      */
+    @Deprecated
     public Builder allowRemoteDCsForLocalConsistencyLevel() {
       this.allowRemoteDCsForLocalConsistencyLevel = true;
       return this;

@@ -359,9 +359,32 @@ private Map<Address, List<String>> frozenKeyValueMap;
 private Map<String, List<Address>> frozenValueMap;
 ```
 
+With regards to tuples, these can be represented as `TupleValue` fields, i.e.:
+
+```java
+@Frozen
+private TupleValue myTupleValue;
+```
+
+Please note however that tuples are not a good fit for the mapper since it is up to the user to
+resolve the associated `TupleType` when creating and accessing `TupleValue`s and properly use the
+right types since java type information is not known.
+
+Also note that `@UDT`-annotated classes are not implicitly registered with `TupleValue` like they
+otherwise are because the mapper is not able to identify the cql type information at the time
+entities are constructed.
+
+To work around this, one may use [udtCodec] to register a `TypeCodec` that the mapper can use
+to figure out how to appropriately handle UDT conversion, i.e.:
+
+```java
+mappingManager.udtCodec(Address.class);
+```
+
 [frozen]:http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/annotations/Frozen.html
 [frozenkey]:http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/annotations/FrozenKey.html
 [frozenvalue]:http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/annotations/FrozenValue.html
+[udtCodec]:https://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/MappingManager.html#udtCodec-java.lang.Class-
 
 #### Prefer Frozen Collections
 

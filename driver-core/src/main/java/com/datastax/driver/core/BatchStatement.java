@@ -21,9 +21,7 @@ import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -82,22 +80,23 @@ public class BatchStatement extends Statement {
 
   IdAndValues getIdAndValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
     IdAndValues idAndVals = new IdAndValues(statements.size());
-    for (Statement statement : statements) {
-      if (statement instanceof StatementWrapper)
+    for (int i = 0; i < statements.size(); i++) {
+      Statement statement = statements.get(i);
+      if (statement instanceof StatementWrapper) {
         statement = ((StatementWrapper) statement).getWrappedStatement();
+      }
       if (statement instanceof RegularStatement) {
         RegularStatement st = (RegularStatement) statement;
         ByteBuffer[] vals = st.getValues(protocolVersion, codecRegistry);
         String query = st.getQueryString(codecRegistry);
         idAndVals.ids.add(query);
-        idAndVals.values.add(
-            vals == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(vals));
+        idAndVals.values[i] = vals == null ? Requests.EMPTY_BB_ARRAY : vals;
       } else {
         // We handle BatchStatement in add() so ...
         assert statement instanceof BoundStatement;
         BoundStatement st = (BoundStatement) statement;
         idAndVals.ids.add(st.statement.getPreparedId().boundValuesMetadata.id);
-        idAndVals.values.add(Arrays.asList(st.wrapper.values));
+        idAndVals.values[i] = st.wrapper.values;
       }
     }
     return idAndVals;
@@ -212,7 +211,7 @@ public class BatchStatement extends Statement {
                 + (q instanceof String
                     ? CBUtil.sizeOfLongString((String) q)
                     : CBUtil.sizeOfShortBytes(((MD5Digest) q).bytes));
-        size += CBUtil.sizeOfValueList(idAndVals.values.get(i));
+        size += CBUtil.sizeOfValueList(idAndVals.values[i]);
       }
       switch (protocolVersion) {
         case V2:
@@ -301,11 +300,11 @@ public class BatchStatement extends Statement {
   static class IdAndValues {
 
     public final List<Object> ids;
-    public final List<List<ByteBuffer>> values;
+    public final ByteBuffer[][] values;
 
     IdAndValues(int nbstatements) {
       ids = new ArrayList<Object>(nbstatements);
-      values = new ArrayList<List<ByteBuffer>>(nbstatements);
+      values = new ByteBuffer[nbstatements][];
     }
   }
 }
