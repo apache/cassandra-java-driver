@@ -14,6 +14,7 @@
 - [improvement] JAVA-2002: Reimplement TypeCodec.accepts to improve performance.
 - [documentation] JAVA-2041: Deprecate cross-DC failover in DCAwareRoundRobinPolicy.
 - [documentation] JAVA-1159: Document workaround for using tuple with udt field in Mapper.
+- [documentation] JAVA-1964: Complete remaining "Coming Soon" sections in docs.
 
 
 ### 3.6.0
