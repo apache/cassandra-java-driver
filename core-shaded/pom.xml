@@ -141,22 +141,6 @@
         </executions>
       </plugin>
       <plugin>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>3.0.2</version>
-        <executions>
-          <execution>
-            <id>empty-javadoc-jar</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-            <configuration>
-              <classifier>javadoc</classifier>
-              <classesDirectory>${basedir}/src/main/javadoc</classesDirectory>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
         <executions>
           <execution>
@@ -183,6 +167,55 @@
                 META-INF/maven/com.datastax.oss/java-driver-core/**,
                 META-INF/maven/io.netty/**,
               </excludes>
+            </configuration>
+          </execution>
+          <!-- Unpack shaded sources in order to run javadoc on them: -->
+          <execution>
+            <id>unpack-shaded-sources</id>
+            <phase>package</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>com.datastax.oss</groupId>
+                  <artifactId>java-driver-core-shaded</artifactId>
+                  <version>${project.version}</version>
+                  <type>jar</type>
+                  <classifier>sources</classifier>
+                  <outputDirectory>${project.build.directory}/shaded-sources</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-shaded-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <configuration>
+              <sourcepath>${project.build.directory}/shaded-sources</sourcepath>
+              <excludePackageNames>
+                com.datastax.oss.driver.internal:com.datastax.oss.driver.shaded
+              </excludePackageNames>
+              <!--
+                javadoc processes the shaded Netty sources (even though they're not included in the
+                report), and will complain if it doesn't find JCTools classes.
+                Add the dependency just to avoid warnings:
+              -->
+              <additionalDependencies>
+                <additionalDependency>
+                  <groupId>org.jctools</groupId>
+                  <artifactId>jctools-core</artifactId>
+                  <version>2.1.2</version>
+                </additionalDependency>
+              </additionalDependencies>
             </configuration>
           </execution>
         </executions>
