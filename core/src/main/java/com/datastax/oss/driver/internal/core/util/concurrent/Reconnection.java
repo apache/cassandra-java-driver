@@ -26,6 +26,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
@@ -56,6 +57,7 @@ public class Reconnection {
   private final Callable<CompletionStage<Boolean>> reconnectionTask;
   private final Runnable onStart;
   private final Runnable onStop;
+  private final Consumer<Throwable> onFail;
 
   private State state = State.STOPPED;
   private ReconnectionSchedule reconnectionSchedule;
@@ -71,21 +73,24 @@ public class Reconnection {
       Supplier<ReconnectionSchedule> scheduleSupplier,
       Callable<CompletionStage<Boolean>> reconnectionTask,
       Runnable onStart,
-      Runnable onStop) {
+      Runnable onStop,
+      Consumer<Throwable> onFail) {
     this.logPrefix = logPrefix;
     this.executor = executor;
     this.scheduleSupplier = scheduleSupplier;
     this.reconnectionTask = reconnectionTask;
     this.onStart = onStart;
     this.onStop = onStop;
+    this.onFail = onFail;
   }
 
   public Reconnection(
       String logPrefix,
       EventExecutor executor,
       Supplier<ReconnectionSchedule> scheduleSupplier,
-      Callable<CompletionStage<Boolean>> reconnectionTask) {
-    this(logPrefix, executor, scheduleSupplier, reconnectionTask, () -> {}, () -> {});
+      Callable<CompletionStage<Boolean>> reconnectionTask,
+      Consumer<Throwable> onFail) {
+    this(logPrefix, executor, scheduleSupplier, reconnectionTask, () -> {}, () -> {}, onFail);
   }
 
   /**
@@ -205,12 +210,13 @@ public class Reconnection {
                   "[{}] Uncaught error while starting reconnection attempt",
                   logPrefix,
                   f.cause());
-              scheduleNextAttempt(null);
+              scheduleNextAttempt(throwable);
             }
           });
     } else {
       Loggers.warnWithException(
           LOG, "Reconnection attempt aborted, at discretion of reconnection policy", logPrefix);
+      onFail.accept(throwable);
     }
   }
 

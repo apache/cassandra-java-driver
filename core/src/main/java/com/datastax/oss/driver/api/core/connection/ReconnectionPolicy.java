@@ -25,9 +25,9 @@ import java.util.Optional;
  *
  * <p>When a reconnection starts, the driver invokes this policy to create a {@link
  * ReconnectionSchedule ReconnectionSchedule} instance. That schedule's {@link
- * ReconnectionSchedule#nextDelay() nextDelay()} method will get called each time the driver needs
- * to program the next connection attempt. When the reconnection succeeds, the schedule is
- * discarded; if the connection is lost again later, the next reconnection attempt will query the
+ * ReconnectionSchedule#nextDelay(Optional)} nextDelay()} method will get called each time the
+ * driver needs to program the next connection attempt. When the reconnection succeeds, the schedule
+ * is discarded; if the connection is lost again later, the next reconnection attempt will query the
  * policy again to obtain a new schedule.
  *
  * <p>There are two types of reconnection:
@@ -77,7 +77,12 @@ public interface ReconnectionPolicy extends AutoCloseable {
    * this node have been restored.
    */
   interface ReconnectionSchedule {
-    /** How long to wait before the next reconnection attempt. */
+    /**
+     * How long to wait before the next reconnection attempt. If Optional.empty() is returned all
+     * future reconnections are aborted.
+     *
+     * @param throwable the error that caused the reconnect, if available.
+     */
     @NonNull
     Optional<Duration> nextDelay(Optional<Throwable> throwable);
   }

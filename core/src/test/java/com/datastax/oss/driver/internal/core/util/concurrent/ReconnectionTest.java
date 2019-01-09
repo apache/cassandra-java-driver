@@ -64,7 +64,8 @@ public class ReconnectionTest {
             () -> reconnectionSchedule,
             reconnectionTask,
             onStartCallback,
-            onStopCallback);
+            onStopCallback,
+            error -> {});
   }
 
   @Test

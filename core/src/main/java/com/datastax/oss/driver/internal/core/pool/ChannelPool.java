@@ -259,7 +259,8 @@ public class ChannelPool implements AsyncAutoCloseable {
               () -> reconnectionPolicy.newNodeSchedule(node),
               this::addMissingChannels,
               () -> eventBus.fire(ChannelEvent.reconnectionStarted(node)),
-              () -> eventBus.fire(ChannelEvent.reconnectionStopped(node)));
+              () -> eventBus.fire(ChannelEvent.reconnectionStopped(node)),
+              error -> {});
       this.configListenerKey =
           eventBus.register(
               ConfigChangeEvent.class, RunOrSchedule.on(adminExecutor, this::onConfigChanged));

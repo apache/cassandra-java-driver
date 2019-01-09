@@ -700,7 +700,49 @@
         "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1-SNAPSHOT",
         "elementKind": "method",
         "justification": "JAVA-2077: Allow reconnection policy to detect first connection attempt"
-      }
+      },
+      {
+        "code": "java.method.numberOfParametersChanged",
+        "old": "method java.time.Duration com.datastax.oss.driver.api.core.connection.ReconnectionPolicy.ReconnectionSchedule::nextDelay()",
+        "new": "method java.util.Optional<java.time.Duration> com.datastax.oss.driver.api.core.connection.ReconnectionPolicy.ReconnectionSchedule::nextDelay(java.util.Optional<java.lang.Throwable>)",
+        "package": "com.datastax.oss.driver.api.core.connection",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.connection.ReconnectionPolicy.ReconnectionSchedule",
+        "classSimpleName": "ReconnectionSchedule",
+        "methodName": "nextDelay",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1-SNAPSHOT",
+        "elementKind": "method",
+        "justification": "JAVA-2086 Enable abort on reconnect policies"
+      },
+      {
+        "code": "java.method.returnTypeChanged",
+        "old": "method java.time.Duration com.datastax.oss.driver.api.core.connection.ReconnectionPolicy.ReconnectionSchedule::nextDelay()",
+        "new": "method java.util.Optional<java.time.Duration> com.datastax.oss.driver.api.core.connection.ReconnectionPolicy.ReconnectionSchedule::nextDelay(java.util.Optional<java.lang.Throwable>)",
+        "oldType": "java.time.Duration",
+        "newType": "java.util.Optional<java.time.Duration>",
+        "package": "com.datastax.oss.driver.api.core.connection",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.connection.ReconnectionPolicy.ReconnectionSchedule",
+        "classSimpleName": "ReconnectionSchedule",
+        "methodName": "nextDelay",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1-SNAPSHOT",
+        "elementKind": "method",
+        "justification": "JAVA-2086 Enable abort on reconnect policies"
+      },
+      {
+        "code": "java.method.numberOfParametersChanged",
+        "old": "method com.datastax.oss.driver.api.core.connection.ReconnectionPolicy.ReconnectionSchedule com.datastax.oss.driver.api.core.connection.ReconnectionPolicy::newControlConnectionSchedule()",
+        "new": "method com.datastax.oss.driver.api.core.connection.ReconnectionPolicy.ReconnectionSchedule com.datastax.oss.driver.api.core.connection.ReconnectionPolicy::newControlConnectionSchedule(boolean)",
+        "package": "com.datastax.oss.driver.api.core.connection",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.connection.ReconnectionPolicy",
+        "classSimpleName": "ReconnectionPolicy",
+        "methodName": "newControlConnectionSchedule",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1-SNAPSHOT",
+        "elementKind": "method",
+        "justification": "JAVA-2086 Enable abort on reconnect policies"
+      },
+
     ]
   }
 }

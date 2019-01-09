@@ -253,7 +253,8 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
               logPrefix,
               adminExecutor,
               () -> reconnectionPolicy.newControlConnectionSchedule(false),
-              this::reconnect);
+              this::reconnect,
+              error -> initFuture.completeExceptionally(error));
       // In "reconnect-on-init" mode, handle cancellation of the initFuture by user code
       CompletableFutures.whenCancelled(
           this.initFuture,
@@ -334,6 +335,10 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
           },
           error -> result.complete(false));
       return result;
+    }
+
+    private void abort(Throwable t) {
+      initFuture.completeExceptionally(t);
     }
 
     private void connect(
