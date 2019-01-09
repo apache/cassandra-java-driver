@@ -19,9 +19,14 @@ Compression must be set before opening a session, it cannot be changed at runtim
 
 
 Two algorithms are supported out of the box: [LZ4](https://github.com/jpountz/lz4-java) and
-[Snappy](http://google.github.io/snappy/). Both rely on third-party libraries, declared by the
-driver as *optional* dependencies; if you enable compression, you need to explicitly depend on the
-corresponding library to pull it into your project. 
+[Snappy](http://google.github.io/snappy/). The LZ4 implementation is a good first choice; it offers
+fallback implementations in case native libraries fail to load and
+[benchmarks](http://java-performance.info/performance-general-compression/) suggest that it offers
+better performance and compression ratios over Snappy.
+
+Both implementations rely on third-party libraries, declared by the driver as *optional*
+dependencies; if you enable compression, you need to explicitly depend on the corresponding library
+to pull it into your project. 
 
 ### LZ4
 
