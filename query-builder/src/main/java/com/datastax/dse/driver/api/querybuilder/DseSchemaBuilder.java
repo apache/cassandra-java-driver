@@ -15,10 +15,18 @@
  */
 package com.datastax.dse.driver.api.querybuilder;
 
+import com.datastax.dse.driver.api.querybuilder.schema.AlterDseKeyspaceStart;
+import com.datastax.dse.driver.api.querybuilder.schema.AlterDseTableStart;
 import com.datastax.dse.driver.api.querybuilder.schema.CreateDseAggregateStart;
 import com.datastax.dse.driver.api.querybuilder.schema.CreateDseFunctionStart;
+import com.datastax.dse.driver.api.querybuilder.schema.CreateDseKeyspaceStart;
+import com.datastax.dse.driver.api.querybuilder.schema.CreateDseTableStart;
+import com.datastax.dse.driver.internal.querybuilder.schema.DefaultAlterDseKeyspace;
+import com.datastax.dse.driver.internal.querybuilder.schema.DefaultAlterDseTable;
 import com.datastax.dse.driver.internal.querybuilder.schema.DefaultCreateDseAggregate;
 import com.datastax.dse.driver.internal.querybuilder.schema.DefaultCreateDseFunction;
+import com.datastax.dse.driver.internal.querybuilder.schema.DefaultCreateDseKeyspace;
+import com.datastax.dse.driver.internal.querybuilder.schema.DefaultCreateDseTable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import com.datastax.oss.driver.api.querybuilder.schema.CreateAggregateStart;
@@ -210,5 +218,109 @@ public class DseSchemaBuilder extends SchemaBuilder {
   public static CreateFunctionStart createFunction(
       @Nullable String keyspace, @NonNull String functionName) {
     return SchemaBuilder.createFunction(keyspace, functionName);
+  }
+
+  /** Starts a CREATE KEYSPACE query. */
+  @NonNull
+  public static CreateDseKeyspaceStart createDseKeyspace(@NonNull CqlIdentifier keyspaceName) {
+    return new DefaultCreateDseKeyspace(keyspaceName);
+  }
+
+  /**
+   * Shortcut for {@link #createDseKeyspace(CqlIdentifier)
+   * createKeyspace(CqlIdentifier.fromCql(keyspaceName))}
+   */
+  @NonNull
+  public static CreateDseKeyspaceStart createDseKeyspace(@NonNull String keyspaceName) {
+    return createDseKeyspace(CqlIdentifier.fromCql(keyspaceName));
+  }
+
+  /** Starts an ALTER KEYSPACE query. */
+  @NonNull
+  public static AlterDseKeyspaceStart alterDseKeyspace(@NonNull CqlIdentifier keyspaceName) {
+    return new DefaultAlterDseKeyspace(keyspaceName);
+  }
+
+  /**
+   * Shortcut for {@link #alterDseKeyspace(CqlIdentifier)
+   * alterKeyspace(CqlIdentifier.fromCql(keyspaceName)}.
+   */
+  @NonNull
+  public static AlterDseKeyspaceStart alterDseKeyspace(@NonNull String keyspaceName) {
+    return DseSchemaBuilder.alterDseKeyspace(CqlIdentifier.fromCql(keyspaceName));
+  }
+
+  /**
+   * Starts a CREATE TABLE query with the given table name. This assumes the keyspace name is
+   * already qualified for the Session or Statement.
+   */
+  @NonNull
+  public static CreateDseTableStart createDseTable(@NonNull CqlIdentifier tableName) {
+    return createDseTable(null, tableName);
+  }
+
+  /** Starts a CREATE TABLE query with the given table name for the given keyspace name. */
+  @NonNull
+  public static CreateDseTableStart createDseTable(
+      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier tableName) {
+    return new DefaultCreateDseTable(keyspace, tableName);
+  }
+
+  /**
+   * Shortcut for {@link #createDseTable(CqlIdentifier)
+   * createDseTable(CqlIdentifier.fromCql(tableName)}
+   */
+  @NonNull
+  public static CreateDseTableStart createDseTable(@NonNull String tableName) {
+    return createDseTable(CqlIdentifier.fromCql(tableName));
+  }
+
+  /**
+   * Shortcut for {@link #createDseTable(CqlIdentifier,CqlIdentifier)
+   * createDseTable(CqlIdentifier.fromCql(keyspaceName),CqlIdentifier.fromCql(tableName)}
+   */
+  @NonNull
+  public static CreateDseTableStart createDseTable(
+      @Nullable String keyspace, @NonNull String tableName) {
+    return createDseTable(
+        keyspace == null ? null : CqlIdentifier.fromCql(keyspace),
+        CqlIdentifier.fromCql(tableName));
+  }
+
+  /**
+   * Starts an ALTER TABLE query with the given table name. This assumes the keyspace name is
+   * already qualified for the Session or Statement.
+   */
+  @NonNull
+  public static AlterDseTableStart alterDseTable(@NonNull CqlIdentifier tableName) {
+    return new DefaultAlterDseTable(tableName);
+  }
+
+  /** Starts an ALTER TABLE query with the given table name for the given keyspace name. */
+  @NonNull
+  public static AlterDseTableStart alterDseTable(
+      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier tableName) {
+    return new DefaultAlterDseTable(keyspace, tableName);
+  }
+
+  /**
+   * Shortcut for {@link #alterDseTable(CqlIdentifier)
+   * alterDseTable(CqlIdentifier.fromCql(tableName)}
+   */
+  @NonNull
+  public static AlterDseTableStart alterDseTable(@NonNull String tableName) {
+    return alterDseTable(CqlIdentifier.fromCql(tableName));
+  }
+
+  /**
+   * Shortcut for {@link #alterDseTable(CqlIdentifier,CqlIdentifier)
+   * alterDseTable(CqlIdentifier.fromCql(keyspaceName),CqlIdentifier.fromCql(tableName)}
+   */
+  @NonNull
+  public static AlterDseTableStart alterDseTable(
+      @Nullable String keyspace, @NonNull String tableName) {
+    return alterDseTable(
+        keyspace == null ? null : CqlIdentifier.fromCql(keyspace),
+        CqlIdentifier.fromCql(tableName));
   }
 }
