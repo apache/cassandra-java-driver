@@ -142,7 +142,8 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
   @Test
   public void should_reconnect_if_channel_goes_down() throws Exception {
     // Given
-    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty())).thenReturn(Optional.of(Duration.ofNanos(1)));
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty()))
+        .thenReturn(Optional.of(Duration.ofNanos(1)));
     DriverChannel channel1 = newMockDriverChannel(1);
     DriverChannel channel2 = newMockDriverChannel(2);
     MockChannelFactoryHelper factoryHelper =
