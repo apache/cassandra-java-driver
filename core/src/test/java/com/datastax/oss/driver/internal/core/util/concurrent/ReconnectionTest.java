@@ -30,6 +30,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,6 +44,7 @@ public class ReconnectionTest {
   @Mock private ReconnectionSchedule reconnectionSchedule;
   @Mock private Runnable onStartCallback;
   @Mock private Runnable onStopCallback;
+  @Mock private Consumer<Throwable> onFailCallback;
   private EmbeddedChannel channel;
 
   private MockReconnectionTask reconnectionTask;
@@ -65,7 +67,7 @@ public class ReconnectionTest {
             reconnectionTask,
             onStartCallback,
             onStopCallback,
-            error -> {});
+            onFailCallback);
   }
 
   @Test
@@ -158,6 +160,18 @@ public class ReconnectionTest {
     // Then
     assertThat(reconnection.isRunning()).isFalse();
     Mockito.verify(onStopCallback).run();
+  }
+
+  @Test
+  public void should_abort_if_on_fail() {
+    // Given
+    Mockito.when(reconnectionSchedule.nextDelay(Optional.empty())).thenReturn(Optional.empty());
+    // When
+    reconnection.start();
+
+    // Then
+    Mockito.verify(reconnectionSchedule).nextDelay(Optional.empty());
+    Mockito.verify(onFailCallback).accept(null);
   }
 
   @Test
