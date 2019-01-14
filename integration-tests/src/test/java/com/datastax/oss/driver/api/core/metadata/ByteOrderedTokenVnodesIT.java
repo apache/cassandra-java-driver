@@ -48,7 +48,7 @@ public class ByteOrderedTokenVnodesIT extends TokenITBase {
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   public ByteOrderedTokenVnodesIT() {
-    super(ByteOrderedToken.class, true);
+    super("org.apache.cassandra.dht.ByteOrderedPartitioner", ByteOrderedToken.class, true);
   }
 
   @Override

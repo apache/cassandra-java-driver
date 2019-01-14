@@ -44,7 +44,7 @@ public class RandomTokenIT extends TokenITBase {
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   public RandomTokenIT() {
-    super(RandomToken.class, false);
+    super("org.apache.cassandra.dht.RandomPartitioner", RandomToken.class, false);
   }
 
   @Override

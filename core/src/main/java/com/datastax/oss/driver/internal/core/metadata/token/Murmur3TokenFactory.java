@@ -24,8 +24,15 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class Murmur3TokenFactory implements TokenFactory {
 
+  public static final String PARTITIONER_NAME = "org.apache.cassandra.dht.Murmur3Partitioner";
+
   public static final Murmur3Token MIN_TOKEN = new Murmur3Token(Long.MIN_VALUE);
   public static final Murmur3Token MAX_TOKEN = new Murmur3Token(Long.MAX_VALUE);
+
+  @Override
+  public String getPartitionerName() {
+    return PARTITIONER_NAME;
+  }
 
   @Override
   public Token hash(ByteBuffer partitionKey) {

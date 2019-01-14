@@ -25,7 +25,14 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class ByteOrderedTokenFactory implements TokenFactory {
 
+  public static final String PARTITIONER_NAME = "org.apache.cassandra.dht.ByteOrderedPartitioner";
+
   public static final ByteOrderedToken MIN_TOKEN = new ByteOrderedToken(ByteBuffer.allocate(0));
+
+  @Override
+  public String getPartitionerName() {
+    return PARTITIONER_NAME;
+  }
 
   @Override
   public Token hash(ByteBuffer partitionKey) {

@@ -27,6 +27,8 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class RandomTokenFactory implements TokenFactory {
 
+  public static final String PARTITIONER_NAME = "org.apache.cassandra.dht.RandomPartitioner";
+
   private static final BigInteger MIN_VALUE = BigInteger.ONE.negate();
   static final BigInteger MAX_VALUE = BigInteger.valueOf(2).pow(127);
   public static final RandomToken MIN_TOKEN = new RandomToken(MIN_VALUE);
@@ -45,6 +47,11 @@ public class RandomTokenFactory implements TokenFactory {
       supportsClone = false;
     }
     this.supportsClone = supportsClone;
+  }
+
+  @Override
+  public String getPartitionerName() {
+    return PARTITIONER_NAME;
   }
 
   @Override
