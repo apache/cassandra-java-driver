@@ -687,6 +687,17 @@
         "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3",
         "elementKind": "method",
         "justification": "JAVA-2058: Make programmatic config reloading part of the public API"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method java.lang.String com.datastax.oss.driver.api.core.metadata.TokenMap::getPartitionerName()",
+        "package": "com.datastax.oss.driver.api.core.metadata",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.metadata.TokenMap",
+        "classSimpleName": "TokenMap",
+        "methodName": "getPartitionerName",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1-SNAPSHOT",
+        "elementKind": "method",
+        "justification": "JAVA-2103: Expose partitioner name in TokenMap API"
       }
     ]
   }

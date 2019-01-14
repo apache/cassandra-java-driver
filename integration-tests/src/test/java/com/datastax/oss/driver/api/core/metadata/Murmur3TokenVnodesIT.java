@@ -44,7 +44,7 @@ public class Murmur3TokenVnodesIT extends TokenITBase {
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   public Murmur3TokenVnodesIT() {
-    super(Murmur3Token.class, true);
+    super("org.apache.cassandra.dht.Murmur3Partitioner", Murmur3Token.class, true);
   }
 
   @Override

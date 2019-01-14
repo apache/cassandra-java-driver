@@ -22,6 +22,8 @@ import java.nio.ByteBuffer;
 /** Manages token instances for a partitioner implementation. */
 public interface TokenFactory {
 
+  String getPartitionerName();
+
   Token hash(ByteBuffer partitionKey);
 
   Token parse(String tokenString);

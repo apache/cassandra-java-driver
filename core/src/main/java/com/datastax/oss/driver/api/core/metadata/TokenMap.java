@@ -144,4 +144,8 @@ public interface TokenMap {
   default Set<Node> getReplicas(@NonNull String keyspaceName, @NonNull TokenRange range) {
     return getReplicas(CqlIdentifier.fromCql(keyspaceName), range);
   }
+
+  /** The name of the partitioner class in use, as reported by the Cassandra nodes. */
+  @NonNull
+  String getPartitionerName();
 }
