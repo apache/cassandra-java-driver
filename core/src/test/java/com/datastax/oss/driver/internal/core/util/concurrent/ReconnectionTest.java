@@ -359,12 +359,12 @@ public class ReconnectionTest {
     channel.runPendingTasks();
   }
 
-  private static class MockReconnectionTask implements Callable<CompletionStage<Boolean>> {
-    private volatile CompletableFuture<Boolean> nextResult;
+  private static class MockReconnectionTask implements Callable<CompletionStage<Void>> {
+    private volatile CompletableFuture<Void> nextResult;
     private final AtomicInteger callCount = new AtomicInteger();
 
     @Override
-    public CompletionStage<Boolean> call() throws Exception {
+    public CompletionStage<Void> call() throws Exception {
       assertThat(nextResult == null || nextResult.isDone()).isTrue();
       callCount.incrementAndGet();
       nextResult = new CompletableFuture<>();
@@ -373,7 +373,7 @@ public class ReconnectionTest {
 
     private void complete(boolean outcome) {
       assertThat(nextResult != null || !nextResult.isDone()).isTrue();
-      nextResult.complete(outcome);
+      nextResult.complete(null);
       nextResult = null;
     }
 

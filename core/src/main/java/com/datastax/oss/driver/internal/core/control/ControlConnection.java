@@ -325,15 +325,15 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     private CompletionStage<Void> reconnect() {
       assert adminExecutor.inEventLoop();
       Queue<Node> nodes = context.getLoadBalancingPolicyWrapper().newQueryPlan();
-      CompletableFuture<Boolean> result = new CompletableFuture<>();
+      CompletableFuture<Void> result = new CompletableFuture<>();
       connect(
           nodes,
           null,
           () -> {
-            result.complete(true);
+            result.complete(null);
             onSuccessfulReconnect();
           },
-          error -> result.complete(false));
+          error -> result.completeExceptionally(error));
       return result;
     }
 

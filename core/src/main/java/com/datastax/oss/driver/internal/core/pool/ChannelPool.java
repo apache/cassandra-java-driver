@@ -47,7 +47,6 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -305,7 +304,7 @@ public class ChannelPool implements AsyncAutoCloseable {
 
     private void onAllConnected(@SuppressWarnings("unused") Void v) {
       assert adminExecutor.inEventLoop();
-      List<Throwable> throwables = new LinkedList<Throwable>();
+      List<Throwable> throwables = new ArrayList<>();
       int invalidKeyspaceErrors = 0;
       for (CompletionStage<DriverChannel> pendingChannel : pendingChannels) {
         CompletableFuture<DriverChannel> future = pendingChannel.toCompletableFuture();
