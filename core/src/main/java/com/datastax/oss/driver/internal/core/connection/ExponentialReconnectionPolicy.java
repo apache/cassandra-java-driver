@@ -15,11 +15,15 @@
  */
 package com.datastax.oss.driver.internal.core.connection;
 
+import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.channel.ClusterNameMismatchException;
+import com.datastax.oss.driver.internal.core.pool.PoolReconnectionException;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
@@ -143,6 +147,21 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
     @NonNull
     @Override
     public Optional<Duration> nextDelay(Optional<Throwable> throwable) {
+      if (throwable.isPresent() && throwable.get() instanceof PoolReconnectionException) {
+        PoolReconnectionException reconnectionException =
+            (PoolReconnectionException) throwable.get();
+        for (Throwable error : reconnectionException.getConnectionErrors()) {
+          if (error instanceof ClusterNameMismatchException
+              || error instanceof UnsupportedProtocolVersionException) {
+            Loggers.warnWithException(
+                LOG,
+                "[{}] Fatal error while initializing pool, forcing the node down",
+                logPrefix,
+                throwable);
+            return Optional.empty();
+          }
+        }
+      }
       long delay = (attempts > maxAttempts) ? maxDelayMs : calculateDelayWithJitter();
       return Optional.of(Duration.ofMillis(delay));
     }

@@ -54,14 +54,14 @@ public class Reconnection {
   private final String logPrefix;
   private final EventExecutor executor;
   private final Supplier<ReconnectionSchedule> scheduleSupplier;
-  private final Callable<CompletionStage<Boolean>> reconnectionTask;
+  private final Callable<CompletionStage<Void>> reconnectionTask;
   private final Runnable onStart;
   private final Runnable onStop;
-  private final Consumer<Throwable> onFail;
+  private final Consumer<Throwable> onAbort;
 
   private State state = State.STOPPED;
   private ReconnectionSchedule reconnectionSchedule;
-  private ScheduledFuture<CompletionStage<Boolean>> nextAttempt;
+  private ScheduledFuture<CompletionStage<Void>> nextAttempt;
 
   /**
    * @param reconnectionTask the actual thing to try on a reconnection, returns if it succeeded or
@@ -71,24 +71,24 @@ public class Reconnection {
       String logPrefix,
       EventExecutor executor,
       Supplier<ReconnectionSchedule> scheduleSupplier,
-      Callable<CompletionStage<Boolean>> reconnectionTask,
+      Callable<CompletionStage<Void>> reconnectionTask,
       Runnable onStart,
       Runnable onStop,
-      Consumer<Throwable> onFail) {
+      Consumer<Throwable> onAbort) {
     this.logPrefix = logPrefix;
     this.executor = executor;
     this.scheduleSupplier = scheduleSupplier;
     this.reconnectionTask = reconnectionTask;
     this.onStart = onStart;
     this.onStop = onStop;
-    this.onFail = onFail;
+    this.onAbort = onAbort;
   }
 
   public Reconnection(
       String logPrefix,
       EventExecutor executor,
       Supplier<ReconnectionSchedule> scheduleSupplier,
-      Callable<CompletionStage<Boolean>> reconnectionTask,
+      Callable<CompletionStage<Void>> reconnectionTask,
       Consumer<Throwable> onFail) {
     this(logPrefix, executor, scheduleSupplier, reconnectionTask, () -> {}, () -> {}, onFail);
   }
@@ -201,7 +201,7 @@ public class Reconnection {
       nextAttempt =
           executor.schedule(reconnectionTask, nextInterval.get().toNanos(), TimeUnit.NANOSECONDS);
       nextAttempt.addListener(
-          (Future<CompletionStage<Boolean>> f) -> {
+          (Future<CompletionStage<Void>> f) -> {
             if (f.isSuccess()) {
               onNextAttemptStarted(f.getNow());
             } else if (!f.isCancelled()) {
@@ -214,15 +214,14 @@ public class Reconnection {
             }
           });
     } else {
-      Loggers.warnWithException(
-          LOG, "Reconnection attempt aborted, at discretion of reconnection policy", logPrefix);
-      onFail.accept(throwable);
+      LOG.debug("Reconnection attempt aborted, at discretion of reconnection policy");
+      onAbort.accept(throwable);
     }
   }
 
   // When the Callable runs this means the caller has started the attempt, we have yet to wait on
   // the CompletableFuture to find out if that succeeded or not.
-  private void onNextAttemptStarted(CompletionStage<Boolean> futureOutcome) {
+  private void onNextAttemptStarted(CompletionStage<Void> futureOutcome) {
     assert executor.inEventLoop();
     state = State.ATTEMPT_IN_PROGRESS;
     futureOutcome
@@ -230,9 +229,9 @@ public class Reconnection {
         .exceptionally(UncaughtExceptions::log);
   }
 
-  private void onNextAttemptCompleted(Boolean success, Throwable error) {
+  private void onNextAttemptCompleted(Void v, Throwable error) {
     assert executor.inEventLoop();
-    if (success) {
+    if (error == null) {
       LOG.debug("[{}] Reconnection successful", logPrefix);
       reallyStop();
     } else {
