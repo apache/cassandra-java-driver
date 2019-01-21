@@ -13,30 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.mapper.processor;
+package com.datastax.oss.driver.internal.mapper.processor.mapper;
 
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
-import com.squareup.javapoet.ClassName;
+import com.datastax.oss.driver.internal.mapper.processor.CodeGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.CodeGeneratorFactory;
+import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import javax.lang.model.element.TypeElement;
 
 /** Entry point to generate all the types related to a {@link Mapper}-annotated interface. */
-public class MapperGenerator {
+public class MapperGenerator implements CodeGenerator {
 
   private final TypeElement interfaceElement;
-  private final GenerationContext context;
+  private final ProcessorContext context;
 
-  public MapperGenerator(TypeElement interfaceElement, GenerationContext context) {
+  public MapperGenerator(TypeElement interfaceElement, ProcessorContext context) {
     this.interfaceElement = interfaceElement;
     this.context = context;
   }
 
+  @Override
   public void generate() {
-    ClassName builderName = GeneratedNames.mapperBuilder(interfaceElement);
-    MapperImplementationGenerator implementation =
-        new MapperImplementationGenerator(interfaceElement, builderName, context);
-    implementation.generate();
-    new MapperBuilderGenerator(
-            builderName, interfaceElement, implementation.getGeneratedClassName(), context)
-        .generate();
+    CodeGeneratorFactory factory = context.getCodeGeneratorFactory();
+    factory.newMapperBuilder(interfaceElement).generate();
+    factory.newMapperImplementation(interfaceElement).generate();
   }
 }
