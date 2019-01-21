@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor;
 
+import com.datastax.oss.driver.internal.mapper.processor.entity.EntityFactory;
 import com.datastax.oss.driver.internal.mapper.processor.util.Classes;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -33,4 +34,6 @@ public interface ProcessorContext {
   JavaPoetFiler getFiler();
 
   CodeGeneratorFactory getCodeGeneratorFactory();
+
+  EntityFactory getEntityFactory();
 }
