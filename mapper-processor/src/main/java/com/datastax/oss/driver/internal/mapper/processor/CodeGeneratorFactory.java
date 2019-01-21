@@ -16,12 +16,16 @@
 package com.datastax.oss.driver.internal.mapper.processor;
 
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
 public interface CodeGeneratorFactory {
+
+  /** The "helper" class associated to an {@link Entity}-annotated class. */
+  CodeGenerator newEntity(TypeElement classElement);
 
   /**
    * All the types derived from a {@link Mapper}-annotated interface.
