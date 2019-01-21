@@ -15,25 +15,30 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor;
 
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
+import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
+import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
+import com.datastax.oss.driver.internal.mapper.processor.util.Classes;
 import javax.annotation.processing.Filer;
-import javax.lang.model.element.Element;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
-/**
- * A custom context to share processor-level information with code generators. Basically just a way
- * to avoid passing a gazillion parameters everywhere.
- */
-public class GenerationContext {
+/** This follows the same principles as {@link DefaultDriverContext}. */
+public class DefaultProcessorContext implements ProcessorContext {
+
+  private final CycleDetector cycleDetector =
+      new CycleDetector("Detected cycle in context initialization");
+
+  private final LazyReference<CodeGeneratorFactory> codeGeneratorFactoryRef =
+      new LazyReference<>("codeGeneratorFactory", this::buildCodeGeneratorFactory, cycleDetector);
 
   private final DecoratedMessager messager;
   private final Types typeUtils;
   private final Elements elementUtils;
-  private final Filer filer;
-  private final String indent;
+  private final Classes classUtils;
+  private final JavaPoetFiler filer;
 
-  public GenerationContext(
+  public DefaultProcessorContext(
       DecoratedMessager messager,
       Types typeUtils,
       Elements elementUtils,
@@ -42,35 +47,41 @@ public class GenerationContext {
     this.messager = messager;
     this.typeUtils = typeUtils;
     this.elementUtils = elementUtils;
-    this.filer = filer;
-    this.indent = indent;
+    this.classUtils = new Classes(typeUtils, elementUtils);
+    this.filer = new JavaPoetFiler(filer, indent);
   }
 
+  protected CodeGeneratorFactory buildCodeGeneratorFactory() {
+    return new DefaultCodeGeneratorFactory(this);
+  }
+
+  @Override
   public DecoratedMessager getMessager() {
     return messager;
   }
 
+  @Override
   public Types getTypeUtils() {
     return typeUtils;
   }
 
+  @Override
   public Elements getElementUtils() {
     return elementUtils;
   }
 
-  public boolean isSame(Element element, Class<?> javaClass) {
-    return element.equals(elementUtils.getTypeElement(javaClass.getName()));
+  @Override
+  public Classes getClassUtils() {
+    return classUtils;
   }
 
-  public boolean isSame(TypeMirror mirror, Class<?> javaClass) {
-    return typeUtils.isSameType(mirror, elementUtils.getTypeElement(javaClass.getName()).asType());
-  }
-
-  public Filer getFiler() {
+  @Override
+  public JavaPoetFiler getFiler() {
     return filer;
   }
 
-  public String getIndent() {
-    return indent;
+  @Override
+  public CodeGeneratorFactory getCodeGeneratorFactory() {
+    return codeGeneratorFactoryRef.get();
   }
 }

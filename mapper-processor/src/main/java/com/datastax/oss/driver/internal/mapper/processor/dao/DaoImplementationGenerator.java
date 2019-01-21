@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.mapper.processor;
+package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.mapper.MapperContext;
+import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
+import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
+import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -30,13 +32,12 @@ import java.util.concurrent.CompletableFuture;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
-/** Generates the implementation of a {@link Dao}-annotated interface. */
-public class DaoImplementationGenerator extends FileGenerator {
+public class DaoImplementationGenerator extends SingleFileCodeGenerator {
 
   private final TypeElement interfaceElement;
   private final ClassName implementationName;
 
-  public DaoImplementationGenerator(TypeElement interfaceElement, GenerationContext context) {
+  public DaoImplementationGenerator(TypeElement interfaceElement, ProcessorContext context) {
     super(context);
     this.interfaceElement = interfaceElement;
     implementationName = GeneratedNames.daoImplementation(interfaceElement);
