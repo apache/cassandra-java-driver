@@ -24,6 +24,8 @@ import com.squareup.javapoet.TypeSpec;
  * <p>For example, a final field with the corresponding initialization statements in the constructor
  * and getter.
  */
+// TODO get rid of this? we could generalize the pattern where partial generators invoke callbacks
+// on the parent generator
 public interface PartialClassGenerator {
 
   void addMembers(TypeSpec.Builder classBuilder);

@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper.processor;
 
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoImplementationGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.entity.EntityHelperGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.mapper.DaoFactoryMethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.mapper.MapperBuilderGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.mapper.MapperGenerator;
@@ -38,6 +39,11 @@ public class DefaultCodeGeneratorFactory implements CodeGeneratorFactory {
 
   public DefaultCodeGeneratorFactory(ProcessorContext context) {
     this.context = context;
+  }
+
+  @Override
+  public CodeGenerator newEntity(TypeElement classElement) {
+    return new EntityHelperGenerator(classElement, context);
   }
 
   @Override
