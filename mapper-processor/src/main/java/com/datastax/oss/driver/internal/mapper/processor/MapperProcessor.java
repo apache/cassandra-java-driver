@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.mapper.processor;
 
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.shaded.guava.common.base.Strings;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
@@ -68,8 +69,12 @@ public class MapperProcessor extends AbstractProcessor {
     ProcessorContext context = buildContext(messager, typeUtils, elementUtils, filer, indent);
 
     CodeGeneratorFactory generatorFactory = context.getCodeGeneratorFactory();
-    processAnnotatedInterfaces(roundEnvironment, Dao.class, generatorFactory::newDao);
-    processAnnotatedInterfaces(roundEnvironment, Mapper.class, generatorFactory::newMapper);
+    processAnnotatedTypes(
+        roundEnvironment, Entity.class, ElementKind.CLASS, generatorFactory::newEntity);
+    processAnnotatedTypes(
+        roundEnvironment, Dao.class, ElementKind.INTERFACE, generatorFactory::newDao);
+    processAnnotatedTypes(
+        roundEnvironment, Mapper.class, ElementKind.INTERFACE, generatorFactory::newMapper);
     return true;
   }
 
@@ -82,14 +87,18 @@ public class MapperProcessor extends AbstractProcessor {
     return new DefaultProcessorContext(messager, typeUtils, elementUtils, filer, indent);
   }
 
-  protected void processAnnotatedInterfaces(
+  protected void processAnnotatedTypes(
       RoundEnvironment roundEnvironment,
       Class<? extends Annotation> annotationClass,
+      ElementKind expectedKind,
       Function<TypeElement, CodeGenerator> generatorFactory) {
     for (Element element : roundEnvironment.getElementsAnnotatedWith(annotationClass)) {
-      if (element.getKind() != ElementKind.INTERFACE) {
+      if (element.getKind() != expectedKind) {
         messager.error(
-            element, "Only interfaces can be annotated with %s", annotationClass.getSimpleName());
+            element,
+            "Only %s elements can be annotated with %s",
+            expectedKind,
+            annotationClass.getSimpleName());
       } else {
         // Safe cast given that we checked the kind above
         TypeElement typeElement = (TypeElement) element;
@@ -107,7 +116,7 @@ public class MapperProcessor extends AbstractProcessor {
 
   @Override
   public Set<String> getSupportedAnnotationTypes() {
-    return ImmutableSet.of(Mapper.class.getName(), Dao.class.getName());
+    return ImmutableSet.of(Entity.class.getName(), Mapper.class.getName(), Dao.class.getName());
   }
 
   @Override
