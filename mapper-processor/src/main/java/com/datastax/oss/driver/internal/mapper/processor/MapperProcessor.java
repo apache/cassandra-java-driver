@@ -24,7 +24,7 @@ import com.google.common.base.Throwables;
 import java.lang.annotation.Annotation;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -65,20 +65,27 @@ public class MapperProcessor extends AbstractProcessor {
   @Override
   public boolean process(
       Set<? extends TypeElement> annotations, RoundEnvironment roundEnvironment) {
-    GenerationContext context =
-        new GenerationContext(messager, typeUtils, elementUtils, filer, indent);
+    ProcessorContext context = buildContext(messager, typeUtils, elementUtils, filer, indent);
 
-    processAnnotatedInterfaces(
-        roundEnvironment, Dao.class, e -> new DaoImplementationGenerator(e, context).generate());
-    processAnnotatedInterfaces(
-        roundEnvironment, Mapper.class, e -> new MapperGenerator(e, context).generate());
+    CodeGeneratorFactory generatorFactory = context.getCodeGeneratorFactory();
+    processAnnotatedInterfaces(roundEnvironment, Dao.class, generatorFactory::newDao);
+    processAnnotatedInterfaces(roundEnvironment, Mapper.class, generatorFactory::newMapper);
     return true;
   }
 
-  private void processAnnotatedInterfaces(
+  protected ProcessorContext buildContext(
+      DecoratedMessager messager,
+      Types typeUtils,
+      Elements elementUtils,
+      Filer filer,
+      String indent) {
+    return new DefaultProcessorContext(messager, typeUtils, elementUtils, filer, indent);
+  }
+
+  protected void processAnnotatedInterfaces(
       RoundEnvironment roundEnvironment,
       Class<? extends Annotation> annotationClass,
-      Consumer<TypeElement> action) {
+      Function<TypeElement, CodeGenerator> generatorFactory) {
     for (Element element : roundEnvironment.getElementsAnnotatedWith(annotationClass)) {
       if (element.getKind() != ElementKind.INTERFACE) {
         messager.error(
@@ -87,7 +94,7 @@ public class MapperProcessor extends AbstractProcessor {
         // Safe cast given that we checked the kind above
         TypeElement typeElement = (TypeElement) element;
         try {
-          action.accept(typeElement);
+          generatorFactory.apply(typeElement).generate();
         } catch (Exception e) {
           messager.error(
               element,

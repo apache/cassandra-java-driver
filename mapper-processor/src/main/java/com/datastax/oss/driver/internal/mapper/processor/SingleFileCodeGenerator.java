@@ -16,17 +16,9 @@
 package com.datastax.oss.driver.internal.mapper.processor;
 
 import com.squareup.javapoet.JavaFile;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.io.Writer;
-import javax.tools.JavaFileObject;
 
-/**
- * Handles the generation of an individual file created by the processor.
- *
- * <p>There can be multiple ones for a single annotated element.
- */
-public abstract class FileGenerator {
+/** A code generator that produces exactly one source file. */
+public abstract class SingleFileCodeGenerator implements CodeGenerator {
 
   /** A generic warning that can get added to the javadoc of any generated type. */
   public static final String JAVADOC_GENERATED_WARNING =
@@ -34,21 +26,15 @@ public abstract class FileGenerator {
 
   public static final String JAVADOC_PARAGRAPH_SEPARATOR = "\n\n<p>";
 
-  protected final GenerationContext context;
+  protected final ProcessorContext context;
 
-  protected FileGenerator(GenerationContext context) {
+  protected SingleFileCodeGenerator(ProcessorContext context) {
     this.context = context;
   }
 
+  @Override
   public void generate() {
-    try {
-      JavaFileObject file = context.getFiler().createSourceFile(getFileName());
-      try (Writer writer = file.openWriter()) {
-        getContents().indent(context.getIndent()).build().writeTo(writer);
-      }
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    context.getFiler().write(getFileName(), getContents());
   }
 
   /**

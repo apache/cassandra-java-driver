@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.mapper.processor;
+package com.datastax.oss.driver.internal.mapper.processor.mapper;
 
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.mapper.MapperContext;
+import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
+import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
+import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -25,21 +28,15 @@ import com.squareup.javapoet.TypeSpec;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
-public class MapperBuilderGenerator extends FileGenerator {
+public class MapperBuilderGenerator extends SingleFileCodeGenerator {
 
   private final ClassName builderName;
   private final TypeElement interfaceElement;
-  private final ClassName implementationName;
 
-  public MapperBuilderGenerator(
-      ClassName builderName,
-      TypeElement interfaceElement,
-      ClassName implementationName,
-      GenerationContext context) {
+  public MapperBuilderGenerator(TypeElement interfaceElement, ProcessorContext context) {
     super(context);
-    this.builderName = builderName;
+    this.builderName = GeneratedNames.mapperBuilder(interfaceElement);
     this.interfaceElement = interfaceElement;
-    this.implementationName = implementationName;
   }
 
   @Override
@@ -72,7 +69,9 @@ public class MapperBuilderGenerator extends FileGenerator {
                     .addModifiers(Modifier.PUBLIC)
                     .returns(ClassName.get(interfaceElement))
                     .addStatement("$1T context = new $1T(session)", MapperContext.class)
-                    .addStatement("return new $T(context)", implementationName)
+                    .addStatement(
+                        "return new $T(context)",
+                        GeneratedNames.mapperImplementation(interfaceElement))
                     .build());
     return JavaFile.builder(builderName.packageName(), contents.build());
   }
