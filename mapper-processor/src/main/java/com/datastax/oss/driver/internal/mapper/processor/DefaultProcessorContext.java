@@ -18,6 +18,8 @@ package com.datastax.oss.driver.internal.mapper.processor;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
+import com.datastax.oss.driver.internal.mapper.processor.entity.DefaultEntityFactory;
+import com.datastax.oss.driver.internal.mapper.processor.entity.EntityFactory;
 import com.datastax.oss.driver.internal.mapper.processor.util.Classes;
 import javax.annotation.processing.Filer;
 import javax.lang.model.util.Elements;
@@ -31,6 +33,9 @@ public class DefaultProcessorContext implements ProcessorContext {
 
   private final LazyReference<CodeGeneratorFactory> codeGeneratorFactoryRef =
       new LazyReference<>("codeGeneratorFactory", this::buildCodeGeneratorFactory, cycleDetector);
+
+  private final LazyReference<EntityFactory> entityFactoryRef =
+      new LazyReference<>("codeGeneratorFactory", this::buildEntityFactory, cycleDetector);
 
   private final DecoratedMessager messager;
   private final Types typeUtils;
@@ -53,6 +58,10 @@ public class DefaultProcessorContext implements ProcessorContext {
 
   protected CodeGeneratorFactory buildCodeGeneratorFactory() {
     return new DefaultCodeGeneratorFactory(this);
+  }
+
+  protected EntityFactory buildEntityFactory() {
+    return new DefaultEntityFactory(this);
   }
 
   @Override
@@ -83,5 +92,10 @@ public class DefaultProcessorContext implements ProcessorContext {
   @Override
   public CodeGeneratorFactory getCodeGeneratorFactory() {
     return codeGeneratorFactoryRef.get();
+  }
+
+  @Override
+  public EntityFactory getEntityFactory() {
+    return entityFactoryRef.get();
   }
 }
