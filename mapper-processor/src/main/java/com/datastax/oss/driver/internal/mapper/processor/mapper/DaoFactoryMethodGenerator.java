@@ -23,6 +23,7 @@ import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.PartialClassGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SkipGenerationException;
+import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -50,12 +51,12 @@ public class DaoFactoryMethodGenerator implements PartialClassGenerator {
       ExecutableElement methodElement,
       ClassName daoImplementationName,
       boolean isAsync,
+      NameIndex nameIndex,
       ProcessorContext context) {
     this.methodElement = methodElement;
     this.daoImplementationName = daoImplementationName;
     this.isAsync = isAsync;
-    // TODO disambiguate if multiple methods share the same name?
-    fieldName = GeneratedNames.mapperDaoCacheField(methodElement);
+    fieldName = nameIndex.uniqueField(GeneratedNames.mapperDaoCacheField(methodElement));
 
     VariableElement tmpKeyspace = null;
     VariableElement tmpTable = null;

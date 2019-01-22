@@ -21,6 +21,7 @@ import com.datastax.oss.driver.internal.mapper.processor.PartialClassGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.SkipGenerationException;
+import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -52,6 +53,8 @@ public class MapperImplementationGenerator extends SingleFileCodeGenerator {
 
   @Override
   protected JavaFile.Builder getContents() {
+    NameIndex nameIndex = new NameIndex();
+
     // Find all interface methods that return mappers
     List<PartialClassGenerator> daoFactoryMethods = new ArrayList<>();
     for (Element child : interfaceElement.getEnclosedElements()) {
@@ -59,7 +62,7 @@ public class MapperImplementationGenerator extends SingleFileCodeGenerator {
         ExecutableElement methodElement = (ExecutableElement) child;
         try {
           PartialClassGenerator generator =
-              context.getCodeGeneratorFactory().newDaoMethodFactory(methodElement);
+              context.getCodeGeneratorFactory().newDaoMethodFactory(methodElement, nameIndex);
           if (generator != null) {
             daoFactoryMethods.add(generator);
           } else {
