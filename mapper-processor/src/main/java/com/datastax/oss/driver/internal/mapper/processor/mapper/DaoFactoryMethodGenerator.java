@@ -77,9 +77,8 @@ public class DaoFactoryMethodGenerator implements PartialClassGenerator {
       }
     }
     isCachedByKeyspaceAndTable = (tmpKeyspace != null || tmpTable != null);
-    keyspaceArgumentName =
-        (tmpKeyspace == null) ? "(CqlIdentifier)null" : tmpKeyspace.getSimpleName();
-    tableArgumentName = (tmpTable == null) ? "(CqlIdentifier)null" : tmpTable.getSimpleName();
+    keyspaceArgumentName = (tmpKeyspace == null) ? null : tmpKeyspace.getSimpleName();
+    tableArgumentName = (tmpTable == null) ? null : tmpTable.getSimpleName();
   }
 
   private VariableElement validateParameter(
@@ -143,12 +142,22 @@ public class DaoFactoryMethodGenerator implements PartialClassGenerator {
           ClassName.get(parameterElement.asType()), parameterElement.getSimpleName().toString());
     }
     if (isCachedByKeyspaceAndTable) {
+      // DaoCacheKey key = new DaoCacheKey(x, y)
+      // where x, y is either the name of the parameter or "(CqlIdentifier)null"
+      overridingMethodBuilder.addCode("$1T key = new $1T(", DaoCacheKey.class);
+      if (keyspaceArgumentName == null) {
+        overridingMethodBuilder.addCode("($T)null", CqlIdentifier.class);
+      } else {
+        overridingMethodBuilder.addCode("$L", keyspaceArgumentName);
+      }
+      overridingMethodBuilder.addCode(", ");
+      if (tableArgumentName == null) {
+        overridingMethodBuilder.addCode("($T)null", CqlIdentifier.class);
+      } else {
+        overridingMethodBuilder.addCode("$L", tableArgumentName);
+      }
       overridingMethodBuilder
-          .addStatement(
-              "$1T key = new $1T($2L, $3L)",
-              DaoCacheKey.class,
-              keyspaceArgumentName,
-              tableArgumentName)
+          .addCode(");\n")
           .addStatement(
               "return $L.computeIfAbsent(key, "
                   + "k -> $T.$L(context, k.getKeyspaceId(), k.getTableId()))",
