@@ -21,6 +21,7 @@ import com.datastax.oss.driver.internal.mapper.processor.mapper.DaoFactoryMethod
 import com.datastax.oss.driver.internal.mapper.processor.mapper.MapperBuilderGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.mapper.MapperGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.mapper.MapperImplementationGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import javax.lang.model.element.Element;
@@ -50,7 +51,8 @@ public class DefaultCodeGeneratorFactory implements CodeGeneratorFactory {
   }
 
   @Override
-  public PartialClassGenerator newDaoMethodFactory(ExecutableElement methodElement) {
+  public PartialClassGenerator newDaoMethodFactory(
+      ExecutableElement methodElement, NameIndex nameIndex) {
     TypeMirror returnType = methodElement.getReturnType();
     if (returnType.getKind() != TypeKind.DECLARED) {
       return null;
@@ -65,6 +67,7 @@ public class DefaultCodeGeneratorFactory implements CodeGeneratorFactory {
               methodElement,
               GeneratedNames.daoImplementation(((TypeElement) returnTypeElement)),
               false,
+              nameIndex,
               context);
     } else if (isFuture(declaredReturnType.asElement())
         && declaredReturnType.getTypeArguments().size() == 1) {
@@ -80,6 +83,7 @@ public class DefaultCodeGeneratorFactory implements CodeGeneratorFactory {
               methodElement,
               GeneratedNames.daoImplementation(((TypeElement) typeArgumentElement)),
               true,
+              nameIndex,
               context);
     } else {
       return null;
