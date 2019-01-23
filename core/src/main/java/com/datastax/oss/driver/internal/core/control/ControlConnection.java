@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.control;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
+import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -45,6 +46,7 @@ import com.datastax.oss.protocol.internal.response.event.TopologyChangeEvent;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Queue;
@@ -273,6 +275,9 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
               firstConnectionAttemptFuture.complete(null);
             },
             error -> {
+              if (isAuthFailure(error)) {
+                Loggers.warnWithException(LOG, "[{}] Authentication error", logPrefix, error);
+              }
               if (reconnectOnFailure && !closeWasCalled) {
                 reconnection.start();
               } else {
@@ -499,6 +504,20 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                 });
       }
     }
+  }
+
+  private boolean isAuthFailure(Throwable error) {
+    boolean authFailure = true;
+    if (error instanceof AllNodesFailedException) {
+      Collection<Throwable> errors = ((AllNodesFailedException) error).getErrors().values();
+      for (Throwable nodeError : errors) {
+        if (!(nodeError instanceof AuthenticationException)) {
+          authFailure = false;
+          break;
+        }
+      }
+    }
+    return authFailure;
   }
 
   private static ImmutableList<String> buildEventTypes(boolean listenClusterEvents) {
