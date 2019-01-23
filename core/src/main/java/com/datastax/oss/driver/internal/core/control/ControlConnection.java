@@ -276,7 +276,11 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
             },
             error -> {
               if (isAuthFailure(error)) {
-                Loggers.warnWithException(LOG, "[{}] Authentication error", logPrefix, error);
+                Loggers.warnWithException(
+                    LOG,
+                    "[{}] Authentication errors encountered on all contact points. Please check our authentication configuration.",
+                    logPrefix,
+                    error);
               }
               if (reconnectOnFailure && !closeWasCalled) {
                 reconnection.start();
@@ -337,11 +341,16 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                       if (closeWasCalled || initFuture.isCancelled()) {
                         onSuccess.run(); // abort, we don't really care about the result
                       } else {
-                        LOG.debug(
-                            "[{}] Error connecting to {}, trying next node",
-                            logPrefix,
-                            node,
-                            error);
+                        if (error instanceof AuthenticationException) {
+                          Loggers.warnWithException(
+                              LOG, "[{}] Authentication error", logPrefix, error);
+                        } else {
+                          LOG.debug(
+                              "[{}] Error connecting to {}, trying next node",
+                              logPrefix,
+                              node,
+                              error);
+                        }
                         Map<Node, Throwable> newErrors =
                             (errors == null) ? new LinkedHashMap<>() : errors;
                         newErrors.put(node, error);
