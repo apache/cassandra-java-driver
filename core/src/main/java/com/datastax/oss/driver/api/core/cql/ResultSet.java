@@ -16,122 +16,23 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
-import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import com.datastax.oss.driver.api.core.PagingIterable;
 
 /**
  * The result of a synchronous CQL query.
  *
- * <p>It uses {@link AsyncResultSet asynchronous calls} internally, but blocks on the results in
- * order to provide a synchronous API to its clients. If the query is paged, only the first page
- * will be fetched initially, and iteration will trigger background fetches of the next pages when
- * necessary.
- *
- * <p>Note that this object can only be iterated once: rows are "consumed" as they are read,
- * subsequent calls to {@code iterator()} will the same iterator instance.
- *
- * <p>Implementations of this type are <b>not</b> thread-safe. They can only be iterated by the
+ * <p>See {@link PagingIterable} for a few generic explanations about the behavior of this object;
+ * in particular, implementations are <b>not thread-safe</b>. They can only be iterated by the
  * thread that invoked {@code session.execute}.
  *
  * @see CqlSession#execute(Statement)
  * @see CqlSession#execute(String)
  */
-public interface ResultSet extends Iterable<Row> {
+public interface ResultSet extends PagingIterable<Row> {
 
-  /** @return the column definitions contained in this result set. */
-  @NonNull
-  ColumnDefinitions getColumnDefinitions();
-
+  // overridden to amend the javadocs:
   /**
-   * The execution information for the last query performed for this result set.
-   *
-   * <p>This is a shortcut for:
-   *
-   * <pre>
-   * getExecutionInfos().get(getExecutionInfos().size() - 1)
-   * </pre>
-   *
-   * @see #getExecutionInfos()
-   */
-  @NonNull
-  default ExecutionInfo getExecutionInfo() {
-    List<ExecutionInfo> infos = getExecutionInfos();
-    return infos.get(infos.size() - 1);
-  }
-
-  /**
-   * The execution information for all the queries that have been performed so far to assemble this
-   * result set.
-   *
-   * <p>This will have multiple elements if the query is paged, since the driver performs blocking
-   * background queries to fetch additional pages transparently as the result set is being iterated.
-   */
-  @NonNull
-  List<ExecutionInfo> getExecutionInfos();
-
-  /**
-   * Returns the next row, or {@code null} if the result set is exhausted.
-   *
-   * <p>This is convenient for queries that are known to return exactly one row, for example count
-   * queries.
-   */
-  @Nullable
-  default Row one() {
-    Iterator<Row> iterator = iterator();
-    return iterator.hasNext() ? iterator.next() : null;
-  }
-
-  /**
-   * Returns all the remaining rows as a list; <b>not recommended for queries that return a large
-   * number of rows</b>.
-   *
-   * <p>Contrary to {@link #iterator()} or successive calls to {@link #one()}, this method forces
-   * fetching the <b>full contents</b> of the result set at once; in particular, this means that a
-   * large number of background queries might have to be run, and that all the data will be held in
-   * memory locally. Therefore it is crucial to only call this method for queries that are known to
-   * return a reasonable number of results.
-   */
-  @NonNull
-  default List<Row> all() {
-    if (!iterator().hasNext()) {
-      return Collections.emptyList();
-    }
-    // We can't know the actual size in advance since more pages could be fetched, but we can at
-    // least allocate for what we already have.
-    List<Row> result = Lists.newArrayListWithExpectedSize(getAvailableWithoutFetching());
-    Iterables.addAll(result, this);
-    return result;
-  }
-
-  /**
-   * Whether all pages have been fetched from the database.
-   *
-   * <p>If this is {@code false}, it means that more blocking background queries will be triggered
-   * as iteration continues.
-   */
-  boolean isFullyFetched();
-
-  /**
-   * The number of rows that can be returned from this result set before a blocking background query
-   * needs to be performed to retrieve more results. In other words, this is the number of rows
-   * remaining in the current page.
-   *
-   * <p>This is useful if you use the paging state to pause the iteration and resume it later: after
-   * you've retrieved the state ({@link ExecutionInfo#getPagingState()
-   * getExecutionInfo().getPagingState()}), call this method and iterate the remaining rows; that
-   * way you're not leaving a gap between the last row and the position you'll restart from when you
-   * reinject the state in a new query.
-   */
-  int getAvailableWithoutFetching();
-
-  /**
-   * If the query that produced this result was a conditional update, indicate whether it was
-   * successfully applied.
+   * {@inheritDoc}
    *
    * <p>This is equivalent to calling:
    *
@@ -140,15 +41,7 @@ public interface ResultSet extends Iterable<Row> {
    * </pre>
    *
    * Except that this method peeks at the next row without consuming it.
-   *
-   * <p>For consistency, this method always returns {@code true} for non-conditional queries
-   * (although there is no reason to call the method in that case). This is also the case for
-   * conditional DDL statements ({@code CREATE KEYSPACE... IF NOT EXISTS}, {@code CREATE TABLE... IF
-   * NOT EXISTS}), for which Cassandra doesn't return an {@code [applied]} column.
-   *
-   * <p>Note that, for versions of Cassandra strictly lower than 2.1.0-rc2, a server-side bug (<a
-   * href="https://issues.apache.org/jira/browse/CASSANDRA-7337">CASSANDRA-7337</a>) causes this
-   * method to always return {@code true} for batches containing conditional queries.
    */
+  @Override
   boolean wasApplied();
 }
