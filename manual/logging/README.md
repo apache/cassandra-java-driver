@@ -192,6 +192,17 @@ that can significantly boost latencies when writing log messages.
 without stopping the application. This usually involves JMX and is available for [Logback](http://logback.qos.ch/manual/jmxConfig.html);
 Log4J provides a `configureAndWatch()` method but it is not recommended to use it inside J2EE containers (see [FAQ](https://logging.apache.org/log4j/1.2/faq.html#a3.6)).
 
+### Server Side Warnings
+
+When using the driver to execute queries, it is possible that the server will generate a warning. Normally,
+these warnings are contained in the `ResultSet`'s `ExecutionInfo` attribute, but are not logged by the driver
+itself. If desired, you can set the system property `advanced.request.log-warnings` to "true" and the driver
+will log any such warnings at the `WARN` level. If that system property is not set, or is set to "false",
+these server-side warnings will not be explicitly logged by the driver. Regardless of this setting, all
+server-side [query warnings](http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/ExecutionInfo.html#getWarnings--)
+are available via the [ResultSet](https://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/ResultSet.html) method
+[getExecutionInfo()](https://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/PagingIterable.html#getExecutionInfo--).
+
 ### Logback Example
 
 Here is a typical example configuration for Logback. *Please adapt it to your specific needs before using it!*

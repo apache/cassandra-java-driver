@@ -64,6 +64,7 @@ class RequestHandler {
 
   private static final boolean HOST_METRICS_ENABLED =
       Boolean.getBoolean("com.datastax.driver.HOST_METRICS_ENABLED");
+  static final String LOG_REQUEST_WARNINGS_PROPERTY = "advanced.request.log-warnings";
 
   final String id;
 
@@ -224,6 +225,16 @@ class RequestHandler {
                 response.getCustomPayload());
       }
       callback.onSet(connection, response, info, statement, System.nanoTime() - startTime);
+      // if the response from the server has warnings, they'll be set on the ExecutionInfo. Log them
+      // here, if enabled.
+      if (logger.isWarnEnabled()
+          && response.warnings != null
+          && !response.warnings.isEmpty()
+          && Boolean.getBoolean(RequestHandler.LOG_REQUEST_WARNINGS_PROPERTY)) {
+        for (String warning : response.warnings) {
+          logger.warn(warning);
+        }
+      }
     } catch (Exception e) {
       callback.onException(
           connection,

@@ -2,6 +2,7 @@
 
 ### 3.7.0 (In progress)
 
+- [improvement] JAVA-1950: Log server side warnings returned from a query.
 - [improvement] JAVA-2025: Include exception message in Abstract\*Codec.accepts(null).
 - [improvement] JAVA-1980: Use covariant return types in RemoteEndpointAwareJdkSSLOptions.Builder methods.
 - [documentation] JAVA-2062: Document frozen collection preference with Mapper.
