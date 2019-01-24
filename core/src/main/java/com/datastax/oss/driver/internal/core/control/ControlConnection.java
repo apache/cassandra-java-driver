@@ -278,7 +278,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
               if (isAuthFailure(error)) {
                 Loggers.warnWithException(
                     LOG,
-                    "[{}] Authentication errors encountered on all contact points. Please check our authentication configuration.",
+                    "[{}] Authentication errors encountered on all contact points. Please check your authentication configuration.",
                     logPrefix,
                     error);
               }
@@ -519,6 +519,9 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     boolean authFailure = true;
     if (error instanceof AllNodesFailedException) {
       Collection<Throwable> errors = ((AllNodesFailedException) error).getErrors().values();
+      if (errors.size() == 0) {
+        return false;
+      }
       for (Throwable nodeError : errors) {
         if (!(nodeError instanceof AuthenticationException)) {
           authFailure = false;
