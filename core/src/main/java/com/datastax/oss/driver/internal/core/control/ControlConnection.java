@@ -351,7 +351,11 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                               .getDefaultProfile()
                               .getBoolean(DefaultDriverOption.CONNECTION_WARN_INIT_ERROR)) {
                             Loggers.warnWithException(
-                                LOG, "[{}]  Error while opening new channel", logPrefix, error);
+                                LOG,
+                                "[{}] Error connecting to {}, trying next node",
+                                logPrefix,
+                                node,
+                                error);
                           } else {
                             LOG.debug(
                                 "[{}] Error connecting to {}, trying next node",
