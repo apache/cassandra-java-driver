@@ -18,6 +18,8 @@ package com.datastax.oss.driver.internal.core.control;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -214,6 +216,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
   private class SingleThreaded {
     private final InternalDriverContext context;
+    private final DriverConfig config;
     private final CompletableFuture<Void> initFuture = new CompletableFuture<>();
     private final CompletableFuture<Void> firstConnectionAttemptFuture = new CompletableFuture<>();
     private boolean initWasCalled;
@@ -227,6 +230,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
     private SingleThreaded(InternalDriverContext context) {
       this.context = context;
+      this.config = context.getConfig();
       ReconnectionPolicy reconnectionPolicy = context.getReconnectionPolicy();
       this.reconnection =
           new Reconnection(
@@ -276,11 +280,9 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
             },
             error -> {
               if (isAuthFailure(error)) {
-                Loggers.warnWithException(
-                    LOG,
+                LOG.warn(
                     "[{}] Authentication errors encountered on all contact points. Please check your authentication configuration.",
-                    logPrefix,
-                    error);
+                    logPrefix);
               }
               if (reconnectOnFailure && !closeWasCalled) {
                 reconnection.start();
@@ -345,11 +347,18 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                           Loggers.warnWithException(
                               LOG, "[{}] Authentication error", logPrefix, error);
                         } else {
-                          LOG.debug(
-                              "[{}] Error connecting to {}, trying next node",
-                              logPrefix,
-                              node,
-                              error);
+                          if (config
+                              .getDefaultProfile()
+                              .getBoolean(DefaultDriverOption.CONNECTION_WARN_INIT_ERROR)) {
+                            Loggers.warnWithException(
+                                LOG, "[{}]  Error while opening new channel", logPrefix, error);
+                          } else {
+                            LOG.debug(
+                                "[{}] Error connecting to {}, trying next node",
+                                logPrefix,
+                                node,
+                                error);
+                          }
                         }
                         Map<Node, Throwable> newErrors =
                             (errors == null) ? new LinkedHashMap<>() : errors;
