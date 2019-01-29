@@ -10,7 +10,7 @@ Here is a short example that opens a session and runs a query asynchronously:
 CompletionStage<CqlSession> sessionStage = CqlSession.builder().buildAsync();
 
 // Chain one async operation after another:
-CompletionStage<AsyncResultSet> responseStage =
+CompletionStage<? extends AsyncResultSet> responseStage =
     sessionStage.thenCompose(
         session -> session.executeAsync("SELECT release_version FROM system.local"));
 
@@ -45,7 +45,7 @@ CompletionStage<CqlSession> sessionStage = CqlSession.builder().buildAsync();
 sessionStage.thenAccept(session -> System.out.println(Thread.currentThread().getName()));
 // prints s0-admin-n (admin pool thread)
 
-CompletionStage<AsyncResultSet> resultStage =
+CompletionStage<? extends AsyncResultSet> resultStage =
     session.executeAsync("SELECT release_version FROM system.local");
 resultStage.thenAccept(resultSet -> System.out.println(Thread.currentThread().getName()));
 // prints s0-io-n (I/O pool thread)
@@ -56,11 +56,11 @@ method from inside a callback:
 
 ```java
 // Get the department id for a given user:
-CompletionStage<AsyncResultSet> idStage =
+CompletionStage<? extends AsyncResultSet> idStage =
     session.executeAsync("SELECT department_id FROM user WHERE id = 1");
 
 // Once we have the id, query the details of that department:
-CompletionStage<AsyncResultSet> dataStage =
+CompletionStage<? extends AsyncResultSet> dataStage =
     idStage.thenCompose(
         resultSet -> {
           UUID departmentId = resultSet.one().getUuid(0);
@@ -122,7 +122,7 @@ specific to the driver). When all your callback does is a side effect, it's easy
 swallow an exception: 
 
 ```java
-CompletionStage<AsyncResultSet> responseStage =
+CompletionStage<? extends AsyncResultSet> responseStage =
     sessionStage.thenCompose(
         session -> session.executeAsync("SELECT release_version FROM system.local"));
 responseStage.thenAccept(

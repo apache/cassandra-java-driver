@@ -29,15 +29,17 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
 import com.datastax.oss.driver.internal.core.channel.EventCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.DefaultTopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.DistanceEvent;
+import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
-import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.Reconnection;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -61,15 +63,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Maintains a dedicated connection to a Cassandra node for administrative queries: schema
- * refreshes, and cluster topology queries and events.
+ * Maintains a dedicated connection to a Cassandra node for administrative queries.
  *
  * <p>If the control node goes down, a reconnection is triggered. The control node is chosen
  * randomly among the contact points at startup, or according to the load balancing policy for later
  * reconnections.
  *
- * <p>If a custom {@link TopologyMonitor} is used, the control connection is used only for schema
- * refreshes; if schema metadata is also disabled, the control connection never initializes.
+ * <p>The control connection is used by:
+ *
+ * <ul>
+ *   <li>{@link DefaultTopologyMonitor} to determine cluster connectivity and retrieve node
+ *       metadata;
+ *   <li>{@link MetadataManager} to run schema metadata queries.
+ * </ul>
  */
 @ThreadSafe
 public class ControlConnection implements EventCallback, AsyncAutoCloseable {
@@ -92,16 +98,31 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
   }
 
   /**
+   * Initializes the control connection. If it is already initialized, this is a no-op and all
+   * parameters are ignored.
+   *
    * @param listenToClusterEvents whether to register for TOPOLOGY_CHANGE and STATUS_CHANGE events.
    *     If the control connection has already initialized with another value, this is ignored.
    *     SCHEMA_CHANGE events are always registered.
    * @param reconnectOnFailure whether to schedule a reconnection if the initial attempt fails (this
    *     does not affect the returned future, which always represent the outcome of the initial
    *     attempt only).
+   * @param useInitialReconnectionSchedule if no node can be reached, the type of reconnection
+   *     schedule to use. In other words, the value that will be passed to {@link
+   *     ReconnectionPolicy#newControlConnectionSchedule(boolean)}.
    */
-  public CompletionStage<Void> init(boolean listenToClusterEvents, boolean reconnectOnFailure) {
+  public CompletionStage<Void> init(
+      boolean listenToClusterEvents,
+      boolean reconnectOnFailure,
+      boolean useInitialReconnectionSchedule) {
+    Preconditions.checkArgument(
+        reconnectOnFailure || !useInitialReconnectionSchedule,
+        "Can't set useInitialReconnectionSchedule if reconnectOnFailure is false");
     RunOrSchedule.on(
-        adminExecutor, () -> singleThreaded.init(listenToClusterEvents, reconnectOnFailure));
+        adminExecutor,
+        () ->
+            singleThreaded.init(
+                listenToClusterEvents, reconnectOnFailure, useInitialReconnectionSchedule));
     return singleThreaded.initFuture;
   }
 
@@ -222,6 +243,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     private boolean initWasCalled;
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
     private boolean closeWasCalled;
+    private final ReconnectionPolicy reconnectionPolicy;
     private final Reconnection reconnection;
     private DriverChannelOptions channelOptions;
     // The last events received for each node
@@ -231,12 +253,12 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     private SingleThreaded(InternalDriverContext context) {
       this.context = context;
       this.config = context.getConfig();
-      ReconnectionPolicy reconnectionPolicy = context.getReconnectionPolicy();
+      this.reconnectionPolicy = context.getReconnectionPolicy();
       this.reconnection =
           new Reconnection(
               logPrefix,
               adminExecutor,
-              reconnectionPolicy::newControlConnectionSchedule,
+              () -> reconnectionPolicy.newControlConnectionSchedule(false),
               this::reconnect);
       // In "reconnect-on-init" mode, handle cancellation of the initFuture by user code
       CompletableFutures.whenCancelled(
@@ -254,7 +276,10 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
           .register(NodeStateEvent.class, RunOrSchedule.on(adminExecutor, this::onStateEvent));
     }
 
-    private void init(boolean listenToClusterEvents, boolean reconnectOnFailure) {
+    private void init(
+        boolean listenToClusterEvents,
+        boolean reconnectOnFailure,
+        boolean useInitialReconnectionSchedule) {
       assert adminExecutor.inEventLoop();
       if (initWasCalled) {
         return;
@@ -285,7 +310,9 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                     logPrefix);
               }
               if (reconnectOnFailure && !closeWasCalled) {
-                reconnection.start();
+                reconnection.start(
+                    reconnectionPolicy.newControlConnectionSchedule(
+                        useInitialReconnectionSchedule));
               } else {
                 // Special case for the initial connection: reword to a more user-friendly error
                 // message

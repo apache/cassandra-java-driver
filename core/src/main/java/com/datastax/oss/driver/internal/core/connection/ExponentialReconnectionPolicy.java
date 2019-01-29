@@ -124,7 +124,8 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
 
   @NonNull
   @Override
-  public ReconnectionSchedule newControlConnectionSchedule() {
+  public ReconnectionSchedule newControlConnectionSchedule(
+      @SuppressWarnings("ignored") boolean isInitialConnection) {
     LOG.debug("[{}] Creating new schedule for the control connection", logPrefix);
     return new ExponentialSchedule();
   }

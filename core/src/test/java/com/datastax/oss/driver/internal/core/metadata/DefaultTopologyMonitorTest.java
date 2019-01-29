@@ -102,7 +102,7 @@ public class DefaultTopologyMonitorTest {
     topologyMonitor.init();
 
     // Then
-    Mockito.verify(controlConnection).init(true, false);
+    Mockito.verify(controlConnection).init(true, false, false);
   }
 
   @Test

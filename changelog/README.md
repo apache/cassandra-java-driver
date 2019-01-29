@@ -5,6 +5,8 @@
 ### 4.0.0-rc1 (in progress)
 
 - [bug] JAVA-2063: Normalize authentication logging
+- [documentation] JAVA-2034: Add performance recommendations in the manual
+- [improvement] JAVA-2077: Allow reconnection policy to detect first connection attempt
 - [improvement] JAVA-2067: Publish javadocs JAR for the shaded module
 - [improvement] JAVA-2103: Expose partitioner name in TokenMap API
 - [documentation] JAVA-2075: Document preference for LZ4 over Snappy
