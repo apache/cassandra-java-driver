@@ -19,20 +19,36 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Strings;
-import java.util.ArrayList;
 import java.util.List;
-import org.apache.log4j.Logger;
-import org.apache.log4j.WriterAppender;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.log4j.Layout;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 @CCMConfig(config = {"batch_size_warn_threshold_in_kb:5"})
 @CassandraVersion("2.2.0")
 public class WarningsTest extends CCMTestsSupport {
 
+  private MemoryAppender logAppender;
+
   @Override
   public void onTestContextInitialized() {
     execute("CREATE TABLE foo(k int primary key, v text)");
+  }
+
+  @Override
+  public void beforeTestClass(Object instance) throws Exception {
+    // create a MemoryAppender and add it
+    logAppender = new MemoryAppender();
+    logAppender.enableFor(LoggerFactory.getLogger(RequestHandler.class));
+    super.beforeTestClass(instance);
+  }
+
+  @Override
+  public void afterTestClass() throws Exception {
+    super.afterTestClass();
+    // remove the log appender
+    logAppender.disableFor(LoggerFactory.getLogger(RequestHandler.class));
+    logAppender = null;
   }
 
   @Test(groups = "short")
@@ -53,53 +69,80 @@ public class WarningsTest extends CCMTestsSupport {
 
     List<String> warnings = rs.getExecutionInfo().getWarnings();
     assertThat(warnings).hasSize(1);
+    // also assert that by default, the warning is logged and truncated to MAX_QUERY_LOG_LENGTH
+    String log = logAppender.getNext();
+    assertThat(log).isNotNull();
+    assertThat(log).isNotEmpty();
+    assertThat(log)
+        .isEqualTo(
+            "Query '"
+                + "BEGIN UNLOGGED BATCH\nINSERT INTO foo (k, v) VALUES"
+                + "' generated server side warning(s): "
+                + "Batch for [ks_1.foo] is of size 5152, exceeding specified threshold of 5120 by 32."
+                + Layout.LINE_SEP);
   }
 
   @Test(groups = "short")
-  public void should_execute_query_with_server_side_warnings() {
-    // Set the system property to enable logging of server side warnings
-    final String originalLoggingFlag =
-        System.getProperty(RequestHandler.LOG_REQUEST_WARNINGS_PROPERTY, "false");
-    System.setProperty(RequestHandler.LOG_REQUEST_WARNINGS_PROPERTY, "true");
-    assertThat(Boolean.getBoolean(RequestHandler.LOG_REQUEST_WARNINGS_PROPERTY)).isTrue();
-    // create a TestAppender and add it
-    TestAppender logAppender = new TestAppender();
-    Logger.getRootLogger().addAppender(logAppender);
+  public void should_execute_query_and_log_server_side_warnings() {
+    // Assert that logging of server-side query warnings is NOT disabled
+    assertThat(Boolean.getBoolean(RequestHandler.DISABLE_QUERY_WARNING_LOGS)).isFalse();
+
     // Given a query that will produce server side warnings that will be embedded in the
     // ExecutionInfo
-    SimpleStatement statement = new SimpleStatement("SELECT count(*) FROM foo");
-
+    final String query = "SELECT count(*) FROM foo";
+    SimpleStatement statement = new SimpleStatement(query);
+    // When the query is executed
     ResultSet rs = session().execute(statement);
-    ExecutionInfo ei = rs.getExecutionInfo();
-    // When
+    // Then the result has 1 Row
     Row row = rs.one();
-
-    // Then
     assertThat(row).isNotNull();
+    // And there is a server side warning captured in the ResultSet's ExecutionInfo
+    ExecutionInfo ei = rs.getExecutionInfo();
     List<String> warnings = ei.getWarnings();
-
     assertThat(warnings).isNotEmpty();
     assertThat(warnings.size()).isEqualTo(1);
     assertThat(warnings.get(0)).isEqualTo("Aggregation query used without partition key");
-    // assert the log was generated
-    assertThat(logAppender).isNotNull();
-    assertThat(logAppender.logs).isNotNull();
-    assertThat(logAppender.logs).isNotEmpty();
-    assertThat(logAppender.logs.get(0).getMessage())
-        .isEqualTo("Aggregation query used without partition key");
-    // remove the log appender
-    Logger.getRootLogger().removeAppender(logAppender);
-    // reset the logging flag
-    System.setProperty(RequestHandler.LOG_REQUEST_WARNINGS_PROPERTY, originalLoggingFlag);
+    // And the driver logged the server side warning
+    String log = logAppender.getNext();
+    assertThat(log).isNotNull();
+    assertThat(log).isNotEmpty();
+    assertThat(log)
+        .isEqualTo(
+            "Query '"
+                + query
+                + "' generated server side warning(s): Aggregation query used without partition key"
+                + Layout.LINE_SEP);
   }
 
-  private class TestAppender extends WriterAppender {
+  @Test(groups = "short")
+  public void should_execute_query_and_not_log_server_side_warnings() {
+    // Get the system property value for disabling logging server side warnings
+    final String disabledLogFlag =
+        System.getProperty(RequestHandler.DISABLE_QUERY_WARNING_LOGS, "false");
+    // assert that logs are NOT disabled
+    assertThat(disabledLogFlag).isEqualTo("false");
+    // Disable the logs
+    System.setProperty(RequestHandler.DISABLE_QUERY_WARNING_LOGS, "true");
 
-    private ArrayList<LoggingEvent> logs = new ArrayList();
+    // Given a query that will produce server side warnings that will be embedded in the
+    // ExecutionInfo
+    SimpleStatement statement = new SimpleStatement("SELECT count(*) FROM foo");
+    // When the query is executed
+    ResultSet rs = session().execute(statement);
+    // Then the result has 1 Row
+    Row row = rs.one();
+    assertThat(row).isNotNull();
+    // And there is a server side warning captured in the ResultSet's ExecutionInfo
+    ExecutionInfo ei = rs.getExecutionInfo();
+    List<String> warnings = ei.getWarnings();
+    assertThat(warnings).isNotEmpty();
+    assertThat(warnings.size()).isEqualTo(1);
+    assertThat(warnings.get(0)).isEqualTo("Aggregation query used without partition key");
+    // And the driver di NOT log the server side warning
+    String log = logAppender.getNext();
+    assertThat(log).isNullOrEmpty();
 
-    @Override
-    public void append(LoggingEvent event) {
-      logs.add(event);
-    }
+    // reset the logging flag
+    System.setProperty(RequestHandler.DISABLE_QUERY_WARNING_LOGS, disabledLogFlag);
   }
 }

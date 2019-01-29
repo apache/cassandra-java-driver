@@ -194,14 +194,44 @@ Log4J provides a `configureAndWatch()` method but it is not recommended to use i
 
 ### Server Side Warnings
 
-When using the driver to execute queries, it is possible that the server will generate a warning. Normally,
-these warnings are contained in the `ResultSet`'s `ExecutionInfo` attribute, but are not logged by the driver
-itself. If desired, you can set the system property `advanced.request.log-warnings` to "true" and the driver
-will log any such warnings at the `WARN` level. If that system property is not set, or is set to "false",
-these server-side warnings will not be explicitly logged by the driver. Regardless of this setting, all
-server-side [query warnings](http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/ExecutionInfo.html#getWarnings--)
-are available via the [ResultSet](https://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/ResultSet.html) method
-[getExecutionInfo()](https://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/PagingIterable.html#getExecutionInfo--).
+When using the driver to execute queries, it is possible that the server will generate warnings and
+return them along with the results. Consider the following query:
+
+```sql
+SELECT count(*) FROM cycling.cyclist_name;
+```
+
+Executing this query would generate a warning in Cassandra:
+
+```
+Aggregation query used without partition key
+```
+
+These
+[query warnings](http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/ExecutionInfo.html#getWarnings--)
+are available programmatically from the
+[ExecutionInfo](https://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/ExecutionInfo.html)
+via
+[ResultSet](https://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/ResultSet.html)'s
+[getExecutionInfo()](https://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/PagingIterable.html#getExecutionInfo--)
+method. They are also logged by the driver:
+
+```
+WARN  com.datastax.driver.core.RequestHandler - Query 'SELECT count(*) FROM cycling.cyclist_name' generated server side warning(s): Aggregation query used without partition key
+```
+
+Sometimes, it is not desirable for the driver to log server-side warnings. In such cases, logging
+these warnings can be disabled in the driver by setting the system property `com.datastax.driver.DISABLE_QUERY_WARNING_LOGS`
+to "true". This can be done at application startup (`-Dcom.datastax.driver.DISABLE_QUERY_WARNING_LOGS=true`)
+or it can be toggled programmatically in application code:
+
+```java
+// disable driver logging of server-side warnings
+System.getProperty("com.datastax.driver.DISABLE_QUERY_WARNING_LOGS", "true");
+....
+// enable driver logging of server-side warnings
+System.getProperty("com.datastax.driver.DISABLE_QUERY_WARNING_LOGS", "false");
+```
 
 ### Logback Example
 
