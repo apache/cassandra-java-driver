@@ -19,6 +19,9 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.addresstranslation.PassThroughAddressTranslator;
@@ -67,6 +70,8 @@ abstract class ControlConnectionTestBase {
   @Mock protected LoadBalancingPolicyWrapper loadBalancingPolicyWrapper;
   @Mock protected MetadataManager metadataManager;
   @Mock protected MetricsFactory metricsFactory;
+  @Mock protected DriverConfig config;
+  @Mock protected DriverExecutionProfile defaultProfile;
 
   protected AddressTranslator addressTranslator;
   protected DefaultNode node1;
@@ -115,6 +120,10 @@ abstract class ControlConnectionTestBase {
 
     addressTranslator = Mockito.spy(new PassThroughAddressTranslator(context));
     Mockito.when(context.getAddressTranslator()).thenReturn(addressTranslator);
+    Mockito.when(context.getConfig()).thenReturn(config);
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
+    Mockito.when(defaultProfile.getBoolean(DefaultDriverOption.CONNECTION_WARN_INIT_ERROR))
+        .thenReturn(false);
 
     controlConnection = new ControlConnection(context);
   }
