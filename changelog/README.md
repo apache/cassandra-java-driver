@@ -4,10 +4,10 @@
 
 ### 4.0.0-rc1 (in progress)
 
+- [bug] JAVA-2063: Normalize authentication logging
 - [improvement] JAVA-2067: Publish javadocs JAR for the shaded module
 - [improvement] JAVA-2103: Expose partitioner name in TokenMap API
 - [documentation] JAVA-2075: Document preference for LZ4 over Snappy
-- [bug] JAVA-2063: Normalize authentication logging
 
 ### 4.0.0-beta3
 
