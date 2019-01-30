@@ -17,10 +17,13 @@ package com.datastax.oss.driver.api.mapper.entity;
 
 import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.data.SettableByName;
+import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 
 public interface EntityHelper<EntityT> {
 
   <SettableT extends SettableByName<SettableT>> SettableT set(EntityT entity, SettableT target);
 
   EntityT get(GettableByName source);
+
+  BuildableQuery insert();
 }

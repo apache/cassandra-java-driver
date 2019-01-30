@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
+import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 
 @Dao
@@ -53,4 +54,10 @@ public interface ProductDao {
 
   @GetEntity
   Product getOne(AsyncResultSet resultSet);
+
+  @Insert
+  void save(Product product);
+
+  @Insert(customClause = "USING TIMESTAMP :timestamp")
+  Product saveWithBoundTimestamp(Product product, long timestamp);
 }
