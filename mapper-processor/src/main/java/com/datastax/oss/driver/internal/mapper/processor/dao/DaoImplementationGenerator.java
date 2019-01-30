@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
-import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.mapper.MapperContext;
@@ -58,13 +57,6 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator {
             .addSuperinterface(ClassName.get(interfaceElement))
             .addField(
                 FieldSpec.builder(MapperContext.class, "context", Modifier.PRIVATE, Modifier.FINAL)
-                    .build())
-            .addField(
-                FieldSpec.builder(
-                        CqlIdentifier.class, "keyspaceId", Modifier.PRIVATE, Modifier.FINAL)
-                    .build())
-            .addField(
-                FieldSpec.builder(CqlIdentifier.class, "tableId", Modifier.PRIVATE, Modifier.FINAL)
                     .build());
 
     MethodSpec.Builder initAsyncBuilder =
@@ -74,10 +66,8 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator {
                     ClassName.get(CompletableFuture.class), ClassName.get(interfaceElement)))
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
             .addParameter(MapperContext.class, "context")
-            .addParameter(CqlIdentifier.class, "keyspaceId")
-            .addParameter(CqlIdentifier.class, "tableId")
             .addStatement(
-                "return $T.completedFuture(new $T(context, keyspaceId, tableId))",
+                "return $T.completedFuture(new $T(context))",
                 CompletableFuture.class,
                 implementationName);
 
@@ -86,22 +76,15 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator {
             .returns(ClassName.get(interfaceElement))
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
             .addParameter(MapperContext.class, "context")
-            .addParameter(CqlIdentifier.class, "keyspaceId")
-            .addParameter(CqlIdentifier.class, "tableId")
             .addStatement("$T.checkNotDriverThread()", BlockingOperation.class)
             .addStatement(
-                "return $T.getUninterruptibly(initAsync(context, keyspaceId, tableId))",
-                CompletableFutures.class);
+                "return $T.getUninterruptibly(initAsync(context))", CompletableFutures.class);
 
     MethodSpec.Builder constructorBuilder =
         MethodSpec.constructorBuilder()
             .addModifiers(Modifier.PRIVATE)
             .addParameter(MapperContext.class, "context")
-            .addParameter(CqlIdentifier.class, "keyspaceId")
-            .addParameter(CqlIdentifier.class, "tableId")
-            .addStatement("this.context = context")
-            .addStatement("this.keyspaceId = keyspaceId")
-            .addStatement("this.tableId = tableId");
+            .addStatement("this.context = context");
 
     classBuilder.addMethod(initAsyncBuilder.build());
     classBuilder.addMethod(initBuilder.build());
