@@ -85,7 +85,7 @@ public class EntityHelperGetMethodGenerator implements PartialClassGenerator {
             "$T $L = source.getUdtValue($S)", UdtValue.class, udtValueName, cqlName);
         getBuilder.beginControlFlow("if ($L != null)", udtValueName);
         // Get underlying udt object and set it on return type
-        String childHelper = enclosingClass.addChildHelper(childEntityElement);
+        String childHelper = enclosingClass.addEntityHelperField(childEntityElement);
         getBuilder.addStatement("$T $L = $L.get($L)", type, valueName, childHelper, udtValueName);
         getBuilder.addStatement("returnValue.$L($L)", setterName, valueName);
         getBuilder.endControlFlow();

@@ -15,42 +15,57 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
+import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
-import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import com.datastax.oss.driver.internal.mapper.DaoBase;
 import com.datastax.oss.driver.internal.mapper.MapperContext;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.SkipGenerationException;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
+import com.datastax.oss.driver.internal.mapper.processor.util.generation.BindableHandlingSharedCode;
+import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import java.beans.Introspector;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.BiConsumer;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
-public class DaoImplementationGenerator extends SingleFileCodeGenerator {
+public class DaoImplementationGenerator extends SingleFileCodeGenerator
+    implements BindableHandlingSharedCode {
+
+  private static final TypeName PREPARED_STATEMENT_STAGE =
+      ParameterizedTypeName.get(CompletionStage.class, PreparedStatement.class);
 
   private final TypeElement interfaceElement;
   private final ClassName implementationName;
   private final NameIndex nameIndex = new NameIndex();
-  private final Map<ClassName, String> entityHelperFields = new HashMap<>();
+  private final GenericTypeConstantGenerator genericTypeConstantGenerator =
+      new GenericTypeConstantGenerator(nameIndex);
+  private final Map<ClassName, String> entityHelperFields = new LinkedHashMap<>();
+  private final List<GeneratedPreparedStatement> preparedStatements = new ArrayList<>();
 
   public DaoImplementationGenerator(TypeElement interfaceElement, ProcessorContext context) {
     super(context);
@@ -58,15 +73,18 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator {
     implementationName = GeneratedNames.daoImplementation(interfaceElement);
   }
 
-  /**
-   * Requests the generation of a field holding the {@link EntityHelper} that was generated for the
-   * given entity class, along with the initialization code in the constructor.
-   *
-   * <p>If this is called multiple times, only a single field will be created.
-   *
-   * @return the name of the field.
-   */
-  String addEntityHelperField(TypeElement entityClass) {
+  @Override
+  public NameIndex getNameIndex() {
+    return nameIndex;
+  }
+
+  @Override
+  public String addGenericTypeConstant(TypeName type) {
+    return genericTypeConstantGenerator.add(type);
+  }
+
+  @Override
+  public String addEntityHelperField(TypeElement entityClass) {
     ClassName helperClass = GeneratedNames.entityHelper(entityClass);
     return entityHelperFields.computeIfAbsent(
         helperClass,
@@ -75,6 +93,27 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator {
               Introspector.decapitalize(entityClass.getSimpleName().toString()) + "Helper";
           return nameIndex.uniqueField(baseName);
         });
+  }
+
+  /**
+   * Requests the generation of a prepared statement in this DAO. It will be initialized in {@code
+   * initAsync}, and then passed to the constructor which will store it in a private field.
+   *
+   * @param methodElement the method that will be using this statement.
+   * @param simpleStatementGenerator a callback that generates code to create a {@link
+   *     SimpleStatement} local variable that will be used to create the statement. The first
+   *     parameter is the method to add to, and the second the name of the local variable.
+   * @return the name of the generated field that will hold the statement.
+   */
+  String addPreparedStatement(
+      ExecutableElement methodElement,
+      BiConsumer<MethodSpec.Builder, String> simpleStatementGenerator) {
+    // Prepared statements are not shared between methods, so always generate a new name
+    String fieldName =
+        nameIndex.uniqueField(methodElement.getSimpleName().toString() + "Statement");
+    preparedStatements.add(
+        new GeneratedPreparedStatement(methodElement, fieldName, simpleStatementGenerator));
+    return fieldName;
   }
 
   @Override
@@ -92,6 +131,8 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator {
           ExecutableElement methodElement = (ExecutableElement) child;
           if (methodElement.getAnnotation(SetEntity.class) != null) {
             methods.add(new DaoSetEntityMethodGenerator(methodElement, this, context).generate());
+          } else if (methodElement.getAnnotation(Insert.class) != null) {
+            methods.add(new DaoInsertMethodGenerator(methodElement, this, context).generate());
           }
           if (methodElement.getAnnotation(GetEntity.class) != null) {
             methods.add(new DaoGetEntityMethodGenerator(methodElement, this, context).generate());
@@ -106,10 +147,10 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator {
         TypeSpec.classBuilder(implementationName)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
             .addModifiers(Modifier.PUBLIC)
-            .addSuperinterface(ClassName.get(interfaceElement))
-            .addField(
-                FieldSpec.builder(MapperContext.class, "context", Modifier.PRIVATE, Modifier.FINAL)
-                    .build());
+            .superclass(DaoBase.class)
+            .addSuperinterface(ClassName.get(interfaceElement));
+
+    genericTypeConstantGenerator.generate(classBuilder);
 
     MethodSpec.Builder initAsyncBuilder = getInitAsyncContents();
 
@@ -119,7 +160,7 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator {
         MethodSpec.constructorBuilder()
             .addModifiers(Modifier.PRIVATE)
             .addParameter(MapperContext.class, "context")
-            .addStatement("this.context = context");
+            .addStatement("super(context)");
 
     // For each entity helper that was requested by a method generator, create a field for it and
     // add a constructor parameter for it (the instance gets created in initAsync).
@@ -132,6 +173,20 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator {
       constructorBuilder
           .addParameter(fieldTypeName, fieldName)
           .addStatement("this.$1L = $1L", fieldName);
+    }
+
+    // Same for prepared statements:
+    for (GeneratedPreparedStatement preparedStatement : preparedStatements) {
+      classBuilder.addField(
+          FieldSpec.builder(
+                  PreparedStatement.class,
+                  preparedStatement.fieldName,
+                  Modifier.PRIVATE,
+                  Modifier.FINAL)
+              .build());
+      constructorBuilder
+          .addParameter(PreparedStatement.class, preparedStatement.fieldName)
+          .addStatement("this.$1L = $1L", preparedStatement.fieldName);
     }
 
     classBuilder.addMethod(initAsyncBuilder.build());
@@ -160,34 +215,59 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator {
                 ParameterizedTypeName.get(
                     ClassName.get(CompletableFuture.class), ClassName.get(interfaceElement)))
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-            .addParameter(MapperContext.class, "context");
+            .addParameter(MapperContext.class, "context")
+            .beginControlFlow("try");
 
     // Start a constructor call: we build it dynamically because the number of parameters depends on
     // the entity helpers and prepared statements below.
     CodeBlock.Builder newDaoStatement = CodeBlock.builder();
-    newDaoStatement.add("$[$1T dao = new $1T(context", implementationName);
+    newDaoStatement.add("new $1T(context$>$>", implementationName);
 
+    initAsyncBuilder.addComment("Initialize all entity helpers");
     // For each entity helper that was requested by a method generator:
-    // - create an instance
-    // - add it as a parameter to the constructor call
-    // Example:
-    // User_Helper userHelper = new User_Helper(context);
-    // Address_Helper addressHelper = new Address_Helper(context);
-    // UserDao_Impl dao = new UserDao_Impl(context,
-    //     userHelper,
-    //     addressHelper);
     for (Map.Entry<ClassName, String> entry : entityHelperFields.entrySet()) {
       ClassName fieldTypeName = entry.getKey();
       String fieldName = entry.getValue();
+      // - create an instance
       initAsyncBuilder.addStatement("$1T $2L = new $1T(context)", fieldTypeName, fieldName);
+      // - add it as a parameter to the constructor call
       newDaoStatement.add(",\n$L", fieldName);
     }
-    newDaoStatement.add(")$];\n");
 
-    // Finally emit the complete constructor call, and wrap the result in a future
-    // TODO this will change once we also create prepared statements in this method
-    initAsyncBuilder.addCode(newDaoStatement.build());
-    initAsyncBuilder.addStatement("return $T.completedFuture(dao)", CompletableFuture.class);
+    initAsyncBuilder.addStatement(
+        "$T<$T> prepareStages = new $T<>()", List.class, PREPARED_STATEMENT_STAGE, ArrayList.class);
+    // For each prepared statement that was requested by a method generator:
+    for (GeneratedPreparedStatement preparedStatement : preparedStatements) {
+      initAsyncBuilder.addComment(
+          "Prepare the statement for `$L`:", preparedStatement.methodElement.toString());
+      // - generate the simple statement
+      String simpleStatementName = preparedStatement.fieldName + "_simple";
+      preparedStatement.simpleStatementGenerator.accept(initAsyncBuilder, simpleStatementName);
+      // - prepare it asynchronously, store all CompletionStages in a list
+      initAsyncBuilder
+          .addStatement(
+              "$T $L = prepare($L, context)",
+              PREPARED_STATEMENT_STAGE,
+              preparedStatement.fieldName,
+              simpleStatementName)
+          .addStatement("prepareStages.add($L)", preparedStatement.fieldName);
+      // - add the stage's result to the constructor call (which will be executed once all stages
+      //   are complete)
+      newDaoStatement.add(
+          ",\n$T.getCompleted($L)", CompletableFutures.class, preparedStatement.fieldName);
+    }
+
+    newDaoStatement.add(")");
+
+    initAsyncBuilder
+        .addComment("Build the DAO when all statements are prepared")
+        .addCode("$[return $T.allSuccessful(prepareStages)", CompletableFutures.class)
+        .addCode("\n.thenApply(v -> ($T) ", interfaceElement)
+        .addCode(newDaoStatement.build())
+        .addCode(")\n$<$<.toCompletableFuture();$]\n")
+        .nextControlFlow("catch ($T t)", Throwable.class)
+        .addStatement("return $T.failedFuture(t)", CompletableFutures.class)
+        .endControlFlow();
     return initAsyncBuilder;
   }
 
@@ -199,5 +279,20 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator {
         .addParameter(MapperContext.class, "context")
         .addStatement("$T.checkNotDriverThread()", BlockingOperation.class)
         .addStatement("return $T.getUninterruptibly(initAsync(context))", CompletableFutures.class);
+  }
+
+  private static class GeneratedPreparedStatement {
+    final ExecutableElement methodElement;
+    final String fieldName;
+    final BiConsumer<MethodSpec.Builder, String> simpleStatementGenerator;
+
+    GeneratedPreparedStatement(
+        ExecutableElement methodElement,
+        String fieldName,
+        BiConsumer<MethodSpec.Builder, String> simpleStatementGenerator) {
+      this.methodElement = methodElement;
+      this.fieldName = fieldName;
+      this.simpleStatementGenerator = simpleStatementGenerator;
+    }
   }
 }

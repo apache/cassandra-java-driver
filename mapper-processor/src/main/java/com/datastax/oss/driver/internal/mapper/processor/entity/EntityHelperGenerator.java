@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
-import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import com.datastax.oss.driver.internal.mapper.MapperContext;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
@@ -23,6 +23,8 @@ import com.datastax.oss.driver.internal.mapper.processor.PartialClassGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
+import com.datastax.oss.driver.internal.mapper.processor.util.generation.BindableHandlingSharedCode;
+import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -38,13 +40,15 @@ import java.util.Map;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
-public class EntityHelperGenerator extends SingleFileCodeGenerator {
+public class EntityHelperGenerator extends SingleFileCodeGenerator
+    implements BindableHandlingSharedCode {
 
   private final TypeElement classElement;
   private final EntityDefinition entityDefinition;
   private final ClassName helperName;
   private final NameIndex nameIndex = new NameIndex();
-  private final Map<TypeName, String> typeConstantNames = new HashMap<>();
+  private final GenericTypeConstantGenerator genericTypeConstantGenerator =
+      new GenericTypeConstantGenerator(nameIndex);
   private final Map<TypeElement, String> childHelpers = new HashMap<>();
 
   public EntityHelperGenerator(TypeElement classElement, ProcessorContext context) {
@@ -55,30 +59,22 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator {
   }
 
   @Override
+  public NameIndex getNameIndex() {
+    return nameIndex;
+  }
+
+  @Override
   protected String getFileName() {
     return helperName.packageName() + "." + helperName.simpleName();
   }
 
-  /**
-   * Requests the generation of a constant holding the {@link GenericType} for the given type.
-   *
-   * <p>If this is called multiple times, only a single constant will be created.
-   *
-   * @return the name of the constant.
-   */
-  String addGenericTypeConstant(TypeName type) {
-    return typeConstantNames.computeIfAbsent(
-        type, k -> nameIndex.uniqueField(GeneratedNames.GENERIC_TYPE_CONSTANT));
+  @Override
+  public String addGenericTypeConstant(TypeName type) {
+    return genericTypeConstantGenerator.add(type);
   }
 
-  /**
-   * Requests the generation of a field that holding an instance of another entity's helper class.
-   *
-   * <p>If this is called multiple times, only a single field will be created.
-   *
-   * @return the name of the field.
-   */
-  String addChildHelper(TypeElement childEntityElement) {
+  @Override
+  public String addEntityHelperField(TypeElement childEntityElement) {
     return childHelpers.computeIfAbsent(
         childEntityElement,
         k -> {
@@ -94,7 +90,8 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator {
     List<PartialClassGenerator> methodGenerators =
         ImmutableList.of(
             new EntityHelperSetMethodGenerator(entityDefinition, this, context),
-            new EntityHelperGetMethodGenerator(entityDefinition, this, context));
+            new EntityHelperGetMethodGenerator(entityDefinition, this, context),
+            new EntityHelperInsertMethodGenerator(entityDefinition, this, context));
 
     TypeSpec.Builder classContents =
         TypeSpec.classBuilder(helperName)
@@ -105,6 +102,12 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator {
                     ClassName.get(EntityHelper.class), ClassName.get(classElement)))
             .addField(
                 FieldSpec.builder(MapperContext.class, "context", Modifier.PRIVATE, Modifier.FINAL)
+                    .build())
+            .addField(
+                FieldSpec.builder(
+                        CqlIdentifier.class, "defaultTableId", Modifier.PRIVATE, Modifier.FINAL)
+                    .initializer(
+                        "$T.fromCql($S)", CqlIdentifier.class, entityDefinition.getCqlName())
                     .build());
 
     MethodSpec.Builder constructorContents =
@@ -118,16 +121,7 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator {
       methodGenerator.addMembers(classContents);
     }
 
-    for (Map.Entry<TypeName, String> entry : typeConstantNames.entrySet()) {
-      TypeName typeParameter = entry.getKey();
-      String name = entry.getValue();
-      ParameterizedTypeName type =
-          ParameterizedTypeName.get(ClassName.get(GenericType.class), typeParameter);
-      classContents.addField(
-          FieldSpec.builder(type, name, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-              .initializer("new $T(){}", type)
-              .build());
-    }
+    genericTypeConstantGenerator.generate(classContents);
 
     for (Map.Entry<TypeElement, String> entry : childHelpers.entrySet()) {
       TypeElement childEntity = entry.getKey();
