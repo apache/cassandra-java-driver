@@ -72,8 +72,6 @@ abstract class ControlConnectionTestBase {
   @Mock protected LoadBalancingPolicyWrapper loadBalancingPolicyWrapper;
   @Mock protected MetadataManager metadataManager;
   @Mock protected MetricsFactory metricsFactory;
-  @Mock protected DriverConfig config;
-  @Mock protected DriverExecutionProfile defaultProfile;
 
   protected AddressTranslator addressTranslator;
   protected DefaultNode node1;
