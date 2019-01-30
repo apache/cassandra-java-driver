@@ -13,14 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.mapper.entity;
+package com.datastax.oss.driver.mapper.model;
 
 import com.datastax.oss.driver.api.core.data.GettableByName;
-import com.datastax.oss.driver.api.core.data.SettableByName;
 
-public interface EntityHelper<EntityT> {
+/**
+ * Provides a sample of an entity and means to check that it's correctly mapped to a driver data
+ * structure.
+ */
+public abstract class EntityFixture<EntityT> {
 
-  <SettableT extends SettableByName<SettableT>> SettableT set(EntityT entity, SettableT target);
+  public final EntityT entity;
 
-  EntityT get(GettableByName source);
+  protected EntityFixture(EntityT entity) {
+    this.entity = entity;
+  }
+
+  public abstract void assertMatches(GettableByName data);
 }
