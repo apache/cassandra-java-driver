@@ -707,7 +707,6 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.connection.ReconnectionPolicy",
         "classSimpleName": "ReconnectionPolicy",
         "methodName": "newControlConnectionSchedule",
-        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1-SNAPSHOT",
         "elementKind": "method",
         "justification": "JAVA-2077: Allow reconnection policy to detect first connection attempt"
