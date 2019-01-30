@@ -28,12 +28,12 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import com.squareup.javapoet.WildcardTypeName;
+import com.squareup.javapoet.TypeVariableName;
 import java.util.Map;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
-public class EntityHelperInjectGenerator implements PartialClassGenerator {
+public class EntityHelperSetMethodGenerator implements PartialClassGenerator {
 
   /**
    * The names of the primitive getters/setters on {@link GettableByName} and {@link
@@ -52,7 +52,7 @@ public class EntityHelperInjectGenerator implements PartialClassGenerator {
   private final EntityDefinition entityDefinition;
   private final EntityHelperGenerator enclosingClass;
 
-  public EntityHelperInjectGenerator(
+  public EntityHelperSetMethodGenerator(
       EntityDefinition entityDefinition,
       EntityHelperGenerator enclosingClass,
       ProcessorContext context) {
@@ -66,18 +66,20 @@ public class EntityHelperInjectGenerator implements PartialClassGenerator {
     // TODO add an ignore mechanism? this fails if a property is missing on the target.
     // TODO handle collections of UDTs (JAVA-2129)
 
+    // The method's type variable: <SettableT extends SettableByName<SettableT>>
+    TypeVariableName settableT = TypeVariableName.get("SettableT");
+    settableT =
+        settableT.withBounds(
+            ParameterizedTypeName.get(ClassName.get(SettableByName.class), settableT));
+
     MethodSpec.Builder injectBuilder =
-        MethodSpec.methodBuilder("inject")
+        MethodSpec.methodBuilder("set")
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
+            .addTypeVariable(settableT)
             .addParameter(ParameterSpec.builder(entityDefinition.getClassName(), "entity").build())
-            .addParameter(
-                ParameterSpec.builder(
-                        ParameterizedTypeName.get(
-                            ClassName.get(SettableByName.class),
-                            WildcardTypeName.subtypeOf(Object.class)),
-                        "target")
-                    .build());
+            .addParameter(ParameterSpec.builder(settableT, "target").build())
+            .returns(settableT);
 
     int udtIndex = 0;
     for (PropertyDefinition property : entityDefinition.getProperties()) {
@@ -100,33 +102,33 @@ public class EntityHelperInjectGenerator implements PartialClassGenerator {
         // Inject the child entity into the UdtValue
         String childHelper = enclosingClass.addChildHelper(childEntityElement);
         injectBuilder.addStatement(
-            "$L.inject(entity.$L(), $L)", childHelper, getterName, udtValueName);
+            "$L.set(entity.$L(), $L)", childHelper, getterName, udtValueName);
         // Set the UdtValue into the target
-        injectBuilder.addStatement("target.setUdtValue($S, $L)", cqlName, udtValueName);
+        injectBuilder.addStatement("target = target.setUdtValue($S, $L)", cqlName, udtValueName);
       } else {
         String primitiveAccessor = PRIMITIVE_ACCESSORS.get(type);
         if (primitiveAccessor != null) {
           // Primitive type: use dedicated setter, since it is optimized to avoid boxing
           injectBuilder.addStatement(
-              "target.set$L($S, entity.$L())", primitiveAccessor, cqlName, getterName);
+              "target = target.set$L($S, entity.$L())", primitiveAccessor, cqlName, getterName);
         } else if (type instanceof ClassName) {
           // Unparameterized class: use the generic, class-based setter:
           injectBuilder.addStatement(
-              "target.set($S, entity.$L(), $T.class)", cqlName, getterName, type);
+              "target = target.set($S, entity.$L(), $T.class)", cqlName, getterName, type);
         } else {
           // Parameterized type: create a GenericType constant
           // Note that lists, sets and maps of unparameterized classes also fall under that
           // category. Their setter creates a GenericType under the hood, so there's no performance
           // advantage in calling them instead of the generic set().
           injectBuilder.addStatement(
-              "target.set($S, entity.$L(), $L)",
+              "target = target.set($S, entity.$L(), $L)",
               cqlName,
               getterName,
               enclosingClass.addGenericTypeConstant(type));
         }
       }
     }
-
+    injectBuilder.addCode("\n").addStatement("return target");
     classBuilder.addMethod(injectBuilder.build());
   }
 

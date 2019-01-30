@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.mapper.entity;
+package com.datastax.oss.driver.mapper.model.inventory;
 
-import com.datastax.oss.driver.api.core.data.GettableByName;
-import com.datastax.oss.driver.api.core.data.SettableByName;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
+import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 
-public interface EntityHelper<EntityT> {
-
-  <SettableT extends SettableByName<SettableT>> SettableT set(EntityT entity, SettableT target);
-
-  EntityT get(GettableByName source);
+@Mapper
+public interface InventoryMapper {
+  ProductDao productDao(@DaoKeyspace CqlIdentifier keyspace);
 }
