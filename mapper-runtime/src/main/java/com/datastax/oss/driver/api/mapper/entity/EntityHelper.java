@@ -15,9 +15,12 @@
  */
 package com.datastax.oss.driver.api.mapper.entity;
 
+import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.data.SettableByName;
 
 public interface EntityHelper<EntityT> {
 
   void inject(EntityT entity, SettableByName<?> target);
+
+  EntityT extract(GettableByName source);
 }
