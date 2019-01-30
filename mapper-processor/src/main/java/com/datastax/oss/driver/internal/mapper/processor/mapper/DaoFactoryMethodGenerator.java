@@ -160,7 +160,7 @@ public class DaoFactoryMethodGenerator implements PartialClassGenerator {
           .addCode(");\n")
           .addStatement(
               "return $L.computeIfAbsent(key, "
-                  + "k -> $T.$L(context, k.getKeyspaceId(), k.getTableId()))",
+                  + "k -> $T.$L(context.withKeyspaceAndTable(k.getKeyspaceId(), k.getTableId())))",
               fieldName,
               daoImplementationName,
               isAsync ? "initAsync" : "init");
@@ -174,7 +174,7 @@ public class DaoFactoryMethodGenerator implements PartialClassGenerator {
   public void addConstructorInstructions(MethodSpec.Builder constructorBuilder) {
     if (!isCachedByKeyspaceAndTable) {
       constructorBuilder.addStatement(
-          "this.$L = $T.$L(context, null, null)",
+          "this.$L = $T.$L(context)",
           fieldName,
           daoImplementationName,
           isAsync ? "initAsync" : "init");
