@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.mapper.model.inventory;
+package com.datastax.oss.driver.api.mapper.annotations;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import java.util.List;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class InventorySchema {
-  public static List<String> createStatements() {
-    return ImmutableList.of(
-        "CREATE TYPE dimensions(length int, width int, height int)",
-        "CREATE TABLE product(id uuid PRIMARY KEY, description text, dimensions dimensions)");
-  }
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.CLASS)
+public @interface Insert {
+  String customClause() default "";
 }

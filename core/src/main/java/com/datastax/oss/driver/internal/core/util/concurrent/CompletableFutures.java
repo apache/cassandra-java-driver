@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -71,6 +72,40 @@ public class CompletableFutures {
   public static <T> void whenAllDone(
       List<CompletionStage<T>> inputs, Runnable callback, Executor executor) {
     allDone(inputs).thenRunAsync(callback, executor).exceptionally(UncaughtExceptions::log);
+  }
+  /**
+   * @return a completion stage that completes when all inputs are successful, or fails if any of
+   *     them failed.
+   */
+  public static <T> CompletionStage<Void> allSuccessful(List<CompletionStage<T>> inputs) {
+    CompletableFuture<Void> result = new CompletableFuture<>();
+    if (inputs.isEmpty()) {
+      result.complete(null);
+    } else {
+      final int todo = inputs.size();
+      final AtomicInteger done = new AtomicInteger();
+      final CopyOnWriteArrayList<Throwable> errors = new CopyOnWriteArrayList<>();
+      for (CompletionStage<?> input : inputs) {
+        input.whenComplete(
+            (v, error) -> {
+              if (error != null) {
+                errors.add(error);
+              }
+              if (done.incrementAndGet() == todo) {
+                if (errors.isEmpty()) {
+                  result.complete(null);
+                } else {
+                  Throwable finalError = errors.get(0);
+                  for (int i = 1; i < errors.size(); i++) {
+                    finalError.addSuppressed(errors.get(i));
+                  }
+                  result.completeExceptionally(finalError);
+                }
+              }
+            });
+      }
+    }
+    return result;
   }
 
   /** Get the result now, when we know for sure that the future is complete. */
