@@ -15,9 +15,9 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
-import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
+import com.datastax.oss.driver.internal.mapper.MapperContext;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.PartialClassGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
@@ -102,19 +102,14 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator {
                 ParameterizedTypeName.get(
                     ClassName.get(EntityHelper.class), ClassName.get(classElement)))
             .addField(
-                FieldSpec.builder(CqlIdentifier.class, "keyspace", Modifier.PRIVATE, Modifier.FINAL)
-                    .build())
-            .addField(
-                FieldSpec.builder(CqlIdentifier.class, "table", Modifier.PRIVATE, Modifier.FINAL)
+                FieldSpec.builder(MapperContext.class, "context", Modifier.PRIVATE, Modifier.FINAL)
                     .build());
 
     MethodSpec.Builder constructorContents =
         MethodSpec.constructorBuilder()
             .addModifiers(Modifier.PUBLIC)
-            .addParameter(CqlIdentifier.class, "keyspace")
-            .addParameter(CqlIdentifier.class, "table")
-            .addStatement("this.keyspace = keyspace")
-            .addStatement("this.table = table");
+            .addParameter(MapperContext.class, "context")
+            .addStatement("this.context = context");
 
     for (PartialClassGenerator methodGenerator : methodGenerators) {
       methodGenerator.addConstructorInstructions(constructorContents);
@@ -140,8 +135,7 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator {
       classContents.addField(
           FieldSpec.builder(helperClassName, fieldName, Modifier.PRIVATE, Modifier.FINAL).build());
 
-      constructorContents.addStatement(
-          "this.$L = new $T(keyspace, table)", fieldName, helperClassName);
+      constructorContents.addStatement("this.$L = new $T(context)", fieldName, helperClassName);
     }
 
     classContents.addMethod(constructorContents.build());
