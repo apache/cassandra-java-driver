@@ -93,8 +93,8 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator {
 
     List<PartialClassGenerator> methodGenerators =
         ImmutableList.of(
-            new EntityHelperInjectGenerator(entityDefinition, this, context),
-            new EntityHelperExtractGenerator(entityDefinition, this, context));
+            new EntityHelperSetMethodGenerator(entityDefinition, this, context),
+            new EntityHelperGetMethodGenerator(entityDefinition, this, context));
 
     TypeSpec.Builder classContents =
         TypeSpec.classBuilder(helperName)
