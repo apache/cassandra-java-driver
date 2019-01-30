@@ -109,7 +109,8 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
    *     attempt only).
    * @param useInitialReconnectionSchedule if no node can be reached, the type of reconnection
    *     schedule to use. In other words, the value that will be passed to {@link
-   *     ReconnectionPolicy#newControlConnectionSchedule(boolean)}.
+   *     ReconnectionPolicy#newControlConnectionSchedule(boolean)}. Note that this parameter is only
+   *     relevant if {@code reconnectOnFailure} is true, otherwise it is not used.
    */
   public CompletionStage<Void> init(
       boolean listenToClusterEvents,
