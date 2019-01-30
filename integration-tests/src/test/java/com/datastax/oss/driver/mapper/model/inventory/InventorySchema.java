@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.mapper.entity;
+package com.datastax.oss.driver.mapper.model.inventory;
 
-import com.datastax.oss.driver.api.core.data.GettableByName;
-import com.datastax.oss.driver.api.core.data.SettableByName;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import java.util.List;
 
-public interface EntityHelper<EntityT> {
-
-  <SettableT extends SettableByName<SettableT>> SettableT set(EntityT entity, SettableT target);
-
-  EntityT get(GettableByName source);
+public class InventorySchema {
+  public static List<String> createStatements() {
+    return ImmutableList.of(
+        "CREATE TYPE dimensions(length int, width int, height int)",
+        "CREATE TABLE product(id uuid PRIMARY KEY, description text, dimensions dimensions)");
+  }
 }

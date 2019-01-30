@@ -24,11 +24,11 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import javax.lang.model.element.Modifier;
 
-public class EntityHelperExtractGenerator implements PartialClassGenerator {
+public class EntityHelperGetMethodGenerator implements PartialClassGenerator {
 
   private final EntityDefinition entityDefinition;
 
-  public EntityHelperExtractGenerator(
+  public EntityHelperGetMethodGenerator(
       EntityDefinition entityDefinition,
       EntityHelperGenerator enclosingClass,
       ProcessorContext context) {
@@ -39,7 +39,7 @@ public class EntityHelperExtractGenerator implements PartialClassGenerator {
   public void addMembers(TypeSpec.Builder classBuilder) {
 
     MethodSpec.Builder extractBuilder =
-        MethodSpec.methodBuilder("extract")
+        MethodSpec.methodBuilder("get")
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
             .addParameter(
