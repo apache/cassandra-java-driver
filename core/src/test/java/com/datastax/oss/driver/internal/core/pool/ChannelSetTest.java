@@ -17,12 +17,13 @@ package com.datastax.oss.driver.internal.core.pool;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class ChannelSetTest {
@@ -49,15 +50,15 @@ public class ChannelSetTest {
     // Then
     assertThat(set.size()).isEqualTo(1);
     assertThat(set.next()).isEqualTo(channel1);
-    Mockito.verify(channel1, never()).getAvailableIds();
+    verify(channel1, never()).getAvailableIds();
   }
 
   @Test
   public void should_return_most_available_when_multiple() {
     // Given
-    Mockito.when(channel1.getAvailableIds()).thenReturn(2);
-    Mockito.when(channel2.getAvailableIds()).thenReturn(12);
-    Mockito.when(channel3.getAvailableIds()).thenReturn(8);
+    when(channel1.getAvailableIds()).thenReturn(2);
+    when(channel2.getAvailableIds()).thenReturn(12);
+    when(channel3.getAvailableIds()).thenReturn(8);
 
     // When
     set.add(channel1);
@@ -67,12 +68,12 @@ public class ChannelSetTest {
     // Then
     assertThat(set.size()).isEqualTo(3);
     assertThat(set.next()).isEqualTo(channel2);
-    Mockito.verify(channel1).getAvailableIds();
-    Mockito.verify(channel2).getAvailableIds();
-    Mockito.verify(channel3).getAvailableIds();
+    verify(channel1).getAvailableIds();
+    verify(channel2).getAvailableIds();
+    verify(channel3).getAvailableIds();
 
     // When
-    Mockito.when(channel1.getAvailableIds()).thenReturn(15);
+    when(channel1.getAvailableIds()).thenReturn(15);
 
     // Then
     assertThat(set.next()).isEqualTo(channel1);
@@ -81,9 +82,9 @@ public class ChannelSetTest {
   @Test
   public void should_remove_channels() {
     // Given
-    Mockito.when(channel1.getAvailableIds()).thenReturn(2);
-    Mockito.when(channel2.getAvailableIds()).thenReturn(12);
-    Mockito.when(channel3.getAvailableIds()).thenReturn(8);
+    when(channel1.getAvailableIds()).thenReturn(2);
+    when(channel2.getAvailableIds()).thenReturn(12);
+    when(channel3.getAvailableIds()).thenReturn(8);
 
     set.add(channel1);
     set.add(channel2);

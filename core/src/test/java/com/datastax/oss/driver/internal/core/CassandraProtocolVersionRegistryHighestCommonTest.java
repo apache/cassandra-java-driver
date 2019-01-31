@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.internal.core;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
@@ -25,7 +27,6 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.Collection;
 import java.util.Collections;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 /**
  * Covers {@link CassandraProtocolVersionRegistry#highestCommon(Collection)} separately, because it
@@ -92,9 +93,9 @@ public class CassandraProtocolVersionRegistryHighestCommonTest {
   }
 
   private Node mockNode(String cassandraVersion) {
-    Node node = Mockito.mock(Node.class);
+    Node node = mock(Node.class);
     if (cassandraVersion != null) {
-      Mockito.when(node.getCassandraVersion()).thenReturn(Version.parse(cassandraVersion));
+      when(node.getCassandraVersion()).thenReturn(Version.parse(cassandraVersion));
     }
     return node;
   }

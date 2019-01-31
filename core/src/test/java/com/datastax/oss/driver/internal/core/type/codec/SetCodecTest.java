@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.type.codec;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataTypes;
@@ -29,7 +30,6 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class SetCodecTest extends CodecTestBase<Set<Integer>> {
@@ -40,8 +40,8 @@ public class SetCodecTest extends CodecTestBase<Set<Integer>> {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(elementCodec.getCqlType()).thenReturn(DataTypes.INT);
-    Mockito.when(elementCodec.getJavaType()).thenReturn(GenericType.INTEGER);
+    when(elementCodec.getCqlType()).thenReturn(DataTypes.INT);
+    when(elementCodec.getJavaType()).thenReturn(GenericType.INTEGER);
     codec = TypeCodecs.setOf(elementCodec);
   }
 
@@ -57,11 +57,9 @@ public class SetCodecTest extends CodecTestBase<Set<Integer>> {
 
   @Test
   public void should_encode_non_empty_set() {
-    Mockito.when(elementCodec.encode(1, ProtocolVersion.DEFAULT))
-        .thenReturn(Bytes.fromHexString("0x01"));
-    Mockito.when(elementCodec.encode(2, ProtocolVersion.DEFAULT))
-        .thenReturn(Bytes.fromHexString("0x0002"));
-    Mockito.when(elementCodec.encode(3, ProtocolVersion.DEFAULT))
+    when(elementCodec.encode(1, ProtocolVersion.DEFAULT)).thenReturn(Bytes.fromHexString("0x01"));
+    when(elementCodec.encode(2, ProtocolVersion.DEFAULT)).thenReturn(Bytes.fromHexString("0x0002"));
+    when(elementCodec.encode(3, ProtocolVersion.DEFAULT))
         .thenReturn(Bytes.fromHexString("0x000003"));
 
     assertThat(encode(ImmutableSet.of(1, 2, 3)))
@@ -86,11 +84,9 @@ public class SetCodecTest extends CodecTestBase<Set<Integer>> {
 
   @Test
   public void should_decode_non_empty_set() {
-    Mockito.when(elementCodec.decode(Bytes.fromHexString("0x01"), ProtocolVersion.DEFAULT))
-        .thenReturn(1);
-    Mockito.when(elementCodec.decode(Bytes.fromHexString("0x0002"), ProtocolVersion.DEFAULT))
-        .thenReturn(2);
-    Mockito.when(elementCodec.decode(Bytes.fromHexString("0x000003"), ProtocolVersion.DEFAULT))
+    when(elementCodec.decode(Bytes.fromHexString("0x01"), ProtocolVersion.DEFAULT)).thenReturn(1);
+    when(elementCodec.decode(Bytes.fromHexString("0x0002"), ProtocolVersion.DEFAULT)).thenReturn(2);
+    when(elementCodec.decode(Bytes.fromHexString("0x000003"), ProtocolVersion.DEFAULT))
         .thenReturn(3);
 
     assertThat(decode("0x" + "00000003" + "0000000101" + "000000020002" + "00000003000003"))
@@ -109,9 +105,9 @@ public class SetCodecTest extends CodecTestBase<Set<Integer>> {
 
   @Test
   public void should_format_non_empty_set() {
-    Mockito.when(elementCodec.format(1)).thenReturn("a");
-    Mockito.when(elementCodec.format(2)).thenReturn("b");
-    Mockito.when(elementCodec.format(3)).thenReturn("c");
+    when(elementCodec.format(1)).thenReturn("a");
+    when(elementCodec.format(2)).thenReturn("b");
+    when(elementCodec.format(3)).thenReturn("c");
 
     assertThat(format(ImmutableSet.of(1, 2, 3))).isEqualTo("{a,b,c}");
   }
@@ -129,9 +125,9 @@ public class SetCodecTest extends CodecTestBase<Set<Integer>> {
 
   @Test
   public void should_parse_non_empty_set() {
-    Mockito.when(elementCodec.parse("a")).thenReturn(1);
-    Mockito.when(elementCodec.parse("b")).thenReturn(2);
-    Mockito.when(elementCodec.parse("c")).thenReturn(3);
+    when(elementCodec.parse("a")).thenReturn(1);
+    when(elementCodec.parse("b")).thenReturn(2);
+    when(elementCodec.parse("c")).thenReturn(3);
 
     assertThat(parse("{a,b,c}")).containsExactly(1, 2, 3);
   }

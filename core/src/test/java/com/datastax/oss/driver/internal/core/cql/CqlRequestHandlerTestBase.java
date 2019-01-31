@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.TestDataProviders;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
@@ -44,7 +45,6 @@ import java.util.Queue;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 @RunWith(DataProviderRunner.class)
@@ -71,12 +71,12 @@ public abstract class CqlRequestHandlerTestBase {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(node1.getMetricUpdater()).thenReturn(nodeMetricUpdater1);
-    Mockito.when(nodeMetricUpdater1.isEnabled(any(NodeMetric.class), anyString())).thenReturn(true);
-    Mockito.when(node2.getMetricUpdater()).thenReturn(nodeMetricUpdater2);
-    Mockito.when(nodeMetricUpdater2.isEnabled(any(NodeMetric.class), anyString())).thenReturn(true);
-    Mockito.when(node3.getMetricUpdater()).thenReturn(nodeMetricUpdater3);
-    Mockito.when(nodeMetricUpdater3.isEnabled(any(NodeMetric.class), anyString())).thenReturn(true);
+    when(node1.getMetricUpdater()).thenReturn(nodeMetricUpdater1);
+    when(nodeMetricUpdater1.isEnabled(any(NodeMetric.class), anyString())).thenReturn(true);
+    when(node2.getMetricUpdater()).thenReturn(nodeMetricUpdater2);
+    when(nodeMetricUpdater2.isEnabled(any(NodeMetric.class), anyString())).thenReturn(true);
+    when(node3.getMetricUpdater()).thenReturn(nodeMetricUpdater3);
+    when(nodeMetricUpdater3.isEnabled(any(NodeMetric.class), anyString())).thenReturn(true);
   }
 
   protected static Frame defaultFrameOf(Message responseMessage) {

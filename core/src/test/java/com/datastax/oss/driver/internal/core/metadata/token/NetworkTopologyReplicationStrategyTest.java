@@ -19,6 +19,9 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -37,7 +40,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
 
@@ -659,7 +661,7 @@ public class NetworkTopologyReplicationStrategyTest {
 
       // Then
       // No logs:
-      Mockito.verify(appender, never()).doAppend(any(ILoggingEvent.class));
+      verify(appender, never()).doAppend(any(ILoggingEvent.class));
 
       // When
       int traversedTokensForInvalidSettings =
@@ -667,7 +669,7 @@ public class NetworkTopologyReplicationStrategyTest {
       // Did not take more steps than the valid settings
       assertThat(traversedTokensForInvalidSettings).isEqualTo(traversedTokensForValidSettings);
       // Did log:
-      Mockito.verify(appender).doAppend(loggingEventCaptor.capture());
+      verify(appender).doAppend(loggingEventCaptor.capture());
       ILoggingEvent log = loggingEventCaptor.getValue();
       assertThat(log.getLevel()).isEqualTo(Level.WARN);
       assertThat(log.getMessage()).contains("could not achieve replication factor");
@@ -682,8 +684,8 @@ public class NetworkTopologyReplicationStrategyTest {
       Map<Token, Node> tokenToPrimary,
       ImmutableMap<String, String> replicationConfig) {
     AtomicInteger count = new AtomicInteger();
-    List<Token> ringSpy = Mockito.spy(ring);
-    Mockito.when(ringSpy.get(anyInt()))
+    List<Token> ringSpy = spy(ring);
+    when(ringSpy.get(anyInt()))
         .thenAnswer(
             invocation -> {
               count.incrementAndGet();
@@ -695,7 +697,7 @@ public class NetworkTopologyReplicationStrategyTest {
   }
 
   private void locate(Node node, String dc, String rack) {
-    Mockito.when(node.getDatacenter()).thenReturn(dc);
-    Mockito.when(node.getRack()).thenReturn(rack);
+    when(node.getDatacenter()).thenReturn(dc);
+    when(node.getRack()).thenReturn(rack);
   }
 }

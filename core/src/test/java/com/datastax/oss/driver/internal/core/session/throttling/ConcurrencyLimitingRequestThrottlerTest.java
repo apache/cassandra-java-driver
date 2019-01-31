@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.session.throttling;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -31,7 +32,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -45,13 +45,12 @@ public class ConcurrencyLimitingRequestThrottlerTest {
 
   @Before
   public void setup() {
-    Mockito.when(context.getConfig()).thenReturn(config);
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
+    when(context.getConfig()).thenReturn(config);
+    when(config.getDefaultProfile()).thenReturn(defaultProfile);
 
-    Mockito.when(
-            defaultProfile.getInt(DefaultDriverOption.REQUEST_THROTTLER_MAX_CONCURRENT_REQUESTS))
+    when(defaultProfile.getInt(DefaultDriverOption.REQUEST_THROTTLER_MAX_CONCURRENT_REQUESTS))
         .thenReturn(5);
-    Mockito.when(defaultProfile.getInt(DefaultDriverOption.REQUEST_THROTTLER_MAX_QUEUE_SIZE))
+    when(defaultProfile.getInt(DefaultDriverOption.REQUEST_THROTTLER_MAX_QUEUE_SIZE))
         .thenReturn(10);
 
     throttler = new ConcurrencyLimitingRequestThrottler(context);

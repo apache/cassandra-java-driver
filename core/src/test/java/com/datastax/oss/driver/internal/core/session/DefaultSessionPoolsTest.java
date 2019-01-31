@@ -20,7 +20,11 @@ import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -71,7 +75,6 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class DefaultSessionPoolsTest {
@@ -109,47 +112,44 @@ public class DefaultSessionPoolsTest {
     MockitoAnnotations.initMocks(this);
 
     adminEventLoopGroup = new DefaultEventLoopGroup(1);
-    Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
-    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
+    when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
+    when(context.getNettyOptions()).thenReturn(nettyOptions);
 
     // Config:
-    Mockito.when(defaultProfile.getBoolean(DefaultDriverOption.REQUEST_WARN_IF_SET_KEYSPACE))
+    when(defaultProfile.getBoolean(DefaultDriverOption.REQUEST_WARN_IF_SET_KEYSPACE))
         .thenReturn(true);
-    Mockito.when(defaultProfile.getBoolean(DefaultDriverOption.REPREPARE_ENABLED))
-        .thenReturn(false);
-    Mockito.when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn(true);
-    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.METADATA_TOPOLOGY_WINDOW))
+    when(defaultProfile.getBoolean(DefaultDriverOption.REPREPARE_ENABLED)).thenReturn(false);
+    when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn(true);
+    when(defaultProfile.getDuration(DefaultDriverOption.METADATA_TOPOLOGY_WINDOW))
         .thenReturn(Duration.ZERO);
-    Mockito.when(defaultProfile.getInt(DefaultDriverOption.METADATA_TOPOLOGY_MAX_EVENTS))
-        .thenReturn(1);
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(context.getConfig()).thenReturn(config);
+    when(defaultProfile.getInt(DefaultDriverOption.METADATA_TOPOLOGY_MAX_EVENTS)).thenReturn(1);
+    when(config.getDefaultProfile()).thenReturn(defaultProfile);
+    when(context.getConfig()).thenReturn(config);
 
     // Init sequence:
-    Mockito.when(metadataManager.addContactPoints(anySet()))
+    when(metadataManager.addContactPoints(anySet()))
         .thenReturn(CompletableFuture.completedFuture(null));
-    Mockito.when(metadataManager.refreshNodes())
+    when(metadataManager.refreshNodes()).thenReturn(CompletableFuture.completedFuture(null));
+    when(metadataManager.firstSchemaRefreshFuture())
         .thenReturn(CompletableFuture.completedFuture(null));
-    Mockito.when(metadataManager.firstSchemaRefreshFuture())
-        .thenReturn(CompletableFuture.completedFuture(null));
-    Mockito.when(context.getMetadataManager()).thenReturn(metadataManager);
+    when(context.getMetadataManager()).thenReturn(metadataManager);
 
-    Mockito.when(topologyMonitor.init()).thenReturn(CompletableFuture.completedFuture(null));
-    Mockito.when(context.getTopologyMonitor()).thenReturn(topologyMonitor);
+    when(topologyMonitor.init()).thenReturn(CompletableFuture.completedFuture(null));
+    when(context.getTopologyMonitor()).thenReturn(topologyMonitor);
 
-    Mockito.when(context.getLoadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
+    when(context.getLoadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
 
-    Mockito.when(context.getConfigLoader()).thenReturn(configLoader);
+    when(context.getConfigLoader()).thenReturn(configLoader);
 
-    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
+    when(context.getMetricsFactory()).thenReturn(metricsFactory);
 
     // Runtime behavior:
-    Mockito.when(context.getSessionName()).thenReturn("test");
+    when(context.getSessionName()).thenReturn("test");
 
-    Mockito.when(context.getChannelPoolFactory()).thenReturn(channelPoolFactory);
+    when(context.getChannelPoolFactory()).thenReturn(channelPoolFactory);
 
-    eventBus = Mockito.spy(new EventBus("test"));
-    Mockito.when(context.getEventBus()).thenReturn(eventBus);
+    eventBus = spy(new EventBus("test"));
+    when(context.getEventBus()).thenReturn(eventBus);
 
     node1 = mockLocalNode(1);
     node2 = mockLocalNode(2);
@@ -159,46 +159,41 @@ public class DefaultSessionPoolsTest {
             node1.getConnectAddress(), node1,
             node2.getConnectAddress(), node2,
             node3.getConnectAddress(), node3);
-    Mockito.when(metadata.getNodes()).thenReturn(nodes);
-    Mockito.when(metadataManager.getMetadata()).thenReturn(metadata);
+    when(metadata.getNodes()).thenReturn(nodes);
+    when(metadataManager.getMetadata()).thenReturn(metadata);
 
     PoolManager poolManager = new PoolManager(context);
-    Mockito.when(context.getPoolManager()).thenReturn(poolManager);
+    when(context.getPoolManager()).thenReturn(poolManager);
 
     // Shutdown sequence:
-    Mockito.when(context.getReconnectionPolicy()).thenReturn(reconnectionPolicy);
-    Mockito.when(context.getRetryPolicy(DriverExecutionProfile.DEFAULT_NAME))
-        .thenReturn(retryPolicy);
-    Mockito.when(context.getSpeculativeExecutionPolicies())
+    when(context.getReconnectionPolicy()).thenReturn(reconnectionPolicy);
+    when(context.getRetryPolicy(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(retryPolicy);
+    when(context.getSpeculativeExecutionPolicies())
         .thenReturn(
             ImmutableMap.of(DriverExecutionProfile.DEFAULT_NAME, speculativeExecutionPolicy));
-    Mockito.when(context.getAddressTranslator()).thenReturn(addressTranslator);
-    Mockito.when(context.getNodeStateListener()).thenReturn(nodeStateListener);
-    Mockito.when(context.getSchemaChangeListener()).thenReturn(schemaChangeListener);
-    Mockito.when(context.getRequestTracker()).thenReturn(requestTracker);
+    when(context.getAddressTranslator()).thenReturn(addressTranslator);
+    when(context.getNodeStateListener()).thenReturn(nodeStateListener);
+    when(context.getSchemaChangeListener()).thenReturn(schemaChangeListener);
+    when(context.getRequestTracker()).thenReturn(requestTracker);
 
-    Mockito.when(metadataManager.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
-    Mockito.when(metadataManager.forceCloseAsync())
-        .thenReturn(CompletableFuture.completedFuture(null));
+    when(metadataManager.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
+    when(metadataManager.forceCloseAsync()).thenReturn(CompletableFuture.completedFuture(null));
 
-    Mockito.when(topologyMonitor.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
-    Mockito.when(topologyMonitor.forceCloseAsync())
-        .thenReturn(CompletableFuture.completedFuture(null));
+    when(topologyMonitor.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
+    when(topologyMonitor.forceCloseAsync()).thenReturn(CompletableFuture.completedFuture(null));
 
-    Mockito.when(context.getControlConnection()).thenReturn(controlConnection);
-    Mockito.when(controlConnection.closeAsync())
-        .thenReturn(CompletableFuture.completedFuture(null));
-    Mockito.when(controlConnection.forceCloseAsync())
-        .thenReturn(CompletableFuture.completedFuture(null));
+    when(context.getControlConnection()).thenReturn(controlConnection);
+    when(controlConnection.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
+    when(controlConnection.forceCloseAsync()).thenReturn(CompletableFuture.completedFuture(null));
 
     DefaultPromise<Void> nettyCloseFuture = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
     nettyCloseFuture.setSuccess(null);
-    Mockito.when(nettyOptions.onClose()).thenAnswer(invocation -> nettyCloseFuture);
+    when(nettyOptions.onClose()).thenAnswer(invocation -> nettyCloseFuture);
   }
 
   @Test
   public void should_initialize_pools_with_distances() {
-    Mockito.when(node3.getDistance()).thenReturn(NodeDistance.REMOTE);
+    when(node3.getDistance()).thenReturn(NodeDistance.REMOTE);
 
     CompletableFuture<ChannelPool> pool1Future = new CompletableFuture<>();
     CompletableFuture<ChannelPool> pool2Future = new CompletableFuture<>();
@@ -236,7 +231,7 @@ public class DefaultSessionPoolsTest {
 
   @Test
   public void should_not_connect_to_ignored_nodes() {
-    Mockito.when(node2.getDistance()).thenReturn(NodeDistance.IGNORED);
+    when(node2.getDistance()).thenReturn(NodeDistance.IGNORED);
 
     ChannelPool pool1 = mockPool(node1);
     ChannelPool pool3 = mockPool(node3);
@@ -260,7 +255,7 @@ public class DefaultSessionPoolsTest {
 
   @Test
   public void should_not_connect_to_forced_down_nodes() {
-    Mockito.when(node2.getState()).thenReturn(NodeState.FORCED_DOWN);
+    when(node2.getState()).thenReturn(NodeState.FORCED_DOWN);
 
     ChannelPool pool1 = mockPool(node1);
     ChannelPool pool3 = mockPool(node3);
@@ -314,7 +309,7 @@ public class DefaultSessionPoolsTest {
     pool3Future.complete(pool3);
     waitForPendingAdminTasks();
 
-    Mockito.verify(pool2).resize(NodeDistance.REMOTE);
+    verify(pool2).resize(NodeDistance.REMOTE);
 
     assertThatStage(initFuture)
         .isSuccess(
@@ -355,7 +350,7 @@ public class DefaultSessionPoolsTest {
     pool3Future.complete(pool3);
     waitForPendingAdminTasks();
 
-    Mockito.verify(pool2).closeAsync();
+    verify(pool2).closeAsync();
 
     assertThatStage(initFuture)
         .isSuccess(
@@ -395,7 +390,7 @@ public class DefaultSessionPoolsTest {
     pool3Future.complete(pool3);
     waitForPendingAdminTasks();
 
-    Mockito.verify(pool2).closeAsync();
+    verify(pool2).closeAsync();
 
     assertThatStage(initFuture)
         .isSuccess(
@@ -424,7 +419,7 @@ public class DefaultSessionPoolsTest {
     assertThatStage(initFuture).isSuccess();
 
     eventBus.fire(new DistanceEvent(NodeDistance.REMOTE, node2));
-    Mockito.verify(pool2, timeout(500)).resize(NodeDistance.REMOTE);
+    verify(pool2, timeout(500)).resize(NodeDistance.REMOTE);
   }
 
   @Test
@@ -448,7 +443,7 @@ public class DefaultSessionPoolsTest {
     assertThatStage(initFuture).isSuccess();
 
     eventBus.fire(new DistanceEvent(NodeDistance.IGNORED, node2));
-    Mockito.verify(pool2, timeout(500)).closeAsync();
+    verify(pool2, timeout(500)).closeAsync();
 
     Session session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
     assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
@@ -475,7 +470,7 @@ public class DefaultSessionPoolsTest {
     assertThatStage(initFuture).isSuccess();
 
     eventBus.fire(new DistanceEvent(NodeDistance.IGNORED, node2));
-    Mockito.verify(pool2, timeout(100)).closeAsync();
+    verify(pool2, timeout(100)).closeAsync();
 
     Session session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
     assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
@@ -488,7 +483,7 @@ public class DefaultSessionPoolsTest {
 
   @Test
   public void should_recreate_pool_if_node_becomes_not_ignored() {
-    Mockito.when(node2.getDistance()).thenReturn(NodeDistance.IGNORED);
+    when(node2.getDistance()).thenReturn(NodeDistance.IGNORED);
 
     ChannelPool pool1 = mockPool(node1);
     ChannelPool pool2 = mockPool(node2);
@@ -539,7 +534,7 @@ public class DefaultSessionPoolsTest {
     assertThatStage(initFuture).isSuccess();
 
     eventBus.fire(NodeStateEvent.changed(NodeState.UP, NodeState.FORCED_DOWN, node2));
-    Mockito.verify(pool2, timeout(500)).closeAsync();
+    verify(pool2, timeout(500)).closeAsync();
 
     Session session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
     assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
@@ -547,7 +542,7 @@ public class DefaultSessionPoolsTest {
 
   @Test
   public void should_recreate_pool_if_node_is_forced_back_up() {
-    Mockito.when(node2.getState()).thenReturn(NodeState.FORCED_DOWN);
+    when(node2.getState()).thenReturn(NodeState.FORCED_DOWN);
 
     ChannelPool pool1 = mockPool(node1);
     ChannelPool pool2 = mockPool(node2);
@@ -578,8 +573,8 @@ public class DefaultSessionPoolsTest {
 
   @Test
   public void should_not_recreate_pool_if_node_is_forced_back_up_but_ignored() {
-    Mockito.when(node2.getState()).thenReturn(NodeState.FORCED_DOWN);
-    Mockito.when(node2.getDistance()).thenReturn(NodeDistance.IGNORED);
+    when(node2.getState()).thenReturn(NodeState.FORCED_DOWN);
+    when(node2.getDistance()).thenReturn(NodeDistance.IGNORED);
 
     ChannelPool pool1 = mockPool(node1);
     ChannelPool pool2 = mockPool(node2);
@@ -608,7 +603,7 @@ public class DefaultSessionPoolsTest {
 
   @Test
   public void should_adjust_distance_if_changed_while_recreating() {
-    Mockito.when(node2.getDistance()).thenReturn(NodeDistance.IGNORED);
+    when(node2.getDistance()).thenReturn(NodeDistance.IGNORED);
 
     ChannelPool pool1 = mockPool(node1);
     ChannelPool pool2 = mockPool(node2);
@@ -644,14 +639,14 @@ public class DefaultSessionPoolsTest {
     waitForPendingAdminTasks();
 
     // Pool should have been adjusted
-    Mockito.verify(pool2).resize(NodeDistance.REMOTE);
+    verify(pool2).resize(NodeDistance.REMOTE);
 
     assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool2, pool3);
   }
 
   @Test
   public void should_remove_pool_if_ignored_while_recreating() {
-    Mockito.when(node2.getDistance()).thenReturn(NodeDistance.IGNORED);
+    when(node2.getDistance()).thenReturn(NodeDistance.IGNORED);
 
     ChannelPool pool1 = mockPool(node1);
     ChannelPool pool2 = mockPool(node2);
@@ -687,14 +682,14 @@ public class DefaultSessionPoolsTest {
     waitForPendingAdminTasks();
 
     // Pool should have been closed
-    Mockito.verify(pool2).closeAsync();
+    verify(pool2).closeAsync();
 
     assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
   }
 
   @Test
   public void should_remove_pool_if_forced_down_while_recreating() {
-    Mockito.when(node2.getDistance()).thenReturn(NodeDistance.IGNORED);
+    when(node2.getDistance()).thenReturn(NodeDistance.IGNORED);
 
     ChannelPool pool1 = mockPool(node1);
     ChannelPool pool2 = mockPool(node2);
@@ -730,7 +725,7 @@ public class DefaultSessionPoolsTest {
     waitForPendingAdminTasks();
 
     // Pool should have been closed
-    Mockito.verify(pool2).closeAsync();
+    verify(pool2).closeAsync();
 
     assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
   }
@@ -760,9 +755,9 @@ public class DefaultSessionPoolsTest {
     waitForPendingAdminTasks();
     assertThatStage(closeFuture).isSuccess();
 
-    Mockito.verify(pool1).closeAsync();
-    Mockito.verify(pool2).closeAsync();
-    Mockito.verify(pool3).closeAsync();
+    verify(pool1).closeAsync();
+    verify(pool2).closeAsync();
+    verify(pool3).closeAsync();
   }
 
   @Test
@@ -790,14 +785,14 @@ public class DefaultSessionPoolsTest {
     waitForPendingAdminTasks();
     assertThatStage(closeFuture).isSuccess();
 
-    Mockito.verify(pool1).forceCloseAsync();
-    Mockito.verify(pool2).forceCloseAsync();
-    Mockito.verify(pool3).forceCloseAsync();
+    verify(pool1).forceCloseAsync();
+    verify(pool2).forceCloseAsync();
+    verify(pool3).forceCloseAsync();
   }
 
   @Test
   public void should_close_pool_if_recreated_while_closing() {
-    Mockito.when(node2.getState()).thenReturn(NodeState.FORCED_DOWN);
+    when(node2.getState()).thenReturn(NodeState.FORCED_DOWN);
 
     ChannelPool pool1 = mockPool(node1);
     ChannelPool pool2 = mockPool(node2);
@@ -835,7 +830,7 @@ public class DefaultSessionPoolsTest {
     waitForPendingAdminTasks();
 
     // Pool should have been closed
-    Mockito.verify(pool2).forceCloseAsync();
+    verify(pool2).forceCloseAsync();
   }
 
   @Test
@@ -863,14 +858,14 @@ public class DefaultSessionPoolsTest {
     ((DefaultSession) session).setKeyspace(newKeyspace);
     waitForPendingAdminTasks();
 
-    Mockito.verify(pool1).setKeyspace(newKeyspace);
-    Mockito.verify(pool2).setKeyspace(newKeyspace);
-    Mockito.verify(pool3).setKeyspace(newKeyspace);
+    verify(pool1).setKeyspace(newKeyspace);
+    verify(pool2).setKeyspace(newKeyspace);
+    verify(pool3).setKeyspace(newKeyspace);
   }
 
   @Test
   public void should_set_keyspace_on_pool_if_recreated_while_switching_keyspace() {
-    Mockito.when(node2.getState()).thenReturn(NodeState.FORCED_DOWN);
+    when(node2.getState()).thenReturn(NodeState.FORCED_DOWN);
 
     ChannelPool pool1 = mockPool(node1);
     ChannelPool pool2 = mockPool(node2);
@@ -903,32 +898,32 @@ public class DefaultSessionPoolsTest {
     CqlIdentifier newKeyspace = CqlIdentifier.fromInternal("newKeyspace");
     session.setKeyspace(newKeyspace);
     waitForPendingAdminTasks();
-    Mockito.verify(pool1).setKeyspace(newKeyspace);
-    Mockito.verify(pool3).setKeyspace(newKeyspace);
+    verify(pool1).setKeyspace(newKeyspace);
+    verify(pool3).setKeyspace(newKeyspace);
 
     // now pool init completes
     pool2Future.complete(pool2);
     waitForPendingAdminTasks();
 
     // Pool should have been closed
-    Mockito.verify(pool2).setKeyspace(newKeyspace);
+    verify(pool2).setKeyspace(newKeyspace);
   }
 
   private ChannelPool mockPool(Node node) {
-    ChannelPool pool = Mockito.mock(ChannelPool.class);
-    Mockito.when(pool.getNode()).thenReturn(node);
-    Mockito.when(pool.getInitialKeyspaceName()).thenReturn(KEYSPACE);
-    Mockito.when(pool.setKeyspace(any(CqlIdentifier.class)))
+    ChannelPool pool = mock(ChannelPool.class);
+    when(pool.getNode()).thenReturn(node);
+    when(pool.getInitialKeyspaceName()).thenReturn(KEYSPACE);
+    when(pool.setKeyspace(any(CqlIdentifier.class)))
         .thenReturn(CompletableFuture.completedFuture(null));
     CompletableFuture<Void> closeFuture = new CompletableFuture<>();
-    Mockito.when(pool.closeFuture()).thenReturn(closeFuture);
-    Mockito.when(pool.closeAsync())
+    when(pool.closeFuture()).thenReturn(closeFuture);
+    when(pool.closeAsync())
         .then(
             i -> {
               closeFuture.complete(null);
               return closeFuture;
             });
-    Mockito.when(pool.forceCloseAsync())
+    when(pool.forceCloseAsync())
         .then(
             i -> {
               closeFuture.complete(null);
@@ -942,10 +937,10 @@ public class DefaultSessionPoolsTest {
   }
 
   private static DefaultNode mockLocalNode(int i) {
-    DefaultNode node = Mockito.mock(DefaultNode.class);
-    Mockito.when(node.getConnectAddress()).thenReturn(new InetSocketAddress("127.0.0." + i, 9042));
-    Mockito.when(node.getDistance()).thenReturn(NodeDistance.LOCAL);
-    Mockito.when(node.toString()).thenReturn("node" + i);
+    DefaultNode node = mock(DefaultNode.class);
+    when(node.getConnectAddress()).thenReturn(new InetSocketAddress("127.0.0." + i, 9042));
+    when(node.getDistance()).thenReturn(NodeDistance.LOCAL);
+    when(node.toString()).thenReturn("node" + i);
     return node;
   }
 

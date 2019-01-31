@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -45,7 +46,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
-import org.mockito.Mockito;
 
 @Category(ParallelizableTests.class)
 public class SchemaChangesIT {
@@ -91,7 +91,7 @@ public class SchemaChangesIT {
               .containsEntry("class", "org.apache.cassandra.locator.SimpleStrategy")
               .containsEntry("replication_factor", "1");
         },
-        (listener, keyspace) -> Mockito.verify(listener).onKeyspaceCreated(keyspace),
+        (listener, keyspace) -> verify(listener).onKeyspaceCreated(keyspace),
         newKeyspaceId);
   }
 
@@ -106,7 +106,7 @@ public class SchemaChangesIT {
                 newKeyspaceId.asCql(true))),
         String.format("DROP KEYSPACE %s", newKeyspaceId.asCql(true)),
         metadata -> metadata.getKeyspace(newKeyspaceId),
-        (listener, oldKeyspace) -> Mockito.verify(listener).onKeyspaceDropped(oldKeyspace),
+        (listener, oldKeyspace) -> verify(listener).onKeyspaceDropped(oldKeyspace),
         newKeyspaceId);
   }
 
@@ -127,7 +127,7 @@ public class SchemaChangesIT {
         metadata -> metadata.getKeyspace(newKeyspaceId),
         newKeyspace -> assertThat(newKeyspace.isDurableWrites()).isFalse(),
         (listener, oldKeyspace, newKeyspace) ->
-            Mockito.verify(listener).onKeyspaceUpdated(newKeyspace, oldKeyspace),
+            verify(listener).onKeyspaceUpdated(newKeyspace, oldKeyspace),
         newKeyspaceId);
   }
 
@@ -154,7 +154,7 @@ public class SchemaChangesIT {
                   });
           assertThat(table.getClusteringColumns()).isEmpty();
         },
-        (listener, table) -> Mockito.verify(listener).onTableCreated(table));
+        (listener, table) -> verify(listener).onTableCreated(table));
   }
 
   @Test
@@ -166,7 +166,7 @@ public class SchemaChangesIT {
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
                 .flatMap(ks -> ks.getTable(CqlIdentifier.fromInternal("foo"))),
-        (listener, oldTable) -> Mockito.verify(listener).onTableDropped(oldTable));
+        (listener, oldTable) -> verify(listener).onTableDropped(oldTable));
   }
 
   @Test
@@ -179,8 +179,7 @@ public class SchemaChangesIT {
                 .getKeyspace(adminSessionRule.keyspace())
                 .flatMap(ks -> ks.getTable(CqlIdentifier.fromInternal("foo"))),
         newTable -> assertThat(newTable.getColumn(CqlIdentifier.fromInternal("v"))).isPresent(),
-        (listener, oldTable, newTable) ->
-            Mockito.verify(listener).onTableUpdated(newTable, oldTable));
+        (listener, oldTable, newTable) -> verify(listener).onTableUpdated(newTable, oldTable));
   }
 
   @Test
@@ -198,7 +197,7 @@ public class SchemaChangesIT {
           assertThat(type.getFieldNames()).containsExactly(CqlIdentifier.fromInternal("i"));
           assertThat(type.getFieldTypes()).containsExactly(DataTypes.INT);
         },
-        (listener, type) -> Mockito.verify(listener).onUserDefinedTypeCreated(type));
+        (listener, type) -> verify(listener).onUserDefinedTypeCreated(type));
   }
 
   @Test
@@ -210,7 +209,7 @@ public class SchemaChangesIT {
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
                 .flatMap(ks -> ks.getUserDefinedType(CqlIdentifier.fromInternal("t"))),
-        (listener, oldType) -> Mockito.verify(listener).onUserDefinedTypeDropped(oldType));
+        (listener, oldType) -> verify(listener).onUserDefinedTypeDropped(oldType));
   }
 
   @Test
@@ -226,7 +225,7 @@ public class SchemaChangesIT {
             assertThat(newType.getFieldNames())
                 .containsExactly(CqlIdentifier.fromInternal("i"), CqlIdentifier.fromInternal("j")),
         (listener, oldType, newType) ->
-            Mockito.verify(listener).onUserDefinedTypeUpdated(newType, oldType));
+            verify(listener).onUserDefinedTypeUpdated(newType, oldType));
   }
 
   @Test
@@ -254,7 +253,7 @@ public class SchemaChangesIT {
                   CqlIdentifier.fromInternal("score"),
                   CqlIdentifier.fromInternal("user"));
         },
-        (listener, view) -> Mockito.verify(listener).onViewCreated(view));
+        (listener, view) -> verify(listener).onViewCreated(view));
   }
 
   @Test
@@ -272,7 +271,7 @@ public class SchemaChangesIT {
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
                 .flatMap(ks -> ks.getView(CqlIdentifier.fromInternal("highscores"))),
-        (listener, oldView) -> Mockito.verify(listener).onViewDropped(oldView));
+        (listener, oldView) -> verify(listener).onViewDropped(oldView));
   }
 
   @Test
@@ -293,7 +292,7 @@ public class SchemaChangesIT {
         newView ->
             assertThat(newView.getOptions().get(CqlIdentifier.fromInternal("comment")))
                 .isEqualTo("The best score for each game"),
-        (listener, oldView, newView) -> Mockito.verify(listener).onViewUpdated(newView, oldView));
+        (listener, oldView, newView) -> verify(listener).onViewUpdated(newView, oldView));
   }
 
   @Test
@@ -316,7 +315,7 @@ public class SchemaChangesIT {
           assertThat(function.isCalledOnNullInput()).isFalse();
           assertThat(function.getBody()).isEqualTo("return i;");
         },
-        (listener, function) -> Mockito.verify(listener).onFunctionCreated(function));
+        (listener, function) -> verify(listener).onFunctionCreated(function));
   }
 
   @Test
@@ -331,7 +330,7 @@ public class SchemaChangesIT {
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
                 .flatMap(ks -> ks.getFunction(CqlIdentifier.fromInternal("id"), DataTypes.INT)),
-        (listener, oldFunction) -> Mockito.verify(listener).onFunctionDropped(oldFunction));
+        (listener, oldFunction) -> verify(listener).onFunctionDropped(oldFunction));
   }
 
   @Test
@@ -350,7 +349,7 @@ public class SchemaChangesIT {
                 .flatMap(ks -> ks.getFunction(CqlIdentifier.fromInternal("id"), DataTypes.INT)),
         newFunction -> assertThat(newFunction.getBody()).isEqualTo("return j;"),
         (listener, oldFunction, newFunction) ->
-            Mockito.verify(listener).onFunctionUpdated(newFunction, oldFunction));
+            verify(listener).onFunctionUpdated(newFunction, oldFunction));
   }
 
   @Test
@@ -375,7 +374,7 @@ public class SchemaChangesIT {
           assertThat(aggregate.getFinalFuncSignature()).isEmpty();
           assertThat(aggregate.getInitCond()).hasValue(0);
         },
-        (listener, aggregate) -> Mockito.verify(listener).onAggregateCreated(aggregate));
+        (listener, aggregate) -> verify(listener).onAggregateCreated(aggregate));
   }
 
   @Test
@@ -391,7 +390,7 @@ public class SchemaChangesIT {
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
                 .flatMap(ks -> ks.getAggregate(CqlIdentifier.fromInternal("sum"), DataTypes.INT)),
-        (listener, oldAggregate) -> Mockito.verify(listener).onAggregateDropped(oldAggregate));
+        (listener, oldAggregate) -> verify(listener).onAggregateDropped(oldAggregate));
   }
 
   @Test
@@ -410,7 +409,7 @@ public class SchemaChangesIT {
                 .flatMap(ks -> ks.getAggregate(CqlIdentifier.fromInternal("sum"), DataTypes.INT)),
         newAggregate -> assertThat(newAggregate.getInitCond()).hasValue(1),
         (listener, oldAggregate, newAggregate) ->
-            Mockito.verify(listener).onAggregateUpdated(newAggregate, oldAggregate));
+            verify(listener).onAggregateUpdated(newAggregate, oldAggregate));
   }
 
   private <T> void should_handle_creation(
@@ -425,8 +424,8 @@ public class SchemaChangesIT {
       adminSessionRule.session().execute(beforeStatement);
     }
 
-    SchemaChangeListener listener1 = Mockito.mock(SchemaChangeListener.class);
-    SchemaChangeListener listener2 = Mockito.mock(SchemaChangeListener.class);
+    SchemaChangeListener listener1 = mock(SchemaChangeListener.class);
+    SchemaChangeListener listener2 = mock(SchemaChangeListener.class);
 
     // cluster1 executes the DDL query and gets a SCHEMA_CHANGE response.
     // cluster2 gets a SCHEMA_CHANGE push event on its control connection.
@@ -478,8 +477,8 @@ public class SchemaChangesIT {
       adminSessionRule.session().execute(statement);
     }
 
-    SchemaChangeListener listener1 = Mockito.mock(SchemaChangeListener.class);
-    SchemaChangeListener listener2 = Mockito.mock(SchemaChangeListener.class);
+    SchemaChangeListener listener1 = mock(SchemaChangeListener.class);
+    SchemaChangeListener listener2 = mock(SchemaChangeListener.class);
 
     List<String> keyspaceList = Lists.newArrayList();
     for (CqlIdentifier keyspace : keyspaces) {
@@ -526,8 +525,8 @@ public class SchemaChangesIT {
       adminSessionRule.session().execute(statement);
     }
 
-    SchemaChangeListener listener1 = Mockito.mock(SchemaChangeListener.class);
-    SchemaChangeListener listener2 = Mockito.mock(SchemaChangeListener.class);
+    SchemaChangeListener listener1 = mock(SchemaChangeListener.class);
+    SchemaChangeListener listener2 = mock(SchemaChangeListener.class);
     List<String> keyspaceList = Lists.newArrayList();
     for (CqlIdentifier keyspace : keyspaces) {
       keyspaceList.add(keyspace.asInternal());
@@ -578,8 +577,8 @@ public class SchemaChangesIT {
       adminSessionRule.session().execute(statement);
     }
 
-    SchemaChangeListener listener1 = Mockito.mock(SchemaChangeListener.class);
-    SchemaChangeListener listener2 = Mockito.mock(SchemaChangeListener.class);
+    SchemaChangeListener listener1 = mock(SchemaChangeListener.class);
+    SchemaChangeListener listener2 = mock(SchemaChangeListener.class);
     List<String> keyspaceList = Lists.newArrayList();
     for (CqlIdentifier keyspace : keyspaces) {
       keyspaceList.add(keyspace.asInternal());

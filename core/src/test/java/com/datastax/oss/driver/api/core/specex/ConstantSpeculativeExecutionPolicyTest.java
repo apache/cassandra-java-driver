@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.specex;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
@@ -28,7 +29,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -40,14 +40,14 @@ public class ConstantSpeculativeExecutionPolicyTest {
 
   @Before
   public void setup() {
-    Mockito.when(context.getConfig()).thenReturn(config);
-    Mockito.when(config.getProfile(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(defaultProfile);
+    when(context.getConfig()).thenReturn(config);
+    when(config.getProfile(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(defaultProfile);
   }
 
   private void mockOptions(int maxExecutions, long constantDelayMillis) {
-    Mockito.when(defaultProfile.getInt(DefaultDriverOption.SPECULATIVE_EXECUTION_MAX))
+    when(defaultProfile.getInt(DefaultDriverOption.SPECULATIVE_EXECUTION_MAX))
         .thenReturn(maxExecutions);
-    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.SPECULATIVE_EXECUTION_DELAY))
+    when(defaultProfile.getDuration(DefaultDriverOption.SPECULATIVE_EXECUTION_DELAY))
         .thenReturn(Duration.ofMillis(constantDelayMillis));
   }
 

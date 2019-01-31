@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -29,7 +30,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingDeque;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 // Note: we don't repeat the other tests in Cassandra3SchemaQueriesTest because the logic is
 // shared, this class just validates the query strings.
@@ -37,9 +37,8 @@ public class Cassandra21SchemaQueriesTest extends SchemaQueriesTest {
 
   @Test
   public void should_query() {
-    Mockito.when(
-            config.getStringList(
-                DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList()))
+    when(config.getStringList(
+            DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList()))
         .thenReturn(Collections.emptyList());
 
     SchemaQueriesWithMockedChannel queries =

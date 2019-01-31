@@ -17,6 +17,9 @@ package com.datastax.oss.driver.internal.core.control;
 
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -52,7 +55,6 @@ import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 abstract class ControlConnectionTestBase {
@@ -85,14 +87,14 @@ abstract class ControlConnectionTestBase {
 
     adminEventLoopGroup = new DefaultEventLoopGroup(1);
 
-    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
-    Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
-    eventBus = Mockito.spy(new EventBus("test"));
-    Mockito.when(context.getEventBus()).thenReturn(eventBus);
-    Mockito.when(context.getChannelFactory()).thenReturn(channelFactory);
+    when(context.getNettyOptions()).thenReturn(nettyOptions);
+    when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
+    eventBus = spy(new EventBus("test"));
+    when(context.getEventBus()).thenReturn(eventBus);
+    when(context.getChannelFactory()).thenReturn(channelFactory);
 
     channelFactoryFuture = new Exchanger<>();
-    Mockito.when(channelFactory.connect(any(Node.class), any(DriverChannelOptions.class)))
+    when(channelFactory.connect(any(Node.class), any(DriverChannelOptions.class)))
         .thenAnswer(
             invocation -> {
               CompletableFuture<DriverChannel> channelFuture = new CompletableFuture<>();
@@ -100,42 +102,39 @@ abstract class ControlConnectionTestBase {
               return channelFuture;
             });
 
-    Mockito.when(context.getConfig()).thenReturn(config);
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(defaultProfile.getBoolean(DefaultDriverOption.RECONNECT_ON_INIT))
-        .thenReturn(false);
+    when(context.getConfig()).thenReturn(config);
+    when(config.getDefaultProfile()).thenReturn(defaultProfile);
+    when(defaultProfile.getBoolean(DefaultDriverOption.RECONNECT_ON_INIT)).thenReturn(false);
 
-    Mockito.when(context.getReconnectionPolicy()).thenReturn(reconnectionPolicy);
+    when(context.getReconnectionPolicy()).thenReturn(reconnectionPolicy);
     // Child classes only cover "runtime" reconnections when the driver is already initialized
-    Mockito.when(reconnectionPolicy.newControlConnectionSchedule(false))
-        .thenReturn(reconnectionSchedule);
+    when(reconnectionPolicy.newControlConnectionSchedule(false)).thenReturn(reconnectionSchedule);
     // By default, set a large reconnection delay. Tests that care about reconnection will override
     // it.
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofDays(1));
+    when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofDays(1));
 
-    Mockito.when(context.getLoadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
+    when(context.getLoadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
 
-    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
+    when(context.getMetricsFactory()).thenReturn(metricsFactory);
     node1 = new DefaultNode(ADDRESS1, context);
     node2 = new DefaultNode(ADDRESS2, context);
     mockQueryPlan(node1, node2);
 
-    Mockito.when(metadataManager.refreshNodes())
-        .thenReturn(CompletableFuture.completedFuture(null));
-    Mockito.when(context.getMetadataManager()).thenReturn(metadataManager);
+    when(metadataManager.refreshNodes()).thenReturn(CompletableFuture.completedFuture(null));
+    when(context.getMetadataManager()).thenReturn(metadataManager);
 
-    addressTranslator = Mockito.spy(new PassThroughAddressTranslator(context));
-    Mockito.when(context.getAddressTranslator()).thenReturn(addressTranslator);
-    Mockito.when(context.getConfig()).thenReturn(config);
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(defaultProfile.getBoolean(DefaultDriverOption.CONNECTION_WARN_INIT_ERROR))
+    addressTranslator = spy(new PassThroughAddressTranslator(context));
+    when(context.getAddressTranslator()).thenReturn(addressTranslator);
+    when(context.getConfig()).thenReturn(config);
+    when(config.getDefaultProfile()).thenReturn(defaultProfile);
+    when(defaultProfile.getBoolean(DefaultDriverOption.CONNECTION_WARN_INIT_ERROR))
         .thenReturn(false);
 
     controlConnection = new ControlConnection(context);
   }
 
   protected void mockQueryPlan(Node... nodes) {
-    Mockito.when(loadBalancingPolicyWrapper.newQueryPlan())
+    when(loadBalancingPolicyWrapper.newQueryPlan())
         .thenAnswer(
             i -> {
               ConcurrentLinkedQueue<Node> queryPlan = new ConcurrentLinkedQueue<>();
@@ -152,26 +151,25 @@ abstract class ControlConnectionTestBase {
   }
 
   protected DriverChannel newMockDriverChannel(int id) {
-    DriverChannel driverChannel = Mockito.mock(DriverChannel.class);
-    Channel channel = Mockito.mock(Channel.class);
+    DriverChannel driverChannel = mock(DriverChannel.class);
+    Channel channel = mock(Channel.class);
     EventLoop adminExecutor = adminEventLoopGroup.next();
     DefaultChannelPromise closeFuture = new DefaultChannelPromise(channel, adminExecutor);
-    Mockito.when(driverChannel.close())
+    when(driverChannel.close())
         .thenAnswer(
             i -> {
               closeFuture.trySuccess(null);
               return closeFuture;
             });
-    Mockito.when(driverChannel.forceClose())
+    when(driverChannel.forceClose())
         .thenAnswer(
             i -> {
               closeFuture.trySuccess(null);
               return closeFuture;
             });
-    Mockito.when(driverChannel.closeFuture()).thenReturn(closeFuture);
-    Mockito.when(driverChannel.toString()).thenReturn("channel" + id);
-    Mockito.when(driverChannel.connectAddress())
-        .thenReturn(new InetSocketAddress("127.0.0." + id, 9042));
+    when(driverChannel.closeFuture()).thenReturn(closeFuture);
+    when(driverChannel.toString()).thenReturn("channel" + id);
+    when(driverChannel.connectAddress()).thenReturn(new InetSocketAddress("127.0.0." + id, 9042));
     return driverChannel;
   }
 

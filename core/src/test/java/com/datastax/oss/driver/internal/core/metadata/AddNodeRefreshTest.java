@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -30,7 +31,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -45,7 +45,7 @@ public class AddNodeRefreshTest {
 
   @Before
   public void setup() {
-    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
+    when(context.getMetricsFactory()).thenReturn(metricsFactory);
     node1 = new DefaultNode(ADDRESS1, context);
   }
 

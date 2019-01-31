@@ -19,7 +19,11 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -51,7 +55,6 @@ import java.util.concurrent.CompletionStage;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class DefaultTopologyMonitorTest {
@@ -76,19 +79,19 @@ public class DefaultTopologyMonitorTest {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(defaultConfig.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT))
+    when(defaultConfig.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT))
         .thenReturn(Duration.ofSeconds(1));
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfig);
-    Mockito.when(context.getConfig()).thenReturn(config);
+    when(config.getDefaultProfile()).thenReturn(defaultConfig);
+    when(context.getConfig()).thenReturn(config);
 
-    addressTranslator = Mockito.spy(new PassThroughAddressTranslator(context));
-    Mockito.when(context.getAddressTranslator()).thenReturn(addressTranslator);
+    addressTranslator = spy(new PassThroughAddressTranslator(context));
+    when(context.getAddressTranslator()).thenReturn(addressTranslator);
 
-    Mockito.when(channel.connectAddress()).thenReturn(ADDRESS1);
-    Mockito.when(controlConnection.channel()).thenReturn(channel);
-    Mockito.when(context.getControlConnection()).thenReturn(controlConnection);
+    when(channel.connectAddress()).thenReturn(ADDRESS1);
+    when(controlConnection.channel()).thenReturn(channel);
+    when(context.getControlConnection()).thenReturn(controlConnection);
 
-    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
+    when(context.getMetricsFactory()).thenReturn(metricsFactory);
 
     node1 = new DefaultNode(ADDRESS1, context);
     node2 = new DefaultNode(ADDRESS2, context);
@@ -102,7 +105,7 @@ public class DefaultTopologyMonitorTest {
     topologyMonitor.init();
 
     // Then
-    Mockito.verify(controlConnection).init(true, false, true);
+    verify(controlConnection).init(true, false, true);
   }
 
   @Test
@@ -186,13 +189,13 @@ public class DefaultTopologyMonitorTest {
             });
     // The rpc_address in each row should have been tried, only the last row should have been
     // converted
-    Mockito.verify(peer3).getInetAddress("rpc_address");
-    Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.3", 9042));
-    Mockito.verify(peer3, never()).getString(anyString());
+    verify(peer3).getInetAddress("rpc_address");
+    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.3", 9042));
+    verify(peer3, never()).getString(anyString());
 
-    Mockito.verify(peer2).getInetAddress("rpc_address");
-    Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.2", 9042));
-    Mockito.verify(peer2).getString("data_center");
+    verify(peer2).getInetAddress("rpc_address");
+    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.2", 9042));
+    verify(peer2).getString("data_center");
   }
 
   @Test
@@ -218,13 +221,13 @@ public class DefaultTopologyMonitorTest {
             });
     // The rpc_address in each row should have been tried, only the last row should have been
     // converted
-    Mockito.verify(peer3).getInetAddress("native_address");
-    Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.3", 9042));
-    Mockito.verify(peer3, never()).getString(anyString());
+    verify(peer3).getInetAddress("native_address");
+    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.3", 9042));
+    verify(peer3, never()).getString(anyString());
 
-    Mockito.verify(peer2).getInetAddress("native_address");
-    Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.2", 9042));
-    Mockito.verify(peer2).getString("data_center");
+    verify(peer2).getInetAddress("native_address");
+    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.2", 9042));
+    verify(peer2).getString("data_center");
   }
 
   @Test
@@ -250,17 +253,17 @@ public class DefaultTopologyMonitorTest {
             });
     // The rpc_address in each row should have been tried, only the last row should have been
     // converted
-    Mockito.verify(peer3).getInetAddress("rpc_address");
-    Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.3", 9042));
-    Mockito.verify(peer3, never()).getString(anyString());
+    verify(peer3).getInetAddress("rpc_address");
+    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.3", 9042));
+    verify(peer3, never()).getString(anyString());
 
-    Mockito.verify(peer2).getInetAddress("rpc_address");
-    Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.2", 9042));
-    Mockito.verify(peer2, never()).getString(anyString());
+    verify(peer2).getInetAddress("rpc_address");
+    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.2", 9042));
+    verify(peer2, never()).getString(anyString());
 
-    Mockito.verify(peer1).getInetAddress("rpc_address");
-    Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.1", 9042));
-    Mockito.verify(peer1).getString("data_center");
+    verify(peer1).getInetAddress("rpc_address");
+    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.1", 9042));
+    verify(peer1).getString("data_center");
   }
 
   @Test
@@ -286,17 +289,17 @@ public class DefaultTopologyMonitorTest {
             });
     // The natove in each row should have been tried, only the last row should have been
     // converted
-    Mockito.verify(peer3).getInetAddress("native_address");
-    Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.3", 9042));
-    Mockito.verify(peer3, never()).getString(anyString());
+    verify(peer3).getInetAddress("native_address");
+    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.3", 9042));
+    verify(peer3, never()).getString(anyString());
 
-    Mockito.verify(peer2).getInetAddress("native_address");
-    Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.2", 9042));
-    Mockito.verify(peer2, never()).getString(anyString());
+    verify(peer2).getInetAddress("native_address");
+    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.2", 9042));
+    verify(peer2, never()).getString(anyString());
 
-    Mockito.verify(peer1).getInetAddress("native_address");
-    Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.1", 9042));
-    Mockito.verify(peer1).getString("data_center");
+    verify(peer1).getInetAddress("native_address");
+    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.1", 9042));
+    verify(peer1).getString("data_center");
   }
 
   @Test
@@ -405,20 +408,19 @@ public class DefaultTopologyMonitorTest {
 
   private AdminRow mockLocalRow(int i) {
     try {
-      AdminRow row = Mockito.mock(AdminRow.class);
-      Mockito.when(row.getInetAddress("broadcast_address"))
+      AdminRow row = mock(AdminRow.class);
+      when(row.getInetAddress("broadcast_address"))
           .thenReturn(InetAddress.getByName("127.0.0." + i));
-      Mockito.when(row.getString("data_center")).thenReturn("dc" + i);
-      Mockito.when(row.getInetAddress("listen_address"))
-          .thenReturn(InetAddress.getByName("127.0.0." + i));
-      Mockito.when(row.getString("rack")).thenReturn("rack" + i);
-      Mockito.when(row.getString("release_version")).thenReturn("release_version" + i);
+      when(row.getString("data_center")).thenReturn("dc" + i);
+      when(row.getInetAddress("listen_address")).thenReturn(InetAddress.getByName("127.0.0." + i));
+      when(row.getString("rack")).thenReturn("rack" + i);
+      when(row.getString("release_version")).thenReturn("release_version" + i);
 
       // The driver should not use this column for the local row, because it can contain the
       // non-broadcast RPC address. Simulate the bug to ensure it's handled correctly.
-      Mockito.when(row.getInetAddress("rpc_address")).thenReturn(InetAddress.getByName("0.0.0.0"));
+      when(row.getInetAddress("rpc_address")).thenReturn(InetAddress.getByName("0.0.0.0"));
 
-      Mockito.when(row.getSetOfString("tokens")).thenReturn(ImmutableSet.of("token" + i));
+      when(row.getSetOfString("tokens")).thenReturn(ImmutableSet.of("token" + i));
       return row;
     } catch (UnknownHostException e) {
       fail("unexpected", e);
@@ -428,14 +430,13 @@ public class DefaultTopologyMonitorTest {
 
   private AdminRow mockPeersRow(int i) {
     try {
-      AdminRow row = Mockito.mock(AdminRow.class);
-      Mockito.when(row.getInetAddress("peer")).thenReturn(InetAddress.getByName("127.0.0." + i));
-      Mockito.when(row.getString("data_center")).thenReturn("dc" + i);
-      Mockito.when(row.getString("rack")).thenReturn("rack" + i);
-      Mockito.when(row.getString("release_version")).thenReturn("release_version" + i);
-      Mockito.when(row.getInetAddress("rpc_address"))
-          .thenReturn(InetAddress.getByName("127.0.0." + i));
-      Mockito.when(row.getSetOfString("tokens")).thenReturn(ImmutableSet.of("token" + i));
+      AdminRow row = mock(AdminRow.class);
+      when(row.getInetAddress("peer")).thenReturn(InetAddress.getByName("127.0.0." + i));
+      when(row.getString("data_center")).thenReturn("dc" + i);
+      when(row.getString("rack")).thenReturn("rack" + i);
+      when(row.getString("release_version")).thenReturn("release_version" + i);
+      when(row.getInetAddress("rpc_address")).thenReturn(InetAddress.getByName("127.0.0." + i));
+      when(row.getSetOfString("tokens")).thenReturn(ImmutableSet.of("token" + i));
       return row;
     } catch (UnknownHostException e) {
       fail("unexpected", e);
@@ -445,18 +446,17 @@ public class DefaultTopologyMonitorTest {
 
   private AdminRow mockPeersV2Row(int i) {
     try {
-      AdminRow row = Mockito.mock(AdminRow.class);
-      Mockito.when(row.getInetAddress("peer")).thenReturn(InetAddress.getByName("127.0.0." + i));
-      Mockito.when(row.getInteger("peer_port")).thenReturn(7000 + i);
-      Mockito.when(row.getString("data_center")).thenReturn("dc" + i);
-      Mockito.when(row.getString("rack")).thenReturn("rack" + i);
-      Mockito.when(row.getString("release_version")).thenReturn("release_version" + i);
-      Mockito.when(row.getInetAddress("native_address"))
-          .thenReturn(InetAddress.getByName("127.0.0." + i));
-      Mockito.when(row.getInteger("native_port")).thenReturn(9042);
-      Mockito.when(row.getSetOfString("tokens")).thenReturn(ImmutableSet.of("token" + i));
-      Mockito.when(row.contains("peer_port")).thenReturn(true);
-      Mockito.when(row.contains("native_port")).thenReturn(true);
+      AdminRow row = mock(AdminRow.class);
+      when(row.getInetAddress("peer")).thenReturn(InetAddress.getByName("127.0.0." + i));
+      when(row.getInteger("peer_port")).thenReturn(7000 + i);
+      when(row.getString("data_center")).thenReturn("dc" + i);
+      when(row.getString("rack")).thenReturn("rack" + i);
+      when(row.getString("release_version")).thenReturn("release_version" + i);
+      when(row.getInetAddress("native_address")).thenReturn(InetAddress.getByName("127.0.0." + i));
+      when(row.getInteger("native_port")).thenReturn(9042);
+      when(row.getSetOfString("tokens")).thenReturn(ImmutableSet.of("token" + i));
+      when(row.contains("peer_port")).thenReturn(true);
+      when(row.contains("native_port")).thenReturn(true);
       return row;
     } catch (UnknownHostException e) {
       fail("unexpected", e);
@@ -465,8 +465,8 @@ public class DefaultTopologyMonitorTest {
   }
 
   private AdminResult mockResult(AdminRow... rows) {
-    AdminResult result = Mockito.mock(AdminResult.class);
-    Mockito.when(result.iterator()).thenReturn(Iterators.forArray(rows));
+    AdminResult result = mock(AdminResult.class);
+    when(result.iterator()).thenReturn(Iterators.forArray(rows));
     return result;
   }
 

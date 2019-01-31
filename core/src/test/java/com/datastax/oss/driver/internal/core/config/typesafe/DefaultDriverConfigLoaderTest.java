@@ -18,6 +18,9 @@ package com.datastax.oss.driver.internal.core.config.typesafe;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
@@ -37,7 +40,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class DefaultDriverConfigLoaderTest {
@@ -55,22 +57,22 @@ public class DefaultDriverConfigLoaderTest {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(context.getSessionName()).thenReturn("test");
-    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
-    Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventExecutorGroup);
+    when(context.getSessionName()).thenReturn("test");
+    when(context.getNettyOptions()).thenReturn(nettyOptions);
+    when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventExecutorGroup);
 
     adminExecutor = new ScheduledTaskCapturingEventLoop(adminEventExecutorGroup);
-    Mockito.when(adminEventExecutorGroup.next()).thenReturn(adminExecutor);
+    when(adminEventExecutorGroup.next()).thenReturn(adminExecutor);
 
-    eventBus = Mockito.spy(new EventBus("test"));
-    Mockito.when(context.getEventBus()).thenReturn(eventBus);
+    eventBus = spy(new EventBus("test"));
+    when(context.getEventBus()).thenReturn(eventBus);
 
     // The already loaded config in the context.
     // In real life, it's the object managed by the loader, but in this test it's simpler to mock
     // it.
-    Mockito.when(context.getConfig()).thenReturn(config);
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.CONFIG_RELOAD_INTERVAL))
+    when(context.getConfig()).thenReturn(config);
+    when(config.getDefaultProfile()).thenReturn(defaultProfile);
+    when(defaultProfile.getDuration(DefaultDriverOption.CONFIG_RELOAD_INTERVAL))
         .thenReturn(Duration.ofSeconds(12));
 
     configSource = new AtomicReference<>("int1 = 42");
@@ -114,7 +116,7 @@ public class DefaultDriverConfigLoaderTest {
     task.run();
 
     assertThat(initialConfig).hasIntOption(MockOptions.INT1, 43);
-    Mockito.verify(eventBus).fire(ConfigChangeEvent.INSTANCE);
+    verify(eventBus).fire(ConfigChangeEvent.INSTANCE);
   }
 
   @Test
@@ -133,7 +135,7 @@ public class DefaultDriverConfigLoaderTest {
     adminExecutor.waitForNonScheduledTasks();
 
     assertThat(initialConfig).hasIntOption(MockOptions.INT1, 43);
-    Mockito.verify(eventBus).fire(ConfigChangeEvent.INSTANCE);
+    verify(eventBus).fire(ConfigChangeEvent.INSTANCE);
     assertThatStage(reloaded).isSuccess(changed -> assertThat(changed).isTrue());
   }
 
@@ -153,7 +155,7 @@ public class DefaultDriverConfigLoaderTest {
 
     task.run();
 
-    Mockito.verify(eventBus, never()).fire(ConfigChangeEvent.INSTANCE);
+    verify(eventBus, never()).fire(ConfigChangeEvent.INSTANCE);
   }
 
   @Test
@@ -169,7 +171,7 @@ public class DefaultDriverConfigLoaderTest {
     CompletionStage<Boolean> reloaded = loader.reload();
     adminExecutor.waitForNonScheduledTasks();
 
-    Mockito.verify(eventBus, never()).fire(ConfigChangeEvent.INSTANCE);
+    verify(eventBus, never()).fire(ConfigChangeEvent.INSTANCE);
     assertThatStage(reloaded).isSuccess(changed -> assertThat(changed).isFalse());
   }
 }

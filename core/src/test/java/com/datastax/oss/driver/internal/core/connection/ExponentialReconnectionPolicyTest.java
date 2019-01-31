@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.connection;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
@@ -27,7 +28,6 @@ import java.time.temporal.ChronoUnit;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class ExponentialReconnectionPolicyTest {
@@ -41,11 +41,11 @@ public class ExponentialReconnectionPolicyTest {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    Mockito.when(driverConfig.getDefaultProfile()).thenReturn(profile);
-    Mockito.when(driverContext.getConfig()).thenReturn(driverConfig);
-    Mockito.when(profile.getDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY))
+    when(driverConfig.getDefaultProfile()).thenReturn(profile);
+    when(driverContext.getConfig()).thenReturn(driverConfig);
+    when(profile.getDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY))
         .thenReturn(Duration.of(baseDelay, ChronoUnit.MILLIS));
-    Mockito.when(profile.getDuration(DefaultDriverOption.RECONNECTION_MAX_DELAY))
+    when(profile.getDuration(DefaultDriverOption.RECONNECTION_MAX_DELAY))
         .thenReturn(Duration.of(maxDelay, ChronoUnit.MILLIS));
   }
 

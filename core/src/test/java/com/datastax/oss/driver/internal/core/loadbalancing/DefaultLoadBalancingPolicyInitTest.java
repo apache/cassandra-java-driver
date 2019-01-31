@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.filter;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -30,15 +32,13 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.util.Collections;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPolicyTestBase {
 
   @Test
   public void should_use_local_dc_if_provided_via_config() {
     // Given
-    Mockito.when(
-            defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null))
+    when(defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null))
         .thenReturn("dc1");
 
     // When
@@ -52,7 +52,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   @Test
   public void should_use_local_dc_if_provided_via_context() {
     // Given
-    Mockito.when(context.getLocalDatacenter(DriverExecutionProfile.DEFAULT_NAME)).thenReturn("dc1");
+    when(context.getLocalDatacenter(DriverExecutionProfile.DEFAULT_NAME)).thenReturn("dc1");
 
     // When
     DefaultLoadBalancingPolicy policy =
@@ -60,15 +60,14 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
 
     // Then
     assertThat(policy.localDc).isEqualTo("dc1");
-    Mockito.verify(defaultProfile, never())
+    verify(defaultProfile, never())
         .getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null);
   }
 
   @Test
   public void should_infer_local_dc_if_no_explicit_contact_points() {
     // Given
-    Mockito.when(
-            defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null))
+    when(defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null))
         .thenReturn(null);
     DefaultLoadBalancingPolicy policy =
         new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
@@ -86,8 +85,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   @Test
   public void should_require_local_dc_if_explicit_contact_points() {
     // Given
-    Mockito.when(
-            defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null))
+    when(defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null))
         .thenReturn(null);
     DefaultLoadBalancingPolicy policy =
         new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
@@ -102,8 +100,8 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   @Test
   public void should_warn_if_contact_points_not_in_local_dc() {
     // Given
-    Mockito.when(node2.getDatacenter()).thenReturn("dc2");
-    Mockito.when(node3.getDatacenter()).thenReturn("dc3");
+    when(node2.getDatacenter()).thenReturn("dc2");
+    when(node3.getDatacenter()).thenReturn("dc3");
     DefaultLoadBalancingPolicy policy =
         new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
 
@@ -114,7 +112,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
         ImmutableSet.of(ADDRESS1, ADDRESS2, ADDRESS3));
 
     // Then
-    Mockito.verify(appender, atLeast(1)).doAppend(loggingEventCaptor.capture());
+    verify(appender, atLeast(1)).doAppend(loggingEventCaptor.capture());
     Iterable<ILoggingEvent> warnLogs =
         filter(loggingEventCaptor.getAllValues()).with("level", Level.WARN).get();
     assertThat(warnLogs).hasSize(1);
@@ -138,17 +136,17 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
         ImmutableSet.of(ADDRESS1, ADDRESS2)); // make node3 not a contact point to cover all cases
 
     // Then
-    Mockito.verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
-    Mockito.verify(distanceReporter).setDistance(node2, NodeDistance.LOCAL);
-    Mockito.verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
+    verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
+    verify(distanceReporter).setDistance(node2, NodeDistance.LOCAL);
+    verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
     assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1, node2, node3);
   }
 
   @Test
   public void should_ignore_nodes_from_remote_dcs() {
     // Given
-    Mockito.when(node2.getDatacenter()).thenReturn("dc2");
-    Mockito.when(node3.getDatacenter()).thenReturn("dc3");
+    when(node2.getDatacenter()).thenReturn("dc2");
+    when(node3.getDatacenter()).thenReturn("dc3");
     DefaultLoadBalancingPolicy policy =
         new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
 
@@ -159,16 +157,16 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
         ImmutableSet.of(ADDRESS1, ADDRESS2)); // make node3 not a contact point to cover all cases
 
     // Then
-    Mockito.verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
-    Mockito.verify(distanceReporter).setDistance(node2, NodeDistance.IGNORED);
-    Mockito.verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
+    verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
+    verify(distanceReporter).setDistance(node2, NodeDistance.IGNORED);
+    verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
     assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1);
   }
 
   @Test
   public void should_ignore_nodes_excluded_by_filter() {
     // Given
-    Mockito.when(context.getNodeFilter(DriverExecutionProfile.DEFAULT_NAME))
+    when(context.getNodeFilter(DriverExecutionProfile.DEFAULT_NAME))
         .thenReturn(node -> node.equals(node1));
 
     DefaultLoadBalancingPolicy policy =
@@ -181,9 +179,9 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
         ImmutableSet.of(ADDRESS1, ADDRESS2)); // make node3 not a contact point to cover all cases
 
     // Then
-    Mockito.verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
-    Mockito.verify(distanceReporter).setDistance(node2, NodeDistance.IGNORED);
-    Mockito.verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
+    verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
+    verify(distanceReporter).setDistance(node2, NodeDistance.IGNORED);
+    verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
     assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1);
   }
 }

@@ -16,6 +16,9 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
@@ -28,26 +31,25 @@ import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import org.mockito.Mockito;
 
 public abstract class ResultSetTestBase {
 
   /** Mocks an async result set where column 0 has type INT, with rows with the provided data. */
   protected AsyncResultSet mockPage(boolean nextPage, Integer... data) {
-    AsyncResultSet page = Mockito.mock(AsyncResultSet.class);
+    AsyncResultSet page = mock(AsyncResultSet.class);
 
-    ColumnDefinitions columnDefinitions = Mockito.mock(ColumnDefinitions.class);
-    Mockito.when(page.getColumnDefinitions()).thenReturn(columnDefinitions);
+    ColumnDefinitions columnDefinitions = mock(ColumnDefinitions.class);
+    when(page.getColumnDefinitions()).thenReturn(columnDefinitions);
 
-    ExecutionInfo executionInfo = Mockito.mock(ExecutionInfo.class);
-    Mockito.when(page.getExecutionInfo()).thenReturn(executionInfo);
+    ExecutionInfo executionInfo = mock(ExecutionInfo.class);
+    when(page.getExecutionInfo()).thenReturn(executionInfo);
 
     if (nextPage) {
-      Mockito.when(page.hasMorePages()).thenReturn(true);
-      Mockito.when(page.fetchNextPage()).thenReturn(Mockito.spy(new CompletableFuture<>()));
+      when(page.hasMorePages()).thenReturn(true);
+      when(page.fetchNextPage()).thenReturn(spy(new CompletableFuture<>()));
     } else {
-      Mockito.when(page.hasMorePages()).thenReturn(false);
-      Mockito.when(page.fetchNextPage()).thenThrow(new IllegalStateException());
+      when(page.hasMorePages()).thenReturn(false);
+      when(page.fetchNextPage()).thenThrow(new IllegalStateException());
     }
 
     // Emulate DefaultAsyncResultSet's internals (this is a bit sketchy, maybe it would be better
@@ -61,15 +63,15 @@ public abstract class ResultSetTestBase {
             return (index == null) ? endOfData() : mockRow(index);
           }
         };
-    Mockito.when(page.currentPage()).thenReturn(() -> iterator);
-    Mockito.when(page.remaining()).thenAnswer(invocation -> iterator.remaining());
+    when(page.currentPage()).thenReturn(() -> iterator);
+    when(page.remaining()).thenAnswer(invocation -> iterator.remaining());
 
     return page;
   }
 
   private Row mockRow(int index) {
-    Row row = Mockito.mock(Row.class);
-    Mockito.when(row.getInt(0)).thenReturn(index);
+    Row row = mock(Row.class);
+    when(row.getInt(0)).thenReturn(index);
     return row;
   }
 

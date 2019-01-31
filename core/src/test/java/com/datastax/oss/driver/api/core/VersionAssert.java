@@ -18,7 +18,6 @@ package com.datastax.oss.driver.api.core;
 import static com.datastax.oss.driver.Assertions.assertThat;
 
 import org.assertj.core.api.AbstractComparableAssert;
-import org.assertj.core.api.Assertions;
 
 public class VersionAssert extends AbstractComparableAssert<VersionAssert, Version> {
 
@@ -27,29 +26,29 @@ public class VersionAssert extends AbstractComparableAssert<VersionAssert, Versi
   }
 
   public VersionAssert hasMajorMinorPatch(int major, int minor, int patch) {
-    Assertions.assertThat(actual.getMajor()).isEqualTo(major);
-    Assertions.assertThat(actual.getMinor()).isEqualTo(minor);
-    Assertions.assertThat(actual.getPatch()).isEqualTo(patch);
+    assertThat(actual.getMajor()).isEqualTo(major);
+    assertThat(actual.getMinor()).isEqualTo(minor);
+    assertThat(actual.getPatch()).isEqualTo(patch);
     return this;
   }
 
   public VersionAssert hasDsePatch(int dsePatch) {
-    Assertions.assertThat(actual.getDSEPatch()).isEqualTo(dsePatch);
+    assertThat(actual.getDSEPatch()).isEqualTo(dsePatch);
     return this;
   }
 
   public VersionAssert hasPreReleaseLabels(String... labels) {
-    Assertions.assertThat(actual.getPreReleaseLabels()).containsExactly(labels);
+    assertThat(actual.getPreReleaseLabels()).containsExactly(labels);
     return this;
   }
 
   public VersionAssert hasNoPreReleaseLabels() {
-    Assertions.assertThat(actual.getPreReleaseLabels()).isNull();
+    assertThat(actual.getPreReleaseLabels()).isNull();
     return this;
   }
 
   public VersionAssert hasBuildLabel(String label) {
-    Assertions.assertThat(actual.getBuildLabel()).isEqualTo(label);
+    assertThat(actual.getBuildLabel()).isEqualTo(label);
     return this;
   }
 
@@ -60,7 +59,7 @@ public class VersionAssert extends AbstractComparableAssert<VersionAssert, Versi
 
   @Override
   public VersionAssert hasToString(String string) {
-    Assertions.assertThat(actual.toString()).isEqualTo(string);
+    assertThat(actual.toString()).isEqualTo(string);
     return this;
   }
 }

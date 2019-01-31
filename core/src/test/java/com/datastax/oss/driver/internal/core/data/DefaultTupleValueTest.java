@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.data;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
@@ -30,7 +31,6 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class DefaultTupleValueTest extends AccessibleByIndexTestBase<TupleValue> {
 
@@ -67,8 +67,8 @@ public class DefaultTupleValueTest extends AccessibleByIndexTestBase<TupleValue>
   public void should_support_null_items_when_setting_in_bulk() throws UnsupportedEncodingException {
     DefaultTupleType type =
         new DefaultTupleType(ImmutableList.of(DataTypes.INT, DataTypes.TEXT), attachmentPoint);
-    Mockito.when(codecRegistry.<Integer>codecFor(DataTypes.INT)).thenReturn(TypeCodecs.INT);
-    Mockito.when(codecRegistry.codecFor(DataTypes.TEXT, "foo")).thenReturn(TypeCodecs.TEXT);
+    when(codecRegistry.<Integer>codecFor(DataTypes.INT)).thenReturn(TypeCodecs.INT);
+    when(codecRegistry.codecFor(DataTypes.TEXT, "foo")).thenReturn(TypeCodecs.TEXT);
     TupleValue value = type.newValue(null, "foo");
 
     assertThat(value.isNull(0)).isTrue();

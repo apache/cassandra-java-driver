@@ -19,7 +19,11 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
@@ -56,7 +60,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -78,11 +81,11 @@ public class QueryTraceFetcherTest {
 
   @Before
   public void setup() {
-    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
-    Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventExecutorGroup);
-    Mockito.when(adminEventExecutorGroup.next()).thenReturn(eventExecutor);
+    when(context.getNettyOptions()).thenReturn(nettyOptions);
+    when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventExecutorGroup);
+    when(adminEventExecutorGroup.next()).thenReturn(eventExecutor);
     // Always execute scheduled tasks immediately:
-    Mockito.when(eventExecutor.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class)))
+    when(eventExecutor.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class)))
         .thenAnswer(
             invocation -> {
               Runnable runnable = invocation.getArgument(0);
@@ -91,18 +94,16 @@ public class QueryTraceFetcherTest {
               return null;
             });
 
-    Mockito.when(config.getInt(DefaultDriverOption.REQUEST_TRACE_ATTEMPTS)).thenReturn(3);
+    when(config.getInt(DefaultDriverOption.REQUEST_TRACE_ATTEMPTS)).thenReturn(3);
     // Doesn't really matter since we mock the scheduler
-    Mockito.when(config.getDuration(DefaultDriverOption.REQUEST_TRACE_INTERVAL))
-        .thenReturn(Duration.ZERO);
-    Mockito.when(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
+    when(config.getDuration(DefaultDriverOption.REQUEST_TRACE_INTERVAL)).thenReturn(Duration.ZERO);
+    when(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
         .thenReturn(DefaultConsistencyLevel.LOCAL_ONE.name());
-    Mockito.when(config.getString(DefaultDriverOption.REQUEST_TRACE_CONSISTENCY))
+    when(config.getString(DefaultDriverOption.REQUEST_TRACE_CONSISTENCY))
         .thenReturn(DefaultConsistencyLevel.ONE.name());
 
-    Mockito.when(
-            config.withString(
-                DefaultDriverOption.REQUEST_CONSISTENCY, DefaultConsistencyLevel.ONE.name()))
+    when(config.withString(
+            DefaultDriverOption.REQUEST_CONSISTENCY, DefaultConsistencyLevel.ONE.name()))
         .thenReturn(traceConfig);
   }
 
@@ -111,7 +112,7 @@ public class QueryTraceFetcherTest {
     // Given
     CompletionStage<AsyncResultSet> sessionRow = completeSessionRow();
     CompletionStage<AsyncResultSet> eventRows = singlePageEventRows();
-    Mockito.when(session.executeAsync(any(SimpleStatement.class)))
+    when(session.executeAsync(any(SimpleStatement.class)))
         .thenAnswer(invocation -> sessionRow)
         .thenAnswer(invocation -> eventRows);
 
@@ -120,12 +121,12 @@ public class QueryTraceFetcherTest {
     CompletionStage<QueryTrace> traceFuture = fetcher.fetch();
 
     // Then
-    Mockito.verify(session, times(2)).executeAsync(statementCaptor.capture());
+    verify(session, times(2)).executeAsync(statementCaptor.capture());
     List<SimpleStatement> statements = statementCaptor.getAllValues();
     assertSessionQuery(statements.get(0));
     SimpleStatement statement = statements.get(1);
     assertEventsQuery(statement);
-    Mockito.verifyNoMoreInteractions(session);
+    verifyNoMoreInteractions(session);
 
     assertThatStage(traceFuture)
         .isSuccess(
@@ -163,7 +164,7 @@ public class QueryTraceFetcherTest {
     CompletionStage<AsyncResultSet> sessionRow = completeSessionRow();
     CompletionStage<AsyncResultSet> eventRows1 = multiPageEventRows1();
     CompletionStage<AsyncResultSet> eventRows2 = multiPageEventRows2();
-    Mockito.when(session.executeAsync(any(SimpleStatement.class)))
+    when(session.executeAsync(any(SimpleStatement.class)))
         .thenAnswer(invocation -> sessionRow)
         .thenAnswer(invocation -> eventRows1)
         .thenAnswer(invocation -> eventRows2);
@@ -173,13 +174,13 @@ public class QueryTraceFetcherTest {
     CompletionStage<QueryTrace> traceFuture = fetcher.fetch();
 
     // Then
-    Mockito.verify(session, times(3)).executeAsync(statementCaptor.capture());
+    verify(session, times(3)).executeAsync(statementCaptor.capture());
     List<SimpleStatement> statements = statementCaptor.getAllValues();
     assertSessionQuery(statements.get(0));
     assertEventsQuery(statements.get(1));
     assertEventsQuery(statements.get(2));
     assertThat(statements.get(2).getPagingState()).isEqualTo(PAGING_STATE);
-    Mockito.verifyNoMoreInteractions(session);
+    verifyNoMoreInteractions(session);
 
     assertThatStage(traceFuture).isSuccess(trace -> assertThat(trace.getEvents()).hasSize(2));
   }
@@ -190,7 +191,7 @@ public class QueryTraceFetcherTest {
     CompletionStage<AsyncResultSet> sessionRow1 = incompleteSessionRow();
     CompletionStage<AsyncResultSet> sessionRow2 = completeSessionRow();
     CompletionStage<AsyncResultSet> eventRows = singlePageEventRows();
-    Mockito.when(session.executeAsync(any(SimpleStatement.class)))
+    when(session.executeAsync(any(SimpleStatement.class)))
         .thenAnswer(invocation -> sessionRow1)
         .thenAnswer(invocation -> sessionRow2)
         .thenAnswer(invocation -> eventRows);
@@ -200,12 +201,12 @@ public class QueryTraceFetcherTest {
     CompletionStage<QueryTrace> traceFuture = fetcher.fetch();
 
     // Then
-    Mockito.verify(session, times(3)).executeAsync(statementCaptor.capture());
+    verify(session, times(3)).executeAsync(statementCaptor.capture());
     List<SimpleStatement> statements = statementCaptor.getAllValues();
     assertSessionQuery(statements.get(0));
     assertSessionQuery(statements.get(1));
     assertEventsQuery(statements.get(2));
-    Mockito.verifyNoMoreInteractions(session);
+    verifyNoMoreInteractions(session);
 
     assertThatStage(traceFuture)
         .isSuccess(
@@ -237,7 +238,7 @@ public class QueryTraceFetcherTest {
   public void should_fail_when_session_query_fails() {
     // Given
     RuntimeException mockError = new RuntimeException("mock error");
-    Mockito.when(session.executeAsync(any(SimpleStatement.class)))
+    when(session.executeAsync(any(SimpleStatement.class)))
         .thenReturn(CompletableFutures.failedFuture(mockError));
 
     // When
@@ -245,10 +246,10 @@ public class QueryTraceFetcherTest {
     CompletionStage<QueryTrace> traceFuture = fetcher.fetch();
 
     // Then
-    Mockito.verify(session).executeAsync(statementCaptor.capture());
+    verify(session).executeAsync(statementCaptor.capture());
     SimpleStatement statement = statementCaptor.getValue();
     assertSessionQuery(statement);
-    Mockito.verifyNoMoreInteractions(session);
+    verifyNoMoreInteractions(session);
 
     assertThatStage(traceFuture).isFailed(error -> assertThat(error).isSameAs(mockError));
   }
@@ -259,7 +260,7 @@ public class QueryTraceFetcherTest {
     CompletionStage<AsyncResultSet> sessionRow1 = incompleteSessionRow();
     CompletionStage<AsyncResultSet> sessionRow2 = incompleteSessionRow();
     CompletionStage<AsyncResultSet> sessionRow3 = incompleteSessionRow();
-    Mockito.when(session.executeAsync(any(SimpleStatement.class)))
+    when(session.executeAsync(any(SimpleStatement.class)))
         .thenAnswer(invocation -> sessionRow1)
         .thenAnswer(invocation -> sessionRow2)
         .thenAnswer(invocation -> sessionRow3);
@@ -269,7 +270,7 @@ public class QueryTraceFetcherTest {
     CompletionStage<QueryTrace> traceFuture = fetcher.fetch();
 
     // Then
-    Mockito.verify(session, times(3)).executeAsync(statementCaptor.capture());
+    verify(session, times(3)).executeAsync(statementCaptor.capture());
     List<SimpleStatement> statements = statementCaptor.getAllValues();
     for (int i = 0; i < 3; i++) {
       assertSessionQuery(statements.get(i));
@@ -292,21 +293,21 @@ public class QueryTraceFetcherTest {
   }
 
   private CompletionStage<AsyncResultSet> sessionRow(Integer duration) {
-    Row row = Mockito.mock(Row.class);
-    Mockito.when(row.getString("request")).thenReturn("mock request");
+    Row row = mock(Row.class);
+    when(row.getString("request")).thenReturn("mock request");
     if (duration == null) {
-      Mockito.when(row.isNull("duration")).thenReturn(true);
+      when(row.isNull("duration")).thenReturn(true);
     } else {
-      Mockito.when(row.getInt("duration")).thenReturn(duration);
+      when(row.getInt("duration")).thenReturn(duration);
     }
-    Mockito.when(row.getInetAddress("coordinator")).thenReturn(address);
-    Mockito.when(row.getMap("parameters", String.class, String.class))
+    when(row.getInetAddress("coordinator")).thenReturn(address);
+    when(row.getMap("parameters", String.class, String.class))
         .thenReturn(ImmutableMap.of("key1", "value1", "key2", "value2"));
-    Mockito.when(row.isNull("started_at")).thenReturn(false);
-    Mockito.when(row.getInstant("started_at")).thenReturn(Instant.EPOCH);
+    when(row.isNull("started_at")).thenReturn(false);
+    when(row.getInstant("started_at")).thenReturn(Instant.EPOCH);
 
-    AsyncResultSet rs = Mockito.mock(AsyncResultSet.class);
-    Mockito.when(rs.one()).thenReturn(row);
+    AsyncResultSet rs = mock(AsyncResultSet.class);
+    when(rs.one()).thenReturn(row);
     return CompletableFuture.completedFuture(rs);
   }
 
@@ -316,49 +317,49 @@ public class QueryTraceFetcherTest {
       rows.add(eventRow(i));
     }
 
-    AsyncResultSet rs = Mockito.mock(AsyncResultSet.class);
-    Mockito.when(rs.currentPage()).thenReturn(rows);
+    AsyncResultSet rs = mock(AsyncResultSet.class);
+    when(rs.currentPage()).thenReturn(rows);
 
-    ExecutionInfo executionInfo = Mockito.mock(ExecutionInfo.class);
-    Mockito.when(executionInfo.getPagingState()).thenReturn(null);
-    Mockito.when(rs.getExecutionInfo()).thenReturn(executionInfo);
+    ExecutionInfo executionInfo = mock(ExecutionInfo.class);
+    when(executionInfo.getPagingState()).thenReturn(null);
+    when(rs.getExecutionInfo()).thenReturn(executionInfo);
 
     return CompletableFuture.completedFuture(rs);
   }
 
   private CompletionStage<AsyncResultSet> multiPageEventRows1() {
-    AsyncResultSet rs = Mockito.mock(AsyncResultSet.class);
+    AsyncResultSet rs = mock(AsyncResultSet.class);
 
     ImmutableList<Row> rows = ImmutableList.of(eventRow(0));
-    Mockito.when(rs.currentPage()).thenReturn(rows);
+    when(rs.currentPage()).thenReturn(rows);
 
-    ExecutionInfo executionInfo = Mockito.mock(ExecutionInfo.class);
-    Mockito.when(executionInfo.getPagingState()).thenReturn(PAGING_STATE);
-    Mockito.when(rs.getExecutionInfo()).thenReturn(executionInfo);
+    ExecutionInfo executionInfo = mock(ExecutionInfo.class);
+    when(executionInfo.getPagingState()).thenReturn(PAGING_STATE);
+    when(rs.getExecutionInfo()).thenReturn(executionInfo);
 
     return CompletableFuture.completedFuture(rs);
   }
 
   private CompletionStage<AsyncResultSet> multiPageEventRows2() {
-    AsyncResultSet rs = Mockito.mock(AsyncResultSet.class);
+    AsyncResultSet rs = mock(AsyncResultSet.class);
 
     ImmutableList<Row> rows = ImmutableList.of(eventRow(1));
-    Mockito.when(rs.currentPage()).thenReturn(rows);
+    when(rs.currentPage()).thenReturn(rows);
 
-    ExecutionInfo executionInfo = Mockito.mock(ExecutionInfo.class);
-    Mockito.when(executionInfo.getPagingState()).thenReturn(null);
-    Mockito.when(rs.getExecutionInfo()).thenReturn(executionInfo);
+    ExecutionInfo executionInfo = mock(ExecutionInfo.class);
+    when(executionInfo.getPagingState()).thenReturn(null);
+    when(rs.getExecutionInfo()).thenReturn(executionInfo);
 
     return CompletableFuture.completedFuture(rs);
   }
 
   private Row eventRow(int i) {
-    Row row = Mockito.mock(Row.class);
-    Mockito.when(row.getString("activity")).thenReturn("mock activity " + i);
-    Mockito.when(row.getUuid("event_id")).thenReturn(Uuids.startOf(i));
-    Mockito.when(row.getInetAddress("source")).thenReturn(address);
-    Mockito.when(row.getInt("source_elapsed")).thenReturn(i);
-    Mockito.when(row.getString("thread")).thenReturn("mock thread " + i);
+    Row row = mock(Row.class);
+    when(row.getString("activity")).thenReturn("mock activity " + i);
+    when(row.getUuid("event_id")).thenReturn(Uuids.startOf(i));
+    when(row.getInetAddress("source")).thenReturn(address);
+    when(row.getInt("source_elapsed")).thenReturn(i);
+    when(row.getString("thread")).thenReturn("mock thread " + i);
     return row;
   }
 

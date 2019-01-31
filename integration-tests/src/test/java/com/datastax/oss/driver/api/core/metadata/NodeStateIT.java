@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.metadata;
 
 import static com.datastax.oss.driver.assertions.Assertions.assertThat;
 import static com.datastax.oss.driver.assertions.Assertions.fail;
+import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 
@@ -71,7 +72,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InOrder;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @Category(ParallelizableTests.class)
@@ -80,7 +80,7 @@ public class NodeStateIT {
 
   private SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(2));
 
-  private NodeStateListener nodeStateListener = Mockito.mock(NodeStateListener.class);
+  private NodeStateListener nodeStateListener = mock(NodeStateListener.class);
   private InOrder inOrder;
 
   private SessionRule<CqlSession> sessionRule =
@@ -111,7 +111,7 @@ public class NodeStateIT {
 
   @Before
   public void setup() {
-    inOrder = Mockito.inOrder(nodeStateListener);
+    inOrder = inOrder(nodeStateListener);
 
     AtomicBoolean nonInitialEvent = new AtomicBoolean(false);
     driverContext = (InternalDriverContext) sessionRule.session().getContext();
@@ -172,7 +172,7 @@ public class NodeStateIT {
 
   @After
   public void teardown() {
-    Mockito.reset(nodeStateListener);
+    reset(nodeStateListener);
   }
 
   @Test
@@ -336,7 +336,7 @@ public class NodeStateIT {
             .withDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY, Duration.ofHours(1))
             .withDuration(DefaultDriverOption.RECONNECTION_MAX_DELAY, Duration.ofHours(1))
             .build();
-    NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
+    NodeStateListener localNodeStateListener = mock(NodeStateListener.class);
     try (CqlSession session =
         SessionUtils.newSession(simulacron, null, localNodeStateListener, null, null, loader)) {
 
@@ -347,7 +347,7 @@ public class NodeStateIT {
           (DefaultNode)
               session.getMetadata().getNodes().get(localSimulacronNode.inetSocketAddress());
       // UP fired a first time as part of the init process
-      Mockito.verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode);
+      verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode);
 
       localSimulacronNode.stop();
 
@@ -356,7 +356,7 @@ public class NodeStateIT {
           .as("Node going down")
           .before(10, TimeUnit.SECONDS)
           .becomesTrue();
-      Mockito.verify(localNodeStateListener, timeout(500)).onDown(localMetadataNode);
+      verify(localNodeStateListener, timeout(500)).onDown(localMetadataNode);
 
       expect(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, localMetadataNode));
 
@@ -369,7 +369,7 @@ public class NodeStateIT {
           .as("Node coming back up")
           .before(10, TimeUnit.SECONDS)
           .becomesTrue();
-      Mockito.verify(localNodeStateListener, timeout(500).times(2)).onUp(localMetadataNode);
+      verify(localNodeStateListener, timeout(500).times(2)).onUp(localMetadataNode);
 
       expect(NodeStateEvent.changed(NodeState.DOWN, NodeState.UP, localMetadataNode));
     }
@@ -474,7 +474,7 @@ public class NodeStateIT {
     Iterator<InetSocketAddress> contactPoints = simulacron.getContactPoints().iterator();
     InetSocketAddress address1 = contactPoints.next();
     InetSocketAddress address2 = contactPoints.next();
-    NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
+    NodeStateListener localNodeStateListener = mock(NodeStateListener.class);
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
             .withDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY, Duration.ofHours(1))
@@ -494,9 +494,9 @@ public class NodeStateIT {
       Node localMetadataNode2 = nodes.get(address2);
 
       // Successful contact point goes to up directly
-      Mockito.verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode1);
+      verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode1);
       // Non-contact point only added since we don't have a connection or events for it yet
-      Mockito.verify(localNodeStateListener, timeout(500)).onAdd(localMetadataNode2);
+      verify(localNodeStateListener, timeout(500)).onAdd(localMetadataNode2);
     }
   }
 
@@ -506,7 +506,7 @@ public class NodeStateIT {
     Iterator<InetSocketAddress> contactPoints = simulacron.getContactPoints().iterator();
     InetSocketAddress address1 = contactPoints.next();
     InetSocketAddress address2 = contactPoints.next();
-    NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
+    NodeStateListener localNodeStateListener = mock(NodeStateListener.class);
 
     // Initialize the driver with 1 wrong address and 1 valid address
     InetSocketAddress wrongContactPoint = withUnusedPort(address1);
@@ -531,10 +531,10 @@ public class NodeStateIT {
 
       // The order of the calls is not deterministic because contact points are shuffled, but it
       // does not matter here since Mockito.verify does not enforce order.
-      Mockito.verify(localNodeStateListener, timeout(500)).onRemove(nodeCaptor.capture());
+      verify(localNodeStateListener, timeout(500)).onRemove(nodeCaptor.capture());
       assertThat(nodeCaptor.getValue().getConnectAddress()).isEqualTo(wrongContactPoint);
-      Mockito.verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode1);
-      Mockito.verify(localNodeStateListener, timeout(500)).onAdd(localMetadataNode2);
+      verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode1);
+      verify(localNodeStateListener, timeout(500)).onAdd(localMetadataNode2);
 
       // Note: there might be an additional onDown for wrongContactPoint if it was hit first at
       // init. This is hard to test since the node was removed later, so we simply don't call
@@ -553,7 +553,7 @@ public class NodeStateIT {
     InetSocketAddress address1 = localSimulacronNode1.inetSocketAddress();
     InetSocketAddress address2 = localSimulacronNode2.inetSocketAddress();
 
-    NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
+    NodeStateListener localNodeStateListener = mock(NodeStateListener.class);
 
     localSimulacronNode2.stop();
     try {
@@ -579,18 +579,18 @@ public class NodeStateIT {
           Node localMetadataNode2 = nodes.get(address2);
           if (localMetadataNode2.getState() == NodeState.DOWN) {
             // Stopped node was tried first and marked down, that's our target scenario
-            Mockito.verify(localNodeStateListener, timeout(500)).onDown(localMetadataNode2);
-            Mockito.verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode1);
-            Mockito.verifyNoMoreInteractions(localNodeStateListener);
+            verify(localNodeStateListener, timeout(500)).onDown(localMetadataNode2);
+            verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode1);
+            verifyNoMoreInteractions(localNodeStateListener);
             return;
           } else {
             // Stopped node was not tried
             assertThat(localMetadataNode2).isUnknown();
-            Mockito.verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode1);
-            Mockito.verifyNoMoreInteractions(localNodeStateListener);
+            verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode1);
+            verifyNoMoreInteractions(localNodeStateListener);
           }
         }
-        Mockito.reset(localNodeStateListener);
+        reset(localNodeStateListener);
       }
       fail("Couldn't get the driver to try stopped node first (tried 5 times)");
     } finally {

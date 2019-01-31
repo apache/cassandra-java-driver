@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.internal.core.time;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -32,7 +34,6 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.OngoingStubbing;
 import org.slf4j.LoggerFactory;
@@ -53,18 +54,15 @@ abstract class MonotonicTimestampGeneratorTestBase {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(context.getConfig()).thenReturn(config);
+    when(config.getDefaultProfile()).thenReturn(defaultProfile);
+    when(context.getConfig()).thenReturn(config);
 
     // Disable warnings by default
-    Mockito.when(
-            defaultProfile.getDuration(
-                DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD, Duration.ZERO))
+    when(defaultProfile.getDuration(
+            DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD, Duration.ZERO))
         .thenReturn(Duration.ZERO);
     // Actual value doesn't really matter since we only test the first warning
-    Mockito.when(
-            defaultProfile.getDuration(
-                DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL))
+    when(defaultProfile.getDuration(DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL))
         .thenReturn(Duration.ofSeconds(10));
 
     logger = (Logger) LoggerFactory.getLogger(MonotonicTimestampGenerator.class);
@@ -80,7 +78,7 @@ abstract class MonotonicTimestampGeneratorTestBase {
 
   @Test
   public void should_use_clock_if_it_keeps_increasing() {
-    OngoingStubbing<Long> stub = Mockito.when(clock.currentTimeMicros());
+    OngoingStubbing<Long> stub = when(clock.currentTimeMicros());
     for (long l = 1; l < 5; l++) {
       stub = stub.thenReturn(l);
     }
@@ -94,7 +92,7 @@ abstract class MonotonicTimestampGeneratorTestBase {
 
   @Test
   public void should_increment_if_clock_does_not_increase() {
-    Mockito.when(clock.currentTimeMicros()).thenReturn(1L, 1L, 1L, 5L);
+    when(clock.currentTimeMicros()).thenReturn(1L, 1L, 1L, 5L);
 
     MonotonicTimestampGenerator generator = newInstance(clock);
 
@@ -106,11 +104,10 @@ abstract class MonotonicTimestampGeneratorTestBase {
 
   @Test
   public void should_warn_if_timestamps_drift() {
-    Mockito.when(
-            defaultProfile.getDuration(
-                DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD, Duration.ZERO))
+    when(defaultProfile.getDuration(
+            DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD, Duration.ZERO))
         .thenReturn(Duration.ofNanos(2 * 1000));
-    Mockito.when(clock.currentTimeMicros()).thenReturn(1L, 1L, 1L, 1L, 1L);
+    when(clock.currentTimeMicros()).thenReturn(1L, 1L, 1L, 1L, 1L);
 
     MonotonicTimestampGenerator generator = newInstance(clock);
 
@@ -121,7 +118,7 @@ abstract class MonotonicTimestampGeneratorTestBase {
     // Clock still at 1, last returned timestamp is 4 (> 1 + 2), should warn
     assertThat(generator.next()).isEqualTo(5);
 
-    Mockito.verify(appender).doAppend(loggingEventCaptor.capture());
+    verify(appender).doAppend(loggingEventCaptor.capture());
     ILoggingEvent log = loggingEventCaptor.getValue();
     assertThat(log.getLevel()).isEqualTo(Level.WARN);
     assertThat(log.getMessage()).contains("Clock skew detected");
@@ -129,7 +126,7 @@ abstract class MonotonicTimestampGeneratorTestBase {
 
   @Test
   public void should_go_back_to_clock_if_new_tick_high_enough() {
-    Mockito.when(clock.currentTimeMicros()).thenReturn(1L, 1L, 1L, 1L, 1L, 10L);
+    when(clock.currentTimeMicros()).thenReturn(1L, 1L, 1L, 1L, 1L, 10L);
 
     MonotonicTimestampGenerator generator = newInstance(clock);
 

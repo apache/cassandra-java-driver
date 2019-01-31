@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -59,7 +60,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.Answer;
 
@@ -111,31 +111,30 @@ public abstract class ChannelFactoryTestBase {
     serverGroup = new DefaultEventLoopGroup(1);
     clientGroup = new DefaultEventLoopGroup(1);
 
-    Mockito.when(context.getConfig()).thenReturn(driverConfig);
-    Mockito.when(driverConfig.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(defaultProfile.isDefined(DefaultDriverOption.AUTH_PROVIDER_CLASS))
-        .thenReturn(false);
-    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
+    when(context.getConfig()).thenReturn(driverConfig);
+    when(driverConfig.getDefaultProfile()).thenReturn(defaultProfile);
+    when(defaultProfile.isDefined(DefaultDriverOption.AUTH_PROVIDER_CLASS)).thenReturn(false);
+    when(defaultProfile.getDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
         .thenReturn(Duration.ofMillis(TIMEOUT_MILLIS));
-    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT))
+    when(defaultProfile.getDuration(DefaultDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT))
         .thenReturn(Duration.ofMillis(TIMEOUT_MILLIS));
-    Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS)).thenReturn(1);
-    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.HEARTBEAT_INTERVAL))
+    when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS)).thenReturn(1);
+    when(defaultProfile.getDuration(DefaultDriverOption.HEARTBEAT_INTERVAL))
         .thenReturn(Duration.ofSeconds(30));
 
-    Mockito.when(context.getProtocolVersionRegistry()).thenReturn(protocolVersionRegistry);
-    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
-    Mockito.when(nettyOptions.ioEventLoopGroup()).thenReturn(clientGroup);
-    Mockito.when(nettyOptions.channelClass()).thenAnswer((Answer<Object>) i -> LocalChannel.class);
-    Mockito.when(nettyOptions.allocator()).thenReturn(ByteBufAllocator.DEFAULT);
-    Mockito.when(context.getFrameCodec())
+    when(context.getProtocolVersionRegistry()).thenReturn(protocolVersionRegistry);
+    when(context.getNettyOptions()).thenReturn(nettyOptions);
+    when(nettyOptions.ioEventLoopGroup()).thenReturn(clientGroup);
+    when(nettyOptions.channelClass()).thenAnswer((Answer<Object>) i -> LocalChannel.class);
+    when(nettyOptions.allocator()).thenReturn(ByteBufAllocator.DEFAULT);
+    when(context.getFrameCodec())
         .thenReturn(
             FrameCodec.defaultClient(
                 new ByteBufPrimitiveCodec(ByteBufAllocator.DEFAULT), Compressor.none()));
-    Mockito.when(context.getSslHandlerFactory()).thenReturn(Optional.empty());
-    Mockito.when(context.getEventBus()).thenReturn(eventBus);
-    Mockito.when(context.getWriteCoalescer()).thenReturn(new PassThroughWriteCoalescer(null));
-    Mockito.when(context.getCompressor()).thenReturn(compressor);
+    when(context.getSslHandlerFactory()).thenReturn(Optional.empty());
+    when(context.getEventBus()).thenReturn(eventBus);
+    when(context.getWriteCoalescer()).thenReturn(new PassThroughWriteCoalescer(null));
+    when(context.getCompressor()).thenReturn(compressor);
 
     // Start local server
     ServerBootstrap serverBootstrap =

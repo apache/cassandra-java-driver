@@ -21,7 +21,6 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.tuple;
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.createAggregate;
 
 import com.datastax.oss.driver.api.core.type.DataTypes;
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class CreateAggregateTest {
@@ -135,18 +134,18 @@ public class CreateAggregateTest {
 
   @Test
   public void should_not_throw_on_toString_for_CreateAggregateStart() {
-    Assertions.assertThat(createAggregate("agg1").toString()).isEqualTo("CREATE AGGREGATE agg1 ()");
+    assertThat(createAggregate("agg1").toString()).isEqualTo("CREATE AGGREGATE agg1 ()");
   }
 
   @Test
   public void should_not_throw_on_toString_for_CreateAggregateWithParam() {
-    Assertions.assertThat(createAggregate("func1").withParameter(DataTypes.INT).toString())
+    assertThat(createAggregate("func1").withParameter(DataTypes.INT).toString())
         .isEqualTo("CREATE AGGREGATE func1 (int)");
   }
 
   @Test
   public void should_not_throw_on_toString_for_NotExists_OrReplace() {
-    Assertions.assertThat(createAggregate("func1").ifNotExists().orReplace().toString())
+    assertThat(createAggregate("func1").ifNotExists().orReplace().toString())
         .isEqualTo("CREATE OR REPLACE AGGREGATE IF NOT EXISTS func1 ()");
   }
 }
