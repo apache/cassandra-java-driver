@@ -39,7 +39,6 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.Reconnection;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -116,9 +115,6 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
       boolean listenToClusterEvents,
       boolean reconnectOnFailure,
       boolean useInitialReconnectionSchedule) {
-    Preconditions.checkArgument(
-        reconnectOnFailure || !useInitialReconnectionSchedule,
-        "Can't set useInitialReconnectionSchedule if reconnectOnFailure is false");
     RunOrSchedule.on(
         adminExecutor,
         () ->
