@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.time;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static com.datastax.oss.driver.Assertions.fail;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import java.util.List;
@@ -28,7 +29,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.mockito.stubbing.OngoingStubbing;
 
 public class ThreadLocalTimestampGeneratorTest extends MonotonicTimestampGeneratorTestBase {
@@ -42,7 +42,7 @@ public class ThreadLocalTimestampGeneratorTest extends MonotonicTimestampGenerat
     final int testThreadsCount = 2;
 
     // Prepare to generate 1000 timestamps for each thread, with the clock frozen at 1
-    OngoingStubbing<Long> stub = Mockito.when(clock.currentTimeMicros());
+    OngoingStubbing<Long> stub = when(clock.currentTimeMicros());
     for (int i = 0; i < testThreadsCount * 1000; i++) {
       stub = stub.thenReturn(1L);
     }

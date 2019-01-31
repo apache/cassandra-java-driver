@@ -18,6 +18,8 @@ package com.datastax.oss.driver.internal.core.cql;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
@@ -62,7 +64,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.OngoingStubbing;
 
@@ -95,85 +96,76 @@ public class RequestHandlerTestHarness implements AutoCloseable {
   protected RequestHandlerTestHarness(Builder builder) {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(nettyOptions.getTimer()).thenReturn(timer);
-    Mockito.when(nettyOptions.ioEventLoopGroup()).thenReturn(eventLoopGroup);
-    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
+    when(nettyOptions.getTimer()).thenReturn(timer);
+    when(nettyOptions.ioEventLoopGroup()).thenReturn(eventLoopGroup);
+    when(context.getNettyOptions()).thenReturn(nettyOptions);
 
-    Mockito.when(defaultProfile.getName()).thenReturn(DriverExecutionProfile.DEFAULT_NAME);
+    when(defaultProfile.getName()).thenReturn(DriverExecutionProfile.DEFAULT_NAME);
     // TODO make configurable in the test, also handle profiles
-    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
+    when(defaultProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
         .thenReturn(Duration.ofMillis(500));
-    Mockito.when(defaultProfile.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
+    when(defaultProfile.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
         .thenReturn(DefaultConsistencyLevel.LOCAL_ONE.name());
-    Mockito.when(defaultProfile.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE)).thenReturn(5000);
-    Mockito.when(defaultProfile.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
+    when(defaultProfile.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE)).thenReturn(5000);
+    when(defaultProfile.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
         .thenReturn(DefaultConsistencyLevel.SERIAL.name());
-    Mockito.when(defaultProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE))
+    when(defaultProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE))
         .thenReturn(builder.defaultIdempotence);
-    Mockito.when(defaultProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES))
-        .thenReturn(true);
+    when(defaultProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(true);
 
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(context.getConfig()).thenReturn(config);
+    when(config.getDefaultProfile()).thenReturn(defaultProfile);
+    when(context.getConfig()).thenReturn(config);
 
-    Mockito.when(
-            loadBalancingPolicyWrapper.newQueryPlan(
-                any(Request.class), anyString(), any(Session.class)))
+    when(loadBalancingPolicyWrapper.newQueryPlan(
+            any(Request.class), anyString(), any(Session.class)))
         .thenReturn(builder.buildQueryPlan());
-    Mockito.when(context.getLoadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
+    when(context.getLoadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
 
-    Mockito.when(context.getRetryPolicy(anyString())).thenReturn(retryPolicy);
+    when(context.getRetryPolicy(anyString())).thenReturn(retryPolicy);
 
     // Disable speculative executions by default
-    Mockito.when(
-            speculativeExecutionPolicy.nextExecution(
-                any(Node.class), any(CqlIdentifier.class), any(Request.class), anyInt()))
+    when(speculativeExecutionPolicy.nextExecution(
+            any(Node.class), any(CqlIdentifier.class), any(Request.class), anyInt()))
         .thenReturn(-1L);
-    Mockito.when(context.getSpeculativeExecutionPolicy(anyString()))
-        .thenReturn(speculativeExecutionPolicy);
+    when(context.getSpeculativeExecutionPolicy(anyString())).thenReturn(speculativeExecutionPolicy);
 
-    Mockito.when(context.getCodecRegistry()).thenReturn(new DefaultCodecRegistry("test"));
+    when(context.getCodecRegistry()).thenReturn(new DefaultCodecRegistry("test"));
 
-    Mockito.when(timestampGenerator.next()).thenReturn(Long.MIN_VALUE);
-    Mockito.when(context.getTimestampGenerator()).thenReturn(timestampGenerator);
+    when(timestampGenerator.next()).thenReturn(Long.MIN_VALUE);
+    when(context.getTimestampGenerator()).thenReturn(timestampGenerator);
 
     pools = builder.buildMockPools();
-    Mockito.when(session.getChannel(any(Node.class), anyString()))
+    when(session.getChannel(any(Node.class), anyString()))
         .thenAnswer(
             invocation -> {
               Node node = invocation.getArgument(0);
               return pools.get(node).next();
             });
-    Mockito.when(session.getRepreparePayloads()).thenReturn(new ConcurrentHashMap<>());
+    when(session.getRepreparePayloads()).thenReturn(new ConcurrentHashMap<>());
 
-    Mockito.when(session.setKeyspace(any(CqlIdentifier.class)))
+    when(session.setKeyspace(any(CqlIdentifier.class)))
         .thenReturn(CompletableFuture.completedFuture(null));
 
-    Mockito.when(session.getMetricUpdater()).thenReturn(sessionMetricUpdater);
-    Mockito.when(sessionMetricUpdater.isEnabled(any(SessionMetric.class), anyString()))
-        .thenReturn(true);
+    when(session.getMetricUpdater()).thenReturn(sessionMetricUpdater);
+    when(sessionMetricUpdater.isEnabled(any(SessionMetric.class), anyString())).thenReturn(true);
 
-    Mockito.when(session.getMetadata()).thenReturn(DefaultMetadata.EMPTY);
+    when(session.getMetadata()).thenReturn(DefaultMetadata.EMPTY);
 
-    Mockito.when(context.getProtocolVersionRegistry()).thenReturn(protocolVersionRegistry);
-    Mockito.when(
-            protocolVersionRegistry.supports(
-                any(ProtocolVersion.class), any(ProtocolFeature.class)))
+    when(context.getProtocolVersionRegistry()).thenReturn(protocolVersionRegistry);
+    when(protocolVersionRegistry.supports(any(ProtocolVersion.class), any(ProtocolFeature.class)))
         .thenReturn(true);
 
     if (builder.protocolVersion != null) {
-      Mockito.when(context.getProtocolVersion()).thenReturn(builder.protocolVersion);
+      when(context.getProtocolVersion()).thenReturn(builder.protocolVersion);
     }
 
-    Mockito.when(context.getConsistencyLevelRegistry())
-        .thenReturn(new DefaultConsistencyLevelRegistry());
+    when(context.getConsistencyLevelRegistry()).thenReturn(new DefaultConsistencyLevelRegistry());
 
-    Mockito.when(context.getWriteTypeRegistry()).thenReturn(new DefaultWriteTypeRegistry());
+    when(context.getWriteTypeRegistry()).thenReturn(new DefaultWriteTypeRegistry());
 
-    Mockito.when(context.getRequestThrottler())
-        .thenReturn(new PassThroughRequestThrottler(context));
+    when(context.getRequestThrottler()).thenReturn(new PassThroughRequestThrottler(context));
 
-    Mockito.when(context.getRequestTracker()).thenReturn(new NoopRequestTracker(context));
+    when(context.getRequestTracker()).thenReturn(new NoopRequestTracker(context));
   }
 
   public DefaultSession getSession() {
@@ -297,11 +289,11 @@ public class RequestHandlerTestHarness implements AutoCloseable {
       Map<Node, OngoingStubbing<DriverChannel>> stubbings = new HashMap<>();
       for (PoolBehavior behavior : poolBehaviors) {
         Node node = behavior.node;
-        ChannelPool pool = pools.computeIfAbsent(node, n -> Mockito.mock(ChannelPool.class));
+        ChannelPool pool = pools.computeIfAbsent(node, n -> mock(ChannelPool.class));
 
         // The goal of the code below is to generate the equivalent of:
         //
-        //     Mockito.when(pool.next())
+        //     when(pool.next())
         //       .thenReturn(behavior1.channel)
         //       .thenReturn(behavior2.channel)
         //       ...
@@ -309,7 +301,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
             node,
             (sameNode, previous) -> {
               if (previous == null) {
-                previous = Mockito.when(pool.next());
+                previous = when(pool.next());
               }
               return previous.thenReturn(behavior.channel);
             });

@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.time;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.fail;
+import static org.mockito.Mockito.when;
 
 import java.util.SortedSet;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -24,7 +25,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.mockito.stubbing.OngoingStubbing;
 
 public class AtomicTimestampGeneratorTest extends MonotonicTimestampGeneratorTestBase {
@@ -36,7 +36,7 @@ public class AtomicTimestampGeneratorTest extends MonotonicTimestampGeneratorTes
   @Test
   public void should_share_timestamps_across_all_threads() throws Exception {
     // Prepare to generate 1000 timestamps with the clock frozen at 1
-    OngoingStubbing<Long> stub = Mockito.when(clock.currentTimeMicros());
+    OngoingStubbing<Long> stub = when(clock.currentTimeMicros());
     for (int i = 0; i < 1000; i++) {
       stub = stub.thenReturn(1L);
     }

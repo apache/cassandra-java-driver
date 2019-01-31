@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -32,7 +34,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -59,7 +60,7 @@ public class DefaultMetadataTokenMapTest {
   public void setup() {
     DefaultReplicationStrategyFactory replicationStrategyFactory =
         new DefaultReplicationStrategyFactory(context);
-    Mockito.when(context.getReplicationStrategyFactory()).thenReturn(replicationStrategyFactory);
+    when(context.getReplicationStrategyFactory()).thenReturn(replicationStrategyFactory);
   }
 
   @Test
@@ -126,16 +127,16 @@ public class DefaultMetadataTokenMapTest {
   }
 
   private static DefaultNode mockNode(String token) {
-    DefaultNode node = Mockito.mock(DefaultNode.class);
-    Mockito.when(node.getRawTokens()).thenReturn(ImmutableSet.of(token));
+    DefaultNode node = mock(DefaultNode.class);
+    when(node.getRawTokens()).thenReturn(ImmutableSet.of(token));
     return node;
   }
 
   private static KeyspaceMetadata mockKeyspace(
       CqlIdentifier name, Map<String, String> replicationConfig) {
-    KeyspaceMetadata keyspace = Mockito.mock(KeyspaceMetadata.class);
-    Mockito.when(keyspace.getName()).thenReturn(name);
-    Mockito.when(keyspace.getReplication()).thenReturn(replicationConfig);
+    KeyspaceMetadata keyspace = mock(KeyspaceMetadata.class);
+    when(keyspace.getName()).thenReturn(name);
+    when(keyspace.getReplication()).thenReturn(replicationConfig);
     return keyspace;
   }
 }

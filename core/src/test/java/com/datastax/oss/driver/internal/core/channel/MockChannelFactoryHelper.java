@@ -19,7 +19,10 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -35,7 +38,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
-import org.mockito.Mockito;
 import org.mockito.internal.util.MockUtil;
 import org.mockito.stubbing.OngoingStubbing;
 
@@ -63,7 +65,7 @@ public class MockChannelFactoryHelper {
 
   public MockChannelFactoryHelper(ChannelFactory channelFactory) {
     this.channelFactory = channelFactory;
-    this.inOrder = Mockito.inOrder(channelFactory);
+    this.inOrder = inOrder(channelFactory);
   }
 
   public void waitForCall(Node node) {
@@ -118,7 +120,7 @@ public class MockChannelFactoryHelper {
 
     public Builder(ChannelFactory channelFactory) {
       assertThat(MockUtil.isMock(channelFactory)).as("expected a mock").isTrue();
-      Mockito.verifyZeroInteractions(channelFactory);
+      verifyZeroInteractions(channelFactory);
       this.channelFactory = channelFactory;
     }
 
@@ -166,7 +168,7 @@ public class MockChannelFactoryHelper {
         if (results.size() > 0) {
           CompletionStage<DriverChannel> first = results.poll();
           OngoingStubbing<CompletionStage<DriverChannel>> ongoingStubbing =
-              Mockito.when(channelFactory.connect(eq(node), any(DriverChannelOptions.class)))
+              when(channelFactory.connect(eq(node), any(DriverChannelOptions.class)))
                   .thenReturn(first);
           for (CompletionStage<DriverChannel> result : results) {
             ongoingStubbing.thenReturn(result);

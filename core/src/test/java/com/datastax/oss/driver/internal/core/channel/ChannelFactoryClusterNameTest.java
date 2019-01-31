@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -25,15 +26,14 @@ import com.datastax.oss.driver.internal.core.metrics.NoopNodeMetricUpdater;
 import com.datastax.oss.protocol.internal.response.Ready;
 import java.util.concurrent.CompletionStage;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class ChannelFactoryClusterNameTest extends ChannelFactoryTestBase {
 
   @Test
   public void should_set_cluster_name_from_first_connection() {
     // Given
-    Mockito.when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn(false);
-    Mockito.when(protocolVersionRegistry.highestNonBeta()).thenReturn(DefaultProtocolVersion.V4);
+    when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn(false);
+    when(protocolVersionRegistry.highestNonBeta()).thenReturn(DefaultProtocolVersion.V4);
     ChannelFactory factory = newChannelFactory();
 
     // When
@@ -52,8 +52,8 @@ public class ChannelFactoryClusterNameTest extends ChannelFactoryTestBase {
   @Test
   public void should_check_cluster_name_for_next_connections() throws Throwable {
     // Given
-    Mockito.when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn(false);
-    Mockito.when(protocolVersionRegistry.highestNonBeta()).thenReturn(DefaultProtocolVersion.V4);
+    when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn(false);
+    when(protocolVersionRegistry.highestNonBeta()).thenReturn(DefaultProtocolVersion.V4);
     ChannelFactory factory = newChannelFactory();
 
     // When

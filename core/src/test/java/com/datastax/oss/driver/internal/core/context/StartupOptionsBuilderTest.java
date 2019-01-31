@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.context;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -37,7 +38,6 @@ import java.util.function.Predicate;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class StartupOptionsBuilderTest {
@@ -59,8 +59,8 @@ public class StartupOptionsBuilderTest {
   @Before
   public void before() {
     MockitoAnnotations.initMocks(this);
-    Mockito.when(configLoader.getInitialConfig()).thenReturn(driverConfig);
-    Mockito.when(driverConfig.getDefaultProfile()).thenReturn(defaultProfile);
+    when(configLoader.getInitialConfig()).thenReturn(driverConfig);
+    when(driverConfig.getDefaultProfile()).thenReturn(defaultProfile);
   }
 
   private void buildDriverContext() {
@@ -96,10 +96,9 @@ public class StartupOptionsBuilderTest {
 
   @Test
   public void should_build_startup_options_with_compression() {
-    Mockito.when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_COMPRESSION))
+    when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_COMPRESSION))
         .thenReturn(Boolean.TRUE);
-    Mockito.when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION))
-        .thenReturn("lz4");
+    when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION)).thenReturn("lz4");
     buildDriverContext();
     Startup startup = new Startup(defaultDriverContext.getStartupOptions());
     // assert the compression option is present

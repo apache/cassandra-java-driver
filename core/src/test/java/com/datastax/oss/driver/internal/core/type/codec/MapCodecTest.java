@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.type.codec;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataTypes;
@@ -29,7 +30,6 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class MapCodecTest extends CodecTestBase<Map<String, Integer>> {
@@ -41,11 +41,11 @@ public class MapCodecTest extends CodecTestBase<Map<String, Integer>> {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(keyCodec.getCqlType()).thenReturn(DataTypes.TEXT);
-    Mockito.when(keyCodec.getJavaType()).thenReturn(GenericType.STRING);
+    when(keyCodec.getCqlType()).thenReturn(DataTypes.TEXT);
+    when(keyCodec.getJavaType()).thenReturn(GenericType.STRING);
 
-    Mockito.when(valueCodec.getCqlType()).thenReturn(DataTypes.INT);
-    Mockito.when(valueCodec.getJavaType()).thenReturn(GenericType.INTEGER);
+    when(valueCodec.getCqlType()).thenReturn(DataTypes.INT);
+    when(valueCodec.getJavaType()).thenReturn(GenericType.INTEGER);
     codec = TypeCodecs.mapOf(keyCodec, valueCodec);
   }
 
@@ -61,19 +61,13 @@ public class MapCodecTest extends CodecTestBase<Map<String, Integer>> {
 
   @Test
   public void should_encode_non_empty_map() {
-    Mockito.when(keyCodec.encode("a", ProtocolVersion.DEFAULT))
-        .thenReturn(Bytes.fromHexString("0x10"));
-    Mockito.when(keyCodec.encode("b", ProtocolVersion.DEFAULT))
-        .thenReturn(Bytes.fromHexString("0x2000"));
-    Mockito.when(keyCodec.encode("c", ProtocolVersion.DEFAULT))
-        .thenReturn(Bytes.fromHexString("0x300000"));
+    when(keyCodec.encode("a", ProtocolVersion.DEFAULT)).thenReturn(Bytes.fromHexString("0x10"));
+    when(keyCodec.encode("b", ProtocolVersion.DEFAULT)).thenReturn(Bytes.fromHexString("0x2000"));
+    when(keyCodec.encode("c", ProtocolVersion.DEFAULT)).thenReturn(Bytes.fromHexString("0x300000"));
 
-    Mockito.when(valueCodec.encode(1, ProtocolVersion.DEFAULT))
-        .thenReturn(Bytes.fromHexString("0x01"));
-    Mockito.when(valueCodec.encode(2, ProtocolVersion.DEFAULT))
-        .thenReturn(Bytes.fromHexString("0x0002"));
-    Mockito.when(valueCodec.encode(3, ProtocolVersion.DEFAULT))
-        .thenReturn(Bytes.fromHexString("0x000003"));
+    when(valueCodec.encode(1, ProtocolVersion.DEFAULT)).thenReturn(Bytes.fromHexString("0x01"));
+    when(valueCodec.encode(2, ProtocolVersion.DEFAULT)).thenReturn(Bytes.fromHexString("0x0002"));
+    when(valueCodec.encode(3, ProtocolVersion.DEFAULT)).thenReturn(Bytes.fromHexString("0x000003"));
 
     assertThat(encode(ImmutableMap.of("a", 1, "b", 2, "c", 3)))
         .isEqualTo(
@@ -100,19 +94,13 @@ public class MapCodecTest extends CodecTestBase<Map<String, Integer>> {
 
   @Test
   public void should_decode_non_empty_map() {
-    Mockito.when(keyCodec.decode(Bytes.fromHexString("0x10"), ProtocolVersion.DEFAULT))
-        .thenReturn("a");
-    Mockito.when(keyCodec.decode(Bytes.fromHexString("0x2000"), ProtocolVersion.DEFAULT))
-        .thenReturn("b");
-    Mockito.when(keyCodec.decode(Bytes.fromHexString("0x300000"), ProtocolVersion.DEFAULT))
-        .thenReturn("c");
+    when(keyCodec.decode(Bytes.fromHexString("0x10"), ProtocolVersion.DEFAULT)).thenReturn("a");
+    when(keyCodec.decode(Bytes.fromHexString("0x2000"), ProtocolVersion.DEFAULT)).thenReturn("b");
+    when(keyCodec.decode(Bytes.fromHexString("0x300000"), ProtocolVersion.DEFAULT)).thenReturn("c");
 
-    Mockito.when(valueCodec.decode(Bytes.fromHexString("0x01"), ProtocolVersion.DEFAULT))
-        .thenReturn(1);
-    Mockito.when(valueCodec.decode(Bytes.fromHexString("0x0002"), ProtocolVersion.DEFAULT))
-        .thenReturn(2);
-    Mockito.when(valueCodec.decode(Bytes.fromHexString("0x000003"), ProtocolVersion.DEFAULT))
-        .thenReturn(3);
+    when(valueCodec.decode(Bytes.fromHexString("0x01"), ProtocolVersion.DEFAULT)).thenReturn(1);
+    when(valueCodec.decode(Bytes.fromHexString("0x0002"), ProtocolVersion.DEFAULT)).thenReturn(2);
+    when(valueCodec.decode(Bytes.fromHexString("0x000003"), ProtocolVersion.DEFAULT)).thenReturn(3);
 
     assertThat(
             decode(
@@ -142,13 +130,13 @@ public class MapCodecTest extends CodecTestBase<Map<String, Integer>> {
 
   @Test
   public void should_format_non_empty_map() {
-    Mockito.when(keyCodec.format("a")).thenReturn("foo");
-    Mockito.when(keyCodec.format("b")).thenReturn("bar");
-    Mockito.when(keyCodec.format("c")).thenReturn("baz");
+    when(keyCodec.format("a")).thenReturn("foo");
+    when(keyCodec.format("b")).thenReturn("bar");
+    when(keyCodec.format("c")).thenReturn("baz");
 
-    Mockito.when(valueCodec.format(1)).thenReturn("qux");
-    Mockito.when(valueCodec.format(2)).thenReturn("quux");
-    Mockito.when(valueCodec.format(3)).thenReturn("quuz");
+    when(valueCodec.format(1)).thenReturn("qux");
+    when(valueCodec.format(2)).thenReturn("quux");
+    when(valueCodec.format(3)).thenReturn("quuz");
 
     assertThat(format(ImmutableMap.of("a", 1, "b", 2, "c", 3)))
         .isEqualTo("{foo:qux,bar:quux,baz:quuz}");
@@ -167,13 +155,13 @@ public class MapCodecTest extends CodecTestBase<Map<String, Integer>> {
 
   @Test
   public void should_parse_non_empty_map() {
-    Mockito.when(keyCodec.parse("foo")).thenReturn("a");
-    Mockito.when(keyCodec.parse("bar")).thenReturn("b");
-    Mockito.when(keyCodec.parse("baz")).thenReturn("c");
+    when(keyCodec.parse("foo")).thenReturn("a");
+    when(keyCodec.parse("bar")).thenReturn("b");
+    when(keyCodec.parse("baz")).thenReturn("c");
 
-    Mockito.when(valueCodec.parse("qux")).thenReturn(1);
-    Mockito.when(valueCodec.parse("quux")).thenReturn(2);
-    Mockito.when(valueCodec.parse("quuz")).thenReturn(3);
+    when(valueCodec.parse("qux")).thenReturn(1);
+    when(valueCodec.parse("quux")).thenReturn(2);
+    when(valueCodec.parse("quuz")).thenReturn(3);
 
     assertThat(parse("{foo:qux,bar:quux,baz:quuz}"))
         .containsOnlyKeys("a", "b", "c")

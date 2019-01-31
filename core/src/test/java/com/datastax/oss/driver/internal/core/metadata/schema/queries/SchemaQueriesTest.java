@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -31,7 +33,6 @@ import java.util.concurrent.CompletableFuture;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -50,21 +51,20 @@ public abstract class SchemaQueriesTest {
   @Before
   public void setup() {
     // Whatever, not actually used because the requests are mocked
-    Mockito.when(config.getDuration(DefaultDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT))
+    when(config.getDuration(DefaultDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT))
         .thenReturn(Duration.ZERO);
-    Mockito.when(config.getInt(DefaultDriverOption.METADATA_SCHEMA_REQUEST_PAGE_SIZE))
-        .thenReturn(5000);
+    when(config.getInt(DefaultDriverOption.METADATA_SCHEMA_REQUEST_PAGE_SIZE)).thenReturn(5000);
 
     channel = new EmbeddedChannel();
-    driverChannel = Mockito.mock(DriverChannel.class);
-    Mockito.when(driverChannel.eventLoop()).thenReturn(channel.eventLoop());
+    driverChannel = mock(DriverChannel.class);
+    when(driverChannel.eventLoop()).thenReturn(channel.eventLoop());
   }
 
   protected static AdminRow mockRow(String... values) {
-    AdminRow row = Mockito.mock(AdminRow.class);
+    AdminRow row = mock(AdminRow.class);
     assertThat(values.length % 2).as("Expecting an even number of parameters").isZero();
     for (int i = 0; i < values.length / 2; i++) {
-      Mockito.when(row.getString(values[i * 2])).thenReturn(values[i * 2 + 1]);
+      when(row.getString(values[i * 2])).thenReturn(values[i * 2 + 1]);
     }
     return row;
   }
@@ -74,14 +74,14 @@ public abstract class SchemaQueriesTest {
   }
 
   protected static AdminResult mockResult(AdminResult next, AdminRow... rows) {
-    AdminResult result = Mockito.mock(AdminResult.class);
+    AdminResult result = mock(AdminResult.class);
     if (next == null) {
-      Mockito.when(result.hasNextPage()).thenReturn(false);
+      when(result.hasNextPage()).thenReturn(false);
     } else {
-      Mockito.when(result.hasNextPage()).thenReturn(true);
-      Mockito.when(result.nextPage()).thenReturn(CompletableFuture.completedFuture(next));
+      when(result.hasNextPage()).thenReturn(true);
+      when(result.nextPage()).thenReturn(CompletableFuture.completedFuture(next));
     }
-    Mockito.when(result.iterator()).thenReturn(Iterators.forArray(rows));
+    when(result.iterator()).thenReturn(Iterators.forArray(rows));
     return result;
   }
 

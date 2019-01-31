@@ -16,6 +16,9 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
@@ -52,7 +55,6 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
@@ -72,14 +74,13 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
   public void setup() {
     super.setup();
     MockitoAnnotations.initMocks(this);
-    Mockito.when(internalDriverContext.getConfig()).thenReturn(driverConfig);
-    Mockito.when(driverConfig.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
+    when(internalDriverContext.getConfig()).thenReturn(driverConfig);
+    when(driverConfig.getDefaultProfile()).thenReturn(defaultProfile);
+    when(defaultProfile.getDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
         .thenReturn(Duration.ofMillis(QUERY_TIMEOUT_MILLIS));
-    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.HEARTBEAT_INTERVAL))
+    when(defaultProfile.getDuration(DefaultDriverOption.HEARTBEAT_INTERVAL))
         .thenReturn(Duration.ofSeconds(30));
-    Mockito.when(internalDriverContext.getProtocolVersionRegistry())
-        .thenReturn(protocolVersionRegistry);
+    when(internalDriverContext.getProtocolVersionRegistry()).thenReturn(protocolVersionRegistry);
 
     channel
         .pipeline()
@@ -206,11 +207,11 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 heartbeatHandler));
 
     String serverAuthenticator = "mockServerAuthenticator";
-    AuthProvider authProvider = Mockito.mock(AuthProvider.class);
+    AuthProvider authProvider = mock(AuthProvider.class);
     MockAuthenticator authenticator = new MockAuthenticator();
-    Mockito.when(authProvider.newAuthenticator(channel.remoteAddress(), serverAuthenticator))
+    when(authProvider.newAuthenticator(channel.remoteAddress(), serverAuthenticator))
         .thenReturn(authenticator);
-    Mockito.when(internalDriverContext.getAuthProvider()).thenReturn(Optional.of(authProvider));
+    when(internalDriverContext.getAuthProvider()).thenReturn(Optional.of(authProvider));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -222,7 +223,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     writeInboundFrame(requestFrame, new Authenticate(serverAuthenticator));
 
     // The connection should have created an authenticator from the auth provider
-    Mockito.verify(authProvider).newAuthenticator(channel.remoteAddress(), serverAuthenticator);
+    verify(authProvider).newAuthenticator(channel.remoteAddress(), serverAuthenticator);
 
     // And sent an auth response
     requestFrame = readOutboundFrame();
@@ -269,8 +270,8 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 DriverChannelOptions.DEFAULT,
                 heartbeatHandler));
 
-    AuthProvider authProvider = Mockito.mock(AuthProvider.class);
-    Mockito.when(internalDriverContext.getAuthProvider()).thenReturn(Optional.of(authProvider));
+    AuthProvider authProvider = mock(AuthProvider.class);
+    when(internalDriverContext.getAuthProvider()).thenReturn(Optional.of(authProvider));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -279,7 +280,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
 
     // Simulate a READY response, the provider should be notified
     writeInboundFrame(buildInboundFrame(requestFrame, new Ready()));
-    Mockito.verify(authProvider).onMissingChallenge(channel.remoteAddress());
+    verify(authProvider).onMissingChallenge(channel.remoteAddress());
 
     // Since our mock does nothing, init should proceed normally
     requestFrame = readOutboundFrame();
@@ -302,11 +303,11 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 heartbeatHandler));
 
     String serverAuthenticator = "mockServerAuthenticator";
-    AuthProvider authProvider = Mockito.mock(AuthProvider.class);
+    AuthProvider authProvider = mock(AuthProvider.class);
     MockAuthenticator authenticator = new MockAuthenticator();
-    Mockito.when(authProvider.newAuthenticator(channel.remoteAddress(), serverAuthenticator))
+    when(authProvider.newAuthenticator(channel.remoteAddress(), serverAuthenticator))
         .thenReturn(authenticator);
-    Mockito.when(internalDriverContext.getAuthProvider()).thenReturn(Optional.of(authProvider));
+    when(internalDriverContext.getAuthProvider()).thenReturn(Optional.of(authProvider));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -416,7 +417,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
   @Test
   public void should_initialize_with_events() {
     List<String> eventTypes = ImmutableList.of("foo", "bar");
-    EventCallback eventCallback = Mockito.mock(EventCallback.class);
+    EventCallback eventCallback = mock(EventCallback.class);
     DriverChannelOptions driverChannelOptions =
         DriverChannelOptions.builder().withEvents(eventTypes, eventCallback).build();
     channel
@@ -446,7 +447,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
   @Test
   public void should_initialize_with_keyspace_and_events() {
     List<String> eventTypes = ImmutableList.of("foo", "bar");
-    EventCallback eventCallback = Mockito.mock(EventCallback.class);
+    EventCallback eventCallback = mock(EventCallback.class);
     DriverChannelOptions driverChannelOptions =
         DriverChannelOptions.builder()
             .withKeyspace(CqlIdentifier.fromCql("ks"))

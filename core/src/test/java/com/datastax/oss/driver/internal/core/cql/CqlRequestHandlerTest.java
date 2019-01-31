@@ -17,6 +17,9 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
@@ -44,7 +47,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
 
@@ -153,7 +155,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
       assertThatStage(resultSetFuture)
           .isSuccess(
               resultSet ->
-                  Mockito.verify(harness.getSession())
+                  verify(harness.getSession())
                       .setKeyspace(CqlIdentifier.fromInternal("newKeyspace")));
     }
   }
@@ -162,14 +164,14 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
   public void should_reprepare_on_the_fly_if_not_prepared() throws InterruptedException {
     ByteBuffer mockId = Bytes.fromHexString("0xffff");
 
-    PreparedStatement preparedStatement = Mockito.mock(PreparedStatement.class);
-    Mockito.when(preparedStatement.getId()).thenReturn(mockId);
-    ColumnDefinitions columnDefinitions = Mockito.mock(ColumnDefinitions.class);
-    Mockito.when(columnDefinitions.size()).thenReturn(0);
-    Mockito.when(preparedStatement.getResultSetDefinitions()).thenReturn(columnDefinitions);
-    BoundStatement boundStatement = Mockito.mock(BoundStatement.class);
-    Mockito.when(boundStatement.getPreparedStatement()).thenReturn(preparedStatement);
-    Mockito.when(boundStatement.getValues()).thenReturn(Collections.emptyList());
+    PreparedStatement preparedStatement = mock(PreparedStatement.class);
+    when(preparedStatement.getId()).thenReturn(mockId);
+    ColumnDefinitions columnDefinitions = mock(ColumnDefinitions.class);
+    when(columnDefinitions.size()).thenReturn(0);
+    when(preparedStatement.getResultSetDefinitions()).thenReturn(columnDefinitions);
+    BoundStatement boundStatement = mock(BoundStatement.class);
+    when(boundStatement.getPreparedStatement()).thenReturn(preparedStatement);
+    when(boundStatement.getValues()).thenReturn(Collections.emptyList());
 
     RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
     // For the first attempt that gets the UNPREPARED response
@@ -183,7 +185,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
       ConcurrentMap<ByteBuffer, RepreparePayload> repreparePayloads = new ConcurrentHashMap<>();
       repreparePayloads.put(
           mockId, new RepreparePayload(mockId, "mock query", null, Collections.emptyMap()));
-      Mockito.when(harness.getSession().getRepreparePayloads()).thenReturn(repreparePayloads);
+      when(harness.getSession().getRepreparePayloads()).thenReturn(repreparePayloads);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
           new CqlRequestHandler(boundStatement, harness.getSession(), harness.getContext(), "test")

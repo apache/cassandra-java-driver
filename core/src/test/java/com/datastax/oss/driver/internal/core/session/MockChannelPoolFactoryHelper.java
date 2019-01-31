@@ -19,7 +19,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
@@ -41,7 +44,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
-import org.mockito.Mockito;
 import org.mockito.internal.util.MockUtil;
 import org.mockito.stubbing.OngoingStubbing;
 
@@ -59,7 +61,7 @@ public class MockChannelPoolFactoryHelper {
 
   private MockChannelPoolFactoryHelper(ChannelPoolFactory channelPoolFactory) {
     this.channelPoolFactory = channelPoolFactory;
-    this.inOrder = Mockito.inOrder(channelPoolFactory);
+    this.inOrder = inOrder(channelPoolFactory);
   }
 
   public void waitForCall(Node node, CqlIdentifier keyspace, NodeDistance distance) {
@@ -120,7 +122,7 @@ public class MockChannelPoolFactoryHelper {
 
     private Builder(ChannelPoolFactory channelPoolFactory) {
       assertThat(MockUtil.isMock(channelPoolFactory)).as("expected a mock").isTrue();
-      Mockito.verifyZeroInteractions(channelPoolFactory);
+      verifyZeroInteractions(channelPoolFactory);
       this.channelPoolFactory = channelPoolFactory;
     }
 
@@ -175,13 +177,12 @@ public class MockChannelPoolFactoryHelper {
         if (results.size() > 0) {
           CompletionStage<ChannelPool> first = results.poll();
           OngoingStubbing<CompletionStage<ChannelPool>> ongoingStubbing =
-              Mockito.when(
-                      channelPoolFactory.init(
-                          eq(params.node),
-                          eq(params.keyspace),
-                          eq(params.distance),
-                          any(InternalDriverContext.class),
-                          eq("test")))
+              when(channelPoolFactory.init(
+                      eq(params.node),
+                      eq(params.keyspace),
+                      eq(params.distance),
+                      any(InternalDriverContext.class),
+                      eq("test")))
                   .thenReturn(first);
           for (CompletionStage<ChannelPool> result : results) {
             ongoingStubbing.thenReturn(result);

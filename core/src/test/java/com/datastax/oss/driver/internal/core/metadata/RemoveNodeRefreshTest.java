@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
@@ -26,7 +27,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -43,7 +43,7 @@ public class RemoveNodeRefreshTest {
 
   @Before
   public void setup() {
-    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
+    when(context.getMetricsFactory()).thenReturn(metricsFactory);
     node1 = new DefaultNode(ADDRESS1, context);
     node2 = new DefaultNode(ADDRESS2, context);
   }

@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.internal.core.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -27,7 +29,6 @@ import com.datastax.oss.driver.internal.core.specex.NoSpeculativeExecutionPolicy
 import com.typesafe.config.ConfigFactory;
 import java.util.Map;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class ReflectionTest {
 
@@ -55,9 +56,9 @@ public class ReflectionTest {
             + "    advanced.speculative-execution-policy.class = NoSpeculativeExecutionPolicy\n"
             + "  }\n"
             + "}\n";
-    InternalDriverContext context = Mockito.mock(InternalDriverContext.class);
+    InternalDriverContext context = mock(InternalDriverContext.class);
     TypesafeDriverConfig config = new TypesafeDriverConfig(ConfigFactory.parseString(configSource));
-    Mockito.when(context.getConfig()).thenReturn(config);
+    when(context.getConfig()).thenReturn(config);
 
     Map<String, SpeculativeExecutionPolicy> policies =
         Reflection.buildFromConfigProfiles(

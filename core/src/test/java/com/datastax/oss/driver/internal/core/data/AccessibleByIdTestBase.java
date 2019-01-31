@@ -18,6 +18,10 @@ package com.datastax.oss.driver.internal.core.data;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
@@ -32,7 +36,6 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public abstract class AccessibleByIdTestBase<
         T extends GettableById & SettableById<T> & GettableByName & SettableByName<T>>
@@ -50,8 +53,8 @@ public abstract class AccessibleByIdTestBase<
     t.setInt(FIELD0_ID, 1);
 
     // Then
-    Mockito.verify(codecRegistry).codecFor(DataTypes.INT, Integer.class);
-    Mockito.verify(intCodec).encodePrimitive(1, ProtocolVersion.DEFAULT);
+    verify(codecRegistry).codecFor(DataTypes.INT, Integer.class);
+    verify(intCodec).encodePrimitive(1, ProtocolVersion.DEFAULT);
     assertThat(t.getBytesUnsafe(FIELD0_ID)).isEqualTo(Bytes.fromHexString("0x00000001"));
   }
 
@@ -64,8 +67,8 @@ public abstract class AccessibleByIdTestBase<
     t.setString(FIELD0_ID, "a");
 
     // Then
-    Mockito.verify(codecRegistry).codecFor(DataTypes.TEXT, String.class);
-    Mockito.verify(textCodec).encode("a", ProtocolVersion.DEFAULT);
+    verify(codecRegistry).codecFor(DataTypes.TEXT, String.class);
+    verify(textCodec).encode("a", ProtocolVersion.DEFAULT);
     assertThat(t.getBytesUnsafe(FIELD0_ID)).isEqualTo(Bytes.fromHexString("0x61"));
   }
 
@@ -78,7 +81,7 @@ public abstract class AccessibleByIdTestBase<
     t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
 
     // Then
-    Mockito.verifyZeroInteractions(codecRegistry);
+    verifyZeroInteractions(codecRegistry);
     assertThat(t.getBytesUnsafe(FIELD0_ID)).isEqualTo(Bytes.fromHexString("0x00000001"));
   }
 
@@ -92,32 +95,31 @@ public abstract class AccessibleByIdTestBase<
     t.setToNull(FIELD0_ID);
 
     // Then
-    Mockito.verifyZeroInteractions(codecRegistry);
+    verifyZeroInteractions(codecRegistry);
     assertThat(t.getBytesUnsafe(FIELD0_ID)).isNull();
   }
 
   @Test
   public void should_set_with_explicit_class_by_id() {
     // Given
-    CqlIntToStringCodec intToStringCodec = Mockito.spy(new CqlIntToStringCodec());
-    Mockito.when(codecRegistry.codecFor(DataTypes.INT, String.class))
-        .thenAnswer(i -> intToStringCodec);
+    CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
+    when(codecRegistry.codecFor(DataTypes.INT, String.class)).thenAnswer(i -> intToStringCodec);
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
     t.set(FIELD0_ID, "1", String.class);
 
     // Then
-    Mockito.verify(codecRegistry).codecFor(DataTypes.INT, String.class);
-    Mockito.verify(intToStringCodec).encode("1", ProtocolVersion.DEFAULT);
+    verify(codecRegistry).codecFor(DataTypes.INT, String.class);
+    verify(intToStringCodec).encode("1", ProtocolVersion.DEFAULT);
     assertThat(t.getBytesUnsafe(FIELD0_ID)).isEqualTo(Bytes.fromHexString("0x00000001"));
   }
 
   @Test
   public void should_set_with_explicit_type_by_id() {
     // Given
-    CqlIntToStringCodec intToStringCodec = Mockito.spy(new CqlIntToStringCodec());
-    Mockito.when(codecRegistry.codecFor(DataTypes.INT, GenericType.STRING))
+    CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
+    when(codecRegistry.codecFor(DataTypes.INT, GenericType.STRING))
         .thenAnswer(i -> intToStringCodec);
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
@@ -125,23 +127,23 @@ public abstract class AccessibleByIdTestBase<
     t.set(FIELD0_ID, "1", GenericType.STRING);
 
     // Then
-    Mockito.verify(codecRegistry).codecFor(DataTypes.INT, GenericType.STRING);
-    Mockito.verify(intToStringCodec).encode("1", ProtocolVersion.DEFAULT);
+    verify(codecRegistry).codecFor(DataTypes.INT, GenericType.STRING);
+    verify(intToStringCodec).encode("1", ProtocolVersion.DEFAULT);
     assertThat(t.getBytesUnsafe(FIELD0_ID)).isEqualTo(Bytes.fromHexString("0x00000001"));
   }
 
   @Test
   public void should_set_with_explicit_codec_by_id() {
     // Given
-    CqlIntToStringCodec intToStringCodec = Mockito.spy(new CqlIntToStringCodec());
+    CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
     t.set(FIELD0_ID, "1", intToStringCodec);
 
     // Then
-    Mockito.verifyZeroInteractions(codecRegistry);
-    Mockito.verify(intToStringCodec).encode("1", ProtocolVersion.DEFAULT);
+    verifyZeroInteractions(codecRegistry);
+    verify(intToStringCodec).encode("1", ProtocolVersion.DEFAULT);
     assertThat(t.getBytesUnsafe(FIELD0_ID)).isEqualTo(Bytes.fromHexString("0x00000001"));
   }
 
@@ -155,8 +157,8 @@ public abstract class AccessibleByIdTestBase<
     int i = t.getInt(FIELD0_ID);
 
     // Then
-    Mockito.verify(codecRegistry).codecFor(DataTypes.INT, Integer.class);
-    Mockito.verify(intCodec).decodePrimitive(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
+    verify(codecRegistry).codecFor(DataTypes.INT, Integer.class);
+    verify(intCodec).decodePrimitive(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
     assertThat(i).isEqualTo(1);
   }
 
@@ -170,8 +172,8 @@ public abstract class AccessibleByIdTestBase<
     String s = t.getString(FIELD0_ID);
 
     // Then
-    Mockito.verify(codecRegistry).codecFor(DataTypes.TEXT, String.class);
-    Mockito.verify(textCodec).decode(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
+    verify(codecRegistry).codecFor(DataTypes.TEXT, String.class);
+    verify(textCodec).decode(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
     assertThat(s).isEqualTo("a");
   }
 
@@ -185,7 +187,7 @@ public abstract class AccessibleByIdTestBase<
     ByteBuffer bytes = t.getBytesUnsafe(FIELD0_ID);
 
     // Then
-    Mockito.verifyZeroInteractions(codecRegistry);
+    verifyZeroInteractions(codecRegistry);
     assertThat(bytes).isEqualTo(Bytes.fromHexString("0x00000001"));
   }
 
@@ -199,16 +201,15 @@ public abstract class AccessibleByIdTestBase<
     boolean isNull = t.isNull(FIELD0_ID);
 
     // Then
-    Mockito.verifyZeroInteractions(codecRegistry);
+    verifyZeroInteractions(codecRegistry);
     assertThat(isNull).isTrue();
   }
 
   @Test
   public void should_get_with_explicit_class_by_id() {
     // Given
-    CqlIntToStringCodec intToStringCodec = Mockito.spy(new CqlIntToStringCodec());
-    Mockito.when(codecRegistry.codecFor(DataTypes.INT, String.class))
-        .thenAnswer(i -> intToStringCodec);
+    CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
+    when(codecRegistry.codecFor(DataTypes.INT, String.class)).thenAnswer(i -> intToStringCodec);
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
     t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
 
@@ -216,16 +217,16 @@ public abstract class AccessibleByIdTestBase<
     String s = t.get(FIELD0_ID, String.class);
 
     // Then
-    Mockito.verify(codecRegistry).codecFor(DataTypes.INT, String.class);
-    Mockito.verify(intToStringCodec).decode(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
+    verify(codecRegistry).codecFor(DataTypes.INT, String.class);
+    verify(intToStringCodec).decode(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
     assertThat(s).isEqualTo("1");
   }
 
   @Test
   public void should_get_with_explicit_type_by_id() {
     // Given
-    CqlIntToStringCodec intToStringCodec = Mockito.spy(new CqlIntToStringCodec());
-    Mockito.when(codecRegistry.codecFor(DataTypes.INT, GenericType.STRING))
+    CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
+    when(codecRegistry.codecFor(DataTypes.INT, GenericType.STRING))
         .thenAnswer(i -> intToStringCodec);
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
     t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
@@ -234,15 +235,15 @@ public abstract class AccessibleByIdTestBase<
     String s = t.get(FIELD0_ID, GenericType.STRING);
 
     // Then
-    Mockito.verify(codecRegistry).codecFor(DataTypes.INT, GenericType.STRING);
-    Mockito.verify(intToStringCodec).decode(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
+    verify(codecRegistry).codecFor(DataTypes.INT, GenericType.STRING);
+    verify(intToStringCodec).decode(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
     assertThat(s).isEqualTo("1");
   }
 
   @Test
   public void should_get_with_explicit_codec_by_id() {
     // Given
-    CqlIntToStringCodec intToStringCodec = Mockito.spy(new CqlIntToStringCodec());
+    CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
     t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
 
@@ -250,8 +251,8 @@ public abstract class AccessibleByIdTestBase<
     String s = t.get(FIELD0_ID, intToStringCodec);
 
     // Then
-    Mockito.verifyZeroInteractions(codecRegistry);
-    Mockito.verify(intToStringCodec).decode(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
+    verifyZeroInteractions(codecRegistry);
+    verify(intToStringCodec).decode(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
     assertThat(s).isEqualTo("1");
   }
 
@@ -264,8 +265,8 @@ public abstract class AccessibleByIdTestBase<
     t.setInt(FIELD0_NAME, 1);
 
     // Then
-    Mockito.verify(codecRegistry).codecFor(DataTypes.INT, Integer.class);
-    Mockito.verify(intCodec).encodePrimitive(1, ProtocolVersion.DEFAULT);
+    verify(codecRegistry).codecFor(DataTypes.INT, Integer.class);
+    verify(intCodec).encodePrimitive(1, ProtocolVersion.DEFAULT);
     assertThat(t.getBytesUnsafe(FIELD0_NAME)).isEqualTo(Bytes.fromHexString("0x00000001"));
   }
 
@@ -278,8 +279,8 @@ public abstract class AccessibleByIdTestBase<
     t.setString(FIELD0_NAME, "a");
 
     // Then
-    Mockito.verify(codecRegistry).codecFor(DataTypes.TEXT, String.class);
-    Mockito.verify(textCodec).encode("a", ProtocolVersion.DEFAULT);
+    verify(codecRegistry).codecFor(DataTypes.TEXT, String.class);
+    verify(textCodec).encode("a", ProtocolVersion.DEFAULT);
     assertThat(t.getBytesUnsafe(FIELD0_NAME)).isEqualTo(Bytes.fromHexString("0x61"));
   }
 
@@ -292,7 +293,7 @@ public abstract class AccessibleByIdTestBase<
     t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
 
     // Then
-    Mockito.verifyZeroInteractions(codecRegistry);
+    verifyZeroInteractions(codecRegistry);
     assertThat(t.getBytesUnsafe(FIELD0_NAME)).isEqualTo(Bytes.fromHexString("0x00000001"));
   }
 
@@ -306,32 +307,31 @@ public abstract class AccessibleByIdTestBase<
     t.setToNull(FIELD0_NAME);
 
     // Then
-    Mockito.verifyZeroInteractions(codecRegistry);
+    verifyZeroInteractions(codecRegistry);
     assertThat(t.getBytesUnsafe(FIELD0_NAME)).isNull();
   }
 
   @Test
   public void should_set_with_explicit_class_by_name() {
     // Given
-    CqlIntToStringCodec intToStringCodec = Mockito.spy(new CqlIntToStringCodec());
-    Mockito.when(codecRegistry.codecFor(DataTypes.INT, String.class))
-        .thenAnswer(i -> intToStringCodec);
+    CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
+    when(codecRegistry.codecFor(DataTypes.INT, String.class)).thenAnswer(i -> intToStringCodec);
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
     t.set(FIELD0_NAME, "1", String.class);
 
     // Then
-    Mockito.verify(codecRegistry).codecFor(DataTypes.INT, String.class);
-    Mockito.verify(intToStringCodec).encode("1", ProtocolVersion.DEFAULT);
+    verify(codecRegistry).codecFor(DataTypes.INT, String.class);
+    verify(intToStringCodec).encode("1", ProtocolVersion.DEFAULT);
     assertThat(t.getBytesUnsafe(FIELD0_NAME)).isEqualTo(Bytes.fromHexString("0x00000001"));
   }
 
   @Test
   public void should_set_with_explicit_type_by_name() {
     // Given
-    CqlIntToStringCodec intToStringCodec = Mockito.spy(new CqlIntToStringCodec());
-    Mockito.when(codecRegistry.codecFor(DataTypes.INT, GenericType.STRING))
+    CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
+    when(codecRegistry.codecFor(DataTypes.INT, GenericType.STRING))
         .thenAnswer(i -> intToStringCodec);
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
@@ -339,23 +339,23 @@ public abstract class AccessibleByIdTestBase<
     t.set(FIELD0_NAME, "1", GenericType.STRING);
 
     // Then
-    Mockito.verify(codecRegistry).codecFor(DataTypes.INT, GenericType.STRING);
-    Mockito.verify(intToStringCodec).encode("1", ProtocolVersion.DEFAULT);
+    verify(codecRegistry).codecFor(DataTypes.INT, GenericType.STRING);
+    verify(intToStringCodec).encode("1", ProtocolVersion.DEFAULT);
     assertThat(t.getBytesUnsafe(FIELD0_NAME)).isEqualTo(Bytes.fromHexString("0x00000001"));
   }
 
   @Test
   public void should_set_with_explicit_codec_by_name() {
     // Given
-    CqlIntToStringCodec intToStringCodec = Mockito.spy(new CqlIntToStringCodec());
+    CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
     t.set(FIELD0_NAME, "1", intToStringCodec);
 
     // Then
-    Mockito.verifyZeroInteractions(codecRegistry);
-    Mockito.verify(intToStringCodec).encode("1", ProtocolVersion.DEFAULT);
+    verifyZeroInteractions(codecRegistry);
+    verify(intToStringCodec).encode("1", ProtocolVersion.DEFAULT);
     assertThat(t.getBytesUnsafe(FIELD0_NAME)).isEqualTo(Bytes.fromHexString("0x00000001"));
   }
 
@@ -369,8 +369,8 @@ public abstract class AccessibleByIdTestBase<
     int i = t.getInt(FIELD0_NAME);
 
     // Then
-    Mockito.verify(codecRegistry).codecFor(DataTypes.INT, Integer.class);
-    Mockito.verify(intCodec).decodePrimitive(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
+    verify(codecRegistry).codecFor(DataTypes.INT, Integer.class);
+    verify(intCodec).decodePrimitive(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
     assertThat(i).isEqualTo(1);
   }
 
@@ -384,8 +384,8 @@ public abstract class AccessibleByIdTestBase<
     String s = t.getString(FIELD0_NAME);
 
     // Then
-    Mockito.verify(codecRegistry).codecFor(DataTypes.TEXT, String.class);
-    Mockito.verify(textCodec).decode(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
+    verify(codecRegistry).codecFor(DataTypes.TEXT, String.class);
+    verify(textCodec).decode(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
     assertThat(s).isEqualTo("a");
   }
 
@@ -399,7 +399,7 @@ public abstract class AccessibleByIdTestBase<
     ByteBuffer bytes = t.getBytesUnsafe(FIELD0_NAME);
 
     // Then
-    Mockito.verifyZeroInteractions(codecRegistry);
+    verifyZeroInteractions(codecRegistry);
     assertThat(bytes).isEqualTo(Bytes.fromHexString("0x00000001"));
   }
 
@@ -413,16 +413,15 @@ public abstract class AccessibleByIdTestBase<
     boolean isNull = t.isNull(FIELD0_NAME);
 
     // Then
-    Mockito.verifyZeroInteractions(codecRegistry);
+    verifyZeroInteractions(codecRegistry);
     assertThat(isNull).isTrue();
   }
 
   @Test
   public void should_get_with_explicit_class_by_name() {
     // Given
-    CqlIntToStringCodec intToStringCodec = Mockito.spy(new CqlIntToStringCodec());
-    Mockito.when(codecRegistry.codecFor(DataTypes.INT, String.class))
-        .thenAnswer(i -> intToStringCodec);
+    CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
+    when(codecRegistry.codecFor(DataTypes.INT, String.class)).thenAnswer(i -> intToStringCodec);
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
     t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
 
@@ -430,16 +429,16 @@ public abstract class AccessibleByIdTestBase<
     String s = t.get(FIELD0_NAME, String.class);
 
     // Then
-    Mockito.verify(codecRegistry).codecFor(DataTypes.INT, String.class);
-    Mockito.verify(intToStringCodec).decode(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
+    verify(codecRegistry).codecFor(DataTypes.INT, String.class);
+    verify(intToStringCodec).decode(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
     assertThat(s).isEqualTo("1");
   }
 
   @Test
   public void should_get_with_explicit_type_by_name() {
     // Given
-    CqlIntToStringCodec intToStringCodec = Mockito.spy(new CqlIntToStringCodec());
-    Mockito.when(codecRegistry.codecFor(DataTypes.INT, GenericType.STRING))
+    CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
+    when(codecRegistry.codecFor(DataTypes.INT, GenericType.STRING))
         .thenAnswer(i -> intToStringCodec);
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
     t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
@@ -448,15 +447,15 @@ public abstract class AccessibleByIdTestBase<
     String s = t.get(FIELD0_NAME, GenericType.STRING);
 
     // Then
-    Mockito.verify(codecRegistry).codecFor(DataTypes.INT, GenericType.STRING);
-    Mockito.verify(intToStringCodec).decode(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
+    verify(codecRegistry).codecFor(DataTypes.INT, GenericType.STRING);
+    verify(intToStringCodec).decode(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
     assertThat(s).isEqualTo("1");
   }
 
   @Test
   public void should_get_with_explicit_codec_by_name() {
     // Given
-    CqlIntToStringCodec intToStringCodec = Mockito.spy(new CqlIntToStringCodec());
+    CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
     t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
 
@@ -464,8 +463,8 @@ public abstract class AccessibleByIdTestBase<
     String s = t.get(FIELD0_NAME, intToStringCodec);
 
     // Then
-    Mockito.verifyZeroInteractions(codecRegistry);
-    Mockito.verify(intToStringCodec).decode(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
+    verifyZeroInteractions(codecRegistry);
+    verify(intToStringCodec).decode(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
     assertThat(s).isEqualTo("1");
   }
 

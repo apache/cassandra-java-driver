@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.internal.core.metadata.schema.parsing;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
@@ -30,7 +32,6 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
 public class DataTypeCqlNameParserTest {
 
@@ -84,10 +85,10 @@ public class DataTypeCqlNameParserTest {
 
   @Test
   public void should_reuse_existing_user_type_when_not_top_level() {
-    UserDefinedType addressType = Mockito.mock(UserDefinedType.class);
-    UserDefinedType frozenAddressType = Mockito.mock(UserDefinedType.class);
-    Mockito.when(addressType.copy(false)).thenReturn(addressType);
-    Mockito.when(addressType.copy(true)).thenReturn(frozenAddressType);
+    UserDefinedType addressType = mock(UserDefinedType.class);
+    UserDefinedType frozenAddressType = mock(UserDefinedType.class);
+    when(addressType.copy(false)).thenReturn(addressType);
+    when(addressType.copy(true)).thenReturn(frozenAddressType);
 
     ImmutableMap<CqlIdentifier, UserDefinedType> existingTypes =
         ImmutableMap.of(CqlIdentifier.fromInternal("address"), addressType);

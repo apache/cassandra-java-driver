@@ -22,6 +22,10 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.TestDataProviders;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
@@ -53,7 +57,6 @@ import java.util.Iterator;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 
@@ -94,7 +97,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
                 assertThat(executionInfo.getSuccessfulExecutionIndex()).isEqualTo(0);
                 assertThat(executionInfo.getWarnings()).isEmpty();
 
-                Mockito.verifyNoMoreInteractions(harness.getContext().getRetryPolicy(anyString()));
+                verifyNoMoreInteractions(harness.getContext().getRetryPolicy(anyString()));
               });
     }
   }
@@ -121,20 +124,20 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
                 assertThat(error)
                     .isInstanceOf(InvalidQueryException.class)
                     .hasMessage("mock message");
-                Mockito.verifyNoMoreInteractions(harness.getContext().getRetryPolicy(anyString()));
+                verifyNoMoreInteractions(harness.getContext().getRetryPolicy(anyString()));
 
-                Mockito.verify(nodeMetricUpdater1)
+                verify(nodeMetricUpdater1)
                     .incrementCounter(
                         DefaultNodeMetric.OTHER_ERRORS, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1, atMost(1))
+                verify(nodeMetricUpdater1, atMost(1))
                     .isEnabled(DefaultNodeMetric.CQL_MESSAGES, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1)
+                verify(nodeMetricUpdater1)
                     .updateTimer(
                         eq(DefaultNodeMetric.CQL_MESSAGES),
                         eq(DriverExecutionProfile.DEFAULT_NAME),
                         anyLong(),
                         eq(TimeUnit.NANOSECONDS));
-                Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
+                verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
   }
@@ -168,24 +171,24 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
                 assertThat(executionInfo.getErrors()).hasSize(1);
                 assertThat(executionInfo.getErrors().get(0).getKey()).isEqualTo(node1);
 
-                Mockito.verify(nodeMetricUpdater1)
+                verify(nodeMetricUpdater1)
                     .incrementCounter(
                         failureScenario.errorMetric, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1)
+                verify(nodeMetricUpdater1)
                     .incrementCounter(
                         DefaultNodeMetric.RETRIES, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1)
+                verify(nodeMetricUpdater1)
                     .incrementCounter(
                         failureScenario.retryMetric, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1, atMost(1))
+                verify(nodeMetricUpdater1, atMost(1))
                     .isEnabled(DefaultNodeMetric.CQL_MESSAGES, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1, atMost(1))
+                verify(nodeMetricUpdater1, atMost(1))
                     .updateTimer(
                         eq(DefaultNodeMetric.CQL_MESSAGES),
                         eq(DriverExecutionProfile.DEFAULT_NAME),
                         anyLong(),
                         eq(TimeUnit.NANOSECONDS));
-                Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
+                verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
   }
@@ -219,24 +222,24 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
                 assertThat(executionInfo.getErrors()).hasSize(1);
                 assertThat(executionInfo.getErrors().get(0).getKey()).isEqualTo(node1);
 
-                Mockito.verify(nodeMetricUpdater1)
+                verify(nodeMetricUpdater1)
                     .incrementCounter(
                         failureScenario.errorMetric, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1)
+                verify(nodeMetricUpdater1)
                     .incrementCounter(
                         DefaultNodeMetric.RETRIES, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1)
+                verify(nodeMetricUpdater1)
                     .incrementCounter(
                         failureScenario.retryMetric, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1, atMost(2))
+                verify(nodeMetricUpdater1, atMost(2))
                     .isEnabled(DefaultNodeMetric.CQL_MESSAGES, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1, atMost(2))
+                verify(nodeMetricUpdater1, atMost(2))
                     .updateTimer(
                         eq(DefaultNodeMetric.CQL_MESSAGES),
                         eq(DriverExecutionProfile.DEFAULT_NAME),
                         anyLong(),
                         eq(TimeUnit.NANOSECONDS));
-                Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
+                verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
   }
@@ -267,24 +270,24 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
                 assertThat(executionInfo.getCoordinator()).isEqualTo(node1);
                 assertThat(executionInfo.getErrors()).hasSize(0);
 
-                Mockito.verify(nodeMetricUpdater1)
+                verify(nodeMetricUpdater1)
                     .incrementCounter(
                         failureScenario.errorMetric, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1)
+                verify(nodeMetricUpdater1)
                     .incrementCounter(
                         DefaultNodeMetric.IGNORES, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1)
+                verify(nodeMetricUpdater1)
                     .incrementCounter(
                         failureScenario.ignoreMetric, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1, atMost(1))
+                verify(nodeMetricUpdater1, atMost(1))
                     .isEnabled(DefaultNodeMetric.CQL_MESSAGES, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1, atMost(1))
+                verify(nodeMetricUpdater1, atMost(1))
                     .updateTimer(
                         eq(DefaultNodeMetric.CQL_MESSAGES),
                         eq(DriverExecutionProfile.DEFAULT_NAME),
                         anyLong(),
                         eq(TimeUnit.NANOSECONDS));
-                Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
+                verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
   }
@@ -311,18 +314,18 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
               error -> {
                 assertThat(error).isInstanceOf(failureScenario.expectedExceptionClass);
 
-                Mockito.verify(nodeMetricUpdater1)
+                verify(nodeMetricUpdater1)
                     .incrementCounter(
                         failureScenario.errorMetric, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1, atMost(1))
+                verify(nodeMetricUpdater1, atMost(1))
                     .isEnabled(DefaultNodeMetric.CQL_MESSAGES, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1, atMost(1))
+                verify(nodeMetricUpdater1, atMost(1))
                     .updateTimer(
                         eq(DefaultNodeMetric.CQL_MESSAGES),
                         eq(DriverExecutionProfile.DEFAULT_NAME),
                         anyLong(),
                         eq(TimeUnit.NANOSECONDS));
-                Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
+                verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
   }
@@ -360,22 +363,21 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
                 assertThat(error).isInstanceOf(failureScenario.expectedExceptionClass);
                 // When non idempotent, the policy is bypassed completely:
                 if (!shouldCallRetryPolicy) {
-                  Mockito.verifyNoMoreInteractions(
-                      harness.getContext().getRetryPolicy(anyString()));
+                  verifyNoMoreInteractions(harness.getContext().getRetryPolicy(anyString()));
                 }
 
-                Mockito.verify(nodeMetricUpdater1)
+                verify(nodeMetricUpdater1)
                     .incrementCounter(
                         failureScenario.errorMetric, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1, atMost(1))
+                verify(nodeMetricUpdater1, atMost(1))
                     .isEnabled(DefaultNodeMetric.CQL_MESSAGES, DriverExecutionProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1, atMost(1))
+                verify(nodeMetricUpdater1, atMost(1))
                     .updateTimer(
                         eq(DefaultNodeMetric.CQL_MESSAGES),
                         eq(DriverExecutionProfile.DEFAULT_NAME),
                         anyLong(),
                         eq(TimeUnit.NANOSECONDS));
-                Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
+                verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
   }
@@ -425,14 +427,13 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 
           @Override
           public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
-            Mockito.when(
-                    policy.onReadTimeout(
-                        any(SimpleStatement.class),
-                        eq(DefaultConsistencyLevel.LOCAL_ONE),
-                        eq(2),
-                        eq(1),
-                        eq(true),
-                        eq(0)))
+            when(policy.onReadTimeout(
+                    any(SimpleStatement.class),
+                    eq(DefaultConsistencyLevel.LOCAL_ONE),
+                    eq(2),
+                    eq(1),
+                    eq(true),
+                    eq(0)))
                 .thenReturn(decision);
           }
         },
@@ -456,14 +457,13 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 
           @Override
           public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
-            Mockito.when(
-                    policy.onWriteTimeout(
-                        any(SimpleStatement.class),
-                        eq(DefaultConsistencyLevel.LOCAL_ONE),
-                        eq(DefaultWriteType.SIMPLE),
-                        eq(2),
-                        eq(1),
-                        eq(0)))
+            when(policy.onWriteTimeout(
+                    any(SimpleStatement.class),
+                    eq(DefaultConsistencyLevel.LOCAL_ONE),
+                    eq(DefaultWriteType.SIMPLE),
+                    eq(2),
+                    eq(1),
+                    eq(0)))
                 .thenReturn(decision);
           }
         },
@@ -483,13 +483,12 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 
           @Override
           public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
-            Mockito.when(
-                    policy.onUnavailable(
-                        any(SimpleStatement.class),
-                        eq(DefaultConsistencyLevel.LOCAL_ONE),
-                        eq(2),
-                        eq(1),
-                        eq(0)))
+            when(policy.onUnavailable(
+                    any(SimpleStatement.class),
+                    eq(DefaultConsistencyLevel.LOCAL_ONE),
+                    eq(2),
+                    eq(1),
+                    eq(0)))
                 .thenReturn(decision);
           }
         },
@@ -508,9 +507,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 
           @Override
           public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
-            Mockito.when(
-                    policy.onErrorResponse(
-                        any(SimpleStatement.class), any(ServerError.class), eq(0)))
+            when(policy.onErrorResponse(any(SimpleStatement.class), any(ServerError.class), eq(0)))
                 .thenReturn(decision);
           }
         },
@@ -521,14 +518,13 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
             DefaultNodeMetric.IGNORES_ON_ABORTED) {
           @Override
           public void mockRequestError(RequestHandlerTestHarness.Builder builder, Node node) {
-            builder.withResponseFailure(node, Mockito.mock(HeartbeatException.class));
+            builder.withResponseFailure(node, mock(HeartbeatException.class));
           }
 
           @Override
           public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
-            Mockito.when(
-                    policy.onRequestAborted(
-                        any(SimpleStatement.class), any(HeartbeatException.class), eq(0)))
+            when(policy.onRequestAborted(
+                    any(SimpleStatement.class), any(HeartbeatException.class), eq(0)))
                 .thenReturn(decision);
           }
         });

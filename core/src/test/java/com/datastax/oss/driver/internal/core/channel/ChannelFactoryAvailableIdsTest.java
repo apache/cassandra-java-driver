@@ -19,6 +19,8 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -31,7 +33,6 @@ import java.util.concurrent.CompletionStage;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
 public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
 
@@ -41,14 +42,13 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
   @Override
   public void setup() throws InterruptedException {
     super.setup();
-    Mockito.when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn(true);
-    Mockito.when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn("V4");
-    Mockito.when(protocolVersionRegistry.fromName("V4")).thenReturn(DefaultProtocolVersion.V4);
+    when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn(true);
+    when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn("V4");
+    when(protocolVersionRegistry.fromName("V4")).thenReturn(DefaultProtocolVersion.V4);
 
-    Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS))
-        .thenReturn(128);
+    when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS)).thenReturn(128);
 
-    Mockito.when(responseCallback.isLastResponse(any(Frame.class))).thenReturn(true);
+    when(responseCallback.isLastResponse(any(Frame.class))).thenReturn(true);
   }
 
   @Test
@@ -78,7 +78,7 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
 
                         // Complete the request, should increase again
                         writeInboundFrame(readOutboundFrame(), Void.INSTANCE);
-                        Mockito.verify(responseCallback, timeout(500)).onResponse(any(Frame.class));
+                        verify(responseCallback, timeout(500)).onResponse(any(Frame.class));
                         assertThat(channel.getAvailableIds()).isEqualTo(128);
                       });
             });

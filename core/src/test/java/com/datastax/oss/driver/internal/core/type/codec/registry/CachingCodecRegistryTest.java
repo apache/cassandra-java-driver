@@ -18,6 +18,8 @@ package com.datastax.oss.driver.internal.core.type.codec.registry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
@@ -63,7 +65,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class CachingCodecRegistryTest {
@@ -99,7 +100,7 @@ public class CachingCodecRegistryTest {
     checkPrimitiveMappings(registry, TypeCodecs.INET);
     checkPrimitiveMappings(registry, TypeCodecs.DURATION);
     // Primitive mappings never hit the cache
-    Mockito.verifyZeroInteractions(mockCache);
+    verifyZeroInteractions(mockCache);
   }
 
   private void checkPrimitiveMappings(TestCachingCodecRegistry registry, TypeCodec<?> codec) {
@@ -134,7 +135,7 @@ public class CachingCodecRegistryTest {
     assertThat(registry.codecFor(new UUID(2L, 1L))).isEqualTo(TypeCodecs.UUID);
     assertThat(registry.codecFor(InetAddress.getByName("127.0.0.1"))).isEqualTo(TypeCodecs.INET);
     assertThat(registry.codecFor(CqlDuration.newInstance(1, 2, 3))).isEqualTo(TypeCodecs.DURATION);
-    Mockito.verifyZeroInteractions(mockCache);
+    verifyZeroInteractions(mockCache);
   }
 
   @Test
@@ -161,7 +162,7 @@ public class CachingCodecRegistryTest {
         .isEqualTo(TypeCodecs.INET);
     assertThat(registry.codecFor(DataTypes.DURATION, CqlDuration.newInstance(1, 2, 3)))
         .isEqualTo(TypeCodecs.DURATION);
-    Mockito.verifyZeroInteractions(mockCache);
+    verifyZeroInteractions(mockCache);
   }
 
   @Test
@@ -182,7 +183,7 @@ public class CachingCodecRegistryTest {
     assertThat(registry.codecFor(DataTypes.INT)).isSameAs(TypeCodecs.INT);
     assertThat(registry.codecFor("")).isSameAs(TypeCodecs.TEXT);
 
-    Mockito.verifyZeroInteractions(mockCache);
+    verifyZeroInteractions(mockCache);
   }
 
   @Test
@@ -202,7 +203,7 @@ public class CachingCodecRegistryTest {
     // The search by CQL type only still returns the built-in codec
     assertThat(registry.codecFor(DataTypes.TEXT)).isSameAs(TypeCodecs.TEXT);
 
-    Mockito.verifyZeroInteractions(mockCache);
+    verifyZeroInteractions(mockCache);
   }
 
   @Test
@@ -212,7 +213,7 @@ public class CachingCodecRegistryTest {
     List<List<Integer>> value = ImmutableList.of(ImmutableList.of(1));
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<List<List<Integer>>> codec = registry.codecFor(cqlType, javaType);
     assertThat(codec).isNotNull();
@@ -233,7 +234,7 @@ public class CachingCodecRegistryTest {
     List<List<Integer>> value = ImmutableList.of(ImmutableList.of(1));
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<List<List<Integer>>> codec = registry.codecFor(cqlType);
     assertThat(codec).isNotNull();
@@ -251,7 +252,7 @@ public class CachingCodecRegistryTest {
     List<List<Integer>> value = ImmutableList.of(ImmutableList.of(1));
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<List<List<Integer>>> codec = registry.codecFor(cqlType, value);
     assertThat(codec).isNotNull();
@@ -271,7 +272,7 @@ public class CachingCodecRegistryTest {
     List<List<Integer>> value = ImmutableList.of(ImmutableList.of(1));
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<List<List<Integer>>> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
@@ -294,7 +295,7 @@ public class CachingCodecRegistryTest {
     List<InetAddress> value = ImmutableList.of(address);
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<List<InetAddress>> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
@@ -312,7 +313,7 @@ public class CachingCodecRegistryTest {
     Set<Set<Integer>> value = ImmutableSet.of(ImmutableSet.of(1));
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<Set<Set<Integer>>> codec = registry.codecFor(cqlType, javaType);
     assertThat(codec).isNotNull();
@@ -333,7 +334,7 @@ public class CachingCodecRegistryTest {
     Set<Set<Integer>> value = ImmutableSet.of(ImmutableSet.of(1));
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<Set<Set<Integer>>> codec = registry.codecFor(cqlType);
     assertThat(codec).isNotNull();
@@ -351,7 +352,7 @@ public class CachingCodecRegistryTest {
     Set<Set<Integer>> value = ImmutableSet.of(ImmutableSet.of(1));
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<Set<Set<Integer>>> codec = registry.codecFor(cqlType, value);
     assertThat(codec).isNotNull();
@@ -371,7 +372,7 @@ public class CachingCodecRegistryTest {
     Set<Set<Integer>> value = ImmutableSet.of(ImmutableSet.of(1));
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<Set<Set<Integer>>> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
@@ -394,7 +395,7 @@ public class CachingCodecRegistryTest {
     Set<InetAddress> value = ImmutableSet.of(address);
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<Set<InetAddress>> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
@@ -413,7 +414,7 @@ public class CachingCodecRegistryTest {
     Map<Integer, Map<Integer, Integer>> value = ImmutableMap.of(1, ImmutableMap.of(1, 1));
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<Map<Integer, Map<Integer, Integer>>> codec = registry.codecFor(cqlType, javaType);
     assertThat(codec).isNotNull();
@@ -438,7 +439,7 @@ public class CachingCodecRegistryTest {
     Map<Integer, Map<Integer, Integer>> value = ImmutableMap.of(1, ImmutableMap.of(1, 1));
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<Map<Integer, Map<Integer, Integer>>> codec = registry.codecFor(cqlType);
     assertThat(codec).isNotNull();
@@ -457,7 +458,7 @@ public class CachingCodecRegistryTest {
     Map<Integer, Map<Integer, Integer>> value = ImmutableMap.of(1, ImmutableMap.of(1, 1));
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<Map<Integer, Map<Integer, Integer>>> codec = registry.codecFor(javaType);
     assertThat(codec).isNotNull();
@@ -476,7 +477,7 @@ public class CachingCodecRegistryTest {
     Map<Integer, Map<Integer, Integer>> value = ImmutableMap.of(1, ImmutableMap.of(1, 1));
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<Map<Integer, Map<Integer, Integer>>> codec = registry.codecFor(cqlType, value);
     assertThat(codec).isNotNull();
@@ -500,7 +501,7 @@ public class CachingCodecRegistryTest {
     Map<Integer, Map<Integer, Integer>> value = ImmutableMap.of(1, ImmutableMap.of(1, 1));
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<Map<Integer, Map<Integer, Integer>>> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
@@ -526,7 +527,7 @@ public class CachingCodecRegistryTest {
     Map<InetAddress, InetAddress> value = ImmutableMap.of(address, address);
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<Map<InetAddress, InetAddress>> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
@@ -545,7 +546,7 @@ public class CachingCodecRegistryTest {
     TupleValue value = cqlType.newValue();
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<TupleValue> codec = registry.codecFor(cqlType, GenericType.TUPLE_VALUE);
     assertThat(codec).isNotNull();
@@ -564,7 +565,7 @@ public class CachingCodecRegistryTest {
     TupleValue value = cqlType.newValue();
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<TupleValue> codec = registry.codecFor(cqlType);
     assertThat(codec).isNotNull();
@@ -581,7 +582,7 @@ public class CachingCodecRegistryTest {
     TupleValue value = cqlType.newValue();
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<TupleValue> codec = registry.codecFor(cqlType, value);
     assertThat(codec).isNotNull();
@@ -600,7 +601,7 @@ public class CachingCodecRegistryTest {
     TupleValue value = cqlType.newValue();
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<TupleValue> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
@@ -626,7 +627,7 @@ public class CachingCodecRegistryTest {
     UdtValue value = cqlType.newValue();
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<UdtValue> codec = registry.codecFor(cqlType, GenericType.UDT_VALUE);
     assertThat(codec).isNotNull();
@@ -650,7 +651,7 @@ public class CachingCodecRegistryTest {
     UdtValue value = cqlType.newValue();
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<UdtValue> codec = registry.codecFor(cqlType);
     assertThat(codec).isNotNull();
@@ -672,7 +673,7 @@ public class CachingCodecRegistryTest {
     UdtValue value = cqlType.newValue();
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<UdtValue> codec = registry.codecFor(cqlType, value);
     assertThat(codec).isNotNull();
@@ -696,7 +697,7 @@ public class CachingCodecRegistryTest {
     UdtValue value = cqlType.newValue();
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     TypeCodec<UdtValue> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
@@ -737,7 +738,7 @@ public class CachingCodecRegistryTest {
   public void should_not_allow_covariance_for_lookups_by_java_type() {
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache, new ACodec());
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     // covariance not allowed
 
@@ -759,7 +760,7 @@ public class CachingCodecRegistryTest {
   public void should_allow_covariance_for_lookups_by_cql_type_and_value() {
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache, new ACodec());
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     // covariance allowed
 
@@ -786,7 +787,7 @@ public class CachingCodecRegistryTest {
   public void should_allow_covariance_for_lookups_by_value() {
 
     TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache, new ACodec());
-    InOrder inOrder = Mockito.inOrder(mockCache);
+    InOrder inOrder = inOrder(mockCache);
 
     // covariance allowed
 

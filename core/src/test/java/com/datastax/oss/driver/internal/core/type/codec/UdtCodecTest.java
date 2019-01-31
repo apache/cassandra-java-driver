@@ -16,6 +16,10 @@
 package com.datastax.oss.driver.internal.core.type.codec;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
@@ -35,7 +39,6 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class UdtCodecTest extends CodecTestBase<UdtValue> {
@@ -52,23 +55,22 @@ public class UdtCodecTest extends CodecTestBase<UdtValue> {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(attachmentPoint.getCodecRegistry()).thenReturn(codecRegistry);
-    Mockito.when(attachmentPoint.getProtocolVersion()).thenReturn(ProtocolVersion.DEFAULT);
+    when(attachmentPoint.getCodecRegistry()).thenReturn(codecRegistry);
+    when(attachmentPoint.getProtocolVersion()).thenReturn(ProtocolVersion.DEFAULT);
 
-    intCodec = Mockito.spy(TypeCodecs.INT);
-    doubleCodec = Mockito.spy(TypeCodecs.DOUBLE);
-    textCodec = Mockito.spy(TypeCodecs.TEXT);
+    intCodec = spy(TypeCodecs.INT);
+    doubleCodec = spy(TypeCodecs.DOUBLE);
+    textCodec = spy(TypeCodecs.TEXT);
 
     // Called by the getters/setters
-    Mockito.when(codecRegistry.codecFor(DataTypes.INT, Integer.class)).thenAnswer(i -> intCodec);
-    Mockito.when(codecRegistry.codecFor(DataTypes.DOUBLE, Double.class))
-        .thenAnswer(i -> doubleCodec);
-    Mockito.when(codecRegistry.codecFor(DataTypes.TEXT, String.class)).thenAnswer(i -> textCodec);
+    when(codecRegistry.codecFor(DataTypes.INT, Integer.class)).thenAnswer(i -> intCodec);
+    when(codecRegistry.codecFor(DataTypes.DOUBLE, Double.class)).thenAnswer(i -> doubleCodec);
+    when(codecRegistry.codecFor(DataTypes.TEXT, String.class)).thenAnswer(i -> textCodec);
 
     // Called by format/parse
-    Mockito.when(codecRegistry.codecFor(DataTypes.INT)).thenAnswer(i -> intCodec);
-    Mockito.when(codecRegistry.codecFor(DataTypes.DOUBLE)).thenAnswer(i -> doubleCodec);
-    Mockito.when(codecRegistry.codecFor(DataTypes.TEXT)).thenAnswer(i -> textCodec);
+    when(codecRegistry.codecFor(DataTypes.INT)).thenAnswer(i -> intCodec);
+    when(codecRegistry.codecFor(DataTypes.DOUBLE)).thenAnswer(i -> doubleCodec);
+    when(codecRegistry.codecFor(DataTypes.TEXT)).thenAnswer(i -> textCodec);
 
     userType =
         new DefaultUserDefinedType(
@@ -105,10 +107,10 @@ public class UdtCodecTest extends CodecTestBase<UdtValue> {
                 + ("00000001" + "61") // size and contents of field 2
             );
 
-    Mockito.verify(intCodec).encodePrimitive(1, ProtocolVersion.DEFAULT);
+    verify(intCodec).encodePrimitive(1, ProtocolVersion.DEFAULT);
     // null values are handled directly in the udt codec, without calling the child codec:
-    Mockito.verifyZeroInteractions(doubleCodec);
-    Mockito.verify(textCodec).encode("a", ProtocolVersion.DEFAULT);
+    verifyZeroInteractions(doubleCodec);
+    verify(textCodec).encode("a", ProtocolVersion.DEFAULT);
   }
 
   @Test
@@ -124,10 +126,9 @@ public class UdtCodecTest extends CodecTestBase<UdtValue> {
     assertThat(udt.isNull(1)).isTrue();
     assertThat(udt.getString(2)).isEqualTo("a");
 
-    Mockito.verify(intCodec)
-        .decodePrimitive(Bytes.fromHexString("0x00000001"), ProtocolVersion.DEFAULT);
-    Mockito.verifyZeroInteractions(doubleCodec);
-    Mockito.verify(textCodec).decode(Bytes.fromHexString("0x61"), ProtocolVersion.DEFAULT);
+    verify(intCodec).decodePrimitive(Bytes.fromHexString("0x00000001"), ProtocolVersion.DEFAULT);
+    verifyZeroInteractions(doubleCodec);
+    verify(textCodec).decode(Bytes.fromHexString("0x61"), ProtocolVersion.DEFAULT);
   }
 
   @Test
@@ -144,9 +145,9 @@ public class UdtCodecTest extends CodecTestBase<UdtValue> {
 
     assertThat(format(udt)).isEqualTo("{field1:1,field2:NULL,field3:'a'}");
 
-    Mockito.verify(intCodec).format(1);
-    Mockito.verify(doubleCodec).format(null);
-    Mockito.verify(textCodec).format("a");
+    verify(intCodec).format(1);
+    verify(doubleCodec).format(null);
+    verify(textCodec).format("a");
   }
 
   @Test
@@ -164,9 +165,9 @@ public class UdtCodecTest extends CodecTestBase<UdtValue> {
     assertThat(udt.isNull(1)).isTrue();
     assertThat(udt.getString(2)).isEqualTo("a");
 
-    Mockito.verify(intCodec).parse("1");
-    Mockito.verify(doubleCodec).parse("NULL");
-    Mockito.verify(textCodec).parse("'a'");
+    verify(intCodec).parse("1");
+    verify(doubleCodec).parse("NULL");
+    verify(textCodec).parse("'a'");
   }
 
   @Test(expected = IllegalArgumentException.class)

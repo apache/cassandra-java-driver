@@ -17,6 +17,8 @@ package com.datastax.oss.driver.internal.core.control;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
@@ -30,7 +32,6 @@ import com.datastax.oss.protocol.internal.response.event.TopologyChangeEvent;
 import java.util.concurrent.CompletableFuture;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 
 public class ControlConnectionEventsTest extends ControlConnectionTestBase {
 
@@ -40,7 +41,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     DriverChannel channel1 = newMockDriverChannel(1);
     ArgumentCaptor<DriverChannelOptions> optionsCaptor =
         ArgumentCaptor.forClass(DriverChannelOptions.class);
-    Mockito.when(channelFactory.connect(eq(node1), optionsCaptor.capture()))
+    when(channelFactory.connect(eq(node1), optionsCaptor.capture()))
         .thenReturn(CompletableFuture.completedFuture(channel1));
 
     // When
@@ -63,7 +64,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     DriverChannel channel1 = newMockDriverChannel(1);
     ArgumentCaptor<DriverChannelOptions> optionsCaptor =
         ArgumentCaptor.forClass(DriverChannelOptions.class);
-    Mockito.when(channelFactory.connect(eq(node1), optionsCaptor.capture()))
+    when(channelFactory.connect(eq(node1), optionsCaptor.capture()))
         .thenReturn(CompletableFuture.completedFuture(channel1));
 
     // When
@@ -83,7 +84,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     DriverChannel channel1 = newMockDriverChannel(1);
     ArgumentCaptor<DriverChannelOptions> optionsCaptor =
         ArgumentCaptor.forClass(DriverChannelOptions.class);
-    Mockito.when(channelFactory.connect(eq(node1), optionsCaptor.capture()))
+    when(channelFactory.connect(eq(node1), optionsCaptor.capture()))
         .thenReturn(CompletableFuture.completedFuture(channel1));
     controlConnection.init(true, false, false);
     waitForPendingAdminTasks();
@@ -95,8 +96,8 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     callback.onEvent(event);
 
     // Then
-    Mockito.verify(addressTranslator).translate(ADDRESS1);
-    Mockito.verify(eventBus).fire(TopologyEvent.suggestUp(ADDRESS1));
+    verify(addressTranslator).translate(ADDRESS1);
+    verify(eventBus).fire(TopologyEvent.suggestUp(ADDRESS1));
   }
 
   @Test
@@ -105,7 +106,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     DriverChannel channel1 = newMockDriverChannel(1);
     ArgumentCaptor<DriverChannelOptions> optionsCaptor =
         ArgumentCaptor.forClass(DriverChannelOptions.class);
-    Mockito.when(channelFactory.connect(eq(node1), optionsCaptor.capture()))
+    when(channelFactory.connect(eq(node1), optionsCaptor.capture()))
         .thenReturn(CompletableFuture.completedFuture(channel1));
     controlConnection.init(true, false, false);
     waitForPendingAdminTasks();
@@ -117,8 +118,8 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     callback.onEvent(event);
 
     // Then
-    Mockito.verify(addressTranslator).translate(ADDRESS1);
-    Mockito.verify(eventBus).fire(TopologyEvent.suggestAdded(ADDRESS1));
+    verify(addressTranslator).translate(ADDRESS1);
+    verify(eventBus).fire(TopologyEvent.suggestAdded(ADDRESS1));
   }
 
   @Test
@@ -127,7 +128,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     DriverChannel channel1 = newMockDriverChannel(1);
     ArgumentCaptor<DriverChannelOptions> optionsCaptor =
         ArgumentCaptor.forClass(DriverChannelOptions.class);
-    Mockito.when(channelFactory.connect(eq(node1), optionsCaptor.capture()))
+    when(channelFactory.connect(eq(node1), optionsCaptor.capture()))
         .thenReturn(CompletableFuture.completedFuture(channel1));
     controlConnection.init(false, false, false);
     waitForPendingAdminTasks();
@@ -144,6 +145,6 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     callback.onEvent(event);
 
     // Then
-    Mockito.verify(metadataManager).refreshSchema("ks", false, false);
+    verify(metadataManager).refreshSchema("ks", false, false);
   }
 }

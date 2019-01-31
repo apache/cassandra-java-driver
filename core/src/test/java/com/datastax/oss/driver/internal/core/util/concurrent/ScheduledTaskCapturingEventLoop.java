@@ -18,6 +18,8 @@ package com.datastax.oss.driver.internal.core.util.concurrent;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -32,7 +34,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.mockito.Mockito;
 
 /**
  * Extend Netty's default event loop to capture scheduled tasks instead of running them. The tasks
@@ -129,7 +130,7 @@ public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
     private final TimeUnit unit;
 
     @SuppressWarnings("unchecked")
-    private final ScheduledFuture<V> scheduledFuture = Mockito.mock(ScheduledFuture.class);
+    private final ScheduledFuture<V> scheduledFuture = mock(ScheduledFuture.class);
 
     CapturedTask(Callable<V> task, long initialDelay, TimeUnit unit) {
       this(task, initialDelay, -1, unit);
@@ -142,14 +143,13 @@ public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
       this.unit = unit;
 
       // If the code under test cancels the scheduled future, cancel our task
-      Mockito.when(scheduledFuture.cancel(anyBoolean()))
+      when(scheduledFuture.cancel(anyBoolean()))
           .thenAnswer(invocation -> futureTask.cancel(invocation.getArgument(0)));
 
       // Delegate methods of the scheduled future to our task (to be extended to more methods if
       // needed)
-      Mockito.when(scheduledFuture.isDone()).thenAnswer(invocation -> futureTask.isDone());
-      Mockito.when(scheduledFuture.isCancelled())
-          .thenAnswer(invocation -> futureTask.isCancelled());
+      when(scheduledFuture.isDone()).thenAnswer(invocation -> futureTask.isDone());
+      when(scheduledFuture.isCancelled()).thenAnswer(invocation -> futureTask.isCancelled());
     }
 
     public void run() {

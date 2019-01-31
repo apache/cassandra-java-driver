@@ -21,7 +21,10 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -40,7 +43,6 @@ import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
 public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingPolicyTestBase {
 
@@ -60,13 +62,13 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
   public void setup() {
     super.setup();
 
-    Mockito.when(context.getMetadataManager()).thenReturn(metadataManager);
-    Mockito.when(metadataManager.getMetadata()).thenReturn(metadata);
-    Mockito.when(metadata.getTokenMap()).thenAnswer(invocation -> Optional.of(this.tokenMap));
+    when(context.getMetadataManager()).thenReturn(metadataManager);
+    when(metadataManager.getMetadata()).thenReturn(metadata);
+    when(metadata.getTokenMap()).thenAnswer(invocation -> Optional.of(this.tokenMap));
 
     // Use a subclass to disable shuffling, we just spy to make sure that the shuffling method was
     // called (makes tests easier)
-    policy = Mockito.spy(new NonShufflingPolicy(context, DriverExecutionProfile.DEFAULT_NAME));
+    policy = spy(new NonShufflingPolicy(context, DriverExecutionProfile.DEFAULT_NAME));
     policy.init(
         ImmutableMap.of(
             ADDRESS1, node1,
@@ -90,43 +92,43 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
 
     assertRoundRobinQueryPlans();
 
-    Mockito.verify(request, never()).getRoutingKey();
-    Mockito.verify(request, never()).getRoutingToken();
-    Mockito.verify(metadataManager, never()).getMetadata();
+    verify(request, never()).getRoutingKey();
+    verify(request, never()).getRoutingToken();
+    verify(metadataManager, never()).getMetadata();
   }
 
   @Test
   public void should_use_round_robin_when_request_has_no_routing_key_or_token() {
-    Mockito.when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
+    when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
     assertThat(request.getRoutingKey()).isNull();
     assertThat(request.getRoutingToken()).isNull();
 
     assertRoundRobinQueryPlans();
 
-    Mockito.verify(metadataManager, never()).getMetadata();
+    verify(metadataManager, never()).getMetadata();
   }
 
   @Test
   public void should_use_round_robin_when_token_map_absent() {
-    Mockito.when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
-    Mockito.when(request.getRoutingKey()).thenReturn(ROUTING_KEY);
+    when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
+    when(request.getRoutingKey()).thenReturn(ROUTING_KEY);
 
-    Mockito.when(metadata.getTokenMap()).thenReturn(Optional.empty());
+    when(metadata.getTokenMap()).thenReturn(Optional.empty());
 
     assertRoundRobinQueryPlans();
 
-    Mockito.verify(metadata, atLeast(1)).getTokenMap();
+    verify(metadata, atLeast(1)).getTokenMap();
   }
 
   @Test
   public void should_use_round_robin_when_token_map_returns_no_replicas() {
-    Mockito.when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
-    Mockito.when(request.getRoutingKey()).thenReturn(ROUTING_KEY);
-    Mockito.when(tokenMap.getReplicas(KEYSPACE, ROUTING_KEY)).thenReturn(Collections.emptySet());
+    when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
+    when(request.getRoutingKey()).thenReturn(ROUTING_KEY);
+    when(tokenMap.getReplicas(KEYSPACE, ROUTING_KEY)).thenReturn(Collections.emptySet());
 
     assertRoundRobinQueryPlans();
 
-    Mockito.verify(tokenMap, atLeast(1)).getReplicas(KEYSPACE, ROUTING_KEY);
+    verify(tokenMap, atLeast(1)).getReplicas(KEYSPACE, ROUTING_KEY);
   }
 
   private void assertRoundRobinQueryPlans() {
@@ -146,9 +148,9 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
 
   @Test
   public void should_prioritize_single_replica() {
-    Mockito.when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
-    Mockito.when(request.getRoutingKey()).thenReturn(ROUTING_KEY);
-    Mockito.when(tokenMap.getReplicas(KEYSPACE, ROUTING_KEY)).thenReturn(ImmutableSet.of(node3));
+    when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
+    when(request.getRoutingKey()).thenReturn(ROUTING_KEY);
+    when(tokenMap.getReplicas(KEYSPACE, ROUTING_KEY)).thenReturn(ImmutableSet.of(node3));
 
     // node3 always first, round-robin on the rest
     assertThat(policy.newQueryPlan(request, session))
@@ -161,15 +163,14 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
         .containsExactly(node3, node5, node1, node2, node4);
 
     // Should not shuffle replicas since there is only one
-    Mockito.verify(policy, never()).shuffleHead(any(), anyInt());
+    verify(policy, never()).shuffleHead(any(), anyInt());
   }
 
   @Test
   public void should_prioritize_and_shuffle_replicas() {
-    Mockito.when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
-    Mockito.when(request.getRoutingKey()).thenReturn(ROUTING_KEY);
-    Mockito.when(tokenMap.getReplicas(KEYSPACE, ROUTING_KEY))
-        .thenReturn(ImmutableSet.of(node3, node5));
+    when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
+    when(request.getRoutingKey()).thenReturn(ROUTING_KEY);
+    when(tokenMap.getReplicas(KEYSPACE, ROUTING_KEY)).thenReturn(ImmutableSet.of(node3, node5));
 
     assertThat(policy.newQueryPlan(request, session))
         .containsExactly(node3, node5, node1, node2, node4);
@@ -178,9 +179,9 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
     assertThat(policy.newQueryPlan(request, session))
         .containsExactly(node3, node5, node4, node1, node2);
 
-    Mockito.verify(policy, times(3)).shuffleHead(any(), eq(2));
+    verify(policy, times(3)).shuffleHead(any(), eq(2));
     // No power of two choices with only two replicas
-    Mockito.verify(session, never()).getPools();
+    verify(session, never()).getPools();
   }
 
   static class NonShufflingPolicy extends DefaultLoadBalancingPolicy {

@@ -19,7 +19,10 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
@@ -48,7 +51,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class NodeStateManagerTest {
@@ -70,21 +72,20 @@ public class NodeStateManagerTest {
     MockitoAnnotations.initMocks(this);
 
     // Disable debouncing by default, tests that need it will override
-    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.METADATA_TOPOLOGY_WINDOW))
+    when(defaultProfile.getDuration(DefaultDriverOption.METADATA_TOPOLOGY_WINDOW))
         .thenReturn(Duration.ofSeconds(0));
-    Mockito.when(defaultProfile.getInt(DefaultDriverOption.METADATA_TOPOLOGY_MAX_EVENTS))
-        .thenReturn(1);
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(context.getConfig()).thenReturn(config);
+    when(defaultProfile.getInt(DefaultDriverOption.METADATA_TOPOLOGY_MAX_EVENTS)).thenReturn(1);
+    when(config.getDefaultProfile()).thenReturn(defaultProfile);
+    when(context.getConfig()).thenReturn(config);
 
-    this.eventBus = Mockito.spy(new EventBus("test"));
-    Mockito.when(context.getEventBus()).thenReturn(eventBus);
+    this.eventBus = spy(new EventBus("test"));
+    when(context.getEventBus()).thenReturn(eventBus);
 
     adminEventLoopGroup = new DefaultEventLoopGroup(1, new BlockingOperation.SafeThreadFactory());
-    Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
-    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
+    when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
+    when(context.getNettyOptions()).thenReturn(nettyOptions);
 
-    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
+    when(context.getMetricsFactory()).thenReturn(metricsFactory);
     node1 = new DefaultNode(new InetSocketAddress("127.0.0.1", 9042), context);
     node2 = new DefaultNode(new InetSocketAddress("127.0.0.2", 9042), context);
     ImmutableMap<InetSocketAddress, Node> nodes =
@@ -92,11 +93,11 @@ public class NodeStateManagerTest {
             .put(node1.getConnectAddress(), node1)
             .put(node2.getConnectAddress(), node2)
             .build();
-    Mockito.when(metadata.getNodes()).thenReturn(nodes);
-    Mockito.when(metadataManager.getMetadata()).thenReturn(metadata);
-    Mockito.when(metadataManager.refreshNode(any(Node.class)))
+    when(metadata.getNodes()).thenReturn(nodes);
+    when(metadataManager.getMetadata()).thenReturn(metadata);
+    when(metadataManager.refreshNode(any(Node.class)))
         .thenReturn(CompletableFuture.completedFuture(null));
-    Mockito.when(context.getMetadataManager()).thenReturn(metadataManager);
+    when(context.getMetadataManager()).thenReturn(metadataManager);
   }
 
   @After
@@ -119,7 +120,7 @@ public class NodeStateManagerTest {
       // Then
       assertThat(node1.state).isEqualTo(oldState);
     }
-    Mockito.verify(eventBus, never()).fire(any(NodeStateEvent.class));
+    verify(eventBus, never()).fire(any(NodeStateEvent.class));
   }
 
   @Test
@@ -138,9 +139,9 @@ public class NodeStateManagerTest {
       // Then
       assertThat(node1.state).isEqualTo(NodeState.UP);
       if (oldState != NodeState.UNKNOWN) {
-        Mockito.verify(metadataManager, times(++i)).refreshNode(node1);
+        verify(metadataManager, times(++i)).refreshNode(node1);
       }
-      Mockito.verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.UP, node1));
+      verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.UP, node1));
     }
   }
 
@@ -154,8 +155,8 @@ public class NodeStateManagerTest {
     waitForPendingAdminTasks();
 
     // Then
-    Mockito.verify(eventBus, never()).fire(any(NodeStateEvent.class));
-    Mockito.verify(metadataManager).addNode(NEW_ADDRESS);
+    verify(eventBus, never()).fire(any(NodeStateEvent.class));
+    verify(metadataManager).addNode(NEW_ADDRESS);
   }
 
   @Test
@@ -173,7 +174,7 @@ public class NodeStateManagerTest {
       // Then
       assertThat(node1.state).isEqualTo(oldState);
     }
-    Mockito.verify(eventBus, never()).fire(any(NodeStateEvent.class));
+    verify(eventBus, never()).fire(any(NodeStateEvent.class));
   }
 
   @Test
@@ -190,7 +191,7 @@ public class NodeStateManagerTest {
 
     // Then
     assertThat(node1.state).isEqualTo(NodeState.UP);
-    Mockito.verify(eventBus, never()).fire(any(NodeStateEvent.class));
+    verify(eventBus, never()).fire(any(NodeStateEvent.class));
   }
 
   @Test
@@ -208,7 +209,7 @@ public class NodeStateManagerTest {
 
       // Then
       assertThat(node1.state).isEqualTo(NodeState.DOWN);
-      Mockito.verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.DOWN, node1));
+      verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.DOWN, node1));
     }
   }
 
@@ -222,8 +223,8 @@ public class NodeStateManagerTest {
     waitForPendingAdminTasks();
 
     // Then
-    Mockito.verify(eventBus, never()).fire(any(NodeStateEvent.class));
-    Mockito.verify(metadataManager, never()).addNode(NEW_ADDRESS);
+    verify(eventBus, never()).fire(any(NodeStateEvent.class));
+    verify(metadataManager, never()).addNode(NEW_ADDRESS);
   }
 
   @Test
@@ -238,7 +239,7 @@ public class NodeStateManagerTest {
 
     // Then
     assertThat(node1.state).isEqualTo(NodeState.FORCED_DOWN);
-    Mockito.verify(eventBus, never()).fire(any(NodeStateEvent.class));
+    verify(eventBus, never()).fire(any(NodeStateEvent.class));
   }
 
   @Test
@@ -255,7 +256,7 @@ public class NodeStateManagerTest {
 
       // Then
       assertThat(node1.state).isEqualTo(NodeState.FORCED_DOWN);
-      Mockito.verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.FORCED_DOWN, node1));
+      verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.FORCED_DOWN, node1));
     }
   }
 
@@ -269,8 +270,8 @@ public class NodeStateManagerTest {
     waitForPendingAdminTasks();
 
     // Then
-    Mockito.verify(eventBus, never()).fire(any(NodeStateEvent.class));
-    Mockito.verify(metadataManager, never()).addNode(NEW_ADDRESS);
+    verify(eventBus, never()).fire(any(NodeStateEvent.class));
+    verify(metadataManager, never()).addNode(NEW_ADDRESS);
   }
 
   @Test
@@ -285,7 +286,7 @@ public class NodeStateManagerTest {
 
     // Then
     assertThat(node1.state).isEqualTo(NodeState.UP);
-    Mockito.verify(eventBus, never()).fire(any(NodeStateEvent.class));
+    verify(eventBus, never()).fire(any(NodeStateEvent.class));
   }
 
   @Test
@@ -304,9 +305,9 @@ public class NodeStateManagerTest {
 
       // Then
       assertThat(node1.state).isEqualTo(NodeState.UP);
-      Mockito.verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.UP, node1));
+      verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.UP, node1));
       if (oldState != NodeState.UNKNOWN) {
-        Mockito.verify(metadataManager, times(++i)).refreshNode(node1);
+        verify(metadataManager, times(++i)).refreshNode(node1);
       }
     }
   }
@@ -321,8 +322,8 @@ public class NodeStateManagerTest {
     waitForPendingAdminTasks();
 
     // Then
-    Mockito.verify(eventBus, never()).fire(any(NodeStateEvent.class));
-    Mockito.verify(metadataManager).addNode(NEW_ADDRESS);
+    verify(eventBus, never()).fire(any(NodeStateEvent.class));
+    verify(metadataManager).addNode(NEW_ADDRESS);
   }
 
   @Test
@@ -336,7 +337,7 @@ public class NodeStateManagerTest {
     waitForPendingAdminTasks();
 
     // Then
-    Mockito.verify(metadataManager).addNode(newAddress);
+    verify(metadataManager).addNode(newAddress);
   }
 
   @Test
@@ -349,7 +350,7 @@ public class NodeStateManagerTest {
     waitForPendingAdminTasks();
 
     // Then
-    Mockito.verify(metadataManager, never()).addNode(any(InetSocketAddress.class));
+    verify(metadataManager, never()).addNode(any(InetSocketAddress.class));
   }
 
   @Test
@@ -362,7 +363,7 @@ public class NodeStateManagerTest {
     waitForPendingAdminTasks();
 
     // Then
-    Mockito.verify(metadataManager).removeNode(node1.getConnectAddress());
+    verify(metadataManager).removeNode(node1.getConnectAddress());
   }
 
   @Test
@@ -376,16 +377,15 @@ public class NodeStateManagerTest {
     waitForPendingAdminTasks();
 
     // Then
-    Mockito.verify(metadataManager, never()).removeNode(any(InetSocketAddress.class));
+    verify(metadataManager, never()).removeNode(any(InetSocketAddress.class));
   }
 
   @Test
   public void should_coalesce_topology_events() {
     // Given
-    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.METADATA_TOPOLOGY_WINDOW))
+    when(defaultProfile.getDuration(DefaultDriverOption.METADATA_TOPOLOGY_WINDOW))
         .thenReturn(Duration.ofDays(1));
-    Mockito.when(defaultProfile.getInt(DefaultDriverOption.METADATA_TOPOLOGY_MAX_EVENTS))
-        .thenReturn(5);
+    when(defaultProfile.getInt(DefaultDriverOption.METADATA_TOPOLOGY_MAX_EVENTS)).thenReturn(5);
     new NodeStateManager(context);
     node1.state = NodeState.FORCED_DOWN;
     node2.state = NodeState.DOWN;
@@ -435,7 +435,7 @@ public class NodeStateManagerTest {
 
       // Then
       assertThat(node1.state).isEqualTo(NodeState.UP);
-      Mockito.verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.UP, node1));
+      verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.UP, node1));
     }
   }
 
@@ -451,7 +451,7 @@ public class NodeStateManagerTest {
 
     // Then
     assertThat(node1.state).isEqualTo(NodeState.FORCED_DOWN);
-    Mockito.verify(eventBus, never()).fire(any(NodeStateEvent.class));
+    verify(eventBus, never()).fire(any(NodeStateEvent.class));
   }
 
   @Test
@@ -482,7 +482,7 @@ public class NodeStateManagerTest {
     waitForPendingAdminTasks();
 
     assertThat(node1.state).isEqualTo(NodeState.DOWN);
-    Mockito.verify(eventBus).fire(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, node1));
+    verify(eventBus).fire(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, node1));
   }
 
   @Test
@@ -497,7 +497,7 @@ public class NodeStateManagerTest {
     waitForPendingAdminTasks();
 
     assertThat(node1.state).isEqualTo(NodeState.DOWN);
-    Mockito.verify(eventBus).fire(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, node1));
+    verify(eventBus).fire(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, node1));
   }
 
   @Test
@@ -512,7 +512,7 @@ public class NodeStateManagerTest {
     waitForPendingAdminTasks();
 
     assertThat(node1.state).isEqualTo(NodeState.UP);
-    Mockito.verify(eventBus, never()).fire(any(NodeStateEvent.class));
+    verify(eventBus, never()).fire(any(NodeStateEvent.class));
   }
 
   @Test

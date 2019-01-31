@@ -19,6 +19,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
@@ -30,7 +33,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -45,8 +47,8 @@ public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPo
   public void setup() {
     super.setup();
 
-    Mockito.when(filter.test(Mockito.any(Node.class))).thenReturn(true);
-    Mockito.when(context.getNodeFilter(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(filter);
+    when(filter.test(any(Node.class))).thenReturn(true);
+    when(context.getNodeFilter(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(filter);
 
     policy = new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
     policy.init(
@@ -55,7 +57,7 @@ public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPo
         ImmutableSet.of(ADDRESS1));
     assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1, node2);
 
-    Mockito.reset(distanceReporter);
+    reset(distanceReporter);
   }
 
   @Test
@@ -65,9 +67,9 @@ public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPo
 
     // Then
     assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1);
-    Mockito.verify(distanceReporter, never()).setDistance(eq(node2), any(NodeDistance.class));
+    verify(distanceReporter, never()).setDistance(eq(node2), any(NodeDistance.class));
     // should have been called only once, during initialization, but not during onDown
-    Mockito.verify(filter).test(node2);
+    verify(filter).test(node2);
   }
 
   @Test
@@ -77,9 +79,9 @@ public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPo
 
     // Then
     assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1);
-    Mockito.verify(distanceReporter, never()).setDistance(eq(node2), any(NodeDistance.class));
+    verify(distanceReporter, never()).setDistance(eq(node2), any(NodeDistance.class));
     // should have been called only once, during initialization, but not during onRemove
-    Mockito.verify(filter).test(node2);
+    verify(filter).test(node2);
   }
 
   @Test
@@ -88,8 +90,8 @@ public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPo
     policy.onAdd(node3);
 
     // Then
-    Mockito.verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
-    Mockito.verify(filter).test(node3);
+    verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
+    verify(filter).test(node3);
     // Not added to the live set yet, we're waiting for the pool to open
     assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1, node2);
   }
@@ -97,26 +99,26 @@ public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPo
   @Test
   public void should_ignore_added_node_when_filtered() {
     // Given
-    Mockito.when(filter.test(node3)).thenReturn(false);
+    when(filter.test(node3)).thenReturn(false);
 
     // When
     policy.onAdd(node3);
 
     // Then
-    Mockito.verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
+    verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
     assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1, node2);
   }
 
   @Test
   public void should_ignore_added_node_when_remote_dc() {
     // Given
-    Mockito.when(node3.getDatacenter()).thenReturn("dc2");
+    when(node3.getDatacenter()).thenReturn("dc2");
 
     // When
     policy.onAdd(node3);
 
     // Then
-    Mockito.verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
+    verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
     assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1, node2);
   }
 
@@ -126,35 +128,35 @@ public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPo
     policy.onUp(node3);
 
     // Then
-    Mockito.verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
-    Mockito.verify(filter).test(node3);
+    verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
+    verify(filter).test(node3);
     assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1, node2, node3);
   }
 
   @Test
   public void should_ignore_up_node_when_filtered() {
     // Given
-    Mockito.when(filter.test(node3)).thenReturn(false);
+    when(filter.test(node3)).thenReturn(false);
 
     // When
     policy.onUp(node3);
 
     // Then
-    Mockito.verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
-    Mockito.verify(filter).test(node3);
+    verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
+    verify(filter).test(node3);
     assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1, node2);
   }
 
   @Test
   public void should_ignore_up_node_when_remote_dc() {
     // Given
-    Mockito.when(node3.getDatacenter()).thenReturn("dc2");
+    when(node3.getDatacenter()).thenReturn("dc2");
 
     // When
     policy.onUp(node3);
 
     // Then
-    Mockito.verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
+    verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
     assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1, node2);
   }
 }

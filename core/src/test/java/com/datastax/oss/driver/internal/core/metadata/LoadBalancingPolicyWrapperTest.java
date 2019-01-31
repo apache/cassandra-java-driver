@@ -19,8 +19,13 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
@@ -47,7 +52,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
@@ -75,7 +79,7 @@ public class LoadBalancingPolicyWrapperTest {
 
   @Before
   public void setup() {
-    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
+    when(context.getMetricsFactory()).thenReturn(metricsFactory);
 
     node1 = new DefaultNode(new InetSocketAddress("127.0.0.1", 9042), context);
     node2 = new DefaultNode(new InetSocketAddress("127.0.0.2", 9042), context);
@@ -86,16 +90,16 @@ public class LoadBalancingPolicyWrapperTest {
             .put(node1.getConnectAddress(), node1)
             .put(node2.getConnectAddress(), node2)
             .build();
-    Mockito.when(metadata.getNodes()).thenReturn(contactPointsMap);
-    Mockito.when(metadataManager.getMetadata()).thenReturn(metadata);
-    Mockito.when(metadataManager.getContactPoints()).thenReturn(contactPointsMap.keySet());
-    Mockito.when(context.getMetadataManager()).thenReturn(metadataManager);
+    when(metadata.getNodes()).thenReturn(contactPointsMap);
+    when(metadataManager.getMetadata()).thenReturn(metadata);
+    when(metadataManager.getContactPoints()).thenReturn(contactPointsMap.keySet());
+    when(context.getMetadataManager()).thenReturn(metadataManager);
 
     defaultPolicysQueryPlan = Lists.newLinkedList(ImmutableList.of(node3, node2, node1));
-    Mockito.when(policy1.newQueryPlan(null, null)).thenReturn(defaultPolicysQueryPlan);
+    when(policy1.newQueryPlan(null, null)).thenReturn(defaultPolicysQueryPlan);
 
-    eventBus = Mockito.spy(new EventBus("test"));
-    Mockito.when(context.getEventBus()).thenReturn(eventBus);
+    eventBus = spy(new EventBus("test"));
+    when(context.getEventBus()).thenReturn(eventBus);
 
     wrapper =
         new LoadBalancingPolicyWrapper(
@@ -118,7 +122,7 @@ public class LoadBalancingPolicyWrapperTest {
 
     // Then
     for (LoadBalancingPolicy policy : ImmutableList.of(policy1, policy2, policy3)) {
-      Mockito.verify(policy, never()).newQueryPlan(null, null);
+      verify(policy, never()).newQueryPlan(null, null);
     }
     assertThat(queryPlan).containsOnlyElementsOf(contactPointsMap.values());
   }
@@ -128,8 +132,7 @@ public class LoadBalancingPolicyWrapperTest {
     // Given
     wrapper.init();
     for (LoadBalancingPolicy policy : ImmutableList.of(policy1, policy2, policy3)) {
-      Mockito.verify(policy)
-          .init(anyMap(), any(DistanceReporter.class), eq(contactPointsMap.keySet()));
+      verify(policy).init(anyMap(), any(DistanceReporter.class), eq(contactPointsMap.keySet()));
     }
 
     // When
@@ -137,7 +140,7 @@ public class LoadBalancingPolicyWrapperTest {
 
     // Then
     // no-arg newQueryPlan() uses the default profile
-    Mockito.verify(policy1).newQueryPlan(null, null);
+    verify(policy1).newQueryPlan(null, null);
     assertThat(queryPlan).isEqualTo(defaultPolicysQueryPlan);
   }
 
@@ -153,14 +156,14 @@ public class LoadBalancingPolicyWrapperTest {
             .put(node2.getConnectAddress(), node2)
             .put(node3.getConnectAddress(), node3)
             .build();
-    Mockito.when(metadata.getNodes()).thenReturn(contactPointsMap2);
+    when(metadata.getNodes()).thenReturn(contactPointsMap2);
 
     // When
     wrapper.init();
 
     // Then
     for (LoadBalancingPolicy policy : ImmutableList.of(policy1, policy2, policy3)) {
-      Mockito.verify(policy)
+      verify(policy)
           .init(
               initNodesCaptor.capture(),
               any(DistanceReporter.class),
@@ -175,16 +178,16 @@ public class LoadBalancingPolicyWrapperTest {
     // Given
     wrapper.init();
     ArgumentCaptor<DistanceReporter> captor1 = ArgumentCaptor.forClass(DistanceReporter.class);
-    Mockito.verify(policy1).init(anyMap(), captor1.capture(), eq(contactPointsMap.keySet()));
+    verify(policy1).init(anyMap(), captor1.capture(), eq(contactPointsMap.keySet()));
     DistanceReporter distanceReporter1 = captor1.getValue();
     ArgumentCaptor<DistanceReporter> captor2 = ArgumentCaptor.forClass(DistanceReporter.class);
-    Mockito.verify(policy2).init(anyMap(), captor2.capture(), eq(contactPointsMap.keySet()));
+    verify(policy2).init(anyMap(), captor2.capture(), eq(contactPointsMap.keySet()));
     DistanceReporter distanceReporter2 = captor1.getValue();
     ArgumentCaptor<DistanceReporter> captor3 = ArgumentCaptor.forClass(DistanceReporter.class);
-    Mockito.verify(policy3).init(anyMap(), captor3.capture(), eq(contactPointsMap.keySet()));
+    verify(policy3).init(anyMap(), captor3.capture(), eq(contactPointsMap.keySet()));
     DistanceReporter distanceReporter3 = captor3.getValue();
 
-    InOrder inOrder = Mockito.inOrder(eventBus);
+    InOrder inOrder = inOrder(eventBus);
 
     // When
     distanceReporter1.setDistance(node1, NodeDistance.REMOTE);
@@ -222,7 +225,7 @@ public class LoadBalancingPolicyWrapperTest {
 
     // Then
     for (LoadBalancingPolicy policy : ImmutableList.of(policy1, policy2, policy3)) {
-      Mockito.verify(policy, never()).onUp(node1);
+      verify(policy, never()).onUp(node1);
     }
   }
 
@@ -236,7 +239,7 @@ public class LoadBalancingPolicyWrapperTest {
 
     // Then
     for (LoadBalancingPolicy policy : ImmutableList.of(policy1, policy2, policy3)) {
-      Mockito.verify(policy).onUp(node1);
+      verify(policy).onUp(node1);
     }
   }
 
@@ -254,7 +257,7 @@ public class LoadBalancingPolicyWrapperTest {
           return null;
         };
     for (LoadBalancingPolicy policy : ImmutableList.of(policy1, policy2, policy3)) {
-      Mockito.doAnswer(mockInit)
+      doAnswer(mockInit)
           .when(policy)
           .init(anyMap(), any(DistanceReporter.class), eq(contactPointsMap.keySet()));
     }
@@ -278,7 +281,7 @@ public class LoadBalancingPolicyWrapperTest {
     // wait for init launch to signal that runnable is complete.
     initLatch.await(500, TimeUnit.MILLISECONDS);
     for (LoadBalancingPolicy policy : ImmutableList.of(policy1, policy2, policy3)) {
-      Mockito.verify(policy).onDown(node1);
+      verify(policy).onDown(node1);
     }
     if (thread.isAlive()) {
       // thread still completing - sleep to allow thread to complete.

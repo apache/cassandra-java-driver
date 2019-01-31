@@ -18,7 +18,10 @@ package com.datastax.oss.driver.internal.core.cql;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -32,7 +35,6 @@ import io.netty.channel.socket.DefaultSocketChannelConfig;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import io.netty.util.concurrent.Promise;
 import java.util.concurrent.CompletableFuture;
-import org.mockito.Mockito;
 
 /**
  * The simulated behavior of the connection pool for a given node in a {@link
@@ -54,13 +56,11 @@ public class PoolBehavior {
       this.channel = null;
       this.writePromise = null;
     } else {
-      this.channel = Mockito.mock(DriverChannel.class);
-      EventLoop eventLoop = Mockito.mock(EventLoop.class);
-      ChannelConfig config = Mockito.mock(DefaultSocketChannelConfig.class);
+      this.channel = mock(DriverChannel.class);
+      EventLoop eventLoop = mock(EventLoop.class);
+      ChannelConfig config = mock(DefaultSocketChannelConfig.class);
       this.writePromise = GlobalEventExecutor.INSTANCE.newPromise();
-      Mockito.when(
-              channel.write(
-                  any(Message.class), anyBoolean(), anyMap(), any(ResponseCallback.class)))
+      when(channel.write(any(Message.class), anyBoolean(), anyMap(), any(ResponseCallback.class)))
           .thenAnswer(
               invocation -> {
                 ResponseCallback callback = invocation.getArgument(3);
@@ -68,20 +68,19 @@ public class PoolBehavior {
                 callbackFuture.complete(callback);
                 return writePromise;
               });
-      ChannelFuture closeFuture = Mockito.mock(ChannelFuture.class);
-      Mockito.when(channel.closeFuture()).thenReturn(closeFuture);
-      Mockito.when(channel.eventLoop()).thenReturn(eventLoop);
-      Mockito.when(channel.config()).thenReturn(config);
+      ChannelFuture closeFuture = mock(ChannelFuture.class);
+      when(channel.closeFuture()).thenReturn(closeFuture);
+      when(channel.eventLoop()).thenReturn(eventLoop);
+      when(channel.config()).thenReturn(config);
     }
   }
 
   public void verifyWrite() {
-    Mockito.verify(channel)
-        .write(any(Message.class), anyBoolean(), anyMap(), any(ResponseCallback.class));
+    verify(channel).write(any(Message.class), anyBoolean(), anyMap(), any(ResponseCallback.class));
   }
 
   public void verifyNoWrite() {
-    Mockito.verify(channel, never())
+    verify(channel, never())
         .write(any(Message.class), anyBoolean(), anyMap(), any(ResponseCallback.class));
   }
 
@@ -113,9 +112,7 @@ public class PoolBehavior {
   public void mockFollowupRequest(Class<? extends Message> expectedMessage, Frame responseFrame) {
     Promise<Void> writePromise2 = GlobalEventExecutor.INSTANCE.newPromise();
     CompletableFuture<ResponseCallback> callbackFuture2 = new CompletableFuture<>();
-    Mockito.when(
-            channel.write(
-                any(expectedMessage), anyBoolean(), anyMap(), any(ResponseCallback.class)))
+    when(channel.write(any(expectedMessage), anyBoolean(), anyMap(), any(ResponseCallback.class)))
         .thenAnswer(
             invocation -> {
               callbackFuture2.complete(invocation.getArgument(3));
@@ -126,6 +123,6 @@ public class PoolBehavior {
   }
 
   public void verifyCancellation() {
-    Mockito.verify(channel).cancel(any(ResponseCallback.class));
+    verify(channel).cancel(any(ResponseCallback.class));
   }
 }

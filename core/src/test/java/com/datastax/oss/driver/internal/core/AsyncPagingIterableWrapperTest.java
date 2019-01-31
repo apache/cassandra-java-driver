@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.internal.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.AsyncPagingIterable;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -38,7 +40,6 @@ import java.util.concurrent.CompletableFuture;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class AsyncPagingIterableWrapperTest {
@@ -53,15 +54,15 @@ public class AsyncPagingIterableWrapperTest {
     MockitoAnnotations.initMocks(this);
 
     // One single column "i" of type int:
-    Mockito.when(columnDefinitions.contains("i")).thenReturn(true);
-    ColumnDefinition iDefinition = Mockito.mock(ColumnDefinition.class);
-    Mockito.when(iDefinition.getType()).thenReturn(DataTypes.INT);
-    Mockito.when(columnDefinitions.get("i")).thenReturn(iDefinition);
-    Mockito.when(columnDefinitions.firstIndexOf("i")).thenReturn(0);
-    Mockito.when(columnDefinitions.get(0)).thenReturn(iDefinition);
+    when(columnDefinitions.contains("i")).thenReturn(true);
+    ColumnDefinition iDefinition = mock(ColumnDefinition.class);
+    when(iDefinition.getType()).thenReturn(DataTypes.INT);
+    when(columnDefinitions.get("i")).thenReturn(iDefinition);
+    when(columnDefinitions.firstIndexOf("i")).thenReturn(0);
+    when(columnDefinitions.get(0)).thenReturn(iDefinition);
 
-    Mockito.when(context.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
-    Mockito.when(context.getProtocolVersion()).thenReturn(DefaultProtocolVersion.DEFAULT);
+    when(context.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
+    when(context.getProtocolVersion()).thenReturn(DefaultProtocolVersion.DEFAULT);
   }
 
   @Test
@@ -77,10 +78,10 @@ public class AsyncPagingIterableWrapperTest {
             columnDefinitions, mockExecutionInfo(), mockData(5, 10), session, context);
     // chain them together:
     ByteBuffer mockPagingState = ByteBuffer.allocate(0);
-    Mockito.when(executionInfo1.getPagingState()).thenReturn(mockPagingState);
-    Statement<?> mockNextStatement = Mockito.mock(Statement.class);
-    Mockito.when(((Statement) statement).copy(mockPagingState)).thenReturn(mockNextStatement);
-    Mockito.when(session.executeAsync(mockNextStatement))
+    when(executionInfo1.getPagingState()).thenReturn(mockPagingState);
+    Statement<?> mockNextStatement = mock(Statement.class);
+    when(((Statement) statement).copy(mockPagingState)).thenReturn(mockNextStatement);
+    when(session.executeAsync(mockNextStatement))
         .thenAnswer(invocation -> CompletableFuture.completedFuture(resultSet2));
 
     // When
@@ -124,8 +125,8 @@ public class AsyncPagingIterableWrapperTest {
   }
 
   private ExecutionInfo mockExecutionInfo() {
-    ExecutionInfo executionInfo = Mockito.mock(ExecutionInfo.class);
-    Mockito.when(executionInfo.getStatement()).thenAnswer(invocation -> statement);
+    ExecutionInfo executionInfo = mock(ExecutionInfo.class);
+    when(executionInfo.getStatement()).thenAnswer(invocation -> statement);
     return executionInfo;
   }
 

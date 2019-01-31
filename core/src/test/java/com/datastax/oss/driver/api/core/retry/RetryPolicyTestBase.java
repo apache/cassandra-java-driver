@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.retry;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
@@ -24,7 +25,6 @@ import com.datastax.oss.driver.api.core.session.Request;
 import org.assertj.core.api.Assert;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -56,11 +56,11 @@ public abstract class RetryPolicyTestBase {
 
   protected Assert<?, RetryDecision> assertOnRequestAborted(
       Class<? extends Throwable> errorClass, int retryCount) {
-    return assertThat(policy.onRequestAborted(request, Mockito.mock(errorClass), retryCount));
+    return assertThat(policy.onRequestAborted(request, mock(errorClass), retryCount));
   }
 
   protected Assert<?, RetryDecision> assertOnErrorResponse(
       Class<? extends CoordinatorException> errorClass, int retryCount) {
-    return assertThat(policy.onErrorResponse(request, Mockito.mock(errorClass), retryCount));
+    return assertThat(policy.onErrorResponse(request, mock(errorClass), retryCount));
   }
 }

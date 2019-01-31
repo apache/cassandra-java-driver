@@ -22,6 +22,7 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 
@@ -56,7 +57,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.internal.verification.VerificationModeFactory;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.verification.Timeout;
@@ -172,7 +172,7 @@ public class RequestLoggerIT {
     sessionRuleRequest.session().execute(QUERY);
 
     // Then
-    Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
         .contains("Success", "[0 values]", QUERY);
   }
@@ -186,7 +186,7 @@ public class RequestLoggerIT {
     sessionRuleDefaults.session().execute(QUERY);
 
     // Then
-    Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
         .contains("Success", "[0 values]", QUERY);
   }
@@ -205,7 +205,7 @@ public class RequestLoggerIT {
     }
 
     // Then
-    Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
     ILoggingEvent log = loggingEventCaptor.getValue();
     assertThat(log.getFormattedMessage())
         .contains("Error", "[0 values]", QUERY)
@@ -227,7 +227,7 @@ public class RequestLoggerIT {
     }
 
     // Then
-    Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
     ILoggingEvent log = loggingEventCaptor.getValue();
     assertThat(log.getFormattedMessage())
         .contains("Error", "[0 values]", QUERY, ServerError.class.getName());
@@ -249,7 +249,7 @@ public class RequestLoggerIT {
     }
 
     // Then
-    Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
     ILoggingEvent log = loggingEventCaptor.getValue();
     assertThat(log.getFormattedMessage())
         .contains("Error", "[0 values]", QUERY, ServerError.class.getName());
@@ -267,7 +267,7 @@ public class RequestLoggerIT {
         .execute(SimpleStatement.builder(QUERY).withExecutionProfileName("low-threshold").build());
 
     // Then
-    Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
         .contains("Slow", "[0 values]", QUERY);
   }
@@ -285,7 +285,7 @@ public class RequestLoggerIT {
     // Then
     // We expect no messages. The request logger is invoked asynchronously, so simply wait a bit
     TimeUnit.MILLISECONDS.sleep(500);
-    Mockito.verify(appender, never()).doAppend(any(LoggingEvent.class));
+    verify(appender, never()).doAppend(any(LoggingEvent.class));
   }
 
   @Test
@@ -308,7 +308,7 @@ public class RequestLoggerIT {
     ResultSet set = sessionRuleNode.session().execute(QUERY);
 
     // Then
-    Mockito.verify(appender, new Timeout(500, VerificationModeFactory.times(3)))
+    verify(appender, new Timeout(500, VerificationModeFactory.times(3)))
         .doAppend(loggingEventCaptor.capture());
     List<ILoggingEvent> events = loggingEventCaptor.getAllValues();
     assertThat(events.get(0).getFormattedMessage()).contains("Error", "[0 values]", QUERY);
@@ -335,7 +335,7 @@ public class RequestLoggerIT {
     ResultSet set = sessionRuleNode.session().execute(QUERY);
 
     // Then
-    Mockito.verify(appender, new Timeout(500, VerificationModeFactory.times(2)))
+    verify(appender, new Timeout(500, VerificationModeFactory.times(2)))
         .doAppend(loggingEventCaptor.capture());
     List<ILoggingEvent> events = loggingEventCaptor.getAllValues();
     assertThat(events.get(0).getFormattedMessage()).contains("Success", "[0 values]", QUERY);

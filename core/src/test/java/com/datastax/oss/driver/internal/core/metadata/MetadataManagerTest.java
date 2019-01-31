@@ -18,7 +18,10 @@ package com.datastax.oss.driver.internal.core.metadata;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
@@ -50,7 +53,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class MetadataManagerTest {
@@ -77,23 +79,22 @@ public class MetadataManagerTest {
     MockitoAnnotations.initMocks(this);
 
     adminEventLoopGroup = new DefaultEventLoopGroup(1);
-    Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
-    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
+    when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
+    when(context.getNettyOptions()).thenReturn(nettyOptions);
 
-    Mockito.when(context.getTopologyMonitor()).thenReturn(topologyMonitor);
+    when(context.getTopologyMonitor()).thenReturn(topologyMonitor);
 
-    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.METADATA_SCHEMA_WINDOW))
+    when(defaultProfile.getDuration(DefaultDriverOption.METADATA_SCHEMA_WINDOW))
         .thenReturn(Duration.ZERO);
-    Mockito.when(defaultProfile.getInt(DefaultDriverOption.METADATA_SCHEMA_MAX_EVENTS))
-        .thenReturn(1);
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(context.getConfig()).thenReturn(config);
+    when(defaultProfile.getInt(DefaultDriverOption.METADATA_SCHEMA_MAX_EVENTS)).thenReturn(1);
+    when(config.getDefaultProfile()).thenReturn(defaultProfile);
+    when(context.getConfig()).thenReturn(config);
 
-    Mockito.when(context.getEventBus()).thenReturn(eventBus);
-    Mockito.when(context.getSchemaQueriesFactory()).thenReturn(schemaQueriesFactory);
-    Mockito.when(context.getSchemaParserFactory()).thenReturn(schemaParserFactory);
+    when(context.getEventBus()).thenReturn(eventBus);
+    when(context.getSchemaQueriesFactory()).thenReturn(schemaQueriesFactory);
+    when(context.getSchemaParserFactory()).thenReturn(schemaParserFactory);
 
-    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
+    when(context.getMetricsFactory()).thenReturn(metricsFactory);
 
     metadataManager = new TestMetadataManager(context);
   }
@@ -136,11 +137,10 @@ public class MetadataManagerTest {
   @Test
   public void should_refresh_all_nodes() {
     // Given
-    NodeInfo info1 = Mockito.mock(NodeInfo.class);
-    NodeInfo info2 = Mockito.mock(NodeInfo.class);
+    NodeInfo info1 = mock(NodeInfo.class);
+    NodeInfo info2 = mock(NodeInfo.class);
     List<NodeInfo> infos = ImmutableList.of(info1, info2);
-    Mockito.when(topologyMonitor.refreshNodeList())
-        .thenReturn(CompletableFuture.completedFuture(infos));
+    when(topologyMonitor.refreshNodeList()).thenReturn(CompletableFuture.completedFuture(infos));
 
     // When
     CompletionStage<Void> refreshNodesFuture = metadataManager.refreshNodes();
@@ -157,9 +157,9 @@ public class MetadataManagerTest {
   public void should_refresh_single_node() {
     // Given
     Node node = new DefaultNode(ADDRESS1, context);
-    NodeInfo info = Mockito.mock(NodeInfo.class);
-    Mockito.when(info.getDatacenter()).thenReturn("dc1");
-    Mockito.when(topologyMonitor.refreshNode(node))
+    NodeInfo info = mock(NodeInfo.class);
+    when(info.getDatacenter()).thenReturn("dc1");
+    when(topologyMonitor.refreshNode(node))
         .thenReturn(CompletableFuture.completedFuture(Optional.of(info)));
 
     // When
@@ -168,15 +168,15 @@ public class MetadataManagerTest {
     // Then
     // the info should have been copied to the node
     assertThatStage(refreshNodeFuture).isSuccess();
-    Mockito.verify(info, timeout(500)).getDatacenter();
+    verify(info, timeout(500)).getDatacenter();
     assertThat(node.getDatacenter()).isEqualTo("dc1");
   }
 
   @Test
   public void should_ignore_node_refresh_if_topology_monitor_does_not_have_info() {
     // Given
-    Node node = Mockito.mock(Node.class);
-    Mockito.when(topologyMonitor.refreshNode(node))
+    Node node = mock(Node.class);
+    when(topologyMonitor.refreshNode(node))
         .thenReturn(CompletableFuture.completedFuture(Optional.empty()));
 
     // When
@@ -189,9 +189,9 @@ public class MetadataManagerTest {
   @Test
   public void should_add_node() {
     // Given
-    NodeInfo info = Mockito.mock(NodeInfo.class);
-    Mockito.when(info.getConnectAddress()).thenReturn(ADDRESS1);
-    Mockito.when(topologyMonitor.getNewNodeInfo(ADDRESS1))
+    NodeInfo info = mock(NodeInfo.class);
+    when(info.getConnectAddress()).thenReturn(ADDRESS1);
+    when(topologyMonitor.getNewNodeInfo(ADDRESS1))
         .thenReturn(CompletableFuture.completedFuture(Optional.of(info)));
 
     // When
@@ -207,10 +207,10 @@ public class MetadataManagerTest {
   @Test
   public void should_not_add_node_if_connect_address_does_not_match() {
     // Given
-    NodeInfo info = Mockito.mock(NodeInfo.class);
-    Mockito.when(topologyMonitor.getNewNodeInfo(ADDRESS1))
+    NodeInfo info = mock(NodeInfo.class);
+    when(topologyMonitor.getNewNodeInfo(ADDRESS1))
         .thenReturn(CompletableFuture.completedFuture(Optional.of(info)));
-    Mockito.when(info.getConnectAddress())
+    when(info.getConnectAddress())
         .thenReturn(
             ADDRESS2 // Does not match the address we got the info with
             );
@@ -226,7 +226,7 @@ public class MetadataManagerTest {
   @Test
   public void should_not_add_node_if_topology_monitor_does_not_have_info() {
     // Given
-    Mockito.when(topologyMonitor.getNewNodeInfo(ADDRESS1))
+    when(topologyMonitor.getNewNodeInfo(ADDRESS1))
         .thenReturn(CompletableFuture.completedFuture(Optional.empty()));
 
     // When

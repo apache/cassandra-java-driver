@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.internal.core.metadata.schema.parsing;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
@@ -30,7 +32,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -143,7 +144,7 @@ public class DataTypeClassNameParserTest {
 
   @Test
   public void should_make_a_frozen_copy_user_type_when_definition_already_available() {
-    UserDefinedType existing = Mockito.mock(UserDefinedType.class);
+    UserDefinedType existing = mock(UserDefinedType.class);
 
     parse(
         "org.apache.cassandra.db.marshal.UserType(foo,70686f6e65,"
@@ -151,7 +152,7 @@ public class DataTypeClassNameParserTest {
             + "6e756d626572:org.apache.cassandra.db.marshal.UTF8Type)",
         ImmutableMap.of(CqlIdentifier.fromInternal("phone"), existing));
 
-    Mockito.verify(existing).copy(true);
+    verify(existing).copy(true);
   }
 
   @Test

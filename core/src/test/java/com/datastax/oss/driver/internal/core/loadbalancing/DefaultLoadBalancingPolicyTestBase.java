@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.loadbalancing;
 
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.when;
+
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
@@ -34,7 +37,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
 
@@ -66,22 +68,21 @@ public abstract class DefaultLoadBalancingPolicyTestBase {
 
   @Before
   public void setup() {
-    Mockito.when(context.getSessionName()).thenReturn("test");
-    Mockito.when(context.getConfig()).thenReturn(config);
-    Mockito.when(config.getProfile(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(defaultProfile);
+    when(context.getSessionName()).thenReturn("test");
+    when(context.getConfig()).thenReturn(config);
+    when(config.getProfile(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(defaultProfile);
 
-    Mockito.when(
-            defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null))
+    when(defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null))
         .thenReturn("dc1");
 
     logger = (Logger) LoggerFactory.getLogger(DefaultLoadBalancingPolicy.class);
     logger.addAppender(appender);
 
     for (Node node : ImmutableList.of(node1, node2, node3, node4, node5)) {
-      Mockito.when(node.getDatacenter()).thenReturn("dc1");
+      when(node.getDatacenter()).thenReturn("dc1");
     }
 
-    Mockito.when(context.getLocalDatacenter(Mockito.anyString())).thenReturn(null);
+    when(context.getLocalDatacenter(anyString())).thenReturn(null);
   }
 
   @After

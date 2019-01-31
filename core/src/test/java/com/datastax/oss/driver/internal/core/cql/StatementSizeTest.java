@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
@@ -45,7 +46,6 @@ import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class StatementSizeTest {
@@ -69,9 +69,9 @@ public class StatementSizeTest {
     MockitoAnnotations.initMocks(this);
 
     ByteBuffer preparedId = ByteBuffer.wrap(PREPARED_ID);
-    Mockito.when(preparedStatement.getId()).thenReturn(preparedId);
+    when(preparedStatement.getId()).thenReturn(preparedId);
     ByteBuffer resultMetadataId = ByteBuffer.wrap(RESULT_METADATA_ID);
-    Mockito.when(preparedStatement.getResultMetadataId()).thenReturn(resultMetadataId);
+    when(preparedStatement.getResultMetadataId()).thenReturn(resultMetadataId);
 
     ColumnDefinitions columnDefinitions =
         DefaultColumnDefinitions.valueOf(
@@ -79,15 +79,15 @@ public class StatementSizeTest {
                 phonyColumnDef("ks", "table", "c1", -1, ProtocolConstants.DataType.INT),
                 phonyColumnDef("ks", "table", "c2", -1, ProtocolConstants.DataType.VARCHAR)));
 
-    Mockito.when(preparedStatement.getVariableDefinitions()).thenReturn(columnDefinitions);
+    when(preparedStatement.getVariableDefinitions()).thenReturn(columnDefinitions);
 
-    Mockito.when(driverContext.getProtocolVersion()).thenReturn(DefaultProtocolVersion.V5);
-    Mockito.when(driverContext.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
-    Mockito.when(driverContext.getProtocolVersionRegistry())
+    when(driverContext.getProtocolVersion()).thenReturn(DefaultProtocolVersion.V5);
+    when(driverContext.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
+    when(driverContext.getProtocolVersionRegistry())
         .thenReturn(new CassandraProtocolVersionRegistry(null));
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(driverContext.getConfig()).thenReturn(config);
-    Mockito.when(driverContext.getTimestampGenerator()).thenReturn(timestampGenerator);
+    when(config.getDefaultProfile()).thenReturn(defaultProfile);
+    when(driverContext.getConfig()).thenReturn(config);
+    when(driverContext.getTimestampGenerator()).thenReturn(timestampGenerator);
   }
 
   private ColumnDefinition phonyColumnDef(

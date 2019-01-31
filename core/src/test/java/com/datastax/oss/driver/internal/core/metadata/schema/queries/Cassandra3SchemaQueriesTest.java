@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -31,7 +32,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingDeque;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
 
@@ -41,9 +41,8 @@ public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
     super.setup();
 
     // By default, no keyspace filter
-    Mockito.when(
-            config.getStringList(
-                DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList()))
+    when(config.getStringList(
+            DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList()))
         .thenReturn(Collections.emptyList());
   }
 
@@ -54,9 +53,8 @@ public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
 
   @Test
   public void should_query_with_keyspace_filter() {
-    Mockito.when(
-            config.getStringList(
-                DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList()))
+    when(config.getStringList(
+            DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList()))
         .thenReturn(ImmutableList.of("ks1", "ks2"));
 
     should_query_with_where_clause(" WHERE keyspace_name in ('ks1','ks2')");

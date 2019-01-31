@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.data;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.data.UdtValue;
@@ -30,7 +31,6 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class DefaultUdtValueTest extends AccessibleByIdTestBase<UdtValue> {
 
@@ -89,8 +89,8 @@ public class DefaultUdtValueTest extends AccessibleByIdTestBase<UdtValue> {
             .withField(CqlIdentifier.fromInternal("field1"), DataTypes.INT)
             .withField(CqlIdentifier.fromInternal("field2"), DataTypes.TEXT)
             .build();
-    Mockito.when(codecRegistry.<Integer>codecFor(DataTypes.INT)).thenReturn(TypeCodecs.INT);
-    Mockito.when(codecRegistry.codecFor(DataTypes.TEXT, "foo")).thenReturn(TypeCodecs.TEXT);
+    when(codecRegistry.<Integer>codecFor(DataTypes.INT)).thenReturn(TypeCodecs.INT);
+    when(codecRegistry.codecFor(DataTypes.TEXT, "foo")).thenReturn(TypeCodecs.TEXT);
     UdtValue value = type.newValue(null, "foo");
 
     assertThat(value.isNull(0)).isTrue();

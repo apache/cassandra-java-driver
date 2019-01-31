@@ -19,7 +19,11 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -51,7 +55,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -75,44 +78,41 @@ public class SchemaAgreementCheckerTest {
 
   @Before
   public void setup() {
-    Mockito.when(defaultConfig.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT))
+    when(defaultConfig.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT))
         .thenReturn(Duration.ofSeconds(1));
-    Mockito.when(
-            defaultConfig.getDuration(DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_INTERVAL))
+    when(defaultConfig.getDuration(DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_INTERVAL))
         .thenReturn(Duration.ofMillis(200));
-    Mockito.when(
-            defaultConfig.getDuration(DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_TIMEOUT))
+    when(defaultConfig.getDuration(DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_TIMEOUT))
         .thenReturn(Duration.ofSeconds(10));
-    Mockito.when(defaultConfig.getBoolean(DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_WARN))
+    when(defaultConfig.getBoolean(DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_WARN))
         .thenReturn(true);
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfig);
-    Mockito.when(context.getConfig()).thenReturn(config);
+    when(config.getDefaultProfile()).thenReturn(defaultConfig);
+    when(context.getConfig()).thenReturn(config);
 
-    addressTranslator = Mockito.spy(new PassThroughAddressTranslator(context));
-    Mockito.when(context.getAddressTranslator()).thenReturn(addressTranslator);
+    addressTranslator = spy(new PassThroughAddressTranslator(context));
+    when(context.getAddressTranslator()).thenReturn(addressTranslator);
 
     Map<InetSocketAddress, Node> nodes = ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2);
-    Mockito.when(metadata.getNodes()).thenReturn(nodes);
-    Mockito.when(metadataManager.getMetadata()).thenReturn(metadata);
-    Mockito.when(context.getMetadataManager()).thenReturn(metadataManager);
+    when(metadata.getNodes()).thenReturn(nodes);
+    when(metadataManager.getMetadata()).thenReturn(metadata);
+    when(context.getMetadataManager()).thenReturn(metadataManager);
 
-    Mockito.when(node2.getState()).thenReturn(NodeState.UP);
+    when(node2.getState()).thenReturn(NodeState.UP);
 
-    Mockito.when(eventLoop.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class)))
+    when(eventLoop.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class)))
         .thenAnswer(
             invocation -> { // Ignore delay and run immediately:
               Runnable task = invocation.getArgument(0);
               task.run();
               return null;
             });
-    Mockito.when(channel.eventLoop()).thenReturn(eventLoop);
+    when(channel.eventLoop()).thenReturn(eventLoop);
   }
 
   @Test
   public void should_skip_if_timeout_is_zero() {
     // Given
-    Mockito.when(
-            defaultConfig.getDuration(DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_TIMEOUT))
+    when(defaultConfig.getDuration(DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_TIMEOUT))
         .thenReturn(Duration.ZERO);
     TestSchemaAgreementChecker checker = new TestSchemaAgreementChecker(channel, context);
 
@@ -158,14 +158,14 @@ public class SchemaAgreementCheckerTest {
 
     // Then
     assertThatStage(future).isSuccess(b -> assertThat(b).isTrue());
-    Mockito.verify(addressTranslator).translate(ADDRESS2);
+    verify(addressTranslator).translate(ADDRESS2);
   }
 
   @Test
   public void should_ignore_down_peers() {
     // Given
     TestSchemaAgreementChecker checker = new TestSchemaAgreementChecker(channel, context);
-    Mockito.when(node2.getState()).thenReturn(NodeState.DOWN);
+    when(node2.getState()).thenReturn(NodeState.DOWN);
     checker.stubQueries(
         new StubbedQuery(
             "SELECT schema_version FROM system.local WHERE key='local'",
@@ -179,7 +179,7 @@ public class SchemaAgreementCheckerTest {
 
     // Then
     assertThatStage(future).isSuccess(b -> assertThat(b).isTrue());
-    Mockito.verify(addressTranslator).translate(ADDRESS2);
+    verify(addressTranslator).translate(ADDRESS2);
   }
 
   @Test
@@ -199,14 +199,14 @@ public class SchemaAgreementCheckerTest {
 
     // Then
     assertThatStage(future).isSuccess(b -> assertThat(b).isTrue());
-    Mockito.verify(addressTranslator, never()).translate(ADDRESS2);
+    verify(addressTranslator, never()).translate(ADDRESS2);
   }
 
   @Test
   public void should_use_peer_if_rpc_address_is_0_0_0_0() {
     // Given
     TestSchemaAgreementChecker checker = new TestSchemaAgreementChecker(channel, context);
-    Mockito.when(node2.getState()).thenReturn(NodeState.DOWN);
+    when(node2.getState()).thenReturn(NodeState.DOWN);
     checker.stubQueries(
         new StubbedQuery(
             "SELECT schema_version FROM system.local WHERE key='local'",
@@ -222,7 +222,7 @@ public class SchemaAgreementCheckerTest {
 
     // Then
     assertThatStage(future).isSuccess(b -> assertThat(b).isTrue());
-    Mockito.verify(addressTranslator).translate(ADDRESS2);
+    verify(addressTranslator).translate(ADDRESS2);
   }
 
   @Test
@@ -256,8 +256,7 @@ public class SchemaAgreementCheckerTest {
   @Test
   public void should_fail_if_versions_do_not_match_after_timeout() {
     // Given
-    Mockito.when(
-            defaultConfig.getDuration(DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_TIMEOUT))
+    when(defaultConfig.getDuration(DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_TIMEOUT))
         .thenReturn(Duration.ofNanos(10));
     TestSchemaAgreementChecker checker = new TestSchemaAgreementChecker(channel, context);
     checker.stubQueries(
@@ -308,16 +307,16 @@ public class SchemaAgreementCheckerTest {
   }
 
   private AdminRow mockRow(InetAddress peer, InetAddress rpcAddress, UUID uuid) {
-    AdminRow row = Mockito.mock(AdminRow.class);
-    Mockito.when(row.getInetAddress("peer")).thenReturn(peer);
-    Mockito.when(row.getInetAddress("rpc_address")).thenReturn(rpcAddress);
-    Mockito.when(row.getUuid("schema_version")).thenReturn(uuid);
+    AdminRow row = mock(AdminRow.class);
+    when(row.getInetAddress("peer")).thenReturn(peer);
+    when(row.getInetAddress("rpc_address")).thenReturn(rpcAddress);
+    when(row.getUuid("schema_version")).thenReturn(uuid);
     return row;
   }
 
   private AdminResult mockResult(AdminRow... rows) {
-    AdminResult result = Mockito.mock(AdminResult.class);
-    Mockito.when(result.iterator()).thenReturn(Iterators.forArray(rows));
+    AdminResult result = mock(AdminResult.class);
+    when(result.iterator()).thenReturn(Iterators.forArray(rows));
     return result;
   }
 }

@@ -17,6 +17,8 @@ package com.datastax.oss.driver.internal.core.pool;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -28,14 +30,12 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
 
   @Test
   public void should_switch_keyspace_on_existing_channels() throws Exception {
-    Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
-        .thenReturn(2);
+    when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(2);
 
     DriverChannel channel1 = newMockDriverChannel(1);
     DriverChannel channel2 = newMockDriverChannel(2);
@@ -59,8 +59,8 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
     CompletionStage<Void> setKeyspaceFuture = pool.setKeyspace(newKeyspace);
     waitForPendingAdminTasks();
 
-    Mockito.verify(channel1).setKeyspace(newKeyspace);
-    Mockito.verify(channel2).setKeyspace(newKeyspace);
+    verify(channel1).setKeyspace(newKeyspace);
+    verify(channel2).setKeyspace(newKeyspace);
 
     assertThatStage(setKeyspaceFuture).isSuccess();
 
@@ -69,10 +69,9 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
 
   @Test
   public void should_switch_keyspace_on_pending_channels() throws Exception {
-    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
 
-    Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
-        .thenReturn(2);
+    when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(2);
 
     DriverChannel channel1 = newMockDriverChannel(1);
     CompletableFuture<DriverChannel> channel1Future = new CompletableFuture<>();
@@ -98,8 +97,8 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
     ChannelPool pool = poolFuture.toCompletableFuture().get();
 
     // Check that reconnection has kicked in, but do not complete it yet
-    Mockito.verify(reconnectionSchedule).nextDelay();
-    Mockito.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
+    verify(reconnectionSchedule).nextDelay();
+    verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
     factoryHelper.waitForCalls(node, 2);
 
     // Switch keyspace, it succeeds immediately since there is no active channel
@@ -113,9 +112,9 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
     channel2Future.complete(channel2);
     waitForPendingAdminTasks();
 
-    Mockito.verify(eventBus).fire(ChannelEvent.reconnectionStopped(node));
-    Mockito.verify(channel1).setKeyspace(newKeyspace);
-    Mockito.verify(channel2).setKeyspace(newKeyspace);
+    verify(eventBus).fire(ChannelEvent.reconnectionStopped(node));
+    verify(channel1).setKeyspace(newKeyspace);
+    verify(channel2).setKeyspace(newKeyspace);
 
     factoryHelper.verifyNoMoreCalls();
   }

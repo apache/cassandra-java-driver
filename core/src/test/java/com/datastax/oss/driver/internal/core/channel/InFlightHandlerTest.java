@@ -16,7 +16,10 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
@@ -40,7 +43,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class InFlightHandlerTest extends ChannelHandlerTestBase {
@@ -61,7 +63,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   public void should_fail_if_connection_busy() throws Throwable {
     // Given
     addToPipeline();
-    Mockito.when(streamIds.acquire()).thenReturn(-1);
+    when(streamIds.acquire()).thenReturn(-1);
 
     // When
     ChannelFuture writeFuture =
@@ -78,7 +80,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   public void should_assign_streamid_and_send_frame() {
     // Given
     addToPipeline();
-    Mockito.when(streamIds.acquire()).thenReturn(42);
+    when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback();
 
     // When
@@ -88,7 +90,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
 
     // Then
     assertThat(writeFuture).isSuccess();
-    Mockito.verify(streamIds).acquire();
+    verify(streamIds).acquire();
 
     Frame frame = readOutboundFrame();
     assertThat(frame.streamId).isEqualTo(42);
@@ -99,7 +101,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   public void should_notify_callback_of_response() {
     // Given
     addToPipeline();
-    Mockito.when(streamIds.acquire()).thenReturn(42);
+    when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback();
     channel.writeAndFlush(
         new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback));
@@ -111,14 +113,14 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
 
     // Then
     assertThat(responseCallback.getLastResponse()).isSameAs(responseFrame);
-    Mockito.verify(streamIds).release(42);
+    verify(streamIds).release(42);
   }
 
   @Test
   public void should_notify_response_promise_when_decoding_fails() throws Throwable {
     // Given
     addToPipeline();
-    Mockito.when(streamIds.acquire()).thenReturn(42);
+    when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback();
     channel
         .writeAndFlush(
@@ -131,14 +133,14 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
 
     // Then
     assertThat(responseCallback.getFailure()).isSameAs(mockCause);
-    Mockito.verify(streamIds).release(42);
+    verify(streamIds).release(42);
   }
 
   @Test
   public void should_release_stream_id_when_orphaned_callback_receives_response() {
     // Given
     addToPipeline();
-    Mockito.when(streamIds.acquire()).thenReturn(42);
+    when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback();
     channel.writeAndFlush(
         new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback));
@@ -150,7 +152,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     writeInboundFrame(responseFrame);
 
     // Then
-    Mockito.verify(streamIds).release(42);
+    verify(streamIds).release(42);
     // The response is not propagated, because we assume a callback that cancelled managed its own
     // termination
     assertThat(responseCallback.getLastResponse()).isNull();
@@ -160,7 +162,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   public void should_delay_graceful_close_and_complete_when_last_pending_completes() {
     // Given
     addToPipeline();
-    Mockito.when(streamIds.acquire()).thenReturn(42);
+    when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback();
     channel
         .writeAndFlush(
@@ -187,7 +189,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   public void should_delay_graceful_close_and_complete_when_last_pending_cancelled() {
     // Given
     addToPipeline();
-    Mockito.when(streamIds.acquire()).thenReturn(42);
+    when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback();
     channel
         .writeAndFlush(
@@ -225,7 +227,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   public void should_refuse_new_writes_during_graceful_close() {
     // Given
     addToPipeline();
-    Mockito.when(streamIds.acquire()).thenReturn(42);
+    when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback();
     channel
         .writeAndFlush(
@@ -256,7 +258,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     addToPipeline();
     // Generate n orphan ids by writing and cancelling the requests:
     for (int i = 0; i < MAX_ORPHAN_IDS; i++) {
-      Mockito.when(streamIds.acquire()).thenReturn(i);
+      when(streamIds.acquire()).thenReturn(i);
       MockResponseCallback responseCallback = new MockResponseCallback();
       channel
           .writeAndFlush(
@@ -265,7 +267,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
       channel.writeAndFlush(responseCallback).awaitUninterruptibly();
     }
     // Generate another request that is pending and not cancelled:
-    Mockito.when(streamIds.acquire()).thenReturn(MAX_ORPHAN_IDS);
+    when(streamIds.acquire()).thenReturn(MAX_ORPHAN_IDS);
     MockResponseCallback pendingResponseCallback = new MockResponseCallback();
     channel
         .writeAndFlush(
@@ -275,7 +277,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
 
     // When
     // Generate the n+1th orphan id that makes us go above the threshold
-    Mockito.when(streamIds.acquire()).thenReturn(MAX_ORPHAN_IDS + 1);
+    when(streamIds.acquire()).thenReturn(MAX_ORPHAN_IDS + 1);
     MockResponseCallback responseCallback = new MockResponseCallback();
     channel
         .writeAndFlush(
@@ -312,7 +314,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     addToPipeline();
     // Generate n orphan ids by writing and cancelling the requests:
     for (int i = 0; i < MAX_ORPHAN_IDS; i++) {
-      Mockito.when(streamIds.acquire()).thenReturn(i);
+      when(streamIds.acquire()).thenReturn(i);
       MockResponseCallback responseCallback = new MockResponseCallback();
       channel
           .writeAndFlush(
@@ -323,7 +325,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
 
     // When
     // Generate the n+1th orphan id that makes us go above the threshold
-    Mockito.when(streamIds.acquire()).thenReturn(MAX_ORPHAN_IDS);
+    when(streamIds.acquire()).thenReturn(MAX_ORPHAN_IDS);
     MockResponseCallback responseCallback = new MockResponseCallback();
     channel
         .writeAndFlush(
@@ -340,7 +342,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   public void should_fail_all_pending_when_force_closed() throws Throwable {
     // Given
     addToPipeline();
-    Mockito.when(streamIds.acquire()).thenReturn(42, 43);
+    when(streamIds.acquire()).thenReturn(42, 43);
     MockResponseCallback responseCallback1 = new MockResponseCallback();
     MockResponseCallback responseCallback2 = new MockResponseCallback();
     channel
@@ -368,7 +370,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   public void should_fail_all_pending_and_close_on_unexpected_inbound_exception() throws Throwable {
     // Given
     addToPipeline();
-    Mockito.when(streamIds.acquire()).thenReturn(42, 43);
+    when(streamIds.acquire()).thenReturn(42, 43);
     MockResponseCallback responseCallback1 = new MockResponseCallback();
     MockResponseCallback responseCallback2 = new MockResponseCallback();
     channel
@@ -397,7 +399,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   public void should_fail_all_pending_if_connection_lost() {
     // Given
     addToPipeline();
-    Mockito.when(streamIds.acquire()).thenReturn(42, 43);
+    when(streamIds.acquire()).thenReturn(42, 43);
     MockResponseCallback responseCallback1 = new MockResponseCallback();
     MockResponseCallback responseCallback2 = new MockResponseCallback();
     channel
@@ -424,7 +426,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   public void should_hold_stream_id_for_multi_response_callback() {
     // Given
     addToPipeline();
-    Mockito.when(streamIds.acquire()).thenReturn(42);
+    when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback =
         new MockResponseCallback(frame -> frame.message instanceof Error);
 
@@ -448,7 +450,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
       // Then
       assertThat(responseCallback.getLastResponse()).isSameAs(responseFrame);
       // Stream id not released, callback can receive more responses
-      Mockito.verify(streamIds, never()).release(42);
+      verify(streamIds, never()).release(42);
     }
 
     // When
@@ -457,7 +459,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     writeInboundFrame(responseFrame);
 
     // Then
-    Mockito.verify(streamIds).release(42);
+    verify(streamIds).release(42);
     assertThat(responseCallback.getLastResponse()).isSameAs(responseFrame);
 
     // When
@@ -475,7 +477,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
       should_release_stream_id_when_orphaned_multi_response_callback_receives_last_response() {
     // Given
     addToPipeline();
-    Mockito.when(streamIds.acquire()).thenReturn(42);
+    when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback =
         new MockResponseCallback(frame -> frame.message instanceof Error);
 
@@ -489,7 +491,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
       Frame responseFrame = buildInboundFrame(requestFrame, Void.INSTANCE);
       writeInboundFrame(responseFrame);
       assertThat(responseCallback.getLastResponse()).isSameAs(responseFrame);
-      Mockito.verify(streamIds, never()).release(42);
+      verify(streamIds, never()).release(42);
     }
 
     // When
@@ -501,7 +503,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     // already), but do not release the stream id
     writeInboundFrame(requestFrame, Void.INSTANCE);
     assertThat(responseCallback.getLastResponse()).isNull();
-    Mockito.verify(streamIds, never()).release(42);
+    verify(streamIds, never()).release(42);
 
     // When
     // the terminal response arrives
@@ -510,7 +512,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     // Then
     // still not propagated but the id is released
     assertThat(responseCallback.getLastResponse()).isNull();
-    Mockito.verify(streamIds).release(42);
+    verify(streamIds).release(42);
   }
 
   @Test
@@ -551,7 +553,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   @Test
   public void should_notify_callback_of_events() {
     // Given
-    EventCallback eventCallback = Mockito.mock(EventCallback.class);
+    EventCallback eventCallback = mock(EventCallback.class);
     addToPipelineWithEventCallback(eventCallback);
 
     // When
@@ -570,7 +572,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
 
     // Then
     ArgumentCaptor<StatusChangeEvent> captor = ArgumentCaptor.forClass(StatusChangeEvent.class);
-    Mockito.verify(eventCallback).onEvent(captor.capture());
+    verify(eventCallback).onEvent(captor.capture());
     assertThat(captor.getValue()).isSameAs(event);
   }
 

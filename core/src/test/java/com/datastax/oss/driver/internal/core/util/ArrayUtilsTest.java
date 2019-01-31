@@ -16,10 +16,12 @@
 package com.datastax.oss.driver.internal.core.util;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.concurrent.ThreadLocalRandom;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class ArrayUtilsTest {
 
@@ -82,8 +84,8 @@ public class ArrayUtilsTest {
   @Test
   public void should_shuffle_head() {
     String[] array = {"a", "b", "c", "d", "e"};
-    ThreadLocalRandom random = Mockito.mock(ThreadLocalRandom.class);
-    Mockito.when(random.nextInt(Mockito.anyInt()))
+    ThreadLocalRandom random = mock(ThreadLocalRandom.class);
+    when(random.nextInt(anyInt()))
         .thenAnswer(
             (invocation) -> {
               int i = invocation.getArgument(0);

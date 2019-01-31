@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata.schema.parsing;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata;
@@ -29,7 +30,6 @@ import java.util.Collections;
 import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class AggregateParserTest extends SchemaParserTestBase {
 
@@ -57,8 +57,8 @@ public class AggregateParserTest extends SchemaParserTestBase {
 
   @Before
   public void setup() {
-    Mockito.when(context.getCodecRegistry()).thenReturn(new DefaultCodecRegistry("test"));
-    Mockito.when(context.getProtocolVersion()).thenReturn(ProtocolVersion.DEFAULT);
+    when(context.getCodecRegistry()).thenReturn(new DefaultCodecRegistry("test"));
+    when(context.getProtocolVersion()).thenReturn(ProtocolVersion.DEFAULT);
   }
 
   @Test

@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.session.throttling;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -34,7 +35,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
@@ -63,24 +63,23 @@ public class RateLimitingRequestThrottlerTest {
 
   @Before
   public void setup() {
-    Mockito.when(context.getConfig()).thenReturn(config);
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
+    when(context.getConfig()).thenReturn(config);
+    when(config.getDefaultProfile()).thenReturn(defaultProfile);
 
-    Mockito.when(
-            defaultProfile.getInt(DefaultDriverOption.REQUEST_THROTTLER_MAX_REQUESTS_PER_SECOND))
+    when(defaultProfile.getInt(DefaultDriverOption.REQUEST_THROTTLER_MAX_REQUESTS_PER_SECOND))
         .thenReturn(5);
-    Mockito.when(defaultProfile.getInt(DefaultDriverOption.REQUEST_THROTTLER_MAX_QUEUE_SIZE))
+    when(defaultProfile.getInt(DefaultDriverOption.REQUEST_THROTTLER_MAX_QUEUE_SIZE))
         .thenReturn(10);
 
     // Set to match the time to reissue one permit. Although it does not matter in practice, since
     // the executor is mocked and we trigger tasks manually.
-    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.REQUEST_THROTTLER_DRAIN_INTERVAL))
+    when(defaultProfile.getDuration(DefaultDriverOption.REQUEST_THROTTLER_DRAIN_INTERVAL))
         .thenReturn(DRAIN_INTERVAL);
 
-    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
-    Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminGroup);
+    when(context.getNettyOptions()).thenReturn(nettyOptions);
+    when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminGroup);
     adminExecutor = new ScheduledTaskCapturingEventLoop(adminGroup);
-    Mockito.when(adminGroup.next()).thenReturn(adminExecutor);
+    when(adminGroup.next()).thenReturn(adminExecutor);
 
     throttler = new RateLimitingRequestThrottler(context, clock);
   }

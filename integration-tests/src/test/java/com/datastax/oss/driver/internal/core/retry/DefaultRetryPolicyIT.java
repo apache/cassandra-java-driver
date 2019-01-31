@@ -26,6 +26,7 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.writeTimeout;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.timeout;
 
@@ -66,7 +67,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 import org.slf4j.helpers.MessageFormatter;
 
@@ -94,7 +94,7 @@ public class DefaultRetryPolicyIT {
       ArgumentCaptor.forClass(ILoggingEvent.class);
 
   @SuppressWarnings("unchecked")
-  private Appender<ILoggingEvent> appender = (Appender<ILoggingEvent>) Mockito.mock(Appender.class);
+  private Appender<ILoggingEvent> appender = (Appender<ILoggingEvent>) mock(Appender.class);
 
   private Logger logger;
   private Level oldLevel;
@@ -146,7 +146,7 @@ public class DefaultRetryPolicyIT {
     counter.assertTotalCount(1);
 
     // expect no logging messages since there was no retry
-    Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
+    verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
   }
 
   @Test
@@ -172,7 +172,7 @@ public class DefaultRetryPolicyIT {
     counter.assertTotalCount(1);
 
     // expect no logging messages since there was no retry
-    Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
+    verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
   }
 
   @Test
@@ -199,7 +199,7 @@ public class DefaultRetryPolicyIT {
     counter.assertNodeCounts(2, 0, 0);
 
     // verify log event was emitted as expected
-    Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
         .isEqualTo(
             expectedMessage(
@@ -242,7 +242,7 @@ public class DefaultRetryPolicyIT {
     counter.assertNodeCounts(1, 1, 0);
 
     // verify log event was emitted as expected
-    Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
         .isEqualTo(expectedMessage(DefaultRetryPolicy.RETRYING_ON_ABORTED, logPrefix, 0));
   }
@@ -273,7 +273,7 @@ public class DefaultRetryPolicyIT {
     counter.assertNodeCounts(1, 1, 1);
 
     // verify log event was emitted for each host as expected
-    Mockito.verify(appender, after(500).times(3)).doAppend(loggingEventCaptor.capture());
+    verify(appender, after(500).times(3)).doAppend(loggingEventCaptor.capture());
     // final log message should have 2 retries
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
         .isEqualTo(expectedMessage(DefaultRetryPolicy.RETRYING_ON_ABORTED, logPrefix, 2));
@@ -308,7 +308,7 @@ public class DefaultRetryPolicyIT {
     counter.assertTotalCount(1);
 
     // expect no logging messages since there was no retry
-    Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
+    verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
   }
 
   @Test
@@ -336,7 +336,7 @@ public class DefaultRetryPolicyIT {
     counter.assertNodeCounts(2, 0, 0);
 
     // verify log event was emitted as expected
-    Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
         .isEqualTo(
             expectedMessage(
@@ -386,7 +386,7 @@ public class DefaultRetryPolicyIT {
     counter.assertTotalCount(1);
 
     // expect no logging messages since there was no retry
-    Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
+    verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
   }
 
   @Test
@@ -415,7 +415,7 @@ public class DefaultRetryPolicyIT {
     counter.assertTotalCount(1);
 
     // expect no logging messages since there was no retry
-    Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
+    verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
   }
 
   @Test
@@ -442,7 +442,7 @@ public class DefaultRetryPolicyIT {
     counter.assertNodeCounts(1, 1, 0);
 
     // verify log event was emitted as expected
-    Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
         .isEqualTo(
             expectedMessage(
@@ -496,7 +496,7 @@ public class DefaultRetryPolicyIT {
     counter.assertNodeCounts(1, 1, 1);
 
     // verify log event was emitted for each host as expected
-    Mockito.verify(appender, after(500).times(3)).doAppend(loggingEventCaptor.capture());
+    verify(appender, after(500).times(3)).doAppend(loggingEventCaptor.capture());
     // final log message should have 2 retries
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
         .isEqualTo(expectedMessage(DefaultRetryPolicy.RETRYING_ON_ERROR, logPrefix, 2));
@@ -523,7 +523,7 @@ public class DefaultRetryPolicyIT {
     counter.assertNodeCounts(1, 0, 0);
 
     // expect no logging messages since there was no retry
-    Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
+    verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
   }
 
   private String expectedMessage(String template, Object... args) {

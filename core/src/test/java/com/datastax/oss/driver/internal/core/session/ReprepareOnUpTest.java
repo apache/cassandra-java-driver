@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.session;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -55,7 +56,6 @@ import java.util.concurrent.CompletionStage;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class ReprepareOnUpTest {
@@ -75,22 +75,21 @@ public class ReprepareOnUpTest {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(pool.next()).thenReturn(channel);
-    Mockito.when(channel.eventLoop()).thenReturn(eventLoop);
-    Mockito.when(eventLoop.inEventLoop()).thenReturn(true);
+    when(pool.next()).thenReturn(channel);
+    when(channel.eventLoop()).thenReturn(eventLoop);
+    when(eventLoop.inEventLoop()).thenReturn(true);
 
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(defaultProfile.getBoolean(DefaultDriverOption.REPREPARE_CHECK_SYSTEM_TABLE))
+    when(config.getDefaultProfile()).thenReturn(defaultProfile);
+    when(defaultProfile.getBoolean(DefaultDriverOption.REPREPARE_CHECK_SYSTEM_TABLE))
         .thenReturn(true);
-    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.REPREPARE_TIMEOUT))
+    when(defaultProfile.getDuration(DefaultDriverOption.REPREPARE_TIMEOUT))
         .thenReturn(Duration.ofMillis(500));
-    Mockito.when(defaultProfile.getInt(DefaultDriverOption.REPREPARE_MAX_STATEMENTS)).thenReturn(0);
-    Mockito.when(defaultProfile.getInt(DefaultDriverOption.REPREPARE_MAX_PARALLELISM))
-        .thenReturn(100);
-    Mockito.when(context.getConfig()).thenReturn(config);
+    when(defaultProfile.getInt(DefaultDriverOption.REPREPARE_MAX_STATEMENTS)).thenReturn(0);
+    when(defaultProfile.getInt(DefaultDriverOption.REPREPARE_MAX_PARALLELISM)).thenReturn(100);
+    when(context.getConfig()).thenReturn(config);
 
-    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
-    Mockito.when(metricsFactory.getSessionUpdater()).thenReturn(metricUpdater);
+    when(context.getMetricsFactory()).thenReturn(metricsFactory);
+    when(metricsFactory.getSessionUpdater()).thenReturn(metricUpdater);
 
     done = new CompletableFuture<>();
     whenPrepared = () -> ((CompletableFuture<Void>) done).complete(null);
@@ -112,7 +111,7 @@ public class ReprepareOnUpTest {
   @Test
   public void should_complete_immediately_if_pool_empty() {
     // Given
-    Mockito.when(pool.next()).thenReturn(null);
+    when(pool.next()).thenReturn(null);
     MockReprepareOnUp reprepareOnUp =
         new MockReprepareOnUp("test", pool, getMockPayloads('a'), context, whenPrepared);
 
@@ -175,7 +174,7 @@ public class ReprepareOnUpTest {
 
   @Test
   public void should_reprepare_all_if_system_query_disabled() {
-    Mockito.when(defaultProfile.getBoolean(DefaultDriverOption.REPREPARE_CHECK_SYSTEM_TABLE))
+    when(defaultProfile.getBoolean(DefaultDriverOption.REPREPARE_CHECK_SYSTEM_TABLE))
         .thenReturn(false);
 
     MockReprepareOnUp reprepareOnUp =
@@ -223,21 +222,21 @@ public class ReprepareOnUpTest {
 
   @Test
   public void should_proceed_if_schema_agreement_not_reached() {
-    Mockito.when(topologyMonitor.checkSchemaAgreement())
+    when(topologyMonitor.checkSchemaAgreement())
         .thenReturn(CompletableFuture.completedFuture(false));
     should_not_reprepare_already_known_statements();
   }
 
   @Test
   public void should_proceed_if_schema_agreement_fails() {
-    Mockito.when(topologyMonitor.checkSchemaAgreement())
+    when(topologyMonitor.checkSchemaAgreement())
         .thenReturn(CompletableFutures.failedFuture(new RuntimeException("test")));
     should_not_reprepare_already_known_statements();
   }
 
   @Test
   public void should_limit_number_of_statements_to_reprepare() {
-    Mockito.when(defaultProfile.getInt(DefaultDriverOption.REPREPARE_MAX_STATEMENTS)).thenReturn(3);
+    when(defaultProfile.getInt(DefaultDriverOption.REPREPARE_MAX_STATEMENTS)).thenReturn(3);
 
     MockReprepareOnUp reprepareOnUp =
         new MockReprepareOnUp(
@@ -265,8 +264,7 @@ public class ReprepareOnUpTest {
 
   @Test
   public void should_limit_number_of_statements_reprepared_in_parallel() {
-    Mockito.when(defaultProfile.getInt(DefaultDriverOption.REPREPARE_MAX_PARALLELISM))
-        .thenReturn(3);
+    when(defaultProfile.getInt(DefaultDriverOption.REPREPARE_MAX_PARALLELISM)).thenReturn(3);
 
     MockReprepareOnUp reprepareOnUp =
         new MockReprepareOnUp(

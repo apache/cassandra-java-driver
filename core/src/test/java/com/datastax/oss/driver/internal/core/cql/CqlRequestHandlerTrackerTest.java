@@ -19,7 +19,11 @@ import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
@@ -30,7 +34,6 @@ import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.Error;
 import java.util.concurrent.CompletionStage;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
 
@@ -46,8 +49,8 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
             .withResponse(node2, defaultFrameOf(singleRow()))
             .build()) {
 
-      RequestTracker requestTracker = Mockito.mock(RequestTracker.class);
-      Mockito.when(harness.getContext().getRequestTracker()).thenReturn(requestTracker);
+      RequestTracker requestTracker = mock(RequestTracker.class);
+      when(harness.getContext().getRequestTracker()).thenReturn(requestTracker);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
           new CqlRequestHandler(
@@ -60,26 +63,26 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
       assertThatStage(resultSetFuture)
           .isSuccess(
               resultSet -> {
-                Mockito.verify(requestTracker)
+                verify(requestTracker)
                     .onNodeError(
                         eq(UNDEFINED_IDEMPOTENCE_STATEMENT),
                         any(BootstrappingException.class),
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node1));
-                Mockito.verify(requestTracker)
+                verify(requestTracker)
                     .onNodeSuccess(
                         eq(UNDEFINED_IDEMPOTENCE_STATEMENT),
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node2));
-                Mockito.verify(requestTracker)
+                verify(requestTracker)
                     .onSuccess(
                         eq(UNDEFINED_IDEMPOTENCE_STATEMENT),
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node2));
-                Mockito.verifyNoMoreInteractions(requestTracker);
+                verifyNoMoreInteractions(requestTracker);
               });
     }
   }
@@ -97,7 +100,7 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
             .build()) {
 
       RequestTracker requestTracker = spy(new NoopRequestTracker(harness.getContext()));
-      Mockito.when(harness.getContext().getRequestTracker()).thenReturn(requestTracker);
+      when(harness.getContext().getRequestTracker()).thenReturn(requestTracker);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
           new CqlRequestHandler(
@@ -108,7 +111,7 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
               .handle();
 
       assertThatStage(resultSetFuture)
-          .isSuccess(resultSet -> Mockito.verifyNoMoreInteractions(requestTracker));
+          .isSuccess(resultSet -> verifyNoMoreInteractions(requestTracker));
     }
   }
 }
