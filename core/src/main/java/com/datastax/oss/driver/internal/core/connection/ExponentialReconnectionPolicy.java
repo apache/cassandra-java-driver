@@ -160,4 +160,8 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
       return delay;
     }
   }
+
+  public long getMaxAttempts() {
+    return maxAttempts;
+  }
 }
