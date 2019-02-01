@@ -126,7 +126,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * <p>Contrary to the configuration, DNS names with multiple A-records will not be handled here.
    * If you need that, extract them manually with {@link java.net.InetAddress#getAllByName(String)}
    * before calling this method. Similarly, if you need connect addresses to stay unresolved, make
-   * sure you pass unresolved instances here (see {@code advanced.resolve-addresses} in the
+   * sure you pass unresolved instances here (see {@code advanced.resolve-contact-points} in the
    * configuration for more explanations).
    */
   @NonNull
