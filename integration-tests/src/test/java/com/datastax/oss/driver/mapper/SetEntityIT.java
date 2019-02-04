@@ -25,9 +25,11 @@ import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.mapper.model.EntityFixture;
 import com.datastax.oss.driver.mapper.model.inventory.InventoryFixtures;
 import com.datastax.oss.driver.mapper.model.inventory.InventoryMapper;
 import com.datastax.oss.driver.mapper.model.inventory.InventoryMapperBuilder;
+import com.datastax.oss.driver.mapper.model.inventory.Product;
 import com.datastax.oss.driver.mapper.model.inventory.ProductDao;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -62,6 +64,11 @@ public class SetEntityIT {
 
   @Test
   public void should_set_entity_on_bound_statement() {
+    should_set_entity_on_bound_statement(InventoryFixtures.FLAMETHROWER);
+    should_set_entity_on_bound_statement(InventoryFixtures.MP3_DOWNLOAD);
+  }
+
+  private void should_set_entity_on_bound_statement(EntityFixture<Product> entityFixture) {
     // Given
     CqlSession session = sessionRule.session();
     PreparedStatement preparedStatement =
@@ -69,10 +76,10 @@ public class SetEntityIT {
     BoundStatement boundStatement = preparedStatement.bind();
 
     // When
-    boundStatement = productDao.set(InventoryFixtures.FLAMETHROWER.entity, boundStatement);
+    boundStatement = productDao.set(entityFixture.entity, boundStatement);
 
     // Then
-    InventoryFixtures.FLAMETHROWER.assertMatches(boundStatement);
+    entityFixture.assertMatches(boundStatement);
   }
 
   @Test
