@@ -47,6 +47,21 @@ public class InventoryFixtures {
         }
       };
 
+  /** Has a null entity property. */
+  public static EntityFixture<Product> MP3_DOWNLOAD =
+      new EntityFixture<Product>(new Product(UUID.randomUUID(), "MP3 download", null)) {
+        @Override
+        public void assertMatches(GettableByName data) {
+          assertThat(data.getUuid("id")).isEqualTo(entity.getId());
+          assertThat(data.getString("description")).isEqualTo(entity.getDescription());
+          UdtValue udtValue = data.getUdtValue("dimensions");
+          assertThat(udtValue.getType().getName().asInternal()).isEqualTo("dimensions");
+          assertThat(udtValue.isNull("length")).isTrue();
+          assertThat(udtValue.isNull("width")).isTrue();
+          assertThat(udtValue.isNull("height")).isTrue();
+        }
+      };
+
   public static EntityFixture<Dimensions> SAMPLE_DIMENSIONS =
       new EntityFixture<Dimensions>(new Dimensions(30, 10, 8)) {
         @Override
