@@ -65,6 +65,7 @@ public class EntityHelperSetMethodGenerator implements PartialClassGenerator {
 
     // TODO add an ignore mechanism? this fails if a property is missing on the target.
     // TODO handle collections of UDTs (JAVA-2129)
+    // TODO different strategies for null values? (null vs unset)
 
     // The method's type variable: <SettableT extends SettableByName<SettableT>>
     TypeVariableName settableT = TypeVariableName.get("SettableT");
@@ -93,6 +94,11 @@ public class EntityHelperSetMethodGenerator implements PartialClassGenerator {
         udtIndex += 1;
         String udtTypeName = "udtType" + udtIndex;
         String udtValueName = "udtValue" + udtIndex;
+        String valueName = "value" + udtIndex;
+        // Extract the child entity, make sure it's not null
+        injectBuilder
+            .addStatement("$T $L = entity.$L()", type, valueName, getterName)
+            .beginControlFlow("if ($L != null)", valueName);
         // Retrieve the UDT type
         injectBuilder.addStatement(
             "$1T $2L = ($1T) target.getType($3S)", UserDefinedType.class, udtTypeName, cqlName);
@@ -101,10 +107,11 @@ public class EntityHelperSetMethodGenerator implements PartialClassGenerator {
             "$T $L = $L.newValue()", UdtValue.class, udtValueName, udtTypeName);
         // Inject the child entity into the UdtValue
         String childHelper = enclosingClass.addChildHelper(childEntityElement);
-        injectBuilder.addStatement(
-            "$L.set(entity.$L(), $L)", childHelper, getterName, udtValueName);
+        injectBuilder.addStatement("$L.set($L, $L)", childHelper, valueName, udtValueName);
         // Set the UdtValue into the target
-        injectBuilder.addStatement("target = target.setUdtValue($S, $L)", cqlName, udtValueName);
+        injectBuilder
+            .addStatement("target = target.setUdtValue($S, $L)", cqlName, udtValueName)
+            .endControlFlow();
       } else {
         String primitiveAccessor = PRIMITIVE_ACCESSORS.get(type);
         if (primitiveAccessor != null) {
