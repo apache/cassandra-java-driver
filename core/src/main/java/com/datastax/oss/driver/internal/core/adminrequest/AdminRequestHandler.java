@@ -27,7 +27,7 @@ import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.request.query.QueryOptions;
-import com.datastax.oss.protocol.internal.response.result.Prepared;
+import com.datastax.oss.protocol.internal.response.Result;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.ScheduledFuture;
@@ -50,6 +50,11 @@ public class AdminRequestHandler implements ResponseCallback {
   private static final Logger LOG = LoggerFactory.getLogger(AdminRequestHandler.class);
 
   public static AdminRequestHandler query(
+      DriverChannel channel, Query query, Duration timeout, String logPrefix) {
+    return createAdminRequestHandler(channel, query, Collections.emptyMap(), timeout, logPrefix);
+  }
+
+  public static AdminRequestHandler query(
       DriverChannel channel,
       String query,
       Map<String, Object> parameters,
@@ -60,7 +65,17 @@ public class AdminRequestHandler implements ResponseCallback {
         new Query(
             query,
             buildQueryOptions(pageSize, serialize(parameters, channel.protocolVersion()), null));
-    String debugString = "query '" + query + "'";
+    return createAdminRequestHandler(channel, message, parameters, timeout, logPrefix);
+  }
+
+  private static AdminRequestHandler createAdminRequestHandler(
+      DriverChannel channel,
+      Query message,
+      Map<String, Object> parameters,
+      Duration timeout,
+      String logPrefix) {
+
+    String debugString = "query '" + message.query + "'";
     if (!parameters.isEmpty()) {
       debugString += " with parameters " + parameters;
     }
@@ -148,7 +163,8 @@ public class AdminRequestHandler implements ResponseCallback {
       ByteBuffer pagingState = rows.getMetadata().pagingState;
       AdminRequestHandler nextHandler = (pagingState == null) ? null : this.copy(pagingState);
       setFinalResult(new AdminResult(rows, nextHandler, channel.protocolVersion()));
-    } else if (message instanceof Prepared) {
+    } else if (message instanceof Result) {
+
       // Internal prepares are only "reprepare on up" types of queries, where we only care about
       // success, not the actual result, so this is good enough:
       setFinalResult(null);
