@@ -15,28 +15,22 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
-import com.squareup.javapoet.TypeName;
-import javax.lang.model.element.TypeElement;
+import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
+import javax.lang.model.type.TypeMirror;
 
 public class DefaultPropertyDefinition implements PropertyDefinition {
 
   private final String cqlName;
   private final String getterName;
   private final String setterName;
-  private final TypeName type;
-  private final TypeElement entityElement;
+  private final PropertyType type;
 
   public DefaultPropertyDefinition(
-      String cqlName,
-      String getterName,
-      String setterName,
-      TypeName type,
-      TypeElement entityElement) {
+      String cqlName, String getterName, String setterName, PropertyType type) {
     this.cqlName = cqlName;
     this.getterName = getterName;
     this.setterName = setterName;
     this.type = type;
-    this.entityElement = entityElement;
   }
 
   @Override
@@ -55,26 +49,21 @@ public class DefaultPropertyDefinition implements PropertyDefinition {
   }
 
   @Override
-  public TypeName getType() {
+  public PropertyType getType() {
     return type;
-  }
-
-  @Override
-  public TypeElement getEntityElement() {
-    return entityElement;
   }
 
   public static class Builder {
     private final String cqlName;
-    private final TypeName type;
-    private final TypeElement entityElement;
+    private final TypeMirror rawType;
+    private final PropertyType type;
     private String getterName;
     private String setterName;
 
-    public Builder(String cqlName, TypeName type, TypeElement entityElement) {
+    public Builder(String cqlName, TypeMirror rawType, PropertyType type) {
       this.cqlName = cqlName;
+      this.rawType = rawType;
       this.type = type;
-      this.entityElement = entityElement;
     }
 
     public Builder withGetterName(String getterName) {
@@ -87,8 +76,8 @@ public class DefaultPropertyDefinition implements PropertyDefinition {
       return this;
     }
 
-    public TypeName getType() {
-      return type;
+    public TypeMirror getRawType() {
+      return rawType;
     }
 
     public String getGetterName() {
@@ -100,7 +89,7 @@ public class DefaultPropertyDefinition implements PropertyDefinition {
     }
 
     DefaultPropertyDefinition build() {
-      return new DefaultPropertyDefinition(cqlName, getterName, setterName, type, entityElement);
+      return new DefaultPropertyDefinition(cqlName, getterName, setterName, type);
     }
   }
 }

@@ -115,7 +115,8 @@ public class DaoSetEntityMethodGenerator implements MethodGenerator {
 
   @Override
   public MethodSpec.Builder generate() {
-    String helperFieldName = daoImplementationGenerator.addEntityHelperField(entityElement);
+    String helperFieldName =
+        daoImplementationGenerator.addEntityHelperField(ClassName.get(entityElement));
 
     MethodSpec.Builder overridingMethodBuilder =
         MethodSpec.methodBuilder(methodElement.getSimpleName().toString())

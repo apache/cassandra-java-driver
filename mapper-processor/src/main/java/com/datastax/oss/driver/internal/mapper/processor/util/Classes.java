@@ -17,6 +17,9 @@ package com.datastax.oss.driver.internal.mapper.processor.util;
 
 import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.data.SettableByName;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -37,6 +40,9 @@ public class Classes {
 
   private final TypeMirror settableByNameType;
   private final TypeMirror gettableByNameType;
+  private final TypeElement listElement;
+  private final TypeElement setElement;
+  private final TypeElement mapElement;
 
   public Classes(Types typeUtils, Elements elementUtils) {
     this.typeUtils = typeUtils;
@@ -46,6 +52,9 @@ public class Classes {
         typeUtils.erasure(elementUtils.getTypeElement(SettableByName.class.getName()).asType());
     this.gettableByNameType =
         typeUtils.erasure(elementUtils.getTypeElement(GettableByName.class.getName()).asType());
+    this.listElement = elementUtils.getTypeElement(List.class.getCanonicalName());
+    this.setElement = elementUtils.getTypeElement(Set.class.getCanonicalName());
+    this.mapElement = elementUtils.getTypeElement(Map.class.getCanonicalName());
   }
 
   /** Whether an element is the {@link TypeElement} for the given class. */
@@ -69,5 +78,20 @@ public class Classes {
 
   public boolean implementsGettableByName(TypeMirror mirror) {
     return typeUtils.isAssignable(mirror, gettableByNameType);
+  }
+
+  /** Whether a type mirror is a parameterized {@code java.util.List}. */
+  public boolean isList(DeclaredType declaredType) {
+    return declaredType.asElement().equals(listElement);
+  }
+
+  /** Whether a type mirror is a parameterized {@code java.util.Set}. */
+  public boolean isSet(DeclaredType declaredType) {
+    return declaredType.asElement().equals(setElement);
+  }
+
+  /** Whether a type mirror is a parameterized {@code java.util.Map}. */
+  public boolean isMap(DeclaredType declaredType) {
+    return declaredType.asElement().equals(mapElement);
   }
 }
