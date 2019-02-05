@@ -84,13 +84,12 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
   }
 
   @Override
-  public String addEntityHelperField(TypeElement entityClass) {
-    ClassName helperClass = GeneratedNames.entityHelper(entityClass);
+  public String addEntityHelperField(ClassName entityClassName) {
+    ClassName helperClass = GeneratedNames.entityHelper(entityClassName);
     return entityHelperFields.computeIfAbsent(
         helperClass,
         k -> {
-          String baseName =
-              Introspector.decapitalize(entityClass.getSimpleName().toString()) + "Helper";
+          String baseName = Introspector.decapitalize(entityClassName.simpleName()) + "Helper";
           return nameIndex.uniqueField(baseName);
         });
   }

@@ -15,11 +15,10 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
-import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
+import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.TypeName;
 import java.beans.Introspector;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +27,6 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
@@ -57,9 +55,8 @@ public class DefaultEntityFactory implements EntityFactory {
         ExecutableElement method = (ExecutableElement) child;
         String methodName = method.getSimpleName().toString();
         if (methodName.startsWith("get") && method.getParameters().isEmpty()) {
-          TypeMirror returnTypeMirror = method.getReturnType();
-          TypeName propertyType = TypeName.get(returnTypeMirror);
-          if (TypeName.VOID.equals(propertyType)) {
+          TypeMirror typeMirror = method.getReturnType();
+          if (typeMirror.getKind() == TypeKind.VOID) {
             continue;
           }
           String propertyName = Introspector.decapitalize(methodName.substring(3));
@@ -67,19 +64,19 @@ public class DefaultEntityFactory implements EntityFactory {
           if (builder == null) {
             builder =
                 new DefaultPropertyDefinition.Builder(
-                    propertyName, propertyType, getEntityElement(returnTypeMirror));
+                    propertyName, typeMirror, PropertyType.parse(typeMirror, context));
             propertyBuilders.put(propertyName, builder);
-          } else if (!builder.getType().equals(propertyType)) {
+          } else if (!context.getTypeUtils().isSameType(builder.getRawType(), typeMirror)) {
             context
                 .getMessager()
                 .warn(
                     method,
                     "Ignoring method %s %s() because there is a setter "
                         + "with the same name but a different type: %s(%s)",
-                    propertyType,
+                    typeMirror,
                     methodName,
                     builder.getSetterName(),
-                    builder.getType());
+                    builder.getRawType());
             continue;
           }
           builder.withGetterName(methodName);
@@ -87,14 +84,13 @@ public class DefaultEntityFactory implements EntityFactory {
           String propertyName = Introspector.decapitalize(methodName.substring(3));
           VariableElement parameter = method.getParameters().get(0);
           TypeMirror typeMirror = parameter.asType();
-          TypeName propertyType = TypeName.get(typeMirror);
           DefaultPropertyDefinition.Builder builder = propertyBuilders.get(propertyName);
           if (builder == null) {
             builder =
                 new DefaultPropertyDefinition.Builder(
-                    propertyName, propertyType, getEntityElement(typeMirror));
+                    propertyName, typeMirror, PropertyType.parse(typeMirror, context));
             propertyBuilders.put(propertyName, builder);
-          } else if (!builder.getType().equals(propertyType)) {
+          } else if (!context.getTypeUtils().isSameType(builder.getRawType(), typeMirror)) {
             context
                 .getMessager()
                 .warn(
@@ -102,8 +98,8 @@ public class DefaultEntityFactory implements EntityFactory {
                     "Ignoring method %s(%s) because there is a getter "
                         + "with the same name but a different type: %s %s()",
                     methodName,
-                    propertyType,
-                    builder.getType(),
+                    typeMirror,
+                    builder.getRawType(),
                     builder.getGetterName());
             continue;
           }
@@ -122,15 +118,5 @@ public class DefaultEntityFactory implements EntityFactory {
     String entityName = Introspector.decapitalize(classElement.getSimpleName().toString());
     return new DefaultEntityDefinition(
         ClassName.get(classElement), entityName, definitions.build());
-  }
-
-  private TypeElement getEntityElement(TypeMirror typeMirror) {
-    if (typeMirror.getKind() == TypeKind.DECLARED) {
-      Element element = ((DeclaredType) typeMirror).asElement();
-      if (element.getKind() == ElementKind.CLASS && element.getAnnotation(Entity.class) != null) {
-        return (TypeElement) element;
-      }
-    }
-    return null;
   }
 }

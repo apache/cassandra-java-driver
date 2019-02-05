@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.mapper.processor.entity;
+package com.datastax.oss.driver.mapper.model.udts;
 
-import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
+import com.datastax.oss.driver.api.core.data.GettableByName;
+import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
+import com.datastax.oss.driver.api.mapper.annotations.Insert;
 
-public interface PropertyDefinition {
+@Dao
+public interface ContainerDao {
 
-  String getCqlName();
+  @Insert
+  void save(Container container);
 
-  String getGetterName();
-
-  String getSetterName();
-
-  PropertyType getType();
+  @GetEntity
+  Container get(GettableByName source);
 }

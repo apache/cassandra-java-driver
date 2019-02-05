@@ -33,6 +33,7 @@ public class EntityHelperSetMethodGenerator implements PartialClassGenerator {
 
   private final EntityDefinition entityDefinition;
   private final BindableHandlingSharedCode enclosingClass;
+  private final ProcessorContext context;
 
   public EntityHelperSetMethodGenerator(
       EntityDefinition entityDefinition,
@@ -40,6 +41,7 @@ public class EntityHelperSetMethodGenerator implements PartialClassGenerator {
       ProcessorContext context) {
     this.entityDefinition = entityDefinition;
     this.enclosingClass = enclosingClass;
+    this.context = context;
   }
 
   @Override
@@ -67,7 +69,6 @@ public class EntityHelperSetMethodGenerator implements PartialClassGenerator {
       GeneratedCodePatterns.setValue(
           property.getCqlName(),
           property.getType(),
-          property.getEntityElement(),
           CodeBlock.of("entity.$L()", property.getGetterName()),
           "target",
           injectBuilder,
