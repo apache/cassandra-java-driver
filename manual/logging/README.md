@@ -227,10 +227,10 @@ or it can be toggled programmatically in application code:
 
 ```java
 // disable driver logging of server-side warnings
-System.getProperty("com.datastax.driver.DISABLE_QUERY_WARNING_LOGS", "true");
+System.setProperty("com.datastax.driver.DISABLE_QUERY_WARNING_LOGS", "true");
 ....
 // enable driver logging of server-side warnings
-System.getProperty("com.datastax.driver.DISABLE_QUERY_WARNING_LOGS", "false");
+System.setProperty("com.datastax.driver.DISABLE_QUERY_WARNING_LOGS", "false");
 ```
 
 ### Logback Example

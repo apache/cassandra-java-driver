@@ -2,7 +2,6 @@
 
 ### 3.7.0 (In progress)
 
-- [improvement] JAVA-1950: Log server side warnings returned from a query.
 - [improvement] JAVA-2025: Include exception message in Abstract\*Codec.accepts(null).
 - [improvement] JAVA-1980: Use covariant return types in RemoteEndpointAwareJdkSSLOptions.Builder methods.
 - [documentation] JAVA-2062: Document frozen collection preference with Mapper.
@@ -16,6 +15,7 @@
 - [documentation] JAVA-2041: Deprecate cross-DC failover in DCAwareRoundRobinPolicy.
 - [documentation] JAVA-1159: Document workaround for using tuple with udt field in Mapper.
 - [documentation] JAVA-1964: Complete remaining "Coming Soon" sections in docs.
+- [improvement] JAVA-1950: Log server side warnings returned from a query.
 
 
 ### 3.6.0

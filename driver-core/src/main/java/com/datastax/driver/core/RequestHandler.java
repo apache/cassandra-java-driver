@@ -65,7 +65,6 @@ class RequestHandler {
   private static final boolean HOST_METRICS_ENABLED =
       Boolean.getBoolean("com.datastax.driver.HOST_METRICS_ENABLED");
   static final String DISABLE_QUERY_WARNING_LOGS = "com.datastax.driver.DISABLE_QUERY_WARNING_LOGS";
-  private static final int MAX_QUERY_LOG_LENGTH = 50;
 
   final String id;
 
@@ -228,7 +227,10 @@ class RequestHandler {
       callback.onSet(connection, response, info, statement, System.nanoTime() - startTime);
       // if the response from the server has warnings, they'll be set on the ExecutionInfo. Log them
       // here, unless they've been disabled.
-      if (logger.isWarnEnabled() && response.warnings != null && !response.warnings.isEmpty()) {
+      if (logger.isWarnEnabled()
+          && response.warnings != null
+          && !response.warnings.isEmpty()
+          && !Boolean.getBoolean(RequestHandler.DISABLE_QUERY_WARNING_LOGS)) {
         logServerWarnings(response.warnings);
       }
     } catch (Exception e) {
@@ -242,19 +244,11 @@ class RequestHandler {
   }
 
   private void logServerWarnings(List<String> warnings) {
-    // log the warnings if they have NOT been disabled (double negative)
-    if (!Boolean.getBoolean(RequestHandler.DISABLE_QUERY_WARNING_LOGS)) {
-      // comma separated list of warnings
-      StringBuilder warningString = new StringBuilder();
-      for (String warning : warnings) {
-        warningString.append(warning).append(", ");
-      }
-      // truncate the statement query to the MAX_QUERY_LOG_LENGTH, if necessary
-      final String queryString = statement.toString();
-      logger.warn(
-          "Query '{}' generated server side warning(s): {}",
-          queryString.subSequence(0, Math.min(queryString.length(), MAX_QUERY_LOG_LENGTH)),
-          warningString.substring(0, warningString.length() - ", ".length()));
+    // truncate the statement query to the DEFAULT_MAX_QUERY_STRING_LENGTH, if necessary
+    final String queryString = QueryLogger.builder().build().statementAsString(statement);
+    // log each warning separately
+    for (String warning : warnings) {
+      logger.warn("Query '{}' generated server side warning(s): {}", queryString, warning);
     }
   }
 
