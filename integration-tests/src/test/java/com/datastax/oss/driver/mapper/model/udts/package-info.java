@@ -13,17 +13,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.mapper.processor.entity;
-
-import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
-
-public interface PropertyDefinition {
-
-  String getCqlName();
-
-  String getGetterName();
-
-  String getSetterName();
-
-  PropertyType getType();
-}
+/** An abstract model to test complex UDT mappings. */
+package com.datastax.oss.driver.mapper.model.udts;

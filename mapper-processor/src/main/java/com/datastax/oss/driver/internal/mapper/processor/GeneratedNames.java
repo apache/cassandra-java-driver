@@ -30,7 +30,12 @@ public class GeneratedNames {
 
   /** The helper class generated for an {@link Entity}-annotated class. */
   public static ClassName entityHelper(TypeElement entityClass) {
-    return ClassName.get(entityClass).peerClass(entityClass.getSimpleName() + "_Helper");
+    return entityHelper(ClassName.get(entityClass));
+  }
+
+  /** Variant for {@link #entityHelper(TypeElement)} when only the type name is known. */
+  public static ClassName entityHelper(ClassName entityClassName) {
+    return entityClassName.peerClass(entityClassName.simpleName() + "_Helper");
   }
 
   /** The builder for a {@link Mapper}-annotated interface. */
