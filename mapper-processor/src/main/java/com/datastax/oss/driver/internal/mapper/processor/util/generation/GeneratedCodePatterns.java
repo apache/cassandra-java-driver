@@ -18,22 +18,24 @@ package com.datastax.oss.driver.internal.mapper.processor.util.generation;
 import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.data.SettableByName;
 import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.driver.api.core.type.ListType;
+import com.datastax.oss.driver.api.core.type.MapType;
+import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
-import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
+import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
+import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
+import java.beans.Introspector;
 import java.util.List;
 import java.util.Map;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
 
 /** A collection of recurring patterns in our generated sources. */
 public class GeneratedCodePatterns {
@@ -61,15 +63,15 @@ public class GeneratedCodePatterns {
   public static void bindParameters(
       List<? extends VariableElement> parameters,
       MethodSpec.Builder methodBuilder,
-      BindableHandlingSharedCode enclosingClass) {
+      BindableHandlingSharedCode enclosingClass,
+      ProcessorContext context) {
 
     for (VariableElement parameter : parameters) {
       String parameterName = parameter.getSimpleName().toString();
-      TypeMirror typeMirror = parameter.asType();
+      PropertyType type = PropertyType.parse(parameter.asType(), context);
       setValue(
           parameterName,
-          TypeName.get(typeMirror),
-          getEntityElement(typeMirror),
+          type,
           CodeBlock.of("$L", parameterName),
           "boundStatementBuilder",
           methodBuilder,
@@ -87,8 +89,7 @@ public class GeneratedCodePatterns {
    * }</pre>
    *
    * @param cqlName the CQL name to set ({@code "id"})
-   * @param type the Java type of the value ({@code UUID})
-   * @param entityElement if the value is a mapped entity, the corresponding element
+   * @param type the type of the value ({@code UUID})
    * @param valueExtractor the code snippet to extract the value ({@code entity.getId()}
    * @param targetName the name of the target {@link SettableByName} instance ({@code target})
    * @param methodBuilder where to add the code
@@ -97,8 +98,7 @@ public class GeneratedCodePatterns {
    */
   public static void setValue(
       String cqlName,
-      TypeName type,
-      TypeElement entityElement,
+      PropertyType type,
       CodeBlock valueExtractor,
       String targetName,
       MethodSpec.Builder methodBuilder,
@@ -106,9 +106,36 @@ public class GeneratedCodePatterns {
 
     methodBuilder.addComment("$L:", cqlName);
 
-    // TODO handle collections of UDTs (JAVA-2129)
-
-    if (entityElement != null) {
+    if (type instanceof PropertyType.Simple) {
+      TypeName typeName = ((PropertyType.Simple) type).typeName;
+      String primitiveAccessor = GeneratedCodePatterns.PRIMITIVE_ACCESSORS.get(typeName);
+      if (primitiveAccessor != null) {
+        // Primitive type: use dedicated setter, since it is optimized to avoid boxing.
+        //     target = target.setInt("length", entity.getLength());
+        methodBuilder.addStatement(
+            "$1L = $1L.set$2L($3S, $4L)", targetName, primitiveAccessor, cqlName, valueExtractor);
+      } else if (typeName instanceof ClassName) {
+        // Unparameterized class: use the generic, class-based setter.
+        //     target = target.set("id", entity.getId(), UUID.class);
+        methodBuilder.addStatement(
+            "$1L = $1L.set($2S, $3L, $4T.class)", targetName, cqlName, valueExtractor, typeName);
+      } else {
+        // Parameterized type: create a constant and use the GenericType-based setter.
+        //     private static final GenericType<List<String>> GENERIC_TYPE =
+        //         new GenericType<List<String>>(){};
+        //     target = target.set("names", entity.getNames(), GENERIC_TYPE);
+        // Note that lists, sets and maps of unparameterized classes also fall under that
+        // category. Their setter creates a GenericType under the hood, so there's no performance
+        // advantage in calling them instead of the generic set().
+        methodBuilder.addStatement(
+            "$1L = $1L.set($2S, $3L, $4L)",
+            targetName,
+            cqlName,
+            valueExtractor,
+            enclosingClass.addGenericTypeConstant(typeName));
+      }
+    } else if (type instanceof PropertyType.SingleEntity) {
+      ClassName entityClass = ((PropertyType.SingleEntity) type).entityName;
       // Other entity class: the CQL column is a mapped UDT. Example of generated code:
       //     Dimensions value = entity.getDimensions();
       //     if (value != null) {
@@ -125,7 +152,7 @@ public class GeneratedCodePatterns {
       String valueName = enclosingClass.getNameIndex().uniqueField("value");
 
       methodBuilder
-          .addStatement("$T $L = $L", type, valueName, valueExtractor)
+          .addStatement("$T $L = $L", entityClass, valueName, valueExtractor)
           .beginControlFlow("if ($L != null)", valueName)
           .addStatement(
               "$1T $2L = ($1T) $3L.getType($4S)",
@@ -134,53 +161,179 @@ public class GeneratedCodePatterns {
               targetName,
               cqlName)
           .addStatement("$T $L = $L.newValue()", UdtValue.class, udtValueName, udtTypeName);
-      String childHelper = enclosingClass.addEntityHelperField(entityElement);
+      String childHelper = enclosingClass.addEntityHelperField(entityClass);
       methodBuilder
           .addStatement("$L.set($L, $L)", childHelper, valueName, udtValueName)
           .addStatement("$1L = $1L.setUdtValue($2S, $3L)", targetName, cqlName, udtValueName)
           .endControlFlow();
     } else {
-      String primitiveAccessor = GeneratedCodePatterns.PRIMITIVE_ACCESSORS.get(type);
-      if (primitiveAccessor != null) {
-        // Primitive type: use dedicated setter, since it is optimized to avoid boxing.
-        //     target = target.setInt("length", entity.getLength());
-        methodBuilder.addStatement(
-            "$1L = $1L.set$2L($3S, $4L)", targetName, primitiveAccessor, cqlName, valueExtractor);
-      } else if (type instanceof ClassName) {
-        // Unparameterized class: use the generic, class-based setter.
-        //     target = target.set("id", entity.getId(), UUID.class);
-        methodBuilder.addStatement(
-            "$1L = $1L.set($2S, $3L, $4T.class)", targetName, cqlName, valueExtractor, type);
-      } else {
-        // Parameterized type: create a constant and use the GenericType-based setter.
-        //     private static final GenericType<List<String>> GENERIC_TYPE =
-        //         new GenericType<List<String>>(){};
-        //     target = target.set("names", entity.getNames(), GENERIC_TYPE);
-        // Note that lists, sets and maps of unparameterized classes also fall under that
-        // category. Their setter creates a GenericType under the hood, so there's no performance
-        // advantage in calling them instead of the generic set().
-        methodBuilder.addStatement(
-            "$1L = $1L.set($2S, $3L, $4L)",
-            targetName,
-            cqlName,
-            valueExtractor,
-            enclosingClass.addGenericTypeConstant(type));
-      }
+      // Collection of other entity class(es): the CQL column is a collection of mapped UDTs
+      // Build a copy of the value, encoding all entities into UdtValue instances on the fly.
+      String mappedCollectionName = enclosingClass.getNameIndex().uniqueField("mappedCollection");
+      String rawCollectionName = enclosingClass.getNameIndex().uniqueField("rawCollection");
+      methodBuilder
+          .addStatement("$T $L = $L", type.asTypeName(), mappedCollectionName, valueExtractor)
+          .beginControlFlow("if ($L != null)", mappedCollectionName);
+
+      CodeBlock currentCqlType = CodeBlock.of("$L.getType($S)", targetName, cqlName);
+      CodeBlock.Builder udtTypesBuilder = CodeBlock.builder();
+      CodeBlock.Builder conversionCodeBuilder = CodeBlock.builder();
+      convertEntitiesIntoUdts(
+          mappedCollectionName,
+          rawCollectionName,
+          type,
+          currentCqlType,
+          udtTypesBuilder,
+          conversionCodeBuilder,
+          enclosingClass);
+
+      methodBuilder
+          .addCode(udtTypesBuilder.build())
+          .addCode(conversionCodeBuilder.build())
+          .addStatement(
+              "$1L = $1L.set($2S, $3L, $4L)",
+              targetName,
+              cqlName,
+              rawCollectionName,
+              enclosingClass.addGenericTypeConstant(type.asRawTypeName()))
+          .endControlFlow();
     }
   }
 
   /**
-   * If the given type mirror is the declared type for an {@link Entity}-annotated class, returns
-   * the element for that class, otherwise null.
+   * Generates the code to convert a collection of mapped entities, for example a {@code Map<String,
+   * Product>} into a {@code Map<String, UdtValue>}.
+   *
+   * @param mappedObjectName the name of the local variable containing the value to convert.
+   * @param rawObjectName the name of the local variable that will hold the converted value (it does
+   *     not exist yet, this method must generate the declaration).
+   * @param type the type of the value.
+   * @param currentCqlType a code snippet to extract the CQL type corresponding to {@code type}.
+   * @param udtTypesBuilder a code block that comes before the conversion code, and creates local
+   *     variables that extract the required {@link UserDefinedType} instances from the target
+   *     container.
+   * @param conversionBuilder the code block to generate the conversion code into.
    */
-  private static TypeElement getEntityElement(TypeMirror typeMirror) {
-    if (typeMirror.getKind() == TypeKind.DECLARED) {
-      DeclaredType declaredType = (DeclaredType) typeMirror;
-      Element element = declaredType.asElement();
-      if (element.getKind() == ElementKind.CLASS && element.getAnnotation(Entity.class) != null) {
-        return ((TypeElement) element);
+  private static void convertEntitiesIntoUdts(
+      String mappedObjectName,
+      String rawObjectName,
+      PropertyType type,
+      CodeBlock currentCqlType,
+      CodeBlock.Builder udtTypesBuilder,
+      CodeBlock.Builder conversionBuilder,
+      BindableHandlingSharedCode enclosingClass) {
+
+    if (type instanceof PropertyType.SingleEntity) {
+      ClassName entityClass = ((PropertyType.SingleEntity) type).entityName;
+      String udtTypeName =
+          enclosingClass
+              .getNameIndex()
+              .uniqueField(Introspector.decapitalize(entityClass.simpleName()) + "UdtType");
+      udtTypesBuilder.addStatement(
+          "$1T $2L = ($1T) $3L", UserDefinedType.class, udtTypeName, currentCqlType);
+
+      String entityHelperName = enclosingClass.addEntityHelperField(entityClass);
+      conversionBuilder
+          .addStatement("$T $L = $L.newValue()", UdtValue.class, rawObjectName, udtTypeName)
+          .addStatement("$L.set($L, $L)", entityHelperName, mappedObjectName, rawObjectName);
+    } else if (type instanceof PropertyType.EntityList) {
+      TypeName rawCollectionType = type.asRawTypeName();
+      conversionBuilder.addStatement(
+          "$T $L = $T.newArrayListWithExpectedSize($L.size())",
+          rawCollectionType,
+          rawObjectName,
+          Lists.class,
+          mappedObjectName);
+      PropertyType mappedElementType = ((PropertyType.EntityList) type).elementType;
+      String mappedElementName = enclosingClass.getNameIndex().uniqueField("mappedElement");
+      conversionBuilder.beginControlFlow(
+          "for ($T $L: $L)", mappedElementType.asTypeName(), mappedElementName, mappedObjectName);
+      String rawElementName = enclosingClass.getNameIndex().uniqueField("rawElement");
+      convertEntitiesIntoUdts(
+          mappedElementName,
+          rawElementName,
+          mappedElementType,
+          CodeBlock.of("(($T) $L).getElementType()", ListType.class, currentCqlType),
+          udtTypesBuilder,
+          conversionBuilder,
+          enclosingClass);
+      conversionBuilder.addStatement("$L.add($L)", rawObjectName, rawElementName).endControlFlow();
+    } else if (type instanceof PropertyType.EntitySet) {
+      TypeName rawCollectionType = type.asRawTypeName();
+      conversionBuilder.addStatement(
+          "$T $L = $T.newLinkedHashSetWithExpectedSize($L.size())",
+          rawCollectionType,
+          rawObjectName,
+          Sets.class,
+          mappedObjectName);
+      PropertyType mappedElementType = ((PropertyType.EntitySet) type).elementType;
+      String mappedElementName = enclosingClass.getNameIndex().uniqueField("mappedElement");
+      conversionBuilder.beginControlFlow(
+          "for ($T $L: $L)", mappedElementType.asTypeName(), mappedElementName, mappedObjectName);
+      String rawElementName = enclosingClass.getNameIndex().uniqueField("rawElement");
+      convertEntitiesIntoUdts(
+          mappedElementName,
+          rawElementName,
+          mappedElementType,
+          CodeBlock.of("(($T) $L).getElementType()", SetType.class, currentCqlType),
+          udtTypesBuilder,
+          conversionBuilder,
+          enclosingClass);
+      conversionBuilder.addStatement("$L.add($L)", rawObjectName, rawElementName).endControlFlow();
+    } else if (type instanceof PropertyType.EntityMap) {
+      TypeName rawCollectionType = type.asRawTypeName();
+      conversionBuilder.addStatement(
+          "$T $L = $T.newLinkedHashMapWithExpectedSize($L.size())",
+          rawCollectionType,
+          rawObjectName,
+          Maps.class,
+          mappedObjectName);
+      PropertyType mappedKeyType = ((PropertyType.EntityMap) type).keyType;
+      PropertyType mappedValueType = ((PropertyType.EntityMap) type).valueType;
+      String mappedEntryName = enclosingClass.getNameIndex().uniqueField("mappedEntry");
+      conversionBuilder.beginControlFlow(
+          "for ($T $L: $L.entrySet())",
+          ParameterizedTypeName.get(
+              ClassName.get(Map.Entry.class),
+              mappedKeyType.asTypeName(),
+              mappedValueType.asTypeName()),
+          mappedEntryName,
+          mappedObjectName);
+      String mappedKeyName = CodeBlock.of("$L.getKey()", mappedEntryName).toString();
+      String rawKeyName;
+      if (mappedKeyType instanceof PropertyType.Simple) {
+        rawKeyName = mappedKeyName; // no conversion, use the instance as-is
+      } else {
+        rawKeyName = enclosingClass.getNameIndex().uniqueField("rawKey");
+        convertEntitiesIntoUdts(
+            mappedKeyName,
+            rawKeyName,
+            mappedKeyType,
+            CodeBlock.of("(($T) $L).getKeyType()", MapType.class, currentCqlType),
+            udtTypesBuilder,
+            conversionBuilder,
+            enclosingClass);
       }
+      String mappedValueName = CodeBlock.of("$L.getValue()", mappedEntryName).toString();
+      String rawValueName;
+      if (mappedValueType instanceof PropertyType.Simple) {
+        rawValueName = mappedValueName;
+      } else {
+        rawValueName = enclosingClass.getNameIndex().uniqueField("rawValue");
+        convertEntitiesIntoUdts(
+            mappedValueName,
+            rawValueName,
+            mappedValueType,
+            CodeBlock.of("(($T) $L).getValueType()", MapType.class, currentCqlType),
+            udtTypesBuilder,
+            conversionBuilder,
+            enclosingClass);
+      }
+      conversionBuilder
+          .addStatement("$L.put($L, $L)", rawObjectName, rawKeyName, rawValueName)
+          .endControlFlow();
+    } else {
+      throw new AssertionError("Unsupported type " + type.asTypeName());
     }
-    return null;
   }
 }

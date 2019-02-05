@@ -21,8 +21,8 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
-import javax.lang.model.element.TypeElement;
 
 /**
  * Shared class-level code for {@link MethodGenerator} components that generate code that
@@ -52,5 +52,5 @@ public interface BindableHandlingSharedCode {
    *
    * @return the name of the field.
    */
-  String addEntityHelperField(TypeElement entityClass);
+  String addEntityHelperField(ClassName entityClassName);
 }
