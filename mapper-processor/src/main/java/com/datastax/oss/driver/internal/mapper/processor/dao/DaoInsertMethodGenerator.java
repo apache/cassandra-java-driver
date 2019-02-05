@@ -147,7 +147,7 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
 
   @Override
   public MethodSpec.Builder generate() {
-    String helperFieldName = enclosingClass.addEntityHelperField(entityElement);
+    String helperFieldName = enclosingClass.addEntityHelperField(ClassName.get(entityElement));
     String statementName =
         enclosingClass.addPreparedStatement(
             methodElement,
@@ -180,7 +180,7 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
     // Handle all remaining parameters as additional bound values
     if (parameters.size() > 1) {
       GeneratedCodePatterns.bindParameters(
-          parameters.subList(1, parameters.size()), insertBuilder, enclosingClass);
+          parameters.subList(1, parameters.size()), insertBuilder, enclosingClass, context);
     }
 
     insertBuilder

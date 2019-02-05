@@ -49,7 +49,7 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
   private final NameIndex nameIndex = new NameIndex();
   private final GenericTypeConstantGenerator genericTypeConstantGenerator =
       new GenericTypeConstantGenerator(nameIndex);
-  private final Map<TypeElement, String> childHelpers = new HashMap<>();
+  private final Map<ClassName, String> childHelpers = new HashMap<>();
 
   public EntityHelperGenerator(TypeElement classElement, ProcessorContext context) {
     super(context);
@@ -74,12 +74,11 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
   }
 
   @Override
-  public String addEntityHelperField(TypeElement childEntityElement) {
+  public String addEntityHelperField(ClassName childEntityName) {
     return childHelpers.computeIfAbsent(
-        childEntityElement,
+        childEntityName,
         k -> {
-          String baseName =
-              Introspector.decapitalize(childEntityElement.getSimpleName().toString()) + "Helper";
+          String baseName = Introspector.decapitalize(childEntityName.simpleName()) + "Helper";
           return nameIndex.uniqueField(baseName);
         });
   }
@@ -123,11 +122,11 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
 
     genericTypeConstantGenerator.generate(classContents);
 
-    for (Map.Entry<TypeElement, String> entry : childHelpers.entrySet()) {
-      TypeElement childEntity = entry.getKey();
+    for (Map.Entry<ClassName, String> entry : childHelpers.entrySet()) {
+      ClassName childEntityName = entry.getKey();
       String fieldName = entry.getValue();
 
-      ClassName helperClassName = GeneratedNames.entityHelper(childEntity);
+      ClassName helperClassName = GeneratedNames.entityHelper(childEntityName);
       classContents.addField(
           FieldSpec.builder(helperClassName, fieldName, Modifier.PRIVATE, Modifier.FINAL).build());
 
