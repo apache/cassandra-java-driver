@@ -36,6 +36,7 @@ import com.datastax.oss.driver.internal.core.servererrors.WriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.session.PoolManager;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
+import com.datastax.oss.driver.internal.core.tracker.RequestLogFormatter;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -161,4 +162,13 @@ public interface InternalDriverContext extends DriverContext {
   default List<LifecycleListener> getLifecycleListeners() {
     return Collections.emptyList();
   }
+
+  /**
+   * A {@link RequestLogFormatter} instance based on this {@link DriverContext}.
+   *
+   * <p>The {@link RequestLogFormatter} instance returned here will use the settings in
+   * advanced.request-tracker when formatting requests.
+   */
+  @NonNull
+  RequestLogFormatter getRequestLogFormatter();
 }

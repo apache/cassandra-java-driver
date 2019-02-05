@@ -67,6 +67,7 @@ import com.datastax.oss.driver.internal.core.session.PoolManager;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
 import com.datastax.oss.driver.internal.core.ssl.JdkSslHandlerFactory;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
+import com.datastax.oss.driver.internal.core.tracker.RequestLogFormatter;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
 import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
@@ -195,6 +196,8 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final Map<String, String> localDatacentersFromBuilder;
   private final Map<String, Predicate<Node>> nodeFiltersFromBuilder;
   private final ClassLoader classLoader;
+  private final LazyReference<RequestLogFormatter> requestLogFormatterRef =
+      new LazyReference<>("requestLogFormatter", this::buildRequestLogFormatter, cycleDetector);
 
   public DefaultDriverContext(
       DriverConfigLoader configLoader,
@@ -756,5 +759,15 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public Map<String, String> getStartupOptions() {
     return startupOptionsRef.get();
+  }
+
+  protected RequestLogFormatter buildRequestLogFormatter() {
+    return new RequestLogFormatter(this);
+  }
+
+  @NonNull
+  @Override
+  public RequestLogFormatter getRequestLogFormatter() {
+    return requestLogFormatterRef.get();
   }
 }

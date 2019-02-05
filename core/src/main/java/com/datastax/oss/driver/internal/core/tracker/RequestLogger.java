@@ -63,6 +63,11 @@ public class RequestLogger implements RequestTracker {
 
   private static final Logger LOG = LoggerFactory.getLogger(RequestLogger.class);
 
+  public static final int DEFAULT_REQUEST_LOGGER_MAX_QUERY_LENGTH = 500;
+  public static final boolean DEFAULT_REQUEST_LOGGER_SHOW_VALUES = true;
+  public static final int DEFAULT_REQUEST_LOGGER_MAX_VALUES = 50;
+  public static final int DEFAULT_REQUEST_LOGGER_MAX_VALUE_LENGTH = 50;
+
   private final String logPrefix;
   private final RequestLogFormatter formatter;
 
@@ -100,12 +105,19 @@ public class RequestLogger implements RequestTracker {
     }
 
     int maxQueryLength =
-        executionProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_QUERY_LENGTH, 500);
+        executionProfile.getInt(
+            DefaultDriverOption.REQUEST_LOGGER_MAX_QUERY_LENGTH,
+            DEFAULT_REQUEST_LOGGER_MAX_QUERY_LENGTH);
     boolean showValues =
-        executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_VALUES, false);
-    int maxValues = executionProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES, 0);
+        executionProfile.getBoolean(
+            DefaultDriverOption.REQUEST_LOGGER_VALUES, DEFAULT_REQUEST_LOGGER_SHOW_VALUES);
+    int maxValues =
+        executionProfile.getInt(
+            DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES, DEFAULT_REQUEST_LOGGER_MAX_VALUES);
     int maxValueLength =
-        executionProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUE_LENGTH, 0);
+        executionProfile.getInt(
+            DefaultDriverOption.REQUEST_LOGGER_MAX_VALUE_LENGTH,
+            DEFAULT_REQUEST_LOGGER_MAX_VALUE_LENGTH);
 
     logSuccess(
         request, latencyNanos, isSlow, node, maxQueryLength, showValues, maxValues, maxValueLength);
@@ -124,13 +136,20 @@ public class RequestLogger implements RequestTracker {
     }
 
     int maxQueryLength =
-        executionProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_QUERY_LENGTH, 500);
+        executionProfile.getInt(
+            DefaultDriverOption.REQUEST_LOGGER_MAX_QUERY_LENGTH,
+            DEFAULT_REQUEST_LOGGER_MAX_QUERY_LENGTH);
     boolean showValues =
-        executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_VALUES, false);
-    int maxValues = executionProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES, 0);
+        executionProfile.getBoolean(
+            DefaultDriverOption.REQUEST_LOGGER_VALUES, DEFAULT_REQUEST_LOGGER_SHOW_VALUES);
+    int maxValues =
+        executionProfile.getInt(
+            DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES, DEFAULT_REQUEST_LOGGER_MAX_VALUES);
 
     int maxValueLength =
-        executionProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUE_LENGTH, 0);
+        executionProfile.getInt(
+            DefaultDriverOption.REQUEST_LOGGER_MAX_VALUE_LENGTH,
+            DEFAULT_REQUEST_LOGGER_MAX_VALUE_LENGTH);
     boolean showStackTraces =
         executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES, false);
 
