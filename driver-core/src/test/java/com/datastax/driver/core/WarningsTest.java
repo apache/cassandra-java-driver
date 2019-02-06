@@ -78,7 +78,9 @@ public class WarningsTest extends CCMTestsSupport {
         .contains(query.substring(0, QueryLogger.DEFAULT_MAX_QUERY_STRING_LENGTH))
         .contains("' generated server side warning(s): ")
         .contains(
-            "Batch for [ks_1.foo] is of size 5152, exceeding specified threshold of 5120 by 32.");
+            String.format(
+                "Batch for [%s.foo] is of size 5152, exceeding specified threshold of 5120 by 32.",
+                keyspace));
   }
 
   @Test(groups = "short")

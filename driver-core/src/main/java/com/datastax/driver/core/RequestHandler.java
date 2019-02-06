@@ -87,6 +87,7 @@ class RequestHandler {
 
   private final AtomicBoolean isDone = new AtomicBoolean();
   private final AtomicInteger executionIndex = new AtomicInteger();
+  private final QueryLogger queryLogger = QueryLogger.builder().build();
 
   public RequestHandler(SessionManager manager, Callback callback, Statement statement) {
     this.id = Long.toString(System.identityHashCode(this));
@@ -245,7 +246,7 @@ class RequestHandler {
 
   private void logServerWarnings(List<String> warnings) {
     // truncate the statement query to the DEFAULT_MAX_QUERY_STRING_LENGTH, if necessary
-    final String queryString = QueryLogger.builder().build().statementAsString(statement);
+    final String queryString = queryLogger.statementAsString(statement);
     // log each warning separately
     for (String warning : warnings) {
       logger.warn("Query '{}' generated server side warning(s): {}", queryString, warning);
