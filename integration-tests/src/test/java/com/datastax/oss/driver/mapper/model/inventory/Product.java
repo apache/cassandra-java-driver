@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.mapper.model.inventory;
 
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -55,5 +56,37 @@ public class Product {
 
   public void setDimensions(Dimensions dimensions) {
     this.dimensions = dimensions;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Product product = (Product) o;
+    return Objects.equals(id, product.id)
+        && Objects.equals(description, product.description)
+        && Objects.equals(dimensions, product.dimensions);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, description, dimensions);
+  }
+
+  @Override
+  public String toString() {
+    return "Product{"
+        + "id="
+        + id
+        + ", description='"
+        + description
+        + '\''
+        + ", dimensions="
+        + dimensions
+        + '}';
   }
 }
