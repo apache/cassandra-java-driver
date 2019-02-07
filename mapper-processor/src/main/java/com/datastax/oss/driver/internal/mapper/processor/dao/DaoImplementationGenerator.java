@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
@@ -91,6 +92,9 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator {
           ExecutableElement methodElement = (ExecutableElement) child;
           if (methodElement.getAnnotation(SetEntity.class) != null) {
             methods.add(new DaoSetEntityMethodGenerator(methodElement, this, context).generate());
+          }
+          if (methodElement.getAnnotation(GetEntity.class) != null) {
+            methods.add(new DaoGetEntityMethodGenerator(methodElement, this, context).generate());
           }
           // TODO handle other annotations
         }
