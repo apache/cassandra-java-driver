@@ -64,6 +64,7 @@ class RequestHandler {
 
   private static final boolean HOST_METRICS_ENABLED =
       Boolean.getBoolean("com.datastax.driver.HOST_METRICS_ENABLED");
+  private static final QueryLogger QUERY_LOGGER = QueryLogger.builder().build();
   static final String DISABLE_QUERY_WARNING_LOGS = "com.datastax.driver.DISABLE_QUERY_WARNING_LOGS";
 
   final String id;
@@ -87,7 +88,6 @@ class RequestHandler {
 
   private final AtomicBoolean isDone = new AtomicBoolean();
   private final AtomicInteger executionIndex = new AtomicInteger();
-  private final QueryLogger queryLogger = QueryLogger.builder().build();
 
   public RequestHandler(SessionManager manager, Callback callback, Statement statement) {
     this.id = Long.toString(System.identityHashCode(this));
@@ -246,7 +246,7 @@ class RequestHandler {
 
   private void logServerWarnings(List<String> warnings) {
     // truncate the statement query to the DEFAULT_MAX_QUERY_STRING_LENGTH, if necessary
-    final String queryString = queryLogger.statementAsString(statement);
+    final String queryString = QUERY_LOGGER.statementAsString(statement);
     // log each warning separately
     for (String warning : warnings) {
       logger.warn("Query '{}' generated server side warning(s): {}", queryString, warning);
