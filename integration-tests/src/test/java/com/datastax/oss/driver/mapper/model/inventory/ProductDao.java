@@ -15,10 +15,16 @@
  */
 package com.datastax.oss.driver.mapper.model.inventory;
 
+import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
+import com.datastax.oss.driver.api.core.PagingIterable;
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 
 @Dao
@@ -32,4 +38,19 @@ public interface ProductDao {
 
   @SetEntity
   void set(Dimensions dimensions, UdtValue udtValue);
+
+  @GetEntity
+  Product get(Row row);
+
+  @GetEntity
+  PagingIterable<Product> get(ResultSet resultSet);
+
+  @GetEntity
+  MappedAsyncPagingIterable<Product> get(AsyncResultSet resultSet);
+
+  @GetEntity
+  Product getOne(ResultSet resultSet);
+
+  @GetEntity
+  Product getOne(AsyncResultSet resultSet);
 }
