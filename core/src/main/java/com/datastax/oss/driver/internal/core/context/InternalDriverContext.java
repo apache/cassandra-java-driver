@@ -41,6 +41,8 @@ import com.datastax.oss.protocol.internal.FrameCodec;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.buffer.ByteBuf;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -145,4 +147,18 @@ public interface InternalDriverContext extends DriverContext {
    */
   @NonNull
   Map<String, String> getStartupOptions();
+
+  /**
+   * A list of additional components to notify of session lifecycle events.
+   *
+   * <p>The default implementation returns an empty list. Custom driver extensions might override
+   * this method to add their own components.
+   *
+   * <p>Note that the driver assumes that the returned list is constant; there is no way to add
+   * listeners dynamically.
+   */
+  @NonNull
+  default List<LifecycleListener> getLifecycleListeners() {
+    return Collections.emptyList();
+  }
 }

@@ -4,6 +4,7 @@
 
 ### 4.0.0-rc1 (in progress)
 
+- [new feature] JAVA-2144: Expose internal API to hook into the session lifecycle
 - [improvement] JAVA-2119: Add PagingIterable abstraction as a supertype of ResultSet
 - [bug] JAVA-2063: Normalize authentication logging
 - [documentation] JAVA-2034: Add performance recommendations in the manual
