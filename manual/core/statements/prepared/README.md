@@ -55,34 +55,68 @@ client                            driver                Cassandra
   |<--------------------------------|                     |
 ```
 
+Beyond saving a bit of parsing overhead on the server, prepared statements have other advantages;
+the `PREPARED` response also contains useful metadata about the CQL query:
+
+* information about the result set that will be produced when the statement gets executed. The
+  driver caches this, so that the server doesn't need to include it with every response. This saves
+  a bit of bandwidth, and the resources it would take to decode it every time.
+* the CQL types of the bound variables. This allows bound statements' `set` methods to perform
+  better checks, and fail fast (without a server round-trip) if the types are wrong.
+* which bound variables are part of the partition key. This allows bound statements to automatically
+  compute their [routing key](../../load_balancing/#token-aware).
+* more optimizations might get added in the future. For example, [CASSANDRA-10813] suggests adding
+  an "[idempotent](../../idempotence)" flag to the response.
+
+If you have a unique query that is executed only once, a [simple statement](../simple/) will be more
+efficient. But note that this should be pretty rare: most client applications typically repeat the
+same queries over and over, and a parameterized version can be extracted and prepared.  
+
+### Preparing
+
+`Session.prepare()` accepts either a plain query string, or a `SimpleStatement` object. If you use a
+`SimpleStatement`, its execution parameters will propagate to bound statements:
+
+```java
+SimpleStatement simpleStatement =
+    SimpleStatement.builder("SELECT * FROM product WHERE sku = ?")
+        .withConsistencyLevel(DefaultConsistencyLevel.QUORUM)
+        .build();
+PreparedStatement preparedStatement = session.prepare(simpleStatement);
+BoundStatement boundStatement = preparedStatement.bind();
+assert boundStatement.getConsistencyLevel() == DefaultConsistencyLevel.QUORUM;
+``` 
+
+For more details, including the complete list of attributes that are copied, refer to
+[API docs][Session.prepare].
+
 The driver caches prepared statements: if you call `prepare()` multiple times with the same query
-string (or a `SimpleStatement` with the same execution characteristics), you will get the same
-`PreparedStatement` instance. We still recommend keeping a reference to it (for example by caching
-it as a field in a DAO); if that's not possible (e.g. if query strings are generated dynamically),
-it's OK to call `prepare()` every time: there will just be a small performance overhead to check the
-internal cache. Note that caching is based on:
+string (or a `SimpleStatement` with the same execution parameters), you will get the same
+`PreparedStatement` instance:
+ 
+```java
+PreparedStatement ps1 = session.prepare("SELECT * FROM product WHERE sku = ?");
+// The second call hits the cache, nothing is sent to the server:
+PreparedStatement ps2 = session.prepare("SELECT * FROM product WHERE sku = ?");
+assert ps1 == ps2;
+``` 
+ 
+We still recommend avoiding repeated calls to `prepare()`; if that's not possible (e.g. if query
+strings are generated dynamically), there will just be a small performance overhead to check the
+cache on every call.
+
+Note that caching is based on:
 
 * the query string exactly as you provided it: the driver does not perform any kind of trimming or
   sanitizing.
 * all other execution parameters: for example, preparing two statements with identical query strings
-  but different consistency levels will yield distinct prepared statements.
+  but different consistency levels will yield two distinct prepared statements (that each produce
+  bound statements with their respective consistency level).
 
 The size of the cache is exposed as a session-level [metric](../../metrics/)
 `cql-prepared-cache-size`. The cache uses [weak values]([guava eviction]) eviction, so this
 represents the number of `PreparedStatement` instances that your application has created, and is
 still holding a reference to.
-
-If you execute a query only once, a prepared statement is inefficient because it requires two round
-trips. Consider a [simple statement](../simple/) instead.
-
-### Preparing
-
-The `Session.prepare` method accepts either a query string or a `SimpleStatement` object. If you use
-the object variant, both the initial prepare request and future bound statements will share some of
-the options of that simple statement:
-
-* initial prepare request: configuration profile name (or instance) and custom payload.
-* bound statements: configuration profile name (or instance) and custom payload, idempotent flag.
 
 ### Parameters and binding
 
@@ -279,6 +313,7 @@ new version with the response; the driver updates its local cache transparently,
 observe the new columns in the result set.
 
 [BoundStatement]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/BoundStatement.html
-
+[Session.prepare]: https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/CqlSession.html#prepare-com.datastax.oss.driver.api.core.cql.SimpleStatement-
 [CASSANDRA-10786]: https://issues.apache.org/jira/browse/CASSANDRA-10786
+[CASSANDRA-10813]: https://issues.apache.org/jira/browse/CASSANDRA-10813
 [guava eviction]: https://github.com/google/guava/wiki/CachesExplained#reference-based-eviction
