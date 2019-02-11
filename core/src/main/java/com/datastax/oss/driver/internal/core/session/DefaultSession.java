@@ -394,8 +394,8 @@ public class DefaultSession implements CqlSession {
                   if (error != null) {
                     initFuture.completeExceptionally(error);
                   } else {
-                    notifyLifecycleListeners();
                     initFuture.complete(DefaultSession.this);
+                    notifyLifecycleListeners();
                   }
                 });
       } catch (Throwable throwable) {
