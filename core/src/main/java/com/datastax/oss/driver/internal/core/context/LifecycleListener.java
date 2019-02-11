@@ -39,6 +39,9 @@ public interface LifecycleListener extends AutoCloseable {
   /**
    * Invoked when the session shuts down.
    *
+   * <p>Implementations should perform any necessary cleanup, for example freeing resources or
+   * cancelling scheduled tasks.
+   *
    * <p>Note that this method gets called even if the shutdown results from a failed initialization.
    * In that case, implementations should be ready to handle a call to this method even though
    * {@link #onSessionReady()} hasn't been invoked.
