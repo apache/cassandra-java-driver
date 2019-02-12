@@ -30,6 +30,7 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.context.LifecycleListener;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
@@ -394,6 +395,7 @@ public class DefaultSession implements CqlSession {
                     initFuture.completeExceptionally(error);
                   } else {
                     initFuture.complete(DefaultSession.this);
+                    notifyLifecycleListeners();
                   }
                 });
       } catch (Throwable throwable) {
@@ -402,6 +404,21 @@ public class DefaultSession implements CqlSession {
                 (v, error) -> {
                   initFuture.completeExceptionally(throwable);
                 });
+      }
+    }
+
+    private void notifyLifecycleListeners() {
+      for (LifecycleListener lifecycleListener : context.getLifecycleListeners()) {
+        try {
+          lifecycleListener.onSessionReady();
+        } catch (Throwable t) {
+          Loggers.warnWithException(
+              LOG,
+              "[{}] Error while notifying {} of session ready",
+              logPrefix,
+              lifecycleListener,
+              t);
+        }
       }
     }
 
@@ -537,6 +554,7 @@ public class DefaultSession implements CqlSession {
       } catch (Throwable t) {
         // ignore
       }
+      policies.addAll(context.getLifecycleListeners());
 
       // Finally we have a list of all the policies that initialized successfully, close them:
       for (AutoCloseable policy : policies) {
