@@ -1,15 +1,15 @@
 ## Aggregate
 
 Aggregates enable users to apply User-defined functions (UDF) to rows in a data set and combine
-their values into a final result, for example average or standard deviation.  [SchemaBuilderDsl]
+their values into a final result, for example average or standard deviation.  [SchemaBuilder]
 offers API methods for creating and dropping aggregates.
 
 ### Creating an aggregate (CREATE AGGREGATE)
 
-To start a `CREATE AGGREGATE` query, use `createAggregate` in [SchemaBuilderDsl]:
+To start a `CREATE AGGREGATE` query, use `createAggregate` in [SchemaBuilder]:
 
 ```java
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.*;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 
 CreateAggregateStart create = createAggregate("average");
 ```
@@ -76,4 +76,4 @@ dropAggregate("average").ifExists();
 // DROP AGGREGATE IF EXISTS average
 ```
 
-[SchemaBuilderDsl]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilderDsl.html
+[SchemaBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html

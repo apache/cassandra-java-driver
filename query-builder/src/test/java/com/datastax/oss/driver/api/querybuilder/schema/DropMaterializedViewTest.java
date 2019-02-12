@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.dropMaterializedView;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.dropMaterializedView;
 
 import org.junit.Test;
 

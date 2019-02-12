@@ -18,8 +18,8 @@ package com.datastax.oss.driver.api.querybuilder.select;
 import static com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder.ASC;
 import static com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder.DESC;
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.literal;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.selectFrom;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;

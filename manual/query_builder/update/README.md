@@ -1,11 +1,11 @@
 ## UPDATE
 
-To start an UPDATE query, use one of the `update` methods in [QueryBuilderDsl]. There are several
+To start an UPDATE query, use one of the `update` methods in [QueryBuilder]. There are several
 variants depending on whether your table name is qualified, and whether you use case-sensitive
 identifiers or case-insensitive strings:
 
 ```java
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.*;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 
 UpdateStart update = update("user");
 ```
@@ -222,5 +222,5 @@ update("foo")
 Conditions are a common feature used by UPDATE and DELETE, so they have a
 [dedicated page](../condition) in this manual.
 
-[QueryBuilderDsl]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/QueryBuilderDsl.html
-[Assignment]:      http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/update/Assignment.html
+[QueryBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/QueryBuilder.html
+[Assignment]:   http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/update/Assignment.html

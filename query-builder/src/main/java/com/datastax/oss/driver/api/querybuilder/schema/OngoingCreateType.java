@@ -18,7 +18,7 @@ package com.datastax.oss.driver.api.querybuilder.schema;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
-import com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl;
+import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface OngoingCreateType {
@@ -29,7 +29,7 @@ public interface OngoingCreateType {
    * <p>Fields keys are added in the order of their declaration.
    *
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
-   * {@link SchemaBuilderDsl#udt(CqlIdentifier, boolean)}.
+   * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
   @NonNull
   CreateType withField(@NonNull CqlIdentifier identifier, @NonNull DataType dataType);

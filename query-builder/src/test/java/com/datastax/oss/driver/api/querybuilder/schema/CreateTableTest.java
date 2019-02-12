@@ -16,13 +16,13 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.createTable;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.udt;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createTable;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.udt;
 
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.core.type.DataTypes;
-import com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl;
-import com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.RowsPerPartition;
+import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
+import com.datastax.oss.driver.api.querybuilder.SchemaBuilder.RowsPerPartition;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.TimeWindowCompactionStrategy.CompactionWindowUnit;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.TimeWindowCompactionStrategy.TimestampResolution;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -261,7 +261,7 @@ public class CreateTableTest {
                 .withPartitionKey("k", DataTypes.INT)
                 .withColumn("v", DataTypes.TEXT)
                 .withCompaction(
-                    SchemaBuilderDsl.sizeTieredCompactionStrategy()
+                    SchemaBuilder.sizeTieredCompactionStrategy()
                         .withBucketHigh(1.6)
                         .withBucketLow(0.6)
                         .withColdReadsToOmit(0.1)
@@ -284,7 +284,7 @@ public class CreateTableTest {
                 .withPartitionKey("k", DataTypes.INT)
                 .withColumn("v", DataTypes.TEXT)
                 .withCompaction(
-                    SchemaBuilderDsl.leveledCompactionStrategy()
+                    SchemaBuilder.leveledCompactionStrategy()
                         .withSSTableSizeInMB(110)
                         .withTombstoneCompactionIntervalInSeconds(3600)))
         .hasCql(
@@ -298,7 +298,7 @@ public class CreateTableTest {
                 .withPartitionKey("k", DataTypes.INT)
                 .withColumn("v", DataTypes.TEXT)
                 .withCompaction(
-                    SchemaBuilderDsl.timeWindowCompactionStrategy()
+                    SchemaBuilder.timeWindowCompactionStrategy()
                         .withCompactionWindow(10, CompactionWindowUnit.DAYS)
                         .withTimestampResolution(TimestampResolution.MICROSECONDS)
                         .withUnsafeAggressiveSSTableExpiration(false)))

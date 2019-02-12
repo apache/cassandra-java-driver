@@ -8,10 +8,10 @@ one to *generate CQL DDL queries programmatically**.  For example it could be us
 * given a Java class that represents a table, view, or user defined type, generate representative
   schema DDL `CREATE` queries.
 
-Here is an example that demonstrates creating a keyspace and a table using [SchemaBuilderDsl]:
+Here is an example that demonstrates creating a keyspace and a table using [SchemaBuilder]:
 
 ```java
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.*;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 
 try (CqlSession session = CqlSession.builder().build()) {
   CreateKeyspace createKs = createKeyspace("cycling").withSimpleStrategy(1);
@@ -44,4 +44,4 @@ element type:
 * [function](function/)
 * [aggregate](aggregate/)
 
-[SchemaBuilderDsl]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilderDsl.html
+[SchemaBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html

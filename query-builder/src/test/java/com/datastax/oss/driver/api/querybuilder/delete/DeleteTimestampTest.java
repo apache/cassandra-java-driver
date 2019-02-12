@@ -16,8 +16,8 @@
 package com.datastax.oss.driver.api.querybuilder.delete;
 
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.bindMarker;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.deleteFrom;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.deleteFrom;
 
 import org.junit.Test;
 

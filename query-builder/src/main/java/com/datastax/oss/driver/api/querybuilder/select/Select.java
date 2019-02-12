@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
-import com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.relation.OngoingWhereClause;
 import com.datastax.oss.driver.internal.core.CqlIdentifiers;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
@@ -156,8 +156,8 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
   /**
    * Adds a LIMIT clause to this query with a bind marker.
    *
-   * <p>To create the argument, use one of the factory methods in {@link QueryBuilderDsl}, for
-   * example {@link QueryBuilderDsl#bindMarker() bindMarker()}.
+   * <p>To create the argument, use one of the factory methods in {@link QueryBuilder}, for example
+   * {@link QueryBuilder#bindMarker() bindMarker()}.
    *
    * <p>If this method or {@link #limit(int)} is called multiple times, the last value is used.
    * {@code null} can be passed to cancel a previous limit.
@@ -177,8 +177,8 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
   /**
    * Adds a PER PARTITION LIMIT clause to this query with a bind marker.
    *
-   * <p>To create the argument, use one of the factory methods in {@link QueryBuilderDsl}, for
-   * example {@link QueryBuilderDsl#bindMarker() bindMarker()}.
+   * <p>To create the argument, use one of the factory methods in {@link QueryBuilder}, for example
+   * {@link QueryBuilder#bindMarker() bindMarker()}.
    *
    * <p>If this method or {@link #perPartitionLimit(int)} is called multiple times, the last value
    * is used. {@code null} can be passed to cancel a previous limit.

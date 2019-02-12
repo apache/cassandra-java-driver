@@ -16,10 +16,10 @@
 package com.datastax.oss.driver.api.querybuilder.relation;
 
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.bindMarker;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.raw;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.selectFrom;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.tuple;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.raw;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.tuple;
 
 import org.junit.Test;
 

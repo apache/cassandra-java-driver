@@ -1,11 +1,11 @@
 ## INSERT
 
-To start an INSERT query, use one of the `insertInto` methods in [QueryBuilderDsl]. There are
+To start an INSERT query, use one of the `insertInto` methods in [QueryBuilder]. There are
 several variants depending on whether your table name is qualified, and whether you use
 case-sensitive identifiers or case-insensitive strings:
 
 ```java
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.*;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 
 InsertInto insert = insertInto("user");
 ```
@@ -87,4 +87,4 @@ insertInto("user").json(bindMarker()).usingTimestamp(bindMarker())
 
 If you call the method multiple times, the last value will be used.
 
-[QueryBuilderDsl]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/QueryBuilderDsl.html
+[QueryBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/QueryBuilder.html

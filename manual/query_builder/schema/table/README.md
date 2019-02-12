@@ -1,14 +1,14 @@
 ## Table
 
-Data in Apache Cassandra is stored in tables.  [SchemaBuilderDsl] offers API methods for creating,
+Data in Apache Cassandra is stored in tables.  [SchemaBuilder] offers API methods for creating,
 altering, and dropping tables.
 
 ### Creating a Table (CREATE TABLE)
 
-To start a `CREATE TABLE` query, use `createTable` in [SchemaBuilderDsl]:
+To start a `CREATE TABLE` query, use `createTable` in [SchemaBuilder]:
 
 ```java
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.*;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 
 CreateTableStart create = createTable("cycling", "cyclist_name");
 ```
@@ -107,6 +107,6 @@ dropTable("cyclist_name").ifExists();
 // DROP TABLE IF EXISTS cyclist_name
 ```
 
-[SchemaBuilderDsl]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilderDsl.html
+[SchemaBuilder]:          http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
 [CreateTableWithOptions]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/schema/CreateTableWithOptions.html
-[AlterTableWithOptions]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/schema/AlterTableWithOptions.html
+[AlterTableWithOptions]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/schema/AlterTableWithOptions.html

@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.CqlSnippet;
-import com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.relation.ArithmeticRelationBuilder;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 
@@ -33,9 +33,8 @@ import com.datastax.oss.driver.api.querybuilder.select.Selector;
  *   <li>as the right operand of a {@link ArithmeticRelationBuilder#isEqualTo(Term) relation}.
  * </ul>
  *
- * To build instances of this type, use the factory methods in {@link QueryBuilderDsl}, such as
- * {@link QueryBuilderDsl#literal(Object) literal}, {@link QueryBuilderDsl#tuple(Iterable) tuple},
- * etc.
+ * To build instances of this type, use the factory methods in {@link QueryBuilder}, such as {@link
+ * QueryBuilder#literal(Object) literal}, {@link QueryBuilder#tuple(Iterable) tuple}, etc.
  */
 public interface Term extends CqlSnippet {
 

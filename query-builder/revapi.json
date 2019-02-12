@@ -104,6 +104,26 @@
         "newArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-beta3",
         "elementKind": "parameter",
         "justification": "Fix nullability annotations on query builder range selectors"
+      },
+      {
+        "code": "java.class.removed",
+        "old": "class com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl",
+        "oldArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-beta3",
+        "justification": "JAVA-2151: Drop \"Dsl\" suffix from query builder main classes"
+      },
+      {
+        "code": "java.class.removed",
+        "old": "class com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl",
+        "oldArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-beta3",
+        "justification": "JAVA-2151: Drop \"Dsl\" suffix from query builder main classes"
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter SelfT com.datastax.oss.driver.api.querybuilder.schema.RelationOptions<SelfT extends com.datastax.oss.driver.api.querybuilder.schema.RelationOptions<SelfT extends com.datastax.oss.driver.api.querybuilder.schema.RelationOptions<SelfT>>>::withCaching(boolean, ===com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.RowsPerPartition===)",
+        "new": "parameter SelfT com.datastax.oss.driver.api.querybuilder.schema.RelationOptions<SelfT extends com.datastax.oss.driver.api.querybuilder.schema.RelationOptions<SelfT extends com.datastax.oss.driver.api.querybuilder.schema.RelationOptions<SelfT>>>::withCaching(boolean, ===com.datastax.oss.driver.api.querybuilder.SchemaBuilder.RowsPerPartition===)",
+        "oldArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-beta3",
+        "newArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-rc1-SNAPSHOT",
+        "justification": "JAVA-2151: Drop \"Dsl\" suffix from query builder main classes"
       }
     ]
   }

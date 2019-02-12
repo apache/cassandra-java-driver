@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.api.querybuilder.update;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
@@ -156,13 +156,13 @@ public interface OngoingAssignment {
    * Increments a counter by 1, as in {@code SET c+=1} .
    *
    * <p>This is a shortcut for {@link #increment(CqlIdentifier, Term)} increment(columnId,
-   * QueryBuilderDsl.literal(1))}.
+   * QueryBuilder.literal(1))}.
    *
    * @see Assignment#increment(CqlIdentifier)
    */
   @NonNull
   default UpdateWithAssignments increment(@NonNull CqlIdentifier columnId) {
-    return increment(columnId, QueryBuilderDsl.literal(1));
+    return increment(columnId, QueryBuilder.literal(1));
   }
 
   /**
@@ -207,7 +207,7 @@ public interface OngoingAssignment {
    */
   @NonNull
   default UpdateWithAssignments decrement(@NonNull CqlIdentifier columnId) {
-    return decrement(columnId, QueryBuilderDsl.literal(1));
+    return decrement(columnId, QueryBuilder.literal(1));
   }
 
   /**

@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.api.querybuilder.relation;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.core.CqlIdentifiers;
 import com.datastax.oss.driver.internal.querybuilder.DefaultRaw;
@@ -234,7 +234,7 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
   /**
    * Adds a raw CQL snippet as a relation.
    *
-   * <p>This is the equivalent of creating a relation with {@link QueryBuilderDsl#raw(String)} and
+   * <p>This is the equivalent of creating a relation with {@link QueryBuilder#raw(String)} and
    * passing it to {@link #where(Relation)}.
    *
    * <p>The contents will be appended to the query as-is, without any syntax checking or escaping.

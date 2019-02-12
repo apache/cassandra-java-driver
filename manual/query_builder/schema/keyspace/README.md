@@ -1,14 +1,14 @@
 ## Keyspace
 
 A keyspace is a top-level namespace that defines a name, replication strategy and configurable
-options. [SchemaBuilderDsl] offers API methods for creating, altering and dropping keyspaces.
+options. [SchemaBuilder] offers API methods for creating, altering and dropping keyspaces.
 
 ### Creating a Keyspace (CREATE KEYSPACE)
 
-To start a `CREATE KEYSPACE` query, use `createKeyspace` in [SchemaBuilderDsl]:
+To start a `CREATE KEYSPACE` query, use `createKeyspace` in [SchemaBuilder]:
 
 ```java
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.*;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 
 CreateKeyspaceStart create = createKeyspace("cycling");
 ```
@@ -83,6 +83,6 @@ dropKeyspace("cycling").ifExists();
 // DROP KEYSPACE IF EXISTS cycling
 ```
 
-[SchemaBuilderDsl]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilderDsl.html
+[SchemaBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
 
 

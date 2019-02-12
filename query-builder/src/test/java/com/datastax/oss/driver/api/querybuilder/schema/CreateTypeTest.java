@@ -16,8 +16,8 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.createType;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.udt;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createType;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.udt;
 
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import org.junit.Test;

@@ -16,12 +16,12 @@
 package com.datastax.oss.driver.api.querybuilder.insert;
 
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.add;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.function;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.insertInto;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.literal;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.raw;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.tuple;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.add;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.function;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.raw;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.tuple;
 
 import org.junit.Test;
 

@@ -21,7 +21,7 @@ To use it in your application, add the following dependency:
 Here is our canonical example rewritten with the query builder:
 
 ```java
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.*;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 
 try (CqlSession session = CqlSession.builder().build()) {
   
@@ -38,11 +38,11 @@ try (CqlSession session = CqlSession.builder().build()) {
 
 #### Fluent API
 
-All the starting methods are centralized in the [QueryBuilderDsl] class. To get started, add the
+All the starting methods are centralized in the [QueryBuilder] class. To get started, add the
 following import:
 
 ```java
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.*;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 ```
 
 Choose the method matching your desired statement, for example `selectFrom`. Then use your IDE's
@@ -183,6 +183,6 @@ For a complete tour of the API, browse the child pages in this manual:
   * [Terms](term/)
   * [Idempotence](idempotence/)
   
-[QueryBuilderDsl]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/QueryBuilderDsl.html
-[SchemaBuilderDsl]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/SchemaBuilderDsl.html
-[CqlIdentifier]:   http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/CqlIdentifier.html
+[QueryBuilder]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/QueryBuilder.html
+[SchemaBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/SchemaBuilder.html
+[CqlIdentifier]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/CqlIdentifier.html

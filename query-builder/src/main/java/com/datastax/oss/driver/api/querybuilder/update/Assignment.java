@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.CqlSnippet;
-import com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.ColumnComponentLeftOperand;
 import com.datastax.oss.driver.internal.querybuilder.lhs.ColumnLeftOperand;
@@ -109,7 +109,7 @@ public interface Assignment extends CqlSnippet {
   /** Increments a counter by 1, as in {@code SET c+=1} . */
   @NonNull
   static Assignment increment(@NonNull CqlIdentifier columnId) {
-    return increment(columnId, QueryBuilderDsl.literal(1));
+    return increment(columnId, QueryBuilder.literal(1));
   }
 
   /** Shortcut for {@link #increment(CqlIdentifier) CqlIdentifier.fromCql(columnName)}. */
@@ -136,7 +136,7 @@ public interface Assignment extends CqlSnippet {
   /** Decrements a counter by 1, as in {@code SET c-=1} . */
   @NonNull
   static Assignment decrement(@NonNull CqlIdentifier columnId) {
-    return decrement(columnId, QueryBuilderDsl.literal(1));
+    return decrement(columnId, QueryBuilder.literal(1));
   }
 
   /** Shortcut for {@link #decrement(CqlIdentifier) CqlIdentifier.fromCql(columnName)}. */
