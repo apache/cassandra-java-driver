@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.api.querybuilder.condition;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.condition.DefaultConditionBuilder;
 import com.datastax.oss.driver.internal.querybuilder.lhs.ColumnComponentLeftOperand;
@@ -147,7 +147,7 @@ public interface ConditionalStatement<SelfT extends ConditionalStatement<SelfT>>
   /**
    * Adds a raw CQL snippet as a condition.
    *
-   * <p>This is the equivalent of creating a condition with {@link QueryBuilderDsl#raw(String)} and
+   * <p>This is the equivalent of creating a condition with {@link QueryBuilder#raw(String)} and
    * passing it to {@link #if_(Condition)}.
    *
    * <p>The contents will be appended to the query as-is, without any syntax checking or escaping.
@@ -155,10 +155,10 @@ public interface ConditionalStatement<SelfT extends ConditionalStatement<SelfT>>
    * fail at execution time; on the other hand, it can be used as a workaround to handle new CQL
    * features that are not yet covered by the query builder.
    *
-   * @see QueryBuilderDsl#raw(String)
+   * @see QueryBuilder#raw(String)
    */
   @NonNull
   default SelfT ifRaw(@NonNull String raw) {
-    return if_(QueryBuilderDsl.raw(raw));
+    return if_(QueryBuilder.raw(raw));
   }
 }

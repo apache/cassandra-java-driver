@@ -1,15 +1,15 @@
 ## Function
 
 User-defined functions (UDF) enable users to create user code written in JSR-232 compliant scripting
-languages that can be evaluated in CQL queries.  [SchemaBuilderDsl] offers API methods for creating
+languages that can be evaluated in CQL queries.  [SchemaBuilder] offers API methods for creating
 and dropping UDFs.
 
 ### Creating a Function (CREATE FUNCTION)
 
-To start a `CREATE FUNCTION` query, use `createFunction` in [SchemaBuilderDsl]:
+To start a `CREATE FUNCTION` query, use `createFunction` in [SchemaBuilder]:
 
 ```java
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.*;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 
 CreateFunctionStart create = createFunction("log");
 ```
@@ -92,4 +92,4 @@ dropFunction("log").ifExists();
 // DROP FUNCTION IF EXISTS log
 ```
 
-[SchemaBuilderDsl]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilderDsl.html
+[SchemaBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html

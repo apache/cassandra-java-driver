@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
-import com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl;
+import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface CreateTable extends BuildableQuery, OngoingPartitionKey, CreateTableWithOptions {
@@ -33,7 +33,7 @@ public interface CreateTable extends BuildableQuery, OngoingPartitionKey, Create
    * <p>Clustering key columns are added in the order of their declaration.
    *
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
-   * {@link SchemaBuilderDsl#udt(CqlIdentifier, boolean)}.
+   * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
   @NonNull
   CreateTable withClusteringColumn(@NonNull CqlIdentifier columnName, @NonNull DataType dataType);
@@ -51,7 +51,7 @@ public interface CreateTable extends BuildableQuery, OngoingPartitionKey, Create
    * Adds a column definition in the CREATE TABLE statement.
    *
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
-   * {@link SchemaBuilderDsl#udt(CqlIdentifier, boolean)}.
+   * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
   @NonNull
   CreateTable withColumn(@NonNull CqlIdentifier columnName, @NonNull DataType dataType);
@@ -72,7 +72,7 @@ public interface CreateTable extends BuildableQuery, OngoingPartitionKey, Create
    * #withColumn(CqlIdentifier, DataType) addColumn} call).
    *
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
-   * {@link SchemaBuilderDsl#udt(CqlIdentifier, boolean)}.
+   * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
   @NonNull
   CreateTable withStaticColumn(@NonNull CqlIdentifier columnName, @NonNull DataType dataType);

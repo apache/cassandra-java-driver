@@ -1,14 +1,14 @@
 ## Type
 
 User-defined types are special types that can associate multiple named fields to a single column. 
-[SchemaBuilderDsl] offers API methods for creating, altering, and dropping types.
+[SchemaBuilder] offers API methods for creating, altering, and dropping types.
 
 ### Creating a Type (CREATE TYPE)
 
-To start a `CREATE TYPE` query, use `createType` in [SchemaBuilderDsl]:
+To start a `CREATE TYPE` query, use `createType` in [SchemaBuilder]:
 
 ```java
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.*;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 
 CreateTypeStart create = createType("mykeyspace", "address");
 ```
@@ -43,7 +43,7 @@ CreateType create = createType("mykeyspace", "address")
 ### Using a created Type in Schema Builder API
 
 After creating a UDT, one may wonder how to use it in other schema statements.  To do so, utilize
-`udt(name,frozen)` from [SchemaBuilderDsl], i.e:
+`udt(name,frozen)` from [SchemaBuilder], i.e:
 
 ```java
 CreateTable users = createTable("mykeyspace", "users")
@@ -88,4 +88,4 @@ dropTable("address").ifExists();
 // DROP TYPE IF EXISTS address
 ```
 
-[SchemaBuilderDsl]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilderDsl.html
+[SchemaBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html

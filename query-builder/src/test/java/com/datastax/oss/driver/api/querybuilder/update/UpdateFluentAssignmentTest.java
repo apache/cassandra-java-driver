@@ -16,9 +16,9 @@
 package com.datastax.oss.driver.api.querybuilder.update;
 
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.bindMarker;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.literal;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.update;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.update;
 
 import com.datastax.oss.driver.api.querybuilder.Literal;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;

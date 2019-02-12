@@ -17,7 +17,7 @@ You can also create it manually with one of the factory methods in [Condition], 
 `if_()`:
 
 ```java
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.*;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 
 Condition vCondition = Condition.column("v").isEqualTo(literal(1));
 deleteFrom("user")

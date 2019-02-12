@@ -2,15 +2,15 @@
 
 Materialized Views are an experimental feature introduced in Apache Cassandra 3.0 that provide a
 mechanism for server-side denormalization from a base table into a view that is updated when the
-base table is updated. [SchemaBuilderDsl] offers API methods for creating, altering and dropping
+base table is updated. [SchemaBuilder] offers API methods for creating, altering and dropping
 materialized views.
 
 ### Creating a Materialized View (CREATE MATERIALIZED VIEW)
 
-To start a `CREATE MATERIALIZED VIEW` query, use `createMaterializedView` in [SchemaBuilderDsl]:
+To start a `CREATE MATERIALIZED VIEW` query, use `createMaterializedView` in [SchemaBuilder]:
 
 ```java
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.*;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 
 CreateMaterializedViewStart create = createMaterializedView("cycling", "cyclist_by_age");
 ```
@@ -85,5 +85,5 @@ dropTable("cyclist_by_age").ifExists();
 // DROP MATERIALIZED VIEW IF EXISTS cyclist_by_age
 ```
 
-[SchemaBuilderDsl]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilderDsl.html
+[SchemaBuilder]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
 [RelationStructure]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/schema/RelationStructure.html

@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
-import com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl;
+import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface AlterTypeStart extends AlterTypeRenameField {
@@ -28,7 +28,7 @@ public interface AlterTypeStart extends AlterTypeRenameField {
    * Completes ALTER TYPE specifying the the type of a field should be changed.
    *
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
-   * {@link SchemaBuilderDsl#udt(CqlIdentifier, boolean)}.
+   * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
   @NonNull
   BuildableQuery alterField(@NonNull CqlIdentifier fieldName, @NonNull DataType dataType);
@@ -46,7 +46,7 @@ public interface AlterTypeStart extends AlterTypeRenameField {
    * Completes ALTER TYPE by adding a field definition in the ALTER TYPE statement.
    *
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
-   * {@link SchemaBuilderDsl#udt(CqlIdentifier, boolean)}.
+   * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
   @NonNull
   BuildableQuery addField(@NonNull CqlIdentifier fieldName, @NonNull DataType dataType);

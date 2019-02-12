@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.dropTable;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.dropTable;
 
 import org.junit.Test;
 

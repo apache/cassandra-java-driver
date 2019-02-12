@@ -6,7 +6,7 @@ A term is an expression that does not involve the value of a column. It is used:
   selectors;
 * as the right operand of [relations](../relation).
 
-To create a term, call one of the factory methods in [QueryBuilderDsl]:
+To create a term, call one of the factory methods in [QueryBuilder]:
 
 ### Literals
 
@@ -105,5 +105,5 @@ This should be used with caution, as it's possible to generate invalid CQL that 
 execution time; on the other hand, it can be used as a workaround to handle new CQL features that
 are not yet covered by the query builder.
 
-[QueryBuilderDsl]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/QueryBuilderDsl.html
-[CodecRegistry]:   http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html
+[QueryBuilder]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/QueryBuilder.html
+[CodecRegistry]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html

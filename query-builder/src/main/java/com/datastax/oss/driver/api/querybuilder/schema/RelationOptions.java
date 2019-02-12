@@ -15,9 +15,9 @@
  */
 package com.datastax.oss.driver.api.querybuilder.schema;
 
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.RowsPerPartition;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.RowsPerPartition;
 
-import com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl;
+import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.CompactionStrategy;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -79,9 +79,9 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
   /**
    * Defines the compaction strategy to use.
    *
-   * @see SchemaBuilderDsl#sizeTieredCompactionStrategy()
-   * @see SchemaBuilderDsl#leveledCompactionStrategy()
-   * @see SchemaBuilderDsl#timeWindowCompactionStrategy()
+   * @see SchemaBuilder#sizeTieredCompactionStrategy()
+   * @see SchemaBuilder#leveledCompactionStrategy()
+   * @see SchemaBuilder#timeWindowCompactionStrategy()
    */
   @NonNull
   default SelfT withCompaction(@NonNull CompactionStrategy<?> compactionStrategy) {

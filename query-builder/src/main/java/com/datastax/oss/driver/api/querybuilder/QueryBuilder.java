@@ -49,7 +49,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;
 
 /** A Domain-Specific Language to build CQL queries using Java code. */
-public class QueryBuilderDsl {
+public class QueryBuilder {
 
   /** Starts a SELECT query for a qualified table. */
   @NonNull

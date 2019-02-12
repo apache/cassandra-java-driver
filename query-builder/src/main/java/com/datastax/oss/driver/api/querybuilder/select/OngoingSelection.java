@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
-import com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -272,7 +272,7 @@ public interface OngoingSelection {
    * selection, like a nested UDT).
    *
    * <p>In other words, this is a shortcut for {{@link #field(Selector, CqlIdentifier)
-   * field(QueryBuilderDsl.column(udtColumnId), fieldId)}.
+   * field(QueryBuilder.column(udtColumnId), fieldId)}.
    *
    * @see Selector#field(CqlIdentifier, CqlIdentifier)
    */
@@ -311,7 +311,7 @@ public interface OngoingSelection {
    * Shortcut for element selection when the target collection is a simple column.
    *
    * <p>In other words, this is the equivalent of {@link #element(Selector, Term)
-   * element(QueryBuilderDsl.column(collection), index)}.
+   * element(QueryBuilder.column(collection), index)}.
    *
    * @see Selector#element(CqlIdentifier, Term)
    */
@@ -481,7 +481,7 @@ public interface OngoingSelection {
    * (map<int,text>){a:b,c:d}}.
    *
    * <p>To create the data types, use the constants and static methods in {@link DataTypes}, or
-   * {@link QueryBuilderDsl#udt(CqlIdentifier)}.
+   * {@link QueryBuilder#udt(CqlIdentifier)}.
    *
    * <p>This is a shortcut for {@link #selector(Selector) selector(Selector.mapOf(elementSelectors,
    * keyType, valueType))}.
@@ -666,7 +666,7 @@ public interface OngoingSelection {
    * Casts a selector to a type, as in {@code SELECT CAST(a AS double)}.
    *
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
-   * {@link QueryBuilderDsl#udt(CqlIdentifier)}.
+   * {@link QueryBuilder#udt(CqlIdentifier)}.
    *
    * <p>This is a shortcut for {@link #selector(Selector) selector(Selector.function(keyspaceId,
    * functionId, arguments))}.
@@ -747,7 +747,7 @@ public interface OngoingSelection {
    *
    * @throws CodecNotFoundException if there is no default CQL mapping for the Java type of {@code
    *     value}.
-   * @see QueryBuilderDsl#literal(Object)
+   * @see QueryBuilder#literal(Object)
    */
   @NonNull
   default Select literal(@Nullable Object value) {
@@ -764,7 +764,7 @@ public interface OngoingSelection {
    * @see DriverContext#getCodecRegistry()
    * @throws CodecNotFoundException if {@code codecRegistry} does not contain any codec that can
    *     handle {@code value}.
-   * @see QueryBuilderDsl#literal(Object, CodecRegistry)
+   * @see QueryBuilder#literal(Object, CodecRegistry)
    */
   @NonNull
   default Select literal(@Nullable Object value, @NonNull CodecRegistry codecRegistry) {
@@ -777,11 +777,11 @@ public interface OngoingSelection {
    * <p>This is an alternative to {@link #literal(Object)} for custom type mappings. The value will
    * be turned into a string with {@link TypeCodec#format(Object)}, and inlined in the query.
    *
-   * @see QueryBuilderDsl#literal(Object, TypeCodec)
+   * @see QueryBuilder#literal(Object, TypeCodec)
    */
   @NonNull
   default <T> Select literal(@Nullable T value, @Nullable TypeCodec<T> codec) {
-    return selector(QueryBuilderDsl.literal(value, codec));
+    return selector(QueryBuilder.literal(value, codec));
   }
 
   /**
@@ -793,11 +793,11 @@ public interface OngoingSelection {
    * features that are not yet covered by the query builder.
    *
    * <p>This is a shortcut for {@link #selector(Selector)
-   * selector(QueryBuilderDsl.raw(rawExpression))}.
+   * selector(QueryBuilder.raw(rawExpression))}.
    */
   @NonNull
   default Select raw(@NonNull String rawExpression) {
-    return selector(QueryBuilderDsl.raw(rawExpression));
+    return selector(QueryBuilder.raw(rawExpression));
   }
 
   /**

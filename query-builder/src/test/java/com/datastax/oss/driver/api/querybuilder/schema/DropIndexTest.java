@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.dropIndex;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.dropIndex;
 
 import org.junit.Test;
 

@@ -1,11 +1,11 @@
 ## DELETE
 
-To start a DELETE query, use one of the `deleteFrom` methods in [QueryBuilderDsl]. There are several
+To start a DELETE query, use one of the `deleteFrom` methods in [QueryBuilder]. There are several
 variants depending on whether your table name is qualified, and whether you use case-sensitive
 identifiers or case-insensitive strings:
 
 ```java
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.*;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 
 DeleteSelection delete = deleteFrom("user");
 ```
@@ -141,5 +141,5 @@ deleteFrom("user")
 Conditions are a common feature used by UPDATE and DELETE, so they have a
 [dedicated page](../condition) in this manual.
 
-[QueryBuilderDsl]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/QueryBuilderDsl.html
-[Selector]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/select/Selector.html
+[QueryBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/QueryBuilder.html
+[Selector]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/select/Selector.html

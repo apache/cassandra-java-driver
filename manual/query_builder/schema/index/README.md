@@ -1,15 +1,15 @@
 # Index
 
-An index provides a means of expanding the query capabilities of a table.  [SchemaBuilderDsl] offers
+An index provides a means of expanding the query capabilities of a table.  [SchemaBuilder] offers
 API methods for creating and dropping indices.  Unlike other schema members, there is no mechanism
 to alter an index.
 
 ### Creating an Index (CREATE INDEX)
 
-To start a `CREATE INDEX` query, use `createIndex` in [SchemaBuilderDsl]:
+To start a `CREATE INDEX` query, use `createIndex` in [SchemaBuilder]:
 
 ```java
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.*;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 
 // an index name is not required
 CreateIndexStart create = createIndex();
@@ -99,4 +99,4 @@ dropIndex("my_idx").ifExists();
 // DROP INDEX IF EXISTS my_idx
 ```
 
-[SchemaBuilderDsl]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilderDsl.html
+[SchemaBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html

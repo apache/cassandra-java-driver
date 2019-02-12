@@ -204,8 +204,8 @@ public interface TypeCodec<JavaTypeT> {
    *   <li>to format the INITCOND in {@link AggregateMetadata#describe(boolean)};
    *   <li>in the {@code toString()} representation of some driver objects (such as {@link UdtValue}
    *       and {@link TupleValue}), which is only used in driver logs;
-   *   <li>for literal values in the query builder (see {@code QueryBuilderDsl#literal(Object,
-   *       CodecRegistry)} and {@code QueryBuilderDsl#literal(Object, TypeCodec)}).
+   *   <li>for literal values in the query builder (see {@code QueryBuilder#literal(Object,
+   *       CodecRegistry)} and {@code QueryBuilder#literal(Object, TypeCodec)}).
    * </ol>
    *
    * If you choose not to implement this method, don't throw an exception but instead return a

@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.CqlSnippet;
-import com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.ArithmeticOperator;
 import com.datastax.oss.driver.internal.querybuilder.select.AllSelector;
@@ -351,7 +351,7 @@ public interface Selector extends CqlSnippet {
    * (map<int,text>){a:b,c:d}}.
    *
    * <p>To create the data types, use the constants and static methods in {@link DataTypes}, or
-   * {@link QueryBuilderDsl#udt(CqlIdentifier)}.
+   * {@link QueryBuilder#udt(CqlIdentifier)}.
    *
    * @see #mapOf(Map)
    */
@@ -367,7 +367,7 @@ public interface Selector extends CqlSnippet {
    * Provides a type hint for a selector, as in {@code SELECT (double)1/3}.
    *
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
-   * {@link QueryBuilderDsl#udt(CqlIdentifier)}.
+   * {@link QueryBuilder#udt(CqlIdentifier)}.
    */
   @NonNull
   static Selector typeHint(@NonNull Selector selector, @NonNull DataType targetType) {
@@ -490,7 +490,7 @@ public interface Selector extends CqlSnippet {
    * Casts a selector to a type, as in {@code SELECT CAST(a AS double)}.
    *
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
-   * {@link QueryBuilderDsl#udt(CqlIdentifier)}.
+   * {@link QueryBuilder#udt(CqlIdentifier)}.
    *
    * @throws IllegalArgumentException if the selector is aliased.
    */

@@ -25,7 +25,7 @@ import com.datastax.oss.driver.api.querybuilder.term.Term;
  * A raw CQL snippet that will be appended to the query as-is, without any syntax checking or
  * escaping.
  *
- * <p>To build an instance of this type, use {@link QueryBuilderDsl#raw(String)}.
+ * <p>To build an instance of this type, use {@link QueryBuilder#raw(String)}.
  *
  * <p>It should be used with caution, as it's possible to generate invalid CQL that will fail at
  * execution time; on the other hand, it can be used as a workaround to handle new CQL features that

@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.dropKeyspace;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.dropKeyspace;
 
 import org.junit.Test;
 

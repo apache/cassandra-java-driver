@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
-import com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.insert.Insert;
 import com.datastax.oss.driver.api.querybuilder.insert.InsertInto;
 import com.datastax.oss.driver.api.querybuilder.insert.JsonInsert;
@@ -80,7 +80,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
     return new DefaultInsert(
         keyspace,
         table,
-        QueryBuilderDsl.literal(json),
+        QueryBuilder.literal(json),
         missingJsonBehavior,
         ImmutableMap.of(),
         timestamp,

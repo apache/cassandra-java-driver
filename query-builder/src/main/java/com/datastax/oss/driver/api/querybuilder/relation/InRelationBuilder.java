@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.api.querybuilder.relation;
 
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
-import com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -39,7 +39,7 @@ public interface InRelationBuilder<ResultT> {
    */
   @NonNull
   default ResultT in(@NonNull Iterable<Term> alternatives) {
-    return build(" IN ", QueryBuilderDsl.tuple(alternatives));
+    return build(" IN ", QueryBuilder.tuple(alternatives));
   }
 
   /** Var-arg equivalent of {@link #in(Iterable)} . */

@@ -58,7 +58,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 /** A Domain-Specific Language to build CQL DDL queries using Java code. */
-public class SchemaBuilderDsl {
+public class SchemaBuilder {
 
   /** Starts a CREATE KEYSPACE query. */
   @NonNull
@@ -661,7 +661,7 @@ public class SchemaBuilderDsl {
   /**
    * Specifies the rows_per_partition configuration for table caching options.
    *
-   * @see RelationOptions#withCaching(boolean, SchemaBuilderDsl.RowsPerPartition)
+   * @see RelationOptions#withCaching(boolean, SchemaBuilder.RowsPerPartition)
    */
   public static class RowsPerPartition {
 

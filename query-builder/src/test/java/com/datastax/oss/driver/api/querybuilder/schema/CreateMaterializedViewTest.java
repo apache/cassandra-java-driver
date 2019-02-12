@@ -16,8 +16,8 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.literal;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.createMaterializedView;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createMaterializedView;
 
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import org.junit.Test;

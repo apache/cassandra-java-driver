@@ -17,7 +17,7 @@ package com.datastax.oss.driver.api.querybuilder.delete;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
-import com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.relation.OngoingWhereClause;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
@@ -143,18 +143,18 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
   /**
    * Specifies an element to delete as a raw CQL snippet.
    *
-   * <p>This is a shortcut for {@link #selector(Selector) selector(QueryBuilderDsl.raw(raw))}.
+   * <p>This is a shortcut for {@link #selector(Selector) selector(QueryBuilder.raw(raw))}.
    *
    * <p>The contents will be appended to the query as-is, without any syntax checking or escaping.
    * This method should be used with caution, as it's possible to generate invalid CQL that will
    * fail at execution time; on the other hand, it can be used as a workaround to handle new CQL
    * features that are not yet covered by the query builder.
    *
-   * @see QueryBuilderDsl#raw(String)
+   * @see QueryBuilder#raw(String)
    */
   @NonNull
   default DeleteSelection raw(@NonNull String raw) {
-    return selector(QueryBuilderDsl.raw(raw));
+    return selector(QueryBuilder.raw(raw));
   }
 
   /**

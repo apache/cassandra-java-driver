@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.osgi;
 
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.selectFrom;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;

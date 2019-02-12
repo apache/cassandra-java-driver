@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.api.querybuilder.select;
 
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.selectFrom;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 
 import org.junit.Test;
 

@@ -16,9 +16,9 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.literal;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.tuple;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.createAggregate;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.tuple;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createAggregate;
 
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import org.junit.Test;
