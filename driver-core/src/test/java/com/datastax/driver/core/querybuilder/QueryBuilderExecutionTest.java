@@ -36,6 +36,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.set;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.token;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.update;
 import static com.datastax.driver.core.schemabuilder.SchemaBuilder.createTable;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.data.MapEntry.entry;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -43,6 +44,7 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.core.ConditionChecker;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.RegularStatement;
@@ -56,6 +58,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import org.assertj.core.api.iterable.Extractor;
 import org.testng.annotations.Test;
 
@@ -923,5 +926,46 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
                         .and(eq("b", 1))
                         .groupBy("b")))
         .containsExactly(row(1, 1, 12));
+  }
+
+  /**
+   * Validates that {@link QueryBuilder} can construct a SELECT query for a materialized view.
+   *
+   * @test_category queries:builder
+   * @jira_ticket JAVA-2123
+   * @since 3.7.0
+   */
+  @CassandraVersion(
+      value = "3.0",
+      description = "Support for materialized views was added to C* 3.0")
+  @Test(groups = "short")
+  public void should_select_from_materialized_view() {
+
+    String table = TestUtils.generateIdentifier("table");
+    final String mv = TestUtils.generateIdentifier("mv");
+
+    execute(
+        String.format("CREATE TABLE %s (pk int, cc int, v int, PRIMARY KEY (pk, cc))", table),
+        String.format("INSERT INTO %s (pk, cc, v) VALUES (0,0,0)", table),
+        String.format("INSERT INTO %s (pk, cc, v) VALUES (0,1,1)", table),
+        String.format("INSERT INTO %s (pk, cc, v) VALUES (0,2,2)", table),
+        String.format(
+            "CREATE MATERIALIZED VIEW %s AS SELECT cc FROM %s WHERE cc IS NOT NULL PRIMARY KEY (pk, cc)",
+            mv, table));
+
+    // Wait until the MV is fully constructed
+    ConditionChecker.check()
+        .that(
+            new Callable<Boolean>() {
+              @Override
+              public Boolean call() {
+                return session().execute("SELECT * FROM " + mv).all().size() == 3;
+              }
+            })
+        .before(1, MINUTES)
+        .becomesTrue();
+
+    assertThat(session().execute(select().column("cc").as("mycc").from(mv)))
+        .containsExactly(row(0), row(1), row(2));
   }
 }
