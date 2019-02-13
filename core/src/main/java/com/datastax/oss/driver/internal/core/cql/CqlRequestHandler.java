@@ -54,6 +54,7 @@ import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
 import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
+import com.datastax.oss.driver.internal.core.tracker.RequestLogger;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
 import com.datastax.oss.protocol.internal.Frame;
@@ -356,9 +357,41 @@ public class CqlRequestHandler implements Throttled {
               TimeUnit.NANOSECONDS);
         }
       }
+      // log the warnings if they have NOT been disabled
+      if (!executionInfo.getWarnings().isEmpty()
+          && executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOG_WARNINGS)
+          && LOG.isWarnEnabled()) {
+        logServerWarnings(executionInfo.getWarnings());
+      }
     } catch (Throwable error) {
       setFinalError(error, callback.node, -1);
     }
+  }
+
+  private void logServerWarnings(List<String> warnings) {
+    // use the RequestLogFormatter to format the query
+    StringBuilder statementString = new StringBuilder();
+    context
+        .getRequestLogFormatter()
+        .appendRequest(
+            statement,
+            executionProfile.getInt(
+                DefaultDriverOption.REQUEST_LOGGER_MAX_QUERY_LENGTH,
+                RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_QUERY_LENGTH),
+            executionProfile.getBoolean(
+                DefaultDriverOption.REQUEST_LOGGER_VALUES,
+                RequestLogger.DEFAULT_REQUEST_LOGGER_SHOW_VALUES),
+            executionProfile.getInt(
+                DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES,
+                RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_VALUES),
+            executionProfile.getInt(
+                DefaultDriverOption.REQUEST_LOGGER_MAX_VALUE_LENGTH,
+                RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_VALUE_LENGTH),
+            statementString);
+    // log each warning separately
+    warnings.forEach(
+        (warning) ->
+            LOG.warn("Query '{}' generated server side warning(s): {}", statementString, warning));
   }
 
   private ExecutionInfo buildExecutionInfo(

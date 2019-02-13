@@ -92,10 +92,18 @@ public class RequestLoggerIT {
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, true)
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SLOW_ENABLED, true)
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, true)
-          .withInt(DefaultDriverOption.REQUEST_LOGGER_MAX_QUERY_LENGTH, 500)
-          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_VALUES, true)
-          .withInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUE_LENGTH, 50)
-          .withInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES, 50)
+          .withInt(
+              DefaultDriverOption.REQUEST_LOGGER_MAX_QUERY_LENGTH,
+              RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_QUERY_LENGTH)
+          .withBoolean(
+              DefaultDriverOption.REQUEST_LOGGER_VALUES,
+              RequestLogger.DEFAULT_REQUEST_LOGGER_SHOW_VALUES)
+          .withInt(
+              DefaultDriverOption.REQUEST_LOGGER_MAX_VALUE_LENGTH,
+              RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_VALUE_LENGTH)
+          .withInt(
+              DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES,
+              RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_VALUES)
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES, true)
           .withProfile("low-threshold", lowThresholdProfile)
           .withProfile("no-logs", noLogsProfile)
@@ -111,10 +119,18 @@ public class RequestLoggerIT {
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, true)
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SLOW_ENABLED, true)
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, true)
-          .withInt(DefaultDriverOption.REQUEST_LOGGER_MAX_QUERY_LENGTH, 500)
-          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_VALUES, true)
-          .withInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUE_LENGTH, 50)
-          .withInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES, 50)
+          .withInt(
+              DefaultDriverOption.REQUEST_LOGGER_MAX_QUERY_LENGTH,
+              RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_QUERY_LENGTH)
+          .withBoolean(
+              DefaultDriverOption.REQUEST_LOGGER_VALUES,
+              RequestLogger.DEFAULT_REQUEST_LOGGER_SHOW_VALUES)
+          .withInt(
+              DefaultDriverOption.REQUEST_LOGGER_MAX_VALUE_LENGTH,
+              RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_VALUE_LENGTH)
+          .withInt(
+              DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES,
+              RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_VALUES)
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES, true)
           .withProfile("low-threshold", lowThresholdProfile)
           .withProfile("no-logs", noLogsProfile)

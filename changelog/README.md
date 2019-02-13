@@ -4,6 +4,7 @@
 
 ### 4.0.0-rc1 (in progress)
 
+- [improvement] JAVA-2106: Log server side warnings returned from a query
 - [improvement] JAVA-2151: Drop "Dsl" suffix from query builder main classes
 - [new feature] JAVA-2144: Expose internal API to hook into the session lifecycle
 - [improvement] JAVA-2119: Add PagingIterable abstraction as a supertype of ResultSet
