@@ -228,10 +228,10 @@ class RequestHandler {
       callback.onSet(connection, response, info, statement, System.nanoTime() - startTime);
       // if the response from the server has warnings, they'll be set on the ExecutionInfo. Log them
       // here, unless they've been disabled.
-      if (logger.isWarnEnabled()
-          && response.warnings != null
+      if (response.warnings != null
           && !response.warnings.isEmpty()
-          && !Boolean.getBoolean(RequestHandler.DISABLE_QUERY_WARNING_LOGS)) {
+          && !Boolean.getBoolean(RequestHandler.DISABLE_QUERY_WARNING_LOGS)
+          && logger.isWarnEnabled()) {
         logServerWarnings(response.warnings);
       }
     } catch (Exception e) {
