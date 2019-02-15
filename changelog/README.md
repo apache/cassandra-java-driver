@@ -15,6 +15,7 @@
 - [documentation] JAVA-2041: Deprecate cross-DC failover in DCAwareRoundRobinPolicy.
 - [documentation] JAVA-1159: Document workaround for using tuple with udt field in Mapper.
 - [documentation] JAVA-1964: Complete remaining "Coming Soon" sections in docs.
+- [improvement] JAVA-1950: Log server side warnings returned from a query.
 
 
 ### 3.6.0

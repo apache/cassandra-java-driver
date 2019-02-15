@@ -64,6 +64,8 @@ class RequestHandler {
 
   private static final boolean HOST_METRICS_ENABLED =
       Boolean.getBoolean("com.datastax.driver.HOST_METRICS_ENABLED");
+  private static final QueryLogger QUERY_LOGGER = QueryLogger.builder().build();
+  static final String DISABLE_QUERY_WARNING_LOGS = "com.datastax.driver.DISABLE_QUERY_WARNING_LOGS";
 
   final String id;
 
@@ -224,6 +226,14 @@ class RequestHandler {
                 response.getCustomPayload());
       }
       callback.onSet(connection, response, info, statement, System.nanoTime() - startTime);
+      // if the response from the server has warnings, they'll be set on the ExecutionInfo. Log them
+      // here, unless they've been disabled.
+      if (response.warnings != null
+          && !response.warnings.isEmpty()
+          && !Boolean.getBoolean(RequestHandler.DISABLE_QUERY_WARNING_LOGS)
+          && logger.isWarnEnabled()) {
+        logServerWarnings(response.warnings);
+      }
     } catch (Exception e) {
       callback.onException(
           connection,
@@ -231,6 +241,15 @@ class RequestHandler {
               "Unexpected exception while setting final result from " + response, e),
           System.nanoTime() - startTime, /*unused*/
           0);
+    }
+  }
+
+  private void logServerWarnings(List<String> warnings) {
+    // truncate the statement query to the DEFAULT_MAX_QUERY_STRING_LENGTH, if necessary
+    final String queryString = QUERY_LOGGER.statementAsString(statement);
+    // log each warning separately
+    for (String warning : warnings) {
+      logger.warn("Query '{}' generated server side warning(s): {}", queryString, warning);
     }
   }
 
