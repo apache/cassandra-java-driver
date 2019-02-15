@@ -46,6 +46,7 @@ import static org.testng.Assert.fail;
 import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.ConditionChecker;
 import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.MaterializedViewMetadata;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.ResultSet;
@@ -965,7 +966,10 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
         .before(1, MINUTES)
         .becomesTrue();
 
-    assertThat(session().execute(select().column("cc").as("mycc").from(mv)))
+    MaterializedViewMetadata materializedView =
+        session().getCluster().getMetadata().getKeyspace(keyspace).getMaterializedView(mv);
+
+    assertThat(session().execute(select().column("cc").as("mycc").from(materializedView)))
         .containsExactly(row(0), row(1), row(2));
   }
 }
