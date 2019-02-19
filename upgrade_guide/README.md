@@ -121,8 +121,8 @@ will find more information about asynchronous iterations in the manual pages abo
 programming][4.x async programming] and [paging][4.x paging].
 
 [3.x async paging]: http://docs.datastax.com/en/developer/java-driver/3.2/manual/async/#async-paging
-[4.x async programming]: http://docs.datastax.com/en/developer/java-driver/4.0/manual/core/async/
-[4.x paging]: http://docs.datastax.com/en/developer/java-driver/4.0/manual/core/paging/
+[4.x async programming]: ../manual/core/async/
+[4.x paging]: ../manual/core/paging/
 
 #### CQL to Java type mappings
 
