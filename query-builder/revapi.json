@@ -122,7 +122,7 @@
         "old": "parameter SelfT com.datastax.oss.driver.api.querybuilder.schema.RelationOptions<SelfT extends com.datastax.oss.driver.api.querybuilder.schema.RelationOptions<SelfT extends com.datastax.oss.driver.api.querybuilder.schema.RelationOptions<SelfT>>>::withCaching(boolean, ===com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.RowsPerPartition===)",
         "new": "parameter SelfT com.datastax.oss.driver.api.querybuilder.schema.RelationOptions<SelfT extends com.datastax.oss.driver.api.querybuilder.schema.RelationOptions<SelfT extends com.datastax.oss.driver.api.querybuilder.schema.RelationOptions<SelfT>>>::withCaching(boolean, ===com.datastax.oss.driver.api.querybuilder.SchemaBuilder.RowsPerPartition===)",
         "oldArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-beta3",
-        "newArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-rc1-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-rc1",
         "justification": "JAVA-2151: Drop \"Dsl\" suffix from query builder main classes"
       }
     ]

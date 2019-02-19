@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.0.0-rc1 (in progress)
+### 4.0.0-rc1
 
 - [improvement] JAVA-2106: Log server side warnings returned from a query
 - [improvement] JAVA-2151: Drop "Dsl" suffix from query builder main classes

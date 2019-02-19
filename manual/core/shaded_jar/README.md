@@ -12,7 +12,7 @@ package name:
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core-shaded</artifactId>
-  <version>4.0.0-beta3</version>
+  <version>4.0.0-rc1</version>
 </dependency>
 ```
 
@@ -23,12 +23,12 @@ dependency to the non-shaded JAR:
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core-shaded</artifactId>
-  <version>4.0.0-beta3</version>
+  <version>4.0.0-rc1</version>
 </dependency>
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-query-builder</artifactId>
-  <version>4.0.0-beta3</version>
+  <version>4.0.0-rc1</version>
   <exclusions>
     <exclusion>
       <groupId>com.datastax.oss</groupId>

@@ -695,7 +695,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.metadata.TokenMap",
         "classSimpleName": "TokenMap",
         "methodName": "getPartitionerName",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
         "elementKind": "method",
         "justification": "JAVA-2103: Expose partitioner name in TokenMap API"
       },
@@ -707,7 +707,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.connection.ReconnectionPolicy",
         "classSimpleName": "ReconnectionPolicy",
         "methodName": "newControlConnectionSchedule",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
         "elementKind": "method",
         "justification": "JAVA-2077: Allow reconnection policy to detect first connection attempt"
       }
