@@ -27,14 +27,15 @@ generally have to go through an explicit cast:
 import com.datastax.oss.driver.api.core.context.DriverContext;
 
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.config.ForceReloadConfigEvent;
+import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 
 // Public API:
 DriverContext context = session.getContext();
 
-// Switch to the internal API to force a reload of the configuration:
+// Switch to the internal API to force a node down:
 InternalDriverContext internalContext = (InternalDriverContext) context;
-internalContext.getEventBus().fire(ForceReloadConfigEvent.INSTANCE);
+InetSocketAddress address = new InetSocketAddress("127.0.0.1", 9042);
+internalContext.getEventBus().fire(TopologyEvent.forceDown(address));
 ```
 
 So the risk of unintentionally using the internal API is very low. To double-check, you can always
