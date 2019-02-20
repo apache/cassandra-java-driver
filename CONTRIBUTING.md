@@ -423,11 +423,11 @@ Like commits, pull requests should be focused on a single, clearly stated goal.
 Don't base a pull request onto another one, it's too complicated to follow two branches that evolve
 at the same time. If a ticket depends on another, wait for the first one to be merged. 
 
-If you have to address feedback, avoid rebasing your branch and force-pushing (this makes the
-reviewers' job harder, because they have to re-read the full diff and figure out where your new
-changes are). Instead, push a new commit on top of the existing history; it will be squashed later
-when the PR gets merged. If the history is complex, it's a good idea to indicate in the message
-where the changes should be squashed:
+If you have to address feedback, avoid rewriting the history (e.g. squashing or amending commits):
+this makes the reviewers' job harder, because they have to re-read the full diff and figure out
+where your new changes are. Instead, push a new commit on top of the existing history; it will be
+squashed later when the PR gets merged. If the history is complex, it's a good idea to indicate in
+the message where the changes should be squashed:
 
 ```
 * 20c88f4 - Address feedback (to squash with "Add metadata parsing logic") (36 minutes ago)
@@ -438,7 +438,6 @@ where the changes should be squashed:
 (Note that the message refers to the other commit's subject line, not the SHA-1. This way it's still
 relevant if there are intermediary rebases.)
 
-If you *really* need a newer commit from the base branch, or if the history is getting too
-complicated, it can be OK to force-push occasionally, provided that **all current reviewers agree**.
-
-Don't push a merge commit to a pull request under any circumstance.
+If you need new stuff from the base branch, it's fine to rebase and force-push, as long as you don't
+rewrite the history. Just give a heads up to the reviewers beforehand. Don't push a merge commit to
+a pull request.
