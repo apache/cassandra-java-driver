@@ -4,6 +4,8 @@
 
 ### 4.0.0 (in progress)
 
+- [documentation] JAVA-2149: Improve Term javadocs in the query builder
+
 ### 4.0.0-rc1
 
 - [improvement] JAVA-2106: Log server side warnings returned from a query

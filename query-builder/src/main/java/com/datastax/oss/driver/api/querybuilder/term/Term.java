@@ -17,24 +17,39 @@ package com.datastax.oss.driver.api.querybuilder.term;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.CqlSnippet;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
-import com.datastax.oss.driver.api.querybuilder.relation.ArithmeticRelationBuilder;
+import com.datastax.oss.driver.api.querybuilder.relation.Relation;
+import com.datastax.oss.driver.api.querybuilder.select.OngoingSelection;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 
 /**
  * A simple expression that doesn't reference columns.
  *
- * <p>For example, it can be used:
+ * <p>It is used as an argument to certain {@linkplain Selector selectors} (for example the indices
+ * in a {@linkplain OngoingSelection#range(Selector, Term, Term) range}), or as the right operand of
+ * {@linkplain Relation relations}.
+ *
+ * <p>To create a term, call one of the static factory methods in {@link QueryBuilder}:
  *
  * <ul>
- *   <li>for the indices in a {@link Selector#range(CqlIdentifier, Term, Term) range selection};
- *   <li>as the right operand of a {@link ArithmeticRelationBuilder#isEqualTo(Term) relation}.
+ *   <li>{@link QueryBuilder#literal(Object) literal()} to inline a Java object into the query
+ *       string;
+ *   <li>{@link QueryBuilder#function(CqlIdentifier, CqlIdentifier, Iterable) function()} to invoke
+ *       a built-in or user-defined function;
+ *   <li>an arithmetic operator combining other terms: {@link QueryBuilder#add(Term, Term) add()},
+ *       {@link QueryBuilder#subtract(Term, Term) subtract()}, {@link QueryBuilder#negate(Term)
+ *       negate()}, {@link QueryBuilder#multiply(Term, Term) multiply()}, {@link
+ *       QueryBuilder#divide(Term, Term) divide()} or {@link QueryBuilder#remainder(Term, Term)
+ *       remainder()};
+ *   <li>{@link QueryBuilder#typeHint(Term, DataType) typeHint()} to coerce another term to a
+ *       particular CQL type;
+ *   <li>{@link QueryBuilder#raw(String) raw()} for a raw CQL snippet.
  * </ul>
  *
- * To build instances of this type, use the factory methods in {@link QueryBuilder}, such as {@link
- * QueryBuilder#literal(Object) literal}, {@link QueryBuilder#tuple(Iterable) tuple}, etc.
+ * Note that some of these methods have multiple overloads.
  */
 public interface Term extends CqlSnippet {
 
