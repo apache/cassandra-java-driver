@@ -17,10 +17,6 @@ Some aspects are not covered by the formatter:
   empty or contains only a single statement.
 * XML files: indent with two spaces and wrap to respect the column limit of 100 characters.
 
-Also, if your IDE sorts import statements automatically, make sure it follows the same order as the
-formatter: all static imports in ASCII sort order, followed by a blank line, followed by all regular
-imports in ASCII sort order.
-
 ## Coding style -- production code
 
 Do not use static imports. They make things harder to understand when you look at the code 
