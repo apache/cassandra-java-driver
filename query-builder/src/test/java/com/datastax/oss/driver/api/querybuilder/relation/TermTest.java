@@ -35,6 +35,7 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.toDate;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.toTimestamp;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.toUnixTimestamp;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.typeHint;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.data.TupleValue;
@@ -47,6 +48,7 @@ import com.datastax.oss.driver.api.querybuilder.CharsetCodec;
 import com.datastax.oss.driver.internal.core.type.UserDefinedTypeBuilder;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import java.util.Date;
 import org.junit.Test;
 
 public class TermTest {
@@ -112,8 +114,14 @@ public class TermTest {
     assertThat(literal(Charsets.UTF_8, CharsetCodec.TEST_REGISTRY)).hasCql("'UTF-8'");
   }
 
-  @Test(expected = CodecNotFoundException.class)
+  @Test
   public void should_fail_when_no_codec_for_literal() {
-    literal(Charsets.UTF_8);
+    assertThatThrownBy(() -> literal(new Date(2018, 10, 10)))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Could not inline literal of type java.util.Date. "
+                + "This happens because the driver doesn't know how to map it to a CQL type. "
+                + "Try passing a TypeCodec or CodecRegistry to literal().")
+        .hasCauseInstanceOf(CodecNotFoundException.class);
   }
 }
