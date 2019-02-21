@@ -15,9 +15,11 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.AbstractTableMetadata;
 import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.ColumnMetadata;
 import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.MaterializedViewMetadata;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.TableMetadata;
 import java.util.ArrayList;
@@ -47,7 +49,8 @@ public class Select extends BuiltStatement {
     this(keyspace, table, null, null, columnNames, isDistinct, isJson);
   }
 
-  Select(TableMetadata table, List<Object> columnNames, boolean isDistinct, boolean isJson) {
+  Select(
+      AbstractTableMetadata table, List<Object> columnNames, boolean isDistinct, boolean isJson) {
     this(
         Metadata.quoteIfNecessary(table.getKeyspace().getName()),
         Metadata.quoteIfNecessary(table.getName()),
@@ -469,6 +472,16 @@ public class Select extends BuiltStatement {
     public Select from(TableMetadata table) {
       return new Select(table, columnNames, isDistinct, isJson);
     }
+
+    /**
+     * Adds the materialized view to select from.
+     *
+     * @param view the materialized view to select from.
+     * @return a newly built SELECT statement that selects from {@code view}.
+     */
+    public Select from(MaterializedViewMetadata view) {
+      return new Select(view, columnNames, isDistinct, isJson);
+    }
   }
 
   /** An Selection clause for an in-construction SELECT statement. */
@@ -856,6 +869,15 @@ public class Select extends BuiltStatement {
       if (previousSelection != null) addName(previousSelection);
       previousSelection = null;
       return super.from(table);
+    }
+
+    @Override
+    public Select from(MaterializedViewMetadata view) {
+      if (previousSelection != null) {
+        addName(previousSelection);
+      }
+      previousSelection = null;
+      return super.from(view);
     }
   }
 }
