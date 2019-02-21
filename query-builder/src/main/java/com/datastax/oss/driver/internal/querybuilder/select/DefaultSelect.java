@@ -433,6 +433,22 @@ public class DefaultSelect implements SelectFrom, Select {
 
   @NonNull
   @Override
+  public SimpleStatement build(@NonNull Object... values) {
+    return builder().addPositionalValues(values).build();
+  }
+
+  @NonNull
+  @Override
+  public SimpleStatement build(@NonNull Map<String, Object> namedValues) {
+    SimpleStatementBuilder builder = builder();
+    for (Map.Entry<String, Object> entry : namedValues.entrySet()) {
+      builder.addNamedValue(entry.getKey(), entry.getValue());
+    }
+    return builder.build();
+  }
+
+  @NonNull
+  @Override
   public SimpleStatementBuilder builder() {
     // SELECT statements are always idempotent
     return SimpleStatement.builder(asCql()).withIdempotence(true);
