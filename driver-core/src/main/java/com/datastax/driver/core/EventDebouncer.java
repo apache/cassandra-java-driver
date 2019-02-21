@@ -117,6 +117,12 @@ abstract class EventDebouncer<T> {
         break;
       }
     }
+    while (true) {
+      DeliveryAttempt previous = cancelImmediateDelivery();
+      if (immediateDelivery.compareAndSet(previous, null)) {
+        break;
+      }
+    }
 
     completeAllPendingFutures();
 
@@ -205,14 +211,21 @@ abstract class EventDebouncer<T> {
   }
 
   private DeliveryAttempt cancelDelayedDelivery() {
-    DeliveryAttempt previous = delayedDelivery.get();
+    return cancelDelivery(delayedDelivery.get());
+  }
+
+  private DeliveryAttempt cancelImmediateDelivery() {
+    return cancelDelivery(immediateDelivery.get());
+  }
+
+  private DeliveryAttempt cancelDelivery(DeliveryAttempt previous) {
     if (previous != null) {
       previous.cancel();
     }
     return previous;
   }
 
-  void deliverEvents() {
+  private void deliverEvents() {
     if (state == State.STOPPED) {
       completeAllPendingFutures();
       return;

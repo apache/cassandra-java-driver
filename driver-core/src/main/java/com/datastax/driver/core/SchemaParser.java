@@ -93,7 +93,13 @@ abstract class SchemaParser {
             connection,
             cassandraVersion);
 
-    Metadata metadata = cluster.getMetadata();
+    Metadata metadata;
+    try {
+      metadata = cluster.getMetadata();
+    } catch (IllegalStateException e) {
+      logger.warn("Unable to refresh metadata, cluster has been closed");
+      return;
+    }
     metadata.lock.lock();
     try {
       if (targetType == null || targetType == KEYSPACE) {
