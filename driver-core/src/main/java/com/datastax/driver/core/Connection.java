@@ -382,7 +382,9 @@ class Connection {
 
     DefaultResultSetFuture clusterNameFuture =
         new DefaultResultSetFuture(
-            null, protocolVersion, new Requests.Query("select cluster_name from system.local"));
+            null,
+            protocolVersion,
+            new Requests.Query("select cluster_name from system.local where key = 'local'"));
     try {
       write(clusterNameFuture);
       return GuavaCompatibility.INSTANCE.transformAsync(
