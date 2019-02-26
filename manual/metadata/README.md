@@ -4,7 +4,7 @@ The driver maintains global information about the Cassandra cluster it
 is connected to. It is available via
 [Cluster#getMetadata()][getMetadata].
 
-[getMetadata]: http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/Cluster.html#getMetadata--
+[getMetadata]: http://docs.datastax.com/en/drivers/java/3.7/com/datastax/driver/core/Cluster.html#getMetadata--
 
 ### Schema metadata
 
@@ -12,8 +12,8 @@ Use [getKeyspace(String)][getKeyspace] or [getKeyspaces()][getKeyspaces]
 to get keyspace-level metadata. From there you can access the keyspace's
 objects (tables, and UDTs and UDFs if relevant).
 
-[getKeyspace]: http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/Metadata.html#getKeyspace-java.lang.String-
-[getKeyspaces]: http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/Metadata.html#getKeyspaces--
+[getKeyspace]: http://docs.datastax.com/en/drivers/java/3.7/com/datastax/driver/core/Metadata.html#getKeyspace-java.lang.String-
+[getKeyspaces]: http://docs.datastax.com/en/drivers/java/3.7/com/datastax/driver/core/Metadata.html#getKeyspaces--
 
 #### Refreshes
 
@@ -47,8 +47,8 @@ Note that it is preferable to register a listener only *after* the cluster is fu
 otherwise the listener could be notified with a great deal of "Added" events as
 the driver builds the schema metadata from scratch for the first time.
 
-[SchemaChangeListener]: http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/SchemaChangeListener.html
-[registerListener]: http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/Cluster.html#register-com.datastax.driver.core.SchemaChangeListener-
+[SchemaChangeListener]: http://docs.datastax.com/en/drivers/java/3.7/com/datastax/driver/core/SchemaChangeListener.html
+[registerListener]: http://docs.datastax.com/en/drivers/java/3.7/com/datastax/driver/core/Cluster.html#register-com.datastax.driver.core.SchemaChangeListener-
 
 #### Schema agreement
 
@@ -135,9 +135,9 @@ custom executor).
 
 Check out the API docs for the features in this section:
 
-* [withMaxSchemaAgreementWaitSeconds(int)](http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/Cluster.Builder.html#withMaxSchemaAgreementWaitSeconds-int-)
-* [isSchemaInAgreement()](http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/ExecutionInfo.html#isSchemaInAgreement--)
-* [checkSchemaAgreement()](http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/Metadata.html#checkSchemaAgreement--)
+* [withMaxSchemaAgreementWaitSeconds(int)](http://docs.datastax.com/en/drivers/java/3.7/com/datastax/driver/core/Cluster.Builder.html#withMaxSchemaAgreementWaitSeconds-int-)
+* [isSchemaInAgreement()](http://docs.datastax.com/en/drivers/java/3.7/com/datastax/driver/core/ExecutionInfo.html#isSchemaInAgreement--)
+* [checkSchemaAgreement()](http://docs.datastax.com/en/drivers/java/3.7/com/datastax/driver/core/Metadata.html#checkSchemaAgreement--)
 
 
 ### Token metadata
