@@ -20,15 +20,34 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Strings;
 import java.util.List;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 @CCMConfig(config = {"batch_size_warn_threshold_in_kb:5"})
 @CassandraVersion("2.2.0")
 public class WarningsTest extends CCMTestsSupport {
 
+  private MemoryAppender logAppender;
+
   @Override
   public void onTestContextInitialized() {
     execute("CREATE TABLE foo(k int primary key, v text)");
+  }
+
+  @Override
+  public void beforeTestClass(Object instance) throws Exception {
+    // create a MemoryAppender and add it
+    logAppender = new MemoryAppender();
+    logAppender.enableFor(LoggerFactory.getLogger(RequestHandler.class));
+    super.beforeTestClass(instance);
+  }
+
+  @Override
+  public void afterTestClass() throws Exception {
+    super.afterTestClass();
+    // remove the log appender
+    logAppender.disableFor(LoggerFactory.getLogger(RequestHandler.class));
+    logAppender = null;
   }
 
   @Test(groups = "short")
@@ -44,29 +63,24 @@ public class WarningsTest extends CCMTestsSupport {
                 + "INSERT INTO foo (k, v) VALUES (2, '%s')\n"
                 + "APPLY BATCH",
             Strings.repeat("1", 2 * 1024), Strings.repeat("1", 3 * 1024));
-    MemoryAppender logAppender = new MemoryAppender();
-    logAppender.enableFor(RequestHandler.class);
-    try {
-      ResultSet rs = session().execute(query);
-      List<String> warnings = rs.getExecutionInfo().getWarnings();
-      assertThat(warnings).hasSize(1);
-      // also assert that by default, the warning is logged and truncated to
-      // DEFAULT_MAX_QUERY_STRING_LENGTH
-      String log = logAppender.waitAndGet(10000);
-      assertThat(log).isNotNull();
-      assertThat(log).isNotEmpty();
-      assertThat(log)
-          .startsWith("Query '")
-          // query will only be logged up to QueryLogger.DEFAULT_MAX_QUERY_STRING_LENGTH characters
-          .contains(query.substring(0, QueryLogger.DEFAULT_MAX_QUERY_STRING_LENGTH))
-          .contains("' generated server side warning(s): ")
-          .contains(
-              String.format(
-                  "Batch for [%s.foo] is of size 5152, exceeding specified threshold of 5120 by 32.",
-                  keyspace));
-    } finally {
-      logAppender.disableFor(RequestHandler.class);
-    }
+    ResultSet rs = session().execute(query);
+
+    List<String> warnings = rs.getExecutionInfo().getWarnings();
+    assertThat(warnings).hasSize(1);
+    // also assert that by default, the warning is logged and truncated to
+    // DEFAULT_MAX_QUERY_STRING_LENGTH
+    String log = logAppender.waitAndGet(5000)
+    assertThat(log).isNotNull();
+    assertThat(log).isNotEmpty();
+    assertThat(log)
+        .startsWith("Query '")
+        // query will only be logged up to QueryLogger.DEFAULT_MAX_QUERY_STRING_LENGTH characters
+        .contains(query.substring(0, QueryLogger.DEFAULT_MAX_QUERY_STRING_LENGTH))
+        .contains("' generated server side warning(s): ")
+        .contains(
+            String.format(
+                "Batch for [%s.foo] is of size 5152, exceeding specified threshold of 5120 by 32.",
+                keyspace));
   }
 
   @Test(groups = "short")
@@ -79,31 +93,25 @@ public class WarningsTest extends CCMTestsSupport {
     final String query = "SELECT count(*) FROM foo;";
     SimpleStatement statement = new SimpleStatement(query);
     // When the query is executed
-    MemoryAppender logAppender = new MemoryAppender();
-    logAppender.enableFor(RequestHandler.class);
-    try {
-      ResultSet rs = session().execute(statement);
-      // Then the result has 1 Row
-      Row row = rs.one();
-      assertThat(row).isNotNull();
-      // And there is a server side warning captured in the ResultSet's ExecutionInfo
-      ExecutionInfo ei = rs.getExecutionInfo();
-      List<String> warnings = ei.getWarnings();
-      assertThat(warnings).isNotEmpty();
-      assertThat(warnings.size()).isEqualTo(1);
-      assertThat(warnings.get(0)).isEqualTo("Aggregation query used without partition key");
-      // And the driver logged the server side warning
-      String log = logAppender.waitAndGet(10000);
-      assertThat(log).isNotNull();
-      assertThat(log).isNotEmpty();
-      assertThat(log)
-          .startsWith(
-              "Query '[0 bound values] "
-                  + query
-                  + "' generated server side warning(s): Aggregation query used without partition key");
-    } finally {
-      logAppender.disableFor(RequestHandler.class);
-    }
+    ResultSet rs = session().execute(statement);
+    // Then the result has 1 Row
+    Row row = rs.one();
+    assertThat(row).isNotNull();
+    // And there is a server side warning captured in the ResultSet's ExecutionInfo
+    ExecutionInfo ei = rs.getExecutionInfo();
+    List<String> warnings = ei.getWarnings();
+    assertThat(warnings).isNotEmpty();
+    assertThat(warnings.size()).isEqualTo(1);
+    assertThat(warnings.get(0)).isEqualTo("Aggregation query used without partition key");
+    // And the driver logged the server side warning
+    String log = logAppender.waitAndGet(5000);
+    assertThat(log).isNotNull();
+    assertThat(log).isNotEmpty();
+    assertThat(log)
+        .startsWith(
+            "Query '[0 bound values] "
+                + query
+                + "' generated server side warning(s): Aggregation query used without partition key");
   }
 
   @Test(groups = "isolated")
@@ -120,25 +128,19 @@ public class WarningsTest extends CCMTestsSupport {
       // ExecutionInfo
       SimpleStatement statement = new SimpleStatement("SELECT count(*) FROM foo");
       // When the query is executed
-      MemoryAppender logAppender = new MemoryAppender();
-      logAppender.enableFor(RequestHandler.class);
-      try {
-        ResultSet rs = session().execute(statement);
-        // Then the result has 1 Row
-        Row row = rs.one();
-        assertThat(row).isNotNull();
-        // And there is a server side warning captured in the ResultSet's ExecutionInfo
-        ExecutionInfo ei = rs.getExecutionInfo();
-        List<String> warnings = ei.getWarnings();
-        assertThat(warnings).isNotEmpty();
-        assertThat(warnings.size()).isEqualTo(1);
-        assertThat(warnings.get(0)).isEqualTo("Aggregation query used without partition key");
-        // And the driver did NOT log the server side warning
-        String log = logAppender.waitAndGet(10000);
-        assertThat(log).isNullOrEmpty();
-      } finally {
-        logAppender.disableFor(RequestHandler.class);
-      }
+      ResultSet rs = session().execute(statement);
+      // Then the result has 1 Row
+      Row row = rs.one();
+      assertThat(row).isNotNull();
+      // And there is a server side warning captured in the ResultSet's ExecutionInfo
+      ExecutionInfo ei = rs.getExecutionInfo();
+      List<String> warnings = ei.getWarnings();
+      assertThat(warnings).isNotEmpty();
+      assertThat(warnings.size()).isEqualTo(1);
+      assertThat(warnings.get(0)).isEqualTo("Aggregation query used without partition key");
+      // And the driver did NOT log the server side warning
+      String log = logAppender.waitAndGet(5000);
+      assertThat(log).isNullOrEmpty();
     } finally {
       // reset the logging flag
       System.setProperty(RequestHandler.DISABLE_QUERY_WARNING_LOGS, disabledLogFlag);
