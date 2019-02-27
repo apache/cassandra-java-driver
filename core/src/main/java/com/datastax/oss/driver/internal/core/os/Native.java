@@ -15,7 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.os;
 
+import java.lang.reflect.Method;
 import jnr.ffi.LibraryLoader;
+import jnr.ffi.Platform;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import jnr.ffi.Struct;
@@ -73,6 +75,32 @@ public class Native {
               + "Check isGetProcessIdAvailable() before calling this method.");
     }
     return PosixLoader.POSIX.getpid();
+  }
+
+  /**
+   * Returns {@code true} if JNR {@link Platform} class is loaded, and {@code false} otherwise.
+   *
+   * @return {@code true} if JNR {@link Platform} class is loaded.
+   */
+  public static boolean isPlatformAvailable() {
+    try {
+      return PlatformLoader.PLATFORM != null;
+    } catch (NoClassDefFoundError e) {
+      return false;
+    }
+  }
+
+  /**
+   * Returns the current processor architecture the JVM is running on, as reported by {@link
+   * Platform#getCPU()}.
+   *
+   * @return the current processor architecture.
+   * @throws UnsupportedOperationException if JNR Platform library is not loaded.
+   */
+  public static String getCPU() {
+    if (!isPlatformAvailable())
+      throw new UnsupportedOperationException("JNR Platform class not loaded");
+    return PlatformLoader.PLATFORM.getCPU().toString();
   }
 
   /**
@@ -148,6 +176,29 @@ public class Native {
         }
       }
       GET_PID_AVAILABLE = getPidAvailable;
+    }
+  }
+
+  private static class PlatformLoader {
+
+    private static final Platform PLATFORM;
+
+    static {
+      Platform platform;
+      try {
+        Class<?> platformClass = Class.forName("jnr.ffi.Platform");
+        Method getNativePlatform = platformClass.getMethod("getNativePlatform");
+        platform = (Platform) getNativePlatform.invoke(null);
+      } catch (Throwable t) {
+        platform = null;
+        if (LOG.isDebugEnabled())
+          LOG.debug("Could not load jnr.ffi.Platform class, this class will not be available.", t);
+        else
+          LOG.info(
+              "Could not load jnr.ffi.Platform class, this class will not be available "
+                  + "(set this logger level to DEBUG to see the full stack trace).");
+      }
+      PLATFORM = platform;
     }
   }
 }
