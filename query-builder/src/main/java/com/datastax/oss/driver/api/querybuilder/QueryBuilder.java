@@ -219,7 +219,7 @@ public class QueryBuilder {
     return new OppositeTerm(argument);
   }
 
-  /** A function call as a term, as in {@code WHERE = f(arguments)}. */
+  /** A function call as a term, as in {@code WHERE k = f(arguments)}. */
   @NonNull
   public static Term function(
       @NonNull CqlIdentifier functionId, @NonNull Iterable<Term> arguments) {
@@ -250,7 +250,7 @@ public class QueryBuilder {
     return function(CqlIdentifier.fromCql(functionName), arguments);
   }
 
-  /** A function call as a term, as in {@code WHERE = ks.f(arguments)}. */
+  /** A function call as a term, as in {@code WHERE k = ks.f(arguments)}. */
   @NonNull
   public static Term function(
       @Nullable CqlIdentifier keyspaceId,
@@ -400,7 +400,18 @@ public class QueryBuilder {
    */
   @NonNull
   public static Literal literal(@Nullable Object value, @NonNull CodecRegistry codecRegistry) {
-    return literal(value, (value == null) ? null : codecRegistry.codecFor(value));
+    try {
+      return literal(value, (value == null) ? null : codecRegistry.codecFor(value));
+    } catch (CodecNotFoundException e) {
+      assert value != null;
+      throw new IllegalArgumentException(
+          String.format(
+              "Could not inline literal of type %s. "
+                  + "This happens because the driver doesn't know how to map it to a CQL type. "
+                  + "Try passing a TypeCodec or CodecRegistry to literal().",
+              value.getClass().getName()),
+          e);
+    }
   }
 
   /**

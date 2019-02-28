@@ -8,12 +8,23 @@ sure you don't accidentally ignore their result:
 ```java
 BoundStatement boundSelect = preparedSelect.bind();
 
-// This doesn't work: setInt doesn't modify boundSelect in place:
+// This doesn't work: setInt and setPageSize don't modify boundSelect in place:
 boundSelect.setInt("k", key);
+boundSelect.setPageSize(1000);
 session.execute(boundSelect);
 
 // Instead, do this:
-boundSelect = boundSelect.setInt("k", key);
+boundSelect = boundSelect.setInt("k", key).setPageSize(1000);
+```
+
+The driver also provides builders:
+
+```java
+BoundStatement boundSelect =
+    preparedSelect.boundStatementBuilder()
+        .setInt("k", key)
+        .withPageSize(1000)
+        .build();
 ```
 
 ### Why do asynchronous methods return `CompletionStage<T>` instead of `CompletableFuture<T>`?

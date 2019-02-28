@@ -31,6 +31,7 @@ import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.util.Map;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -184,6 +185,22 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
   @Override
   public SimpleStatement build() {
     return builder().build();
+  }
+
+  @NonNull
+  @Override
+  public SimpleStatement build(@NonNull Object... values) {
+    return builder().addPositionalValues(values).build();
+  }
+
+  @NonNull
+  @Override
+  public SimpleStatement build(@NonNull Map<String, Object> namedValues) {
+    SimpleStatementBuilder builder = builder();
+    for (Map.Entry<String, Object> entry : namedValues.entrySet()) {
+      builder.addNamedValue(entry.getKey(), entry.getValue());
+    }
+    return builder.build();
   }
 
   @NonNull

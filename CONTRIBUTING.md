@@ -17,10 +17,6 @@ Some aspects are not covered by the formatter:
   empty or contains only a single statement.
 * XML files: indent with two spaces and wrap to respect the column limit of 100 characters.
 
-Also, if your IDE sorts import statements automatically, make sure it follows the same order as the
-formatter: all static imports in ASCII sort order, followed by a blank line, followed by all regular
-imports in ASCII sort order.
-
 ## Coding style -- production code
 
 Do not use static imports. They make things harder to understand when you look at the code 
@@ -237,25 +233,102 @@ factor some common code in a parent abstract class named with "XxxTestBase", and
 different families of tests into separate child classes. For example, `CqlRequestHandlerTestBase`,
 `CqlRequestHandlerRetryTest`, `CqlRequestHandlerSpeculativeExecutionTest`...
 
-Unit tests live in their respective production code's module. They should be fast and not start any
+### Unit tests
+
+They live in the same module as the code they are testing. They should be fast and not start any
 external process. They usually target one specific component and mock the rest of the driver
 context.
 
-Integration tests live in the aptly-named `integration-tests` module. They exercise the whole driver
-stack against an external process -- either simulated with
-[Simulacron](https://github.com/datastax/simulacron), or a live Cassandra cluster run with
-[CCM](https://github.com/pcmanus/ccm) (the `ccm` executable must be in the path). They are
-classified into categories that determine how they will be run during the build:
+### Integration tests
 
-* `@Category(ParallelizableTests.class)`: for tests that use Simulacron or `CcmRule`. They will be
-  run in parallel. 
-* No annotation: for tests that use `CustomCcmRule`. They will be run one after the other. 
-* `@Category(IsolatedTests.class)`: for tests that require specific environment tweaks, typically
-  system properties that need to be set before initialization. They will be run one after the other,
-  each in its own JVM fork.
+They live in the `integration-tests` module, and exercise the whole driver stack against an external
+process, which can be either one of:
+* [Simulacron](https://github.com/datastax/simulacron): simulates Cassandra nodes on loopback
+  addresses; your test must "prime" data, i.e. tell the nodes what results to return for
+  pre-determined queries.
+  
+    For an example of a Simulacron-based test, see `NodeTargetingIT`.
+* [CCM](https://github.com/pcmanus/ccm): launches actual Cassandra nodes locally. The `ccm`
+  executable must be in the path.
+  
+    You can pass a `-Dccm.version` system property to the build to target a particular Cassandra
+    version (it defaults to 3.11.0). `-Dccm.directory` allows you to point to a local installation
+    -- this can be a checkout of the Cassandra codebase, as long as it's built. See `CcmBridge` in
+    the driver codebase for more details.
+    
+    For an example of a CCM-based test, see `PlainTextAuthProviderIT`.
 
-Simulacron relies on loopback aliases to simulate multiple nodes. On Linux or Windows, you shouldn't
-have anything to do. On MacOS, run this script:
+Integration tests are divided into three categories:
+
+#### Parallelizable tests
+
+These tests can be run in parallel, to speed up the build. They either use:
+* dedicated Simulacron instances. These are lightweight, and Simulacron will manage the ports to
+  make sure that there are no collisions.
+* a shared, one-node CCM cluster. Each test works in its own keyspace.
+
+The build runs them with a configurable degree of parallelism (currently 8). The shared CCM cluster
+is initialized the first time it's used, and stopped before moving on to serial tests.
+
+To make an integration test parallelizable, annotate it with `@Category(ParallelizableTests.class)`.
+If you use CCM, it **must** be with `CcmRule`.
+
+For an example of a Simulacron-based parallelizable test, see `NodeTargetingIT`. For a CCM-based
+test, see `DirectCompressionIT`.
+
+#### Serial tests
+
+These tests cannot run in parallel, in general because they require CCM clusters of different sizes,
+or with a specific configuration (we never run more than one CCM cluster simultaneously: it would be
+too resource-intensive, and too complicated to manage all the ports).
+
+The build runs them one by one, after the parallelizable tests.
+
+To make an integration test serial, do not annotate it with `@Category`. The CCM rule **must** be
+`CustomCcmRule`.
+
+For an example, see `DefaultLoadBalancingPolicyIT`.
+ 
+Note: if multiple serial tests have a common "base" class, do not pull up `CustomCcmRule`, each
+child class must have its own instance. Otherwise they share the same CCM instance, and the first
+one destroys it on teardown. See `TokenITBase` for how to organize code in those cases.
+
+#### Isolated tests
+
+Not only can those tests not run in parallel, they also require specific environment tweaks,
+typically system properties that need to be set before initialization.
+
+The build runs them one by one, *each in its own JVM fork*, after the serial tests.
+
+To isolate an integration test, annotate it with `@Category(IsolatedTests.class)`. The CCM rule
+**must** be `CustomCcmRule`.  
+
+For an example, see `HeapCompressionIT`.
+
+
+## Running the tests
+
+### Unit tests
+
+    mvn clean test
+    
+This currently takes about 30 seconds. The goal is to keep it within a couple of minutes (it runs
+for each commit if you enable the pre-commit hook -- see below).
+
+### Integration tests
+
+    mvn clean verify
+
+This currently takes about 9 minutes. We don't have a hard limit, but ideally it should stay within
+30 minutes to 1 hour.
+
+You can skip test categories individually with `-DskipParallelizableITs`, `-DskipSerialITs` and
+`-DskipIsolatedITs`.
+
+### Configuring MacOS for Simulacron
+
+Simulacron (used in integration tests) relies on loopback aliases to simulate multiple nodes. On
+Linux or Windows, you shouldn't have anything to do. On MacOS, run this script:
 
 ```
 #!/bin/bash
@@ -268,23 +341,6 @@ done
 Note that this is known to cause temporary increased CPU usage in OS X initially while mDNSResponder
 acclimates itself to the presence of added IP addresses. This lasts several minutes. Also, this does
 not survive reboots.
-
-
-## Running the tests
-
-#### Unit tests
-
-    mvn clean test
-    
-This currently takes about 30 seconds. The goal is to keep it within a couple of minutes (it runs
-for each commit if you enable the pre-commit hook -- see below).
-
-#### Integration tests
-
-    mvn clean verify
-
-This currently takes about 9 minutes. We don't have a hard limit, but ideally it should stay within
-30 minutes to 1 hour.
 
 
 ## License headers
@@ -367,11 +423,11 @@ Like commits, pull requests should be focused on a single, clearly stated goal.
 Don't base a pull request onto another one, it's too complicated to follow two branches that evolve
 at the same time. If a ticket depends on another, wait for the first one to be merged. 
 
-If you have to address feedback, avoid rebasing your branch and force-pushing (this makes the
-reviewers' job harder, because they have to re-read the full diff and figure out where your new
-changes are). Instead, push a new commit on top of the existing history; it will be squashed later
-when the PR gets merged. If the history is complex, it's a good idea to indicate in the message
-where the changes should be squashed:
+If you have to address feedback, avoid rewriting the history (e.g. squashing or amending commits):
+this makes the reviewers' job harder, because they have to re-read the full diff and figure out
+where your new changes are. Instead, push a new commit on top of the existing history; it will be
+squashed later when the PR gets merged. If the history is complex, it's a good idea to indicate in
+the message where the changes should be squashed:
 
 ```
 * 20c88f4 - Address feedback (to squash with "Add metadata parsing logic") (36 minutes ago)
@@ -382,7 +438,6 @@ where the changes should be squashed:
 (Note that the message refers to the other commit's subject line, not the SHA-1. This way it's still
 relevant if there are intermediary rebases.)
 
-If you *really* need a newer commit from the base branch, or if the history is getting too
-complicated, it can be OK to force-push occasionally, provided that **all current reviewers agree**.
-
-Don't push a merge commit to a pull request under any circumstance.
+If you need new stuff from the base branch, it's fine to rebase and force-push, as long as you don't
+rewrite the history. Just give a heads up to the reviewers beforehand. Don't push a merge commit to
+a pull request.
