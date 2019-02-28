@@ -99,7 +99,9 @@ public class Native {
    */
   public static String getCPU() {
     if (!isPlatformAvailable())
-      throw new UnsupportedOperationException("JNR Platform class not loaded");
+      throw new IllegalStateException(
+          "JNR Platform class not loaded. "
+              + "Check isGetProcessIdAvailable() before calling this method.");
     return PlatformLoader.PLATFORM.getCPU().toString();
   }
 
@@ -191,12 +193,7 @@ public class Native {
         platform = (Platform) getNativePlatform.invoke(null);
       } catch (Throwable t) {
         platform = null;
-        if (LOG.isDebugEnabled())
-          LOG.debug("Could not load jnr.ffi.Platform class, this class will not be available.", t);
-        else
-          LOG.info(
-              "Could not load jnr.ffi.Platform class, this class will not be available "
-                  + "(set this logger level to DEBUG to see the full stack trace).");
+        LOG.debug("Error loading jnr.ffi.Platform class, this class will not be available.", t);
       }
       PLATFORM = platform;
     }
