@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Map;
 
 /**
  * End state for the query builder DSL, which allows the generation of a CQL query.
@@ -47,12 +48,48 @@ public interface BuildableQuery {
    * SimpleStatement.newInstance(asCql())
    * }</pre>
    *
-   * In addition, some query implementation might try to infer additional statement properties (such
-   * as {@link Statement#isIdempotent()}).
+   * In addition, some implementations might try to infer additional statement properties (such as
+   * {@link Statement#isIdempotent()}).
    */
   @NonNull
   default SimpleStatement build() {
     return SimpleStatement.newInstance(asCql());
+  }
+
+  /**
+   * Builds the CQL query and wraps it in a simple statement, also providing positional values for
+   * bind markers.
+   *
+   * <p>This is a similar to:
+   *
+   * <pre>{@code
+   * SimpleStatement.newInstance(asCql(), values)
+   * }</pre>
+   *
+   * In addition, some implementations might try to infer additional statement properties (such as
+   * {@link Statement#isIdempotent()}).
+   */
+  @NonNull
+  default SimpleStatement build(@NonNull Object... values) {
+    return SimpleStatement.newInstance(asCql(), values);
+  }
+
+  /**
+   * Builds the CQL query and wraps it in a simple statement, also providing named values for bind
+   * markers.
+   *
+   * <p>This is a similar to:
+   *
+   * <pre>{@code
+   * SimpleStatement.newInstance(asCql(), namedValues)
+   * }</pre>
+   *
+   * In addition, some implementations might try to infer additional statement properties (such as
+   * {@link Statement#isIdempotent()}).
+   */
+  @NonNull
+  default SimpleStatement build(@NonNull Map<String, Object> namedValues) {
+    return SimpleStatement.newInstance(asCql(), namedValues);
   }
 
   /**
@@ -71,6 +108,9 @@ public interface BuildableQuery {
    * SimpleStatement statement =
    *     builder.addNamedValue("k", 1).addNamedValue("c", 2).withTracing().build();
    * }</pre>
+   *
+   * In addition, some implementations might try to infer additional statement properties (such as
+   * {@link Statement#isIdempotent()}).
    */
   @NonNull
   default SimpleStatementBuilder builder() {
