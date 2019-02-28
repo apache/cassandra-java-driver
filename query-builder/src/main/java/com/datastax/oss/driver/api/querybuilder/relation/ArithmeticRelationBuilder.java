@@ -21,61 +21,37 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 
 public interface ArithmeticRelationBuilder<ResultT> {
 
-  /**
-   * Builds an '=' relation with the given term.
-   *
-   * <p>Use one of the static factory method in {@link Term} to create the argument.
-   */
+  /** Builds an '=' relation with the given term. */
   @NonNull
   default ResultT isEqualTo(@NonNull Term rightOperand) {
     return build("=", rightOperand);
   }
 
-  /**
-   * Builds a '&lt;' relation with the given term.
-   *
-   * <p>Use one of the static factory method in {@link Term} to create the argument.
-   */
+  /** Builds a '&lt;' relation with the given term. */
   @NonNull
   default ResultT isLessThan(@NonNull Term rightOperand) {
     return build("<", rightOperand);
   }
 
-  /**
-   * Builds a '&lt;=' relation with the given term.
-   *
-   * <p>Use one of the static factory method in {@link Term} to create the argument.
-   */
+  /** Builds a '&lt;=' relation with the given term. */
   @NonNull
   default ResultT isLessThanOrEqualTo(@NonNull Term rightOperand) {
     return build("<=", rightOperand);
   }
 
-  /**
-   * Builds a '&gt;' relation with the given term.
-   *
-   * <p>Use one of the static factory method in {@link Term} to create the argument.
-   */
+  /** Builds a '&gt;' relation with the given term. */
   @NonNull
   default ResultT isGreaterThan(@NonNull Term rightOperand) {
     return build(">", rightOperand);
   }
 
-  /**
-   * Builds a '&gt;=' relation with the given term.
-   *
-   * <p>Use one of the static factory method in {@link Term} to create the argument.
-   */
+  /** Builds a '&gt;=' relation with the given term. */
   @NonNull
   default ResultT isGreaterThanOrEqualTo(@NonNull Term rightOperand) {
     return build(">=", rightOperand);
   }
 
-  /**
-   * Builds a '!=' relation with the given term.
-   *
-   * <p>Use one of the static factory method in {@link Term} to create the argument.
-   */
+  /** Builds a '!=' relation with the given term. */
   @NonNull
   default ResultT isNotEqualTo(@NonNull Term rightOperand) {
     return build("!=", rightOperand);
