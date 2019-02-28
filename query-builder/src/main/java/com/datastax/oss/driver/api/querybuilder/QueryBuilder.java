@@ -400,7 +400,18 @@ public class QueryBuilder {
    */
   @NonNull
   public static Literal literal(@Nullable Object value, @NonNull CodecRegistry codecRegistry) {
-    return literal(value, (value == null) ? null : codecRegistry.codecFor(value));
+    try {
+      return literal(value, (value == null) ? null : codecRegistry.codecFor(value));
+    } catch (CodecNotFoundException e) {
+      assert value != null;
+      throw new IllegalArgumentException(
+          String.format(
+              "Could not inline literal of type %s. "
+                  + "This happens because the driver doesn't know how to map it to a CQL type. "
+                  + "Try passing a TypeCodec or CodecRegistry to literal().",
+              value.getClass().getName()),
+          e);
+    }
   }
 
   /**
