@@ -95,7 +95,7 @@ public class Native {
    * Platform#getCPU()}.
    *
    * @return the current processor architecture.
-   * @throws UnsupportedOperationException if JNR Platform library is not loaded.
+   * @throws IllegalStateException if JNR Platform library is not loaded.
    */
   public static String getCPU() {
     if (!isPlatformAvailable())
