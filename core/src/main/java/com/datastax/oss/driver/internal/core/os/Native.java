@@ -15,7 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.os;
 
+import java.lang.reflect.Method;
 import jnr.ffi.LibraryLoader;
+import jnr.ffi.Platform;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import jnr.ffi.Struct;
@@ -73,6 +75,34 @@ public class Native {
               + "Check isGetProcessIdAvailable() before calling this method.");
     }
     return PosixLoader.POSIX.getpid();
+  }
+
+  /**
+   * Returns {@code true} if JNR {@link Platform} class is loaded, and {@code false} otherwise.
+   *
+   * @return {@code true} if JNR {@link Platform} class is loaded.
+   */
+  public static boolean isPlatformAvailable() {
+    try {
+      return PlatformLoader.PLATFORM != null;
+    } catch (NoClassDefFoundError e) {
+      return false;
+    }
+  }
+
+  /**
+   * Returns the current processor architecture the JVM is running on, as reported by {@link
+   * Platform#getCPU()}.
+   *
+   * @return the current processor architecture.
+   * @throws IllegalStateException if JNR Platform library is not loaded.
+   */
+  public static String getCPU() {
+    if (!isPlatformAvailable())
+      throw new IllegalStateException(
+          "JNR Platform class not loaded. "
+              + "Check isPlatformAvailable() before calling this method.");
+    return PlatformLoader.PLATFORM.getCPU().toString();
   }
 
   /**
@@ -148,6 +178,24 @@ public class Native {
         }
       }
       GET_PID_AVAILABLE = getPidAvailable;
+    }
+  }
+
+  private static class PlatformLoader {
+
+    private static final Platform PLATFORM;
+
+    static {
+      Platform platform;
+      try {
+        Class<?> platformClass = Class.forName("jnr.ffi.Platform");
+        Method getNativePlatform = platformClass.getMethod("getNativePlatform");
+        platform = (Platform) getNativePlatform.invoke(null);
+      } catch (Throwable t) {
+        platform = null;
+        LOG.debug("Error loading jnr.ffi.Platform class, this class will not be available.", t);
+      }
+      PLATFORM = platform;
     }
   }
 }
