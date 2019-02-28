@@ -219,7 +219,7 @@ public class QueryBuilder {
     return new OppositeTerm(argument);
   }
 
-  /** A function call as a term, as in {@code WHERE = f(arguments)}. */
+  /** A function call as a term, as in {@code WHERE k = f(arguments)}. */
   @NonNull
   public static Term function(
       @NonNull CqlIdentifier functionId, @NonNull Iterable<Term> arguments) {
@@ -250,7 +250,7 @@ public class QueryBuilder {
     return function(CqlIdentifier.fromCql(functionName), arguments);
   }
 
-  /** A function call as a term, as in {@code WHERE = ks.f(arguments)}. */
+  /** A function call as a term, as in {@code WHERE k = ks.f(arguments)}. */
   @NonNull
   public static Term function(
       @Nullable CqlIdentifier keyspaceId,

@@ -5,6 +5,7 @@
 ### 4.0.0 (in progress)
 
 - [improvement] JAVA-2150: Improve query builder error message on unsupported literal type
+- [documentation] JAVA-2149: Improve Term javadocs in the query builder
 
 ### 4.0.0-rc1
 
