@@ -101,7 +101,7 @@ public class Native {
     if (!isPlatformAvailable())
       throw new IllegalStateException(
           "JNR Platform class not loaded. "
-              + "Check isGetProcessIdAvailable() before calling this method.");
+              + "Check isPlatformAvailable() before calling this method.");
     return PlatformLoader.PLATFORM.getCPU().toString();
   }
 
