@@ -192,7 +192,7 @@ public class SessionUtils {
                 String.format(
                     "CREATE KEYSPACE %s WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };",
                     keyspace.asCql(false)))
-            .withExecutionProfile(profile)
+            .setExecutionProfile(profile)
             .build();
     session.execute(createKeyspace, Statement.SYNC);
   }
@@ -214,7 +214,7 @@ public class SessionUtils {
       Session session, CqlIdentifier keyspace, DriverExecutionProfile profile) {
     session.execute(
         SimpleStatement.builder(String.format("DROP KEYSPACE IF EXISTS %s", keyspace.asCql(false)))
-            .withExecutionProfile(profile)
+            .setExecutionProfile(profile)
             .build(),
         Statement.SYNC);
   }

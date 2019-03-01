@@ -32,7 +32,7 @@ SimpleStatement statement =
 // Or with a builder:
 SimpleStatement statement =
     SimpleStatement.builder("SELECT first_name FROM user WHERE id=1")
-        .withIdempotence(true)
+        .setIdempotence(true)
         .build();
 ```
 

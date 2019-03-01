@@ -61,25 +61,25 @@ public class SimpleStatementBuilder
 
   /** @see SimpleStatement#getQuery() */
   @NonNull
-  public SimpleStatementBuilder withQuery(@NonNull String query) {
+  public SimpleStatementBuilder setQuery(@NonNull String query) {
     this.query = query;
     return this;
   }
 
   /** @see SimpleStatement#getKeyspace() */
   @NonNull
-  public SimpleStatementBuilder withKeyspace(@Nullable CqlIdentifier keyspace) {
+  public SimpleStatementBuilder setKeyspace(@Nullable CqlIdentifier keyspace) {
     this.keyspace = keyspace;
     return this;
   }
 
   /**
-   * Shortcut for {@link #withKeyspace(CqlIdentifier)
-   * withKeyspace(CqlIdentifier.fromCql(keyspaceName))}.
+   * Shortcut for {@link #setKeyspace(CqlIdentifier)
+   * setKeyspace(CqlIdentifier.fromCql(keyspaceName))}.
    */
   @NonNull
-  public SimpleStatementBuilder withKeyspace(@Nullable String keyspaceName) {
-    return withKeyspace(keyspaceName == null ? null : CqlIdentifier.fromCql(keyspaceName));
+  public SimpleStatementBuilder setKeyspace(@Nullable String keyspaceName) {
+    return setKeyspace(keyspaceName == null ? null : CqlIdentifier.fromCql(keyspaceName));
   }
 
   /** @see SimpleStatement#setPositionalValues(List) */

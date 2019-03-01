@@ -19,7 +19,7 @@ Statement statement =
 
 // Builder-based:
 Statement statement =
-  SimpleStatement.builder("SELECT * FROM users WHERE id = 1234").withTracing().build();
+  SimpleStatement.builder("SELECT * FROM users WHERE id = 1234").setTracing().build();
 ```
 
 Tracing is supposed to be run on a small percentage of requests only. Do not enable it on every

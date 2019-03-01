@@ -145,7 +145,7 @@ Finally, you can assign a timestamp to a statement directly from application cod
 ```java
 Statement statement =
     SimpleStatement.builder("UPDATE users SET email = 'x@y.com' where id = 1")
-        .withTimestamp(1432815430948040L)
+        .setTimestamp(1432815430948040L)
         .build();
 session.execute(statement);
 ```

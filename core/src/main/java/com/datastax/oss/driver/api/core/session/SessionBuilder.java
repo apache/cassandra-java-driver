@@ -259,7 +259,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
 
   /**
    * Shortcut for {@link #withKeyspace(CqlIdentifier)
-   * withKeyspace(CqlIdentifier.fromCql(keyspaceName))}
+   * setKeyspace(CqlIdentifier.fromCql(keyspaceName))}
    */
   @NonNull
   public SelfT withKeyspace(@Nullable String keyspaceName) {

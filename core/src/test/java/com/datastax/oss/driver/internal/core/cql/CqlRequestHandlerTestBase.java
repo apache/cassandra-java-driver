@@ -53,9 +53,9 @@ public abstract class CqlRequestHandlerTestBase {
   protected static final SimpleStatement UNDEFINED_IDEMPOTENCE_STATEMENT =
       SimpleStatement.newInstance("mock query");
   protected static final SimpleStatement IDEMPOTENT_STATEMENT =
-      SimpleStatement.builder("mock query").withIdempotence(true).build();
+      SimpleStatement.builder("mock query").setIdempotence(true).build();
   protected static final SimpleStatement NON_IDEMPOTENT_STATEMENT =
-      SimpleStatement.builder("mock query").withIdempotence(false).build();
+      SimpleStatement.builder("mock query").setIdempotence(false).build();
   protected static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
   protected static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
   protected static final InetSocketAddress ADDRESS3 = new InetSocketAddress("127.0.0.3", 9042);

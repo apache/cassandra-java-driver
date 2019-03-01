@@ -86,14 +86,14 @@ public abstract class StatementBuilder<
 
   /** @see Statement#setExecutionProfileName(String) */
   @NonNull
-  public SelfT withExecutionProfileName(@Nullable String executionProfileName) {
+  public SelfT setExecutionProfileName(@Nullable String executionProfileName) {
     this.executionProfileName = executionProfileName;
     return self;
   }
 
   /** @see Statement#setExecutionProfile(DriverExecutionProfile) */
   @NonNull
-  public SelfT withExecutionProfile(@Nullable DriverExecutionProfile executionProfile) {
+  public SelfT setExecutionProfile(@Nullable DriverExecutionProfile executionProfile) {
     this.executionProfile = executionProfile;
     this.executionProfileName = null;
     return self;
@@ -101,31 +101,31 @@ public abstract class StatementBuilder<
 
   /** @see Statement#setRoutingKeyspace(CqlIdentifier) */
   @NonNull
-  public SelfT withRoutingKeyspace(@Nullable CqlIdentifier routingKeyspace) {
+  public SelfT setRoutingKeyspace(@Nullable CqlIdentifier routingKeyspace) {
     this.routingKeyspace = routingKeyspace;
     return self;
   }
 
   /**
-   * Shortcut for {@link #withRoutingKeyspace(CqlIdentifier)
-   * withRoutingKeyspace(CqlIdentifier.fromCql(routingKeyspaceName))}.
+   * Shortcut for {@link #setRoutingKeyspace(CqlIdentifier)
+   * setRoutingKeyspace(CqlIdentifier.fromCql(routingKeyspaceName))}.
    */
   @NonNull
-  public SelfT withRoutingKeyspace(@Nullable String routingKeyspaceName) {
-    return withRoutingKeyspace(
+  public SelfT setRoutingKeyspace(@Nullable String routingKeyspaceName) {
+    return setRoutingKeyspace(
         routingKeyspaceName == null ? null : CqlIdentifier.fromCql(routingKeyspaceName));
   }
 
   /** @see Statement#setRoutingKey(ByteBuffer) */
   @NonNull
-  public SelfT withRoutingKey(@Nullable ByteBuffer routingKey) {
+  public SelfT setRoutingKey(@Nullable ByteBuffer routingKey) {
     this.routingKey = routingKey;
     return self;
   }
 
   /** @see Statement#setRoutingToken(Token) */
   @NonNull
-  public SelfT withRoutingToken(@Nullable Token routingToken) {
+  public SelfT setRoutingToken(@Nullable Token routingToken) {
     this.routingToken = routingToken;
     return self;
   }
@@ -149,62 +149,62 @@ public abstract class StatementBuilder<
 
   /** @see Statement#setIdempotent(Boolean) */
   @NonNull
-  public SelfT withIdempotence(@Nullable Boolean idempotent) {
+  public SelfT setIdempotence(@Nullable Boolean idempotent) {
     this.idempotent = idempotent;
     return self;
   }
 
   /** @see Statement#setTracing(boolean) */
   @NonNull
-  public SelfT withTracing() {
+  public SelfT setTracing() {
     this.tracing = true;
     return self;
   }
 
   /** @see Statement#setTimestamp(long) */
   @NonNull
-  public SelfT withTimestamp(long timestamp) {
+  public SelfT setTimestamp(long timestamp) {
     this.timestamp = timestamp;
     return self;
   }
 
   /** @see Statement#setPagingState(ByteBuffer) */
   @NonNull
-  public SelfT withPagingState(@Nullable ByteBuffer pagingState) {
+  public SelfT setPagingState(@Nullable ByteBuffer pagingState) {
     this.pagingState = pagingState;
     return self;
   }
 
   /** @see Statement#setPageSize(int) */
   @NonNull
-  public SelfT withPageSize(int pageSize) {
+  public SelfT setPageSize(int pageSize) {
     this.pageSize = pageSize;
     return self;
   }
 
   /** @see Statement#setConsistencyLevel(ConsistencyLevel) */
   @NonNull
-  public SelfT withConsistencyLevel(@Nullable ConsistencyLevel consistencyLevel) {
+  public SelfT setConsistencyLevel(@Nullable ConsistencyLevel consistencyLevel) {
     this.consistencyLevel = consistencyLevel;
     return self;
   }
 
   /** @see Statement#setSerialConsistencyLevel(ConsistencyLevel) */
   @NonNull
-  public SelfT withSerialConsistencyLevel(@Nullable ConsistencyLevel serialConsistencyLevel) {
+  public SelfT setSerialConsistencyLevel(@Nullable ConsistencyLevel serialConsistencyLevel) {
     this.serialConsistencyLevel = serialConsistencyLevel;
     return self;
   }
 
   /** @see Statement#setTimeout(Duration) */
   @NonNull
-  public SelfT withTimeout(@Nullable Duration timeout) {
+  public SelfT setTimeout(@Nullable Duration timeout) {
     this.timeout = timeout;
     return self;
   }
 
   /** @see Statement#setNode(Node) */
-  public SelfT withNode(@Nullable Node node) {
+  public SelfT setNode(@Nullable Node node) {
     this.node = node;
     return self;
   }

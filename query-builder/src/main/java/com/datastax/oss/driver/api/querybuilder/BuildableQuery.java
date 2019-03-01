@@ -106,7 +106,7 @@ public interface BuildableQuery {
    *         .whereColumn("c").isLessThan(bindMarker("c"))
    *         .builder();
    * SimpleStatement statement =
-   *     builder.addNamedValue("k", 1).addNamedValue("c", 2).withTracing().build();
+   *     builder.addNamedValue("k", 1).addNamedValue("c", 2).setTracing().build();
    * }</pre>
    *
    * In addition, some implementations might try to infer additional statement properties (such as

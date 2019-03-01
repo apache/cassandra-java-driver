@@ -289,7 +289,7 @@ public class DataTypeIT {
                     String.format(
                         "CREATE TABLE IF NOT EXISTS %s (k int primary key, %s)",
                         tableName, String.join(",", columnData)))
-                .withExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(sessionRule.slowProfile())
                 .build());
   }
 
@@ -771,7 +771,7 @@ public class DataTypeIT {
                       String.format(
                           "CREATE TYPE IF NOT EXISTS %s (%s)",
                           udt.getName().asCql(false), String.join(",", fieldParts)))
-                  .withExecutionProfile(sessionRule.slowProfile())
+                  .setExecutionProfile(sessionRule.slowProfile())
                   .build());
 
       // Chances are the UDT isn't labeled as frozen in the context we're given, so we add it as

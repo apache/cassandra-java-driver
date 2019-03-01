@@ -83,7 +83,7 @@ public class ExecutionInfoWarningsIT {
         .session()
         .execute(
             SimpleStatement.builder("CREATE TABLE IF NOT EXISTS test (k int primary key, v text)")
-                .withExecutionProfile(SESSION_RULE.slowProfile())
+                .setExecutionProfile(SESSION_RULE.slowProfile())
                 .build());
     for (int i = 0; i < 100; i++) {
       SESSION_RULE
@@ -140,7 +140,7 @@ public class ExecutionInfoWarningsIT {
     final String query = "SELECT count(*) FROM test;";
     Statement<?> st =
         SimpleStatement.builder(String.format(query))
-            .withExecutionProfileName("log-disabled")
+            .setExecutionProfileName("log-disabled")
             .build();
     ResultSet result = SESSION_RULE.session().execute(st);
 

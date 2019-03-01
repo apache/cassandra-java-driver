@@ -80,7 +80,7 @@ same queries over and over, and a parameterized version can be extracted and pre
 ```java
 SimpleStatement simpleStatement =
     SimpleStatement.builder("SELECT * FROM product WHERE sku = ?")
-        .withConsistencyLevel(DefaultConsistencyLevel.QUORUM)
+        .setConsistencyLevel(DefaultConsistencyLevel.QUORUM)
         .build();
 PreparedStatement preparedStatement = session.prepare(simpleStatement);
 BoundStatement boundStatement = preparedStatement.bind();
@@ -160,8 +160,8 @@ BoundStatement bound =
       .boundStatementBuilder()
       .setString(0, "324378")
       .setString(1, "LCD screen")
-      .withConfigProfileName("oltp")
-      .withTimestamp(123456789L)
+      .setExecutionProfileName("oltp")
+      .setTimestamp(123456789L)
       .build();
 ```
 
