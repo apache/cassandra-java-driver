@@ -243,8 +243,8 @@ public class Metadata {
    * if it's not a CQL reserved keyword.
    *
    * <p>When 'Migrating from compact storage' after DROP COMPACT STORAGE on the table, it can have a
-   * column with an empty name. (See @jira_ticket JAVA-2174 for the reference) For that case, we
-   * need to escape empty column name.
+   * column with an empty name. (See JAVA-2174 for the reference) For that case, we need to escape
+   * empty column name.
    */
   private static boolean needsQuote(String s) {
     // this method should only be called for C*-provided identifiers,
