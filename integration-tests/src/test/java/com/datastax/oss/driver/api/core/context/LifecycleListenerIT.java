@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.context;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -22,6 +23,7 @@ import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
+import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
@@ -52,11 +54,11 @@ public class LifecycleListenerIT {
     assertThat(listener.closed).isFalse();
 
     try (CqlSession session = newSession(listener)) {
-      assertThat(listener.ready).isTrue();
+      ConditionChecker.checkThat(() -> listener.ready).before(1, SECONDS).becomesTrue();
       assertThat(listener.closed).isFalse();
     }
     assertThat(listener.ready).isTrue();
-    assertThat(listener.closed).isTrue();
+    ConditionChecker.checkThat(() -> listener.closed).before(1, SECONDS).becomesTrue();
   }
 
   @Test
@@ -83,8 +85,8 @@ public class LifecycleListenerIT {
   }
 
   public static class TestLifecycleListener implements LifecycleListener {
-    public volatile boolean ready;
-    public volatile boolean closed;
+    volatile boolean ready;
+    volatile boolean closed;
 
     @Override
     public void onSessionReady() {
@@ -101,7 +103,7 @@ public class LifecycleListenerIT {
 
     private final List<LifecycleListener> listeners;
 
-    public TestContext(DriverConfigLoader configLoader, TestLifecycleListener listener) {
+    TestContext(DriverConfigLoader configLoader, TestLifecycleListener listener) {
       super(
           configLoader,
           Collections.emptyList(),
