@@ -170,6 +170,12 @@ public class MetadataTest extends CCMTestsSupport {
     assertThat(Metadata.quoteIfNecessary("columnfamily")).isEqualTo("\"columnfamily\"");
   }
 
+  /** @jira_ticket JAVA-2174 */
+  @Test(groups = "unit")
+  public void escapeId_should_quote_empty_keyword() {
+    assertThat(Metadata.quoteIfNecessary("")).isEqualTo("\"\"");
+  }
+
   @Test(groups = "unit")
   public void should_detect_reserved_keywords_in_upper_case() {
     assertThat(Metadata.isReservedCqlKeyword("COLUMNFAMILY")).isTrue();

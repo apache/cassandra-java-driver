@@ -241,11 +241,16 @@ public class Metadata {
   /**
    * We don't need to escape an identifier if it matches non-quoted CQL3 ids ([a-z][a-z0-9_]*), and
    * if it's not a CQL reserved keyword.
+   *
+   * <p>When 'Migrating from compact storage' after DROP COMPACT STORAGE on the table, it can have a
+   * column with an empty name. (See JAVA-2174 for the reference) For that case, we need to escape
+   * empty column name.
    */
   private static boolean needsQuote(String s) {
     // this method should only be called for C*-provided identifiers,
-    // so we expect it to be non-null and non-empty.
-    assert s != null && !s.isEmpty();
+    // so we expect it to be non-null
+    assert s != null;
+    if (s.isEmpty()) return true;
     char c = s.charAt(0);
     if (!(c >= 97 && c <= 122)) // a-z
     return true;
