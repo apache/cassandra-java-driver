@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.7.1 (in progress)
+### 3.7.1
 
 - [bug] JAVA-2174: Metadata.needsQuote should accept empty strings.
 

@@ -38,7 +38,7 @@ To do this in a maven project:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>3.7.0</version>
+  <version>3.7.1</version>
   <exclusions>
     <exclusion>
       <groupId>io.dropwizard.metrics</groupId>
