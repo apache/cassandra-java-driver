@@ -23,7 +23,7 @@ The driver also provides builders:
 BoundStatement boundSelect =
     preparedSelect.boundStatementBuilder()
         .setInt("k", key)
-        .withPageSize(1000)
+        .setPageSize(1000)
         .build();
 ```
 

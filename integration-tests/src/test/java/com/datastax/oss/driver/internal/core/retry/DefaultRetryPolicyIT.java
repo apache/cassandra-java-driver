@@ -293,7 +293,7 @@ public class DefaultRetryPolicyIT {
       // when executing a non-idempotent query.
       sessionRule
           .session()
-          .execute(SimpleStatement.builder(queryStr).withIdempotence(false).build());
+          .execute(SimpleStatement.builder(queryStr).setIdempotence(false).build());
       fail("ClosedConnectionException expected");
     } catch (ClosedConnectionException ex) {
       // then a ClosedConnectionException should be raised, indicating that the connection closed
@@ -401,7 +401,7 @@ public class DefaultRetryPolicyIT {
       // when executing a non-idempotent query.
       sessionRule
           .session()
-          .execute(SimpleStatement.builder(queryStr).withIdempotence(false).build());
+          .execute(SimpleStatement.builder(queryStr).setIdempotence(false).build());
       fail("WriteTimeoutException expected");
     } catch (WriteTimeoutException wte) {
       // then a write timeout exception is thrown
@@ -511,7 +511,7 @@ public class DefaultRetryPolicyIT {
       // when executing a query that is not idempotent
       sessionRule
           .session()
-          .execute(SimpleStatement.builder(queryStr).withIdempotence(false).build());
+          .execute(SimpleStatement.builder(queryStr).setIdempotence(false).build());
       fail("Expected a ServerError");
     } catch (ServerError e) {
       // then should get a server error from first host.

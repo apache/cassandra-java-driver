@@ -206,7 +206,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
   @NonNull
   @Override
   public SimpleStatementBuilder builder() {
-    return SimpleStatement.builder(asCql()).withIdempotence(isIdempotent());
+    return SimpleStatement.builder(asCql()).setIdempotence(isIdempotent());
   }
 
   public boolean isIdempotent() {

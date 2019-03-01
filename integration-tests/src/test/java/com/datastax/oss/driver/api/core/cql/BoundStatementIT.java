@@ -103,7 +103,7 @@ public class BoundStatementIT {
         .execute(
             SimpleStatement.builder(
                     "CREATE TABLE IF NOT EXISTS test (k text, v int, PRIMARY KEY(k, v))")
-                .withExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(sessionRule.slowProfile())
                 .build());
     for (int i = 0; i < 100; i++) {
       sessionRule
@@ -119,7 +119,7 @@ public class BoundStatementIT {
         .session()
         .execute(
             SimpleStatement.builder("CREATE TABLE IF NOT EXISTS test2 (k text primary key, v0 int)")
-                .withExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(sessionRule.slowProfile())
                 .build());
 
     // table with composite partition key
@@ -130,7 +130,7 @@ public class BoundStatementIT {
                     "CREATE TABLE IF NOT EXISTS test3 "
                         + "(pk1 int, pk2 int, v int, "
                         + "PRIMARY KEY ((pk1, pk2)))")
-                .withExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(sessionRule.slowProfile())
                 .build());
   }
 
@@ -255,7 +255,7 @@ public class BoundStatementIT {
   @Test
   public void should_use_page_size_from_simple_statement() {
     try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
-      SimpleStatement st = SimpleStatement.builder("SELECT v FROM test").withPageSize(10).build();
+      SimpleStatement st = SimpleStatement.builder("SELECT v FROM test").setPageSize(10).build();
       PreparedStatement prepared = session.prepare(st);
       CompletionStage<? extends AsyncResultSet> future = session.executeAsync(prepared.bind());
       AsyncResultSet result = CompletableFutures.getUninterruptibly(future);
@@ -270,7 +270,7 @@ public class BoundStatementIT {
     try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
       // set page size on simple statement, but will be unused since
       // overridden by bound statement.
-      SimpleStatement st = SimpleStatement.builder("SELECT v FROM test").withPageSize(10).build();
+      SimpleStatement st = SimpleStatement.builder("SELECT v FROM test").setPageSize(10).build();
       PreparedStatement prepared = session.prepare(st);
       CompletionStage<? extends AsyncResultSet> future =
           session.executeAsync(prepared.bind().setPageSize(12));
@@ -286,8 +286,8 @@ public class BoundStatementIT {
     try (CqlSession session = SessionUtils.newSession(simulacron)) {
       SimpleStatement st =
           SimpleStatement.builder("SELECT * FROM test where k = ?")
-              .withConsistencyLevel(DefaultConsistencyLevel.TWO)
-              .withSerialConsistencyLevel(DefaultConsistencyLevel.LOCAL_SERIAL)
+              .setConsistencyLevel(DefaultConsistencyLevel.TWO)
+              .setSerialConsistencyLevel(DefaultConsistencyLevel.LOCAL_SERIAL)
               .build();
       PreparedStatement prepared = session.prepare(st);
       simulacron.cluster().clearLogs();
@@ -317,8 +317,8 @@ public class BoundStatementIT {
       // overridden by bound statement.
       SimpleStatement st =
           SimpleStatement.builder("SELECT * FROM test where k = ?")
-              .withConsistencyLevel(DefaultConsistencyLevel.TWO)
-              .withSerialConsistencyLevel(DefaultConsistencyLevel.LOCAL_SERIAL)
+              .setConsistencyLevel(DefaultConsistencyLevel.TWO)
+              .setSerialConsistencyLevel(DefaultConsistencyLevel.LOCAL_SERIAL)
               .build();
       PreparedStatement prepared = session.prepare(st);
       simulacron.cluster().clearLogs();
@@ -327,8 +327,8 @@ public class BoundStatementIT {
       session.execute(
           prepared
               .boundStatementBuilder("0")
-              .withConsistencyLevel(DefaultConsistencyLevel.THREE)
-              .withSerialConsistencyLevel(DefaultConsistencyLevel.SERIAL)
+              .setConsistencyLevel(DefaultConsistencyLevel.THREE)
+              .setSerialConsistencyLevel(DefaultConsistencyLevel.SERIAL)
               .build());
 
       List<QueryLog> logs = simulacron.cluster().getLogs().getQueryLogs();
@@ -364,8 +364,8 @@ public class BoundStatementIT {
                   .delay(1500, TimeUnit.MILLISECONDS));
       SimpleStatement st =
           SimpleStatement.builder("mock query")
-              .withTimeout(Duration.ofSeconds(1))
-              .withConsistencyLevel(DefaultConsistencyLevel.ONE)
+              .setTimeout(Duration.ofSeconds(1))
+              .setConsistencyLevel(DefaultConsistencyLevel.ONE)
               .build();
       PreparedStatement prepared = session.prepare(st);
 
@@ -395,8 +395,8 @@ public class BoundStatementIT {
                   .delay(1500, TimeUnit.MILLISECONDS));
       SimpleStatement st =
           SimpleStatement.builder("mock query")
-              .withTimeout(Duration.ofSeconds(1))
-              .withConsistencyLevel(DefaultConsistencyLevel.ONE)
+              .setTimeout(Duration.ofSeconds(1))
+              .setConsistencyLevel(DefaultConsistencyLevel.ONE)
               .build();
       PreparedStatement prepared = session.prepare(st);
 
@@ -434,20 +434,20 @@ public class BoundStatementIT {
 
     SimpleStatementBuilder simpleStatementBuilder =
         SimpleStatement.builder("SELECT release_version FROM system.local")
-            .withExecutionProfile(mockProfile)
-            .withExecutionProfileName(mockConfigProfileName)
-            .withPagingState(mockPagingState)
-            .withKeyspace(mockKeyspace)
-            .withRoutingKeyspace(mockRoutingKeyspace)
-            .withRoutingKey(mockRoutingKey)
-            .withRoutingToken(mockRoutingToken)
-            .withTimestamp(42)
-            .withIdempotence(true)
-            .withTracing()
-            .withTimeout(mockTimeout)
-            .withConsistencyLevel(mockCl)
-            .withSerialConsistencyLevel(mockSerialCl)
-            .withPageSize(mockPageSize);
+            .setExecutionProfile(mockProfile)
+            .setExecutionProfileName(mockConfigProfileName)
+            .setPagingState(mockPagingState)
+            .setKeyspace(mockKeyspace)
+            .setRoutingKeyspace(mockRoutingKeyspace)
+            .setRoutingKey(mockRoutingKey)
+            .setRoutingToken(mockRoutingToken)
+            .setTimestamp(42)
+            .setIdempotence(true)
+            .setTracing()
+            .setTimeout(mockTimeout)
+            .setConsistencyLevel(mockCl)
+            .setSerialConsistencyLevel(mockSerialCl)
+            .setPageSize(mockPageSize);
 
     if (atLeastV4) {
       simpleStatementBuilder =

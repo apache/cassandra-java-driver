@@ -139,7 +139,7 @@ public class SchemaIT {
         .session()
         .execute(
             SimpleStatement.builder("CREATE TABLE foo(k int primary key)")
-                .withExecutionProfile(slowProfile)
+                .setExecutionProfile(slowProfile)
                 .build());
     assertThat(session.getMetadata().getKeyspace(sessionRule.keyspace()).get().getTables())
         .doesNotContainKey(CqlIdentifier.fromInternal("foo"));

@@ -194,7 +194,7 @@ public class DefaultDelete implements DeleteSelection, Delete {
   @NonNull
   @Override
   public SimpleStatementBuilder builder() {
-    return SimpleStatement.builder(asCql()).withIdempotence(isIdempotent());
+    return SimpleStatement.builder(asCql()).setIdempotence(isIdempotent());
   }
 
   public boolean isIdempotent() {

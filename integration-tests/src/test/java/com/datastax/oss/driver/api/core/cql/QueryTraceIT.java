@@ -81,7 +81,7 @@ public class QueryTraceIT {
             .session()
             .execute(
                 SimpleStatement.builder("SELECT release_version FROM system.local")
-                    .withTracing()
+                    .setTracing()
                     .build())
             .getExecutionInfo();
 

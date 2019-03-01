@@ -89,7 +89,7 @@ public class SimpleStatementIT {
         .execute(
             SimpleStatement.builder(
                     "CREATE TABLE IF NOT EXISTS test (k text, v int, PRIMARY KEY(k, v))")
-                .withExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(sessionRule.slowProfile())
                 .build());
     for (int i = 0; i < 100; i++) {
       sessionRule
@@ -105,7 +105,7 @@ public class SimpleStatementIT {
         .session()
         .execute(
             SimpleStatement.builder("CREATE TABLE IF NOT EXISTS test2 (k text primary key, v int)")
-                .withExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(sessionRule.slowProfile())
                 .build());
   }
 
@@ -142,7 +142,7 @@ public class SimpleStatementIT {
     // response.
     st =
         SimpleStatement.builder(String.format("SELECT v FROM test where k='%s'", KEY))
-            .withPagingState(result.getExecutionInfo().getPagingState())
+            .setPagingState(result.getExecutionInfo().getPagingState())
             .build();
 
     // when executing that query.
@@ -164,7 +164,7 @@ public class SimpleStatementIT {
     // given a new different query and providing the paging state from the previous query
     // then an exception should be thrown indicating incompatible paging state
     SimpleStatement.builder("SELECT v FROM test")
-        .withPagingState(result.getExecutionInfo().getPagingState())
+        .setPagingState(result.getExecutionInfo().getPagingState())
         .build();
   }
 
@@ -175,7 +175,7 @@ public class SimpleStatementIT {
     SimpleStatement insert =
         SimpleStatement.builder("INSERT INTO test2 (k, v) values (?, ?)")
             .addPositionalValues(name.getMethodName(), 0)
-            .withTimestamp(timestamp)
+            .setTimestamp(timestamp)
             .build();
 
     sessionRule.session().execute(insert);
@@ -203,7 +203,7 @@ public class SimpleStatementIT {
     ResultSet result =
         sessionRule
             .session()
-            .execute(SimpleStatement.builder("select * from test").withTracing().build());
+            .execute(SimpleStatement.builder("select * from test").setTracing().build());
   }
 
   @Test
@@ -384,7 +384,7 @@ public class SimpleStatementIT {
 
   @Test
   public void should_use_page_size() {
-    Statement<?> st = SimpleStatement.builder("SELECT v FROM test").withPageSize(10).build();
+    Statement<?> st = SimpleStatement.builder("SELECT v FROM test").setPageSize(10).build();
     CompletionStage<? extends AsyncResultSet> future = sessionRule.session().executeAsync(st);
     AsyncResultSet result = CompletableFutures.getUninterruptibly(future);
 
@@ -396,8 +396,8 @@ public class SimpleStatementIT {
   public void should_use_consistencies() {
     SimpleStatement st =
         SimpleStatement.builder("SELECT * FROM test where k = ?")
-            .withConsistencyLevel(DefaultConsistencyLevel.TWO)
-            .withSerialConsistencyLevel(DefaultConsistencyLevel.LOCAL_SERIAL)
+            .setConsistencyLevel(DefaultConsistencyLevel.TWO)
+            .setSerialConsistencyLevel(DefaultConsistencyLevel.LOCAL_SERIAL)
             .build();
     simulacronSessionRule.session().execute(st);
 
@@ -421,8 +421,8 @@ public class SimpleStatementIT {
         .prime(when("mock query").then(noRows()).delay(1500, TimeUnit.MILLISECONDS));
     SimpleStatement st =
         SimpleStatement.builder("mock query")
-            .withTimeout(Duration.ofSeconds(1))
-            .withConsistencyLevel(DefaultConsistencyLevel.ONE)
+            .setTimeout(Duration.ofSeconds(1))
+            .setConsistencyLevel(DefaultConsistencyLevel.ONE)
             .build();
 
     thrown.expect(DriverTimeoutException.class);

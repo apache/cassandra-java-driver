@@ -61,7 +61,7 @@ public class PerRequestKeyspaceIT {
         .execute(
             SimpleStatement.builder(
                     "CREATE TABLE IF NOT EXISTS foo (k text, cc int, v int, PRIMARY KEY(k, cc))")
-                .withExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(sessionRule.slowProfile())
                 .build());
   }
 
@@ -80,7 +80,7 @@ public class PerRequestKeyspaceIT {
             "INSERT INTO foo (k, cc, v) VALUES (?, ?, ?)", nameRule.getMethodName(), 1, 1);
     should_reject_statement_with_keyspace_in_protocol_v4(
         BatchStatement.builder(DefaultBatchType.LOGGED)
-            .withKeyspace(sessionRule.keyspace())
+            .setKeyspace(sessionRule.keyspace())
             .addStatement(statementWithoutKeyspace)
             .build());
   }
@@ -134,7 +134,7 @@ public class PerRequestKeyspaceIT {
     CqlSession session = sessionRule.session();
     session.execute(
         BatchStatement.builder(DefaultBatchType.LOGGED)
-            .withKeyspace(sessionRule.keyspace())
+            .setKeyspace(sessionRule.keyspace())
             .addStatements(
                 SimpleStatement.newInstance(
                     "INSERT INTO foo (k, cc, v) VALUES (?, ?, ?)", nameRule.getMethodName(), 1, 1),
@@ -158,7 +158,7 @@ public class PerRequestKeyspaceIT {
     CqlSession session = sessionRule.session();
     session.execute(
         BatchStatement.builder(DefaultBatchType.LOGGED)
-            .withKeyspace(sessionRule.keyspace())
+            .setKeyspace(sessionRule.keyspace())
             .addStatements(
                 SimpleStatement.newInstance(
                         "INSERT INTO foo (k, cc, v) VALUES (?, ?, ?)",

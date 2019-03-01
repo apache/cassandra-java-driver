@@ -15,6 +15,126 @@
       }
     },
     "ignore": [
+      {
+        "code": "java.method.removed",
+        "old": "method com.datastax.oss.driver.api.core.cql.BatchStatementBuilder com.datastax.oss.driver.api.core.cql.BatchStatementBuilder::withKeyspace(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method com.datastax.oss.driver.api.core.cql.BatchStatementBuilder com.datastax.oss.driver.api.core.cql.BatchStatementBuilder::withKeyspace(java.lang.String)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder::withKeyspace(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder::withKeyspace(java.lang.String)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder::withQuery(java.lang.String)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>, StatementT>, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>>::withConsistencyLevel(com.datastax.oss.driver.api.core.ConsistencyLevel)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>, StatementT>, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>>::withExecutionProfile(com.datastax.oss.driver.api.core.config.DriverExecutionProfile)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>, StatementT>, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>>::withExecutionProfileName(java.lang.String)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>, StatementT>, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>>::withIdempotence(java.lang.Boolean)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>, StatementT>, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>>::withNode(com.datastax.oss.driver.api.core.metadata.Node)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>, StatementT>, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>>::withPageSize(int)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>, StatementT>, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>>::withPagingState(java.nio.ByteBuffer)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>, StatementT>, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>>::withRoutingKey(java.nio.ByteBuffer)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>, StatementT>, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>>::withRoutingKeyspace(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>, StatementT>, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>>::withRoutingKeyspace(java.lang.String)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>, StatementT>, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>>::withRoutingToken(com.datastax.oss.driver.api.core.metadata.token.Token)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>, StatementT>, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>>::withSerialConsistencyLevel(com.datastax.oss.driver.api.core.ConsistencyLevel)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>, StatementT>, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>>::withTimeout(java.time.Duration)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>, StatementT>, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>>::withTimestamp(long)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>, StatementT>, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>>::withTracing()",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      }
     ]
   }
 }

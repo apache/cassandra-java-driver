@@ -62,7 +62,7 @@ If you have many options to set, you can use a builder to avoid creating interme
 ```java
 SimpleStatement statement =
     SimpleStatement.builder("SELECT value FROM application_params WHERE name = 'greeting_message'")
-        .withIdempotence(true)
+        .setIdempotence(true)
         .build();
 ```
 

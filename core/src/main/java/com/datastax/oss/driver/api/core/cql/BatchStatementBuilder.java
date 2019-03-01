@@ -51,20 +51,20 @@ public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilde
    * @see BatchStatement#getKeyspace()
    */
   @NonNull
-  public BatchStatementBuilder withKeyspace(@NonNull CqlIdentifier keyspace) {
+  public BatchStatementBuilder setKeyspace(@NonNull CqlIdentifier keyspace) {
     this.keyspace = keyspace;
     return this;
   }
 
   /**
-   * Sets the CQL keyspace to execute this batch in. Shortcut for {@link
-   * #withKeyspace(CqlIdentifier) withKeyspace(CqlIdentifier.fromCql(keyspaceName))}.
+   * Sets the CQL keyspace to execute this batch in. Shortcut for {@link #setKeyspace(CqlIdentifier)
+   * setKeyspace(CqlIdentifier.fromCql(keyspaceName))}.
    *
    * @return this builder; never {@code null}.
    */
   @NonNull
-  public BatchStatementBuilder withKeyspace(@NonNull String keyspaceName) {
-    return withKeyspace(CqlIdentifier.fromCql(keyspaceName));
+  public BatchStatementBuilder setKeyspace(@NonNull String keyspaceName) {
+    return setKeyspace(CqlIdentifier.fromCql(keyspaceName));
   }
 
   /**

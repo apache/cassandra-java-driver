@@ -87,7 +87,7 @@ public class PreparedStatementIT {
           .session()
           .execute(
               SimpleStatement.builder(query)
-                  .withExecutionProfile(sessionRule.slowProfile())
+                  .setExecutionProfile(sessionRule.slowProfile())
                   .build());
     }
   }
@@ -159,7 +159,7 @@ public class PreparedStatementIT {
     // When
     session.execute(
         SimpleStatement.builder("ALTER TABLE prepared_statement_test ADD d int")
-            .withExecutionProfile(sessionRule.slowProfile())
+            .setExecutionProfile(sessionRule.slowProfile())
             .build());
     BoundStatement bs = ps.bind(1);
     ResultSet rows = session.execute(bs);
@@ -203,7 +203,7 @@ public class PreparedStatementIT {
     // When
     session.execute(
         SimpleStatement.builder("ALTER TABLE prepared_statement_test ADD d int")
-            .withExecutionProfile(sessionRule.slowProfile())
+            .setExecutionProfile(sessionRule.slowProfile())
             .build());
 
     // Then

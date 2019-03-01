@@ -190,7 +190,7 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
   @NonNull
   @Override
   public SimpleStatementBuilder builder() {
-    return SimpleStatement.builder(asCql()).withIdempotence(isIdempotent());
+    return SimpleStatement.builder(asCql()).setIdempotence(isIdempotent());
   }
 
   public boolean isIdempotent() {
