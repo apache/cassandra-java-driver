@@ -57,7 +57,7 @@ api_docs:
   2.0: http://docs.datastax.com/en/drivers/java/2.0
 versions:
   - name: '3.7'
-    ref: '3.7.0'
+    ref: '3.7.1'
   - name: '4.0-rc'
     ref: '4.0.0-rc1'
     prerelease: true
