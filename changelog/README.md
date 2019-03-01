@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.7.1 (in progress)
+
+- [bug] JAVA-2174: Metadata.needsQuote should accept empty strings.
+
+
 ### 3.7.0
 
 - [improvement] JAVA-2025: Include exception message in Abstract\*Codec.accepts(null).
@@ -18,7 +23,6 @@
 - [improvement] JAVA-1950: Log server side warnings returned from a query.
 - [improvement] JAVA-2123: Allow to use QueryBuilder for building queries against Materialized Views.
 - [bug] JAVA-2082: Avoid race condition during cluster close and schema refresh.
-- [bug] JAVA-2174: Metadata.needsQuote should accept empty strings.
 
 
 ### 3.6.0
