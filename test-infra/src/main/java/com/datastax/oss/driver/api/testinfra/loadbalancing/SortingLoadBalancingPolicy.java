@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
 
 public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
 
@@ -75,10 +76,7 @@ public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
   public SortingLoadBalancingPolicy() {}
 
   @Override
-  public void init(
-      @NonNull Map<InetSocketAddress, Node> nodes,
-      @NonNull DistanceReporter distanceReporter,
-      @NonNull Set<InetSocketAddress> contactPoints) {
+  public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
     this.nodes.addAll(nodes.values());
     this.nodes.forEach(n -> distanceReporter.setDistance(n, NodeDistance.LOCAL));
   }

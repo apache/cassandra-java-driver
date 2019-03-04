@@ -43,6 +43,8 @@ import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.util.concurrent.Future;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -61,7 +63,6 @@ public class NodeStateManagerTest {
   @Mock private DriverExecutionProfile defaultProfile;
   @Mock private NettyOptions nettyOptions;
   @Mock private MetadataManager metadataManager;
-  @Mock private Metadata metadata;
   @Mock protected MetricsFactory metricsFactory;
   private DefaultNode node1, node2;
   private EventBus eventBus;
@@ -86,14 +87,14 @@ public class NodeStateManagerTest {
     when(context.getNettyOptions()).thenReturn(nettyOptions);
 
     when(context.getMetricsFactory()).thenReturn(metricsFactory);
-    node1 = new DefaultNode(new InetSocketAddress("127.0.0.1", 9042), context);
-    node2 = new DefaultNode(new InetSocketAddress("127.0.0.2", 9042), context);
-    ImmutableMap<InetSocketAddress, Node> nodes =
-        ImmutableMap.<InetSocketAddress, Node>builder()
-            .put(node1.getConnectAddress(), node1)
-            .put(node2.getConnectAddress(), node2)
+    node1 = TestNodeFactory.newNode(1, context);
+    node2 = TestNodeFactory.newNode(2, context);
+    ImmutableMap<UUID, Node> nodes =
+        ImmutableMap.<UUID, Node>builder()
+            .put(node1.getHostId(), node1)
+            .put(node2.getHostId(), node2)
             .build();
-    when(metadata.getNodes()).thenReturn(nodes);
+    Metadata metadata = new DefaultMetadata(nodes, Collections.emptyMap(), null);
     when(metadataManager.getMetadata()).thenReturn(metadata);
     when(metadataManager.refreshNode(any(Node.class)))
         .thenReturn(CompletableFuture.completedFuture(null));
@@ -114,7 +115,7 @@ public class NodeStateManagerTest {
       node1.state = oldState;
 
       // When
-      eventBus.fire(TopologyEvent.suggestUp(node1.getConnectAddress()));
+      eventBus.fire(TopologyEvent.suggestUp(node1.getBroadcastRpcAddress().get()));
       waitForPendingAdminTasks();
 
       // Then
@@ -133,7 +134,7 @@ public class NodeStateManagerTest {
       node1.state = oldState;
 
       // When
-      eventBus.fire(TopologyEvent.suggestUp(node1.getConnectAddress()));
+      eventBus.fire(TopologyEvent.suggestUp(node1.getBroadcastRpcAddress().get()));
       waitForPendingAdminTasks();
 
       // Then
@@ -168,7 +169,7 @@ public class NodeStateManagerTest {
       node1.state = oldState;
 
       // When
-      eventBus.fire(TopologyEvent.suggestDown(node1.getConnectAddress()));
+      eventBus.fire(TopologyEvent.suggestDown(node1.getBroadcastRpcAddress().get()));
       waitForPendingAdminTasks();
 
       // Then
@@ -186,7 +187,7 @@ public class NodeStateManagerTest {
     assertThat(node1.openConnections).isEqualTo(1);
 
     // When
-    eventBus.fire(TopologyEvent.suggestDown(node1.getConnectAddress()));
+    eventBus.fire(TopologyEvent.suggestDown(node1.getBroadcastRpcAddress().get()));
     waitForPendingAdminTasks();
 
     // Then
@@ -204,7 +205,7 @@ public class NodeStateManagerTest {
       assertThat(node1.openConnections).isEqualTo(0);
 
       // When
-      eventBus.fire(TopologyEvent.suggestDown(node1.getConnectAddress()));
+      eventBus.fire(TopologyEvent.suggestDown(node1.getBroadcastRpcAddress().get()));
       waitForPendingAdminTasks();
 
       // Then
@@ -234,7 +235,7 @@ public class NodeStateManagerTest {
     node1.state = NodeState.FORCED_DOWN;
 
     // When
-    eventBus.fire(TopologyEvent.forceDown(node1.getConnectAddress()));
+    eventBus.fire(TopologyEvent.forceDown(node1.getBroadcastRpcAddress().get()));
     waitForPendingAdminTasks();
 
     // Then
@@ -251,7 +252,7 @@ public class NodeStateManagerTest {
       node1.state = oldState;
 
       // When
-      eventBus.fire(TopologyEvent.forceDown(node1.getConnectAddress()));
+      eventBus.fire(TopologyEvent.forceDown(node1.getBroadcastRpcAddress().get()));
       waitForPendingAdminTasks();
 
       // Then
@@ -281,7 +282,7 @@ public class NodeStateManagerTest {
     node1.state = NodeState.UP;
 
     // When
-    eventBus.fire(TopologyEvent.forceUp(node1.getConnectAddress()));
+    eventBus.fire(TopologyEvent.forceUp(node1.getBroadcastRpcAddress().get()));
     waitForPendingAdminTasks();
 
     // Then
@@ -300,7 +301,7 @@ public class NodeStateManagerTest {
       node1.state = oldState;
 
       // When
-      eventBus.fire(TopologyEvent.forceUp(node1.getConnectAddress()));
+      eventBus.fire(TopologyEvent.forceUp(node1.getBroadcastRpcAddress().get()));
       waitForPendingAdminTasks();
 
       // Then
@@ -346,7 +347,7 @@ public class NodeStateManagerTest {
     new NodeStateManager(context);
 
     // When
-    eventBus.fire(TopologyEvent.suggestAdded(node1.getConnectAddress()));
+    eventBus.fire(TopologyEvent.suggestAdded(node1.getBroadcastRpcAddress().get()));
     waitForPendingAdminTasks();
 
     // Then
@@ -359,11 +360,11 @@ public class NodeStateManagerTest {
     new NodeStateManager(context);
 
     // When
-    eventBus.fire(TopologyEvent.suggestRemoved(node1.getConnectAddress()));
+    eventBus.fire(TopologyEvent.suggestRemoved(node1.getBroadcastRpcAddress().get()));
     waitForPendingAdminTasks();
 
     // Then
-    verify(metadataManager).removeNode(node1.getConnectAddress());
+    verify(metadataManager).removeNode(node1.getBroadcastRpcAddress().get());
   }
 
   @Test
@@ -391,11 +392,11 @@ public class NodeStateManagerTest {
     node2.state = NodeState.DOWN;
 
     // When
-    eventBus.fire(TopologyEvent.suggestDown(node1.getConnectAddress()));
-    eventBus.fire(TopologyEvent.forceUp(node1.getConnectAddress()));
-    eventBus.fire(TopologyEvent.suggestDown(node2.getConnectAddress()));
-    eventBus.fire(TopologyEvent.suggestDown(node1.getConnectAddress()));
-    eventBus.fire(TopologyEvent.suggestUp(node2.getConnectAddress()));
+    eventBus.fire(TopologyEvent.suggestDown(node1.getBroadcastRpcAddress().get()));
+    eventBus.fire(TopologyEvent.forceUp(node1.getBroadcastRpcAddress().get()));
+    eventBus.fire(TopologyEvent.suggestDown(node2.getBroadcastRpcAddress().get()));
+    eventBus.fire(TopologyEvent.suggestDown(node1.getBroadcastRpcAddress().get()));
+    eventBus.fire(TopologyEvent.suggestUp(node2.getBroadcastRpcAddress().get()));
     waitForPendingAdminTasks();
 
     // Then

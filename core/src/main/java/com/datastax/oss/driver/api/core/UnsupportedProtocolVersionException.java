@@ -16,10 +16,10 @@
 package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import java.net.SocketAddress;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,51 +34,51 @@ import java.util.List;
 public class UnsupportedProtocolVersionException extends DriverException {
   private static final long serialVersionUID = 0;
 
-  private final SocketAddress address;
+  private final EndPoint endPoint;
   private final List<ProtocolVersion> attemptedVersions;
 
   @NonNull
   public static UnsupportedProtocolVersionException forSingleAttempt(
-      @NonNull SocketAddress address, @NonNull ProtocolVersion attemptedVersion) {
+      @NonNull EndPoint endPoint, @NonNull ProtocolVersion attemptedVersion) {
     String message =
-        String.format("[%s] Host does not support protocol version %s", address, attemptedVersion);
+        String.format("[%s] Host does not support protocol version %s", endPoint, attemptedVersion);
     return new UnsupportedProtocolVersionException(
-        address, message, Collections.singletonList(attemptedVersion), null);
+        endPoint, message, Collections.singletonList(attemptedVersion), null);
   }
 
   @NonNull
   public static UnsupportedProtocolVersionException forNegotiation(
-      @NonNull SocketAddress address, @NonNull List<ProtocolVersion> attemptedVersions) {
+      @NonNull EndPoint endPoint, @NonNull List<ProtocolVersion> attemptedVersions) {
     String message =
         String.format(
             "[%s] Protocol negotiation failed: could not find a common version (attempted: %s). "
                 + "Note that the driver does not support Cassandra 2.0 or lower.",
-            address, attemptedVersions);
+            endPoint, attemptedVersions);
     return new UnsupportedProtocolVersionException(
-        address, message, ImmutableList.copyOf(attemptedVersions), null);
+        endPoint, message, ImmutableList.copyOf(attemptedVersions), null);
   }
 
   public UnsupportedProtocolVersionException(
-      @Nullable SocketAddress address, // technically nullable, but should never be in real life
+      @Nullable EndPoint endPoint, // technically nullable, but should never be in real life
       @NonNull String message,
       @NonNull List<ProtocolVersion> attemptedVersions) {
-    this(address, message, attemptedVersions, null);
+    this(endPoint, message, attemptedVersions, null);
   }
 
   private UnsupportedProtocolVersionException(
-      SocketAddress address,
+      EndPoint endPoint,
       String message,
       List<ProtocolVersion> attemptedVersions,
       ExecutionInfo executionInfo) {
     super(message, executionInfo, null, true);
-    this.address = address;
+    this.endPoint = endPoint;
     this.attemptedVersions = attemptedVersions;
   }
 
   /** The address of the node that threw the error. */
   @Nullable
-  public SocketAddress getAddress() {
-    return address;
+  public EndPoint getEndPoint() {
+    return endPoint;
   }
 
   /** The versions that were attempted. */
@@ -91,6 +91,6 @@ public class UnsupportedProtocolVersionException extends DriverException {
   @Override
   public DriverException copy() {
     return new UnsupportedProtocolVersionException(
-        address, getMessage(), attemptedVersions, getExecutionInfo());
+        endPoint, getMessage(), attemptedVersions, getExecutionInfo());
   }
 }

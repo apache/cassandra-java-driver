@@ -130,25 +130,22 @@ public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry
             "[{}] Node {} reports null Cassandra version, "
                 + "ignoring it from optimal protocol version computation",
             logPrefix,
-            node.getConnectAddress());
+            node.getEndPoint());
         continue;
       }
       version = version.nextStable();
       if (version.compareTo(Version.V2_1_0) < 0) {
         throw new UnsupportedProtocolVersionException(
-            node.getConnectAddress(),
+            node.getEndPoint(),
             String.format(
                 "Node %s reports Cassandra version %s, "
                     + "but the driver only supports 2.1.0 and above",
-                node.getConnectAddress(), version),
+                node.getEndPoint(), version),
             ImmutableList.of(DefaultProtocolVersion.V3, DefaultProtocolVersion.V4));
       }
 
       LOG.debug(
-          "[{}] Node {} reports Cassandra version {}",
-          logPrefix,
-          node.getConnectAddress(),
-          version);
+          "[{}] Node {} reports Cassandra version {}", logPrefix, node.getEndPoint(), version);
       if (version.compareTo(Version.V2_2_0) < 0 && candidates.remove(DefaultProtocolVersion.V4)) {
         LOG.debug("[{}] Excluding protocol V4", logPrefix);
       }

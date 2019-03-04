@@ -19,9 +19,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverExecutionException;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import java.net.InetSocketAddress;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.ClassRule;
@@ -91,8 +93,9 @@ public class QueryTraceIT {
     assertThat(queryTrace.getTracingId()).isEqualTo(executionInfo.getTracingId());
     assertThat(queryTrace.getRequestType()).isEqualTo("Execute CQL3 query");
     assertThat(queryTrace.getDurationMicros()).isPositive();
+    EndPoint contactPoint = ccmRule.getContactPoints().iterator().next();
     assertThat(queryTrace.getCoordinator())
-        .isEqualTo(ccmRule.getContactPoints().iterator().next().getAddress());
+        .isEqualTo(((InetSocketAddress) contactPoint.resolve()).getAddress());
     assertThat(queryTrace.getParameters())
         .containsEntry("consistency_level", "LOCAL_ONE")
         .containsEntry("page_size", "5000")

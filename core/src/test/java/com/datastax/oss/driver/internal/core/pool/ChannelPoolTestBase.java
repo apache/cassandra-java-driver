@@ -32,6 +32,8 @@ import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
+import com.datastax.oss.driver.internal.core.metadata.TestNodeFactory;
+import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import io.netty.channel.Channel;
@@ -39,7 +41,6 @@ import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoop;
 import io.netty.util.concurrent.Future;
-import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -51,8 +52,6 @@ import org.mockito.MockitoAnnotations;
 
 abstract class ChannelPoolTestBase {
 
-  static final InetSocketAddress ADDRESS = new InetSocketAddress("localhost", 9042);
-
   @Mock protected InternalDriverContext context;
   @Mock private DriverConfig config;
   @Mock protected DriverExecutionProfile defaultProfile;
@@ -60,8 +59,9 @@ abstract class ChannelPoolTestBase {
   @Mock protected ReconnectionPolicy.ReconnectionSchedule reconnectionSchedule;
   @Mock private NettyOptions nettyOptions;
   @Mock protected ChannelFactory channelFactory;
-  @Mock protected DefaultNode node;
+  @Mock protected MetricsFactory metricsFactory;
   @Mock protected NodeMetricUpdater nodeMetricUpdater;
+  protected DefaultNode node;
   protected EventBus eventBus;
   private DefaultEventLoopGroup adminEventLoopGroup;
 
@@ -85,8 +85,10 @@ abstract class ChannelPoolTestBase {
     // it.
     when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofDays(1));
 
-    when(node.getConnectAddress()).thenReturn(ADDRESS);
-    when(node.getMetricUpdater()).thenReturn(nodeMetricUpdater);
+    when(context.getMetricsFactory()).thenReturn(metricsFactory);
+    when(metricsFactory.newNodeUpdater(any(Node.class))).thenReturn(nodeMetricUpdater);
+
+    node = TestNodeFactory.newNode(1, context);
   }
 
   @After

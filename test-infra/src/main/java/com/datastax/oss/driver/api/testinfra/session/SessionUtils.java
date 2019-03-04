@@ -140,7 +140,7 @@ public class SessionUtils {
       Predicate<Node> nodeFilter) {
     SessionBuilder builder =
         baseBuilder()
-            .addContactPoints(cassandraResource.getContactPoints())
+            .addContactEndPoints(cassandraResource.getContactPoints())
             .withKeyspace(keyspace)
             .withNodeStateListener(nodeStateListener)
             .withSchemaChangeListener(schemaChangeListener);

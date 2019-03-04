@@ -96,7 +96,6 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     callback.onEvent(event);
 
     // Then
-    verify(addressTranslator).translate(ADDRESS1);
     verify(eventBus).fire(TopologyEvent.suggestUp(ADDRESS1));
   }
 
@@ -118,7 +117,6 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     callback.onEvent(event);
 
     // Then
-    verify(addressTranslator).translate(ADDRESS1);
     verify(eventBus).fire(TopologyEvent.suggestAdded(ADDRESS1));
   }
 

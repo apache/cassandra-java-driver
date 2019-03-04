@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.auth.Authenticator;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.ConnectionInitException;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
@@ -42,7 +43,6 @@ import com.datastax.oss.protocol.internal.response.Ready;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import io.netty.channel.ChannelHandlerContext;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.List;
 import net.jcip.annotations.NotThreadSafe;
@@ -65,6 +65,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
   private final DriverChannelOptions options;
   // might be null if this is the first channel to this cluster
   private final String expectedClusterName;
+  private final EndPoint endPoint;
   private final HeartbeatHandler heartbeatHandler;
   private String logPrefix;
   private ChannelHandlerContext ctx;
@@ -73,10 +74,12 @@ class ProtocolInitHandler extends ConnectInitHandler {
       InternalDriverContext context,
       ProtocolVersion protocolVersion,
       String expectedClusterName,
+      EndPoint endPoint,
       DriverChannelOptions options,
       HeartbeatHandler heartbeatHandler) {
 
     this.context = context;
+    this.endPoint = endPoint;
 
     DriverExecutionProfile defaultConfig = context.getConfig().getDefaultProfile();
 
@@ -165,14 +168,12 @@ class ProtocolInitHandler extends ConnectInitHandler {
           ProtocolUtils.opcodeString(response.opcode));
       try {
         if (step == Step.STARTUP && response instanceof Ready) {
-          context
-              .getAuthProvider()
-              .ifPresent(provider -> provider.onMissingChallenge(channel.remoteAddress()));
+          context.getAuthProvider().ifPresent(provider -> provider.onMissingChallenge(endPoint));
           step = Step.GET_CLUSTER_NAME;
           send();
         } else if (step == Step.STARTUP && response instanceof Authenticate) {
           Authenticate authenticate = (Authenticate) response;
-          authenticator = buildAuthenticator(channel.remoteAddress(), authenticate.authenticator);
+          authenticator = buildAuthenticator(endPoint, authenticate.authenticator);
           authenticator
               .initialResponse()
               .whenCompleteAsync(
@@ -180,7 +181,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
                     if (error != null) {
                       fail(
                           new AuthenticationException(
-                              channel.remoteAddress(), "authenticator threw an exception", error));
+                              endPoint, "authenticator threw an exception", error));
                     } else {
                       step = Step.AUTH_RESPONSE;
                       authReponseToken = token;
@@ -198,7 +199,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
                     if (error != null) {
                       fail(
                           new AuthenticationException(
-                              channel.remoteAddress(), "authenticator threw an exception", error));
+                              endPoint, "authenticator threw an exception", error));
                     } else {
                       step = Step.AUTH_RESPONSE;
                       authReponseToken = token;
@@ -216,7 +217,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
                     if (error != null) {
                       fail(
                           new AuthenticationException(
-                              channel.remoteAddress(), "authenticator threw an exception", error));
+                              endPoint, "authenticator threw an exception", error));
                     } else {
                       step = Step.GET_CLUSTER_NAME;
                       send();
@@ -229,16 +230,14 @@ class ProtocolInitHandler extends ConnectInitHandler {
             && ((Error) response).code == ProtocolConstants.ErrorCode.AUTH_ERROR) {
           fail(
               new AuthenticationException(
-                  channel.remoteAddress(),
-                  String.format("server replied '%s'", ((Error) response).message)));
+                  endPoint, String.format("server replied '%s'", ((Error) response).message)));
         } else if (step == Step.GET_CLUSTER_NAME && response instanceof Rows) {
           Rows rows = (Rows) response;
           List<ByteBuffer> row = rows.getData().poll();
           String actualClusterName = getString(row, 0);
           if (expectedClusterName != null && !expectedClusterName.equals(actualClusterName)) {
             fail(
-                new ClusterNameMismatchException(
-                    channel.remoteAddress(), actualClusterName, expectedClusterName));
+                new ClusterNameMismatchException(endPoint, actualClusterName, expectedClusterName));
           } else {
             if (expectedClusterName == null) {
               // Store the actual name so that it can be retrieved from the factory
@@ -275,7 +274,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
               && error.message.contains("Invalid or unsupported protocol version")) {
             fail(
                 UnsupportedProtocolVersionException.forSingleAttempt(
-                    channel.remoteAddress(), initialProtocolVersion));
+                    endPoint, initialProtocolVersion));
           } else if (step == Step.SET_KEYSPACE
               && error.code == ProtocolConstants.ErrorCode.INVALID) {
             fail(new InvalidKeyspaceException(error.message));
@@ -299,17 +298,17 @@ class ProtocolInitHandler extends ConnectInitHandler {
       setConnectFailure(finalException);
     }
 
-    private Authenticator buildAuthenticator(SocketAddress address, String authenticator) {
+    private Authenticator buildAuthenticator(EndPoint endPoint, String authenticator) {
       return context
           .getAuthProvider()
-          .map(p -> p.newAuthenticator(address, authenticator))
+          .map(p -> p.newAuthenticator(endPoint, authenticator))
           .orElseThrow(
               () ->
                   new AuthenticationException(
-                      address,
+                      endPoint,
                       String.format(
-                          "Host %s requires authentication (%s), but no authenticator configured",
-                          address, authenticator)));
+                          "Node %s requires authentication (%s), but no authenticator configured",
+                          endPoint, authenticator)));
     }
 
     @Override

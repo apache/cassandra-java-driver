@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.context.EventBus;
@@ -33,6 +34,7 @@ import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import net.jcip.annotations.ThreadSafe;
@@ -170,75 +172,87 @@ public class NodeStateManager implements AsyncAutoCloseable {
         return;
       }
       LOG.debug("[{}] Processing {}", logPrefix, event);
-      DefaultNode node = (DefaultNode) metadataManager.getMetadata().getNodes().get(event.address);
+      Optional<Node> maybeNode = metadataManager.getMetadata().findNode(event.broadcastRpcAddress);
       switch (event.type) {
         case SUGGEST_UP:
-          if (node == null) {
+          if (maybeNode.isPresent()) {
+            DefaultNode node = (DefaultNode) maybeNode.get();
+            if (node.state == NodeState.FORCED_DOWN) {
+              LOG.debug("[{}] Not setting {} UP because it is FORCED_DOWN", logPrefix, node);
+            } else if (node.distance == NodeDistance.IGNORED) {
+              setState(node, NodeState.UP, "it is IGNORED and an UP topology event was received");
+            }
+          } else {
             LOG.debug(
-                "[{}] Received UP event for unknown node {}, adding it", logPrefix, event.address);
-            metadataManager.addNode(event.address);
-          } else if (node.state == NodeState.FORCED_DOWN) {
-            LOG.debug("[{}] Not setting {} UP because it is FORCED_DOWN", logPrefix, node);
-          } else if (node.distance == NodeDistance.IGNORED) {
-            setState(node, NodeState.UP, "it is IGNORED and an UP topology event was received");
+                "[{}] Received UP event for unknown node {}, adding it",
+                logPrefix,
+                event.broadcastRpcAddress);
+            metadataManager.addNode(event.broadcastRpcAddress);
           }
           break;
         case SUGGEST_DOWN:
-          if (node == null) {
+          if (maybeNode.isPresent()) {
+            DefaultNode node = (DefaultNode) maybeNode.get();
+            if (node.openConnections > 0) {
+              LOG.debug(
+                  "[{}] Not setting {} DOWN because it still has active connections",
+                  logPrefix,
+                  node);
+            } else if (node.state == NodeState.FORCED_DOWN) {
+              LOG.debug("[{}] Not setting {} DOWN because it is FORCED_DOWN", logPrefix, node);
+            } else if (node.distance == NodeDistance.IGNORED) {
+              setState(
+                  node, NodeState.DOWN, "it is IGNORED and a DOWN topology event was received");
+            }
+          } else {
             LOG.debug(
                 "[{}] Received DOWN event for unknown node {}, ignoring it",
                 logPrefix,
-                event.address);
-          } else if (node.openConnections > 0) {
-            LOG.debug(
-                "[{}] Not setting {} DOWN because it still has active connections",
-                logPrefix,
-                node);
-          } else if (node.state == NodeState.FORCED_DOWN) {
-            LOG.debug("[{}] Not setting {} DOWN because it is FORCED_DOWN", logPrefix, node);
-          } else if (node.distance == NodeDistance.IGNORED) {
-            setState(node, NodeState.DOWN, "it is IGNORED and a DOWN topology event was received");
+                event.broadcastRpcAddress);
           }
           break;
         case FORCE_UP:
-          if (node == null) {
+          if (maybeNode.isPresent()) {
+            DefaultNode node = (DefaultNode) maybeNode.get();
+            setState(node, NodeState.UP, "a FORCE_UP topology event was received");
+          } else {
             LOG.debug(
                 "[{}] Received FORCE_UP event for unknown node {}, adding it",
                 logPrefix,
-                event.address);
-            metadataManager.addNode(event.address);
-          } else {
-            setState(node, NodeState.UP, "a FORCE_UP topology event was received");
+                event.broadcastRpcAddress);
+            metadataManager.addNode(event.broadcastRpcAddress);
           }
           break;
         case FORCE_DOWN:
-          if (node == null) {
+          if (maybeNode.isPresent()) {
+            DefaultNode node = (DefaultNode) maybeNode.get();
+            setState(node, NodeState.FORCED_DOWN, "a FORCE_DOWN topology event was received");
+          } else {
             LOG.debug(
                 "[{}] Received FORCE_DOWN event for unknown node {}, ignoring it",
                 logPrefix,
-                event.address);
-          } else {
-            setState(node, NodeState.FORCED_DOWN, "a FORCE_DOWN topology event was received");
+                event.broadcastRpcAddress);
           }
           break;
         case SUGGEST_ADDED:
-          if (node != null) {
+          if (maybeNode.isPresent()) {
+            DefaultNode node = (DefaultNode) maybeNode.get();
             LOG.debug(
                 "[{}] Received ADDED event for {} but it is already in our metadata, ignoring",
                 logPrefix,
                 node);
           } else {
-            metadataManager.addNode(event.address);
+            metadataManager.addNode(event.broadcastRpcAddress);
           }
           break;
         case SUGGEST_REMOVED:
-          if (node == null) {
+          if (maybeNode.isPresent()) {
+            metadataManager.removeNode(event.broadcastRpcAddress);
+          } else {
             LOG.debug(
                 "[{}] Received REMOVED event for {} but it is not in our metadata, ignoring",
                 logPrefix,
-                event.address);
-          } else {
-            metadataManager.removeNode(event.address);
+                event.broadcastRpcAddress);
           }
           break;
       }
@@ -261,9 +275,9 @@ public class NodeStateManager implements AsyncAutoCloseable {
         Map<InetSocketAddress, TopologyEvent> last = Maps.newHashMapWithExpectedSize(events.size());
         for (TopologyEvent event : events) {
           if (event.isForceEvent()
-              || !last.containsKey(event.address)
-              || !last.get(event.address).isForceEvent()) {
-            last.put(event.address, event);
+              || !last.containsKey(event.broadcastRpcAddress)
+              || !last.get(event.broadcastRpcAddress).isForceEvent()) {
+            last.put(event.broadcastRpcAddress, event);
           }
         }
         result = last.values();

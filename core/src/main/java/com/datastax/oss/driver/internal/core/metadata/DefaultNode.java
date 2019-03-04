@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -37,9 +38,10 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class DefaultNode implements Node {
 
-  private final InetSocketAddress connectAddress;
+  private final EndPoint endPoint;
   private final NodeMetricUpdater metricUpdater;
 
+  volatile InetSocketAddress broadcastRpcAddress;
   volatile InetSocketAddress broadcastAddress;
   volatile InetSocketAddress listenAddress;
   volatile String datacenter;
@@ -59,8 +61,8 @@ public class DefaultNode implements Node {
 
   volatile NodeDistance distance;
 
-  public DefaultNode(InetSocketAddress connectAddress, InternalDriverContext context) {
-    this.connectAddress = connectAddress;
+  public DefaultNode(EndPoint endPoint, InternalDriverContext context) {
+    this.endPoint = endPoint;
     this.state = NodeState.UNKNOWN;
     this.distance = NodeDistance.IGNORED;
     this.rawTokens = Collections.emptySet();
@@ -73,8 +75,14 @@ public class DefaultNode implements Node {
 
   @NonNull
   @Override
-  public InetSocketAddress getConnectAddress() {
-    return connectAddress;
+  public EndPoint getEndPoint() {
+    return endPoint;
+  }
+
+  @NonNull
+  @Override
+  public Optional<InetSocketAddress> getBroadcastRpcAddress() {
+    return Optional.ofNullable(broadcastRpcAddress);
   }
 
   @NonNull
@@ -162,7 +170,9 @@ public class DefaultNode implements Node {
       return true;
     } else if (other instanceof Node) {
       Node that = (Node) other;
-      return this.connectAddress.equals(that.getConnectAddress());
+      // hostId is the natural identifier, but unfortunately we don't know it for contact points
+      // until the driver has opened the first connection.
+      return this.endPoint.equals(that.getEndPoint());
     } else {
       return false;
     }
@@ -170,12 +180,12 @@ public class DefaultNode implements Node {
 
   @Override
   public int hashCode() {
-    return connectAddress.hashCode();
+    return endPoint.hashCode();
   }
 
   @Override
   public String toString() {
-    return connectAddress.toString();
+    return endPoint.toString();
   }
 
   /** Note: deliberately not exposed by the public interface. */

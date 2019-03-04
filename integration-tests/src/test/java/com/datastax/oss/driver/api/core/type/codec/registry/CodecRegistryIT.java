@@ -172,7 +172,7 @@ public class CodecRegistryIT {
         (CqlSession)
             SessionUtils.baseBuilder()
                 .addTypeCodecs(new FloatCIntCodec())
-                .addContactPoints(ccm.getContactPoints())
+                .addContactEndPoints(ccm.getContactPoints())
                 .withKeyspace(sessionRule.keyspace())
                 .build()) {
       PreparedStatement prepared = session.prepare("INSERT INTO test (k, v) values (?, ?)");
@@ -293,7 +293,7 @@ public class CodecRegistryIT {
         (CqlSession)
             SessionUtils.baseBuilder()
                 .addTypeCodecs(optionalMapCodec, mapWithOptionalValueCodec)
-                .addContactPoints(ccm.getContactPoints())
+                .addContactEndPoints(ccm.getContactPoints())
                 .withKeyspace(sessionRule.keyspace())
                 .build()) {
       PreparedStatement prepared =

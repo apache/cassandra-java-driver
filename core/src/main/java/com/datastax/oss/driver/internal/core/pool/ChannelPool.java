@@ -109,7 +109,7 @@ public class ChannelPool implements AsyncAutoCloseable {
     this.initialKeyspaceName = keyspaceName;
     this.adminExecutor = context.getNettyOptions().adminEventExecutorGroup().next();
     this.sessionLogPrefix = sessionLogPrefix;
-    this.logPrefix = sessionLogPrefix + "|" + node.getConnectAddress();
+    this.logPrefix = sessionLogPrefix + "|" + node.getEndPoint();
     this.singleThreaded = new SingleThreaded(keyspaceName, distance, context);
   }
 
@@ -380,7 +380,12 @@ public class ChannelPool implements AsyncAutoCloseable {
             "[{}] Fatal error while initializing pool, forcing the node down",
             logPrefix,
             fatalError);
-        eventBus.fire(TopologyEvent.forceDown(node.getConnectAddress()));
+        // Note: getBroadcastRpcAddress() can only be empty for the control node (and not for modern
+        // C* versions anyway). If we already have a control connection open to that node, it's
+        // impossible to get a protocol version or cluster name mismatch error while creating the
+        // pool, so it's safe to ignore this case.
+        node.getBroadcastRpcAddress()
+            .ifPresent(address -> eventBus.fire(TopologyEvent.forceDown(address)));
         // Don't bother continuing, the pool will get shut down soon anyway
         return true;
       }

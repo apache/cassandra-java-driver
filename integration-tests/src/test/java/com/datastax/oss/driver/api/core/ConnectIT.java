@@ -115,7 +115,7 @@ public class ConnectIT {
               .without(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)
               .build();
       CqlSession.builder()
-          .addContactPoints(simulacronRule.getContactPoints())
+          .addContactEndPoints(simulacronRule.getContactPoints())
           .withConfigLoader(loader)
           .build();
       fail("Should have thrown a DriverException for no DC with explicit contact point");
@@ -131,7 +131,7 @@ public class ConnectIT {
   private CompletionStage<? extends Session> newSessionAsync(
       SimulacronRule serverRule, DriverConfigLoader loader) {
     return SessionUtils.baseBuilder()
-        .addContactPoints(serverRule.getContactPoints())
+        .addContactEndPoints(serverRule.getContactPoints())
         .withConfigLoader(loader)
         .buildAsync();
   }

@@ -28,10 +28,12 @@ import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.internal.core.CassandraProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.TestResponses;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.TestNodeFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -60,6 +62,9 @@ import org.mockito.MockitoAnnotations;
 public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
 
   private static final long QUERY_TIMEOUT_MILLIS = 100L;
+  // The handled only uses this to call the auth provider and for exception messages, so the actual
+  // value doesn't matter:
+  private static final EndPoint END_POINT = TestNodeFactory.newEndPoint(1);
 
   @Mock private InternalDriverContext internalDriverContext;
   @Mock private DriverConfig driverConfig;
@@ -108,6 +113,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
                 null,
+                END_POINT,
                 DriverChannelOptions.DEFAULT,
                 heartbeatHandler));
 
@@ -137,6 +143,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
             internalDriverContext,
             DefaultProtocolVersion.V4,
             null,
+            END_POINT,
             DriverChannelOptions.DEFAULT,
             heartbeatHandler);
 
@@ -179,6 +186,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
                 null,
+                END_POINT,
                 DriverChannelOptions.DEFAULT,
                 heartbeatHandler));
 
@@ -203,14 +211,14 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
                 null,
+                END_POINT,
                 DriverChannelOptions.DEFAULT,
                 heartbeatHandler));
 
     String serverAuthenticator = "mockServerAuthenticator";
     AuthProvider authProvider = mock(AuthProvider.class);
     MockAuthenticator authenticator = new MockAuthenticator();
-    when(authProvider.newAuthenticator(channel.remoteAddress(), serverAuthenticator))
-        .thenReturn(authenticator);
+    when(authProvider.newAuthenticator(END_POINT, serverAuthenticator)).thenReturn(authenticator);
     when(internalDriverContext.getAuthProvider()).thenReturn(Optional.of(authProvider));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
@@ -223,7 +231,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     writeInboundFrame(requestFrame, new Authenticate(serverAuthenticator));
 
     // The connection should have created an authenticator from the auth provider
-    verify(authProvider).newAuthenticator(channel.remoteAddress(), serverAuthenticator);
+    verify(authProvider).newAuthenticator(END_POINT, serverAuthenticator);
 
     // And sent an auth response
     requestFrame = readOutboundFrame();
@@ -267,6 +275,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
                 null,
+                END_POINT,
                 DriverChannelOptions.DEFAULT,
                 heartbeatHandler));
 
@@ -280,7 +289,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
 
     // Simulate a READY response, the provider should be notified
     writeInboundFrame(buildInboundFrame(requestFrame, new Ready()));
-    verify(authProvider).onMissingChallenge(channel.remoteAddress());
+    verify(authProvider).onMissingChallenge(END_POINT);
 
     // Since our mock does nothing, init should proceed normally
     requestFrame = readOutboundFrame();
@@ -299,14 +308,14 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
                 null,
+                END_POINT,
                 DriverChannelOptions.DEFAULT,
                 heartbeatHandler));
 
     String serverAuthenticator = "mockServerAuthenticator";
     AuthProvider authProvider = mock(AuthProvider.class);
     MockAuthenticator authenticator = new MockAuthenticator();
-    when(authProvider.newAuthenticator(channel.remoteAddress(), serverAuthenticator))
-        .thenReturn(authenticator);
+    when(authProvider.newAuthenticator(END_POINT, serverAuthenticator)).thenReturn(authenticator);
     when(internalDriverContext.getAuthProvider()).thenReturn(Optional.of(authProvider));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
@@ -330,7 +339,9 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 assertThat(e)
                     .isInstanceOf(AuthenticationException.class)
                     .hasMessage(
-                        "Authentication error on host embedded: server replied 'mock error'"));
+                        String.format(
+                            "Authentication error on node %s: server replied 'mock error'",
+                            END_POINT)));
   }
 
   @Test
@@ -343,6 +354,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
                 "expectedClusterName",
+                END_POINT,
                 DriverChannelOptions.DEFAULT,
                 heartbeatHandler));
 
@@ -372,6 +384,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
                 "expectedClusterName",
+                END_POINT,
                 DriverChannelOptions.DEFAULT,
                 heartbeatHandler));
 
@@ -387,7 +400,9 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 assertThat(e)
                     .isInstanceOf(ClusterNameMismatchException.class)
                     .hasMessageContaining(
-                        "Node embedded reports cluster name 'differentClusterName' that doesn't match our cluster name 'expectedClusterName'."));
+                        String.format(
+                            "Node %s reports cluster name 'differentClusterName' that doesn't match our cluster name 'expectedClusterName'.",
+                            END_POINT)));
   }
 
   @Test
@@ -399,7 +414,12 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "init",
             new ProtocolInitHandler(
-                internalDriverContext, DefaultProtocolVersion.V4, null, options, heartbeatHandler));
+                internalDriverContext,
+                DefaultProtocolVersion.V4,
+                null,
+                END_POINT,
+                options,
+                heartbeatHandler));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -428,6 +448,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
                 null,
+                END_POINT,
                 driverChannelOptions,
                 heartbeatHandler));
 
@@ -461,6 +482,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
                 null,
+                END_POINT,
                 driverChannelOptions,
                 heartbeatHandler));
 
@@ -494,6 +516,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
                 null,
+                END_POINT,
                 driverChannelOptions,
                 heartbeatHandler));
 

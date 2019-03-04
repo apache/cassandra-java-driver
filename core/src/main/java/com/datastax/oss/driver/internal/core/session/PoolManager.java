@@ -336,15 +336,23 @@ public class PoolManager implements AsyncAutoCloseable {
     private void onTopologyEvent(TopologyEvent event) {
       assert adminExecutor.inEventLoop();
       if (event.type == TopologyEvent.Type.SUGGEST_UP) {
-        Node node = context.getMetadataManager().getMetadata().getNodes().get(event.address);
-        if (node.getDistance() != NodeDistance.IGNORED) {
-          LOG.debug(
-              "[{}] Received a SUGGEST_UP event for {}, reconnecting pool now", logPrefix, node);
-          ChannelPool pool = pools.get(node);
-          if (pool != null) {
-            pool.reconnectNow();
-          }
-        }
+        context
+            .getMetadataManager()
+            .getMetadata()
+            .findNode(event.broadcastRpcAddress)
+            .ifPresent(
+                node -> {
+                  if (node.getDistance() != NodeDistance.IGNORED) {
+                    LOG.debug(
+                        "[{}] Received a SUGGEST_UP event for {}, reconnecting pool now",
+                        logPrefix,
+                        node);
+                    ChannelPool pool = pools.get(node);
+                    if (pool != null) {
+                      pool.reconnectNow();
+                    }
+                  }
+                });
       }
     }
 
@@ -394,7 +402,7 @@ public class PoolManager implements AsyncAutoCloseable {
       assert adminExecutor.inEventLoop();
       if (config.getBoolean(DefaultDriverOption.REPREPARE_ENABLED)) {
         new ReprepareOnUp(
-                logPrefix + "|" + pool.getNode().getConnectAddress(),
+                logPrefix + "|" + pool.getNode().getEndPoint(),
                 pool,
                 repreparePayloads,
                 context,

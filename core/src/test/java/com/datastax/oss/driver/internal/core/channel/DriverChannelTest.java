@@ -62,7 +62,7 @@ public class DriverChannelTest extends ChannelHandlerTestBase {
     writeCoalescer = new MockWriteCoalescer();
     driverChannel =
         new DriverChannel(
-            channel.remoteAddress(), channel, writeCoalescer, DefaultProtocolVersion.V3);
+            new EmbeddedEndPoint(channel), channel, writeCoalescer, DefaultProtocolVersion.V3);
   }
 
   /**

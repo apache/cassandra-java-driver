@@ -46,23 +46,25 @@ public class AddNodeRefreshTest {
   @Before
   public void setup() {
     when(context.getMetricsFactory()).thenReturn(metricsFactory);
-    node1 = new DefaultNode(ADDRESS1, context);
+    node1 = TestNodeFactory.newNode(1, context);
   }
 
   @Test
   public void should_add_new_node() {
     // Given
     DefaultMetadata oldMetadata =
-        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1), Collections.emptyMap(), null);
-    UUID hostId = Uuids.random();
-    UUID schemaVersion = Uuids.random();
+        new DefaultMetadata(
+            ImmutableMap.of(node1.getHostId(), node1), Collections.emptyMap(), null);
+    UUID newHostId = Uuids.random();
+    DefaultEndPoint newEndPoint = TestNodeFactory.newEndPoint(2);
+    UUID newSchemaVersion = Uuids.random();
     DefaultNodeInfo newNodeInfo =
         DefaultNodeInfo.builder()
-            .withConnectAddress(ADDRESS2)
+            .withHostId(newHostId)
+            .withEndPoint(newEndPoint)
             .withDatacenter("dc1")
             .withRack("rack2")
-            .withHostId(hostId)
-            .withSchemaVersion(schemaVersion)
+            .withSchemaVersion(newSchemaVersion)
             .build();
     AddNodeRefresh refresh = new AddNodeRefresh(newNodeInfo);
 
@@ -70,13 +72,14 @@ public class AddNodeRefreshTest {
     MetadataRefresh.Result result = refresh.compute(oldMetadata, false, context);
 
     // Then
-    Map<InetSocketAddress, Node> newNodes = result.newMetadata.getNodes();
-    assertThat(newNodes).containsOnlyKeys(ADDRESS1, ADDRESS2);
-    Node node2 = newNodes.get(ADDRESS2);
+    Map<UUID, Node> newNodes = result.newMetadata.getNodes();
+    assertThat(newNodes).containsOnlyKeys(node1.getHostId(), newHostId);
+    Node node2 = newNodes.get(newHostId);
+    assertThat(node2.getEndPoint()).isEqualTo(newEndPoint);
     assertThat(node2.getDatacenter()).isEqualTo("dc1");
     assertThat(node2.getRack()).isEqualTo("rack2");
-    assertThat(node2.getHostId()).isEqualTo(hostId);
-    assertThat(node2.getSchemaVersion()).isEqualTo(schemaVersion);
+    assertThat(node2.getHostId()).isEqualTo(newHostId);
+    assertThat(node2.getSchemaVersion()).isEqualTo(newSchemaVersion);
     assertThat(result.events).containsExactly(NodeStateEvent.added((DefaultNode) node2));
   }
 
@@ -84,10 +87,12 @@ public class AddNodeRefreshTest {
   public void should_not_add_existing_node() {
     // Given
     DefaultMetadata oldMetadata =
-        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1), Collections.emptyMap(), null);
+        new DefaultMetadata(
+            ImmutableMap.of(node1.getHostId(), node1), Collections.emptyMap(), null);
     DefaultNodeInfo newNodeInfo =
         DefaultNodeInfo.builder()
-            .withConnectAddress(ADDRESS1)
+            .withHostId(node1.getHostId())
+            .withEndPoint(node1.getEndPoint())
             .withDatacenter("dc1")
             .withRack("rack2")
             .build();
@@ -97,7 +102,7 @@ public class AddNodeRefreshTest {
     MetadataRefresh.Result result = refresh.compute(oldMetadata, false, context);
 
     // Then
-    assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1);
+    assertThat(result.newMetadata.getNodes()).containsOnlyKeys(node1.getHostId());
     // Info is not copied over:
     assertThat(node1.getDatacenter()).isNull();
     assertThat(node1.getRack()).isNull();

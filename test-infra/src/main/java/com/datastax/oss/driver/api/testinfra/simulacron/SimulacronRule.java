@@ -17,13 +17,13 @@ package com.datastax.oss.driver.api.testinfra.simulacron;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.server.BoundCluster;
-import com.datastax.oss.simulacron.server.BoundNode;
 import com.datastax.oss.simulacron.server.Inet4Resolver;
 import com.datastax.oss.simulacron.server.Server;
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -82,12 +82,12 @@ public class SimulacronRule extends CassandraResourceRule {
 
   /** @return All nodes in first data center. */
   @Override
-  public Set<InetSocketAddress> getContactPoints() {
+  public Set<EndPoint> getContactPoints() {
     return boundCluster
         .dc(0)
         .getNodes()
         .stream()
-        .map(BoundNode::inetSocketAddress)
+        .map(node -> new DefaultEndPoint(node.inetSocketAddress()))
         .collect(Collectors.toSet());
   }
 

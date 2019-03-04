@@ -58,7 +58,7 @@ public abstract class OsgiBaseIT {
   public void should_connect_and_query() {
     SessionBuilder<CqlSessionBuilder, CqlSession> builder =
         CqlSession.builder()
-            .addContactPoints(ccmRule.getContactPoints())
+            .addContactEndPoints(ccmRule.getContactPoints())
             // use the driver's ClassLoader instead of the OSGI application thread's.
             .withClassLoader(CqlSession.class.getClassLoader())
             .withConfigLoader(configLoader());

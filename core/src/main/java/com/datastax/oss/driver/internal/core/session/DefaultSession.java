@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
@@ -44,7 +45,6 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.util.concurrent.EventExecutor;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +80,7 @@ public class DefaultSession implements CqlSession {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSession.class);
 
   public static CompletionStage<CqlSession> init(
-      InternalDriverContext context, Set<InetSocketAddress> contactPoints, CqlIdentifier keyspace) {
+      InternalDriverContext context, Set<EndPoint> contactPoints, CqlIdentifier keyspace) {
     return new DefaultSession(context, contactPoints).init(keyspace);
   }
 
@@ -93,7 +93,7 @@ public class DefaultSession implements CqlSession {
   private final PoolManager poolManager;
   private final SessionMetricUpdater metricUpdater;
 
-  private DefaultSession(InternalDriverContext context, Set<InetSocketAddress> contactPoints) {
+  private DefaultSession(InternalDriverContext context, Set<EndPoint> contactPoints) {
     LOG.debug("Creating new session {}", context.getSessionName());
     this.logPrefix = context.getSessionName();
     this.adminExecutor = context.getNettyOptions().adminEventExecutorGroup().next();
@@ -260,7 +260,7 @@ public class DefaultSession implements CqlSession {
   private class SingleThreaded {
 
     private final InternalDriverContext context;
-    private final Set<InetSocketAddress> initialContactPoints;
+    private final Set<EndPoint> initialContactPoints;
     private final NodeStateManager nodeStateManager;
     private final CompletableFuture<CqlSession> initFuture = new CompletableFuture<>();
     private boolean initWasCalled;
@@ -268,7 +268,7 @@ public class DefaultSession implements CqlSession {
     private boolean closeWasCalled;
     private boolean forceCloseWasCalled;
 
-    private SingleThreaded(InternalDriverContext context, Set<InetSocketAddress> contactPoints) {
+    private SingleThreaded(InternalDriverContext context, Set<EndPoint> contactPoints) {
       this.context = context;
       this.nodeStateManager = new NodeStateManager(context);
       this.initialContactPoints = contactPoints;
@@ -326,11 +326,10 @@ public class DefaultSession implements CqlSession {
       }
 
       MetadataManager metadataManager = context.getMetadataManager();
-      metadataManager
-          // Store contact points in the metadata right away, the control connection will need them
-          // if it has to initialize (if the set is empty, 127.0.0.1 is used as a default).
-          .addContactPoints(initialContactPoints)
-          .thenCompose(v -> context.getTopologyMonitor().init())
+      metadataManager.addContactPoints(initialContactPoints);
+      context
+          .getTopologyMonitor()
+          .init()
           .thenCompose(v -> metadataManager.refreshNodes())
           .thenAccept(v -> afterInitialNodeListRefresh(keyspace))
           .exceptionally(

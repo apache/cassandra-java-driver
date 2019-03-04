@@ -97,7 +97,7 @@ public class RequestProcessorIT {
 
   private GuavaSession newSession(CqlIdentifier keyspace) {
     return GuavaSessionUtils.builder()
-        .addContactPoints(ccm.getContactPoints())
+        .addContactEndPoints(ccm.getContactPoints())
         .withKeyspace(keyspace)
         .build();
   }

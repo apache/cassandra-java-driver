@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
-import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Session;
@@ -86,13 +85,12 @@ public interface TopologyMonitor extends AsyncAutoCloseable {
    * <p>This will be invoked directly from a driver's internal thread; if the refresh involves
    * blocking I/O or heavy computations, it should be scheduled on a separate thread.
    *
-   * @param connectAddress the address that the driver uses to connect to the node. This is the
-   *     node's broadcast RPC address, <b>transformed by the {@link AddressTranslator}</b> if one is
-   *     configured.
+   * @param broadcastRpcAddress the node's broadcast RPC address,.
    * @return a future that completes with the information. If the monitor doesn't know any node with
    *     this address, it should reply with {@link Optional#empty()}; the new node will be ignored.
+   * @see Node#getBroadcastRpcAddress()
    */
-  CompletionStage<Optional<NodeInfo>> getNewNodeInfo(InetSocketAddress connectAddress);
+  CompletionStage<Optional<NodeInfo>> getNewNodeInfo(InetSocketAddress broadcastRpcAddress);
 
   /**
    * Invoked when the driver needs to refresh information about all the nodes.

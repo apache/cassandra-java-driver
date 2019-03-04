@@ -61,7 +61,7 @@ public class DriverExecutionProfileReloadIT {
         (CqlSession)
             SessionUtils.baseBuilder()
                 .withConfigLoader(loader)
-                .addContactPoints(simulacron.getContactPoints())
+                .addContactEndPoints(simulacron.getContactPoints())
                 .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
@@ -99,7 +99,7 @@ public class DriverExecutionProfileReloadIT {
         (CqlSession)
             SessionUtils.baseBuilder()
                 .withConfigLoader(loader)
-                .addContactPoints(simulacron.getContactPoints())
+                .addContactEndPoints(simulacron.getContactPoints())
                 .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
@@ -136,7 +136,7 @@ public class DriverExecutionProfileReloadIT {
         (CqlSession)
             SessionUtils.baseBuilder()
                 .withConfigLoader(loader)
-                .addContactPoints(simulacron.getContactPoints())
+                .addContactEndPoints(simulacron.getContactPoints())
                 .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
@@ -178,7 +178,7 @@ public class DriverExecutionProfileReloadIT {
         (CqlSession)
             SessionUtils.baseBuilder()
                 .withConfigLoader(loader)
-                .addContactPoints(simulacron.getContactPoints())
+                .addContactEndPoints(simulacron.getContactPoints())
                 .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 

@@ -526,7 +526,7 @@ public class BoundStatementIT {
   private CqlSession sessionWithCustomCodec(CqlIntToStringCodec codec) {
     return (CqlSession)
         SessionUtils.baseBuilder()
-            .addContactPoints(ccm.getContactPoints())
+            .addContactEndPoints(ccm.getContactPoints())
             .withKeyspace(sessionRule.keyspace())
             .addTypeCodecs(codec)
             .build();

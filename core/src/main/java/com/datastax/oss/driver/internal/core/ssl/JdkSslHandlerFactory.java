@@ -15,10 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.ssl;
 
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import io.netty.channel.Channel;
 import io.netty.handler.ssl.SslHandler;
-import java.net.SocketAddress;
 import javax.net.ssl.SSLEngine;
 import net.jcip.annotations.ThreadSafe;
 
@@ -32,7 +32,7 @@ public class JdkSslHandlerFactory implements SslHandlerFactory {
   }
 
   @Override
-  public SslHandler newSslHandler(Channel channel, SocketAddress remoteEndpoint) {
+  public SslHandler newSslHandler(Channel channel, EndPoint remoteEndpoint) {
     SSLEngine engine = sslEngineFactory.newSslEngine(remoteEndpoint);
     return new SslHandler(engine);
   }

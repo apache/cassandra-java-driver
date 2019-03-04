@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,7 +32,8 @@ public class DefaultNodeInfo implements NodeInfo {
     return new Builder();
   }
 
-  private final InetSocketAddress connectAddress;
+  private final EndPoint endPoint;
+  private final InetSocketAddress broadcastRpcAddress;
   private final InetSocketAddress broadcastAddress;
   private final InetSocketAddress listenAddress;
   private final String datacenter;
@@ -44,7 +46,8 @@ public class DefaultNodeInfo implements NodeInfo {
   private final UUID schemaVersion;
 
   private DefaultNodeInfo(Builder builder) {
-    this.connectAddress = builder.connectAddress;
+    this.endPoint = builder.endPoint;
+    this.broadcastRpcAddress = builder.broadcastRpcAddress;
     this.broadcastAddress = builder.broadcastAddress;
     this.listenAddress = builder.listenAddress;
     this.datacenter = builder.datacenter;
@@ -58,8 +61,13 @@ public class DefaultNodeInfo implements NodeInfo {
   }
 
   @Override
-  public InetSocketAddress getConnectAddress() {
-    return connectAddress;
+  public EndPoint getEndPoint() {
+    return endPoint;
+  }
+
+  @Override
+  public Optional<InetSocketAddress> getBroadcastRpcAddress() {
+    return Optional.ofNullable(broadcastRpcAddress);
   }
 
   @Override
@@ -114,7 +122,8 @@ public class DefaultNodeInfo implements NodeInfo {
 
   @NotThreadSafe
   public static class Builder {
-    private InetSocketAddress connectAddress;
+    private EndPoint endPoint;
+    private InetSocketAddress broadcastRpcAddress;
     private InetSocketAddress broadcastAddress;
     private InetSocketAddress listenAddress;
     private String datacenter;
@@ -126,22 +135,23 @@ public class DefaultNodeInfo implements NodeInfo {
     private UUID hostId;
     private UUID schemaVersion;
 
-    public Builder withConnectAddress(InetSocketAddress address) {
-      this.connectAddress = address;
+    public Builder withEndPoint(EndPoint endPoint) {
+      this.endPoint = endPoint;
+      return this;
+    }
+
+    public Builder withBroadcastRpcAddress(InetSocketAddress address) {
+      this.broadcastRpcAddress = address;
       return this;
     }
 
     public Builder withBroadcastAddress(InetSocketAddress address) {
-      if (address != null) {
-        this.broadcastAddress = address;
-      }
+      this.broadcastAddress = address;
       return this;
     }
 
     public Builder withListenAddress(InetSocketAddress address) {
-      if (address != null) {
-        this.listenAddress = address;
-      }
+      this.listenAddress = address;
       return this;
     }
 

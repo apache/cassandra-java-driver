@@ -54,7 +54,7 @@ public class NodeStateEvent {
       NodeStateEvent that = (NodeStateEvent) other;
       return this.oldState == that.oldState
           && this.newState == that.newState
-          && Objects.equals(this.node.getConnectAddress(), that.node.getConnectAddress());
+          && Objects.equals(this.node, that.node);
     } else {
       return false;
     }
@@ -62,11 +62,11 @@ public class NodeStateEvent {
 
   @Override
   public int hashCode() {
-    return Objects.hash(oldState, newState, node.getConnectAddress());
+    return Objects.hash(oldState, newState, node);
   }
 
   @Override
   public String toString() {
-    return "NodeStateEvent(" + oldState + "=>" + newState + ", " + node.getConnectAddress() + ")";
+    return "NodeStateEvent(" + oldState + "=>" + newState + ", " + node + ")";
   }
 }

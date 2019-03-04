@@ -21,22 +21,22 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.internal.core.addresstranslation.PassThroughAddressTranslator;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
+import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
+import com.datastax.oss.driver.internal.core.metadata.TestNodeFactory;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import io.netty.channel.Channel;
@@ -75,7 +75,6 @@ abstract class ControlConnectionTestBase {
   @Mock protected MetadataManager metadataManager;
   @Mock protected MetricsFactory metricsFactory;
 
-  protected AddressTranslator addressTranslator;
   protected DefaultNode node1;
   protected DefaultNode node2;
 
@@ -116,15 +115,13 @@ abstract class ControlConnectionTestBase {
     when(context.getLoadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
 
     when(context.getMetricsFactory()).thenReturn(metricsFactory);
-    node1 = new DefaultNode(ADDRESS1, context);
-    node2 = new DefaultNode(ADDRESS2, context);
+    node1 = TestNodeFactory.newNode(1, context);
+    node2 = TestNodeFactory.newNode(2, context);
     mockQueryPlan(node1, node2);
 
     when(metadataManager.refreshNodes()).thenReturn(CompletableFuture.completedFuture(null));
     when(context.getMetadataManager()).thenReturn(metadataManager);
 
-    addressTranslator = spy(new PassThroughAddressTranslator(context));
-    when(context.getAddressTranslator()).thenReturn(addressTranslator);
     when(context.getConfig()).thenReturn(config);
     when(config.getDefaultProfile()).thenReturn(defaultProfile);
     when(defaultProfile.getBoolean(DefaultDriverOption.CONNECTION_WARN_INIT_ERROR))
@@ -169,7 +166,8 @@ abstract class ControlConnectionTestBase {
             });
     when(driverChannel.closeFuture()).thenReturn(closeFuture);
     when(driverChannel.toString()).thenReturn("channel" + id);
-    when(driverChannel.connectAddress()).thenReturn(new InetSocketAddress("127.0.0." + id, 9042));
+    when(driverChannel.getEndPoint())
+        .thenReturn(new DefaultEndPoint(new InetSocketAddress("127.0.0." + id, 9042)));
     return driverChannel;
   }
 

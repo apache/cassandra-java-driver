@@ -26,9 +26,10 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.writeTimeout;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -229,11 +230,11 @@ public class DefaultRetryPolicyIT {
     // the host that received the query.
     assertThat(result.getExecutionInfo().getErrors()).hasSize(1);
     Map.Entry<Node, Throwable> error = result.getExecutionInfo().getErrors().get(0);
-    assertThat(error.getKey().getConnectAddress())
+    assertThat(error.getKey().getEndPoint().resolve())
         .isEqualTo(simulacron.cluster().node(0).inetSocketAddress());
     assertThat(error.getValue()).isInstanceOf(ClosedConnectionException.class);
     // the host that returned the response should be node 1.
-    assertThat(result.getExecutionInfo().getCoordinator().getConnectAddress())
+    assertThat(result.getExecutionInfo().getCoordinator().getEndPoint().resolve())
         .isEqualTo(simulacron.cluster().node(1).inetSocketAddress());
 
     // should have been retried.
@@ -430,11 +431,11 @@ public class DefaultRetryPolicyIT {
     // the host that received the query.
     assertThat(result.getExecutionInfo().getErrors()).hasSize(1);
     Map.Entry<Node, Throwable> error = result.getExecutionInfo().getErrors().get(0);
-    assertThat(error.getKey().getConnectAddress())
+    assertThat(error.getKey().getEndPoint().resolve())
         .isEqualTo(simulacron.cluster().node(0).inetSocketAddress());
     assertThat(error.getValue()).isInstanceOf(UnavailableException.class);
     // the host that returned the response should be node 1.
-    assertThat(result.getExecutionInfo().getCoordinator().getConnectAddress())
+    assertThat(result.getExecutionInfo().getCoordinator().getEndPoint().resolve())
         .isEqualTo(simulacron.cluster().node(1).inetSocketAddress());
 
     // should have been retried on another host.
@@ -462,7 +463,7 @@ public class DefaultRetryPolicyIT {
     } catch (UnavailableException ue) {
       // then we should get an unavailable exception with the host being node 1 (since it was second
       // tried).
-      assertThat(ue.getCoordinator().getConnectAddress())
+      assertThat(ue.getCoordinator().getEndPoint().resolve())
           .isEqualTo(simulacron.cluster().node(1).inetSocketAddress());
       assertThat(ue.getConsistencyLevel()).isEqualTo(DefaultConsistencyLevel.LOCAL_QUORUM);
       assertThat(ue.getRequired()).isEqualTo(3);

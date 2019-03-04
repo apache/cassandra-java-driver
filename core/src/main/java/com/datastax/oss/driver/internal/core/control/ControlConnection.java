@@ -48,7 +48,6 @@ import com.datastax.oss.protocol.internal.response.event.StatusChangeEvent;
 import com.datastax.oss.protocol.internal.response.event.TopologyChangeEvent;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -199,13 +198,12 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
   private void processTopologyChange(Event event) {
     TopologyChangeEvent tce = (TopologyChangeEvent) event;
-    InetSocketAddress address = context.getAddressTranslator().translate(tce.address);
     switch (tce.changeType) {
       case ProtocolConstants.TopologyChangeType.NEW_NODE:
-        context.getEventBus().fire(TopologyEvent.suggestAdded(address));
+        context.getEventBus().fire(TopologyEvent.suggestAdded(tce.address));
         break;
       case ProtocolConstants.TopologyChangeType.REMOVED_NODE:
-        context.getEventBus().fire(TopologyEvent.suggestRemoved(address));
+        context.getEventBus().fire(TopologyEvent.suggestRemoved(tce.address));
         break;
       default:
         LOG.warn("[{}] Unsupported topology change type: {}", logPrefix, tce.changeType);
@@ -214,13 +212,12 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
   private void processStatusChange(Event event) {
     StatusChangeEvent sce = (StatusChangeEvent) event;
-    InetSocketAddress address = context.getAddressTranslator().translate(sce.address);
     switch (sce.changeType) {
       case ProtocolConstants.StatusChangeType.UP:
-        context.getEventBus().fire(TopologyEvent.suggestUp(address));
+        context.getEventBus().fire(TopologyEvent.suggestUp(sce.address));
         break;
       case ProtocolConstants.StatusChangeType.DOWN:
-        context.getEventBus().fire(TopologyEvent.suggestDown(address));
+        context.getEventBus().fire(TopologyEvent.suggestDown(sce.address));
         break;
       default:
         LOG.warn("[{}] Unsupported status change type: {}", logPrefix, sce.changeType);
@@ -501,7 +498,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
       if (event.distance == NodeDistance.IGNORED
           && channel != null
           && !channel.closeFuture().isDone()
-          && event.node.getConnectAddress().equals(channel.connectAddress())) {
+          && event.node.getEndPoint().equals(channel.getEndPoint())) {
         LOG.debug(
             "[{}] Control node {} became IGNORED, reconnecting to a different node",
             logPrefix,
@@ -516,7 +513,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
       if ((event.newState == null /*(removed)*/ || event.newState == NodeState.FORCED_DOWN)
           && channel != null
           && !channel.closeFuture().isDone()
-          && event.node.getConnectAddress().equals(channel.connectAddress())) {
+          && event.node.getEndPoint().equals(channel.getEndPoint())) {
         LOG.debug(
             "[{}] Control node {} was removed or forced down, reconnecting to a different node",
             logPrefix,
