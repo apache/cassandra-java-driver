@@ -4,6 +4,7 @@
 
 ### 4.0.0 (in progress)
 
+- [improvement] JAVA-2148: Add examples
 - [bug] JAVA-2189: Exclude virtual keyspaces from token map computation
 - [improvement] JAVA-2183: Enable materialized views when testing against Cassandra 4
 - [improvement] JAVA-2182: Add insertInto().json() variant that takes an object in QueryBuilder
