@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
@@ -34,6 +35,7 @@ import com.datastax.oss.protocol.internal.response.Error;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,6 +43,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import net.jcip.annotations.ThreadSafe;
@@ -104,7 +107,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     }
     LOG.debug("[{}] Refreshing info for {}", logPrefix, node);
     DriverChannel channel = controlConnection.channel();
-    if (node.getConnectAddress().equals(channel.connectAddress())) {
+    if (node.getEndPoint().equals(channel.getEndPoint())) {
       // refreshNode is called for nodes that just came up. If the control node just came up, it
       // means the control connection just reconnected, which means we did a full node refresh. So
       // we don't need to process this call.
@@ -134,19 +137,19 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
       return query.thenApply(this::firstRowAsNodeInfo);
     } else {
       return query(channel, "SELECT * FROM " + retrievePeerTableName())
-          .thenApply(result -> this.findInPeers(result, node.getConnectAddress()));
+          .thenApply(result -> this.findInPeers(result, node.getHostId()));
     }
   }
 
   @Override
-  public CompletionStage<Optional<NodeInfo>> getNewNodeInfo(InetSocketAddress connectAddress) {
+  public CompletionStage<Optional<NodeInfo>> getNewNodeInfo(InetSocketAddress broadcastRpcAddress) {
     if (closeFuture.isDone()) {
       return CompletableFutures.failedFuture(new IllegalStateException("closed"));
     }
-    LOG.debug("[{}] Fetching info for new node {}", logPrefix, connectAddress);
+    LOG.debug("[{}] Fetching info for new node {}", logPrefix, broadcastRpcAddress);
     DriverChannel channel = controlConnection.channel();
     return query(channel, "SELECT * FROM " + retrievePeerTableName())
-        .thenApply(result -> this.findInPeers(result, connectAddress));
+        .thenApply(result -> this.findInPeers(result, broadcastRpcAddress));
   }
 
   @Override
@@ -159,7 +162,8 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
 
     // This cast always succeeds in production. The only way it could fail is in a test that uses a
     // local channel, and we don't have such tests at the moment.
-    InetSocketAddress controlAddress = (InetSocketAddress) channel.connectAddress();
+    InetSocketAddress controlBroadcastRpcAddress =
+        (InetSocketAddress) channel.getEndPoint().resolve();
 
     savePort(channel);
 
@@ -199,7 +203,8 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
           // reports the normal RPC address instead of the broadcast one (CASSANDRA-11181). We
           // already know the address since we've just used it to query.
           nodeInfos.add(
-              nodeInfoBuilder(controlNodeResult.iterator().next(), controlAddress).build());
+              nodeInfoBuilder(controlNodeResult.iterator().next(), controlBroadcastRpcAddress)
+                  .build());
           for (AdminRow row : peersResult) {
             nodeInfos.add(asNodeInfo(row));
           }
@@ -255,12 +260,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   }
 
   private NodeInfo asNodeInfo(AdminRow row) {
-    InetSocketAddress connectAddress = getNativeAddressFromPeers(row);
-    if (connectAddress == null) {
-      throw new IllegalArgumentException(
-          "Missing rpc_address or native in system row, can't refresh node");
-    }
-    return nodeInfoBuilder(row, connectAddress).build();
+    return nodeInfoBuilder(row, getBroadcastRpcAddress(row)).build();
   }
 
   private Optional<NodeInfo> firstRowAsNodeInfo(AdminResult result) {
@@ -272,10 +272,23 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     }
   }
 
+  /**
+   * @param broadcastRpcAddress this is a parameter only because we already have it when we come
+   *     from {@link #findInPeers(AdminResult, InetSocketAddress)}. Callers that don't already have
+   *     it can use {@link #getBroadcastRpcAddress}.
+   */
   protected DefaultNodeInfo.Builder nodeInfoBuilder(
-      AdminRow row, InetSocketAddress connectAddress) {
-    DefaultNodeInfo.Builder builder = DefaultNodeInfo.builder().withConnectAddress(connectAddress);
+      AdminRow row, InetSocketAddress broadcastRpcAddress) {
 
+    // Deployments that use a custom EndPoint implementation will need their own TopologyMonitor.
+    // One simple approach is to extend this class and override this method.
+    EndPoint endPoint =
+        new DefaultEndPoint(context.getAddressTranslator().translate(broadcastRpcAddress));
+
+    DefaultNodeInfo.Builder builder =
+        DefaultNodeInfo.builder()
+            .withEndPoint(endPoint)
+            .withBroadcastRpcAddress(broadcastRpcAddress);
     InetAddress broadcastAddress = row.getInetAddress("broadcast_address"); // in system.local
     if (broadcastAddress == null) {
       broadcastAddress = row.getInetAddress("peer"); // in system.peers
@@ -301,16 +314,28 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     return builder;
   }
 
-  private Optional<NodeInfo> findInPeers(AdminResult result, InetSocketAddress connectAddress) {
-    // The peers table is keyed by broadcast_address, but we only have the translated
-    // broadcast_rpc_address, so we have to traverse the whole table and check the rows one by one.
+  private Optional<NodeInfo> findInPeers(
+      AdminResult result, InetSocketAddress broadcastRpcAddressToFind) {
+    // The peers table is keyed by broadcast_address, but we only have the broadcast_rpc_address, so
+    // we have to traverse the whole table and check the rows one by one.
     for (AdminRow row : result) {
-      InetSocketAddress nativeAddress = getNativeAddressFromPeers(row);
-      if (nativeAddress != null && nativeAddress.equals(connectAddress)) {
-        return Optional.of(nodeInfoBuilder(row, nativeAddress).build());
+      InetSocketAddress broadcastRpcAddress = getBroadcastRpcAddress(row);
+      if (broadcastRpcAddress != null && broadcastRpcAddress.equals(broadcastRpcAddressToFind)) {
+        return Optional.of(nodeInfoBuilder(row, broadcastRpcAddress).build());
       }
     }
-    LOG.debug("[{}] Could not find any peer row matching {}", logPrefix, connectAddress);
+    LOG.debug("[{}] Could not find any peer row matching {}", logPrefix, broadcastRpcAddressToFind);
+    return Optional.empty();
+  }
+
+  private Optional<NodeInfo> findInPeers(AdminResult result, UUID hostIdToFind) {
+    for (AdminRow row : result) {
+      UUID hostId = row.getUuid("host_id");
+      if (hostId != null && hostId.equals(hostIdToFind)) {
+        return Optional.of(nodeInfoBuilder(row, getBroadcastRpcAddress(row)).build());
+      }
+    }
+    LOG.debug("[{}] Could not find any peer row matching {}", logPrefix, hostIdToFind);
     return Optional.empty();
   }
 
@@ -318,23 +343,30 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   // nodes. As a consequence, the port is not stored in system tables.
   // We save it the first time we get a control connection channel.
   private void savePort(DriverChannel channel) {
-    if (port < 0 && channel.connectAddress() instanceof InetSocketAddress) {
-      port = ((InetSocketAddress) channel.connectAddress()).getPort();
+    if (port < 0) {
+      SocketAddress address = channel.getEndPoint().resolve();
+      if (address instanceof InetSocketAddress) {
+        port = ((InetSocketAddress) address).getPort();
+      }
     }
   }
 
-  private InetSocketAddress getNativeAddressFromPeers(AdminRow row) {
+  private InetSocketAddress getBroadcastRpcAddress(AdminRow row) {
     InetAddress nativeAddress = row.getInetAddress("native_address");
     if (nativeAddress == null) {
-      nativeAddress = row.getInetAddress("rpc_address");
+      // Cassandra < 4
+      InetAddress rpcAddress = row.getInetAddress("rpc_address");
+      if (rpcAddress == null) {
+        // This could only happen if system.peers is corrupted, but handle gracefully
+        return null;
+      }
+      return new InetSocketAddress(rpcAddress, port);
+    } else {
+      Integer rowPort = row.getInteger("native_port");
+      if (rowPort == null || rowPort == 0) {
+        rowPort = port;
+      }
+      return new InetSocketAddress(nativeAddress, rowPort);
     }
-    if (nativeAddress == null) {
-      return null;
-    }
-    Integer rowPort = row.getInteger("native_port");
-    if (rowPort == null || rowPort == 0) {
-      rowPort = port;
-    }
-    return addressTranslator.translate(new InetSocketAddress(nativeAddress, rowPort));
   }
 }

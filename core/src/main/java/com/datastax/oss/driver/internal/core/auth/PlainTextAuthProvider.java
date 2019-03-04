@@ -21,9 +21,9 @@ import com.datastax.oss.driver.api.core.auth.SyncAuthenticator;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -65,19 +65,19 @@ public class PlainTextAuthProvider implements AuthProvider {
   @NonNull
   @Override
   public Authenticator newAuthenticator(
-      @NonNull SocketAddress host, @NonNull String serverAuthenticator) {
+      @NonNull EndPoint endPoint, @NonNull String serverAuthenticator) {
     String username = config.getString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME);
     String password = config.getString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD);
     return new PlainTextAuthenticator(username, password);
   }
 
   @Override
-  public void onMissingChallenge(@NonNull SocketAddress host) {
+  public void onMissingChallenge(@NonNull EndPoint endPoint) {
     LOG.warn(
         "[{}] {} did not send an authentication challenge; "
             + "This is suspicious because the driver expects authentication",
         logPrefix,
-        host);
+        endPoint);
   }
 
   @Override

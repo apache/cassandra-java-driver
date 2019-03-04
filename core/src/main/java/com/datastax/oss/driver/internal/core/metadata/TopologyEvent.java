@@ -24,6 +24,10 @@ import net.jcip.annotations.Immutable;
  * An event emitted from the {@link TopologyMonitor}, indicating a change in the topology of the
  * Cassandra cluster.
  *
+ * <p>Internally, the driver uses this to handle {@code TOPOLOGY_CHANGE} and {@code STATUS_CHANGE}
+ * events received on the control connection; for historical reasons, those protocol events identify
+ * nodes by their (untranslated) {@linkplain Node#getBroadcastRpcAddress() broadcast RPC address}.
+ *
  * <p>As shown by the names, most of these events are mere suggestions, that the driver might choose
  * to ignore if they contradict other information it has about the nodes; see the documentation of
  * each factory method for detailed explanations.
@@ -56,8 +60,8 @@ public class TopologyEvent {
    *       </ul>
    * </ul>
    */
-  public static TopologyEvent suggestUp(InetSocketAddress address) {
-    return new TopologyEvent(Type.SUGGEST_UP, address);
+  public static TopologyEvent suggestUp(InetSocketAddress broadcastRpcAddress) {
+    return new TopologyEvent(Type.SUGGEST_UP, broadcastRpcAddress);
   }
 
   /**
@@ -73,8 +77,8 @@ public class TopologyEvent {
    *       #forceDown(InetSocketAddress)}.
    * </ul>
    */
-  public static TopologyEvent suggestDown(InetSocketAddress address) {
-    return new TopologyEvent(Type.SUGGEST_DOWN, address);
+  public static TopologyEvent suggestDown(InetSocketAddress broadcastRpcAddress) {
+    return new TopologyEvent(Type.SUGGEST_DOWN, broadcastRpcAddress);
   }
 
   /**
@@ -95,8 +99,8 @@ public class TopologyEvent {
    * when it detects an unrecoverable error, such as a node that does not support the current
    * protocol version.
    */
-  public static TopologyEvent forceDown(InetSocketAddress address) {
-    return new TopologyEvent(Type.FORCE_DOWN, address);
+  public static TopologyEvent forceDown(InetSocketAddress broadcastRpcAddress) {
+    return new TopologyEvent(Type.FORCE_DOWN, broadcastRpcAddress);
   }
 
   /**
@@ -105,8 +109,8 @@ public class TopologyEvent {
    * <p>The node will be set back UP. If it is not ignored by the load balancing policy, a
    * connection pool will be reopened.
    */
-  public static TopologyEvent forceUp(InetSocketAddress address) {
-    return new TopologyEvent(Type.FORCE_UP, address);
+  public static TopologyEvent forceUp(InetSocketAddress broadcastRpcAddress) {
+    return new TopologyEvent(Type.FORCE_UP, broadcastRpcAddress);
   }
 
   /**
@@ -116,8 +120,8 @@ public class TopologyEvent {
    * information about the node can't be refreshed (i.e. {@link
    * TopologyMonitor#getNewNodeInfo(InetSocketAddress)} fails).
    */
-  public static TopologyEvent suggestAdded(InetSocketAddress address) {
-    return new TopologyEvent(Type.SUGGEST_ADDED, address);
+  public static TopologyEvent suggestAdded(InetSocketAddress broadcastRpcAddress) {
+    return new TopologyEvent(Type.SUGGEST_ADDED, broadcastRpcAddress);
   }
 
   /**
@@ -125,17 +129,24 @@ public class TopologyEvent {
    *
    * <p>The driver ignore this event if the node does not exist in its metadata.
    */
-  public static TopologyEvent suggestRemoved(InetSocketAddress address) {
-    return new TopologyEvent(Type.SUGGEST_REMOVED, address);
+  public static TopologyEvent suggestRemoved(InetSocketAddress broadcastRpcAddress) {
+    return new TopologyEvent(Type.SUGGEST_REMOVED, broadcastRpcAddress);
   }
 
   public final Type type;
-  public final InetSocketAddress address;
+
+  /**
+   * Note that this is the <em>untranslated</em> broadcast RPC address, as it was received in the
+   * protocol event.
+   *
+   * @see Node#getBroadcastRpcAddress()
+   */
+  public final InetSocketAddress broadcastRpcAddress;
 
   /** Builds a new instance (the static methods in this class are a preferred alternative). */
-  public TopologyEvent(Type type, InetSocketAddress address) {
+  public TopologyEvent(Type type, InetSocketAddress broadcastRpcAddress) {
     this.type = type;
-    this.address = address;
+    this.broadcastRpcAddress = broadcastRpcAddress;
   }
 
   public boolean isForceEvent() {
@@ -148,7 +159,8 @@ public class TopologyEvent {
       return true;
     } else if (other instanceof TopologyEvent) {
       TopologyEvent that = (TopologyEvent) other;
-      return this.type == that.type && Objects.equals(this.address, that.address);
+      return this.type == that.type
+          && Objects.equals(this.broadcastRpcAddress, that.broadcastRpcAddress);
     } else {
       return false;
     }
@@ -156,11 +168,11 @@ public class TopologyEvent {
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.type, this.address);
+    return Objects.hash(this.type, this.broadcastRpcAddress);
   }
 
   @Override
   public String toString() {
-    return "TopologyEvent(" + type + ", " + address + ")";
+    return "TopologyEvent(" + type + ", " + broadcastRpcAddress + ")";
   }
 }

@@ -67,7 +67,7 @@ public class ProtocolVersionMixedClusterIT {
 
       // Find out which node became the control node after the reconnection (not necessarily node 0)
       InetSocketAddress controlAddress =
-          (InetSocketAddress) context.getControlConnection().channel().connectAddress();
+          (InetSocketAddress) context.getControlConnection().channel().getEndPoint().resolve();
       BoundNode currentControlNode = null;
       for (BoundNode node : simulacron.getNodes()) {
         if (node.inetSocketAddress().equals(controlAddress)) {

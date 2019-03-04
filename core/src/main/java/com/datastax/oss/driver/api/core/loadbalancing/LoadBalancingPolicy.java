@@ -19,14 +19,11 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
-import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import java.net.InetSocketAddress;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
+import java.util.UUID;
 
 /** Decides which Cassandra nodes to contact for each query. */
 public interface LoadBalancingPolicy extends AutoCloseable {
@@ -42,17 +39,8 @@ public interface LoadBalancingPolicy extends AutoCloseable {
    *     NodeState#UNKNOWN}. Node states may be updated concurrently while this method executes, but
    *     if so you will receive a notification.
    * @param distanceReporter an object that will be used by the policy to signal distance changes.
-   * @param contactPoints the set of contact points that the driver was initialized with (see {@link
-   *     SessionBuilder#addContactPoints(Collection)}). This is provided for reference, in case the
-   *     policy needs to handle those nodes in a particular way. Each address in this set should
-   *     normally have a corresponding entry in {@code nodes}, except for contact points that were
-   *     down or invalid. If no contact points were provided, the driver defaults to 127.0.0.1:9042,
-   *     but the set will be empty.
    */
-  void init(
-      @NonNull Map<InetSocketAddress, Node> nodes,
-      @NonNull DistanceReporter distanceReporter,
-      @NonNull Set<InetSocketAddress> contactPoints);
+  void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter);
 
   /**
    * Returns the coordinators to use for a new query.

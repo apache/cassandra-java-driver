@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
-import java.net.SocketAddress;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 
 /**
  * Indicates that we've attempted to connect to a node with a cluster name that doesn't match that
@@ -39,18 +39,18 @@ public class ClusterNameMismatchException extends RuntimeException {
 
   private static final long serialVersionUID = 0;
 
-  public final SocketAddress address;
+  public final EndPoint endPoint;
   public final String expectedClusterName;
   public final String actualClusterName;
 
   public ClusterNameMismatchException(
-      SocketAddress address, String actualClusterName, String expectedClusterName) {
+      EndPoint endPoint, String actualClusterName, String expectedClusterName) {
     super(
         String.format(
             "Node %s reports cluster name '%s' that doesn't match our cluster name '%s'. "
                 + "It will be forced down.",
-            address, actualClusterName, expectedClusterName));
-    this.address = address;
+            endPoint, actualClusterName, expectedClusterName));
+    this.endPoint = endPoint;
     this.expectedClusterName = expectedClusterName;
     this.actualClusterName = actualClusterName;
   }

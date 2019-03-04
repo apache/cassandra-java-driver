@@ -124,8 +124,11 @@ public class NodeTargetingIT {
     BoundNode boundNode = simulacron.cluster().node(id);
     assertThat(boundNode).isNotNull();
     InetSocketAddress address = (InetSocketAddress) boundNode.getAddress();
-    Node node = sessionRule.session().getMetadata().getNodes().get(address);
-    assertThat(node).isNotNull();
-    return node;
+    return sessionRule
+        .session()
+        .getMetadata()
+        .findNode(address)
+        .orElseThrow(
+            () -> new AssertionError(String.format("Expected to find node %d in metadata", id)));
   }
 }

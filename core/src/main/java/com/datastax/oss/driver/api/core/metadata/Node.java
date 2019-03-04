@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.api.core.metadata;
 
 import com.datastax.oss.driver.api.core.Version;
-import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -33,23 +32,40 @@ import java.util.UUID;
  * state of the node.
  */
 public interface Node {
+
+  /** The information that the driver uses to connect to the node. */
+  @NonNull
+  EndPoint getEndPoint();
+
   /**
-   * The address that the driver uses to connect to the node. This is the node's broadcast RPC
-   * address, <b>transformed by the {@link AddressTranslator}</b> if one is configured.
+   * The node's broadcast RPC address.
    *
-   * <p>The driver also uses this to uniquely identify a node.
+   * <p>This is the address that the node expects clients to connect to, as reported in {@code
+   * system.peers.rpc_address} (Cassandra 3) or {@code system.peers_v2.native_address/native_port}
+   * (Cassandra 4+). However, it might not be what the driver uses directly, if the node is accessed
+   * through a proxy.
+   *
+   * <p>This may not be known at all times. In particular, some Cassandra versions (less than
+   * 2.0.16, 2.1.6 or 2.2.0-rc1) don't store it in the {@code system.local} table, so this will be
+   * unknown for the control node, until the control connection reconnects to another node.
+   *
+   * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-9436">CASSANDRA-9436 (where the
+   *     information was added to system.local)</a>
    */
   @NonNull
-  InetSocketAddress getConnectAddress();
+  Optional<InetSocketAddress> getBroadcastRpcAddress();
 
   /**
    * The node's broadcast address. That is, the address that other nodes use to communicate with
    * that node. This is also the value of the {@code peer} column in {@code system.peers}. If the
    * port is set to 0 it is unknown.
    *
-   * <p>This may not be known at all times. In particular, some Cassandra versions don't store it in
-   * the {@code system.local} table, so this will be unknown for the control node, until the control
-   * connection reconnects to another node.
+   * <p>This may not be known at all times. In particular, some Cassandra versions (less than
+   * 2.0.16, 2.1.6 or 2.2.0-rc1) don't store it in the {@code system.local} table, so this will be
+   * unknown for the control node, until the control connection reconnects to another node.
+   *
+   * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-9436">CASSANDRA-9436 (where the
+   *     information was added to system.local)</a>
    */
   @NonNull
   Optional<InetSocketAddress> getBroadcastAddress();

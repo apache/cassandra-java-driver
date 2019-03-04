@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
@@ -51,8 +52,8 @@ import org.slf4j.LoggerFactory;
 public class MetadataManager implements AsyncAutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataManager.class);
 
-  public static final InetSocketAddress DEFAULT_CONTACT_POINT =
-      new InetSocketAddress("127.0.0.1", 9042);
+  static final EndPoint DEFAULT_CONTACT_POINT =
+      new DefaultEndPoint(new InetSocketAddress("127.0.0.1", 9042));
 
   private final InternalDriverContext context;
   private final String logPrefix;
@@ -66,7 +67,8 @@ public class MetadataManager implements AsyncAutoCloseable {
   private volatile List<String> refreshedKeyspaces;
   private volatile Boolean schemaEnabledProgrammatically;
   private volatile boolean tokenMapEnabled;
-  private volatile Set<InetSocketAddress> providedContactPoints;
+  private volatile Set<DefaultNode> contactPoints;
+  private volatile boolean wasImplicitContactPoint;
 
   public MetadataManager(InternalDriverContext context) {
     this(context, DefaultMetadata.EMPTY);
@@ -112,24 +114,38 @@ public class MetadataManager implements AsyncAutoCloseable {
     return this.metadata;
   }
 
-  public CompletionStage<Void> addContactPoints(Set<InetSocketAddress> providedContactPoints) {
-    this.providedContactPoints = providedContactPoints;
-    Set<InetSocketAddress> contactPoints;
+  public void addContactPoints(Set<EndPoint> providedContactPoints) {
+    // Convert the EndPoints to Nodes, but we can't put them into the Metadata yet, because we
+    // don't know their host_id. So store them in a volatile field instead, they will get copied
+    // during the first node refresh.
+    ImmutableSet.Builder<DefaultNode> contactPointsBuilder = ImmutableSet.builder();
     if (providedContactPoints == null || providedContactPoints.isEmpty()) {
       LOG.info(
           "[{}] No contact points provided, defaulting to {}", logPrefix, DEFAULT_CONTACT_POINT);
-      contactPoints = ImmutableSet.of(DEFAULT_CONTACT_POINT);
+      this.wasImplicitContactPoint = true;
+      contactPointsBuilder.add(new DefaultNode(DEFAULT_CONTACT_POINT, context));
     } else {
-      contactPoints = providedContactPoints;
+      for (EndPoint endPoint : providedContactPoints) {
+        contactPointsBuilder.add(new DefaultNode(endPoint, context));
+      }
     }
+    this.contactPoints = contactPointsBuilder.build();
     LOG.debug("[{}] Adding initial contact points {}", logPrefix, contactPoints);
-    CompletableFuture<Void> initNodesFuture = new CompletableFuture<>();
-    RunOrSchedule.on(adminExecutor, () -> singleThreaded.initNodes(contactPoints, initNodesFuture));
-    return initNodesFuture;
   }
 
-  public Set<InetSocketAddress> getContactPoints() {
-    return providedContactPoints;
+  /**
+   * The contact points that were used by the driver to initialize. If none were provided
+   * explicitly, this will be the default (127.0.0.1:9042).
+   *
+   * @see #wasImplicitContactPoint()
+   */
+  public Set<DefaultNode> getContactPoints() {
+    return contactPoints;
+  }
+
+  /** Whether the default contact point was used (because none were provided explicitly). */
+  public boolean wasImplicitContactPoint() {
+    return wasImplicitContactPoint;
   }
 
   public CompletionStage<Void> refreshNodes() {
@@ -162,10 +178,10 @@ public class MetadataManager implements AsyncAutoCloseable {
             adminExecutor);
   }
 
-  public void addNode(InetSocketAddress address) {
+  public void addNode(InetSocketAddress broadcastRpcAddress) {
     context
         .getTopologyMonitor()
-        .getNewNodeInfo(address)
+        .getNewNodeInfo(broadcastRpcAddress)
         .whenCompleteAsync(
             (info, error) -> {
               if (error != null) {
@@ -173,17 +189,17 @@ public class MetadataManager implements AsyncAutoCloseable {
                     "[{}] Error refreshing node info for {}, "
                         + "this will be retried on the next full refresh",
                     logPrefix,
-                    address,
+                    broadcastRpcAddress,
                     error);
               } else {
-                singleThreaded.addNode(address, info.orElse(null));
+                singleThreaded.addNode(broadcastRpcAddress, info.orElse(null));
               }
             },
             adminExecutor);
   }
 
-  public void removeNode(InetSocketAddress address) {
-    RunOrSchedule.on(adminExecutor, () -> singleThreaded.removeNode(address));
+  public void removeNode(InetSocketAddress broadcastRpcAddress) {
+    RunOrSchedule.on(adminExecutor, () -> singleThreaded.removeNode(broadcastRpcAddress));
   }
 
   /**
@@ -274,28 +290,26 @@ public class MetadataManager implements AsyncAutoCloseable {
       this.schemaParserFactory = context.getSchemaParserFactory();
     }
 
-    private void initNodes(
-        Set<InetSocketAddress> addresses, CompletableFuture<Void> initNodesFuture) {
-      apply(new InitContactPointsRefresh(addresses));
-      initNodesFuture.complete(null);
-    }
-
     private Void refreshNodes(Iterable<NodeInfo> nodeInfos) {
+      MetadataRefresh refresh =
+          didFirstNodeListRefresh
+              ? new FullNodeListRefresh(nodeInfos)
+              : new InitialNodeListRefresh(nodeInfos, contactPoints);
       didFirstNodeListRefresh = true;
-      return apply(new FullNodeListRefresh(nodeInfos));
+      return apply(refresh);
     }
 
     private void addNode(InetSocketAddress address, NodeInfo info) {
       try {
         if (info != null) {
-          if (!address.equals(info.getConnectAddress())) {
+          if (!address.equals(info.getBroadcastRpcAddress().orElse(null))) {
             // This would be a bug in the TopologyMonitor, protect against it
             LOG.warn(
-                "[{}] Received a request to add a node for {}, "
-                    + "but the provided info uses the connect address {}, ignoring it",
+                "[{}] Received a request to add a node for broadcast RPC address {}, "
+                    + "but the provided info reports {}, ignoring it",
                 logPrefix,
                 address,
-                info.getConnectAddress());
+                info.getBroadcastAddress());
           } else {
             apply(new AddNodeRefresh(info));
           }
@@ -311,8 +325,8 @@ public class MetadataManager implements AsyncAutoCloseable {
       }
     }
 
-    private void removeNode(InetSocketAddress address) {
-      apply(new RemoveNodeRefresh(address));
+    private void removeNode(InetSocketAddress broadcastRpcAddress) {
+      apply(new RemoveNodeRefresh(broadcastRpcAddress));
     }
 
     private void refreshSchema(

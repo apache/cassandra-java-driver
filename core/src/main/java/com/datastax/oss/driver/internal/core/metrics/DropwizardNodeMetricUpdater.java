@@ -19,15 +19,12 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
-import java.net.Inet4Address;
-import java.net.Inet6Address;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.function.Function;
 import net.jcip.annotations.ThreadSafe;
@@ -44,7 +41,7 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
       MetricRegistry registry,
       InternalDriverContext context) {
     super(enabledMetrics, registry);
-    this.metricNamePrefix = buildPrefix(context.getSessionName(), node.getConnectAddress());
+    this.metricNamePrefix = buildPrefix(context.getSessionName(), node.getEndPoint());
 
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
 
@@ -92,21 +89,8 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
     return metricNamePrefix + metric.getPath();
   }
 
-  private String buildPrefix(String sessionName, InetSocketAddress addressAndPort) {
-    StringBuilder prefix = new StringBuilder(sessionName).append(".nodes.");
-    InetAddress address = addressAndPort.getAddress();
-    int port = addressAndPort.getPort();
-    if (address instanceof Inet4Address) {
-      // Metrics use '.' as a delimiter, replace so that the IP is a single path component
-      // (127.0.0.1 => 127_0_0_1)
-      prefix.append(address.getHostAddress().replace('.', '_'));
-    } else {
-      assert address instanceof Inet6Address;
-      // IPv6 only uses '%' and ':' as separators, so no replacement needed
-      prefix.append(address.getHostAddress());
-    }
-    // Append the port in anticipation of when C* will support nodes on different ports
-    return prefix.append('_').append(port).append('.').toString();
+  private String buildPrefix(String sessionName, EndPoint endPoint) {
+    return sessionName + ".nodes." + endPoint.asMetricPrefix() + ".";
   }
 
   private void initializePoolGauge(

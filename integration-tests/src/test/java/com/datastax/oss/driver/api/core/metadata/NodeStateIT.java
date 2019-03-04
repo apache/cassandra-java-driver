@@ -17,9 +17,13 @@ package com.datastax.oss.driver.api.core.metadata;
 
 import static com.datastax.oss.driver.assertions.Assertions.assertThat;
 import static com.datastax.oss.driver.assertions.Assertions.fail;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -36,6 +40,7 @@ import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
@@ -54,6 +59,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -158,11 +164,17 @@ public class NodeStateIT {
     assertThat(simulacronControlNode).isNotNull();
     assertThat(simulacronRegularNode).isNotNull();
 
-    Map<InetSocketAddress, Node> nodesMetadata = sessionRule.session().getMetadata().getNodes();
+    Metadata metadata = sessionRule.session().getMetadata();
     metadataControlNode =
-        (DefaultNode) nodesMetadata.get(simulacronControlNode.inetSocketAddress());
+        (DefaultNode)
+            metadata
+                .findNode(simulacronControlNode.inetSocketAddress())
+                .orElseThrow(AssertionError::new);
     metadataRegularNode =
-        (DefaultNode) nodesMetadata.get(simulacronRegularNode.inetSocketAddress());
+        (DefaultNode)
+            metadata
+                .findNode(simulacronRegularNode.inetSocketAddress())
+                .orElseThrow(AssertionError::new);
 
     // SessionRule uses all nodes as contact points, so we only get onUp notifications for them (no
     // onAdd)
@@ -287,7 +299,7 @@ public class NodeStateIT {
 
     driverContext
         .getEventBus()
-        .fire(TopologyEvent.suggestDown(metadataRegularNode.getConnectAddress()));
+        .fire(TopologyEvent.suggestDown(metadataRegularNode.getBroadcastRpcAddress().get()));
     ConditionChecker.checkThat(
             () ->
                 assertThat(metadataRegularNode)
@@ -302,7 +314,7 @@ public class NodeStateIT {
 
     driverContext
         .getEventBus()
-        .fire(TopologyEvent.suggestUp(metadataRegularNode.getConnectAddress()));
+        .fire(TopologyEvent.suggestUp(metadataRegularNode.getBroadcastRpcAddress().get()));
     ConditionChecker.checkThat(
             () ->
                 assertThat(metadataRegularNode)
@@ -322,7 +334,7 @@ public class NodeStateIT {
   public void should_ignore_down_topology_event_when_still_connected() throws InterruptedException {
     driverContext
         .getEventBus()
-        .fire(TopologyEvent.suggestDown(metadataRegularNode.getConnectAddress()));
+        .fire(TopologyEvent.suggestDown(metadataRegularNode.getBroadcastRpcAddress().get()));
     TimeUnit.MILLISECONDS.sleep(500);
     assertThat(metadataRegularNode).isUp().hasOpenConnections(2).isNotReconnecting();
   }
@@ -345,7 +357,10 @@ public class NodeStateIT {
 
       DefaultNode localMetadataNode =
           (DefaultNode)
-              session.getMetadata().getNodes().get(localSimulacronNode.inetSocketAddress());
+              session
+                  .getMetadata()
+                  .findNode(localSimulacronNode.inetSocketAddress())
+                  .orElseThrow(AssertionError::new);
       // UP fired a first time as part of the init process
       verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode);
 
@@ -363,7 +378,7 @@ public class NodeStateIT {
       localSimulacronNode.acceptConnections();
       ((InternalDriverContext) session.getContext())
           .getEventBus()
-          .fire(TopologyEvent.suggestUp(localMetadataNode.getConnectAddress()));
+          .fire(TopologyEvent.suggestUp(localMetadataNode.getBroadcastRpcAddress().get()));
 
       ConditionChecker.checkThat(() -> assertThat(localMetadataNode).isUp().isNotReconnecting())
           .as("Node coming back up")
@@ -379,7 +394,7 @@ public class NodeStateIT {
   public void should_force_down_when_not_ignored() throws InterruptedException {
     driverContext
         .getEventBus()
-        .fire(TopologyEvent.forceDown(metadataRegularNode.getConnectAddress()));
+        .fire(TopologyEvent.forceDown(metadataRegularNode.getBroadcastRpcAddress().get()));
     ConditionChecker.checkThat(
             () ->
                 assertThat(metadataRegularNode)
@@ -394,20 +409,20 @@ public class NodeStateIT {
     // Should ignore up/down topology events while forced down
     driverContext
         .getEventBus()
-        .fire(TopologyEvent.suggestUp(metadataRegularNode.getConnectAddress()));
+        .fire(TopologyEvent.suggestUp(metadataRegularNode.getBroadcastRpcAddress().get()));
     TimeUnit.MILLISECONDS.sleep(500);
     assertThat(metadataRegularNode).isForcedDown();
 
     driverContext
         .getEventBus()
-        .fire(TopologyEvent.suggestDown(metadataRegularNode.getConnectAddress()));
+        .fire(TopologyEvent.suggestDown(metadataRegularNode.getBroadcastRpcAddress().get()));
     TimeUnit.MILLISECONDS.sleep(500);
     assertThat(metadataRegularNode).isForcedDown();
 
     // Should only come back up on a FORCE_UP event
     driverContext
         .getEventBus()
-        .fire(TopologyEvent.forceUp(metadataRegularNode.getConnectAddress()));
+        .fire(TopologyEvent.forceUp(metadataRegularNode.getBroadcastRpcAddress().get()));
     ConditionChecker.checkThat(
             () -> assertThat(metadataRegularNode).isUp().hasOpenConnections(2).isNotReconnecting())
         .as("Node forced back up")
@@ -422,7 +437,7 @@ public class NodeStateIT {
 
     driverContext
         .getEventBus()
-        .fire(TopologyEvent.forceDown(metadataRegularNode.getConnectAddress()));
+        .fire(TopologyEvent.forceDown(metadataRegularNode.getBroadcastRpcAddress().get()));
     ConditionChecker.checkThat(
             () ->
                 assertThat(metadataRegularNode)
@@ -437,13 +452,13 @@ public class NodeStateIT {
     // Should ignore up/down topology events while forced down
     driverContext
         .getEventBus()
-        .fire(TopologyEvent.suggestUp(metadataRegularNode.getConnectAddress()));
+        .fire(TopologyEvent.suggestUp(metadataRegularNode.getBroadcastRpcAddress().get()));
     TimeUnit.MILLISECONDS.sleep(500);
     assertThat(metadataRegularNode).isForcedDown();
 
     driverContext
         .getEventBus()
-        .fire(TopologyEvent.suggestDown(metadataRegularNode.getConnectAddress()));
+        .fire(TopologyEvent.suggestDown(metadataRegularNode.getBroadcastRpcAddress().get()));
     TimeUnit.MILLISECONDS.sleep(500);
     assertThat(metadataRegularNode).isForcedDown();
 
@@ -451,7 +466,7 @@ public class NodeStateIT {
     // ignored
     driverContext
         .getEventBus()
-        .fire(TopologyEvent.forceUp(metadataRegularNode.getConnectAddress()));
+        .fire(TopologyEvent.forceUp(metadataRegularNode.getBroadcastRpcAddress().get()));
     ConditionChecker.checkThat(
             () ->
                 assertThat(metadataRegularNode)
@@ -471,9 +486,9 @@ public class NodeStateIT {
   public void should_signal_non_contact_points_as_added() {
     // Since we need to observe the behavior of non-contact points, build a dedicated session with
     // just one contact point.
-    Iterator<InetSocketAddress> contactPoints = simulacron.getContactPoints().iterator();
-    InetSocketAddress address1 = contactPoints.next();
-    InetSocketAddress address2 = contactPoints.next();
+    Iterator<EndPoint> contactPoints = simulacron.getContactPoints().iterator();
+    EndPoint endPoint1 = contactPoints.next();
+    EndPoint endPoint2 = contactPoints.next();
     NodeStateListener localNodeStateListener = mock(NodeStateListener.class);
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
@@ -484,14 +499,14 @@ public class NodeStateIT {
     try (CqlSession localSession =
         (CqlSession)
             SessionUtils.baseBuilder()
-                .addContactPoint(address1)
+                .addContactEndPoint(endPoint1)
                 .withNodeStateListener(localNodeStateListener)
                 .withConfigLoader(loader)
                 .build()) {
 
-      Map<InetSocketAddress, Node> nodes = localSession.getMetadata().getNodes();
-      Node localMetadataNode1 = nodes.get(address1);
-      Node localMetadataNode2 = nodes.get(address2);
+      Metadata metadata = localSession.getMetadata();
+      Node localMetadataNode1 = metadata.findNode(endPoint1).orElseThrow(AssertionError::new);
+      Node localMetadataNode2 = metadata.findNode(endPoint2).orElseThrow(AssertionError::new);
 
       // Successful contact point goes to up directly
       verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode1);
@@ -503,13 +518,13 @@ public class NodeStateIT {
   @Test
   public void should_remove_invalid_contact_point() {
 
-    Iterator<InetSocketAddress> contactPoints = simulacron.getContactPoints().iterator();
-    InetSocketAddress address1 = contactPoints.next();
-    InetSocketAddress address2 = contactPoints.next();
+    Iterator<EndPoint> contactPoints = simulacron.getContactPoints().iterator();
+    EndPoint endPoint1 = contactPoints.next();
+    EndPoint endPoint2 = contactPoints.next();
     NodeStateListener localNodeStateListener = mock(NodeStateListener.class);
 
     // Initialize the driver with 1 wrong address and 1 valid address
-    InetSocketAddress wrongContactPoint = withUnusedPort(address1);
+    EndPoint wrongContactPoint = withUnusedPort(endPoint1);
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
             .withDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY, Duration.ofHours(1))
@@ -518,21 +533,21 @@ public class NodeStateIT {
     try (CqlSession localSession =
         (CqlSession)
             SessionUtils.baseBuilder()
-                .addContactPoint(address1)
-                .addContactPoint(wrongContactPoint)
+                .addContactEndPoint(endPoint1)
+                .addContactEndPoint(wrongContactPoint)
                 .withNodeStateListener(localNodeStateListener)
                 .withConfigLoader(loader)
                 .build()) {
 
-      Map<InetSocketAddress, Node> nodes = localSession.getMetadata().getNodes();
-      assertThat(nodes).doesNotContainKey(wrongContactPoint);
-      Node localMetadataNode1 = nodes.get(address1);
-      Node localMetadataNode2 = nodes.get(address2);
+      Metadata metadata = localSession.getMetadata();
+      assertThat(metadata.findNode(wrongContactPoint)).isEmpty();
+      Node localMetadataNode1 = metadata.findNode(endPoint1).orElseThrow(AssertionError::new);
+      Node localMetadataNode2 = metadata.findNode(endPoint2).orElseThrow(AssertionError::new);
 
       // The order of the calls is not deterministic because contact points are shuffled, but it
       // does not matter here since Mockito.verify does not enforce order.
       verify(localNodeStateListener, timeout(500)).onRemove(nodeCaptor.capture());
-      assertThat(nodeCaptor.getValue().getConnectAddress()).isEqualTo(wrongContactPoint);
+      assertThat(nodeCaptor.getValue().getEndPoint()).isEqualTo(wrongContactPoint);
       verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode1);
       verify(localNodeStateListener, timeout(500)).onAdd(localMetadataNode2);
 
@@ -574,9 +589,9 @@ public class NodeStateIT {
                     .withConfigLoader(loader)
                     .build()) {
 
-          Map<InetSocketAddress, Node> nodes = localSession.getMetadata().getNodes();
-          Node localMetadataNode1 = nodes.get(address1);
-          Node localMetadataNode2 = nodes.get(address2);
+          Metadata metadata = localSession.getMetadata();
+          Node localMetadataNode1 = metadata.findNode(address1).orElseThrow(AssertionError::new);
+          Node localMetadataNode2 = metadata.findNode(address2).orElseThrow(AssertionError::new);
           if (localMetadataNode2.getState() == NodeState.DOWN) {
             // Stopped node was tried first and marked down, that's our target scenario
             verify(localNodeStateListener, timeout(500)).onDown(localMetadataNode2);
@@ -609,9 +624,10 @@ public class NodeStateIT {
     }
   }
 
-  // Generates a socket address that is not the connect address of one of the nodes in the cluster
-  private InetSocketAddress withUnusedPort(InetSocketAddress address) {
-    return new InetSocketAddress(address.getAddress(), findAvailablePort());
+  // Generates an endpoint that is not the connect address of one of the nodes in the cluster
+  private EndPoint withUnusedPort(EndPoint endPoint) {
+    InetSocketAddress address = (InetSocketAddress) endPoint.resolve();
+    return new DefaultEndPoint(new InetSocketAddress(address.getAddress(), findAvailablePort()));
   }
 
   /**
@@ -647,10 +663,7 @@ public class NodeStateIT {
     }
 
     @Override
-    public void init(
-        @NonNull Map<InetSocketAddress, Node> nodes,
-        @NonNull DistanceReporter distanceReporter,
-        @NonNull Set<InetSocketAddress> contactPoints) {
+    public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
       this.distanceReporter = distanceReporter;
       for (Node node : nodes.values()) {
         liveNodes.add(node);

@@ -15,10 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.ssl;
 
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import io.netty.channel.Channel;
 import io.netty.handler.ssl.SslHandler;
-import java.net.SocketAddress;
 
 /**
  * Low-level SSL extension point.
@@ -37,5 +37,5 @@ import java.net.SocketAddress;
  * @see DefaultDriverContext#buildSslHandlerFactory()
  */
 public interface SslHandlerFactory extends AutoCloseable {
-  SslHandler newSslHandler(Channel channel, SocketAddress remoteEndpoint);
+  SslHandler newSslHandler(Channel channel, EndPoint remoteEndpoint);
 }

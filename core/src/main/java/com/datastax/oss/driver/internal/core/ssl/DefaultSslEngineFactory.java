@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.ssl;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.InputStream;
@@ -85,11 +86,12 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
 
   @NonNull
   @Override
-  public SSLEngine newSslEngine(@NonNull SocketAddress remoteEndpoint) {
+  public SSLEngine newSslEngine(@NonNull EndPoint remoteEndpoint) {
     SSLEngine engine;
-    if (remoteEndpoint instanceof InetSocketAddress) {
-      InetSocketAddress address = (InetSocketAddress) remoteEndpoint;
-      engine = sslContext.createSSLEngine(address.getHostName(), address.getPort());
+    SocketAddress remoteAddress = remoteEndpoint.resolve();
+    if (remoteAddress instanceof InetSocketAddress) {
+      InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
+      engine = sslContext.createSSLEngine(socketAddress.getHostName(), socketAddress.getPort());
     } else {
       engine = sslContext.createSSLEngine();
     }

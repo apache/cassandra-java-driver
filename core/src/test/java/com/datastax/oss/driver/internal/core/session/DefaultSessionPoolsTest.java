@@ -19,7 +19,6 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
@@ -48,11 +47,13 @@ import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
+import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.DistanceEvent;
 import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
+import com.datastax.oss.driver.internal.core.metadata.TestNodeFactory;
 import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
@@ -64,9 +65,10 @@ import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GlobalEventExecutor;
-import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -127,8 +129,6 @@ public class DefaultSessionPoolsTest {
     when(context.getConfig()).thenReturn(config);
 
     // Init sequence:
-    when(metadataManager.addContactPoints(anySet()))
-        .thenReturn(CompletableFuture.completedFuture(null));
     when(metadataManager.refreshNodes()).thenReturn(CompletableFuture.completedFuture(null));
     when(metadataManager.firstSchemaRefreshFuture())
         .thenReturn(CompletableFuture.completedFuture(null));
@@ -154,11 +154,11 @@ public class DefaultSessionPoolsTest {
     node1 = mockLocalNode(1);
     node2 = mockLocalNode(2);
     node3 = mockLocalNode(3);
-    ImmutableMap<InetSocketAddress, Node> nodes =
+    ImmutableMap<UUID, Node> nodes =
         ImmutableMap.of(
-            node1.getConnectAddress(), node1,
-            node2.getConnectAddress(), node2,
-            node3.getConnectAddress(), node3);
+            node1.getHostId(), node1,
+            node2.getHostId(), node2,
+            node3.getHostId(), node3);
     when(metadata.getNodes()).thenReturn(nodes);
     when(metadataManager.getMetadata()).thenReturn(metadata);
 
@@ -938,7 +938,10 @@ public class DefaultSessionPoolsTest {
 
   private static DefaultNode mockLocalNode(int i) {
     DefaultNode node = mock(DefaultNode.class);
-    when(node.getConnectAddress()).thenReturn(new InetSocketAddress("127.0.0." + i, 9042));
+    when(node.getHostId()).thenReturn(UUID.randomUUID());
+    DefaultEndPoint endPoint = TestNodeFactory.newEndPoint(i);
+    when(node.getEndPoint()).thenReturn(endPoint);
+    when(node.getBroadcastRpcAddress()).thenReturn(Optional.of(endPoint.resolve()));
     when(node.getDistance()).thenReturn(NodeDistance.LOCAL);
     when(node.toString()).thenReturn("node" + i);
     return node;

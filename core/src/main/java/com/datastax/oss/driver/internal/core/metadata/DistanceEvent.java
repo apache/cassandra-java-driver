@@ -40,8 +40,7 @@ public class DistanceEvent {
       return true;
     } else if (other instanceof DistanceEvent) {
       DistanceEvent that = (DistanceEvent) other;
-      return this.distance == that.distance
-          && Objects.equals(this.node.getConnectAddress(), that.node.getConnectAddress());
+      return this.distance == that.distance && Objects.equals(this.node, that.node);
     } else {
       return false;
     }
@@ -49,11 +48,11 @@ public class DistanceEvent {
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.distance, this.node.getConnectAddress());
+    return Objects.hash(this.distance, this.node);
   }
 
   @Override
   public String toString() {
-    return "DistanceEvent(" + distance + ", " + node.getConnectAddress() + ")";
+    return "DistanceEvent(" + distance + ", " + node + ")";
   }
 }

@@ -29,10 +29,10 @@ import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,12 +48,12 @@ public class DefaultMetadata implements Metadata {
   public static DefaultMetadata EMPTY =
       new DefaultMetadata(Collections.emptyMap(), Collections.emptyMap(), null);
 
-  protected final Map<InetSocketAddress, Node> nodes;
+  protected final Map<UUID, Node> nodes;
   protected final Map<CqlIdentifier, ? extends KeyspaceMetadata> keyspaces;
   protected final TokenMap tokenMap;
 
   protected DefaultMetadata(
-      Map<InetSocketAddress, Node> nodes,
+      Map<UUID, Node> nodes,
       Map<CqlIdentifier, ? extends KeyspaceMetadata> keyspaces,
       TokenMap tokenMap) {
     this.nodes = nodes;
@@ -63,7 +63,7 @@ public class DefaultMetadata implements Metadata {
 
   @NonNull
   @Override
-  public Map<InetSocketAddress, Node> getNodes() {
+  public Map<UUID, Node> getNodes() {
     return nodes;
   }
 
@@ -91,7 +91,7 @@ public class DefaultMetadata implements Metadata {
    * @return the new metadata.
    */
   public DefaultMetadata withNodes(
-      Map<InetSocketAddress, Node> newNodes,
+      Map<UUID, Node> newNodes,
       boolean tokenMapEnabled,
       boolean tokensChanged,
       TokenFactory tokenFactory,
@@ -119,7 +119,7 @@ public class DefaultMetadata implements Metadata {
 
   @Nullable
   protected TokenMap rebuildTokenMap(
-      Map<InetSocketAddress, Node> newNodes,
+      Map<UUID, Node> newNodes,
       Map<CqlIdentifier, ? extends KeyspaceMetadata> newKeyspaces,
       boolean tokenMapEnabled,
       boolean forceFullRebuild,

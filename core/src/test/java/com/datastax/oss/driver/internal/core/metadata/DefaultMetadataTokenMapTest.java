@@ -27,9 +27,9 @@ import com.datastax.oss.driver.internal.core.metadata.token.DefaultReplicationSt
 import com.datastax.oss.driver.internal.core.metadata.token.Murmur3TokenFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,8 +41,6 @@ public class DefaultMetadataTokenMapTest {
 
   // Simulate the simplest setup possible for a functional token map. We're not testing the token
   // map itself, only how the metadata interacts with it.
-  private static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
-  private static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
   private static final String TOKEN1 = "-9000000000000000000";
   private static final String TOKEN2 = "9000000000000000000";
   private static final Node NODE1 = mockNode(TOKEN1);
@@ -66,60 +64,86 @@ public class DefaultMetadataTokenMapTest {
   @Test
   public void should_not_build_token_map_when_initializing_with_contact_points() {
     DefaultMetadata contactPointsMetadata =
-        new DefaultMetadata(ImmutableMap.of(ADDRESS1, NODE1), Collections.emptyMap(), null);
+        new DefaultMetadata(
+            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null);
     assertThat(contactPointsMetadata.getTokenMap()).isNotPresent();
   }
 
   @Test
   public void should_build_minimal_token_map_on_first_refresh() {
     DefaultMetadata contactPointsMetadata =
-        new DefaultMetadata(ImmutableMap.of(ADDRESS1, NODE1), Collections.emptyMap(), null);
+        new DefaultMetadata(
+            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null);
     DefaultMetadata firstRefreshMetadata =
         contactPointsMetadata.withNodes(
-            ImmutableMap.of(ADDRESS1, NODE1), true, true, new Murmur3TokenFactory(), context);
+            ImmutableMap.of(NODE1.getHostId(), NODE1),
+            true,
+            true,
+            new Murmur3TokenFactory(),
+            context);
     assertThat(firstRefreshMetadata.getTokenMap().get().getTokenRanges()).hasSize(1);
   }
 
   @Test
   public void should_not_build_token_map_when_disabled() {
     DefaultMetadata contactPointsMetadata =
-        new DefaultMetadata(ImmutableMap.of(ADDRESS1, NODE1), Collections.emptyMap(), null);
+        new DefaultMetadata(
+            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null);
     DefaultMetadata firstRefreshMetadata =
         contactPointsMetadata.withNodes(
-            ImmutableMap.of(ADDRESS1, NODE1), false, true, new Murmur3TokenFactory(), context);
+            ImmutableMap.of(NODE1.getHostId(), NODE1),
+            false,
+            true,
+            new Murmur3TokenFactory(),
+            context);
     assertThat(firstRefreshMetadata.getTokenMap()).isNotPresent();
   }
 
   @Test
   public void should_stay_empty_on_first_refresh_if_partitioner_missing() {
     DefaultMetadata contactPointsMetadata =
-        new DefaultMetadata(ImmutableMap.of(ADDRESS1, NODE1), Collections.emptyMap(), null);
+        new DefaultMetadata(
+            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null);
     DefaultMetadata firstRefreshMetadata =
         contactPointsMetadata.withNodes(
-            ImmutableMap.of(ADDRESS1, NODE1), true, true, null, context);
+            ImmutableMap.of(NODE1.getHostId(), NODE1), true, true, null, context);
     assertThat(firstRefreshMetadata.getTokenMap()).isNotPresent();
   }
 
   @Test
   public void should_update_minimal_token_map_if_new_node_and_still_no_schema() {
     DefaultMetadata contactPointsMetadata =
-        new DefaultMetadata(ImmutableMap.of(ADDRESS1, NODE1), Collections.emptyMap(), null);
+        new DefaultMetadata(
+            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null);
     DefaultMetadata firstRefreshMetadata =
         contactPointsMetadata.withNodes(
-            ImmutableMap.of(ADDRESS1, NODE1), true, true, new Murmur3TokenFactory(), context);
+            ImmutableMap.of(NODE1.getHostId(), NODE1),
+            true,
+            true,
+            new Murmur3TokenFactory(),
+            context);
     DefaultMetadata secondRefreshMetadata =
         firstRefreshMetadata.withNodes(
-            ImmutableMap.of(ADDRESS1, NODE1, ADDRESS2, NODE2), true, false, null, context);
+            ImmutableMap.of(NODE1.getHostId(), NODE1, NODE2.getHostId(), NODE2),
+            true,
+            false,
+            null,
+            context);
     assertThat(secondRefreshMetadata.getTokenMap().get().getTokenRanges()).hasSize(2);
   }
 
   @Test
   public void should_update_token_map_when_schema_changes() {
     DefaultMetadata contactPointsMetadata =
-        new DefaultMetadata(ImmutableMap.of(ADDRESS1, NODE1), Collections.emptyMap(), null);
+        new DefaultMetadata(
+            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null);
     DefaultMetadata firstRefreshMetadata =
         contactPointsMetadata.withNodes(
-            ImmutableMap.of(ADDRESS1, NODE1), true, true, new Murmur3TokenFactory(), context);
+            ImmutableMap.of(NODE1.getHostId(), NODE1),
+            true,
+            true,
+            new Murmur3TokenFactory(),
+            context);
     DefaultMetadata schemaRefreshMetadata =
         firstRefreshMetadata.withSchema(ImmutableMap.of(KEYSPACE_NAME, KEYSPACE), true, context);
     assertThat(schemaRefreshMetadata.getTokenMap().get().getTokenRanges(KEYSPACE_NAME, NODE1))
@@ -128,6 +152,7 @@ public class DefaultMetadataTokenMapTest {
 
   private static DefaultNode mockNode(String token) {
     DefaultNode node = mock(DefaultNode.class);
+    when(node.getHostId()).thenReturn(UUID.randomUUID());
     when(node.getRawTokens()).thenReturn(ImmutableSet.of(token));
     return node;
   }

@@ -135,6 +135,105 @@
         "old": "method SelfT com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT extends com.datastax.oss.driver.api.core.cql.StatementBuilder<SelfT, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>, StatementT>, StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT extends com.datastax.oss.driver.api.core.cql.Statement<StatementT>>>::withTracing()",
         "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
         "justification": "JAVA-2164: Rename statement builder methods to setXxx"
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter void com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException::<init>(===java.net.SocketAddress===, java.lang.String, java.util.List<com.datastax.oss.driver.api.core.ProtocolVersion>)",
+        "new": "parameter void com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException::<init>(===com.datastax.oss.driver.api.core.metadata.EndPoint===, java.lang.String, java.util.List<com.datastax.oss.driver.api.core.ProtocolVersion>)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2165: Abstract node connection information"
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException::forNegotiation(===java.net.SocketAddress===, java.util.List<com.datastax.oss.driver.api.core.ProtocolVersion>)",
+        "new": "parameter com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException::forNegotiation(===com.datastax.oss.driver.api.core.metadata.EndPoint===, java.util.List<com.datastax.oss.driver.api.core.ProtocolVersion>)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2165: Abstract node connection information"
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException::forSingleAttempt(===java.net.SocketAddress===, com.datastax.oss.driver.api.core.ProtocolVersion)",
+        "new": "parameter com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException::forSingleAttempt(===com.datastax.oss.driver.api.core.metadata.EndPoint===, com.datastax.oss.driver.api.core.ProtocolVersion)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2165: Abstract node connection information"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method java.net.SocketAddress com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException::getAddress()",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2165: Abstract node connection information"
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter com.datastax.oss.driver.api.core.auth.Authenticator com.datastax.oss.driver.api.core.auth.AuthProvider::newAuthenticator(===java.net.SocketAddress===, java.lang.String) throws com.datastax.oss.driver.api.core.auth.AuthenticationException",
+        "new": "parameter com.datastax.oss.driver.api.core.auth.Authenticator com.datastax.oss.driver.api.core.auth.AuthProvider::newAuthenticator(===com.datastax.oss.driver.api.core.metadata.EndPoint===, java.lang.String) throws com.datastax.oss.driver.api.core.auth.AuthenticationException",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2165: Abstract node connection information"
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter void com.datastax.oss.driver.api.core.auth.AuthProvider::onMissingChallenge(===java.net.SocketAddress===) throws com.datastax.oss.driver.api.core.auth.AuthenticationException",
+        "new": "parameter void com.datastax.oss.driver.api.core.auth.AuthProvider::onMissingChallenge(===com.datastax.oss.driver.api.core.metadata.EndPoint===) throws com.datastax.oss.driver.api.core.auth.AuthenticationException",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2165: Abstract node connection information"
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter void com.datastax.oss.driver.api.core.auth.AuthenticationException::<init>(===java.net.SocketAddress===, java.lang.String)",
+        "new": "parameter void com.datastax.oss.driver.api.core.auth.AuthenticationException::<init>(===com.datastax.oss.driver.api.core.metadata.EndPoint===, java.lang.String)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2165: Abstract node connection information"
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter void com.datastax.oss.driver.api.core.auth.AuthenticationException::<init>(===java.net.SocketAddress===, java.lang.String, java.lang.Throwable)",
+        "new": "parameter void com.datastax.oss.driver.api.core.auth.AuthenticationException::<init>(===com.datastax.oss.driver.api.core.metadata.EndPoint===, java.lang.String, java.lang.Throwable)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2165: Abstract node connection information"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method java.net.SocketAddress com.datastax.oss.driver.api.core.auth.AuthenticationException::getAddress()",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2165: Abstract node connection information"
+      },
+      {
+        "code": "java.method.numberOfParametersChanged",
+        "old": "method void com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy::init(java.util.Map<java.net.InetSocketAddress, com.datastax.oss.driver.api.core.metadata.Node>, com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy.DistanceReporter, java.util.Set<java.net.InetSocketAddress>)",
+        "new": "method void com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy::init(java.util.Map<java.util.UUID, com.datastax.oss.driver.api.core.metadata.Node>, com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy.DistanceReporter)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2165: Abstract node connection information"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Map<java.net.InetSocketAddress, com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.core.metadata.Metadata::getNodes()",
+        "new": "method java.util.Map<java.util.UUID, com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.core.metadata.Metadata::getNodes()",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2165: Abstract node connection information"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method java.util.Optional<java.net.InetSocketAddress> com.datastax.oss.driver.api.core.metadata.Node::getBroadcastRpcAddress()",
+        "justification": "JAVA-2165: Abstract node connection information"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method java.net.InetSocketAddress com.datastax.oss.driver.api.core.metadata.Node::getConnectAddress()",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2165: Abstract node connection information"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method com.datastax.oss.driver.api.core.metadata.EndPoint com.datastax.oss.driver.api.core.metadata.Node::getEndPoint()",
+        "package": "com.datastax.oss.driver.api.core.metadata",
+        "justification": "JAVA-2165: Abstract node connection information"
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter javax.net.ssl.SSLEngine com.datastax.oss.driver.api.core.ssl.SslEngineFactory::newSslEngine(===java.net.SocketAddress===)",
+        "new": "parameter javax.net.ssl.SSLEngine com.datastax.oss.driver.api.core.ssl.SslEngineFactory::newSslEngine(===com.datastax.oss.driver.api.core.metadata.EndPoint===)",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
+        "justification": "JAVA-2165: Abstract node connection information"
       }
     ]
   }

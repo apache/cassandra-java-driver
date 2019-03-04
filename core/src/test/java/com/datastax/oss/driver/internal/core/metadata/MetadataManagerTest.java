@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -57,8 +58,9 @@ import org.mockito.MockitoAnnotations;
 
 public class MetadataManagerTest {
 
-  private static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
-  private static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
+  // Don't use 1 because that's the default when no contact points are provided
+  private static final EndPoint END_POINT2 = TestNodeFactory.newEndPoint(2);
+  private static final EndPoint END_POINT3 = TestNodeFactory.newEndPoint(3);
 
   @Mock private InternalDriverContext context;
   @Mock private NettyOptions nettyOptions;
@@ -107,36 +109,62 @@ public class MetadataManagerTest {
   @Test
   public void should_add_contact_points() {
     // When
-    CompletionStage<Void> addContactPointsFuture =
-        metadataManager.addContactPoints(ImmutableSet.of(ADDRESS1));
-    waitForPendingAdminTasks();
+    metadataManager.addContactPoints(ImmutableSet.of(END_POINT2));
 
     // Then
-    assertThatStage(addContactPointsFuture).isSuccess();
-    assertThat(metadataManager.refreshes).hasSize(1);
-    InitContactPointsRefresh refresh =
-        ((InitContactPointsRefresh) metadataManager.refreshes.get(0));
-    assertThat(refresh.contactPoints).containsExactlyInAnyOrder(ADDRESS1);
+    assertThat(metadataManager.getContactPoints())
+        .extracting(Node::getEndPoint)
+        .containsOnly(END_POINT2);
+    assertThat(metadataManager.wasImplicitContactPoint()).isFalse();
   }
 
   @Test
   public void should_use_default_if_no_contact_points_provided() {
     // When
-    CompletionStage<Void> addContactPointsFuture =
-        metadataManager.addContactPoints(Collections.emptySet());
+    metadataManager.addContactPoints(Collections.emptySet());
+
+    // Then
+    assertThat(metadataManager.getContactPoints())
+        .extracting(Node::getEndPoint)
+        .containsOnly(MetadataManager.DEFAULT_CONTACT_POINT);
+    assertThat(metadataManager.wasImplicitContactPoint()).isTrue();
+  }
+
+  @Test
+  public void should_copy_contact_points_on_refresh_of_all_nodes() {
+    // Given
+    // Run previous scenario to trigger the addition of the default contact point:
+    should_use_default_if_no_contact_points_provided();
+
+    NodeInfo info1 = mock(NodeInfo.class);
+    NodeInfo info2 = mock(NodeInfo.class);
+    List<NodeInfo> infos = ImmutableList.of(info1, info2);
+    when(topologyMonitor.refreshNodeList()).thenReturn(CompletableFuture.completedFuture(infos));
+
+    // When
+    CompletionStage<Void> refreshNodesFuture = metadataManager.refreshNodes();
     waitForPendingAdminTasks();
 
     // Then
-    assertThatStage(addContactPointsFuture).isSuccess();
+    assertThatStage(refreshNodesFuture).isSuccess();
     assertThat(metadataManager.refreshes).hasSize(1);
-    InitContactPointsRefresh refresh =
-        ((InitContactPointsRefresh) metadataManager.refreshes.get(0));
-    assertThat(refresh.contactPoints).containsExactly(MetadataManager.DEFAULT_CONTACT_POINT);
+    InitialNodeListRefresh refresh = (InitialNodeListRefresh) metadataManager.refreshes.get(0);
+    assertThat(refresh.contactPoints)
+        .extracting(Node::getEndPoint)
+        .containsOnly(MetadataManager.DEFAULT_CONTACT_POINT);
+    assertThat(refresh.nodeInfos).containsExactlyInAnyOrder(info1, info2);
   }
 
   @Test
   public void should_refresh_all_nodes() {
     // Given
+    // Run previous scenario to trigger the addition of the default contact point and a first
+    // refresh:
+    should_copy_contact_points_on_refresh_of_all_nodes();
+    // Discard that first refresh, we don't really care about it in the context of this test, only
+    // that the next one won't be the first
+    metadataManager.refreshes.clear();
+
     NodeInfo info1 = mock(NodeInfo.class);
     NodeInfo info2 = mock(NodeInfo.class);
     List<NodeInfo> infos = ImmutableList.of(info1, info2);
@@ -156,7 +184,7 @@ public class MetadataManagerTest {
   @Test
   public void should_refresh_single_node() {
     // Given
-    Node node = new DefaultNode(ADDRESS1, context);
+    Node node = TestNodeFactory.newNode(2, context);
     NodeInfo info = mock(NodeInfo.class);
     when(info.getDatacenter()).thenReturn("dc1");
     when(topologyMonitor.refreshNode(node))
@@ -189,13 +217,14 @@ public class MetadataManagerTest {
   @Test
   public void should_add_node() {
     // Given
+    InetSocketAddress broadcastRpcAddress = ((InetSocketAddress) END_POINT2.resolve());
     NodeInfo info = mock(NodeInfo.class);
-    when(info.getConnectAddress()).thenReturn(ADDRESS1);
-    when(topologyMonitor.getNewNodeInfo(ADDRESS1))
+    when(info.getBroadcastRpcAddress()).thenReturn(Optional.of(broadcastRpcAddress));
+    when(topologyMonitor.getNewNodeInfo(broadcastRpcAddress))
         .thenReturn(CompletableFuture.completedFuture(Optional.of(info)));
 
     // When
-    metadataManager.addNode(ADDRESS1);
+    metadataManager.addNode(broadcastRpcAddress);
     waitForPendingAdminTasks();
 
     // Then
@@ -205,18 +234,20 @@ public class MetadataManagerTest {
   }
 
   @Test
-  public void should_not_add_node_if_connect_address_does_not_match() {
+  public void should_not_add_node_if_broadcast_rpc_address_does_not_match() {
     // Given
+    InetSocketAddress broadcastRpcAddress2 = ((InetSocketAddress) END_POINT2.resolve());
+    InetSocketAddress broadcastRpcAddress3 = ((InetSocketAddress) END_POINT3.resolve());
     NodeInfo info = mock(NodeInfo.class);
-    when(topologyMonitor.getNewNodeInfo(ADDRESS1))
+    when(topologyMonitor.getNewNodeInfo(broadcastRpcAddress2))
         .thenReturn(CompletableFuture.completedFuture(Optional.of(info)));
-    when(info.getConnectAddress())
+    when(info.getBroadcastRpcAddress())
         .thenReturn(
-            ADDRESS2 // Does not match the address we got the info with
+            Optional.of(broadcastRpcAddress3) // Does not match the address we got the info with
             );
 
     // When
-    metadataManager.addNode(ADDRESS1);
+    metadataManager.addNode(broadcastRpcAddress2);
     waitForPendingAdminTasks();
 
     // Then
@@ -226,11 +257,12 @@ public class MetadataManagerTest {
   @Test
   public void should_not_add_node_if_topology_monitor_does_not_have_info() {
     // Given
-    when(topologyMonitor.getNewNodeInfo(ADDRESS1))
+    InetSocketAddress broadcastRpcAddress2 = ((InetSocketAddress) END_POINT2.resolve());
+    when(topologyMonitor.getNewNodeInfo(broadcastRpcAddress2))
         .thenReturn(CompletableFuture.completedFuture(Optional.empty()));
 
     // When
-    metadataManager.addNode(ADDRESS1);
+    metadataManager.addNode(broadcastRpcAddress2);
     waitForPendingAdminTasks();
 
     // Then
@@ -239,14 +271,17 @@ public class MetadataManagerTest {
 
   @Test
   public void should_remove_node() {
+    // Given
+    InetSocketAddress broadcastRpcAddress2 = ((InetSocketAddress) END_POINT2.resolve());
+
     // When
-    metadataManager.removeNode(ADDRESS1);
+    metadataManager.removeNode(broadcastRpcAddress2);
     waitForPendingAdminTasks();
 
     // Then
     assertThat(metadataManager.refreshes).hasSize(1);
     RemoveNodeRefresh refresh = (RemoveNodeRefresh) metadataManager.refreshes.get(0);
-    assertThat(refresh.toRemove).isEqualTo(ADDRESS1);
+    assertThat(refresh.broadcastRpcAddressToRemove).isEqualTo(broadcastRpcAddress2);
   }
 
   private static class TestMetadataManager extends MetadataManager {

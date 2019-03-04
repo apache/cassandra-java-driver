@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.TestResponses;
 import com.datastax.oss.driver.internal.core.context.EventBus;
@@ -45,10 +46,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.DefaultEventLoopGroup;
-import io.netty.channel.local.LocalAddress;
 import io.netty.channel.local.LocalChannel;
 import io.netty.channel.local.LocalServerChannel;
-import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Optional;
@@ -78,8 +77,8 @@ import org.mockito.stubbing.Answer;
  */
 @RunWith(DataProviderRunner.class)
 public abstract class ChannelFactoryTestBase {
-  static final LocalAddress SERVER_ADDRESS =
-      new LocalAddress(ChannelFactoryTestBase.class.getSimpleName() + "-server");
+  static final EndPoint SERVER_ADDRESS =
+      new LocalEndPoint(ChannelFactoryTestBase.class.getSimpleName() + "-server");
 
   private static final int TIMEOUT_MILLIS = 500;
 
@@ -141,7 +140,7 @@ public abstract class ChannelFactoryTestBase {
         new ServerBootstrap()
             .group(serverGroup)
             .channel(LocalServerChannel.class)
-            .localAddress(SERVER_ADDRESS)
+            .localAddress(SERVER_ADDRESS.resolve())
             .childHandler(new ServerInitializer());
     ChannelFuture channelFuture = serverBootstrap.bind().sync();
     serverAcceptChannel = (LocalServerChannel) channelFuture.sync().channel();
@@ -222,7 +221,7 @@ public abstract class ChannelFactoryTestBase {
 
     @Override
     ChannelInitializer<Channel> initializer(
-        SocketAddress address,
+        EndPoint endPoint,
         ProtocolVersion protocolVersion,
         DriverChannelOptions options,
         NodeMetricUpdater nodeMetricUpdater,
@@ -253,7 +252,7 @@ public abstract class ChannelFactoryTestBase {
             HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultProfile);
             ProtocolInitHandler initHandler =
                 new ProtocolInitHandler(
-                    context, protocolVersion, clusterName, options, heartbeatHandler);
+                    context, protocolVersion, clusterName, endPoint, options, heartbeatHandler);
             channel.pipeline().addLast("inflight", inFlightHandler).addLast("init", initHandler);
           } catch (Throwable t) {
             resultFuture.completeExceptionally(t);

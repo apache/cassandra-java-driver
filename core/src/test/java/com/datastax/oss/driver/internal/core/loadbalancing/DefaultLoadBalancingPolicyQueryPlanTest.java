@@ -32,7 +32,6 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
 import com.datastax.oss.driver.api.core.session.Request;
-import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
@@ -40,6 +39,7 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -51,7 +51,6 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
 
   @Mock private Request request;
   @Mock private DefaultSession session;
-  @Mock private MetadataManager metadataManager;
   @Mock private Metadata metadata;
   @Mock private TokenMap tokenMap;
 
@@ -62,7 +61,8 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
   public void setup() {
     super.setup();
 
-    when(context.getMetadataManager()).thenReturn(metadataManager);
+    when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1));
+
     when(metadataManager.getMetadata()).thenReturn(metadata);
     when(metadata.getTokenMap()).thenAnswer(invocation -> Optional.of(this.tokenMap));
 
@@ -71,13 +71,12 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
     policy = spy(new NonShufflingPolicy(context, DriverExecutionProfile.DEFAULT_NAME));
     policy.init(
         ImmutableMap.of(
-            ADDRESS1, node1,
-            ADDRESS2, node2,
-            ADDRESS3, node3,
-            ADDRESS4, node4,
-            ADDRESS5, node5),
-        distanceReporter,
-        ImmutableSet.of(ADDRESS1));
+            UUID.randomUUID(), node1,
+            UUID.randomUUID(), node2,
+            UUID.randomUUID(), node3,
+            UUID.randomUUID(), node4,
+            UUID.randomUUID(), node5),
+        distanceReporter);
 
     // Note: this test relies on the fact that the policy uses a CopyOnWriteArraySet which preserves
     // insertion order.

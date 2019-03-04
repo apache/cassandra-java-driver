@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,6 +51,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import org.junit.Before;
@@ -78,6 +80,10 @@ public class DefaultTopologyMonitorTest {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
+    when(context.getMetricsFactory()).thenReturn(metricsFactory);
+
+    node1 = TestNodeFactory.newNode(1, context);
+    node2 = TestNodeFactory.newNode(2, context);
 
     when(defaultConfig.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT))
         .thenReturn(Duration.ofSeconds(1));
@@ -87,14 +93,9 @@ public class DefaultTopologyMonitorTest {
     addressTranslator = spy(new PassThroughAddressTranslator(context));
     when(context.getAddressTranslator()).thenReturn(addressTranslator);
 
-    when(channel.connectAddress()).thenReturn(ADDRESS1);
+    when(channel.getEndPoint()).thenReturn(node1.getEndPoint());
     when(controlConnection.channel()).thenReturn(channel);
     when(context.getControlConnection()).thenReturn(controlConnection);
-
-    when(context.getMetricsFactory()).thenReturn(metricsFactory);
-
-    node1 = new DefaultNode(ADDRESS1, context);
-    node2 = new DefaultNode(ADDRESS2, context);
 
     topologyMonitor = new TestTopologyMonitor(context);
   }
@@ -126,7 +127,7 @@ public class DefaultTopologyMonitorTest {
         new StubbedQuery(
             "SELECT * FROM system.peers WHERE peer = :address",
             ImmutableMap.of("address", ADDRESS2.getAddress()),
-            mockResult(mockPeersRow(2))));
+            mockResult(mockPeersRow(2, node2.getHostId()))));
 
     // When
     CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.refreshNode(node2);
@@ -150,7 +151,7 @@ public class DefaultTopologyMonitorTest {
         new StubbedQuery(
             "SELECT * FROM system.peers_v2 WHERE peer = :address and peer_port = :port",
             ImmutableMap.of("address", ADDRESS2.getAddress(), "peer", 9042),
-            mockResult(mockPeersV2Row(2))));
+            mockResult(mockPeersV2Row(2, node2.getHostId()))));
 
     // When
     CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.refreshNode(node2);
@@ -171,8 +172,8 @@ public class DefaultTopologyMonitorTest {
     // Given
     topologyMonitor.isSchemaV2 = false;
     node2.broadcastAddress = null;
-    AdminRow peer3 = mockPeersRow(3);
-    AdminRow peer2 = mockPeersRow(2);
+    AdminRow peer3 = mockPeersRow(3, UUID.randomUUID());
+    AdminRow peer2 = mockPeersRow(2, node2.getHostId());
     topologyMonitor.stubQueries(
         new StubbedQuery("SELECT * FROM system.peers", mockResult(peer3, peer2)));
 
@@ -189,12 +190,10 @@ public class DefaultTopologyMonitorTest {
             });
     // The rpc_address in each row should have been tried, only the last row should have been
     // converted
-    verify(peer3).getInetAddress("rpc_address");
-    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.3", 9042));
+    verify(peer3).getUuid("host_id");
     verify(peer3, never()).getString(anyString());
 
-    verify(peer2).getInetAddress("rpc_address");
-    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.2", 9042));
+    verify(peer2, times(2)).getUuid("host_id");
     verify(peer2).getString("data_center");
   }
 
@@ -203,8 +202,8 @@ public class DefaultTopologyMonitorTest {
     // Given
     topologyMonitor.isSchemaV2 = true;
     node2.broadcastAddress = null;
-    AdminRow peer3 = mockPeersV2Row(3);
-    AdminRow peer2 = mockPeersV2Row(2);
+    AdminRow peer3 = mockPeersV2Row(3, UUID.randomUUID());
+    AdminRow peer2 = mockPeersV2Row(2, node2.getHostId());
     topologyMonitor.stubQueries(
         new StubbedQuery("SELECT * FROM system.peers_v2", mockResult(peer3, peer2)));
 
@@ -219,23 +218,21 @@ public class DefaultTopologyMonitorTest {
               NodeInfo info = maybeInfo.get();
               assertThat(info.getDatacenter()).isEqualTo("dc2");
             });
-    // The rpc_address in each row should have been tried, only the last row should have been
+    // The host_id in each row should have been tried, only the last row should have been
     // converted
-    verify(peer3).getInetAddress("native_address");
-    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.3", 9042));
+    verify(peer3).getUuid("host_id");
     verify(peer3, never()).getString(anyString());
 
-    verify(peer2).getInetAddress("native_address");
-    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.2", 9042));
+    verify(peer2, times(2)).getUuid("host_id");
     verify(peer2).getString("data_center");
   }
 
   @Test
   public void should_get_new_node_from_peers() {
     // Given
-    AdminRow peer3 = mockPeersRow(3);
-    AdminRow peer2 = mockPeersRow(2);
-    AdminRow peer1 = mockPeersRow(1);
+    AdminRow peer3 = mockPeersRow(3, UUID.randomUUID());
+    AdminRow peer2 = mockPeersRow(2, node2.getHostId());
+    AdminRow peer1 = mockPeersRow(1, node1.getHostId());
     topologyMonitor.isSchemaV2 = false;
     topologyMonitor.stubQueries(
         new StubbedQuery("SELECT * FROM system.peers", mockResult(peer3, peer2, peer1)));
@@ -254,24 +251,21 @@ public class DefaultTopologyMonitorTest {
     // The rpc_address in each row should have been tried, only the last row should have been
     // converted
     verify(peer3).getInetAddress("rpc_address");
-    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.3", 9042));
     verify(peer3, never()).getString(anyString());
 
     verify(peer2).getInetAddress("rpc_address");
-    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.2", 9042));
     verify(peer2, never()).getString(anyString());
 
     verify(peer1).getInetAddress("rpc_address");
-    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.1", 9042));
     verify(peer1).getString("data_center");
   }
 
   @Test
   public void should_get_new_node_from_peers_v2() {
     // Given
-    AdminRow peer3 = mockPeersV2Row(3);
-    AdminRow peer2 = mockPeersV2Row(2);
-    AdminRow peer1 = mockPeersV2Row(1);
+    AdminRow peer3 = mockPeersV2Row(3, UUID.randomUUID());
+    AdminRow peer2 = mockPeersV2Row(2, node2.getHostId());
+    AdminRow peer1 = mockPeersV2Row(1, node1.getHostId());
     topologyMonitor.isSchemaV2 = true;
     topologyMonitor.stubQueries(
         new StubbedQuery("SELECT * FROM system.peers_v2", mockResult(peer3, peer2, peer1)));
@@ -290,23 +284,20 @@ public class DefaultTopologyMonitorTest {
     // The natove in each row should have been tried, only the last row should have been
     // converted
     verify(peer3).getInetAddress("native_address");
-    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.3", 9042));
     verify(peer3, never()).getString(anyString());
 
     verify(peer2).getInetAddress("native_address");
-    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.2", 9042));
     verify(peer2, never()).getString(anyString());
 
     verify(peer1).getInetAddress("native_address");
-    verify(addressTranslator).translate(new InetSocketAddress("127.0.0.1", 9042));
     verify(peer1).getString("data_center");
   }
 
   @Test
   public void should_refresh_node_list_from_local_and_peers() {
     // Given
-    AdminRow peer3 = mockPeersRow(3);
-    AdminRow peer2 = mockPeersRow(2);
+    AdminRow peer3 = mockPeersRow(3, UUID.randomUUID());
+    AdminRow peer2 = mockPeersRow(2, node2.getHostId());
     topologyMonitor.stubQueries(
         new StubbedQuery("SELECT * FROM system.local", mockResult(mockLocalRow(1))),
         new StubbedQuery(
@@ -325,15 +316,14 @@ public class DefaultTopologyMonitorTest {
             infos -> {
               Iterator<NodeInfo> iterator = infos.iterator();
               NodeInfo info1 = iterator.next();
-              assertThat(info1.getConnectAddress()).isEqualTo(ADDRESS1);
+              assertThat(info1.getEndPoint()).isEqualTo(node1.getEndPoint());
               assertThat(info1.getDatacenter()).isEqualTo("dc1");
               NodeInfo info3 = iterator.next();
-              assertThat(info3.getConnectAddress())
+              assertThat(info3.getEndPoint().resolve())
                   .isEqualTo(new InetSocketAddress("127.0.0.3", 9042));
               assertThat(info3.getDatacenter()).isEqualTo("dc3");
               NodeInfo info2 = iterator.next();
-              assertThat(info2.getConnectAddress())
-                  .isEqualTo(new InetSocketAddress("127.0.0.2", 9042));
+              assertThat(info2.getEndPoint()).isEqualTo(node2.getEndPoint());
               assertThat(info2.getDatacenter()).isEqualTo("dc2");
             });
   }
@@ -428,9 +418,10 @@ public class DefaultTopologyMonitorTest {
     }
   }
 
-  private AdminRow mockPeersRow(int i) {
+  private AdminRow mockPeersRow(int i, UUID hostId) {
     try {
       AdminRow row = mock(AdminRow.class);
+      when(row.getUuid("host_id")).thenReturn(hostId);
       when(row.getInetAddress("peer")).thenReturn(InetAddress.getByName("127.0.0." + i));
       when(row.getString("data_center")).thenReturn("dc" + i);
       when(row.getString("rack")).thenReturn("rack" + i);
@@ -444,9 +435,10 @@ public class DefaultTopologyMonitorTest {
     }
   }
 
-  private AdminRow mockPeersV2Row(int i) {
+  private AdminRow mockPeersV2Row(int i, UUID hostId) {
     try {
       AdminRow row = mock(AdminRow.class);
+      when(row.getUuid("host_id")).thenReturn(hostId);
       when(row.getInetAddress("peer")).thenReturn(InetAddress.getByName("127.0.0." + i));
       when(row.getInteger("peer_port")).thenReturn(7000 + i);
       when(row.getString("data_center")).thenReturn("dc" + i);

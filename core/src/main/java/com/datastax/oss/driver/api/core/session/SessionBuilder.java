@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
@@ -31,6 +32,7 @@ import com.datastax.oss.driver.internal.core.ContactPoints;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -63,7 +65,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   protected final SelfT self = (SelfT) this;
 
   protected DriverConfigLoader configLoader;
-  protected Set<InetSocketAddress> programmaticContactPoints = new HashSet<>();
+  protected Set<EndPoint> programmaticContactPoints = new HashSet<>();
   protected List<TypeCodec<?>> typeCodecs = new ArrayList<>();
   private NodeStateListener nodeStateListener;
   private SchemaChangeListener schemaChangeListener;
@@ -131,7 +133,9 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    */
   @NonNull
   public SelfT addContactPoints(@NonNull Collection<InetSocketAddress> contactPoints) {
-    this.programmaticContactPoints.addAll(contactPoints);
+    for (InetSocketAddress contactPoint : contactPoints) {
+      addContactPoint(contactPoint);
+    }
     return self;
   }
 
@@ -142,6 +146,32 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    */
   @NonNull
   public SelfT addContactPoint(@NonNull InetSocketAddress contactPoint) {
+    this.programmaticContactPoints.add(new DefaultEndPoint(contactPoint));
+    return self;
+  }
+
+  /**
+   * Adds contact points to use for the initial connection to the cluster.
+   *
+   * <p>You only need this method if you use a custom {@link EndPoint} implementation. Otherwise,
+   * use {@link #addContactPoints(Collection)}.
+   */
+  @NonNull
+  public SelfT addContactEndPoints(@NonNull Collection<EndPoint> contactPoints) {
+    for (EndPoint contactPoint : contactPoints) {
+      addContactEndPoint(contactPoint);
+    }
+    return self;
+  }
+
+  /**
+   * Adds a contact point to use for the initial connection to the cluster.
+   *
+   * <p>You only need this method if you use a custom {@link EndPoint} implementation. Otherwise,
+   * use {@link #addContactPoint(InetSocketAddress)}.
+   */
+  @NonNull
+  public SelfT addContactEndPoint(@NonNull EndPoint contactPoint) {
     this.programmaticContactPoints.add(contactPoint);
     return self;
   }
@@ -319,7 +349,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       boolean resolveAddresses =
           defaultConfig.getBoolean(DefaultDriverOption.RESOLVE_CONTACT_POINTS, true);
 
-      Set<InetSocketAddress> contactPoints =
+      Set<EndPoint> contactPoints =
           ContactPoints.merge(programmaticContactPoints, configContactPoints, resolveAddresses);
 
       if (keyspace == null && defaultConfig.isDefined(DefaultDriverOption.SESSION_KEYSPACE)) {

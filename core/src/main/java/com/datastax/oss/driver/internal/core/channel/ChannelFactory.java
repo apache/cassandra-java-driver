@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
@@ -39,7 +40,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.FixedRecvByteBufAllocator;
-import java.net.SocketAddress;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -100,12 +100,12 @@ public class ChannelFactory {
     } else {
       nodeMetricUpdater = NoopNodeMetricUpdater.INSTANCE;
     }
-    return connect(node.getConnectAddress(), options, nodeMetricUpdater);
+    return connect(node.getEndPoint(), options, nodeMetricUpdater);
   }
 
   @VisibleForTesting
   CompletionStage<DriverChannel> connect(
-      SocketAddress address, DriverChannelOptions options, NodeMetricUpdater nodeMetricUpdater) {
+      EndPoint endPoint, DriverChannelOptions options, NodeMetricUpdater nodeMetricUpdater) {
     CompletableFuture<DriverChannel> resultFuture = new CompletableFuture<>();
 
     ProtocolVersion currentVersion;
@@ -120,7 +120,7 @@ public class ChannelFactory {
     }
 
     connect(
-        address,
+        endPoint,
         options,
         nodeMetricUpdater,
         currentVersion,
@@ -131,7 +131,7 @@ public class ChannelFactory {
   }
 
   private void connect(
-      SocketAddress address,
+      EndPoint endPoint,
       DriverChannelOptions options,
       NodeMetricUpdater nodeMetricUpdater,
       ProtocolVersion currentVersion,
@@ -147,7 +147,7 @@ public class ChannelFactory {
             .channel(nettyOptions.channelClass())
             .option(ChannelOption.ALLOCATOR, nettyOptions.allocator())
             .handler(
-                initializer(address, currentVersion, options, nodeMetricUpdater, resultFuture));
+                initializer(endPoint, currentVersion, options, nodeMetricUpdater, resultFuture));
 
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
 
@@ -180,14 +180,14 @@ public class ChannelFactory {
 
     nettyOptions.afterBootstrapInitialized(bootstrap);
 
-    ChannelFuture connectFuture = bootstrap.connect(address);
+    ChannelFuture connectFuture = bootstrap.connect(endPoint.resolve());
 
     connectFuture.addListener(
         cf -> {
           if (connectFuture.isSuccess()) {
             Channel channel = connectFuture.channel();
             DriverChannel driverChannel =
-                new DriverChannel(address, channel, context.getWriteCoalescer(), currentVersion);
+                new DriverChannel(endPoint, channel, context.getWriteCoalescer(), currentVersion);
             // If this is the first successful connection, remember the protocol version and
             // cluster name for future connections.
             if (isNegotiating) {
@@ -210,7 +210,7 @@ public class ChannelFactory {
                     currentVersion,
                     downgraded.get());
                 connect(
-                    address,
+                    endPoint,
                     options,
                     nodeMetricUpdater,
                     downgraded.get(),
@@ -219,7 +219,8 @@ public class ChannelFactory {
                     resultFuture);
               } else {
                 resultFuture.completeExceptionally(
-                    UnsupportedProtocolVersionException.forNegotiation(address, attemptedVersions));
+                    UnsupportedProtocolVersionException.forNegotiation(
+                        endPoint, attemptedVersions));
               }
             } else {
               // Note: might be completed already if the failure happened in initializer(), this is
@@ -232,7 +233,7 @@ public class ChannelFactory {
 
   @VisibleForTesting
   ChannelInitializer<Channel> initializer(
-      SocketAddress address,
+      EndPoint endPoint,
       ProtocolVersion protocolVersion,
       DriverChannelOptions options,
       NodeMetricUpdater nodeMetricUpdater,
@@ -266,12 +267,12 @@ public class ChannelFactory {
           HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultConfig);
           ProtocolInitHandler initHandler =
               new ProtocolInitHandler(
-                  context, protocolVersion, clusterName, options, heartbeatHandler);
+                  context, protocolVersion, clusterName, endPoint, options, heartbeatHandler);
 
           ChannelPipeline pipeline = channel.pipeline();
           context
               .getSslHandlerFactory()
-              .map(f -> f.newSslHandler(channel, address))
+              .map(f -> f.newSslHandler(channel, endPoint))
               .map(h -> pipeline.addLast("ssl", h));
 
           // Only add meter handlers on the pipeline if metrics are enabled.
