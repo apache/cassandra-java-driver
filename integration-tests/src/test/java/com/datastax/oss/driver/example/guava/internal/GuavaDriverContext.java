@@ -68,8 +68,6 @@ public class GuavaDriverContext extends DefaultDriverContext {
   public RequestProcessorRegistry buildRequestProcessorRegistry() {
     // Register the typical request processors, except instead of the normal async processors,
     // use GuavaRequestAsyncProcessor to return ListenableFutures in async methods.
-    ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache =
-        new MapMaker().weakValues().makeMap();
 
     CqlRequestAsyncProcessor cqlRequestAsyncProcessor = new CqlRequestAsyncProcessor();
     CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor = new CqlPrepareAsyncProcessor();
