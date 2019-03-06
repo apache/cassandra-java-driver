@@ -29,13 +29,9 @@ import com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestAsyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
-import com.datastax.oss.driver.internal.core.cql.DefaultPreparedStatement;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
-import com.google.common.collect.MapMaker;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 
 /**
@@ -68,8 +64,6 @@ public class GuavaDriverContext extends DefaultDriverContext {
   public RequestProcessorRegistry buildRequestProcessorRegistry() {
     // Register the typical request processors, except instead of the normal async processors,
     // use GuavaRequestAsyncProcessor to return ListenableFutures in async methods.
-    ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache =
-        new MapMaker().weakValues().makeMap();
 
     CqlRequestAsyncProcessor cqlRequestAsyncProcessor = new CqlRequestAsyncProcessor();
     CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor = new CqlPrepareAsyncProcessor();
