@@ -53,6 +53,9 @@ public abstract class CollectionSelector implements Selector {
   @Override
   public void appendTo(@NonNull StringBuilder builder) {
     CqlHelper.append(elementSelectors, builder, opening, ",", closing);
+    if (alias != null) {
+      builder.append(" AS ").append(alias.asCql(true));
+    }
   }
 
   @NonNull

@@ -252,4 +252,77 @@ public class SelectSelectorTest {
     assertThat(selectFrom("foo").countAll().as("allthethings").as("total"))
         .hasCql("SELECT count(*) AS total FROM foo");
   }
+
+  @Test
+  public void should_alias_function_selector() {
+    assertThat(selectFrom("foo").function("bar", Selector.column("col")).as("alias_1"))
+        .hasCql("SELECT bar(col) AS alias_1 FROM foo");
+
+    assertThat(
+            selectFrom("foo")
+                .function("bar", Selector.column("col"))
+                .as("alias_1")
+                .function("baz", Selector.column("col"))
+                .as("alias_2"))
+        .hasCql("SELECT bar(col) AS alias_1,baz(col) AS alias_2 FROM foo");
+  }
+
+  @Test
+  public void should_alias_list_selector() {
+    assertThat(selectFrom("foo").listOf(Selector.column("col")).as("alias_1"))
+        .hasCql("SELECT [col] AS alias_1 FROM foo");
+
+    assertThat(
+            selectFrom("foo")
+                .listOf(Selector.column("col"))
+                .as("alias_1")
+                .listOf(Selector.column("col2"))
+                .as("alias_2"))
+        .hasCql("SELECT [col] AS alias_1,[col2] AS alias_2 FROM foo");
+  }
+
+  @Test
+  public void should_alias_set_selector() {
+    assertThat(selectFrom("foo").setOf(Selector.column("col")).as("alias_1"))
+        .hasCql("SELECT {col} AS alias_1 FROM foo");
+
+    assertThat(
+            selectFrom("foo")
+                .setOf(Selector.column("col"))
+                .as("alias_1")
+                .setOf(Selector.column("col2"))
+                .as("alias_2"))
+        .hasCql("SELECT {col} AS alias_1,{col2} AS alias_2 FROM foo");
+  }
+
+  @Test
+  public void should_alias_tuple_selector() {
+    assertThat(selectFrom("foo").tupleOf(Selector.column("col")).as("alias_1"))
+        .hasCql("SELECT (col) AS alias_1 FROM foo");
+
+    assertThat(
+            selectFrom("foo")
+                .tupleOf(Selector.column("col"))
+                .as("alias_1")
+                .tupleOf(Selector.column("col2"))
+                .as("alias_2"))
+        .hasCql("SELECT (col) AS alias_1,(col2) AS alias_2 FROM foo");
+  }
+
+  @Test
+  public void should_alias_map_selector() {
+    assertThat(
+            selectFrom("foo")
+                .mapOf(ImmutableMap.of(Selector.column("a"), Selector.column("b")))
+                .as("alias_1"))
+        .hasCql("SELECT {a:b} AS alias_1 FROM foo");
+
+    assertThat(
+            selectFrom("foo")
+                .mapOf(ImmutableMap.of(Selector.column("a"), Selector.column("b")))
+                .as("alias_1")
+                .mapOf(ImmutableMap.of(Selector.column("c"), Selector.column("d")))
+                .as("alias_2"))
+        .hasCql("SELECT {a:b} AS alias_1,{c:d} AS alias_2 FROM foo");
+  }
 }

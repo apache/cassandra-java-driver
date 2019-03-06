@@ -88,6 +88,10 @@ public class MapSelector implements Selector {
       entry.getValue().appendTo(builder);
     }
     builder.append("}");
+
+    if (alias != null) {
+      builder.append(" AS ").append(alias.asCql(true));
+    }
   }
 
   @NonNull
