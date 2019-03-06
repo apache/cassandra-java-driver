@@ -25,7 +25,6 @@
   </parent>
 
   <artifactId>java-driver-mapper-processor</artifactId>
-  <packaging>bundle</packaging>
 
   <name>DataStax Java driver for Apache Cassandra(R) - object mapper processor</name>
 
@@ -60,40 +59,6 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-        <extensions>true</extensions>
-        <executions>
-          <execution>
-            <goals>
-              <goal>bundle</goal>
-            </goals>
-            <configuration>
-              <instructions>
-                <Bundle-SymbolicName>com.datastax.oss.driver.mapper-processor</Bundle-SymbolicName>
-                <!--
-                Allow importing code from other packages
-                (so reflection-based loading of policies works)
-                -->
-                <DynamicImport-Package>*</DynamicImport-Package>
-                <!--
-                Don't include the packages below because they aren't OSGi bundles,
-                and the driver can live without them.
-                -->
-                <Import-Package>
-                  !net.jcip.annotations.*,
-                  !edu.umd.cs.findbugs.annotations.*,
-                  *
-                </Import-Package>
-                <Export-Package>
-                  com.datastax.oss.driver.*.mapper.*
-                </Export-Package>
-              </instructions>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
       <plugin>
         <groupId>org.revapi</groupId>
         <artifactId>revapi-maven-plugin</artifactId>
