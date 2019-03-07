@@ -31,49 +31,16 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-/**
- * A JSON codec that uses the <a href="http://wiki.fasterxml.com/JacksonHome">Jackson</a> library to
- * perform serialization and deserialization of JSON objects.
- *
- * <p>This codec maps a single Java object to a single JSON structure at a time; mapping of arrays
- * or collections to root-level JSON arrays is not supported, but such a codec can be easily crafted
- * after this one.
- *
- * <p>Note that this codec requires the presence of Jackson library at runtime. If you use Maven,
- * this can be done by declaring the following dependency in your project:
- *
- * <p>
- *
- * <pre>{@code
- * <dependency>
- *   <groupId>com.fasterxml.jackson.core</groupId>
- *   <artifactId>jackson-databind</artifactId>
- *   <version>2.6.3</version>
- * </dependency>
- * }</pre>
- */
 public class JacksonJsonCodec<T> implements TypeCodec<T> {
 
   private final ObjectMapper objectMapper;
   private final GenericType<T> javaType;
 
-  /**
-   * Creates a new instance for the provided {@code javaClass}, using a default, newly-allocated
-   * {@link ObjectMapper}.
-   *
-   * @param javaClass the Java class this codec maps to.
-   */
-  public JacksonJsonCodec(Class<T> javaClass) {
+  JacksonJsonCodec(Class<T> javaClass) {
     this(javaClass, new ObjectMapper());
   }
 
-  /**
-   * Creates a new instance for the provided {@code javaClass}, and using the provided {@link
-   * ObjectMapper}.
-   *
-   * @param javaClass the Java class this codec maps to.
-   */
-  public JacksonJsonCodec(Class<T> javaClass, ObjectMapper objectMapper) {
+  private JacksonJsonCodec(Class<T> javaClass, ObjectMapper objectMapper) {
     this.javaType = GenericType.of(javaClass);
     this.objectMapper = objectMapper;
   }
@@ -140,25 +107,17 @@ public class JacksonJsonCodec<T> implements TypeCodec<T> {
     }
   }
 
-  /**
-   * This method acts as a bridge between Guava's {@link
-   * com.datastax.oss.driver.api.core.type.reflect.GenericType GenericType} API, which is used by
-   * the driver, and Jackson's {@link JavaType} API.
-   *
-   * @return A {@link JavaType} instance corresponding to the codec's {@link #getJavaType() Java
-   *     type}.
-   */
   private JavaType toJacksonJavaType() {
     return TypeFactory.defaultInstance().constructType(getJavaType().getType());
   }
 
   static class InvalidTypeException extends RuntimeException {
 
-    public InvalidTypeException(String message, Throwable e) {
+    InvalidTypeException(String message, Throwable e) {
       super(message, e);
     }
 
-    public InvalidTypeException(String msg) {
+    InvalidTypeException(String msg) {
       super(msg);
     }
   }
