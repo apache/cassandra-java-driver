@@ -17,6 +17,28 @@
       }
     },
     "ignore": [
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method <T> com.datastax.oss.driver.api.querybuilder.insert.JsonInsert com.datastax.oss.driver.api.querybuilder.insert.InsertInto::json(T, com.datastax.oss.driver.api.core.type.codec.TypeCodec<T>)",
+        "package": "com.datastax.oss.driver.api.querybuilder.insert",
+        "classQualifiedName": "com.datastax.oss.driver.api.querybuilder.insert.InsertInto",
+        "classSimpleName": "InsertInto",
+        "methodName": "json",
+        "newArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-rc2-SNAPSHOT",
+        "elementKind": "method",
+        "justification": "add missing Inert json() method"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method com.datastax.oss.driver.api.querybuilder.insert.JsonInsert com.datastax.oss.driver.api.querybuilder.insert.InsertInto::json(java.lang.Object, com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry)",
+        "package": "com.datastax.oss.driver.api.querybuilder.insert",
+        "classQualifiedName": "com.datastax.oss.driver.api.querybuilder.insert.InsertInto",
+        "classSimpleName": "InsertInto",
+        "methodName": "json",
+        "newArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-rc2-SNAPSHOT",
+        "elementKind": "method",
+        "justification": "add missing Inert json() method"
+      }
     ]
   }
 }
