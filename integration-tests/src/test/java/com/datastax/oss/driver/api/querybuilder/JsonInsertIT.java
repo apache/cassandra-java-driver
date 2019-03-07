@@ -1,15 +1,33 @@
+/*
+ * Copyright DataStax, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datastax.oss.driver.api.querybuilder;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 import static com.datastax.oss.driver.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -57,7 +75,7 @@ public class JsonInsertIT {
   }
 
   @Test
-  public void should_insert_json_object_a_a_json_row_using_prepare_statement() {
+  public void should_insert_json_using_prepare_statement() {
     // given prepare statement
     try (CqlSession session = sessionWithCustomCodec()) {
       User user = new User(2, "bob", 35);
@@ -74,7 +92,7 @@ public class JsonInsertIT {
   }
 
   @Test
-  public void should_insert_json_object_as_a_json_row_using_simple_statement_with_custom_codec() {
+  public void should_insert_json_using_simple_statement_with_custom_codec() {
     // given a simple statement
     try (CqlSession session = sessionWithCustomCodec()) {
       User user = new User(1, "alice", 30);
@@ -91,7 +109,23 @@ public class JsonInsertIT {
   }
 
   @Test
-  public void should_insert_json_object_as_a_json_row_using_simple_statement_with_codec_registry() {
+  public void should_insert_json_using_simple_statement_with_custom_codec_without_codec_registry() {
+    try (CqlSession session = sessionWithoutCustomCodec()) {
+      // given
+      User user = new User(1, "alice", 30);
+      SimpleStatement stmt = insertInto("json_jackson_row").json(user, JACKSON_JSON_CODEC).build();
+
+      // when
+      session.execute(stmt);
+
+      // then
+      List<Row> rows = session.execute(selectFrom("json_jackson_row").json().all().build()).all();
+      Assertions.assertThat(rows.get(0).get(0, JACKSON_JSON_CODEC)).isEqualTo(user);
+    }
+  }
+
+  @Test
+  public void should_insert_json_using_simple_statement_with_codec_registry() {
     // given a simple statement
     try (CqlSession session = sessionWithCustomCodec()) {
       User user = new User(1, "alice", 30);
@@ -108,6 +142,20 @@ public class JsonInsertIT {
 
       assertThat(rows.get(0).get(0, User.class)).isEqualTo(user);
     }
+  }
+
+  @Test
+  public void
+      should_throw_when_insert_json_using_simple_statement_with_codec_registry_without_custom_codec() {
+    assertThatThrownBy(
+            () -> {
+              try (CqlSession session = sessionWithoutCustomCodec()) {
+                insertInto("json_jackson_row")
+                    .json(new User(1, "alice", 30), session.getContext().getCodecRegistry())
+                    .build();
+              }
+            })
+        .isExactlyInstanceOf(CodecNotFoundException.class);
   }
 
   @SuppressWarnings("unchecked")
