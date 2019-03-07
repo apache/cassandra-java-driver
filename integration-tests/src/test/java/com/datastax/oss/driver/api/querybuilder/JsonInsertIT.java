@@ -20,6 +20,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import org.assertj.core.api.Assertions;
+import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -48,6 +49,11 @@ public class JsonInsertIT {
     sessionRule
         .session()
         .execute("CREATE TABLE json_jackson_row(id int PRIMARY KEY, name text, age int)");
+  }
+
+  @After
+  public void clearTable() {
+    sessionRule.session().execute("TRUNCATE TABLE json_jackson_row");
   }
 
   @Test
