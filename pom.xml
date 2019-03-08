@@ -292,6 +292,9 @@
           <groupId>org.revapi</groupId>
           <artifactId>revapi-maven-plugin</artifactId>
           <version>0.10.5</version>
+          <configuration>
+            <outputNonIdentifyingDifferenceInfo>false</outputNonIdentifyingDifferenceInfo>
+          </configuration>
           <dependencies>
             <dependency>
               <groupId>org.revapi</groupId>
