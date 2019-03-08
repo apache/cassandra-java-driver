@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
@@ -160,7 +161,12 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
     for (Node node : nodes.values()) {
       if (filter.test(node)) {
         distanceReporter.setDistance(node, NodeDistance.LOCAL);
-        localDcLiveNodes.add(node);
+        if (node.getState() != NodeState.DOWN) {
+          // This includes state == UNKNOWN. If the node turns out to be unreachable, this will be
+          // detected when we try to open a pool to it, it will get marked down and this will be
+          // signaled back to this policy
+          localDcLiveNodes.add(node);
+        }
       } else {
         distanceReporter.setDistance(node, NodeDistance.IGNORED);
       }

@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -119,7 +118,7 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
       MetadataManager metadataManager = context.getMetadataManager();
       Metadata metadata = metadataManager.getMetadata();
       for (LoadBalancingPolicy policy : policies) {
-        policy.init(excludeDownHosts(metadata), reporters.get(policy));
+        policy.init(metadata.getNodes(), reporters.get(policy));
       }
       if (stateRef.compareAndSet(State.DURING_INIT, State.RUNNING)) {
         eventFilter.markReady();
@@ -193,18 +192,6 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
         }
         break;
     }
-  }
-
-  private static Map<UUID, Node> excludeDownHosts(Metadata metadata) {
-    ImmutableMap.Builder<UUID, Node> nodes = ImmutableMap.builder();
-    for (Map.Entry<UUID, Node> entry : metadata.getNodes().entrySet()) {
-      UUID id = entry.getKey();
-      Node node = entry.getValue();
-      if (node.getState() == NodeState.UP || node.getState() == NodeState.UNKNOWN) {
-        nodes.put(id, node);
-      }
-    }
-    return nodes.build();
   }
 
   @Override
