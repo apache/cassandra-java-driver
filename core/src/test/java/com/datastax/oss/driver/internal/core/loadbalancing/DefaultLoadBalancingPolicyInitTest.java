@@ -27,6 +27,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.util.UUID;
@@ -129,6 +130,9 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   public void should_include_nodes_from_local_dc() {
     // Given
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2));
+    when(node1.getState()).thenReturn(NodeState.UP);
+    when(node2.getState()).thenReturn(NodeState.DOWN);
+    when(node3.getState()).thenReturn(NodeState.UNKNOWN);
     DefaultLoadBalancingPolicy policy =
         new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
 
@@ -139,10 +143,12 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
         distanceReporter);
 
     // Then
+    // Set distance for all nodes in the local DC
     verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
     verify(distanceReporter).setDistance(node2, NodeDistance.LOCAL);
     verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
-    assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1, node2, node3);
+    // But only include UP or UNKNOWN nodes in the live set
+    assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1, node3);
   }
 
   @Test
