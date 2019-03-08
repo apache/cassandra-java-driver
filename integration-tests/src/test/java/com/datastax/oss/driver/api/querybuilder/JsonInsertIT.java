@@ -75,6 +75,30 @@ public class JsonInsertIT {
   }
 
   @Test
+  public void should_insert_string_as_json_using_simple_statement() {
+    // given a simple statement
+    try (CqlSession session = sessionWithCustomCodec()) {
+      String jsonUser = "{ \"id\": 2, \"name\": \"Alice\", \"age\": 3 }";
+      Statement stmt = insertInto("json_jackson_row").json(jsonUser).build();
+
+      // when
+      session.execute(stmt);
+
+      // then
+      String jsonUserResult =
+          session
+              .execute(selectFrom("json_jackson_row").json().all().build())
+              .all()
+              .get(0)
+              .getString(0);
+
+      assertThat(jsonUserResult).contains("\"id\": 2");
+      assertThat(jsonUserResult).contains(" \"name\": \"Alice\"");
+      assertThat(jsonUserResult).contains("\"age\": 3");
+    }
+  }
+
+  @Test
   public void should_insert_json_using_prepare_statement() {
     // given prepare statement
     try (CqlSession session = sessionWithCustomCodec()) {

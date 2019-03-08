@@ -31,6 +31,7 @@ import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.sun.istack.internal.NotNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
@@ -112,7 +113,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
 
   @NonNull
   @Override
-  public <T> JsonInsert json(@Nullable T value, @Nullable TypeCodec<T> codec) {
+  public <T> JsonInsert json(@Nullable T value, @NotNull TypeCodec<T> codec) {
     return new DefaultInsert(
         keyspace,
         table,

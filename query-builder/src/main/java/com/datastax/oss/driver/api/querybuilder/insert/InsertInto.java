@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
 import com.datastax.oss.driver.internal.querybuilder.insert.DefaultInsert;
+import com.sun.istack.internal.NotNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
@@ -61,5 +62,5 @@ public interface InsertInto extends OngoingValues {
    * @see DefaultInsert#json(T, TypeCodec)
    */
   @NonNull
-  <T> JsonInsert json(@Nullable T value, @Nullable TypeCodec<T> codec);
+  <T> JsonInsert json(@Nullable T value, @NotNull TypeCodec<T> codec);
 }
