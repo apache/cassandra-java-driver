@@ -285,7 +285,7 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
 
     // timestamp
     if (!(context.getTimestampGenerator() instanceof ServerSideTimestampGenerator)
-        || getTimestamp() != Long.MIN_VALUE) {
+        || getQueryTimestamp() != Long.MIN_VALUE) {
       size += PrimitiveSizes.LONG;
     }
 

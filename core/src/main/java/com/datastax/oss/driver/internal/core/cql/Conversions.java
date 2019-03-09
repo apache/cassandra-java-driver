@@ -131,7 +131,7 @@ public class Conversions {
             ? consistencyLevelRegistry.nameToCode(
                 config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
             : serialConsistency.getProtocolCode();
-    long timestamp = statement.getTimestamp();
+    long timestamp = statement.getQueryTimestamp();
     if (timestamp == Long.MIN_VALUE) {
       timestamp = context.getTimestampGenerator().next();
     }

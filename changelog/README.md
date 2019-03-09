@@ -4,6 +4,7 @@
 
 ### 4.0.0 (in progress)
 
+- [improvement] JAVA-2143: Rename Statement.setTimestamp() to setQueryTimestamp()
 - [improvement] JAVA-2165: Abstract node connection information
 - [improvement] JAVA-2090: Add support for additional_write_policy and read_repair table options
 - [improvement] JAVA-2164: Rename statement builder methods to setXxx

@@ -75,7 +75,7 @@ public abstract class StatementBuilder<
     }
     this.idempotent = template.isIdempotent();
     this.tracing = template.isTracing();
-    this.timestamp = template.getTimestamp();
+    this.timestamp = template.getQueryTimestamp();
     this.pagingState = template.getPagingState();
     this.pageSize = template.getPageSize();
     this.consistencyLevel = template.getConsistencyLevel();
@@ -161,9 +161,9 @@ public abstract class StatementBuilder<
     return self;
   }
 
-  /** @see Statement#setTimestamp(long) */
+  /** @see Statement#setQueryTimestamp(long) */
   @NonNull
-  public SelfT setTimestamp(long timestamp) {
+  public SelfT setQueryTimestamp(long timestamp) {
     this.timestamp = timestamp;
     return self;
   }

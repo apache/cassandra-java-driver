@@ -86,7 +86,7 @@ public interface BoundStatement
 
     // timestamp
     if (!(context.getTimestampGenerator() instanceof ServerSideTimestampGenerator)
-        || getTimestamp() != Long.MIN_VALUE) {
+        || getQueryTimestamp() != Long.MIN_VALUE) {
       size += PrimitiveSizes.LONG;
     }
 

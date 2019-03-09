@@ -210,7 +210,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    *
    * @see TimestampGenerator
    */
-  long getTimestamp();
+  long getQueryTimestamp();
 
   /**
    * Sets the query timestamp, in microseconds, to send with the statement.
@@ -224,7 +224,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * @see TimestampGenerator
    */
   @NonNull
-  SelfT setTimestamp(long newTimestamp);
+  SelfT setQueryTimestamp(long newTimestamp);
 
   /**
    * Sets how long to wait for this request to complete. This is a global limit on the duration of a

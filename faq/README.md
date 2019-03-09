@@ -57,3 +57,10 @@ higher latencies.
 We therefore urge users to carefully choose upfront the consistency level that works best for their
 use cases. If there is a legitimate reason to downgrade and retry, that should be handled by the
 application code.
+
+### I want to set a date on a bound statement, where did `setTimestamp()` go?
+
+The driver now uses Java 8's improved date and time API. CQL type `timestamp` is mapped to
+`java.time.Instant`, and the corresponding getter and setter are `getInstant` and `setInstant`.
+
+See [Temporal types](../manual/core/temporal_types/) for more details.
