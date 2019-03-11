@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
-import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.insert.Insert;
@@ -31,7 +30,6 @@ import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import com.sun.istack.internal.NotNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
@@ -100,20 +98,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
 
   @NonNull
   @Override
-  public JsonInsert json(@Nullable Object value, @NonNull CodecRegistry codecRegistry) {
-    return new DefaultInsert(
-        keyspace,
-        table,
-        QueryBuilder.literal(value, (value == null) ? null : codecRegistry.codecFor(value)),
-        missingJsonBehavior,
-        ImmutableMap.of(),
-        timestamp,
-        ifNotExists);
-  }
-
-  @NonNull
-  @Override
-  public <T> JsonInsert json(@Nullable T value, @NotNull TypeCodec<T> codec) {
+  public <T> JsonInsert json(@Nullable T value, @Nullable TypeCodec<T> codec) {
     return new DefaultInsert(
         keyspace,
         table,

@@ -26,7 +26,7 @@
         "methodName": "json",
         "newArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-rc2-SNAPSHOT",
         "elementKind": "method",
-        "justification": "add missing Inert json() method"
+        "justification": "JAVA-2182: Add insertInto().json() variant that takes an object in QueryBuilder"
       },
       {
         "code": "java.method.addedToInterface",
@@ -37,7 +37,7 @@
         "methodName": "json",
         "newArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-rc2-SNAPSHOT",
         "elementKind": "method",
-        "justification": "add missing Inert json() method"
+        "justification": "JAVA-2182: Add insertInto().json() variant that takes an object in QueryBuilder"
       }
     ]
   }

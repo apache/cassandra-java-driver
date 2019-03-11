@@ -21,7 +21,6 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
 import com.datastax.oss.driver.internal.querybuilder.insert.DefaultInsert;
-import com.sun.istack.internal.NotNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
@@ -52,7 +51,19 @@ public interface InsertInto extends OngoingValues {
    * @see DefaultInsert#json(Object, CodecRegistry)
    */
   @NonNull
-  JsonInsert json(@Nullable Object value, @NonNull CodecRegistry codecRegistry);
+  default JsonInsert json(@Nullable Object value, @NonNull CodecRegistry codecRegistry) {
+    try {
+      return json(value, (value == null) ? null : codecRegistry.codecFor(value));
+    } catch (CodecNotFoundException e) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Could not inline literal of type %s. "
+                  + "This happens because the driver doesn't know how to map it to a CQL type. "
+                  + "Try passing a TypeCodec or CodecRegistry to literal().",
+              (value == null) ? null : value.getClass().getName()),
+          e);
+    }
+  }
 
   /**
    * Makes this statement an INSERT JSON with a custom type mapping, as in {@code INSERT JSON ?}.
@@ -62,5 +73,5 @@ public interface InsertInto extends OngoingValues {
    * @see DefaultInsert#json(T, TypeCodec)
    */
   @NonNull
-  <T> JsonInsert json(@Nullable T value, @NotNull TypeCodec<T> codec);
+  <T> JsonInsert json(@Nullable T value, @Nullable TypeCodec<T> codec);
 }

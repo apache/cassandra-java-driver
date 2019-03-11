@@ -37,7 +37,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
-import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -111,7 +110,7 @@ public class JsonInsertIT {
 
       // then
       List<Row> rows = session.execute(selectFrom("json_jackson_row").json().all().build()).all();
-      Assertions.assertThat(rows.get(0).get(0, User.class)).isEqualTo(user);
+      assertThat(rows.get(0).get(0, User.class)).isEqualTo(user);
     }
   }
 
@@ -144,7 +143,7 @@ public class JsonInsertIT {
 
       // then
       List<Row> rows = session.execute(selectFrom("json_jackson_row").json().all().build()).all();
-      Assertions.assertThat(rows.get(0).get(0, JACKSON_JSON_CODEC)).isEqualTo(user);
+      assertThat(rows.get(0).get(0, JACKSON_JSON_CODEC)).isEqualTo(user);
     }
   }
 
@@ -179,7 +178,14 @@ public class JsonInsertIT {
                     .build();
               }
             })
-        .isExactlyInstanceOf(CodecNotFoundException.class);
+        .isExactlyInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            String.format(
+                "Could not inline literal of type %s. "
+                    + "This happens because the driver doesn't know how to map it to a CQL type. "
+                    + "Try passing a TypeCodec or CodecRegistry to literal().",
+                User.class.getName()))
+        .hasCauseInstanceOf(CodecNotFoundException.class);
   }
 
   @SuppressWarnings("unchecked")
