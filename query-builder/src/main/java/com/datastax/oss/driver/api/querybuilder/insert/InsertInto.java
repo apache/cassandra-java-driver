@@ -39,7 +39,8 @@ public interface InsertInto extends OngoingValues {
   JsonInsert json(@NonNull BindMarker bindMarker);
 
   /**
-   * Makes this statement an INSERT JSON with a custom type mapping, as in {@code INSERT JSON ?}.
+   * Makes this statement an INSERT JSON with a custom type mapping. The provided {@code Object
+   * value} will be mapped to a JSON string.
    *
    * <p>This is an alternative to {@link #json(String)} for custom type mappings. The provided
    * registry should contain a codec that can format the value. Typically, this will be your
@@ -66,9 +67,9 @@ public interface InsertInto extends OngoingValues {
   }
 
   /**
-   * Makes this statement an INSERT JSON with a custom type mapping, as in {@code INSERT JSON ?}.
-   * The value will be turned into a string with {@link TypeCodec#format(Object)}, and inlined in
-   * the query.
+   * Makes this statement an INSERT JSON with a custom type mapping. The provided {@code Object
+   * value} will be mapped to a JSON string. The value will be turned into a string with {@link
+   * TypeCodec#format(Object)}, and inlined in the query.
    *
    * @see DefaultInsert#json(T, TypeCodec)
    */
