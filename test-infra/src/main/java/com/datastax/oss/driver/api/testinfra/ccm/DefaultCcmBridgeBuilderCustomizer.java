@@ -15,9 +15,14 @@
  */
 package com.datastax.oss.driver.api.testinfra.ccm;
 
+import com.datastax.oss.driver.api.core.Version;
+
 public class DefaultCcmBridgeBuilderCustomizer {
 
   public static CcmBridge.Builder configureBuilder(CcmBridge.Builder builder) {
+    if (!CcmBridge.DSE_ENABLEMENT && CcmBridge.VERSION.compareTo(Version.V4_0_0) >= 0) {
+      builder.withCassandraConfiguration("enable_materialized_views", true);
+    }
     return builder;
   }
 }
