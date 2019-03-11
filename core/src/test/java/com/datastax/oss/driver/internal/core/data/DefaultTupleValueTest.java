@@ -28,7 +28,6 @@ import com.datastax.oss.driver.internal.SerializationHelper;
 import com.datastax.oss.driver.internal.core.type.DefaultTupleType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import java.io.UnsupportedEncodingException;
 import java.util.List;
 import org.junit.Test;
 
@@ -52,8 +51,8 @@ public class DefaultTupleValueTest extends AccessibleByIndexTestBase<TupleValue>
     DefaultTupleType type =
         new DefaultTupleType(ImmutableList.of(DataTypes.INT, DataTypes.TEXT), attachmentPoint);
     TupleValue in = type.newValue();
-    in.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
-    in.setBytesUnsafe(1, Bytes.fromHexString("0x61"));
+    in = in.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
+    in = in.setBytesUnsafe(1, Bytes.fromHexString("0x61"));
 
     TupleValue out = SerializationHelper.serializeAndDeserialize(in);
 
@@ -64,7 +63,7 @@ public class DefaultTupleValueTest extends AccessibleByIndexTestBase<TupleValue>
   }
 
   @Test
-  public void should_support_null_items_when_setting_in_bulk() throws UnsupportedEncodingException {
+  public void should_support_null_items_when_setting_in_bulk() {
     DefaultTupleType type =
         new DefaultTupleType(ImmutableList.of(DataTypes.INT, DataTypes.TEXT), attachmentPoint);
     when(codecRegistry.<Integer>codecFor(DataTypes.INT)).thenReturn(TypeCodecs.INT);

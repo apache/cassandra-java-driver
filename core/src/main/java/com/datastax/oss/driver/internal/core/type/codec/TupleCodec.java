@@ -116,7 +116,7 @@ public class TupleCodec implements TypeCodec<TupleValue> {
           element.limit(elementSize);
           input.position(input.position() + elementSize);
         }
-        value.setBytesUnsafe(i, element);
+        value = value.setBytesUnsafe(i, element);
         i += 1;
       }
       return value;
@@ -194,7 +194,7 @@ public class TupleCodec implements TypeCodec<TupleValue> {
       String fieldValue = value.substring(position, n);
       DataType elementType = cqlType.getComponentTypes().get(i);
       TypeCodec<Object> codec = registry.codecFor(elementType);
-      tuple.set(i, codec.parse(fieldValue), codec);
+      tuple = tuple.set(i, codec.parse(fieldValue), codec);
 
       position = n;
       i += 1;

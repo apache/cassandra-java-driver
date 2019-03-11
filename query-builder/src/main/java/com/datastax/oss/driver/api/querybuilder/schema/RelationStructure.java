@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.querybuilder.schema;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.internal.core.CqlIdentifiers;
+import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 
@@ -32,6 +33,7 @@ public interface RelationStructure<SelfT extends RelationStructure<SelfT>>
    * position in the provided map.
    */
   @NonNull
+  @CheckReturnValue
   SelfT withClusteringOrderByIds(@NonNull Map<CqlIdentifier, ClusteringOrder> orderings);
 
   /**
@@ -42,6 +44,7 @@ public interface RelationStructure<SelfT extends RelationStructure<SelfT>>
    * identifier, for example "foo" and "Foo"; if this happens, a runtime exception will be thrown.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT withClusteringOrder(@NonNull Map<String, ClusteringOrder> orderings) {
     return withClusteringOrderByIds(CqlIdentifiers.wrapKeys(orderings));
   }
@@ -53,6 +56,7 @@ public interface RelationStructure<SelfT extends RelationStructure<SelfT>>
    * clause will be appended at the end of the current clustering order.
    */
   @NonNull
+  @CheckReturnValue
   SelfT withClusteringOrder(@NonNull CqlIdentifier columnName, @NonNull ClusteringOrder order);
 
   /**
@@ -60,6 +64,7 @@ public interface RelationStructure<SelfT extends RelationStructure<SelfT>>
    * withClusteringOrder(CqlIdentifier.fromCql(columnName), order)}.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT withClusteringOrder(@NonNull String columnName, @NonNull ClusteringOrder order) {
     return withClusteringOrder(CqlIdentifier.fromCql(columnName), order);
   }

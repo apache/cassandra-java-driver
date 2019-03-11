@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.querybuilder.schema.compaction;
 
+import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface TimeWindowCompactionStrategy<SelfT extends TimeWindowCompactionStrategy<SelfT>>
@@ -32,17 +33,20 @@ public interface TimeWindowCompactionStrategy<SelfT extends TimeWindowCompaction
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT withCompactionWindow(long size, @NonNull CompactionWindowUnit unit) {
     return withOption("compaction_window_size", size)
         .withOption("compaction_window_unit", unit.toString());
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT withUnsafeAggressiveSSTableExpiration(boolean enabled) {
     return withOption("unsafe_aggressive_sstable_expiration", enabled);
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT withTimestampResolution(@NonNull TimestampResolution timestampResolution) {
     return withOption("timestamp_resolution", timestampResolution.toString());
   }

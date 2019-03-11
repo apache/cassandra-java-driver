@@ -88,7 +88,7 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
-    t.setInt(0, 1);
+    t = t.setInt(0, 1);
 
     // Then
     verify(codecRegistry).codecFor(DataTypes.INT, Integer.class);
@@ -102,7 +102,7 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
     T t = newInstance(ImmutableList.of(DataTypes.TEXT), attachmentPoint);
 
     // When
-    t.setString(0, "a");
+    t = t.setString(0, "a");
 
     // Then
     verify(codecRegistry).codecFor(DataTypes.TEXT, String.class);
@@ -116,7 +116,7 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
-    t.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
 
     // Then
     verifyZeroInteractions(codecRegistry);
@@ -127,10 +127,10 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
   public void should_set_to_null_by_index() {
     // Given
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
 
     // When
-    t.setToNull(0);
+    t = t.setToNull(0);
 
     // Then
     verifyZeroInteractions(codecRegistry);
@@ -145,7 +145,7 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
-    t.set(0, "1", String.class);
+    t = t.set(0, "1", String.class);
 
     // Then
     verify(codecRegistry).codecFor(DataTypes.INT, String.class);
@@ -162,7 +162,7 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
-    t.set(0, "1", GenericType.STRING);
+    t = t.set(0, "1", GenericType.STRING);
 
     // Then
     verify(codecRegistry).codecFor(DataTypes.INT, GenericType.STRING);
@@ -177,7 +177,7 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
-    t.set(0, "1", intToStringCodec);
+    t = t.set(0, "1", intToStringCodec);
 
     // Then
     verifyZeroInteractions(codecRegistry);
@@ -235,7 +235,7 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
   public void should_get_primitive_value_by_index() {
     // Given
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
 
     // When
     int i = t.getInt(0);
@@ -250,7 +250,7 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
   public void should_get_object_value_by_index() {
     // Given
     T t = newInstance(ImmutableList.of(DataTypes.TEXT), attachmentPoint);
-    t.setBytesUnsafe(0, Bytes.fromHexString("0x61"));
+    t = t.setBytesUnsafe(0, Bytes.fromHexString("0x61"));
 
     // When
     String s = t.getString(0);
@@ -265,7 +265,7 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
   public void should_get_bytes_by_index() {
     // Given
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
 
     // When
     ByteBuffer bytes = t.getBytesUnsafe(0);
@@ -279,7 +279,7 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
   public void should_test_if_null_by_index() {
     // Given
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(0, null);
+    t = t.setBytesUnsafe(0, null);
 
     // When
     boolean isNull = t.isNull(0);
@@ -295,7 +295,7 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
     CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
     when(codecRegistry.codecFor(DataTypes.INT, String.class)).thenAnswer(i -> intToStringCodec);
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
 
     // When
     String s = t.get(0, String.class);
@@ -313,7 +313,7 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
     when(codecRegistry.codecFor(DataTypes.INT, GenericType.STRING))
         .thenAnswer(i -> intToStringCodec);
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
 
     // When
     String s = t.get(0, GenericType.STRING);
@@ -329,7 +329,7 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
     // Given
     CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
 
     // When
     String s = t.get(0, intToStringCodec);

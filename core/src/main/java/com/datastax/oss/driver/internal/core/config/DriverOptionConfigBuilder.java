@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.config;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
+import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Duration;
@@ -38,57 +39,68 @@ import java.util.Map;
 public interface DriverOptionConfigBuilder<SelfT extends DriverOptionConfigBuilder> {
 
   @NonNull
+  @CheckReturnValue
   default SelfT withBoolean(@NonNull DriverOption option, boolean value) {
     return with(option, value);
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT withBooleanList(@NonNull DriverOption option, @NonNull List<Boolean> value) {
     return with(option, value);
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT withInt(@NonNull DriverOption option, int value) {
     return with(option, value);
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT withIntList(@NonNull DriverOption option, @NonNull List<Integer> value) {
     return with(option, value);
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT withLong(@NonNull DriverOption option, long value) {
     return with(option, value);
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT withLongList(@NonNull DriverOption option, @NonNull List<Long> value) {
     return with(option, value);
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT withDouble(@NonNull DriverOption option, double value) {
     return with(option, value);
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT withDoubleList(@NonNull DriverOption option, @NonNull List<Double> value) {
     return with(option, value);
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT withString(@NonNull DriverOption option, @NonNull String value) {
     return with(option, value);
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT withStringList(@NonNull DriverOption option, @NonNull List<String> value) {
     return with(option, value);
   }
 
   @SuppressWarnings("unchecked")
   @NonNull
+  @CheckReturnValue
   default SelfT withStringMap(@NonNull DriverOption option, @NonNull Map<String, String> value) {
     SelfT v = (SelfT) this;
     for (String key : value.keySet()) {
@@ -103,42 +115,50 @@ public interface DriverOptionConfigBuilder<SelfT extends DriverOptionConfigBuild
    * "256 MB".
    */
   @NonNull
+  @CheckReturnValue
   default SelfT withBytes(@NonNull DriverOption option, @NonNull String value) {
     return with(option, value);
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT withBytes(@NonNull DriverOption option, long value) {
     return with(option, value);
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT withBytesList(@NonNull DriverOption option, @NonNull List<Long> value) {
     return with(option, value);
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT withDuration(@NonNull DriverOption option, @NonNull Duration value) {
     return with(option, value);
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT withDurationList(@NonNull DriverOption option, @NonNull List<Duration> value) {
     return with(option, value);
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT withClass(@NonNull DriverOption option, @NonNull Class<?> value) {
     return with(option, value.getName());
   }
 
   /** Unsets an option. */
   @NonNull
+  @CheckReturnValue
   default SelfT without(@NonNull DriverOption option) {
     return with(option, null);
   }
 
   @NonNull
+  @CheckReturnValue
   default SelfT with(@NonNull DriverOption option, @Nullable Object value) {
     return with(option.getPath(), value);
   }
@@ -148,5 +168,6 @@ public interface DriverOptionConfigBuilder<SelfT extends DriverOptionConfigBuild
    * not recommended that it is used directly other than by these defaults.
    */
   @NonNull
+  @CheckReturnValue
   SelfT with(@NonNull String path, @Nullable Object value);
 }

@@ -119,7 +119,7 @@ public class UdtCodec implements TypeCodec<UdtValue> {
           element.limit(elementSize);
           input.position(input.position() + elementSize);
         }
-        value.setBytesUnsafe(i, element);
+        value = value.setBytesUnsafe(i, element);
         i += 1;
       }
       return value;
@@ -224,7 +224,7 @@ public class UdtCodec implements TypeCodec<UdtValue> {
       // This works because ids occur at most once in UDTs
       DataType fieldType = cqlType.getFieldTypes().get(cqlType.firstIndexOf(id));
       TypeCodec<Object> codec = registry.codecFor(fieldType);
-      udt.set(id, codec.parse(fieldValue), codec);
+      udt = udt.set(id, codec.parse(fieldValue), codec);
       position = n;
 
       position = ParseUtils.skipSpaces(value, position);

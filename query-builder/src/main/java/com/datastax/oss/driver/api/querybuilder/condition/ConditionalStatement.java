@@ -22,6 +22,7 @@ import com.datastax.oss.driver.internal.querybuilder.condition.DefaultConditionB
 import com.datastax.oss.driver.internal.querybuilder.lhs.ColumnComponentLeftOperand;
 import com.datastax.oss.driver.internal.querybuilder.lhs.ColumnLeftOperand;
 import com.datastax.oss.driver.internal.querybuilder.lhs.FieldLeftOperand;
+import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
 
@@ -38,6 +39,7 @@ public interface ConditionalStatement<SelfT extends ConditionalStatement<SelfT>>
    * <p>If any column conditions were added before, they will be cleared.
    */
   @NonNull
+  @CheckReturnValue
   SelfT ifExists();
 
   /**
@@ -51,6 +53,7 @@ public interface ConditionalStatement<SelfT extends ConditionalStatement<SelfT>>
    * alternative.
    */
   @NonNull
+  @CheckReturnValue
   SelfT if_(@NonNull Condition condition);
 
   /**
@@ -64,10 +67,12 @@ public interface ConditionalStatement<SelfT extends ConditionalStatement<SelfT>>
    * {@link Condition#column(CqlIdentifier) column}.
    */
   @NonNull
+  @CheckReturnValue
   SelfT if_(@NonNull Iterable<Condition> conditions);
 
   /** Var-arg equivalent of {@link #if_(Iterable)}. */
   @NonNull
+  @CheckReturnValue
   default SelfT if_(@NonNull Condition... conditions) {
     return if_(Arrays.asList(conditions));
   }
@@ -158,6 +163,7 @@ public interface ConditionalStatement<SelfT extends ConditionalStatement<SelfT>>
    * @see QueryBuilder#raw(String)
    */
   @NonNull
+  @CheckReturnValue
   default SelfT ifRaw(@NonNull String raw) {
     return if_(QueryBuilder.raw(raw));
   }
