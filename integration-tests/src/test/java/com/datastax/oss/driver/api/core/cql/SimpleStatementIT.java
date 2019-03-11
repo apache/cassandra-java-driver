@@ -175,7 +175,7 @@ public class SimpleStatementIT {
     SimpleStatement insert =
         SimpleStatement.builder("INSERT INTO test2 (k, v) values (?, ?)")
             .addPositionalValues(name.getMethodName(), 0)
-            .setTimestamp(timestamp)
+            .setQueryTimestamp(timestamp)
             .build();
 
     sessionRule.session().execute(insert);

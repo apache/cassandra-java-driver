@@ -161,7 +161,7 @@ BoundStatement bound =
       .setString(0, "324378")
       .setString(1, "LCD screen")
       .setExecutionProfileName("oltp")
-      .setTimestamp(123456789L)
+      .setQueryTimestamp(123456789L)
       .build();
 ```
 

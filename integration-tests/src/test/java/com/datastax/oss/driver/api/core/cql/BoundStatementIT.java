@@ -441,7 +441,7 @@ public class BoundStatementIT {
             .setRoutingKeyspace(mockRoutingKeyspace)
             .setRoutingKey(mockRoutingKey)
             .setRoutingToken(mockRoutingToken)
-            .setTimestamp(42)
+            .setQueryTimestamp(42)
             .setIdempotence(true)
             .setTracing()
             .setTimeout(mockTimeout)
@@ -483,7 +483,7 @@ public class BoundStatementIT {
       // Bound statements do not support per-query keyspaces, so this is not set
       assertThat(boundStatement.getKeyspace()).isNull();
       // Should not be propagated
-      assertThat(boundStatement.getTimestamp()).isEqualTo(Long.MIN_VALUE);
+      assertThat(boundStatement.getQueryTimestamp()).isEqualTo(Long.MIN_VALUE);
     }
   }
 

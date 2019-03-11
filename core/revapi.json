@@ -234,6 +234,26 @@
         "new": "parameter javax.net.ssl.SSLEngine com.datastax.oss.driver.api.core.ssl.SslEngineFactory::newSslEngine(===com.datastax.oss.driver.api.core.metadata.EndPoint===)",
         "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
         "justification": "JAVA-2165: Abstract node connection information"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method long com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>>::getQueryTimestamp()",
+        "justification": "JAVA-2143: Rename Statement.setTimestamp() to setQueryTimestamp()"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method long com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>>::getTimestamp()",
+        "justification": "JAVA-2143: Rename Statement.setTimestamp() to setQueryTimestamp()"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>>::setQueryTimestamp(long)",
+        "justification": "JAVA-2143: Rename Statement.setTimestamp() to setQueryTimestamp()"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>>::setTimestamp(long)",
+        "justification": "JAVA-2143: Rename Statement.setTimestamp() to setQueryTimestamp()"
       }
     ]
   }
