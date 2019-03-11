@@ -275,7 +275,9 @@ public class DefaultTokenMap implements TokenMap {
       Collection<? extends KeyspaceMetadata> keyspaces, String logPrefix) {
     ImmutableMap.Builder<CqlIdentifier, Map<String, String>> builder = ImmutableMap.builder();
     for (KeyspaceMetadata keyspace : keyspaces) {
-      builder.put(keyspace.getName(), keyspace.getReplication());
+      if (!keyspace.isVirtual()) {
+        builder.put(keyspace.getName(), keyspace.getReplication());
+      }
     }
     ImmutableMap<CqlIdentifier, Map<String, String>> result = builder.build();
     LOG.debug("[{}] Computing keyspace-level data for {}", logPrefix, result);
