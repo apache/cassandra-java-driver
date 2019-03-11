@@ -39,7 +39,7 @@ import java.util.Arrays;
  * example:
  *
  * <pre>{@code
- * selectFrom("foo").all().whereColumn("k").isEqualTo(literal(1))
+ * selectFrom("foo").all().where(Relation.column("k").isEqualTo(literal(1)))
  * // SELECT * FROM foo WHERE k=1
  * }</pre>
  *
