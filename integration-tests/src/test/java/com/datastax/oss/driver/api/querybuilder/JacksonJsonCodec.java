@@ -64,7 +64,7 @@ public class JacksonJsonCodec<T> implements TypeCodec<T> {
     try {
       return ByteBuffer.wrap(objectMapper.writeValueAsBytes(value));
     } catch (JsonProcessingException e) {
-      throw new InvalidTypeException(e.getMessage(), e);
+      throw new IllegalArgumentException(e.getMessage(), e);
     }
   }
 
@@ -75,7 +75,7 @@ public class JacksonJsonCodec<T> implements TypeCodec<T> {
     try {
       return objectMapper.readValue(Bytes.getArray(bytes), toJacksonJavaType());
     } catch (IOException e) {
-      throw new InvalidTypeException(e.getMessage(), e);
+      throw new IllegalArgumentException(e.getMessage(), e);
     }
   }
 
@@ -87,7 +87,7 @@ public class JacksonJsonCodec<T> implements TypeCodec<T> {
     try {
       json = objectMapper.writeValueAsString(value);
     } catch (IOException e) {
-      throw new InvalidTypeException(e.getMessage(), e);
+      throw new IllegalArgumentException(e.getMessage(), e);
     }
     return Strings.quote(json);
   }
@@ -98,27 +98,16 @@ public class JacksonJsonCodec<T> implements TypeCodec<T> {
   public T parse(String value) {
     if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) return null;
     if (!Strings.isQuoted(value))
-      throw new InvalidTypeException("JSON strings must be enclosed by single quotes");
+      throw new IllegalArgumentException("JSON strings must be enclosed by single quotes");
     String json = Strings.unquote(value);
     try {
       return (T) objectMapper.readValue(json, toJacksonJavaType());
     } catch (IOException e) {
-      throw new InvalidTypeException(e.getMessage(), e);
+      throw new IllegalArgumentException(e.getMessage(), e);
     }
   }
 
   private JavaType toJacksonJavaType() {
     return TypeFactory.defaultInstance().constructType(getJavaType().getType());
-  }
-
-  static class InvalidTypeException extends RuntimeException {
-
-    InvalidTypeException(String message, Throwable e) {
-      super(message, e);
-    }
-
-    InvalidTypeException(String msg) {
-      super(msg);
-    }
   }
 }
