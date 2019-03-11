@@ -22,7 +22,6 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
 import com.datastax.oss.driver.internal.querybuilder.insert.DefaultInsert;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * The beginning of an INSERT statement; at this point only the table is known, it might become a
@@ -52,16 +51,17 @@ public interface InsertInto extends OngoingValues {
    * @see DefaultInsert#json(Object, CodecRegistry)
    */
   @NonNull
-  default JsonInsert json(@Nullable Object value, @NonNull CodecRegistry codecRegistry) {
+  default JsonInsert json(@NonNull Object value, @NonNull CodecRegistry codecRegistry) {
     try {
-      return json(value, (value == null) ? null : codecRegistry.codecFor(value));
+      return json(value, codecRegistry.codecFor(value));
     } catch (CodecNotFoundException e) {
       throw new IllegalArgumentException(
           String.format(
-              "Could not inline literal of type %s. "
-                  + "This happens because the driver doesn't know how to map it to a CQL type. "
-                  + "Try passing a TypeCodec or CodecRegistry to literal().",
-              (value == null) ? null : value.getClass().getName()),
+              "Could not inline JSON literal of type %s. "
+                  + "This happens because the provided CodecRegistry does not contain "
+                  + "a codec for this type. Try registering your TypeCodec in the registry first, "
+                  + "or use json(Object, TypeCodec).",
+              value.getClass().getName()),
           e);
     }
   }
@@ -74,5 +74,5 @@ public interface InsertInto extends OngoingValues {
    * @see DefaultInsert#json(T, TypeCodec)
    */
   @NonNull
-  <T> JsonInsert json(@Nullable T value, @Nullable TypeCodec<T> codec);
+  <T> JsonInsert json(@NonNull T value, @NonNull TypeCodec<T> codec);
 }

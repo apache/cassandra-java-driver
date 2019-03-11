@@ -181,9 +181,10 @@ public class JsonInsertIT {
         .isExactlyInstanceOf(IllegalArgumentException.class)
         .hasMessage(
             String.format(
-                "Could not inline literal of type %s. "
-                    + "This happens because the driver doesn't know how to map it to a CQL type. "
-                    + "Try passing a TypeCodec or CodecRegistry to literal().",
+                "Could not inline JSON literal of type %s. "
+                    + "This happens because the provided CodecRegistry does not contain "
+                    + "a codec for this type. Try registering your TypeCodec in the registry "
+                    + "first, or use json(Object, TypeCodec).",
                 User.class.getName()))
         .hasCauseInstanceOf(CodecNotFoundException.class);
   }

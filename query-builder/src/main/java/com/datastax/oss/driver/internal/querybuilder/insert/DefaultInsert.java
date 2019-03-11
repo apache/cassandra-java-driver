@@ -98,7 +98,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
 
   @NonNull
   @Override
-  public <T> JsonInsert json(@Nullable T value, @Nullable TypeCodec<T> codec) {
+  public <T> JsonInsert json(@NonNull T value, @NonNull TypeCodec<T> codec) {
     return new DefaultInsert(
         keyspace,
         table,
