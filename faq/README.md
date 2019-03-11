@@ -17,6 +17,10 @@ session.execute(boundSelect);
 boundSelect = boundSelect.setInt("k", key).setPageSize(1000);
 ```
 
+All of these mutating methods are annotated with `@CheckReturnValue`. Some code analysis tools --
+such as [ErrorProne](https://errorprone.info/) -- can check correct usage at build time, and report
+mistakes as compiler errors.
+
 The driver also provides builders:
 
 ```java
