@@ -34,6 +34,8 @@ import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.protocol.internal.util.Bytes;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Map;
 import org.junit.AssumptionViolatedException;
@@ -45,6 +47,8 @@ import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 public class SchemaIT {
+
+  private static final Version DSE_MIN_VIRTUAL_TABLES = Version.parse("6.7.0");
 
   private CcmRule ccmRule = CcmRule.getInstance();
 
@@ -180,14 +184,9 @@ public class SchemaIT {
   @CassandraRequirement(min = "4.0", description = "virtual tables introduced in 4.0")
   @Test
   public void should_get_virtual_metadata() {
+    skipIfDse60();
+
     Metadata md = sessionRule.session().getMetadata();
-    // Special case: DSE 6.0 reports C* 4.0 but does not support virtual tables
-    if (ccmRule.getDseVersion().isPresent()) {
-      Version dseVersion = ccmRule.getDseVersion().get();
-      if (dseVersion.compareTo(Version.parse("6.7.0")) < 0) {
-        throw new AssumptionViolatedException("DSE 6.0 does not support virtual tables");
-      }
-    }
     KeyspaceMetadata kmd = md.getKeyspace("system_views").get();
 
     // Keyspace name should be set, marked as virtual, and have at least sstable_tasks table.
@@ -240,5 +239,34 @@ public class SchemaIT {
     assertThat(cm.getParent()).isEqualTo(tm.getName());
     assertThat(cm.getType()).isEqualTo(DataTypes.BIGINT);
     assertThat(cm.getName().toString()).isEqualTo("progress");
+  }
+
+  @CassandraRequirement(min = "4.0", description = "virtual tables introduced in 4.0")
+  @Test
+  public void should_exclude_virtual_keyspaces_from_token_map() {
+    skipIfDse60();
+
+    Metadata metadata = sessionRule.session().getMetadata();
+    Map<CqlIdentifier, ? extends KeyspaceMetadata> keyspaces = metadata.getKeyspaces();
+    assertThat(keyspaces)
+        .containsKey(CqlIdentifier.fromCql("system_views"))
+        .containsKey(CqlIdentifier.fromCql("system_virtual_schema"));
+
+    TokenMap tokenMap = metadata.getTokenMap().orElseThrow(AssertionError::new);
+    ByteBuffer partitionKey = Bytes.fromHexString("0x00"); // value does not matter
+    assertThat(tokenMap.getReplicas("system_views", partitionKey)).isEmpty();
+    assertThat(tokenMap.getReplicas("system_virtual_schema", partitionKey)).isEmpty();
+    // Check that a non-virtual keyspace is present
+    assertThat(tokenMap.getReplicas(sessionRule.keyspace(), partitionKey)).isNotEmpty();
+  }
+
+  private void skipIfDse60() {
+    // Special case: DSE 6.0 reports C* 4.0 but does not support virtual tables
+    if (ccmRule.getDseVersion().isPresent()) {
+      Version dseVersion = ccmRule.getDseVersion().get();
+      if (dseVersion.compareTo(DSE_MIN_VIRTUAL_TABLES) < 0) {
+        throw new AssumptionViolatedException("DSE 6.0 does not support virtual tables");
+      }
+    }
   }
 }
