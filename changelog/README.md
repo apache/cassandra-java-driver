@@ -4,6 +4,7 @@
 
 ### 4.0.0 (in progress)
 
+- [improvement] JAVA-2183: Enable materialized views when testing against Cassandra 4
 - [improvement] JAVA-2182: Add insertInto().json() variant that takes an object in QueryBuilder
 - [improvement] JAVA-2161: Annotate mutating methods with `@CheckReturnValue`
 - [bug] JAVA-2177: Don't exclude down nodes when initializing LBPs
@@ -18,7 +19,6 @@
 
 ### 4.0.0-rc1
 
-- [improvement] JAVA-2183: Enable materialized views when testing against Cassandra 4
 - [improvement] JAVA-2106: Log server side warnings returned from a query
 - [improvement] JAVA-2151: Drop "Dsl" suffix from query builder main classes
 - [new feature] JAVA-2144: Expose internal API to hook into the session lifecycle
