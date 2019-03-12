@@ -19,6 +19,11 @@
     },
     "ignore": [
       {
+        "code": "java.method.addedToInterface",
+        "new": "method <T> com.datastax.oss.driver.api.querybuilder.insert.JsonInsert com.datastax.oss.driver.api.querybuilder.insert.InsertInto::json(T, com.datastax.oss.driver.api.core.type.codec.TypeCodec<T>)",
+        "justification": "JAVA-2182: Add insertInto().json() variant that takes an object in QueryBuilder"
+      },
+      {
         "code": "java.annotation.added",
         "old": "method SelfT com.datastax.oss.driver.api.querybuilder.condition.ConditionalStatement<SelfT extends com.datastax.oss.driver.api.querybuilder.condition.ConditionalStatement<SelfT extends com.datastax.oss.driver.api.querybuilder.condition.ConditionalStatement<SelfT>>>::ifExists()",
         "new": "method SelfT com.datastax.oss.driver.api.querybuilder.condition.ConditionalStatement<SelfT extends com.datastax.oss.driver.api.querybuilder.condition.ConditionalStatement<SelfT extends com.datastax.oss.driver.api.querybuilder.condition.ConditionalStatement<SelfT>>>::ifExists()",

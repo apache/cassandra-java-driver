@@ -17,11 +17,6 @@
     },
     "ignore": [
       {
-        "code": "java.method.addedToInterface",
-        "new": "method <T> com.datastax.oss.driver.api.querybuilder.insert.JsonInsert com.datastax.oss.driver.api.querybuilder.insert.InsertInto::json(T, com.datastax.oss.driver.api.core.type.codec.TypeCodec<T>)",
-        "justification": "JAVA-2182: Add insertInto().json() variant that takes an object in QueryBuilder"
-      },
-      {
         "code": "java.method.removed",
         "old": "method com.datastax.oss.driver.api.core.cql.BatchStatementBuilder com.datastax.oss.driver.api.core.cql.BatchStatementBuilder::withKeyspace(com.datastax.oss.driver.api.core.CqlIdentifier)",
         "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-rc1",
