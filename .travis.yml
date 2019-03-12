@@ -8,16 +8,13 @@ matrix:
       jdk: openjdk8
     # 11
     - env: JDK='OpenJDK 11'
+      # switch to JDK 11 before running tests
       before_script: . $TRAVIS_BUILD_DIR/ci/install-jdk.sh -F 11 -L GPL
 before_install:
+  # Require JDK8 for compiling
   - jdk_switcher use openjdk8
-  - git clone --depth 1 https://github.com/datastax/native-protocol.git
-  - pushd native-protocol
-  - mvn install -Dmaven.javadoc.skip=true -B -V
-  - popd
-  - rm -rf native-protocol
 install: mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 script: mvn test -Djacoco.skip=true -B -V
 cache:
   directories:
-  - $HOME/.m2
+    - $HOME/.m2
