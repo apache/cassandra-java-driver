@@ -320,6 +320,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    *     defined in the configuration.
    * @see DefaultDriverOption#REQUEST_CONSISTENCY
    */
+  @NonNull
   @CheckReturnValue
   SelfT setConsistencyLevel(@Nullable ConsistencyLevel newConsistencyLevel);
 

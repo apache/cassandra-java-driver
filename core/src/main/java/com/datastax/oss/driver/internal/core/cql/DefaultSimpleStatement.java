@@ -631,6 +631,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return consistencyLevel;
   }
 
+  @NonNull
   @Override
   public SimpleStatement setConsistencyLevel(@Nullable ConsistencyLevel newConsistencyLevel) {
     return new DefaultSimpleStatement(

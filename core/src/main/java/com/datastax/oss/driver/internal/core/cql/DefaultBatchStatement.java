@@ -310,6 +310,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return consistencyLevel;
   }
 
+  @NonNull
   @Override
   public BatchStatement setConsistencyLevel(@Nullable ConsistencyLevel newConsistencyLevel) {
     return new DefaultBatchStatement(
