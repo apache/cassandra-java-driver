@@ -95,9 +95,9 @@ public class UdtCodecTest extends CodecTestBase<UdtValue> {
   @Test
   public void should_encode_udt() {
     UdtValue udt = userType.newValue();
-    udt.setInt("field1", 1);
-    udt.setToNull("field2");
-    udt.setString("field3", "a");
+    udt = udt.setInt("field1", 1);
+    udt = udt.setToNull("field2");
+    udt = udt.setString("field3", "a");
 
     assertThat(encode(udt))
         .isEqualTo(
@@ -139,9 +139,9 @@ public class UdtCodecTest extends CodecTestBase<UdtValue> {
   @Test
   public void should_format_udt() {
     UdtValue udt = userType.newValue();
-    udt.setInt(0, 1);
-    udt.setToNull(1);
-    udt.setString(2, "a");
+    udt = udt.setInt(0, 1);
+    udt = udt.setToNull(1);
+    udt = udt.setString(2, "a");
 
     assertThat(format(udt)).isEqualTo("{field1:1,field2:NULL,field3:'a'}");
 

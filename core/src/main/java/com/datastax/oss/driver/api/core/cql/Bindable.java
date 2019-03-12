@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.data.SettableById;
 import com.datastax.oss.driver.api.core.data.SettableByName;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /** A data container with the ability to unset values. */
@@ -70,6 +71,7 @@ public interface Bindable<SelfT extends Bindable<SelfT>>
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT unset(int i) {
     return setBytesUnsafe(i, ProtocolConstants.UNSET_VALUE);
   }
@@ -81,6 +83,7 @@ public interface Bindable<SelfT extends Bindable<SelfT>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT unset(@NonNull CqlIdentifier id) {
     return setBytesUnsafe(id, ProtocolConstants.UNSET_VALUE);
   }
@@ -92,6 +95,7 @@ public interface Bindable<SelfT extends Bindable<SelfT>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT unset(@NonNull String name) {
     return setBytesUnsafe(name, ProtocolConstants.UNSET_VALUE);
   }

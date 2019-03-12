@@ -25,6 +25,7 @@ import com.datastax.oss.driver.internal.querybuilder.relation.DefaultColumnCompo
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultColumnRelationBuilder;
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultMultiColumnRelationBuilder;
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultTokenRelationBuilder;
+import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
 
@@ -41,6 +42,7 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * alternative.
    */
   @NonNull
+  @CheckReturnValue
   SelfT where(@NonNull Relation relation);
 
   /**
@@ -55,10 +57,12 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * @see #where(Relation)
    */
   @NonNull
+  @CheckReturnValue
   SelfT where(@NonNull Iterable<Relation> additionalRelations);
 
   /** Var-arg equivalent of {@link #where(Iterable)}. */
   @NonNull
+  @CheckReturnValue
   default SelfT where(@NonNull Relation... additionalRelations) {
     return where(Arrays.asList(additionalRelations));
   }
@@ -215,6 +219,7 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * Relation#customIndex(CqlIdentifier, Term)} and passing it to {@link #where(Relation)}.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT whereCustomIndex(@NonNull CqlIdentifier indexId, @NonNull Term expression) {
     return where(new CustomIndexRelation(indexId, expression));
   }
@@ -227,6 +232,7 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * Term)} and passing it to {@link #where(Relation)}.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT whereCustomIndex(@NonNull String indexName, @NonNull Term expression) {
     return whereCustomIndex(CqlIdentifier.fromCql(indexName), expression);
   }
@@ -243,6 +249,7 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * features that are not yet covered by the query builder.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT whereRaw(@NonNull String raw) {
     return where(new DefaultRaw(raw));
   }

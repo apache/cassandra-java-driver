@@ -31,6 +31,7 @@ import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.RoutingKey;
+import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
@@ -76,6 +77,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * method. However custom implementations may choose to be mutable and return the same instance.
    */
   @NonNull
+  @CheckReturnValue
   SelfT setExecutionProfileName(@Nullable String newConfigProfileName);
 
   /**
@@ -85,6 +87,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * method. However custom implementations may choose to be mutable and return the same instance.
    */
   @NonNull
+  @CheckReturnValue
   SelfT setExecutionProfile(@Nullable DriverExecutionProfile newProfile);
 
   /**
@@ -95,6 +98,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * @param newRoutingKeyspace The keyspace to use, or {@code null} to disable token-aware routing.
    */
   @NonNull
+  @CheckReturnValue
   SelfT setRoutingKeyspace(@Nullable CqlIdentifier newRoutingKeyspace);
 
   /**
@@ -119,6 +123,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    *     delegate to the configured load balancing policy.
    */
   @NonNull
+  @CheckReturnValue
   SelfT setNode(@Nullable Node node);
 
   /**
@@ -129,6 +134,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    *     routing.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setRoutingKeyspace(@Nullable String newRoutingKeyspaceName) {
     return setRoutingKeyspace(
         newRoutingKeyspaceName == null ? null : CqlIdentifier.fromCql(newRoutingKeyspaceName));
@@ -142,6 +148,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * @param newRoutingKey The routing key to use, or {@code null} to disable token-aware routing.
    */
   @NonNull
+  @CheckReturnValue
   SelfT setRoutingKey(@Nullable ByteBuffer newRoutingKey);
 
   /**
@@ -152,6 +159,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * can be {@code null}.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setRoutingKey(@NonNull ByteBuffer... newRoutingKeyComponents) {
     return setRoutingKey(RoutingKey.compose(newRoutingKeyComponents));
   }
@@ -165,6 +173,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    *     routing.
    */
   @NonNull
+  @CheckReturnValue
   SelfT setRoutingToken(@Nullable Token newRoutingToken);
 
   /**
@@ -179,6 +188,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * it's never modified after being set on the statement).
    */
   @NonNull
+  @CheckReturnValue
   SelfT setCustomPayload(@NonNull Map<String, ByteBuffer> newCustomPayload);
 
   /**
@@ -191,6 +201,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    *     use the default idempotence defined in the configuration.
    */
   @NonNull
+  @CheckReturnValue
   SelfT setIdempotent(@Nullable Boolean newIdempotence);
 
   /**
@@ -200,6 +211,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * method. However custom implementations may choose to be mutable and return the same instance.
    */
   @NonNull
+  @CheckReturnValue
   SelfT setTracing(boolean newTracing);
 
   /**
@@ -224,6 +236,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * @see TimestampGenerator
    */
   @NonNull
+  @CheckReturnValue
   SelfT setQueryTimestamp(long newTimestamp);
 
   /**
@@ -235,6 +248,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * @see DefaultDriverOption#REQUEST_TIMEOUT
    */
   @NonNull
+  @CheckReturnValue
   SelfT setTimeout(@Nullable Duration newTimeout);
 
   /**
@@ -265,6 +279,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * if you do so, you must override {@link #copy(ByteBuffer)}.
    */
   @NonNull
+  @CheckReturnValue
   SelfT setPagingState(@Nullable ByteBuffer newPagingState);
 
   /**
@@ -285,6 +300,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * @see DefaultDriverOption#REQUEST_PAGE_SIZE
    */
   @NonNull
+  @CheckReturnValue
   SelfT setPageSize(int newPageSize);
 
   /**
@@ -304,6 +320,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    *     defined in the configuration.
    * @see DefaultDriverOption#REQUEST_CONSISTENCY
    */
+  @CheckReturnValue
   SelfT setConsistencyLevel(@Nullable ConsistencyLevel newConsistencyLevel);
 
   /**
@@ -324,6 +341,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * @see DefaultDriverOption#REQUEST_SERIAL_CONSISTENCY
    */
   @NonNull
+  @CheckReturnValue
   SelfT setSerialConsistencyLevel(@Nullable ConsistencyLevel newSerialConsistencyLevel);
 
   /** Whether tracing information should be recorded for this statement. */
@@ -351,6 +369,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * your own mutable implementation, make sure it returns a different instance.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT copy(@Nullable ByteBuffer newPagingState) {
     return setPagingState(newPagingState);
   }

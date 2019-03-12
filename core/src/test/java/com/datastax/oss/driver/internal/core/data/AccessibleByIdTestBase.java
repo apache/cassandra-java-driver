@@ -50,7 +50,7 @@ public abstract class AccessibleByIdTestBase<
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
-    t.setInt(FIELD0_ID, 1);
+    t = t.setInt(FIELD0_ID, 1);
 
     // Then
     verify(codecRegistry).codecFor(DataTypes.INT, Integer.class);
@@ -64,7 +64,7 @@ public abstract class AccessibleByIdTestBase<
     T t = newInstance(ImmutableList.of(DataTypes.TEXT), attachmentPoint);
 
     // When
-    t.setString(FIELD0_ID, "a");
+    t = t.setString(FIELD0_ID, "a");
 
     // Then
     verify(codecRegistry).codecFor(DataTypes.TEXT, String.class);
@@ -78,7 +78,7 @@ public abstract class AccessibleByIdTestBase<
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
-    t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
 
     // Then
     verifyZeroInteractions(codecRegistry);
@@ -89,10 +89,10 @@ public abstract class AccessibleByIdTestBase<
   public void should_set_to_null_by_id() {
     // Given
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
 
     // When
-    t.setToNull(FIELD0_ID);
+    t = t.setToNull(FIELD0_ID);
 
     // Then
     verifyZeroInteractions(codecRegistry);
@@ -107,7 +107,7 @@ public abstract class AccessibleByIdTestBase<
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
-    t.set(FIELD0_ID, "1", String.class);
+    t = t.set(FIELD0_ID, "1", String.class);
 
     // Then
     verify(codecRegistry).codecFor(DataTypes.INT, String.class);
@@ -124,7 +124,7 @@ public abstract class AccessibleByIdTestBase<
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
-    t.set(FIELD0_ID, "1", GenericType.STRING);
+    t = t.set(FIELD0_ID, "1", GenericType.STRING);
 
     // Then
     verify(codecRegistry).codecFor(DataTypes.INT, GenericType.STRING);
@@ -139,7 +139,7 @@ public abstract class AccessibleByIdTestBase<
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
-    t.set(FIELD0_ID, "1", intToStringCodec);
+    t = t.set(FIELD0_ID, "1", intToStringCodec);
 
     // Then
     verifyZeroInteractions(codecRegistry);
@@ -151,7 +151,7 @@ public abstract class AccessibleByIdTestBase<
   public void should_get_primitive_value_by_id() {
     // Given
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
 
     // When
     int i = t.getInt(FIELD0_ID);
@@ -166,7 +166,7 @@ public abstract class AccessibleByIdTestBase<
   public void should_get_object_value_by_id() {
     // Given
     T t = newInstance(ImmutableList.of(DataTypes.TEXT), attachmentPoint);
-    t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x61"));
+    t = t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x61"));
 
     // When
     String s = t.getString(FIELD0_ID);
@@ -181,7 +181,7 @@ public abstract class AccessibleByIdTestBase<
   public void should_get_bytes_by_id() {
     // Given
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
 
     // When
     ByteBuffer bytes = t.getBytesUnsafe(FIELD0_ID);
@@ -195,7 +195,7 @@ public abstract class AccessibleByIdTestBase<
   public void should_test_if_null_by_id() {
     // Given
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(FIELD0_ID, null);
+    t = t.setBytesUnsafe(FIELD0_ID, null);
 
     // When
     boolean isNull = t.isNull(FIELD0_ID);
@@ -211,7 +211,7 @@ public abstract class AccessibleByIdTestBase<
     CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
     when(codecRegistry.codecFor(DataTypes.INT, String.class)).thenAnswer(i -> intToStringCodec);
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
 
     // When
     String s = t.get(FIELD0_ID, String.class);
@@ -229,7 +229,7 @@ public abstract class AccessibleByIdTestBase<
     when(codecRegistry.codecFor(DataTypes.INT, GenericType.STRING))
         .thenAnswer(i -> intToStringCodec);
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
 
     // When
     String s = t.get(FIELD0_ID, GenericType.STRING);
@@ -245,7 +245,7 @@ public abstract class AccessibleByIdTestBase<
     // Given
     CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(FIELD0_ID, Bytes.fromHexString("0x00000001"));
 
     // When
     String s = t.get(FIELD0_ID, intToStringCodec);
@@ -262,7 +262,7 @@ public abstract class AccessibleByIdTestBase<
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
-    t.setInt(FIELD0_NAME, 1);
+    t = t.setInt(FIELD0_NAME, 1);
 
     // Then
     verify(codecRegistry).codecFor(DataTypes.INT, Integer.class);
@@ -276,7 +276,7 @@ public abstract class AccessibleByIdTestBase<
     T t = newInstance(ImmutableList.of(DataTypes.TEXT), attachmentPoint);
 
     // When
-    t.setString(FIELD0_NAME, "a");
+    t = t.setString(FIELD0_NAME, "a");
 
     // Then
     verify(codecRegistry).codecFor(DataTypes.TEXT, String.class);
@@ -290,7 +290,7 @@ public abstract class AccessibleByIdTestBase<
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
-    t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
 
     // Then
     verifyZeroInteractions(codecRegistry);
@@ -301,10 +301,10 @@ public abstract class AccessibleByIdTestBase<
   public void should_set_to_null_by_name() {
     // Given
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
 
     // When
-    t.setToNull(FIELD0_NAME);
+    t = t.setToNull(FIELD0_NAME);
 
     // Then
     verifyZeroInteractions(codecRegistry);
@@ -319,7 +319,7 @@ public abstract class AccessibleByIdTestBase<
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
-    t.set(FIELD0_NAME, "1", String.class);
+    t = t.set(FIELD0_NAME, "1", String.class);
 
     // Then
     verify(codecRegistry).codecFor(DataTypes.INT, String.class);
@@ -336,7 +336,7 @@ public abstract class AccessibleByIdTestBase<
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
-    t.set(FIELD0_NAME, "1", GenericType.STRING);
+    t = t.set(FIELD0_NAME, "1", GenericType.STRING);
 
     // Then
     verify(codecRegistry).codecFor(DataTypes.INT, GenericType.STRING);
@@ -351,7 +351,7 @@ public abstract class AccessibleByIdTestBase<
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
-    t.set(FIELD0_NAME, "1", intToStringCodec);
+    t = t.set(FIELD0_NAME, "1", intToStringCodec);
 
     // Then
     verifyZeroInteractions(codecRegistry);
@@ -363,7 +363,7 @@ public abstract class AccessibleByIdTestBase<
   public void should_get_primitive_value_by_name() {
     // Given
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
 
     // When
     int i = t.getInt(FIELD0_NAME);
@@ -378,7 +378,7 @@ public abstract class AccessibleByIdTestBase<
   public void should_get_object_value_by_name() {
     // Given
     T t = newInstance(ImmutableList.of(DataTypes.TEXT), attachmentPoint);
-    t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x61"));
+    t = t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x61"));
 
     // When
     String s = t.getString(FIELD0_NAME);
@@ -393,7 +393,7 @@ public abstract class AccessibleByIdTestBase<
   public void should_get_bytes_by_name() {
     // Given
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
 
     // When
     ByteBuffer bytes = t.getBytesUnsafe(FIELD0_NAME);
@@ -407,7 +407,7 @@ public abstract class AccessibleByIdTestBase<
   public void should_test_if_null_by_name() {
     // Given
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(FIELD0_NAME, null);
+    t = t.setBytesUnsafe(FIELD0_NAME, null);
 
     // When
     boolean isNull = t.isNull(FIELD0_NAME);
@@ -423,7 +423,7 @@ public abstract class AccessibleByIdTestBase<
     CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
     when(codecRegistry.codecFor(DataTypes.INT, String.class)).thenAnswer(i -> intToStringCodec);
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
 
     // When
     String s = t.get(FIELD0_NAME, String.class);
@@ -441,7 +441,7 @@ public abstract class AccessibleByIdTestBase<
     when(codecRegistry.codecFor(DataTypes.INT, GenericType.STRING))
         .thenAnswer(i -> intToStringCodec);
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
 
     // When
     String s = t.get(FIELD0_NAME, GenericType.STRING);
@@ -457,7 +457,7 @@ public abstract class AccessibleByIdTestBase<
     // Given
     CqlIntToStringCodec intToStringCodec = spy(new CqlIntToStringCodec());
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
-    t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
+    t = t.setBytesUnsafe(FIELD0_NAME, Bytes.fromHexString("0x00000001"));
 
     // When
     String s = t.get(FIELD0_NAME, intToStringCodec);
@@ -468,6 +468,7 @@ public abstract class AccessibleByIdTestBase<
     assertThat(s).isEqualTo("1");
   }
 
+  @SuppressWarnings("UnusedAssignment")
   @Test(expected = IllegalArgumentException.class)
   public void should_fail_when_id_does_not_exists() {
     final CqlIdentifier invalidField = CqlIdentifier.fromInternal("invalidField");
@@ -475,7 +476,7 @@ public abstract class AccessibleByIdTestBase<
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
-    t.setInt(invalidField, 1);
+    t = t.setInt(invalidField, 1);
 
     // Then the method will throw IllegalArgumentException up to the client.
   }
