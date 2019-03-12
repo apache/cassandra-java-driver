@@ -32,13 +32,27 @@ public interface LoadBalancingPolicy extends AutoCloseable {
    * Initializes this policy with the nodes discovered during driver initialization.
    *
    * <p>This method is guaranteed to be called exactly once per instance, and before any other
-   * method in this class.
+   * method in this class. At this point, the driver has successfully connected to one of the
+   * contact points, and performed a first refresh of topology information (by default, the contents
+   * of {@code system.peers}), to discover other nodes in the cluster.
    *
-   * @param nodes the nodes discovered by the driver when it connected to the cluster. When this
-   *     method is invoked, their state is guaranteed to be either {@link NodeState#UP} or {@link
-   *     NodeState#UNKNOWN}. Node states may be updated concurrently while this method executes, but
-   *     if so you will receive a notification.
+   * <p>This method must call {@link DistanceReporter#setDistance(Node, NodeDistance)
+   * distanceReporter.setDistance} for each provided node (otherwise that node will stay at distance
+   * {@link NodeDistance#IGNORED IGNORED}, and the driver won't open connections to it). Note that
+   * the node's {@link Node#getState() state} can be either {@link NodeState#UP UP} (for the
+   * successful contact point), {@link NodeState#DOWN DOWN} (for contact points that were tried
+   * unsuccessfully), or {@link NodeState#UNKNOWN UNKNOWN} (for contact points that weren't tried,
+   * or any other node discovered from the topology refresh). Node states may be updated
+   * concurrently while this method executes, but if so this policy will get notified after this
+   * method has returned, through other methods such as {@link #onUp(Node)} or {@link
+   * #onDown(Node)}.
+   *
+   * @param nodes all the nodes that are known to exist in the cluster (regardless of their state)
+   *     at the time of invocation.
    * @param distanceReporter an object that will be used by the policy to signal distance changes.
+   *     Implementations will typically store a this in a field, since new nodes may get {@link
+   *     #onAdd(Node) added} later and will need to have their distance set (or the policy might
+   *     change distances dynamically over time).
    */
   void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter);
 
@@ -60,14 +74,18 @@ public interface LoadBalancingPolicy extends AutoCloseable {
   /**
    * Called when a node is added to the cluster.
    *
-   * <p>The new node will have the state {@link NodeState#UNKNOWN}. The actual state will be known
-   * when:
+   * <p>The new node will be at distance {@link NodeDistance#IGNORED IGNORED}, and have the state
+   * {@link NodeState#UNKNOWN UNKNOWN}.
    *
-   * <ul>
-   *   <li>the load balancing policy signals an active distance for the node, and the driver tries
-   *       to connect to it.
-   *   <li>or a topology event is received from the cluster.
-   * </ul>
+   * <p>If this method assigns an active distance to the node, the driver will try to create a
+   * connection pool to it (resulting in a state change to {@link #onUp(Node) UP} or {@link
+   * #onDown(Node) DOWN} depending on the outcome).
+   *
+   * <p>If it leaves it at distance {@link NodeDistance#IGNORED IGNORED}, the driver won't attempt
+   * any connection. The node state will remain unknown, but might be updated later if a topology
+   * event is received from the cluster.
+   *
+   * @see #init(Map, DistanceReporter)
    */
   void onAdd(@NonNull Node node);
 

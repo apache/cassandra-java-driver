@@ -146,7 +146,7 @@ public class LoadBalancingPolicyWrapperTest {
   }
 
   @Test
-  public void should_init_policies_with_up_or_unknown_nodes() {
+  public void should_init_policies_with_all_nodes() {
     // Given
     node1.state = NodeState.UP;
     node2.state = NodeState.UNKNOWN;
@@ -159,7 +159,7 @@ public class LoadBalancingPolicyWrapperTest {
     for (LoadBalancingPolicy policy : ImmutableList.of(policy1, policy2, policy3)) {
       verify(policy).init(initNodesCaptor.capture(), any(DistanceReporter.class));
       Map<UUID, Node> initNodes = initNodesCaptor.getValue();
-      assertThat(initNodes.values()).containsOnly(node1, node2);
+      assertThat(initNodes.values()).containsOnly(node1, node2, node3);
     }
   }
 

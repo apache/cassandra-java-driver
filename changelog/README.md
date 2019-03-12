@@ -5,6 +5,7 @@
 ### 4.0.0 (in progress)
 
 - [improvement] JAVA-2161: Annotate mutating methods with `@CheckReturnValue`
+- [bug] JAVA-2177: Don't exclude down nodes when initializing LBPs
 - [improvement] JAVA-2143: Rename Statement.setTimestamp() to setQueryTimestamp()
 - [improvement] JAVA-2165: Abstract node connection information
 - [improvement] JAVA-2090: Add support for additional_write_policy and read_repair table options
