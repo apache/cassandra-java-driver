@@ -4433,6 +4433,41 @@
         "new": "method SelfT com.datastax.oss.driver.api.core.data.SettableByName<SelfT extends com.datastax.oss.driver.api.core.data.SettableByName<SelfT extends com.datastax.oss.driver.api.core.data.SettableByName<SelfT>>>::setUuid(java.lang.String, java.util.UUID) @ com.datastax.oss.driver.api.core.data.UdtValue",
         "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
         "justification": "JAVA-2161: Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>>::setConsistencyLevel(com.datastax.oss.driver.api.core.ConsistencyLevel) @ com.datastax.oss.driver.api.core.cql.BatchStatement",
+        "new": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>>::setConsistencyLevel(com.datastax.oss.driver.api.core.ConsistencyLevel) @ com.datastax.oss.driver.api.core.cql.BatchStatement",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "Add missing `@NonNull` annotation to Statement.setConsistencyLevel"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>>::setConsistencyLevel(com.datastax.oss.driver.api.core.ConsistencyLevel) @ com.datastax.oss.driver.api.core.cql.BatchableStatement<SelfT extends com.datastax.oss.driver.api.core.cql.BatchableStatement<SelfT extends com.datastax.oss.driver.api.core.cql.BatchableStatement<SelfT>>>",
+        "new": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>>::setConsistencyLevel(com.datastax.oss.driver.api.core.ConsistencyLevel) @ com.datastax.oss.driver.api.core.cql.BatchableStatement<SelfT extends com.datastax.oss.driver.api.core.cql.BatchableStatement<SelfT extends com.datastax.oss.driver.api.core.cql.BatchableStatement<SelfT>>>",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "Add missing `@NonNull` annotation to Statement.setConsistencyLevel"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>>::setConsistencyLevel(com.datastax.oss.driver.api.core.ConsistencyLevel) @ com.datastax.oss.driver.api.core.cql.BoundStatement",
+        "new": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>>::setConsistencyLevel(com.datastax.oss.driver.api.core.ConsistencyLevel) @ com.datastax.oss.driver.api.core.cql.BoundStatement",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "Add missing `@NonNull` annotation to Statement.setConsistencyLevel"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>>::setConsistencyLevel(com.datastax.oss.driver.api.core.ConsistencyLevel) @ com.datastax.oss.driver.api.core.cql.SimpleStatement",
+        "new": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>>::setConsistencyLevel(com.datastax.oss.driver.api.core.ConsistencyLevel) @ com.datastax.oss.driver.api.core.cql.SimpleStatement",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "Add missing `@NonNull` annotation to Statement.setConsistencyLevel"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>>::setConsistencyLevel(com.datastax.oss.driver.api.core.ConsistencyLevel)",
+        "new": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>>::setConsistencyLevel(com.datastax.oss.driver.api.core.ConsistencyLevel)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "Add missing `@NonNull` annotation to Statement.setConsistencyLevel"
       }
     ]
   }
