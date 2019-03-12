@@ -193,7 +193,7 @@ public class JsonInsertIT {
   private CqlSession sessionWithCustomCodec() {
     return (CqlSession)
         SessionUtils.baseBuilder()
-            .addContactPoints(ccmRule.getContactPoints())
+            .addContactEndPoints(ccmRule.getContactPoints())
             .withKeyspace(sessionRule.keyspace())
             .addTypeCodecs(JACKSON_JSON_CODEC)
             .build();
@@ -203,7 +203,7 @@ public class JsonInsertIT {
   private CqlSession sessionWithoutCustomCodec() {
     return (CqlSession)
         SessionUtils.baseBuilder()
-            .addContactPoints(ccmRule.getContactPoints())
+            .addContactEndPoints(ccmRule.getContactPoints())
             .withKeyspace(sessionRule.keyspace())
             .build();
   }
