@@ -629,6 +629,7 @@ public class DefaultBoundStatement implements BoundStatement {
     return consistencyLevel;
   }
 
+  @NonNull
   @Override
   public BoundStatement setConsistencyLevel(@Nullable ConsistencyLevel newConsistencyLevel) {
     return new DefaultBoundStatement(
