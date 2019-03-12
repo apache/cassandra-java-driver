@@ -122,7 +122,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
     when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(3);
 
     ClusterNameMismatchException error =
-        new ClusterNameMismatchException(ADDRESS, "actual", "expected");
+        new ClusterNameMismatchException(node.getEndPoint(), "actual", "expected");
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
             .failure(node, error)
@@ -135,7 +135,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
     factoryHelper.waitForCalls(node, 3);
     waitForPendingAdminTasks();
 
-    verify(eventBus).fire(TopologyEvent.forceDown(ADDRESS));
+    verify(eventBus).fire(TopologyEvent.forceDown(node.getBroadcastRpcAddress().get()));
     verify(eventBus, never()).fire(ChannelEvent.channelOpened(node));
 
     verify(nodeMetricUpdater, times(3))

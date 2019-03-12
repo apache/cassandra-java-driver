@@ -23,6 +23,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * The metadata of the Cassandra cluster that this driver instance is connected to.
@@ -36,11 +37,45 @@ import java.util.Optional;
  */
 public interface Metadata {
   /**
-   * The nodes known to the driver, indexed by the address that it uses to connect to them. This
-   * might include nodes that are currently viewed as down, or ignored by the load balancing policy.
+   * The nodes known to the driver, indexed by their unique identifier ({@code host_id} in {@code
+   * system.local}/{@code system.peers}). This might include nodes that are currently viewed as
+   * down, or ignored by the load balancing policy.
    */
   @NonNull
-  Map<InetSocketAddress, Node> getNodes();
+  Map<UUID, Node> getNodes();
+
+  /**
+   * Finds the node with the given {@linkplain Node#getEndPoint() connection information}, if it
+   * exists.
+   *
+   * <p>Note that this method performs a linear search of {@link #getNodes()}.
+   */
+  @NonNull
+  default Optional<Node> findNode(@NonNull EndPoint endPoint) {
+    for (Node node : getNodes().values()) {
+      if (node.getEndPoint().equals(endPoint)) {
+        return Optional.of(node);
+      }
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Finds the node with the given <em>untranslated</em> {@linkplain Node#getBroadcastRpcAddress()
+   * broadcast RPC address}, if it exists.
+   *
+   * <p>Note that this method performs a linear search of {@link #getNodes()}.
+   */
+  @NonNull
+  default Optional<Node> findNode(@NonNull InetSocketAddress broadcastRpcAddress) {
+    for (Node node : getNodes().values()) {
+      Optional<InetSocketAddress> o = node.getBroadcastRpcAddress();
+      if (o.isPresent() && o.get().equals(broadcastRpcAddress)) {
+        return Optional.of(node);
+      }
+    }
+    return Optional.empty();
+  }
 
   /**
    * The keyspaces defined in this cluster.

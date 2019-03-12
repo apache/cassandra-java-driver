@@ -15,12 +15,14 @@
  */
 package com.datastax.oss.driver.api.querybuilder.schema.compaction;
 
+import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface LeveledCompactionStrategy<SelfT extends LeveledCompactionStrategy<SelfT>>
     extends CompactionStrategy<SelfT> {
 
   @NonNull
+  @CheckReturnValue
   default SelfT withSSTableSizeInMB(int ssTableSizeInMB) {
     return withOption("sstable_size_in_mb", ssTableSizeInMB);
   }

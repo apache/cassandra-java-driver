@@ -15,8 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.ssl;
 
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.net.SocketAddress;
 import javax.net.ssl.SSLEngine;
 
 /**
@@ -34,5 +34,5 @@ public interface SslEngineFactory extends AutoCloseable {
    *     node).
    */
   @NonNull
-  SSLEngine newSslEngine(@NonNull SocketAddress remoteEndpoint);
+  SSLEngine newSslEngine(@NonNull EndPoint remoteEndpoint);
 }

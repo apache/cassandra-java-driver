@@ -5,6 +5,12 @@
 ### 4.0.0 (in progress)
 
 - [improvement] JAVA-2182: Add insertInto().json() variant that takes an object in QueryBuilder
+- [improvement] JAVA-2161: Annotate mutating methods with `@CheckReturnValue`
+- [bug] JAVA-2177: Don't exclude down nodes when initializing LBPs
+- [improvement] JAVA-2143: Rename Statement.setTimestamp() to setQueryTimestamp()
+- [improvement] JAVA-2165: Abstract node connection information
+- [improvement] JAVA-2090: Add support for additional_write_policy and read_repair table options
+- [improvement] JAVA-2164: Rename statement builder methods to setXxx
 - [bug] JAVA-2178: QueryBuilder: Alias after function column is not included in a query
 - [improvement] JAVA-2158: Allow BuildableQuery to build statement with values
 - [improvement] JAVA-2150: Improve query builder error message on unsupported literal type

@@ -34,6 +34,7 @@ abstract class NodesRefresh implements MetadataRefresh {
    */
   protected static boolean copyInfos(
       NodeInfo nodeInfo, DefaultNode node, TokenFactory tokenFactory, String logPrefix) {
+    node.broadcastRpcAddress = nodeInfo.getBroadcastRpcAddress().orElse(null);
     node.broadcastAddress = nodeInfo.getBroadcastAddress().orElse(null);
     node.listenAddress = nodeInfo.getListenAddress().orElse(null);
     node.datacenter = nodeInfo.getDatacenter();
@@ -48,7 +49,7 @@ abstract class NodesRefresh implements MetadataRefresh {
           "[{}] Error converting Cassandra version '{}' for {}",
           logPrefix,
           versionString,
-          node.getConnectAddress());
+          node.getEndPoint());
     }
     boolean tokensChanged = tokenFactory != null && !node.rawTokens.equals(nodeInfo.getTokens());
     if (tokensChanged) {

@@ -27,10 +27,10 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
-import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
+import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
-import java.util.Collections;
+import java.util.UUID;
 import org.junit.Test;
 
 public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPolicyTestBase {
@@ -38,8 +38,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   @Test
   public void should_use_local_dc_if_provided_via_config() {
     // Given
-    when(defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null))
-        .thenReturn("dc1");
+    // the parent class sets the config option to "dc1"
 
     // When
     DefaultLoadBalancingPolicy policy =
@@ -53,6 +52,8 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   public void should_use_local_dc_if_provided_via_context() {
     // Given
     when(context.getLocalDatacenter(DriverExecutionProfile.DEFAULT_NAME)).thenReturn("dc1");
+    // note: programmatic takes priority, the config won't even be inspected so no need to stub the
+    // option to null
 
     // When
     DefaultLoadBalancingPolicy policy =
@@ -69,14 +70,13 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     // Given
     when(defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null))
         .thenReturn(null);
+    when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1));
+    when(metadataManager.wasImplicitContactPoint()).thenReturn(true);
     DefaultLoadBalancingPolicy policy =
         new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
 
     // When
-    policy.init(
-        ImmutableMap.of(MetadataManager.DEFAULT_CONTACT_POINT, node1),
-        distanceReporter,
-        Collections.emptySet());
+    policy.init(ImmutableMap.of(UUID.randomUUID(), node1), distanceReporter);
 
     // Then
     assertThat(policy.localDc).isEqualTo("dc1");
@@ -87,6 +87,8 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     // Given
     when(defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null))
         .thenReturn(null);
+    when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node2));
+    when(metadataManager.wasImplicitContactPoint()).thenReturn(false);
     DefaultLoadBalancingPolicy policy =
         new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
 
@@ -94,7 +96,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     thrown.expectMessage("You provided explicit contact points, the local DC must be specified");
 
     // When
-    policy.init(ImmutableMap.of(ADDRESS2, node2), distanceReporter, ImmutableSet.of(ADDRESS2));
+    policy.init(ImmutableMap.of(UUID.randomUUID(), node2), distanceReporter);
   }
 
   @Test
@@ -102,14 +104,15 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     // Given
     when(node2.getDatacenter()).thenReturn("dc2");
     when(node3.getDatacenter()).thenReturn("dc3");
+    when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2, node3));
     DefaultLoadBalancingPolicy policy =
         new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
 
     // When
     policy.init(
-        ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2, ADDRESS3, node3),
-        distanceReporter,
-        ImmutableSet.of(ADDRESS1, ADDRESS2, ADDRESS3));
+        ImmutableMap.of(
+            UUID.randomUUID(), node1, UUID.randomUUID(), node2, UUID.randomUUID(), node3),
+        distanceReporter);
 
     // Then
     verify(appender, atLeast(1)).doAppend(loggingEventCaptor.capture());
@@ -119,27 +122,33 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     assertThat(warnLogs.iterator().next().getFormattedMessage())
         .contains(
             "You specified dc1 as the local DC, but some contact points are from a different DC")
-        .contains("/127.0.0.2:9042=dc2")
-        .contains("/127.0.0.3:9042=dc3");
+        .contains("node2=dc2")
+        .contains("node3=dc3");
   }
 
   @Test
   public void should_include_nodes_from_local_dc() {
     // Given
+    when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2));
+    when(node1.getState()).thenReturn(NodeState.UP);
+    when(node2.getState()).thenReturn(NodeState.DOWN);
+    when(node3.getState()).thenReturn(NodeState.UNKNOWN);
     DefaultLoadBalancingPolicy policy =
         new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
 
     // When
     policy.init(
-        ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2, ADDRESS3, node3),
-        distanceReporter,
-        ImmutableSet.of(ADDRESS1, ADDRESS2)); // make node3 not a contact point to cover all cases
+        ImmutableMap.of(
+            UUID.randomUUID(), node1, UUID.randomUUID(), node2, UUID.randomUUID(), node3),
+        distanceReporter);
 
     // Then
+    // Set distance for all nodes in the local DC
     verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
     verify(distanceReporter).setDistance(node2, NodeDistance.LOCAL);
     verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
-    assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1, node2, node3);
+    // But only include UP or UNKNOWN nodes in the live set
+    assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1, node3);
   }
 
   @Test
@@ -147,14 +156,15 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     // Given
     when(node2.getDatacenter()).thenReturn("dc2");
     when(node3.getDatacenter()).thenReturn("dc3");
+    when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2));
     DefaultLoadBalancingPolicy policy =
         new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
 
     // When
     policy.init(
-        ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2, ADDRESS3, node3),
-        distanceReporter,
-        ImmutableSet.of(ADDRESS1, ADDRESS2)); // make node3 not a contact point to cover all cases
+        ImmutableMap.of(
+            UUID.randomUUID(), node1, UUID.randomUUID(), node2, UUID.randomUUID(), node3),
+        distanceReporter);
 
     // Then
     verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
@@ -166,6 +176,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   @Test
   public void should_ignore_nodes_excluded_by_filter() {
     // Given
+    when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2));
     when(context.getNodeFilter(DriverExecutionProfile.DEFAULT_NAME))
         .thenReturn(node -> node.equals(node1));
 
@@ -174,9 +185,9 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
 
     // When
     policy.init(
-        ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2, ADDRESS3, node3),
-        distanceReporter,
-        ImmutableSet.of(ADDRESS1, ADDRESS2)); // make node3 not a contact point to cover all cases
+        ImmutableMap.of(
+            UUID.randomUUID(), node1, UUID.randomUUID(), node2, UUID.randomUUID(), node3),
+        distanceReporter);
 
     // Then
     verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);

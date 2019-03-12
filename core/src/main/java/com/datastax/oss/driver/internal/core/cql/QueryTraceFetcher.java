@@ -78,7 +78,7 @@ class QueryTraceFetcher {
         .executeAsync(
             SimpleStatement.builder("SELECT * FROM system_traces.sessions WHERE session_id = ?")
                 .addPositionalValue(tracingId)
-                .withExecutionProfile(config)
+                .setExecutionProfile(config)
                 .build())
         .whenComplete(
             (rs, error) -> {
@@ -112,8 +112,8 @@ class QueryTraceFetcher {
         .executeAsync(
             SimpleStatement.builder("SELECT * FROM system_traces.events WHERE session_id = ?")
                 .addPositionalValue(tracingId)
-                .withPagingState(pagingState)
-                .withExecutionProfile(config)
+                .setPagingState(pagingState)
+                .setExecutionProfile(config)
                 .build())
         .whenComplete(
             (rs, error) -> {

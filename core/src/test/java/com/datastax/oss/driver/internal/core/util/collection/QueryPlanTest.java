@@ -68,10 +68,10 @@ public class QueryPlanTest {
     queryPlan.poll();
     Iterator<Node> iterator00 = queryPlan.iterator();
 
-    assertThat(iterator3).containsExactly(node1, node2, node3);
-    assertThat(iterator2).containsExactly(node2, node3);
-    assertThat(iterator1).containsExactly(node3);
-    assertThat(iterator0).isEmpty();
-    assertThat(iterator00).isEmpty();
+    assertThat(iterator3).toIterable().containsExactly(node1, node2, node3);
+    assertThat(iterator2).toIterable().containsExactly(node2, node3);
+    assertThat(iterator1).toIterable().containsExactly(node3);
+    assertThat(iterator0).toIterable().isEmpty();
+    assertThat(iterator00).toIterable().isEmpty();
   }
 }

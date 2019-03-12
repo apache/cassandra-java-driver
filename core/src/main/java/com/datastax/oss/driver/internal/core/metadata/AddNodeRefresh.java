@@ -20,8 +20,8 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.UUID;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -36,16 +36,16 @@ public class AddNodeRefresh extends NodesRefresh {
   @Override
   public Result compute(
       DefaultMetadata oldMetadata, boolean tokenMapEnabled, InternalDriverContext context) {
-    Map<InetSocketAddress, Node> oldNodes = oldMetadata.getNodes();
-    if (oldNodes.containsKey(newNodeInfo.getConnectAddress())) {
+    Map<UUID, Node> oldNodes = oldMetadata.getNodes();
+    if (oldNodes.containsKey(newNodeInfo.getHostId())) {
       return new Result(oldMetadata);
     } else {
-      DefaultNode newNode = new DefaultNode(newNodeInfo.getConnectAddress(), context);
+      DefaultNode newNode = new DefaultNode(newNodeInfo.getEndPoint(), context);
       copyInfos(newNodeInfo, newNode, null, context.getSessionName());
-      Map<InetSocketAddress, Node> newNodes =
-          ImmutableMap.<InetSocketAddress, Node>builder()
+      Map<UUID, Node> newNodes =
+          ImmutableMap.<UUID, Node>builder()
               .putAll(oldNodes)
-              .put(newNode.getConnectAddress(), newNode)
+              .put(newNode.getHostId(), newNode)
               .build();
       return new Result(
           oldMetadata.withNodes(newNodes, tokenMapEnabled, false, null, context),

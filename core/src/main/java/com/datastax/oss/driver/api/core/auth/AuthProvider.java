@@ -16,9 +16,9 @@
 package com.datastax.oss.driver.api.core.auth;
 
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.net.SocketAddress;
 
 /**
  * Provides {@link Authenticator} instances to use when connecting to Cassandra nodes.
@@ -31,12 +31,12 @@ public interface AuthProvider extends AutoCloseable {
   /**
    * The authenticator to use when connecting to {@code host}.
    *
-   * @param host the Cassandra host to connect to.
+   * @param endPoint the Cassandra host to connect to.
    * @param serverAuthenticator the configured authenticator on the host.
    * @return the authentication implementation to use.
    */
   @NonNull
-  Authenticator newAuthenticator(@NonNull SocketAddress host, @NonNull String serverAuthenticator)
+  Authenticator newAuthenticator(@NonNull EndPoint endPoint, @NonNull String serverAuthenticator)
       throws AuthenticationException;
 
   /**
@@ -55,5 +55,5 @@ public interface AuthProvider extends AutoCloseable {
    *       will be retried according to the {@link ReconnectionPolicy}).
    * </ul>
    */
-  void onMissingChallenge(@NonNull SocketAddress host) throws AuthenticationException;
+  void onMissingChallenge(@NonNull EndPoint endPoint) throws AuthenticationException;
 }

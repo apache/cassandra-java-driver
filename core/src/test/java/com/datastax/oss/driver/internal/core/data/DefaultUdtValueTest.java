@@ -70,8 +70,8 @@ public class DefaultUdtValueTest extends AccessibleByIdTestBase<UdtValue> {
             .withField(CqlIdentifier.fromInternal("field2"), DataTypes.TEXT)
             .build();
     UdtValue in = type.newValue();
-    in.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
-    in.setBytesUnsafe(1, Bytes.fromHexString("0x61"));
+    in = in.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
+    in = in.setBytesUnsafe(1, Bytes.fromHexString("0x61"));
 
     UdtValue out = SerializationHelper.serializeAndDeserialize(in);
 

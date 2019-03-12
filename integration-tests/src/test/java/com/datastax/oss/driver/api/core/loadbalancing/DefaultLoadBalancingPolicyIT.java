@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
@@ -183,7 +184,7 @@ public class DefaultLoadBalancingPolicyIT {
     for (Node replica : tokenMap.getReplicas(keyspace, routingKey)) {
       if (replica.getDatacenter().equals(LOCAL_DC)) {
         localReplicas.add(replica);
-        context.getEventBus().fire(TopologyEvent.forceDown(replica.getConnectAddress()));
+        context.getEventBus().fire(TopologyEvent.forceDown(replica.getBroadcastRpcAddress().get()));
         ConditionChecker.checkThat(() -> assertThat(replica.getOpenConnections()).isZero())
             .becomesTrue();
       }
@@ -218,7 +219,7 @@ public class DefaultLoadBalancingPolicyIT {
     }
 
     for (Node replica : localReplicas) {
-      context.getEventBus().fire(TopologyEvent.forceUp(replica.getConnectAddress()));
+      context.getEventBus().fire(TopologyEvent.forceUp(replica.getBroadcastRpcAddress().get()));
       ConditionChecker.checkThat(() -> assertThat(replica.getOpenConnections()).isPositive())
           .becomesTrue();
     }
@@ -236,7 +237,7 @@ public class DefaultLoadBalancingPolicyIT {
     // Pick a random node to exclude -- just ensure that it's not the default contact point since
     // we assert 0 connections at the end of this test (the filter is not applied to contact
     // points).
-    InetSocketAddress ignoredAddress = firstNonDefaultContactPoint(localNodes);
+    EndPoint ignoredEndPoint = firstNonDefaultContactPoint(localNodes);
 
     // Open a separate session with a filter
     try (CqlSession session =
@@ -245,26 +246,30 @@ public class DefaultLoadBalancingPolicyIT {
             sessionRule.keyspace(),
             null,
             null,
-            node -> !node.getConnectAddress().equals(ignoredAddress))) {
+            node -> !node.getEndPoint().equals(ignoredEndPoint))) {
 
       // No routing information => should round-robin on white-listed nodes
       SimpleStatement statement = SimpleStatement.newInstance("SELECT * FROM test.foo WHERE k = 1");
       for (int i = 0; i < 12; i++) {
         ResultSet rs = session.execute(statement);
         Node coordinator = rs.getExecutionInfo().getCoordinator();
-        assertThat(coordinator.getConnectAddress()).isNotEqualTo(ignoredAddress);
+        assertThat(coordinator.getEndPoint()).isNotEqualTo(ignoredEndPoint);
       }
 
-      Node ignoredNode = session.getMetadata().getNodes().get(ignoredAddress);
-      assertThat(ignoredNode.getOpenConnections()).isEqualTo(0);
+      assertThat(session.getMetadata().findNode(ignoredEndPoint))
+          .hasValueSatisfying(
+              ignoredNode -> {
+                assertThat(ignoredNode.getOpenConnections()).isEqualTo(0);
+              });
     }
   }
 
-  private InetSocketAddress firstNonDefaultContactPoint(Iterable<Node> nodes) {
+  private EndPoint firstNonDefaultContactPoint(Iterable<Node> nodes) {
     for (Node localNode : nodes) {
-      InetSocketAddress address = localNode.getConnectAddress();
-      if (!address.getAddress().getHostAddress().equals("127.0.0.1")) {
-        return address;
+      EndPoint endPoint = localNode.getEndPoint();
+      InetSocketAddress connectAddress = (InetSocketAddress) endPoint.resolve();
+      if (!connectAddress.getAddress().getHostAddress().equals("127.0.0.1")) {
+        return endPoint;
       }
     }
     fail("should have other nodes than the default contact point");

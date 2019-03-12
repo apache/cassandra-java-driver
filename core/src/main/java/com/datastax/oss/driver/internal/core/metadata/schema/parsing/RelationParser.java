@@ -115,6 +115,7 @@ public abstract class RelationParser {
    */
   public static final ImmutableMap<String, TypeCodec<?>> OPTION_CODECS =
       ImmutableMap.<String, TypeCodec<?>>builder()
+          .put("additional_write_policy", TypeCodecs.TEXT)
           .put("bloom_filter_fp_chance", TypeCodecs.DOUBLE)
           // In C* <= 2.2, this is a string, not a map (this is special-cased in parseOptions):
           .put("caching", MAP_OF_TEXT_TO_TEXT)
@@ -136,6 +137,7 @@ public abstract class RelationParser {
           .put("max_index_interval", TypeCodecs.INT)
           .put("memtable_flush_period_in_ms", TypeCodecs.INT)
           .put("min_index_interval", TypeCodecs.INT)
+          .put("read_repair", TypeCodecs.TEXT)
           .put("read_repair_chance", TypeCodecs.DOUBLE)
           .put("speculative_retry", TypeCodecs.TEXT)
           .build();

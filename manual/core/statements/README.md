@@ -40,6 +40,10 @@ statement.setIdempotent(true);
 statement = statement.setConfigProfileName("oltp").setIdempotent(true);
 ```
 
+All of these mutating methods are annotated with `@CheckReturnValue`. Some code analysis tools --
+such as [ErrorProne](https://errorprone.info/) -- can check correct usage at build time, and report
+mistakes as compiler errors.
+
 Note that some attributes can either be set programmatically, or inherit a default value defined in
 the [configuration](../configuration/). Namely, these are: idempotent flag, query timeout,
 consistency levels and page size. We recommended the configuration approach whenever possible (you

@@ -16,7 +16,9 @@
 package com.datastax.oss.driver.api.testinfra;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Set;
@@ -48,8 +50,8 @@ public abstract class CassandraResourceRule extends ExternalResource {
    * @return Default contact points associated with this cassandra resource. By default returns
    *     127.0.0.1
    */
-  public Set<InetSocketAddress> getContactPoints() {
-    return Collections.singleton(new InetSocketAddress("127.0.0.1", 9042));
+  public Set<EndPoint> getContactPoints() {
+    return Collections.singleton(new DefaultEndPoint(new InetSocketAddress("127.0.0.1", 9042)));
   }
 
   /** @return The highest protocol version supported by this resource. */

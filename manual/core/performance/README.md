@@ -17,9 +17,9 @@ an intermediary copy. If you have multiple attributes to set, use a builder inst
 
 ```java
 SimpleStatement statement = SimpleStatement.builder("SELECT * FROM foo")
-    .withPageSize(20)
-    .withConsistencyLevel(DefaultConsistencyLevel.QUORUM)
-    .withIdempotence(true)
+    .setPageSize(20)
+    .setConsistencyLevel(DefaultConsistencyLevel.QUORUM)
+    .setIdempotence(true)
     .build();
 ```
 

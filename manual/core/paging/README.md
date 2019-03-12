@@ -131,7 +131,7 @@ ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
 
 // Later:
 SimpleStatement statement =
-    SimpleStatement.builder("your query").withPagingState(pagingState).build();
+    SimpleStatement.builder("your query").setPagingState(pagingState).build();
 session.execute(statement);
 ```
 

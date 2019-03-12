@@ -17,13 +17,17 @@ session.execute(boundSelect);
 boundSelect = boundSelect.setInt("k", key).setPageSize(1000);
 ```
 
+All of these mutating methods are annotated with `@CheckReturnValue`. Some code analysis tools --
+such as [ErrorProne](https://errorprone.info/) -- can check correct usage at build time, and report
+mistakes as compiler errors.
+
 The driver also provides builders:
 
 ```java
 BoundStatement boundSelect =
     preparedSelect.boundStatementBuilder()
         .setInt("k", key)
-        .withPageSize(1000)
+        .setPageSize(1000)
         .build();
 ```
 
@@ -57,3 +61,10 @@ higher latencies.
 We therefore urge users to carefully choose upfront the consistency level that works best for their
 use cases. If there is a legitimate reason to downgrade and retry, that should be handled by the
 application code.
+
+### I want to set a date on a bound statement, where did `setTimestamp()` go?
+
+The driver now uses Java 8's improved date and time API. CQL type `timestamp` is mapped to
+`java.time.Instant`, and the corresponding getter and setter are `getInstant` and `setInstant`.
+
+See [Temporal types](../manual/core/temporal_types/) for more details.

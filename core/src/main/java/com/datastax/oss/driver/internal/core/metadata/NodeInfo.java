@@ -15,9 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
-import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import java.net.InetSocketAddress;
@@ -32,17 +32,21 @@ import java.util.UUID;
  * <p>This information will be copied to the corresponding {@link Node} in the metadata.
  */
 public interface NodeInfo {
+
+  /** The endpoint that the driver will use to connect to the node. */
+  EndPoint getEndPoint();
+
   /**
-   * The address that the driver uses to connect to the node. This is the node's broadcast RPC
-   * address, <b>transformed by the {@link AddressTranslator}</b> if one is configured.
+   * The node's broadcast RPC address.
    *
-   * <p>The driver uses this to uniquely identify a node.
+   * <p>This is used to match status events coming in on the control connection. Note that it's not
+   * possible to fill it for the control node for some Cassandra versions, but that's less important
+   * because the control node doesn't receive events for itself.
    *
-   * <p>This must not be null. If this instance is the reponse to a {@link
-   * TopologyMonitor#refreshNode(Node) refresh node} request, it must also match the address with
-   * which the request was made, otherwise the new node will be ignored.
+   * @see Node#getBroadcastRpcAddress()
    */
-  InetSocketAddress getConnectAddress();
+  Optional<InetSocketAddress> getBroadcastRpcAddress();
+
   /**
    * The node's broadcast address and port. That is, the address that other nodes use to communicate
    * with that node.
@@ -51,6 +55,7 @@ public interface NodeInfo {
    * don't need this information, you can leave it empty.
    */
   Optional<InetSocketAddress> getBroadcastAddress();
+
   /**
    * The node's listen address and port. That is, the address that the Cassandra process binds to.
    *
@@ -111,8 +116,8 @@ public interface NodeInfo {
   Map<String, Object> getExtras();
 
   /**
-   * The host ID that is assigned to this host by cassandra. This value can be used to uniquely
-   * identify a host even when the underling ip address changes.
+   * The host ID that is assigned to this host by cassandra. The driver uses this to uniquely
+   * identify a node.
    */
   UUID getHostId();
 

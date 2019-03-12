@@ -65,7 +65,7 @@ public class DriverExecutionProfileIT {
     try (CqlSession session = SessionUtils.newSession(simulacron)) {
       SimpleStatement statement =
           SimpleStatement.builder("select * from system.local")
-              .withExecutionProfileName("IDONTEXIST")
+              .setExecutionProfileName("IDONTEXIST")
               .build();
 
       thrown.expect(IllegalArgumentException.class);
@@ -99,7 +99,7 @@ public class DriverExecutionProfileIT {
       }
 
       // Execute query with profile, should not timeout since waits up to 10 seconds.
-      session.execute(SimpleStatement.builder(query).withExecutionProfileName("olap").build());
+      session.execute(SimpleStatement.builder(query).setExecutionProfileName("olap").build());
     }
   }
 
@@ -128,7 +128,7 @@ public class DriverExecutionProfileIT {
 
       // Execute query with profile, should retry on all hosts since query is idempotent.
       thrown.expect(AllNodesFailedException.class);
-      session.execute(SimpleStatement.builder(query).withExecutionProfileName("idem").build());
+      session.execute(SimpleStatement.builder(query).setExecutionProfileName("idem").build());
     }
   }
 
@@ -169,7 +169,7 @@ public class DriverExecutionProfileIT {
       simulacron.cluster().clearLogs();
 
       // Execute query with profile, should use profile CLs
-      session.execute(SimpleStatement.builder(query).withExecutionProfileName("cl").build());
+      session.execute(SimpleStatement.builder(query).setExecutionProfileName("cl").build());
 
       log =
           simulacron
@@ -213,11 +213,11 @@ public class DriverExecutionProfileIT {
       session.execute(
           SimpleStatement.builder(
                   "CREATE TABLE IF NOT EXISTS test (k int, v int, PRIMARY KEY (k,v))")
-              .withExecutionProfile(slowProfile)
+              .setExecutionProfile(slowProfile)
               .build());
       PreparedStatement prepared = session.prepare("INSERT INTO test (k, v) values (0, ?)");
       BatchStatementBuilder bs =
-          BatchStatement.builder(DefaultBatchType.UNLOGGED).withExecutionProfile(slowProfile);
+          BatchStatement.builder(DefaultBatchType.UNLOGGED).setExecutionProfile(slowProfile);
       for (int i = 0; i < 500; i++) {
         bs.addStatement(prepared.bind(i));
       }
@@ -235,7 +235,7 @@ public class DriverExecutionProfileIT {
       // Execute query with profile, should use profile page size
       future =
           session.executeAsync(
-              SimpleStatement.builder(query).withExecutionProfileName("smallpages").build());
+              SimpleStatement.builder(query).setExecutionProfileName("smallpages").build());
       result = CompletableFutures.getUninterruptibly(future);
       assertThat(result.remaining()).isEqualTo(10);
       // next fetch should also be 10 pages.

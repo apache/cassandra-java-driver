@@ -22,11 +22,13 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.util.ArrayUtils;
 import com.datastax.oss.driver.internal.core.util.Reflection;
@@ -35,7 +37,6 @@ import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Map;
@@ -43,6 +44,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntUnaryOperator;
@@ -119,17 +121,15 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
   }
 
   @Override
-  public void init(
-      @NonNull Map<InetSocketAddress, Node> nodes,
-      @NonNull DistanceReporter distanceReporter,
-      @NonNull Set<InetSocketAddress> contactPoints) {
+  public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
     this.distanceReporter = distanceReporter;
 
+    Set<DefaultNode> contactPoints = metadataManager.getContactPoints();
     if (localDc == null) {
-      if (contactPoints.isEmpty()) {
-        // No explicit contact points provided => the driver used the default (127.0.0.1:9042), and
-        // we allow inferring the local DC in this case
-        Node contactPoint = nodes.get(MetadataManager.DEFAULT_CONTACT_POINT);
+      if (metadataManager.wasImplicitContactPoint()) {
+        // We allow automatic inference of the local DC in this case
+        assert contactPoints.size() == 1;
+        Node contactPoint = contactPoints.iterator().next();
         localDc = contactPoint.getDatacenter();
         LOG.debug("[{}] Local DC set from contact point {}: {}", logPrefix, contactPoint, localDc);
       } else {
@@ -139,17 +139,16 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
                 + " in the config)");
       }
     } else {
-      ImmutableMap.Builder<InetSocketAddress, String> builder = ImmutableMap.builder();
-      for (InetSocketAddress address : contactPoints) {
-        Node node = nodes.get(address);
+      ImmutableMap.Builder<Node, String> builder = ImmutableMap.builder();
+      for (Node node : contactPoints) {
         if (node != null) {
           String datacenter = node.getDatacenter();
           if (!Objects.equals(localDc, datacenter)) {
-            builder.put(address, (datacenter == null) ? "<null>" : datacenter);
+            builder.put(node, (datacenter == null) ? "<null>" : datacenter);
           }
         }
       }
-      ImmutableMap<InetSocketAddress, String> badContactPoints = builder.build();
+      ImmutableMap<Node, String> badContactPoints = builder.build();
       if (isDefaultPolicy && !badContactPoints.isEmpty()) {
         LOG.warn(
             "[{}] You specified {} as the local DC, but some contact points are from a different DC ({})",
@@ -162,7 +161,12 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
     for (Node node : nodes.values()) {
       if (filter.test(node)) {
         distanceReporter.setDistance(node, NodeDistance.LOCAL);
-        localDcLiveNodes.add(node);
+        if (node.getState() != NodeState.DOWN) {
+          // This includes state == UNKNOWN. If the node turns out to be unreachable, this will be
+          // detected when we try to open a pool to it, it will get marked down and this will be
+          // signaled back to this policy
+          localDcLiveNodes.add(node);
+        }
       } else {
         distanceReporter.setDistance(node, NodeDistance.IGNORED);
       }

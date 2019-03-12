@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core;
 
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
+import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
 import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
@@ -33,28 +35,14 @@ import org.slf4j.LoggerFactory;
 public class ContactPoints {
   private static final Logger LOG = LoggerFactory.getLogger(ContactPoints.class);
 
-  public static Set<InetSocketAddress> merge(
-      Set<InetSocketAddress> programmaticContactPoints,
-      List<String> configContactPoints,
-      boolean resolve) {
+  public static Set<EndPoint> merge(
+      Set<EndPoint> programmaticContactPoints, List<String> configContactPoints, boolean resolve) {
 
-    if (!resolve) {
-      for (InetSocketAddress address : programmaticContactPoints) {
-        if (!address.isUnresolved()) {
-          LOG.warn(
-              "You configured the driver to not resolve addresses,"
-                  + " but at least one of your programmatic contact points is resolved ({}),"
-                  + " this is probably a mistake",
-              address);
-          break;
-        }
-      }
-    }
-
-    Set<InetSocketAddress> result = Sets.newHashSet(programmaticContactPoints);
+    Set<EndPoint> result = Sets.newHashSet(programmaticContactPoints);
     for (String spec : configContactPoints) {
       for (InetSocketAddress address : extract(spec, resolve)) {
-        boolean wasNew = result.add(address);
+        DefaultEndPoint endPoint = new DefaultEndPoint(address);
+        boolean wasNew = result.add(endPoint);
         if (!wasNew) {
           LOG.warn("Duplicate contact point {}", address);
         }

@@ -44,7 +44,7 @@ Now each request only needs a profile name:
 ```java
 SimpleStatement s =
   SimpleStatement.builder("SELECT name FROM user WHERE id = 1")
-      .withExecutionProfileName("oltp")
+      .setExecutionProfileName("oltp")
       .build();
 session.execute(s);
 ```
@@ -185,7 +185,7 @@ DriverExecutionProfile dynamicProfile =
       DefaultDriverOption.REQUEST_CONSISTENCY, DefaultConsistencyLevel.EACH_QUORUM.name());
 SimpleStatement s =
     SimpleStatement.builder("SELECT name FROM user WHERE id = 1")
-        .withConfigProfile(dynamicProfile)
+        .setExecutionProfile(dynamicProfile)
         .build();
 session.execute(s);
 ```

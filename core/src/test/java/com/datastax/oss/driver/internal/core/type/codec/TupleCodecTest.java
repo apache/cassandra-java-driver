@@ -86,9 +86,9 @@ public class TupleCodecTest extends CodecTestBase<TupleValue> {
   @Test
   public void should_encode_tuple() {
     TupleValue tuple = tupleType.newValue();
-    tuple.setInt(0, 1);
-    tuple.setToNull(1);
-    tuple.setString(2, "a");
+    tuple = tuple.setInt(0, 1);
+    tuple = tuple.setToNull(1);
+    tuple = tuple.setString(2, "a");
 
     assertThat(encode(tuple))
         .isEqualTo(
@@ -130,9 +130,9 @@ public class TupleCodecTest extends CodecTestBase<TupleValue> {
   @Test
   public void should_format_tuple() {
     TupleValue tuple = tupleType.newValue();
-    tuple.setInt(0, 1);
-    tuple.setToNull(1);
-    tuple.setString(2, "a");
+    tuple = tuple.setInt(0, 1);
+    tuple = tuple.setToNull(1);
+    tuple = tuple.setString(2, "a");
 
     assertThat(format(tuple)).isEqualTo("(1,NULL,'a')");
 

@@ -28,6 +28,7 @@ import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import java.util.UUID;
 import java.util.function.Predicate;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,11 +51,11 @@ public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPo
     when(filter.test(any(Node.class))).thenReturn(true);
     when(context.getNodeFilter(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(filter);
 
+    when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1));
+
     policy = new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
     policy.init(
-        ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2),
-        distanceReporter,
-        ImmutableSet.of(ADDRESS1));
+        ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2), distanceReporter);
     assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1, node2);
 
     reset(distanceReporter);

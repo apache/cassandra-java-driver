@@ -61,7 +61,7 @@ public class DriverExecutionProfileReloadIT {
         (CqlSession)
             SessionUtils.baseBuilder()
                 .withConfigLoader(loader)
-                .addContactPoints(simulacron.getContactPoints())
+                .addContactEndPoints(simulacron.getContactPoints())
                 .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
@@ -99,7 +99,7 @@ public class DriverExecutionProfileReloadIT {
         (CqlSession)
             SessionUtils.baseBuilder()
                 .withConfigLoader(loader)
-                .addContactPoints(simulacron.getContactPoints())
+                .addContactEndPoints(simulacron.getContactPoints())
                 .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
@@ -136,13 +136,13 @@ public class DriverExecutionProfileReloadIT {
         (CqlSession)
             SessionUtils.baseBuilder()
                 .withConfigLoader(loader)
-                .addContactPoints(simulacron.getContactPoints())
+                .addContactEndPoints(simulacron.getContactPoints())
                 .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
       // Expect failure because profile doesn't exist.
       try {
-        session.execute(SimpleStatement.builder(query).withExecutionProfileName("slow").build());
+        session.execute(SimpleStatement.builder(query).setExecutionProfileName("slow").build());
         fail("Expected IllegalArgumentException");
       } catch (IllegalArgumentException e) {
         // expected.
@@ -155,7 +155,7 @@ public class DriverExecutionProfileReloadIT {
       // Execute again, should expect to fail again because doesn't allow to dynamically define
       // profile.
       thrown.expect(IllegalArgumentException.class);
-      session.execute(SimpleStatement.builder(query).withExecutionProfileName("slow").build());
+      session.execute(SimpleStatement.builder(query).setExecutionProfileName("slow").build());
     }
   }
 
@@ -178,13 +178,13 @@ public class DriverExecutionProfileReloadIT {
         (CqlSession)
             SessionUtils.baseBuilder()
                 .withConfigLoader(loader)
-                .addContactPoints(simulacron.getContactPoints())
+                .addContactEndPoints(simulacron.getContactPoints())
                 .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
       // Expect failure because profile doesn't exist.
       try {
-        session.execute(SimpleStatement.builder(query).withExecutionProfileName("slow").build());
+        session.execute(SimpleStatement.builder(query).setExecutionProfileName("slow").build());
         fail("Expected DriverTimeoutException");
       } catch (DriverTimeoutException e) {
         // expected.
@@ -195,7 +195,7 @@ public class DriverExecutionProfileReloadIT {
       waitForConfigChange(session, 3, TimeUnit.SECONDS);
 
       // Execute again, should succeed because profile timeout was increased.
-      session.execute(SimpleStatement.builder(query).withExecutionProfileName("slow").build());
+      session.execute(SimpleStatement.builder(query).setExecutionProfileName("slow").build());
     }
   }
 

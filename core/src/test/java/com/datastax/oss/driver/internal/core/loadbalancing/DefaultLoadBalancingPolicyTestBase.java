@@ -27,8 +27,9 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
+import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import java.net.InetSocketAddress;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -43,24 +44,19 @@ import org.slf4j.LoggerFactory;
 @RunWith(MockitoJUnitRunner.class)
 public abstract class DefaultLoadBalancingPolicyTestBase {
 
-  protected static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
-  protected static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
-  protected static final InetSocketAddress ADDRESS3 = new InetSocketAddress("127.0.0.3", 9042);
-  protected static final InetSocketAddress ADDRESS4 = new InetSocketAddress("127.0.0.4", 9042);
-  protected static final InetSocketAddress ADDRESS5 = new InetSocketAddress("127.0.0.5", 9042);
-
   @Rule public ExpectedException thrown = ExpectedException.none();
 
-  @Mock protected Node node1;
-  @Mock protected Node node2;
-  @Mock protected Node node3;
-  @Mock protected Node node4;
-  @Mock protected Node node5;
+  @Mock protected DefaultNode node1;
+  @Mock protected DefaultNode node2;
+  @Mock protected DefaultNode node3;
+  @Mock protected DefaultNode node4;
+  @Mock protected DefaultNode node5;
   @Mock protected InternalDriverContext context;
   @Mock protected DriverConfig config;
   @Mock protected DriverExecutionProfile defaultProfile;
   @Mock protected LoadBalancingPolicy.DistanceReporter distanceReporter;
   @Mock protected Appender<ILoggingEvent> appender;
+  @Mock protected MetadataManager metadataManager;
 
   @Captor protected ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
 
@@ -74,6 +70,8 @@ public abstract class DefaultLoadBalancingPolicyTestBase {
 
     when(defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null))
         .thenReturn("dc1");
+
+    when(context.getMetadataManager()).thenReturn(metadataManager);
 
     logger = (Logger) LoggerFactory.getLogger(DefaultLoadBalancingPolicy.class);
     logger.addAppender(appender);

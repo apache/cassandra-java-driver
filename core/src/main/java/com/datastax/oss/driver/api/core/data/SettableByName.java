@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.math.BigDecimal;
@@ -55,6 +56,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setBytesUnsafe(@NonNull String name, @Nullable ByteBuffer v) {
     return setBytesUnsafe(firstIndexOf(name), v);
   }
@@ -74,6 +76,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setToNull(@NonNull String name) {
     return setToNull(firstIndexOf(name));
   }
@@ -95,6 +98,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default <ValueT> SelfT set(
       @NonNull String name, @Nullable ValueT v, @NonNull TypeCodec<ValueT> codec) {
     return set(firstIndexOf(name), v, codec);
@@ -115,6 +119,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @NonNull
+  @CheckReturnValue
   default <ValueT> SelfT set(
       @NonNull String name, @Nullable ValueT v, @NonNull GenericType<ValueT> targetType) {
     return set(firstIndexOf(name), v, targetType);
@@ -135,6 +140,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @NonNull
+  @CheckReturnValue
   default <ValueT> SelfT set(
       @NonNull String name, @Nullable ValueT v, @NonNull Class<ValueT> targetClass) {
     return set(firstIndexOf(name), v, targetClass);
@@ -154,6 +160,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setBoolean(@NonNull String name, boolean v) {
     return setBoolean(firstIndexOf(name), v);
   }
@@ -172,6 +179,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setByte(@NonNull String name, byte v) {
     return setByte(firstIndexOf(name), v);
   }
@@ -190,6 +198,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setDouble(@NonNull String name, double v) {
     return setDouble(firstIndexOf(name), v);
   }
@@ -208,6 +217,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setFloat(@NonNull String name, float v) {
     return setFloat(firstIndexOf(name), v);
   }
@@ -226,6 +236,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setInt(@NonNull String name, int v) {
     return setInt(firstIndexOf(name), v);
   }
@@ -244,6 +255,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setLong(@NonNull String name, long v) {
     return setLong(firstIndexOf(name), v);
   }
@@ -262,6 +274,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setShort(@NonNull String name, short v) {
     return setShort(firstIndexOf(name), v);
   }
@@ -277,6 +290,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setInstant(@NonNull String name, @Nullable Instant v) {
     return setInstant(firstIndexOf(name), v);
   }
@@ -292,6 +306,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setLocalDate(@NonNull String name, @Nullable LocalDate v) {
     return setLocalDate(firstIndexOf(name), v);
   }
@@ -307,6 +322,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setLocalTime(@NonNull String name, @Nullable LocalTime v) {
     return setLocalTime(firstIndexOf(name), v);
   }
@@ -322,6 +338,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setByteBuffer(@NonNull String name, @Nullable ByteBuffer v) {
     return setByteBuffer(firstIndexOf(name), v);
   }
@@ -337,6 +354,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setString(@NonNull String name, @Nullable String v) {
     return setString(firstIndexOf(name), v);
   }
@@ -352,6 +370,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setBigInteger(@NonNull String name, @Nullable BigInteger v) {
     return setBigInteger(firstIndexOf(name), v);
   }
@@ -367,6 +386,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setBigDecimal(@NonNull String name, @Nullable BigDecimal v) {
     return setBigDecimal(firstIndexOf(name), v);
   }
@@ -382,6 +402,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setUuid(@NonNull String name, @Nullable UUID v) {
     return setUuid(firstIndexOf(name), v);
   }
@@ -397,6 +418,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setInetAddress(@NonNull String name, @Nullable InetAddress v) {
     return setInetAddress(firstIndexOf(name), v);
   }
@@ -412,6 +434,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setCqlDuration(@NonNull String name, @Nullable CqlDuration v) {
     return setCqlDuration(firstIndexOf(name), v);
   }
@@ -429,6 +452,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setToken(@NonNull String name, @NonNull Token v) {
     return setToken(firstIndexOf(name), v);
   }
@@ -447,6 +471,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default <ElementT> SelfT setList(
       @NonNull String name, @Nullable List<ElementT> v, @NonNull Class<ElementT> elementsClass) {
     return setList(firstIndexOf(name), v, elementsClass);
@@ -466,6 +491,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default <ElementT> SelfT setSet(
       @NonNull String name, @Nullable Set<ElementT> v, @NonNull Class<ElementT> elementsClass) {
     return setSet(firstIndexOf(name), v, elementsClass);
@@ -485,6 +511,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default <KeyT, ValueT> SelfT setMap(
       @NonNull String name,
       @Nullable Map<KeyT, ValueT> v,
@@ -505,6 +532,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setUdtValue(@NonNull String name, @Nullable UdtValue v) {
     return setUdtValue(firstIndexOf(name), v);
   }
@@ -520,6 +548,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
+  @CheckReturnValue
   default SelfT setTupleValue(@NonNull String name, @Nullable TupleValue v) {
     return setTupleValue(firstIndexOf(name), v);
   }

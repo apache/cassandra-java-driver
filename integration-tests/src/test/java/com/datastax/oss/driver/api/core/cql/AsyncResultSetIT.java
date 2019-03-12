@@ -62,7 +62,7 @@ public class AsyncResultSetIT {
         .execute(
             SimpleStatement.builder(
                     "CREATE TABLE IF NOT EXISTS test (k0 text, k1 int, v int, PRIMARY KEY(k0, k1))")
-                .withExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(sessionRule.slowProfile())
                 .build());
 
     PreparedStatement prepared =
@@ -78,10 +78,10 @@ public class AsyncResultSetIT {
 
     sessionRule
         .session()
-        .execute(batchPart1.withExecutionProfile(sessionRule.slowProfile()).build());
+        .execute(batchPart1.setExecutionProfile(sessionRule.slowProfile()).build());
     sessionRule
         .session()
-        .execute(batchPart2.withExecutionProfile(sessionRule.slowProfile()).build());
+        .execute(batchPart2.setExecutionProfile(sessionRule.slowProfile()).build());
   }
 
   @Test

@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.protocol.internal.Message;
 import io.netty.channel.Channel;
@@ -46,7 +47,7 @@ public class DriverChannel {
   @SuppressWarnings("RedundantStringConstructorCall")
   static final Object FORCEFUL_CLOSE_MESSAGE = new String("FORCEFUL_CLOSE_MESSAGE");
 
-  private final SocketAddress connectAddress;
+  private final EndPoint endPoint;
   private final Channel channel;
   private final InFlightHandler inFlightHandler;
   private final WriteCoalescer writeCoalescer;
@@ -55,11 +56,11 @@ public class DriverChannel {
   private final AtomicBoolean forceClosing = new AtomicBoolean();
 
   DriverChannel(
-      SocketAddress connectAddress,
+      EndPoint endPoint,
       Channel channel,
       WriteCoalescer writeCoalescer,
       ProtocolVersion protocolVersion) {
-    this.connectAddress = connectAddress;
+    this.endPoint = endPoint;
     this.channel = channel;
     this.inFlightHandler = channel.pipeline().get(InFlightHandler.class);
     this.writeCoalescer = writeCoalescer;
@@ -153,16 +154,9 @@ public class DriverChannel {
     return protocolVersion;
   }
 
-  /**
-   * The address that was used to establish the connection.
-   *
-   * <p>Note that it might be unresolved, and therefore not equal to the underlying Netty channel's
-   * remote address.
-   *
-   * <p>See {@code advanced.resolve-contact-points} in the configuration.
-   */
-  public SocketAddress connectAddress() {
-    return connectAddress;
+  /** The endpoint that was used to establish the connection. */
+  public EndPoint getEndPoint() {
+    return endPoint;
   }
 
   public SocketAddress localAddress() {

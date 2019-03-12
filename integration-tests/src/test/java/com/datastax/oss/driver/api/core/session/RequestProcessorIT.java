@@ -83,7 +83,7 @@ public class RequestProcessorIT {
         .execute(
             SimpleStatement.builder(
                     "CREATE TABLE IF NOT EXISTS test (k text, v0 int, v1 int, PRIMARY KEY(k, v0))")
-                .withExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(sessionRule.slowProfile())
                 .build());
     for (int i = 0; i < 100; i++) {
       sessionRule
@@ -97,7 +97,7 @@ public class RequestProcessorIT {
 
   private GuavaSession newSession(CqlIdentifier keyspace) {
     return GuavaSessionUtils.builder()
-        .addContactPoints(ccm.getContactPoints())
+        .addContactEndPoints(ccm.getContactPoints())
         .withKeyspace(keyspace)
         .build();
   }

@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.core.metadata;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
@@ -39,10 +38,12 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
-import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
@@ -62,7 +63,8 @@ public class LoadBalancingPolicyWrapperTest {
   private DefaultNode node2;
   private DefaultNode node3;
 
-  private Map<InetSocketAddress, Node> contactPointsMap;
+  private Map<UUID, Node> allNodes;
+  private Set<DefaultNode> contactPoints;
   private Queue<Node> defaultPolicysQueryPlan;
 
   @Mock private InternalDriverContext context;
@@ -73,7 +75,7 @@ public class LoadBalancingPolicyWrapperTest {
   @Mock private MetadataManager metadataManager;
   @Mock private Metadata metadata;
   @Mock protected MetricsFactory metricsFactory;
-  @Captor private ArgumentCaptor<Map<InetSocketAddress, Node>> initNodesCaptor;
+  @Captor private ArgumentCaptor<Map<UUID, Node>> initNodesCaptor;
 
   private LoadBalancingPolicyWrapper wrapper;
 
@@ -81,18 +83,17 @@ public class LoadBalancingPolicyWrapperTest {
   public void setup() {
     when(context.getMetricsFactory()).thenReturn(metricsFactory);
 
-    node1 = new DefaultNode(new InetSocketAddress("127.0.0.1", 9042), context);
-    node2 = new DefaultNode(new InetSocketAddress("127.0.0.2", 9042), context);
-    node3 = new DefaultNode(new InetSocketAddress("127.0.0.3", 9042), context);
+    node1 = TestNodeFactory.newNode(1, context);
+    node2 = TestNodeFactory.newNode(2, context);
+    node3 = TestNodeFactory.newNode(3, context);
 
-    contactPointsMap =
-        ImmutableMap.<InetSocketAddress, Node>builder()
-            .put(node1.getConnectAddress(), node1)
-            .put(node2.getConnectAddress(), node2)
-            .build();
-    when(metadata.getNodes()).thenReturn(contactPointsMap);
+    contactPoints = ImmutableSet.of(node1, node2);
+    allNodes =
+        ImmutableMap.of(
+            node1.getHostId(), node1, node2.getHostId(), node2, node3.getHostId(), node3);
     when(metadataManager.getMetadata()).thenReturn(metadata);
-    when(metadataManager.getContactPoints()).thenReturn(contactPointsMap.keySet());
+    when(metadata.getNodes()).thenReturn(allNodes);
+    when(metadataManager.getContactPoints()).thenReturn(contactPoints);
     when(context.getMetadataManager()).thenReturn(metadataManager);
 
     defaultPolicysQueryPlan = Lists.newLinkedList(ImmutableList.of(node3, node2, node1));
@@ -124,7 +125,7 @@ public class LoadBalancingPolicyWrapperTest {
     for (LoadBalancingPolicy policy : ImmutableList.of(policy1, policy2, policy3)) {
       verify(policy, never()).newQueryPlan(null, null);
     }
-    assertThat(queryPlan).containsOnlyElementsOf(contactPointsMap.values());
+    assertThat(queryPlan).containsOnlyElementsOf(contactPoints);
   }
 
   @Test
@@ -132,7 +133,7 @@ public class LoadBalancingPolicyWrapperTest {
     // Given
     wrapper.init();
     for (LoadBalancingPolicy policy : ImmutableList.of(policy1, policy2, policy3)) {
-      verify(policy).init(anyMap(), any(DistanceReporter.class), eq(contactPointsMap.keySet()));
+      verify(policy).init(anyMap(), any(DistanceReporter.class));
     }
 
     // When
@@ -145,31 +146,20 @@ public class LoadBalancingPolicyWrapperTest {
   }
 
   @Test
-  public void should_init_policies_with_up_or_unknown_nodes() {
+  public void should_init_policies_with_all_nodes() {
     // Given
     node1.state = NodeState.UP;
     node2.state = NodeState.UNKNOWN;
     node3.state = NodeState.DOWN;
-    Map<InetSocketAddress, Node> contactPointsMap2 =
-        ImmutableMap.<InetSocketAddress, Node>builder()
-            .put(node1.getConnectAddress(), node1)
-            .put(node2.getConnectAddress(), node2)
-            .put(node3.getConnectAddress(), node3)
-            .build();
-    when(metadata.getNodes()).thenReturn(contactPointsMap2);
 
     // When
     wrapper.init();
 
     // Then
     for (LoadBalancingPolicy policy : ImmutableList.of(policy1, policy2, policy3)) {
-      verify(policy)
-          .init(
-              initNodesCaptor.capture(),
-              any(DistanceReporter.class),
-              eq(contactPointsMap.keySet()));
-      Map<InetSocketAddress, Node> initNodes = initNodesCaptor.getValue();
-      assertThat(initNodes.values()).containsOnly(node1, node2);
+      verify(policy).init(initNodesCaptor.capture(), any(DistanceReporter.class));
+      Map<UUID, Node> initNodes = initNodesCaptor.getValue();
+      assertThat(initNodes.values()).containsOnly(node1, node2, node3);
     }
   }
 
@@ -178,13 +168,13 @@ public class LoadBalancingPolicyWrapperTest {
     // Given
     wrapper.init();
     ArgumentCaptor<DistanceReporter> captor1 = ArgumentCaptor.forClass(DistanceReporter.class);
-    verify(policy1).init(anyMap(), captor1.capture(), eq(contactPointsMap.keySet()));
+    verify(policy1).init(anyMap(), captor1.capture());
     DistanceReporter distanceReporter1 = captor1.getValue();
     ArgumentCaptor<DistanceReporter> captor2 = ArgumentCaptor.forClass(DistanceReporter.class);
-    verify(policy2).init(anyMap(), captor2.capture(), eq(contactPointsMap.keySet()));
+    verify(policy2).init(anyMap(), captor2.capture());
     DistanceReporter distanceReporter2 = captor1.getValue();
     ArgumentCaptor<DistanceReporter> captor3 = ArgumentCaptor.forClass(DistanceReporter.class);
-    verify(policy3).init(anyMap(), captor3.capture(), eq(contactPointsMap.keySet()));
+    verify(policy3).init(anyMap(), captor3.capture());
     DistanceReporter distanceReporter3 = captor3.getValue();
 
     InOrder inOrder = inOrder(eventBus);
@@ -257,9 +247,7 @@ public class LoadBalancingPolicyWrapperTest {
           return null;
         };
     for (LoadBalancingPolicy policy : ImmutableList.of(policy1, policy2, policy3)) {
-      doAnswer(mockInit)
-          .when(policy)
-          .init(anyMap(), any(DistanceReporter.class), eq(contactPointsMap.keySet()));
+      doAnswer(mockInit).when(policy).init(anyMap(), any(DistanceReporter.class));
     }
 
     // When

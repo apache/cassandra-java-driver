@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.querybuilder.schema;
 
+import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 
@@ -24,6 +25,7 @@ public interface OptionProvider<SelfT extends OptionProvider<SelfT>> {
    * been added to this API.
    */
   @NonNull
+  @CheckReturnValue
   SelfT withOption(@NonNull String name, @NonNull Object value);
 
   @NonNull

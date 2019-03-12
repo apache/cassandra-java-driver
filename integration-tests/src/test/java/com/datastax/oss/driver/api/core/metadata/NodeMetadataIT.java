@@ -27,6 +27,7 @@ import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
+import java.net.InetSocketAddress;
 import java.util.Collection;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -42,14 +43,13 @@ public class NodeMetadataIT {
     try (CqlSession session = SessionUtils.newSession(ccmRule)) {
       Node node = getUniqueNode(session);
       // Run a few basic checks given what we know about our test environment:
-      assertThat(node.getConnectAddress()).isNotNull();
+      assertThat(node.getEndPoint()).isNotNull();
+      InetSocketAddress connectAddress = (InetSocketAddress) node.getEndPoint().resolve();
       node.getBroadcastAddress()
           .ifPresent(
               broadcastAddress ->
-                  assertThat(broadcastAddress.getAddress())
-                      .isEqualTo(node.getConnectAddress().getAddress()));
-      assertThat(node.getListenAddress().get().getAddress())
-          .isEqualTo(node.getConnectAddress().getAddress());
+                  assertThat(broadcastAddress.getAddress()).isEqualTo(connectAddress.getAddress()));
+      assertThat(node.getListenAddress().get().getAddress()).isEqualTo(connectAddress.getAddress());
       assertThat(node.getDatacenter()).isEqualTo("dc1");
       assertThat(node.getRack()).isEqualTo("r1");
       if (!CcmBridge.DSE_ENABLEMENT) {
@@ -67,10 +67,10 @@ public class NodeMetadataIT {
 
       // Force the node down and back up to check that upSinceMillis gets updated
       EventBus eventBus = ((InternalDriverContext) session.getContext()).getEventBus();
-      eventBus.fire(TopologyEvent.forceDown(node.getConnectAddress()));
+      eventBus.fire(TopologyEvent.forceDown(node.getBroadcastRpcAddress().get()));
       ConditionChecker.checkThat(() -> node.getState() == NodeState.FORCED_DOWN).becomesTrue();
       assertThat(node.getUpSinceMillis()).isEqualTo(-1);
-      eventBus.fire(TopologyEvent.forceUp(node.getConnectAddress()));
+      eventBus.fire(TopologyEvent.forceUp(node.getBroadcastRpcAddress().get()));
       ConditionChecker.checkThat(() -> node.getState() == NodeState.UP).becomesTrue();
       assertThat(node.getUpSinceMillis()).isGreaterThan(upTime1);
     }

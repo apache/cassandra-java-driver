@@ -21,7 +21,6 @@ import static org.mockito.Mockito.when;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,9 +31,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class RemoveNodeRefreshTest {
 
-  private static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
-  private static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
-
   @Mock private InternalDriverContext context;
   @Mock protected MetricsFactory metricsFactory;
 
@@ -44,8 +40,8 @@ public class RemoveNodeRefreshTest {
   @Before
   public void setup() {
     when(context.getMetricsFactory()).thenReturn(metricsFactory);
-    node1 = new DefaultNode(ADDRESS1, context);
-    node2 = new DefaultNode(ADDRESS2, context);
+    node1 = TestNodeFactory.newNode(1, context);
+    node2 = TestNodeFactory.newNode(2, context);
   }
 
   @Test
@@ -53,14 +49,16 @@ public class RemoveNodeRefreshTest {
     // Given
     DefaultMetadata oldMetadata =
         new DefaultMetadata(
-            ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2), Collections.emptyMap(), null);
-    RemoveNodeRefresh refresh = new RemoveNodeRefresh(ADDRESS2);
+            ImmutableMap.of(node1.getHostId(), node1, node2.getHostId(), node2),
+            Collections.emptyMap(),
+            null);
+    RemoveNodeRefresh refresh = new RemoveNodeRefresh(node2.getBroadcastRpcAddress().get());
 
     // When
     MetadataRefresh.Result result = refresh.compute(oldMetadata, false, context);
 
     // Then
-    assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1);
+    assertThat(result.newMetadata.getNodes()).containsOnlyKeys(node1.getHostId());
     assertThat(result.events).containsExactly(NodeStateEvent.removed(node2));
   }
 
@@ -68,14 +66,15 @@ public class RemoveNodeRefreshTest {
   public void should_not_remove_nonexistent_node() {
     // Given
     DefaultMetadata oldMetadata =
-        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1), Collections.emptyMap(), null);
-    RemoveNodeRefresh refresh = new RemoveNodeRefresh(ADDRESS2);
+        new DefaultMetadata(
+            ImmutableMap.of(node1.getHostId(), node1), Collections.emptyMap(), null);
+    RemoveNodeRefresh refresh = new RemoveNodeRefresh(node2.getBroadcastRpcAddress().get());
 
     // When
     MetadataRefresh.Result result = refresh.compute(oldMetadata, false, context);
 
     // Then
-    assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1);
+    assertThat(result.newMetadata.getNodes()).containsOnlyKeys(node1.getHostId());
     assertThat(result.events).isEmpty();
   }
 }

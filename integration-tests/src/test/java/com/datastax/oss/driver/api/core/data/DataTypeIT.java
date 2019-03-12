@@ -222,7 +222,7 @@ public class DataTypeIT {
               types.add(dataType);
               TupleType tupleType = new DefaultTupleType(types);
               TupleValue tupleValue = tupleType.newValue();
-              tupleValue.setInt(0, 0);
+              tupleValue = tupleValue.setInt(0, 0);
               setValue(1, tupleValue, dataType, o[1]);
               samples.add(new Object[] {tupleType, tupleValue});
 
@@ -248,7 +248,7 @@ public class DataTypeIT {
                       types);
 
               UdtValue udtValue = udt.newValue();
-              udtValue.setInt(0, 0);
+              udtValue = udtValue.setInt(0, 0);
               setValue(1, udtValue, dataType, o[1]);
               samples.add(new Object[] {udt, udtValue});
 
@@ -289,7 +289,7 @@ public class DataTypeIT {
                     String.format(
                         "CREATE TABLE IF NOT EXISTS %s (k int primary key, %s)",
                         tableName, String.join(",", columnData)))
-                .withExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(sessionRule.slowProfile())
                 .build());
   }
 
@@ -430,7 +430,7 @@ public class DataTypeIT {
 
     PreparedStatement preparedSelect = sessionRule.session().prepare(select);
     BoundStatement boundSelect = setValue("k", preparedSelect.bind(), DataTypes.INT, key);
-    boundSelect.setInt("k", key);
+    boundSelect = boundSelect.setInt("k", key);
 
     readValue(boundSelect, dataType, value, expectedPrimitiveValue);
   }
@@ -771,7 +771,7 @@ public class DataTypeIT {
                       String.format(
                           "CREATE TYPE IF NOT EXISTS %s (%s)",
                           udt.getName().asCql(false), String.join(",", fieldParts)))
-                  .withExecutionProfile(sessionRule.slowProfile())
+                  .setExecutionProfile(sessionRule.slowProfile())
                   .build());
 
       // Chances are the UDT isn't labeled as frozen in the context we're given, so we add it as

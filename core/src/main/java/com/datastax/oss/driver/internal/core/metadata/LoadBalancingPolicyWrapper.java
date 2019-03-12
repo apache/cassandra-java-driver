@@ -29,7 +29,6 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -119,8 +118,7 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
       MetadataManager metadataManager = context.getMetadataManager();
       Metadata metadata = metadataManager.getMetadata();
       for (LoadBalancingPolicy policy : policies) {
-        policy.init(
-            excludeDownHosts(metadata), reporters.get(policy), metadataManager.getContactPoints());
+        policy.init(metadata.getNodes(), reporters.get(policy));
       }
       if (stateRef.compareAndSet(State.DURING_INIT, State.RUNNING)) {
         eventFilter.markReady();
@@ -145,10 +143,8 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
     switch (stateRef.get()) {
       case BEFORE_INIT:
       case DURING_INIT:
-        // Retrieve nodes from the metadata (at this stage it's the contact points). The only time
-        // when this can happen is during control connection initialization.
-        List<Node> nodes = new ArrayList<>();
-        nodes.addAll(context.getMetadataManager().getMetadata().getNodes().values());
+        // The contact points are not stored in the metadata yet:
+        List<Node> nodes = new ArrayList<>(context.getMetadataManager().getContactPoints());
         Collections.shuffle(nodes);
         return new ConcurrentLinkedQueue<>(nodes);
       case RUNNING:
@@ -196,16 +192,6 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
         }
         break;
     }
-  }
-
-  private static Map<InetSocketAddress, Node> excludeDownHosts(Metadata metadata) {
-    ImmutableMap.Builder<InetSocketAddress, Node> nodes = ImmutableMap.builder();
-    for (Node node : metadata.getNodes().values()) {
-      if (node.getState() == NodeState.UP || node.getState() == NodeState.UNKNOWN) {
-        nodes.put(node.getConnectAddress(), node);
-      }
-    }
-    return nodes.build();
   }
 
   @Override

@@ -28,7 +28,6 @@ import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.Collections;
@@ -111,7 +110,7 @@ class SchemaAgreementChecker {
       CompletionStage<AdminResult> localQuery =
           query("SELECT schema_version FROM system.local WHERE key='local'");
       CompletionStage<AdminResult> peersQuery =
-          query("SELECT peer, rpc_address, schema_version FROM system.peers");
+          query("SELECT host_id, schema_version FROM system.peers");
 
       localQuery
           .thenCombine(peersQuery, this::extractSchemaVersions)
@@ -120,52 +119,60 @@ class SchemaAgreementChecker {
   }
 
   private Set<UUID> extractSchemaVersions(AdminResult controlNodeResult, AdminResult peersResult) {
-    ImmutableSet.Builder<UUID> uuids = ImmutableSet.builder();
+    // Gather the versions of all the nodes that are UP
+    ImmutableSet.Builder<UUID> schemaVersions = ImmutableSet.builder();
 
-    UUID uuid;
+    // Control node (implicitly UP, we've just queried it)
     Iterator<AdminRow> iterator = controlNodeResult.iterator();
-    if (iterator.hasNext() && (uuid = iterator.next().getUuid("schema_version")) != null) {
-      uuids.add(uuid);
+    if (iterator.hasNext()) {
+      AdminRow localRow = iterator.next();
+      UUID schemaVersion = localRow.getUuid("schema_version");
+      if (schemaVersion == null) {
+        LOG.warn(
+            "[{}] Missing schema_version for control node {}, "
+                + "excluding from schema agreement check",
+            logPrefix,
+            channel.getEndPoint());
+      } else {
+        schemaVersions.add(schemaVersion);
+      }
+    } else {
+      LOG.warn(
+          "[{}] Missing system.local row for control node {}, "
+              + "excluding from schema agreement check",
+          logPrefix,
+          channel.getEndPoint());
     }
 
-    Map<InetSocketAddress, Node> nodes = context.getMetadataManager().getMetadata().getNodes();
+    Map<UUID, Node> nodes = context.getMetadataManager().getMetadata().getNodes();
     for (AdminRow peerRow : peersResult) {
-      InetSocketAddress connectAddress = getConnectAddress(peerRow);
-      Node node = nodes.get(connectAddress);
-      if (node == null || node.getState() != NodeState.UP) {
+      UUID hostId = peerRow.getUuid("host_id");
+      if (hostId == null) {
+        LOG.warn(
+            "[{}] Missing host_id in system.peers row, excluding from schema agreement check",
+            logPrefix);
         continue;
       }
-      uuid = peerRow.getUuid("schema_version");
-      if (uuid != null) {
-        uuids.add(uuid);
+      UUID schemaVersion = peerRow.getUuid("schema_version");
+      if (schemaVersion == null) {
+        LOG.warn(
+            "[{}] Missing schema_version in system.peers row for {}, "
+                + "excluding from schema agreement check",
+            logPrefix,
+            hostId);
+        continue;
       }
+      Node node = nodes.get(hostId);
+      if (node == null) {
+        LOG.warn("[{}] Unknown peer {}, excluding from schema agreement check", logPrefix, hostId);
+        continue;
+      } else if (node.getState() != NodeState.UP) {
+        LOG.debug("[{}] Peer {} is down, excluding from schema agreement check", logPrefix, hostId);
+        continue;
+      }
+      schemaVersions.add(schemaVersion);
     }
-    return uuids.build();
-  }
-
-  private InetSocketAddress getConnectAddress(AdminRow peerRow) {
-    // This is actually broadcast_address
-    InetAddress broadcastAddress = peerRow.getInetAddress("peer");
-    // The address we are looking for (this corresponds to broadcast_rpc_address in the peer's
-    // cassandra yaml file; if this setting if unset, it defaults to the value for rpc_address or
-    // rpc_interface
-    InetAddress rpcAddress = peerRow.getInetAddress("rpc_address");
-
-    if (rpcAddress == null) {
-      LOG.warn(
-          "[{}] Found corrupted row with null rpc_address in system.peers (peer = {}), "
-              + "excluding from schema agreement",
-          logPrefix,
-          broadcastAddress);
-      return null;
-    } else if (rpcAddress.equals(BIND_ALL_ADDRESS)) {
-      LOG.warn(
-          "[{}] Found peer with 0.0.0.0 as rpc_address in system.peers, using peer ({}) instead",
-          logPrefix,
-          broadcastAddress);
-      rpcAddress = broadcastAddress;
-    }
-    return context.getAddressTranslator().translate(new InetSocketAddress(rpcAddress, port));
+    return schemaVersions.build();
   }
 
   private void completeOrReschedule(Set<UUID> uuids, Throwable error) {

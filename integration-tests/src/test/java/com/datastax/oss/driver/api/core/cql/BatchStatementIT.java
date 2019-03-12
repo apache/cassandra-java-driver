@@ -137,7 +137,7 @@ public class BatchStatementIT {
       BoundStatement boundStatement = preparedStatement.bind(i, i + 2);
       // unset v every 20 statements.
       if (i % 20 == 0) {
-        boundStatement.unset(1);
+        boundStatement = boundStatement.unset(1);
       }
       builder.addStatement(boundStatement);
     }

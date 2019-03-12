@@ -20,8 +20,8 @@ followed by a textual representation of the node's address. For example:
 
 ```
 s0.connected-nodes => 2
-s0.nodes.127_0_0_1_9042.pool.open-connections => 2
-s0.nodes.127_0_0_2_9042.pool.open-connections => 1
+s0.nodes.127_0_0_1:9042.pool.open-connections => 2
+s0.nodes.127_0_0_2:9042.pool.open-connections => 1
 ```  
 
 ### Configuration

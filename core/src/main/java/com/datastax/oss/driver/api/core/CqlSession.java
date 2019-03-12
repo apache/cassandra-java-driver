@@ -114,9 +114,9 @@ public interface CqlSession extends Session {
    *       null}), or {@code simpleStatement.getRoutingKeyspace()};
    *   <li>on the other hand, the following attributes are <b>not</b> propagated:
    *       <ul>
-   *         <li>{@link Statement#getTimestamp() boundStatement.getTimestamp()} will be set to
-   *             {@link Long#MIN_VALUE}, meaning that the value will be assigned by the session's
-   *             timestamp generator.
+   *         <li>{@link Statement#getQueryTimestamp() boundStatement.getQueryTimestamp()} will be
+   *             set to {@link Long#MIN_VALUE}, meaning that the value will be assigned by the
+   *             session's timestamp generator.
    *         <li>{@link Statement#getNode() boundStatement.getNode()} will always be {@code null}.
    *       </ul>
    * </ul>
