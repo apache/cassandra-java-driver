@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.querybuilder.insert;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.insert.Insert;
@@ -93,6 +94,19 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
   public JsonInsert json(@NonNull BindMarker json) {
     return new DefaultInsert(
         keyspace, table, json, missingJsonBehavior, ImmutableMap.of(), timestamp, ifNotExists);
+  }
+
+  @NonNull
+  @Override
+  public <T> JsonInsert json(@NonNull T value, @NonNull TypeCodec<T> codec) {
+    return new DefaultInsert(
+        keyspace,
+        table,
+        QueryBuilder.literal(value, codec),
+        missingJsonBehavior,
+        ImmutableMap.of(),
+        timestamp,
+        ifNotExists);
   }
 
   @NonNull
