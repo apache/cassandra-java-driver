@@ -141,11 +141,9 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
     } else {
       ImmutableMap.Builder<Node, String> builder = ImmutableMap.builder();
       for (Node node : contactPoints) {
-        if (node != null) {
-          String datacenter = node.getDatacenter();
-          if (!Objects.equals(localDc, datacenter)) {
-            builder.put(node, (datacenter == null) ? "<null>" : datacenter);
-          }
+        String datacenter = node.getDatacenter();
+        if (!Objects.equals(localDc, datacenter)) {
+          builder.put(node, (datacenter == null) ? "<null>" : datacenter);
         }
       }
       ImmutableMap<Node, String> badContactPoints = builder.build();
