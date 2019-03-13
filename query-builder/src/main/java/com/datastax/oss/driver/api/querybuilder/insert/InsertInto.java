@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.querybuilder.insert;
 
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
@@ -38,6 +39,14 @@ public interface InsertInto extends OngoingValues {
   /**
    * Makes this statement an INSERT JSON with a custom type mapping. The provided {@code Object
    * value} will be mapped to a JSON string.
+   *
+   * <p>This is an alternative to {@link #json(String)} for custom type mappings. The provided
+   * registry should contain a codec that can format the value. Typically, this will be your
+   * session's registry, which is accessible via {@code session.getContext().getCodecRegistry()}.
+   *
+   * @throws CodecNotFoundException if {@code codecRegistry} does not contain any codec that can
+   *     handle {@code value}.
+   * @see DriverContext#getCodecRegistry()
    */
   @NonNull
   default JsonInsert json(@NonNull Object value, @NonNull CodecRegistry codecRegistry) {
@@ -57,7 +66,8 @@ public interface InsertInto extends OngoingValues {
 
   /**
    * Makes this statement an INSERT JSON with a custom type mapping. The provided {@code Object
-   * value} will be mapped to a JSON string.
+   * value} will be mapped to a JSON string. The value will be turned into a string with {@link
+   * TypeCodec#format(Object)}, and inlined in the query.
    */
   @NonNull
   <T> JsonInsert json(@NonNull T value, @NonNull TypeCodec<T> codec);
