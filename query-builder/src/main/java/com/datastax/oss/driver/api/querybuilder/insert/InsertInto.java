@@ -20,7 +20,6 @@ import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
-import com.datastax.oss.driver.internal.querybuilder.insert.DefaultInsert;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
@@ -48,7 +47,6 @@ public interface InsertInto extends OngoingValues {
    * @throws CodecNotFoundException if {@code codecRegistry} does not contain any codec that can
    *     handle {@code value}.
    * @see DriverContext#getCodecRegistry()
-   * @see DefaultInsert#json(Object, CodecRegistry)
    */
   @NonNull
   default JsonInsert json(@NonNull Object value, @NonNull CodecRegistry codecRegistry) {
@@ -70,8 +68,6 @@ public interface InsertInto extends OngoingValues {
    * Makes this statement an INSERT JSON with a custom type mapping. The provided {@code Object
    * value} will be mapped to a JSON string. The value will be turned into a string with {@link
    * TypeCodec#format(Object)}, and inlined in the query.
-   *
-   * @see DefaultInsert#json(T, TypeCodec)
    */
   @NonNull
   <T> JsonInsert json(@NonNull T value, @NonNull TypeCodec<T> codec);
