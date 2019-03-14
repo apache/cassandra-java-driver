@@ -23,21 +23,18 @@
         "code": "java.method.returnTypeTypeParametersChanged",
         "old": "method java.util.Set<java.net.InetSocketAddress> com.datastax.oss.driver.api.testinfra.CassandraResourceRule::getContactPoints()",
         "new": "method java.util.Set<com.datastax.oss.driver.api.core.metadata.EndPoint> com.datastax.oss.driver.api.testinfra.CassandraResourceRule::getContactPoints()",
-        "oldArchive": "com.datastax.oss:java-driver-test-infra:jar:4.0.0-rc1",
         "justification": "JAVA-2165: Abstract node connection information"
       },
       {
         "code": "java.method.numberOfParametersChanged",
         "old": "method void com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::init(java.util.Map<java.net.InetSocketAddress, com.datastax.oss.driver.api.core.metadata.Node>, com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy.DistanceReporter, java.util.Set<java.net.InetSocketAddress>)",
         "new": "method void com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::init(java.util.Map<java.util.UUID, com.datastax.oss.driver.api.core.metadata.Node>, com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy.DistanceReporter)",
-        "oldArchive": "com.datastax.oss:java-driver-test-infra:jar:4.0.0-rc1",
         "justification": "JAVA-2165: Abstract node connection information"
       },
       {
         "code": "java.method.returnTypeTypeParametersChanged",
         "old": "method java.util.Set<java.net.InetSocketAddress> com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule::getContactPoints()",
         "new": "method java.util.Set<com.datastax.oss.driver.api.core.metadata.EndPoint> com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule::getContactPoints()",
-        "oldArchive": "com.datastax.oss:java-driver-test-infra:jar:4.0.0-rc1",
         "justification": "JAVA-2165: Abstract node connection information"
       }
     ]
