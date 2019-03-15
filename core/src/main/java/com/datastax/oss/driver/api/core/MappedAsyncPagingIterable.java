@@ -13,18 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.core.metrics;
+package com.datastax.oss.driver.api.core;
 
-import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.metrics.Metrics;
-import java.util.Optional;
+import java.util.function.Function;
 
-public interface MetricsFactory {
-
-  Optional<Metrics> getMetrics();
-
-  /** @return the unique instance for this session (this must return the same object every time). */
-  SessionMetricUpdater getSessionUpdater();
-
-  NodeMetricUpdater newNodeUpdater(Node node);
-}
+/** The result of calling {@link #map(Function)} on another async iterable. */
+public interface MappedAsyncPagingIterable<ElementT>
+    extends AsyncPagingIterable<ElementT, MappedAsyncPagingIterable<ElementT>> {}

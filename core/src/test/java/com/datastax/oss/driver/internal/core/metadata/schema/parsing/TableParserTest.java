@@ -128,7 +128,7 @@ public class TableParserTest extends SchemaParserTestBase {
     assertThat(pk1.getType()).isEqualTo(DataTypes.TEXT);
 
     assertThat(table.getClusteringColumns().entrySet()).hasSize(2);
-    Iterator<? extends ColumnMetadata> clusteringColumnsIterator =
+    Iterator<ColumnMetadata> clusteringColumnsIterator =
         table.getClusteringColumns().keySet().iterator();
     ColumnMetadata clusteringColumn1 = clusteringColumnsIterator.next();
     assertThat(clusteringColumn1.getName().asInternal()).isEqualTo("cc1");

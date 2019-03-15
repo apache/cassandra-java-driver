@@ -45,7 +45,7 @@ public interface RelationMetadata extends Describable {
    * @see #getClusteringColumns()
    */
   @NonNull
-  default List<? extends ColumnMetadata> getPrimaryKey() {
+  default List<ColumnMetadata> getPrimaryKey() {
     return ImmutableList.<ColumnMetadata>builder()
         .addAll(getPartitionKey())
         .addAll(getClusteringColumns().keySet())
@@ -53,16 +53,16 @@ public interface RelationMetadata extends Describable {
   }
 
   @NonNull
-  List<? extends ColumnMetadata> getPartitionKey();
+  List<ColumnMetadata> getPartitionKey();
 
   @NonNull
-  Map<? extends ColumnMetadata, ClusteringOrder> getClusteringColumns();
+  Map<ColumnMetadata, ClusteringOrder> getClusteringColumns();
 
   @NonNull
-  Map<CqlIdentifier, ? extends ColumnMetadata> getColumns();
+  Map<CqlIdentifier, ColumnMetadata> getColumns();
 
   @NonNull
-  default Optional<? extends ColumnMetadata> getColumn(@NonNull CqlIdentifier columnId) {
+  default Optional<ColumnMetadata> getColumn(@NonNull CqlIdentifier columnId) {
     return Optional.ofNullable(getColumns().get(columnId));
   }
 
@@ -70,7 +70,7 @@ public interface RelationMetadata extends Describable {
    * Shortcut for {@link #getColumn(CqlIdentifier) getColumn(CqlIdentifier.fromCql(columnName))}.
    */
   @NonNull
-  default Optional<? extends ColumnMetadata> getColumn(@NonNull String columnName) {
+  default Optional<ColumnMetadata> getColumn(@NonNull String columnName) {
     return getColumn(CqlIdentifier.fromCql(columnName));
   }
 

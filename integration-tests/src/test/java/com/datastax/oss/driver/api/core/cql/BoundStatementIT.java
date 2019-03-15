@@ -257,7 +257,7 @@ public class BoundStatementIT {
     try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
       SimpleStatement st = SimpleStatement.builder("SELECT v FROM test").setPageSize(10).build();
       PreparedStatement prepared = session.prepare(st);
-      CompletionStage<? extends AsyncResultSet> future = session.executeAsync(prepared.bind());
+      CompletionStage<AsyncResultSet> future = session.executeAsync(prepared.bind());
       AsyncResultSet result = CompletableFutures.getUninterruptibly(future);
 
       // Should have only fetched 10 (page size) rows.
@@ -272,7 +272,7 @@ public class BoundStatementIT {
       // overridden by bound statement.
       SimpleStatement st = SimpleStatement.builder("SELECT v FROM test").setPageSize(10).build();
       PreparedStatement prepared = session.prepare(st);
-      CompletionStage<? extends AsyncResultSet> future =
+      CompletionStage<AsyncResultSet> future =
           session.executeAsync(prepared.bind().setPageSize(12));
       AsyncResultSet result = CompletableFutures.getUninterruptibly(future);
 

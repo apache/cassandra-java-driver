@@ -49,13 +49,11 @@ public class DefaultMetadata implements Metadata {
       new DefaultMetadata(Collections.emptyMap(), Collections.emptyMap(), null);
 
   protected final Map<UUID, Node> nodes;
-  protected final Map<CqlIdentifier, ? extends KeyspaceMetadata> keyspaces;
+  protected final Map<CqlIdentifier, KeyspaceMetadata> keyspaces;
   protected final TokenMap tokenMap;
 
   protected DefaultMetadata(
-      Map<UUID, Node> nodes,
-      Map<CqlIdentifier, ? extends KeyspaceMetadata> keyspaces,
-      TokenMap tokenMap) {
+      Map<UUID, Node> nodes, Map<CqlIdentifier, KeyspaceMetadata> keyspaces, TokenMap tokenMap) {
     this.nodes = nodes;
     this.keyspaces = keyspaces;
     this.tokenMap = tokenMap;
@@ -69,7 +67,7 @@ public class DefaultMetadata implements Metadata {
 
   @NonNull
   @Override
-  public Map<CqlIdentifier, ? extends KeyspaceMetadata> getKeyspaces() {
+  public Map<CqlIdentifier, KeyspaceMetadata> getKeyspaces() {
     return keyspaces;
   }
 
@@ -120,7 +118,7 @@ public class DefaultMetadata implements Metadata {
   @Nullable
   protected TokenMap rebuildTokenMap(
       Map<UUID, Node> newNodes,
-      Map<CqlIdentifier, ? extends KeyspaceMetadata> newKeyspaces,
+      Map<CqlIdentifier, KeyspaceMetadata> newKeyspaces,
       boolean tokenMapEnabled,
       boolean forceFullRebuild,
       TokenFactory tokenFactory,

@@ -385,7 +385,7 @@ public class SimpleStatementIT {
   @Test
   public void should_use_page_size() {
     Statement<?> st = SimpleStatement.builder("SELECT v FROM test").setPageSize(10).build();
-    CompletionStage<? extends AsyncResultSet> future = sessionRule.session().executeAsync(st);
+    CompletionStage<AsyncResultSet> future = sessionRule.session().executeAsync(st);
     AsyncResultSet result = CompletableFutures.getUninterruptibly(future);
 
     // Should have only fetched 10 (page size) rows.

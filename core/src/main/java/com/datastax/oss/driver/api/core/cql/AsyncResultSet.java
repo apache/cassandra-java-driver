@@ -17,8 +17,6 @@ package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.AsyncPagingIterable;
 import com.datastax.oss.driver.api.core.CqlSession;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import java.util.concurrent.CompletionStage;
 
 /**
  * The result of an asynchronous CQL query.
@@ -26,12 +24,7 @@ import java.util.concurrent.CompletionStage;
  * @see CqlSession#executeAsync(Statement)
  * @see CqlSession#executeAsync(String)
  */
-public interface AsyncResultSet extends AsyncPagingIterable<Row> {
-
-  // overridden to use a covariant return type:
-  @NonNull
-  @Override
-  CompletionStage<? extends AsyncResultSet> fetchNextPage() throws IllegalStateException;
+public interface AsyncResultSet extends AsyncPagingIterable<Row, AsyncResultSet> {
 
   // overridden to amend the javadocs:
   /**

@@ -232,7 +232,7 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
       return Collections.emptySet();
     }
 
-    Optional<? extends TokenMap> maybeTokenMap = metadataManager.getMetadata().getTokenMap();
+    Optional<TokenMap> maybeTokenMap = metadataManager.getMetadata().getTokenMap();
     if (maybeTokenMap.isPresent()) {
       TokenMap tokenMap = maybeTokenMap.get();
       return (token != null)

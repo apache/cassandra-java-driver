@@ -75,11 +75,8 @@ public abstract class ResultSetTestBase {
     return row;
   }
 
-  protected static void complete(
-      CompletionStage<? extends AsyncResultSet> stage, AsyncResultSet result) {
-    @SuppressWarnings("unchecked")
-    CompletableFuture<AsyncResultSet> future = (CompletableFuture<AsyncResultSet>) stage;
-    future.complete(result);
+  protected static void complete(CompletionStage<AsyncResultSet> stage, AsyncResultSet result) {
+    stage.toCompletableFuture().complete(result);
   }
 
   protected void assertNextRow(Iterator<Row> iterator, int expectedValue) {
