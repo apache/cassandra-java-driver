@@ -95,7 +95,7 @@ public class DefaultAsyncResultSetTest {
         new DefaultAsyncResultSet(
             columnDefinitions, executionInfo, new ArrayDeque<>(), session, context);
     assertThat(resultSet.hasMorePages()).isTrue();
-    CompletionStage<? extends AsyncResultSet> nextPageFuture = resultSet.fetchNextPage();
+    CompletionStage<AsyncResultSet> nextPageFuture = resultSet.fetchNextPage();
 
     // Then
     verify(statement).copy(mockPagingState);

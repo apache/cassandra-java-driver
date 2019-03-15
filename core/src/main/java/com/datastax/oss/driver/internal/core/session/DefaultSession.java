@@ -145,13 +145,13 @@ public class DefaultSession implements CqlSession {
 
   @NonNull
   @Override
-  public CompletionStage<? extends Metadata> setSchemaMetadataEnabled(@Nullable Boolean newValue) {
+  public CompletionStage<Metadata> setSchemaMetadataEnabled(@Nullable Boolean newValue) {
     return metadataManager.setSchemaEnabled(newValue);
   }
 
   @NonNull
   @Override
-  public CompletionStage<? extends Metadata> refreshSchemaAsync() {
+  public CompletionStage<Metadata> refreshSchemaAsync() {
     return metadataManager.refreshSchema(null, true, true);
   }
 
@@ -175,7 +175,7 @@ public class DefaultSession implements CqlSession {
 
   @NonNull
   @Override
-  public Optional<? extends Metrics> getMetrics() {
+  public Optional<Metrics> getMetrics() {
     return context.getMetricsFactory().getMetrics();
   }
 

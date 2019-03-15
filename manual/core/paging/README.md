@@ -97,7 +97,7 @@ iteration only yields the current page, and the next page must be explicitly fet
 that translates to our example:
 
 ```java
-CompletionStage<? extends AsyncResultSet> futureRs =
+CompletionStage<AsyncResultSet> futureRs =
     session.executeAsync("SELECT * FROM myTable WHERE id = 1");
 futureRs.whenComplete(this::processRows);
 

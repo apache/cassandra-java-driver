@@ -16,7 +16,8 @@
 package com.datastax.oss.driver.api.core.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -415,7 +416,7 @@ public class SchemaChangesIT {
   private <T> void should_handle_creation(
       String beforeStatement,
       String createStatement,
-      Function<Metadata, Optional<? extends T>> extract,
+      Function<Metadata, Optional<T>> extract,
       Consumer<T> verifyMetadata,
       BiConsumer<SchemaChangeListener, T> verifyListener,
       CqlIdentifier... keyspaces) {
@@ -469,7 +470,7 @@ public class SchemaChangesIT {
   private <T> void should_handle_drop(
       Iterable<String> beforeStatements,
       String dropStatement,
-      Function<Metadata, Optional<? extends T>> extract,
+      Function<Metadata, Optional<T>> extract,
       BiConsumer<SchemaChangeListener, T> verifyListener,
       CqlIdentifier... keyspaces) {
 
@@ -516,7 +517,7 @@ public class SchemaChangesIT {
   private <T> void should_handle_update(
       Iterable<String> beforeStatements,
       String updateStatement,
-      Function<Metadata, Optional<? extends T>> extract,
+      Function<Metadata, Optional<T>> extract,
       Consumer<T> verifyNewMetadata,
       TriConsumer<SchemaChangeListener, T, T> verifyListener,
       CqlIdentifier... keyspaces) {
@@ -568,7 +569,7 @@ public class SchemaChangesIT {
       Iterable<String> beforeStatements,
       String dropStatement,
       String recreateStatement,
-      Function<Metadata, Optional<? extends T>> extract,
+      Function<Metadata, Optional<T>> extract,
       Consumer<T> verifyNewMetadata,
       TriConsumer<SchemaChangeListener, T, T> verifyListener,
       CqlIdentifier... keyspaces) {

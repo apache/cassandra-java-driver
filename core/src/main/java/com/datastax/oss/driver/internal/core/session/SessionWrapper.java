@@ -74,13 +74,13 @@ public class SessionWrapper implements Session {
 
   @NonNull
   @Override
-  public CompletionStage<? extends Metadata> setSchemaMetadataEnabled(@Nullable Boolean newValue) {
+  public CompletionStage<Metadata> setSchemaMetadataEnabled(@Nullable Boolean newValue) {
     return delegate.setSchemaMetadataEnabled(newValue);
   }
 
   @NonNull
   @Override
-  public CompletionStage<? extends Metadata> refreshSchemaAsync() {
+  public CompletionStage<Metadata> refreshSchemaAsync() {
     return delegate.refreshSchemaAsync();
   }
 
@@ -104,7 +104,7 @@ public class SessionWrapper implements Session {
 
   @NonNull
   @Override
-  public Optional<? extends Metrics> getMetrics() {
+  public Optional<Metrics> getMetrics() {
     return delegate.getMetrics();
   }
 

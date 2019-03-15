@@ -186,7 +186,7 @@ public class PreparedStatementIT {
     ByteBuffer idBefore = ps.getResultMetadataId();
     assertThat(ps.getResultSetDefinitions()).hasSize(3);
 
-    CompletionStage<? extends AsyncResultSet> future = session.executeAsync(ps.bind());
+    CompletionStage<AsyncResultSet> future = session.executeAsync(ps.bind());
     AsyncResultSet rows = CompletableFutures.getUninterruptibly(future);
     assertThat(rows.getColumnDefinitions()).hasSize(3);
     assertThat(rows.getColumnDefinitions().contains("d")).isFalse();
@@ -417,7 +417,7 @@ public class PreparedStatementIT {
     assertThat(firstPageOf(session.executeAsync(preparedStatement2.bind()))).hasSize(4);
   }
 
-  private static Iterable<Row> firstPageOf(CompletionStage<? extends AsyncResultSet> stage) {
+  private static Iterable<Row> firstPageOf(CompletionStage<AsyncResultSet> stage) {
     return CompletableFutures.getUninterruptibly(stage).currentPage();
   }
 

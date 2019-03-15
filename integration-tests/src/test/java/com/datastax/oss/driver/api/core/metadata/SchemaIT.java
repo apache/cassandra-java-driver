@@ -58,7 +58,7 @@ public class SchemaIT {
 
   @Test
   public void should_expose_system_and_test_keyspace() {
-    Map<CqlIdentifier, ? extends KeyspaceMetadata> keyspaces =
+    Map<CqlIdentifier, KeyspaceMetadata> keyspaces =
         sessionRule.session().getMetadata().getKeyspaces();
     assertThat(keyspaces)
         .containsKeys(
@@ -247,7 +247,7 @@ public class SchemaIT {
     skipIfDse60();
 
     Metadata metadata = sessionRule.session().getMetadata();
-    Map<CqlIdentifier, ? extends KeyspaceMetadata> keyspaces = metadata.getKeyspaces();
+    Map<CqlIdentifier, KeyspaceMetadata> keyspaces = metadata.getKeyspaces();
     assertThat(keyspaces)
         .containsKey(CqlIdentifier.fromCql("system_views"))
         .containsKey(CqlIdentifier.fromCql("system_virtual_schema"));

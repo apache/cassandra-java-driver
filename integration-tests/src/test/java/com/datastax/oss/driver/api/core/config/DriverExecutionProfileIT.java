@@ -225,7 +225,7 @@ public class DriverExecutionProfileIT {
 
       String query = "SELECT * FROM test where k=0";
       // Execute query without profile, should use global page size (100)
-      CompletionStage<? extends AsyncResultSet> future = session.executeAsync(query);
+      CompletionStage<AsyncResultSet> future = session.executeAsync(query);
       AsyncResultSet result = CompletableFutures.getUninterruptibly(future);
       assertThat(result.remaining()).isEqualTo(100);
       result = CompletableFutures.getUninterruptibly(result.fetchNextPage());
