@@ -23,7 +23,6 @@ import java.util.List;
 import org.testng.annotations.Test;
 
 @CCMConfig(config = {"batch_size_warn_threshold_in_kb:5"})
-@CassandraVersion("2.2.0")
 public class WarningsTest extends CCMTestsSupport {
 
   @Override
@@ -32,6 +31,7 @@ public class WarningsTest extends CCMTestsSupport {
   }
 
   @Test(groups = "short")
+  @CassandraVersion("2.2.0")
   public void should_expose_warnings_on_execution_info() throws Exception {
     // the default batch size warn threshold is 5 * 1024 bytes, but after CASSANDRA-10876 there must
     // be
@@ -49,7 +49,8 @@ public class WarningsTest extends CCMTestsSupport {
     try {
       ResultSet rs = session().execute(query);
       List<String> warnings = rs.getExecutionInfo().getWarnings();
-      assertThat(warnings).hasSize(1);
+      // some versions of Cassandra will generate more than 1 log for this query
+      assertThat(warnings).isNotEmpty();
       // also assert that by default, the warning is logged and truncated to
       // DEFAULT_MAX_QUERY_STRING_LENGTH
       String log = logAppender.waitAndGet(2000);
@@ -59,16 +60,16 @@ public class WarningsTest extends CCMTestsSupport {
           // query will only be logged up to QueryLogger.DEFAULT_MAX_QUERY_STRING_LENGTH characters
           .contains(query.substring(0, QueryLogger.DEFAULT_MAX_QUERY_STRING_LENGTH))
           .contains("' generated server side warning(s): ")
-          .contains(
-              String.format(
-                  "Batch for [%s.foo] is of size 5152, exceeding specified threshold of 5120 by 32.",
-                  keyspace));
+          .contains("Batch")
+          .contains(String.format("for [%s.foo] is of size", keyspace))
+          .contains(", exceeding specified threshold");
     } finally {
       logAppender.disableFor(RequestHandler.class);
     }
   }
 
   @Test(groups = "short")
+  @CassandraVersion("3.0.0")
   public void should_execute_query_and_log_server_side_warnings() throws Exception {
     // Assert that logging of server-side query warnings is NOT disabled
     assertThat(Boolean.getBoolean(RequestHandler.DISABLE_QUERY_WARNING_LOGS)).isFalse();
@@ -105,6 +106,7 @@ public class WarningsTest extends CCMTestsSupport {
   }
 
   @Test(groups = "isolated")
+  @CassandraVersion("3.0.0")
   public void should_execute_query_and_not_log_server_side_warnings() throws Exception {
     // Get the system property value for disabling logging server side warnings
     final String disabledLogFlag =
