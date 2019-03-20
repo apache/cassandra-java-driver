@@ -16,7 +16,23 @@ Language v3.
 ## Getting the driver
 
 The driver artifacts are published in Maven central, under the group id [com.datastax.oss]; there
-are multiple modules, all prefixed with `java-driver-`. Refer to the [manual] for more details.
+are multiple modules, all prefixed with `java-driver-`.
+
+```xml
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-core</artifactId>
+  <version>4.0.0-rc1</version>
+</dependency>
+
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-query-builder</artifactId>
+  <version>4.0.0-rc1</version>
+</dependency>
+```
+
+Refer to the [manual] for more details.
 
 [com.datastax.oss]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.datastax.oss%22
 [manual]: manual/
