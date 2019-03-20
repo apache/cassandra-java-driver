@@ -9,6 +9,11 @@ sections:
     sources:
       - type:  markdown
         files: 'manual/**/*.md'
+  - title:     Reference configuration
+    prefix:    /manual/core/configuration/reference
+    sources:
+      - type: rst
+        files: 'manual/core/configuration/reference/*.rst'
   # The 'manual' section was called 'features' in older releases. Leave both
   # definitions and Documentor will pick up whichever exists and ignore the
   # other.
