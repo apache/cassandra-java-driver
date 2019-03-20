@@ -3,6 +3,7 @@
 ### 3.7.1
 
 - [bug] JAVA-2174: Metadata.needsQuote should accept empty strings.
+- [bug] JAVA-2193: Fix flaky tests in WarningsTest
 
 
 ### 3.7.0
