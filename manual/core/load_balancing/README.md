@@ -93,19 +93,15 @@ means a catastrophic failure happened in Region1, and the application node is do
 Failover should be cross-region instead (handled by the load balancer in this example).
 
 Therefore the default policy does not allow remote nodes; it only ever assigns the `LOCAL` or
-`IGNORED` distance, based on the local datacenter name specified in the configuration:
+`IGNORED` distance. You **must** provide a local datacenter name, either in the configuration:
 
 ```
 datastax-java-driver.basic.load-balancing-policy {
-  class = DefaultLoadBalancingPolicy
   local-datacenter = datacenter1
 }
 ```
 
-This option is required, except when you didn't specify any contact points and let the driver
-default to 127.0.0.1:9042 (this is mostly for convenience during the development phase).
-
-Note that the local datacenter can also be provided programmatically when building the session:
+Or programmatically when building the session:
 
 ```java
 CqlSession session = CqlSession.builder()
@@ -114,6 +110,11 @@ CqlSession session = CqlSession.builder()
 ```
 
 If both are provided, the programmatic value takes precedence.
+
+For convenience, the local datacenter name may be omitted if no contact points were provided: in
+that case, the driver will connect to 127.0.0.1:9042, and use that node's datacenter. This is just
+for a better out-of-the-box experience for users who have just downloaded the driver; beyond that
+initial development phase, you should provide explicit contact points and a local datacenter.
 
 #### Token-aware
 
