@@ -14,7 +14,7 @@ The core driver is available from:
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core</artifactId>
-  <version>4.0.0-rc1</version>
+  <version>4.0.0</version>
 </dependency>
 ```
 
@@ -378,7 +378,7 @@ The query builder is now distributed as a separate artifact:
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-query-builder</artifactId>
-  <version>4.0.0-rc1</version>
+  <version>4.0.0</version>
 </dependency>
 ```
 

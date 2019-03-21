@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.0.0 (in progress)
+### 4.0.0
 
 - [improvement] JAVA-2192: Don't return generic types with wildcards
 - [improvement] JAVA-2148: Add examples

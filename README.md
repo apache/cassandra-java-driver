@@ -3,7 +3,7 @@
 *If you're reading this on github.com, please note that this is the readme for the development 
 version and that some features described here might not yet have been released. You can find the
 documentation for latest version through [DataStax Docs] or via the release tags, e.g. 
-[4.0.0-rc1](https://github.com/datastax/java-driver/tree/4.0.0-rc1).*
+[4.0.0](https://github.com/datastax/java-driver/tree/4.0.0).*
 
 A modern, feature-rich and highly tunable Java client library for [Apache Cassandra®] \(2.1+) and 
 [DataStax Enterprise] \(4.7+), using exclusively Cassandra's binary protocol and Cassandra Query
@@ -22,13 +22,13 @@ are multiple modules, all prefixed with `java-driver-`.
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core</artifactId>
-  <version>4.0.0-rc1</version>
+  <version>4.0.0</version>
 </dependency>
 
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-query-builder</artifactId>
-  <version>4.0.0-rc1</version>
+  <version>4.0.0</version>
 </dependency>
 ```
 
