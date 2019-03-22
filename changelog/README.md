@@ -4,6 +4,8 @@
 
 ### 4.0.1 (in progress)
 
+- [improvement] JAVA-2197: Skip deployment of examples and integration tests to Maven central
+
 ### 4.0.0
 
 - [improvement] JAVA-2192: Don't return generic types with wildcards
