@@ -1,0 +1,9 @@
+{
+  "datastax-java-driver": {
+    "basic": {
+      "request": {
+        "page-size": "2000"
+      }
+    }
+  }
+}

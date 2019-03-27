@@ -22,8 +22,10 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
 import com.datastax.oss.driver.internal.core.context.EventBus;
@@ -33,6 +35,7 @@ import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCaptur
 import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop.CapturedTask;
 import com.typesafe.config.ConfigFactory;
 import io.netty.channel.EventLoopGroup;
+import java.io.File;
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -173,5 +176,36 @@ public class DefaultDriverConfigLoaderTest {
 
     verify(eventBus, never()).fire(ConfigChangeEvent.INSTANCE);
     assertThatStage(reloaded).isSuccess(changed -> assertThat(changed).isFalse());
+  }
+
+  @Test
+  public void should_load_from_other_classpath_resource() {
+    DriverConfigLoader loader = DriverConfigLoader.fromClasspath("config/customApplication");
+    DriverExecutionProfile config = loader.getInitialConfig().getDefaultProfile();
+    // From customApplication.conf:
+    assertThat(config.getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
+        .isEqualTo(Duration.ofMillis(500));
+    // From customApplication.json:
+    assertThat(config.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE)).isEqualTo(2000);
+    // From customApplication.properties:
+    assertThat(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
+        .isEqualTo(DefaultConsistencyLevel.ONE.name());
+    // From reference.conf:
+    assertThat(config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
+        .isEqualTo(DefaultConsistencyLevel.SERIAL.name());
+  }
+
+  @Test
+  public void should_load_from_file() {
+    File file = new File("src/test/resources/config/customApplication.conf");
+    assertThat(file).exists();
+    DriverConfigLoader loader = DriverConfigLoader.fromFile(file);
+    DriverExecutionProfile config = loader.getInitialConfig().getDefaultProfile();
+    // From customApplication.conf:
+    assertThat(config.getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
+        .isEqualTo(Duration.ofMillis(500));
+    // From reference.conf:
+    assertThat(config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
+        .isEqualTo(DefaultConsistencyLevel.SERIAL.name());
   }
 }
