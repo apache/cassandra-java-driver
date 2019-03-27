@@ -46,10 +46,12 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultDriverConfigLoader.class);
 
+  public static final String DEFAULT_ROOT_PATH = "datastax-java-driver";
+
   public static final Supplier<Config> DEFAULT_CONFIG_SUPPLIER =
       () -> {
         ConfigFactory.invalidateCaches();
-        return ConfigFactory.load().getConfig("datastax-java-driver");
+        return ConfigFactory.load().getConfig(DEFAULT_ROOT_PATH);
       };
 
   private final Supplier<Config> configSupplier;
