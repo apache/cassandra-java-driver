@@ -28,12 +28,12 @@ import static org.assertj.core.api.Assertions.fail;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
 import com.datastax.oss.protocol.internal.request.Register;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.QueryLog;
@@ -115,7 +115,7 @@ public class HeartbeatIT {
   @Test
   public void should_send_heartbeat_on_control_connection() {
     // Ensure we only have the control connection)
-    DefaultDriverConfigLoaderBuilder loader =
+    ProgrammaticDriverConfigLoaderBuilder loader =
         SessionUtils.configLoaderBuilder()
             .withInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE, 0);
     try (CqlSession session = newSession(loader)) {
@@ -207,7 +207,7 @@ public class HeartbeatIT {
     return newSession(null);
   }
 
-  private CqlSession newSession(DefaultDriverConfigLoaderBuilder loaderBuilder) {
+  private CqlSession newSession(ProgrammaticDriverConfigLoaderBuilder loaderBuilder) {
     if (loaderBuilder == null) {
       loaderBuilder = SessionUtils.configLoaderBuilder();
     }

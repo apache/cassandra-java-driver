@@ -58,7 +58,7 @@ public class FrameLengthIT {
           .withClass(
               DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS, SortingLoadBalancingPolicy.class)
           .withClass(DefaultDriverOption.RETRY_POLICY_CLASS, AlwaysRetryAbortedPolicy.class)
-          .withBytes(DefaultDriverOption.PROTOCOL_MAX_FRAME_LENGTH, "100 kilobytes")
+          .withBytes(DefaultDriverOption.PROTOCOL_MAX_FRAME_LENGTH, 100 * 1024)
           .build();
 
   private static SessionRule<CqlSession> sessionRule =

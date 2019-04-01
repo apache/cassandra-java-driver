@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -33,8 +34,6 @@ import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.QueryCounter;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
-import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder.ProfileBuilder;
 import com.datastax.oss.driver.internal.core.specex.ConstantSpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.specex.NoSpeculativeExecutionPolicy;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
@@ -331,7 +330,7 @@ public class SpeculativeExecutionIT {
       int profile1MaxSpeculativeExecutions,
       long profile1SpeculativeDelayMs) {
 
-    DefaultDriverConfigLoaderBuilder builder =
+    ProgrammaticDriverConfigLoaderBuilder builder =
         SessionUtils.configLoaderBuilder()
             .withDuration(
                 DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofMillis(SPECULATIVE_DELAY * 10))
@@ -362,39 +361,33 @@ public class SpeculativeExecutionIT {
               NoSpeculativeExecutionPolicy.class);
     }
 
-    ProfileBuilder profile1 = DefaultDriverConfigLoaderBuilder.profileBuilder();
+    builder = builder.startProfile("profile1");
     if (profile1MaxSpeculativeExecutions != -1 || profile1SpeculativeDelayMs != -1) {
-      profile1 =
-          profile1.withClass(
+      builder =
+          builder.withClass(
               DefaultDriverOption.SPECULATIVE_EXECUTION_POLICY_CLASS,
               ConstantSpeculativeExecutionPolicy.class);
 
       if (profile1MaxSpeculativeExecutions != -1) {
-        profile1 =
-            profile1.withInt(
+        builder =
+            builder.withInt(
                 DefaultDriverOption.SPECULATIVE_EXECUTION_MAX, profile1MaxSpeculativeExecutions);
       }
       if (profile1SpeculativeDelayMs != -1) {
-        profile1 =
-            profile1.withDuration(
+        builder =
+            builder.withDuration(
                 DefaultDriverOption.SPECULATIVE_EXECUTION_DELAY,
                 Duration.ofMillis(profile1SpeculativeDelayMs));
       }
     } else {
-      profile1 =
-          profile1.withClass(
+      builder =
+          builder.withClass(
               DefaultDriverOption.SPECULATIVE_EXECUTION_POLICY_CLASS,
               NoSpeculativeExecutionPolicy.class);
     }
 
-    builder = builder.withProfile("profile1", profile1.build());
-
     builder =
-        builder.withProfile(
-            "profile2",
-            DefaultDriverConfigLoaderBuilder.profileBuilder()
-                .withString(DefaultDriverOption.REQUEST_CONSISTENCY, "ONE")
-                .build());
+        builder.startProfile("profile2").withString(DefaultDriverOption.REQUEST_CONSISTENCY, "ONE");
 
     CqlSession session = SessionUtils.newSession(simulacron, builder.build());
 

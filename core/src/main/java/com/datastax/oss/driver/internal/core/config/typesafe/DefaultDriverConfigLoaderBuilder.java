@@ -27,14 +27,11 @@ import java.util.Map;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
- * Provides a mechanism for constructing a {@link DriverConfigLoader} programmatically that uses
- * {@link com.datastax.oss.driver.api.core.CqlSession}'s default config loader with the values of
- * {@code withXXX(...)} methods overriding the configuration defined in configuration files.
- *
- * <p>The built {@link DriverConfigLoader} provided by {@link #build()} can be passed to {@link
- * com.datastax.oss.driver.api.core.session.SessionBuilder#withConfigLoader(DriverConfigLoader)}.
+ * @deprecated this feature is now available in the public API. Use {@link
+ *     DriverConfigLoader#programmaticBuilder()} instead.
  */
 @NotThreadSafe
+@Deprecated
 public class DefaultDriverConfigLoaderBuilder
     implements DriverOptionConfigBuilder<DefaultDriverConfigLoaderBuilder> {
 

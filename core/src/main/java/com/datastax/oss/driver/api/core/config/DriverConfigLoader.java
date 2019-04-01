@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.config;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
+import com.datastax.oss.driver.internal.core.config.typesafe.DefaultProgrammaticDriverConfigLoaderBuilder;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -134,6 +135,64 @@ public interface DriverConfigLoader extends AutoCloseable {
                   .resolve();
           return config.getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
         });
+  }
+
+  /**
+   * Starts a builder that allows configuration options to be overridden programmatically.
+   *
+   * <p>For example:
+   *
+   * <pre>{@code
+   * DriverConfigLoader loader =
+   *     DriverConfigLoader.programmaticBuilder()
+   *         .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(5))
+   *         .startProfile("slow")
+   *         .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+   *         .endProfile()
+   *         .build();
+   * }</pre>
+   *
+   * produces the same overrides as:
+   *
+   * <pre>
+   * datastax-java-driver {
+   *   basic.request.timeout = 5 seconds
+   *   profiles {
+   *     slow {
+   *       basic.request.timeout = 30 seconds
+   *     }
+   *   }
+   * }
+   * </pre>
+   *
+   * The resulting loader still uses the driver's default implementation (based on Typesafe config),
+   * except that the programmatic configuration takes precedence. More precisely, configuration
+   * properties are loaded and merged from the following (first-listed are higher priority):
+   *
+   * <ul>
+   *   <li>system properties
+   *   <li>properties that were provided programmatically
+   *   <li>{@code application.conf} (all resources on classpath with this name)
+   *   <li>{@code application.json} (all resources on classpath with this name)
+   *   <li>{@code application.properties} (all resources on classpath with this name)
+   *   <li>{@code reference.conf} (all resources on classpath with this name). In particular, this
+   *       will load the {@code reference.conf} included in the core driver JAR, that defines
+   *       default options for all mandatory options.
+   * </ul>
+   *
+   * Note that {@code application.*} is entirely optional, you may choose to only rely on the
+   * driver's built-in {@code reference.conf} and programmatic overrides.
+   *
+   * <p>The resulting configuration is expected to contain a {@code datastax-java-driver} section.
+   *
+   * <p>The loader will honor the reload interval defined by the option {@code
+   * basic.config-reload-interval}.
+   *
+   * <p>Note that the returned builder is <b>not thread-safe</b>.
+   */
+  @NonNull
+  static ProgrammaticDriverConfigLoaderBuilder programmaticBuilder() {
+    return new DefaultProgrammaticDriverConfigLoaderBuilder();
   }
 
   /**

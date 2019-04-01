@@ -37,7 +37,7 @@ import java.util.SortedSet;
  *
  * @see DriverConfig
  */
-public interface DriverExecutionProfile {
+public interface DriverExecutionProfile extends OngoingConfigOptions<DriverExecutionProfile> {
 
   /**
    * The name of the default profile (the string {@value}).
@@ -64,9 +64,6 @@ public interface DriverExecutionProfile {
   }
 
   @NonNull
-  DriverExecutionProfile withBoolean(@NonNull DriverOption option, boolean value);
-
-  @NonNull
   List<Boolean> getBooleanList(@NonNull DriverOption option);
 
   @Nullable
@@ -75,18 +72,11 @@ public interface DriverExecutionProfile {
     return isDefined(option) ? getBooleanList(option) : defaultValue;
   }
 
-  @NonNull
-  DriverExecutionProfile withBooleanList(
-      @NonNull DriverOption option, @NonNull List<Boolean> value);
-
   int getInt(@NonNull DriverOption option);
 
   default int getInt(@NonNull DriverOption option, int defaultValue) {
     return isDefined(option) ? getInt(option) : defaultValue;
   }
-
-  @NonNull
-  DriverExecutionProfile withInt(@NonNull DriverOption option, int value);
 
   @NonNull
   List<Integer> getIntList(@NonNull DriverOption option);
@@ -97,16 +87,11 @@ public interface DriverExecutionProfile {
     return isDefined(option) ? getIntList(option) : defaultValue;
   }
 
-  @NonNull
-  DriverExecutionProfile withIntList(@NonNull DriverOption option, @NonNull List<Integer> value);
-
   long getLong(@NonNull DriverOption option);
 
   default long getLong(@NonNull DriverOption option, long defaultValue) {
     return isDefined(option) ? getLong(option) : defaultValue;
   }
-
-  DriverExecutionProfile withLong(@NonNull DriverOption option, long value);
 
   @NonNull
   List<Long> getLongList(@NonNull DriverOption option);
@@ -116,17 +101,11 @@ public interface DriverExecutionProfile {
     return isDefined(option) ? getLongList(option) : defaultValue;
   }
 
-  @NonNull
-  DriverExecutionProfile withLongList(@NonNull DriverOption option, @NonNull List<Long> value);
-
   double getDouble(@NonNull DriverOption option);
 
   default double getDouble(@NonNull DriverOption option, double defaultValue) {
     return isDefined(option) ? getDouble(option) : defaultValue;
   }
-
-  @NonNull
-  DriverExecutionProfile withDouble(@NonNull DriverOption option, double value);
 
   @NonNull
   List<Double> getDoubleList(@NonNull DriverOption option);
@@ -138,18 +117,12 @@ public interface DriverExecutionProfile {
   }
 
   @NonNull
-  DriverExecutionProfile withDoubleList(@NonNull DriverOption option, @NonNull List<Double> value);
-
-  @NonNull
   String getString(@NonNull DriverOption option);
 
   @Nullable
   default String getString(@NonNull DriverOption option, @Nullable String defaultValue) {
     return isDefined(option) ? getString(option) : defaultValue;
   }
-
-  @NonNull
-  DriverExecutionProfile withString(@NonNull DriverOption option, @NonNull String value);
 
   @NonNull
   List<String> getStringList(@NonNull DriverOption option);
@@ -161,9 +134,6 @@ public interface DriverExecutionProfile {
   }
 
   @NonNull
-  DriverExecutionProfile withStringList(@NonNull DriverOption option, @NonNull List<String> value);
-
-  @NonNull
   Map<String, String> getStringMap(@NonNull DriverOption option);
 
   @Nullable
@@ -171,10 +141,6 @@ public interface DriverExecutionProfile {
       @NonNull DriverOption option, @Nullable Map<String, String> defaultValue) {
     return isDefined(option) ? getStringMap(option) : defaultValue;
   }
-
-  @NonNull
-  DriverExecutionProfile withStringMap(
-      @NonNull DriverOption option, @NonNull Map<String, String> value);
 
   /**
    * @return a size in bytes. This is separate from {@link #getLong(DriverOption)}, in case
@@ -189,20 +155,12 @@ public interface DriverExecutionProfile {
 
   /** @see #getBytes(DriverOption) */
   @NonNull
-  DriverExecutionProfile withBytes(@NonNull DriverOption option, long value);
-
-  /** @see #getBytes(DriverOption) */
-  @NonNull
   List<Long> getBytesList(DriverOption option);
 
   @Nullable
   default List<Long> getBytesList(DriverOption option, @Nullable List<Long> defaultValue) {
     return isDefined(option) ? getBytesList(option) : defaultValue;
   }
-
-  /** @see #getBytes(DriverOption) */
-  @NonNull
-  DriverExecutionProfile withBytesList(@NonNull DriverOption option, @NonNull List<Long> value);
 
   @NonNull
   Duration getDuration(@NonNull DriverOption option);
@@ -213,9 +171,6 @@ public interface DriverExecutionProfile {
   }
 
   @NonNull
-  DriverExecutionProfile withDuration(@NonNull DriverOption option, @NonNull Duration value);
-
-  @NonNull
   List<Duration> getDurationList(@NonNull DriverOption option);
 
   @Nullable
@@ -223,14 +178,6 @@ public interface DriverExecutionProfile {
       @NonNull DriverOption option, @Nullable List<Duration> defaultValue) {
     return isDefined(option) ? getDurationList(option) : defaultValue;
   }
-
-  @NonNull
-  DriverExecutionProfile withDurationList(
-      @NonNull DriverOption option, @NonNull List<Duration> value);
-
-  /** Unsets an option. */
-  @NonNull
-  DriverExecutionProfile without(@NonNull DriverOption option);
 
   /**
    * Returns a representation of all the child options under a given option.
