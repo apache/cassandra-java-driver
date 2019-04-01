@@ -36,6 +36,12 @@
         "old": "method java.util.Set<java.net.InetSocketAddress> com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule::getContactPoints()",
         "new": "method java.util.Set<com.datastax.oss.driver.api.core.metadata.EndPoint> com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule::getContactPoints()",
         "justification": "JAVA-2165: Abstract node connection information"
+      },
+      {
+        "code": "java.method.returnTypeChanged",
+        "old": "method com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder com.datastax.oss.driver.api.testinfra.session.SessionUtils::configLoaderBuilder()",
+        "new": "method com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder com.datastax.oss.driver.api.testinfra.session.SessionUtils::configLoaderBuilder()",
+        "justification": "JAVA-2201: Expose a public API for programmatic config"
       }
     ]
   }

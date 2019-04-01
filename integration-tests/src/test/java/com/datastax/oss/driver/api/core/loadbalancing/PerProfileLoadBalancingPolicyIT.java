@@ -30,7 +30,6 @@ import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -53,16 +52,10 @@ public class PerProfileLoadBalancingPolicyIT {
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, "dc1")
-                  .withProfile(
-                      "profile1",
-                      DefaultDriverConfigLoaderBuilder.profileBuilder()
-                          .withString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, "dc3")
-                          .build())
-                  .withProfile(
-                      "profile2",
-                      DefaultDriverConfigLoaderBuilder.profileBuilder()
-                          .withString(DefaultDriverOption.REQUEST_CONSISTENCY, "ONE")
-                          .build())
+                  .startProfile("profile1")
+                  .withString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, "dc3")
+                  .startProfile("profile2")
+                  .withString(DefaultDriverOption.REQUEST_CONSISTENCY, "ONE")
                   .build())
           .build();
 

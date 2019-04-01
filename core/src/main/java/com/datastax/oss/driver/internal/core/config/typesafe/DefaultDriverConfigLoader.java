@@ -129,7 +129,11 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
    * <p>In the general case, use of this is not recommended, but it may be useful in situations
    * where configuration must be defined at runtime or is derived from some other configuration
    * source.
+   *
+   * @deprecated this feature is now available in the public API. Use {@link
+   *     DriverConfigLoader#programmaticBuilder()} instead.
    */
+  @Deprecated
   @NonNull
   public static DefaultDriverConfigLoaderBuilder builder() {
     return new DefaultDriverConfigLoaderBuilder();

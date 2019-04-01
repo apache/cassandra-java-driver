@@ -39,7 +39,6 @@ import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.QueryCounter;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
 import com.datastax.oss.driver.internal.core.retry.DefaultRetryPolicy;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -67,16 +66,10 @@ public class PerProfileRetryPolicyIT {
                       DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS,
                       SortingLoadBalancingPolicy.class)
                   .withClass(DefaultDriverOption.RETRY_POLICY_CLASS, DefaultRetryPolicy.class)
-                  .withProfile(
-                      "profile1",
-                      DefaultDriverConfigLoaderBuilder.profileBuilder()
-                          .withClass(DefaultDriverOption.RETRY_POLICY_CLASS, NoRetryPolicy.class)
-                          .build())
-                  .withProfile(
-                      "profile2",
-                      DefaultDriverConfigLoaderBuilder.profileBuilder()
-                          .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 100)
-                          .build())
+                  .startProfile("profile1")
+                  .withClass(DefaultDriverOption.RETRY_POLICY_CLASS, NoRetryPolicy.class)
+                  .startProfile("profile2")
+                  .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 100)
                   .build())
           .build();
 

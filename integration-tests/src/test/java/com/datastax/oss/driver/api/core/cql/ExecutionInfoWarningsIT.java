@@ -30,7 +30,6 @@ import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
-import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestHandler;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogger;
 import com.google.common.base.Strings;
@@ -67,11 +66,8 @@ public class ExecutionInfoWarningsIT {
                   .withInt(
                       DefaultDriverOption.REQUEST_LOGGER_MAX_QUERY_LENGTH,
                       RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_QUERY_LENGTH)
-                  .withProfile(
-                      "log-disabled",
-                      DefaultDriverConfigLoaderBuilder.profileBuilder()
-                          .withString(DefaultDriverOption.REQUEST_LOG_WARNINGS, "false")
-                          .build())
+                  .startProfile("log-disabled")
+                  .withString(DefaultDriverOption.REQUEST_LOG_WARNINGS, "false")
                   .build())
           .build();
 

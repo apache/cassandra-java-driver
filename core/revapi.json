@@ -4721,6 +4721,13 @@
         "old": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, ? extends com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata> com.datastax.oss.driver.api.core.metadata.schema.TableMetadata::getIndexes()",
         "new": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata> com.datastax.oss.driver.api.core.metadata.schema.TableMetadata::getIndexes()",
         "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method com.datastax.oss.driver.api.core.config.DriverExecutionProfile com.datastax.oss.driver.api.core.config.DriverExecutionProfile::withLong(com.datastax.oss.driver.api.core.config.DriverOption, long)",
+        "new": "method SelfT com.datastax.oss.driver.api.core.config.OngoingConfigOptions<SelfT extends com.datastax.oss.driver.api.core.config.OngoingConfigOptions<SelfT extends com.datastax.oss.driver.api.core.config.OngoingConfigOptions<SelfT>>>::withLong(com.datastax.oss.driver.api.core.config.DriverOption, long) @ com.datastax.oss.driver.api.core.config.DriverExecutionProfile",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "Bugfix, the annotation should have been present from the beginning"
       }
     ]
   }

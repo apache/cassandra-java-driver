@@ -4,6 +4,7 @@
 
 ### 4.0.1 (in progress)
 
+- [new feature] JAVA-2201: Expose a public API for programmatic config
 - [new feature] JAVA-2205: Expose public factory methods for alternative config loaders
 - [bug] JAVA-2214: Fix flaky RequestLoggerIT test
 - [bug] JAVA-2203: Handle unresolved addresses in DefaultEndPoint

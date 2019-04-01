@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -28,8 +29,6 @@ import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
-import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
-import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
@@ -83,21 +82,20 @@ public class SessionUtils {
     }
   }
 
-  /** @leaks-private-api Tests use this for programmatic config loading. */
-  public static DefaultDriverConfigLoaderBuilder configLoaderBuilder() {
+  public static ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder() {
     try {
       Class<?> clazz = Class.forName(SESSION_BUILDER_CLASS);
       Method m = clazz.getMethod("configLoaderBuilder");
-      return (DefaultDriverConfigLoaderBuilder) m.invoke(null);
+      return (ProgrammaticDriverConfigLoaderBuilder) m.invoke(null);
     } catch (Exception e) {
       if (!SESSION_BUILDER_CLASS.equals(DEFAULT_SESSION_CLASS_NAME)) {
         LOG.warn(
-            "Could not construct DefaultDriverConfigLoaderBuilder from {} using "
+            "Could not construct ProgrammaticDriverConfigLoaderBuilder from {} using "
                 + "configLoaderBuilder(), using default implementation.",
             SESSION_BUILDER_CLASS,
             e);
       }
-      return DefaultDriverConfigLoader.builder();
+      return DriverConfigLoader.programmaticBuilder();
     }
   }
 
