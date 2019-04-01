@@ -4,6 +4,7 @@
 
 ### 4.0.1 (in progress)
 
+- [bug] JAVA-2193: Fix flaky tests in ExecutionInfoWarningsIT
 - [improvement] JAVA-2197: Skip deployment of examples and integration tests to Maven central
 
 ### 4.0.0

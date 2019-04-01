@@ -54,7 +54,11 @@ public class ExecutionInfoWarningsIT {
 
   private static final String KEY = "test";
 
-  private final CustomCcmRule ccm = new CustomCcmRule.Builder().build();
+  private final CustomCcmRule ccm =
+      new CustomCcmRule.Builder()
+          // set the warn threshold to 5Kb (default is 64Kb in newer versions)
+          .withCassandraConfiguration("batch_size_warn_threshold_in_kb", "5")
+          .build();
   private final SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccm)
           .withConfigLoader(
@@ -182,14 +186,15 @@ public class ExecutionInfoWarningsIT {
             logMessage ->
                 assertThat(logMessage)
                     .startsWith("Query '")
-                    // query will only be logged up to MAX_QUERY_LENGTH characters
+                    // different versiosns of Cassandra produce slightly different formated logs
+                    // the .contains() below verify the common bits
                     .contains(
                         query.substring(0, RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_QUERY_LENGTH))
                     .contains("' generated server side warning(s): ")
                     .contains("Batch")
-                    .contains(
-                        String.format(
-                            "for [%s.test] is of size", sessionRule.keyspace().asCql(true)))
+                    .contains("for")
+                    .contains(String.format("%s.test", sessionRule.keyspace().asCql(true)))
+                    .contains("is of size")
                     .contains("exceeding specified threshold"));
   }
 }
