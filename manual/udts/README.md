@@ -61,7 +61,7 @@ various ways to get it:
 * from the driver's [schema metadata](../metadata/#schema-metadata):
 
     ```java
-    UserType udt = session.getMetadata().getKeyspace("ks").getUserType("type1");
+    UserType udt = session.getCluster().getMetadata().getKeyspace("ks").getUserType("type1");
     ```
 
 * from another UDT value:
