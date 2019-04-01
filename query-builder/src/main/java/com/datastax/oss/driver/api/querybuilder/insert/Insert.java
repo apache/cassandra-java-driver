@@ -44,4 +44,32 @@ public interface Insert extends BuildableQuery {
    */
   @NonNull
   Insert usingTimestamp(@Nullable BindMarker bindMarker);
+
+  /**
+   * Adds a {@code USING TTL} clause to this statement with a literal value. Setting a value of
+   * {@code null} will remove the {@code USING TTL} clause on this statement. Setting a value of
+   * {@code 0} will insert the data with no TTL when the statement is executed, overriding any Table
+   * TTL that might exist.
+   *
+   * <p>If this method or {@link #usingTtl(BindMarker) } is called multiple times, the value from
+   * the last invocation is used.
+   *
+   * @param ttlInSeconds Time, in seconds, the inserted data should live before expiring.
+   */
+  @NonNull
+  Insert usingTtl(int ttlInSeconds);
+
+  /**
+   * Adds a {@code USING TTL} clause to this statement with a bind marker. Setting a value of {@code
+   * null} will remove the {@code USING TTL} clause on this statement. Binding a value of {@code 0}
+   * will insert the data with no TTL when the statement is executed, overriding any Table TTL that
+   * might exist.
+   *
+   * <p>If this method or {@link #usingTtl(int) } is called multiple times, the value from the last
+   * invocation is used.
+   *
+   * @param bindMarker A bind marker that is understood to be a value in seconds.
+   */
+  @NonNull
+  Insert usingTtl(@Nullable BindMarker bindMarker);
 }
