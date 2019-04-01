@@ -41,4 +41,32 @@ public interface UpdateStart extends OngoingAssignment {
    */
   @NonNull
   UpdateStart usingTimestamp(@NonNull BindMarker bindMarker);
+
+  /**
+   * Adds a {@code USING TTL} clause to this statement with a literal value. Setting a value of
+   * {@code null} will remove the {@code USING TTL} clause on this statement. Setting a value of
+   * {@code 0} will update the data and remove any TTL on the column when the statement is executed,
+   * overriding any TTL (table or column) that may exist in Cassandra.
+   *
+   * <p>If this method or {@link #usingTtl(BindMarker) } is called multiple times, the value from
+   * the last invocation is used.
+   *
+   * @param ttlInSeconds Time, in seconds, the inserted data should live before expiring.
+   */
+  @NonNull
+  UpdateStart usingTtl(int ttlInSeconds);
+
+  /**
+   * Adds a {@code USING TTL} clause to this statement with a bind marker. Setting a value of {@code
+   * null} will remove the {@code USING TTL} clause on this statement. Binding a value of {@code 0}
+   * will update the data and remove any TTL on the column when the statement is executed,
+   * overriding any TTL (table or column) that may exist in Cassandra.
+   *
+   * <p>If this method or {@link #usingTtl(int)} is called multiple times, the value from the last
+   * invocation is used.
+   *
+   * @param bindMarker A bind marker that is understood to be a value in seconds.
+   */
+  @NonNull
+  UpdateStart usingTtl(@NonNull BindMarker bindMarker);
 }

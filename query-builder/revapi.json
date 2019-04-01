@@ -2752,6 +2752,26 @@
         "new": "method SelfT com.datastax.oss.driver.api.querybuilder.relation.OngoingWhereClause<SelfT extends com.datastax.oss.driver.api.querybuilder.relation.OngoingWhereClause<SelfT extends com.datastax.oss.driver.api.querybuilder.relation.OngoingWhereClause<SelfT>>>::whereRaw(java.lang.String) @ com.datastax.oss.driver.api.querybuilder.update.UpdateWithAssignments",
         "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
         "justification": "JAVA-2161: Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method com.datastax.oss.driver.api.querybuilder.insert.Insert com.datastax.oss.driver.api.querybuilder.insert.Insert::usingTtl(com.datastax.oss.driver.api.querybuilder.BindMarker)",
+        "justification": "JAVA-2210: Add ability to set TTL for modification queries"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method com.datastax.oss.driver.api.querybuilder.insert.Insert com.datastax.oss.driver.api.querybuilder.insert.Insert::usingTtl(int)",
+        "justification": "JAVA-2210: Add ability to set TTL for modification queries"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method com.datastax.oss.driver.api.querybuilder.update.UpdateStart com.datastax.oss.driver.api.querybuilder.update.UpdateStart::usingTtl(com.datastax.oss.driver.api.querybuilder.BindMarker)",
+        "justification": "JAVA-2210: Add ability to set TTL for modification queries"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method com.datastax.oss.driver.api.querybuilder.update.UpdateStart com.datastax.oss.driver.api.querybuilder.update.UpdateStart::usingTtl(int)",
+        "justification": "JAVA-2210: Add ability to set TTL for modification queries"
       }
     ]
   }

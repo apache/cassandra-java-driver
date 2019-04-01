@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.querybuilder.update.UpdateStart;
 import com.datastax.oss.driver.api.querybuilder.update.UpdateWithAssignments;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -39,26 +40,46 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
   private final CqlIdentifier keyspace;
   private final CqlIdentifier table;
   private final Object timestamp;
+  private final Object ttlInSeconds;
   private final ImmutableList<Assignment> assignments;
   private final ImmutableList<Relation> relations;
   private final boolean ifExists;
   private final ImmutableList<Condition> conditions;
 
   public DefaultUpdate(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
-    this(keyspace, table, null, ImmutableList.of(), ImmutableList.of(), false, ImmutableList.of());
+    this(
+        keyspace,
+        table,
+        null,
+        null,
+        ImmutableList.of(),
+        ImmutableList.of(),
+        false,
+        ImmutableList.of());
   }
 
   public DefaultUpdate(
       @Nullable CqlIdentifier keyspace,
       @NonNull CqlIdentifier table,
       @Nullable Object timestamp,
+      @Nullable Object ttlInSeconds,
       @NonNull ImmutableList<Assignment> assignments,
       @NonNull ImmutableList<Relation> relations,
       boolean ifExists,
       @NonNull ImmutableList<Condition> conditions) {
+    Preconditions.checkArgument(
+        timestamp == null || timestamp instanceof Long || timestamp instanceof BindMarker,
+        "TIMESTAMP value must be a BindMarker or a Long");
+    Preconditions.checkArgument(
+        ttlInSeconds == null
+            || ttlInSeconds instanceof Integer
+            || ttlInSeconds instanceof BindMarker,
+        "TTL value must be a BindMarker or an Integer");
+
     this.keyspace = keyspace;
     this.table = table;
     this.timestamp = timestamp;
+    this.ttlInSeconds = ttlInSeconds;
     this.assignments = assignments;
     this.relations = relations;
     this.ifExists = ifExists;
@@ -69,14 +90,28 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
   @Override
   public UpdateStart usingTimestamp(long newTimestamp) {
     return new DefaultUpdate(
-        keyspace, table, newTimestamp, assignments, relations, ifExists, conditions);
+        keyspace, table, newTimestamp, ttlInSeconds, assignments, relations, ifExists, conditions);
   }
 
   @NonNull
   @Override
   public UpdateStart usingTimestamp(@NonNull BindMarker newTimestamp) {
     return new DefaultUpdate(
-        keyspace, table, newTimestamp, assignments, relations, ifExists, conditions);
+        keyspace, table, newTimestamp, ttlInSeconds, assignments, relations, ifExists, conditions);
+  }
+
+  @NonNull
+  @Override
+  public UpdateStart usingTtl(int ttlInSeconds) {
+    return new DefaultUpdate(
+        keyspace, table, timestamp, ttlInSeconds, assignments, relations, ifExists, conditions);
+  }
+
+  @NonNull
+  @Override
+  public UpdateStart usingTtl(@NonNull BindMarker ttlInSeconds) {
+    return new DefaultUpdate(
+        keyspace, table, timestamp, ttlInSeconds, assignments, relations, ifExists, conditions);
   }
 
   @NonNull
@@ -94,7 +129,7 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
   @NonNull
   public UpdateWithAssignments withAssignments(@NonNull ImmutableList<Assignment> newAssignments) {
     return new DefaultUpdate(
-        keyspace, table, timestamp, newAssignments, relations, ifExists, conditions);
+        keyspace, table, timestamp, ttlInSeconds, newAssignments, relations, ifExists, conditions);
   }
 
   @NonNull
@@ -112,13 +147,14 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
   @NonNull
   public Update withRelations(@NonNull ImmutableList<Relation> newRelations) {
     return new DefaultUpdate(
-        keyspace, table, timestamp, assignments, newRelations, ifExists, conditions);
+        keyspace, table, timestamp, ttlInSeconds, assignments, newRelations, ifExists, conditions);
   }
 
   @NonNull
   @Override
   public Update ifExists() {
-    return new DefaultUpdate(keyspace, table, timestamp, assignments, relations, true, conditions);
+    return new DefaultUpdate(
+        keyspace, table, timestamp, ttlInSeconds, assignments, relations, true, conditions);
   }
 
   @NonNull
@@ -136,7 +172,7 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
   @NonNull
   public Update withConditions(@NonNull ImmutableList<Condition> newConditions) {
     return new DefaultUpdate(
-        keyspace, table, timestamp, assignments, relations, false, newConditions);
+        keyspace, table, timestamp, ttlInSeconds, assignments, relations, false, newConditions);
   }
 
   @NonNull
@@ -151,6 +187,16 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
         ((BindMarker) timestamp).appendTo(builder);
       } else {
         builder.append(timestamp);
+      }
+    }
+
+    if (ttlInSeconds != null) {
+      // choose the correct keyword based on whether or not we have a timestamp
+      builder.append((timestamp != null) ? " AND " : " USING ").append("TTL ");
+      if (ttlInSeconds instanceof BindMarker) {
+        ((BindMarker) ttlInSeconds).appendTo(builder);
+      } else {
+        builder.append(ttlInSeconds);
       }
     }
 
@@ -225,6 +271,11 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
   @Nullable
   public Object getTimestamp() {
     return timestamp;
+  }
+
+  @Nullable
+  public Object getTtl() {
+    return ttlInSeconds;
   }
 
   @NonNull
