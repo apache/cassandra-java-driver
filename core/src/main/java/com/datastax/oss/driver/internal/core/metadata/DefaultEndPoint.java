@@ -16,11 +16,8 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import java.net.Inet4Address;
-import java.net.Inet6Address;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Objects;
 
 public class DefaultEndPoint implements EndPoint {
 
@@ -28,8 +25,7 @@ public class DefaultEndPoint implements EndPoint {
   private final String metricPrefix;
 
   public DefaultEndPoint(InetSocketAddress address) {
-    Preconditions.checkNotNull(address);
-    this.address = address;
+    this.address = Objects.requireNonNull(address, "address can't be null");
     this.metricPrefix = buildMetricPrefix(address);
   }
 
@@ -65,20 +61,13 @@ public class DefaultEndPoint implements EndPoint {
     return metricPrefix;
   }
 
-  private static String buildMetricPrefix(InetSocketAddress addressAndPort) {
-    StringBuilder prefix = new StringBuilder();
-    InetAddress address = addressAndPort.getAddress();
-    int port = addressAndPort.getPort();
-    if (address instanceof Inet4Address) {
-      // Metrics use '.' as a delimiter, replace so that the IP is a single path component
-      // (127.0.0.1 => 127_0_0_1)
-      prefix.append(address.getHostAddress().replace('.', '_'));
-    } else {
-      assert address instanceof Inet6Address;
-      // IPv6 only uses '%' and ':' as separators, so no replacement needed
-      prefix.append(address.getHostAddress());
+  private static String buildMetricPrefix(InetSocketAddress address) {
+    String hostString = address.getHostString();
+    if (hostString == null) {
+      throw new IllegalArgumentException(
+          "Could not extract a host string from provided address " + address);
     }
     // Append the port since Cassandra 4 supports nodes with different ports
-    return prefix.append(':').append(port).toString();
+    return hostString.replace('.', '_') + ':' + address.getPort();
   }
 }
