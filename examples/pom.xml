@@ -117,6 +117,12 @@
       <optional>true</optional>
     </dependency>
 
+    <dependency>
+      <groupId>org.glassfish.jersey.inject</groupId>
+      <artifactId>jersey-hk2</artifactId>
+      <optional>true</optional>
+    </dependency>
+
     <!-- Standard annotations -->
 
     <dependency>
