@@ -75,7 +75,7 @@ public class LifecycleListenerIT {
       simulacronRule.cluster().acceptConnections();
     }
     assertThat(listener.ready).isFalse();
-    assertThat(listener.closed).isTrue();
+    ConditionChecker.checkThat(() -> listener.closed).before(1, SECONDS).becomesTrue();
   }
 
   private CqlSession newSession(TestLifecycleListener listener) {
