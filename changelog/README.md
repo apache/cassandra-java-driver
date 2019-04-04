@@ -4,6 +4,7 @@
 
 ### 4.0.1 (in progress)
 
+- [improvement] JAVA-2212: Add truncate to QueryBuilder 
 - [improvement] JAVA-2211: Upgrade Jersey examples to fix security issue sid-3606
 - [bug] JAVA-2193: Fix flaky tests in ExecutionInfoWarningsIT
 - [improvement] JAVA-2197: Skip deployment of examples and integration tests to Maven central

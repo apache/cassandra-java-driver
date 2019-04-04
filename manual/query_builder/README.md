@@ -176,6 +176,7 @@ For a complete tour of the API, browse the child pages in this manual:
   * [INSERT](insert/)
   * [UPDATE](update/)
   * [DELETE](delete/)
+  * [TRUNCATE](truncate/)
   * [Schema builder](schema/) (for DDL statements such as CREATE TABLE, etc.)
 * common topics:
   * [Relations](relation/)
