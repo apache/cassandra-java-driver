@@ -37,6 +37,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
+import com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
@@ -84,6 +85,12 @@ public class RequestLoggerIT {
   private final DefaultDriverConfigLoaderBuilder.Profile noTracesProfile =
       DefaultDriverConfigLoaderBuilder.profileBuilder()
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES, false)
+          .build();
+
+  private final DefaultDriverConfigLoaderBuilder.Profile sortingLbp =
+      DefaultDriverConfigLoaderBuilder.profileBuilder()
+          .withClass(
+              DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS, SortingLoadBalancingPolicy.class)
           .build();
 
   private final DriverConfigLoader requestLoader =
@@ -135,6 +142,7 @@ public class RequestLoggerIT {
           .withProfile("low-threshold", lowThresholdProfile)
           .withProfile("no-logs", noLogsProfile)
           .withProfile("no-traces", noTracesProfile)
+          .withProfile("sorting-lbp", sortingLbp)
           .build();
 
   private SessionRule<CqlSession> sessionRuleNode =
@@ -321,7 +329,10 @@ public class RequestLoggerIT {
         .prime(when(QUERY).then(rows().row("release_version", "3.0.0")));
 
     // When
-    ResultSet set = sessionRuleNode.session().execute(QUERY);
+    sessionRuleNode
+        .session()
+        // use the sorting LBP here to ensure that node 0 is always hit first
+        .execute(SimpleStatement.builder(QUERY).setExecutionProfileName("sorting-lbp").build());
 
     // Then
     verify(appender, new Timeout(500, VerificationModeFactory.times(3)))
