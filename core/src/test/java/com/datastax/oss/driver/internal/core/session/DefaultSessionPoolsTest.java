@@ -952,7 +952,7 @@ public class DefaultSessionPoolsTest {
     // This works because the event loop group is single-threaded
     Future<?> f = adminEventLoopGroup.schedule(() -> null, 5, TimeUnit.NANOSECONDS);
     try {
-      Uninterruptibles.getUninterruptibly(f, 100, TimeUnit.MILLISECONDS);
+      Uninterruptibles.getUninterruptibly(f, 250, TimeUnit.MILLISECONDS);
     } catch (ExecutionException e) {
       fail("unexpected error", e.getCause());
     } catch (TimeoutException e) {
