@@ -46,14 +46,14 @@ SimpleStatement statement =
 ```
 
 You can then use setter methods to configure additional options. Note that, like all statement
-implementations, simple statements are immutable, so these methods return a new instance each time.
-Make sure you don't ignore the result: 
+implementations, simple statements are **immutable**, so these methods return a new instance each
+time. Make sure you don't ignore the result:
 
 ```java
 // WRONG: ignores the result
 statement.setIdempotent(true);
 
-// Do this instead:
+// Instead, reassign the statement every time:
 statement = statement.setIdempotent(true);
 ```
 

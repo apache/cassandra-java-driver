@@ -197,12 +197,12 @@ You can still provide your own policy by implementing the `LoadBalancingPolicy` 
 #### Statements
 
 Simple, bound and batch [statements](../manual/core/statements/) are now exposed in the public API
-as interfaces. The internal implementations are immutable. This makes them automatically
+as interfaces. The internal implementations are **immutable**. This makes them automatically
 thread-safe: you don't need to worry anymore about sharing them or reusing them between asynchronous
 executions.
 
-Note that all mutating methods return a new instance, so make sure you don't accidentally ignore
-their result:
+Note that all mutating methods return a new instance, so **make sure you don't accidentally ignore
+their result**:
 
 ```java
 BoundStatement boundSelect = preparedSelect.bind();
@@ -211,7 +211,7 @@ BoundStatement boundSelect = preparedSelect.bind();
 boundSelect.setInt("k", key);
 session.execute(boundSelect);
 
-// Instead, do this:
+// Instead, reassign the statement every time:
 boundSelect = boundSelect.setInt("k", key);
 ```
 

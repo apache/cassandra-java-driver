@@ -136,7 +136,7 @@ BoundStatement bound = ps1.bind("324378", "LCD screen");
 ```
 
 You can also bind first, then use setters, which is slightly more explicit. Bound statements are 
-immutable, so each method returns a new instance; make sure you don't accidentally discard the
+**immutable**, so each method returns a new instance; make sure you don't accidentally discard the
 result:
 
 ```java
