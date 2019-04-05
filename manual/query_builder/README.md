@@ -109,8 +109,8 @@ the query builder in your hot path**:
 #### Identifiers
 
 All fluent API methods use [CqlIdentifier] for schema element names (keyspaces, tables, columns...).
-But, for convenience, there are also `String` overloads if you use case-insensitive identifiers (as
-we recommend, see [Case sensitivity](../case_sensitivity) for more explanations).
+But, for convenience, there are also `String` overloads that take the CQL form (as see [Case
+sensitivity](../case_sensitivity) for more explanations).
 
 For conciseness, we'll use the string-based versions for the examples in this manual.
 
