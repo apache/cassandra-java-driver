@@ -2,7 +2,7 @@
 
 To start an INSERT query, use one of the `insertInto` methods in [QueryBuilder]. There are
 several variants depending on whether your table name is qualified, and whether you use
-case-sensitive identifiers or case-insensitive strings:
+[identifiers](../../case_sensitivity/) or raw strings:
 
 ```java
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
