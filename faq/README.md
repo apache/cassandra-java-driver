@@ -2,8 +2,8 @@
 
 ### I'm modifying a statement and the changes get ignored, why?
 
-In driver 4, statement classes are immutable. All mutating methods return a new instance, so make
-sure you don't accidentally ignore their result:
+In driver 4, statement classes are **immutable**. All mutating methods return a new instance, so
+make sure you don't accidentally ignore their result:
 
 ```java
 BoundStatement boundSelect = preparedSelect.bind();
@@ -13,7 +13,7 @@ boundSelect.setInt("k", key);
 boundSelect.setPageSize(1000);
 session.execute(boundSelect);
 
-// Instead, do this:
+// Instead, reassign the statement every time:
 boundSelect = boundSelect.setInt("k", key).setPageSize(1000);
 ```
 

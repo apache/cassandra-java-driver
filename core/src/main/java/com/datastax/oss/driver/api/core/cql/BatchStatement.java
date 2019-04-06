@@ -40,7 +40,11 @@ import java.util.Collections;
  */
 public interface BatchStatement extends Statement<BatchStatement>, Iterable<BatchableStatement<?>> {
 
-  /** Creates an instance of the default implementation for the given batch type. */
+  /**
+   * Creates an instance of the default implementation for the given batch type.
+   *
+   * <p>Note that the returned object is <b>immutable</b>.
+   */
   @NonNull
   static BatchStatement newInstance(@NonNull BatchType batchType) {
     return new DefaultBatchStatement(
@@ -67,6 +71,8 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
   /**
    * Creates an instance of the default implementation for the given batch type, containing the
    * given statements.
+   *
+   * <p>Note that the returned object is <b>immutable</b>.
    */
   @NonNull
   static BatchStatement newInstance(
@@ -95,6 +101,8 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
   /**
    * Creates an instance of the default implementation for the given batch type, containing the
    * given statements.
+   *
+   * <p>Note that the returned object is <b>immutable</b>.
    */
   @NonNull
   static BatchStatement newInstance(

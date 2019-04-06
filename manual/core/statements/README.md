@@ -25,8 +25,8 @@ through either setters or a builder:
 * custom payload to send arbitrary key/value pairs with the request (you should only need this if
   you have a custom query handler on the server).
 
-When setting these attributes, keep in mind that statements are immutable, and every method returns
-a different instance:
+When setting these attributes, keep in mind that statements are **immutable**, and every method
+returns a different instance:
 
 ```java
 SimpleStatement statement =
@@ -36,7 +36,7 @@ SimpleStatement statement =
 statement.setConfigProfileName("oltp");
 statement.setIdempotent(true);
 
-// Do this instead:
+// Instead, reassign the statement every time:
 statement = statement.setConfigProfileName("oltp").setIdempotent(true);
 ```
 

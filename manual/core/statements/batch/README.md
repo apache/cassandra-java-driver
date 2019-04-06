@@ -33,13 +33,13 @@ BatchStatement batch =
         .build();
 ```
 
-Keep in mind that batch statements are immutable, and every method returns a different instance:
+Keep in mind that batch statements are **immutable**, and every method returns a different instance:
 
 ```java
 // Won't work: the object is not modified in place:
 batch.setConfigProfileName("oltp");
 
-// Do this instead:
+// Instead, reassign the statement every time:
 batch = batch.setConfigProfileName("oltp");
 ```
 
