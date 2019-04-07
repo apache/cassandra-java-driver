@@ -21,6 +21,7 @@ import com.datastax.dse.driver.api.core.metadata.schema.DseKeyspaceMetadata;
 import com.datastax.dse.driver.api.core.metadata.schema.DseTableMetadata;
 import com.datastax.dse.driver.api.core.metadata.schema.DseViewMetadata;
 import com.datastax.dse.driver.internal.core.metadata.schema.DefaultDseKeyspaceMetadata;
+import com.datastax.dse.driver.internal.core.metadata.schema.queries.Dse68SchemaRows;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata;
@@ -40,6 +41,8 @@ import com.datastax.oss.driver.internal.core.metadata.schema.refresh.SchemaRefre
 import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.datastax.oss.driver.shaded.guava.common.base.MoreObjects;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMultimap;
+import com.datastax.oss.driver.shaded.guava.common.collect.Multimap;
 import java.util.Collections;
 import java.util.Map;
 import net.jcip.annotations.ThreadSafe;
@@ -47,7 +50,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Default parser implementation for Cassandra.
+ * Default parser implementation for DSE.
  *
  * <p>For modularity, the code for each element row is split into separate classes (schema stuff is
  * not on the hot path, so creating a few extra objects doesn't matter).
@@ -109,9 +112,12 @@ public class DseSchemaParser implements SchemaParser {
     //     durable_writes boolean,
     //     replication frozen<map<text, text>>
     // )
+    //
+    // DSE >= 6.8: same as Cassandra 3 + graph_engine text
     CqlIdentifier keyspaceId = CqlIdentifier.fromInternal(keyspaceRow.getString("keyspace_name"));
     boolean durableWrites =
         MoreObjects.firstNonNull(keyspaceRow.getBoolean("durable_writes"), false);
+    String graphEngine = keyspaceRow.getString("graph_engine");
 
     Map<String, String> replicationOptions;
     if (keyspaceRow.contains("strategy_class")) {
@@ -133,6 +139,7 @@ public class DseSchemaParser implements SchemaParser {
         keyspaceId,
         durableWrites,
         false,
+        graphEngine,
         replicationOptions,
         types,
         parseTables(keyspaceId, types),
@@ -148,8 +155,16 @@ public class DseSchemaParser implements SchemaParser {
   private Map<CqlIdentifier, TableMetadata> parseTables(
       CqlIdentifier keyspaceId, Map<CqlIdentifier, UserDefinedType> types) {
     ImmutableMap.Builder<CqlIdentifier, TableMetadata> tablesBuilder = ImmutableMap.builder();
+    Multimap<CqlIdentifier, AdminRow> vertices;
+    Multimap<CqlIdentifier, AdminRow> edges;
+    if (rows instanceof Dse68SchemaRows) {
+      vertices = ((Dse68SchemaRows) rows).vertices().get(keyspaceId);
+      edges = ((Dse68SchemaRows) rows).edges().get(keyspaceId);
+    } else {
+      vertices = edges = ImmutableMultimap.of();
+    }
     for (AdminRow tableRow : rows.tables().get(keyspaceId)) {
-      DseTableMetadata table = tableParser.parseTable(tableRow, keyspaceId, types);
+      DseTableMetadata table = tableParser.parseTable(tableRow, keyspaceId, types, vertices, edges);
       if (table != null) {
         tablesBuilder.put(table.getName(), table);
       }
@@ -206,6 +221,7 @@ public class DseSchemaParser implements SchemaParser {
         keyspaceId,
         durableWrites,
         true,
+        null,
         Collections.emptyMap(),
         Collections.emptyMap(),
         parseVirtualTables(keyspaceId),

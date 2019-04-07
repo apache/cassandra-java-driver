@@ -73,6 +73,8 @@
     <legacy-jackson.version>1.9.12</legacy-jackson.version>
     <awaitility.version>4.0.2</awaitility.version>
     <apacheds.version>2.0.0-M19</apacheds.version>
+    <!-- esri dependencies (used only in OSGi integration tests) -->
+    <json.version>20180130</json.version>
     <surefire.version>2.22.2</surefire.version>
     <skipTests>false</skipTests>
     <skipUnitTests>${skipTests}</skipUnitTests>
@@ -154,6 +156,11 @@
       <dependency>
         <groupId>org.apache.tinkerpop</groupId>
         <artifactId>tinkergraph-gremlin</artifactId>
+        <version>${tinkerpop.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.tinkerpop</groupId>
+        <artifactId>gremlin-driver</artifactId>
         <version>${tinkerpop.version}</version>
       </dependency>
       <dependency>

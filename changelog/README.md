@@ -2,6 +2,8 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### NGDG (in progress)
+
 ### 4.5.0 (in progress)
 
 - [bug] JAVA-2642: Fix default value of max-orphan-requests

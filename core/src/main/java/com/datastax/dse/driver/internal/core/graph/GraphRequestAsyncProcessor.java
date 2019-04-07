@@ -17,6 +17,8 @@ package com.datastax.dse.driver.internal.core.graph;
 
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
+import com.datastax.dse.driver.internal.core.context.DseDriverContext;
+import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -25,10 +27,28 @@ import com.datastax.oss.driver.internal.core.session.RequestProcessor;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import java.util.concurrent.CompletionStage;
 import net.jcip.annotations.ThreadSafe;
+import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryReader;
+import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryWriter;
+import org.apache.tinkerpop.gremlin.driver.ser.binary.TypeSerializerRegistry;
 
 @ThreadSafe
 public class GraphRequestAsyncProcessor
     implements RequestProcessor<GraphStatement<?>, CompletionStage<AsyncGraphResultSet>> {
+
+  private final GraphBinaryModule graphBinaryModule;
+
+  public GraphRequestAsyncProcessor(DseDriverContext context) {
+    TypeSerializerRegistry typeSerializerRegistry =
+        GraphBinaryModule.createDseTypeSerializerRegistry(context);
+    this.graphBinaryModule =
+        new GraphBinaryModule(
+            new GraphBinaryReader(typeSerializerRegistry),
+            new GraphBinaryWriter(typeSerializerRegistry));
+  }
+
+  public GraphBinaryModule getGraphBinaryModule() {
+    return graphBinaryModule;
+  }
 
   @Override
   public boolean canProcess(Request request, GenericType<?> resultType) {
@@ -41,7 +61,9 @@ public class GraphRequestAsyncProcessor
       DefaultSession session,
       InternalDriverContext context,
       String sessionLogPrefix) {
-    return new GraphRequestHandler(request, session, context, sessionLogPrefix).handle();
+    return new GraphRequestHandler(
+            request, session, context, sessionLogPrefix, getGraphBinaryModule())
+        .handle();
   }
 
   @Override

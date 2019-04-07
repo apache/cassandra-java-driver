@@ -197,4 +197,9 @@ public class DefaultScriptGraphStatement extends GraphStatementBase<ScriptGraphS
         readConsistencyLevel,
         writeConsistencyLevel);
   }
+
+  @Override
+  public String toString() {
+    return String.format("ScriptGraphStatement['%s', params: %s]", this.script, this.queryParams);
+  }
 }

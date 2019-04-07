@@ -16,11 +16,15 @@
 package com.datastax.dse.driver.internal.core.metadata.schema.parsing;
 
 import com.datastax.dse.driver.api.core.metadata.schema.DseColumnMetadata;
+import com.datastax.dse.driver.api.core.metadata.schema.DseEdgeMetadata;
 import com.datastax.dse.driver.api.core.metadata.schema.DseIndexMetadata;
 import com.datastax.dse.driver.api.core.metadata.schema.DseTableMetadata;
+import com.datastax.dse.driver.api.core.metadata.schema.DseVertexMetadata;
 import com.datastax.dse.driver.internal.core.metadata.schema.DefaultDseColumnMetadata;
+import com.datastax.dse.driver.internal.core.metadata.schema.DefaultDseEdgeMetadata;
 import com.datastax.dse.driver.internal.core.metadata.schema.DefaultDseIndexMetadata;
 import com.datastax.dse.driver.internal.core.metadata.schema.DefaultDseTableMetadata;
+import com.datastax.dse.driver.internal.core.metadata.schema.DefaultDseVertexMetadata;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
@@ -31,6 +35,7 @@ import com.datastax.oss.driver.api.core.type.ListType;
 import com.datastax.oss.driver.api.core.type.MapType;
 import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.internal.core.CqlIdentifiers;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.DataTypeClassNameCompositeParser;
@@ -42,6 +47,7 @@ import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMultimap;
+import com.datastax.oss.driver.shaded.guava.common.collect.Multimap;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -62,7 +68,11 @@ public class DseTableParser extends RelationParser {
   }
 
   public DseTableMetadata parseTable(
-      AdminRow tableRow, CqlIdentifier keyspaceId, Map<CqlIdentifier, UserDefinedType> userTypes) {
+      AdminRow tableRow,
+      CqlIdentifier keyspaceId,
+      Map<CqlIdentifier, UserDefinedType> userTypes,
+      Multimap<CqlIdentifier, AdminRow> vertices,
+      Multimap<CqlIdentifier, AdminRow> edges) {
     // Cassandra <= 2.2:
     // CREATE TABLE system.schema_columnfamilies (
     //     keyspace_name text,
@@ -228,7 +238,9 @@ public class DseTableParser extends RelationParser {
         clusteringColumnsBuilder.build(),
         allColumnsBuilder.build(),
         options,
-        indexesBuilder.build());
+        indexesBuilder.build(),
+        buildVertex(tableId, vertices),
+        buildEdge(tableId, edges, vertices));
   }
 
   DseTableMetadata parseVirtualTable(AdminRow tableRow, CqlIdentifier keyspaceId) {
@@ -283,7 +295,9 @@ public class DseTableParser extends RelationParser {
         clusteringColumnsBuilder.build(),
         allColumnsBuilder.build(),
         Collections.emptyMap(),
-        Collections.emptyMap());
+        Collections.emptyMap(),
+        null,
+        null);
   }
 
   // In C*<=2.2, index information is stored alongside the column.
@@ -334,5 +348,76 @@ public class DseTableParser extends RelationParser {
     Map<String, String> options = row.getMapOfStringToString("options");
     String target = options.get("target");
     return new DefaultDseIndexMetadata(keyspaceId, tableId, name, kind, target, options);
+  }
+
+  private DseVertexMetadata buildVertex(
+      CqlIdentifier tableId, Multimap<CqlIdentifier, AdminRow> keyspaceVertices) {
+
+    if (keyspaceVertices == null) {
+      return null;
+    }
+    Collection<AdminRow> tableVertices = keyspaceVertices.get(tableId);
+    if (tableVertices == null || tableVertices.isEmpty()) {
+      return null;
+    }
+
+    AdminRow row = tableVertices.iterator().next();
+    return new DefaultDseVertexMetadata(getLabel(row));
+  }
+
+  private DseEdgeMetadata buildEdge(
+      CqlIdentifier tableId,
+      Multimap<CqlIdentifier, AdminRow> keyspaceEdges,
+      Multimap<CqlIdentifier, AdminRow> keyspaceVertices) {
+
+    if (keyspaceEdges == null) {
+      return null;
+    }
+
+    Collection<AdminRow> tableEdges = keyspaceEdges.get(tableId);
+    if (tableEdges == null || tableEdges.isEmpty()) {
+      return null;
+    }
+
+    AdminRow row = tableEdges.iterator().next();
+
+    CqlIdentifier fromTable = CqlIdentifier.fromInternal(row.getString("from_table"));
+
+    CqlIdentifier toTable = CqlIdentifier.fromInternal(row.getString("to_table"));
+
+    return new DefaultDseEdgeMetadata(
+        getLabel(row),
+        fromTable,
+        findVertexLabel(fromTable, keyspaceVertices, "incoming"),
+        CqlIdentifiers.wrap(row.getListOfString("from_partition_key_columns")),
+        CqlIdentifiers.wrap(row.getListOfString("from_clustering_columns")),
+        toTable,
+        findVertexLabel(toTable, keyspaceVertices, "outgoing"),
+        CqlIdentifiers.wrap(row.getListOfString("to_partition_key_columns")),
+        CqlIdentifiers.wrap(row.getListOfString("to_clustering_columns")));
+  }
+
+  private CqlIdentifier getLabel(AdminRow row) {
+    String rawLabel = row.getString("label_name");
+    return (rawLabel == null || rawLabel.isEmpty()) ? null : CqlIdentifier.fromInternal(rawLabel);
+  }
+
+  // system_schema.edges only contains vertex table names. We also expose the labels in our metadata
+  // objects, so we need to look them up in system_schema.vertices.
+  private CqlIdentifier findVertexLabel(
+      CqlIdentifier table,
+      Multimap<CqlIdentifier, AdminRow> keyspaceVertices,
+      String directionForErrorMessage) {
+    Collection<AdminRow> tableVertices =
+        (keyspaceVertices == null) ? null : keyspaceVertices.get(table);
+    if (tableVertices == null || tableVertices.isEmpty()) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Missing vertex definition for %s table %s",
+              directionForErrorMessage, table.asCql(true)));
+    }
+
+    AdminRow row = tableVertices.iterator().next();
+    return getLabel(row);
   }
 }

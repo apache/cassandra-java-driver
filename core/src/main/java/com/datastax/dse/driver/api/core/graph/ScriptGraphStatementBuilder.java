@@ -16,6 +16,7 @@
 package com.datastax.dse.driver.api.core.graph;
 
 import com.datastax.dse.driver.internal.core.graph.DefaultScriptGraphStatement;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -35,6 +36,10 @@ public class ScriptGraphStatementBuilder
   private Boolean isSystemQuery;
   private Map<String, Object> queryParams;
 
+  public ScriptGraphStatementBuilder() {
+    this.queryParams = Maps.newHashMap();
+  }
+
   public ScriptGraphStatementBuilder(String script) {
     this.script = script;
     this.queryParams = Maps.newHashMap();
@@ -45,6 +50,12 @@ public class ScriptGraphStatementBuilder
     this.script = template.getScript();
     this.queryParams = Maps.newHashMap(template.getQueryParams());
     this.isSystemQuery = template.isSystemQuery();
+  }
+
+  @NonNull
+  public ScriptGraphStatementBuilder setScript(@NonNull String script) {
+    this.script = script;
+    return this;
   }
 
   /** @see ScriptGraphStatement#isSystemQuery() */
@@ -101,6 +112,7 @@ public class ScriptGraphStatementBuilder
   @NonNull
   @Override
   public ScriptGraphStatement build() {
+    Preconditions.checkNotNull(this.script, "Script hasn't been defined in this builder.");
     return new DefaultScriptGraphStatement(
         this.script,
         this.queryParams,

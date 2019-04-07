@@ -24,8 +24,10 @@ import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -34,6 +36,7 @@ public class DefaultDseKeyspaceMetadata implements DseKeyspaceMetadata {
   @NonNull private final CqlIdentifier name;
   private final boolean durableWrites;
   private final boolean virtual;
+  @Nullable private final String graphEngine;
   @NonNull private final Map<String, String> replication;
   @NonNull private final Map<CqlIdentifier, UserDefinedType> types;
   @NonNull private final Map<CqlIdentifier, TableMetadata> tables;
@@ -45,6 +48,7 @@ public class DefaultDseKeyspaceMetadata implements DseKeyspaceMetadata {
       @NonNull CqlIdentifier name,
       boolean durableWrites,
       boolean virtual,
+      @Nullable String graphEngine,
       @NonNull Map<String, String> replication,
       @NonNull Map<CqlIdentifier, UserDefinedType> types,
       @NonNull Map<CqlIdentifier, TableMetadata> tables,
@@ -54,6 +58,7 @@ public class DefaultDseKeyspaceMetadata implements DseKeyspaceMetadata {
     this.name = name;
     this.durableWrites = durableWrites;
     this.virtual = virtual;
+    this.graphEngine = graphEngine;
     this.replication = replication;
     this.types = types;
     this.tables = tables;
@@ -76,6 +81,12 @@ public class DefaultDseKeyspaceMetadata implements DseKeyspaceMetadata {
   @Override
   public boolean isVirtual() {
     return virtual;
+  }
+
+  @NonNull
+  @Override
+  public Optional<String> getGraphEngine() {
+    return Optional.ofNullable(graphEngine);
   }
 
   @NonNull
@@ -123,6 +134,7 @@ public class DefaultDseKeyspaceMetadata implements DseKeyspaceMetadata {
       return Objects.equals(this.name, that.getName())
           && this.durableWrites == that.isDurableWrites()
           && this.virtual == that.isVirtual()
+          && Objects.equals(this.graphEngine, that.getGraphEngine().orElse(null))
           && Objects.equals(this.replication, that.getReplication())
           && Objects.equals(this.types, that.getUserDefinedTypes())
           && Objects.equals(this.tables, that.getTables())
@@ -137,6 +149,15 @@ public class DefaultDseKeyspaceMetadata implements DseKeyspaceMetadata {
   @Override
   public int hashCode() {
     return Objects.hash(
-        name, durableWrites, virtual, replication, types, tables, views, functions, aggregates);
+        name,
+        durableWrites,
+        virtual,
+        graphEngine,
+        replication,
+        types,
+        tables,
+        views,
+        functions,
+        aggregates);
   }
 }

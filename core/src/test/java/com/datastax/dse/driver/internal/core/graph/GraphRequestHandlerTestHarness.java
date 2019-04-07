@@ -15,14 +15,25 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
+import static org.mockito.Mockito.when;
+
+import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
+import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.internal.core.DefaultConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.cql.RequestHandlerTestHarness;
+import com.datastax.oss.driver.internal.core.servererrors.DefaultWriteTypeRegistry;
+import com.datastax.oss.driver.internal.core.session.throttling.PassThroughRequestThrottler;
+import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
+import io.netty.channel.EventLoop;
 import java.time.Duration;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import java.util.Optional;
+import javax.annotation.Nullable;
+import org.mockito.*;
 
 /**
  * Provides the environment to test a request handler, where a query plan can be defined, and the
@@ -34,77 +45,97 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
 
   @Mock DriverExecutionProfile systemQueryExecutionProfile;
 
-  protected GraphRequestHandlerTestHarness(Builder builder) {
+  @Mock DseDriverContext dseDriverContext;
+
+  @Mock EventLoop eventLoop;
+
+  protected GraphRequestHandlerTestHarness(
+      Builder builder, @Nullable String graphProtocolForTestConfig) {
     super(builder);
 
+    // not mocked by RequestHandlerTestHarness, will be used when DseDriverOptions.GRAPH_TIMEOUT
+    // is not null in the config
+    when(eventLoopGroup.next()).thenReturn(eventLoop);
+
     // default graph options as in the reference.conf file
-    Mockito.when(defaultProfile.getString(DseDriverOption.GRAPH_TRAVERSAL_SOURCE, null))
-        .thenReturn("g");
-    Mockito.when(defaultProfile.getString(DseDriverOption.GRAPH_SUB_PROTOCOL, "graphson-2.0"))
+    when(defaultProfile.getString(DseDriverOption.GRAPH_TRAVERSAL_SOURCE, null)).thenReturn("g");
+    when(defaultProfile.getString(DseDriverOption.GRAPH_SUB_PROTOCOL, "graphson-2.0"))
         .thenReturn("graphson-2.0");
-    Mockito.when(defaultProfile.getBoolean(DseDriverOption.GRAPH_IS_SYSTEM_QUERY, false))
-        .thenReturn(false);
-    Mockito.when(defaultProfile.getString(DseDriverOption.GRAPH_NAME, null))
-        .thenReturn("mockGraph");
+    when(defaultProfile.getBoolean(DseDriverOption.GRAPH_IS_SYSTEM_QUERY, false)).thenReturn(false);
+    when(defaultProfile.getString(DseDriverOption.GRAPH_NAME, null)).thenReturn("mockGraph");
 
-    Mockito.when(testProfile.getName()).thenReturn("default");
-    Mockito.when(testProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, null))
-        .thenReturn(Duration.ofMillis(500L));
-    Mockito.when(testProfile.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
+    when(testProfile.getName()).thenReturn("test-graph");
+    when(testProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, null))
+        .thenReturn(Duration.ofMillis(2L));
+    when(testProfile.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
         .thenReturn(DefaultConsistencyLevel.LOCAL_ONE.name());
-    Mockito.when(testProfile.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE)).thenReturn(5000);
-    Mockito.when(testProfile.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
+    when(testProfile.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE)).thenReturn(5000);
+    when(testProfile.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
         .thenReturn(DefaultConsistencyLevel.SERIAL.name());
-    Mockito.when(testProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE))
-        .thenReturn(false);
-    Mockito.when(testProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(true);
-    Mockito.when(testProfile.getString(DseDriverOption.GRAPH_TRAVERSAL_SOURCE, null))
-        .thenReturn("a");
-    Mockito.when(testProfile.getString(DseDriverOption.GRAPH_SUB_PROTOCOL, "graphson-2.0"))
-        .thenReturn("testMock");
-    Mockito.when(testProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, null))
-        .thenReturn(Duration.ofMillis(2));
-    Mockito.when(testProfile.getBoolean(DseDriverOption.GRAPH_IS_SYSTEM_QUERY, false))
-        .thenReturn(false);
-    Mockito.when(testProfile.getString(DseDriverOption.GRAPH_NAME, null)).thenReturn("mockGraph");
-    Mockito.when(testProfile.getString(DseDriverOption.GRAPH_READ_CONSISTENCY_LEVEL, null))
+    when(testProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)).thenReturn(false);
+    when(testProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(true);
+    when(testProfile.getString(DseDriverOption.GRAPH_TRAVERSAL_SOURCE, null)).thenReturn("a");
+    when(testProfile.getString(
+            ArgumentMatchers.eq(DseDriverOption.GRAPH_SUB_PROTOCOL), ArgumentMatchers.anyString()))
+        .thenReturn(Optional.ofNullable(graphProtocolForTestConfig).orElse("graphson-2.0"));
+    when(testProfile.getBoolean(DseDriverOption.GRAPH_IS_SYSTEM_QUERY, false)).thenReturn(false);
+    when(testProfile.getString(DseDriverOption.GRAPH_NAME, null)).thenReturn("mockGraph");
+    when(testProfile.getString(DseDriverOption.GRAPH_READ_CONSISTENCY_LEVEL, null))
         .thenReturn("LOCAL_TWO");
-    Mockito.when(testProfile.getString(DseDriverOption.GRAPH_WRITE_CONSISTENCY_LEVEL, null))
+    when(testProfile.getString(DseDriverOption.GRAPH_WRITE_CONSISTENCY_LEVEL, null))
         .thenReturn("LOCAL_THREE");
+    when(config.getProfile("test-graph")).thenReturn(testProfile);
 
-    Mockito.when(config.getProfile("test-graph")).thenReturn(testProfile);
-
-    Mockito.when(systemQueryExecutionProfile.getName()).thenReturn("default");
-    Mockito.when(systemQueryExecutionProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, null))
+    when(systemQueryExecutionProfile.getName()).thenReturn("graph-system-query");
+    when(systemQueryExecutionProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, null))
         .thenReturn(Duration.ofMillis(500L));
-    Mockito.when(systemQueryExecutionProfile.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
+    when(systemQueryExecutionProfile.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
         .thenReturn(DefaultConsistencyLevel.LOCAL_ONE.name());
-    Mockito.when(systemQueryExecutionProfile.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE))
+    when(systemQueryExecutionProfile.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE))
         .thenReturn(5000);
-    Mockito.when(
-            systemQueryExecutionProfile.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
+    when(systemQueryExecutionProfile.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
         .thenReturn(DefaultConsistencyLevel.SERIAL.name());
-    Mockito.when(
-            systemQueryExecutionProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE))
+    when(systemQueryExecutionProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE))
         .thenReturn(false);
-    Mockito.when(systemQueryExecutionProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES))
+    when(systemQueryExecutionProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES))
         .thenReturn(true);
-    Mockito.when(systemQueryExecutionProfile.getName()).thenReturn("graph-system-query");
-    Mockito.when(systemQueryExecutionProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, null))
+    when(systemQueryExecutionProfile.getName()).thenReturn("graph-system-query");
+    when(systemQueryExecutionProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, null))
         .thenReturn(Duration.ofMillis(2));
-    Mockito.when(
-            systemQueryExecutionProfile.getBoolean(DseDriverOption.GRAPH_IS_SYSTEM_QUERY, false))
+    when(systemQueryExecutionProfile.getBoolean(DseDriverOption.GRAPH_IS_SYSTEM_QUERY, false))
         .thenReturn(true);
-    Mockito.when(
-            systemQueryExecutionProfile.getString(
-                DseDriverOption.GRAPH_READ_CONSISTENCY_LEVEL, null))
+    when(systemQueryExecutionProfile.getString(DseDriverOption.GRAPH_READ_CONSISTENCY_LEVEL, null))
         .thenReturn("LOCAL_TWO");
-    Mockito.when(
-            systemQueryExecutionProfile.getString(
-                DseDriverOption.GRAPH_WRITE_CONSISTENCY_LEVEL, null))
+    when(systemQueryExecutionProfile.getString(DseDriverOption.GRAPH_WRITE_CONSISTENCY_LEVEL, null))
         .thenReturn("LOCAL_THREE");
 
-    Mockito.when(config.getProfile("graph-system-query")).thenReturn(systemQueryExecutionProfile);
+    when(config.getProfile("graph-system-query")).thenReturn(systemQueryExecutionProfile);
+
+    // need to re-mock everything on the context because the RequestHandlerTestHarness returns a
+    // InternalDriverContext and not a DseDriverContext. Couldn't figure out a way with mockito
+    // to say "mock this object (this.dseDriverContext), and delegate every call to that
+    // other object (this.context), except _this_ call and _this_ and so on"
+    // Spy wouldn't work because the spied object has to be of the same type as the final object
+    when(dseDriverContext.getConfig()).thenReturn(config);
+    when(dseDriverContext.getNettyOptions()).thenReturn(nettyOptions);
+    when(dseDriverContext.getLoadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
+    when(dseDriverContext.getRetryPolicy(ArgumentMatchers.anyString())).thenReturn(retryPolicy);
+    when(dseDriverContext.getSpeculativeExecutionPolicy(ArgumentMatchers.anyString()))
+        .thenReturn(speculativeExecutionPolicy);
+    when(dseDriverContext.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
+    when(dseDriverContext.getTimestampGenerator()).thenReturn(timestampGenerator);
+    when(dseDriverContext.getProtocolVersion()).thenReturn(DseProtocolVersion.DSE_V2);
+    when(dseDriverContext.getConsistencyLevelRegistry())
+        .thenReturn(new DefaultConsistencyLevelRegistry());
+    when(dseDriverContext.getWriteTypeRegistry()).thenReturn(new DefaultWriteTypeRegistry());
+    when(dseDriverContext.getRequestThrottler())
+        .thenReturn(new PassThroughRequestThrottler(dseDriverContext));
+    when(dseDriverContext.getRequestTracker()).thenReturn(new NoopRequestTracker(dseDriverContext));
+  }
+
+  @Override
+  public DseDriverContext getContext() {
+    return dseDriverContext;
   }
 
   public static GraphRequestHandlerTestHarness.Builder builder() {
@@ -113,9 +144,16 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
 
   public static class Builder extends RequestHandlerTestHarness.Builder {
 
+    String graphProtocolForTestConfig;
+
+    public Builder withGraphProtocolForTestConfig(String protocol) {
+      this.graphProtocolForTestConfig = protocol;
+      return this;
+    }
+
     @Override
-    public RequestHandlerTestHarness build() {
-      return new GraphRequestHandlerTestHarness(this);
+    public GraphRequestHandlerTestHarness build() {
+      return new GraphRequestHandlerTestHarness(this, graphProtocolForTestConfig);
     }
   }
 }

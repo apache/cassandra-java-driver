@@ -1,3 +1,4 @@
+dist: trusty
 language: java
 dist: trusty
 sudo: false

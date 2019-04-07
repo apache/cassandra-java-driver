@@ -15,45 +15,68 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
-import static com.datastax.dse.driver.internal.core.graph.GraphSONUtils.GRAPHSON_1_0;
-import static com.datastax.dse.driver.internal.core.graph.GraphSONUtils.GRAPHSON_2_0;
-import static com.datastax.dse.driver.internal.core.graph.GraphSONUtils.GRAPHSON_3_0;
+import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_1_0;
+import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_2_0;
+import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_3_0;
+import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPH_BINARY_1_0;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
+import com.datastax.dse.driver.internal.core.context.DseDriverContext;
+import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
+import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import io.netty.buffer.ByteBuf;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryReader;
+import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryWriter;
+import org.apache.tinkerpop.gremlin.driver.ser.binary.TypeSerializerRegistry;
+import org.apache.tinkerpop.gremlin.process.remote.traversal.DefaultRemoteTraverser;
+import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.EmptyPath;
 import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedEdge;
 import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedProperty;
 import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedVertex;
 import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedVertexProperty;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DataProviderRunner.class)
 public class GraphNodeTest {
 
+  private GraphBinaryModule graphBinaryModule;
+
+  @Before
+  public void setup() {
+    DseDriverContext dseDriverContext = mock(DseDriverContext.class);
+    when(dseDriverContext.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
+    when(dseDriverContext.getProtocolVersion()).thenReturn(DseProtocolVersion.DSE_V2);
+
+    TypeSerializerRegistry registry =
+        GraphBinaryModule.createDseTypeSerializerRegistry(dseDriverContext);
+    graphBinaryModule =
+        new GraphBinaryModule(new GraphBinaryReader(registry), new GraphBinaryWriter(registry));
+  }
+
   @Test
   public void should_create_graph_node_for_set_for_graphson_3_0() throws IOException {
-    // given
-    ImmutableList<ByteBuffer> bytes =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(ImmutableSet.of("value"), GRAPHSON_3_0));
-
     // when
-    GraphNode graphNode = GraphSONUtils.createGraphNode(bytes, GRAPHSON_3_0);
+    GraphNode graphNode = serdeAndCreateGraphNode(ImmutableSet.of("value"), GRAPHSON_3_0);
 
     // then
     assertThat(graphNode.isSet()).isTrue();
@@ -63,13 +86,8 @@ public class GraphNodeTest {
 
   @Test
   public void should_not_support_set_for_graphson_2_0() throws IOException {
-    // given
-    ImmutableList<ByteBuffer> bytes =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(ImmutableSet.of("value"), GRAPHSON_2_0));
-
     // when
-    GraphNode graphNode = GraphSONUtils.createGraphNode(bytes, GRAPHSON_2_0);
+    GraphNode graphNode = serdeAndCreateGraphNode(ImmutableSet.of("value"), GRAPHSON_2_0);
 
     // then
     assertThat(graphNode.isSet()).isFalse();
@@ -77,13 +95,8 @@ public class GraphNodeTest {
 
   @Test
   public void should_throw_for_set_for_graphson_1_0() throws IOException {
-    // given
-    ImmutableList<ByteBuffer> bytes =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(ImmutableSet.of("value"), GRAPHSON_1_0));
-
     // when
-    GraphNode graphNode = GraphSONUtils.createGraphNode(bytes, GRAPHSON_1_0);
+    GraphNode graphNode = serdeAndCreateGraphNode(ImmutableSet.of("value"), GRAPHSON_1_0);
 
     // then
     assertThat(graphNode.isSet()).isFalse();
@@ -91,15 +104,10 @@ public class GraphNodeTest {
   }
 
   @Test
-  @UseDataProvider(value = "graphsonAllVersions")
-  public void should_create_graph_node_for_list(String graphVersion) throws IOException {
-    // given
-    ImmutableList<ByteBuffer> bytes =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(ImmutableList.of("value"), graphVersion));
-
+  @UseDataProvider(value = "allGraphProtocols")
+  public void should_create_graph_node_for_list(GraphProtocol graphVersion) throws IOException {
     // when
-    GraphNode graphNode = GraphSONUtils.createGraphNode(bytes, graphVersion);
+    GraphNode graphNode = serdeAndCreateGraphNode(ImmutableList.of("value"), graphVersion);
 
     // then
     assertThat(graphNode.isList()).isTrue();
@@ -109,13 +117,8 @@ public class GraphNodeTest {
 
   @Test
   public void should_create_graph_node_for_map_for_graphson_3_0() throws IOException {
-    // given
-    ImmutableList<ByteBuffer> bytes =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(ImmutableMap.of(12, 1234), GRAPHSON_3_0));
-
     // when
-    GraphNode graphNode = GraphSONUtils.createGraphNode(bytes, GRAPHSON_3_0);
+    GraphNode graphNode = serdeAndCreateGraphNode(ImmutableMap.of(12, 1234), GRAPHSON_3_0);
 
     // then
     assertThat(graphNode.isMap()).isTrue();
@@ -124,15 +127,10 @@ public class GraphNodeTest {
   }
 
   @Test
-  @UseDataProvider("graphsonAllVersions")
-  public void should_create_graph_node_for_map(String graphsonVersion) throws IOException {
-    // given
-    ImmutableList<ByteBuffer> bytes =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(ImmutableMap.of("value", 1234), graphsonVersion));
-
+  @UseDataProvider("allGraphProtocols")
+  public void should_create_graph_node_for_map(GraphProtocol graphProtocol) throws IOException {
     // when
-    GraphNode graphNode = GraphSONUtils.createGraphNode(bytes, graphsonVersion);
+    GraphNode graphNode = serdeAndCreateGraphNode(ImmutableMap.of("value", 1234), graphProtocol);
 
     // then
     assertThat(graphNode.isMap()).isTrue();
@@ -142,15 +140,10 @@ public class GraphNodeTest {
 
   @Test
   @UseDataProvider("graphson1_0and2_0")
-  public void should_create_graph_node_for_map_for_non_string_key(String graphsonVersion)
+  public void should_create_graph_node_for_map_for_non_string_key(GraphProtocol graphProtocol)
       throws IOException {
-    // given
-    ImmutableList<ByteBuffer> bytes =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(ImmutableMap.of(12, 1234), graphsonVersion));
-
     // when
-    GraphNode graphNode = GraphSONUtils.createGraphNode(bytes, graphsonVersion);
+    GraphNode graphNode = serdeAndCreateGraphNode(ImmutableMap.of(12, 1234), graphProtocol);
 
     // then
     assertThat(graphNode.isMap()).isTrue();
@@ -159,25 +152,13 @@ public class GraphNodeTest {
   }
 
   @Test
-  @UseDataProvider(value = "graphsonAllVersions")
-  public void should_calculate_size_of_collection_types(String graphVersion) throws IOException {
-    // given
-    ImmutableList<ByteBuffer> map =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(ImmutableMap.of(12, 1234), graphVersion));
-
-    ImmutableList<ByteBuffer> set =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(ImmutableSet.of(12, 1234), graphVersion));
-
-    ImmutableList<ByteBuffer> list =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(ImmutableList.of(12, 1234, 99999), graphVersion));
-
+  @UseDataProvider(value = "allGraphProtocols")
+  public void should_calculate_size_of_collection_types(GraphProtocol graphProtocol)
+      throws IOException {
     // when
-    GraphNode mapNode = GraphSONUtils.createGraphNode(map, graphVersion);
-    GraphNode setNode = GraphSONUtils.createGraphNode(set, graphVersion);
-    GraphNode listNode = GraphSONUtils.createGraphNode(list, graphVersion);
+    GraphNode mapNode = serdeAndCreateGraphNode(ImmutableMap.of(12, 1234), graphProtocol);
+    GraphNode setNode = serdeAndCreateGraphNode(ImmutableSet.of(12, 1234), graphProtocol);
+    GraphNode listNode = serdeAndCreateGraphNode(ImmutableList.of(12, 1234, 99999), graphProtocol);
 
     // then
     assertThat(mapNode.size()).isEqualTo(1);
@@ -186,58 +167,26 @@ public class GraphNodeTest {
   }
 
   @Test
-  @UseDataProvider(value = "graphsonAllVersions")
-  public void should_return_is_value_only_for_scalar_value(String graphVersion) throws IOException {
-    // given
-    ImmutableList<ByteBuffer> map =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(ImmutableMap.of(12, 1234), graphVersion));
-
-    ImmutableList<ByteBuffer> set =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(ImmutableSet.of(12, 1234), graphVersion));
-
-    ImmutableList<ByteBuffer> list =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(ImmutableList.of(12, 1234, 99999), graphVersion));
-
-    ImmutableList<ByteBuffer> vertex =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(new DetachedVertex("a", "l", null), graphVersion));
-
-    ImmutableList<ByteBuffer> edge =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(
-                new DetachedEdge("a", "l", Collections.emptyMap(), "v1", "l1", "v2", "l2"),
-                graphVersion));
-
-    ImmutableList<ByteBuffer> path =
-        ImmutableList.of(GraphSONUtils.serializeToByteBuffer(EmptyPath.instance(), graphVersion));
-
-    ImmutableList<ByteBuffer> property =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(new DetachedProperty<>("a", 1), graphVersion));
-
-    ImmutableList<ByteBuffer> vertexProperty =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(
-                new DetachedVertexProperty<>(
-                    "id", "l", "v", null, new DetachedVertex("a", "l", null)),
-                graphVersion));
-
-    ImmutableList<ByteBuffer> scalarValue =
-        ImmutableList.of(GraphSONUtils.serializeToByteBuffer(true, graphVersion));
-
+  @UseDataProvider(value = "allGraphProtocols")
+  public void should_return_is_value_only_for_scalar_value(GraphProtocol graphProtocol)
+      throws IOException {
     // when
-    GraphNode mapNode = GraphSONUtils.createGraphNode(map, graphVersion);
-    GraphNode setNode = GraphSONUtils.createGraphNode(set, graphVersion);
-    GraphNode listNode = GraphSONUtils.createGraphNode(list, graphVersion);
-    GraphNode vertexNode = GraphSONUtils.createGraphNode(vertex, graphVersion);
-    GraphNode edgeNode = GraphSONUtils.createGraphNode(edge, graphVersion);
-    GraphNode pathNode = GraphSONUtils.createGraphNode(path, graphVersion);
-    GraphNode propertyNode = GraphSONUtils.createGraphNode(property, graphVersion);
-    GraphNode vertexPropertyNode = GraphSONUtils.createGraphNode(vertexProperty, graphVersion);
-    GraphNode scalarValueNode = GraphSONUtils.createGraphNode(scalarValue, graphVersion);
+    GraphNode mapNode = serdeAndCreateGraphNode(ImmutableMap.of(12, 1234), graphProtocol);
+    GraphNode setNode = serdeAndCreateGraphNode(ImmutableMap.of(12, 1234), graphProtocol);
+    GraphNode listNode = serdeAndCreateGraphNode(ImmutableMap.of(12, 1234), graphProtocol);
+    GraphNode vertexNode =
+        serdeAndCreateGraphNode(new DetachedVertex("a", "l", null), graphProtocol);
+    GraphNode edgeNode =
+        serdeAndCreateGraphNode(
+            new DetachedEdge("a", "l", Collections.emptyMap(), "v1", "l1", "v2", "l2"),
+            graphProtocol);
+    GraphNode pathNode = serdeAndCreateGraphNode(EmptyPath.instance(), graphProtocol);
+    GraphNode propertyNode = serdeAndCreateGraphNode(new DetachedProperty<>("a", 1), graphProtocol);
+    GraphNode vertexPropertyNode =
+        serdeAndCreateGraphNode(
+            new DetachedVertexProperty<>("id", "l", "v", null, new DetachedVertex("a", "l", null)),
+            graphProtocol);
+    GraphNode scalarValueNode = serdeAndCreateGraphNode(true, graphProtocol);
 
     // then
     assertThat(mapNode.isValue()).isFalse();
@@ -252,15 +201,11 @@ public class GraphNodeTest {
   }
 
   @Test
-  @UseDataProvider("graphson2_0and3_0")
-  public void should_check_if_node_is_property_not_map(String graphVersion) throws IOException {
-    // given
-    ImmutableList<ByteBuffer> property =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(new DetachedProperty<>("a", 1), graphVersion));
-
+  @UseDataProvider("objectGraphNodeProtocols")
+  public void should_check_if_node_is_property_not_map(GraphProtocol graphProtocol)
+      throws IOException {
     // when
-    GraphNode propertyNode = GraphSONUtils.createGraphNode(property, graphVersion);
+    GraphNode propertyNode = serdeAndCreateGraphNode(new DetachedProperty<>("a", 1), graphProtocol);
 
     // then
     assertThat(propertyNode.isProperty()).isTrue();
@@ -270,13 +215,8 @@ public class GraphNodeTest {
 
   @Test
   public void should_check_if_node_is_property_or_map_for_1_0() throws IOException {
-    // given
-    ImmutableList<ByteBuffer> property =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(new DetachedProperty<>("a", 1), GRAPHSON_1_0));
-
     // when
-    GraphNode propertyNode = GraphSONUtils.createGraphNode(property, GRAPHSON_1_0);
+    GraphNode propertyNode = serdeAndCreateGraphNode(new DetachedProperty<>("a", 1), GRAPHSON_1_0);
 
     // then
     assertThat(propertyNode.isProperty()).isTrue();
@@ -285,18 +225,14 @@ public class GraphNodeTest {
   }
 
   @Test
-  @UseDataProvider("graphsonAllVersions")
-  public void should_check_if_node_is_vertex_property(String graphVersion) throws IOException {
-    // given
-    ImmutableList<ByteBuffer> vertexProperty =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(
-                new DetachedVertexProperty<>(
-                    "id", "l", "v", null, new DetachedVertex("a", "l", null)),
-                graphVersion));
-
+  @UseDataProvider("allGraphProtocols")
+  public void should_check_if_node_is_vertex_property(GraphProtocol graphProtocol)
+      throws IOException {
     // when
-    GraphNode vertexPropertyNode = GraphSONUtils.createGraphNode(vertexProperty, graphVersion);
+    GraphNode vertexPropertyNode =
+        serdeAndCreateGraphNode(
+            new DetachedVertexProperty<>("id", "l", "v", null, new DetachedVertex("a", "l", null)),
+            graphProtocol);
 
     // then
     assertThat(vertexPropertyNode.isVertexProperty()).isTrue();
@@ -305,46 +241,31 @@ public class GraphNodeTest {
 
   @Test
   public void should_check_if_node_is_path_for_graphson_1_0() throws IOException {
-    // given
-    ImmutableList<ByteBuffer> path =
-        ImmutableList.of(GraphSONUtils.serializeToByteBuffer(EmptyPath.instance(), GRAPHSON_1_0));
-
     // when
-    GraphNode vertexPropertyNode = GraphSONUtils.createGraphNode(path, GRAPHSON_1_0);
+    GraphNode pathNode = serdeAndCreateGraphNode(EmptyPath.instance(), GRAPHSON_1_0);
 
     // then
-    assertThat(vertexPropertyNode.isPath()).isFalse();
-    assertThatThrownBy(vertexPropertyNode::asPath)
-        .isExactlyInstanceOf(UnsupportedOperationException.class);
+    assertThat(pathNode.isPath()).isFalse();
+    assertThatThrownBy(pathNode::asPath).isExactlyInstanceOf(UnsupportedOperationException.class);
   }
 
   @Test
-  @UseDataProvider("graphson2_0and3_0")
-  public void should_check_if_node_is_path(String graphsonVersion) throws IOException {
-    // given
-    ImmutableList<ByteBuffer> path =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(EmptyPath.instance(), graphsonVersion));
-
+  @UseDataProvider("objectGraphNodeProtocols")
+  public void should_check_if_node_is_path(GraphProtocol graphProtocol) throws IOException {
     // when
-    GraphNode vertexPropertyNode = GraphSONUtils.createGraphNode(path, graphsonVersion);
+    GraphNode pathNode = serdeAndCreateGraphNode(EmptyPath.instance(), graphProtocol);
 
     // then
-    assertThat(vertexPropertyNode.isPath()).isTrue();
-    assertThat(vertexPropertyNode.asPath()).isNotNull();
+    assertThat(pathNode.isPath()).isTrue();
+    assertThat(pathNode.asPath()).isNotNull();
   }
 
   @Test
-  @UseDataProvider("graphsonAllVersions")
-  public void should_check_if_node_is_vertex(String graphsonVersion) throws IOException {
-    // given
-    ImmutableList<ByteBuffer> vertex =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(
-                new DetachedVertex("a", "l", null), graphsonVersion));
-
+  @UseDataProvider("allGraphProtocols")
+  public void should_check_if_node_is_vertex(GraphProtocol graphProtocol) throws IOException {
     // when
-    GraphNode vertexNode = GraphSONUtils.createGraphNode(vertex, graphsonVersion);
+    GraphNode vertexNode =
+        serdeAndCreateGraphNode(new DetachedVertex("a", "l", null), graphProtocol);
 
     // then
     assertThat(vertexNode.isVertex()).isTrue();
@@ -352,26 +273,40 @@ public class GraphNodeTest {
   }
 
   @Test
-  @UseDataProvider("graphsonAllVersions")
-  public void should_check_if_node_is_edge(String graphsonVersion) throws IOException {
-    // given
-    ImmutableList<ByteBuffer> edge =
-        ImmutableList.of(
-            GraphSONUtils.serializeToByteBuffer(
-                new DetachedEdge("a", "l", Collections.emptyMap(), "v1", "l1", "v2", "l2"),
-                graphsonVersion));
-
+  @UseDataProvider("allGraphProtocols")
+  public void should_check_if_node_is_edge(GraphProtocol graphProtocol) throws IOException {
     // when
-    GraphNode edgeNode = GraphSONUtils.createGraphNode(edge, graphsonVersion);
+    GraphNode edgeNode =
+        serdeAndCreateGraphNode(
+            new DetachedEdge("a", "l", Collections.emptyMap(), "v1", "l1", "v2", "l2"),
+            graphProtocol);
 
     // then
     assertThat(edgeNode.isEdge()).isTrue();
     assertThat(edgeNode.asEdge()).isNotNull();
   }
 
+  private GraphNode serdeAndCreateGraphNode(Object inputValue, GraphProtocol graphProtocol)
+      throws IOException {
+    if (graphProtocol.isGraphBinary()) {
+      ByteBuf nettyBuf = graphBinaryModule.serialize(new DefaultRemoteTraverser<>(inputValue, 0L));
+      ByteBuffer nioBuffer = ByteBufUtil.toByteBuffer(nettyBuf);
+      nettyBuf.release();
+      return new ObjectGraphNode(
+          GraphConversions.createGraphBinaryGraphNode(
+                  ImmutableList.of(nioBuffer), graphBinaryModule)
+              .as(Traverser.class)
+              .get());
+    } else {
+      return GraphSONUtils.createGraphNode(
+          ImmutableList.of(GraphSONUtils.serializeToByteBuffer(inputValue, graphProtocol)),
+          graphProtocol);
+    }
+  }
+
   @DataProvider
-  public static Object[][] graphsonAllVersions() {
-    return new Object[][] {{GRAPHSON_1_0}, {GRAPHSON_2_0}, {GRAPHSON_3_0}};
+  public static Object[][] allGraphProtocols() {
+    return new Object[][] {{GRAPHSON_1_0}, {GRAPHSON_2_0}, {GRAPHSON_3_0}, {GRAPH_BINARY_1_0}};
   }
 
   @DataProvider
@@ -380,7 +315,7 @@ public class GraphNodeTest {
   }
 
   @DataProvider
-  public static Object[][] graphson2_0and3_0() {
-    return new Object[][] {{GRAPHSON_2_0}, {GRAPHSON_3_0}};
+  public static Object[][] objectGraphNodeProtocols() {
+    return new Object[][] {{GRAPHSON_2_0}, {GRAPHSON_3_0}, {GRAPH_BINARY_1_0}};
   }
 }

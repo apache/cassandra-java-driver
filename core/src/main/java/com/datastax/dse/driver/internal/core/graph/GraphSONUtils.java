@@ -41,15 +41,12 @@ import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
 
 class GraphSONUtils {
 
-  public static final String GRAPHSON_1_0 = "graphson-1.0";
-  public static final String GRAPHSON_2_0 = "graphson-2.0";
-  public static final String GRAPHSON_3_0 = "graphson-3.0";
-  private static final LoadingCache<String, ObjectMapper> OBJECT_MAPPERS =
+  private static final LoadingCache<GraphProtocol, ObjectMapper> OBJECT_MAPPERS =
       CacheBuilder.newBuilder()
           .build(
-              new CacheLoader<String, ObjectMapper>() {
+              new CacheLoader<GraphProtocol, ObjectMapper>() {
                 @Override
-                public ObjectMapper load(@NonNull String graphSubProtocol) throws Exception {
+                public ObjectMapper load(@NonNull GraphProtocol graphSubProtocol) throws Exception {
                   switch (graphSubProtocol) {
                     case GRAPHSON_1_0:
                       com.datastax.oss.driver.api.core.Version driverVersion =
@@ -100,7 +97,7 @@ class GraphSONUtils {
 
                     default:
                       throw new IllegalStateException(
-                          String.format("Unknown graph sub-protocol: {%s}", graphSubProtocol));
+                          String.format("GraphSON sub-protocol unknown: {%s}", graphSubProtocol));
                   }
                 }
               });
@@ -112,12 +109,12 @@ class GraphSONUtils {
                   .mapper(GraphSONMapper.build().version(GraphSONVersion.V1_0).create())
                   .create());
 
-  static ByteBuffer serializeToByteBuffer(Object object, String graphSubProtocol)
+  static ByteBuffer serializeToByteBuffer(Object object, GraphProtocol graphSubProtocol)
       throws IOException {
     return ByteBuffer.wrap(serializeToBytes(object, graphSubProtocol));
   }
 
-  static byte[] serializeToBytes(Object object, String graphSubProtocol) throws IOException {
+  static byte[] serializeToBytes(Object object, GraphProtocol graphSubProtocol) throws IOException {
     try {
       return OBJECT_MAPPERS.get(graphSubProtocol).writeValueAsBytes(object);
     } catch (ExecutionException e) {
@@ -126,7 +123,7 @@ class GraphSONUtils {
     }
   }
 
-  static GraphNode createGraphNode(List<ByteBuffer> data, String graphSubProtocol)
+  static GraphNode createGraphNode(List<ByteBuffer> data, GraphProtocol graphSubProtocol)
       throws IOException {
     try {
       ObjectMapper mapper = OBJECT_MAPPERS.get(graphSubProtocol);
@@ -139,7 +136,7 @@ class GraphSONUtils {
         default:
           // Should already be caught when we lookup in the cache
           throw new AssertionError(
-              String.format("Unknown graph sub-protocol: {%s}", graphSubProtocol));
+              String.format("Unknown GraphSON sub-protocol: {%s}", graphSubProtocol));
       }
     } catch (ExecutionException e) {
       Throwables.throwIfUnchecked(e);

@@ -15,7 +15,9 @@
  */
 package com.datastax.dse.driver.internal.core.metadata.schema;
 
+import com.datastax.dse.driver.api.core.metadata.schema.DseEdgeMetadata;
 import com.datastax.dse.driver.api.core.metadata.schema.DseTableMetadata;
+import com.datastax.dse.driver.api.core.metadata.schema.DseVertexMetadata;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
@@ -43,6 +45,8 @@ public class DefaultDseTableMetadata implements DseTableMetadata {
   @NonNull private final Map<CqlIdentifier, ColumnMetadata> columns;
   @NonNull private final Map<CqlIdentifier, Object> options;
   @NonNull private final Map<CqlIdentifier, IndexMetadata> indexes;
+  @Nullable private final DseVertexMetadata vertex;
+  @Nullable private final DseEdgeMetadata edge;
 
   public DefaultDseTableMetadata(
       @NonNull CqlIdentifier keyspace,
@@ -54,7 +58,9 @@ public class DefaultDseTableMetadata implements DseTableMetadata {
       @NonNull Map<ColumnMetadata, ClusteringOrder> clusteringColumns,
       @NonNull Map<CqlIdentifier, ColumnMetadata> columns,
       @NonNull Map<CqlIdentifier, Object> options,
-      @NonNull Map<CqlIdentifier, IndexMetadata> indexes) {
+      @NonNull Map<CqlIdentifier, IndexMetadata> indexes,
+      @Nullable DseVertexMetadata vertex,
+      @Nullable DseEdgeMetadata edge) {
     this.keyspace = keyspace;
     this.name = name;
     this.id = id;
@@ -65,6 +71,8 @@ public class DefaultDseTableMetadata implements DseTableMetadata {
     this.columns = columns;
     this.options = options;
     this.indexes = indexes;
+    this.vertex = vertex;
+    this.edge = edge;
   }
 
   @NonNull
@@ -125,6 +133,18 @@ public class DefaultDseTableMetadata implements DseTableMetadata {
     return indexes;
   }
 
+  @NonNull
+  @Override
+  public Optional<DseVertexMetadata> getVertex() {
+    return Optional.ofNullable(vertex);
+  }
+
+  @NonNull
+  @Override
+  public Optional<DseEdgeMetadata> getEdge() {
+    return Optional.ofNullable(edge);
+  }
+
   @Override
   public boolean equals(Object other) {
     if (other == this) {
@@ -133,13 +153,15 @@ public class DefaultDseTableMetadata implements DseTableMetadata {
       DseTableMetadata that = (DseTableMetadata) other;
       return Objects.equals(this.keyspace, that.getKeyspace())
           && Objects.equals(this.name, that.getName())
-          && Objects.equals(Optional.ofNullable(this.id), that.getId())
+          && Objects.equals(this.id, that.getId().orElse(null))
           && this.compactStorage == that.isCompactStorage()
           && this.virtual == that.isVirtual()
           && Objects.equals(this.partitionKey, that.getPartitionKey())
           && Objects.equals(this.clusteringColumns, that.getClusteringColumns())
           && Objects.equals(this.columns, that.getColumns())
-          && Objects.equals(this.indexes, that.getIndexes());
+          && Objects.equals(this.indexes, that.getIndexes())
+          && Objects.equals(this.vertex, that.getVertex().orElse(null))
+          && Objects.equals(this.edge, that.getEdge().orElse(null));
     } else {
       return false;
     }
@@ -156,6 +178,8 @@ public class DefaultDseTableMetadata implements DseTableMetadata {
         partitionKey,
         clusteringColumns,
         columns,
-        indexes);
+        indexes,
+        vertex,
+        edge);
   }
 }

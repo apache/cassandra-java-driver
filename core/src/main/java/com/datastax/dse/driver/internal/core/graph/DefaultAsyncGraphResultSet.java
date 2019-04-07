@@ -19,10 +19,12 @@ import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Queue;
 import java.util.concurrent.CompletionStage;
 import net.jcip.annotations.NotThreadSafe;
+import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
 
 @NotThreadSafe // wraps a mutable queue
 public class DefaultAsyncGraphResultSet implements AsyncGraphResultSet {
@@ -30,11 +32,14 @@ public class DefaultAsyncGraphResultSet implements AsyncGraphResultSet {
   private final ExecutionInfo executionInfo;
   private final CountingIterator<GraphNode> iterator;
   private final Iterable<GraphNode> currentPage;
+  private final GraphProtocol graphProtocol;
 
-  public DefaultAsyncGraphResultSet(ExecutionInfo executionInfo, Queue<GraphNode> data) {
+  public DefaultAsyncGraphResultSet(
+      ExecutionInfo executionInfo, Queue<GraphNode> data, GraphProtocol graphProtocol) {
     this.executionInfo = executionInfo;
     this.iterator = new GraphResultIterator(data);
     this.currentPage = () -> iterator;
+    this.graphProtocol = graphProtocol;
   }
 
   @NonNull
@@ -80,7 +85,7 @@ public class DefaultAsyncGraphResultSet implements AsyncGraphResultSet {
     // nothing to do
   }
 
-  private static class GraphResultIterator extends CountingIterator<GraphNode> {
+  private class GraphResultIterator extends CountingIterator<GraphNode> {
 
     private final Queue<GraphNode> data;
 
@@ -108,14 +113,26 @@ public class DefaultAsyncGraphResultSet implements AsyncGraphResultSet {
         return endOfData();
       }
 
-      // The repeat counter is called "bulk" in the JSON payload
-      GraphNode b = container.getByKey("bulk");
-      if (b != null) {
-        this.repeat = b.asLong();
-      }
+      if (graphProtocol.isGraphBinary()) {
+        // results are contained in a Traverser object and not a Map if the protocol
+        // is GraphBinary
+        Preconditions.checkState(
+            container.as(Object.class) instanceof Traverser,
+            "Graph protocol error. Received object should be a Traverser but it is not.");
+        Traverser t = container.as(Traverser.class);
+        this.repeat = t.bulk();
+        this.lastGraphNode = new ObjectGraphNode(t.get());
+        return lastGraphNode;
+      } else {
+        // The repeat counter is called "bulk" in the JSON payload
+        GraphNode b = container.getByKey("bulk");
+        if (b != null) {
+          this.repeat = b.asLong();
+        }
 
-      lastGraphNode = container.getByKey("result");
-      return lastGraphNode;
+        lastGraphNode = container.getByKey("result");
+        return lastGraphNode;
+      }
     }
   }
 }

@@ -15,11 +15,12 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
-import com.datastax.dse.driver.api.core.graph.BatchGraphStatement;
-import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
-import com.datastax.dse.driver.api.core.graph.GraphStatement;
-import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
+import com.datastax.dse.driver.api.core.graph.*;
+import com.datastax.dse.driver.internal.core.context.DseDriverContext;
+import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.dse.protocol.internal.request.RawBytesQuery;
 import com.datastax.dse.protocol.internal.request.query.DseQueryOptions;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
@@ -28,19 +29,23 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
-import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.cql.Conversions;
-import com.datastax.oss.driver.internal.core.session.DefaultSession;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
+import io.netty.buffer.ByteBuf;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
+import org.apache.tinkerpop.gremlin.driver.ser.SerializationException;
+import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
 
 /**
  * Utility class to move boilerplate out of {@link GraphRequestHandler}.
@@ -51,16 +56,22 @@ import java.util.Map;
  */
 public class GraphConversions extends Conversions {
 
-  static String GRAPH_LANG_OPTION_KEY = "graph-language";
-  static String GRAPH_NAME_OPTION_KEY = "graph-name";
-  static String GRAPH_SOURCE_OPTION_KEY = "graph-source";
-  static String GRAPH_READ_CONSISTENCY_LEVEL_OPTION_KEY = "graph-read-consistency";
-  static String GRAPH_WRITE_CONSISTENCY_LEVEL_OPTION_KEY = "graph-write-consistency";
-  static String GRAPH_RESULTS_OPTION_KEY = "graph-results";
-  static String GRAPH_TIMEOUT_OPTION_KEY = "request-timeout";
+  static final String GRAPH_LANG_OPTION_KEY = "graph-language";
+  static final String GRAPH_NAME_OPTION_KEY = "graph-name";
+  static final String GRAPH_SOURCE_OPTION_KEY = "graph-source";
+  static final String GRAPH_READ_CONSISTENCY_LEVEL_OPTION_KEY = "graph-read-consistency";
+  static final String GRAPH_WRITE_CONSISTENCY_LEVEL_OPTION_KEY = "graph-write-consistency";
+  static final String GRAPH_RESULTS_OPTION_KEY = "graph-results";
+  static final String GRAPH_TIMEOUT_OPTION_KEY = "request-timeout";
+  static final String GRAPH_BINARY_QUERY_OPTION_KEY = "graph-binary-query";
 
-  static String inferSubProtocol(
-      GraphStatement<?> statement, DriverExecutionProfile config, DefaultSession session) {
+  static final String LANGUAGE_GROOVY = "gremlin-groovy";
+  static final String LANGUAGE_BYTECODE = "bytecode-json";
+
+  @VisibleForTesting static final byte[] EMPTY_STRING_QUERY = "".getBytes(UTF_8);
+
+  static GraphProtocol inferSubProtocol(
+      GraphStatement<?> statement, DriverExecutionProfile config) {
     String graphProtocol = statement.getSubProtocol();
     if (graphProtocol == null) {
       graphProtocol =
@@ -69,26 +80,42 @@ public class GraphConversions extends Conversions {
               // TODO pick graphson-3.0 if the target graph uses the native engine
               "graphson-2.0");
     }
-    assert graphProtocol != null;
-    return graphProtocol;
+    // should not be null because we call config.getString() with a default value
+    Objects.requireNonNull(
+        graphProtocol,
+        "Could not determine the graph protocol for the query. This is a bug, please report.");
+
+    return GraphProtocol.fromString(graphProtocol);
   }
 
   static Message createMessageFromGraphStatement(
       GraphStatement<?> statement,
-      String subProtocol,
+      GraphProtocol subProtocol,
       DriverExecutionProfile config,
-      InternalDriverContext context) {
+      DseDriverContext context,
+      GraphBinaryModule graphBinaryModule) {
 
-    ByteBuffer encodedQueryParams;
-    try {
-      Map<String, Object> queryParams =
-          (statement instanceof ScriptGraphStatement)
-              ? ((ScriptGraphStatement) statement).getQueryParams()
-              : Collections.emptyMap();
-      encodedQueryParams = GraphSONUtils.serializeToByteBuffer(queryParams, subProtocol);
-    } catch (IOException e) {
-      throw new UncheckedIOException(
-          "Couldn't serialize parameters for GraphStatement: " + statement, e);
+    final List<ByteBuffer> encodedQueryParams;
+    if ((!(statement instanceof ScriptGraphStatement))
+        || ((ScriptGraphStatement) statement).getQueryParams().isEmpty()) {
+      encodedQueryParams = Collections.emptyList();
+    } else {
+      try {
+        Map<String, Object> queryParams = ((ScriptGraphStatement) statement).getQueryParams();
+        if (subProtocol.isGraphBinary()) {
+          ByteBuf graphBinaryParams = graphBinaryModule.serialize(queryParams);
+          encodedQueryParams =
+              Collections.singletonList(ByteBufUtil.toByteBuffer(graphBinaryParams));
+          graphBinaryParams.release();
+        } else {
+          encodedQueryParams =
+              Collections.singletonList(
+                  GraphSONUtils.serializeToByteBuffer(queryParams, subProtocol));
+        }
+      } catch (IOException e) {
+        throw new UncheckedIOException(
+            "Couldn't serialize parameters for GraphStatement: " + statement, e);
+      }
     }
 
     int consistencyLevel =
@@ -103,7 +130,7 @@ public class GraphConversions extends Conversions {
     DseQueryOptions queryOptions =
         new DseQueryOptions(
             consistencyLevel,
-            Collections.singletonList(encodedQueryParams),
+            encodedQueryParams,
             Collections.emptyMap(), // ignored by the DSE Graph server
             true, // also ignored
             50, // also ignored
@@ -122,20 +149,40 @@ public class GraphConversions extends Conversions {
     }
   }
 
-  private static byte[] getQueryBytes(GraphStatement<?> statement, String graphSubProtocol) {
-    assert statement instanceof FluentGraphStatement
-        || statement instanceof BatchGraphStatement
-        || statement instanceof BytecodeGraphStatement;
+  // This method returns either a Bytecode object, or a List<Bytecode> if the statement is a
+  // BatchGraphStatement
+  @VisibleForTesting
+  public static Object bytecodeToSerialize(GraphStatement<?> statement) {
+    Preconditions.checkArgument(
+        statement instanceof FluentGraphStatement
+            || statement instanceof BatchGraphStatement
+            || statement instanceof BytecodeGraphStatement,
+        "To serialize bytecode the query must be a fluent or batch statement, but was: %s",
+        statement.getClass());
+
     Object toSerialize;
     if (statement instanceof FluentGraphStatement) {
       toSerialize = ((FluentGraphStatement) statement).getTraversal().asAdmin().getBytecode();
     } else if (statement instanceof BatchGraphStatement) {
-      toSerialize = ((BatchGraphStatement) statement).iterator();
+      // transform the Iterator<GraphTraversal> to List<Bytecode>
+      toSerialize =
+          ImmutableList.copyOf(
+              Iterators.transform(
+                  ((BatchGraphStatement) statement).iterator(),
+                  traversal -> traversal.asAdmin().getBytecode()));
     } else {
       toSerialize = ((BytecodeGraphStatement) statement).getBytecode();
     }
+    return toSerialize;
+  }
+
+  private static byte[] getQueryBytes(GraphStatement<?> statement, GraphProtocol graphSubProtocol) {
     try {
-      return GraphSONUtils.serializeToBytes(toSerialize, graphSubProtocol);
+      return graphSubProtocol.isGraphBinary()
+          // if GraphBinary, the query is encoded in the custom payload, and not in the query field
+          // see GraphConversions#createCustomPayload()
+          ? EMPTY_STRING_QUERY
+          : GraphSONUtils.serializeToBytes(bytecodeToSerialize(statement), graphSubProtocol);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
@@ -143,9 +190,10 @@ public class GraphConversions extends Conversions {
 
   static Map<String, ByteBuffer> createCustomPayload(
       GraphStatement<?> statement,
-      String subProtocol,
+      GraphProtocol subProtocol,
       DriverExecutionProfile config,
-      InternalDriverContext context) {
+      DseDriverContext context,
+      GraphBinaryModule graphBinaryModule) {
 
     ProtocolVersion protocolVersion = context.getProtocolVersion();
 
@@ -154,11 +202,18 @@ public class GraphConversions extends Conversions {
     Map<String, ByteBuffer> statementOptions = statement.getCustomPayload();
     payload.putAll(statementOptions);
 
+    final String graphLanguage;
+
     // Don't override anything that's already provided at the statement level
     if (!statementOptions.containsKey(GRAPH_LANG_OPTION_KEY)) {
-      String graphLanguage =
-          (statement instanceof ScriptGraphStatement) ? "gremlin-groovy" : "bytecode-json";
+      graphLanguage =
+          (statement instanceof ScriptGraphStatement) ? LANGUAGE_GROOVY : LANGUAGE_BYTECODE;
       payload.put(GRAPH_LANG_OPTION_KEY, TypeCodecs.TEXT.encode(graphLanguage, protocolVersion));
+    } else {
+      graphLanguage =
+          TypeCodecs.TEXT.decode(statementOptions.get(GRAPH_LANG_OPTION_KEY), protocolVersion);
+      Preconditions.checkNotNull(
+          graphLanguage, "A null value was set for the graph-language custom payload key.");
     }
 
     if (!isSystemQuery(statement, config)) {
@@ -183,9 +238,27 @@ public class GraphConversions extends Conversions {
       }
     }
 
-    if (!statementOptions.containsKey(GRAPH_RESULTS_OPTION_KEY)) {
-      assert subProtocol != null;
-      payload.put(GRAPH_RESULTS_OPTION_KEY, TypeCodecs.TEXT.encode(subProtocol, protocolVersion));
+    // the payload allows null entry values so doing a get directly here and checking for null
+    final ByteBuffer payloadInitialProtocol = statementOptions.get(GRAPH_RESULTS_OPTION_KEY);
+    if (payloadInitialProtocol == null) {
+      Preconditions.checkNotNull(subProtocol);
+      payload.put(
+          GRAPH_RESULTS_OPTION_KEY,
+          TypeCodecs.TEXT.encode(subProtocol.toInternalCode(), protocolVersion));
+    } else {
+      subProtocol =
+          GraphProtocol.fromString(TypeCodecs.TEXT.decode(payloadInitialProtocol, protocolVersion));
+    }
+
+    if (subProtocol.isGraphBinary() && graphLanguage.equals(LANGUAGE_BYTECODE)) {
+      Object bytecodeQuery = bytecodeToSerialize(statement);
+      try {
+        ByteBuf bytecodeByteBuf = graphBinaryModule.serialize(bytecodeQuery);
+        payload.put(GRAPH_BINARY_QUERY_OPTION_KEY, ByteBufUtil.toByteBuffer(bytecodeByteBuf));
+        bytecodeByteBuf.release();
+      } catch (SerializationException e) {
+        throw new UncheckedIOException(e);
+      }
     }
 
     if (!statementOptions.containsKey(GRAPH_READ_CONSISTENCY_LEVEL_OPTION_KEY)) {
@@ -236,5 +309,21 @@ public class GraphConversions extends Conversions {
       }
     }
     return config.getBoolean(DseDriverOption.GRAPH_IS_SYSTEM_QUERY, false);
+  }
+
+  static GraphNode createGraphBinaryGraphNode(
+      List<ByteBuffer> data, GraphBinaryModule graphBinaryModule) throws IOException {
+    // there should be only one column in the given row
+    Preconditions.checkArgument(data.size() == 1, "Invalid row given to deserialize");
+
+    // TODO: avoid the conversion to ByteBuffer and use Netty ByteBuf directly from the driver since
+    // GraphBinary accepts ByteBufs.
+    // This would require fiddling with the DseFrameCodecs and the GraphRequestHandler
+    ByteBuf toDeserialize = ByteBufUtil.toByteBuf(data.get(0));
+    Object deserializedObject = graphBinaryModule.deserialize(toDeserialize);
+    toDeserialize.release();
+    assert deserializedObject instanceof Traverser
+        : "Graph protocol error. Received object should be a Traverser but it is not.";
+    return new ObjectGraphNode(deserializedObject);
   }
 }

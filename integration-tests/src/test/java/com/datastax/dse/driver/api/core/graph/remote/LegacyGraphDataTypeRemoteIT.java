@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.dse.driver.api.core.graph.statement;
+package com.datastax.dse.driver.api.core.graph.remote;
 
 import com.datastax.dse.driver.api.core.graph.DseGraph;
-import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
-import com.datastax.dse.driver.api.core.graph.GraphDataTypeITBase;
+import com.datastax.dse.driver.api.core.graph.LegacyGraphDataTypeITBase;
 import com.datastax.dse.driver.api.core.graph.SampleGraphScripts;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@DseRequirement(min = "5.0.3", description = "DSE 5.0.3 required for fluent API support")
-public class GraphDataTypeFluentIT extends GraphDataTypeITBase {
+@DseRequirement(min = "5.0.3", description = "DSE 5.0.3 required for remote TinkerPop support")
+public class LegacyGraphDataTypeRemoteIT extends LegacyGraphDataTypeITBase {
 
   private static CustomCcmRule ccmRule =
       CustomCcmRule.builder()
@@ -56,14 +56,11 @@ public class GraphDataTypeFluentIT extends GraphDataTypeITBase {
     return sessionRule.session();
   }
 
+  private final GraphTraversalSource g =
+      DseGraph.g.withRemote(DseGraph.remoteConnectionBuilder(sessionRule.session()).build());
+
   @Override
   public Vertex insertVertexAndReturn(String vertexLabel, String propertyName, Object value) {
-    return sessionRule
-        .session()
-        .execute(
-            FluentGraphStatement.newInstance(
-                DseGraph.g.addV(vertexLabel).property(propertyName, value)))
-        .one()
-        .asVertex();
+    return g.addV(vertexLabel).property(propertyName, value).next();
   }
 }

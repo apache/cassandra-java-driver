@@ -17,16 +17,11 @@ package com.datastax.dse.driver.internal.core.graph;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import net.jcip.annotations.Immutable;
 import org.apache.tinkerpop.gremlin.process.remote.RemoteConnection;
-import org.apache.tinkerpop.gremlin.process.remote.RemoteConnectionException;
 import org.apache.tinkerpop.gremlin.process.remote.traversal.RemoteTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.Bytecode;
-import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
-import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
 
 @Immutable
 public class DseGraphRemoteConnection implements RemoteConnection {

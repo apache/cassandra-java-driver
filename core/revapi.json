@@ -4851,6 +4851,168 @@
         "new": "method com.datastax.oss.driver.api.core.auth.Authenticator com.datastax.oss.driver.api.core.auth.PlainTextAuthProviderBase::newAuthenticator(com.datastax.oss.driver.api.core.metadata.EndPoint, java.lang.String) throws com.datastax.oss.driver.api.core.auth.AuthenticationException",
         "exception": "com.datastax.oss.driver.api.core.auth.AuthenticationException",
         "justification": "New exception is unchecked"
+      },
+      {
+        "code": "java.class.superTypeTypeParametersChanged",
+        "old": "class com.datastax.dse.driver.api.core.DseSessionBuilderBase<SelfT extends com.datastax.oss.driver.api.core.session.SessionBuilder, SessionT extends java.lang.Object>",
+        "new": "class com.datastax.dse.driver.api.core.DseSessionBuilderBase<SelfT extends com.datastax.dse.driver.api.core.DseSessionBuilderBase<SelfT, SessionT extends java.lang.Object>, SessionT>",
+        "oldSuperType": "com.datastax.oss.driver.api.core.session.SessionBuilder<SelfT extends com.datastax.oss.driver.api.core.session.SessionBuilder, SessionT extends java.lang.Object>",
+        "newSuperType": "com.datastax.oss.driver.api.core.session.SessionBuilder<SelfT extends com.datastax.dse.driver.api.core.DseSessionBuilderBase<SelfT, SessionT extends java.lang.Object>, SessionT>",
+        "justification": "JAVA-2411: Type parameters were wrong but it is unlikely that implementors would notice that in subclasses"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method java.util.Map<com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature, com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata> com.datastax.dse.driver.api.core.metadata.schema.DseKeyspaceMetadata::getAggregates()",
+        "justification": "JAVA-1898: Expose new table-level graph metadata"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method java.util.Map<com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature, com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata> com.datastax.dse.driver.api.core.metadata.schema.DseKeyspaceMetadata::getFunctions()",
+        "justification": "JAVA-1898: Expose new table-level graph metadata"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method java.util.Optional<java.lang.String> com.datastax.dse.driver.api.core.metadata.schema.DseKeyspaceMetadata::getGraphEngine()",
+        "justification": "JAVA-1898: Expose new table-level graph metadata"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.metadata.schema.TableMetadata> com.datastax.dse.driver.api.core.metadata.schema.DseKeyspaceMetadata::getTables()",
+        "justification": "JAVA-1898: Expose new table-level graph metadata"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata> com.datastax.dse.driver.api.core.metadata.schema.DseKeyspaceMetadata::getViews()",
+        "justification": "JAVA-1898: Expose new table-level graph metadata"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method java.util.Optional<? extends com.datastax.dse.driver.api.core.metadata.schema.DseEdgeMetadata> com.datastax.dse.driver.api.core.metadata.schema.DseTableMetadata::getEdge()",
+        "justification": "JAVA-1898: Expose new table-level graph metadata"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata> com.datastax.dse.driver.api.core.metadata.schema.DseTableMetadata::getIndexes()",
+        "justification": "JAVA-1898: Expose new table-level graph metadata"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method java.util.Optional<? extends com.datastax.dse.driver.api.core.metadata.schema.DseVertexMetadata> com.datastax.dse.driver.api.core.metadata.schema.DseTableMetadata::getVertex()",
+        "justification": "JAVA-1898: Expose new table-level graph metadata"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method <E> org.apache.tinkerpop.gremlin.process.remote.traversal.RemoteTraversal<?, E> org.apache.tinkerpop.gremlin.process.remote.RemoteConnection::submit(org.apache.tinkerpop.gremlin.process.traversal.Bytecode) throws org.apache.tinkerpop.gremlin.process.remote.RemoteConnectionException",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method <E> java.util.Iterator<org.apache.tinkerpop.gremlin.process.traversal.Traverser.Admin<E>> org.apache.tinkerpop.gremlin.process.remote.RemoteConnection::submit(org.apache.tinkerpop.gremlin.process.traversal.Traversal<?, E>) throws org.apache.tinkerpop.gremlin.process.remote.RemoteConnectionException",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.method.noLongerDefault",
+        "old": "method <E> java.util.concurrent.CompletableFuture<org.apache.tinkerpop.gremlin.process.remote.traversal.RemoteTraversal<?, E>> org.apache.tinkerpop.gremlin.process.remote.RemoteConnection::submitAsync(org.apache.tinkerpop.gremlin.process.traversal.Bytecode) throws org.apache.tinkerpop.gremlin.process.remote.RemoteConnectionException",
+        "new": "method <E> java.util.concurrent.CompletableFuture<org.apache.tinkerpop.gremlin.process.remote.traversal.RemoteTraversal<?, E>> org.apache.tinkerpop.gremlin.process.remote.RemoteConnection::submitAsync(org.apache.tinkerpop.gremlin.process.traversal.Bytecode) throws org.apache.tinkerpop.gremlin.process.remote.RemoteConnectionException",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.method.nowAbstract",
+        "old": "method <E> java.util.concurrent.CompletableFuture<org.apache.tinkerpop.gremlin.process.remote.traversal.RemoteTraversal<?, E>> org.apache.tinkerpop.gremlin.process.remote.RemoteConnection::submitAsync(org.apache.tinkerpop.gremlin.process.traversal.Bytecode) throws org.apache.tinkerpop.gremlin.process.remote.RemoteConnectionException",
+        "new": "method <E> java.util.concurrent.CompletableFuture<org.apache.tinkerpop.gremlin.process.remote.traversal.RemoteTraversal<?, E>> org.apache.tinkerpop.gremlin.process.remote.RemoteConnection::submitAsync(org.apache.tinkerpop.gremlin.process.traversal.Bytecode) throws org.apache.tinkerpop.gremlin.process.remote.RemoteConnectionException",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.field.removedWithConstant",
+        "old": "field org.apache.tinkerpop.gremlin.process.traversal.TraversalSource.GREMLIN_REMOTE",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.field.removedWithConstant",
+        "old": "field org.apache.tinkerpop.gremlin.process.traversal.TraversalSource.GREMLIN_REMOTE_CONNECTION_CLASS",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter java.util.List<org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategy<?>> org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies::sortStrategies(===java.util.List<org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategy<?>>===)",
+        "new": "parameter java.util.Set<org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategy<?>> org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies::sortStrategies(===java.util.Set<org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategy<?>>===)",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.method.returnTypeChanged",
+        "old": "method java.util.List<org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategy<?>> org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies::sortStrategies(java.util.List<org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategy<?>>)",
+        "new": "method java.util.Set<org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategy<?>> org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies::sortStrategies(java.util.Set<org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategy<?>>)",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.method.numberOfParametersChanged",
+        "old": "method void org.apache.tinkerpop.gremlin.process.traversal.Traverser.Admin<T>::incrLoops(java.lang.String)",
+        "new": "method void org.apache.tinkerpop.gremlin.process.traversal.Traverser.Admin<T>::incrLoops()",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method void org.apache.tinkerpop.gremlin.process.traversal.Traverser.Admin<T>::initialiseLoops(java.lang.String, java.lang.String)",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method int org.apache.tinkerpop.gremlin.process.traversal.Traverser<T>::loops(java.lang.String)",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method <E2 extends java.lang.Number> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::max()",
+        "new": "method <E2 extends java.lang.Comparable> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::max()",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <E2 extends java.lang.Number> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::max()",
+        "new": "method <E2 extends java.lang.Comparable> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::max()",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method <E2 extends java.lang.Number> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::max(org.apache.tinkerpop.gremlin.process.traversal.Scope)",
+        "new": "method <E2 extends java.lang.Comparable> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::max(org.apache.tinkerpop.gremlin.process.traversal.Scope)",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <E2 extends java.lang.Number> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::max(org.apache.tinkerpop.gremlin.process.traversal.Scope)",
+        "new": "method <E2 extends java.lang.Comparable> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::max(org.apache.tinkerpop.gremlin.process.traversal.Scope)",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method <E2 extends java.lang.Number> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::min()",
+        "new": "method <E2 extends java.lang.Comparable> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::min()",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <E2 extends java.lang.Number> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::min()",
+        "new": "method <E2 extends java.lang.Comparable> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::min()",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method <E2 extends java.lang.Number> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::min(org.apache.tinkerpop.gremlin.process.traversal.Scope)",
+        "new": "method <E2 extends java.lang.Comparable> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::min(org.apache.tinkerpop.gremlin.process.traversal.Scope)",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <E2 extends java.lang.Number> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::min(org.apache.tinkerpop.gremlin.process.traversal.Scope)",
+        "new": "method <E2 extends java.lang.Comparable> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::min(org.apache.tinkerpop.gremlin.process.traversal.Scope)",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method <E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, java.util.Map<java.lang.String, E2>> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::valueMap(java.lang.String[])",
+        "new": "method <E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, java.util.Map<java.lang.Object, E2>> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::valueMap(java.lang.String[])",
+        "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
       }
     ]
   }

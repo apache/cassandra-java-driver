@@ -40,6 +40,9 @@ public class CqlSessionRuleBuilder extends SessionRuleBuilder<CqlSessionRuleBuil
 
     final String graphName;
     final DriverConfigLoader actualLoader;
+
+    Supplier<Config> actualSupplier;
+
     if (createGraph) {
       graphName = "dsedrivertests_" + GRAPH_NAME_INDEX.getAndIncrement();
 
@@ -54,18 +57,34 @@ public class CqlSessionRuleBuilder extends SessionRuleBuilder<CqlSessionRuleBuil
         assertThat(loader).isInstanceOf(DefaultDriverConfigLoader.class);
       }
       Supplier<Config> originalSupplier = ((DefaultDriverConfigLoader) loader).getConfigSupplier();
-      Supplier<Config> actualSupplier =
+      actualSupplier =
           () ->
               originalSupplier
                   .get()
                   .withValue(
                       DseDriverOption.GRAPH_NAME.getPath(),
                       ConfigValueFactory.fromAnyRef(graphName));
-      actualLoader = new DefaultDriverConfigLoader(actualSupplier);
     } else {
       graphName = null;
-      actualLoader = loader;
+      if (loader == null) {
+        loader = new DefaultDriverConfigLoader();
+      }
+
+      actualSupplier = ((DefaultDriverConfigLoader) loader).getConfigSupplier();
     }
+
+    actualLoader =
+        new DefaultDriverConfigLoader(
+            () ->
+                graphProtocol != null
+                    ? actualSupplier
+                        .get()
+                        .withValue(
+                            DseDriverOption.GRAPH_SUB_PROTOCOL.getPath(),
+                            ConfigValueFactory.fromAnyRef(graphProtocol))
+                    // will use the protocol from the config file (in application.conf if
+                    // defined or in reference.conf)
+                    : actualSupplier.get());
 
     return new SessionRule<>(
         cassandraResource,
@@ -73,6 +92,7 @@ public class CqlSessionRuleBuilder extends SessionRuleBuilder<CqlSessionRuleBuil
         nodeStateListener,
         schemaChangeListener,
         actualLoader,
-        graphName);
+        graphName,
+        isCoreGraph);
   }
 }

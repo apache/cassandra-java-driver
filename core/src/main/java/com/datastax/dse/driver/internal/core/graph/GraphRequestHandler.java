@@ -22,6 +22,8 @@ import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
+import com.datastax.dse.driver.internal.core.context.DseDriverContext;
+import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
@@ -93,7 +95,7 @@ public class GraphRequestHandler implements Throttled {
 
   private final DefaultSession session;
 
-  private final InternalDriverContext context;
+  private final DseDriverContext context;
   private Queue<Node> queryPlan;
   private final DriverExecutionProfile executionProfile;
 
@@ -102,7 +104,7 @@ public class GraphRequestHandler implements Throttled {
   private final boolean isIdempotent;
   protected final CompletableFuture<AsyncGraphResultSet> result;
   private final Message message;
-  private final String subProtocol;
+  private final GraphProtocol subProtocol;
   private final EventExecutor scheduler;
 
   /**
@@ -126,6 +128,8 @@ public class GraphRequestHandler implements Throttled {
   private final List<PerRequestCallback> inFlightCallbacks;
   private final RetryPolicy retryPolicy;
   private final RequestThrottler throttler;
+  private final Map<String, ByteBuffer> queryCustomPayload;
+  private final GraphBinaryModule graphBinaryModule;
 
   // The errors on the nodes that were already tried (lazily initialized on the first error).
   // We don'traversals use a map because nodes can appear multiple times.
@@ -135,7 +139,8 @@ public class GraphRequestHandler implements Throttled {
       @NonNull GraphStatement<?> graphStatement,
       @NonNull DefaultSession dseSession,
       @NonNull InternalDriverContext context,
-      @NonNull String sessionLogPrefix) {
+      @NonNull String sessionLogPrefix,
+      @NonNull GraphBinaryModule graphBinaryModule) {
     this.startTimeNanos = System.nanoTime();
     this.logPrefix = sessionLogPrefix + "|" + this.hashCode();
     Preconditions.checkArgument(
@@ -148,7 +153,9 @@ public class GraphRequestHandler implements Throttled {
     LOG.trace("[{}] Creating new Graph request handler for request {}", logPrefix, graphStatement);
     this.graphStatement = graphStatement;
     this.session = dseSession;
-    this.context = context;
+
+    Preconditions.checkArgument(context instanceof DseDriverContext);
+    this.context = ((DseDriverContext) context);
 
     this.executionProfile =
         GraphConversions.resolveExecutionProfile(this.graphStatement, this.context);
@@ -186,12 +193,26 @@ public class GraphRequestHandler implements Throttled {
     this.scheduledExecutions = isIdempotent ? new CopyOnWriteArrayList<>() : null;
 
     this.inFlightCallbacks = new CopyOnWriteArrayList<>();
+    this.graphBinaryModule = graphBinaryModule;
 
-    this.subProtocol =
-        GraphConversions.inferSubProtocol(this.graphStatement, executionProfile, session);
+    this.subProtocol = GraphConversions.inferSubProtocol(this.graphStatement, executionProfile);
+    LOG.debug("[{}], Graph protocol used for query: {}", logPrefix, subProtocol);
+
     this.message =
         GraphConversions.createMessageFromGraphStatement(
-            this.graphStatement, subProtocol, executionProfile, context);
+            this.graphStatement,
+            subProtocol,
+            executionProfile,
+            this.context,
+            this.graphBinaryModule);
+
+    this.queryCustomPayload =
+        GraphConversions.createCustomPayload(
+            this.graphStatement,
+            subProtocol,
+            executionProfile,
+            this.context,
+            this.graphBinaryModule);
 
     this.throttler = context.getRequestThrottler();
     this.throttler.register(this);
@@ -276,12 +297,7 @@ public class GraphRequestHandler implements Throttled {
               node, channel, currentExecutionIndex, retryCount, scheduleNextExecution, logPrefix);
 
       channel
-          .write(
-              message,
-              graphStatement.isTracing(),
-              GraphConversions.createCustomPayload(
-                  graphStatement, subProtocol, executionProfile, context),
-              perRequestCallback)
+          .write(message, graphStatement.isTracing(), queryCustomPayload, perRequestCallback)
           .addListener(perRequestCallback);
     }
   }
@@ -495,11 +511,17 @@ public class GraphRequestHandler implements Throttled {
 
         Queue<GraphNode> graphNodes = new ArrayDeque<>();
         for (List<ByteBuffer> row : ((Rows) resultMessage).getData()) {
-          graphNodes.offer(GraphSONUtils.createGraphNode(row, subProtocol));
+          if (subProtocol.isGraphBinary()) {
+            graphNodes.offer(
+                GraphConversions.createGraphBinaryGraphNode(
+                    row, GraphRequestHandler.this.graphBinaryModule));
+          } else {
+            graphNodes.offer(GraphSONUtils.createGraphNode(row, subProtocol));
+          }
         }
 
         DefaultAsyncGraphResultSet resultSet =
-            new DefaultAsyncGraphResultSet(executionInfo, graphNodes);
+            new DefaultAsyncGraphResultSet(executionInfo, graphNodes, subProtocol);
         if (result.complete(resultSet)) {
           cancelScheduledTasks();
           throttler.signalSuccess(GraphRequestHandler.this);

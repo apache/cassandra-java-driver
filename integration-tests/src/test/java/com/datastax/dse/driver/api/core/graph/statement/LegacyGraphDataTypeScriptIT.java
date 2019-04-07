@@ -15,7 +15,7 @@
  */
 package com.datastax.dse.driver.api.core.graph.statement;
 
-import com.datastax.dse.driver.api.core.graph.GraphDataTypeITBase;
+import com.datastax.dse.driver.api.core.graph.LegacyGraphDataTypeITBase;
 import com.datastax.dse.driver.api.core.graph.SampleGraphScripts;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -29,7 +29,7 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @DseRequirement(min = "5.0.4", description = "DSE 5.0.4 required for script API with GraphSON 2")
-public class GraphDataTypeScriptIT extends GraphDataTypeITBase {
+public class LegacyGraphDataTypeScriptIT extends LegacyGraphDataTypeITBase {
 
   private static CustomCcmRule ccmRule =
       CustomCcmRule.builder()
