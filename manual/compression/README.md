@@ -56,11 +56,11 @@ LZ4-java has three internal implementations (from fastest to slowest):
 It will pick the best implementation depending on what's possible on
 your platform. To find out which one was chosen, [enable INFO
 logs](../logging/) on the category
-`com.datastax.driver.core.FrameCompressor` and look for a log similar to
+`com.datastax.driver.core.LZ4Compressor` and look for a log similar to
 this:
 
 ```
-INFO  com.datastax.driver.core.FrameCompressor  - Using LZ4Factory:JNI
+INFO  com.datastax.driver.core.LZ4Compressor  - Using LZ4Factory:JNI
 ```
 
 ### Snappy
