@@ -55,7 +55,7 @@ public class SetEntityIT {
 
     for (String query : InventoryFixtures.createStatements()) {
       session.execute(
-          SimpleStatement.builder(query).withExecutionProfile(sessionRule.slowProfile()).build());
+          SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }
 
     InventoryMapper inventoryMapper = new InventoryMapperBuilder(session).build();
