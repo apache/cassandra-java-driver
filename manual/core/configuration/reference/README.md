@@ -5,4 +5,4 @@ to provide default values for all configuration options (anything that is not ov
 `application.conf` or with system properties).
 
 Here is a [link to the file in our GitHub
-repository](https://github.com/datastax/java-driver/blob/4.0.0/core/src/main/resources/reference.conf).
+repository](https://github.com/datastax/java-driver/blob/4.0.1/core/src/main/resources/reference.conf).

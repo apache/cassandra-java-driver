@@ -39,7 +39,7 @@ dependencies, and tell Maven that we're going to use Java 8:
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-core</artifactId>
-      <version>4.0.0</version>
+      <version>4.0.1</version>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
@@ -144,7 +144,7 @@ You should see output similar to:
 [INFO] Nothing to compile - all classes are up to date
 [INFO]
 [INFO] --- exec-maven-plugin:1.3.1:java (default-cli) @ yourapp ---
-11:39:45.355 [Main.main()] INFO  c.d.o.d.i.c.DefaultMavenCoordinates - DataStax Java driver for Apache Cassandra(R) (com.datastax.oss:java-driver-core) version 4.0.0
+11:39:45.355 [Main.main()] INFO  c.d.o.d.i.c.DefaultMavenCoordinates - DataStax Java driver for Apache Cassandra(R) (com.datastax.oss:java-driver-core) version 4.0.1
 11:39:45.648 [poc-admin-0] INFO  c.d.o.d.internal.core.time.Clock - Using native clock for microsecond precision
 11:39:45.649 [poc-admin-0] INFO  c.d.o.d.i.c.metadata.MetadataManager - [poc] No contact points provided, defaulting to /127.0.0.1:9042
 3.11.2
@@ -176,7 +176,7 @@ repositories {
 }
 
 dependencies {
-    compile group: 'com.datastax.oss', name: 'java-driver-core', version: '4.0.0'
+    compile group: 'com.datastax.oss', name: 'java-driver-core', version: '4.0.1'
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
 }
 ```
@@ -214,7 +214,7 @@ $ ./gradlew execute
 :processResources
 :classes
 :execute
-13:32:25.339 [main] INFO  c.d.o.d.i.c.DefaultMavenCoordinates - DataStax Java driver for Apache Cassandra(R) (com.datastax.oss:java-driver-core) version 4.0.0-alpha4-SNAPSHOT
+13:32:25.339 [main] INFO  c.d.o.d.i.c.DefaultMavenCoordinates - DataStax Java driver for Apache Cassandra(R) (com.datastax.oss:java-driver-core) version 4.0.1-alpha4-SNAPSHOT
 13:32:25.682 [poc-admin-0] INFO  c.d.o.d.internal.core.time.Clock - Using native clock for microsecond precision
 13:32:25.683 [poc-admin-0] INFO  c.d.o.d.i.c.metadata.MetadataManager - [poc] No contact points provided, defaulting to /127.0.0.1:9042
 3.11.2
@@ -260,7 +260,7 @@ In that case, you can exclude the dependency:
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core</artifactId>
-  <version>4.0.0</version>
+  <version>4.0.1</version>
   <exclusions>
     <exclusion>
       <groupId>com.typesafe</groupId>
@@ -288,7 +288,7 @@ are not available on your platform, you can exclude the following dependencies:
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core</artifactId>
-  <version>4.0.0</version>
+  <version>4.0.1</version>
   <exclusions>
     <exclusion>
       <groupId>com.github.jnr</groupId>
@@ -322,7 +322,7 @@ and never call [Session.getMetrics] anywhere in your application, you can remove
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core</artifactId>
-  <version>4.0.0</version>
+  <version>4.0.1</version>
   <exclusions>
     <exclusion>
       <groupId>io.dropwizard.metrics</groupId>
@@ -343,7 +343,7 @@ If all of these metrics are disabled, you can remove the dependency:
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core</artifactId>
-  <version>4.0.0</version>
+  <version>4.0.1</version>
   <exclusions>
     <exclusion>
       <groupId>org.hdrhistogram</groupId>
@@ -369,7 +369,7 @@ exclude them:
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core</artifactId>
-  <version>4.0.0</version>
+  <version>4.0.1</version>
   <exclusions>
     <exclusion>
       <groupId>com.github.stephenc.jcip</groupId>
