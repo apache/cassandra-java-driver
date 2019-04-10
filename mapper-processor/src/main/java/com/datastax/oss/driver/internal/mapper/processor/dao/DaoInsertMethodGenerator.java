@@ -33,7 +33,6 @@ import java.util.concurrent.CompletionStage;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
@@ -154,16 +153,7 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
             (methodBuilder, requestName) ->
                 generatePrepareRequest(methodBuilder, requestName, helperFieldName));
 
-    MethodSpec.Builder insertBuilder =
-        MethodSpec.methodBuilder(methodElement.getSimpleName().toString())
-            .addAnnotation(Override.class)
-            .addModifiers(Modifier.PUBLIC)
-            .returns(ClassName.get(methodElement.getReturnType()));
-    List<? extends VariableElement> parameters = methodElement.getParameters();
-    for (VariableElement parameterElement : parameters) {
-      insertBuilder.addParameter(
-          ClassName.get(parameterElement.asType()), parameterElement.getSimpleName().toString());
-    }
+    MethodSpec.Builder insertBuilder = GeneratedCodePatterns.override(methodElement);
 
     if (isAsync) {
       insertBuilder.beginControlFlow("try");
@@ -173,6 +163,7 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
         BoundStatementBuilder.class,
         statementName);
 
+    List<? extends VariableElement> parameters = methodElement.getParameters();
     String entityParameterName = parameters.get(0).getSimpleName().toString();
     insertBuilder.addStatement(
         "$L.set($L, boundStatementBuilder)", helperFieldName, entityParameterName);
