@@ -104,7 +104,11 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
                     .build())
             .addField(
                 FieldSpec.builder(
-                        CqlIdentifier.class, "defaultTableId", Modifier.PRIVATE, Modifier.FINAL)
+                        CqlIdentifier.class,
+                        "DEFAULT_TABLE_ID",
+                        Modifier.PRIVATE,
+                        Modifier.STATIC,
+                        Modifier.FINAL)
                     .initializer(
                         "$T.fromCql($S)", CqlIdentifier.class, entityDefinition.getCqlName())
                     .build());
