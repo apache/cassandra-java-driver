@@ -47,7 +47,7 @@ public class EntityHelperInsertMethodGenerator implements PartialClassGenerator 
             .addStatement("$T keyspaceId = context.getKeyspaceId()", CqlIdentifier.class)
             .addStatement("$T tableId = context.getTableId()", CqlIdentifier.class)
             .beginControlFlow("if (tableId == null)")
-            .addStatement("tableId = defaultTableId")
+            .addStatement("tableId = DEFAULT_TABLE_ID")
             .endControlFlow()
             .addStatement(
                 "$1T insertInto = (keyspaceId == null)\n"
