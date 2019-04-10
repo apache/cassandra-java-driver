@@ -35,6 +35,8 @@ import com.squareup.javapoet.TypeName;
 import java.beans.Introspector;
 import java.util.List;
 import java.util.Map;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
 
 /** A collection of recurring patterns in our generated sources. */
@@ -53,6 +55,20 @@ public class GeneratedCodePatterns {
           .put(TypeName.INT, "Int")
           .put(TypeName.LONG, "Long")
           .build();
+
+  /** Starts the generation of a method that overrides an interface method. */
+  public static MethodSpec.Builder override(ExecutableElement interfaceMethod) {
+    MethodSpec.Builder result =
+        MethodSpec.methodBuilder(interfaceMethod.getSimpleName().toString())
+            .addAnnotation(Override.class)
+            .addModifiers(Modifier.PUBLIC)
+            .returns(ClassName.get(interfaceMethod.getReturnType()));
+    for (VariableElement parameterElement : interfaceMethod.getParameters()) {
+      result.addParameter(
+          ClassName.get(parameterElement.asType()), parameterElement.getSimpleName().toString());
+    }
+    return result;
+  }
 
   /**
    * Treats a list of method parameters as bind variables in a query.

@@ -26,12 +26,12 @@ import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SkipGenerationException;
+import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
@@ -170,15 +170,7 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
     String helperFieldName =
         daoImplementationGenerator.addEntityHelperField(ClassName.get(entityElement));
 
-    MethodSpec.Builder overridingMethodBuilder =
-        MethodSpec.methodBuilder(methodElement.getSimpleName().toString())
-            .addAnnotation(Override.class)
-            .addModifiers(Modifier.PUBLIC)
-            .returns(ClassName.get(methodElement.getReturnType()));
-    for (VariableElement parameterElement : methodElement.getParameters()) {
-      overridingMethodBuilder.addParameter(
-          ClassName.get(parameterElement.asType()), parameterElement.getSimpleName().toString());
-    }
+    MethodSpec.Builder overridingMethodBuilder = GeneratedCodePatterns.override(methodElement);
     switch (transformation) {
       case NONE:
         overridingMethodBuilder.addStatement("return $L.get($L)", helperFieldName, parameterName);

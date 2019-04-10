@@ -24,6 +24,7 @@ import com.datastax.oss.driver.internal.mapper.processor.PartialClassGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SkipGenerationException;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
+import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -132,15 +133,8 @@ public class DaoFactoryMethodGenerator implements PartialClassGenerator {
           FieldSpec.builder(returnTypeName, fieldName, Modifier.PRIVATE, Modifier.FINAL).build());
     }
 
-    MethodSpec.Builder overridingMethodBuilder =
-        MethodSpec.methodBuilder(methodElement.getSimpleName().toString())
-            .addAnnotation(Override.class)
-            .addModifiers(Modifier.PUBLIC)
-            .returns(returnTypeName);
-    for (VariableElement parameterElement : methodElement.getParameters()) {
-      overridingMethodBuilder.addParameter(
-          ClassName.get(parameterElement.asType()), parameterElement.getSimpleName().toString());
-    }
+    MethodSpec.Builder overridingMethodBuilder = GeneratedCodePatterns.override(methodElement);
+
     if (isCachedByKeyspaceAndTable) {
       // DaoCacheKey key = new DaoCacheKey(x, y)
       // where x, y is either the name of the parameter or "(CqlIdentifier)null"
