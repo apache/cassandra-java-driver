@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.net.SocketAddress;
 
@@ -28,11 +29,13 @@ public class EmbeddedEndPoint implements EndPoint {
     this.address = channel.remoteAddress();
   }
 
+  @NonNull
   @Override
   public SocketAddress resolve() {
     throw new UnsupportedOperationException("This should not get called from unit tests");
   }
 
+  @NonNull
   @Override
   public String asMetricPrefix() {
     throw new UnsupportedOperationException("This should not get called from unit tests");
