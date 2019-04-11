@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.mapper.processor.entity;
 
 import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.data.UdtValue;
-import com.datastax.oss.driver.internal.mapper.processor.PartialClassGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.BindableHandlingSharedCode;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
@@ -31,11 +31,10 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
-import com.squareup.javapoet.TypeSpec;
 import java.util.Map;
 import javax.lang.model.element.Modifier;
 
-public class EntityHelperGetMethodGenerator implements PartialClassGenerator {
+public class EntityHelperGetMethodGenerator implements MethodGenerator {
 
   private final EntityDefinition entityDefinition;
   private final BindableHandlingSharedCode enclosingClass;
@@ -49,8 +48,7 @@ public class EntityHelperGetMethodGenerator implements PartialClassGenerator {
   }
 
   @Override
-  public void addMembers(TypeSpec.Builder classBuilder) {
-
+  public MethodSpec.Builder generate() {
     MethodSpec.Builder getBuilder =
         MethodSpec.methodBuilder("get")
             .addAnnotation(Override.class)
@@ -138,8 +136,7 @@ public class EntityHelperGetMethodGenerator implements PartialClassGenerator {
       }
     }
     getBuilder.addStatement("return returnValue");
-
-    classBuilder.addMethod(getBuilder.build());
+    return getBuilder;
   }
 
   /**
@@ -235,10 +232,5 @@ public class EntityHelperGetMethodGenerator implements PartialClassGenerator {
     } else {
       throw new AssertionError("Unsupported type " + type.asTypeName());
     }
-  }
-
-  @Override
-  public void addConstructorInstructions(MethodSpec.Builder constructorBuilder) {
-    // nothing to do
   }
 }

@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import com.datastax.oss.driver.internal.mapper.MapperContext;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
-import com.datastax.oss.driver.internal.mapper.processor.PartialClassGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
@@ -87,7 +87,7 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
   @Override
   protected JavaFile.Builder getContents() {
 
-    List<PartialClassGenerator> methodGenerators =
+    List<MethodGenerator> methodGenerators =
         ImmutableList.of(
             new EntityHelperSetMethodGenerator(entityDefinition, this, context),
             new EntityHelperGetMethodGenerator(entityDefinition, this, context),
@@ -117,9 +117,8 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
     GeneratedCodePatterns.addFinalFieldAndConstructorArgument(
         ClassName.get(MapperContext.class), "context", classContents, constructorContents);
 
-    for (PartialClassGenerator methodGenerator : methodGenerators) {
-      methodGenerator.addConstructorInstructions(constructorContents);
-      methodGenerator.addMembers(classContents);
+    for (MethodGenerator methodGenerator : methodGenerators) {
+      classContents.addMethod(methodGenerator.generate().build());
     }
 
     genericTypeConstantGenerator.generate(classContents);
