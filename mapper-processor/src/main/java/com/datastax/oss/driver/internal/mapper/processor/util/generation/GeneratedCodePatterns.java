@@ -29,9 +29,11 @@ import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeSpec;
 import java.beans.Introspector;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +70,18 @@ public class GeneratedCodePatterns {
           ClassName.get(parameterElement.asType()), parameterElement.getSimpleName().toString());
     }
     return result;
+  }
+
+  /** Adds a private final field to a class, that gets initialized through its constructor. */
+  public static void addFinalFieldAndConstructorArgument(
+      TypeName fieldType,
+      String fieldName,
+      TypeSpec.Builder classBuilder,
+      MethodSpec.Builder constructorBuilder) {
+
+    classBuilder.addField(
+        FieldSpec.builder(fieldType, fieldName, Modifier.PRIVATE, Modifier.FINAL).build());
+    constructorBuilder.addParameter(fieldType, fieldName).addStatement("this.$1L = $1L", fieldName);
   }
 
   /**
