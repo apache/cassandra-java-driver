@@ -20,8 +20,8 @@ import com.datastax.oss.driver.internal.mapper.MapperContext;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
@@ -46,7 +46,7 @@ public class MapperBuilderGenerator extends SingleFileCodeGenerator {
 
   @Override
   protected JavaFile.Builder getContents() {
-    TypeSpec.Builder contents =
+    TypeSpec.Builder classContents =
         TypeSpec.classBuilder(builderName)
             .addJavadoc(
                 "Builds an instance of {@link $T} wrapping a driver {@link $T}.",
@@ -54,25 +54,21 @@ public class MapperBuilderGenerator extends SingleFileCodeGenerator {
                 Session.class)
             .addJavadoc(JAVADOC_PARAGRAPH_SEPARATOR)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
-            .addModifiers(Modifier.PUBLIC)
-            .addField(
-                FieldSpec.builder(Session.class, "session", Modifier.PRIVATE, Modifier.FINAL)
-                    .build())
-            .addMethod(
-                MethodSpec.constructorBuilder()
-                    .addModifiers(Modifier.PUBLIC)
-                    .addParameter(Session.class, "session")
-                    .addStatement("this.session = session")
-                    .build())
-            .addMethod(
-                MethodSpec.methodBuilder("build")
-                    .addModifiers(Modifier.PUBLIC)
-                    .returns(ClassName.get(interfaceElement))
-                    .addStatement("$1T context = new $1T(session)", MapperContext.class)
-                    .addStatement(
-                        "return new $T(context)",
-                        GeneratedNames.mapperImplementation(interfaceElement))
-                    .build());
-    return JavaFile.builder(builderName.packageName(), contents.build());
+            .addModifiers(Modifier.PUBLIC);
+    MethodSpec.Builder constructorContents =
+        MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC);
+    GeneratedCodePatterns.addFinalFieldAndConstructorArgument(
+        ClassName.get(Session.class), "session", classContents, constructorContents);
+    classContents
+        .addMethod(constructorContents.build())
+        .addMethod(
+            MethodSpec.methodBuilder("build")
+                .addModifiers(Modifier.PUBLIC)
+                .returns(ClassName.get(interfaceElement))
+                .addStatement("$1T context = new $1T(session)", MapperContext.class)
+                .addStatement(
+                    "return new $T(context)", GeneratedNames.mapperImplementation(interfaceElement))
+                .build());
+    return JavaFile.builder(builderName.packageName(), classContents.build());
   }
 }

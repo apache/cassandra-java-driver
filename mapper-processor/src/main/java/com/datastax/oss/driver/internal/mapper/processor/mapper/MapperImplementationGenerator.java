@@ -22,8 +22,8 @@ import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.SkipGenerationException;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
+import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
@@ -83,16 +83,13 @@ public class MapperImplementationGenerator extends SingleFileCodeGenerator {
             .addJavadoc(JAVADOC_PARAGRAPH_SEPARATOR)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
             .addModifiers(Modifier.PUBLIC)
-            .addSuperinterface(ClassName.get(interfaceElement))
-            .addField(
-                FieldSpec.builder(MapperContext.class, "context", Modifier.PRIVATE, Modifier.FINAL)
-                    .build());
+            .addSuperinterface(ClassName.get(interfaceElement));
 
     MethodSpec.Builder constructorContents =
-        MethodSpec.constructorBuilder()
-            .addModifiers(Modifier.PUBLIC)
-            .addParameter(MapperContext.class, "context")
-            .addStatement("this.context = context");
+        MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC);
+
+    GeneratedCodePatterns.addFinalFieldAndConstructorArgument(
+        ClassName.get(MapperContext.class), "context", classContents, constructorContents);
 
     for (PartialClassGenerator daoFactoryMethod : daoFactoryMethods) {
       daoFactoryMethod.addConstructorInstructions(constructorContents);
