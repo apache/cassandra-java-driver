@@ -24,6 +24,7 @@ import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.BindableHandlingSharedCode;
+import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
@@ -100,9 +101,6 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
                 ParameterizedTypeName.get(
                     ClassName.get(EntityHelper.class), ClassName.get(classElement)))
             .addField(
-                FieldSpec.builder(MapperContext.class, "context", Modifier.PRIVATE, Modifier.FINAL)
-                    .build())
-            .addField(
                 FieldSpec.builder(
                         CqlIdentifier.class,
                         "DEFAULT_TABLE_ID",
@@ -114,10 +112,10 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
                     .build());
 
     MethodSpec.Builder constructorContents =
-        MethodSpec.constructorBuilder()
-            .addModifiers(Modifier.PUBLIC)
-            .addParameter(MapperContext.class, "context")
-            .addStatement("this.context = context");
+        MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC);
+
+    GeneratedCodePatterns.addFinalFieldAndConstructorArgument(
+        ClassName.get(MapperContext.class), "context", classContents, constructorContents);
 
     for (PartialClassGenerator methodGenerator : methodGenerators) {
       methodGenerator.addConstructorInstructions(constructorContents);
