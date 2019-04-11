@@ -18,46 +18,42 @@ package com.datastax.oss.driver.internal.mapper.processor.mapper;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.DaoTable;
+import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.internal.mapper.DaoCacheKey;
-import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
-import com.datastax.oss.driver.internal.mapper.processor.PartialClassGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SkipGenerationException;
-import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
-import com.squareup.javapoet.TypeSpec;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
-public class DaoFactoryMethodGenerator implements PartialClassGenerator {
+/**
+ * Generates the implementation of a DAO-producing method in a {@link Mapper}-annotated interface.
+ */
+public class DaoFactoryMethodGenerator implements MethodGenerator {
 
   private final ExecutableElement methodElement;
   private final CharSequence keyspaceArgumentName;
   private final CharSequence tableArgumentName;
   private final ClassName daoImplementationName;
-  private final String fieldName;
   private final boolean isAsync;
+  private final MapperImplementationSharedCode enclosingClass;
   private final boolean isCachedByKeyspaceAndTable;
 
   public DaoFactoryMethodGenerator(
       ExecutableElement methodElement,
       ClassName daoImplementationName,
       boolean isAsync,
-      NameIndex nameIndex,
+      MapperImplementationSharedCode enclosingClass,
       ProcessorContext context) {
     this.methodElement = methodElement;
     this.daoImplementationName = daoImplementationName;
     this.isAsync = isAsync;
-    fieldName = nameIndex.uniqueField(GeneratedNames.mapperDaoCacheField(methodElement));
+    this.enclosingClass = enclosingClass;
 
     VariableElement tmpKeyspace = null;
     VariableElement tmpTable = null;
@@ -113,25 +109,14 @@ public class DaoFactoryMethodGenerator implements PartialClassGenerator {
   }
 
   @Override
-  public void addMembers(TypeSpec.Builder classBuilder) {
+  public MethodSpec.Builder generate() {
     TypeName returnTypeName = ClassName.get(methodElement.getReturnType());
-
-    if (isCachedByKeyspaceAndTable) {
-      classBuilder.addField(
-          FieldSpec.builder(
-                  ParameterizedTypeName.get(
-                      ClassName.get(ConcurrentMap.class),
-                      TypeName.get(DaoCacheKey.class),
-                      returnTypeName),
-                  fieldName,
-                  Modifier.PRIVATE,
-                  Modifier.FINAL)
-              .initializer("new $T<>()", ConcurrentHashMap.class)
-              .build());
-    } else {
-      classBuilder.addField(
-          FieldSpec.builder(returnTypeName, fieldName, Modifier.PRIVATE, Modifier.FINAL).build());
-    }
+    String suggestedFieldName = methodElement.getSimpleName() + "Cache";
+    String fieldName =
+        isCachedByKeyspaceAndTable
+            ? enclosingClass.addDaoMapField(suggestedFieldName, returnTypeName)
+            : enclosingClass.addDaoSimpleField(
+                suggestedFieldName, returnTypeName, daoImplementationName, isAsync);
 
     MethodSpec.Builder overridingMethodBuilder = GeneratedCodePatterns.override(methodElement);
 
@@ -161,17 +146,6 @@ public class DaoFactoryMethodGenerator implements PartialClassGenerator {
     } else {
       overridingMethodBuilder.addStatement("return $L", fieldName);
     }
-    classBuilder.addMethod(overridingMethodBuilder.build());
-  }
-
-  @Override
-  public void addConstructorInstructions(MethodSpec.Builder constructorBuilder) {
-    if (!isCachedByKeyspaceAndTable) {
-      constructorBuilder.addStatement(
-          "this.$L = $T.$L(context)",
-          fieldName,
-          daoImplementationName,
-          isAsync ? "initAsync" : "init");
-    }
+    return overridingMethodBuilder;
   }
 }
