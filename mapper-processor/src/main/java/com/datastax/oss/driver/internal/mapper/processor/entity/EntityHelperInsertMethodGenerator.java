@@ -19,13 +19,12 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.insert.InsertInto;
-import com.datastax.oss.driver.internal.mapper.processor.PartialClassGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeSpec;
 import javax.lang.model.element.Modifier;
 
-public class EntityHelperInsertMethodGenerator implements PartialClassGenerator {
+public class EntityHelperInsertMethodGenerator implements MethodGenerator {
 
   private final EntityDefinition entityDefinition;
 
@@ -37,8 +36,7 @@ public class EntityHelperInsertMethodGenerator implements PartialClassGenerator 
   }
 
   @Override
-  public void addMembers(TypeSpec.Builder classBuilder) {
-
+  public MethodSpec.Builder generate() {
     MethodSpec.Builder insertBuilder =
         MethodSpec.methodBuilder("insert")
             .addAnnotation(Override.class)
@@ -62,12 +60,6 @@ public class EntityHelperInsertMethodGenerator implements PartialClassGenerator 
           "\n.value($1S, $2T.bindMarker($1S))", property.getCqlName(), QueryBuilder.class);
     }
     insertBuilder.addCode("$];\n");
-
-    classBuilder.addMethod(insertBuilder.build());
-  }
-
-  @Override
-  public void addConstructorInstructions(MethodSpec.Builder constructorBuilder) {
-    // nothing to do
+    return insertBuilder;
   }
 }

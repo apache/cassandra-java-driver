@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.mapper.processor;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
-import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
+import com.datastax.oss.driver.internal.mapper.processor.mapper.MapperImplementationSharedCode;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
@@ -38,13 +38,13 @@ public interface CodeGeneratorFactory {
   /**
    * The implementation of a {@link Mapper}-annotated interface.
    *
-   * <p>By default, this calls {@link #newDaoMethodFactory(ExecutableElement, NameIndex)} for each
-   * DAO factory method.
+   * <p>By default, this calls {@link #newDaoMethodFactory} for each DAO factory method.
    */
   CodeGenerator newMapperImplementation(TypeElement interfaceElement);
 
   /** A method of a {@link Mapper}-annotated interface that produces DAO instances. */
-  PartialClassGenerator newDaoMethodFactory(ExecutableElement methodElement, NameIndex nameIndex);
+  MethodGenerator newDaoMethodFactory(
+      ExecutableElement methodElement, MapperImplementationSharedCode enclosingClass);
 
   /** The builder associated to a {@link Mapper}-annotated interface. */
   CodeGenerator newMapperBuilder(TypeElement interfaceElement);
