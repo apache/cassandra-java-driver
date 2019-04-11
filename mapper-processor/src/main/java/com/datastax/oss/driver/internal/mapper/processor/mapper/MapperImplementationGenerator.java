@@ -15,35 +15,63 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.mapper;
 
+import com.datastax.oss.driver.internal.mapper.DaoCacheKey;
 import com.datastax.oss.driver.internal.mapper.MapperContext;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
-import com.datastax.oss.driver.internal.mapper.processor.PartialClassGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.SkipGenerationException;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
-public class MapperImplementationGenerator extends SingleFileCodeGenerator {
+public class MapperImplementationGenerator extends SingleFileCodeGenerator
+    implements MapperImplementationSharedCode {
 
-  private TypeElement interfaceElement;
+  private final TypeElement interfaceElement;
   private final ClassName className;
+  private final NameIndex nameIndex = new NameIndex();
+  private final List<DaoSimpleField> daoSimpleFields = new ArrayList<>();
+  private final List<DaoMapField> daoMapFields = new ArrayList<>();
 
   public MapperImplementationGenerator(TypeElement interfaceElement, ProcessorContext context) {
     super(context);
     this.interfaceElement = interfaceElement;
     className = GeneratedNames.mapperImplementation(interfaceElement);
+  }
+
+  @Override
+  public String addDaoSimpleField(
+      String suggestedFieldName,
+      TypeName fieldType,
+      TypeName daoImplementationType,
+      boolean isAsync) {
+    String fieldName = nameIndex.uniqueField(suggestedFieldName);
+    daoSimpleFields.add(new DaoSimpleField(fieldName, fieldType, daoImplementationType, isAsync));
+    return fieldName;
+  }
+
+  @Override
+  public String addDaoMapField(String suggestedFieldName, TypeName mapValueType) {
+    String fieldName = nameIndex.uniqueField(suggestedFieldName);
+    daoMapFields.add(new DaoMapField(fieldName, mapValueType));
+    return fieldName;
   }
 
   @Override
@@ -53,18 +81,16 @@ public class MapperImplementationGenerator extends SingleFileCodeGenerator {
 
   @Override
   protected JavaFile.Builder getContents() {
-    NameIndex nameIndex = new NameIndex();
-
     // Find all interface methods that return mappers
-    List<PartialClassGenerator> daoFactoryMethods = new ArrayList<>();
+    List<MethodSpec.Builder> daoFactoryMethods = new ArrayList<>();
     for (Element child : interfaceElement.getEnclosedElements()) {
       if (child.getKind() == ElementKind.METHOD) {
         ExecutableElement methodElement = (ExecutableElement) child;
         try {
-          PartialClassGenerator generator =
-              context.getCodeGeneratorFactory().newDaoMethodFactory(methodElement, nameIndex);
+          MethodGenerator generator =
+              context.getCodeGeneratorFactory().newDaoMethodFactory(methodElement, this);
           if (generator != null) {
-            daoFactoryMethods.add(generator);
+            daoFactoryMethods.add(generator.generate());
           } else {
             context
                 .getMessager()
@@ -91,13 +117,59 @@ public class MapperImplementationGenerator extends SingleFileCodeGenerator {
     GeneratedCodePatterns.addFinalFieldAndConstructorArgument(
         ClassName.get(MapperContext.class), "context", classContents, constructorContents);
 
-    for (PartialClassGenerator daoFactoryMethod : daoFactoryMethods) {
-      daoFactoryMethod.addConstructorInstructions(constructorContents);
-      daoFactoryMethod.addMembers(classContents);
+    // Add all the fields that were requested by DAO method generators:
+    for (DaoSimpleField field : daoSimpleFields) {
+      classContents.addField(
+          FieldSpec.builder(field.type, field.name, Modifier.PRIVATE, Modifier.FINAL).build());
+      constructorContents.addStatement(
+          "this.$L = $T.$L(context)",
+          field.name,
+          field.daoImplementationType,
+          field.isAsync ? "initAsync" : "init");
     }
-
+    for (DaoMapField field : daoMapFields) {
+      classContents.addField(
+          FieldSpec.builder(
+                  ParameterizedTypeName.get(
+                      ClassName.get(ConcurrentMap.class),
+                      TypeName.get(DaoCacheKey.class),
+                      field.mapValueType),
+                  field.name,
+                  Modifier.PRIVATE,
+                  Modifier.FINAL)
+              .initializer("new $T<>()", ConcurrentHashMap.class)
+              .build());
+    }
     classContents.addMethod(constructorContents.build());
 
+    for (MethodSpec.Builder method : daoFactoryMethods) {
+      classContents.addMethod(method.build());
+    }
+
     return JavaFile.builder(className.packageName(), classContents.build());
+  }
+
+  private static class DaoSimpleField {
+    final String name;
+    final TypeName type;
+    final TypeName daoImplementationType;
+    final boolean isAsync;
+
+    DaoSimpleField(String name, TypeName type, TypeName daoImplementationType, boolean isAsync) {
+      this.name = name;
+      this.type = type;
+      this.daoImplementationType = daoImplementationType;
+      this.isAsync = isAsync;
+    }
+  }
+
+  private static class DaoMapField {
+    final String name;
+    final TypeName mapValueType;
+
+    DaoMapField(String name, TypeName mapValueType) {
+      this.name = name;
+      this.mapValueType = mapValueType;
+    }
   }
 }

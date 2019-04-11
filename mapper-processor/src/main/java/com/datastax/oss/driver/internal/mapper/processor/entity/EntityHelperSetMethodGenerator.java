@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
 import com.datastax.oss.driver.api.core.data.SettableByName;
-import com.datastax.oss.driver.internal.mapper.processor.PartialClassGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.BindableHandlingSharedCode;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
@@ -25,11 +25,10 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
-import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import javax.lang.model.element.Modifier;
 
-public class EntityHelperSetMethodGenerator implements PartialClassGenerator {
+public class EntityHelperSetMethodGenerator implements MethodGenerator {
 
   private final EntityDefinition entityDefinition;
   private final BindableHandlingSharedCode enclosingClass;
@@ -45,7 +44,7 @@ public class EntityHelperSetMethodGenerator implements PartialClassGenerator {
   }
 
   @Override
-  public void addMembers(TypeSpec.Builder classBuilder) {
+  public MethodSpec.Builder generate() {
 
     // TODO add an ignore mechanism? this fails if a property is missing on the target.
     // TODO different strategies for null values? (null vs unset)
@@ -75,11 +74,6 @@ public class EntityHelperSetMethodGenerator implements PartialClassGenerator {
           enclosingClass);
     }
     injectBuilder.addCode("\n").addStatement("return target");
-    classBuilder.addMethod(injectBuilder.build());
-  }
-
-  @Override
-  public void addConstructorInstructions(MethodSpec.Builder constructorBuilder) {
-    // nothing to do
+    return injectBuilder;
   }
 }
