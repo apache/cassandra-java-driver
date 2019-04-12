@@ -2,6 +2,9 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.0.2 (in progress)
+
+
 ### 4.0.1
 
 - [new feature] JAVA-2201: Expose a public API for programmatic config
