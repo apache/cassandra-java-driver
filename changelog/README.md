@@ -4,6 +4,7 @@
 
 ### 4.0.2 (in progress)
 
+- [bug] JAVA-2226: Support IPv6 contact points in the configuration
 
 ### 4.0.1
 

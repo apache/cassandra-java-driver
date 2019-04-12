@@ -17,7 +17,6 @@ package com.datastax.oss.driver.internal.core;
 
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
-import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import java.net.InetAddress;
@@ -52,20 +51,19 @@ public class ContactPoints {
   }
 
   private static Set<InetSocketAddress> extract(String spec, boolean resolve) {
-    List<String> hostAndPort = Splitter.on(":").splitToList(spec);
-    if (hostAndPort.size() != 2) {
+    int separator = spec.lastIndexOf(':');
+    if (separator < 0) {
       LOG.warn("Ignoring invalid contact point {} (expecting host:port)", spec);
       return Collections.emptySet();
     }
-    String host = hostAndPort.get(0);
+
+    String host = spec.substring(0, separator);
+    String portSpec = spec.substring(separator + 1);
     int port;
     try {
-      port = Integer.parseInt(hostAndPort.get(1));
+      port = Integer.parseInt(portSpec);
     } catch (NumberFormatException e) {
-      LOG.warn(
-          "Ignoring invalid contact point {} (expecting a number, got {})",
-          spec,
-          hostAndPort.get(1));
+      LOG.warn("Ignoring invalid contact point {} (expecting a number, got {})", spec, portSpec);
       return Collections.emptySet();
     }
     if (!resolve) {
