@@ -34,14 +34,16 @@ public class GeneratedNames {
 
   /** Variant for {@link #entityHelper(TypeElement)} when only the type name is known. */
   public static ClassName entityHelper(ClassName entityClassName) {
-    return entityClassName.peerClass(entityClassName.simpleName() + "_Helper");
+    return peerClass(entityClassName, "_Helper");
   }
 
   /** The builder for a {@link Mapper}-annotated interface. */
   public static ClassName mapperBuilder(TypeElement mapperInterface) {
     String custom = mapperInterface.getAnnotation(Mapper.class).builderName();
     if (custom.isEmpty()) {
-      return ClassName.get(mapperInterface).peerClass(mapperInterface.getSimpleName() + "Builder");
+      // Note that the builder is referenced in client code, so generate a "normal" name (no
+      // underscores).
+      return peerClass(mapperInterface, "Builder");
     } else {
       int i = custom.lastIndexOf('.');
       return ClassName.get(custom.substring(0, i), custom.substring(i + 1));
@@ -50,11 +52,28 @@ public class GeneratedNames {
 
   /** The implementation of a {@link Mapper}-annotated interface. */
   public static ClassName mapperImplementation(TypeElement mapperInterface) {
-    return ClassName.get(mapperInterface).peerClass(mapperInterface.getSimpleName() + "_Impl");
+    return peerClass(mapperInterface, "_Impl");
   }
 
   /** The implementation of a {@link Dao}-annotated interface. */
   public static ClassName daoImplementation(TypeElement daoInterface) {
-    return ClassName.get(daoInterface).peerClass(daoInterface.getSimpleName() + "_Impl");
+    return peerClass(daoInterface, "_Impl");
+  }
+
+  // Generates a non-nested peer class. If the base class is nested, the names of all enclosing
+  // classes are prepended to ensure uniqueness. For example:
+  // com.datastax.Foo.Bar.Baz => com.datastax.Foo_Bar_BazImpl
+  private static ClassName peerClass(ClassName base, String suffix) {
+    ClassName topLevel = base;
+    StringBuilder prefix = new StringBuilder();
+    while (topLevel.enclosingClassName() != null) {
+      topLevel = topLevel.enclosingClassName();
+      prefix.insert(0, '_').insert(0, topLevel.simpleName());
+    }
+    return topLevel.peerClass(prefix.toString() + base.simpleName() + suffix);
+  }
+
+  private static ClassName peerClass(TypeElement element, String suffix) {
+    return peerClass(ClassName.get(element), suffix);
   }
 }
