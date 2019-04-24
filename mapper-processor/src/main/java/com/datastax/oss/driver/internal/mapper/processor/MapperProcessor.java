@@ -31,7 +31,6 @@ import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -40,7 +39,6 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 @AutoService(Processor.class)
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class MapperProcessor extends AbstractProcessor {
 
   private static final String INDENT_AMOUNT_OPTION = "com.datastax.oss.driver.mapper.indent";
@@ -122,6 +120,11 @@ public class MapperProcessor extends AbstractProcessor {
   @Override
   public Set<String> getSupportedOptions() {
     return ImmutableSet.of(INDENT_AMOUNT_OPTION, INDENT_WITH_TABS_OPTION);
+  }
+
+  @Override
+  public SourceVersion getSupportedSourceVersion() {
+    return SourceVersion.latest();
   }
 
   private String computeIndent(Map<String, String> options) {
