@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2018 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -59,5 +65,10 @@ public enum DefaultProtocolVersion implements ProtocolVersion {
   @Override
   public boolean isBeta() {
     return beta;
+  }
+
+  @Override
+  public boolean supportsShardingInfo() {
+    return code != ProtocolConstants.Version.V3;
   }
 }

@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2018 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.api.core;
 
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
@@ -55,4 +61,7 @@ public interface ProtocolVersion {
    * application, as beta features may break at any point.
    */
   boolean isBeta();
+
+  /** Whether sharding info is supported in this protocol version */
+  boolean supportsShardingInfo();
 }
