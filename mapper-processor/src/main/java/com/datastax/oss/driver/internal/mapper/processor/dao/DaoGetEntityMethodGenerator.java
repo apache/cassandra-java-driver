@@ -72,7 +72,7 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
       context
           .getMessager()
           .error(
-              methodElement, "%s method must have one parameter", GetEntity.class.getSimpleName());
+              methodElement, "%s methods must have one parameter", GetEntity.class.getSimpleName());
       throw new SkipGenerationException();
     }
     VariableElement parameterElement = methodElement.getParameters().get(0);
@@ -110,8 +110,7 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
               .getMessager()
               .error(
                   methodElement,
-                  "%s method can only return %s if its argument is %s",
-                  GetEntity.class.getSimpleName(),
+                  "Invalid return type. Can only return %s if the argument is %s",
                   PagingIterable.class.getSimpleName(),
                   ResultSet.class.getSimpleName());
           throw new SkipGenerationException();
@@ -124,8 +123,7 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
               .getMessager()
               .error(
                   methodElement,
-                  "%s method can only return %s if its argument is %s",
-                  GetEntity.class.getSimpleName(),
+                  "Invalid return type. Can only return %s if the argument is %s",
                   MappedAsyncPagingIterable.class.getSimpleName(),
                   AsyncResultSet.class.getSimpleName());
           throw new SkipGenerationException();

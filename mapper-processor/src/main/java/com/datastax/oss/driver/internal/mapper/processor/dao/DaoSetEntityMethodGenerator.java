@@ -107,7 +107,7 @@ public class DaoSetEntityMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              "Invalid return type, should be the same as '%s' (%s)",
+              "Invalid return type, should be either void or the same as '%s' (%s)",
               targetParameterName,
               targetParameterType);
     }
