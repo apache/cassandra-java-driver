@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.internal.mapper.processor.mapper.MapperImplementationSharedCode;
+import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
@@ -38,12 +39,19 @@ public interface CodeGeneratorFactory {
   /**
    * The implementation of a {@link Mapper}-annotated interface.
    *
-   * <p>By default, this calls {@link #newDaoMethodFactory} for each DAO factory method.
+   * <p>The default code factory calls {@link #newMapperImplementationMethod} for each non-static,
+   * non-default method, but this is not a hard requirement.
    */
   CodeGenerator newMapperImplementation(TypeElement interfaceElement);
 
-  /** A method of a {@link Mapper}-annotated interface that produces DAO instances. */
-  MethodGenerator newDaoMethodFactory(
+  /**
+   * A method in the implementation of a {@link Mapper}-annotated interface.
+   *
+   * @return empty if the processor can't determine what to generate. This will translate as a
+   *     compile-time error.
+   * @see #newMapperImplementation(TypeElement)
+   */
+  Optional<MethodGenerator> newMapperImplementationMethod(
       ExecutableElement methodElement, MapperImplementationSharedCode enclosingClass);
 
   /** The builder associated to a {@link Mapper}-annotated interface. */

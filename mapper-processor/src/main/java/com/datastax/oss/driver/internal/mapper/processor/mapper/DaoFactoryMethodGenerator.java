@@ -16,10 +16,12 @@
 package com.datastax.oss.driver.internal.mapper.processor.mapper;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.DaoTable;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.internal.mapper.DaoCacheKey;
+import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SkipGenerationException;
@@ -27,8 +29,12 @@ import com.datastax.oss.driver.internal.mapper.processor.util.generation.Generat
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 /**
@@ -37,31 +43,68 @@ import javax.lang.model.type.TypeMirror;
 public class DaoFactoryMethodGenerator implements MethodGenerator {
 
   private final ExecutableElement methodElement;
-  private final CharSequence keyspaceArgumentName;
-  private final CharSequence tableArgumentName;
-  private final ClassName daoImplementationName;
-  private final boolean isAsync;
   private final MapperImplementationSharedCode enclosingClass;
-  private final boolean isCachedByKeyspaceAndTable;
+  private final ProcessorContext context;
 
   public DaoFactoryMethodGenerator(
       ExecutableElement methodElement,
-      ClassName daoImplementationName,
-      boolean isAsync,
       MapperImplementationSharedCode enclosingClass,
       ProcessorContext context) {
     this.methodElement = methodElement;
-    this.daoImplementationName = daoImplementationName;
-    this.isAsync = isAsync;
     this.enclosingClass = enclosingClass;
+    this.context = context;
+  }
 
-    VariableElement tmpKeyspace = null;
-    VariableElement tmpTable = null;
+  @Override
+  public MethodSpec.Builder generate() {
+
+    // Validate the return type, which tells us what DAO to build, and whether the method should be
+    // async.
+    ClassName daoImplementationName = null;
+    boolean isAsync = false;
+    TypeMirror returnTypeMirror = methodElement.getReturnType();
+    if (returnTypeMirror.getKind() == TypeKind.DECLARED) {
+      DeclaredType declaredReturnType = (DeclaredType) returnTypeMirror;
+      if (declaredReturnType.getTypeArguments().isEmpty()) {
+        Element returnTypeElement = declaredReturnType.asElement();
+        if (returnTypeElement.getAnnotation(Dao.class) != null) {
+          daoImplementationName =
+              GeneratedNames.daoImplementation(((TypeElement) returnTypeElement));
+        }
+      } else if (context.getClassUtils().isFuture(declaredReturnType)) {
+        TypeMirror typeArgument = declaredReturnType.getTypeArguments().get(0);
+        if (typeArgument.getKind() == TypeKind.DECLARED) {
+          Element typeArgumentElement = ((DeclaredType) typeArgument).asElement();
+          if (typeArgumentElement.getAnnotation(Dao.class) != null) {
+            daoImplementationName =
+                GeneratedNames.daoImplementation(((TypeElement) typeArgumentElement));
+            isAsync = true;
+          }
+        }
+      }
+    }
+    if (daoImplementationName == null) {
+      context
+          .getMessager()
+          .error(
+              methodElement,
+              "Invalid return type, expecting a %s-annotated interface, or future thereof",
+              Dao.class.getSimpleName());
+      throw new SkipGenerationException();
+    }
+
+    // Validate the arguments
+    String keyspaceArgumentName = null;
+    String tableArgumentName = null;
     for (VariableElement parameterElement : methodElement.getParameters()) {
       if (parameterElement.getAnnotation(DaoKeyspace.class) != null) {
-        tmpKeyspace = validateParameter(parameterElement, tmpKeyspace, DaoKeyspace.class, context);
+        keyspaceArgumentName =
+            validateKeyspaceOrTableParameter(
+                parameterElement, keyspaceArgumentName, DaoKeyspace.class, context);
       } else if (parameterElement.getAnnotation(DaoTable.class) != null) {
-        tmpTable = validateParameter(parameterElement, tmpTable, DaoTable.class, context);
+        tableArgumentName =
+            validateKeyspaceOrTableParameter(
+                parameterElement, tableArgumentName, DaoTable.class, context);
       } else {
         context
             .getMessager()
@@ -73,43 +116,9 @@ public class DaoFactoryMethodGenerator implements MethodGenerator {
         throw new SkipGenerationException();
       }
     }
-    isCachedByKeyspaceAndTable = (tmpKeyspace != null || tmpTable != null);
-    keyspaceArgumentName = (tmpKeyspace == null) ? null : tmpKeyspace.getSimpleName();
-    tableArgumentName = (tmpTable == null) ? null : tmpTable.getSimpleName();
-  }
+    boolean isCachedByKeyspaceAndTable =
+        (keyspaceArgumentName != null || tableArgumentName != null);
 
-  private VariableElement validateParameter(
-      VariableElement candidate,
-      VariableElement previous,
-      Class<?> annotation,
-      ProcessorContext context) {
-    if (previous != null) {
-      context
-          .getMessager()
-          .error(
-              candidate,
-              "Only one parameter can be annotated with @%s",
-              annotation.getSimpleName());
-      throw new SkipGenerationException();
-    }
-    TypeMirror type = candidate.asType();
-    if (!context.getClassUtils().isSame(type, String.class)
-        && !context.getClassUtils().isSame(type, CqlIdentifier.class)) {
-      context
-          .getMessager()
-          .error(
-              candidate,
-              "@%s-annotated parameter must be of type %s or %s",
-              annotation.getSimpleName(),
-              String.class.getSimpleName(),
-              CqlIdentifier.class.getSimpleName());
-      throw new SkipGenerationException();
-    }
-    return candidate;
-  }
-
-  @Override
-  public MethodSpec.Builder generate() {
     TypeName returnTypeName = ClassName.get(methodElement.getReturnType());
     String suggestedFieldName = methodElement.getSimpleName() + "Cache";
     String fieldName =
@@ -147,5 +156,32 @@ public class DaoFactoryMethodGenerator implements MethodGenerator {
       overridingMethodBuilder.addStatement("return $L", fieldName);
     }
     return overridingMethodBuilder;
+  }
+
+  private String validateKeyspaceOrTableParameter(
+      VariableElement candidate, String previous, Class<?> annotation, ProcessorContext context) {
+    if (previous != null) {
+      context
+          .getMessager()
+          .error(
+              candidate,
+              "Only one parameter can be annotated with @%s",
+              annotation.getSimpleName());
+      throw new SkipGenerationException();
+    }
+    TypeMirror type = candidate.asType();
+    if (!context.getClassUtils().isSame(type, String.class)
+        && !context.getClassUtils().isSame(type, CqlIdentifier.class)) {
+      context
+          .getMessager()
+          .error(
+              candidate,
+              "@%s-annotated parameter must be of type %s or %s",
+              annotation.getSimpleName(),
+              String.class.getSimpleName(),
+              CqlIdentifier.class.getSimpleName());
+      throw new SkipGenerationException();
+    }
+    return candidate.getSimpleName().toString();
   }
 }

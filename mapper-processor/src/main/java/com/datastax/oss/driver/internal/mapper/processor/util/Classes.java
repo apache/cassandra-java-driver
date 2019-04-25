@@ -20,6 +20,8 @@ import com.datastax.oss.driver.api.core.data.SettableByName;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -43,6 +45,8 @@ public class Classes {
   private final TypeElement listElement;
   private final TypeElement setElement;
   private final TypeElement mapElement;
+  private final TypeElement completionStageElement;
+  private final TypeElement completableFutureElement;
 
   public Classes(Types typeUtils, Elements elementUtils) {
     this.typeUtils = typeUtils;
@@ -55,6 +59,10 @@ public class Classes {
     this.listElement = elementUtils.getTypeElement(List.class.getCanonicalName());
     this.setElement = elementUtils.getTypeElement(Set.class.getCanonicalName());
     this.mapElement = elementUtils.getTypeElement(Map.class.getCanonicalName());
+    this.completionStageElement =
+        elementUtils.getTypeElement(CompletionStage.class.getCanonicalName());
+    this.completableFutureElement =
+        elementUtils.getTypeElement(CompletableFuture.class.getCanonicalName());
   }
 
   /** Whether an element is the {@link TypeElement} for the given class. */
@@ -93,5 +101,14 @@ public class Classes {
   /** Whether a type mirror is a parameterized {@code java.util.Map}. */
   public boolean isMap(DeclaredType declaredType) {
     return declaredType.asElement().equals(mapElement);
+  }
+
+  /**
+   * Whether a type mirror is a parameterized Java 8 future ({@code CompletionStage or
+   * CompletableFuture}.
+   */
+  public boolean isFuture(DeclaredType declaredType) {
+    return declaredType.asElement().equals(completionStageElement)
+        || declaredType.asElement().equals(completableFutureElement);
   }
 }
