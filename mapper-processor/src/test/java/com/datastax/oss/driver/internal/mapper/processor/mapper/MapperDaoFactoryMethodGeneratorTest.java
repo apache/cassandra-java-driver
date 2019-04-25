@@ -34,7 +34,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DataProviderRunner.class)
-public class DaoFactoryMethodGeneratorTest extends MapperMethodGeneratorTest {
+public class MapperDaoFactoryMethodGeneratorTest extends MapperMethodGeneratorTest {
 
   @Test
   @Override
