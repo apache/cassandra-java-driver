@@ -42,9 +42,6 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
   private final ExecutableElement methodElement;
   private final DaoImplementationGenerator enclosingClass;
   private final ProcessorContext context;
-  private final TypeElement entityElement;
-  private final boolean isVoid;
-  private final boolean isAsync;
 
   public DaoInsertMethodGenerator(
       ExecutableElement methodElement,
@@ -53,14 +50,14 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
     this.methodElement = methodElement;
     this.enclosingClass = enclosingClass;
     this.context = context;
+  }
 
-    // We're accepting:
-    // Parameters:
+  @Override
+  public MethodSpec.Builder generate() {
+
+    // Validate the parameters:
     // - the first one must be the entity.
     // - the others are completely free-form (they'll be used as additional bind variables)
-    // Return type:
-    // - void, CompletionStage/CompletableFuture<Void>
-    // - the same entity, or a future thereof (for INSERT... IF NOT EXISTS)
     if (methodElement.getParameters().isEmpty()) {
       context
           .getMessager()
@@ -71,7 +68,7 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
       throw new SkipGenerationException();
     }
     VariableElement firstParameter = methodElement.getParameters().get(0);
-    entityElement = extractEntityElement(firstParameter);
+    TypeElement entityElement = extractEntityElement(firstParameter);
     if (entityElement == null) {
       context
           .getMessager()
@@ -82,31 +79,34 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
       throw new SkipGenerationException();
     }
 
+    // Validate the return type:
+    // - void, CompletionStage/CompletableFuture<Void>
+    // - the same entity, or a future thereof (for INSERT... IF NOT EXISTS)
+    Boolean isVoid = null;
+    Boolean isAsync = null;
     TypeMirror returnTypeMirror = methodElement.getReturnType();
-    Boolean tmpVoid = null;
-    Boolean tmpAsync = null;
     if (returnTypeMirror.getKind() == TypeKind.VOID) {
-      tmpVoid = true;
-      tmpAsync = false;
+      isVoid = true;
+      isAsync = false;
     } else if (returnTypeMirror.getKind() == TypeKind.DECLARED) {
       DeclaredType declaredReturnType = (DeclaredType) returnTypeMirror;
       if (context.getClassUtils().isFuture(declaredReturnType)) {
         TypeMirror typeArgumentMirror = declaredReturnType.getTypeArguments().get(0);
         if ((typeArgumentMirror.getKind() == TypeKind.DECLARED)) {
           if (context.getClassUtils().isSame(typeArgumentMirror, Void.class)) {
-            tmpVoid = true;
-            tmpAsync = true;
+            isVoid = true;
+            isAsync = true;
           } else if (entityElement.equals(((DeclaredType) typeArgumentMirror).asElement())) {
-            tmpVoid = false;
-            tmpAsync = true;
+            isVoid = false;
+            isAsync = true;
           }
         }
       } else if (entityElement.equals(declaredReturnType.asElement())) {
-        tmpVoid = false;
-        tmpAsync = false;
+        isVoid = false;
+        isAsync = false;
       }
     }
-    if (tmpVoid == null) {
+    if (isVoid == null) {
       context
           .getMessager()
           .error(
@@ -116,28 +116,9 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
               Insert.class.getSimpleName());
       throw new SkipGenerationException();
     }
-    this.isVoid = tmpVoid;
-    this.isAsync = tmpAsync;
-  }
 
-  private TypeElement extractEntityElement(VariableElement parameter) {
-    TypeMirror mirror = parameter.asType();
-    if (mirror.getKind() != TypeKind.DECLARED) {
-      return null;
-    }
-    Element element = ((DeclaredType) mirror).asElement();
-    if (element.getKind() != ElementKind.CLASS) {
-      return null;
-    }
-    TypeElement typeElement = (TypeElement) element;
-    if (typeElement.getAnnotation(Entity.class) == null) {
-      return null;
-    }
-    return typeElement;
-  }
 
-  @Override
-  public MethodSpec.Builder generate() {
+    // Generate the method:
     String helperFieldName = enclosingClass.addEntityHelperField(ClassName.get(entityElement));
     String statementName =
         enclosingClass.addPreparedStatement(
@@ -190,6 +171,22 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
       }
     }
     return insertBuilder;
+  }
+
+  private TypeElement extractEntityElement(VariableElement parameter) {
+    TypeMirror mirror = parameter.asType();
+    if (mirror.getKind() != TypeKind.DECLARED) {
+      return null;
+    }
+    Element element = ((DeclaredType) mirror).asElement();
+    if (element.getKind() != ElementKind.CLASS) {
+      return null;
+    }
+    TypeElement typeElement = (TypeElement) element;
+    if (typeElement.getAnnotation(Entity.class) == null) {
+      return null;
+    }
+    return typeElement;
   }
 
   private void generatePrepareRequest(
