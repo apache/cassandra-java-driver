@@ -21,7 +21,6 @@ import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
-import com.datastax.oss.driver.internal.mapper.processor.SkipGenerationException;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
@@ -83,24 +82,6 @@ public class MapperImplementationGenerator extends SingleFileCodeGenerator
 
   @Override
   protected JavaFile.Builder getContents() {
-    List<MethodGenerator> methodGenerators = new ArrayList<>();
-    for (Element child : interfaceElement.getEnclosedElements()) {
-      if (child.getKind() == ElementKind.METHOD) {
-        ExecutableElement methodElement = (ExecutableElement) child;
-        Set<Modifier> modifiers = methodElement.getModifiers();
-        if (!modifiers.contains(Modifier.STATIC) && !modifiers.contains(Modifier.DEFAULT)) {
-          Optional<MethodGenerator> maybeGenerator =
-              context.getCodeGeneratorFactory().newMapperImplementationMethod(methodElement, this);
-          if (maybeGenerator.isPresent()) {
-            methodGenerators.add(maybeGenerator.get());
-          } else {
-            context
-                .getMessager()
-                .error(methodElement, "Don't know what implementation to generate for this method");
-          }
-        }
-      }
-    }
 
     TypeSpec.Builder classContents =
         TypeSpec.classBuilder(className)
@@ -112,18 +93,29 @@ public class MapperImplementationGenerator extends SingleFileCodeGenerator
             .addModifiers(Modifier.PUBLIC)
             .addSuperinterface(ClassName.get(interfaceElement));
 
+    for (Element child : interfaceElement.getEnclosedElements()) {
+      if (child.getKind() == ElementKind.METHOD) {
+        ExecutableElement methodElement = (ExecutableElement) child;
+        Set<Modifier> modifiers = methodElement.getModifiers();
+        if (!modifiers.contains(Modifier.STATIC) && !modifiers.contains(Modifier.DEFAULT)) {
+          Optional<MethodGenerator> maybeGenerator =
+              context.getCodeGeneratorFactory().newMapperImplementationMethod(methodElement, this);
+          if (!maybeGenerator.isPresent()) {
+            context
+                .getMessager()
+                .error(methodElement, "Don't know what implementation to generate for this method");
+          } else {
+            maybeGenerator.flatMap(MethodGenerator::generate).ifPresent(classContents::addMethod);
+          }
+        }
+      }
+    }
+
     MethodSpec.Builder constructorContents =
         MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC);
 
     GeneratedCodePatterns.addFinalFieldAndConstructorArgument(
         ClassName.get(MapperContext.class), "context", classContents, constructorContents);
-
-    for (MethodGenerator methodGenerator : methodGenerators) {
-      try {
-        classContents.addMethod(methodGenerator.generate().build());
-      } catch (SkipGenerationException ignored) {
-      }
-    }
 
     // Add all the fields that were requested by DAO method generators:
     for (DaoSimpleField field : daoSimpleFields) {

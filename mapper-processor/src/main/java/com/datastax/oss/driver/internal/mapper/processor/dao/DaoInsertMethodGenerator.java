@@ -23,11 +23,11 @@ import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
-import com.datastax.oss.driver.internal.mapper.processor.SkipGenerationException;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import java.util.List;
+import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -53,7 +53,7 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
   }
 
   @Override
-  public MethodSpec.Builder generate() {
+  public Optional<MethodSpec> generate() {
 
     // Validate the parameters:
     // - the first one must be the entity.
@@ -65,7 +65,7 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
               methodElement,
               "%s methods must have at least one parameter",
               Insert.class.getSimpleName());
-      throw new SkipGenerationException();
+      return Optional.empty();
     }
     VariableElement firstParameter = methodElement.getParameters().get(0);
     TypeElement entityElement = extractEntityElement(firstParameter);
@@ -76,7 +76,7 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
               methodElement,
               "%s methods must take the entity to insert as the first parameter",
               Insert.class.getSimpleName());
-      throw new SkipGenerationException();
+      return Optional.empty();
     }
 
     // Validate the return type:
@@ -114,7 +114,7 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
               "%s methods must return either void or the entity class "
                   + "(possibly wrapped in a CompletionStage/CompletableFuture)",
               Insert.class.getSimpleName());
-      throw new SkipGenerationException();
+      return Optional.empty();
     }
 
     // Generate the method:
@@ -169,7 +169,7 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
             "return executeAndMapToSingleEntity(boundStatement, $L)", helperFieldName);
       }
     }
-    return insertBuilder;
+    return Optional.of(insertBuilder.build());
   }
 
   private TypeElement extractEntityElement(VariableElement parameter) {
