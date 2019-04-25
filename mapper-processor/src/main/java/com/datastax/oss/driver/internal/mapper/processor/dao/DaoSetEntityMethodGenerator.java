@@ -36,15 +36,15 @@ import javax.lang.model.type.TypeMirror;
 public class DaoSetEntityMethodGenerator implements MethodGenerator {
 
   private final ExecutableElement methodElement;
-  private final DaoImplementationGenerator daoImplementationGenerator;
+  private final DaoImplementationSharedCode enclosingClass;
   private final ProcessorContext context;
 
   public DaoSetEntityMethodGenerator(
       ExecutableElement methodElement,
-      DaoImplementationGenerator daoImplementationGenerator,
+      DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
     this.methodElement = methodElement;
-    this.daoImplementationGenerator = daoImplementationGenerator;
+    this.enclosingClass = enclosingClass;
     this.context = context;
   }
 
@@ -117,8 +117,7 @@ public class DaoSetEntityMethodGenerator implements MethodGenerator {
     }
 
     // Generate the method:
-    String helperFieldName =
-        daoImplementationGenerator.addEntityHelperField(ClassName.get(entityElement));
+    String helperFieldName = enclosingClass.addEntityHelperField(ClassName.get(entityElement));
 
     // Forward to the base injector in the helper:
     return GeneratedCodePatterns.override(methodElement)
