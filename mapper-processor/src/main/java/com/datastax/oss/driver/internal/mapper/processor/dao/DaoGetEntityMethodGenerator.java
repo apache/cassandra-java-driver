@@ -51,15 +51,15 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
   }
 
   private final ExecutableElement methodElement;
-  private final DaoImplementationGenerator daoImplementationGenerator;
+  private final DaoImplementationSharedCode daoImplementationGenerator;
   private final ProcessorContext context;
 
   public DaoGetEntityMethodGenerator(
       ExecutableElement methodElement,
-      DaoImplementationGenerator daoImplementationGenerator,
+      DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
     this.methodElement = methodElement;
-    this.daoImplementationGenerator = daoImplementationGenerator;
+    this.daoImplementationGenerator = enclosingClass;
     this.context = context;
   }
 

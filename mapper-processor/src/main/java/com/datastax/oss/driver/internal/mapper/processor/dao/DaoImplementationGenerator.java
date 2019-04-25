@@ -16,19 +16,16 @@
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
-import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
-import com.datastax.oss.driver.api.mapper.annotations.Insert;
-import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.mapper.DaoBase;
 import com.datastax.oss.driver.internal.mapper.MapperContext;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
+import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.SkipGenerationException;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
-import com.datastax.oss.driver.internal.mapper.processor.util.generation.BindableHandlingSharedCode;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -43,6 +40,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
@@ -53,7 +52,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
 public class DaoImplementationGenerator extends SingleFileCodeGenerator
-    implements BindableHandlingSharedCode {
+    implements DaoImplementationSharedCode {
 
   private static final TypeName PREPARED_STATEMENT_STAGE =
       ParameterizedTypeName.get(CompletionStage.class, PreparedStatement.class);
@@ -93,17 +92,8 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
         });
   }
 
-  /**
-   * Requests the generation of a prepared statement in this DAO. It will be initialized in {@code
-   * initAsync}, and then passed to the constructor which will store it in a private field.
-   *
-   * @param methodElement the method that will be using this statement.
-   * @param simpleStatementGenerator a callback that generates code to create a {@link
-   *     SimpleStatement} local variable that will be used to create the statement. The first
-   *     parameter is the method to add to, and the second the name of the local variable.
-   * @return the name of the generated field that will hold the statement.
-   */
-  String addPreparedStatement(
+  @Override
+  public String addPreparedStatement(
       ExecutableElement methodElement,
       BiConsumer<MethodSpec.Builder, String> simpleStatementGenerator) {
     // Prepared statements are not shared between methods, so always generate a new name
@@ -121,20 +111,22 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
 
   @Override
   protected JavaFile.Builder getContents() {
-
-    List<MethodSpec.Builder> methods = new ArrayList<>();
+    List<MethodGenerator> methodGenerators = new ArrayList<>();
     for (Element child : interfaceElement.getEnclosedElements()) {
       if (child.getKind() == ElementKind.METHOD) {
         ExecutableElement methodElement = (ExecutableElement) child;
-        if (methodElement.getAnnotation(SetEntity.class) != null) {
-          methods.add(new DaoSetEntityMethodGenerator(methodElement, this, context).generate());
-        } else if (methodElement.getAnnotation(Insert.class) != null) {
-          methods.add(new DaoInsertMethodGenerator(methodElement, this, context).generate());
+        Set<Modifier> modifiers = methodElement.getModifiers();
+        if (!modifiers.contains(Modifier.STATIC) && !modifiers.contains(Modifier.DEFAULT)) {
+          Optional<MethodGenerator> maybeGenerator =
+              context.getCodeGeneratorFactory().newDaoImplementationMethod(methodElement, this);
+          if (maybeGenerator.isPresent()) {
+            methodGenerators.add(maybeGenerator.get());
+          } else {
+            context
+                .getMessager()
+                .error(methodElement, "Don't know what implementation to generate for this method");
+          }
         }
-        if (methodElement.getAnnotation(GetEntity.class) != null) {
-          methods.add(new DaoGetEntityMethodGenerator(methodElement, this, context).generate());
-        }
-        // TODO handle other annotations
       }
     }
 
@@ -144,6 +136,13 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
             .addModifiers(Modifier.PUBLIC)
             .superclass(DaoBase.class)
             .addSuperinterface(ClassName.get(interfaceElement));
+
+    for (MethodGenerator methodGenerator : methodGenerators) {
+      try {
+        classBuilder.addMethod(methodGenerator.generate().build());
+      } catch (SkipGenerationException ignored) {
+      }
+    }
 
     genericTypeConstantGenerator.generate(classBuilder);
 
@@ -187,10 +186,6 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
     classBuilder.addMethod(initAsyncBuilder.build());
     classBuilder.addMethod(initBuilder.build());
     classBuilder.addMethod(constructorBuilder.build());
-
-    for (MethodSpec.Builder method : methods) {
-      classBuilder.addMethod(method.build());
-    }
 
     return JavaFile.builder(implementationName.packageName(), classBuilder.build());
   }

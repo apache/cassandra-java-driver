@@ -16,7 +16,14 @@
 package com.datastax.oss.driver.internal.mapper.processor;
 
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
+import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
+import com.datastax.oss.driver.api.mapper.annotations.Insert;
+import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
+import com.datastax.oss.driver.internal.mapper.processor.dao.DaoGetEntityMethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoImplementationGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.dao.DaoImplementationSharedCode;
+import com.datastax.oss.driver.internal.mapper.processor.dao.DaoInsertMethodGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.dao.DaoSetEntityMethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.entity.EntityHelperGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.mapper.DaoFactoryMethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.mapper.MapperBuilderGenerator;
@@ -66,7 +73,21 @@ public class DefaultCodeGeneratorFactory implements CodeGeneratorFactory {
   }
 
   @Override
-  public CodeGenerator newDao(TypeElement interfaceElement) {
+  public CodeGenerator newDaoImplementation(TypeElement interfaceElement) {
     return new DaoImplementationGenerator(interfaceElement, context);
+  }
+
+  @Override
+  public Optional<MethodGenerator> newDaoImplementationMethod(
+      ExecutableElement methodElement, DaoImplementationSharedCode enclosingClass) {
+    if (methodElement.getAnnotation(SetEntity.class) != null) {
+      return Optional.of(new DaoSetEntityMethodGenerator(methodElement, enclosingClass, context));
+    } else if (methodElement.getAnnotation(Insert.class) != null) {
+      return Optional.of(new DaoInsertMethodGenerator(methodElement, enclosingClass, context));
+    } else if (methodElement.getAnnotation(GetEntity.class) != null) {
+      return Optional.of(new DaoGetEntityMethodGenerator(methodElement, enclosingClass, context));
+    } else {
+      return Optional.empty();
+    }
   }
 }
