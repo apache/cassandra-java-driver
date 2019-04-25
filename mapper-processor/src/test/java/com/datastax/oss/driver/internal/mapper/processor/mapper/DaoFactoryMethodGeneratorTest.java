@@ -15,22 +15,15 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.mapper;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.DaoTable;
-import com.datastax.oss.driver.api.mapper.annotations.Mapper;
-import com.datastax.oss.driver.internal.mapper.processor.MapperProcessorTest;
-import com.google.testing.compile.Compilation;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
-import com.squareup.javapoet.TypeSpec;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
@@ -41,29 +34,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DataProviderRunner.class)
-public class DaoFactoryMethodGeneratorTest extends MapperProcessorTest {
-
-  // Dummy DAO interface that is reused across tests
-  private static final ClassName DAO_CLASS_NAME = ClassName.get("test", "ProductDao");
-  private static final TypeSpec DAO_SPEC =
-      TypeSpec.interfaceBuilder(DAO_CLASS_NAME)
-          .addModifiers(Modifier.PUBLIC)
-          .addAnnotation(Dao.class)
-          .build();
+public class DaoFactoryMethodGeneratorTest extends MapperMethodGeneratorTest {
 
   @Test
+  @Override
   @UseDataProvider("invalidSignatures")
   public void should_fail_with_expected_error(MethodSpec method, String expectedError) {
-    TypeSpec mapperSpec =
-        TypeSpec.interfaceBuilder(ClassName.get("test", "InventoryMapper"))
-            .addModifiers(Modifier.PUBLIC)
-            .addAnnotation(Mapper.class)
-            .addMethod(method)
-            .build();
-
-    Compilation compilation = compileWithMapperProcessor("test", DAO_SPEC, mapperSpec);
-
-    assertThat(compilation).hadErrorContaining(expectedError);
+    super.should_fail_with_expected_error(method, expectedError);
   }
 
   @DataProvider
@@ -142,18 +119,10 @@ public class DaoFactoryMethodGeneratorTest extends MapperProcessorTest {
   }
 
   @Test
+  @Override
   @UseDataProvider("validSignatures")
   public void should_succeed_without_warnings(MethodSpec method) {
-    TypeSpec mapperSpec =
-        TypeSpec.interfaceBuilder(ClassName.get("test", "InventoryMapper"))
-            .addModifiers(Modifier.PUBLIC)
-            .addAnnotation(Mapper.class)
-            .addMethod(method)
-            .build();
-
-    Compilation compilation = compileWithMapperProcessor("test", DAO_SPEC, mapperSpec);
-
-    assertThat(compilation).succeededWithoutWarnings();
+    super.should_succeed_without_warnings(method);
   }
 
   @DataProvider

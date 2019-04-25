@@ -24,7 +24,6 @@ import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
-import com.datastax.oss.driver.internal.mapper.processor.SkipGenerationException;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
 import com.squareup.javapoet.ClassName;
@@ -111,24 +110,6 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
 
   @Override
   protected JavaFile.Builder getContents() {
-    List<MethodGenerator> methodGenerators = new ArrayList<>();
-    for (Element child : interfaceElement.getEnclosedElements()) {
-      if (child.getKind() == ElementKind.METHOD) {
-        ExecutableElement methodElement = (ExecutableElement) child;
-        Set<Modifier> modifiers = methodElement.getModifiers();
-        if (!modifiers.contains(Modifier.STATIC) && !modifiers.contains(Modifier.DEFAULT)) {
-          Optional<MethodGenerator> maybeGenerator =
-              context.getCodeGeneratorFactory().newDaoImplementationMethod(methodElement, this);
-          if (maybeGenerator.isPresent()) {
-            methodGenerators.add(maybeGenerator.get());
-          } else {
-            context
-                .getMessager()
-                .error(methodElement, "Don't know what implementation to generate for this method");
-          }
-        }
-      }
-    }
 
     TypeSpec.Builder classBuilder =
         TypeSpec.classBuilder(implementationName)
@@ -137,10 +118,21 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
             .superclass(DaoBase.class)
             .addSuperinterface(ClassName.get(interfaceElement));
 
-    for (MethodGenerator methodGenerator : methodGenerators) {
-      try {
-        classBuilder.addMethod(methodGenerator.generate().build());
-      } catch (SkipGenerationException ignored) {
+    for (Element child : interfaceElement.getEnclosedElements()) {
+      if (child.getKind() == ElementKind.METHOD) {
+        ExecutableElement methodElement = (ExecutableElement) child;
+        Set<Modifier> modifiers = methodElement.getModifiers();
+        if (!modifiers.contains(Modifier.STATIC) && !modifiers.contains(Modifier.DEFAULT)) {
+          Optional<MethodGenerator> maybeGenerator =
+              context.getCodeGeneratorFactory().newDaoImplementationMethod(methodElement, this);
+          if (!maybeGenerator.isPresent()) {
+            context
+                .getMessager()
+                .error(methodElement, "Don't know what implementation to generate for this method");
+          } else {
+            maybeGenerator.flatMap(MethodGenerator::generate).ifPresent(classBuilder::addMethod);
+          }
+        }
       }
     }
 

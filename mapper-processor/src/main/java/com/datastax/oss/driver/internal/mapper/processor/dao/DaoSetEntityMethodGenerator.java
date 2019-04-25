@@ -20,10 +20,10 @@ import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
-import com.datastax.oss.driver.internal.mapper.processor.SkipGenerationException;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
+import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -49,7 +49,7 @@ public class DaoSetEntityMethodGenerator implements MethodGenerator {
   }
 
   @Override
-  public MethodSpec.Builder generate() {
+  public Optional<MethodSpec> generate() {
 
     String entityParameterName = null;
     TypeElement entityElement = null;
@@ -64,7 +64,7 @@ public class DaoSetEntityMethodGenerator implements MethodGenerator {
               methodElement,
               "%s methods must have two parameters",
               SetEntity.class.getSimpleName());
-      throw new SkipGenerationException();
+      return Optional.empty();
     }
     TypeMirror targetParameterType = null;
     for (VariableElement parameterElement : methodElement.getParameters()) {
@@ -88,7 +88,7 @@ public class DaoSetEntityMethodGenerator implements MethodGenerator {
               methodElement,
               "Could not match parameters, expected a SettableByName "
                   + "and an annotated entity (in any order)");
-      throw new SkipGenerationException();
+      return Optional.empty();
     }
 
     // Validate the return type: either void or the same SettableByName as the parameter
@@ -113,19 +113,21 @@ public class DaoSetEntityMethodGenerator implements MethodGenerator {
               "Invalid return type, should be either void or the same as '%s' (%s)",
               targetParameterName,
               targetParameterType);
-      throw new SkipGenerationException();
+      return Optional.empty();
     }
 
     // Generate the method:
     String helperFieldName = enclosingClass.addEntityHelperField(ClassName.get(entityElement));
 
     // Forward to the base injector in the helper:
-    return GeneratedCodePatterns.override(methodElement)
-        .addStatement(
-            "$L$L.set($L, $L)",
-            isVoid ? "" : "return ",
-            helperFieldName,
-            entityParameterName,
-            targetParameterName);
+    return Optional.of(
+        GeneratedCodePatterns.override(methodElement)
+            .addStatement(
+                "$L$L.set($L, $L)",
+                isVoid ? "" : "return ",
+                helperFieldName,
+                entityParameterName,
+                targetParameterName)
+            .build());
   }
 }

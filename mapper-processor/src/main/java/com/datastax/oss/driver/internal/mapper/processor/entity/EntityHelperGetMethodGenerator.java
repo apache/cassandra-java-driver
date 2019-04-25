@@ -32,6 +32,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import java.util.Map;
+import java.util.Optional;
 import javax.lang.model.element.Modifier;
 
 public class EntityHelperGetMethodGenerator implements MethodGenerator {
@@ -48,7 +49,7 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
   }
 
   @Override
-  public MethodSpec.Builder generate() {
+  public Optional<MethodSpec> generate() {
     MethodSpec.Builder getBuilder =
         MethodSpec.methodBuilder("get")
             .addAnnotation(Override.class)
@@ -136,7 +137,7 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
       }
     }
     getBuilder.addStatement("return returnValue");
-    return getBuilder;
+    return Optional.of(getBuilder.build());
   }
 
   /**

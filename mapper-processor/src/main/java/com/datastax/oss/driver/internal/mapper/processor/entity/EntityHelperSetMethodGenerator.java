@@ -26,6 +26,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeVariableName;
+import java.util.Optional;
 import javax.lang.model.element.Modifier;
 
 public class EntityHelperSetMethodGenerator implements MethodGenerator {
@@ -44,7 +45,7 @@ public class EntityHelperSetMethodGenerator implements MethodGenerator {
   }
 
   @Override
-  public MethodSpec.Builder generate() {
+  public Optional<MethodSpec> generate() {
 
     // TODO add an ignore mechanism? this fails if a property is missing on the target.
     // TODO different strategies for null values? (null vs unset)
@@ -74,6 +75,6 @@ public class EntityHelperSetMethodGenerator implements MethodGenerator {
           enclosingClass);
     }
     injectBuilder.addCode("\n").addStatement("return target");
-    return injectBuilder;
+    return Optional.of(injectBuilder.build());
   }
 }

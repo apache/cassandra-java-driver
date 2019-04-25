@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.querybuilder.insert.InsertInto;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.squareup.javapoet.MethodSpec;
+import java.util.Optional;
 import javax.lang.model.element.Modifier;
 
 public class EntityHelperInsertMethodGenerator implements MethodGenerator {
@@ -36,7 +37,7 @@ public class EntityHelperInsertMethodGenerator implements MethodGenerator {
   }
 
   @Override
-  public MethodSpec.Builder generate() {
+  public Optional<MethodSpec> generate() {
     MethodSpec.Builder insertBuilder =
         MethodSpec.methodBuilder("insert")
             .addAnnotation(Override.class)
@@ -60,6 +61,6 @@ public class EntityHelperInsertMethodGenerator implements MethodGenerator {
           "\n.value($1S, $2T.bindMarker($1S))", property.getCqlName(), QueryBuilder.class);
     }
     insertBuilder.addCode("$];\n");
-    return insertBuilder;
+    return Optional.of(insertBuilder.build());
   }
 }
