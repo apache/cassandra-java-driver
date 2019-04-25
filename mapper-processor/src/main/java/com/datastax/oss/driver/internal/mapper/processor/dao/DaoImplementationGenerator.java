@@ -27,7 +27,6 @@ import com.datastax.oss.driver.internal.mapper.MapperContext;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
-import com.datastax.oss.driver.internal.mapper.processor.SkipGenerationException;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.BindableHandlingSharedCode;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
@@ -125,20 +124,17 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
 
     List<MethodSpec.Builder> methods = new ArrayList<>();
     for (Element child : interfaceElement.getEnclosedElements()) {
-      try {
-        if (child.getKind() == ElementKind.METHOD) {
-          ExecutableElement methodElement = (ExecutableElement) child;
-          if (methodElement.getAnnotation(SetEntity.class) != null) {
-            methods.add(new DaoSetEntityMethodGenerator(methodElement, this, context).generate());
-          } else if (methodElement.getAnnotation(Insert.class) != null) {
-            methods.add(new DaoInsertMethodGenerator(methodElement, this, context).generate());
-          }
-          if (methodElement.getAnnotation(GetEntity.class) != null) {
-            methods.add(new DaoGetEntityMethodGenerator(methodElement, this, context).generate());
-          }
-          // TODO handle other annotations
+      if (child.getKind() == ElementKind.METHOD) {
+        ExecutableElement methodElement = (ExecutableElement) child;
+        if (methodElement.getAnnotation(SetEntity.class) != null) {
+          methods.add(new DaoSetEntityMethodGenerator(methodElement, this, context).generate());
+        } else if (methodElement.getAnnotation(Insert.class) != null) {
+          methods.add(new DaoInsertMethodGenerator(methodElement, this, context).generate());
         }
-      } catch (SkipGenerationException ignored) {
+        if (methodElement.getAnnotation(GetEntity.class) != null) {
+          methods.add(new DaoGetEntityMethodGenerator(methodElement, this, context).generate());
+        }
+        // TODO handle other annotations
       }
     }
 
