@@ -24,11 +24,11 @@ import com.datastax.oss.driver.internal.mapper.DaoCacheKey;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
-import com.datastax.oss.driver.internal.mapper.processor.SkipGenerationException;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
+import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -56,7 +56,7 @@ public class DaoFactoryMethodGenerator implements MethodGenerator {
   }
 
   @Override
-  public MethodSpec.Builder generate() {
+  public Optional<MethodSpec> generate() {
 
     // Validate the return type, which tells us what DAO to build, and whether the method should be
     // async.
@@ -90,7 +90,7 @@ public class DaoFactoryMethodGenerator implements MethodGenerator {
               methodElement,
               "Invalid return type, expecting a %s-annotated interface, or future thereof",
               Dao.class.getSimpleName());
-      throw new SkipGenerationException();
+      return Optional.empty();
     }
 
     // Validate the arguments
@@ -101,10 +101,16 @@ public class DaoFactoryMethodGenerator implements MethodGenerator {
         keyspaceArgumentName =
             validateKeyspaceOrTableParameter(
                 parameterElement, keyspaceArgumentName, DaoKeyspace.class, context);
+        if (keyspaceArgumentName == null) {
+          return Optional.empty();
+        }
       } else if (parameterElement.getAnnotation(DaoTable.class) != null) {
         tableArgumentName =
             validateKeyspaceOrTableParameter(
                 parameterElement, tableArgumentName, DaoTable.class, context);
+        if (tableArgumentName == null) {
+          return Optional.empty();
+        }
       } else {
         context
             .getMessager()
@@ -113,7 +119,7 @@ public class DaoFactoryMethodGenerator implements MethodGenerator {
                 "Only parameters annotated with @%s or @%s are allowed",
                 DaoKeyspace.class.getSimpleName(),
                 DaoTable.class.getSimpleName());
-        throw new SkipGenerationException();
+        return Optional.empty();
       }
     }
     boolean isCachedByKeyspaceAndTable =
@@ -155,7 +161,7 @@ public class DaoFactoryMethodGenerator implements MethodGenerator {
     } else {
       overridingMethodBuilder.addStatement("return $L", fieldName);
     }
-    return overridingMethodBuilder;
+    return Optional.of(overridingMethodBuilder.build());
   }
 
   private String validateKeyspaceOrTableParameter(
@@ -167,7 +173,7 @@ public class DaoFactoryMethodGenerator implements MethodGenerator {
               candidate,
               "Only one parameter can be annotated with @%s",
               annotation.getSimpleName());
-      throw new SkipGenerationException();
+      return null;
     }
     TypeMirror type = candidate.asType();
     if (!context.getClassUtils().isSame(type, String.class)
@@ -180,7 +186,7 @@ public class DaoFactoryMethodGenerator implements MethodGenerator {
               annotation.getSimpleName(),
               String.class.getSimpleName(),
               CqlIdentifier.class.getSimpleName());
-      throw new SkipGenerationException();
+      return null;
     }
     return candidate.getSimpleName().toString();
   }
