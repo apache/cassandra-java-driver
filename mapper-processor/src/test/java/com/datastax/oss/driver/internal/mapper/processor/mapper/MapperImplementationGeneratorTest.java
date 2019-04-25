@@ -28,7 +28,7 @@ public class MapperImplementationGeneratorTest extends MapperMethodGeneratorTest
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(DAO_CLASS_NAME)
             .build(),
-        "Don't know what implementation to generate for this method");
+        "Unrecognized method signature: no implementation will be generated");
   }
 
   @Test

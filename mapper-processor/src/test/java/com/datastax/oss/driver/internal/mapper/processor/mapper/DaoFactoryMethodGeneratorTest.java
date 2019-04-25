@@ -52,7 +52,7 @@ public class DaoFactoryMethodGeneratorTest extends MapperMethodGeneratorTest {
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(TypeName.INT)
             .build(),
-        "Invalid return type, expecting a Dao-annotated interface, or future thereof"
+        "Invalid return type: DaoFactory methods must return a Dao-annotated interface, or future thereof"
       },
       {
         MethodSpec.methodBuilder("productDao")
@@ -61,7 +61,7 @@ public class DaoFactoryMethodGeneratorTest extends MapperMethodGeneratorTest {
             .returns(DAO_CLASS_NAME)
             .addParameter(String.class, "table")
             .build(),
-        "Only parameters annotated with @DaoKeyspace or @DaoTable are allowed"
+        "Invalid parameter annotations: DaoFactory method parameters must be annotated with @DaoKeyspace or @DaoTable"
       },
       {
         MethodSpec.methodBuilder("productDao")
@@ -73,7 +73,7 @@ public class DaoFactoryMethodGeneratorTest extends MapperMethodGeneratorTest {
             .addParameter(
                 ParameterSpec.builder(String.class, "table2").addAnnotation(DaoTable.class).build())
             .build(),
-        "Only one parameter can be annotated with @DaoTable"
+        "Invalid parameter annotations: only one DaoFactory method parameter can be annotated with @DaoTable"
       },
       {
         MethodSpec.methodBuilder("productDao")
@@ -91,7 +91,7 @@ public class DaoFactoryMethodGeneratorTest extends MapperMethodGeneratorTest {
                     .addAnnotation(DaoKeyspace.class)
                     .build())
             .build(),
-        "Only one parameter can be annotated with @DaoKeyspace"
+        "Invalid parameter annotations: only one DaoFactory method parameter can be annotated with @DaoKeyspace"
       },
       {
         MethodSpec.methodBuilder("productDao")
@@ -101,7 +101,7 @@ public class DaoFactoryMethodGeneratorTest extends MapperMethodGeneratorTest {
             .addParameter(
                 ParameterSpec.builder(Integer.class, "table").addAnnotation(DaoTable.class).build())
             .build(),
-        "@DaoTable-annotated parameter must be of type String or CqlIdentifier"
+        "Invalid parameter type: @DaoTable-annotated parameter of DaoFactory methods must be of type String or CqlIdentifier"
       },
       {
         MethodSpec.methodBuilder("productDao")
@@ -113,7 +113,7 @@ public class DaoFactoryMethodGeneratorTest extends MapperMethodGeneratorTest {
                     .addAnnotation(DaoKeyspace.class)
                     .build())
             .build(),
-        "@DaoKeyspace-annotated parameter must be of type String or CqlIdentifier"
+        "Invalid parameter type: @DaoKeyspace-annotated parameter of DaoFactory methods must be of type String or CqlIdentifier"
       },
     };
   }

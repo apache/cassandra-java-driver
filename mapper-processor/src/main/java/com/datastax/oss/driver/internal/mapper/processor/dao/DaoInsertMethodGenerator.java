@@ -63,7 +63,7 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              "%s methods must have at least one parameter",
+              "Wrong number of parameters: %s methods must have at least one",
               Insert.class.getSimpleName());
       return Optional.empty();
     }
@@ -74,7 +74,8 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              "%s methods must take the entity to insert as the first parameter",
+              "Invalid parameter type: "
+                  + "%s methods must take the entity to insert as the first parameter",
               Insert.class.getSimpleName());
       return Optional.empty();
     }
@@ -111,7 +112,7 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              "%s methods must return either void or the entity class "
+              "Invalid return type: %s methods must return either void or the entity class "
                   + "(possibly wrapped in a CompletionStage/CompletableFuture)",
               Insert.class.getSimpleName());
       return Optional.empty();
