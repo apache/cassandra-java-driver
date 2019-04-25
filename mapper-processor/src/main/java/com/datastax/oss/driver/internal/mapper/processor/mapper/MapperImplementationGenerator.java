@@ -103,7 +103,9 @@ public class MapperImplementationGenerator extends SingleFileCodeGenerator
           if (!maybeGenerator.isPresent()) {
             context
                 .getMessager()
-                .error(methodElement, "Don't know what implementation to generate for this method");
+                .error(
+                    methodElement,
+                    "Unrecognized method signature: no implementation will be generated");
           } else {
             maybeGenerator.flatMap(MethodGenerator::generate).ifPresent(classContents::addMethod);
           }

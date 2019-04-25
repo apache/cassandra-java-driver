@@ -48,7 +48,7 @@ public class DaoInsertMethodGeneratorTest extends DaoMethodGeneratorTest {
             .addAnnotation(Insert.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .build(),
-        "Insert methods must have at least one parameter"
+        "Wrong number of parameters: Insert methods must have at least one"
       },
       {
         MethodSpec.methodBuilder("insert")
@@ -56,7 +56,7 @@ public class DaoInsertMethodGeneratorTest extends DaoMethodGeneratorTest {
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addParameter(ParameterSpec.builder(String.class, "a").build())
             .build(),
-        "Insert methods must take the entity to insert as the first parameter"
+        "Invalid parameter type: Insert methods must take the entity to insert as the first parameter"
       },
       {
         MethodSpec.methodBuilder("insert")
@@ -65,7 +65,7 @@ public class DaoInsertMethodGeneratorTest extends DaoMethodGeneratorTest {
             .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
             .returns(TypeName.INT)
             .build(),
-        "Insert methods must return either void or the entity class "
+        "Invalid return type: Insert methods must return either void or the entity class "
             + "(possibly wrapped in a CompletionStage/CompletableFuture)"
       },
     };

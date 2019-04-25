@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper.processor.mapper;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.DaoTable;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
@@ -88,7 +89,9 @@ public class DaoFactoryMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              "Invalid return type, expecting a %s-annotated interface, or future thereof",
+              "Invalid return type: %s methods must return a %s-annotated interface, "
+                  + "or future thereof",
+              DaoFactory.class.getSimpleName(),
               Dao.class.getSimpleName());
       return Optional.empty();
     }
@@ -116,7 +119,9 @@ public class DaoFactoryMethodGenerator implements MethodGenerator {
             .getMessager()
             .error(
                 methodElement,
-                "Only parameters annotated with @%s or @%s are allowed",
+                "Invalid parameter annotations: "
+                    + "%s method parameters must be annotated with @%s or @%s",
+                DaoFactory.class.getSimpleName(),
                 DaoKeyspace.class.getSimpleName(),
                 DaoTable.class.getSimpleName());
         return Optional.empty();
@@ -171,7 +176,9 @@ public class DaoFactoryMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               candidate,
-              "Only one parameter can be annotated with @%s",
+              "Invalid parameter annotations: "
+                  + "only one %s method parameter can be annotated with @%s",
+              DaoFactory.class.getSimpleName(),
               annotation.getSimpleName());
       return null;
     }
@@ -182,8 +189,9 @@ public class DaoFactoryMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               candidate,
-              "@%s-annotated parameter must be of type %s or %s",
+              "Invalid parameter type: @%s-annotated parameter of %s methods must be of type %s or %s",
               annotation.getSimpleName(),
+              DaoFactory.class.getSimpleName(),
               String.class.getSimpleName(),
               CqlIdentifier.class.getSimpleName());
       return null;

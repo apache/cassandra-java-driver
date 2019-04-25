@@ -71,7 +71,9 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
       context
           .getMessager()
           .error(
-              methodElement, "%s methods must have one parameter", GetEntity.class.getSimpleName());
+              methodElement,
+              "Wrong number of parameters: %s methods must have exactly one",
+              GetEntity.class.getSimpleName());
       return Optional.empty();
     }
     VariableElement parameterElement = methodElement.getParameters().get(0);
@@ -86,7 +88,8 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               parameterElement,
-              "Invalid parameter type, expected a %s, %s or %s",
+              "Invalid parameter type: %s methods must take a %s, %s or %s",
+              GetEntity.class.getSimpleName(),
               GettableByName.class.getSimpleName(),
               ResultSet.class.getSimpleName(),
               AsyncResultSet.class.getSimpleName());
@@ -109,7 +112,8 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
               .getMessager()
               .error(
                   methodElement,
-                  "Invalid return type. Can only return %s if the argument is %s",
+                  "Invalid return type: %s methods must return %s if the argument is %s",
+                  GetEntity.class.getSimpleName(),
                   PagingIterable.class.getSimpleName(),
                   ResultSet.class.getSimpleName());
           return Optional.empty();
@@ -122,7 +126,8 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
               .getMessager()
               .error(
                   methodElement,
-                  "Invalid return type. Can only return %s if the argument is %s",
+                  "Invalid return type: %s methods must return %s if the argument is %s",
+                  GetEntity.class.getSimpleName(),
                   MappedAsyncPagingIterable.class.getSimpleName(),
                   AsyncResultSet.class.getSimpleName());
           return Optional.empty();
@@ -136,7 +141,9 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              "Invalid return type. Expected %s-annotated class, or a %s or %s thereof",
+              "Invalid return type: "
+                  + "%s methods must return a %s-annotated class, or a %s or %s thereof",
+              GetEntity.class.getSimpleName(),
               Entity.class.getSimpleName(),
               PagingIterable.class.getSimpleName(),
               MappedAsyncPagingIterable.class.getSimpleName());
