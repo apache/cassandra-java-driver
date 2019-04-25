@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.mapper.model.inventory;
+package com.datastax.oss.driver.api.mapper.annotations;
 
-import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
-import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
-import com.datastax.oss.driver.api.mapper.annotations.Mapper;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-@Mapper
-public interface InventoryMapper {
-  @DaoFactory
-  ProductDao productDao(@DaoKeyspace CqlIdentifier keyspace);
-}
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.CLASS)
+public @interface DaoFactory {}
