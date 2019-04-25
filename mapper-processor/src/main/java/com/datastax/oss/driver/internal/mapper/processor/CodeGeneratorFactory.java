@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.mapper.processor;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
+import com.datastax.oss.driver.internal.mapper.processor.dao.DaoImplementationSharedCode;
 import com.datastax.oss.driver.internal.mapper.processor.mapper.MapperImplementationSharedCode;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
@@ -57,6 +58,22 @@ public interface CodeGeneratorFactory {
   /** The builder associated to a {@link Mapper}-annotated interface. */
   CodeGenerator newMapperBuilder(TypeElement interfaceElement);
 
-  /** The implementation of a {@link Dao}-annotated interface. */
-  CodeGenerator newDao(TypeElement interfaceElement);
+  /**
+   * The implementation of a {@link Dao}-annotated interface.
+   *
+   * <p>The default code factory calls {@link #newDaoImplementationMethod(ExecutableElement,
+   * DaoImplementationSharedCode)} for each non-static, non-default method, but this is not a hard
+   * requirement.
+   */
+  CodeGenerator newDaoImplementation(TypeElement interfaceElement);
+
+  /**
+   * A method in the implementation of a {@link Dao}-annotated interface.
+   *
+   * @return empty if the processor can't determine what to generate. This will translate as a
+   *     compile-time error.
+   * @see #newDaoImplementation(TypeElement)
+   */
+  Optional<MethodGenerator> newDaoImplementationMethod(
+      ExecutableElement methodElement, DaoImplementationSharedCode enclosingClass);
 }
