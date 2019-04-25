@@ -36,7 +36,6 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import java.beans.Introspector;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -87,12 +86,6 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
   @Override
   protected JavaFile.Builder getContents() {
 
-    List<MethodGenerator> methodGenerators =
-        ImmutableList.of(
-            new EntityHelperSetMethodGenerator(entityDefinition, this, context),
-            new EntityHelperGetMethodGenerator(entityDefinition, this, context),
-            new EntityHelperInsertMethodGenerator(entityDefinition, this, context));
-
     TypeSpec.Builder classContents =
         TypeSpec.classBuilder(helperName)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
@@ -111,15 +104,19 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
                         "$T.fromCql($S)", CqlIdentifier.class, entityDefinition.getCqlName())
                     .build());
 
+    for (MethodGenerator methodGenerator :
+        ImmutableList.of(
+            new EntityHelperSetMethodGenerator(entityDefinition, this, context),
+            new EntityHelperGetMethodGenerator(entityDefinition, this, context),
+            new EntityHelperInsertMethodGenerator(entityDefinition, this, context))) {
+      methodGenerator.generate().ifPresent(classContents::addMethod);
+    }
+
     MethodSpec.Builder constructorContents =
         MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC);
 
     GeneratedCodePatterns.addFinalFieldAndConstructorArgument(
         ClassName.get(MapperContext.class), "context", classContents, constructorContents);
-
-    for (MethodGenerator methodGenerator : methodGenerators) {
-      classContents.addMethod(methodGenerator.generate().build());
-    }
 
     genericTypeConstantGenerator.generate(classContents);
 

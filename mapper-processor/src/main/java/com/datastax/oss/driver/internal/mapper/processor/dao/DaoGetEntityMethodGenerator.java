@@ -25,10 +25,10 @@ import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
-import com.datastax.oss.driver.internal.mapper.processor.SkipGenerationException;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
+import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -64,7 +64,7 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
   }
 
   @Override
-  public MethodSpec.Builder generate() {
+  public Optional<MethodSpec> generate() {
 
     // Validate the parameter: there must be exactly one, of type GettableByName or a ResultSet:
     if (methodElement.getParameters().size() != 1) {
@@ -72,7 +72,7 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               methodElement, "%s methods must have one parameter", GetEntity.class.getSimpleName());
-      throw new SkipGenerationException();
+      return Optional.empty();
     }
     VariableElement parameterElement = methodElement.getParameters().get(0);
     String parameterName = parameterElement.getSimpleName().toString();
@@ -90,7 +90,7 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
               GettableByName.class.getSimpleName(),
               ResultSet.class.getSimpleName(),
               AsyncResultSet.class.getSimpleName());
-      throw new SkipGenerationException();
+      return Optional.empty();
     }
 
     // Validate the return type. Make sure it matches the parameter type
@@ -112,7 +112,7 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
                   "Invalid return type. Can only return %s if the argument is %s",
                   PagingIterable.class.getSimpleName(),
                   ResultSet.class.getSimpleName());
-          throw new SkipGenerationException();
+          return Optional.empty();
         }
         entityElement = extractTypeParameter(returnType);
         transformation = Transformation.MAP;
@@ -125,7 +125,7 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
                   "Invalid return type. Can only return %s if the argument is %s",
                   MappedAsyncPagingIterable.class.getSimpleName(),
                   AsyncResultSet.class.getSimpleName());
-          throw new SkipGenerationException();
+          return Optional.empty();
         }
         entityElement = extractTypeParameter(returnType);
         transformation = Transformation.MAP;
@@ -140,7 +140,7 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
               Entity.class.getSimpleName(),
               PagingIterable.class.getSimpleName(),
               MappedAsyncPagingIterable.class.getSimpleName());
-      throw new SkipGenerationException();
+      return Optional.empty();
     }
 
     // Generate the implementation:
@@ -162,7 +162,7 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
             "return $L.map($L::get)", parameterName, helperFieldName);
         break;
     }
-    return overridingMethodBuilder;
+    return Optional.of(overridingMethodBuilder.build());
   }
 
   /** @return the type argument if it's an annotated entity, otherwise null */

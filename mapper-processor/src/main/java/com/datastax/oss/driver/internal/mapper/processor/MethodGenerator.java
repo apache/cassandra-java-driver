@@ -16,8 +16,15 @@
 package com.datastax.oss.driver.internal.mapper.processor;
 
 import com.squareup.javapoet.MethodSpec;
+import java.util.Optional;
 
 /** A component that generates a single method. */
 public interface MethodGenerator {
-  MethodSpec.Builder generate();
+
+  /**
+   * @return empty if an error occurred during generation. In that case, the caller doesn't have
+   *     anything to do: it's the generator's responsibility to report the error via {@link
+   *     DecoratedMessager}.
+   */
+  Optional<MethodSpec> generate();
 }
