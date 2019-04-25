@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.data.SettableByName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
@@ -62,7 +63,7 @@ public class DaoSetEntityMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              "%s methods must have two parameters",
+              "Wrong number of parameters: %s methods must have two",
               SetEntity.class.getSimpleName());
       return Optional.empty();
     }
@@ -86,8 +87,10 @@ public class DaoSetEntityMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              "Could not match parameters, expected a SettableByName "
-                  + "and an annotated entity (in any order)");
+              "Wrong parameter types: %s methods must take a %s "
+                  + "and an annotated entity (in any order)",
+              SetEntity.class.getSimpleName(),
+              SettableByName.class.getSimpleName());
       return Optional.empty();
     }
 
@@ -110,9 +113,11 @@ public class DaoSetEntityMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              "Invalid return type, should be either void or the same as '%s' (%s)",
-              targetParameterName,
-              targetParameterType);
+              "Invalid return type: %s methods must either be void, or return the same "
+                  + "type as their settable parameter (in this case, %s to match '%s')",
+              SetEntity.class.getSimpleName(),
+              targetParameterType,
+              targetParameterName);
       return Optional.empty();
     }
 
