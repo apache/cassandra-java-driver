@@ -28,8 +28,6 @@ import com.datastax.oss.driver.internal.mapper.processor.util.generation.Generat
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -92,7 +90,7 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
       tmpAsync = false;
     } else if (returnTypeMirror.getKind() == TypeKind.DECLARED) {
       DeclaredType declaredReturnType = (DeclaredType) returnTypeMirror;
-      if (isFuture(declaredReturnType.asElement())) {
+      if (context.getClassUtils().isFuture(declaredReturnType)) {
         TypeMirror typeArgumentMirror = declaredReturnType.getTypeArguments().get(0);
         if ((typeArgumentMirror.getKind() == TypeKind.DECLARED)) {
           if (context.getClassUtils().isSame(typeArgumentMirror, Void.class)) {
@@ -136,12 +134,6 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
       return null;
     }
     return typeElement;
-  }
-
-  // TODO factor this (in Classes?)
-  private boolean isFuture(Element element) {
-    return context.getClassUtils().isSame(element, CompletionStage.class)
-        || context.getClassUtils().isSame(element, CompletableFuture.class);
   }
 
   @Override

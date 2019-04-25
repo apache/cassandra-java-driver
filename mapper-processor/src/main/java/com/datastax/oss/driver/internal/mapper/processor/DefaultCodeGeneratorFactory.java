@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor;
 
-import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoImplementationGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.entity.EntityHelperGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.mapper.DaoFactoryMethodGenerator;
@@ -23,15 +23,9 @@ import com.datastax.oss.driver.internal.mapper.processor.mapper.MapperBuilderGen
 import com.datastax.oss.driver.internal.mapper.processor.mapper.MapperGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.mapper.MapperImplementationGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.mapper.MapperImplementationSharedCode;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
+import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
 
 public class DefaultCodeGeneratorFactory implements CodeGeneratorFactory {
 
@@ -57,42 +51,12 @@ public class DefaultCodeGeneratorFactory implements CodeGeneratorFactory {
   }
 
   @Override
-  public MethodGenerator newDaoMethodFactory(
+  public Optional<MethodGenerator> newMapperImplementationMethod(
       ExecutableElement methodElement, MapperImplementationSharedCode enclosingClass) {
-    TypeMirror returnType = methodElement.getReturnType();
-    if (returnType.getKind() != TypeKind.DECLARED) {
-      return null;
-    }
-    DeclaredType declaredReturnType = (DeclaredType) returnType;
-    if (declaredReturnType.getTypeArguments().isEmpty()) {
-      Element returnTypeElement = declaredReturnType.asElement();
-      return (returnTypeElement.getKind() != ElementKind.INTERFACE
-              || returnTypeElement.getAnnotation(Dao.class) == null)
-          ? null
-          : new DaoFactoryMethodGenerator(
-              methodElement,
-              GeneratedNames.daoImplementation(((TypeElement) returnTypeElement)),
-              false,
-              enclosingClass,
-              context);
-    } else if (isFuture(declaredReturnType.asElement())
-        && declaredReturnType.getTypeArguments().size() == 1) {
-      TypeMirror typeArgument = declaredReturnType.getTypeArguments().get(0);
-      if (typeArgument.getKind() != TypeKind.DECLARED) {
-        return null;
-      }
-      Element typeArgumentElement = ((DeclaredType) typeArgument).asElement();
-      return (typeArgumentElement.getKind() != ElementKind.INTERFACE
-              || typeArgumentElement.getAnnotation(Dao.class) == null)
-          ? null
-          : new DaoFactoryMethodGenerator(
-              methodElement,
-              GeneratedNames.daoImplementation(((TypeElement) typeArgumentElement)),
-              true,
-              enclosingClass,
-              context);
+    if (methodElement.getAnnotation(DaoFactory.class) != null) {
+      return Optional.of(new DaoFactoryMethodGenerator(methodElement, enclosingClass, context));
     } else {
-      return null;
+      return Optional.empty();
     }
   }
 
@@ -104,10 +68,5 @@ public class DefaultCodeGeneratorFactory implements CodeGeneratorFactory {
   @Override
   public CodeGenerator newDao(TypeElement interfaceElement) {
     return new DaoImplementationGenerator(interfaceElement, context);
-  }
-
-  private boolean isFuture(Element element) {
-    return context.getClassUtils().isSame(element, CompletionStage.class)
-        || context.getClassUtils().isSame(element, CompletableFuture.class);
   }
 }
