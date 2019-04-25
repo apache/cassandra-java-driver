@@ -40,12 +40,12 @@ import javax.lang.model.type.TypeMirror;
 public class DaoInsertMethodGenerator implements MethodGenerator {
 
   private final ExecutableElement methodElement;
-  private final DaoImplementationGenerator enclosingClass;
+  private final DaoImplementationSharedCode enclosingClass;
   private final ProcessorContext context;
 
   public DaoInsertMethodGenerator(
       ExecutableElement methodElement,
-      DaoImplementationGenerator enclosingClass,
+      DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
     this.methodElement = methodElement;
     this.enclosingClass = enclosingClass;
@@ -116,7 +116,6 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
               Insert.class.getSimpleName());
       throw new SkipGenerationException();
     }
-
 
     // Generate the method:
     String helperFieldName = enclosingClass.addEntityHelperField(ClassName.get(entityElement));
