@@ -19,6 +19,7 @@ import static com.google.testing.compile.CompilationSubject.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.DaoTable;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
@@ -70,13 +71,15 @@ public class DaoFactoryMethodGeneratorTest extends MapperProcessorTest {
     return new Object[][] {
       {
         MethodSpec.methodBuilder("productDao")
+            .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(TypeName.INT)
             .build(),
-        "Don't know what to generate for this signature"
+        "Invalid return type, expecting a Dao-annotated interface, or future thereof"
       },
       {
         MethodSpec.methodBuilder("productDao")
+            .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(DAO_CLASS_NAME)
             .addParameter(String.class, "table")
@@ -85,6 +88,7 @@ public class DaoFactoryMethodGeneratorTest extends MapperProcessorTest {
       },
       {
         MethodSpec.methodBuilder("productDao")
+            .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(DAO_CLASS_NAME)
             .addParameter(
@@ -96,6 +100,7 @@ public class DaoFactoryMethodGeneratorTest extends MapperProcessorTest {
       },
       {
         MethodSpec.methodBuilder("productDao")
+            .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(DAO_CLASS_NAME)
             .addParameter(
@@ -113,6 +118,7 @@ public class DaoFactoryMethodGeneratorTest extends MapperProcessorTest {
       },
       {
         MethodSpec.methodBuilder("productDao")
+            .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(DAO_CLASS_NAME)
             .addParameter(
@@ -122,6 +128,7 @@ public class DaoFactoryMethodGeneratorTest extends MapperProcessorTest {
       },
       {
         MethodSpec.methodBuilder("productDao")
+            .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(DAO_CLASS_NAME)
             .addParameter(
@@ -154,12 +161,14 @@ public class DaoFactoryMethodGeneratorTest extends MapperProcessorTest {
     return new Object[][] {
       {
         MethodSpec.methodBuilder("productDao")
+            .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(DAO_CLASS_NAME)
             .build()
       },
       {
         MethodSpec.methodBuilder("productDao")
+            .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(
                 ParameterizedTypeName.get(ClassName.get(CompletionStage.class), DAO_CLASS_NAME))
@@ -167,6 +176,7 @@ public class DaoFactoryMethodGeneratorTest extends MapperProcessorTest {
       },
       {
         MethodSpec.methodBuilder("productDao")
+            .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(
                 ParameterizedTypeName.get(ClassName.get(CompletableFuture.class), DAO_CLASS_NAME))
@@ -174,6 +184,7 @@ public class DaoFactoryMethodGeneratorTest extends MapperProcessorTest {
       },
       {
         MethodSpec.methodBuilder("productDao")
+            .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(DAO_CLASS_NAME)
             .addParameter(
@@ -186,6 +197,7 @@ public class DaoFactoryMethodGeneratorTest extends MapperProcessorTest {
       },
       {
         MethodSpec.methodBuilder("productDao")
+            .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(DAO_CLASS_NAME)
             .addParameter(
@@ -200,6 +212,7 @@ public class DaoFactoryMethodGeneratorTest extends MapperProcessorTest {
       },
       {
         MethodSpec.methodBuilder("productDao")
+            .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(DAO_CLASS_NAME)
             .addParameter(

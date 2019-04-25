@@ -33,6 +33,8 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.lang.model.element.Element;
@@ -81,22 +83,21 @@ public class MapperImplementationGenerator extends SingleFileCodeGenerator
 
   @Override
   protected JavaFile.Builder getContents() {
-    // Find all interface methods that return mappers
-    List<MethodSpec.Builder> daoFactoryMethods = new ArrayList<>();
+    List<MethodGenerator> methodGenerators = new ArrayList<>();
     for (Element child : interfaceElement.getEnclosedElements()) {
       if (child.getKind() == ElementKind.METHOD) {
         ExecutableElement methodElement = (ExecutableElement) child;
-        try {
-          MethodGenerator generator =
-              context.getCodeGeneratorFactory().newDaoMethodFactory(methodElement, this);
-          if (generator != null) {
-            daoFactoryMethods.add(generator.generate());
+        Set<Modifier> modifiers = methodElement.getModifiers();
+        if (!modifiers.contains(Modifier.STATIC) && !modifiers.contains(Modifier.DEFAULT)) {
+          Optional<MethodGenerator> maybeGenerator =
+              context.getCodeGeneratorFactory().newMapperImplementationMethod(methodElement, this);
+          if (maybeGenerator.isPresent()) {
+            methodGenerators.add(maybeGenerator.get());
           } else {
             context
                 .getMessager()
-                .error(methodElement, "Don't know what to generate for this signature");
+                .error(methodElement, "Don't know what implementation to generate for this method");
           }
-        } catch (SkipGenerationException ignored) {
         }
       }
     }
@@ -116,6 +117,13 @@ public class MapperImplementationGenerator extends SingleFileCodeGenerator
 
     GeneratedCodePatterns.addFinalFieldAndConstructorArgument(
         ClassName.get(MapperContext.class), "context", classContents, constructorContents);
+
+    for (MethodGenerator methodGenerator : methodGenerators) {
+      try {
+        classContents.addMethod(methodGenerator.generate().build());
+      } catch (SkipGenerationException ignored) {
+      }
+    }
 
     // Add all the fields that were requested by DAO method generators:
     for (DaoSimpleField field : daoSimpleFields) {
@@ -141,10 +149,6 @@ public class MapperImplementationGenerator extends SingleFileCodeGenerator
               .build());
     }
     classContents.addMethod(constructorContents.build());
-
-    for (MethodSpec.Builder method : daoFactoryMethods) {
-      classContents.addMethod(method.build());
-    }
 
     return JavaFile.builder(className.packageName(), classContents.build());
   }
