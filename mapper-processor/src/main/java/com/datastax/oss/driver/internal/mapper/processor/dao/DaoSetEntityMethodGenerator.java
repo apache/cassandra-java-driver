@@ -37,10 +37,7 @@ public class DaoSetEntityMethodGenerator implements MethodGenerator {
 
   private final ExecutableElement methodElement;
   private final DaoImplementationGenerator daoImplementationGenerator;
-  private final String entityParameterName;
-  private final TypeElement entityElement;
-  private final String targetParameterName;
-  private final boolean isVoid;
+  private final ProcessorContext context;
 
   public DaoSetEntityMethodGenerator(
       ExecutableElement methodElement,
@@ -48,8 +45,18 @@ public class DaoSetEntityMethodGenerator implements MethodGenerator {
       ProcessorContext context) {
     this.methodElement = methodElement;
     this.daoImplementationGenerator = daoImplementationGenerator;
-    // We're expecting a method where one parameter is an annotated entity, and the other a
-    // SettableByName or subtype. It can either be void or return the SettableByName.
+    this.context = context;
+  }
+
+  @Override
+  public MethodSpec.Builder generate() {
+
+    String entityParameterName = null;
+    TypeElement entityElement = null;
+    String targetParameterName = null;
+
+    // Validate the parameters: one is an annotated entity, and the other a subtype of
+    // SettableByName.
     if (methodElement.getParameters().size() != 2) {
       context
           .getMessager()
@@ -59,25 +66,22 @@ public class DaoSetEntityMethodGenerator implements MethodGenerator {
               SetEntity.class.getSimpleName());
       throw new SkipGenerationException();
     }
-    String tmpEntity = null;
-    TypeElement tmpEntityElement = null;
-    String tmpTarget = null;
     TypeMirror targetParameterType = null;
     for (VariableElement parameterElement : methodElement.getParameters()) {
       TypeMirror parameterType = parameterElement.asType();
       if (context.getClassUtils().implementsSettableByName(parameterType)) {
-        tmpTarget = parameterElement.getSimpleName().toString();
+        targetParameterName = parameterElement.getSimpleName().toString();
         targetParameterType = parameterElement.asType();
       } else if (parameterType.getKind() == TypeKind.DECLARED) {
         Element parameterTypeElement = ((DeclaredType) parameterType).asElement();
         if (parameterTypeElement.getKind() == ElementKind.CLASS
             && parameterTypeElement.getAnnotation(Entity.class) != null) {
-          tmpEntity = parameterElement.getSimpleName().toString();
-          tmpEntityElement = ((TypeElement) parameterTypeElement);
+          entityParameterName = parameterElement.getSimpleName().toString();
+          entityElement = ((TypeElement) parameterTypeElement);
         }
       }
     }
-    if (tmpEntity == null || tmpTarget == null) {
+    if (entityParameterName == null || targetParameterName == null) {
       context
           .getMessager()
           .error(
@@ -86,11 +90,10 @@ public class DaoSetEntityMethodGenerator implements MethodGenerator {
                   + "and an annotated entity (in any order)");
       throw new SkipGenerationException();
     }
-    this.entityParameterName = tmpEntity;
-    this.entityElement = tmpEntityElement;
-    this.targetParameterName = tmpTarget;
+
+    // Validate the return type: either void or the same SettableByName as the parameter
     TypeMirror returnType = methodElement.getReturnType();
-    this.isVoid = returnType.getKind() == TypeKind.VOID;
+    boolean isVoid = returnType.getKind() == TypeKind.VOID;
     if (isVoid) {
       if (context.getClassUtils().isSame(targetParameterType, BoundStatement.class)) {
         context
@@ -110,11 +113,10 @@ public class DaoSetEntityMethodGenerator implements MethodGenerator {
               "Invalid return type, should be either void or the same as '%s' (%s)",
               targetParameterName,
               targetParameterType);
+      throw new SkipGenerationException();
     }
-  }
 
-  @Override
-  public MethodSpec.Builder generate() {
+    // Generate the method:
     String helperFieldName =
         daoImplementationGenerator.addEntityHelperField(ClassName.get(entityElement));
 

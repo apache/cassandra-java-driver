@@ -52,14 +52,7 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
 
   private final ExecutableElement methodElement;
   private final DaoImplementationGenerator daoImplementationGenerator;
-  private final String parameterName;
-  /**
-   * The entity type manipulated by this method (it is either the direct return type, or the type
-   * parameter of the returned iterable).
-   */
-  private final TypeElement entityElement;
-
-  private final Transformation transformation;
+  private final ProcessorContext context;
 
   public DaoGetEntityMethodGenerator(
       ExecutableElement methodElement,
@@ -67,7 +60,13 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
       ProcessorContext context) {
     this.methodElement = methodElement;
     this.daoImplementationGenerator = daoImplementationGenerator;
-    // Methods should only have one parameter
+    this.context = context;
+  }
+
+  @Override
+  public MethodSpec.Builder generate() {
+
+    // Validate the parameter: there must be exactly one, of type GettableByName or a ResultSet:
     if (methodElement.getParameters().size() != 1) {
       context
           .getMessager()
@@ -76,8 +75,7 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
       throw new SkipGenerationException();
     }
     VariableElement parameterElement = methodElement.getParameters().get(0);
-    parameterName = parameterElement.getSimpleName().toString();
-    // Check the parameter type, make sure it matches an expected type
+    String parameterName = parameterElement.getSimpleName().toString();
     TypeMirror parameterType = parameterElement.asType();
     boolean parameterIsGettable = context.getClassUtils().implementsGettableByName(parameterType);
     boolean parameterIsResultSet = context.getClassUtils().isSame(parameterType, ResultSet.class);
@@ -94,16 +92,17 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
               AsyncResultSet.class.getSimpleName());
       throw new SkipGenerationException();
     }
-    TypeElement tmpEntityElement = null;
-    Transformation tmpTransformation = null;
-    // Check return type. Make sure it matches the parameter type
+
+    // Validate the return type. Make sure it matches the parameter type
+    TypeElement entityElement = null;
+    Transformation transformation = null;
     TypeMirror returnType = methodElement.getReturnType();
     if (returnType.getKind() == TypeKind.DECLARED) {
       Element element = ((DeclaredType) returnType).asElement();
       // Simple case return type is an entity type
       if (element.getKind() == ElementKind.CLASS && element.getAnnotation(Entity.class) != null) {
-        tmpEntityElement = (TypeElement) element;
-        tmpTransformation = parameterIsGettable ? Transformation.NONE : Transformation.ONE;
+        entityElement = (TypeElement) element;
+        transformation = parameterIsGettable ? Transformation.NONE : Transformation.ONE;
       } else if (context.getClassUtils().isSame(element, PagingIterable.class)) {
         if (!parameterIsResultSet) {
           context
@@ -115,8 +114,8 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
                   ResultSet.class.getSimpleName());
           throw new SkipGenerationException();
         }
-        tmpEntityElement = extractTypeParameter(returnType);
-        tmpTransformation = Transformation.MAP;
+        entityElement = extractTypeParameter(returnType);
+        transformation = Transformation.MAP;
       } else if (context.getClassUtils().isSame(element, MappedAsyncPagingIterable.class)) {
         if (!parameterIsAsyncResultSet) {
           context
@@ -128,11 +127,11 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
                   AsyncResultSet.class.getSimpleName());
           throw new SkipGenerationException();
         }
-        tmpEntityElement = extractTypeParameter(returnType);
-        tmpTransformation = Transformation.MAP;
+        entityElement = extractTypeParameter(returnType);
+        transformation = Transformation.MAP;
       }
     }
-    if (tmpEntityElement == null) {
+    if (entityElement == null) {
       context
           .getMessager()
           .error(
@@ -143,28 +142,8 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
               MappedAsyncPagingIterable.class.getSimpleName());
       throw new SkipGenerationException();
     }
-    this.entityElement = tmpEntityElement;
-    this.transformation = tmpTransformation;
-  }
 
-  /** @return the type argument if it's an annotated entity, otherwise null */
-  private TypeElement extractTypeParameter(TypeMirror returnType) {
-    // Only called when we've already checked the main type is PagingIterable or
-    // AsyncPagingIterable, so we know it's a declared type and the number of type type arguments is
-    // exactly 1.
-    assert returnType.getKind() == TypeKind.DECLARED;
-    TypeMirror typeArgumentMirror = ((DeclaredType) returnType).getTypeArguments().get(0);
-    if (typeArgumentMirror.getKind() == TypeKind.DECLARED) {
-      Element typeArgumentElement = ((DeclaredType) typeArgumentMirror).asElement();
-      if (typeArgumentElement.getAnnotation(Entity.class) != null) {
-        return (TypeElement) typeArgumentElement;
-      }
-    }
-    return null;
-  }
-
-  @Override
-  public MethodSpec.Builder generate() {
+    // Generate the implementation:
     String helperFieldName =
         daoImplementationGenerator.addEntityHelperField(ClassName.get(entityElement));
 
@@ -184,5 +163,21 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
         break;
     }
     return overridingMethodBuilder;
+  }
+
+  /** @return the type argument if it's an annotated entity, otherwise null */
+  private TypeElement extractTypeParameter(TypeMirror returnType) {
+    // Only called when we've already checked the main type is PagingIterable or
+    // AsyncPagingIterable, so we know it's a declared type and the number of type type arguments is
+    // exactly 1.
+    assert returnType.getKind() == TypeKind.DECLARED;
+    TypeMirror typeArgumentMirror = ((DeclaredType) returnType).getTypeArguments().get(0);
+    if (typeArgumentMirror.getKind() == TypeKind.DECLARED) {
+      Element typeArgumentElement = ((DeclaredType) typeArgumentMirror).asElement();
+      if (typeArgumentElement.getAnnotation(Entity.class) != null) {
+        return (TypeElement) typeArgumentElement;
+      }
+    }
+    return null;
   }
 }
