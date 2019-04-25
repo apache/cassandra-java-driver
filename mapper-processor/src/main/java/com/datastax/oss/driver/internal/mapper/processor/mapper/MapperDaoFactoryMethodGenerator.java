@@ -41,13 +41,13 @@ import javax.lang.model.type.TypeMirror;
 /**
  * Generates the implementation of a DAO-producing method in a {@link Mapper}-annotated interface.
  */
-public class DaoFactoryMethodGenerator implements MethodGenerator {
+public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
 
   private final ExecutableElement methodElement;
   private final MapperImplementationSharedCode enclosingClass;
   private final ProcessorContext context;
 
-  public DaoFactoryMethodGenerator(
+  public MapperDaoFactoryMethodGenerator(
       ExecutableElement methodElement,
       MapperImplementationSharedCode enclosingClass,
       ProcessorContext context) {
