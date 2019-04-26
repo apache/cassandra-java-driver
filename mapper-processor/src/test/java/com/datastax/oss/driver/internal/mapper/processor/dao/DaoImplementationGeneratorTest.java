@@ -26,12 +26,12 @@ public class DaoImplementationGeneratorTest extends DaoMethodGeneratorTest {
   @Test
   public void should_fail_if_method_is_not_annotated() {
     should_fail_with_expected_error(
+        "Unrecognized method signature: no implementation will be generated",
         MethodSpec.methodBuilder("get")
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addParameter(ParameterSpec.builder(Row.class, "source").build())
             .returns(ENTITY_CLASS_NAME)
-            .build(),
-        "Unrecognized method signature: no implementation will be generated");
+            .build());
   }
 
   @Test
