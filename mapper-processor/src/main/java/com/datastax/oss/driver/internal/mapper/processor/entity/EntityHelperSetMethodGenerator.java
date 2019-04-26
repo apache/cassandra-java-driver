@@ -65,7 +65,7 @@ public class EntityHelperSetMethodGenerator implements MethodGenerator {
             .addParameter(ParameterSpec.builder(settableT, "target").build())
             .returns(settableT);
 
-    for (PropertyDefinition property : entityDefinition.getProperties()) {
+    for (PropertyDefinition property : entityDefinition.getAllColumns()) {
       GeneratedCodePatterns.setValue(
           property.getCqlName(),
           property.getType(),
