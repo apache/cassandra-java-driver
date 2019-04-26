@@ -24,11 +24,11 @@ public class MapperImplementationGeneratorTest extends MapperMethodGeneratorTest
   @Test
   public void should_fail_if_method_is_not_annotated() {
     should_fail_with_expected_error(
+        "Unrecognized method signature: no implementation will be generated",
         MethodSpec.methodBuilder("productDao")
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(DAO_CLASS_NAME)
-            .build(),
-        "Unrecognized method signature: no implementation will be generated");
+            .build());
   }
 
   @Test

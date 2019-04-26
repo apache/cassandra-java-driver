@@ -39,31 +39,32 @@ public class MapperDaoFactoryMethodGeneratorTest extends MapperMethodGeneratorTe
   @Test
   @Override
   @UseDataProvider("invalidSignatures")
-  public void should_fail_with_expected_error(MethodSpec method, String expectedError) {
-    super.should_fail_with_expected_error(method, expectedError);
+  public void should_fail_with_expected_error(String expectedError, MethodSpec method) {
+    super.should_fail_with_expected_error(expectedError, method);
   }
 
   @DataProvider
   public static Object[][] invalidSignatures() {
     return new Object[][] {
       {
+        "Invalid return type: DaoFactory methods must return a Dao-annotated interface, or future thereof",
         MethodSpec.methodBuilder("productDao")
             .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(TypeName.INT)
             .build(),
-        "Invalid return type: DaoFactory methods must return a Dao-annotated interface, or future thereof"
       },
       {
+        "Invalid parameter annotations: DaoFactory method parameters must be annotated with @DaoKeyspace or @DaoTable",
         MethodSpec.methodBuilder("productDao")
             .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(DAO_CLASS_NAME)
             .addParameter(String.class, "table")
             .build(),
-        "Invalid parameter annotations: DaoFactory method parameters must be annotated with @DaoKeyspace or @DaoTable"
       },
       {
+        "Invalid parameter annotations: only one DaoFactory method parameter can be annotated with @DaoTable",
         MethodSpec.methodBuilder("productDao")
             .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -73,9 +74,9 @@ public class MapperDaoFactoryMethodGeneratorTest extends MapperMethodGeneratorTe
             .addParameter(
                 ParameterSpec.builder(String.class, "table2").addAnnotation(DaoTable.class).build())
             .build(),
-        "Invalid parameter annotations: only one DaoFactory method parameter can be annotated with @DaoTable"
       },
       {
+        "Invalid parameter annotations: only one DaoFactory method parameter can be annotated with @DaoKeyspace",
         MethodSpec.methodBuilder("productDao")
             .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -91,9 +92,9 @@ public class MapperDaoFactoryMethodGeneratorTest extends MapperMethodGeneratorTe
                     .addAnnotation(DaoKeyspace.class)
                     .build())
             .build(),
-        "Invalid parameter annotations: only one DaoFactory method parameter can be annotated with @DaoKeyspace"
       },
       {
+        "Invalid parameter type: @DaoTable-annotated parameter of DaoFactory methods must be of type String or CqlIdentifier",
         MethodSpec.methodBuilder("productDao")
             .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -101,9 +102,9 @@ public class MapperDaoFactoryMethodGeneratorTest extends MapperMethodGeneratorTe
             .addParameter(
                 ParameterSpec.builder(Integer.class, "table").addAnnotation(DaoTable.class).build())
             .build(),
-        "Invalid parameter type: @DaoTable-annotated parameter of DaoFactory methods must be of type String or CqlIdentifier"
       },
       {
+        "Invalid parameter type: @DaoKeyspace-annotated parameter of DaoFactory methods must be of type String or CqlIdentifier",
         MethodSpec.methodBuilder("productDao")
             .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -113,7 +114,6 @@ public class MapperDaoFactoryMethodGeneratorTest extends MapperMethodGeneratorTe
                     .addAnnotation(DaoKeyspace.class)
                     .build())
             .build(),
-        "Invalid parameter type: @DaoKeyspace-annotated parameter of DaoFactory methods must be of type String or CqlIdentifier"
       },
     };
   }

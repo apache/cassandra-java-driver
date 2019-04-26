@@ -15,12 +15,9 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.internal.mapper.processor.MapperProcessorTest;
-import com.google.testing.compile.Compilation;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
@@ -49,42 +46,38 @@ public abstract class DaoMethodGeneratorTest extends MapperProcessorTest {
                   .build())
           .build();
 
-  protected void should_fail_with_expected_error(MethodSpec method, String expectedError) {
-    TypeSpec daoSpec =
+  protected void should_fail_with_expected_error(String expectedError, MethodSpec method) {
+    should_fail_with_expected_error(
+        expectedError,
+        "test",
+        ENTITY_SPEC,
         TypeSpec.interfaceBuilder(ClassName.get("test", "ProductDao"))
             .addModifiers(Modifier.PUBLIC)
             .addAnnotation(Dao.class)
             .addMethod(method)
-            .build();
-
-    Compilation compilation = compileWithMapperProcessor("test", ENTITY_SPEC, daoSpec);
-
-    assertThat(compilation).hadErrorContaining(expectedError);
+            .build());
   }
 
-  protected void should_succeed_with_expected_warning(MethodSpec method, String expectedWarning) {
-    TypeSpec daoSpec =
+  protected void should_succeed_with_expected_warning(String expectedWarning, MethodSpec method) {
+    should_succeed_with_expected_warning(
+        expectedWarning,
+        "test",
+        ENTITY_SPEC,
         TypeSpec.interfaceBuilder(ClassName.get("test", "ProductDao"))
             .addModifiers(Modifier.PUBLIC)
             .addAnnotation(Dao.class)
             .addMethod(method)
-            .build();
-
-    Compilation compilation = compileWithMapperProcessor("test", ENTITY_SPEC, daoSpec);
-
-    assertThat(compilation).hadWarningContaining(expectedWarning);
+            .build());
   }
 
   protected void should_succeed_without_warnings(MethodSpec method) {
-    TypeSpec daoSpec =
+    should_succeed_without_warnings(
+        "test",
+        ENTITY_SPEC,
         TypeSpec.interfaceBuilder(ClassName.get("test", "ProductDao"))
             .addModifiers(Modifier.PUBLIC)
             .addAnnotation(Dao.class)
             .addMethod(method)
-            .build();
-
-    Compilation compilation = compileWithMapperProcessor("test", ENTITY_SPEC, daoSpec);
-
-    assertThat(compilation).succeededWithoutWarnings();
+            .build());
   }
 }
