@@ -17,11 +17,12 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.internal.mapper.processor.MapperProcessorTest;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import java.util.UUID;
 import javax.lang.model.element.Modifier;
 
 public abstract class DaoMethodGeneratorTest extends MapperProcessorTest {
@@ -32,17 +33,19 @@ public abstract class DaoMethodGeneratorTest extends MapperProcessorTest {
       TypeSpec.classBuilder(ENTITY_CLASS_NAME)
           .addModifiers(Modifier.PUBLIC)
           .addAnnotation(Entity.class)
-          // Dummy getter and setter to have at least one mapped property
+          .addField(UUID.class, "id", Modifier.PRIVATE)
           .addMethod(
-              MethodSpec.methodBuilder("setI")
-                  .addParameter(TypeName.INT, "i")
+              MethodSpec.methodBuilder("setId")
+                  .addParameter(UUID.class, "id")
                   .addModifiers(Modifier.PUBLIC)
+                  .addStatement("this.id = id")
                   .build())
           .addMethod(
-              MethodSpec.methodBuilder("getI")
-                  .returns(TypeName.INT)
+              MethodSpec.methodBuilder("getId")
+                  .addAnnotation(PartitionKey.class)
+                  .returns(UUID.class)
                   .addModifiers(Modifier.PUBLIC)
-                  .addStatement("return 0")
+                  .addStatement("return id")
                   .build())
           .build();
 

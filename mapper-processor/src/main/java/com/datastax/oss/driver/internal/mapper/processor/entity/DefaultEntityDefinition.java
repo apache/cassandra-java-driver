@@ -28,7 +28,8 @@ public class DefaultEntityDefinition implements EntityDefinition {
   private final ImmutableList<PropertyDefinition> regularColumns;
 
   public DefaultEntityDefinition(
-      ClassName className, String cqlName,
+      ClassName className,
+      String cqlName,
       List<PropertyDefinition> partitionKey,
       List<PropertyDefinition> clusteringColumns,
       List<PropertyDefinition> regularColumns) {

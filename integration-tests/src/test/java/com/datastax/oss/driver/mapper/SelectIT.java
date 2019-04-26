@@ -15,13 +15,14 @@
  */
 package com.datastax.oss.driver.mapper;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
+import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
-import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.data.UdtValue;
-import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -32,6 +33,8 @@ import com.datastax.oss.driver.mapper.model.inventory.InventoryMapper;
 import com.datastax.oss.driver.mapper.model.inventory.InventoryMapperBuilder;
 import com.datastax.oss.driver.mapper.model.inventory.Product;
 import com.datastax.oss.driver.mapper.model.inventory.ProductDao;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -41,7 +44,7 @@ import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 @CassandraRequirement(min = "3.4", description = "Creates a SASI index")
-public class SetEntityIT {
+public class SelectIT {
 
   private static CcmRule ccm = CcmRule.getInstance();
 
@@ -62,61 +65,52 @@ public class SetEntityIT {
 
     InventoryMapper inventoryMapper = new InventoryMapperBuilder(session).build();
     productDao = inventoryMapper.productDao(sessionRule.keyspace());
-  }
-
-  @Test
-  public void should_set_entity_on_bound_statement() {
-    should_set_entity_on_bound_statement(InventoryFixtures.FLAMETHROWER);
-    should_set_entity_on_bound_statement(InventoryFixtures.MP3_DOWNLOAD);
-  }
-
-  private void should_set_entity_on_bound_statement(EntityFixture<Product> entityFixture) {
-    // Given
-    CqlSession session = sessionRule.session();
     PreparedStatement preparedStatement =
         session.prepare("INSERT INTO product (id, description, dimensions) VALUES (?, ?, ?)");
     BoundStatement boundStatement = preparedStatement.bind();
-
-    // When
-    boundStatement = productDao.set(entityFixture.entity, boundStatement);
-
-    // Then
-    entityFixture.assertMatches(boundStatement);
+    session.execute(productDao.set(InventoryFixtures.FLAMETHROWER.entity, boundStatement));
+    session.execute(productDao.set(InventoryFixtures.MP3_DOWNLOAD.entity, boundStatement));
   }
 
   @Test
-  public void should_set_entity_on_bound_statement_builder() {
-    // Given
-    CqlSession session = sessionRule.session();
-    PreparedStatement preparedStatement =
-        session.prepare("INSERT INTO product (id, description, dimensions) VALUES (?, ?, ?)");
-    BoundStatementBuilder builder = preparedStatement.boundStatementBuilder();
+  public void should_select_by_primary_key() {
+    should_select_by_primary_key(InventoryFixtures.FLAMETHROWER);
+    should_select_by_primary_key(InventoryFixtures.MP3_DOWNLOAD);
+  }
 
-    // When
-    productDao.set(builder, InventoryFixtures.FLAMETHROWER.entity);
-    BoundStatement boundStatement = builder.build();
-
-    // Then
-    InventoryFixtures.FLAMETHROWER.assertMatches(boundStatement);
+  private void should_select_by_primary_key(EntityFixture<Product> entityFixture) {
+    Product selectedEntity = productDao.findById(entityFixture.entity.getId());
+    assertThat(selectedEntity).isEqualTo(entityFixture.entity);
   }
 
   @Test
-  public void should_set_entity_on_udt_value() {
-    // Given
-    CqlSession session = sessionRule.session();
-    UserDefinedType udtType =
-        session
-            .getMetadata()
-            .getKeyspace(sessionRule.keyspace())
-            .orElseThrow(AssertionError::new)
-            .getUserDefinedType("dimensions")
-            .orElseThrow(AssertionError::new);
-    UdtValue udtValue = udtType.newValue();
+  public void should_select_by_primary_key_async() throws Exception {
+    should_select_by_primary_key_async(InventoryFixtures.FLAMETHROWER);
+    should_select_by_primary_key_async(InventoryFixtures.MP3_DOWNLOAD);
+  }
 
-    // When
-    productDao.set(InventoryFixtures.SAMPLE_DIMENSIONS.entity, udtValue);
+  private void should_select_by_primary_key_async(EntityFixture<Product> entityFixture)
+      throws Exception {
+    CompletionStage<Product> future = productDao.findByIdAsync(entityFixture.entity.getId());
+    Product selectedEntity = future.toCompletableFuture().get(500, TimeUnit.MILLISECONDS);
+    assertThat(selectedEntity).isEqualTo(entityFixture.entity);
+  }
 
-    // Then
-    InventoryFixtures.SAMPLE_DIMENSIONS.assertMatches(udtValue);
+  @Test
+  public void should_select_with_custom_clause() {
+    PagingIterable<Product> products = productDao.findByDescription("%mp3%");
+    assertThat(products.one()).isEqualTo(InventoryFixtures.MP3_DOWNLOAD.entity);
+    assertThat(products.iterator()).isExhausted();
+  }
+
+  @Test
+  public void should_select_with_custom_clause_async() throws Exception {
+    CompletionStage<MappedAsyncPagingIterable<Product>> future =
+        productDao.findByDescriptionAsync("%mp3%");
+    MappedAsyncPagingIterable<Product> iterable =
+        future.toCompletableFuture().get(500, TimeUnit.MILLISECONDS);
+    assertThat(iterable.one()).isEqualTo(InventoryFixtures.MP3_DOWNLOAD.entity);
+    assertThat(iterable.currentPage().iterator()).isExhausted();
+    assertThat(iterable.hasMorePages()).isFalse();
   }
 }

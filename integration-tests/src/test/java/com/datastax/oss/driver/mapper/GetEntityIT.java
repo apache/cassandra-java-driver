@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -47,6 +48,7 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
+@CassandraRequirement(min = "3.4", description = "Creates a SASI index")
 public class GetEntityIT {
 
   private static CcmRule ccm = CcmRule.getInstance();

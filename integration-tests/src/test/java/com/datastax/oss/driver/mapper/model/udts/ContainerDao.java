@@ -19,9 +19,14 @@ import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
+import com.datastax.oss.driver.api.mapper.annotations.Select;
+import java.util.UUID;
 
 @Dao
 public interface ContainerDao {
+
+  @Select
+  Container loadByPk(UUID id);
 
   @Insert
   void save(Container container);
