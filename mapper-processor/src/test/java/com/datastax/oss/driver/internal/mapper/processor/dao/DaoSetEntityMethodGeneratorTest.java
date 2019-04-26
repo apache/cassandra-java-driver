@@ -34,22 +34,23 @@ public class DaoSetEntityMethodGeneratorTest extends DaoMethodGeneratorTest {
   @Test
   @Override
   @UseDataProvider("invalidSignatures")
-  public void should_fail_with_expected_error(MethodSpec method, String expectedError) {
-    super.should_fail_with_expected_error(method, expectedError);
+  public void should_fail_with_expected_error(String expectedError, MethodSpec method) {
+    super.should_fail_with_expected_error(expectedError, method);
   }
 
   @DataProvider
   public static Object[][] invalidSignatures() {
     return new Object[][] {
       {
+        "Wrong number of parameters: SetEntity methods must have two",
         MethodSpec.methodBuilder("set")
             .addAnnotation(SetEntity.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addParameter(ParameterSpec.builder(String.class, "a").build())
             .build(),
-        "Wrong number of parameters: SetEntity methods must have two"
       },
       {
+        "Wrong number of parameters: SetEntity methods must have two",
         MethodSpec.methodBuilder("set")
             .addAnnotation(SetEntity.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -57,27 +58,28 @@ public class DaoSetEntityMethodGeneratorTest extends DaoMethodGeneratorTest {
             .addParameter(ParameterSpec.builder(String.class, "b").build())
             .addParameter(ParameterSpec.builder(String.class, "c").build())
             .build(),
-        "Wrong number of parameters: SetEntity methods must have two"
       },
       {
+        "Wrong parameter types: SetEntity methods must take a SettableByName and an annotated entity (in any order)",
         MethodSpec.methodBuilder("set")
             .addAnnotation(SetEntity.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
             .addParameter(ParameterSpec.builder(Integer.class, "target").build())
             .build(),
-        "Wrong parameter types: SetEntity methods must take a SettableByName and an annotated entity (in any order)"
       },
       {
+        "Wrong parameter types: SetEntity methods must take a SettableByName and an annotated entity (in any order)",
         MethodSpec.methodBuilder("set")
             .addAnnotation(SetEntity.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addParameter(ParameterSpec.builder(String.class, "entity").build())
             .addParameter(ParameterSpec.builder(BoundStatement.class, "target").build())
             .build(),
-        "Wrong parameter types: SetEntity methods must take a SettableByName and an annotated entity (in any order)"
       },
       {
+        "Invalid return type: SetEntity methods must either be void, or return the same type as their settable parameter "
+            + "(in this case, com.datastax.oss.driver.api.core.cql.BoundStatement to match 'target')",
         MethodSpec.methodBuilder("set")
             .addAnnotation(SetEntity.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -85,11 +87,11 @@ public class DaoSetEntityMethodGeneratorTest extends DaoMethodGeneratorTest {
             .addParameter(ParameterSpec.builder(BoundStatement.class, "target").build())
             .returns(Integer.class)
             .build(),
-        "Invalid return type: SetEntity methods must either be void, or return the same type as their settable parameter "
-            + "(in this case, com.datastax.oss.driver.api.core.cql.BoundStatement to match 'target')"
       },
       // Return type is a SettableByName, but not the same subtype as the parameter:
       {
+        "Invalid return type: SetEntity methods must either be void, or return the same type as their settable parameter "
+            + "(in this case, com.datastax.oss.driver.api.core.cql.BoundStatement to match 'target')",
         MethodSpec.methodBuilder("set")
             .addAnnotation(SetEntity.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -97,8 +99,6 @@ public class DaoSetEntityMethodGeneratorTest extends DaoMethodGeneratorTest {
             .addParameter(ParameterSpec.builder(BoundStatement.class, "target").build())
             .returns(UdtValue.class)
             .build(),
-        "Invalid return type: SetEntity methods must either be void, or return the same type as their settable parameter "
-            + "(in this case, com.datastax.oss.driver.api.core.cql.BoundStatement to match 'target')"
       },
     };
   }
@@ -106,15 +106,15 @@ public class DaoSetEntityMethodGeneratorTest extends DaoMethodGeneratorTest {
   @Test
   public void should_warn_when_void_and_target_is_bound_statement() {
     super.should_succeed_with_expected_warning(
+        "BoundStatement is immutable, "
+            + "this method will not modify 'target' in place. "
+            + "It should probably return BoundStatement rather than void",
         MethodSpec.methodBuilder("set")
             .addAnnotation(SetEntity.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
             .addParameter(ParameterSpec.builder(BoundStatement.class, "target").build())
-            .build(),
-        "BoundStatement is immutable, "
-            + "this method will not modify 'target' in place. "
-            + "It should probably return BoundStatement rather than void");
+            .build());
   }
 
   @Test

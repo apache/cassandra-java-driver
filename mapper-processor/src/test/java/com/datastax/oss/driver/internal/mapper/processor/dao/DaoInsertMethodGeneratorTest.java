@@ -36,37 +36,37 @@ public class DaoInsertMethodGeneratorTest extends DaoMethodGeneratorTest {
   @Test
   @Override
   @UseDataProvider("invalidSignatures")
-  public void should_fail_with_expected_error(MethodSpec method, String expectedError) {
-    super.should_fail_with_expected_error(method, expectedError);
+  public void should_fail_with_expected_error(String expectedError, MethodSpec method) {
+    super.should_fail_with_expected_error(expectedError, method);
   }
 
   @DataProvider
   public static Object[][] invalidSignatures() {
     return new Object[][] {
       {
+        "Wrong number of parameters: Insert methods must have at least one",
         MethodSpec.methodBuilder("insert")
             .addAnnotation(Insert.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .build(),
-        "Wrong number of parameters: Insert methods must have at least one"
       },
       {
+        "Invalid parameter type: Insert methods must take the entity to insert as the first parameter",
         MethodSpec.methodBuilder("insert")
             .addAnnotation(Insert.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addParameter(ParameterSpec.builder(String.class, "a").build())
             .build(),
-        "Invalid parameter type: Insert methods must take the entity to insert as the first parameter"
       },
       {
+        "Invalid return type: Insert methods must return either void or the entity class "
+            + "(possibly wrapped in a CompletionStage/CompletableFuture)",
         MethodSpec.methodBuilder("insert")
             .addAnnotation(Insert.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
             .returns(TypeName.INT)
             .build(),
-        "Invalid return type: Insert methods must return either void or the entity class "
-            + "(possibly wrapped in a CompletionStage/CompletableFuture)"
       },
     };
   }
