@@ -28,7 +28,18 @@ public class InventoryFixtures {
   public static List<String> createStatements() {
     return ImmutableList.of(
         "CREATE TYPE dimensions(length int, width int, height int)",
-        "CREATE TABLE product(id uuid PRIMARY KEY, description text, dimensions dimensions)");
+        "CREATE TABLE product(id uuid PRIMARY KEY, description text, dimensions dimensions)",
+        "CREATE CUSTOM INDEX product_description ON product(description) "
+            + "USING 'org.apache.cassandra.index.sasi.SASIIndex' "
+            + "WITH OPTIONS = {"
+            + "'mode': 'CONTAINS',"
+            + "'analyzer_class': 'org.apache.cassandra.index.sasi.analyzer.StandardAnalyzer',"
+            + "'tokenization_enable_stemming': 'true',"
+            + "'tokenization_locale': 'en',"
+            + "'tokenization_skip_stop_words': 'true',"
+            + "'analyzed': 'true',"
+            + "'tokenization_normalize_lowercase': 'true'"
+            + "}");
   }
 
   public static EntityFixture<Product> FLAMETHROWER =

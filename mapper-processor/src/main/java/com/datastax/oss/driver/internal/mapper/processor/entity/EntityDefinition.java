@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper.processor.entity;
 
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
+import java.util.List;
 
 public interface EntityDefinition {
 
@@ -24,9 +25,20 @@ public interface EntityDefinition {
 
   String getCqlName();
 
-  Iterable<PropertyDefinition> getPartitionKey();
+  List<PropertyDefinition> getPartitionKey();
 
-  Iterable<PropertyDefinition> getClusteringColumns();
+  List<PropertyDefinition> getClusteringColumns();
+
+  /**
+   * @return the primary key, obtained by concatenating {@link #getPartitionKey()} and {@link
+   *     #getClusteringColumns()}, in that order.
+   */
+  default List<PropertyDefinition> getPrimaryKey() {
+    return ImmutableList.<PropertyDefinition>builder()
+        .addAll(getPartitionKey())
+        .addAll(getClusteringColumns())
+        .build();
+  }
 
   Iterable<PropertyDefinition> getRegularColumns();
 
@@ -34,7 +46,7 @@ public interface EntityDefinition {
    * @return the concatenation of {@link #getPartitionKey()}, {@link #getClusteringColumns()} and
    *     {@link #getRegularColumns()}, in that order.
    */
-  default Iterable<PropertyDefinition> getAllColumns() {
+  default List<PropertyDefinition> getAllColumns() {
     return ImmutableList.<PropertyDefinition>builder()
         .addAll(getPartitionKey())
         .addAll(getClusteringColumns())

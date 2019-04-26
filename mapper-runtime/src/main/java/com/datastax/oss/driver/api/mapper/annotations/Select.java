@@ -20,8 +20,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target({ElementType.FIELD, ElementType.METHOD})
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.CLASS)
-public @interface ClusteringColumn {
-  int value() default 0;
+public @interface Select {
+  String customWhereClause() default "";
 }

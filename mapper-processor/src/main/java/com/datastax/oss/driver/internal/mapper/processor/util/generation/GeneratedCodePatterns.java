@@ -85,7 +85,8 @@ public class GeneratedCodePatterns {
   }
 
   /**
-   * Treats a list of method parameters as bind variables in a query.
+   * Treats a list of method parameters as bind variables in a query, assuming the bing markers have
+   * the same names as the parameters.
    *
    * <p>The generated code assumes that a {@code BoundStatementBuilder boundStatementBuilder} local
    * variable already exists.
@@ -95,12 +96,31 @@ public class GeneratedCodePatterns {
       MethodSpec.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass,
       ProcessorContext context) {
+    bindParameters(parameters, null, methodBuilder, enclosingClass, context);
+  }
 
-    for (VariableElement parameter : parameters) {
+  /**
+   * Treats a list of method parameters as bind variables in a query, using the provided bind
+   * markers.
+   *
+   * <p>The generated code assumes that a {@code BoundStatementBuilder boundStatementBuilder} local
+   * variable already exists.
+   */
+  public static void bindParameters(
+      List<? extends VariableElement> parameters,
+      List<String> bindMarkerNames,
+      MethodSpec.Builder methodBuilder,
+      BindableHandlingSharedCode enclosingClass,
+      ProcessorContext context) {
+
+    assert bindMarkerNames == null || bindMarkerNames.size() == parameters.size();
+    for (int i = 0; i < parameters.size(); i++) {
+      VariableElement parameter = parameters.get(i);
       String parameterName = parameter.getSimpleName().toString();
+      String cqlName = (bindMarkerNames == null) ? parameterName : bindMarkerNames.get(i);
       PropertyType type = PropertyType.parse(parameter.asType(), context);
       setValue(
-          parameterName,
+          cqlName,
           type,
           CodeBlock.of("$L", parameterName),
           "boundStatementBuilder",
