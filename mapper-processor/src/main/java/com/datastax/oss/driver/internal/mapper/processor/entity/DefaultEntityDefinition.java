@@ -23,13 +23,20 @@ public class DefaultEntityDefinition implements EntityDefinition {
 
   private final ClassName className;
   private final String cqlName;
-  private final ImmutableList<PropertyDefinition> propertyDefinitions;
+  private final List<PropertyDefinition> partitionKey;
+  private final List<PropertyDefinition> clusteringColumns;
+  private final ImmutableList<PropertyDefinition> regularColumns;
 
   public DefaultEntityDefinition(
-      ClassName className, String cqlName, List<PropertyDefinition> propertyDefinitions) {
+      ClassName className, String cqlName,
+      List<PropertyDefinition> partitionKey,
+      List<PropertyDefinition> clusteringColumns,
+      List<PropertyDefinition> regularColumns) {
     this.className = className;
     this.cqlName = cqlName;
-    this.propertyDefinitions = ImmutableList.copyOf(propertyDefinitions);
+    this.partitionKey = partitionKey;
+    this.clusteringColumns = clusteringColumns;
+    this.regularColumns = ImmutableList.copyOf(regularColumns);
   }
 
   @Override
@@ -43,7 +50,17 @@ public class DefaultEntityDefinition implements EntityDefinition {
   }
 
   @Override
-  public Iterable<PropertyDefinition> getProperties() {
-    return propertyDefinitions;
+  public List<PropertyDefinition> getPartitionKey() {
+    return partitionKey;
+  }
+
+  @Override
+  public List<PropertyDefinition> getClusteringColumns() {
+    return clusteringColumns;
+  }
+
+  @Override
+  public Iterable<PropertyDefinition> getRegularColumns() {
+    return regularColumns;
   }
 }
