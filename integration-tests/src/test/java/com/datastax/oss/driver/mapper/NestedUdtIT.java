@@ -86,14 +86,7 @@ public class NestedUdtIT {
     // When
     Container insertedContainer = UdtsFixtures.SAMPLE_CONTAINER.entity;
     containerDao.save(insertedContainer);
-    // TODO maybe replace with a Dao @Select once that is implemented
-    Row row =
-        session
-            .execute(
-                SimpleStatement.newInstance(
-                    "SELECT * FROM container WHERE id = ?", insertedContainer.getId()))
-            .one();
-    Container retrievedContainer = containerDao.get(row);
+    Container retrievedContainer = containerDao.loadByPk(insertedContainer.getId());
 
     // Then
     assertThat(retrievedContainer).isEqualTo(insertedContainer);

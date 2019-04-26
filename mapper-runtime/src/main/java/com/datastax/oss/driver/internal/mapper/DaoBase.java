@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.mapper;
 
+import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
+import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
@@ -53,6 +55,11 @@ public class DaoBase {
     return (row == null) ? null : entityHelper.get(row);
   }
 
+  protected <EntityT> PagingIterable<EntityT> executeAndMapToEntityIterable(
+      Statement<?> statement, EntityHelper<EntityT> entityHelper) {
+    return execute(statement).map(entityHelper::get);
+  }
+
   protected CompletableFuture<AsyncResultSet> executeAsync(Statement<?> statement) {
     CompletionStage<AsyncResultSet> stage =
         context.getSession().execute(statement, Statement.ASYNC);
@@ -78,5 +85,11 @@ public class DaoBase {
               Row row = rs.one();
               return (row == null) ? null : entityHelper.get(row);
             });
+  }
+
+  protected <EntityT>
+      CompletableFuture<MappedAsyncPagingIterable<EntityT>> executeAsyncAndMapToEntityIterable(
+          Statement<?> statement, EntityHelper<EntityT> entityHelper) {
+    return executeAsync(statement).thenApply(rs -> rs.map(entityHelper::get));
   }
 }

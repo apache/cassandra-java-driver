@@ -26,7 +26,10 @@ import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
+import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
+import java.util.UUID;
+import java.util.concurrent.CompletionStage;
 
 @Dao
 public interface ProductDao {
@@ -60,4 +63,18 @@ public interface ProductDao {
 
   @Insert(customClause = "USING TIMESTAMP :timestamp")
   Product saveWithBoundTimestamp(Product product, long timestamp);
+
+  @Select
+  Product findById(UUID productId);
+
+  @Select
+  CompletionStage<Product> findByIdAsync(UUID productId);
+
+  /** Note that this relies on a SASI index. */
+  @Select(customWhereClause = "WHERE description LIKE :searchString")
+  PagingIterable<Product> findByDescription(String searchString);
+
+  /** Note that this relies on a SASI index. */
+  @Select(customWhereClause = "WHERE description LIKE :searchString")
+  CompletionStage<MappedAsyncPagingIterable<Product>> findByDescriptionAsync(String searchString);
 }
