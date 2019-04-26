@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.mapper.model.udts;
 
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -25,7 +26,7 @@ import java.util.UUID;
 @Entity
 public class Container {
 
-  private UUID id;
+  @PartitionKey private UUID id;
   private List<Type1> list;
   private Map<String, List<Type1>> map1;
   private Map<Type1, Set<List<Type2>>> map2;

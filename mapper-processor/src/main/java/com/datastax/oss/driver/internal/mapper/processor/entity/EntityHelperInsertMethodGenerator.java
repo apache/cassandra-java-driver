@@ -56,7 +56,7 @@ public class EntityHelperInsertMethodGenerator implements MethodGenerator {
                 QueryBuilder.class)
             .addCode("$[return insertInto");
 
-    for (PropertyDefinition property : entityDefinition.getProperties()) {
+    for (PropertyDefinition property : entityDefinition.getAllColumns()) {
       insertBuilder.addCode(
           "\n.value($1S, $2T.bindMarker($1S))", property.getCqlName(), QueryBuilder.class);
     }
