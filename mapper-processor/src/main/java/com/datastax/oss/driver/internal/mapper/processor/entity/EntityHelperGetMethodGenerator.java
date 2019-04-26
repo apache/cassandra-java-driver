@@ -62,7 +62,7 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
     String returnName = "returnValue";
     getBuilder.addStatement("$1T $2L = new $1T()", returnType, returnName);
 
-    for (PropertyDefinition property : entityDefinition.getProperties()) {
+    for (PropertyDefinition property : entityDefinition.getAllColumns()) {
       PropertyType type = property.getType();
       String cqlName = property.getCqlName();
       String setterName = property.getSetterName();
