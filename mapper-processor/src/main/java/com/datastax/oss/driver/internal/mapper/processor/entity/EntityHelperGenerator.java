@@ -106,7 +106,9 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
         ImmutableList.of(
             new EntityHelperSetMethodGenerator(entityDefinition, this, context),
             new EntityHelperGetMethodGenerator(entityDefinition, this, context),
-            new EntityHelperInsertMethodGenerator(entityDefinition, this, context))) {
+            new EntityHelperInsertMethodGenerator(entityDefinition, this, context),
+            new EntityHelperSelectByPrimaryKeyMethodGenerator(entityDefinition, this, context),
+            new EntityHelperSelectStartMethodGenerator(entityDefinition, this, context))) {
       methodGenerator.generate().ifPresent(classContents::addMethod);
     }
 
