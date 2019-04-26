@@ -18,11 +18,13 @@ package com.datastax.oss.driver.internal.mapper.processor;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
+import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoGetEntityMethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoImplementationGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoImplementationSharedCode;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoInsertMethodGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.dao.DaoSelectMethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoSetEntityMethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.entity.EntityHelperGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.mapper.MapperBuilderGenerator;
@@ -87,6 +89,8 @@ public class DefaultCodeGeneratorFactory implements CodeGeneratorFactory {
       return Optional.of(new DaoInsertMethodGenerator(methodElement, enclosingClass, context));
     } else if (methodElement.getAnnotation(GetEntity.class) != null) {
       return Optional.of(new DaoGetEntityMethodGenerator(methodElement, enclosingClass, context));
+    } else if (methodElement.getAnnotation(Select.class) != null) {
+      return Optional.of(new DaoSelectMethodGenerator(methodElement, enclosingClass, context));
     } else {
       return Optional.empty();
     }
