@@ -15,12 +15,9 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.mapper;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.internal.mapper.processor.MapperProcessorTest;
-import com.google.testing.compile.Compilation;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
@@ -36,29 +33,26 @@ public class MapperMethodGeneratorTest extends MapperProcessorTest {
           .addAnnotation(Dao.class)
           .build();
 
-  protected void should_fail_with_expected_error(MethodSpec method, String expectedError) {
-    TypeSpec mapperSpec =
+  protected void should_fail_with_expected_error(String expectedError, MethodSpec method) {
+    should_fail_with_expected_error(
+        expectedError,
+        "test",
+        DAO_SPEC,
         TypeSpec.interfaceBuilder(ClassName.get("test", "InventoryMapper"))
             .addModifiers(Modifier.PUBLIC)
             .addAnnotation(Mapper.class)
             .addMethod(method)
-            .build();
-
-    Compilation compilation = compileWithMapperProcessor("test", DAO_SPEC, mapperSpec);
-
-    assertThat(compilation).hadErrorContaining(expectedError);
+            .build());
   }
 
   protected void should_succeed_without_warnings(MethodSpec method) {
-    TypeSpec mapperSpec =
+    should_succeed_without_warnings(
+        "test",
+        DAO_SPEC,
         TypeSpec.interfaceBuilder(ClassName.get("test", "InventoryMapper"))
             .addModifiers(Modifier.PUBLIC)
             .addAnnotation(Mapper.class)
             .addMethod(method)
-            .build();
-
-    Compilation compilation = compileWithMapperProcessor("test", DAO_SPEC, mapperSpec);
-
-    assertThat(compilation).succeededWithoutWarnings();
+            .build());
   }
 }
