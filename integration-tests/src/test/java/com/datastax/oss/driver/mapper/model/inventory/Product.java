@@ -16,13 +16,14 @@
 package com.datastax.oss.driver.mapper.model.inventory;
 
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import java.util.Objects;
 import java.util.UUID;
 
 @Entity
 public class Product {
 
-  private UUID id;
+  @PartitionKey private UUID id;
   private String description;
   private Dimensions dimensions;
 

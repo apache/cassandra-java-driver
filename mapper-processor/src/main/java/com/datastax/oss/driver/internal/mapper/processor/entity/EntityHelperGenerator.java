@@ -44,7 +44,6 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
     implements BindableHandlingSharedCode {
 
   private final TypeElement classElement;
-  private final EntityDefinition entityDefinition;
   private final ClassName helperName;
   private final NameIndex nameIndex = new NameIndex();
   private final GenericTypeConstantGenerator genericTypeConstantGenerator =
@@ -54,7 +53,6 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
   public EntityHelperGenerator(TypeElement classElement, ProcessorContext context) {
     super(context);
     this.classElement = classElement;
-    entityDefinition = context.getEntityFactory().getDefinition(classElement);
     helperName = GeneratedNames.entityHelper(classElement);
   }
 
@@ -85,7 +83,7 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
 
   @Override
   protected JavaFile.Builder getContents() {
-
+    EntityDefinition entityDefinition = context.getEntityFactory().getDefinition(classElement);
     TypeSpec.Builder classContents =
         TypeSpec.classBuilder(helperName)
             .addJavadoc(JAVADOC_GENERATED_WARNING)

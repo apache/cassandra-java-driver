@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
-import javax.lang.model.type.TypeMirror;
 
 public class DefaultPropertyDefinition implements PropertyDefinition {
 
@@ -51,45 +50,5 @@ public class DefaultPropertyDefinition implements PropertyDefinition {
   @Override
   public PropertyType getType() {
     return type;
-  }
-
-  public static class Builder {
-    private final String cqlName;
-    private final TypeMirror rawType;
-    private final PropertyType type;
-    private String getterName;
-    private String setterName;
-
-    public Builder(String cqlName, TypeMirror rawType, PropertyType type) {
-      this.cqlName = cqlName;
-      this.rawType = rawType;
-      this.type = type;
-    }
-
-    public Builder withGetterName(String getterName) {
-      this.getterName = getterName;
-      return this;
-    }
-
-    public Builder withSetterName(String setterName) {
-      this.setterName = setterName;
-      return this;
-    }
-
-    public TypeMirror getRawType() {
-      return rawType;
-    }
-
-    public String getGetterName() {
-      return getterName;
-    }
-
-    public String getSetterName() {
-      return setterName;
-    }
-
-    DefaultPropertyDefinition build() {
-      return new DefaultPropertyDefinition(cqlName, getterName, setterName, type);
-    }
   }
 }
