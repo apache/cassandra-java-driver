@@ -4728,6 +4728,20 @@
         "new": "method SelfT com.datastax.oss.driver.api.core.config.OngoingConfigOptions<SelfT extends com.datastax.oss.driver.api.core.config.OngoingConfigOptions<SelfT extends com.datastax.oss.driver.api.core.config.OngoingConfigOptions<SelfT>>>::withLong(com.datastax.oss.driver.api.core.config.DriverOption, long) @ com.datastax.oss.driver.api.core.config.DriverExecutionProfile",
         "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
         "justification": "Bugfix, the annotation should have been present from the beginning"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method java.lang.String com.datastax.oss.driver.api.core.metadata.EndPoint::asMetricPrefix()",
+        "new": "method java.lang.String com.datastax.oss.driver.api.core.metadata.EndPoint::asMetricPrefix()",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "EndPoint.asMetricPrefix() was missing @NonNull"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method java.net.SocketAddress com.datastax.oss.driver.api.core.metadata.EndPoint::resolve()",
+        "new": "method java.net.SocketAddress com.datastax.oss.driver.api.core.metadata.EndPoint::resolve()",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "EndPoint.resolve() was missing @NonNull"
       }
     ]
   }

@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.metadata;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
@@ -34,6 +35,7 @@ public interface EndPoint {
    * <p>This will be called each time the driver opens a new connection to the node. The returned
    * address cannot be null.
    */
+  @NonNull
   SocketAddress resolve();
 
   /**
@@ -43,5 +45,6 @@ public interface EndPoint {
    * good identifiers. So this method will typically replace the dots by another character, for
    * example {@code 127_0_0_1_9042}.
    */
+  @NonNull
   String asMetricPrefix();
 }
