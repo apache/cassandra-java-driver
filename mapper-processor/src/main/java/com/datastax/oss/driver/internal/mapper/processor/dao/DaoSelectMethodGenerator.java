@@ -23,7 +23,6 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.entity.EntityDefinition;
 import com.datastax.oss.driver.internal.mapper.processor.entity.PropertyDefinition;
@@ -45,19 +44,13 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
-public class DaoSelectMethodGenerator implements MethodGenerator {
-
-  private final ExecutableElement methodElement;
-  private final DaoImplementationSharedCode enclosingClass;
-  private final ProcessorContext context;
+public class DaoSelectMethodGenerator extends DaoMethodGenerator {
 
   public DaoSelectMethodGenerator(
       ExecutableElement methodElement,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    this.methodElement = methodElement;
-    this.enclosingClass = enclosingClass;
-    this.context = context;
+    super(methodElement, enclosingClass, context);
   }
 
   @Override
@@ -74,7 +67,7 @@ public class DaoSelectMethodGenerator implements MethodGenerator {
           && returnElement.getAnnotation(Entity.class) != null) {
         entityElement = (TypeElement) returnElement;
       } else if (context.getClassUtils().isSame(returnElement, PagingIterable.class)) {
-        entityElement = extractTypeParameter(returnTypeMirror);
+        entityElement = typeArgumentAsEntityElement(returnTypeMirror);
         returnsIterable = true;
       } else if (context.getClassUtils().isFuture(((DeclaredType) returnTypeMirror))) {
         TypeMirror typeArgumentMirror = ((DeclaredType) returnTypeMirror).getTypeArguments().get(0);
@@ -84,11 +77,11 @@ public class DaoSelectMethodGenerator implements MethodGenerator {
                 .isSame(
                     ((DeclaredType) typeArgumentMirror).asElement(),
                     MappedAsyncPagingIterable.class)) {
-          entityElement = extractTypeParameter(typeArgumentMirror);
+          entityElement = typeArgumentAsEntityElement(typeArgumentMirror);
           isAsync = true;
           returnsIterable = true;
         } else {
-          entityElement = extractTypeParameter(returnTypeMirror);
+          entityElement = typeArgumentAsEntityElement(returnTypeMirror);
           isAsync = true;
         }
       }
@@ -195,21 +188,6 @@ public class DaoSelectMethodGenerator implements MethodGenerator {
           .endControlFlow();
     }
     return Optional.of(selectBuilder.build());
-  }
-
-  /** @return the type argument if it's an annotated entity, otherwise null */
-  private TypeElement extractTypeParameter(TypeMirror returnType) {
-    // Only called when we've already checked the main type is a parameterized class that takes
-    // exactly 1 argument.
-    assert returnType.getKind() == TypeKind.DECLARED;
-    TypeMirror typeArgumentMirror = ((DeclaredType) returnType).getTypeArguments().get(0);
-    if (typeArgumentMirror.getKind() == TypeKind.DECLARED) {
-      Element typeArgumentElement = ((DeclaredType) typeArgumentMirror).asElement();
-      if (typeArgumentElement.getAnnotation(Entity.class) != null) {
-        return (TypeElement) typeArgumentElement;
-      }
-    }
-    return null;
   }
 
   private void generateSelectRequest(
