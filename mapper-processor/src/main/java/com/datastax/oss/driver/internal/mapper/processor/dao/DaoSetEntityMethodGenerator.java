@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.data.SettableByName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
-import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
@@ -34,19 +33,13 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
-public class DaoSetEntityMethodGenerator implements MethodGenerator {
-
-  private final ExecutableElement methodElement;
-  private final DaoImplementationSharedCode enclosingClass;
-  private final ProcessorContext context;
+public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
 
   public DaoSetEntityMethodGenerator(
       ExecutableElement methodElement,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    this.methodElement = methodElement;
-    this.enclosingClass = enclosingClass;
-    this.context = context;
+    super(methodElement, enclosingClass, context);
   }
 
   @Override
