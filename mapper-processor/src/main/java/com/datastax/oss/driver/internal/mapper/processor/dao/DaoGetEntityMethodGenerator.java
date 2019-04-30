@@ -23,7 +23,6 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
-import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
@@ -38,7 +37,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
-public class DaoGetEntityMethodGenerator implements MethodGenerator {
+public class DaoGetEntityMethodGenerator extends DaoMethodGenerator {
 
   /** The type of processing to do on the argument in addition to invoking the entity helper. */
   private enum Transformation {
@@ -50,17 +49,11 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
     MAP,
   }
 
-  private final ExecutableElement methodElement;
-  private final DaoImplementationSharedCode daoImplementationGenerator;
-  private final ProcessorContext context;
-
   public DaoGetEntityMethodGenerator(
       ExecutableElement methodElement,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    this.methodElement = methodElement;
-    this.daoImplementationGenerator = enclosingClass;
-    this.context = context;
+    super(methodElement, enclosingClass, context);
   }
 
   @Override
@@ -118,7 +111,7 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
                   ResultSet.class.getSimpleName());
           return Optional.empty();
         }
-        entityElement = extractTypeParameter(returnType);
+        entityElement = typeArgumentAsEntityElement(returnType);
         transformation = Transformation.MAP;
       } else if (context.getClassUtils().isSame(element, MappedAsyncPagingIterable.class)) {
         if (!parameterIsAsyncResultSet) {
@@ -132,7 +125,7 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
                   AsyncResultSet.class.getSimpleName());
           return Optional.empty();
         }
-        entityElement = extractTypeParameter(returnType);
+        entityElement = typeArgumentAsEntityElement(returnType);
         transformation = Transformation.MAP;
       }
     }
@@ -151,8 +144,7 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
     }
 
     // Generate the implementation:
-    String helperFieldName =
-        daoImplementationGenerator.addEntityHelperField(ClassName.get(entityElement));
+    String helperFieldName = enclosingClass.addEntityHelperField(ClassName.get(entityElement));
 
     MethodSpec.Builder overridingMethodBuilder = GeneratedCodePatterns.override(methodElement);
     switch (transformation) {
@@ -170,21 +162,5 @@ public class DaoGetEntityMethodGenerator implements MethodGenerator {
         break;
     }
     return Optional.of(overridingMethodBuilder.build());
-  }
-
-  /** @return the type argument if it's an annotated entity, otherwise null */
-  private TypeElement extractTypeParameter(TypeMirror returnType) {
-    // Only called when we've already checked the main type is PagingIterable or
-    // AsyncPagingIterable, so we know it's a declared type and the number of type type arguments is
-    // exactly 1.
-    assert returnType.getKind() == TypeKind.DECLARED;
-    TypeMirror typeArgumentMirror = ((DeclaredType) returnType).getTypeArguments().get(0);
-    if (typeArgumentMirror.getKind() == TypeKind.DECLARED) {
-      Element typeArgumentElement = ((DeclaredType) typeArgumentMirror).asElement();
-      if (typeArgumentElement.getAnnotation(Entity.class) != null) {
-        return (TypeElement) typeArgumentElement;
-      }
-    }
-    return null;
   }
 }

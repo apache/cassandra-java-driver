@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
+import com.datastax.oss.driver.api.querybuilder.delete.Delete;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 
 /**
@@ -140,4 +141,26 @@ public interface EntityHelper<EntityT> {
    * clause (either added with the query builder DSL, or concatenated to the built query).
    */
   Select selectStart();
+
+  /**
+   * Builds a delete query to delete an instance of the entity by primary key (partition key +
+   * clustering columns).
+   *
+   * <p>The returned query is roughly the equivalent of:
+   *
+   * <pre>{@code
+   * Delete delete = QueryBuilder.deleteFrom(keyspaceId, tableId)
+   *     .whereColumn("id").isEqualTo(QueryBuilder.bindMarker("id"));
+   * }</pre>
+   *
+   * All components of the primary key are listed in the {@code WHERE} clause as bindable values
+   * (the bind markers have the same names as the columns). They are listed in the natural order,
+   * i.e. partition key columns first, followed by clustering columns (in the order defined by the
+   * {@link PartitionKey} and {@link ClusteringColumn} annotations on the entity class).
+   *
+   * <p>The keyspace and table identifiers are those of the DAO that this helper was obtained from;
+   * * if the DAO was built without a specific keyspace and table, the query doesn't specify a
+   * keyspace, and the table name is inferred from the naming strategy.
+   */
+  Delete deleteByPrimaryKey();
 }
