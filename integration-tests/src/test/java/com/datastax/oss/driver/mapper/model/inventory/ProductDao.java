@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.Delete;
 import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
@@ -77,4 +78,16 @@ public interface ProductDao {
   /** Note that this relies on a SASI index. */
   @Select(customWhereClause = "WHERE description LIKE :searchString")
   CompletionStage<MappedAsyncPagingIterable<Product>> findByDescriptionAsync(String searchString);
+
+  @Delete
+  void delete(Product product);
+
+  @Delete(entityClass = Product.class)
+  void deleteById(UUID productId);
+
+  @Delete(ifExists = true)
+  boolean deleteIfExists(Product product);
+
+  @Delete(entityClass = Product.class, customIfClause = "IF description = :expectedDescription")
+  ResultSet deleteIfDescriptionMatches(UUID productId, String expectedDescription);
 }

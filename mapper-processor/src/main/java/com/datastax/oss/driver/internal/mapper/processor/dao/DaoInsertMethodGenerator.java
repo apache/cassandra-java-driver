@@ -18,18 +18,14 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import java.util.List;
 import java.util.Optional;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -37,19 +33,13 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
-public class DaoInsertMethodGenerator implements MethodGenerator {
-
-  private final ExecutableElement methodElement;
-  private final DaoImplementationSharedCode enclosingClass;
-  private final ProcessorContext context;
+public class DaoInsertMethodGenerator extends DaoMethodGenerator {
 
   public DaoInsertMethodGenerator(
       ExecutableElement methodElement,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    this.methodElement = methodElement;
-    this.enclosingClass = enclosingClass;
-    this.context = context;
+    super(methodElement, enclosingClass, context);
   }
 
   @Override
@@ -68,7 +58,7 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
       return Optional.empty();
     }
     VariableElement firstParameter = methodElement.getParameters().get(0);
-    TypeElement entityElement = extractEntityElement(firstParameter);
+    TypeElement entityElement = asEntityElement(firstParameter);
     if (entityElement == null) {
       context
           .getMessager()
@@ -171,22 +161,6 @@ public class DaoInsertMethodGenerator implements MethodGenerator {
       }
     }
     return Optional.of(insertBuilder.build());
-  }
-
-  private TypeElement extractEntityElement(VariableElement parameter) {
-    TypeMirror mirror = parameter.asType();
-    if (mirror.getKind() != TypeKind.DECLARED) {
-      return null;
-    }
-    Element element = ((DeclaredType) mirror).asElement();
-    if (element.getKind() != ElementKind.CLASS) {
-      return null;
-    }
-    TypeElement typeElement = (TypeElement) element;
-    if (typeElement.getAnnotation(Entity.class) == null) {
-      return null;
-    }
-    return typeElement;
   }
 
   private void generatePrepareRequest(

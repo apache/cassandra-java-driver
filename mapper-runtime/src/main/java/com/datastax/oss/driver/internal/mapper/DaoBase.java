@@ -48,6 +48,11 @@ public class DaoBase {
     return context.getSession().execute(statement, Statement.SYNC);
   }
 
+  protected boolean executeAndMapWasAppliedToBoolean(Statement<?> statement) {
+    ResultSet rs = execute(statement);
+    return rs.wasApplied();
+  }
+
   protected <EntityT> EntityT executeAndMapToSingleEntity(
       Statement<?> statement, EntityHelper<EntityT> entityHelper) {
     ResultSet rs = execute(statement);
@@ -75,6 +80,11 @@ public class DaoBase {
 
   protected CompletableFuture<Void> executeAsyncAndMapToVoid(Statement<?> statement) {
     return executeAsync(statement).thenApply(rs -> null);
+  }
+
+  protected CompletableFuture<Boolean> executeAsyncAndMapWasAppliedToBoolean(
+      Statement<?> statement) {
+    return executeAsync(statement).thenApply(AsyncResultSet::wasApplied);
   }
 
   protected <EntityT> CompletableFuture<EntityT> executeAsyncAndMapToSingleEntity(
