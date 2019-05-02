@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
@@ -69,7 +70,13 @@ public interface ProductDao {
   Product findById(UUID productId);
 
   @Select
+  Optional<Product> findOptionalById(UUID productId);
+
+  @Select
   CompletionStage<Product> findByIdAsync(UUID productId);
+
+  @Select
+  CompletionStage<Optional<Product>> findOptionalByIdAsync(UUID productId);
 
   /** Note that this relies on a SASI index. */
   @Select(customWhereClause = "WHERE description LIKE :searchString")
