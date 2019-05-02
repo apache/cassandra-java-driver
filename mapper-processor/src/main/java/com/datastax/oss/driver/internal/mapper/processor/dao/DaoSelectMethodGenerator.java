@@ -15,6 +15,11 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_ASYNC_PAGING_ITERABLE;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.PAGING_ITERABLE;
+
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
@@ -30,21 +35,20 @@ import com.datastax.oss.driver.internal.mapper.processor.util.generation.Generat
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
 
 public class DaoSelectMethodGenerator extends DaoMethodGenerator {
+
+  private static final EnumSet<ReturnTypeKind> SUPPORTED_RETURN_TYPES =
+      EnumSet.of(ENTITY, FUTURE_OF_ENTITY, PAGING_ITERABLE, FUTURE_OF_ASYNC_PAGING_ITERABLE);
 
   public DaoSelectMethodGenerator(
       ExecutableElement methodElement,
@@ -56,37 +60,9 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
   @Override
   public Optional<MethodSpec> generate() {
 
-    // Validate the return type: entity, or future thereof, or PagingIterable, or future of
-    // MappedAsyncPagingIterable.
-    TypeElement entityElement = null;
-    boolean isAsync = false, returnsIterable = false;
-    TypeMirror returnTypeMirror = methodElement.getReturnType();
-    if (returnTypeMirror.getKind() == TypeKind.DECLARED) {
-      Element returnElement = ((DeclaredType) returnTypeMirror).asElement();
-      if (returnElement.getKind() == ElementKind.CLASS
-          && returnElement.getAnnotation(Entity.class) != null) {
-        entityElement = (TypeElement) returnElement;
-      } else if (context.getClassUtils().isSame(returnElement, PagingIterable.class)) {
-        entityElement = typeArgumentAsEntityElement(returnTypeMirror);
-        returnsIterable = true;
-      } else if (context.getClassUtils().isFuture(((DeclaredType) returnTypeMirror))) {
-        TypeMirror typeArgumentMirror = ((DeclaredType) returnTypeMirror).getTypeArguments().get(0);
-        if (typeArgumentMirror.getKind() == TypeKind.DECLARED
-            && context
-                .getClassUtils()
-                .isSame(
-                    ((DeclaredType) typeArgumentMirror).asElement(),
-                    MappedAsyncPagingIterable.class)) {
-          entityElement = typeArgumentAsEntityElement(typeArgumentMirror);
-          isAsync = true;
-          returnsIterable = true;
-        } else {
-          entityElement = typeArgumentAsEntityElement(returnTypeMirror);
-          isAsync = true;
-        }
-      }
-    }
-    if (entityElement == null) {
+    // Validate the return type:
+    ReturnType returnType = parseReturnType(methodElement.getReturnType());
+    if (!SUPPORTED_RETURN_TYPES.contains(returnType.kind)) {
       context
           .getMessager()
           .error(
@@ -102,6 +78,7 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
               MappedAsyncPagingIterable.class.getSimpleName());
       return Optional.empty();
     }
+    TypeElement entityElement = returnType.entityElement;
     EntityDefinition entityDefinition = context.getEntityFactory().getDefinition(entityElement);
 
     // Validate the parameters:
@@ -145,7 +122,7 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
                 generateSelectRequest(methodBuilder, requestName, helperFieldName));
     MethodSpec.Builder selectBuilder = GeneratedCodePatterns.override(methodElement);
 
-    if (isAsync) {
+    if (returnType.kind.isAsync) {
       selectBuilder.beginControlFlow("try");
     }
     selectBuilder.addStatement(
@@ -173,15 +150,29 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
         .addCode("\n")
         .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
-    String baseMethodName =
-        String.format(
-            "%sAndMapTo%s",
-            isAsync ? "executeAsync" : "execute",
-            returnsIterable ? "EntityIterable" : "SingleEntity");
+    switch (returnType.kind) {
+      case ENTITY:
+        selectBuilder.addStatement(
+            "return executeAndMapToSingleEntity(boundStatement, $L)", helperFieldName);
+        break;
+      case FUTURE_OF_ENTITY:
+        selectBuilder.addStatement(
+            "return executeAsyncAndMapToSingleEntity(boundStatement, $L)", helperFieldName);
+        break;
+      case PAGING_ITERABLE:
+        selectBuilder.addStatement(
+            "return executeAndMapToEntityIterable(boundStatement, $L)", helperFieldName);
+        break;
+      case FUTURE_OF_ASYNC_PAGING_ITERABLE:
+        selectBuilder.addStatement(
+            "return executeAsyncAndMapToEntityIterable(boundStatement, $L)", helperFieldName);
+        break;
+      default:
+        // should have been checked already
+        throw new AssertionError("Unsupported return type " + returnType.kind);
+    }
 
-    selectBuilder.addStatement("return $L(boundStatement, $L)", baseMethodName, helperFieldName);
-
-    if (isAsync) {
+    if (returnType.kind.isAsync) {
       selectBuilder
           .nextControlFlow("catch ($T t)", Throwable.class)
           .addStatement("return $T.failedFuture(t)", CompletableFutures.class)
