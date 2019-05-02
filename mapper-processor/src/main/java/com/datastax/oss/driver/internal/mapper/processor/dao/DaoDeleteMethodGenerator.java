@@ -218,29 +218,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
         .addCode("\n")
         .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
-    switch (returnType.kind) {
-      case VOID:
-        deleteBuilder.addStatement("execute(boundStatement)");
-        break;
-      case BOOLEAN:
-        deleteBuilder.addStatement("return executeAndMapWasAppliedToBoolean(boundStatement)");
-        break;
-      case RESULT_SET:
-        deleteBuilder.addStatement("return execute(boundStatement)");
-        break;
-      case FUTURE_OF_VOID:
-        deleteBuilder.addStatement("return executeAsyncAndMapToVoid(boundStatement)");
-        break;
-      case FUTURE_OF_BOOLEAN:
-        deleteBuilder.addStatement("return executeAsyncAndMapWasAppliedToBoolean(boundStatement)");
-        break;
-      case FUTURE_OF_ASYNC_RESULT_SET:
-        deleteBuilder.addStatement("return executeAsync(boundStatement)");
-        break;
-      default:
-        // should have been checked already
-        throw new AssertionError("Unsupported return type " + returnType.kind);
-    }
+    returnType.kind.addExecuteStatement(deleteBuilder, helperFieldName);
 
     if (returnType.kind.isAsync) {
       deleteBuilder

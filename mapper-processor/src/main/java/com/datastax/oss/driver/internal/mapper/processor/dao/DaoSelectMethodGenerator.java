@@ -18,6 +18,8 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.ENTITY;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_ASYNC_PAGING_ITERABLE;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_OPTIONAL_ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.OPTIONAL_ENTITY;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.PAGING_ITERABLE;
 
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
@@ -48,7 +50,13 @@ import javax.lang.model.element.VariableElement;
 public class DaoSelectMethodGenerator extends DaoMethodGenerator {
 
   private static final EnumSet<ReturnTypeKind> SUPPORTED_RETURN_TYPES =
-      EnumSet.of(ENTITY, FUTURE_OF_ENTITY, PAGING_ITERABLE, FUTURE_OF_ASYNC_PAGING_ITERABLE);
+      EnumSet.of(
+          ENTITY,
+          OPTIONAL_ENTITY,
+          FUTURE_OF_ENTITY,
+          FUTURE_OF_OPTIONAL_ENTITY,
+          PAGING_ITERABLE,
+          FUTURE_OF_ASYNC_PAGING_ITERABLE);
 
   public DaoSelectMethodGenerator(
       ExecutableElement methodElement,
@@ -150,27 +158,7 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
         .addCode("\n")
         .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
-    switch (returnType.kind) {
-      case ENTITY:
-        selectBuilder.addStatement(
-            "return executeAndMapToSingleEntity(boundStatement, $L)", helperFieldName);
-        break;
-      case FUTURE_OF_ENTITY:
-        selectBuilder.addStatement(
-            "return executeAsyncAndMapToSingleEntity(boundStatement, $L)", helperFieldName);
-        break;
-      case PAGING_ITERABLE:
-        selectBuilder.addStatement(
-            "return executeAndMapToEntityIterable(boundStatement, $L)", helperFieldName);
-        break;
-      case FUTURE_OF_ASYNC_PAGING_ITERABLE:
-        selectBuilder.addStatement(
-            "return executeAsyncAndMapToEntityIterable(boundStatement, $L)", helperFieldName);
-        break;
-      default:
-        // should have been checked already
-        throw new AssertionError("Unsupported return type " + returnType.kind);
-    }
+    returnType.kind.addExecuteStatement(selectBuilder, helperFieldName);
 
     if (returnType.kind.isAsync) {
       selectBuilder
