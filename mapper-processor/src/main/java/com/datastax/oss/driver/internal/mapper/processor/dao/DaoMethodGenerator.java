@@ -19,9 +19,11 @@ import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
+import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -88,6 +90,8 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
       return new ReturnType(ReturnTypeKind.VOID);
     } else if (returnTypeMirror.getKind() == TypeKind.BOOLEAN) {
       return new ReturnType(ReturnTypeKind.BOOLEAN);
+    } else if (returnTypeMirror.getKind() == TypeKind.LONG) {
+      return new ReturnType(ReturnTypeKind.LONG);
     } else if ((entityElement = asEntityElement(returnTypeMirror)) != null) {
       return new ReturnType(ReturnTypeKind.ENTITY, entityElement);
     } else if (returnTypeMirror.getKind() == TypeKind.DECLARED) {
@@ -95,29 +99,43 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
       Element returnElement = declaredReturnType.asElement();
       if (context.getClassUtils().isSame(declaredReturnType, Boolean.class)) {
         return new ReturnType(ReturnTypeKind.BOOLEAN);
+      } else if (context.getClassUtils().isSame(declaredReturnType, Long.class)) {
+        return new ReturnType(ReturnTypeKind.LONG);
+      } else if (context.getClassUtils().isSame(declaredReturnType, Row.class)) {
+        return new ReturnType(ReturnTypeKind.ROW);
       } else if (context.getClassUtils().isSame(declaredReturnType, ResultSet.class)) {
         return new ReturnType(ReturnTypeKind.RESULT_SET);
       } else if (context.getClassUtils().isSame(returnElement, PagingIterable.class)
           && (entityElement = typeArgumentAsEntityElement(returnTypeMirror)) != null) {
         return new ReturnType(ReturnTypeKind.PAGING_ITERABLE, entityElement);
+      } else if (context.getClassUtils().isSame(returnElement, Optional.class)
+          && (entityElement = typeArgumentAsEntityElement(returnTypeMirror)) != null) {
+        return new ReturnType(ReturnTypeKind.OPTIONAL_ENTITY, entityElement);
       } else if (context.getClassUtils().isFuture(declaredReturnType)) {
         TypeMirror typeArgumentMirror = declaredReturnType.getTypeArguments().get(0);
         if (context.getClassUtils().isSame(typeArgumentMirror, Void.class)) {
           return new ReturnType(ReturnTypeKind.FUTURE_OF_VOID);
         } else if (context.getClassUtils().isSame(typeArgumentMirror, Boolean.class)) {
           return new ReturnType(ReturnTypeKind.FUTURE_OF_BOOLEAN);
+        } else if (context.getClassUtils().isSame(typeArgumentMirror, Long.class)) {
+          return new ReturnType(ReturnTypeKind.FUTURE_OF_LONG);
+        } else if (context.getClassUtils().isSame(typeArgumentMirror, Row.class)) {
+          return new ReturnType(ReturnTypeKind.FUTURE_OF_ROW);
         } else if (context.getClassUtils().isSame(typeArgumentMirror, AsyncResultSet.class)) {
           return new ReturnType(ReturnTypeKind.FUTURE_OF_ASYNC_RESULT_SET);
         } else if ((entityElement = asEntityElement(typeArgumentMirror)) != null) {
           return new ReturnType(ReturnTypeKind.FUTURE_OF_ENTITY, entityElement);
-        } else if (typeArgumentMirror.getKind() == TypeKind.DECLARED
-            && context
-                .getClassUtils()
-                .isSame(
-                    ((DeclaredType) typeArgumentMirror).asElement(),
-                    MappedAsyncPagingIterable.class)
-            && (entityElement = typeArgumentAsEntityElement(typeArgumentMirror)) != null) {
-          return new ReturnType(ReturnTypeKind.FUTURE_OF_ASYNC_PAGING_ITERABLE, entityElement);
+        } else if (typeArgumentMirror.getKind() == TypeKind.DECLARED) {
+          Element typeArgumentElement = ((DeclaredType) typeArgumentMirror).asElement();
+          if (context.getClassUtils().isSame(typeArgumentElement, Optional.class)
+              && (entityElement = typeArgumentAsEntityElement(typeArgumentMirror)) != null) {
+            return new ReturnType(ReturnTypeKind.FUTURE_OF_OPTIONAL_ENTITY, entityElement);
+          } else if (context
+                  .getClassUtils()
+                  .isSame(typeArgumentElement, MappedAsyncPagingIterable.class)
+              && (entityElement = typeArgumentAsEntityElement(typeArgumentMirror)) != null) {
+            return new ReturnType(ReturnTypeKind.FUTURE_OF_ASYNC_PAGING_ITERABLE, entityElement);
+          }
         }
       }
     }

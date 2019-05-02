@@ -131,25 +131,7 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
         .addCode("\n")
         .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
-    switch (returnType.kind) {
-      case VOID:
-        insertBuilder.addStatement("execute(boundStatement)");
-        break;
-      case FUTURE_OF_VOID:
-        insertBuilder.addStatement("return executeAsyncAndMapToVoid(boundStatement)");
-        break;
-      case ENTITY:
-        insertBuilder.addStatement(
-            "return executeAndMapToSingleEntity(boundStatement, $L)", helperFieldName);
-        break;
-      case FUTURE_OF_ENTITY:
-        insertBuilder.addStatement(
-            "return executeAsyncAndMapToSingleEntity(boundStatement, $L)", helperFieldName);
-        break;
-      default:
-        // should have been checked already
-        throw new AssertionError("Unsupported return type " + returnType.kind);
-    }
+    returnType.kind.addExecuteStatement(insertBuilder, helperFieldName);
 
     if (returnType.kind.isAsync) {
       insertBuilder

@@ -33,8 +33,10 @@ import com.datastax.oss.driver.mapper.model.inventory.InventoryMapper;
 import com.datastax.oss.driver.mapper.model.inventory.InventoryMapperBuilder;
 import com.datastax.oss.driver.mapper.model.inventory.Product;
 import com.datastax.oss.driver.mapper.model.inventory.ProductDao;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -65,6 +67,11 @@ public class SelectIT {
 
     InventoryMapper inventoryMapper = new InventoryMapperBuilder(session).build();
     productDao = inventoryMapper.productDao(sessionRule.keyspace());
+  }
+
+  @Before
+  public void insertData() {
+    CqlSession session = sessionRule.session();
     PreparedStatement preparedStatement =
         session.prepare("INSERT INTO product (id, description, dimensions) VALUES (?, ?, ?)");
     BoundStatement boundStatement = preparedStatement.bind();
@@ -84,6 +91,15 @@ public class SelectIT {
   }
 
   @Test
+  public void should_select_by_primary_key_and_return_optional() {
+    Product reference = InventoryFixtures.FLAMETHROWER.entity;
+    assertThat(productDao.findOptionalById(reference.getId())).contains(reference);
+
+    productDao.delete(reference);
+    assertThat(productDao.findOptionalById(reference.getId())).isEmpty();
+  }
+
+  @Test
   public void should_select_by_primary_key_async() throws Exception {
     should_select_by_primary_key_async(InventoryFixtures.FLAMETHROWER);
     should_select_by_primary_key_async(InventoryFixtures.MP3_DOWNLOAD);
@@ -94,6 +110,17 @@ public class SelectIT {
     CompletionStage<Product> future = productDao.findByIdAsync(entityFixture.entity.getId());
     Product selectedEntity = future.toCompletableFuture().get(500, TimeUnit.MILLISECONDS);
     assertThat(selectedEntity).isEqualTo(entityFixture.entity);
+  }
+
+  @Test
+  public void should_select_by_primary_key_async_and_return_optional() throws Exception {
+    Product reference = InventoryFixtures.FLAMETHROWER.entity;
+    CompletionStage<Optional<Product>> future = productDao.findOptionalByIdAsync(reference.getId());
+    assertThat(future.toCompletableFuture().get(500, TimeUnit.MILLISECONDS)).contains(reference);
+
+    productDao.delete(reference);
+    future = productDao.findOptionalByIdAsync(reference.getId());
+    assertThat(future.toCompletableFuture().get(500, TimeUnit.MILLISECONDS)).isEmpty();
   }
 
   @Test
