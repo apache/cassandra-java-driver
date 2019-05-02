@@ -15,10 +15,15 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.BOOLEAN;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_ASYNC_RESULT_SET;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_BOOLEAN;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_VOID;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.RESULT_SET;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.VOID;
+
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Delete;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -30,6 +35,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,27 +45,13 @@ import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
 
-  private enum ReturnType {
-    VOID(false),
-    FUTURE_OF_VOID(true),
-    BOOLEAN(false),
-    FUTURE_OF_BOOLEAN(true),
-    RESULT_SET(false),
-    FUTURE_OF_ASYNC_RESULT_SET(true),
-    ;
-
-    final boolean isAsync;
-
-    ReturnType(boolean isAsync) {
-      this.isAsync = isAsync;
-    }
-  }
+  private static final EnumSet<ReturnTypeKind> SUPPORTED_RETURN_TYPES =
+      EnumSet.of(
+          VOID, FUTURE_OF_VOID, BOOLEAN, FUTURE_OF_BOOLEAN, RESULT_SET, FUTURE_OF_ASYNC_RESULT_SET);
 
   public DaoDeleteMethodGenerator(
       ExecutableElement methodElement,
@@ -142,32 +134,9 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
       }
     }
 
-    // Validate the return type: either void, a boolean (will be mapped to wasApplied), a result
-    // set (for DELETE ... IF <condition>), or the async equivalent of any of the above.
-    ReturnType returnType = null;
-    TypeMirror returnTypeMirror = methodElement.getReturnType();
-    if (returnTypeMirror.getKind() == TypeKind.VOID) {
-      returnType = ReturnType.VOID;
-    } else if (returnTypeMirror.getKind() == TypeKind.BOOLEAN) {
-      returnType = ReturnType.BOOLEAN;
-    } else if (returnTypeMirror.getKind() == TypeKind.DECLARED) {
-      DeclaredType declaredReturnType = (DeclaredType) returnTypeMirror;
-      if (context.getClassUtils().isFuture(declaredReturnType)) {
-        TypeMirror typeArgumentMirror = declaredReturnType.getTypeArguments().get(0);
-        if (context.getClassUtils().isSame(typeArgumentMirror, Void.class)) {
-          returnType = ReturnType.FUTURE_OF_VOID;
-        } else if (context.getClassUtils().isSame(typeArgumentMirror, Boolean.class)) {
-          returnType = ReturnType.FUTURE_OF_BOOLEAN;
-        } else if (context.getClassUtils().isSame(typeArgumentMirror, AsyncResultSet.class)) {
-          returnType = ReturnType.FUTURE_OF_ASYNC_RESULT_SET;
-        }
-      } else if (context.getClassUtils().isSame(declaredReturnType, Boolean.class)) {
-        returnType = ReturnType.BOOLEAN;
-      } else if (context.getClassUtils().isSame(declaredReturnType, ResultSet.class)) {
-        returnType = ReturnType.RESULT_SET;
-      }
-    }
-    if (returnType == null) {
+    // Validate the return type:
+    ReturnType returnType = parseReturnType(methodElement.getReturnType());
+    if (!SUPPORTED_RETURN_TYPES.contains(returnType.kind)) {
       context
           .getMessager()
           .error(
@@ -187,7 +156,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
                 generatePrepareRequest(methodBuilder, requestName, helperFieldName));
 
     MethodSpec.Builder deleteBuilder = GeneratedCodePatterns.override(methodElement);
-    if (returnType.isAsync) {
+    if (returnType.kind.isAsync) {
       deleteBuilder.beginControlFlow("try");
     }
 
@@ -249,7 +218,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
         .addCode("\n")
         .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
-    switch (returnType) {
+    switch (returnType.kind) {
       case VOID:
         deleteBuilder.addStatement("execute(boundStatement)");
         break;
@@ -268,9 +237,12 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
       case FUTURE_OF_ASYNC_RESULT_SET:
         deleteBuilder.addStatement("return executeAsync(boundStatement)");
         break;
+      default:
+        // should have been checked already
+        throw new AssertionError("Unsupported return type " + returnType.kind);
     }
 
-    if (returnType.isAsync) {
+    if (returnType.kind.isAsync) {
       deleteBuilder
           .nextControlFlow("catch ($T t)", Throwable.class)
           .addStatement("return $T.failedFuture(t)", CompletableFutures.class)
