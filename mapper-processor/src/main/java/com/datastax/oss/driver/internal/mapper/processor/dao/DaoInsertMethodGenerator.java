@@ -15,6 +15,11 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_VOID;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.VOID;
+
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -24,16 +29,17 @@ import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
 
 public class DaoInsertMethodGenerator extends DaoMethodGenerator {
+
+  private static final EnumSet<ReturnTypeKind> SUPPORTED_RETURN_TYPES =
+      EnumSet.of(VOID, FUTURE_OF_VOID, ENTITY, FUTURE_OF_ENTITY);
 
   public DaoInsertMethodGenerator(
       ExecutableElement methodElement,
@@ -71,39 +77,23 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
     }
 
     // Validate the return type:
-    // - void, CompletionStage/CompletableFuture<Void>
-    // - the same entity, or a future thereof (for INSERT... IF NOT EXISTS)
-    Boolean isVoid = null;
-    Boolean isAsync = null;
-    TypeMirror returnTypeMirror = methodElement.getReturnType();
-    if (returnTypeMirror.getKind() == TypeKind.VOID) {
-      isVoid = true;
-      isAsync = false;
-    } else if (returnTypeMirror.getKind() == TypeKind.DECLARED) {
-      DeclaredType declaredReturnType = (DeclaredType) returnTypeMirror;
-      if (context.getClassUtils().isFuture(declaredReturnType)) {
-        TypeMirror typeArgumentMirror = declaredReturnType.getTypeArguments().get(0);
-        if ((typeArgumentMirror.getKind() == TypeKind.DECLARED)) {
-          if (context.getClassUtils().isSame(typeArgumentMirror, Void.class)) {
-            isVoid = true;
-            isAsync = true;
-          } else if (entityElement.equals(((DeclaredType) typeArgumentMirror).asElement())) {
-            isVoid = false;
-            isAsync = true;
-          }
-        }
-      } else if (entityElement.equals(declaredReturnType.asElement())) {
-        isVoid = false;
-        isAsync = false;
-      }
-    }
-    if (isVoid == null) {
+    ReturnType returnType = parseReturnType(methodElement.getReturnType());
+    if (!SUPPORTED_RETURN_TYPES.contains(returnType.kind)) {
       context
           .getMessager()
           .error(
               methodElement,
               "Invalid return type: %s methods must return either void or the entity class "
                   + "(possibly wrapped in a CompletionStage/CompletableFuture)",
+              Insert.class.getSimpleName());
+      return Optional.empty();
+    }
+    if (returnType.entityElement != null && !returnType.entityElement.equals(entityElement)) {
+      context
+          .getMessager()
+          .error(
+              methodElement,
+              "Invalid return type: %s methods must return the same entity as their argument ",
               Insert.class.getSimpleName());
       return Optional.empty();
     }
@@ -118,7 +108,7 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
 
     MethodSpec.Builder insertBuilder = GeneratedCodePatterns.override(methodElement);
 
-    if (isAsync) {
+    if (returnType.kind.isAsync) {
       insertBuilder.beginControlFlow("try");
     }
     insertBuilder.addStatement(
@@ -141,24 +131,31 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
         .addCode("\n")
         .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
-    if (isAsync) {
-      if (isVoid) {
+    switch (returnType.kind) {
+      case VOID:
+        insertBuilder.addStatement("execute(boundStatement)");
+        break;
+      case FUTURE_OF_VOID:
         insertBuilder.addStatement("return executeAsyncAndMapToVoid(boundStatement)");
-      } else {
+        break;
+      case ENTITY:
+        insertBuilder.addStatement(
+            "return executeAndMapToSingleEntity(boundStatement, $L)", helperFieldName);
+        break;
+      case FUTURE_OF_ENTITY:
         insertBuilder.addStatement(
             "return executeAsyncAndMapToSingleEntity(boundStatement, $L)", helperFieldName);
-      }
+        break;
+      default:
+        // should have been checked already
+        throw new AssertionError("Unsupported return type " + returnType.kind);
+    }
+
+    if (returnType.kind.isAsync) {
       insertBuilder
           .nextControlFlow("catch ($T t)", Throwable.class)
           .addStatement("return $T.failedFuture(t)", CompletableFutures.class)
           .endControlFlow();
-    } else {
-      if (isVoid) {
-        insertBuilder.addStatement("execute(boundStatement)");
-      } else {
-        insertBuilder.addStatement(
-            "return executeAndMapToSingleEntity(boundStatement, $L)", helperFieldName);
-      }
     }
     return Optional.of(insertBuilder.build());
   }
