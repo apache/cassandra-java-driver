@@ -355,6 +355,7 @@
           <version>0.10.5</version>
           <configuration>
             <outputNonIdentifyingDifferenceInfo>false</outputNonIdentifyingDifferenceInfo>
+            <versionFormat>\d+\.\d+\.\d+</versionFormat>
           </configuration>
           <dependencies>
             <dependency>
