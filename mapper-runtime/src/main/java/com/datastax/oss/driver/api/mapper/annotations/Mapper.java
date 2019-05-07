@@ -15,21 +15,47 @@
  */
 package com.datastax.oss.driver.api.mapper.annotations;
 
+import com.datastax.oss.driver.api.core.session.Session;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Annotates an interface that will serve as the entry point to mapper features.
+ *
+ * <p>Example:
+ *
+ * <pre>
+ * &#64;Mapper
+ * public interface InventoryMapper {
+ *   &#64;DaoFactory
+ *   ProductDao productDao();
+ * }
+ * </pre>
+ *
+ * The mapper annotation processor will generate an implementation, and a builder that allows you to
+ * create an instance from a {@link Session}:
+ *
+ * <pre>
+ * InventoryMapper inventoryMapper = new InventoryMapperBuilder(session).build();
+ * </pre>
+ *
+ * By default, the builder's name is the name of the interface with the suffix "Builder", and it
+ * resides in the same package. You can also use a custom name with {@link #builderName()}.
+ *
+ * <p>The interface should define one or more {@link DaoFactory} methods.
+ */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.CLASS)
 public @interface Mapper {
 
   /**
-   * The fully-qualified name of the builder class that will get generated in order to create
-   * instances of the manager, for example "com.mycompany.MyCustomBuilder".
+   * The <em>fully-qualified</em> name of the builder class that will get generated in order to
+   * create instances of the manager, for example "com.mycompany.MyCustomBuilder".
    *
-   * <p>If this is left empty (the default), the builder will use the name of the original interface
-   * with the suffix "Builder", and reside in the same package.
+   * <p>If this is left empty (the default), the builder's name is the name of the interface with
+   * the suffix "Builder", and it * resides in the same package.
    */
   String builderName() default "";
 }

@@ -22,30 +22,23 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a parameter of a DAO factory method in the main mapper class, to indicate that it must be
- * injected in the DAO as the table identifier.
+ * Annotates the parameter of a {@link DaoFactory} method that indicates the table to create a DAO
+ * for.
  *
  * <p>Example:
  *
- * <pre>{@code @Mapper
+ * <pre>
+ * &#64;Mapper
  * public interface InventoryMapper {
  *   ProductDao productDao(@DaoTable String table);
  * }
- * }</pre>
+ * </pre>
  *
- * The annotated parameter can have type {@link String} or {@link CqlIdentifier}. If it is present,
- * the value will be injected in the DAO instance, where it will be used in generated queries, and
- * can be substituted in text queries. This allows you to reuse the same DAO for different tables:
+ * The annotated parameter can be a {@link String} or {@link CqlIdentifier}. If it is present, the
+ * value will be injected in the DAO instance, where it will be used in generated queries, and can
+ * be substituted in text queries. This allows you to reuse the same DAO for different tables.
  *
- * <pre>{@code
- * ProductDao productDao1 = inventoryMapper.productDao("product1");
- * ProductDao productDao2 = inventoryMapper.productDao("product2");
- * }</pre>
- *
- * The mapper will create an internal cache, and only create the DAO once for each keyspace and/or
- * table.
- *
- * @see DaoKeyspace
+ * @see DaoFactory
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.CLASS)
