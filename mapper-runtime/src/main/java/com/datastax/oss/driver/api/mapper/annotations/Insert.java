@@ -15,15 +15,99 @@
  */
 package com.datastax.oss.driver.api.mapper.annotations;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
+/**
+ * Annotates a {@link Dao} method that inserts an instance of an {@link Entity}-annotated class.
+ *
+ * <p>Example:
+ *
+ * <pre>
+ * &#64;Dao
+ * public interface ProductDao {
+ *   &#64;Insert
+ *   void insert(Product product);
+ * }
+ * </pre>
+ *
+ * <h3>Parameters</h3>
+ *
+ * The first parameter must be the entity to insert.
+ *
+ * <p>If the query has a {@linkplain #customUsingClause()} custom clause} with placeholders, the
+ * method must have corresponding additional parameters (same name, and a compatible Java type):
+ *
+ * <pre>
+ * &#64;Insert(customUsingClause = "USING TTL :ttl")
+ * void insertWithTtl(Product product, int ttl);
+ * </pre>
+ *
+ * <h3>Return type</h3>
+ *
+ * The method can return:
+ *
+ * <ul>
+ *   <li>{@code void}.
+ *   <li>the entity class. This is intended for {@code INSERT ... IF NOT EXISTS} queries. The method
+ *       will return {@code null} if the insertion succeeded, or the existing entity if it failed.
+ *       <pre>
+ * &#64;Insert(ifNotExists = true)
+ * Product insertIfNotExists(Product product);
+ *       </pre>
+ *   <li>an {@link Optional} of the entity class, as a null-safe alternative for {@code INSERT ...
+ *       IF NOT EXISTS} queries.
+ *       <pre>
+ * &#64;Insert(ifNotExists = true)
+ * Optional&lt;Product&gt; insertIfNotExists(Product product);
+ *       </pre>
+ *   <li>a {@link CompletionStage} or {@link CompletableFuture} of any of the above. The mapper will
+ *       execute the query asynchronously.
+ *       <pre>
+ * &#64;Insert
+ * CompletionStage&lt;Void&gt; insert(Product product);
+ *
+ * &#64;Insert(ifNotExists = true)
+ * CompletableFuture&lt;Product&gt; insertIfNotExists(Product product);
+ *
+ * &#64;Insert(ifNotExists = true)
+ * CompletableFuture&lt;Optional&lt;Product&gt;&gt; insertIfNotExists(Product product);
+ *       </pre>
+ * </ul>
+ *
+ * <h3>Target keyspace and table</h3>
+ *
+ * If a keyspace was specified when creating the DAO (see {@link DaoFactory}), then the generated
+ * query targets that keyspace. Otherwise, it doesn't specify a keyspace, and will only work if the
+ * mapper was built from a {@link Session} that has a {@linkplain
+ * SessionBuilder#withKeyspace(CqlIdentifier) default keyspace} set.
+ *
+ * <p>If a table was specified when creating the DAO, then the generated query targets that table.
+ * Otherwise, it uses the default table name for the entity (which is determined by the name of the
+ * entity class and the naming convention).
+ */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.CLASS)
 public @interface Insert {
   boolean ifNotExists() default false;
 
+  /**
+   * A custom USING clause for the INSERT query.
+   *
+   * <p>The default mapper code generates a query of the form {@code INSERT INTO table (...) VALUES
+   * (...) [IF NOT EXISTS]}. If this element is a non empty string, it gets appended at the end.
+   * Therefore it can be used to add a {@code USING TTL} or {@code USING TIMESTAMP} clause.
+   *
+   * <p>This clause can contain placeholders that will be bound with the method's parameters; see
+   * the top-level javadocs of this class for more explanations.
+   */
   String customUsingClause() default "";
 }
