@@ -20,8 +20,43 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Annotates the field or getter of an {@link Entity} property, to indicate that it's part of the
+ * partition key.
+ *
+ * <p>Example:
+ *
+ * <pre>
+ * &#64;PartitionKey private UUID id;
+ * </pre>
+ *
+ * This information is used by the mapper processor to generate default queries (for example a basic
+ * {@link Select}). Note that an entity is not required to have a partition key, for example if it
+ * only gets mapped as a UDT.
+ *
+ * <p>If the partition key is composite, you must specify {@link #value()} to indicate the position
+ * of each property:
+ *
+ * <pre>
+ * &#64;PartitionKey(1) private int pk1;
+ * &#64;PartitionKey(2) private int pk2;
+ * </pre>
+ *
+ * If you don't specify positions, or if there are duplicates, the mapper processor will issue a
+ * compile-time error.
+ *
+ * <p>This annotation is mutually exclusive with {@link ClusteringColumn}.
+ */
 @Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.CLASS)
 public @interface PartitionKey {
+
+  /**
+   * The position of the property in the partition key.
+   *
+   * <p>This is only required if the partition key is composite. Positions are not strictly required
+   * to be consecutive or start at a given index, but for clarity it is recommended to use
+   * consecutive integers.
+   */
   int value() default 0;
 }
