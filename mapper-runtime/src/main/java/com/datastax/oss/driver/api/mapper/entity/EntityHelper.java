@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.delete.Delete;
+import com.datastax.oss.driver.api.querybuilder.insert.RegularInsert;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 
 /**
@@ -104,7 +105,7 @@ public interface EntityHelper<EntityT> {
    * if the DAO was built without a specific keyspace and table, the query doesn't specify a
    * keyspace, and the table name is inferred from the naming strategy.
    */
-  BuildableQuery insert();
+  RegularInsert insert();
 
   /**
    * Builds a select query to fetch an instance of the entity by primary key (partition key +
