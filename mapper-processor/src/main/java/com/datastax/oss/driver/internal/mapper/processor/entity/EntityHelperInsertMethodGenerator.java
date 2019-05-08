@@ -16,9 +16,9 @@
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.insert.InsertInto;
+import com.datastax.oss.driver.api.querybuilder.insert.RegularInsert;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.squareup.javapoet.MethodSpec;
@@ -42,7 +42,7 @@ public class EntityHelperInsertMethodGenerator implements MethodGenerator {
         MethodSpec.methodBuilder("insert")
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
-            .returns(BuildableQuery.class)
+            .returns(RegularInsert.class)
             .addStatement("$T keyspaceId = context.getKeyspaceId()", CqlIdentifier.class)
             .addStatement("$T tableId = context.getTableId()", CqlIdentifier.class)
             .beginControlFlow("if (tableId == null)")
