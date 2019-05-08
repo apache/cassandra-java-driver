@@ -46,6 +46,8 @@ public class DaoBase {
   /** The qualified table id placeholder in {@link Query#value()}. */
   public static final String QUALIFIED_TABLE_ID_PLACEHOLDER = "${qualifiedTableId}";
 
+  private static final CqlIdentifier APPLIED = CqlIdentifier.fromInternal("[applied]");
+
   protected static CompletionStage<PreparedStatement> prepare(
       SimpleStatement statement, MapperContext context) {
     if (statement == null) {
@@ -153,8 +155,17 @@ public class DaoBase {
   protected <EntityT> EntityT executeAndMapToSingleEntity(
       Statement<?> statement, EntityHelper<EntityT> entityHelper) {
     ResultSet rs = execute(statement);
-    Row row = rs.one();
-    return (row == null) ? null : entityHelper.get(row);
+    return asEntity(rs.one(), entityHelper);
+  }
+
+  private <EntityT> EntityT asEntity(Row row, EntityHelper<EntityT> entityHelper) {
+    return (row == null
+            // Special case for INSERT IF NOT EXISTS. If the row did not exists, the query returns
+            // only [applied], we want to return null to indicate there was no previous entity
+            || (row.getColumnDefinitions().size() == 1
+                && row.getColumnDefinitions().get(0).getName().equals(APPLIED)))
+        ? null
+        : entityHelper.get(row);
   }
 
   protected <EntityT> Optional<EntityT> executeAndMapToOptionalEntity(
@@ -199,22 +210,13 @@ public class DaoBase {
 
   protected <EntityT> CompletableFuture<EntityT> executeAsyncAndMapToSingleEntity(
       Statement<?> statement, EntityHelper<EntityT> entityHelper) {
-    return executeAsync(statement)
-        .thenApply(
-            rs -> {
-              Row row = rs.one();
-              return (row == null) ? null : entityHelper.get(row);
-            });
+    return executeAsync(statement).thenApply(rs -> asEntity(rs.one(), entityHelper));
   }
 
   protected <EntityT> CompletableFuture<Optional<EntityT>> executeAsyncAndMapToOptionalEntity(
       Statement<?> statement, EntityHelper<EntityT> entityHelper) {
     return executeAsync(statement)
-        .thenApply(
-            rs -> {
-              Row row = rs.one();
-              return (row == null) ? Optional.empty() : Optional.of(entityHelper.get(row));
-            });
+        .thenApply(rs -> Optional.ofNullable(asEntity(rs.one(), entityHelper)));
   }
 
   protected <EntityT>

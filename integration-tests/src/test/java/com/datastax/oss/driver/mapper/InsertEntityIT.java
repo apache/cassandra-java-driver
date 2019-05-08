@@ -24,11 +24,13 @@ import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.mapper.model.inventory.Dimensions;
 import com.datastax.oss.driver.mapper.model.inventory.InventoryFixtures;
 import com.datastax.oss.driver.mapper.model.inventory.InventoryMapper;
 import com.datastax.oss.driver.mapper.model.inventory.InventoryMapperBuilder;
 import com.datastax.oss.driver.mapper.model.inventory.Product;
 import com.datastax.oss.driver.mapper.model.inventory.ProductDao;
+import java.util.Optional;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -108,5 +110,25 @@ public class InsertEntityIT {
 
     // Then
     assertThat(writeTime).isEqualTo(timestamp);
+  }
+
+  @Test
+  public void should_insert_entity_if_not_exists() {
+    // Given
+    Product product = InventoryFixtures.FLAMETHROWER.entity;
+
+    // When
+    Optional<Product> maybeExisting = productDao.saveIfNotExists(product);
+
+    // Then
+    assertThat(maybeExisting).isEmpty();
+
+    // When
+    Product otherProduct =
+        new Product(product.getId(), "Other description", new Dimensions(1, 1, 1));
+    maybeExisting = productDao.saveIfNotExists(otherProduct);
+
+    // Then
+    assertThat(maybeExisting).contains(product);
   }
 }
