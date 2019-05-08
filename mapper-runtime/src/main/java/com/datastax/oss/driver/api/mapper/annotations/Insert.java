@@ -23,5 +23,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.CLASS)
 public @interface Insert {
-  String customClause() default "";
+  boolean ifNotExists() default false;
+
+  String customUsingClause() default "";
 }

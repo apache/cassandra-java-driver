@@ -17,7 +17,9 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.ENTITY;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_OPTIONAL_ENTITY;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_VOID;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.OPTIONAL_ENTITY;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.VOID;
 
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
@@ -39,7 +41,13 @@ import javax.lang.model.element.VariableElement;
 public class DaoInsertMethodGenerator extends DaoMethodGenerator {
 
   private static final EnumSet<ReturnTypeKind> SUPPORTED_RETURN_TYPES =
-      EnumSet.of(VOID, FUTURE_OF_VOID, ENTITY, FUTURE_OF_ENTITY);
+      EnumSet.of(
+          VOID,
+          FUTURE_OF_VOID,
+          ENTITY,
+          FUTURE_OF_ENTITY,
+          OPTIONAL_ENTITY,
+          FUTURE_OF_OPTIONAL_ENTITY);
 
   public DaoInsertMethodGenerator(
       ExecutableElement methodElement,
@@ -145,13 +153,19 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
   private void generatePrepareRequest(
       MethodSpec.Builder methodBuilder, String requestName, String helperFieldName) {
     methodBuilder.addCode(
-        "$[$1T $2L = $1T.newInstance($3L.insert().asCql()",
+        "$[$1T $2L = $1T.newInstance($3L.insert()",
         SimpleStatement.class,
         requestName,
         helperFieldName);
-    String customClause = methodElement.getAnnotation(Insert.class).customClause();
-    if (!customClause.isEmpty()) {
-      methodBuilder.addCode(" + $S", " " + customClause);
+    Insert annotation = methodElement.getAnnotation(Insert.class);
+    if (annotation.ifNotExists()) {
+      methodBuilder.addCode(".ifNotExists()");
+    }
+    methodBuilder.addCode(".asCql()");
+
+    String customUsingClause = annotation.customUsingClause();
+    if (!customUsingClause.isEmpty()) {
+      methodBuilder.addCode(" + $S", " " + customUsingClause);
     }
     methodBuilder.addCode(")$];\n");
   }
