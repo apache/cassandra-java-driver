@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.api.core.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
@@ -64,6 +70,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
 import javax.net.ssl.SSLContext;
 import net.jcip.annotations.NotThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Base implementation to build session instances.
@@ -75,6 +83,8 @@ import net.jcip.annotations.NotThreadSafe;
  */
 @NotThreadSafe
 public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SessionBuilder.class);
 
   @SuppressWarnings("unchecked")
   protected final SelfT self = (SelfT) this;
@@ -616,6 +626,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    */
   @NonNull
   public CompletionStage<SessionT> buildAsync() {
+    System.out.println("Using Scylla optimized driver!!!");
+    LOG.info("Using Scylla optimized driver!!!");
     CompletionStage<CqlSession> buildStage = buildDefaultSessionAsync();
     CompletionStage<SessionT> wrapStage = buildStage.thenApply(this::wrap);
     // thenApply does not propagate cancellation (!)
