@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.pool;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
@@ -52,7 +58,7 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
 
     assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
-    assertThat(pool.channels).containsOnly(channel1, channel2);
+    assertThat(pool.channels[0]).containsOnly(channel1, channel2);
 
     CqlIdentifier newKeyspace = CqlIdentifier.fromCql("new_keyspace");
     CompletionStage<Void> setKeyspaceFuture = pool.setKeyspace(newKeyspace);
@@ -88,15 +94,14 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
     CompletionStage<ChannelPool> poolFuture =
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
-    factoryHelper.waitForCalls(node, 2);
+    factoryHelper.waitForCalls(node, 3);
 
     assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
 
     // Check that reconnection has kicked in, but do not complete it yet
-    verify(reconnectionSchedule, VERIFY_TIMEOUT).nextDelay();
+    verify(reconnectionSchedule, VERIFY_TIMEOUT.times(2)).nextDelay();
     verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.reconnectionStarted(node));
-    factoryHelper.waitForCalls(node, 2);
 
     // Switch keyspace, it succeeds immediately since there is no active channel
     CqlIdentifier newKeyspace = CqlIdentifier.fromCql("new_keyspace");
@@ -109,7 +114,7 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
 
     verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.reconnectionStopped(node));
     verify(channel1, VERIFY_TIMEOUT).setKeyspace(newKeyspace);
-    verify(channel2, VERIFY_TIMEOUT).setKeyspace(newKeyspace);
+    factoryHelper.waitForCalls(node, 1);
 
     factoryHelper.verifyNoMoreCalls();
   }

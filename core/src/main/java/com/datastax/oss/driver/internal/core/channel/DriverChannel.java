@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.ThrottledAdminRequestHandler;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
+import com.datastax.oss.driver.internal.core.protocol.ShardingInfo;
 import com.datastax.oss.driver.internal.core.protocol.ShardingInfo.ConnectionShardingInfo;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
@@ -141,6 +142,16 @@ public class DriverChannel {
 
   public Map<String, List<String>> getOptions() {
     return channel.attr(OPTIONS_KEY).get();
+  }
+
+  public int getShardId() {
+    return channel.hasAttr(SHARDING_INFO_KEY) ? channel.attr(SHARDING_INFO_KEY).get().shardId : 0;
+  }
+
+  public ShardingInfo getShardingInfo() {
+    return channel.hasAttr(SHARDING_INFO_KEY)
+        ? channel.attr(SHARDING_INFO_KEY).get().shardingInfo
+        : null;
   }
 
   /**

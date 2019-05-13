@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.session;
 
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
@@ -26,6 +32,7 @@ import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
@@ -232,12 +239,18 @@ public class DefaultSession implements CqlSession {
 
   @Nullable
   public DriverChannel getChannel(@NonNull Node node, @NonNull String logPrefix) {
+    return getChannel(node, logPrefix, null);
+  }
+
+  @Nullable
+  public DriverChannel getChannel(
+      @NonNull Node node, @NonNull String logPrefix, @Nullable Token routingKey) {
     ChannelPool pool = poolManager.getPools().get(node);
     if (pool == null) {
       LOG.trace("[{}] No pool to {}, skipping", logPrefix, node);
       return null;
     } else {
-      DriverChannel channel = pool.next();
+      DriverChannel channel = pool.next(routingKey);
       if (channel == null) {
         LOG.trace("[{}] Pool returned no channel for {}, skipping", logPrefix, node);
         return null;

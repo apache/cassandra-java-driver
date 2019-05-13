@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.pool;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
@@ -63,14 +69,14 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
     assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
-    assertThat(pool.channels).containsOnly(channel1, channel2, channel3, channel4);
+    assertThat(pool.channels[0]).containsOnly(channel1, channel2, channel3, channel4);
     inOrder.verify(eventBus, VERIFY_TIMEOUT.times(4)).fire(ChannelEvent.channelOpened(node));
 
     pool.resize(NodeDistance.LOCAL);
 
     inOrder.verify(eventBus, VERIFY_TIMEOUT.times(2)).fire(ChannelEvent.channelClosed(node));
 
-    await().untilAsserted(() -> assertThat(pool.channels).containsOnly(channel3, channel4));
+    await().untilAsserted(() -> assertThat(pool.channels[0]).containsOnly(channel3, channel4));
 
     factoryHelper.verifyNoMoreCalls();
   }
@@ -109,7 +115,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     inOrder.verify(eventBus, VERIFY_TIMEOUT.times(2)).fire(ChannelEvent.channelOpened(node));
     assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
-    assertThat(pool.channels).containsOnly(channel1, channel2);
+    assertThat(pool.channels[0]).containsOnly(channel1, channel2);
 
     // A reconnection should have been scheduled to add the missing channels, don't complete yet
     verify(reconnectionSchedule).nextDelay();
@@ -125,11 +131,8 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
     factoryHelper.waitForCalls(node, 2);
 
-    // Pool should have shrinked back to 2. We keep the most recent channels so 1 and 2 get closed.
-    inOrder.verify(eventBus, VERIFY_TIMEOUT.times(2)).fire(ChannelEvent.channelOpened(node));
-    inOrder.verify(eventBus, VERIFY_TIMEOUT.times(2)).fire(ChannelEvent.channelClosed(node));
     inOrder.verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.reconnectionStopped(node));
-    await().untilAsserted(() -> assertThat(pool.channels).containsOnly(channel3, channel4));
+    await().untilAsserted(() -> assertThat(pool.channels[0]).containsOnly(channel1, channel2));
 
     factoryHelper.verifyNoMoreCalls();
   }
@@ -164,7 +167,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
     assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
-    assertThat(pool.channels).containsOnly(channel1, channel2);
+    assertThat(pool.channels[0]).containsOnly(channel1, channel2);
 
     pool.resize(NodeDistance.REMOTE);
 
@@ -178,7 +181,8 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
     await()
         .untilAsserted(
-            () -> assertThat(pool.channels).containsOnly(channel1, channel2, channel3, channel4));
+            () ->
+                assertThat(pool.channels[0]).containsOnly(channel1, channel2, channel3, channel4));
 
     factoryHelper.verifyNoMoreCalls();
   }
@@ -218,7 +222,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
     assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
-    assertThat(pool.channels).containsOnly(channel1);
+    assertThat(pool.channels[0]).containsOnly(channel1);
 
     // A reconnection should have been scheduled to add the missing channel, don't complete yet
     verify(reconnectionSchedule, VERIFY_TIMEOUT).nextDelay();
@@ -233,7 +237,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     factoryHelper.waitForCall(node);
     inOrder.verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.channelOpened(node));
 
-    await().untilAsserted(() -> assertThat(pool.channels).containsOnly(channel1, channel2));
+    await().untilAsserted(() -> assertThat(pool.channels[0]).containsOnly(channel1, channel2));
 
     // A second attempt should have been scheduled since we're now still under the target size
     verify(reconnectionSchedule, VERIFY_TIMEOUT.times(2)).nextDelay();
@@ -250,7 +254,8 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
     await()
         .untilAsserted(
-            () -> assertThat(pool.channels).containsOnly(channel1, channel2, channel3, channel4));
+            () ->
+                assertThat(pool.channels[0]).containsOnly(channel1, channel2, channel3, channel4));
 
     factoryHelper.verifyNoMoreCalls();
   }
@@ -284,7 +289,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
     assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
-    assertThat(pool.channels).containsOnly(channel1, channel2);
+    assertThat(pool.channels[0]).containsOnly(channel1, channel2);
 
     // Simulate a configuration change
     when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(4);
@@ -300,7 +305,8 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
     await()
         .untilAsserted(
-            () -> assertThat(pool.channels).containsOnly(channel1, channel2, channel3, channel4));
+            () ->
+                assertThat(pool.channels[0]).containsOnly(channel1, channel2, channel3, channel4));
 
     factoryHelper.verifyNoMoreCalls();
   }
@@ -339,7 +345,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
     assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
-    assertThat(pool.channels).containsOnly(channel1);
+    assertThat(pool.channels[0]).containsOnly(channel1);
 
     // A reconnection should have been scheduled to add the missing channel, don't complete yet
     verify(reconnectionSchedule, VERIFY_TIMEOUT).nextDelay();
@@ -355,7 +361,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     factoryHelper.waitForCall(node);
     inOrder.verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.channelOpened(node));
 
-    await().untilAsserted(() -> assertThat(pool.channels).containsOnly(channel1, channel2));
+    await().untilAsserted(() -> assertThat(pool.channels[0]).containsOnly(channel1, channel2));
 
     // A second attempt should have been scheduled since we're now still under the target size
     verify(reconnectionSchedule, VERIFY_TIMEOUT.times(2)).nextDelay();
@@ -372,7 +378,8 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
     await()
         .untilAsserted(
-            () -> assertThat(pool.channels).containsOnly(channel1, channel2, channel3, channel4));
+            () ->
+                assertThat(pool.channels[0]).containsOnly(channel1, channel2, channel3, channel4));
 
     factoryHelper.verifyNoMoreCalls();
   }
@@ -400,7 +407,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
     assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
-    assertThat(pool.channels).containsOnly(channel1, channel2);
+    assertThat(pool.channels[0]).containsOnly(channel1, channel2);
 
     // Config changes, but not for our distance
     when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_REMOTE_SIZE)).thenReturn(1);

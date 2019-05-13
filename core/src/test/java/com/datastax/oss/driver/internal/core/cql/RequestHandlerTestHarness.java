@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.cql;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -135,6 +141,12 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     when(context.getTimestampGenerator()).thenReturn(timestampGenerator);
 
     pools = builder.buildMockPools();
+    when(session.getChannel(any(Node.class), anyString(), any()))
+        .thenAnswer(
+            invocation -> {
+              Node node = invocation.getArgument(0);
+              return pools.get(node).next();
+            });
     when(session.getChannel(any(Node.class), anyString()))
         .thenAnswer(
             invocation -> {

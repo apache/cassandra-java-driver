@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.pool;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
@@ -60,7 +66,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
     factoryHelper.waitForCalls(node, 3);
 
     assertThatStage(poolFuture)
-        .isSuccess(pool -> assertThat(pool.channels).containsOnly(channel1, channel2, channel3));
+        .isSuccess(pool -> assertThat(pool.channels[0]).containsOnly(channel1, channel2, channel3));
     verify(eventBus, VERIFY_TIMEOUT.times(3)).fire(ChannelEvent.channelOpened(node));
 
     factoryHelper.verifyNoMoreCalls();
@@ -80,11 +86,11 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
     CompletionStage<ChannelPool> poolFuture =
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
-    factoryHelper.waitForCalls(node, 3);
+    factoryHelper.waitForCalls(node, 1);
 
-    assertThatStage(poolFuture).isSuccess(pool -> assertThat(pool.channels).isEmpty());
+    assertThatStage(poolFuture).isSuccess(pool -> assertThat(pool.channels).isNull());
     verify(eventBus, never()).fire(ChannelEvent.channelOpened(node));
-    verify(nodeMetricUpdater, VERIFY_TIMEOUT.times(3))
+    verify(nodeMetricUpdater, VERIFY_TIMEOUT.times(1))
         .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
 
     factoryHelper.verifyNoMoreCalls();
@@ -104,12 +110,12 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
     CompletionStage<ChannelPool> poolFuture =
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
-    factoryHelper.waitForCalls(node, 3);
+    factoryHelper.waitForCalls(node, 1);
     assertThatStage(poolFuture)
         .isSuccess(
             pool -> {
               assertThat(pool.isInvalidKeyspace()).isTrue();
-              verify(nodeMetricUpdater, VERIFY_TIMEOUT.times(3))
+              verify(nodeMetricUpdater, VERIFY_TIMEOUT.times(1))
                   .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
             });
   }
@@ -129,13 +135,13 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
 
     ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
-    factoryHelper.waitForCalls(node, 3);
+    factoryHelper.waitForCalls(node, 1);
 
     verify(eventBus, VERIFY_TIMEOUT)
         .fire(TopologyEvent.forceDown(node.getBroadcastRpcAddress().get()));
     verify(eventBus, never()).fire(ChannelEvent.channelOpened(node));
 
-    verify(nodeMetricUpdater, VERIFY_TIMEOUT.times(3))
+    verify(nodeMetricUpdater, VERIFY_TIMEOUT.times(1))
         .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
     factoryHelper.verifyNoMoreCalls();
   }
@@ -163,26 +169,26 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
     CompletionStage<ChannelPool> poolFuture =
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
-    factoryHelper.waitForCalls(node, 2);
+    factoryHelper.waitForCalls(node, 1);
 
     assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
-    assertThat(pool.channels).containsOnly(channel1);
-    inOrder.verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.channelOpened(node));
 
     // A reconnection should have been scheduled
     verify(reconnectionSchedule, VERIFY_TIMEOUT).nextDelay();
     inOrder.verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.reconnectionStarted(node));
+    assertThat(pool.channels[0]).containsOnly(channel1);
+    inOrder.verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.channelOpened(node));
 
     channel2Future.complete(channel2);
     factoryHelper.waitForCalls(node, 1);
     inOrder.verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.channelOpened(node));
     inOrder.verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.reconnectionStopped(node));
 
-    await().untilAsserted(() -> assertThat(pool.channels).containsOnly(channel1, channel2));
+    await().untilAsserted(() -> assertThat(pool.channels[0]).containsOnly(channel1, channel2));
 
     verify(nodeMetricUpdater, VERIFY_TIMEOUT)
         .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
-    factoryHelper.verifyNoMoreCalls();
+    factoryHelper.waitForCalls(node, 1);
   }
 }
