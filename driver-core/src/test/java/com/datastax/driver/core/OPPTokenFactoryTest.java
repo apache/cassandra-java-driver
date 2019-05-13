@@ -46,20 +46,6 @@ public class OPPTokenFactoryTest {
   }
 
   @Test(groups = "unit")
-  public void should_strip_trailing_0_bytes() {
-    Token with0Bytes = token(ByteBuffer.wrap(new byte[] {4, 0, 0, 0}));
-    Token without0Bytes = token(ByteBuffer.wrap(new byte[] {4}));
-    Token fromStringWith0Bytes = factory.fromString("040000");
-
-    assertThat(with0Bytes).isEqualTo(without0Bytes).isEqualTo(fromStringWith0Bytes);
-
-    Token withMixed0Bytes = factory.fromString("0004000400");
-    Token withoutMixed0Bytes = factory.fromString("00040004");
-
-    assertThat(withMixed0Bytes).isEqualTo(withoutMixed0Bytes);
-  }
-
-  @Test(groups = "unit")
   public void should_split_range_that_wraps_around_the_ring() {
     for (int start = 1; start < 128; start++) {
       for (int end = start; end < start; end++) {
