@@ -15,19 +15,13 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.mapper.annotations.Delete;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
-import com.squareup.javapoet.TypeName;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import javax.lang.model.element.Modifier;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -105,85 +99,6 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
             .addParameter(ENTITY_CLASS_NAME, "entity")
             .addParameter(Integer.class, "extra")
             .build(),
-      },
-    };
-  }
-
-  @Test
-  @Override
-  @UseDataProvider("validSignatures")
-  public void should_succeed_without_warnings(MethodSpec method) {
-    super.should_succeed_without_warnings(method);
-  }
-
-  @DataProvider
-  public static Object[][] validSignatures() {
-    return new Object[][] {
-      {
-        MethodSpec.methodBuilder("delete")
-            .addAnnotation(Delete.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ENTITY_CLASS_NAME, "entity")
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("delete")
-            .addAnnotation(Delete.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ENTITY_CLASS_NAME, "entity")
-            .returns(TypeName.BOOLEAN)
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("delete")
-            .addAnnotation(Delete.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ENTITY_CLASS_NAME, "entity")
-            .returns(Boolean.class)
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("delete")
-            .addAnnotation(Delete.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ENTITY_CLASS_NAME, "entity")
-            .returns(ResultSet.class)
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("delete")
-            .addAnnotation(Delete.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ENTITY_CLASS_NAME, "entity")
-            .returns(ParameterizedTypeName.get(CompletableFuture.class, Void.class))
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("delete")
-            .addAnnotation(Delete.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ENTITY_CLASS_NAME, "entity")
-            .returns(ParameterizedTypeName.get(CompletionStage.class, Boolean.class))
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("delete")
-            .addAnnotation(Delete.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ENTITY_CLASS_NAME, "entity")
-            .returns(ParameterizedTypeName.get(CompletableFuture.class, AsyncResultSet.class))
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("delete")
-            .addAnnotation(
-                AnnotationSpec.builder(Delete.class)
-                    .addMember("customIfClause", "$S", "IF foo = :foo")
-                    .build())
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ENTITY_CLASS_NAME, "entity")
-            .addParameter(Integer.class, "foo")
-            .build()
       },
     };
   }

@@ -17,19 +17,26 @@ package com.datastax.oss.driver.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
+import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
+import com.datastax.oss.driver.api.mapper.annotations.Delete;
+import com.datastax.oss.driver.api.mapper.annotations.Insert;
+import com.datastax.oss.driver.api.mapper.annotations.Mapper;
+import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.mapper.model.inventory.InventoryFixtures;
-import com.datastax.oss.driver.mapper.model.inventory.InventoryMapper;
-import com.datastax.oss.driver.mapper.model.inventory.InventoryMapperBuilder;
-import com.datastax.oss.driver.mapper.model.inventory.Product;
-import com.datastax.oss.driver.mapper.model.inventory.ProductDao;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -40,7 +47,7 @@ import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 @CassandraRequirement(min = "3.4", description = "Creates a SASI index")
-public class DeleteIT {
+public class DeleteIT extends InventoryITBase {
 
   private static CcmRule ccm = CcmRule.getInstance();
 
@@ -48,65 +55,161 @@ public class DeleteIT {
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
-  private static ProductDao productDao;
+  private static ProductDao dao;
 
   @BeforeClass
   public static void setup() {
     CqlSession session = sessionRule.session();
 
-    for (String query : InventoryFixtures.createStatements()) {
+    for (String query : createStatements()) {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }
 
-    InventoryMapper inventoryMapper = new InventoryMapperBuilder(session).build();
-    productDao = inventoryMapper.productDao(sessionRule.keyspace());
+    InventoryMapper inventoryMapper = new DeleteIT_InventoryMapperBuilder(session).build();
+    dao = inventoryMapper.productDao(sessionRule.keyspace());
   }
 
   @Before
   public void insertFixtures() {
-    productDao.save(InventoryFixtures.FLAMETHROWER.entity);
-    productDao.save(InventoryFixtures.MP3_DOWNLOAD.entity);
+    dao.save(FLAMETHROWER);
   }
 
   @Test
   public void should_delete_entity() {
-    Product entity = InventoryFixtures.FLAMETHROWER.entity;
-    UUID id = entity.getId();
-    productDao.delete(entity);
-    assertThat(productDao.findById(id)).isNull();
+    UUID id = FLAMETHROWER.getId();
+    assertThat(dao.findById(id)).isNotNull();
+
+    dao.delete(FLAMETHROWER);
+    assertThat(dao.findById(id)).isNull();
+  }
+
+  @Test
+  public void should_delete_entity_asynchronously() {
+    UUID id = FLAMETHROWER.getId();
+    assertThat(dao.findById(id)).isNotNull();
+
+    CompletableFutures.getUninterruptibly(dao.deleteAsync(FLAMETHROWER));
+    assertThat(dao.findById(id)).isNull();
   }
 
   @Test
   public void should_delete_by_id() {
-    Product entity = InventoryFixtures.FLAMETHROWER.entity;
-    UUID id = entity.getId();
-    productDao.deleteById(id);
-    assertThat(productDao.findById(id)).isNull();
+    UUID id = FLAMETHROWER.getId();
+    assertThat(dao.findById(id)).isNotNull();
+
+    dao.deleteById(id);
+    assertThat(dao.findById(id)).isNull();
 
     // Non-existing id should be silently ignored
-    productDao.deleteById(id);
+    dao.deleteById(id);
+  }
+
+  @Test
+  public void should_delete_by_id_asynchronously() {
+    UUID id = FLAMETHROWER.getId();
+    assertThat(dao.findById(id)).isNotNull();
+
+    CompletableFutures.getUninterruptibly(dao.deleteAsyncById(id));
+    assertThat(dao.findById(id)).isNull();
+
+    // Non-existing id should be silently ignored
+    CompletableFutures.getUninterruptibly(dao.deleteAsyncById(id));
   }
 
   @Test
   public void should_delete_if_exists() {
-    Product entity = InventoryFixtures.FLAMETHROWER.entity;
-    UUID id = entity.getId();
-    assertThat(productDao.deleteIfExists(entity)).isTrue();
-    assertThat(productDao.findById(id)).isNull();
-    assertThat(productDao.deleteIfExists(entity)).isFalse();
+    UUID id = FLAMETHROWER.getId();
+    assertThat(dao.findById(id)).isNotNull();
+
+    assertThat(dao.deleteIfExists(FLAMETHROWER)).isTrue();
+    assertThat(dao.findById(id)).isNull();
+
+    assertThat(dao.deleteIfExists(FLAMETHROWER)).isFalse();
+  }
+
+  @Test
+  public void should_delete_if_exists_asynchronously() {
+    UUID id = FLAMETHROWER.getId();
+    assertThat(dao.findById(id)).isNotNull();
+
+    assertThat(CompletableFutures.getUninterruptibly(dao.deleteAsyncIfExists(FLAMETHROWER)))
+        .isTrue();
+    assertThat(dao.findById(id)).isNull();
+
+    assertThat(CompletableFutures.getUninterruptibly(dao.deleteAsyncIfExists(FLAMETHROWER)))
+        .isFalse();
   }
 
   @Test
   public void should_delete_with_condition() {
-    Product entity = InventoryFixtures.FLAMETHROWER.entity;
-    UUID id = entity.getId();
-    ResultSet rs = productDao.deleteIfDescriptionMatches(id, "foo");
-    assertThat(rs.wasApplied()).isFalse();
-    assertThat(rs.one().getString("description")).isEqualTo(entity.getDescription());
+    UUID id = FLAMETHROWER.getId();
+    assertThat(dao.findById(id)).isNotNull();
 
-    rs = productDao.deleteIfDescriptionMatches(id, entity.getDescription());
+    ResultSet rs = dao.deleteIfDescriptionMatches(id, "foo");
+    assertThat(rs.wasApplied()).isFalse();
+    assertThat(rs.one().getString("description")).isEqualTo(FLAMETHROWER.getDescription());
+
+    rs = dao.deleteIfDescriptionMatches(id, FLAMETHROWER.getDescription());
     assertThat(rs.wasApplied()).isTrue();
-    assertThat(productDao.findById(id)).isNull();
+    assertThat(dao.findById(id)).isNull();
+  }
+
+  @Test
+  public void should_delete_with_condition_asynchronously() {
+    UUID id = FLAMETHROWER.getId();
+    assertThat(dao.findById(id)).isNotNull();
+
+    AsyncResultSet rs =
+        CompletableFutures.getUninterruptibly(dao.deleteAsyncIfDescriptionMatches(id, "foo"));
+    assertThat(rs.wasApplied()).isFalse();
+    assertThat(rs.one().getString("description")).isEqualTo(FLAMETHROWER.getDescription());
+
+    rs =
+        CompletableFutures.getUninterruptibly(
+            dao.deleteAsyncIfDescriptionMatches(id, FLAMETHROWER.getDescription()));
+    assertThat(rs.wasApplied()).isTrue();
+    assertThat(dao.findById(id)).isNull();
+  }
+
+  @Mapper
+  public interface InventoryMapper {
+    @DaoFactory
+    ProductDao productDao(@DaoKeyspace CqlIdentifier keyspace);
+  }
+
+  @Dao
+  public interface ProductDao {
+
+    @Delete
+    void delete(Product product);
+
+    @Delete(entityClass = Product.class)
+    void deleteById(UUID productId);
+
+    @Delete(ifExists = true)
+    boolean deleteIfExists(Product product);
+
+    @Delete(entityClass = Product.class, customIfClause = "IF description = :expectedDescription")
+    ResultSet deleteIfDescriptionMatches(UUID productId, String expectedDescription);
+
+    @Delete
+    CompletionStage<Void> deleteAsync(Product product);
+
+    @Delete(entityClass = Product.class)
+    CompletableFuture<Void> deleteAsyncById(UUID productId);
+
+    @Delete(ifExists = true)
+    CompletableFuture<Boolean> deleteAsyncIfExists(Product product);
+
+    @Delete(entityClass = Product.class, customIfClause = "IF description = :expectedDescription")
+    CompletableFuture<AsyncResultSet> deleteAsyncIfDescriptionMatches(
+        UUID productId, String expectedDescription);
+
+    @Select
+    Product findById(UUID productId);
+
+    @Insert
+    void save(Product product);
   }
 }

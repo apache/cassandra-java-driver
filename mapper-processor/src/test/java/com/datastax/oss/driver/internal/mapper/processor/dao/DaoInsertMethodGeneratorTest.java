@@ -16,17 +16,12 @@
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import javax.lang.model.element.Modifier;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,101 +63,6 @@ public class DaoInsertMethodGeneratorTest extends DaoMethodGeneratorTest {
             .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
             .returns(TypeName.INT)
             .build(),
-      },
-    };
-  }
-
-  @Test
-  @Override
-  @UseDataProvider("validSignatures")
-  public void should_succeed_without_warnings(MethodSpec method) {
-    super.should_succeed_without_warnings(method);
-  }
-
-  @DataProvider
-  public static Object[][] validSignatures() {
-    return new Object[][] {
-      // Returns void, or a future thereof:
-      {
-        MethodSpec.methodBuilder("insert")
-            .addAnnotation(Insert.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("insert")
-            .addAnnotation(Insert.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
-            .returns(ParameterizedTypeName.get(CompletionStage.class, Void.class))
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("insert")
-            .addAnnotation(Insert.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
-            .returns(ParameterizedTypeName.get(CompletableFuture.class, Void.class))
-            .build()
-      },
-      // Returns the entity class, or a future thereof:
-      {
-        MethodSpec.methodBuilder("insert")
-            .addAnnotation(Insert.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
-            .returns(ENTITY_CLASS_NAME)
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("insert")
-            .addAnnotation(Insert.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
-            .returns(
-                ParameterizedTypeName.get(ClassName.get(CompletionStage.class), ENTITY_CLASS_NAME))
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("insert")
-            .addAnnotation(Insert.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
-            .returns(
-                ParameterizedTypeName.get(
-                    ClassName.get(CompletableFuture.class), ENTITY_CLASS_NAME))
-            .build()
-      },
-      // Returns an optional of the entity class, or a future thereof:
-      {
-        MethodSpec.methodBuilder("insert")
-            .addAnnotation(Insert.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
-            .returns(ParameterizedTypeName.get(ClassName.get(Optional.class), ENTITY_CLASS_NAME))
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("insert")
-            .addAnnotation(Insert.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
-            .returns(
-                ParameterizedTypeName.get(
-                    ClassName.get(CompletionStage.class),
-                    ParameterizedTypeName.get(ClassName.get(Optional.class), ENTITY_CLASS_NAME)))
-            .build()
-      },
-      // Extra parameters in addition to the entity (to bind into the request):
-      {
-        MethodSpec.methodBuilder("insert")
-            .addAnnotation(Insert.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
-            .addParameter(ParameterSpec.builder(String.class, "param1").build())
-            .addParameter(ParameterSpec.builder(Integer.class, "param2").build())
-            .build()
       },
     };
   }
