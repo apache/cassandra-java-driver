@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
-import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 import com.squareup.javapoet.MethodSpec;
@@ -115,73 +114,5 @@ public class DaoSetEntityMethodGeneratorTest extends DaoMethodGeneratorTest {
             .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
             .addParameter(ParameterSpec.builder(BoundStatement.class, "target").build())
             .build());
-  }
-
-  @Test
-  @Override
-  @UseDataProvider("validSignatures")
-  public void should_succeed_without_warnings(MethodSpec method) {
-    super.should_succeed_without_warnings(method);
-  }
-
-  @DataProvider
-  public static Object[][] validSignatures() {
-    return new Object[][] {
-      {
-        MethodSpec.methodBuilder("set")
-            .addAnnotation(SetEntity.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
-            .addParameter(ParameterSpec.builder(BoundStatement.class, "target").build())
-            .returns(BoundStatement.class)
-            .build()
-      },
-      // Parameter order can be reversed:
-      {
-        MethodSpec.methodBuilder("set")
-            .addAnnotation(SetEntity.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(BoundStatement.class, "target").build())
-            .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
-            .returns(BoundStatement.class)
-            .build()
-      },
-      // Methods that process BoundStatementBuilder can be either void or return it:
-      {
-        MethodSpec.methodBuilder("set")
-            .addAnnotation(SetEntity.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
-            .addParameter(ParameterSpec.builder(BoundStatementBuilder.class, "target").build())
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("set")
-            .addAnnotation(SetEntity.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
-            .addParameter(ParameterSpec.builder(BoundStatementBuilder.class, "target").build())
-            .returns(BoundStatementBuilder.class)
-            .build()
-      },
-      // Same for UdtValue:
-      {
-        MethodSpec.methodBuilder("set")
-            .addAnnotation(SetEntity.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
-            .addParameter(ParameterSpec.builder(UdtValue.class, "target").build())
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("set")
-            .addAnnotation(SetEntity.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
-            .addParameter(ParameterSpec.builder(UdtValue.class, "target").build())
-            .returns(UdtValue.class)
-            .build()
-      },
-    };
   }
 }

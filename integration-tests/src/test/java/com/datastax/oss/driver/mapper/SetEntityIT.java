@@ -15,23 +15,26 @@
  */
 package com.datastax.oss.driver.mapper;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
+import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
+import com.datastax.oss.driver.api.mapper.annotations.Mapper;
+import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.mapper.model.EntityFixture;
-import com.datastax.oss.driver.mapper.model.inventory.InventoryFixtures;
-import com.datastax.oss.driver.mapper.model.inventory.InventoryMapper;
-import com.datastax.oss.driver.mapper.model.inventory.InventoryMapperBuilder;
-import com.datastax.oss.driver.mapper.model.inventory.Product;
-import com.datastax.oss.driver.mapper.model.inventory.ProductDao;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -41,7 +44,7 @@ import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 @CassandraRequirement(min = "3.4", description = "Creates a SASI index")
-public class SetEntityIT {
+public class SetEntityIT extends InventoryITBase {
 
   private static CcmRule ccm = CcmRule.getInstance();
 
@@ -49,60 +52,48 @@ public class SetEntityIT {
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
-  private static ProductDao productDao;
+  private static ProductDao dao;
 
   @BeforeClass
   public static void setup() {
     CqlSession session = sessionRule.session();
 
-    for (String query : InventoryFixtures.createStatements()) {
+    for (String query : createStatements()) {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }
 
-    InventoryMapper inventoryMapper = new InventoryMapperBuilder(session).build();
-    productDao = inventoryMapper.productDao(sessionRule.keyspace());
+    InventoryMapper inventoryMapper = new SetEntityIT_InventoryMapperBuilder(session).build();
+    dao = inventoryMapper.productDao(sessionRule.keyspace());
   }
 
   @Test
   public void should_set_entity_on_bound_statement() {
-    should_set_entity_on_bound_statement(InventoryFixtures.FLAMETHROWER);
-    should_set_entity_on_bound_statement(InventoryFixtures.MP3_DOWNLOAD);
-  }
-
-  private void should_set_entity_on_bound_statement(EntityFixture<Product> entityFixture) {
-    // Given
     CqlSession session = sessionRule.session();
     PreparedStatement preparedStatement =
         session.prepare("INSERT INTO product (id, description, dimensions) VALUES (?, ?, ?)");
     BoundStatement boundStatement = preparedStatement.bind();
 
-    // When
-    boundStatement = productDao.set(entityFixture.entity, boundStatement);
+    boundStatement = dao.set(FLAMETHROWER, boundStatement);
 
-    // Then
-    entityFixture.assertMatches(boundStatement);
+    assertMatches(boundStatement, FLAMETHROWER);
   }
 
   @Test
   public void should_set_entity_on_bound_statement_builder() {
-    // Given
     CqlSession session = sessionRule.session();
     PreparedStatement preparedStatement =
         session.prepare("INSERT INTO product (id, description, dimensions) VALUES (?, ?, ?)");
     BoundStatementBuilder builder = preparedStatement.boundStatementBuilder();
 
-    // When
-    productDao.set(builder, InventoryFixtures.FLAMETHROWER.entity);
+    dao.set(builder, FLAMETHROWER);
     BoundStatement boundStatement = builder.build();
 
-    // Then
-    InventoryFixtures.FLAMETHROWER.assertMatches(boundStatement);
+    assertMatches(boundStatement, FLAMETHROWER);
   }
 
   @Test
   public void should_set_entity_on_udt_value() {
-    // Given
     CqlSession session = sessionRule.session();
     UserDefinedType udtType =
         session
@@ -112,11 +103,41 @@ public class SetEntityIT {
             .getUserDefinedType("dimensions")
             .orElseThrow(AssertionError::new);
     UdtValue udtValue = udtType.newValue();
+    Dimensions dimensions = new Dimensions(30, 10, 8);
 
-    // When
-    productDao.set(InventoryFixtures.SAMPLE_DIMENSIONS.entity, udtValue);
+    dao.set(dimensions, udtValue);
 
-    // Then
-    InventoryFixtures.SAMPLE_DIMENSIONS.assertMatches(udtValue);
+    assertThat(udtValue.getInt("length")).isEqualTo(dimensions.getLength());
+    assertThat(udtValue.getInt("width")).isEqualTo(dimensions.getWidth());
+    assertThat(udtValue.getInt("height")).isEqualTo(dimensions.getHeight());
+  }
+
+  private static void assertMatches(GettableByName data, Product entity) {
+    assertThat(data.getUuid("id")).isEqualTo(entity.getId());
+    assertThat(data.getString("description")).isEqualTo(entity.getDescription());
+    UdtValue udtValue = data.getUdtValue("dimensions");
+    assertThat(udtValue.getType().getName().asInternal()).isEqualTo("dimensions");
+    assertThat(udtValue.getInt("length")).isEqualTo(entity.getDimensions().getLength());
+    assertThat(udtValue.getInt("width")).isEqualTo(entity.getDimensions().getWidth());
+    assertThat(udtValue.getInt("height")).isEqualTo(entity.getDimensions().getHeight());
+  }
+
+  @Mapper
+  public interface InventoryMapper {
+    @DaoFactory
+    ProductDao productDao(@DaoKeyspace CqlIdentifier keyspace);
+  }
+
+  @Dao
+  public interface ProductDao {
+
+    @SetEntity
+    BoundStatement set(Product product, BoundStatement boundStatement);
+
+    @SetEntity
+    void set(BoundStatementBuilder builder, Product product);
+
+    @SetEntity
+    void set(Dimensions dimensions, UdtValue udtValue);
   }
 }
