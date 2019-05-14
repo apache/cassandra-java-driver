@@ -41,14 +41,14 @@ public class DaoInsertMethodGeneratorTest extends DaoMethodGeneratorTest {
   public static Object[][] invalidSignatures() {
     return new Object[][] {
       {
-        "Wrong number of parameters: Insert methods must have at least one",
+        "Insert methods must take the entity to insert as the first parameter",
         MethodSpec.methodBuilder("insert")
             .addAnnotation(Insert.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .build(),
       },
       {
-        "Invalid parameter type: Insert methods must take the entity to insert as the first parameter",
+        "Insert methods must take the entity to insert as the first parameter",
         MethodSpec.methodBuilder("insert")
             .addAnnotation(Insert.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)

@@ -25,6 +25,10 @@ long countByIdAndYear(int id, int year);
 The annotation can define a [null saving strategy](../null_saving/) that applies to the method
 parameters.
 
+A [StatementAttributes](../statement_attributes/) can be added as the **last** parameter. This
+allows you to customize customize certain aspects of the request (page size, timeout, etc.) at
+runtime.
+
 ### Return type
 
 The method can return:

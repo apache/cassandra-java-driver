@@ -28,9 +28,11 @@ import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
+import java.util.List;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 
 public class DaoQueryMethodGenerator extends DaoMethodGenerator {
 
@@ -117,6 +119,12 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
                   Query.class.getSimpleName()))
           .endControlFlow();
     }
+    List<? extends VariableElement> parameters = methodElement.getParameters();
+
+    VariableElement statementAttributeParam = findStatementAttributesParam(methodElement);
+    if (statementAttributeParam != null) {
+      parameters = parameters.subList(0, methodElement.getParameters().size() - 1);
+    }
 
     queryBuilder.addStatement(
         "$T boundStatementBuilder = $L.boundStatementBuilder()",
@@ -129,8 +137,13 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
     queryBuilder.addStatement(
         "$1T nullSavingStrategy = $1T.$2L", NullSavingStrategy.class, nullSavingStrategy);
 
-    GeneratedCodePatterns.bindParameters(
-        methodElement.getParameters(), queryBuilder, enclosingClass, context, true);
+    if (statementAttributeParam != null) {
+      queryBuilder.addStatement(
+          "boundStatementBuilder = populateBoundStatementWithAttributes(boundStatementBuilder, $L)",
+          statementAttributeParam.getSimpleName().toString());
+    }
+
+    GeneratedCodePatterns.bindParameters(parameters, queryBuilder, enclosingClass, context, true);
 
     queryBuilder
         .addCode("\n")
