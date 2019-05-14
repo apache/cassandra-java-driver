@@ -64,7 +64,9 @@ public interface EntityHelper<EntityT> {
    */
   @NonNull
   <SettableT extends SettableByName<SettableT>> SettableT set(
-      @NonNull EntityT entity, @NonNull SettableT target, @NonNull NullSavingStrategy nullSavingStrategy);
+      @NonNull EntityT entity,
+      @NonNull SettableT target,
+      @NonNull NullSavingStrategy nullSavingStrategy);
 
   /**
    * Gets values from a data structure to fill an entity instance.

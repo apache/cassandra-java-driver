@@ -63,24 +63,19 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
     // Validate the parameters:
     // - the first one must be the entity.
     // - the others are completely free-form (they'll be used as additional bind variables)
-    if (methodElement.getParameters().isEmpty()) {
-      context
-          .getMessager()
-          .error(
-              methodElement,
-              "Wrong number of parameters: %s methods must have at least one",
-              Update.class.getSimpleName());
-      return Optional.empty();
+    // A StatementAttributes can be added in last position.
+    List<? extends VariableElement> parameters = methodElement.getParameters();
+    VariableElement statementAttributesParam = findStatementAttributesParam(methodElement);
+    if (statementAttributesParam != null) {
+      parameters = parameters.subList(0, parameters.size() - 1);
     }
-    VariableElement firstParameter = methodElement.getParameters().get(0);
-    TypeElement entityElement = asEntityElement(firstParameter);
+    TypeElement entityElement = parameters.isEmpty() ? null : asEntityElement(parameters.get(0));
     if (entityElement == null) {
       context
           .getMessager()
           .error(
               methodElement,
-              "Invalid parameter type: "
-                  + "%s methods must take the entity to update as the first parameter",
+              "%s methods must take the entity to update as the first parameter",
               Update.class.getSimpleName());
       return Optional.empty();
     }
@@ -117,7 +112,12 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
         BoundStatementBuilder.class,
         statementName);
 
-    List<? extends VariableElement> parameters = methodElement.getParameters();
+    if (statementAttributesParam != null) {
+      methodBuilder.addStatement(
+          "boundStatementBuilder = populateBoundStatementWithAttributes(boundStatementBuilder, $L)",
+          statementAttributesParam.getSimpleName().toString());
+    }
+
     String entityParameterName = parameters.get(0).getSimpleName().toString();
 
     Update annotation = methodElement.getAnnotation(Update.class);
@@ -143,7 +143,7 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
         GeneratedCodePatterns.setValue(
             property.getCqlName(),
             property.getType(),
-            CodeBlock.of("$L.$L()", firstParameter.getSimpleName(), property.getGetterName()),
+            CodeBlock.of("$L.$L()", parameters.get(0).getSimpleName(), property.getGetterName()),
             "boundStatementBuilder",
             methodBuilder,
             enclosingClass,

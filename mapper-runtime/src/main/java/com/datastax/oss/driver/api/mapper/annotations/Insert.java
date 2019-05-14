@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.mapper.annotations;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
+import com.datastax.oss.driver.api.mapper.StatementAttributes;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -52,6 +53,9 @@ import java.util.concurrent.CompletionStage;
  * &#64;Insert(ttl = ":ttl")
  * void insertWithTtl(Product product, int ttl);
  * </pre>
+ *
+ * A {@link StatementAttributes} can be added as the <b>last</b> parameter. This allows you to
+ * customize certain aspects of the request (page size, timeout, etc.) at runtime.
  *
  * <h3>Return type</h3>
  *

@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
+import com.datastax.oss.driver.api.mapper.StatementAttributes;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -110,6 +111,9 @@ import java.util.concurrent.CompletionStage;
  * CompletableFuture&lt;AsyncResultSet&gt; updateIfDescriptionMatches(Product product, String expectedDescription);
  *       </pre>
  * </ul>
+ *
+ * A {@link StatementAttributes} can be added as the <b>last</b> parameter. This allows you to
+ * customize certain aspects of the request (page size, timeout, etc.) at runtime.
  *
  * <h3>Target keyspace and table</h3>
  *

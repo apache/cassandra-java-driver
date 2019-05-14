@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.mapper.StatementAttributes;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
@@ -212,6 +213,17 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
         methodBuilder.addCode(".usingTimestamp($L)", timestamp);
       }
     }
+  }
+
+  protected VariableElement findStatementAttributesParam(ExecutableElement methodElement) {
+    if (methodElement.getParameters().size() > 0) {
+      int lastParamIndex = methodElement.getParameters().size() - 1;
+      VariableElement lastParam = methodElement.getParameters().get(lastParamIndex);
+      if (context.getClassUtils().isSame(lastParam.asType(), StatementAttributes.class)) {
+        return lastParam;
+      }
+    }
+    return null;
   }
 
   protected static class ReturnType {

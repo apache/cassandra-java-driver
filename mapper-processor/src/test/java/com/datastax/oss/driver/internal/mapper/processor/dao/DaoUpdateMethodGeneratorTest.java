@@ -48,14 +48,14 @@ public class DaoUpdateMethodGeneratorTest extends DaoMethodGeneratorTest {
   public static Object[][] invalidSignatures() {
     return new Object[][] {
       {
-        "Wrong number of parameters: Update methods must have at least one",
+        "Update methods must take the entity to update as the first parameter",
         MethodSpec.methodBuilder("update")
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addAnnotation(UPDATE_ANNOTATION)
             .build(),
       },
       {
-        "Invalid parameter type: Update methods must take the entity to update as the first parameter",
+        "Update methods must take the entity to update as the first parameter",
         MethodSpec.methodBuilder("update")
             .addAnnotation(UPDATE_ANNOTATION)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)

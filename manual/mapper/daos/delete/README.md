@@ -44,6 +44,10 @@ the method must have corresponding parameters (same name, and a compatible Java 
 void deleteIfDescriptionMatches(UUID productId, String expectedDescription);
 ```
 
+A [StatementAttributes](../statement_attributes/) can be added as the **last** parameter. This
+allows you to customize customize certain aspects of the request (page size, timeout, etc.) at
+runtime.
+
 ### Return type
 
 The method can return:
