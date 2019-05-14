@@ -17,10 +17,8 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
-import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
@@ -107,62 +105,6 @@ public class DaoGetEntityMethodGeneratorTest extends DaoMethodGeneratorTest {
                 ParameterizedTypeName.get(
                     ClassName.get(MappedAsyncPagingIterable.class), ENTITY_CLASS_NAME))
             .build(),
-      },
-    };
-  }
-
-  @Test
-  @Override
-  @UseDataProvider("validSignatures")
-  public void should_succeed_without_warnings(MethodSpec method) {
-    super.should_succeed_without_warnings(method);
-  }
-
-  @DataProvider
-  public static Object[][] validSignatures() {
-    return new Object[][] {
-      {
-        MethodSpec.methodBuilder("get")
-            .addAnnotation(GetEntity.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(Row.class, "source").build())
-            .returns(ENTITY_CLASS_NAME)
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("get")
-            .addAnnotation(GetEntity.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(UdtValue.class, "source").build())
-            .returns(ENTITY_CLASS_NAME)
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("get")
-            .addAnnotation(GetEntity.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(ResultSet.class, "source").build())
-            .returns(
-                ParameterizedTypeName.get(ClassName.get(PagingIterable.class), ENTITY_CLASS_NAME))
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("get")
-            .addAnnotation(GetEntity.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(ResultSet.class, "source").build())
-            .returns(ENTITY_CLASS_NAME)
-            .build()
-      },
-      {
-        MethodSpec.methodBuilder("get")
-            .addAnnotation(GetEntity.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(ParameterSpec.builder(AsyncResultSet.class, "source").build())
-            .returns(
-                ParameterizedTypeName.get(
-                    ClassName.get(MappedAsyncPagingIterable.class), ENTITY_CLASS_NAME))
-            .build()
       },
     };
   }

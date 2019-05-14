@@ -17,25 +17,26 @@ package com.datastax.oss.driver.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
-import com.datastax.oss.driver.api.core.cql.BoundStatement;
-import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
+import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
+import com.datastax.oss.driver.api.mapper.annotations.Delete;
+import com.datastax.oss.driver.api.mapper.annotations.Insert;
+import com.datastax.oss.driver.api.mapper.annotations.Mapper;
+import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.mapper.model.EntityFixture;
-import com.datastax.oss.driver.mapper.model.inventory.InventoryFixtures;
-import com.datastax.oss.driver.mapper.model.inventory.InventoryMapper;
-import com.datastax.oss.driver.mapper.model.inventory.InventoryMapperBuilder;
-import com.datastax.oss.driver.mapper.model.inventory.Product;
-import com.datastax.oss.driver.mapper.model.inventory.ProductDao;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -46,7 +47,7 @@ import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 @CassandraRequirement(min = "3.4", description = "Creates a SASI index")
-public class SelectIT {
+public class SelectIT extends InventoryITBase {
 
   private static CcmRule ccm = CcmRule.getInstance();
 
@@ -54,90 +55,114 @@ public class SelectIT {
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
-  private static ProductDao productDao;
+  private static ProductDao dao;
 
   @BeforeClass
   public static void setup() {
     CqlSession session = sessionRule.session();
 
-    for (String query : InventoryFixtures.createStatements()) {
+    for (String query : createStatements()) {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }
 
-    InventoryMapper inventoryMapper = new InventoryMapperBuilder(session).build();
-    productDao = inventoryMapper.productDao(sessionRule.keyspace());
+    InventoryMapper inventoryMapper = new SelectIT_InventoryMapperBuilder(session).build();
+    dao = inventoryMapper.productDao(sessionRule.keyspace());
   }
 
   @Before
   public void insertData() {
-    CqlSession session = sessionRule.session();
-    PreparedStatement preparedStatement =
-        session.prepare("INSERT INTO product (id, description, dimensions) VALUES (?, ?, ?)");
-    BoundStatement boundStatement = preparedStatement.bind();
-    session.execute(productDao.set(InventoryFixtures.FLAMETHROWER.entity, boundStatement));
-    session.execute(productDao.set(InventoryFixtures.MP3_DOWNLOAD.entity, boundStatement));
+    dao.save(FLAMETHROWER);
+    dao.save(MP3_DOWNLOAD);
   }
 
   @Test
   public void should_select_by_primary_key() {
-    should_select_by_primary_key(InventoryFixtures.FLAMETHROWER);
-    should_select_by_primary_key(InventoryFixtures.MP3_DOWNLOAD);
+    assertThat(dao.findById(FLAMETHROWER.getId())).isEqualTo(FLAMETHROWER);
+
+    dao.delete(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
   }
 
-  private void should_select_by_primary_key(EntityFixture<Product> entityFixture) {
-    Product selectedEntity = productDao.findById(entityFixture.entity.getId());
-    assertThat(selectedEntity).isEqualTo(entityFixture.entity);
+  @Test
+  public void should_select_by_primary_key_asynchronously() {
+    assertThat(CompletableFutures.getUninterruptibly(dao.findByIdAsync(FLAMETHROWER.getId())))
+        .isEqualTo(FLAMETHROWER);
+
+    dao.delete(FLAMETHROWER);
+    assertThat(CompletableFutures.getUninterruptibly(dao.findByIdAsync(FLAMETHROWER.getId())))
+        .isNull();
   }
 
   @Test
   public void should_select_by_primary_key_and_return_optional() {
-    Product reference = InventoryFixtures.FLAMETHROWER.entity;
-    assertThat(productDao.findOptionalById(reference.getId())).contains(reference);
+    assertThat(dao.findOptionalById(FLAMETHROWER.getId())).contains(FLAMETHROWER);
 
-    productDao.delete(reference);
-    assertThat(productDao.findOptionalById(reference.getId())).isEmpty();
+    dao.delete(FLAMETHROWER);
+    assertThat(dao.findOptionalById(FLAMETHROWER.getId())).isEmpty();
   }
 
   @Test
-  public void should_select_by_primary_key_async() throws Exception {
-    should_select_by_primary_key_async(InventoryFixtures.FLAMETHROWER);
-    should_select_by_primary_key_async(InventoryFixtures.MP3_DOWNLOAD);
-  }
+  public void should_select_by_primary_key_and_return_optional_asynchronously() {
+    assertThat(
+            CompletableFutures.getUninterruptibly(dao.findOptionalByIdAsync(FLAMETHROWER.getId())))
+        .contains(FLAMETHROWER);
 
-  private void should_select_by_primary_key_async(EntityFixture<Product> entityFixture)
-      throws Exception {
-    CompletionStage<Product> future = productDao.findByIdAsync(entityFixture.entity.getId());
-    Product selectedEntity = future.toCompletableFuture().get(500, TimeUnit.MILLISECONDS);
-    assertThat(selectedEntity).isEqualTo(entityFixture.entity);
-  }
-
-  @Test
-  public void should_select_by_primary_key_async_and_return_optional() throws Exception {
-    Product reference = InventoryFixtures.FLAMETHROWER.entity;
-    CompletionStage<Optional<Product>> future = productDao.findOptionalByIdAsync(reference.getId());
-    assertThat(future.toCompletableFuture().get(500, TimeUnit.MILLISECONDS)).contains(reference);
-
-    productDao.delete(reference);
-    future = productDao.findOptionalByIdAsync(reference.getId());
-    assertThat(future.toCompletableFuture().get(500, TimeUnit.MILLISECONDS)).isEmpty();
+    dao.delete(FLAMETHROWER);
+    assertThat(
+            CompletableFutures.getUninterruptibly(dao.findOptionalByIdAsync(FLAMETHROWER.getId())))
+        .isEmpty();
   }
 
   @Test
   public void should_select_with_custom_clause() {
-    PagingIterable<Product> products = productDao.findByDescription("%mp3%");
-    assertThat(products.one()).isEqualTo(InventoryFixtures.MP3_DOWNLOAD.entity);
+    PagingIterable<Product> products = dao.findByDescription("%mp3%");
+    assertThat(products.one()).isEqualTo(MP3_DOWNLOAD);
     assertThat(products.iterator()).isExhausted();
   }
 
   @Test
-  public void should_select_with_custom_clause_async() throws Exception {
-    CompletionStage<MappedAsyncPagingIterable<Product>> future =
-        productDao.findByDescriptionAsync("%mp3%");
+  public void should_select_with_custom_clause_asynchronously() {
     MappedAsyncPagingIterable<Product> iterable =
-        future.toCompletableFuture().get(500, TimeUnit.MILLISECONDS);
-    assertThat(iterable.one()).isEqualTo(InventoryFixtures.MP3_DOWNLOAD.entity);
+        CompletableFutures.getUninterruptibly(
+            dao.findByDescriptionAsync("%mp3%").toCompletableFuture());
+    assertThat(iterable.one()).isEqualTo(MP3_DOWNLOAD);
     assertThat(iterable.currentPage().iterator()).isExhausted();
     assertThat(iterable.hasMorePages()).isFalse();
+  }
+
+  @Mapper
+  public interface InventoryMapper {
+    @DaoFactory
+    ProductDao productDao(@DaoKeyspace CqlIdentifier keyspace);
+  }
+
+  @Dao
+  public interface ProductDao {
+    @Select
+    Product findById(UUID productId);
+
+    @Select
+    Optional<Product> findOptionalById(UUID productId);
+
+    @Select
+    CompletionStage<Product> findByIdAsync(UUID productId);
+
+    @Select
+    CompletionStage<Optional<Product>> findOptionalByIdAsync(UUID productId);
+
+    /** Note that this relies on a SASI index. */
+    @Select(customWhereClause = "WHERE description LIKE :searchString")
+    PagingIterable<Product> findByDescription(String searchString);
+
+    /** Note that this relies on a SASI index. */
+    @Select(customWhereClause = "WHERE description LIKE :searchString")
+    CompletionStage<MappedAsyncPagingIterable<Product>> findByDescriptionAsync(String searchString);
+
+    @Delete
+    void delete(Product product);
+
+    @Insert
+    void save(Product product);
   }
 }

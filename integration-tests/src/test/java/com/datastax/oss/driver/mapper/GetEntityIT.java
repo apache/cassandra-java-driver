@@ -17,29 +17,26 @@ package com.datastax.oss.driver.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
-import com.datastax.oss.driver.api.core.cql.BoundStatement;
-import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
+import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
+import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
+import com.datastax.oss.driver.api.mapper.annotations.Insert;
+import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.datastax.oss.driver.mapper.model.EntityFixture;
-import com.datastax.oss.driver.mapper.model.inventory.InventoryFixtures;
-import com.datastax.oss.driver.mapper.model.inventory.InventoryMapper;
-import com.datastax.oss.driver.mapper.model.inventory.InventoryMapperBuilder;
-import com.datastax.oss.driver.mapper.model.inventory.Product;
-import com.datastax.oss.driver.mapper.model.inventory.ProductDao;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -49,7 +46,7 @@ import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 @CassandraRequirement(min = "3.4", description = "Creates a SASI index")
-public class GetEntityIT {
+public class GetEntityIT extends InventoryITBase {
 
   private static CcmRule ccm = CcmRule.getInstance();
 
@@ -57,94 +54,101 @@ public class GetEntityIT {
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
-  private static ProductDao productDao;
+  private static ProductDao dao;
 
   @BeforeClass
   public static void setup() {
     CqlSession session = sessionRule.session();
 
-    for (String query : InventoryFixtures.createStatements()) {
+    for (String query : createStatements()) {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }
 
-    InventoryMapper inventoryMapper = new InventoryMapperBuilder(session).build();
-    productDao = inventoryMapper.productDao(sessionRule.keyspace());
-    PreparedStatement preparedStatement =
-        session.prepare("INSERT INTO product (id, description, dimensions) VALUES (?, ?, ?)");
-    BoundStatement boundStatement = preparedStatement.bind();
-    session.execute(productDao.set(InventoryFixtures.FLAMETHROWER.entity, boundStatement));
-    session.execute(productDao.set(InventoryFixtures.MP3_DOWNLOAD.entity, boundStatement));
+    InventoryMapper inventoryMapper = new GetEntityIT_InventoryMapperBuilder(session).build();
+    dao = inventoryMapper.productDao(sessionRule.keyspace());
+
+    dao.save(FLAMETHROWER);
+    dao.save(MP3_DOWNLOAD);
   }
 
   @Test
-  public void should_get_entity_with_row() {
-    should_get_entity_with_row(InventoryFixtures.FLAMETHROWER);
-    should_get_entity_with_row(InventoryFixtures.MP3_DOWNLOAD);
-  }
-
-  private void should_get_entity_with_row(EntityFixture<Product> entityFixture) {
-    CqlSession session = sessionRule.session();
-    ResultSet rs =
-        session.execute(
-            "Select * FROM product WHERE id=" + entityFixture.entity.getId().toString());
-    List<Row> rows = rs.all();
-    assertThat(rows.size()).isEqualTo(1);
-    Product product = productDao.get(rows.get(0));
-    assertThat(product).isEqualTo(entityFixture.entity);
-  }
-
-  @Test
-  public void should_get_entity_with_result_set() {
-    should_get_entity_with_result_set(InventoryFixtures.FLAMETHROWER);
-    should_get_entity_with_result_set(InventoryFixtures.MP3_DOWNLOAD);
-  }
-
-  private void should_get_entity_with_result_set(EntityFixture<Product> entityFixture) {
+  public void should_get_entity_from_row() {
     CqlSession session = sessionRule.session();
     ResultSet rs =
         session.execute(
             SimpleStatement.newInstance(
-                "Select * FROM product WHERE id=?", entityFixture.entity.getId()));
-    Product product = productDao.getOne(rs);
-    assertThat(product).isEqualTo(entityFixture.entity);
+                "SELECT * FROM product WHERE id = ?", FLAMETHROWER.getId()));
+    Row row = rs.one();
+    assertThat(row).isNotNull();
+
+    Product product = dao.get(row);
+    assertThat(product).isEqualTo(FLAMETHROWER);
   }
 
   @Test
-  public void should_get_entity_with_async_result_set() {
-    should_get_entity_with_async_result_set(InventoryFixtures.FLAMETHROWER);
-    should_get_entity_with_async_result_set(InventoryFixtures.MP3_DOWNLOAD);
-  }
-
-  private void should_get_entity_with_async_result_set(EntityFixture<Product> entityFixture) {
+  public void should_get_entity_from_first_row_of_result_set() {
     CqlSession session = sessionRule.session();
-    CompletionStage<? extends AsyncResultSet> future =
-        session.executeAsync(
-            SimpleStatement.newInstance(
-                "Select * FROM product WHERE id=?", entityFixture.entity.getId()));
-    AsyncResultSet rs = CompletableFutures.getUninterruptibly(future);
-    Product product = productDao.getOne(rs);
-    assertThat(product).isEqualTo(entityFixture.entity);
+    ResultSet rs = session.execute("SELECT * FROM product");
+
+    Product product = dao.getOne(rs);
+    // The order depends on the IDs, which are generated dynamically. This is good enough:
+    assertThat(product.equals(FLAMETHROWER) || product.equals(MP3_DOWNLOAD)).isTrue();
   }
 
   @Test
-  public void should_get_iterable_with_result_set() {
+  public void should_get_entity_from_first_row_of_async_result_set() {
     CqlSession session = sessionRule.session();
-    ResultSet rs = session.execute("Select * FROM product");
-    PagingIterable<Product> products = productDao.get(rs);
-    assertThat(Sets.newHashSet(products))
-        .containsOnly(InventoryFixtures.FLAMETHROWER.entity, InventoryFixtures.MP3_DOWNLOAD.entity);
+    AsyncResultSet rs =
+        CompletableFutures.getUninterruptibly(session.executeAsync("SELECT * FROM product"));
+
+    Product product = dao.getOne(rs);
+    // The order depends on the IDs, which are generated dynamically. This is good enough:
+    assertThat(product.equals(FLAMETHROWER) || product.equals(MP3_DOWNLOAD)).isTrue();
   }
 
   @Test
-  public void should_get_async_iterable_with_async_result_set() {
+  public void should_get_iterable_from_result_set() {
     CqlSession session = sessionRule.session();
-    CompletionStage<? extends AsyncResultSet> future =
-        session.executeAsync("Select * FROM product");
-    AsyncResultSet rs = CompletableFutures.getUninterruptibly(future);
-    MappedAsyncPagingIterable<Product> products = productDao.get(rs);
-    assertThat(Sets.newHashSet(products.currentPage()))
-        .containsOnly(InventoryFixtures.FLAMETHROWER.entity, InventoryFixtures.MP3_DOWNLOAD.entity);
+    ResultSet rs = session.execute("SELECT * FROM product");
+    PagingIterable<Product> products = dao.get(rs);
+    assertThat(Sets.newHashSet(products)).containsOnly(FLAMETHROWER, MP3_DOWNLOAD);
+  }
+
+  @Test
+  public void should_get_async_iterable_from_async_result_set() {
+    CqlSession session = sessionRule.session();
+    AsyncResultSet rs =
+        CompletableFutures.getUninterruptibly(session.executeAsync("SELECT * FROM product"));
+    MappedAsyncPagingIterable<Product> products = dao.get(rs);
+    assertThat(Sets.newHashSet(products.currentPage())).containsOnly(FLAMETHROWER, MP3_DOWNLOAD);
     assertThat(products.hasMorePages()).isFalse();
+  }
+
+  @Mapper
+  public interface InventoryMapper {
+    @DaoFactory
+    ProductDao productDao(@DaoKeyspace CqlIdentifier keyspace);
+  }
+
+  @Dao
+  public interface ProductDao {
+    @GetEntity
+    Product get(Row row);
+
+    @GetEntity
+    PagingIterable<Product> get(ResultSet resultSet);
+
+    @GetEntity
+    MappedAsyncPagingIterable<Product> get(AsyncResultSet resultSet);
+
+    @GetEntity
+    Product getOne(ResultSet resultSet);
+
+    @GetEntity
+    Product getOne(AsyncResultSet resultSet);
+
+    @Insert
+    void save(Product product);
   }
 }
