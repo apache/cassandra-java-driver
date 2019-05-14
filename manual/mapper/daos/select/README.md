@@ -28,6 +28,10 @@ for each, with the same name and a compatible Java type.
 PagingIterable<Product> findByDescription(String searchString);
 ```
 
+A [StatementAttributes](../statement_attributes/) can be added as the **last** parameter. This
+allows you to customize customize certain aspects of the request (page size, timeout, etc.) at
+runtime.
+
 ### Return type
 
 In all cases, the method can return:

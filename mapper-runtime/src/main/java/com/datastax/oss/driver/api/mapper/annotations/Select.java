@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
+import com.datastax.oss.driver.api.mapper.StatementAttributes;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -58,6 +59,9 @@ import java.util.concurrent.CompletionStage;
  * &#64;Select(customWhereClause = "description LIKE :searchString")
  * PagingIterable&lt;Product&gt; findByDescription(String searchString);
  * </pre>
+ *
+ * A {@link StatementAttributes} can be added as the <b>last</b> parameter. This allows you to
+ * customize certain aspects of the request (page size, timeout, etc.) at runtime.
  *
  * <h3>Return type</h3>
  *

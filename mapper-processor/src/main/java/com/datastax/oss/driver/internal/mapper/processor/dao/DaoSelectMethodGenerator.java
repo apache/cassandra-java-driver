@@ -93,7 +93,13 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
     // Validate the parameters:
     // - if there is a custom clause, they are free-form  (they'll be used as bind variables)
     // - otherwise, they must be an exact match for the entity's primary key
+    // In either case, a StatementAttributes can be added in last position.
     List<? extends VariableElement> parameters = methodElement.getParameters();
+
+    VariableElement statementAttributesParam = findStatementAttributesParam(methodElement);
+    if (statementAttributesParam != null) {
+      parameters = parameters.subList(0, parameters.size() - 1);
+    }
     Select selectAnnotation = methodElement.getAnnotation(Select.class);
     assert selectAnnotation != null; // otherwise we wouldn't have gotten into this class
     String customClause = selectAnnotation.customWhereClause();
@@ -138,6 +144,11 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
         "$T boundStatementBuilder = $L.boundStatementBuilder()",
         BoundStatementBuilder.class,
         statementName);
+    if (statementAttributesParam != null) {
+      selectBuilder.addStatement(
+          "boundStatementBuilder = populateBoundStatementWithAttributes(boundStatementBuilder, $L)",
+          statementAttributesParam.getSimpleName().toString());
+    }
     if (parameters.size() > 0) {
       if (customClause.isEmpty()) {
         // Parameters are the PK components, we allow them to be named differently

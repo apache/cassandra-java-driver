@@ -7,3 +7,4 @@ select
 setentity
 update
 null_saving
+statement_attributes
