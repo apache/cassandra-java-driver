@@ -38,11 +38,11 @@ import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -140,8 +140,8 @@ public class QueryIT {
   }
 
   @Test
-  public void should_execute_async_query_and_map_to_void() throws Exception {
-    defaultDao.deleteAsync(1, 1).toCompletableFuture().get(500, TimeUnit.MILLISECONDS);
+  public void should_execute_async_query_and_map_to_void() {
+    CompletableFutures.getUninterruptibly(defaultDao.deleteAsync(1, 1).toCompletableFuture());
     assertThat(defaultDao.findByIdAndRank(1, 1)).isNull();
   }
 
@@ -152,9 +152,11 @@ public class QueryIT {
   }
 
   @Test
-  public void should_execute_async_conditional_query_and_map_to_boolean() throws Exception {
-    assertThat(defaultDao.deleteIfExistsAsync(1, 1).get(500, TimeUnit.MILLISECONDS)).isTrue();
-    assertThat(defaultDao.deleteIfExistsAsync(1, 1).get(500, TimeUnit.MILLISECONDS)).isFalse();
+  public void should_execute_async_conditional_query_and_map_to_boolean() {
+    assertThat(CompletableFutures.getUninterruptibly(defaultDao.deleteIfExistsAsync(1, 1)))
+        .isTrue();
+    assertThat(CompletableFutures.getUninterruptibly(defaultDao.deleteIfExistsAsync(1, 1)))
+        .isFalse();
   }
 
   @Test
@@ -172,8 +174,8 @@ public class QueryIT {
   }
 
   @Test
-  public void should_execute_async_count_query_and_map_to_long() throws Exception {
-    assertThat(defaultDao.countByIdAsync(1).get(500, TimeUnit.MILLISECONDS)).isEqualTo(10);
+  public void should_execute_async_count_query_and_map_to_long() {
+    assertThat(CompletableFutures.getUninterruptibly(defaultDao.countByIdAsync(1))).isEqualTo(10);
   }
 
   @Test
@@ -187,8 +189,8 @@ public class QueryIT {
   }
 
   @Test
-  public void should_execute_async_query_and_map_to_row() throws Exception {
-    Row row = defaultDao.findRowByIdAndRankAsync(1, 1).get(500, TimeUnit.MILLISECONDS);
+  public void should_execute_async_query_and_map_to_row() {
+    Row row = CompletableFutures.getUninterruptibly(defaultDao.findRowByIdAndRankAsync(1, 1));
     assertThat(row).isNotNull();
     assertThat(row.getColumnDefinitions().size()).isEqualTo(3);
     assertThat(row.getInt("id")).isEqualTo(1);
@@ -203,8 +205,9 @@ public class QueryIT {
   }
 
   @Test
-  public void should_execute_async_query_and_map_to_result_set() throws Exception {
-    AsyncResultSet resultSet = defaultDao.findRowsByIdAsync(1).get(500, TimeUnit.MILLISECONDS);
+  public void should_execute_async_query_and_map_to_result_set() {
+    AsyncResultSet resultSet =
+        CompletableFutures.getUninterruptibly(defaultDao.findRowsByIdAsync(1));
     assertThat(ImmutableList.copyOf(resultSet.currentPage())).hasSize(10);
     assertThat(resultSet.hasMorePages()).isFalse();
   }
@@ -221,8 +224,9 @@ public class QueryIT {
   }
 
   @Test
-  public void should_execute_async_query_and_map_to_entity() throws Exception {
-    TestEntity entity = defaultDao.findByIdAndRankAsync(1, 1).get(500, TimeUnit.MILLISECONDS);
+  public void should_execute_async_query_and_map_to_entity() {
+    TestEntity entity =
+        CompletableFutures.getUninterruptibly(defaultDao.findByIdAndRankAsync(1, 1));
     assertThat(entity.getId()).isEqualTo(1);
     assertThat(entity.getRank()).isEqualTo(1);
     assertThat(entity.getValue()).isEqualTo(1);
@@ -247,9 +251,9 @@ public class QueryIT {
   }
 
   @Test
-  public void should_execute_async_query_and_map_to_optional_entity() throws Exception {
+  public void should_execute_async_query_and_map_to_optional_entity() {
     Optional<TestEntity> maybeEntity =
-        defaultDao.findOptionalByIdAndRankAsync(1, 1).get(500, TimeUnit.MILLISECONDS);
+        CompletableFutures.getUninterruptibly(defaultDao.findOptionalByIdAndRankAsync(1, 1));
     assertThat(maybeEntity)
         .hasValueSatisfying(
             entity -> {
@@ -269,9 +273,9 @@ public class QueryIT {
   }
 
   @Test
-  public void should_execute_async_query_and_map_to_iterable() throws Exception {
+  public void should_execute_async_query_and_map_to_iterable() {
     MappedAsyncPagingIterable<TestEntity> iterable =
-        defaultDao.findByIdAsync(1).get(500, TimeUnit.MILLISECONDS);
+        CompletableFutures.getUninterruptibly(defaultDao.findByIdAsync(1));
     assertThat(ImmutableList.copyOf(iterable.currentPage())).hasSize(10);
     assertThat(iterable.hasMorePages()).isFalse();
   }

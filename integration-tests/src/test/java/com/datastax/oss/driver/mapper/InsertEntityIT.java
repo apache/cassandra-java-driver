@@ -17,20 +17,24 @@ package com.datastax.oss.driver.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
+import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
+import com.datastax.oss.driver.api.mapper.annotations.Insert;
+import com.datastax.oss.driver.api.mapper.annotations.Mapper;
+import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.mapper.model.inventory.Dimensions;
-import com.datastax.oss.driver.mapper.model.inventory.InventoryFixtures;
-import com.datastax.oss.driver.mapper.model.inventory.InventoryMapper;
-import com.datastax.oss.driver.mapper.model.inventory.InventoryMapperBuilder;
-import com.datastax.oss.driver.mapper.model.inventory.Product;
-import com.datastax.oss.driver.mapper.model.inventory.ProductDao;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -41,7 +45,7 @@ import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 @CassandraRequirement(min = "3.4", description = "Creates a SASI index")
-public class InsertEntityIT {
+public class InsertEntityIT extends InventoryITBase {
 
   private static CcmRule ccm = CcmRule.getInstance();
 
@@ -49,19 +53,19 @@ public class InsertEntityIT {
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
-  private static ProductDao productDao;
+  private static ProductDao dao;
 
   @BeforeClass
   public static void setup() {
     CqlSession session = sessionRule.session();
 
-    for (String query : InventoryFixtures.createStatements()) {
+    for (String query : createStatements()) {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }
 
-    InventoryMapper inventoryMapper = new InventoryMapperBuilder(session).build();
-    productDao = inventoryMapper.productDao(sessionRule.keyspace());
+    InventoryMapper inventoryMapper = new InsertEntityIT_InventoryMapperBuilder(session).build();
+    dao = inventoryMapper.productDao(sessionRule.keyspace());
   }
 
   @Before
@@ -75,60 +79,134 @@ public class InsertEntityIT {
 
   @Test
   public void should_insert_entity() {
-    // Given
-    CqlSession session = sessionRule.session();
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
 
-    // When
-    Product product = InventoryFixtures.FLAMETHROWER.entity;
-    productDao.save(product);
-    Row row =
-        session
-            .execute(
-                SimpleStatement.newInstance("SELECT * FROM product WHERE id = ?", product.getId()))
-            .one();
+    dao.save(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId())).isEqualTo(FLAMETHROWER);
+  }
 
-    // Then
-    InventoryFixtures.FLAMETHROWER.assertMatches(row);
+  @Test
+  public void should_insert_entity_asynchronously() {
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+
+    CompletableFutures.getUninterruptibly(dao.saveAsync(FLAMETHROWER));
+    assertThat(dao.findById(FLAMETHROWER.getId())).isEqualTo(FLAMETHROWER);
   }
 
   @Test
   public void should_insert_entity_with_custom_clause() {
-    // Given
-    CqlSession session = sessionRule.session();
-    long timestamp = 1234;
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
 
-    // When
-    Product product = InventoryFixtures.FLAMETHROWER.entity;
-    productDao.saveWithBoundTimestamp(product, timestamp);
+    long timestamp = 1234;
+    dao.saveWithBoundTimestamp(FLAMETHROWER, timestamp);
+
+    CqlSession session = sessionRule.session();
     Row row =
         session
             .execute(
                 SimpleStatement.newInstance(
-                    "SELECT WRITETIME(description) FROM product WHERE id = ?", product.getId()))
+                    "SELECT WRITETIME(description) FROM product WHERE id = ?",
+                    FLAMETHROWER.getId()))
             .one();
     long writeTime = row.getLong(0);
+    assertThat(writeTime).isEqualTo(timestamp);
+  }
 
-    // Then
+  @Test
+  public void should_insert_entity_with_custom_clause_asynchronously() {
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+
+    long timestamp = 1234;
+    CompletableFutures.getUninterruptibly(dao.saveAsyncWithBoundTimestamp(FLAMETHROWER, timestamp));
+
+    CqlSession session = sessionRule.session();
+    Row row =
+        session
+            .execute(
+                SimpleStatement.newInstance(
+                    "SELECT WRITETIME(description) FROM product WHERE id = ?",
+                    FLAMETHROWER.getId()))
+            .one();
+    long writeTime = row.getLong(0);
     assertThat(writeTime).isEqualTo(timestamp);
   }
 
   @Test
   public void should_insert_entity_if_not_exists() {
-    // Given
-    Product product = InventoryFixtures.FLAMETHROWER.entity;
+    assertThat(dao.saveIfNotExists(FLAMETHROWER)).isNull();
 
-    // When
-    Optional<Product> maybeExisting = productDao.saveIfNotExists(product);
-
-    // Then
-    assertThat(maybeExisting).isEmpty();
-
-    // When
     Product otherProduct =
-        new Product(product.getId(), "Other description", new Dimensions(1, 1, 1));
-    maybeExisting = productDao.saveIfNotExists(otherProduct);
+        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
+    assertThat(dao.saveIfNotExists(otherProduct)).isEqualTo(FLAMETHROWER);
+  }
 
-    // Then
-    assertThat(maybeExisting).contains(product);
+  @Test
+  public void should_insert_entity_if_not_exists_asynchronously() {
+    assertThat(CompletableFutures.getUninterruptibly(dao.saveAsyncIfNotExists(FLAMETHROWER)))
+        .isNull();
+
+    Product otherProduct =
+        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
+    assertThat(CompletableFutures.getUninterruptibly(dao.saveAsyncIfNotExists(otherProduct)))
+        .isEqualTo(FLAMETHROWER);
+  }
+
+  @Test
+  public void should_insert_entity_if_not_exists_returning_optional() {
+    assertThat(dao.saveIfNotExistsOptional(FLAMETHROWER)).isEmpty();
+
+    Product otherProduct =
+        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
+    assertThat(dao.saveIfNotExistsOptional(otherProduct)).contains(FLAMETHROWER);
+  }
+
+  @Test
+  public void should_insert_entity_if_not_exists_returning_optional_asynchronously() {
+    assertThat(
+            CompletableFutures.getUninterruptibly(dao.saveAsyncIfNotExistsOptional(FLAMETHROWER)))
+        .isEmpty();
+
+    Product otherProduct =
+        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
+    assertThat(
+            CompletableFutures.getUninterruptibly(dao.saveAsyncIfNotExistsOptional(otherProduct)))
+        .contains(FLAMETHROWER);
+  }
+
+  @Mapper
+  public interface InventoryMapper {
+    @DaoFactory
+    ProductDao productDao(@DaoKeyspace CqlIdentifier keyspace);
+  }
+
+  @Dao
+  public interface ProductDao {
+
+    @Insert
+    void save(Product product);
+
+    @Insert(customUsingClause = "USING TIMESTAMP :timestamp")
+    void saveWithBoundTimestamp(Product product, long timestamp);
+
+    @Insert(ifNotExists = true)
+    Product saveIfNotExists(Product product);
+
+    @Insert(ifNotExists = true)
+    Optional<Product> saveIfNotExistsOptional(Product product);
+
+    @Insert
+    CompletableFuture<Void> saveAsync(Product product);
+
+    @Insert(customUsingClause = "USING TIMESTAMP :timestamp")
+    CompletableFuture<Void> saveAsyncWithBoundTimestamp(Product product, long timestamp);
+
+    @Insert(ifNotExists = true)
+    CompletableFuture<Product> saveAsyncIfNotExists(Product product);
+
+    @Insert(ifNotExists = true)
+    CompletableFuture<Optional<Product>> saveAsyncIfNotExistsOptional(Product product);
+
+    @Select
+    Product findById(UUID productId);
   }
 }
