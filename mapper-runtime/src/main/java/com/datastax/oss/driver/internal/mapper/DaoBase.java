@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
@@ -26,6 +27,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.mapper.MapperContext;
+import com.datastax.oss.driver.api.mapper.StatementAttributes;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
@@ -108,6 +110,35 @@ public class DaoBase {
     }
 
     return SimpleStatement.newInstance(queryString);
+  }
+
+  public static BoundStatementBuilder populateBoundStatementWithAttributes(
+      BoundStatementBuilder builder, StatementAttributes attributes) {
+
+    builder =
+        builder
+            .setExecutionProfileName(attributes.getExecutionProfileName())
+            .setExecutionProfile(attributes.getExecutionProfile())
+            .setConsistencyLevel(attributes.getConsistencyLevel())
+            .setSerialConsistencyLevel(attributes.getSerialConsistencyLevel())
+            .setIdempotence(attributes.isIdempotent())
+            .setPageSize(attributes.getPageSize())
+            .setRoutingKey(attributes.getRoutingKey())
+            .setRoutingKeyspace(attributes.getRoutingKeyspace())
+            .setPagingState(attributes.getPagingState())
+            .setTimeout(attributes.getTimeout())
+            .setQueryTimestamp(attributes.getQueryTimestamp())
+            .setNode(attributes.getNode())
+            .setRoutingToken(attributes.getRoutingToken());
+    for (String customPayloadKey : attributes.getCustomPayload().keySet()) {
+      builder =
+          builder.addCustomPayload(
+              customPayloadKey, attributes.getCustomPayload().get(customPayloadKey));
+    }
+    if (attributes.isTracing()) {
+      builder = builder.setTracing();
+    }
+    return builder;
   }
 
   protected final MapperContext context;

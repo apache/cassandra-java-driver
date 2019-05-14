@@ -73,6 +73,10 @@ template.setDescription("Coming soon"); // all other properties remain null
 dao.updateWhereIdIn(template, 42, 43);  // Will only update 'description' on the selected rows
 ```
 
+A [StatementAttributes](../statement_attributes/) can be added as the **last** parameter. This
+allows you to customize customize certain aspects of the request (page size, timeout, etc.) at
+runtime.
+
 ### Return type
 
 The method can return:
