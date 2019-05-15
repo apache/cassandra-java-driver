@@ -33,8 +33,7 @@ public abstract class InventoryITBase {
     return ImmutableList.of(
         "CREATE TYPE dimensions(length int, width int, height int)",
         "CREATE TABLE product(id uuid PRIMARY KEY, description text, dimensions dimensions)",
-        "CREATE TABLE productwithoutid(id uuid, clustering int, description text, PRIMARY KEY((id), clustering))",
-        "CREATE TABLE only_pk(id uuid PRIMARY KEY)",
+        "CREATE TABLE product_without_id(id uuid, clustering int, description text, PRIMARY KEY((id), clustering))",
         "CREATE CUSTOM INDEX product_description ON product(description) "
             + "USING 'org.apache.cassandra.index.sasi.SASIIndex' "
             + "WITH OPTIONS = {"

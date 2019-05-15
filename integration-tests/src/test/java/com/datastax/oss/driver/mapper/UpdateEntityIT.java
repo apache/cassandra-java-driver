@@ -78,10 +78,6 @@ public class UpdateEntityIT extends InventoryITBase {
         SimpleStatement.builder("TRUNCATE product")
             .setExecutionProfile(sessionRule.slowProfile())
             .build());
-    session.execute(
-        SimpleStatement.builder("TRUNCATE only_pk")
-            .setExecutionProfile(sessionRule.slowProfile())
-            .build());
   }
 
   @Test
@@ -334,7 +330,7 @@ public class UpdateEntityIT extends InventoryITBase {
   public void should_throw_when_try_to_use_dao_with_update_only_pk() {
     assertThatThrownBy(() -> inventoryMapper.onlyPkDao(sessionRule.keyspace()))
         .hasCauseInstanceOf(UnsupportedOperationException.class)
-        .hasStackTraceContaining("Entity onlyPK does not have any non PK columns.");
+        .hasStackTraceContaining("Entity OnlyPK does not have any non PK columns.");
   }
 
   @Test
@@ -383,7 +379,7 @@ public class UpdateEntityIT extends InventoryITBase {
         .session()
         .execute(
             SimpleStatement.newInstance(
-                "INSERT INTO productwithoutid (id, clustering, description) VALUES (?,?,?)",
+                "INSERT INTO product_without_id (id, clustering, description) VALUES (?,?,?)",
                 idOne,
                 1,
                 "a"));
@@ -391,7 +387,7 @@ public class UpdateEntityIT extends InventoryITBase {
         .session()
         .execute(
             SimpleStatement.newInstance(
-                "INSERT INTO productwithoutid (id, clustering, description) VALUES (?,?,?)",
+                "INSERT INTO product_without_id (id, clustering, description) VALUES (?,?,?)",
                 idTwo,
                 1,
                 "b"));

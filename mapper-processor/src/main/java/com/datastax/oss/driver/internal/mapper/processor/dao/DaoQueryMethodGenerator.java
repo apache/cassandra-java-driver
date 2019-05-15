@@ -183,6 +183,6 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
         SimpleStatement.class,
         requestName,
         queryString,
-        (helperFieldName == null) ? "null" : helperFieldName + ".DEFAULT_TABLE_ID");
+        (helperFieldName == null) ? "null" : helperFieldName + ".defaultTableId");
   }
 }

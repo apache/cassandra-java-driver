@@ -94,7 +94,7 @@ if the mapper was built from a session that has a [default keyspace] set.
 
 If a table was specified when creating the DAO, then the generated query targets that table.
 Otherwise, it uses the default table name for the entity (which is determined by the name of the
-entity class and the naming convention).
+entity class and the [naming strategy](../../entities/#naming-strategy)).
 
 [default keyspace]:       https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
 [AsyncResultSet]:         https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html

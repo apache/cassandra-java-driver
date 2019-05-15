@@ -35,6 +35,7 @@ import com.datastax.oss.driver.internal.mapper.processor.entity.EntityDefinition
 import com.datastax.oss.driver.internal.mapper.processor.entity.PropertyDefinition;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import java.util.EnumSet;
@@ -140,7 +141,7 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
     if (parameters.size() > 0) {
       if (customClause.isEmpty()) {
         // Parameters are the PK components, we allow them to be named differently
-        List<String> primaryKeyNames =
+        List<CodeBlock> primaryKeyNames =
             entityDefinition
                 .getPrimaryKey()
                 .stream()
