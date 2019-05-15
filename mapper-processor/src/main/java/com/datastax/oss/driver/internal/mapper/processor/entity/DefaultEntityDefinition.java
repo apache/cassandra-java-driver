@@ -17,24 +17,31 @@ package com.datastax.oss.driver.internal.mapper.processor.entity;
 
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import java.util.List;
+import java.util.Optional;
 
 public class DefaultEntityDefinition implements EntityDefinition {
 
   private final ClassName className;
-  private final String cqlName;
+  private final CodeBlock cqlName;
   private final List<PropertyDefinition> partitionKey;
   private final List<PropertyDefinition> clusteringColumns;
   private final ImmutableList<PropertyDefinition> regularColumns;
 
   public DefaultEntityDefinition(
       ClassName className,
-      String cqlName,
+      String javaName,
+      Optional<String> customCqlName,
       List<PropertyDefinition> partitionKey,
       List<PropertyDefinition> clusteringColumns,
-      List<PropertyDefinition> regularColumns) {
+      List<PropertyDefinition> regularColumns,
+      CqlNameGenerator cqlNameGenerator) {
     this.className = className;
-    this.cqlName = cqlName;
+    this.cqlName =
+        customCqlName
+            .map(n -> CodeBlock.of("$S", n))
+            .orElse(cqlNameGenerator.buildCqlName(javaName));
     this.partitionKey = partitionKey;
     this.clusteringColumns = clusteringColumns;
     this.regularColumns = ImmutableList.copyOf(regularColumns);
@@ -46,7 +53,7 @@ public class DefaultEntityDefinition implements EntityDefinition {
   }
 
   @Override
-  public String getCqlName() {
+  public CodeBlock getCqlName() {
     return cqlName;
   }
 

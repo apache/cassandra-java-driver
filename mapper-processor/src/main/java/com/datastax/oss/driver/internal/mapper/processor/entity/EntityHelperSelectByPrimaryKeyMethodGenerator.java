@@ -45,7 +45,7 @@ public class EntityHelperSelectByPrimaryKeyMethodGenerator implements MethodGene
 
     for (PropertyDefinition property : entityDefinition.getPrimaryKey()) {
       selectByPrimaryKeyBuilder.addCode(
-          "\n.whereColumn($1S).isEqualTo($2T.bindMarker($1S))",
+          "\n.whereColumn($1L).isEqualTo($2T.bindMarker($1L))",
           property.getCqlName(),
           QueryBuilder.class);
     }

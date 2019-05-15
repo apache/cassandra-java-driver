@@ -17,13 +17,14 @@ package com.datastax.oss.driver.internal.mapper.processor.entity;
 
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import java.util.List;
 
 public interface EntityDefinition {
 
   ClassName getClassName();
 
-  String getCqlName();
+  CodeBlock getCqlName();
 
   List<PropertyDefinition> getPartitionKey();
 

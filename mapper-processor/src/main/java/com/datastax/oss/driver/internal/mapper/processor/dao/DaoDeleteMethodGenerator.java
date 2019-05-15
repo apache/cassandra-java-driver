@@ -181,7 +181,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
     } else {
       // The PK components are passed as arguments to the method (we've already checked that the
       // types match).
-      List<String> primaryKeyNames =
+      List<CodeBlock> primaryKeyNames =
           entityDefinition
               .getPrimaryKey()
               .stream()

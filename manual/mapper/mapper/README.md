@@ -105,9 +105,9 @@ ProductDao dao3 = inventoryMapper.productDao("keyspace3", "table3");
 
 * `dao1.findById` executes the query `SELECT ... FROM product WHERE id = ?`. No table name was
   specified for the DAO, so it uses the default name for the `Product` entity (which in this case is
-  the entity name converted with the default naming convention). No keyspace was specified either,
-  so the table is unqualified, and this DAO will only work with a session that was built with a
-  default keyspace:
+  the entity name converted with the default [naming strategy](../entities/#naming-strategy)). No
+  keyspace was specified either, so the table is unqualified, and this DAO will only work with a
+  session that was built with a default keyspace:
 
     ```java
     CqlSession session = CqlSession.builder().withKeyspace("keyspace1").build();
@@ -120,7 +120,7 @@ ProductDao dao3 = inventoryMapper.productDao("keyspace3", "table3");
 
 * `dao3.findById` uses the DAO's keyspace and table name: `SELECT ... FROM keyspace3.table3 WHERE id
   = ?`.
-  
+
 The DAO's keyspace and table can also be injected into custom query strings; see [Query
 methods](../daos/query/).
 

@@ -66,7 +66,7 @@ public class QueryIT {
   /** A DAO connected to the default keyspace of the session rule. */
   private static TestDao defaultDao;
 
-  private static final CqlIdentifier TABLE_ID = CqlIdentifier.fromCql("testEntity");
+  private static final CqlIdentifier TABLE_ID = CqlIdentifier.fromCql("test_entity");
   private static final CqlIdentifier ALTERNATE_KEYSPACE =
       CqlIdentifier.fromCql(QueryIT.class.getSimpleName() + "_alt");
 
@@ -79,9 +79,9 @@ public class QueryIT {
             String.format(
                 "CREATE KEYSPACE IF NOT EXISTS %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}",
                 ALTERNATE_KEYSPACE.asCql(false)),
-            "CREATE TABLE testEntity(id int, rank int, value int, PRIMARY KEY(id, rank))",
+            "CREATE TABLE test_entity(id int, rank int, value int, PRIMARY KEY(id, rank))",
             String.format(
-                "CREATE TABLE %s.testEntity(id int, rank int, value int, PRIMARY KEY(id, rank))",
+                "CREATE TABLE %s.test_entity(id int, rank int, value int, PRIMARY KEY(id, rank))",
                 ALTERNATE_KEYSPACE.asCql(false)))) {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
