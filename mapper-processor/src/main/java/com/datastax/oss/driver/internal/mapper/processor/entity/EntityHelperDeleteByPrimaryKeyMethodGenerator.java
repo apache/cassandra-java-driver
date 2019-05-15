@@ -48,13 +48,15 @@ public class EntityHelperDeleteByPrimaryKeyMethodGenerator implements MethodGene
       deleteByPrimaryKeyBuilder.addStatement(
           "throw new $T($S)",
           UnsupportedOperationException.class,
-          String.format("Entity %s does not declare a primary key", entityDefinition.getCqlName()));
+          String.format(
+              "Entity %s does not declare a primary key",
+              entityDefinition.getClassName().simpleName()));
     } else {
       deleteByPrimaryKeyBuilder
           .addStatement("$T keyspaceId = context.getKeyspaceId()", CqlIdentifier.class)
           .addStatement("$T tableId = context.getTableId()", CqlIdentifier.class)
           .beginControlFlow("if (tableId == null)")
-          .addStatement("tableId = DEFAULT_TABLE_ID")
+          .addStatement("tableId = defaultTableId")
           .endControlFlow()
           .addStatement(
               "$1T delete = (keyspaceId == null)\n"
@@ -66,7 +68,7 @@ public class EntityHelperDeleteByPrimaryKeyMethodGenerator implements MethodGene
 
       for (PropertyDefinition property : entityDefinition.getPrimaryKey()) {
         deleteByPrimaryKeyBuilder.addCode(
-            "\n.whereColumn($1S).isEqualTo($2T.bindMarker($1S))",
+            "\n.whereColumn($1L).isEqualTo($2T.bindMarker($1L))",
             property.getCqlName(),
             QueryBuilder.class);
       }

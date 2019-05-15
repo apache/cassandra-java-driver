@@ -46,7 +46,7 @@ public class EntityHelperSelectStartMethodGenerator implements MethodGenerator {
             .addStatement("$T keyspaceId = context.getKeyspaceId()", CqlIdentifier.class)
             .addStatement("$T tableId = context.getTableId()", CqlIdentifier.class)
             .beginControlFlow("if (tableId == null)")
-            .addStatement("tableId = DEFAULT_TABLE_ID")
+            .addStatement("tableId = defaultTableId")
             .endControlFlow()
             .addStatement(
                 "$1T selectFrom = (keyspaceId == null)\n"
@@ -57,7 +57,7 @@ public class EntityHelperSelectStartMethodGenerator implements MethodGenerator {
             .addCode("$[return selectFrom");
 
     for (PropertyDefinition property : entityDefinition.getAllColumns()) {
-      selectStartBuilder.addCode("\n.column($S)", property.getCqlName());
+      selectStartBuilder.addCode("\n.column($L)", property.getCqlName());
     }
     selectStartBuilder.addCode("$];\n");
     return Optional.of(selectStartBuilder.build());

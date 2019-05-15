@@ -46,7 +46,7 @@ public class EntityHelperInsertMethodGenerator implements MethodGenerator {
             .addStatement("$T keyspaceId = context.getKeyspaceId()", CqlIdentifier.class)
             .addStatement("$T tableId = context.getTableId()", CqlIdentifier.class)
             .beginControlFlow("if (tableId == null)")
-            .addStatement("tableId = DEFAULT_TABLE_ID")
+            .addStatement("tableId = defaultTableId")
             .endControlFlow()
             .addStatement(
                 "$1T insertInto = (keyspaceId == null)\n"
@@ -58,7 +58,7 @@ public class EntityHelperInsertMethodGenerator implements MethodGenerator {
 
     for (PropertyDefinition property : entityDefinition.getAllColumns()) {
       insertBuilder.addCode(
-          "\n.value($1S, $2T.bindMarker($1S))", property.getCqlName(), QueryBuilder.class);
+          "\n.value($1L, $2T.bindMarker($1L))", property.getCqlName(), QueryBuilder.class);
     }
     insertBuilder.addCode("$];\n");
     return Optional.of(insertBuilder.build());

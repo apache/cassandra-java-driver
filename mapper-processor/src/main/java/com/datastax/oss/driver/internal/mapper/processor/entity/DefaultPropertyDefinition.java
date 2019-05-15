@@ -16,24 +16,34 @@
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
+import com.squareup.javapoet.CodeBlock;
+import java.util.Optional;
 
 public class DefaultPropertyDefinition implements PropertyDefinition {
 
-  private final String cqlName;
+  private final CodeBlock cqlName;
   private final String getterName;
   private final String setterName;
   private final PropertyType type;
 
   public DefaultPropertyDefinition(
-      String cqlName, String getterName, String setterName, PropertyType type) {
-    this.cqlName = cqlName;
+      String javaName,
+      Optional<String> customCqlName,
+      String getterName,
+      String setterName,
+      PropertyType type,
+      CqlNameGenerator cqlNameGenerator) {
+    this.cqlName =
+        customCqlName
+            .map(n -> CodeBlock.of("$S", n))
+            .orElse(cqlNameGenerator.buildCqlName(javaName));
     this.getterName = getterName;
     this.setterName = setterName;
     this.type = type;
   }
 
   @Override
-  public String getCqlName() {
+  public CodeBlock getCqlName() {
     return cqlName;
   }
 
