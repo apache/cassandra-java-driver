@@ -51,13 +51,13 @@ public class EntityHelperUpdateStartMethodGenerator implements MethodGenerator {
           UnsupportedOperationException.class,
           String.format(
               "Entity %s does not have any non PK columns. %s is not possible",
-              entityDefinition.getCqlName(), Update.class.getSimpleName()));
+              entityDefinition.getClassName().simpleName(), Update.class.getSimpleName()));
     } else {
       updateBuilder
           .addStatement("$T keyspaceId = context.getKeyspaceId()", CqlIdentifier.class)
           .addStatement("$T tableId = context.getTableId()", CqlIdentifier.class)
           .beginControlFlow("if (tableId == null)")
-          .addStatement("tableId = DEFAULT_TABLE_ID")
+          .addStatement("tableId = defaultTableId")
           .endControlFlow()
           .addStatement(
               "$1T update = (keyspaceId == null)\n"
@@ -70,7 +70,7 @@ public class EntityHelperUpdateStartMethodGenerator implements MethodGenerator {
       for (PropertyDefinition property : entityDefinition.getRegularColumns()) {
         // we cannot use getAllColumns because update cannot SET for PKs
         updateBuilder.addCode(
-            "\n.setColumn($1S, $2T.bindMarker($1S))", property.getCqlName(), QueryBuilder.class);
+            "\n.setColumn($1L, $2T.bindMarker($1L))", property.getCqlName(), QueryBuilder.class);
       }
       updateBuilder.addCode(")");
       updateBuilder.addCode("$];\n");

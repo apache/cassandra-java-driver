@@ -93,13 +93,7 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
                     ClassName.get(EntityHelper.class), ClassName.get(classElement)))
             .addField(
                 FieldSpec.builder(
-                        CqlIdentifier.class,
-                        "DEFAULT_TABLE_ID",
-                        Modifier.PUBLIC,
-                        Modifier.STATIC,
-                        Modifier.FINAL)
-                    .initializer(
-                        "$T.fromCql($S)", CqlIdentifier.class, entityDefinition.getCqlName())
+                        CqlIdentifier.class, "defaultTableId", Modifier.PUBLIC, Modifier.FINAL)
                     .build());
 
     for (MethodGenerator methodGenerator :
@@ -120,6 +114,9 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
 
     GeneratedCodePatterns.addFinalFieldAndConstructorArgument(
         ClassName.get(MapperContext.class), "context", classContents, constructorContents);
+
+    constructorContents.addStatement(
+        "defaultTableId = $T.fromCql($L)", CqlIdentifier.class, entityDefinition.getCqlName());
 
     genericTypeConstantGenerator.generate(classContents);
 

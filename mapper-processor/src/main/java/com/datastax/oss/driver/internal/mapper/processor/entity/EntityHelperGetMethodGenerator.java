@@ -64,9 +64,9 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
 
     for (PropertyDefinition property : entityDefinition.getAllColumns()) {
       PropertyType type = property.getType();
-      String cqlName = property.getCqlName();
+      CodeBlock cqlName = property.getCqlName();
       String setterName = property.getSetterName();
-      getBuilder.addComment("$L:", cqlName);
+      getBuilder.addCode("\n");
       if (type instanceof PropertyType.Simple) {
         TypeName typeName = ((PropertyType.Simple) type).typeName;
         String primitiveAccessor = GeneratedCodePatterns.PRIMITIVE_ACCESSORS.get(typeName);
@@ -74,12 +74,12 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
           // Primitive type: use dedicated getter, since it is optimized to avoid boxing
           //     returnValue.setLength(source.getInt("length"));
           getBuilder.addStatement(
-              "returnValue.$L(source.get$L($S))", setterName, primitiveAccessor, cqlName);
+              "returnValue.$L(source.get$L($L))", setterName, primitiveAccessor, cqlName);
         } else if (typeName instanceof ClassName) {
           // Unparameterized class: use the generic, class-based getter:
           //     returnValue.setId(source.get("id", UUID.class));
           getBuilder.addStatement(
-              "returnValue.$L(source.get($S, $T.class))", setterName, cqlName, typeName);
+              "returnValue.$L(source.get($L, $T.class))", setterName, cqlName, typeName);
         } else {
           // Parameterized type: create a constant and use the GenericType-based getter:
           //     private static final GenericType<List<String>> GENERIC_TYPE =
@@ -89,7 +89,7 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
           // category. Their getter creates a GenericType under the hood, so there's no performance
           // advantage in calling them instead of the generic get().
           getBuilder.addStatement(
-              "returnValue.$L(source.get($S, $T))",
+              "returnValue.$L(source.get($L, $T))",
               setterName,
               cqlName,
               enclosingClass.addGenericTypeConstant(typeName));
@@ -108,7 +108,7 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
         String valueName = enclosingClass.getNameIndex().uniqueField("value");
         // Extract UdtValue to pass it on to underlying helper method
         getBuilder.addStatement(
-            "$T $L = source.getUdtValue($S)", UdtValue.class, udtValueName, cqlName);
+            "$T $L = source.getUdtValue($L)", UdtValue.class, udtValueName, cqlName);
         getBuilder.beginControlFlow("if ($L != null)", udtValueName);
         // Get underlying udt object and set it on return type
         String childHelper = enclosingClass.addEntityHelperField(entityClass);
@@ -124,7 +124,7 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
         TypeName rawCollectionType = type.asRawTypeName();
         getBuilder
             .addStatement(
-                "$T $L = source.get($S, $L)",
+                "$T $L = source.get($L, $L)",
                 rawCollectionType,
                 rawCollectionName,
                 cqlName,

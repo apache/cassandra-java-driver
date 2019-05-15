@@ -108,7 +108,7 @@ public class GeneratedCodePatterns {
    */
   public static void bindParameters(
       List<? extends VariableElement> parameters,
-      List<String> bindMarkerNames,
+      List<CodeBlock> bindMarkerNames,
       MethodSpec.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass,
       ProcessorContext context) {
@@ -117,15 +117,24 @@ public class GeneratedCodePatterns {
     for (int i = 0; i < parameters.size(); i++) {
       VariableElement parameter = parameters.get(i);
       String parameterName = parameter.getSimpleName().toString();
-      String cqlName = (bindMarkerNames == null) ? parameterName : bindMarkerNames.get(i);
       PropertyType type = PropertyType.parse(parameter.asType(), context);
-      setValue(
-          cqlName,
-          type,
-          CodeBlock.of("$L", parameterName),
-          "boundStatementBuilder",
-          methodBuilder,
-          enclosingClass);
+      if (bindMarkerNames == null) {
+        setValue(
+            parameterName,
+            type,
+            CodeBlock.of("$L", parameterName),
+            "boundStatementBuilder",
+            methodBuilder,
+            enclosingClass);
+      } else {
+        setValue(
+            bindMarkerNames.get(i),
+            type,
+            CodeBlock.of("$L", parameterName),
+            "boundStatementBuilder",
+            methodBuilder,
+            enclosingClass);
+      }
     }
   }
 
@@ -147,14 +156,14 @@ public class GeneratedCodePatterns {
    *     helpers are needed)
    */
   public static void setValue(
-      String cqlName,
+      CodeBlock cqlName,
       PropertyType type,
       CodeBlock valueExtractor,
       String targetName,
       MethodSpec.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass) {
 
-    methodBuilder.addComment("$L:", cqlName);
+    methodBuilder.addCode("\n");
 
     if (type instanceof PropertyType.Simple) {
       TypeName typeName = ((PropertyType.Simple) type).typeName;
@@ -163,12 +172,12 @@ public class GeneratedCodePatterns {
         // Primitive type: use dedicated setter, since it is optimized to avoid boxing.
         //     target = target.setInt("length", entity.getLength());
         methodBuilder.addStatement(
-            "$1L = $1L.set$2L($3S, $4L)", targetName, primitiveAccessor, cqlName, valueExtractor);
+            "$1L = $1L.set$2L($3L, $4L)", targetName, primitiveAccessor, cqlName, valueExtractor);
       } else if (typeName instanceof ClassName) {
         // Unparameterized class: use the generic, class-based setter.
         //     target = target.set("id", entity.getId(), UUID.class);
         methodBuilder.addStatement(
-            "$1L = $1L.set($2S, $3L, $4T.class)", targetName, cqlName, valueExtractor, typeName);
+            "$1L = $1L.set($2L, $3L, $4T.class)", targetName, cqlName, valueExtractor, typeName);
       } else {
         // Parameterized type: create a constant and use the GenericType-based setter.
         //     private static final GenericType<List<String>> GENERIC_TYPE =
@@ -178,7 +187,7 @@ public class GeneratedCodePatterns {
         // category. Their setter creates a GenericType under the hood, so there's no performance
         // advantage in calling them instead of the generic set().
         methodBuilder.addStatement(
-            "$1L = $1L.set($2S, $3L, $4L)",
+            "$1L = $1L.set($2L, $3L, $4L)",
             targetName,
             cqlName,
             valueExtractor,
@@ -205,7 +214,7 @@ public class GeneratedCodePatterns {
           .addStatement("$T $L = $L", entityClass, valueName, valueExtractor)
           .beginControlFlow("if ($L != null)", valueName)
           .addStatement(
-              "$1T $2L = ($1T) $3L.getType($4S)",
+              "$1T $2L = ($1T) $3L.getType($4L)",
               UserDefinedType.class,
               udtTypeName,
               targetName,
@@ -214,7 +223,7 @@ public class GeneratedCodePatterns {
       String childHelper = enclosingClass.addEntityHelperField(entityClass);
       methodBuilder
           .addStatement("$L.set($L, $L)", childHelper, valueName, udtValueName)
-          .addStatement("$1L = $1L.setUdtValue($2S, $3L)", targetName, cqlName, udtValueName)
+          .addStatement("$1L = $1L.setUdtValue($2L, $3L)", targetName, cqlName, udtValueName)
           .endControlFlow();
     } else {
       // Collection of other entity class(es): the CQL column is a collection of mapped UDTs
@@ -225,7 +234,7 @@ public class GeneratedCodePatterns {
           .addStatement("$T $L = $L", type.asTypeName(), mappedCollectionName, valueExtractor)
           .beginControlFlow("if ($L != null)", mappedCollectionName);
 
-      CodeBlock currentCqlType = CodeBlock.of("$L.getType($S)", targetName, cqlName);
+      CodeBlock currentCqlType = CodeBlock.of("$L.getType($L)", targetName, cqlName);
       CodeBlock.Builder udtTypesBuilder = CodeBlock.builder();
       CodeBlock.Builder conversionCodeBuilder = CodeBlock.builder();
       convertEntitiesIntoUdts(
@@ -241,13 +250,33 @@ public class GeneratedCodePatterns {
           .addCode(udtTypesBuilder.build())
           .addCode(conversionCodeBuilder.build())
           .addStatement(
-              "$1L = $1L.set($2S, $3L, $4L)",
+              "$1L = $1L.set($2L, $3L, $4L)",
               targetName,
               cqlName,
               rawCollectionName,
               enclosingClass.addGenericTypeConstant(type.asRawTypeName()))
           .endControlFlow();
     }
+  }
+
+  /**
+   * Shortcut for {@link #setValue(CodeBlock, PropertyType, CodeBlock, String, MethodSpec.Builder,
+   * BindableHandlingSharedCode)} when the cqlName is a string known at compile time.
+   */
+  public static void setValue(
+      String cqlName,
+      PropertyType type,
+      CodeBlock valueExtractor,
+      String targetName,
+      MethodSpec.Builder methodBuilder,
+      BindableHandlingSharedCode enclosingClass) {
+    setValue(
+        CodeBlock.of("$S", cqlName),
+        type,
+        valueExtractor,
+        targetName,
+        methodBuilder,
+        enclosingClass);
   }
 
   /**

@@ -9,18 +9,18 @@ In order to be detected by the mapper, the class must be annotated with [@Entity
 ```java
 @Entity
 public class Product {
-  @PartitionKey private UUID id;
+  @PartitionKey private UUID productId;
   private String description;
   
-  public UUID getId() { return id; }
-  public void setId(UUID id) { this.id = id; }
+  public UUID getProductId() { return productId; }
+  public void setProductId(UUID productId) { this.productId = productId; }
   public String getDescription() { return description; }
   public void setDescription(String description) { this.description = description; }
 }
 ```
 
 Each entity property will be mapped to a CQL column. In order to detect a property, the mapper looks
-for:
+for all of the following:
 
 * a getter method that follows the usual naming convention (e.g. `getDescription`) and has no
   parameters. The name of the property is obtained by removing the "get" prefix and decapitalizing
@@ -33,6 +33,88 @@ Note that the field is not mandatory, a property can have only a getter and a se
 the value is computed, or the field has a different name, or is nested into another field, etc.)
   
 The class must expose a no-arg constructor that is at least package-private.
+
+### Naming strategy
+
+The mapper infers the database schema from your Java model: the entity class's name is converted
+into a table name, and the property names into column names.
+
+You can control the details of this conversion by annotating your entity class with
+[@NamingStrategy].
+
+#### Naming conventions
+
+The simplest strategy is to use one of the mapper's built-in conventions: 
+
+```java
+import static com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention.UPPER_SNAKE_CASE;
+
+@Entity
+@NamingStrategy(convention = UPPER_SNAKE_CASE)
+public class Product {
+  @PartitionKey private UUID productId;
+  ...
+}
+```
+
+Conventions convert names according to pre-defined rules. For example, with the `UPPER_SNAKE_CASE`
+convention used above, the mapper expects the following schema:
+
+```
+CREATE TABLE "PRODUCT"("PRODUCT_ID" int primary key ...)
+```
+
+For the list of all available conventions, look at the enum constants in [NamingConvention].
+
+If you don't annotate your class with [@NamingStrategy], the mapper defaults to the
+`SNAKE_CASE_INSENSITIVE` convention.
+
+#### User-provided name converter
+
+If none of the built-in conventions work for you, you can provide your own conversion logic by
+implementing [NameConverter]:
+
+```java
+public class MyNameConverter implements NameConverter {
+  @Override
+  public String toCassandraName(String javaName) {
+    ... // implement your logic here
+  }
+}
+```
+
+Then pass your converter class to the annotation:
+
+```java
+@Entity
+@NamingStrategy(customConverterClass = MyNameConverter.class)
+public class Product {
+  ...
+}
+```
+
+The mapper will use reflection to build an instance of the converter; it needs to expose a public
+no-arg constructor.
+
+Note that, unlike built-in conventions, the mapper processor cannot invoke your converter at compile
+time and use the converted names directly in generated code. Instead, the generated code will invoke
+the converter at runtime (that is, every time you run a query). If you want to squeeze the last bit
+of performance from the mapper, we recommend sticking to conventions.
+
+#### User-provided names
+
+Finally, you can override the CQL name manually with the [@CqlName] annotation:
+
+```java
+@PartitionKey
+@CqlName("id")
+private UUID productId;
+```
+
+It works both on entity properties, and on the entity class itself.
+
+This takes precedence over the entity-level naming strategy, so it's convenient if almost all of
+your schema follows a convention, but you need exceptions for a few columns.
 
 ### Property annotations
 
@@ -78,5 +160,9 @@ This information is used by some of the DAO method annotations; for example,
 [@Select](../daos/select/)'s default behavior is to generate a selection by primary key.
 
 [@ClusteringColumn]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
+[@CqlName]:          http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/CqlName.html
 [@Entity]:           http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Entity.html
+[NameConverter]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/entity/naming/NameConverter.html
+[NamingConvention]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/entity/naming/NamingConvention.html
+[@NamingStrategy]:   http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/NamingStrategy.html
 [@PartitionKey]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html

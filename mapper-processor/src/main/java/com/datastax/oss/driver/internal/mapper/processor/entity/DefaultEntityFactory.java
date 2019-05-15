@@ -16,16 +16,23 @@
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
+import com.datastax.oss.driver.api.mapper.annotations.NamingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import java.beans.Introspector;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -46,12 +53,10 @@ public class DefaultEntityFactory implements EntityFactory {
   @Override
   public EntityDefinition getDefinition(TypeElement classElement) {
 
-    // Basic implementation to get things started: look for pairs of getter/setter methods that
-    // share the same name and operate on the same type.
-    // This will get revisited in future tickets:
-    // TODO support custom naming conventions
-    // TODO property annotations: custom name, computed, ignored...
+    // TODO property annotations: computed, ignored...
     // TODO inherit annotations and properties from superclass / parent interface
+
+    CqlNameGenerator cqlNameGenerator = buildCqlNameGenerator(classElement);
 
     SortedMap<Integer, PropertyDefinition> partitionKey = new TreeMap<>();
     SortedMap<Integer, PropertyDefinition> clusteringColumns = new TreeMap<>();
@@ -82,7 +87,13 @@ public class DefaultEntityFactory implements EntityFactory {
 
       PropertyType propertyType = PropertyType.parse(typeMirror, context);
       PropertyDefinition property =
-          new DefaultPropertyDefinition(propertyName, getMethodName, setMethodName, propertyType);
+          new DefaultPropertyDefinition(
+              propertyName,
+              getCustomCqlName(getMethod, field),
+              getMethodName,
+              setMethodName,
+              propertyType,
+              cqlNameGenerator);
 
       int partitionKeyIndex = getPartitionKeyIndex(getMethod, field);
       int clusteringColumnIndex = getClusteringColumnIndex(getMethod, field, partitionKeyIndex);
@@ -126,9 +137,11 @@ public class DefaultEntityFactory implements EntityFactory {
     return new DefaultEntityDefinition(
         ClassName.get(classElement),
         entityName,
+        Optional.ofNullable(classElement.getAnnotation(CqlName.class)).map(CqlName::value),
         ImmutableList.copyOf(partitionKey.values()),
         ImmutableList.copyOf(clusteringColumns.values()),
-        regularColumns.build());
+        regularColumns.build(),
+        cqlNameGenerator);
   }
 
   private VariableElement findField(
@@ -167,11 +180,32 @@ public class DefaultEntityFactory implements EntityFactory {
     return null;
   }
 
+  private Optional<String> getCustomCqlName(ExecutableElement getMethod, VariableElement field) {
+    CqlName getterAnnotation = getMethod.getAnnotation(CqlName.class);
+    CqlName fieldAnnotation = (field == null) ? null : field.getAnnotation(CqlName.class);
+    if (getterAnnotation != null) {
+      if (fieldAnnotation != null) {
+        context
+            .getMessager()
+            .warn(
+                field,
+                "@%s should be used either on the field or the getter, but not both. "
+                    + "The annotation on this field will be ignored.",
+                CqlName.class.getSimpleName());
+      }
+      return Optional.of(getterAnnotation.value());
+    } else if (fieldAnnotation != null) {
+      return Optional.of(fieldAnnotation.value());
+    } else {
+      return Optional.empty();
+    }
+  }
+
   private int getPartitionKeyIndex(ExecutableElement getMethod, VariableElement field) {
-    PartitionKey annotation = getMethod.getAnnotation(PartitionKey.class);
+    PartitionKey getterAnnotation = getMethod.getAnnotation(PartitionKey.class);
     PartitionKey fieldAnnotation = (field == null) ? null : field.getAnnotation(PartitionKey.class);
 
-    if (annotation != null) {
+    if (getterAnnotation != null) {
       if (fieldAnnotation != null) {
         context
             .getMessager()
@@ -181,7 +215,7 @@ public class DefaultEntityFactory implements EntityFactory {
                     + "The annotation on this field will be ignored.",
                 PartitionKey.class.getSimpleName());
       }
-      return annotation.value();
+      return getterAnnotation.value();
     } else if (fieldAnnotation != null) {
       return fieldAnnotation.value();
     } else {
@@ -191,11 +225,11 @@ public class DefaultEntityFactory implements EntityFactory {
 
   private int getClusteringColumnIndex(
       ExecutableElement getMethod, VariableElement field, int partitionKeyIndex) {
-    ClusteringColumn annotation = getMethod.getAnnotation(ClusteringColumn.class);
+    ClusteringColumn getterAnnotation = getMethod.getAnnotation(ClusteringColumn.class);
     ClusteringColumn fieldAnnotation =
         (field == null) ? null : field.getAnnotation(ClusteringColumn.class);
 
-    if (annotation != null) {
+    if (getterAnnotation != null) {
       if (partitionKeyIndex >= 0) {
         context
             .getMessager()
@@ -214,7 +248,7 @@ public class DefaultEntityFactory implements EntityFactory {
                     + "The annotation on this field will be ignored.",
                 ClusteringColumn.class.getSimpleName());
       }
-      return annotation.value();
+      return getterAnnotation.value();
     } else if (fieldAnnotation != null) {
       if (partitionKeyIndex >= 0) {
         context
@@ -229,5 +263,88 @@ public class DefaultEntityFactory implements EntityFactory {
     } else {
       return -1;
     }
+  }
+
+  private CqlNameGenerator buildCqlNameGenerator(TypeElement classElement) {
+
+    NamingStrategy namingStrategy = classElement.getAnnotation(NamingStrategy.class);
+    if (namingStrategy == null) {
+      return CqlNameGenerator.DEFAULT;
+    }
+
+    NamingConvention[] conventions = namingStrategy.convention();
+    TypeMirror[] customConverterClasses = readCustomConverterClasses(classElement);
+
+    if (conventions.length > 0 && customConverterClasses.length > 0) {
+      context
+          .getMessager()
+          .error(
+              classElement,
+              "Invalid annotation configuration: %s must have either a 'convention' "
+                  + "or 'customConverterClass' argument, but not both",
+              NamingStrategy.class.getSimpleName());
+      // Return a generator anyway, so that the processor doesn't crash downstream
+      return new CqlNameGenerator(conventions[0]);
+    } else if (conventions.length == 0 && customConverterClasses.length == 0) {
+      context
+          .getMessager()
+          .error(
+              classElement,
+              "Invalid annotation configuration: %s must have either a 'convention' "
+                  + "or 'customConverterClass' argument",
+              NamingStrategy.class.getSimpleName());
+      return CqlNameGenerator.DEFAULT;
+    } else if (conventions.length > 0) {
+      if (conventions.length > 1) {
+        context
+            .getMessager()
+            .warn(
+                classElement,
+                "Too many naming conventions: %s must have at most one 'convention' "
+                    + "argument (will use the first one: %s)",
+                NamingStrategy.class.getSimpleName(),
+                conventions[0]);
+      }
+      return new CqlNameGenerator(conventions[0]);
+    } else {
+      if (customConverterClasses.length > 1) {
+        context
+            .getMessager()
+            .warn(
+                classElement,
+                "Too many custom converters: %s must have at most one "
+                    + "'customConverterClass' argument (will use the first one: %s)",
+                NamingStrategy.class.getSimpleName(),
+                customConverterClasses[0]);
+      }
+      return new CqlNameGenerator(customConverterClasses[0]);
+    }
+  }
+
+  private TypeMirror[] readCustomConverterClasses(TypeElement classElement) {
+    // customConverterClass references a class that might not be compiled yet, so we can't read it
+    // directly, we need to go through mirrors.
+    AnnotationMirror annotationMirror = null;
+    for (AnnotationMirror candidate : classElement.getAnnotationMirrors()) {
+      if (context.getClassUtils().isSame(candidate.getAnnotationType(), NamingStrategy.class)) {
+        annotationMirror = candidate;
+        break;
+      }
+    }
+    assert annotationMirror != null; // We've checked that in the caller already
+
+    for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry :
+        annotationMirror.getElementValues().entrySet()) {
+      if (entry.getKey().getSimpleName().contentEquals("customConverterClass")) {
+        @SuppressWarnings("unchecked")
+        List<? extends AnnotationValue> values = (List) entry.getValue().getValue();
+        TypeMirror[] result = new TypeMirror[values.size()];
+        for (int i = 0; i < values.size(); i++) {
+          result[i] = ((TypeMirror) values.get(i).getValue());
+        }
+        return result;
+      }
+    }
+    return new TypeMirror[0];
   }
 }
