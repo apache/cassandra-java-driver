@@ -16,10 +16,11 @@
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
+import com.squareup.javapoet.CodeBlock;
 
 public interface PropertyDefinition {
 
-  String getCqlName();
+  CodeBlock getCqlName();
 
   String getGetterName();
 
