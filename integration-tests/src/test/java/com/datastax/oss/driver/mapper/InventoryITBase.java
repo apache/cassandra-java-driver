@@ -33,6 +33,8 @@ public abstract class InventoryITBase {
     return ImmutableList.of(
         "CREATE TYPE dimensions(length int, width int, height int)",
         "CREATE TABLE product(id uuid PRIMARY KEY, description text, dimensions dimensions)",
+        "CREATE TABLE productwithoutid(id uuid, clustering int, description text, PRIMARY KEY((id), clustering))",
+        "CREATE TABLE only_pk(id uuid PRIMARY KEY)",
         "CREATE CUSTOM INDEX product_description ON product(description) "
             + "USING 'org.apache.cassandra.index.sasi.SASIIndex' "
             + "WITH OPTIONS = {"
@@ -119,6 +121,43 @@ public abstract class InventoryITBase {
   }
 
   @Entity
+  public static class ProductWithoutId {
+    private String description;
+
+    public ProductWithoutId() {}
+
+    public ProductWithoutId(String description) {
+      this.description = description;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+
+    public void setDescription(String description) {
+      this.description = description;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ProductWithoutId that = (ProductWithoutId) o;
+      return Objects.equals(description, that.description);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(description);
+    }
+
+    @Override
+    public String toString() {
+      return "ProductWithoutId{" + "description='" + description + '\'' + '}';
+    }
+  }
+
+  @Entity
   public static class Dimensions {
 
     private int length;
@@ -177,6 +216,43 @@ public abstract class InventoryITBase {
     @Override
     public String toString() {
       return "Dimensions{" + "length=" + length + ", width=" + width + ", height=" + height + '}';
+    }
+  }
+
+  @Entity
+  public static class OnlyPK {
+    @PartitionKey private UUID id;
+
+    public OnlyPK() {}
+
+    public OnlyPK(UUID id) {
+      this.id = id;
+    }
+
+    public UUID getId() {
+      return id;
+    }
+
+    public void setId(UUID id) {
+      this.id = id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      OnlyPK onlyPK = (OnlyPK) o;
+      return Objects.equals(id, onlyPK.id);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+      return "OnlyPK{" + "id=" + id + '}';
     }
   }
 }
