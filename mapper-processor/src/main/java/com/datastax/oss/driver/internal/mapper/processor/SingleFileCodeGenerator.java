@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 
 /** A code generator that produces exactly one source file. */
@@ -34,14 +35,16 @@ public abstract class SingleFileCodeGenerator implements CodeGenerator {
 
   @Override
   public void generate() {
-    context.getFiler().write(getFileName(), getContents());
+    ClassName typeName = getPrincipalTypeName();
+    String fileName = typeName.simpleName();
+    if (!typeName.packageName().isEmpty()) {
+      fileName = typeName.packageName() + '.' + fileName;
+    }
+    context.getFiler().write(fileName, getContents());
   }
 
-  /**
-   * Canonical (fully qualified) name of the principal type being declared in this file or a package
-   * name followed by {@code ".package-info"} for a package information file.
-   */
-  protected abstract String getFileName();
+  /** Name of the principal type being declared in this file. */
+  protected abstract ClassName getPrincipalTypeName();
 
   protected abstract JavaFile.Builder getContents();
 }

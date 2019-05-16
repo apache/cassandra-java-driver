@@ -40,8 +40,8 @@ public class MapperBuilderGenerator extends SingleFileCodeGenerator {
   }
 
   @Override
-  protected String getFileName() {
-    return builderName.packageName() + "." + builderName.simpleName();
+  protected ClassName getPrincipalTypeName() {
+    return builderName;
   }
 
   @Override

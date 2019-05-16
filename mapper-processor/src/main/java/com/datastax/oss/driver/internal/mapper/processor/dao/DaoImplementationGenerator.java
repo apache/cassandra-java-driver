@@ -104,8 +104,8 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
   }
 
   @Override
-  protected String getFileName() {
-    return implementationName.packageName() + "." + implementationName.simpleName();
+  protected ClassName getPrincipalTypeName() {
+    return implementationName;
   }
 
   @Override
