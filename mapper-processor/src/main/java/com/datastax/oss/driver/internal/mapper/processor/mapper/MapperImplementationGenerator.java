@@ -76,8 +76,8 @@ public class MapperImplementationGenerator extends SingleFileCodeGenerator
   }
 
   @Override
-  protected String getFileName() {
-    return className.packageName() + "." + className.simpleName();
+  protected ClassName getPrincipalTypeName() {
+    return className;
   }
 
   @Override
