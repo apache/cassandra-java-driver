@@ -62,8 +62,8 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
   }
 
   @Override
-  protected String getFileName() {
-    return helperName.packageName() + "." + helperName.simpleName();
+  protected ClassName getPrincipalTypeName() {
+    return helperName;
   }
 
   @Override
