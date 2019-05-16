@@ -102,7 +102,7 @@ public @interface Insert {
   boolean ifNotExists() default false;
 
   /**
-   * The TTL to use in the generated INSERT query.
+   * The TTL (time to live) to use in the generated INSERT query.
    *
    * <p>If this starts with ":", it is interpreted as a named placeholder (that must have a
    * corresponding parameter in the method signature). Otherwise, it must be a literal integer value
