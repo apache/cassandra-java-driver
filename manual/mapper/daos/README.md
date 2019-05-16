@@ -30,8 +30,9 @@ annotations:
 * [@Query](query/)
 * [@Select](select/)
 * [@SetEntity](setentity/)
+* [@Update](update/)
 
-The methods can have any name. The allowed parameters and return type are specific to on each
+The methods can have any name. The allowed parameters and return type are specific to each
 annotation.
 
 ### Runtime usage
