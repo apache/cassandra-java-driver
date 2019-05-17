@@ -22,11 +22,15 @@ public class Product {
 Each entity property will be mapped to a CQL column. In order to detect a property, the mapper looks
 for:
 
-* a field;
-* a getter method that follows the usual naming convention `getXxx`, has no parameters, and returns
-  the same type as the field;
-* a setter method that follows the usual naming convention `setXxx` and has a single parameter with
-  the same type as the field (the return type does not matter).
+* a getter method that follows the usual naming convention (e.g. `getDescription`) and has no
+  parameters. The name of the property is obtained by removing the "get" prefix and decapitalizing
+  (`description`), and the type of the property is the return type of the getter.
+* a matching setter method (`setDescription`), with a single parameter that has the same type as the
+  property (the return type does not matter).
+* optionally, a matching field (`description`) that has the same type as the property.
+
+Note that the field is not mandatory, a property can have only a getter and a setter (for example if
+the value is computed, or the field has a different name, or is nested into another field, etc.)
   
 The class must expose a no-arg constructor that is at least package-private.
 
