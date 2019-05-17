@@ -27,6 +27,7 @@ import com.datastax.oss.driver.shaded.guava.common.cache.RemovalListener;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.ExecutionError;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.UncheckedExecutionException;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -55,13 +56,13 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
    * eviction is that useful anyway.
    */
   public DefaultCodecRegistry(
-      String logPrefix,
+      @NonNull String logPrefix,
       int initialCacheCapacity,
-      BiFunction<CacheKey, TypeCodec<?>, Integer> cacheWeigher,
+      @Nullable BiFunction<CacheKey, TypeCodec<?>, Integer> cacheWeigher,
       int maximumCacheWeight,
-      BiConsumer<CacheKey, TypeCodec<?>> cacheRemovalListener,
-      TypeCodec<?>[] primitiveCodecs,
-      TypeCodec<?>[] userCodecs) {
+      @Nullable BiConsumer<CacheKey, TypeCodec<?>> cacheRemovalListener,
+      @NonNull TypeCodec<?>[] primitiveCodecs,
+      @NonNull TypeCodec<?>[] userCodecs) {
 
     super(logPrefix, primitiveCodecs, userCodecs);
     CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder();
@@ -92,18 +93,20 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
     }
   }
 
-  public DefaultCodecRegistry(String logPrefix, TypeCodec<?>... userCodecs) {
+  public DefaultCodecRegistry(@NonNull String logPrefix, @NonNull TypeCodec<?>... userCodecs) {
     this(logPrefix, CodecRegistryConstants.PRIMITIVE_CODECS, userCodecs);
   }
 
   public DefaultCodecRegistry(
-      String logPrefix, TypeCodec<?>[] primitiveCodecs, TypeCodec<?>... userCodecs) {
+      @NonNull String logPrefix,
+      @NonNull TypeCodec<?>[] primitiveCodecs,
+      @NonNull TypeCodec<?>... userCodecs) {
     this(logPrefix, 0, null, 0, null, primitiveCodecs, userCodecs);
   }
 
   @Override
   protected TypeCodec<?> getCachedCodec(
-      DataType cqlType, GenericType<?> javaType, boolean isJavaCovariant) {
+      @Nullable DataType cqlType, @Nullable GenericType<?> javaType, boolean isJavaCovariant) {
     LOG.trace("[{}] Checking cache", logPrefix);
     try {
       return cache.getUnchecked(new CacheKey(cqlType, javaType, isJavaCovariant));
@@ -126,7 +129,8 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
     public final GenericType<?> javaType;
     public final boolean isJavaCovariant;
 
-    public CacheKey(DataType cqlType, GenericType<?> javaType, boolean isJavaCovariant) {
+    public CacheKey(
+        @Nullable DataType cqlType, @Nullable GenericType<?> javaType, boolean isJavaCovariant) {
       this.javaType = javaType;
       this.cqlType = cqlType;
       this.isJavaCovariant = isJavaCovariant;
