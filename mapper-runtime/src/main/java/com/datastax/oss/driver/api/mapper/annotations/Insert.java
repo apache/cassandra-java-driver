@@ -97,6 +97,7 @@ import java.util.concurrent.CompletionStage;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.CLASS)
 public @interface Insert {
+  /** Whether to append an IF NOT EXISTS clause at the end of the generated INSERT query. */
   boolean ifNotExists() default false;
 
   /**
