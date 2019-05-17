@@ -161,6 +161,9 @@ public interface CodecRegistry {
    * {@code ArrayList<String>}, it should be possible to encode it with a codec that accepts a
    * {@code List<String>}.
    *
+   * <p>Note that, if {@code value} is an empty collection, this method may return a codec that
+   * won't accept {@code JavaTypeT}; but it will encode {@code value} correctly.
+   *
    * @throws CodecNotFoundException if there is no such codec.
    */
   @NonNull
