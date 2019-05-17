@@ -14,11 +14,11 @@ public interface ProductDao {
 
 The first parameter must be the entity to insert.
 
-If the query has a custom clause with placeholders, the method must have corresponding additional
-parameters (same name, and a compatible Java type):
+If the annotation defines a TTL and/or timestamp with placeholders, the method must have
+corresponding additional parameters (same name, and a compatible Java type):
 
 ```java
-@Insert(customUsingClause = "USING TTL :ttl")
+@Insert(ttl = ":ttl")
 void insertWithTtl(Product product, int ttl);
 ```
 
