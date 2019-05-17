@@ -55,7 +55,7 @@ import java.util.concurrent.CompletionStage;
  * corresponding parameter for each, with the same name and a compatible Java type:
  *
  * <pre>
- * &#64;Select(customWhereClause = "WHERE description LIKE :searchString")
+ * &#64;Select(customWhereClause = "description LIKE :searchString")
  * PagingIterable&lt;Product&gt; findByDescription(String searchString);
  * </pre>
  *
@@ -80,7 +80,7 @@ import java.util.concurrent.CompletionStage;
  *   <li>a {@link PagingIterable} of the entity class. It behaves like a result set, except that
  *       each element is a mapped entity instead of a row.
  *       <pre>
- * &#64;Select(customWhereClause = "WHERE description LIKE :searchString")
+ * &#64;Select(customWhereClause = "description LIKE :searchString")
  * PagingIterable&lt;Product&gt; findByDescription(String searchString);
  *       </pre>
  *   <li>a {@link CompletionStage} or {@link CompletableFuture} of any of the above. The method will
@@ -93,7 +93,7 @@ import java.util.concurrent.CompletionStage;
  * &#64;Select
  * CompletionStage&lt;Optional&lt;Product&gt;&gt; findByIdAsync(UUID productId);
  *
- * &#64;Select(customWhereClause = "WHERE description LIKE :searchString")
+ * &#64;Select(customWhereClause = "description LIKE :searchString")
  * CompletionStage&lt;MappedAsyncPagingIterable&lt;Product&gt;&gt; findByDescriptionAsync(String searchString);
  *       </pre>
  * </ul>
@@ -117,7 +117,7 @@ public @interface Select {
    * A custom WHERE clause for the SELECT query.
    *
    * <p>If this is not empty, it completely replaces the WHERE clause in the generated query. Note
-   * that the provided string must start with the {@code WHERE} keyword.
+   * that the provided string <b>must not</b> contain the {@code WHERE} keyword.
    *
    * <p>This clause can contain placeholders that will be bound with the method's parameters; see
    * the top-level javadocs of this class for more explanations.

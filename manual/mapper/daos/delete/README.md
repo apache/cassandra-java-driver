@@ -36,11 +36,11 @@ The method can operate on:
     In addition, because the entity class can't be inferred from the method signature, it must be
     specified via the annotation's `entityClass` element.
 
-An optional IF clause can be appended to the generated query. It can contain placeholders, for which
+An optional IF clause can be added to the generated query. It can contain placeholders, for which
 the method must have corresponding parameters (same name, and a compatible Java type):
 
 ```java
-@Delete(entityClass = Product.class, customIfClause = "IF description = :expectedDescription")
+@Delete(entityClass = Product.class, customIfClause = "description = :expectedDescription")
 void deleteIfDescriptionMatches(UUID productId, String expectedDescription);
 ```
 
@@ -63,7 +63,7 @@ The method can return:
   applied, they return the actual values of the tested columns.
   
     ```java
-    @Delete(entityClass = Product.class, customIfClause = "IF description = :expectedDescription")
+    @Delete(entityClass = Product.class, customIfClause = "description = :expectedDescription")
     ResultSet deleteIfDescriptionMatches(UUID productId, String expectedDescription);
     // if the condition fails, the result set will contain columns '[applied]' and 'description'
     ```
@@ -78,7 +78,7 @@ The method can return:
     @Delete(ifExists = true)
     CompletionStage<Boolean> deleteIfExistsAsync(Product product);
 
-    @Delete(entityClass = Product.class, customIfClause = "IF description = :expectedDescription")
+    @Delete(entityClass = Product.class, customIfClause = "description = :expectedDescription")
     CompletionStage<AsyncResultSet> deleteIfDescriptionMatchesAsync(UUID productId, String expectedDescription);
     ```
 

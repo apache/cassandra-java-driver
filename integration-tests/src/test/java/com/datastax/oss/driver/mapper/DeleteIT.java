@@ -190,7 +190,7 @@ public class DeleteIT extends InventoryITBase {
     @Delete(ifExists = true)
     boolean deleteIfExists(Product product);
 
-    @Delete(entityClass = Product.class, customIfClause = "IF description = :expectedDescription")
+    @Delete(entityClass = Product.class, customIfClause = "description = :expectedDescription")
     ResultSet deleteIfDescriptionMatches(UUID productId, String expectedDescription);
 
     @Delete
@@ -202,7 +202,7 @@ public class DeleteIT extends InventoryITBase {
     @Delete(ifExists = true)
     CompletableFuture<Boolean> deleteAsyncIfExists(Product product);
 
-    @Delete(entityClass = Product.class, customIfClause = "IF description = :expectedDescription")
+    @Delete(entityClass = Product.class, customIfClause = "description = :expectedDescription")
     CompletableFuture<AsyncResultSet> deleteAsyncIfDescriptionMatches(
         UUID productId, String expectedDescription);
 

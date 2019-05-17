@@ -171,8 +171,8 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
 
   private void generateSelectRequest(
       MethodSpec.Builder methodBuilder, String requestName, String helperFieldName) {
-    String customClause = methodElement.getAnnotation(Select.class).customWhereClause();
-    if (customClause.isEmpty()) {
+    String customWhereClause = methodElement.getAnnotation(Select.class).customWhereClause();
+    if (customWhereClause.isEmpty()) {
       methodBuilder.addStatement(
           "$T $L = $L.selectByPrimaryKey().build()",
           SimpleStatement.class,
@@ -180,11 +180,11 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
           helperFieldName);
     } else {
       methodBuilder.addStatement(
-          "$1T $2L = $1T.newInstance($3L.selectStart().asCql() + $4S)",
+          "$T $L = $L.selectStart().whereRaw($S).build()",
           SimpleStatement.class,
           requestName,
           helperFieldName,
-          " " + customClause);
+          customWhereClause);
     }
   }
 }
