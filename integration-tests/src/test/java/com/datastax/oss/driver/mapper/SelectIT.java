@@ -152,11 +152,11 @@ public class SelectIT extends InventoryITBase {
     CompletionStage<Optional<Product>> findOptionalByIdAsync(UUID productId);
 
     /** Note that this relies on a SASI index. */
-    @Select(customWhereClause = "WHERE description LIKE :searchString")
+    @Select(customWhereClause = "description LIKE :searchString")
     PagingIterable<Product> findByDescription(String searchString);
 
     /** Note that this relies on a SASI index. */
-    @Select(customWhereClause = "WHERE description LIKE :searchString")
+    @Select(customWhereClause = "description LIKE :searchString")
     CompletionStage<MappedAsyncPagingIterable<Product>> findByDescriptionAsync(String searchString);
 
     @Delete

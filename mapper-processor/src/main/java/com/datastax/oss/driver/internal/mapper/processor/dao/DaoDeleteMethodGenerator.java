@@ -282,11 +282,11 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
           helperFieldName);
     } else if (!customIfClause.isEmpty()) {
       methodBuilder.addStatement(
-          "$1T $2L = $1T.newInstance($3L.deleteByPrimaryKey().asCql() + $4S)",
+          "$T $L = $L.deleteByPrimaryKey().ifRaw($S).build()",
           SimpleStatement.class,
           requestName,
           helperFieldName,
-          " " + customIfClause);
+          customIfClause);
     } else {
       methodBuilder.addStatement(
           "$T $L = $L.deleteByPrimaryKey().build()",
