@@ -61,7 +61,7 @@ import java.util.concurrent.CompletionStage;
  * a compatible Java type):
  *
  * <pre>
- * &#64;Delete(entityClass = Product.class, customIfClause = "IF description = :expectedDescription")
+ * &#64;Delete(entityClass = Product.class, customIfClause = "description = :expectedDescription")
  * ResultSet deleteIfDescriptionMatches(UUID productId, String expectedDescription);
  * </pre>
  *
@@ -80,7 +80,7 @@ import java.util.concurrent.CompletionStage;
  *   <li>a {@link ResultSet}. This is intended for queries with custom IF clauses; when those
  *       queries are not applied, they return the actual values of the tested columns.
  *       <pre>
- * &#64;Delete(entityClass = Product.class, customIfClause = "IF description = :expectedDescription")
+ * &#64;Delete(entityClass = Product.class, customIfClause = "description = :expectedDescription")
  * ResultSet deleteIfDescriptionMatches(UUID productId, String expectedDescription);
  * // if the condition fails, the result set will contain columns '[applied]' and 'description'
  *       </pre>
@@ -94,7 +94,7 @@ import java.util.concurrent.CompletionStage;
  * &#64;Delete(ifExists = true)
  * CompletionStage&lt;Boolean&gt; deleteIfExistsAsync(Product product);
  *
- * &#64;Delete(entityClass = Product.class, customIfClause = "IF description = :expectedDescription")
+ * &#64;Delete(entityClass = Product.class, customIfClause = "description = :expectedDescription")
  * CompletionStage&lt;AsyncResultSet&gt; deleteIfDescriptionMatchesAsync(UUID productId, String expectedDescription);
  *       </pre>
  * </ul>
@@ -149,8 +149,8 @@ public @interface Delete {
    * <p>This is mutually exclusive with {@link #ifExists()} (if both are set, the mapper processor
    * will generate a compile-time error).
    *
-   * <p>If this is not empty, it gets appended at the end of the generated query. Note that the
-   * provided string must start with the {@code IF} keyword.
+   * <p>If this is not empty, it gets added to the generated query. Note that the provided string
+   * <b>must not</b> contain the {@code IF} keyword.
    *
    * <p>This clause can contain placeholders that will be bound with the method's parameters; see
    * the top-level javadocs of this class for more explanations.

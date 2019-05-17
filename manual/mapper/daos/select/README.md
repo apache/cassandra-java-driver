@@ -24,7 +24,7 @@ string can contain named placeholders. In that case, the method must have a corr
 for each, with the same name and a compatible Java type.
 
 ```java
-@Select(customWhereClause = "WHERE description LIKE :searchString")
+@Select(customWhereClause = "description LIKE :searchString")
 PagingIterable<Product> findByDescription(String searchString);
 ```
 
@@ -52,7 +52,7 @@ In all cases, the method can return:
   a mapped entity instead of a row.
 
     ```java
-    @Select(customWhereClause = "WHERE description LIKE :searchString")
+    @Select(customWhereClause = "description LIKE :searchString")
     PagingIterable<Product> findByDescription(String searchString);
     ```
 
@@ -67,7 +67,7 @@ In all cases, the method can return:
     @Select
     CompletionStage<Optional<Product>> findByIdAsync(UUID productId);
     
-    @Select(customWhereClause = "WHERE description LIKE :searchString")
+    @Select(customWhereClause = "description LIKE :searchString")
     CompletionStage<MappedAsyncPagingIterable<Product>> findByDescriptionAsync(String searchString);
     ```
 
