@@ -49,6 +49,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 
 public class DaoImplementationGenerator extends SingleFileCodeGenerator
     implements DaoImplementationSharedCode {
@@ -63,6 +64,7 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
       new GenericTypeConstantGenerator(nameIndex);
   private final Map<ClassName, String> entityHelperFields = new LinkedHashMap<>();
   private final List<GeneratedPreparedStatement> preparedStatements = new ArrayList<>();
+  private final List<GeneratedQueryProvider> queryProviders = new ArrayList<>();
 
   public DaoImplementationGenerator(TypeElement interfaceElement, ProcessorContext context) {
     super(context);
@@ -100,6 +102,21 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
         nameIndex.uniqueField(methodElement.getSimpleName().toString() + "Statement");
     preparedStatements.add(
         new GeneratedPreparedStatement(methodElement, fieldName, simpleStatementGenerator));
+    return fieldName;
+  }
+
+  @Override
+  public String addQueryProvider(
+      ExecutableElement methodElement,
+      TypeMirror providerClass,
+      List<ClassName> entityHelperTypes) {
+    // Invokers are not shared between methods, so always generate a new name
+    String fieldName = nameIndex.uniqueField(methodElement.getSimpleName().toString() + "Invoker");
+    List<String> entityHelperNames = new ArrayList<>();
+    for (ClassName type : entityHelperTypes) {
+      entityHelperNames.add(addEntityHelperField(type));
+    }
+    queryProviders.add(new GeneratedQueryProvider(fieldName, providerClass, entityHelperNames));
     return fieldName;
   }
 
@@ -177,6 +194,16 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
           .addStatement("this.$1L = $1L", preparedStatement.fieldName);
     }
 
+    // Same for method invokers:
+    for (GeneratedQueryProvider queryProvider : queryProviders) {
+      TypeName providerClassName = TypeName.get(queryProvider.providerClass);
+      classBuilder.addField(
+          providerClassName, queryProvider.fieldName, Modifier.PRIVATE, Modifier.FINAL);
+      constructorBuilder
+          .addParameter(providerClassName, queryProvider.fieldName)
+          .addStatement("this.$1L = $1L", queryProvider.fieldName);
+    }
+
     classBuilder.addMethod(initAsyncBuilder.build());
     classBuilder.addMethod(initBuilder.build());
     classBuilder.addMethod(constructorBuilder.build());
@@ -241,6 +268,21 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
           ",\n$T.getCompleted($L)", CompletableFutures.class, preparedStatement.fieldName);
     }
 
+    initAsyncBuilder.addComment("Initialize all method invokers");
+    // For each query provider that was requested by a method generator:
+    for (GeneratedQueryProvider queryProvider : queryProviders) {
+      // - create an instance
+      initAsyncBuilder.addCode(
+          "$[$1T $2L = new $1T(context", queryProvider.providerClass, queryProvider.fieldName);
+      for (String helperName : queryProvider.entityHelperNames) {
+        initAsyncBuilder.addCode(", $L", helperName);
+      }
+      initAsyncBuilder.addCode(");$]\n");
+
+      // - add it as a parameter to the constructor call
+      newDaoStatement.add(",\n$L", queryProvider.fieldName);
+    }
+
     newDaoStatement.add(")");
 
     initAsyncBuilder
@@ -277,6 +319,19 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
       this.methodElement = methodElement;
       this.fieldName = fieldName;
       this.simpleStatementGenerator = simpleStatementGenerator;
+    }
+  }
+
+  private static class GeneratedQueryProvider {
+    final String fieldName;
+    final TypeMirror providerClass;
+    final List<String> entityHelperNames;
+
+    GeneratedQueryProvider(
+        String fieldName, TypeMirror providerClass, List<String> entityHelperNames) {
+      this.fieldName = fieldName;
+      this.providerClass = providerClass;
+      this.entityHelperNames = entityHelperNames;
     }
   }
 }

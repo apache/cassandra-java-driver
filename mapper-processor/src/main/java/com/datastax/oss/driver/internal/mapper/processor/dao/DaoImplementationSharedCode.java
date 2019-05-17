@@ -16,11 +16,16 @@
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.BindableHandlingSharedCode;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
+import java.util.List;
 import java.util.function.BiConsumer;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * Exposes callbacks that allow individual method generators for a {@link Dao}-annotated class to
@@ -41,4 +46,19 @@ public interface DaoImplementationSharedCode extends BindableHandlingSharedCode 
   String addPreparedStatement(
       ExecutableElement methodElement,
       BiConsumer<MethodSpec.Builder, String> simpleStatementGenerator);
+
+  /**
+   * Requests the instantiation of a user-provided query provider class in this DAO. It will be
+   * initialized in {@code initAsync}, and then passed to the constructor which will store it in a
+   * private field.
+   *
+   * @param methodElement the method that will be using this provider.
+   * @param providerClass the provider class.
+   * @param entityHelperTypes the types of the entity helpers that should be injected through the
+   *     class's constructor (in addition to the {@link MapperContext}).
+   * @return the name of the generated field that will hold the provider.
+   * @see QueryProvider
+   */
+  String addQueryProvider(
+      ExecutableElement methodElement, TypeMirror providerClass, List<ClassName> entityHelperTypes);
 }
