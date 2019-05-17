@@ -43,11 +43,12 @@ import java.util.concurrent.CompletionStage;
  *
  * The first parameter must be the entity to insert.
  *
- * <p>If the query has a {@linkplain #customUsingClause()} custom clause} with placeholders, the
- * method must have corresponding additional parameters (same name, and a compatible Java type):
+ * <p>If the query has a {@linkplain #ttl() TTL} and/or {@linkplain #timestamp() timestamp} with
+ * placeholders, the method must have corresponding additional parameters (same name, and a
+ * compatible Java type):
  *
  * <pre>
- * &#64;Insert(customUsingClause = "USING TTL :ttl")
+ * &#64;Insert(ttl = ":ttl")
  * void insertWithTtl(Product product, int ttl);
  * </pre>
  *
@@ -101,14 +102,27 @@ public @interface Insert {
   boolean ifNotExists() default false;
 
   /**
-   * A custom USING clause for the INSERT query.
+   * The TTL to use in the generated INSERT query.
    *
-   * <p>The default mapper code generates a query of the form {@code INSERT INTO table (...) VALUES
-   * (...) [IF NOT EXISTS]}. If this element is a non empty string, it gets appended at the end.
-   * Therefore it can be used to add a {@code USING TTL} or {@code USING TIMESTAMP} clause.
+   * <p>If this starts with ":", it is interpreted as a named placeholder (that must have a
+   * corresponding parameter in the method signature). Otherwise, it must be a literal integer value
+   * (representing a number of seconds).
    *
-   * <p>This clause can contain placeholders that will be bound with the method's parameters; see
-   * the top-level javadocs of this class for more explanations.
+   * <p>If the placeholder name is invalid or the literal can't be parsed as an integer (according
+   * to the rules of {@link Integer#parseInt(String)}), the mapper will issue a compile-time
+   * warning.
    */
-  String customUsingClause() default "";
+  String ttl() default "";
+
+  /**
+   * The timestamp to use in the generated INSERT query.
+   *
+   * <p>If this starts with ":", it is interpreted as a named placeholder (that must have a
+   * corresponding parameter in the method signature). Otherwise, it must be literal long value
+   * (representing a number of microseconds since epoch).
+   *
+   * <p>If the placeholder name is invalid or the literal can't be parsed as a long (according to
+   * the rules of {@link Long#parseLong(String)}), the mapper will issue a compile-time warning.
+   */
+  String timestamp() default "";
 }
