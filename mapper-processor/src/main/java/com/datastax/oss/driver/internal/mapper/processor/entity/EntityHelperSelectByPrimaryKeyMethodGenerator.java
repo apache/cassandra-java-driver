@@ -15,8 +15,8 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
-import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.squareup.javapoet.MethodSpec;
@@ -40,7 +40,7 @@ public class EntityHelperSelectByPrimaryKeyMethodGenerator implements MethodGene
         MethodSpec.methodBuilder("selectByPrimaryKey")
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
-            .returns(BuildableQuery.class)
+            .returns(Select.class)
             .addCode("$[return selectStart()");
 
     for (PropertyDefinition property : entityDefinition.getPrimaryKey()) {
