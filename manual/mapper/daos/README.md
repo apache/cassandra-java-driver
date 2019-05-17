@@ -28,6 +28,7 @@ annotations:
 * [@GetEntity](getentity/)
 * [@Insert](insert/)
 * [@Query](query/)
+* [@QueryProvider](queryprovider/)
 * [@Select](select/)
 * [@SetEntity](setentity/)
 * [@Update](update/)
