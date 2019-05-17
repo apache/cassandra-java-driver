@@ -15,14 +15,17 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
+import com.squareup.javapoet.MethodSpec;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -140,6 +143,75 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
       }
     }
     return new ReturnType(ReturnTypeKind.UNSUPPORTED);
+  }
+
+  protected void maybeAddTtl(String ttl, MethodSpec.Builder methodBuilder) {
+    if (!ttl.isEmpty()) {
+      if (ttl.startsWith(":")) {
+        String bindMarkerName = ttl.substring(1);
+        try {
+          CqlIdentifier.fromCql(bindMarkerName);
+        } catch (IllegalArgumentException ignored) {
+          context
+              .getMessager()
+              .warn(
+                  methodElement,
+                  "Invalid ttl value: "
+                      + "'%s' is not a valid placeholder, the generated query will probably fail",
+                  ttl);
+        }
+        methodBuilder.addCode(".usingTtl($T.bindMarker($S))", QueryBuilder.class, bindMarkerName);
+      } else {
+        try {
+          Integer.parseInt(ttl);
+        } catch (NumberFormatException ignored) {
+          context
+              .getMessager()
+              .warn(
+                  methodElement,
+                  "Invalid ttl value: "
+                      + "'%s' is not a bind marker name and can't be parsed as a literal integer "
+                      + "either, the generated query will probably fail",
+                  ttl);
+        }
+        methodBuilder.addCode(".usingTtl($L)", ttl);
+      }
+    }
+  }
+
+  protected void maybeAddTimestamp(String timestamp, MethodSpec.Builder methodBuilder) {
+    if (!timestamp.isEmpty()) {
+      if (timestamp.startsWith(":")) {
+        String bindMarkerName = timestamp.substring(1);
+        try {
+          CqlIdentifier.fromCql(bindMarkerName);
+        } catch (IllegalArgumentException ignored) {
+          context
+              .getMessager()
+              .warn(
+                  methodElement,
+                  "Invalid timestamp value: "
+                      + "'%s' is not a valid placeholder, the generated query will probably fail",
+                  timestamp);
+        }
+        methodBuilder.addCode(
+            ".usingTimestamp($T.bindMarker($S))", QueryBuilder.class, bindMarkerName);
+      } else {
+        try {
+          Long.parseLong(timestamp);
+        } catch (NumberFormatException ignored) {
+          context
+              .getMessager()
+              .warn(
+                  methodElement,
+                  "Invalid timestamp value: "
+                      + "'%s' is not a bind marker name and can't be parsed as a literal long "
+                      + "either, the generated query will probably fail",
+                  timestamp);
+        }
+        methodBuilder.addCode(".usingTimestamp($L)", timestamp);
+      }
+    }
   }
 
   protected static class ReturnType {

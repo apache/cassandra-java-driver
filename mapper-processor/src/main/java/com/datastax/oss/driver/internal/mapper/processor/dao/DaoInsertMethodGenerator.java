@@ -153,20 +153,15 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
   private void generatePrepareRequest(
       MethodSpec.Builder methodBuilder, String requestName, String helperFieldName) {
     methodBuilder.addCode(
-        "$[$1T $2L = $1T.newInstance($3L.insert()",
-        SimpleStatement.class,
-        requestName,
-        helperFieldName);
+        "$[$T $L = $L.insert()", SimpleStatement.class, requestName, helperFieldName);
     Insert annotation = methodElement.getAnnotation(Insert.class);
     if (annotation.ifNotExists()) {
       methodBuilder.addCode(".ifNotExists()");
     }
-    methodBuilder.addCode(".asCql()");
 
-    String customUsingClause = annotation.customUsingClause();
-    if (!customUsingClause.isEmpty()) {
-      methodBuilder.addCode(" + $S", " " + customUsingClause);
-    }
-    methodBuilder.addCode(")$];\n");
+    maybeAddTtl(annotation.ttl(), methodBuilder);
+    maybeAddTimestamp(annotation.timestamp(), methodBuilder);
+
+    methodBuilder.addCode(".build()$];\n");
   }
 }

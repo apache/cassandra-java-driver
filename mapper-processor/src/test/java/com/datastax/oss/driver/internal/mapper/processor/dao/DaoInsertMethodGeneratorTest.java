@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
@@ -62,6 +63,63 @@ public class DaoInsertMethodGeneratorTest extends DaoMethodGeneratorTest {
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
             .returns(TypeName.INT)
+            .build(),
+      },
+    };
+  }
+
+  @Test
+  @Override
+  @UseDataProvider("warningSignatures")
+  public void should_succeed_with_expected_warning(String expectedWarning, MethodSpec method) {
+    super.should_succeed_with_expected_warning(expectedWarning, method);
+  }
+
+  @DataProvider
+  public static Object[][] warningSignatures() {
+    return new Object[][] {
+      {
+        "Invalid ttl value: "
+            + "':foo bar' is not a valid placeholder, the generated query will probably fail",
+        MethodSpec.methodBuilder("insert")
+            .addAnnotation(
+                AnnotationSpec.builder(Insert.class).addMember("ttl", "$S", ":foo bar").build())
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .addParameter(ENTITY_CLASS_NAME, "entity")
+            .build(),
+      },
+      {
+        "Invalid ttl value: "
+            + "'foo' is not a bind marker name and can't be parsed as a literal integer either, "
+            + "the generated query will probably fail",
+        MethodSpec.methodBuilder("insert")
+            .addAnnotation(
+                AnnotationSpec.builder(Insert.class).addMember("ttl", "$S", "foo").build())
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .addParameter(ENTITY_CLASS_NAME, "entity")
+            .build(),
+      },
+      {
+        "Invalid timestamp value: "
+            + "':foo bar' is not a valid placeholder, the generated query will probably fail",
+        MethodSpec.methodBuilder("insert")
+            .addAnnotation(
+                AnnotationSpec.builder(Insert.class)
+                    .addMember("timestamp", "$S", ":foo bar")
+                    .build())
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .addParameter(ENTITY_CLASS_NAME, "entity")
+            .build(),
+      },
+      {
+        "Invalid timestamp value: "
+            + "'foo' is not a bind marker name and can't be parsed as a literal long either, "
+            + "the generated query will probably fail",
+        MethodSpec.methodBuilder("insert")
+            .addAnnotation(
+                AnnotationSpec.builder(Insert.class).addMember("timestamp", "$S", "foo").build())
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .addParameter(ENTITY_CLASS_NAME, "entity")
             .build(),
       },
     };
