@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.mapper.processor.mapper;
 
 import com.datastax.oss.driver.api.core.session.Session;
-import com.datastax.oss.driver.internal.mapper.MapperContext;
+import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
