@@ -15,8 +15,8 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.mapper;
 
+import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.internal.mapper.DaoCacheKey;
-import com.datastax.oss.driver.internal.mapper.MapperContext;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
