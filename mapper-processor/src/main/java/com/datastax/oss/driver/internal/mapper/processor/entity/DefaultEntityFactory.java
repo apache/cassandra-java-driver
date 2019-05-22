@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.NamingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.mapper.annotations.Transient;
 import com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
@@ -53,7 +54,7 @@ public class DefaultEntityFactory implements EntityFactory {
   @Override
   public EntityDefinition getDefinition(TypeElement classElement) {
 
-    // TODO property annotations: computed, ignored...
+    // TODO property annotations: computed...
     // TODO inherit annotations and properties from superclass / parent interface
 
     CqlNameGenerator cqlNameGenerator = buildCqlNameGenerator(classElement);
@@ -84,6 +85,10 @@ public class DefaultEntityFactory implements EntityFactory {
         continue; // must have both
       }
       VariableElement field = findField(classElement, propertyName, typeMirror);
+
+      if (isTransient(getMethod, field)) {
+        continue;
+      }
 
       PropertyType propertyType = PropertyType.parse(typeMirror, context);
       PropertyDefinition property =
@@ -346,5 +351,18 @@ public class DefaultEntityFactory implements EntityFactory {
       }
     }
     return new TypeMirror[0];
+  }
+
+  private boolean isTransient(ExecutableElement getMethod, VariableElement field) {
+    Transient getterAnnotation = getMethod.getAnnotation(Transient.class);
+    if (getterAnnotation != null) {
+      return true;
+    }
+
+    if (field != null) {
+      return field.getModifiers().contains(Modifier.TRANSIENT)
+          || field.getAnnotation(Transient.class) != null;
+    }
+    return false;
   }
 }
