@@ -47,7 +47,7 @@ import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 @CassandraRequirement(min = "3.4", description = "Creates a SASI index")
-public class UpdateEntityIT extends InventoryITBase {
+public class UpdateIT extends InventoryITBase {
 
   private static CcmRule ccm = CcmRule.getInstance();
 
@@ -67,7 +67,7 @@ public class UpdateEntityIT extends InventoryITBase {
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }
 
-    inventoryMapper = new UpdateEntityIT_InventoryMapperBuilder(session).build();
+    inventoryMapper = new UpdateIT_InventoryMapperBuilder(session).build();
     dao = inventoryMapper.productDao(sessionRule.keyspace());
   }
 
