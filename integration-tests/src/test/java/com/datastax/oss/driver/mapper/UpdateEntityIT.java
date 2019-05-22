@@ -167,7 +167,7 @@ public class UpdateEntityIT extends InventoryITBase {
   public void should_update_entity_with_timestamp_literal() {
     assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
 
-    dao.updateWithBoundTimestampLiteral(FLAMETHROWER);
+    dao.updateWithTimestampLiteral(FLAMETHROWER);
 
     CqlSession session = sessionRule.session();
     Row row =
@@ -203,7 +203,7 @@ public class UpdateEntityIT extends InventoryITBase {
   public void should_update_entity_with_ttl_literal() {
     assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
 
-    dao.updateWithBoundTtlLiteral(FLAMETHROWER);
+    dao.updateWithTtlLiteral(FLAMETHROWER);
 
     CqlSession session = sessionRule.session();
     Row row =
@@ -436,13 +436,13 @@ public class UpdateEntityIT extends InventoryITBase {
     void updateWithBoundTimestamp(Product product, long timestamp);
 
     @Update(timestamp = "1000")
-    void updateWithBoundTimestampLiteral(Product product);
+    void updateWithTimestampLiteral(Product product);
 
     @Update(ttl = ":ttl")
     void updateWithBoundTtl(Product product, int ttl);
 
     @Update(ttl = "1000")
-    void updateWithBoundTtlLiteral(Product product);
+    void updateWithTtlLiteral(Product product);
 
     @Update(ifExists = true)
     ResultSet updateIfExists(Product product);
