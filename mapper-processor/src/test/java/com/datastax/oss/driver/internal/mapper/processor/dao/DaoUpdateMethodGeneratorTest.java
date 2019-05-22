@@ -32,7 +32,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DataProviderRunner.class)
-public class DaoUpdateGeneratorTest extends DaoMethodGeneratorTest {
+public class DaoUpdateMethodGeneratorTest extends DaoMethodGeneratorTest {
 
   private static final AnnotationSpec UPDATE_ANNOTATION =
       AnnotationSpec.builder(Update.class).build();
