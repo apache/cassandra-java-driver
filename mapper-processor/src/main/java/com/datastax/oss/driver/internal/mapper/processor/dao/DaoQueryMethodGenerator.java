@@ -15,22 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.BOOLEAN;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.ENTITY;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_ASYNC_PAGING_ITERABLE;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_ASYNC_RESULT_SET;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_BOOLEAN;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_ENTITY;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_LONG;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_OPTIONAL_ENTITY;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_ROW;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_VOID;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.LONG;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.OPTIONAL_ENTITY;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.PAGING_ITERABLE;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.RESULT_SET;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.ROW;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.VOID;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.UNSUPPORTED;
 
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
@@ -42,31 +27,11 @@ import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
-import java.util.EnumSet;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
 public class DaoQueryMethodGenerator extends DaoMethodGenerator {
-
-  private static final EnumSet<ReturnTypeKind> SUPPORTED_RETURN_TYPES =
-      EnumSet.of(
-          VOID,
-          FUTURE_OF_VOID,
-          BOOLEAN,
-          FUTURE_OF_BOOLEAN,
-          LONG,
-          FUTURE_OF_LONG,
-          ROW,
-          FUTURE_OF_ROW,
-          ENTITY,
-          OPTIONAL_ENTITY,
-          FUTURE_OF_ENTITY,
-          FUTURE_OF_OPTIONAL_ENTITY,
-          RESULT_SET,
-          FUTURE_OF_ASYNC_RESULT_SET,
-          PAGING_ITERABLE,
-          FUTURE_OF_ASYNC_PAGING_ITERABLE);
 
   private final String queryString;
 
@@ -83,7 +48,7 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
 
     // Validate the return type:
     ReturnType returnType = parseReturnType(methodElement.getReturnType());
-    if (!SUPPORTED_RETURN_TYPES.contains(returnType.kind)) {
+    if (returnType.kind == UNSUPPORTED) {
       context
           .getMessager()
           .error(
