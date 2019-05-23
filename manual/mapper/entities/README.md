@@ -169,11 +169,34 @@ by the mapper.  In this case, simply annotate these properties with [@Transient]
 private int notAColumn;
 ```
 
-[@ClusteringColumn]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
-[@CqlName]:          http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/CqlName.html
-[@Entity]:           http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Entity.html
-[NameConverter]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/entity/naming/NameConverter.html
-[NamingConvention]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/entity/naming/NamingConvention.html
-[@NamingStrategy]:   http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/NamingStrategy.html
-[@PartitionKey]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
-[@Transient]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Transient.html
+In addition, one may specify transient property names at the entity level by leveraging the
+[@TransientProperties] annotation:
+
+```java
+@TransientProperties({"notAColumn", "x"})
+@Entity
+public class Product {
+  @PartitionKey private UUID id;
+  private String description;
+  // these columns are not included because their names are specified in @TransientProperties
+  private int notAColumn;
+  private int x;
+}
+```
+
+Finally, any field including the `transient` keyword modifier will also be considered transient,
+i.e.:
+
+```java
+private transient int notAColumn;
+```
+
+[@ClusteringColumn]:    http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
+[@CqlName]:             http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/CqlName.html
+[@Entity]:              http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Entity.html
+[NameConverter]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/entity/naming/NameConverter.html
+[NamingConvention]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/entity/naming/NamingConvention.html
+[@NamingStrategy]:      http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/NamingStrategy.html
+[@PartitionKey]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
+[@Transient]:           http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Transient.html
+[@TransientProperties]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Transient.html
