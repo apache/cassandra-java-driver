@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.api.mapper.annotations;
 
-import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -35,7 +35,7 @@ import java.lang.annotation.Target;
  * </pre>
  *
  * The mapper annotation processor will generate an implementation, and a builder that allows you to
- * create an instance from a {@link Session}:
+ * create an instance from a {@link CqlSession}:
  *
  * <pre>
  * InventoryMapper inventoryMapper = new InventoryMapperBuilder(session).build();
