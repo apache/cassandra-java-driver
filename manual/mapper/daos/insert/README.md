@@ -22,6 +22,9 @@ corresponding additional parameters (same name, and a compatible Java type):
 void insertWithTtl(Product product, int ttl);
 ```
 
+The annotation can define a [null saving strategy](../null_saving/) that applies to the properties
+of the entity to insert.
+
 ### Return type
 
 The method can return:
