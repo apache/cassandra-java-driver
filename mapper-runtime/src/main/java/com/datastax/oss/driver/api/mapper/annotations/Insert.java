@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.mapper.annotations;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -125,4 +126,11 @@ public @interface Insert {
    * the rules of {@link Long#parseLong(String)}), the mapper will issue a compile-time warning.
    */
   String timestamp() default "";
+
+  /**
+   * How to handle null entity properties during the insertion.
+   *
+   * <p>This defaults to {@link NullSavingStrategy#DO_NOT_SET}.
+   */
+  NullSavingStrategy nullSavingStrategy() default NullSavingStrategy.DO_NOT_SET;
 }

@@ -148,11 +148,12 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
                 .map(PropertyDefinition::getCqlName)
                 .collect(Collectors.toList());
         GeneratedCodePatterns.bindParameters(
-            parameters, primaryKeyNames, selectBuilder, enclosingClass, context);
+            parameters, primaryKeyNames, selectBuilder, enclosingClass, context, false);
       } else {
         // We don't know the bind marker names in the custom clause, so use the same names as the
         // parameters, user is responsible to make them match.
-        GeneratedCodePatterns.bindParameters(parameters, selectBuilder, enclosingClass, context);
+        GeneratedCodePatterns.bindParameters(
+            parameters, selectBuilder, enclosingClass, context, false);
       }
     }
     selectBuilder

@@ -30,6 +30,7 @@ import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -404,6 +405,62 @@ public class UpdateIT extends InventoryITBase {
     assertThat(dao.findById(idTwo).getDescription()).isEqualTo(afterUpdate.getDescription());
   }
 
+  @Test
+  public void should_update_entity_and_do_not_set_null_field() {
+    // given
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+    dao.update(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+
+    // when
+    dao.updateDoNotSetNull(new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
+
+    // then
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+  }
+
+  @Test
+  public void should_update_entity_and_set_null_field() {
+    // given
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+    dao.update(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+
+    // when
+    dao.updateSetNull(new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
+
+    // then
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNull();
+  }
+
+  @Test
+  public void should_update_entity_udt_and_do_not_set_null_field() {
+    // given
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+    dao.update(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDimensions()).isNotNull();
+
+    // when
+    dao.updateDoNotSetNull(new Product(FLAMETHROWER.getId(), "desc", null));
+
+    // then
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDimensions()).isNotNull();
+  }
+
+  @Test
+  public void should_update_entity_udt_and_set_null_field() {
+    // given
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+    dao.update(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDimensions()).isNotNull();
+
+    // when
+    dao.updateSetNull(new Product(FLAMETHROWER.getId(), "desc", null));
+
+    // then
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDimensions()).isNull();
+  }
+
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
@@ -421,6 +478,12 @@ public class UpdateIT extends InventoryITBase {
 
     @Update
     void update(Product product);
+
+    @Update(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
+    void updateDoNotSetNull(Product product);
+
+    @Update(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
+    void updateSetNull(Product product);
 
     @Update(customWhereClause = "id = :id")
     void updateWhereId(Product product, UUID id);

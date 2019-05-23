@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -226,6 +227,34 @@ public class InsertIT extends InventoryITBase {
         .contains(FLAMETHROWER);
   }
 
+  @Test
+  public void should_insert_entity_and_do_not_set_null_field() {
+    // given
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+    dao.save(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+
+    // when
+    dao.saveDoNotSetNull(new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
+
+    // then
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+  }
+
+  @Test
+  public void should_insert_entity_and_set_null_field() {
+    // given
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+    dao.save(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+
+    // when
+    dao.saveSetNull(new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
+
+    // then
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNull();
+  }
+
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
@@ -237,6 +266,12 @@ public class InsertIT extends InventoryITBase {
 
     @Insert
     void save(Product product);
+
+    @Insert(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
+    void saveDoNotSetNull(Product product);
+
+    @Insert(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
+    void saveSetNull(Product product);
 
     @Insert(timestamp = ":timestamp")
     void saveWithBoundTimestamp(Product product, long timestamp);

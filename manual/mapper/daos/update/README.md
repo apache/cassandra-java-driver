@@ -51,13 +51,27 @@ ResultSet updateIfDescriptionMatches(Product product, String expectedDescription
 ```
 
 An optional IF EXISTS clause at the end of the generated UPDATE query. This is mutually exclusive
-with customIfClause (if both are set, the mapper processor will generate a compile-time error):
+with `customIfClause` (if both are set, the mapper processor will generate a compile-time error):
 
 ```java
 @Update(ifExists = true)
 boolean updateIfExists(Product product);
 ```
 
+The annotation can define a [null saving strategy](../null_saving/) that applies to the properties
+of the entity to update. This allows you to implement partial updates, by passing a "template"
+entity that only contains the properties you want to modify:
+
+```java
+// DAO method definition:
+@Update(customWhereClause = "id IN (:id1, :id2)", nullSavingStrategy = DO_NOT_SET)
+void updateWhereIdIn(Product product, UUID id1, UUID id2);
+
+// Client code:
+Product template = new Product();
+template.setDescription("Coming soon"); // all other properties remain null
+dao.updateWhereIdIn(template, 42, 43);  // Will only update 'description' on the selected rows
+```
 
 ### Return type
 
