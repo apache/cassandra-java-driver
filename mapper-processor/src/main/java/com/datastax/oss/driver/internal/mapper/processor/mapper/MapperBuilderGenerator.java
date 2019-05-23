@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.mapper;
 
-import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
@@ -51,14 +51,14 @@ public class MapperBuilderGenerator extends SingleFileCodeGenerator {
             .addJavadoc(
                 "Builds an instance of {@link $T} wrapping a driver {@link $T}.",
                 interfaceElement,
-                Session.class)
+                CqlSession.class)
             .addJavadoc(JAVADOC_PARAGRAPH_SEPARATOR)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
             .addModifiers(Modifier.PUBLIC);
     MethodSpec.Builder constructorContents =
         MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC);
     GeneratedCodePatterns.addFinalFieldAndConstructorArgument(
-        ClassName.get(Session.class), "session", classContents, constructorContents);
+        ClassName.get(CqlSession.class), "session", classContents, constructorContents);
     classContents
         .addMethod(constructorContents.build())
         .addMethod(

@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.api.mapper;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
@@ -29,17 +29,17 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class MapperContext {
 
-  private final Session session;
+  private final CqlSession session;
   private final CqlIdentifier keyspaceId;
   private final CqlIdentifier tableId;
   private final ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache;
 
-  public MapperContext(Session session) {
+  public MapperContext(CqlSession session) {
     this(session, null, null, new ConcurrentHashMap<>());
   }
 
   private MapperContext(
-      Session session,
+      CqlSession session,
       CqlIdentifier keyspaceId,
       CqlIdentifier tableId,
       ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache) {
@@ -56,7 +56,7 @@ public class MapperContext {
         : new MapperContext(session, newKeyspaceId, newTableId, nameConverterCache);
   }
 
-  public Session getSession() {
+  public CqlSession getSession() {
     return session;
   }
 
