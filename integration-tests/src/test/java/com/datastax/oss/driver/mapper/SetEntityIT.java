@@ -31,6 +31,7 @@ import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -93,6 +94,37 @@ public class SetEntityIT extends InventoryITBase {
   }
 
   @Test
+  public void should_set_entity_on_bound_statement_setting_null() {
+    CqlSession session = sessionRule.session();
+    PreparedStatement preparedStatement =
+        session.prepare("INSERT INTO product (id, description, dimensions) VALUES (?, ?, ?)");
+    BoundStatementBuilder builder = preparedStatement.boundStatementBuilder();
+
+    dao.setNullFields(
+        builder, new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
+    BoundStatement boundStatement = builder.build();
+
+    assertMatches(
+        boundStatement, new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
+  }
+
+  @Test
+  public void should_set_entity_on_bound_statement_without_setting_null() {
+    CqlSession session = sessionRule.session();
+    PreparedStatement preparedStatement =
+        session.prepare("INSERT INTO product (id, description, dimensions) VALUES (?, ?, ?)");
+    BoundStatementBuilder builder = preparedStatement.boundStatementBuilder();
+
+    dao.setDoNotSetNullFields(
+        builder, new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
+    BoundStatement boundStatement = builder.build();
+
+    // "" is in description because it was not set
+    assertMatches(
+        boundStatement, new Product(FLAMETHROWER.getId(), "", FLAMETHROWER.getDimensions()));
+  }
+
+  @Test
   public void should_set_entity_on_udt_value() {
     CqlSession session = sessionRule.session();
     UserDefinedType udtType =
@@ -133,6 +165,12 @@ public class SetEntityIT extends InventoryITBase {
 
     @SetEntity
     BoundStatement set(Product product, BoundStatement boundStatement);
+
+    @SetEntity(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
+    void setNullFields(BoundStatementBuilder builder, Product product);
+
+    @SetEntity(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
+    void setDoNotSetNullFields(BoundStatementBuilder builder, Product product);
 
     @SetEntity
     void set(BoundStatementBuilder builder, Product product);

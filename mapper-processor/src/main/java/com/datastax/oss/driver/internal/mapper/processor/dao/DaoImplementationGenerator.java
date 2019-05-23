@@ -17,6 +17,11 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.mapper.MapperContext;
+import com.datastax.oss.driver.api.mapper.annotations.Insert;
+import com.datastax.oss.driver.api.mapper.annotations.Query;
+import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
+import com.datastax.oss.driver.api.mapper.annotations.Update;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.mapper.DaoBase;
@@ -26,6 +31,7 @@ import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
+import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -226,8 +232,11 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
                 ParameterizedTypeName.get(
                     ClassName.get(CompletableFuture.class), ClassName.get(interfaceElement)))
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-            .addParameter(MapperContext.class, "context")
-            .beginControlFlow("try");
+            .addParameter(MapperContext.class, "context");
+
+    generateProtocolVersionCheck(initAsyncBuilder);
+
+    initAsyncBuilder.beginControlFlow("try");
 
     // Start a constructor call: we build it dynamically because the number of parameters depends on
     // the entity helpers and prepared statements below.
@@ -295,6 +304,65 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
         .addStatement("return $T.failedFuture(t)", CompletableFutures.class)
         .endControlFlow();
     return initAsyncBuilder;
+  }
+
+  private void generateProtocolVersionCheck(MethodSpec.Builder builder) {
+    boolean hasDoNotSetStatement =
+        preparedStatements
+            .stream()
+            .map(v -> v.methodElement)
+            .anyMatch(
+                v ->
+                    updateHasDoNotSet(v)
+                        || insertHasDoNotSet(v)
+                        || setEntityHasDoNotSet(v)
+                        || queryHasDoNotSet(v));
+
+    if (hasDoNotSetStatement) {
+      builder
+          .beginControlFlow(
+              "if (context.getSession().getContext().getProtocolVersion().getCode() <= $T.Version.V3)",
+              ProtocolConstants.class)
+          .addStatement(
+              "throw new IllegalArgumentException($S)",
+              "You cannot use NullSavingStrategy.DO_NOT_SET for protocol version V3.")
+          .endControlFlow()
+          .build();
+    }
+  }
+
+  private boolean queryHasDoNotSet(ExecutableElement v) {
+    Query annotation = v.getAnnotation(Query.class);
+    if (annotation != null) {
+      return annotation.nullSavingStrategy() == NullSavingStrategy.DO_NOT_SET;
+    }
+    return false;
+  }
+
+  private boolean setEntityHasDoNotSet(ExecutableElement v) {
+    SetEntity annotation = v.getAnnotation(SetEntity.class);
+    if (annotation != null) {
+      return annotation.nullSavingStrategy() == NullSavingStrategy.DO_NOT_SET;
+    }
+    return false;
+  }
+
+  private boolean insertHasDoNotSet(ExecutableElement v) {
+    Insert annotation = v.getAnnotation(Insert.class);
+    if (annotation != null) {
+      return annotation.nullSavingStrategy() == NullSavingStrategy.DO_NOT_SET;
+    } else {
+      return false;
+    }
+  }
+
+  private boolean updateHasDoNotSet(ExecutableElement v) {
+    Update annotation = v.getAnnotation(Update.class);
+    if (annotation != null) {
+      return annotation.nullSavingStrategy() == NullSavingStrategy.DO_NOT_SET;
+    } else {
+      return false;
+    }
   }
 
   /** Generates the DAO's init() method: it's a simple synchronous wrapper of initAsync(). */

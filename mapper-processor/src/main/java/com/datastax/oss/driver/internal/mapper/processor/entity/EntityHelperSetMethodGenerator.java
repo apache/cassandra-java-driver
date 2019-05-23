@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
 import com.datastax.oss.driver.api.core.data.SettableByName;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.BindableHandlingSharedCode;
@@ -48,7 +49,6 @@ public class EntityHelperSetMethodGenerator implements MethodGenerator {
   public Optional<MethodSpec> generate() {
 
     // TODO add an ignore mechanism? this fails if a property is missing on the target.
-    // TODO different strategies for null values? (null vs unset)
 
     // The method's type variable: <SettableT extends SettableByName<SettableT>>
     TypeVariableName settableT = TypeVariableName.get("SettableT");
@@ -63,6 +63,8 @@ public class EntityHelperSetMethodGenerator implements MethodGenerator {
             .addTypeVariable(settableT)
             .addParameter(ParameterSpec.builder(entityDefinition.getClassName(), "entity").build())
             .addParameter(ParameterSpec.builder(settableT, "target").build())
+            .addParameter(
+                ParameterSpec.builder(NullSavingStrategy.class, "nullSavingStrategy").build())
             .returns(settableT);
 
     for (PropertyDefinition property : entityDefinition.getAllColumns()) {
@@ -72,7 +74,8 @@ public class EntityHelperSetMethodGenerator implements MethodGenerator {
           CodeBlock.of("entity.$L()", property.getGetterName()),
           "target",
           injectBuilder,
-          enclosingClass);
+          enclosingClass,
+          true);
     }
     injectBuilder.addCode("\n").addStatement("return target");
     return Optional.of(injectBuilder.build());
