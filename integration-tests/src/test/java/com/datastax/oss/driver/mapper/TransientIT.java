@@ -30,6 +30,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.Transient;
+import com.datastax.oss.driver.api.mapper.annotations.TransientProperties;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -96,7 +97,7 @@ public class TransientIT {
     EntityWithTransientAnnotatedGetter retrievedEntity = dao.findById(key);
     assertThat(retrievedEntity.getId()).isEqualTo(key);
     assertThat(retrievedEntity.getV()).isEqualTo(1);
-    // column should not have been set since field was @Transient-annotated
+    // column should not have been set since getter was @Transient-annotated
     assertThat(retrievedEntity.getNotAColumn()).isNull();
   }
 
@@ -113,8 +114,27 @@ public class TransientIT {
     EntityWithTransientKeyword retrievedEntity = dao.findById(key);
     assertThat(retrievedEntity.getId()).isEqualTo(key);
     assertThat(retrievedEntity.getV()).isEqualTo(1);
-    // column should not have been set since field was @Transient-annotated
+    // column should not have been set since field had transient keyword
     assertThat(retrievedEntity.getNotAColumn()).isNull();
+  }
+
+  @Test
+  public void should_ignore_properties_included_in_transient_properties_keyword() {
+    EntityWithTransientPropertiesAnnotationDao dao =
+        mapper.entityWithTransientPropertiesAnnotation(
+            sessionRule.keyspace(), CqlIdentifier.fromCql("entity"));
+
+    int key = keyProvider.incrementAndGet();
+    EntityWithTransientPropertiesAnnotation entity =
+        new EntityWithTransientPropertiesAnnotation(key, 1, 7, 10L);
+    dao.save(entity);
+
+    EntityWithTransientPropertiesAnnotation retrievedEntity = dao.findById(key);
+    assertThat(retrievedEntity.getId()).isEqualTo(key);
+    assertThat(retrievedEntity.getV()).isEqualTo(1);
+    // columns should not have been set since field was @Transient-annotated
+    assertThat(retrievedEntity.getNotAColumn()).isNull();
+    assertThat(retrievedEntity.getAlsoNotAColumn()).isNull();
   }
 
   @Entity
@@ -126,9 +146,9 @@ public class TransientIT {
 
     @Transient private Integer notAColumn;
 
-    public EntityWithTransientAnnotatedField() {}
+    EntityWithTransientAnnotatedField() {}
 
-    public EntityWithTransientAnnotatedField(int id, int v, Integer notAColumn) {
+    EntityWithTransientAnnotatedField(int id, int v, Integer notAColumn) {
       this.id = id;
       this.v = v;
       this.notAColumn = notAColumn;
@@ -150,10 +170,12 @@ public class TransientIT {
       this.v = v;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public Integer getNotAColumn() {
       return notAColumn;
     }
 
+    @SuppressWarnings("unused")
     public void setNotAColumn(Integer notAColumn) {
       this.notAColumn = notAColumn;
     }
@@ -168,9 +190,9 @@ public class TransientIT {
 
     private Integer notAColumn;
 
-    public EntityWithTransientAnnotatedGetter() {}
+    EntityWithTransientAnnotatedGetter() {}
 
-    public EntityWithTransientAnnotatedGetter(int id, int v, Integer notAColumn) {
+    EntityWithTransientAnnotatedGetter(int id, int v, Integer notAColumn) {
       this.id = id;
       this.v = v;
       this.notAColumn = notAColumn;
@@ -193,10 +215,12 @@ public class TransientIT {
     }
 
     @Transient
+    @SuppressWarnings("WeakerAccess")
     public Integer getNotAColumn() {
       return notAColumn;
     }
 
+    @SuppressWarnings("unused")
     public void setNotAColumn(Integer notAColumn) {
       this.notAColumn = notAColumn;
     }
@@ -211,9 +235,9 @@ public class TransientIT {
 
     private transient Integer notAColumn;
 
-    public EntityWithTransientKeyword() {}
+    EntityWithTransientKeyword() {}
 
-    public EntityWithTransientKeyword(int id, int v, Integer notAColumn) {
+    EntityWithTransientKeyword(int id, int v, Integer notAColumn) {
       this.id = id;
       this.v = v;
       this.notAColumn = notAColumn;
@@ -235,12 +259,73 @@ public class TransientIT {
       this.v = v;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public Integer getNotAColumn() {
       return notAColumn;
     }
 
+    @SuppressWarnings("unused")
     public void setNotAColumn(Integer notAColumn) {
       this.notAColumn = notAColumn;
+    }
+  }
+
+  @TransientProperties({"notAColumn", "alsoNotAColumn"})
+  @Entity
+  public static class EntityWithTransientPropertiesAnnotation {
+
+    @PartitionKey private int id;
+
+    private int v;
+
+    private transient Integer notAColumn;
+
+    private transient Long alsoNotAColumn;
+
+    EntityWithTransientPropertiesAnnotation() {}
+
+    EntityWithTransientPropertiesAnnotation(
+        int id, int v, Integer notAColumn, Long alsoNotAColumn) {
+      this.id = id;
+      this.v = v;
+      this.notAColumn = notAColumn;
+      this.alsoNotAColumn = alsoNotAColumn;
+    }
+
+    public int getId() {
+      return id;
+    }
+
+    public void setId(int id) {
+      this.id = id;
+    }
+
+    public int getV() {
+      return v;
+    }
+
+    public void setV(int v) {
+      this.v = v;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public Integer getNotAColumn() {
+      return notAColumn;
+    }
+
+    @SuppressWarnings("unused")
+    public void setNotAColumn(Integer notAColumn) {
+      this.notAColumn = notAColumn;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public Long getAlsoNotAColumn() {
+      return alsoNotAColumn;
+    }
+
+    @SuppressWarnings("unused")
+    public void setAlsoNotAColumn(Long alsoNotAColumn) {
+      this.alsoNotAColumn = alsoNotAColumn;
     }
   }
 
@@ -271,6 +356,15 @@ public class TransientIT {
     void save(EntityWithTransientKeyword entity);
   }
 
+  @Dao
+  public interface EntityWithTransientPropertiesAnnotationDao {
+    @Select
+    EntityWithTransientPropertiesAnnotation findById(int id);
+
+    @Insert
+    void save(EntityWithTransientPropertiesAnnotation entity);
+  }
+
   @Mapper
   public interface TestMapper {
     @DaoFactory
@@ -283,6 +377,10 @@ public class TransientIT {
 
     @DaoFactory
     EntityWithTransientKeywordDao entityWithTransientKeywordDao(
+        @DaoKeyspace CqlIdentifier keyspace, @DaoTable CqlIdentifier table);
+
+    @DaoFactory
+    EntityWithTransientPropertiesAnnotationDao entityWithTransientPropertiesAnnotation(
         @DaoKeyspace CqlIdentifier keyspace, @DaoTable CqlIdentifier table);
   }
 }

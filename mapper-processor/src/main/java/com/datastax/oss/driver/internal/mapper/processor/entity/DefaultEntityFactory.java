@@ -20,12 +20,15 @@ import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.NamingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Transient;
+import com.datastax.oss.driver.api.mapper.annotations.TransientProperties;
 import com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import java.beans.Introspector;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,6 +61,7 @@ public class DefaultEntityFactory implements EntityFactory {
     // TODO inherit annotations and properties from superclass / parent interface
 
     CqlNameGenerator cqlNameGenerator = buildCqlNameGenerator(classElement);
+    Set<String> transientProperties = getTransientPropertyNames(classElement);
 
     SortedMap<Integer, PropertyDefinition> partitionKey = new TreeMap<>();
     SortedMap<Integer, PropertyDefinition> clusteringColumns = new TreeMap<>();
@@ -86,7 +90,17 @@ public class DefaultEntityFactory implements EntityFactory {
       }
       VariableElement field = findField(classElement, propertyName, typeMirror);
 
-      if (isTransient(getMethod, field)) {
+      int partitionKeyIndex = getPartitionKeyIndex(getMethod, field);
+      int clusteringColumnIndex = getClusteringColumnIndex(getMethod, field, partitionKeyIndex);
+
+      if (isTransient(
+          propertyName,
+          transientProperties,
+          classElement,
+          getMethod,
+          field,
+          partitionKeyIndex,
+          clusteringColumnIndex)) {
         continue;
       }
 
@@ -100,8 +114,6 @@ public class DefaultEntityFactory implements EntityFactory {
               propertyType,
               cqlNameGenerator);
 
-      int partitionKeyIndex = getPartitionKeyIndex(getMethod, field);
-      int clusteringColumnIndex = getClusteringColumnIndex(getMethod, field, partitionKeyIndex);
       if (partitionKeyIndex >= 0) {
         PropertyDefinition previous = partitionKey.putIfAbsent(partitionKeyIndex, property);
         if (previous != null) {
@@ -236,13 +248,7 @@ public class DefaultEntityFactory implements EntityFactory {
 
     if (getterAnnotation != null) {
       if (partitionKeyIndex >= 0) {
-        context
-            .getMessager()
-            .error(
-                getMethod,
-                "Properties can't be annotated with both @%s and @%s.",
-                PartitionKey.class.getSimpleName(),
-                ClusteringColumn.class.getSimpleName());
+        reportMultipleAnnotationError(getMethod, PartitionKey.class, ClusteringColumn.class);
         return -1;
       } else if (fieldAnnotation != null) {
         context
@@ -256,13 +262,7 @@ public class DefaultEntityFactory implements EntityFactory {
       return getterAnnotation.value();
     } else if (fieldAnnotation != null) {
       if (partitionKeyIndex >= 0) {
-        context
-            .getMessager()
-            .error(
-                field,
-                "Properties can't be annotated with both @%s and @%s.",
-                PartitionKey.class.getSimpleName(),
-                ClusteringColumn.class.getSimpleName());
+        reportMultipleAnnotationError(field, PartitionKey.class, ClusteringColumn.class);
       }
       return fieldAnnotation.value();
     } else {
@@ -353,16 +353,79 @@ public class DefaultEntityFactory implements EntityFactory {
     return new TypeMirror[0];
   }
 
-  private boolean isTransient(ExecutableElement getMethod, VariableElement field) {
-    Transient getterAnnotation = getMethod.getAnnotation(Transient.class);
-    if (getterAnnotation != null) {
+  private boolean isTransient(
+      String propertyName,
+      Set<String> transientProperties,
+      TypeElement classElement,
+      ExecutableElement getMethod,
+      VariableElement field,
+      int partitionKeyIndex,
+      int clusteringColumnIndex) {
+
+    // check if property is present in @TransientProperties
+    Class<?> otherAnnotationClass =
+        partitionKeyIndex >= 0
+            ? PartitionKey.class
+            : clusteringColumnIndex >= 0 ? ClusteringColumn.class : null;
+    if (transientProperties.contains(propertyName)) {
+      if (otherAnnotationClass != null) {
+        context
+            .getMessager()
+            .error(
+                classElement,
+                "Properties included in @%s can't be annotated with @%s.",
+                TransientProperties.class.getSimpleName(),
+                otherAnnotationClass.getSimpleName());
+      }
       return true;
     }
 
-    if (field != null) {
-      return field.getModifiers().contains(Modifier.TRANSIENT)
-          || field.getAnnotation(Transient.class) != null;
+    // check if property is annotated with @Transient
+    Transient getterAnnotation = getMethod.getAnnotation(Transient.class);
+    boolean isTransient;
+    Element transientElement = getMethod;
+    isTransient = getterAnnotation != null;
+
+    if (!isTransient && field != null) {
+      transientElement = null;
+      if (field.getModifiers().contains(Modifier.TRANSIENT)) {
+        isTransient = true;
+        if (otherAnnotationClass != null) {
+          context
+              .getMessager()
+              .error(
+                  field,
+                  "Field with transient keyword modifier can't be annotated with @%s.",
+                  otherAnnotationClass.getSimpleName());
+        }
+      } else if (field.getAnnotation(Transient.class) != null) {
+        isTransient = true;
+        transientElement = field;
+      }
     }
-    return false;
+
+    // report if property has both @Transient annotation and another annotation.
+    if (transientElement != null && otherAnnotationClass != null) {
+      reportMultipleAnnotationError(transientElement, Transient.class, otherAnnotationClass);
+    }
+    return isTransient;
+  }
+
+  private Set<String> getTransientPropertyNames(TypeElement classElement) {
+    TransientProperties transientProperties = classElement.getAnnotation(TransientProperties.class);
+
+    return transientProperties != null
+        ? Sets.newHashSet(transientProperties.value())
+        : Collections.emptySet();
+  }
+
+  private void reportMultipleAnnotationError(Element element, Class<?> a0, Class<?> a1) {
+    context
+        .getMessager()
+        .error(
+            element,
+            "Properties can't be annotated with both @%s and @%s.",
+            a0.getSimpleName(),
+            a1.getSimpleName());
   }
 }
