@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.entity.EntityDefinition;
@@ -119,13 +120,23 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
     List<? extends VariableElement> parameters = methodElement.getParameters();
     String entityParameterName = parameters.get(0).getSimpleName().toString();
 
-    String customWhereClause = methodElement.getAnnotation(Update.class).customWhereClause();
+    Update annotation = methodElement.getAnnotation(Update.class);
+    String customWhereClause = annotation.customWhereClause();
+    NullSavingStrategy nullSavingStrategy = annotation.nullSavingStrategy();
+
     if (customWhereClause.isEmpty()) {
       // We generated an update by primary key (see maybeAddWhereClause), all entity properties are
       // present as placeholders.
       methodBuilder.addStatement(
-          "$L.set($L, boundStatementBuilder)", helperFieldName, entityParameterName);
+          "$1L.set($2L, boundStatementBuilder, $3T.$4L)",
+          helperFieldName,
+          entityParameterName,
+          NullSavingStrategy.class,
+          nullSavingStrategy);
     } else {
+      methodBuilder.addStatement(
+          "$1T nullSavingStrategy = $1T.$2L", NullSavingStrategy.class, nullSavingStrategy);
+
       // Only non-PK properties are present in SET ... clauses.
       // (if the custom clause has custom placeholders, this will be addressed below)
       for (PropertyDefinition property : entityDefinition.getRegularColumns()) {
@@ -135,14 +146,15 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
             CodeBlock.of("$L.$L()", firstParameter.getSimpleName(), property.getGetterName()),
             "boundStatementBuilder",
             methodBuilder,
-            enclosingClass);
+            enclosingClass,
+            true);
       }
     }
 
     // Handle all remaining parameters as additional bound values in customWhereClause
     if (parameters.size() > 1) {
       GeneratedCodePatterns.bindParameters(
-          parameters.subList(1, parameters.size()), methodBuilder, enclosingClass, context);
+          parameters.subList(1, parameters.size()), methodBuilder, enclosingClass, context, false);
     }
 
     methodBuilder

@@ -35,6 +35,8 @@ import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
+import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -54,6 +56,7 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
+@CassandraRequirement(min = "2.2", description = "support for unset values")
 public class QueryIT {
   private static CcmRule ccm = CcmRule.getInstance();
 
@@ -98,6 +101,16 @@ public class QueryIT {
         dao.insert(new TestEntity(1, i, i));
       }
     }
+  }
+
+  @Test
+  public void should_insert_into_using_query() {
+    TestDao dao = mapper.dao(null, TABLE_ID);
+    // The query uses ${qualifiedTableId} but the DAO doesn't specify a keyspace, so the table
+    // will be unqualified in the query. This still works since the session has a default keyspace.
+    dao.insertWithQualifiedTableId(100, 1, 1);
+
+    assertThat(defaultDao.findById(100)).isNotNull();
   }
 
   @Test
@@ -280,10 +293,59 @@ public class QueryIT {
     assertThat(iterable.hasMorePages()).isFalse();
   }
 
+  @Test
+  public void should_insert_entity_and_do_not_set_null_field() {
+    // given
+    TestDao dao = mapper.dao(null, TABLE_ID);
+    // The query uses ${qualifiedTableId} but the DAO doesn't specify a keyspace, so the table
+    // will be unqualified in the query. This still works since the session has a default keyspace.
+    dao.insertWithQualifiedTableId(1000, 1, 1);
+
+    assertThat(defaultDao.findById(1000)).isNotNull();
+
+    // when
+    dao.insertWithQualifiedTableIdDoNotSetNull(1000, 1, null);
+
+    // then
+    assertThat(defaultDao.findByIdAndRank(1000, 1).getValue()).isNotNull();
+  }
+
+  @Test
+  public void should_insert_entity_and_set_null_field() {
+    // given
+    TestDao dao = mapper.dao(null, TABLE_ID);
+    // The query uses ${qualifiedTableId} but the DAO doesn't specify a keyspace, so the table
+    // will be unqualified in the query. This still works since the session has a default keyspace.
+    dao.insertWithQualifiedTableId(2000, 1, 1);
+
+    assertThat(defaultDao.findById(2000)).isNotNull();
+
+    // when
+    dao.insertWithQualifiedTableIdSetNull(2000, 1, null);
+
+    // then
+    assertThat(defaultDao.findByIdAndRank(2000, 1).getValue()).isNull();
+  }
+
   @Dao
   public interface TestDao {
     @Insert
     void insert(TestEntity entity);
+
+    @Query("INSERT INTO ${qualifiedTableId} (id, rank, value) VALUES (:id, :rank, :value)")
+    void insertWithQualifiedTableId(int id, int rank, Integer value);
+
+    @Query(
+      value = "INSERT INTO ${qualifiedTableId} (id, rank, value) VALUES (:id, :rank, :value)",
+      nullSavingStrategy = NullSavingStrategy.DO_NOT_SET
+    )
+    void insertWithQualifiedTableIdDoNotSetNull(int id, int rank, Integer value);
+
+    @Query(
+      value = "INSERT INTO ${qualifiedTableId} (id, rank, value) VALUES (:id, :rank, :value)",
+      nullSavingStrategy = NullSavingStrategy.SET_TO_NULL
+    )
+    void insertWithQualifiedTableIdSetNull(int id, int rank, Integer value);
 
     @Query("DELETE FROM ${qualifiedTableId} WHERE id = :id and rank = :rank")
     void deleteWithQualifiedTableId(int id, int rank);
@@ -348,11 +410,11 @@ public class QueryIT {
 
     @ClusteringColumn private int rank;
 
-    private int value;
+    private Integer value;
 
     public TestEntity() {}
 
-    public TestEntity(int id, int rank, int value) {
+    public TestEntity(int id, int rank, Integer value) {
       this.id = id;
       this.rank = rank;
       this.value = value;
@@ -374,11 +436,11 @@ public class QueryIT {
       this.rank = rank;
     }
 
-    public int getValue() {
+    public Integer getValue() {
       return value;
     }
 
-    public void setValue(int value) {
+    public void setValue(Integer value) {
       this.value = value;
     }
   }

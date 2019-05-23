@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.type.ListType;
 import com.datastax.oss.driver.api.core.type.MapType;
 import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
@@ -57,6 +58,8 @@ public class GeneratedCodePatterns {
           .put(TypeName.INT, "Int")
           .put(TypeName.LONG, "Long")
           .build();
+
+  private static final String NULL_SAVING_STRATEGY = "nullSavingStrategy";
 
   /** Starts the generation of a method that overrides an interface method. */
   public static MethodSpec.Builder override(ExecutableElement interfaceMethod) {
@@ -95,8 +98,9 @@ public class GeneratedCodePatterns {
       List<? extends VariableElement> parameters,
       MethodSpec.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass,
-      ProcessorContext context) {
-    bindParameters(parameters, null, methodBuilder, enclosingClass, context);
+      ProcessorContext context,
+      boolean useNullSavingStrategy) {
+    bindParameters(parameters, null, methodBuilder, enclosingClass, context, useNullSavingStrategy);
   }
 
   /**
@@ -111,7 +115,8 @@ public class GeneratedCodePatterns {
       List<CodeBlock> bindMarkerNames,
       MethodSpec.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass,
-      ProcessorContext context) {
+      ProcessorContext context,
+      boolean useNullSavingStrategy) {
 
     assert bindMarkerNames == null || bindMarkerNames.size() == parameters.size();
     for (int i = 0; i < parameters.size(); i++) {
@@ -125,7 +130,8 @@ public class GeneratedCodePatterns {
             CodeBlock.of("$L", parameterName),
             "boundStatementBuilder",
             methodBuilder,
-            enclosingClass);
+            enclosingClass,
+            useNullSavingStrategy);
       } else {
         setValue(
             bindMarkerNames.get(i),
@@ -133,7 +139,8 @@ public class GeneratedCodePatterns {
             CodeBlock.of("$L", parameterName),
             "boundStatementBuilder",
             methodBuilder,
-            enclosingClass);
+            enclosingClass,
+            useNullSavingStrategy);
       }
     }
   }
@@ -162,7 +169,17 @@ public class GeneratedCodePatterns {
       String targetName,
       MethodSpec.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass) {
+    setValue(cqlName, type, valueExtractor, targetName, methodBuilder, enclosingClass, false);
+  }
 
+  public static void setValue(
+      CodeBlock cqlName,
+      PropertyType type,
+      CodeBlock valueExtractor,
+      String targetName,
+      MethodSpec.Builder methodBuilder,
+      BindableHandlingSharedCode enclosingClass,
+      boolean useNullSavingStrategy) {
     methodBuilder.addCode("\n");
 
     if (type instanceof PropertyType.Simple) {
@@ -172,12 +189,16 @@ public class GeneratedCodePatterns {
         // Primitive type: use dedicated setter, since it is optimized to avoid boxing.
         //     target = target.setInt("length", entity.getLength());
         methodBuilder.addStatement(
-            "$1L = $1L.set$2L($3L, $4L)", targetName, primitiveAccessor, cqlName, valueExtractor);
+            "$1L = $1L.set$2L($3L, $4L)",
+            targetName,
+            primitiveAccessor,
+            cqlName,
+            valueExtractor); // null saving strategy for primitiveSet does not apply
       } else if (typeName instanceof ClassName) {
         // Unparameterized class: use the generic, class-based setter.
         //     target = target.set("id", entity.getId(), UUID.class);
-        methodBuilder.addStatement(
-            "$1L = $1L.set($2L, $3L, $4T.class)", targetName, cqlName, valueExtractor, typeName);
+        generateSetWithClass(
+            cqlName, valueExtractor, targetName, methodBuilder, typeName, useNullSavingStrategy);
       } else {
         // Parameterized type: create a constant and use the GenericType-based setter.
         //     private static final GenericType<List<String>> GENERIC_TYPE =
@@ -186,12 +207,14 @@ public class GeneratedCodePatterns {
         // Note that lists, sets and maps of unparameterized classes also fall under that
         // category. Their setter creates a GenericType under the hood, so there's no performance
         // advantage in calling them instead of the generic set().
-        methodBuilder.addStatement(
-            "$1L = $1L.set($2L, $3L, $4L)",
-            targetName,
+        generateParameterizedSet(
             cqlName,
             valueExtractor,
-            enclosingClass.addGenericTypeConstant(typeName));
+            targetName,
+            methodBuilder,
+            typeName,
+            enclosingClass,
+            useNullSavingStrategy);
       }
     } else if (type instanceof PropertyType.SingleEntity) {
       ClassName entityClass = ((PropertyType.SingleEntity) type).entityName;
@@ -222,8 +245,22 @@ public class GeneratedCodePatterns {
           .addStatement("$T $L = $L.newValue()", UdtValue.class, udtValueName, udtTypeName);
       String childHelper = enclosingClass.addEntityHelperField(entityClass);
       methodBuilder
-          .addStatement("$L.set($L, $L)", childHelper, valueName, udtValueName)
+          // driver doesn't have the ability to send partial UDT, unset values values will be
+          // serialized to null - set NullSavingStrategy.DO_NOT_SET explicitly
+          .addStatement(
+              "$L.set($L, $L,  $T.$L)",
+              childHelper,
+              valueName,
+              udtValueName,
+              NullSavingStrategy.class,
+              NullSavingStrategy.DO_NOT_SET)
           .addStatement("$1L = $1L.setUdtValue($2L, $3L)", targetName, cqlName, udtValueName)
+          .nextControlFlow(
+              "else if ($L == $T.$L)",
+              NULL_SAVING_STRATEGY,
+              NullSavingStrategy.class,
+              NullSavingStrategy.SET_TO_NULL)
+          .addStatement("$1L = $1L.setUdtValue($2L, null)", targetName, cqlName)
           .endControlFlow();
     } else {
       // Collection of other entity class(es): the CQL column is a collection of mapped UDTs
@@ -255,7 +292,76 @@ public class GeneratedCodePatterns {
               cqlName,
               rawCollectionName,
               enclosingClass.addGenericTypeConstant(type.asRawTypeName()))
+          .nextControlFlow(
+              "else if ($L == $T.$L)",
+              NULL_SAVING_STRATEGY,
+              NullSavingStrategy.class,
+              NullSavingStrategy.SET_TO_NULL)
+          .addStatement(
+              "$1L = $1L.set($2L, null, $3L)",
+              targetName,
+              cqlName,
+              enclosingClass.addGenericTypeConstant(type.asRawTypeName()))
           .endControlFlow();
+    }
+  }
+
+  private static void generateParameterizedSet(
+      CodeBlock cqlName,
+      CodeBlock valueExtractor,
+      String targetName,
+      MethodSpec.Builder methodBuilder,
+      TypeName typeName,
+      BindableHandlingSharedCode enclosingClass,
+      boolean useNullSavingStrategy) {
+    generateSetWithNullSavingStrategy(
+        valueExtractor,
+        methodBuilder,
+        CodeBlock.of(
+            "$1L = $1L.set($2L, $3L, $4L)",
+            targetName,
+            cqlName,
+            valueExtractor,
+            enclosingClass.addGenericTypeConstant(typeName)),
+        useNullSavingStrategy);
+  }
+
+  private static void generateSetWithClass(
+      CodeBlock cqlName,
+      CodeBlock valueExtractor,
+      String targetName,
+      MethodSpec.Builder methodBuilder,
+      TypeName typeName,
+      boolean useNullSavingStrategy) {
+
+    generateSetWithNullSavingStrategy(
+        valueExtractor,
+        methodBuilder,
+        CodeBlock.of(
+            "$1L = $1L.set($2L, $3L, $4T.class)", targetName, cqlName, valueExtractor, typeName),
+        useNullSavingStrategy);
+  }
+
+  /**
+   * If this method is invoked with useNullSavingStrategy = true it assumes that NullSavingStrategy
+   * nullSavingStrategy = ...; variable is already defined on the MethodBuilder.
+   */
+  private static void generateSetWithNullSavingStrategy(
+      CodeBlock valueExtractor,
+      MethodSpec.Builder methodBuilder,
+      CodeBlock nonNullStatement,
+      boolean useNullSavingStrategy) {
+    if (useNullSavingStrategy) {
+      methodBuilder.beginControlFlow(
+          "if ($1L != null || $2L == $3T.$4L)",
+          valueExtractor,
+          NULL_SAVING_STRATEGY,
+          NullSavingStrategy.class,
+          NullSavingStrategy.SET_TO_NULL);
+      methodBuilder.addStatement(nonNullStatement);
+      methodBuilder.endControlFlow();
+    } else {
+      methodBuilder.addStatement(nonNullStatement);
     }
   }
 
@@ -269,14 +375,16 @@ public class GeneratedCodePatterns {
       CodeBlock valueExtractor,
       String targetName,
       MethodSpec.Builder methodBuilder,
-      BindableHandlingSharedCode enclosingClass) {
+      BindableHandlingSharedCode enclosingClass,
+      boolean useNullSavingStrategy) {
     setValue(
         CodeBlock.of("$S", cqlName),
         type,
         valueExtractor,
         targetName,
         methodBuilder,
-        enclosingClass);
+        enclosingClass,
+        useNullSavingStrategy);
   }
 
   /**
@@ -314,7 +422,15 @@ public class GeneratedCodePatterns {
       String entityHelperName = enclosingClass.addEntityHelperField(entityClass);
       conversionBuilder
           .addStatement("$T $L = $L.newValue()", UdtValue.class, rawObjectName, udtTypeName)
-          .addStatement("$L.set($L, $L)", entityHelperName, mappedObjectName, rawObjectName);
+          // driver doesn't have the ability to send partial UDT, unset values values will be
+          // serialized to null - set NullSavingStrategy.DO_NOT_SET explicitly
+          .addStatement(
+              "$L.set($L, $L, $T.$L)",
+              entityHelperName,
+              mappedObjectName,
+              rawObjectName,
+              NullSavingStrategy.class,
+              NullSavingStrategy.DO_NOT_SET);
     } else if (type instanceof PropertyType.EntityList) {
       TypeName rawCollectionType = type.asRawTypeName();
       conversionBuilder.addStatement(

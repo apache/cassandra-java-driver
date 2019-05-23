@@ -24,10 +24,15 @@ the query yourself, and just need the conversion logic.
 ### Parameters
 
 The method must have two parameters: one is the entity instance, the other must be a subtype of
-[SettableByName] (the most likely candidates are [BoundStatement], [BoundStatementBuilder] and
+[SettableByName] \(the most likely candidates are [BoundStatement], [BoundStatementBuilder] and
 [UdtValue]). Note that you can't use [SettableByName] itself.
 
 The order of the parameters does not matter.
+
+The annotation can define a [null saving strategy](../null_saving/) that applies to the properties
+of the object to set. This is only really useful with bound statements (or bound statement
+builders): if the target is a [UdtValue], the driver sends null fields in the serialized form
+anyway, so both strategies are equivalent.
 
 ### Return type
 
