@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
-import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
@@ -30,7 +29,6 @@ import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
-import com.datastax.oss.driver.internal.core.cql.DefaultPrepareRequest;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -56,9 +54,7 @@ public class DaoBase {
       // methods will know how to deal with this.
       return CompletableFuture.completedFuture(null);
     } else {
-      return context
-          .getSession()
-          .execute(new DefaultPrepareRequest(statement), PrepareRequest.ASYNC);
+      return context.getSession().prepareAsync(statement);
     }
   }
 
@@ -121,7 +117,7 @@ public class DaoBase {
   }
 
   protected ResultSet execute(Statement<?> statement) {
-    return context.getSession().execute(statement, Statement.SYNC);
+    return context.getSession().execute(statement);
   }
 
   protected boolean executeAndMapWasAppliedToBoolean(Statement<?> statement) {
@@ -180,11 +176,7 @@ public class DaoBase {
   }
 
   protected CompletableFuture<AsyncResultSet> executeAsync(Statement<?> statement) {
-    CompletionStage<AsyncResultSet> stage =
-        context.getSession().execute(statement, Statement.ASYNC);
-    // We use the generic execute which allows null results, but an async processor should always
-    // return a non-null stage
-    assert stage != null;
+    CompletionStage<AsyncResultSet> stage = context.getSession().executeAsync(statement);
     // We allow DAO interfaces to return CompletableFuture instead of CompletionStage. This method
     // returns CompletableFuture, which makes the implementation code a bit simpler to generate.
     // In practice this has no performance impact, because the default implementation of
