@@ -22,6 +22,10 @@ public interface PropertyDefinition {
 
   CodeBlock getCqlName();
 
+  default CodeBlock getCqlResultName() {
+    return getCqlName();
+  }
+
   String getGetterName();
 
   String getSetterName();

@@ -62,11 +62,21 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
     String returnName = "returnValue";
     getBuilder.addStatement("$1T $2L = new $1T()", returnType, returnName);
 
-    for (PropertyDefinition property : entityDefinition.getAllColumns()) {
+    for (PropertyDefinition property : entityDefinition.getAllValues()) {
       PropertyType type = property.getType();
       CodeBlock cqlName = property.getCqlName();
+      CodeBlock cqlResultName = property.getCqlResultName();
       String setterName = property.getSetterName();
       getBuilder.addCode("\n");
+      // if the result name is not the same as the name, it's likely this is a computed
+      // value that is not part of the table's definition. In this case, we should check
+      // to see if the definition is present in the result set before setting it.
+      // TODO: there isn't a way of doing this without throwing an Exception at the GettableByName
+      // level, so we simply wrap in try catch, should we find a better way to do this?
+      boolean conditionallySet = !cqlName.equals(cqlResultName);
+      if (conditionallySet) {
+        getBuilder.beginControlFlow("try");
+      }
       if (type instanceof PropertyType.Simple) {
         TypeName typeName = ((PropertyType.Simple) type).typeName;
         String primitiveAccessor = GeneratedCodePatterns.PRIMITIVE_ACCESSORS.get(typeName);
@@ -74,12 +84,12 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
           // Primitive type: use dedicated getter, since it is optimized to avoid boxing
           //     returnValue.setLength(source.getInt("length"));
           getBuilder.addStatement(
-              "returnValue.$L(source.get$L($L))", setterName, primitiveAccessor, cqlName);
+              "returnValue.$L(source.get$L($L))", setterName, primitiveAccessor, cqlResultName);
         } else if (typeName instanceof ClassName) {
           // Unparameterized class: use the generic, class-based getter:
           //     returnValue.setId(source.get("id", UUID.class));
           getBuilder.addStatement(
-              "returnValue.$L(source.get($L, $T.class))", setterName, cqlName, typeName);
+              "returnValue.$L(source.get($L, $T.class))", setterName, cqlResultName, typeName);
         } else {
           // Parameterized type: create a constant and use the GenericType-based getter:
           //     private static final GenericType<List<String>> GENERIC_TYPE =
@@ -91,7 +101,7 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
           getBuilder.addStatement(
               "returnValue.$L(source.get($L, $T))",
               setterName,
-              cqlName,
+              cqlResultName,
               enclosingClass.addGenericTypeConstant(typeName));
         }
       } else if (type instanceof PropertyType.SingleEntity) {
@@ -134,6 +144,10 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
         getBuilder
             .addStatement("returnValue.$L($L)", setterName, mappedCollectionName)
             .endControlFlow();
+      }
+      if (conditionallySet) {
+        getBuilder.nextControlFlow("catch ($T e)", IllegalArgumentException.class);
+        getBuilder.endControlFlow();
       }
     }
     getBuilder.addStatement("return returnValue");

@@ -28,6 +28,7 @@ public class DefaultEntityDefinition implements EntityDefinition {
   private final List<PropertyDefinition> partitionKey;
   private final List<PropertyDefinition> clusteringColumns;
   private final ImmutableList<PropertyDefinition> regularColumns;
+  private final ImmutableList<PropertyDefinition> computedValues;
 
   public DefaultEntityDefinition(
       ClassName className,
@@ -36,6 +37,7 @@ public class DefaultEntityDefinition implements EntityDefinition {
       List<PropertyDefinition> partitionKey,
       List<PropertyDefinition> clusteringColumns,
       List<PropertyDefinition> regularColumns,
+      List<PropertyDefinition> computedValues,
       CqlNameGenerator cqlNameGenerator) {
     this.className = className;
     this.cqlName =
@@ -45,6 +47,7 @@ public class DefaultEntityDefinition implements EntityDefinition {
     this.partitionKey = partitionKey;
     this.clusteringColumns = clusteringColumns;
     this.regularColumns = ImmutableList.copyOf(regularColumns);
+    this.computedValues = ImmutableList.copyOf(computedValues);
   }
 
   @Override
@@ -70,5 +73,10 @@ public class DefaultEntityDefinition implements EntityDefinition {
   @Override
   public Iterable<PropertyDefinition> getRegularColumns() {
     return regularColumns;
+  }
+
+  @Override
+  public Iterable<PropertyDefinition> getComputedValues() {
+    return computedValues;
   }
 }
