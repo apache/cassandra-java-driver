@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -141,4 +142,11 @@ public @interface Query {
    * was built with. See the top-level javadocs of this class for more explanations.
    */
   String value();
+
+  /**
+   * How to handle null query parameters.
+   *
+   * <p>This defaults to {@link NullSavingStrategy#DO_NOT_SET}.
+   */
+  NullSavingStrategy nullSavingStrategy() default NullSavingStrategy.DO_NOT_SET;
 }

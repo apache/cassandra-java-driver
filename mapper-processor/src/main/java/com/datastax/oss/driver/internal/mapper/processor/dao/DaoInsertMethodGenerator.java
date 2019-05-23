@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
@@ -126,13 +127,19 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
 
     List<? extends VariableElement> parameters = methodElement.getParameters();
     String entityParameterName = parameters.get(0).getSimpleName().toString();
+    NullSavingStrategy nullSavingStrategy =
+        methodElement.getAnnotation(Insert.class).nullSavingStrategy();
     insertBuilder.addStatement(
-        "$L.set($L, boundStatementBuilder)", helperFieldName, entityParameterName);
+        "$1L.set($2L, boundStatementBuilder, $3T.$4L)",
+        helperFieldName,
+        entityParameterName,
+        NullSavingStrategy.class,
+        nullSavingStrategy);
 
     // Handle all remaining parameters as additional bound values
     if (parameters.size() > 1) {
       GeneratedCodePatterns.bindParameters(
-          parameters.subList(1, parameters.size()), insertBuilder, enclosingClass, context);
+          parameters.subList(1, parameters.size()), insertBuilder, enclosingClass, context, false);
     }
 
     insertBuilder

@@ -22,6 +22,9 @@ placeholders: same name and a compatible Java type.
 long countByIdAndYear(int id, int year);
 ```
 
+The annotation can define a [null saving strategy](../null_saving/) that applies to the method
+parameters.
+
 ### Return type
 
 The method can return:

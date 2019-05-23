@@ -32,6 +32,7 @@ import com.datastax.oss.driver.api.mapper.annotations.NamingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
+import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -56,6 +57,7 @@ import org.junit.rules.TestRule;
  * <p>See each entity's corresponding table schema in {@link #setup()}.
  */
 @Category(ParallelizableTests.class)
+@CassandraRequirement(min = "2.2", description = "support for unset values")
 public class NamingStrategyIT {
 
   private static CcmRule ccm = CcmRule.getInstance();

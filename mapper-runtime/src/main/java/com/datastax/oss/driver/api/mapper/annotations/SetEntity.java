@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.data.SettableByName;
 import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -88,4 +89,12 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.CLASS)
-public @interface SetEntity {}
+public @interface SetEntity {
+
+  /**
+   * How to handle null entity properties.
+   *
+   * <p>This defaults to {@link NullSavingStrategy#DO_NOT_SET}.
+   */
+  NullSavingStrategy nullSavingStrategy() default NullSavingStrategy.DO_NOT_SET;
+}
