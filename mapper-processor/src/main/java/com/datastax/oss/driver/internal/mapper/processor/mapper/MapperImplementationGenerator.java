@@ -15,8 +15,8 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.mapper;
 
-import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.internal.mapper.DaoCacheKey;
+import com.datastax.oss.driver.internal.mapper.DefaultMapperContext;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
@@ -117,7 +117,7 @@ public class MapperImplementationGenerator extends SingleFileCodeGenerator
         MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC);
 
     GeneratedCodePatterns.addFinalFieldAndConstructorArgument(
-        ClassName.get(MapperContext.class), "context", classContents, constructorContents);
+        ClassName.get(DefaultMapperContext.class), "context", classContents, constructorContents);
 
     // Add all the fields that were requested by DAO method generators:
     for (DaoSimpleField field : daoSimpleFields) {

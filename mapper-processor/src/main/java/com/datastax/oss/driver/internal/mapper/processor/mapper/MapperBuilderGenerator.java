@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.mapper.processor.mapper;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.mapper.MapperBuilder;
-import com.datastax.oss.driver.api.mapper.MapperContext;
+import com.datastax.oss.driver.internal.mapper.DefaultMapperContext;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
@@ -70,7 +70,7 @@ public class MapperBuilderGenerator extends SingleFileCodeGenerator {
                     .addModifiers(Modifier.PUBLIC)
                     .addAnnotation(Override.class)
                     .returns(ClassName.get(interfaceElement))
-                    .addStatement("$1T context = new $1T(session)", MapperContext.class)
+                    .addStatement("$1T context = new $1T(session)", DefaultMapperContext.class)
                     .addStatement(
                         "return new $T(context)",
                         GeneratedNames.mapperImplementation(interfaceElement))
