@@ -169,7 +169,7 @@ function call:
 private int v;
 
 @Computed("writetime(v)")
-private int writeTime;
+private long writetime;
 ```
 
 The CQL return type of the formula must match the type of the property, otherwise an exception
@@ -206,7 +206,7 @@ class MyEntity {
 
   @Computed("writetime(v)")
   @CqlName("ts")
-  private int writetime;
+  private long writetime;
 }
 ```
 
