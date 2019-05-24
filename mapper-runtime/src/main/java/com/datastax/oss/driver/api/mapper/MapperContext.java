@@ -20,67 +20,29 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * A runtime context that gets passed from the mapper to DAO components to share global resources
  * and configuration.
  */
-public class MapperContext {
-
-  private final CqlSession session;
-  private final CqlIdentifier keyspaceId;
-  private final CqlIdentifier tableId;
-  private final ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache;
-
-  public MapperContext(@NonNull CqlSession session) {
-    this(session, null, null, new ConcurrentHashMap<>());
-  }
-
-  private MapperContext(
-      CqlSession session,
-      CqlIdentifier keyspaceId,
-      CqlIdentifier tableId,
-      ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache) {
-    this.session = session;
-    this.keyspaceId = keyspaceId;
-    this.tableId = tableId;
-    this.nameConverterCache = nameConverterCache;
-  }
-
-  public MapperContext withKeyspaceAndTable(
-      @Nullable CqlIdentifier newKeyspaceId, @Nullable CqlIdentifier newTableId) {
-    return (Objects.equals(newKeyspaceId, this.keyspaceId)
-            && Objects.equals(newTableId, this.tableId))
-        ? this
-        : new MapperContext(session, newKeyspaceId, newTableId, nameConverterCache);
-  }
+public interface MapperContext {
 
   @NonNull
-  public CqlSession getSession() {
-    return session;
-  }
+  CqlSession getSession();
 
   /**
    * If this context belongs to a DAO that was built with a keyspace-parameterized mapper method,
    * the value of that parameter. Otherwise null.
    */
   @Nullable
-  public CqlIdentifier getKeyspaceId() {
-    return keyspaceId;
-  }
+  CqlIdentifier getKeyspaceId();
 
   /**
    * If this context belongs to a DAO that was built with a table-parameterized mapper method, the
    * value of that parameter. Otherwise null.
    */
   @Nullable
-  public CqlIdentifier getTableId() {
-    return tableId;
-  }
+  CqlIdentifier getTableId();
 
   /**
    * Returns an instance of the given converter class.
@@ -89,23 +51,5 @@ public class MapperContext {
    * exists yet for this mapper, a new instance is built by looking for a public no-arg constructor.
    */
   @NonNull
-  public NameConverter getNameConverter(Class<? extends NameConverter> converterClass) {
-    return nameConverterCache.computeIfAbsent(converterClass, MapperContext::buildNameConverter);
-  }
-
-  private static NameConverter buildNameConverter(Class<? extends NameConverter> converterClass) {
-    try {
-      return converterClass.getDeclaredConstructor().newInstance();
-    } catch (InstantiationException
-        | IllegalAccessException
-        | NoSuchMethodException
-        | InvocationTargetException e) {
-      throw new IllegalStateException(
-          String.format(
-              "Error while building an instance of %s. "
-                  + "%s implementations must have a public no-arg constructor",
-              converterClass, NameConverter.class.getSimpleName()),
-          e);
-    }
-  }
+  NameConverter getNameConverter(Class<? extends NameConverter> converterClass);
 }
