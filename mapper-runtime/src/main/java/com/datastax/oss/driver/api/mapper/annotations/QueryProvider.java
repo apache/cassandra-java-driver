@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.mapper.annotations;
 
+import com.datastax.oss.driver.api.mapper.MapperBuilder;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import java.lang.annotation.ElementType;
@@ -52,6 +53,8 @@ import java.lang.annotation.Target;
  *
  * <p>The parameters and return type are completely free-form, as long as they match those of the
  * provider method.
+ *
+ * @see MapperBuilder#withCustomState(Object, Object)
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.CLASS)
