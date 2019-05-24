@@ -1,0 +1,99 @@
+/*
+ * Copyright DataStax, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.datastax.oss.driver.internal.mapper;
+
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.mapper.MapperContext;
+import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+public class DefaultMapperContext implements MapperContext {
+
+  private final CqlSession session;
+  private final CqlIdentifier keyspaceId;
+  private final CqlIdentifier tableId;
+  private final ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache;
+
+  public DefaultMapperContext(@NonNull CqlSession session) {
+    this(session, null, null, new ConcurrentHashMap<>());
+  }
+
+  private DefaultMapperContext(
+      CqlSession session,
+      CqlIdentifier keyspaceId,
+      CqlIdentifier tableId,
+      ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache) {
+    this.session = session;
+    this.keyspaceId = keyspaceId;
+    this.tableId = tableId;
+    this.nameConverterCache = nameConverterCache;
+  }
+
+  public DefaultMapperContext withKeyspaceAndTable(
+      @Nullable CqlIdentifier newKeyspaceId, @Nullable CqlIdentifier newTableId) {
+    return (Objects.equals(newKeyspaceId, this.keyspaceId)
+            && Objects.equals(newTableId, this.tableId))
+        ? this
+        : new DefaultMapperContext(session, newKeyspaceId, newTableId, nameConverterCache);
+  }
+
+  @NonNull
+  @Override
+  public CqlSession getSession() {
+    return session;
+  }
+
+  @Nullable
+  @Override
+  public CqlIdentifier getKeyspaceId() {
+    return keyspaceId;
+  }
+
+  @Nullable
+  @Override
+  public CqlIdentifier getTableId() {
+    return tableId;
+  }
+
+  @NonNull
+  @Override
+  public NameConverter getNameConverter(Class<? extends NameConverter> converterClass) {
+    return nameConverterCache.computeIfAbsent(
+        converterClass, DefaultMapperContext::buildNameConverter);
+  }
+
+  private static NameConverter buildNameConverter(Class<? extends NameConverter> converterClass) {
+    try {
+      return converterClass.getDeclaredConstructor().newInstance();
+    } catch (InstantiationException
+        | IllegalAccessException
+        | NoSuchMethodException
+        | InvocationTargetException e) {
+      throw new IllegalStateException(
+          String.format(
+              "Error while building an instance of %s. "
+                  + "%s implementations must have a public no-arg constructor",
+              converterClass, NameConverter.class.getSimpleName()),
+          e);
+    }
+  }
+}
