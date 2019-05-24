@@ -16,14 +16,15 @@
 package com.datastax.oss.driver.internal.mapper.processor.mapper;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.mapper.MapperBuilder;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
-import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -48,27 +49,32 @@ public class MapperBuilderGenerator extends SingleFileCodeGenerator {
   protected JavaFile.Builder getContents() {
     TypeSpec.Builder classContents =
         TypeSpec.classBuilder(builderName)
+            .superclass(
+                ParameterizedTypeName.get(
+                    ClassName.get(MapperBuilder.class), ClassName.get(interfaceElement)))
             .addJavadoc(
                 "Builds an instance of {@link $T} wrapping a driver {@link $T}.",
                 interfaceElement,
                 CqlSession.class)
             .addJavadoc(JAVADOC_PARAGRAPH_SEPARATOR)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
-            .addModifiers(Modifier.PUBLIC);
-    MethodSpec.Builder constructorContents =
-        MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC);
-    GeneratedCodePatterns.addFinalFieldAndConstructorArgument(
-        ClassName.get(CqlSession.class), "session", classContents, constructorContents);
-    classContents
-        .addMethod(constructorContents.build())
-        .addMethod(
-            MethodSpec.methodBuilder("build")
-                .addModifiers(Modifier.PUBLIC)
-                .returns(ClassName.get(interfaceElement))
-                .addStatement("$1T context = new $1T(session)", MapperContext.class)
-                .addStatement(
-                    "return new $T(context)", GeneratedNames.mapperImplementation(interfaceElement))
-                .build());
+            .addModifiers(Modifier.PUBLIC)
+            .addMethod(
+                MethodSpec.constructorBuilder()
+                    .addModifiers(Modifier.PUBLIC)
+                    .addParameter(CqlSession.class, "session")
+                    .addStatement("super(session)")
+                    .build())
+            .addMethod(
+                MethodSpec.methodBuilder("build")
+                    .addModifiers(Modifier.PUBLIC)
+                    .addAnnotation(Override.class)
+                    .returns(ClassName.get(interfaceElement))
+                    .addStatement("$1T context = new $1T(session)", MapperContext.class)
+                    .addStatement(
+                        "return new $T(context)",
+                        GeneratedNames.mapperImplementation(interfaceElement))
+                    .build());
     return JavaFile.builder(builderName.packageName(), classContents.build());
   }
 }
