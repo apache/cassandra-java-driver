@@ -25,9 +25,13 @@ import com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import java.beans.Introspector;
+import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +53,17 @@ import javax.lang.model.type.TypeMirror;
 public class DefaultEntityFactory implements EntityFactory {
 
   private final ProcessorContext context;
+
+  // property annotations of which only 1 is allowed on a property
+  private static final Set<Class<? extends Annotation>> EXCLUSIVE_PROPERTY_ANNOTATIONS =
+      ImmutableSet.of(ClusteringColumn.class, PartitionKey.class, Transient.class);
+
+  // all valid property annotations to scan for.
+  private static final Set<Class<? extends Annotation>> PROPERTY_ANNOTATIONS =
+      ImmutableSet.<Class<? extends Annotation>>builder()
+          .addAll(EXCLUSIVE_PROPERTY_ANNOTATIONS)
+          .add(CqlName.class)
+          .build();
 
   public DefaultEntityFactory(ProcessorContext context) {
     this.context = context;
@@ -90,25 +105,19 @@ public class DefaultEntityFactory implements EntityFactory {
       }
       VariableElement field = findField(classElement, propertyName, typeMirror);
 
-      int partitionKeyIndex = getPartitionKeyIndex(getMethod, field);
-      int clusteringColumnIndex = getClusteringColumnIndex(getMethod, field, partitionKeyIndex);
-
-      if (isTransient(
-          propertyName,
-          transientProperties,
-          classElement,
-          getMethod,
-          field,
-          partitionKeyIndex,
-          clusteringColumnIndex)) {
+      Map<Class<? extends Annotation>, Annotation> propertyAnnotations =
+          scanPropertyAnnotations(getMethod, field);
+      if (isTransient(propertyAnnotations, propertyName, transientProperties, getMethod, field)) {
         continue;
       }
 
+      int partitionKeyIndex = getPartitionKeyIndex(propertyAnnotations);
+      int clusteringColumnIndex = getClusteringColumnIndex(propertyAnnotations);
       PropertyType propertyType = PropertyType.parse(typeMirror, context);
       PropertyDefinition property =
           new DefaultPropertyDefinition(
               propertyName,
-              getCustomCqlName(getMethod, field),
+              getCustomCqlName(propertyAnnotations),
               getMethodName,
               setMethodName,
               propertyType,
@@ -197,77 +206,20 @@ public class DefaultEntityFactory implements EntityFactory {
     return null;
   }
 
-  private Optional<String> getCustomCqlName(ExecutableElement getMethod, VariableElement field) {
-    CqlName getterAnnotation = getMethod.getAnnotation(CqlName.class);
-    CqlName fieldAnnotation = (field == null) ? null : field.getAnnotation(CqlName.class);
-    if (getterAnnotation != null) {
-      if (fieldAnnotation != null) {
-        context
-            .getMessager()
-            .warn(
-                field,
-                "@%s should be used either on the field or the getter, but not both. "
-                    + "The annotation on this field will be ignored.",
-                CqlName.class.getSimpleName());
-      }
-      return Optional.of(getterAnnotation.value());
-    } else if (fieldAnnotation != null) {
-      return Optional.of(fieldAnnotation.value());
-    } else {
-      return Optional.empty();
-    }
+  private Optional<String> getCustomCqlName(
+      Map<Class<? extends Annotation>, Annotation> annotations) {
+    CqlName cqlName = (CqlName) annotations.get(CqlName.class);
+    return cqlName != null ? Optional.of(cqlName.value()) : Optional.empty();
   }
 
-  private int getPartitionKeyIndex(ExecutableElement getMethod, VariableElement field) {
-    PartitionKey getterAnnotation = getMethod.getAnnotation(PartitionKey.class);
-    PartitionKey fieldAnnotation = (field == null) ? null : field.getAnnotation(PartitionKey.class);
-
-    if (getterAnnotation != null) {
-      if (fieldAnnotation != null) {
-        context
-            .getMessager()
-            .warn(
-                field,
-                "@%s should be used either on the field or the getter, but not both. "
-                    + "The annotation on this field will be ignored.",
-                PartitionKey.class.getSimpleName());
-      }
-      return getterAnnotation.value();
-    } else if (fieldAnnotation != null) {
-      return fieldAnnotation.value();
-    } else {
-      return -1;
-    }
+  private int getPartitionKeyIndex(Map<Class<? extends Annotation>, Annotation> annotations) {
+    PartitionKey partitionKey = (PartitionKey) annotations.get(PartitionKey.class);
+    return partitionKey != null ? partitionKey.value() : -1;
   }
 
-  private int getClusteringColumnIndex(
-      ExecutableElement getMethod, VariableElement field, int partitionKeyIndex) {
-    ClusteringColumn getterAnnotation = getMethod.getAnnotation(ClusteringColumn.class);
-    ClusteringColumn fieldAnnotation =
-        (field == null) ? null : field.getAnnotation(ClusteringColumn.class);
-
-    if (getterAnnotation != null) {
-      if (partitionKeyIndex >= 0) {
-        reportMultipleAnnotationError(getMethod, PartitionKey.class, ClusteringColumn.class);
-        return -1;
-      } else if (fieldAnnotation != null) {
-        context
-            .getMessager()
-            .warn(
-                field,
-                "@%s should be used either on the field or the getter, but not both. "
-                    + "The annotation on this field will be ignored.",
-                ClusteringColumn.class.getSimpleName());
-      }
-      return getterAnnotation.value();
-    } else if (fieldAnnotation != null) {
-      if (partitionKeyIndex >= 0) {
-        reportMultipleAnnotationError(field, PartitionKey.class, ClusteringColumn.class);
-      }
-      return fieldAnnotation.value();
-    } else {
-      return -1;
-    }
+  private int getClusteringColumnIndex(Map<Class<? extends Annotation>, Annotation> annotations) {
+    ClusteringColumn clusteringColumn = (ClusteringColumn) annotations.get(ClusteringColumn.class);
+    return clusteringColumn != null ? clusteringColumn.value() : -1;
   }
 
   private CqlNameGenerator buildCqlNameGenerator(TypeElement classElement) {
@@ -354,60 +306,34 @@ public class DefaultEntityFactory implements EntityFactory {
   }
 
   private boolean isTransient(
+      Map<Class<? extends Annotation>, Annotation> annotations,
       String propertyName,
       Set<String> transientProperties,
-      TypeElement classElement,
       ExecutableElement getMethod,
-      VariableElement field,
-      int partitionKeyIndex,
-      int clusteringColumnIndex) {
+      VariableElement field) {
 
-    // check if property is present in @TransientProperties
-    Class<?> otherAnnotationClass =
-        partitionKeyIndex >= 0
-            ? PartitionKey.class
-            : clusteringColumnIndex >= 0 ? ClusteringColumn.class : null;
-    if (transientProperties.contains(propertyName)) {
-      if (otherAnnotationClass != null) {
-        context
-            .getMessager()
-            .error(
-                classElement,
-                "Properties included in @%s can't be annotated with @%s.",
-                TransientProperties.class.getSimpleName(),
-                otherAnnotationClass.getSimpleName());
-      }
-      return true;
+    Transient transientAnnotation = (Transient) annotations.get(Transient.class);
+    // check if property name is included in @TransientProperties
+    // -or- if property is annotated with @Transient
+    // -or- if field has transient keyword modifier
+    boolean isTransient =
+        transientProperties.contains(propertyName)
+            || transientAnnotation != null
+            || field != null && field.getModifiers().contains(Modifier.TRANSIENT);
+
+    // if annotations contains an exclusive annotation that isn't transient, raise
+    // an error here.
+    Class<? extends Annotation> exclusiveAnnotation = getExclusiveAnnotation(annotations);
+    if (isTransient && transientAnnotation == null && exclusiveAnnotation != null) {
+      Element element = field != null ? field : getMethod;
+      context
+          .getMessager()
+          .error(
+              element,
+              "Property that is considered transient cannot be annotated with @%s.",
+              exclusiveAnnotation.getSimpleName());
     }
 
-    // check if property is annotated with @Transient
-    Transient getterAnnotation = getMethod.getAnnotation(Transient.class);
-    boolean isTransient;
-    Element transientElement = getMethod;
-    isTransient = getterAnnotation != null;
-
-    if (!isTransient && field != null) {
-      transientElement = null;
-      if (field.getModifiers().contains(Modifier.TRANSIENT)) {
-        isTransient = true;
-        if (otherAnnotationClass != null) {
-          context
-              .getMessager()
-              .error(
-                  field,
-                  "Field with transient keyword modifier can't be annotated with @%s.",
-                  otherAnnotationClass.getSimpleName());
-        }
-      } else if (field.getAnnotation(Transient.class) != null) {
-        isTransient = true;
-        transientElement = field;
-      }
-    }
-
-    // report if property has both @Transient annotation and another annotation.
-    if (transientElement != null && otherAnnotationClass != null) {
-      reportMultipleAnnotationError(transientElement, Transient.class, otherAnnotationClass);
-    }
     return isTransient;
   }
 
@@ -419,13 +345,85 @@ public class DefaultEntityFactory implements EntityFactory {
         : Collections.emptySet();
   }
 
-  private void reportMultipleAnnotationError(Element element, Class<?> a0, Class<?> a1) {
-    context
-        .getMessager()
-        .error(
-            element,
-            "Properties can't be annotated with both @%s and @%s.",
-            a0.getSimpleName(),
-            a1.getSimpleName());
+  private void reportMultipleAnnotationError(
+      Element element, Class<? extends Annotation> a0, Class<? extends Annotation> a1) {
+    if (a0 == a1) {
+      context
+          .getMessager()
+          .warn(
+              element,
+              "@%s should be used either on the field or the getter, but not both. "
+                  + "The annotation on this field will be ignored.",
+              a0.getSimpleName());
+    } else {
+      context
+          .getMessager()
+          .error(
+              element,
+              "Properties can't be annotated with both @%s and @%s.",
+              a0.getSimpleName(),
+              a1.getSimpleName());
+    }
+  }
+
+  private Map<Class<? extends Annotation>, Annotation> scanPropertyAnnotations(
+      ExecutableElement getMethod, VariableElement field) {
+    Map<Class<? extends Annotation>, Annotation> annotations = Maps.newHashMap();
+
+    // scan methods first as they should take precedence.
+    scanMethodAnnotations(getMethod, annotations, null);
+    if (field != null) {
+      scanFieldAnnotations(field, annotations, getExclusiveAnnotation(annotations));
+    }
+
+    return ImmutableMap.copyOf(annotations);
+  }
+
+  private Class<? extends Annotation> getExclusiveAnnotation(
+      Map<Class<? extends Annotation>, Annotation> annotations) {
+    for (Class<? extends Annotation> annotationClass : annotations.keySet()) {
+      if (EXCLUSIVE_PROPERTY_ANNOTATIONS.contains(annotationClass)) {
+        return annotationClass;
+      }
+    }
+    return null;
+  }
+
+  private void scanFieldAnnotations(
+      VariableElement field,
+      Map<Class<? extends Annotation>, Annotation> annotations,
+      Class<? extends Annotation> exclusiveAnnotation) {
+    for (Class<? extends Annotation> annotationClass : PROPERTY_ANNOTATIONS) {
+      Annotation annotation = field.getAnnotation(annotationClass);
+      if (annotation != null) {
+        if (EXCLUSIVE_PROPERTY_ANNOTATIONS.contains(annotationClass)) {
+          if (exclusiveAnnotation == null) {
+            exclusiveAnnotation = annotationClass;
+          } else {
+            reportMultipleAnnotationError(field, exclusiveAnnotation, annotationClass);
+          }
+        }
+        annotations.put(annotationClass, annotation);
+      }
+    }
+  }
+
+  private void scanMethodAnnotations(
+      ExecutableElement getMethod,
+      Map<Class<? extends Annotation>, Annotation> annotations,
+      Class<? extends Annotation> exclusiveAnnotation) {
+    for (Class<? extends Annotation> annotationClass : PROPERTY_ANNOTATIONS) {
+      Annotation annotation = getMethod.getAnnotation(annotationClass);
+      if (annotation != null) {
+        if (EXCLUSIVE_PROPERTY_ANNOTATIONS.contains(annotationClass)) {
+          if (exclusiveAnnotation == null) {
+            exclusiveAnnotation = annotationClass;
+          } else {
+            reportMultipleAnnotationError(getMethod, exclusiveAnnotation, annotationClass);
+          }
+        }
+        annotations.put(annotationClass, annotation);
+      }
+    }
   }
 }
