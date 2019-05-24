@@ -41,6 +41,7 @@ import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -56,6 +57,10 @@ public class QueryProviderIT {
   private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
+  // Dummy counter to exercize the "custom state" feature: it gets incremented each time the query
+  // provider is called.
+  private static AtomicInteger executionCount = new AtomicInteger();
+
   private static SensorDao dao;
 
   @BeforeClass
@@ -70,7 +75,10 @@ public class QueryProviderIT {
             .setExecutionProfile(sessionRule.slowProfile())
             .build());
 
-    SensorMapper mapper = new QueryProviderIT_SensorMapperBuilder(session).build();
+    SensorMapper mapper =
+        new QueryProviderIT_SensorMapperBuilder(session)
+            .withCustomState("executionCount", executionCount)
+            .build();
     dao = mapper.sensorDao(sessionRule.keyspace());
   }
 
@@ -85,11 +93,15 @@ public class QueryProviderIT {
     dao.save(readingFeb1);
     dao.save(readingJan31);
 
+    assertThat(executionCount.get()).isEqualTo(0);
+
     assertThat(dao.findSlice(1, null, null).all())
         .containsExactly(readingFeb3, readingFeb2, readingFeb1, readingJan31);
     assertThat(dao.findSlice(1, 2, null).all())
         .containsExactly(readingFeb3, readingFeb2, readingFeb1);
     assertThat(dao.findSlice(1, 2, 3).all()).containsExactly(readingFeb3);
+
+    assertThat(executionCount.get()).isEqualTo(3);
   }
 
   @Mapper
@@ -109,12 +121,14 @@ public class QueryProviderIT {
 
   public static class FindSliceProvider {
     private final CqlSession session;
+    private final AtomicInteger executionCount;
     private final EntityHelper<SensorReading> sensorReadingHelper;
     private final Select selectStart;
 
     public FindSliceProvider(
         MapperContext context, EntityHelper<SensorReading> sensorReadingHelper) {
       this.session = context.getSession();
+      this.executionCount = ((AtomicInteger) context.getCustomState().get("executionCount"));
       this.sensorReadingHelper = sensorReadingHelper;
       this.selectStart =
           sensorReadingHelper.selectStart().whereColumn("id").isEqualTo(bindMarker());
@@ -124,6 +138,8 @@ public class QueryProviderIT {
       if (month == null && day != null) {
         throw new IllegalArgumentException("Can't specify day if month is null");
       }
+
+      executionCount.incrementAndGet();
 
       Select select = this.selectStart;
       if (month != null) {
