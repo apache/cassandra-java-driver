@@ -106,7 +106,7 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   private static final AtomicInteger SESSION_NAME_COUNTER = new AtomicInteger();
 
-  private final CycleDetector cycleDetector =
+  protected final CycleDetector cycleDetector =
       new CycleDetector("Detected cycle in context initialization");
 
   private final LazyReference<Map<String, LoadBalancingPolicy>> loadBalancingPoliciesRef =
