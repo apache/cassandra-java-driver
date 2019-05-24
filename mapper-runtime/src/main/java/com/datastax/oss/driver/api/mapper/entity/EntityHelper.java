@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.querybuilder.delete.Delete;
 import com.datastax.oss.driver.api.querybuilder.insert.RegularInsert;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.datastax.oss.driver.api.querybuilder.update.Update;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A set of utility methods related to a particular mapped entity.
@@ -61,8 +62,9 @@ public interface EntityHelper<EntityT> {
    * @return the data structure resulting from the assignments. This is useful for immutable target
    *     implementations (see above), otherwise it will be the same as {@code target}.
    */
+  @NonNull
   <SettableT extends SettableByName<SettableT>> SettableT set(
-      EntityT entity, SettableT target, NullSavingStrategy nullSavingStrategy);
+      @NonNull EntityT entity, @NonNull SettableT target, @NonNull NullSavingStrategy nullSavingStrategy);
 
   /**
    * Gets values from a data structure to fill an entity instance.
@@ -84,7 +86,8 @@ public interface EntityHelper<EntityT> {
    *     back from them in this manner).
    * @return the resulting entity.
    */
-  EntityT get(GettableByName source);
+  @NonNull
+  EntityT get(@NonNull GettableByName source);
 
   /**
    * Builds an insert query for this entity.
@@ -107,6 +110,7 @@ public interface EntityHelper<EntityT> {
    * if the DAO was built without a specific keyspace and table, the query doesn't specify a
    * keyspace, and the table name is inferred from the naming strategy.
    */
+  @NonNull
   RegularInsert insert();
 
   /**
@@ -116,6 +120,7 @@ public interface EntityHelper<EntityT> {
    * This would typically not be executed as-is, but instead completed with a custom {@code WHERE}
    * clause (either added with the query builder DSL, or concatenated to the built query).
    */
+  @NonNull
   Update updateStart();
 
   /**
@@ -144,6 +149,7 @@ public interface EntityHelper<EntityT> {
    * if the DAO was built without a specific keyspace and table, the query doesn't specify a
    * keyspace, and the table name is inferred from the naming strategy.
    */
+  @NonNull
   Update updateByPrimaryKey();
 
   /**
@@ -171,6 +177,7 @@ public interface EntityHelper<EntityT> {
    * if the DAO was built without a specific keyspace and table, the query doesn't specify a
    * keyspace, and the table name is inferred from the naming strategy.
    */
+  @NonNull
   Select selectByPrimaryKey();
 
   /**
@@ -180,6 +187,7 @@ public interface EntityHelper<EntityT> {
    * This would typically not be executed as-is, but instead completed with a custom {@code WHERE}
    * clause (either added with the query builder DSL, or concatenated to the built query).
    */
+  @NonNull
   Select selectStart();
 
   /**
@@ -202,5 +210,6 @@ public interface EntityHelper<EntityT> {
    * * if the DAO was built without a specific keyspace and table, the query doesn't specify a
    * keyspace, and the table name is inferred from the naming strategy.
    */
+  @NonNull
   Delete deleteByPrimaryKey();
 }

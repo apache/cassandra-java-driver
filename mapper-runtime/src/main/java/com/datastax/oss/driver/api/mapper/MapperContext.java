@@ -18,6 +18,8 @@ package com.datastax.oss.driver.api.mapper;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,7 +36,7 @@ public class MapperContext {
   private final CqlIdentifier tableId;
   private final ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache;
 
-  public MapperContext(CqlSession session) {
+  public MapperContext(@NonNull CqlSession session) {
     this(session, null, null, new ConcurrentHashMap<>());
   }
 
@@ -49,13 +51,15 @@ public class MapperContext {
     this.nameConverterCache = nameConverterCache;
   }
 
-  public MapperContext withKeyspaceAndTable(CqlIdentifier newKeyspaceId, CqlIdentifier newTableId) {
+  public MapperContext withKeyspaceAndTable(
+      @Nullable CqlIdentifier newKeyspaceId, @Nullable CqlIdentifier newTableId) {
     return (Objects.equals(newKeyspaceId, this.keyspaceId)
             && Objects.equals(newTableId, this.tableId))
         ? this
         : new MapperContext(session, newKeyspaceId, newTableId, nameConverterCache);
   }
 
+  @NonNull
   public CqlSession getSession() {
     return session;
   }
@@ -64,6 +68,7 @@ public class MapperContext {
    * If this context belongs to a DAO that was built with a keyspace-parameterized mapper method,
    * the value of that parameter. Otherwise null.
    */
+  @Nullable
   public CqlIdentifier getKeyspaceId() {
     return keyspaceId;
   }
@@ -72,6 +77,7 @@ public class MapperContext {
    * If this context belongs to a DAO that was built with a table-parameterized mapper method, the
    * value of that parameter. Otherwise null.
    */
+  @Nullable
   public CqlIdentifier getTableId() {
     return tableId;
   }
@@ -82,6 +88,7 @@ public class MapperContext {
    * <p>The results of this method are cached at the mapper level. If no instance of this class
    * exists yet for this mapper, a new instance is built by looking for a public no-arg constructor.
    */
+  @NonNull
   public NameConverter getNameConverter(Class<? extends NameConverter> converterClass) {
     return nameConverterCache.computeIfAbsent(converterClass, MapperContext::buildNameConverter);
   }
