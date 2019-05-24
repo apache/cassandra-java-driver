@@ -323,7 +323,7 @@ This currently takes about 9 minutes. We don't have a hard limit, but ideally it
 30 minutes to 1 hour.
 
 You can skip test categories individually with `-DskipParallelizableITs`, `-DskipSerialITs` and
-`-DskipIsolatedITs`.
+`-DskipIsolatedITs` (`-DskipITs` still works to skip them all at once).
 
 ### Configuring MacOS for Simulacron
 

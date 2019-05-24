@@ -603,7 +603,7 @@ limitations under the License.]]>
           <releaseProfiles>release</releaseProfiles>
           <goals>deploy</goals>
           <!-- Our integration tests are too long to run during a release, we run them in CI -->
-          <arguments>-DskipParallelizableITs -DskipSerialITs -DskipIsolatedITs</arguments>
+          <arguments>-DskipITs</arguments>
         </configuration>
       </plugin>
       <plugin>

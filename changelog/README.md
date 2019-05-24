@@ -4,6 +4,7 @@
 
 ### 4.0.2 (in progress)
 
+- [improvement] JAVA-2242: Allow skipping all integration tests with -DskipITs
 - [improvement] JAVA-2241: Make DefaultDriverContext.cycleDetector protected
 - [bug] JAVA-2226: Support IPv6 contact points in the configuration
 
