@@ -161,9 +161,9 @@ This information is used by some of the DAO method annotations; for example,
 
 #### Computed properties
 
-Annotating an entity property with [@Computed] indicates that when retrieving data with a
-[@Select]-annotated method that this property should be set to the result of a computation on the
-Cassandra side, typically a function call:
+Annotating an entity property with [@Computed] indicates that when retrieving data with the mapper
+this property should be set to the result of a computation on the Cassandra side, typically a
+function call:
 
 ```java
 private int v;
@@ -210,7 +210,7 @@ class MyEntity {
 }
 ```
 
-would expect a CQL query such as:
+would expect a [@Query] such as:
 
 ```java
 @Dao
