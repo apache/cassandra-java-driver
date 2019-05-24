@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.mapper.processor.entity;
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.mapper.annotations.Transient;
 import com.datastax.oss.driver.internal.mapper.processor.MapperProcessorTest;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
@@ -105,7 +106,7 @@ public class EntityPropertyAnnotationsTest extends MapperProcessorTest {
   public static Object[][] entitiesWithErrors() {
     return new Object[][] {
       {
-        "Properties can't be annotated with both @PartitionKey and @ClusteringColumn.",
+        "Properties can't be annotated with both @ClusteringColumn and @PartitionKey.",
         TypeSpec.classBuilder(ClassName.get("test", "Product"))
             .addAnnotation(Entity.class)
             .addField(
@@ -128,7 +129,7 @@ public class EntityPropertyAnnotationsTest extends MapperProcessorTest {
             .build(),
       },
       {
-        "Properties can't be annotated with both @PartitionKey and @ClusteringColumn.",
+        "Properties can't be annotated with both @ClusteringColumn and @PartitionKey.",
         TypeSpec.classBuilder(ClassName.get("test", "Product"))
             .addAnnotation(Entity.class)
             .addField(
@@ -233,6 +234,52 @@ public class EntityPropertyAnnotationsTest extends MapperProcessorTest {
                     .addParameter(UUID.class, "id2")
                     .addModifiers(Modifier.PUBLIC)
                     .addStatement("this.id2 = id2")
+                    .build())
+            .build(),
+      },
+      {
+        "Properties can't be annotated with both @ClusteringColumn and @Transient.",
+        TypeSpec.classBuilder(ClassName.get("test", "Product"))
+            .addAnnotation(Entity.class)
+            .addField(
+                FieldSpec.builder(UUID.class, "id", Modifier.PRIVATE)
+                    .addAnnotation(ClusteringColumn.class)
+                    .addAnnotation(Transient.class)
+                    .build())
+            .addMethod(
+                MethodSpec.methodBuilder("getId")
+                    .returns(UUID.class)
+                    .addModifiers(Modifier.PUBLIC)
+                    .addStatement("return id")
+                    .build())
+            .addMethod(
+                MethodSpec.methodBuilder("setId")
+                    .addParameter(UUID.class, "id")
+                    .addModifiers(Modifier.PUBLIC)
+                    .addStatement("this.id = id")
+                    .build())
+            .build(),
+      },
+      {
+        "Property that is considered transient cannot be annotated with @PartitionKey.",
+        TypeSpec.classBuilder(ClassName.get("test", "Product"))
+            .addAnnotation(Entity.class)
+            .addField(
+                FieldSpec.builder(UUID.class, "id", Modifier.PRIVATE)
+                    .addModifiers(Modifier.TRANSIENT)
+                    .addAnnotation(PartitionKey.class)
+                    .build())
+            .addMethod(
+                MethodSpec.methodBuilder("getId")
+                    .returns(UUID.class)
+                    .addModifiers(Modifier.PUBLIC)
+                    .addStatement("return id")
+                    .build())
+            .addMethod(
+                MethodSpec.methodBuilder("setId")
+                    .addParameter(UUID.class, "id")
+                    .addModifiers(Modifier.PUBLIC)
+                    .addStatement("this.id = id")
                     .build())
             .build(),
       },
