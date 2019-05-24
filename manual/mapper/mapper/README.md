@@ -36,6 +36,22 @@ CqlSession session = CqlSession.builder().build();
 InventoryMapper inventoryMapper = new InventoryMapperBuilder(session).build();
 ```
 
+One nice trick you can use is to create a static factory method on your interface. This hides the
+name of the generated class from the rest of your application:
+
+```java
+@Mapper
+public interface InventoryMapper {
+  
+  static MapperBuilder<InventoryMapper> builder(CqlSession session) {
+    return new InventoryMapperBuilder(session);
+  }
+  ...
+}
+
+InventoryMapper inventoryMapper = InventoryMapper.builder(session).build();
+```
+
 Like the session, the mapper is a long-lived object: you should create it once at initialization
 time, and reuse it for the entire lifetime of your application. It doesn't need to get closed. It is
 thread-safe.
