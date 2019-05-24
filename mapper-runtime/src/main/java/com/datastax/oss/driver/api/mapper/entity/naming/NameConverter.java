@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.mapper.entity.naming;
 
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.NamingStrategy;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A custom converter to infer CQL column names from the names used in an {@link Entity}-annotated
@@ -38,5 +39,6 @@ public interface NameConverter {
    * @return the corresponding CQL name. If you want it to be case-sensitive, it must be enclosed in
    *     double-quotes.
    */
-  String toCassandraName(String javaName);
+  @NonNull
+  String toCassandraName(@NonNull String javaName);
 }
