@@ -39,9 +39,7 @@ public class ComputedPropertyDefinition implements PropertyDefinition {
         customCqlName
             .map(n -> CodeBlock.of("$S", n))
             .orElse(cqlNameGenerator.buildCqlName(javaName));
-    // the queried name is "formula as alias"
-    this.cqlName =
-        CodeBlock.of("$S + $S +", formula, " as ").toBuilder().add(this.cqlResultName).build();
+    this.cqlName = CodeBlock.of("$S", formula);
     this.getterName = getterName;
     this.setterName = setterName;
     this.type = type;
