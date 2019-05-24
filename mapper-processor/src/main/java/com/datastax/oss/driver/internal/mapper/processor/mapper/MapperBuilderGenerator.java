@@ -70,7 +70,8 @@ public class MapperBuilderGenerator extends SingleFileCodeGenerator {
                     .addModifiers(Modifier.PUBLIC)
                     .addAnnotation(Override.class)
                     .returns(ClassName.get(interfaceElement))
-                    .addStatement("$1T context = new $1T(session)", DefaultMapperContext.class)
+                    .addStatement(
+                        "$1T context = new $1T(session, customState)", DefaultMapperContext.class)
                     .addStatement(
                         "return new $T(context)",
                         GeneratedNames.mapperImplementation(interfaceElement))

@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.util.Map;
 
 /**
  * A runtime context that gets passed from the mapper to DAO components to share global resources
@@ -52,4 +53,13 @@ public interface MapperContext {
    */
   @NonNull
   NameConverter getNameConverter(Class<? extends NameConverter> converterClass);
+
+  /**
+   * Retrieves any custom state that was set while building the mapper with {@link
+   * MapperBuilder#withCustomState(Object, Object)}.
+   *
+   * <p>The returned map is immutable. If no state was set on the builder, it will be empty.
+   */
+  @NonNull
+  Map<Object, Object> getCustomState();
 }

@@ -19,9 +19,11 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
+import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -32,20 +34,29 @@ public class DefaultMapperContext implements MapperContext {
   private final CqlIdentifier keyspaceId;
   private final CqlIdentifier tableId;
   private final ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache;
+  private final Map<Object, Object> customState;
 
-  public DefaultMapperContext(@NonNull CqlSession session) {
-    this(session, null, null, new ConcurrentHashMap<>());
+  public DefaultMapperContext(
+      @NonNull CqlSession session, @NonNull Map<Object, Object> customState) {
+    this(
+        session,
+        null,
+        null,
+        new ConcurrentHashMap<>(),
+        NullAllowingImmutableMap.copyOf(customState));
   }
 
   private DefaultMapperContext(
       CqlSession session,
       CqlIdentifier keyspaceId,
       CqlIdentifier tableId,
-      ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache) {
+      ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache,
+      Map<Object, Object> customState) {
     this.session = session;
     this.keyspaceId = keyspaceId;
     this.tableId = tableId;
     this.nameConverterCache = nameConverterCache;
+    this.customState = customState;
   }
 
   public DefaultMapperContext withKeyspaceAndTable(
@@ -53,7 +64,8 @@ public class DefaultMapperContext implements MapperContext {
     return (Objects.equals(newKeyspaceId, this.keyspaceId)
             && Objects.equals(newTableId, this.tableId))
         ? this
-        : new DefaultMapperContext(session, newKeyspaceId, newTableId, nameConverterCache);
+        : new DefaultMapperContext(
+            session, newKeyspaceId, newTableId, nameConverterCache, customState);
   }
 
   @NonNull
@@ -79,6 +91,12 @@ public class DefaultMapperContext implements MapperContext {
   public NameConverter getNameConverter(Class<? extends NameConverter> converterClass) {
     return nameConverterCache.computeIfAbsent(
         converterClass, DefaultMapperContext::buildNameConverter);
+  }
+
+  @NonNull
+  @Override
+  public Map<Object, Object> getCustomState() {
+    return customState;
   }
 
   private static NameConverter buildNameConverter(Class<? extends NameConverter> converterClass) {
