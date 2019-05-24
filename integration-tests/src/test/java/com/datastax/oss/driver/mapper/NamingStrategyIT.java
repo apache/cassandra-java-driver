@@ -37,6 +37,7 @@ import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -189,7 +190,8 @@ public class NamingStrategyIT {
   public static class TestNameConverter implements NameConverter {
 
     @Override
-    public String toCassandraName(String javaName) {
+    @NonNull
+    public String toCassandraName(@NonNull String javaName) {
       // Pretty silly but we don't need this to be realistic
       return "test_" + javaName;
     }
