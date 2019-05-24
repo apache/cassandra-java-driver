@@ -105,7 +105,7 @@ public class EntityPropertyAnnotationsTest extends MapperProcessorTest {
   public static Object[][] entitiesWithErrors() {
     return new Object[][] {
       {
-        "Properties can't be annotated with both @PartitionKey and @ClusteringColumn.",
+        "Properties can't be annotated with both @ClusteringColumn and @PartitionKey.",
         TypeSpec.classBuilder(ClassName.get("test", "Product"))
             .addAnnotation(Entity.class)
             .addField(
@@ -128,7 +128,7 @@ public class EntityPropertyAnnotationsTest extends MapperProcessorTest {
             .build(),
       },
       {
-        "Properties can't be annotated with both @PartitionKey and @ClusteringColumn.",
+        "Properties can't be annotated with both @ClusteringColumn and @PartitionKey.",
         TypeSpec.classBuilder(ClassName.get("test", "Product"))
             .addAnnotation(Entity.class)
             .addField(

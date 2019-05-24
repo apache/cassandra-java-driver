@@ -319,7 +319,7 @@ public class DefaultEntityFactory implements EntityFactory {
     boolean isTransient =
         transientProperties.contains(propertyName)
             || transientAnnotation != null
-            || field != null && field.getModifiers().contains(Modifier.TRANSIENT);
+            || (field != null && field.getModifiers().contains(Modifier.TRANSIENT));
 
     // if annotations contains an exclusive annotation that isn't transient, raise
     // an error here.
