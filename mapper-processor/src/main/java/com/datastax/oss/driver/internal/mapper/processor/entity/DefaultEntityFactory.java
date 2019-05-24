@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
-import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.Computed;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
@@ -125,15 +124,17 @@ public class DefaultEntityFactory implements EntityFactory {
       // if @Computed annotation is present, this does not map to a particular column,
       // but rather a computed result.  In this case, we need to use column aliasing
       // i.e. 'count(*) as X' as the name is not deterministic from the computed formula.
-      // In this case we use a name that is extremely unlikely to be a column name, '[aliasX]'.
+      // In this case we use the propertyName (or customCqlName if present) as the alias.
       if (computedFormula.isPresent()) {
         property =
-            new AliasedPropertyDefinition(
+            new ComputedPropertyDefinition(
+                propertyName,
+                customCqlName,
                 computedFormula.get(),
-                CqlIdentifier.fromInternal("[alias" + aliasCounter++ + "]").asCql(false),
                 getMethodName,
                 setMethodName,
-                propertyType);
+                propertyType,
+                cqlNameGenerator);
       } else {
         property =
             new DefaultPropertyDefinition(

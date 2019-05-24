@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.Computed;
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
@@ -107,7 +108,7 @@ public class ComputedIT {
     assertThat(retrievedValue.getcId()).isEqualTo(1);
     assertThat(retrievedValue.getV()).isEqualTo(2);
     assertThat(retrievedValue.getTtl()).isEqualTo(3600);
-    assertThat(retrievedValue.getWriteTime()).isEqualTo(time);
+    assertThat(retrievedValue.getWritetime()).isEqualTo(time);
   }
 
   @Test
@@ -149,19 +150,27 @@ public class ComputedIT {
   }
 
   @Test
-  public void should_not_select_computed_values_in_GetEntity() {
-    // since we can't control the result names when using GetEntity, we should not expect them back.
+  public void should_return_computed_values_in_GetEntity() {
     ComputedDao computedDao = mapper.computedDao(sessionRule.keyspace());
     int key = keyProvider.incrementAndGet();
 
+    long time = System.currentTimeMillis() - 1000;
     ComputedEntity entity = new ComputedEntity(key, 1, 2);
-    computedDao.save(entity);
+    computedDao.saveWithTime(entity, 3600, time);
 
     CqlSession session = sessionRule.session();
+    // query with the computed values included.
+    // since we the mapper expects the result name to match the property name, we used aliasing
+    // here.
     ResultSet result =
         session.execute(
             SimpleStatement.newInstance(
-                "select * from computed_entity where id=? and " + "c_id=? limit 1", key, 1));
+                "select id, c_id, v, writetime(v) as writetime, ttl(v) as myttl from "
+                    + "computed_entity where "
+                    + "id=? and "
+                    + "c_id=? limit 1",
+                key,
+                1));
     assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
 
     ComputedEntity retrievedValue = computedDao.get(result.one());
@@ -169,15 +178,13 @@ public class ComputedIT {
     assertThat(retrievedValue.getcId()).isEqualTo(1);
     assertThat(retrievedValue.getV()).isEqualTo(2);
 
-    // these aren't set because the result names aren't present, so they'll be boxed to 0.
-    assertThat(retrievedValue.getWriteTime()).isZero();
-    assertThat(retrievedValue.getTtl()).isZero();
+    // these should be set
+    assertThat(retrievedValue.getTtl()).isEqualTo(3600);
+    assertThat(retrievedValue.getWritetime()).isEqualTo(time);
   }
 
   @Test
-  public void should_not_select_computed_values_in_Query() {
-    // since we can't control the result names when using Query, we should not expect them
-    // back.
+  public void should_return_computed_values_in_query() {
     ComputedDao computedDao = mapper.computedDao(sessionRule.keyspace());
     int key = keyProvider.incrementAndGet();
 
@@ -190,9 +197,9 @@ public class ComputedIT {
     assertThat(retrievedValue.getcId()).isEqualTo(1);
     assertThat(retrievedValue.getV()).isEqualTo(2);
 
-    // these aren't set because the result names aren't present, so they'll be boxed to 0.
-    assertThat(retrievedValue.getWriteTime()).isZero();
-    assertThat(retrievedValue.getTtl()).isZero();
+    // these should be set
+    assertThat(retrievedValue.getTtl()).isEqualTo(3600);
+    assertThat(retrievedValue.getWritetime()).isEqualTo(time);
   }
 
   @Entity
@@ -205,8 +212,10 @@ public class ComputedIT {
     private int v;
 
     @Computed("writetime(v)")
-    private long writeTime;
+    private long writetime;
 
+    // use CqlName to ensure it is used for the alias.
+    @CqlName("myttl")
     @Computed("ttl(v)")
     private int ttl;
 
@@ -242,12 +251,12 @@ public class ComputedIT {
       this.v = v;
     }
 
-    public long getWriteTime() {
-      return writeTime;
+    public long getWritetime() {
+      return writetime;
     }
 
-    public void setWriteTime(long writeTime) {
-      this.writeTime = writeTime;
+    public void setWritetime(long writetime) {
+      this.writetime = writetime;
     }
 
     public int getTtl() {
@@ -279,7 +288,10 @@ public class ComputedIT {
     @GetEntity
     ComputedEntity get(Row row);
 
-    @Query("select * from ${qualifiedTableId} WHERE id = :id and c_id = :cId")
+    @Query(
+        "select id, c_id, v, ttl(v) as myttl, writetime(v) as writetime from "
+            + "${qualifiedTableId} WHERE id = :id and "
+            + "c_id = :cId")
     ComputedEntity findByIdQuery(int id, int cId);
 
     @Update

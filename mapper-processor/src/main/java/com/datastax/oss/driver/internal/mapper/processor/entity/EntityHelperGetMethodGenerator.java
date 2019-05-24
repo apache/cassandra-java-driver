@@ -68,15 +68,6 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
       CodeBlock cqlResultName = property.getCqlResultName();
       String setterName = property.getSetterName();
       getBuilder.addCode("\n");
-      // if the result name is not the same as the name, it's likely this is a computed
-      // value that is not part of the table's definition. In this case, we should check
-      // to see if the definition is present in the result set before setting it.
-      // TODO: there isn't a way of doing this without throwing an Exception at the GettableByName
-      // level, so we simply wrap in try catch, should we find a better way to do this?
-      boolean conditionallySet = !cqlName.equals(cqlResultName);
-      if (conditionallySet) {
-        getBuilder.beginControlFlow("try");
-      }
       if (type instanceof PropertyType.Simple) {
         TypeName typeName = ((PropertyType.Simple) type).typeName;
         String primitiveAccessor = GeneratedCodePatterns.PRIMITIVE_ACCESSORS.get(typeName);
@@ -144,10 +135,6 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
         getBuilder
             .addStatement("returnValue.$L($L)", setterName, mappedCollectionName)
             .endControlFlow();
-      }
-      if (conditionallySet) {
-        getBuilder.nextControlFlow("catch ($T e)", IllegalArgumentException.class);
-        getBuilder.endControlFlow();
       }
     }
     getBuilder.addStatement("return returnValue");

@@ -183,9 +183,42 @@ or function names, you'll have to escape them:
 private int f;
 ```
 
-Finally, note that [@Computed] fields are only used for [@Select]-annotated dao methods. Both
-[@GetEntity] and [@Query]-annotated methods will not set [@Computed] properties because the name
-of the result value cannot be resolved deterministically.
+[@Computed] fields are only used for queries, so they will not be considered for [@Update] or
+[@Insert] operations.
+
+Also note that like all other properties, the expected name in a query result for a [@Computed]
+property is based on the property name and the employed [@NamingStrategy](#naming-strategy). You may
+override this behavior using [@CqlName](#user-provided-names).
+
+Mapping computed results to property names is accomplished using [aliases].  If you wish to use
+entities with [@Computed] properties with [@GetEntity] or [@Query]-annotated dao methods, you
+must also do the same:
+
+```java
+@Entity
+class MyEntity {
+  @PartitionKey private int k;
+
+  private int v;
+
+  @Computed("ttl(v)")
+  private int myTtl;
+
+  @Computed("writetime(v)")
+  @CqlName("ts")
+  private int writetime;
+}
+```
+
+would expect a CQL query such as:
+
+```java
+@Dao
+class MyDao {
+  @Query("select k, v, ttl(v) as my_ttl, writetime(v) as ts from ${qualifiedTableId} where k=:id")
+  MyEntity findById(int id);
+}
+```
 
 #### Transient properties
 
@@ -228,7 +261,10 @@ private transient int notAColumn;
 [@PartitionKey]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
 [@Computed]:            http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Computed.html
 [@Select]:              http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Select.html
+[@Insert]:              http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Insert.html
+[@Update]:              http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Update.html
 [@GetEntity]:           http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/GetEntity.html
 [@Query]:               http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Query.html
+[aliases]:              http://cassandra.apache.org/doc/latest/cql/dml.html?#aliases
 [@Transient]:           http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Transient.html
 [@TransientProperties]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Transient.html

@@ -17,8 +17,9 @@ package com.datastax.oss.driver.internal.mapper.processor.entity;
 
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
 import com.squareup.javapoet.CodeBlock;
+import java.util.Optional;
 
-public class AliasedPropertyDefinition implements PropertyDefinition {
+public class ComputedPropertyDefinition implements PropertyDefinition {
 
   private final CodeBlock cqlName;
   private final CodeBlock cqlResultName;
@@ -26,11 +27,21 @@ public class AliasedPropertyDefinition implements PropertyDefinition {
   private final String setterName;
   private final PropertyType type;
 
-  public AliasedPropertyDefinition(
-      String propertyName, String alias, String getterName, String setterName, PropertyType type) {
-    String selector = propertyName + " as " + alias;
-    this.cqlName = CodeBlock.of("$S", selector);
-    this.cqlResultName = CodeBlock.of("$S", alias);
+  public ComputedPropertyDefinition(
+      String javaName,
+      Optional<String> customCqlName,
+      String formula,
+      String getterName,
+      String setterName,
+      PropertyType type,
+      CqlNameGenerator cqlNameGenerator) {
+    this.cqlResultName =
+        customCqlName
+            .map(n -> CodeBlock.of("$S", n))
+            .orElse(cqlNameGenerator.buildCqlName(javaName));
+    // the queried name is "formula as alias"
+    this.cqlName =
+        CodeBlock.of("$S + $S +", formula, " as ").toBuilder().add(this.cqlResultName).build();
     this.getterName = getterName;
     this.setterName = setterName;
     this.type = type;
