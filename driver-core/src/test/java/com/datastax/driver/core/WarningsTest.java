@@ -34,8 +34,7 @@ public class WarningsTest extends CCMTestsSupport {
   @CassandraVersion("2.2.0")
   public void should_expose_warnings_on_execution_info() throws Exception {
     // the default batch size warn threshold is 5 * 1024 bytes, but after CASSANDRA-10876 there must
-    // be
-    // multiple mutations in a batch to trigger this warning so the batch includes 2 different
+    // be multiple mutations in a batch to trigger this warning so the batch includes 2 different
     // inserts.
     final String query =
         String.format(
@@ -61,7 +60,8 @@ public class WarningsTest extends CCMTestsSupport {
           .contains(query.substring(0, QueryLogger.DEFAULT_MAX_QUERY_STRING_LENGTH))
           .contains("' generated server side warning(s): ")
           .contains("Batch")
-          .contains(String.format("for [%s.foo] is of size", keyspace))
+          .contains(keyspace + ".foo")
+          .contains(" is of size")
           .contains(", exceeding specified threshold");
     } finally {
       logAppender.disableFor(RequestHandler.class);
