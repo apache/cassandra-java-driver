@@ -46,12 +46,13 @@ import org.testng.annotations.Test;
 
 public class DCAwareRoundRobinPolicyTest {
 
-  Logger policyLogger = Logger.getLogger(DCAwareRoundRobinPolicy.class);
-  Level originalLevel;
-  MemoryAppender logs;
-  QueryTracker queryTracker;
+  private final Logger policyLogger = Logger.getLogger(DCAwareRoundRobinPolicy.class);
+  private Level originalLevel;
+  private MemoryAppender logs;
+  private QueryTracker queryTracker;
 
-  @Captor ArgumentCaptor<Collection<Host>> initHostsCaptor;
+  @Captor
+  private ArgumentCaptor<Collection<Host>> initHostsCaptor;
 
   @BeforeMethod(groups = "short")
   public void setUp() {
@@ -260,7 +261,7 @@ public class DCAwareRoundRobinPolicyTest {
 
   /**
    * Ensures that {@link DCAwareRoundRobinPolicy} will use remote hosts for non DC local Consistency
-   * Levels if {@link DCAwareRoundRobinPolicy.Builder#allowRemoteDCsForLocalConsistencyLevel} is
+   * Levels if {@code DCAwareRoundRobinPolicy.Builder#allowRemoteDCsForLocalConsistencyLevel} is
    * used. In the case that a DC local Consistency Level is provided a {@link
    * NoHostAvailableException} is raised.
    *
