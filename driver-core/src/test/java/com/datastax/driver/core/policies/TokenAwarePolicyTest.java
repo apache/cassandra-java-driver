@@ -275,6 +275,7 @@ public class TokenAwarePolicyTest {
             .withNodes(3, 3)
             .withNetworkTopologyKeyspace("keyspace", ImmutableMap.of(1, 1, 2, 1))
             .build();
+    @SuppressWarnings("deprecation")
     Cluster cluster =
         Cluster.builder()
             .addContactPoints(sCluster.address(1).getAddress())
