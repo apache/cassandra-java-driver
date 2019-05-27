@@ -51,8 +51,7 @@ public class DCAwareRoundRobinPolicyTest {
   private MemoryAppender logs;
   private QueryTracker queryTracker;
 
-  @Captor
-  private ArgumentCaptor<Collection<Host>> initHostsCaptor;
+  @Captor private ArgumentCaptor<Collection<Host>> initHostsCaptor;
 
   @BeforeMethod(groups = "short")
   public void setUp() {
