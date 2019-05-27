@@ -22,7 +22,6 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.FutureFallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -71,7 +70,7 @@ public abstract class GuavaCompatibility {
    * Returns a {@code Future} whose result is taken from the given primary {@code input} or, if the
    * primary input fails, from the {@code Future} provided by the {@code fallback}.
    *
-   * @see Futures#withFallback(ListenableFuture, FutureFallback)
+   * @see Futures#withFallback(ListenableFuture, com.google.common.util.concurrent.FutureFallback)
    * @see Futures#catchingAsync(ListenableFuture, Class, AsyncFunction)
    */
   public abstract <V> ListenableFuture<V> withFallback(
@@ -81,7 +80,8 @@ public abstract class GuavaCompatibility {
    * Returns a {@code Future} whose result is taken from the given primary {@code input} or, if the
    * primary input fails, from the {@code Future} provided by the {@code fallback}.
    *
-   * @see Futures#withFallback(ListenableFuture, FutureFallback, Executor)
+   * @see Futures#withFallback(ListenableFuture, com.google.common.util.concurrent.FutureFallback,
+   *     Executor)
    * @see Futures#catchingAsync(ListenableFuture, Class, AsyncFunction, Executor)
    */
   public abstract <V> ListenableFuture<V> withFallback(
@@ -201,7 +201,7 @@ public abstract class GuavaCompatibility {
         ListenableFuture<? extends V> input, final AsyncFunction<Throwable, V> fallback) {
       return Futures.withFallback(
           input,
-          new FutureFallback<V>() {
+          new com.google.common.util.concurrent.FutureFallback<V>() {
             @Override
             public ListenableFuture<V> create(Throwable t) throws Exception {
               return fallback.apply(t);
@@ -216,7 +216,7 @@ public abstract class GuavaCompatibility {
         Executor executor) {
       return Futures.withFallback(
           input,
-          new FutureFallback<V>() {
+          new com.google.common.util.concurrent.FutureFallback<V>() {
             @Override
             public ListenableFuture<V> create(Throwable t) throws Exception {
               return fallback.apply(t);
