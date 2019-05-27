@@ -225,7 +225,6 @@ class RequestHandler {
                 execution.retryConsistencyLevel,
                 response.getCustomPayload());
       }
-      callback.onSet(connection, response, info, statement, System.nanoTime() - startTime);
       // if the response from the server has warnings, they'll be set on the ExecutionInfo. Log them
       // here, unless they've been disabled.
       if (response.warnings != null
@@ -234,6 +233,7 @@ class RequestHandler {
           && logger.isWarnEnabled()) {
         logServerWarnings(response.warnings);
       }
+      callback.onSet(connection, response, info, statement, System.nanoTime() - startTime);
     } catch (Exception e) {
       callback.onException(
           connection,
