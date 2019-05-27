@@ -33,12 +33,12 @@ import com.datastax.driver.core.exceptions.QueryConsistencyException;
 import com.datastax.driver.core.exceptions.ReadTimeoutException;
 import com.datastax.driver.core.exceptions.UnavailableException;
 import com.datastax.driver.core.exceptions.WriteTimeoutException;
-import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
 import java.text.SimpleDateFormat;
 
 /**
- * This example illustrates how to replace the deprecated {@link DowngradingConsistencyRetryPolicy}
- * with equivalent application logic.
+ * This example illustrates how to replace the deprecated {@link
+ * com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy} with equivalent application
+ * logic.
  *
  * <p>Preconditions:
  *

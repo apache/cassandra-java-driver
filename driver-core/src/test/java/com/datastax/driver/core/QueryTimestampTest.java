@@ -18,8 +18,8 @@ package com.datastax.driver.core;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.Metrics.Errors;
-import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -37,15 +37,19 @@ public class QueryTimestampTest extends CCMTestsSupport {
 
   @Override
   public Cluster.Builder createClusterBuilder() {
-    return Cluster.builder()
-        .withTimestampGenerator(
-            new TimestampGenerator() {
-              @Override
-              public long next() {
-                return timestampFromGenerator;
-              }
-            })
-        .withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
+    @SuppressWarnings("deprecation")
+    Builder builder =
+        Cluster.builder()
+            .withTimestampGenerator(
+                new TimestampGenerator() {
+                  @Override
+                  public long next() {
+                    return timestampFromGenerator;
+                  }
+                })
+            .withRetryPolicy(
+                com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy.INSTANCE);
+    return builder;
   }
 
   @BeforeMethod(groups = "short")
