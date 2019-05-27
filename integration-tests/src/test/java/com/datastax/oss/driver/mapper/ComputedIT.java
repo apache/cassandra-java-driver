@@ -159,9 +159,16 @@ public class ComputedIT {
     computedDao.saveWithTime(entity, 3600, time);
 
     CqlSession session = sessionRule.session();
-    // query with the computed values included.
-    // since we the mapper expects the result name to match the property name, we used aliasing
-    // here.
+
+    /*
+     * Query with the computed values included.
+     *
+     * Since we the mapper expects the result name to match the property name, we used aliasing
+     * here.
+     *
+     * In the case of ttl(v), since we annotated ttl as @CqlName("myttl") we expect myttl to
+     * be the alias.
+     */
     ResultSet result =
         session.execute(
             SimpleStatement.newInstance(
