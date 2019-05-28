@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
@@ -32,14 +30,12 @@ import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
-import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -138,60 +134,9 @@ public class SchemaValidationIT extends InventoryITBase {
 
   @Dao
   public interface ProductDao {
-    // todo leave only those methods that cause dimensions_helper to be generated
-    @Update
-    void update(Product product);
-
-    @Update(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
-    void updateDoNotSetNull(Product product);
-
-    @Update(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
-    void updateSetNull(Product product);
 
     @Update(customWhereClause = "id = :id")
     void updateWhereId(Product product, UUID id);
-
-    @Update(customWhereClause = "id IN (:id1, :id2)")
-    void updateWhereIdIn(Product product, UUID id1, UUID id2);
-
-    @Update(timestamp = ":timestamp")
-    void updateWithBoundTimestamp(Product product, long timestamp);
-
-    @Update(timestamp = "1000")
-    void updateWithTimestampLiteral(Product product);
-
-    @Update(ttl = ":ttl")
-    void updateWithBoundTtl(Product product, int ttl);
-
-    @Update(ttl = "1000")
-    void updateWithTtlLiteral(Product product);
-
-    @Update(ifExists = true)
-    ResultSet updateIfExists(Product product);
-
-    @Update
-    CompletableFuture<Void> updateAsync(Product product);
-
-    @Update(customIfClause = "dimensions.length = :length")
-    ResultSet updateIfLength(Product product, int length);
-
-    @Update(customIfClause = "dimensions.length = :length")
-    CompletableFuture<AsyncResultSet> updateIfLengthAsync(Product product, int length);
-
-    @Update(timestamp = ":timestamp")
-    CompletableFuture<Void> updateAsyncWithBoundTimestamp(Product product, long timestamp);
-
-    @Update(ifExists = true)
-    CompletableFuture<AsyncResultSet> updateAsyncIfExists(Product product);
-
-    @Update(ifExists = true)
-    boolean updateReturnWasApplied(Product product);
-
-    @Update(ifExists = true)
-    CompletableFuture<Boolean> updateReturnWasAppliedAsync(Product product);
-
-    @Select
-    Product findById(UUID productId);
   }
 
   @Dao
