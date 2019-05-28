@@ -115,7 +115,6 @@ public class SchemaValidationIT extends InventoryITBase {
         .hasStackTraceContaining("Undefined column name description_with_incorrect_name");
   }
 
-  // todo fix this problem with interpreting type Dimensions as table
   @Test
   public void should_not_throw_on_table_with_udt_field() {
     assertThatCode(() -> mapper.productDao(sessionRule.keyspace())).doesNotThrowAnyException();

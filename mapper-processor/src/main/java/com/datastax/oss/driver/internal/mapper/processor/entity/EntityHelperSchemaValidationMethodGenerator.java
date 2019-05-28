@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.mapper.processor.entity;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
+import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultTableMetadata;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
@@ -56,25 +57,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
         .addStatement("tableId = defaultTableId")
         .endControlFlow();
 
-    // Generates TableMetadata - Assumes that MapperContext context is already defined
-    methodBuilder.addStatement("$T finalTableId = tableId", CqlIdentifier.class);
-    methodBuilder.addStatement(
-        "$1T<$2T> tableMetadata = context.getSession().getMetadata().getKeyspace(context.getKeyspaceId()).flatMap(v -> v.getTable(finalTableId))",
-        Optional.class,
-        TableMetadata.class);
-
-    methodBuilder.addStatement("String entityClassName = $S", entityDefinition.getClassName());
-
-    // Find out missingTableCqlNames - columns that are present in Entity Mapping but NOT present in
-    // CQL table
-    methodBuilder.beginControlFlow("if (tableMetadata.isPresent())");
-    methodBuilder.addStatement(
-        "$1T<$2T, $3T> columns = (($4T) tableMetadata.get()).getColumns()",
-        Map.class,
-        CqlIdentifier.class,
-        ColumnMetadata.class,
-        DefaultTableMetadata.class);
-
+    // Generates expected names to be present in cql (table or udt)
     List<CodeBlock> expectedCqlNames =
         entityDefinition
             .getAllColumns()
@@ -90,6 +73,31 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
       methodBuilder.addStatement(
           "expectedCqlNames.add($1T.fromCql($2L))", CqlIdentifier.class, expectedCqlName);
     }
+
+    // Generates TableMetadata - Assumes that MapperContext context is already defined
+    methodBuilder.addStatement("$T finalTableId = tableId", CqlIdentifier.class);
+    methodBuilder.addStatement(
+        "$1T<$2T> tableMetadata = context.getSession().getMetadata().getKeyspace(context.getKeyspaceId()).flatMap(v -> v.getTable(finalTableId))",
+        Optional.class,
+        TableMetadata.class);
+
+    // Generated UserDefineTypes metadata
+    methodBuilder.addStatement(
+        "$1T<$2T> userDefinedType = context.getSession().getMetadata().getKeyspace(context.getKeyspaceId()).flatMap(v -> v.getUserDefinedType(finalTableId))",
+        Optional.class,
+        UserDefinedType.class);
+
+    methodBuilder.addStatement("String entityClassName = $S", entityDefinition.getClassName());
+
+    // Find out missingTableCqlNames - columns that are present in Entity Mapping but NOT present in
+    // CQL table
+    methodBuilder.beginControlFlow("if (tableMetadata.isPresent())");
+    methodBuilder.addStatement(
+        "$1T<$2T, $3T> columns = (($4T) tableMetadata.get()).getColumns()",
+        Map.class,
+        CqlIdentifier.class,
+        ColumnMetadata.class,
+        DefaultTableMetadata.class);
 
     methodBuilder.addStatement(
         "$1T<$2T> missingTableCqlNames = new $3T<>();",
@@ -112,6 +120,39 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     methodBuilder.addStatement(
         "throw new $1T($2L)", IllegalArgumentException.class, missingCqlColumnExceptionMessage);
     methodBuilder.endControlFlow();
+    methodBuilder.endControlFlow();
+
+    // Find out missingTableCqlNames - columns that are present in Entity Mapping but NOT present in
+    // UDT table
+    methodBuilder.beginControlFlow("else if (userDefinedType.isPresent())");
+
+    methodBuilder.addStatement(
+        "$1T<$2T> columns = userDefinedType.get().getFieldNames()",
+        List.class,
+        CqlIdentifier.class);
+
+    methodBuilder.addStatement(
+        "$1T<$2T> missingTableCqlNames = new $3T<>();",
+        List.class,
+        CqlIdentifier.class,
+        ArrayList.class);
+    methodBuilder.beginControlFlow(
+        "for ($1T cqlIdentifier : expectedCqlNames)", CqlIdentifier.class);
+    methodBuilder.beginControlFlow("if (!columns.contains(cqlIdentifier))");
+    methodBuilder.addStatement("missingTableCqlNames.add(cqlIdentifier)");
+    methodBuilder.endControlFlow();
+    methodBuilder.endControlFlow();
+
+    // Throw if there are any missingTableCqlNames
+    CodeBlock missingCqlUdtExceptionMessage =
+        CodeBlock.of(
+            "String.format(\"The CQL ks.udt: %s.%s has missing columns: %s that are defined in the entity class: %s\", "
+                + "context.getKeyspaceId(), tableId, missingTableCqlNames, entityClassName)");
+    methodBuilder.beginControlFlow("if (!missingTableCqlNames.isEmpty())");
+    methodBuilder.addStatement(
+        "throw new $1T($2L)", IllegalArgumentException.class, missingCqlUdtExceptionMessage);
+    methodBuilder.endControlFlow();
+
     methodBuilder.endControlFlow();
 
     // Throw if there is not keyspace.table for defined entity
