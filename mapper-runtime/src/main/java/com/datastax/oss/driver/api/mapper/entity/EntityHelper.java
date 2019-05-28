@@ -26,6 +26,8 @@ import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.DaoTable;
+import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.NamingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
@@ -255,6 +257,13 @@ public interface EntityHelper<EntityT> {
   @NonNull
   Class<EntityT> getEntityClass();
 
-  // todo what it should return?
+  /**
+   * When the new instance of a class annotated with {@link Dao} is created an automatic check for
+   * schema validation is performed. It verifies if all {@link Dao} entity fields are present in CQL
+   * table. If not the {@link IllegalArgumentException} exception with detailed message is thrown.
+   * This check has startup overhead so once your app is stable you may want to disable it. The
+   * schema validation check is enabled by default. It can be disabled using the {@link
+   * Dao#enableEntitySchemaValidation()} method.
+   */
   void validateEntityFields();
 }
