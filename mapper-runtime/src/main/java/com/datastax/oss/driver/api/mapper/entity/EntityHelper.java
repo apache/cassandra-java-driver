@@ -214,4 +214,7 @@ public interface EntityHelper<EntityT> {
    */
   @NonNull
   Delete deleteByPrimaryKey();
+
+  // todo what it should return?
+  void validateEntityFields();
 }
