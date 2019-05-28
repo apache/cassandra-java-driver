@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
@@ -79,6 +80,13 @@ public class SchemaValidationIT {
             "There is no ks.table: ks_0.product_cql_table_missing for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductCqlTableMissing");
   }
 
+  @Test
+  public void should_throw_general_driver_exception_when_schema_validation_check_is_disabled() {
+    assertThatThrownBy(() -> mapper.productDaoValidationDisabled(sessionRule.keyspace()))
+        .isInstanceOf(InvalidQueryException.class)
+        .hasStackTraceContaining("Undefined column name description_with_incorrect_name");
+  }
+
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
@@ -86,10 +94,24 @@ public class SchemaValidationIT {
 
     @DaoFactory
     ProductSimpleCqlTableMissingDao productCqlTableMissingDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    ProductSimpleDaoValidationDisabledDao productDaoValidationDisabled(
+        @DaoKeyspace CqlIdentifier keyspace);
   }
 
   @Dao
   public interface ProductSimpleDao {
+
+    @Update
+    void update(ProductSimple product);
+
+    @Select
+    ProductSimple findById(UUID productId);
+  }
+
+  @Dao(enableEntitySchemaValidation = false)
+  public interface ProductSimpleDaoValidationDisabledDao {
 
     @Update
     void update(ProductSimple product);

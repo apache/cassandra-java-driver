@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.mapper.MapperContext;
+import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
@@ -256,7 +257,9 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
       // - create an instance
       initAsyncBuilder.addStatement("$1T $2L = new $1T(context)", fieldTypeName, fieldName);
       // - validate entity schema
-      initAsyncBuilder.addStatement("$1L.validateEntityFields()", fieldName);
+      if (interfaceElement.getAnnotation(Dao.class).enableEntitySchemaValidation()) {
+        initAsyncBuilder.addStatement("$1L.validateEntityFields()", fieldName);
+      }
       // - add it as a parameter to the constructor call
       newDaoStatement.add(",\n$L", fieldName);
     }
