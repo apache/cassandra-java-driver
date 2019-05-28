@@ -65,7 +65,6 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
     for (PropertyDefinition property : entityDefinition.getAllValues()) {
       PropertyType type = property.getType();
       CodeBlock cqlName = property.getCqlName();
-      CodeBlock cqlResultName = property.getCqlResultName();
       String setterName = property.getSetterName();
       getBuilder.addCode("\n");
       if (type instanceof PropertyType.Simple) {
@@ -75,12 +74,12 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
           // Primitive type: use dedicated getter, since it is optimized to avoid boxing
           //     returnValue.setLength(source.getInt("length"));
           getBuilder.addStatement(
-              "returnValue.$L(source.get$L($L))", setterName, primitiveAccessor, cqlResultName);
+              "returnValue.$L(source.get$L($L))", setterName, primitiveAccessor, cqlName);
         } else if (typeName instanceof ClassName) {
           // Unparameterized class: use the generic, class-based getter:
           //     returnValue.setId(source.get("id", UUID.class));
           getBuilder.addStatement(
-              "returnValue.$L(source.get($L, $T.class))", setterName, cqlResultName, typeName);
+              "returnValue.$L(source.get($L, $T.class))", setterName, cqlName, typeName);
         } else {
           // Parameterized type: create a constant and use the GenericType-based getter:
           //     private static final GenericType<List<String>> GENERIC_TYPE =
@@ -92,7 +91,7 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
           getBuilder.addStatement(
               "returnValue.$L(source.get($L, $T))",
               setterName,
-              cqlResultName,
+              cqlName,
               enclosingClass.addGenericTypeConstant(typeName));
         }
       } else if (type instanceof PropertyType.SingleEntity) {

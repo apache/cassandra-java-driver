@@ -82,7 +82,6 @@ public class DefaultEntityFactory implements EntityFactory {
     SortedMap<Integer, PropertyDefinition> clusteringColumns = new TreeMap<>();
     ImmutableList.Builder<PropertyDefinition> regularColumns = ImmutableList.builder();
     ImmutableList.Builder<PropertyDefinition> computedValues = ImmutableList.builder();
-    int aliasCounter = 0;
     for (Element child : classElement.getEnclosedElements()) {
       Set<Modifier> modifiers = child.getModifiers();
       if (child.getKind() != ElementKind.METHOD
@@ -119,32 +118,15 @@ public class DefaultEntityFactory implements EntityFactory {
       Optional<String> computedFormula = getComputedFormula(propertyAnnotations, getMethod, field);
 
       PropertyType propertyType = PropertyType.parse(typeMirror, context);
-      PropertyDefinition property;
-
-      // if @Computed annotation is present, this does not map to a particular column,
-      // but rather a computed result.  In this case, we need to use column aliasing
-      // i.e. 'count(*) as X' as the name is not deterministic from the computed formula.
-      // In this case we use the propertyName (or customCqlName if present) as the alias.
-      if (computedFormula.isPresent()) {
-        property =
-            new ComputedPropertyDefinition(
-                propertyName,
-                customCqlName,
-                computedFormula.get(),
-                getMethodName,
-                setMethodName,
-                propertyType,
-                cqlNameGenerator);
-      } else {
-        property =
-            new DefaultPropertyDefinition(
-                propertyName,
-                customCqlName,
-                getMethodName,
-                setMethodName,
-                propertyType,
-                cqlNameGenerator);
-      }
+      PropertyDefinition property =
+          new DefaultPropertyDefinition(
+              propertyName,
+              customCqlName,
+              computedFormula,
+              getMethodName,
+              setMethodName,
+              propertyType,
+              cqlNameGenerator);
 
       if (partitionKeyIndex >= 0) {
         PropertyDefinition previous = partitionKey.putIfAbsent(partitionKeyIndex, property);

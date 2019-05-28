@@ -23,8 +23,6 @@ package com.datastax.oss.driver.api.mapper.annotations;
  * <p>Example:
  *
  * <pre>
- * private int v;
- *
  * &#64;Computed("writetime(v)")
  * private int writeTime;
  * </pre>

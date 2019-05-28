@@ -183,8 +183,8 @@ or function names, you'll have to escape them:
 private int f;
 ```
 
-[@Computed] fields are only used for queries, so they will not be considered for [@Update] or
-[@Insert] operations.
+[@Computed] fields are only used for select-based queries, so they will not be considered for
+[@Update] or [@Insert] operations.
 
 Also note that like all other properties, the expected name in a query result for a [@Computed]
 property is based on the property name and the employed [@NamingStrategy](#naming-strategy). You may
