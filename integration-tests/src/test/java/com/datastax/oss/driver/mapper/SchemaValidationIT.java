@@ -16,9 +16,12 @@
 package com.datastax.oss.driver.mapper;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Java6Assertions.assertThatCode;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
@@ -28,15 +31,15 @@ import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
+import com.datastax.oss.driver.api.mapper.annotations.Update;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
+import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -46,7 +49,8 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
-public class SchemaValidationIT {
+@CassandraRequirement(min = "3.4", description = "Creates a SASI index")
+public class SchemaValidationIT extends InventoryITBase {
 
   private static CcmRule ccm = CcmRule.getInstance();
 
@@ -59,17 +63,12 @@ public class SchemaValidationIT {
   @BeforeClass
   public static void setup() {
     CqlSession session = sessionRule.session();
-    for (String query :
-        ImmutableList.of(
-            "CREATE TABLE product_simple(id uuid PRIMARY KEY, description text, unmapped text)",
-            "CREATE TYPE type1(s text)",
-            "CREATE TYPE type2(i int)",
-            "CREATE TABLE container(id uuid PRIMARY KEY, "
-                + "list frozen<list<type1>>, "
-                + "map1 frozen<map<text, list<type1>>>, "
-                + "map2 frozen<map<type1, set<list<type2>>>>,"
-                + "map3 frozen<map<type1, map<text, set<type2>>>>"
-                + ")")) {
+    session.execute(
+        SimpleStatement.builder(
+                "CREATE TABLE product_simple(id uuid PRIMARY KEY, description text, unmapped text)")
+            .setExecutionProfile(sessionRule.slowProfile())
+            .build());
+    for (String query : createStatements()) {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }
@@ -80,32 +79,22 @@ public class SchemaValidationIT {
   public void clearData() {
     CqlSession session = sessionRule.session();
     session.execute(
-        SimpleStatement.builder("TRUNCATE container")
+        SimpleStatement.builder("TRUNCATE product_simple")
             .setExecutionProfile(sessionRule.slowProfile())
             .build());
     session.execute(
-        SimpleStatement.builder("TRUNCATE product_simple")
+        SimpleStatement.builder("TRUNCATE product")
             .setExecutionProfile(sessionRule.slowProfile())
             .build());
   }
 
   @Test
   public void should_throw_when_use_not_properly_mapped_entity() {
-    assertThatThrownBy(() -> mapper.productDao(sessionRule.keyspace()))
+    assertThatThrownBy(() -> mapper.productSimpleDao(sessionRule.keyspace()))
         .hasRootCauseInstanceOf(IllegalArgumentException.class)
         .hasStackTraceContaining(
             String.format(
                 "The CQL ks.table: %s.product_simple has missing columns: [description_with_incorrect_name, some_other_not_mapped_field] that are defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductSimple",
-                sessionRule.keyspace()));
-  }
-
-  @Test
-  public void should_throw_when_use_not_properly_mapped_entity_with_udts() {
-    assertThatThrownBy(() -> mapper.containerDao(sessionRule.keyspace()))
-        .hasRootCauseInstanceOf(IllegalArgumentException.class)
-        .hasStackTraceContaining(
-            String.format(
-                "The CQL ks.table: %s.container has missing columns: [list_not_present] that are defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.Container",
                 sessionRule.keyspace()));
   }
 
@@ -126,10 +115,16 @@ public class SchemaValidationIT {
         .hasStackTraceContaining("Undefined column name description_with_incorrect_name");
   }
 
+  // todo fix this problem with interpreting type Dimensions as table
+  @Test
+  public void should_not_throw_on_table_with_udt_field() {
+    assertThatCode(() -> mapper.productDao(sessionRule.keyspace())).doesNotThrowAnyException();
+  }
+
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
-    ProductSimpleDao productDao(@DaoKeyspace CqlIdentifier keyspace);
+    ProductSimpleDao productSimpleDao(@DaoKeyspace CqlIdentifier keyspace);
 
     @DaoFactory
     ProductSimpleCqlTableMissingDao productCqlTableMissingDao(@DaoKeyspace CqlIdentifier keyspace);
@@ -139,7 +134,65 @@ public class SchemaValidationIT {
         @DaoKeyspace CqlIdentifier keyspace);
 
     @DaoFactory
-    ContainerDao containerDao(@DaoKeyspace CqlIdentifier keyspace);
+    ProductDao productDao(@DaoKeyspace CqlIdentifier keyspace);
+  }
+
+  @Dao
+  public interface ProductDao {
+    // todo leave only those methods that cause dimensions_helper to be generated
+    @Update
+    void update(Product product);
+
+    @Update(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
+    void updateDoNotSetNull(Product product);
+
+    @Update(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
+    void updateSetNull(Product product);
+
+    @Update(customWhereClause = "id = :id")
+    void updateWhereId(Product product, UUID id);
+
+    @Update(customWhereClause = "id IN (:id1, :id2)")
+    void updateWhereIdIn(Product product, UUID id1, UUID id2);
+
+    @Update(timestamp = ":timestamp")
+    void updateWithBoundTimestamp(Product product, long timestamp);
+
+    @Update(timestamp = "1000")
+    void updateWithTimestampLiteral(Product product);
+
+    @Update(ttl = ":ttl")
+    void updateWithBoundTtl(Product product, int ttl);
+
+    @Update(ttl = "1000")
+    void updateWithTtlLiteral(Product product);
+
+    @Update(ifExists = true)
+    ResultSet updateIfExists(Product product);
+
+    @Update
+    CompletableFuture<Void> updateAsync(Product product);
+
+    @Update(customIfClause = "dimensions.length = :length")
+    ResultSet updateIfLength(Product product, int length);
+
+    @Update(customIfClause = "dimensions.length = :length")
+    CompletableFuture<AsyncResultSet> updateIfLengthAsync(Product product, int length);
+
+    @Update(timestamp = ":timestamp")
+    CompletableFuture<Void> updateAsyncWithBoundTimestamp(Product product, long timestamp);
+
+    @Update(ifExists = true)
+    CompletableFuture<AsyncResultSet> updateAsyncIfExists(Product product);
+
+    @Update(ifExists = true)
+    boolean updateReturnWasApplied(Product product);
+
+    @Update(ifExists = true)
+    CompletableFuture<Boolean> updateReturnWasAppliedAsync(Product product);
+
+    @Select
+    Product findById(UUID productId);
   }
 
   @Dao
@@ -161,12 +214,6 @@ public class SchemaValidationIT {
 
     @Select
     ProductCqlTableMissing findById(UUID productId);
-  }
-
-  @Dao
-  public interface ContainerDao {
-    @Select
-    Container loadByPk(UUID id);
   }
 
   @Entity
@@ -249,164 +296,6 @@ public class SchemaValidationIT {
           + ", someOtherNotMappedField="
           + someOtherNotMappedField
           + '}';
-    }
-  }
-
-  @Entity
-  public static class Container {
-
-    @PartitionKey private UUID id;
-    private List<Type1> listNotPresent;
-    private Map<String, List<Type1>> map1;
-    private Map<Type1, Set<List<Type2>>> map2;
-    private Map<Type1, Map<String, Set<Type2>>> map3;
-
-    public Container() {}
-
-    public Container(
-        UUID id,
-        List<Type1> listNotPresent,
-        Map<String, List<Type1>> map1,
-        Map<Type1, Set<List<Type2>>> map2,
-        Map<Type1, Map<String, Set<Type2>>> map3) {
-      this.id = id;
-      this.listNotPresent = listNotPresent;
-      this.map1 = map1;
-      this.map2 = map2;
-      this.map3 = map3;
-    }
-
-    public UUID getId() {
-      return id;
-    }
-
-    public void setId(UUID id) {
-      this.id = id;
-    }
-
-    public List<Type1> getListNotPresent() {
-      return listNotPresent;
-    }
-
-    public void setListNotPresent(List<Type1> listNotPresent) {
-      this.listNotPresent = listNotPresent;
-    }
-
-    public Map<String, List<Type1>> getMap1() {
-      return map1;
-    }
-
-    public void setMap1(Map<String, List<Type1>> map1) {
-      this.map1 = map1;
-    }
-
-    public Map<Type1, Set<List<Type2>>> getMap2() {
-      return map2;
-    }
-
-    public void setMap2(Map<Type1, Set<List<Type2>>> map2) {
-      this.map2 = map2;
-    }
-
-    public Map<Type1, Map<String, Set<Type2>>> getMap3() {
-      return map3;
-    }
-
-    public void setMap3(Map<Type1, Map<String, Set<Type2>>> map3) {
-      this.map3 = map3;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-      if (other == this) {
-        return true;
-      } else if (other instanceof Container) {
-        Container that = (Container) other;
-        return Objects.equals(this.id, that.id)
-            && Objects.equals(this.listNotPresent, that.listNotPresent)
-            && Objects.equals(this.map1, that.map1)
-            && Objects.equals(this.map2, that.map2)
-            && Objects.equals(this.map3, that.map3);
-      } else {
-        return false;
-      }
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(id, listNotPresent, map1, map2, map3);
-    }
-  }
-
-  @Entity
-  public static class Type1 {
-    private String s;
-
-    public Type1() {}
-
-    public Type1(String s) {
-      this.s = s;
-    }
-
-    public String getS() {
-      return s;
-    }
-
-    public void setS(String s) {
-      this.s = s;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-      if (other == this) {
-        return true;
-      } else if (other instanceof Type1) {
-        Type1 that = (Type1) other;
-        return Objects.equals(this.s, that.s);
-      } else {
-        return false;
-      }
-    }
-
-    @Override
-    public int hashCode() {
-      return s == null ? 0 : s.hashCode();
-    }
-  }
-
-  @Entity
-  public static class Type2 {
-    private int i;
-
-    public Type2() {}
-
-    public Type2(int i) {
-      this.i = i;
-    }
-
-    public int getI() {
-      return i;
-    }
-
-    public void setI(int i) {
-      this.i = i;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-      if (other == this) {
-        return true;
-      } else if (other instanceof Type2) {
-        Type2 that = (Type2) other;
-        return this.i == that.i;
-      } else {
-        return false;
-      }
-    }
-
-    @Override
-    public int hashCode() {
-      return i;
     }
   }
 }
