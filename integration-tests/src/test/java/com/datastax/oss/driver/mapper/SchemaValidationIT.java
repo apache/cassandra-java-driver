@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.mapper;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Java6Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
