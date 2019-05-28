@@ -30,6 +30,8 @@ import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
+import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -41,6 +43,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -50,6 +53,7 @@ import org.junit.rules.TestRule;
 
 /** Tests that entities with UDTs nested at various levels are properly mapped. */
 @Category(ParallelizableTests.class)
+@CassandraRequirement(min = "2.2", description = "support for unset values")
 public class NestedUdtIT {
 
   private static CcmRule ccm = CcmRule.getInstance();
@@ -58,10 +62,26 @@ public class NestedUdtIT {
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
+  private static UUID CONTAINER_ID = UUID.randomUUID();
   private static final Container SAMPLE_CONTAINER =
       new Container(
-          UUID.randomUUID(),
+          CONTAINER_ID,
           ImmutableList.of(new Type1("a"), new Type1("b")),
+          ImmutableMap.of(
+              "cd",
+              ImmutableList.of(new Type1("c"), new Type1("d")),
+              "ef",
+              ImmutableList.of(new Type1("e"), new Type1("f"))),
+          ImmutableMap.of(
+              new Type1("12"),
+              ImmutableSet.of(ImmutableList.of(new Type2(1)), ImmutableList.of(new Type2(2)))),
+          ImmutableMap.of(
+              new Type1("12"), ImmutableMap.of("12", ImmutableSet.of(new Type2(1), new Type2(2)))));
+
+  private static final Container SAMPLE_CONTAINER_NULL_LIST =
+      new Container(
+          CONTAINER_ID,
+          null,
           ImmutableMap.of(
               "cd",
               ImmutableList.of(new Type1("c"), new Type1("d")),
@@ -97,6 +117,15 @@ public class NestedUdtIT {
     containerDao = udtsMapper.containerDao(sessionRule.keyspace());
   }
 
+  @Before
+  public void clearContainerData() {
+    CqlSession session = sessionRule.session();
+    session.execute(
+        SimpleStatement.builder("TRUNCATE container")
+            .setExecutionProfile(sessionRule.slowProfile())
+            .build());
+  }
+
   @Test
   public void should_insert_and_retrieve_entity_with_nested_udts() {
     // Given
@@ -108,6 +137,38 @@ public class NestedUdtIT {
 
     // Then
     assertThat(retrievedEntity).isEqualTo(SAMPLE_CONTAINER);
+  }
+
+  @Test
+  public void should_insert_do_not_set_to_null_udts() {
+    // Given
+    CqlSession session = sessionRule.session();
+
+    containerDao.save(SAMPLE_CONTAINER);
+    Container retrievedEntity = containerDao.loadByPk(SAMPLE_CONTAINER.getId());
+
+    assertThat(retrievedEntity.list).isNotNull();
+
+    // When
+    containerDao.saveDoNotSetNull(SAMPLE_CONTAINER_NULL_LIST);
+    Container retrievedEntitySecond = containerDao.loadByPk(SAMPLE_CONTAINER.getId());
+    assertThat(retrievedEntitySecond.list).isNotNull();
+  }
+
+  @Test
+  public void should_insert_set_to_null_udts() {
+    // Given
+    CqlSession session = sessionRule.session();
+
+    containerDao.save(SAMPLE_CONTAINER);
+    Container retrievedEntity = containerDao.loadByPk(SAMPLE_CONTAINER.getId());
+
+    assertThat(retrievedEntity.list).isNotNull();
+
+    // When
+    containerDao.saveSetToNull(SAMPLE_CONTAINER_NULL_LIST);
+    Container retrievedEntitySecond = containerDao.loadByPk(SAMPLE_CONTAINER.getId());
+    assertThat(retrievedEntitySecond.list).isEmpty();
   }
 
   @Mapper
@@ -124,6 +185,12 @@ public class NestedUdtIT {
 
     @Insert
     void save(Container container);
+
+    @Insert(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
+    void saveDoNotSetNull(Container container);
+
+    @Insert(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
+    void saveSetToNull(Container container);
 
     @GetEntity
     Container get(GettableByName source);

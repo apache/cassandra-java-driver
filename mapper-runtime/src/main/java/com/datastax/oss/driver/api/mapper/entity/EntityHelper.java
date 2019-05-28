@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.querybuilder.delete.Delete;
 import com.datastax.oss.driver.api.querybuilder.insert.RegularInsert;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
@@ -60,7 +61,8 @@ public interface EntityHelper<EntityT> {
    * @return the data structure resulting from the assignments. This is useful for immutable target
    *     implementations (see above), otherwise it will be the same as {@code target}.
    */
-  <SettableT extends SettableByName<SettableT>> SettableT set(EntityT entity, SettableT target);
+  <SettableT extends SettableByName<SettableT>> SettableT set(
+      EntityT entity, SettableT target, NullSavingStrategy nullSavingStrategy);
 
   /**
    * Gets values from a data structure to fill an entity instance.

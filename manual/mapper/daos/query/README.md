@@ -1,6 +1,6 @@
 ## Query methods
 
-Annotate a DAO method with [@Select] to provide your own query string:
+Annotate a DAO method with [@Query] to provide your own query string:
 
 ```java
 @Dao
@@ -21,6 +21,9 @@ placeholders: same name and a compatible Java type.
 @Query("SELECT count(*) FROM sensor_readings WHERE id = :id AND year = :year")
 long countByIdAndYear(int id, int year);
 ```
+
+The annotation can define a [null saving strategy](../null_saving/) that applies to the method
+parameters.
 
 ### Return type
 
@@ -89,14 +92,14 @@ Then:
 * `dao1.queryFromKeyspaceAndTable()` and `dao1.queryFromQualifiedTable()` both execute `SELECT *
   FROM ks.t`.
 * `dao2.queryFromKeyspaceAndTable()` fails: no keyspace was specified for this DAO, so
-  `${keyspaceId`} can't be substituted.
+  `${keyspaceId}` can't be substituted.
 * `dao1.queryFromQualifiedTable()` executes `SELECT * FROM t`. In other words, `${qualifiedTableId}`
   uses the keyspace if it is available, but resolves to the table name only if it isn't. Whether the
   query succeeds or not depends on whether the session that the mapper was built with has a [default
   keyspace].
 
 [default keyspace]:          https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
-[@Select]:                   https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Select.html
+[@Query]:                    https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Query.html
 [AsyncResultSet]:            https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
 [ResultSet]:                 https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/ResultSet.html
 [ResultSet#wasApplied()]:    https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/ResultSet.html#wasApplied--

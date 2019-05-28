@@ -192,7 +192,8 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
           primaryKeyNames,
           deleteBuilder,
           enclosingClass,
-          context);
+          context,
+          false);
       nextParameterIndex = primaryKeyNames.size();
     }
 
@@ -211,7 +212,8 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
           parameters.subList(nextParameterIndex, parameters.size()),
           deleteBuilder,
           enclosingClass,
-          context);
+          context,
+          false);
     }
 
     deleteBuilder

@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.mapper.DaoBase;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
@@ -122,8 +123,14 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
         BoundStatementBuilder.class,
         statementName);
 
+    Query annotation = methodElement.getAnnotation(Query.class);
+    NullSavingStrategy nullSavingStrategy = annotation.nullSavingStrategy();
+
+    queryBuilder.addStatement(
+        "$1T nullSavingStrategy = $1T.$2L", NullSavingStrategy.class, nullSavingStrategy);
+
     GeneratedCodePatterns.bindParameters(
-        methodElement.getParameters(), queryBuilder, enclosingClass, context);
+        methodElement.getParameters(), queryBuilder, enclosingClass, context, true);
 
     queryBuilder
         .addCode("\n")

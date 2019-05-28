@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.data.SettableByName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
@@ -117,15 +118,20 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
     // Generate the method:
     String helperFieldName = enclosingClass.addEntityHelperField(ClassName.get(entityElement));
 
+    NullSavingStrategy nullSavingStrategy =
+        methodElement.getAnnotation(SetEntity.class).nullSavingStrategy();
+
     // Forward to the base injector in the helper:
     return Optional.of(
         GeneratedCodePatterns.override(methodElement)
             .addStatement(
-                "$L$L.set($L, $L)",
+                "$1L$2L.set($3L, $4L, $5T.$6L)",
                 isVoid ? "" : "return ",
                 helperFieldName,
                 entityParameterName,
-                targetParameterName)
+                targetParameterName,
+                NullSavingStrategy.class,
+                nullSavingStrategy)
             .build());
   }
 }
