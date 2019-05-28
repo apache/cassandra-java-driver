@@ -8,7 +8,7 @@ to in the driver.
 CQL types `date` and `time` map directly to `java.time.LocalDate` and `java.time.LocalTime`.
 
 These are simple, time-zone-free representations of date-only (`yyyy-mm-dd`) and time-only
-(`HH:MM:SS\[.fff]`) types.
+(`HH:MM:SS[.fff]`) types.
 
 ### Timestamp
 
