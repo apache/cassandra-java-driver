@@ -69,7 +69,9 @@ public class SchemaValidationIT {
     assertThatThrownBy(() -> mapper.productDao(sessionRule.keyspace()))
         .hasRootCauseInstanceOf(IllegalArgumentException.class)
         .hasStackTraceContaining(
-            "The CQL ks.table: ks_0.product_simple has missing columns: [description_with_incorrect_name, some_other_not_mapped_field] that are defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductSimple");
+            String.format(
+                "The CQL ks.table: %s.product_simple has missing columns: [description_with_incorrect_name, some_other_not_mapped_field] that are defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductSimple",
+                sessionRule.keyspace()));
   }
 
   @Test
@@ -77,7 +79,9 @@ public class SchemaValidationIT {
     assertThatThrownBy(() -> mapper.productCqlTableMissingDao(sessionRule.keyspace()))
         .hasRootCauseInstanceOf(IllegalArgumentException.class)
         .hasStackTraceContaining(
-            "There is no ks.table: ks_0.product_cql_table_missing for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductCqlTableMissing");
+            String.format(
+                "There is no ks.table: %s.product_cql_table_missing for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductCqlTableMissing",
+                sessionRule.keyspace()));
   }
 
   @Test
