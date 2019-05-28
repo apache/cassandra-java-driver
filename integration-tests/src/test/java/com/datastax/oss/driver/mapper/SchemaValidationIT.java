@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.mapper;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -63,11 +65,10 @@ public class SchemaValidationIT {
 
   @Test
   public void should_throw_when_use_not_properly_mapped_entity() {
-    // Given
-    ProductSimpleDao dao = mapper.productDao(sessionRule.keyspace());
-
-    // When, Then
-    dao.update(new ProductSimple(UUID.randomUUID(), "desc"));
+    assertThatThrownBy(() -> mapper.productDao(sessionRule.keyspace()))
+        .hasRootCauseInstanceOf(IllegalArgumentException.class)
+        .hasStackTraceContaining(
+            "The CQL ks.table: ks_0.product_simple has missing columns: [description_with_incorrect_name] that are defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductSimple");
   }
 
   @Mapper
