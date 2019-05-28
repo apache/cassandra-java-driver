@@ -51,6 +51,15 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
             .addModifiers(Modifier.PUBLIC)
             .returns(TypeName.VOID);
 
+    // Handle case where keyspace = null. In such case we cannot infer and validate schema for table
+    // or udt
+    methodBuilder.beginControlFlow(
+        "if (!context.getSession().getMetadata().getKeyspace(context.getKeyspaceId()).isPresent())");
+    methodBuilder.addStatement(
+        "return"); // todo maybe we should do log.warn("we cannot validate schema because keyspace
+                   // is null")?
+    methodBuilder.endControlFlow();
+
     methodBuilder
         .addStatement("$T tableId = context.getTableId()", CqlIdentifier.class)
         .beginControlFlow("if (tableId == null)")
