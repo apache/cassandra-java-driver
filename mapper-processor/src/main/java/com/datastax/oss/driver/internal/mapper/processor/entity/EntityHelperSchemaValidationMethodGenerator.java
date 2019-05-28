@@ -89,8 +89,24 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
 
     methodBuilder.addStatement("String entityClassName = $S", entityDefinition.getClassName());
 
-    // Find out missingTableCqlNames - columns that are present in Entity Mapping but NOT present in
-    // CQL table
+    findMissingColumnsInTable(methodBuilder);
+    findMissingColumnsInUdt(methodBuilder);
+
+    // Throw if there is not keyspace.table for defined entity
+    CodeBlock missingKeyspaceTableExceptionMessage =
+        CodeBlock.of(
+            "String.format(\"There is no ks.table: %s.%s for the entity class: %s\", context.getKeyspaceId(), tableId, entityClassName)");
+    methodBuilder.beginControlFlow("else");
+    methodBuilder.addStatement(
+        "throw new $1T($2L)", IllegalArgumentException.class, missingKeyspaceTableExceptionMessage);
+    methodBuilder.endControlFlow();
+
+    return Optional.of(methodBuilder.build());
+  }
+
+  // Finds out missingTableCqlNames - columns that are present in Entity Mapping but NOT present in
+  // CQL table
+  private void findMissingColumnsInTable(MethodSpec.Builder methodBuilder) {
     methodBuilder.beginControlFlow("if (tableMetadata.isPresent())");
     methodBuilder.addStatement(
         "$1T<$2T, $3T> columns = (($4T) tableMetadata.get()).getColumns()",
@@ -121,9 +137,11 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
         "throw new $1T($2L)", IllegalArgumentException.class, missingCqlColumnExceptionMessage);
     methodBuilder.endControlFlow();
     methodBuilder.endControlFlow();
+  }
 
-    // Find out missingTableCqlNames - columns that are present in Entity Mapping but NOT present in
-    // UDT table
+  // Finds out missingTableCqlNames - columns that are present in Entity Mapping but NOT present in
+  // UDT table
+  private void findMissingColumnsInUdt(MethodSpec.Builder methodBuilder) {
     methodBuilder.beginControlFlow("else if (userDefinedType.isPresent())");
 
     methodBuilder.addStatement(
@@ -154,16 +172,5 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     methodBuilder.endControlFlow();
 
     methodBuilder.endControlFlow();
-
-    // Throw if there is not keyspace.table for defined entity
-    CodeBlock missingKeyspaceTableExceptionMessage =
-        CodeBlock.of(
-            "String.format(\"There is no ks.table: %s.%s for the entity class: %s\", context.getKeyspaceId(), tableId, entityClassName)");
-    methodBuilder.beginControlFlow("else");
-    methodBuilder.addStatement(
-        "throw new $1T($2L)", IllegalArgumentException.class, missingKeyspaceTableExceptionMessage);
-    methodBuilder.endControlFlow();
-
-    return Optional.of(methodBuilder.build());
   }
 }
