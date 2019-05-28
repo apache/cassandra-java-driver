@@ -67,7 +67,7 @@
     <hk2.version>2.5.0</hk2.version>
     <jax-rs.version>2.0.1</jax-rs.version>
     <jsr353-ri.version>1.1.4</jsr353-ri.version>
-    <jackson.version>2.9.8</jackson.version>
+    <jackson.version>2.9.9</jackson.version>
   </properties>
 
   <dependencyManagement>
