@@ -67,6 +67,7 @@ public class UpdateIT extends InventoryITBase {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }
+    session.execute("CREATE TABLE only_p_k(id uuid PRIMARY KEY)");
 
     inventoryMapper = new UpdateIT_InventoryMapperBuilder(session).build();
     dao = inventoryMapper.productDao(sessionRule.keyspace());
