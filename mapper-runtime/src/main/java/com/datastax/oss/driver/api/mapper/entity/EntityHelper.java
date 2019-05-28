@@ -254,4 +254,7 @@ public interface EntityHelper<EntityT> {
   /** The class of the mapped entity. */
   @NonNull
   Class<EntityT> getEntityClass();
+
+  // todo what it should return?
+  void validateEntityFields();
 }
