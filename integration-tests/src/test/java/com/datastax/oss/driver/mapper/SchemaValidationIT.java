@@ -25,11 +25,9 @@ import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
-import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
-import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -147,18 +145,12 @@ public class SchemaValidationIT {
   @Dao
   public interface ProductSimpleDao {
 
-    @Update
-    void update(ProductSimple product);
-
     @Select
     ProductSimple findById(UUID productId);
   }
 
   @Dao(enableEntitySchemaValidation = false)
   public interface ProductSimpleDaoValidationDisabledDao {
-
-    @Update
-    void update(ProductSimple product);
 
     @Select
     ProductSimple findById(UUID productId);
@@ -167,17 +159,14 @@ public class SchemaValidationIT {
   @Dao
   public interface ProductSimpleCqlTableMissingDao {
 
-    @Update
-    void update(ProductCqlTableMissing product);
-
     @Select
     ProductCqlTableMissing findById(UUID productId);
   }
 
   @Dao
   public interface ContainerDao {
-    @Insert
-    void save(Container container);
+    @Select
+    Container loadByPk(UUID id);
   }
 
   @Entity
