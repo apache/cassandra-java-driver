@@ -56,7 +56,7 @@ public class SchemaValidationIT {
     CqlSession session = sessionRule.session();
     session.execute(
         SimpleStatement.builder(
-                "CREATE TABLE product_simple(id uuid PRIMARY KEY, description text)")
+                "CREATE TABLE product_simple(id uuid PRIMARY KEY, description text, unmapped text)")
             .setExecutionProfile(sessionRule.slowProfile())
             .build());
 
@@ -68,13 +68,24 @@ public class SchemaValidationIT {
     assertThatThrownBy(() -> mapper.productDao(sessionRule.keyspace()))
         .hasRootCauseInstanceOf(IllegalArgumentException.class)
         .hasStackTraceContaining(
-            "The CQL ks.table: ks_0.product_simple has missing columns: [description_with_incorrect_name] that are defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductSimple");
+            "The CQL ks.table: ks_0.product_simple has missing columns: [description_with_incorrect_name, some_other_not_mapped_field] that are defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductSimple");
+  }
+
+  @Test
+  public void should_throw_when_entity_has_no_corresponding_cql_table() {
+    assertThatThrownBy(() -> mapper.productCqlTableMissingDao(sessionRule.keyspace()))
+        .hasRootCauseInstanceOf(IllegalArgumentException.class)
+        .hasStackTraceContaining(
+            "There is no ks.table: ks_0.product_cql_table_missing for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductCqlTableMissing");
   }
 
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
     ProductSimpleDao productDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    ProductSimpleCqlTableMissingDao productCqlTableMissingDao(@DaoKeyspace CqlIdentifier keyspace);
   }
 
   @Dao
@@ -87,16 +98,44 @@ public class SchemaValidationIT {
     ProductSimple findById(UUID productId);
   }
 
+  @Dao
+  public interface ProductSimpleCqlTableMissingDao {
+
+    @Update
+    void update(ProductCqlTableMissing product);
+
+    @Select
+    ProductCqlTableMissing findById(UUID productId);
+  }
+
+  @Entity
+  public static class ProductCqlTableMissing {
+    @PartitionKey private UUID id;
+
+    public ProductCqlTableMissing() {}
+
+    public UUID getId() {
+      return id;
+    }
+
+    public void setId(UUID id) {
+      this.id = id;
+    }
+  }
+
   @Entity
   public static class ProductSimple {
     @PartitionKey private UUID id;
     private String descriptionWithIncorrectName;
+    private Integer someOtherNotMappedField;
 
     public ProductSimple() {}
 
-    public ProductSimple(UUID id, String descriptionWithIncorrectName) {
+    public ProductSimple(
+        UUID id, String descriptionWithIncorrectName, Integer someOtherNotMappedField) {
       this.id = id;
       this.descriptionWithIncorrectName = descriptionWithIncorrectName;
+      this.someOtherNotMappedField = someOtherNotMappedField;
     }
 
     public UUID getId() {
@@ -115,18 +154,27 @@ public class SchemaValidationIT {
       this.descriptionWithIncorrectName = descriptionWithIncorrectName;
     }
 
+    public Integer getSomeOtherNotMappedField() {
+      return someOtherNotMappedField;
+    }
+
+    public void setSomeOtherNotMappedField(Integer someOtherNotMappedField) {
+      this.someOtherNotMappedField = someOtherNotMappedField;
+    }
+
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       ProductSimple that = (ProductSimple) o;
       return Objects.equals(id, that.id)
-          && Objects.equals(descriptionWithIncorrectName, that.descriptionWithIncorrectName);
+          && Objects.equals(descriptionWithIncorrectName, that.descriptionWithIncorrectName)
+          && Objects.equals(someOtherNotMappedField, that.someOtherNotMappedField);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(id, descriptionWithIncorrectName);
+      return Objects.hash(id, descriptionWithIncorrectName, someOtherNotMappedField);
     }
 
     @Override
@@ -137,6 +185,8 @@ public class SchemaValidationIT {
           + ", descriptionWithIncorrectName='"
           + descriptionWithIncorrectName
           + '\''
+          + ", someOtherNotMappedField="
+          + someOtherNotMappedField
           + '}';
     }
   }
