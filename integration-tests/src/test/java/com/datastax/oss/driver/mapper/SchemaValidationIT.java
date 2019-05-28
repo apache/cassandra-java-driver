@@ -34,6 +34,8 @@ import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import org.junit.Before;
@@ -59,11 +61,16 @@ public class SchemaValidationIT extends InventoryITBase {
   @BeforeClass
   public static void setup() {
     CqlSession session = sessionRule.session();
-    session.execute(
-        SimpleStatement.builder(
-                "CREATE TABLE product_simple(id uuid PRIMARY KEY, description text, unmapped text)")
-            .setExecutionProfile(sessionRule.slowProfile())
-            .build());
+    List<String> statements =
+        Arrays.asList(
+            "CREATE TABLE product_simple(id uuid PRIMARY KEY, description text, unmapped text)",
+            "CREATE TYPE dimensions_with_incorrect_name(length int, width int, height int)",
+            "CREATE TABLE product_with_incorrect_udt(id uuid PRIMARY KEY, description text, dimensions dimensions_with_incorrect_name)");
+
+    for (String query : statements) {
+      session.execute(
+          SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
+    }
     for (String query : createStatements()) {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
@@ -80,6 +87,10 @@ public class SchemaValidationIT extends InventoryITBase {
             .build());
     session.execute(
         SimpleStatement.builder("TRUNCATE product")
+            .setExecutionProfile(sessionRule.slowProfile())
+            .build());
+    session.execute(
+        SimpleStatement.builder("TRUNCATE product_with_incorrect_udt")
             .setExecutionProfile(sessionRule.slowProfile())
             .build());
   }
@@ -112,8 +123,18 @@ public class SchemaValidationIT extends InventoryITBase {
   }
 
   @Test
-  public void should_not_throw_on_table_with_udt_field() {
+  public void should_not_throw_on_table_with_properly_mapped_udt_field() {
     assertThatCode(() -> mapper.productDao(sessionRule.keyspace())).doesNotThrowAnyException();
+  }
+
+  @Test
+  public void should_throw_when_use_not_properly_mapped_entity_with_udt() {
+    assertThatThrownBy(() -> mapper.productWithIncorrectUdtDao(sessionRule.keyspace()))
+        .hasRootCauseInstanceOf(IllegalArgumentException.class)
+        .hasStackTraceContaining(
+            String.format(
+                "The CQL ks.udt: %s.dimensions_with_incorrect_name has missing columns: [length_not_present] that are defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.DimensionsWithIncorrectName",
+                sessionRule.keyspace()));
   }
 
   @Mapper
@@ -130,6 +151,16 @@ public class SchemaValidationIT extends InventoryITBase {
 
     @DaoFactory
     ProductDao productDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    ProductWithIncorrectUdtDao productWithIncorrectUdtDao(@DaoKeyspace CqlIdentifier keyspace);
+  }
+
+  @Dao
+  public interface ProductWithIncorrectUdtDao {
+
+    @Update(customWhereClause = "id = :id")
+    void updateWhereId(ProductWithIncorrectUdt product, UUID id);
   }
 
   @Dao
@@ -239,6 +270,146 @@ public class SchemaValidationIT extends InventoryITBase {
           + '\''
           + ", someOtherNotMappedField="
           + someOtherNotMappedField
+          + '}';
+    }
+  }
+
+  @Entity
+  public static class ProductWithIncorrectUdt {
+
+    @PartitionKey private UUID id;
+    private String description;
+    private DimensionsWithIncorrectName dimensions;
+
+    public ProductWithIncorrectUdt() {}
+
+    public ProductWithIncorrectUdt(
+        UUID id, String description, DimensionsWithIncorrectName dimensions) {
+      this.id = id;
+      this.description = description;
+      this.dimensions = dimensions;
+    }
+
+    public UUID getId() {
+      return id;
+    }
+
+    public void setId(UUID id) {
+      this.id = id;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+
+    public void setDescription(String description) {
+      this.description = description;
+    }
+
+    public DimensionsWithIncorrectName getDimensions() {
+      return dimensions;
+    }
+
+    public void setDimensions(DimensionsWithIncorrectName dimensions) {
+      this.dimensions = dimensions;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      ProductWithIncorrectUdt product = (ProductWithIncorrectUdt) o;
+      return Objects.equals(id, product.id)
+          && Objects.equals(description, product.description)
+          && Objects.equals(dimensions, product.dimensions);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(id, description, dimensions);
+    }
+
+    @Override
+    public String toString() {
+      return "ProductWithIncorrectUdt{"
+          + "id="
+          + id
+          + ", description='"
+          + description
+          + '\''
+          + ", dimensions="
+          + dimensions
+          + '}';
+    }
+  }
+
+  @Entity
+  public static class DimensionsWithIncorrectName {
+
+    private int lengthNotPresent;
+    private int width;
+    private int height;
+
+    public DimensionsWithIncorrectName() {}
+
+    public DimensionsWithIncorrectName(int lengthNotPresent, int width, int height) {
+      this.lengthNotPresent = lengthNotPresent;
+      this.width = width;
+      this.height = height;
+    }
+
+    public int getLengthNotPresent() {
+      return lengthNotPresent;
+    }
+
+    public void setLengthNotPresent(int lengthNotPresent) {
+      this.lengthNotPresent = lengthNotPresent;
+    }
+
+    public int getWidth() {
+      return width;
+    }
+
+    public void setWidth(int width) {
+      this.width = width;
+    }
+
+    public int getHeight() {
+      return height;
+    }
+
+    public void setHeight(int height) {
+      this.height = height;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      DimensionsWithIncorrectName that = (DimensionsWithIncorrectName) o;
+      return lengthNotPresent == that.lengthNotPresent
+          && width == that.width
+          && height == that.height;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(lengthNotPresent, width, height);
+    }
+
+    @Override
+    public String toString() {
+      return "DimensionsWithIncorrectName{"
+          + "lengthNotPresent="
+          + lengthNotPresent
+          + ", width="
+          + width
+          + ", height="
+          + height
           + '}';
     }
   }

@@ -57,7 +57,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
         "if (!context.getSession().getMetadata().getKeyspace(context.getKeyspaceId()).isPresent())");
     methodBuilder.addStatement(
         "return"); // todo maybe we should do log.warn("we cannot validate schema because keyspace
-                   // is null")?
+    // is null")?
     methodBuilder.endControlFlow();
 
     methodBuilder
