@@ -1,3 +1,18 @@
+/*
+ * Copyright DataStax, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
@@ -41,27 +56,40 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
         Optional.class,
         TableMetadata.class);
 
+    methodBuilder.addStatement("String entityClassName = $S", entityDefinition.getClassName());
+
     // Find out missingTableCqlNames - present in Entity Mapping but NOT present in CQL table
     methodBuilder.beginControlFlow("if (tableMetadata.isPresent())");
     methodBuilder.addStatement(
-        "$1T<$2T,$3T> columns = (($4T) tableMetadata.get()).getColumns()",
+        "$1T<$2T, $3T> columns = (($4T) tableMetadata.get()).getColumns()",
         Map.class,
         CqlIdentifier.class,
         ColumnMetadata.class,
         DefaultTableMetadata.class);
+
+    List<CodeBlock> expectedCqlNames =
+        entityDefinition
+            .getAllColumns()
+            .stream()
+            .map(PropertyDefinition::getCqlName)
+            .collect(Collectors.toList());
     methodBuilder.addStatement(
-        "$1T<$2T> expectedCqlNames = entityDefinition.getAllColumns().stream().map(v -> v.getCqlName()).collect($3T.toList())",
+        "$1T<$2T> expectedCqlNames = new $3T<>()",
         List.class,
-        CodeBlock.class,
-        Collectors.class);
+        CqlIdentifier.class,
+        ArrayList.class);
+    for (CodeBlock expectedCqlName : expectedCqlNames) {
+      methodBuilder.addStatement(
+          "expectedCqlNames.add($1T.fromCql($2L))", CqlIdentifier.class, expectedCqlName);
+    }
+
     methodBuilder.addStatement(
         "$1T<$2T> missingTableCqlNames = new $3T<>();",
         List.class,
         CqlIdentifier.class,
         ArrayList.class);
-    methodBuilder.beginControlFlow("for ($1T cqlName : expectedCqlNames)", CodeBlock.class);
-    methodBuilder.addStatement(
-        "$1T cqlIdentifier = $1T.fromCql(cqlName.toString())", CqlIdentifier.class);
+    methodBuilder.beginControlFlow(
+        "for ($1T cqlIdentifier : expectedCqlNames)", CqlIdentifier.class);
     methodBuilder.beginControlFlow("if (columns.get(cqlIdentifier) == null)");
     methodBuilder.addStatement("missingTableCqlNames.add(cqlIdentifier)");
     methodBuilder.endControlFlow();
@@ -71,7 +99,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     CodeBlock missingCqlColumnExceptionMessage =
         CodeBlock.of(
             "String.format(\"The CQL ks.table: %s.%s has missing columns: %s that are defined in the entity class: %s\", "
-                + "context.getKeyspaceId(), context.getTableId(), missingTableCqlNames, entityDefinition.getClassName())");
+                + "context.getKeyspaceId(), context.getTableId(), missingTableCqlNames, entityClassName)");
     methodBuilder.beginControlFlow("if (!missingTableCqlNames.isEmpty())");
     methodBuilder.addStatement(
         "throw new $1T($2L)", IllegalArgumentException.class, missingCqlColumnExceptionMessage);
@@ -81,7 +109,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     // Throw if there is not keyspace.table for defined entity
     CodeBlock missingKeyspaceTableExceptionMessage =
         CodeBlock.of(
-            "String.format(\"There is no ks.table: %s.%s\", context.getKeyspaceId(), context.getTableId())");
+            "String.format(\"There is no ks.table: %s.%s for the entity class: %s\", context.getKeyspaceId(), context.getTableId(), entityClassName)");
     methodBuilder.beginControlFlow("else");
     methodBuilder.addStatement(
         "throw new $1T($2L)", IllegalArgumentException.class, missingKeyspaceTableExceptionMessage);
