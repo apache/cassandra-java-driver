@@ -49,8 +49,10 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
@@ -62,6 +64,8 @@ public class ComputedIT {
   private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private static TestMapper mapper;
 
@@ -164,7 +168,7 @@ public class ComputedIT {
     /*
      * Query with the computed values included.
      *
-     * Since we the mapper expects the result name to match the property name, we used aliasing
+     * Since the mapper expects the result name to match the property name, we used aliasing
      * here.
      *
      * In the case of ttl(v), since we annotated ttl as @CqlName("myttl") we expect myttl to
@@ -189,6 +193,39 @@ public class ComputedIT {
     // these should be set
     assertThat(retrievedValue.getTtl()).isEqualTo(3600);
     assertThat(retrievedValue.getWritetime()).isEqualTo(time);
+  }
+
+  @Test
+  public void should_fail_if_alias_does_not_match_cqlName() {
+    ComputedDao computedDao = mapper.computedDao(sessionRule.keyspace());
+    int key = keyProvider.incrementAndGet();
+
+    long time = System.currentTimeMillis() - 1000;
+    ComputedEntity entity = new ComputedEntity(key, 1, 2);
+    computedDao.saveWithTime(entity, 3600, time);
+
+    CqlSession session = sessionRule.session();
+
+    /*
+     * Query with the computed values included.
+     *
+     * Since the mapper expects the result name to match the property name, we used aliasing
+     * here and used the wrong name for the alias 'notwritetime' which does not map to the cqlName.
+     */
+    ResultSet result =
+        session.execute(
+            SimpleStatement.newInstance(
+                "select id, c_id, v, writetime(v) as notwritetime, ttl(v) as myttl from "
+                    + "computed_entity where "
+                    + "id=? and "
+                    + "c_id=? limit 1",
+                key,
+                1));
+
+    // should raise an exception as 'writetime' is not found in result set.
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("writetime is not a column in this row");
+    computedDao.get(result.one());
   }
 
   @Test
