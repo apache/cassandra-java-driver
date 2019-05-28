@@ -41,6 +41,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -280,28 +281,35 @@ public class ComputedIT {
     @Select
     ComputedEntity findById(int id, int cId);
 
-    @Insert
+    @Insert(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
     void save(ComputedEntity entity);
 
-    @Insert(ttl = ":ttl", timestamp = ":writeTime")
+    @Insert(
+      ttl = ":ttl",
+      timestamp = ":writeTime",
+      nullSavingStrategy = NullSavingStrategy.SET_TO_NULL
+    )
     void saveWithTime(ComputedEntity entity, int ttl, long writeTime);
 
     @Delete
     void delete(ComputedEntity entity);
 
-    @SetEntity
+    @SetEntity(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
     BoundStatementBuilder set(BoundStatementBuilder builder, ComputedEntity computedEntity);
 
     @GetEntity
     ComputedEntity get(Row row);
 
     @Query(
-        "select id, c_id, v, ttl(v) as myttl, writetime(v) as writetime from "
-            + "${qualifiedTableId} WHERE id = :id and "
-            + "c_id = :cId")
+      value =
+          "select id, c_id, v, ttl(v) as myttl, writetime(v) as writetime from "
+              + "${qualifiedTableId} WHERE id = :id and "
+              + "c_id = :cId",
+      nullSavingStrategy = NullSavingStrategy.SET_TO_NULL
+    )
     ComputedEntity findByIdQuery(int id, int cId);
 
-    @Update
+    @Update(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
     void update(ComputedEntity entity);
   }
 
