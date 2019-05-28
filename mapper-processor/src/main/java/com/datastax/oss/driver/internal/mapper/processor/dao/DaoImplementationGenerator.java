@@ -255,6 +255,8 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
       String fieldName = entry.getValue();
       // - create an instance
       initAsyncBuilder.addStatement("$1T $2L = new $1T(context)", fieldTypeName, fieldName);
+      // - validate entity schema
+      initAsyncBuilder.addStatement("$1L.validateEntityFields()", fieldName);
       // - add it as a parameter to the constructor call
       newDaoStatement.add(",\n$L", fieldName);
     }
