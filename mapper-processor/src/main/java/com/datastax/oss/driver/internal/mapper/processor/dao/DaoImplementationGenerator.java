@@ -17,10 +17,7 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.mapper.MapperContext;
-import com.datastax.oss.driver.api.mapper.annotations.Insert;
-import com.datastax.oss.driver.api.mapper.annotations.Query;
-import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
-import com.datastax.oss.driver.api.mapper.annotations.Update;
+import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -31,7 +28,6 @@ import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
-import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -50,6 +46,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -71,11 +68,13 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
   private final Map<ClassName, String> entityHelperFields = new LinkedHashMap<>();
   private final List<GeneratedPreparedStatement> preparedStatements = new ArrayList<>();
   private final List<GeneratedQueryProvider> queryProviders = new ArrayList<>();
+  private final NullSavingStrategyValidation nullSavingStrategyValidation;
 
   public DaoImplementationGenerator(TypeElement interfaceElement, ProcessorContext context) {
     super(context);
     this.interfaceElement = interfaceElement;
     implementationName = GeneratedNames.daoImplementation(interfaceElement);
+    nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
   }
 
   @Override
@@ -124,6 +123,12 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
     }
     queryProviders.add(new GeneratedQueryProvider(fieldName, providerClass, entityHelperNames));
     return fieldName;
+  }
+
+  @Override
+  public Optional<NullSavingStrategy> getNullSavingStrategy() {
+    return Optional.ofNullable(interfaceElement.getAnnotation(DefaultNullSavingStrategy.class))
+        .map(DefaultNullSavingStrategy::value);
   }
 
   @Override
@@ -307,61 +312,10 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
   }
 
   private void generateProtocolVersionCheck(MethodSpec.Builder builder) {
-    boolean hasDoNotSetStatement =
-        preparedStatements
-            .stream()
-            .map(v -> v.methodElement)
-            .anyMatch(
-                v ->
-                    updateHasDoNotSet(v)
-                        || insertHasDoNotSet(v)
-                        || setEntityHasDoNotSet(v)
-                        || queryHasDoNotSet(v));
-
-    if (hasDoNotSetStatement) {
-      builder
-          .beginControlFlow(
-              "if (context.getSession().getContext().getProtocolVersion().getCode() <= $T.Version.V3)",
-              ProtocolConstants.class)
-          .addStatement(
-              "throw new IllegalArgumentException($S)",
-              "You cannot use NullSavingStrategy.DO_NOT_SET for protocol version V3.")
-          .endControlFlow()
-          .build();
-    }
-  }
-
-  private boolean queryHasDoNotSet(ExecutableElement v) {
-    Query annotation = v.getAnnotation(Query.class);
-    if (annotation != null) {
-      return annotation.nullSavingStrategy() == NullSavingStrategy.DO_NOT_SET;
-    }
-    return false;
-  }
-
-  private boolean setEntityHasDoNotSet(ExecutableElement v) {
-    SetEntity annotation = v.getAnnotation(SetEntity.class);
-    if (annotation != null) {
-      return annotation.nullSavingStrategy() == NullSavingStrategy.DO_NOT_SET;
-    }
-    return false;
-  }
-
-  private boolean insertHasDoNotSet(ExecutableElement v) {
-    Insert annotation = v.getAnnotation(Insert.class);
-    if (annotation != null) {
-      return annotation.nullSavingStrategy() == NullSavingStrategy.DO_NOT_SET;
-    } else {
-      return false;
-    }
-  }
-
-  private boolean updateHasDoNotSet(ExecutableElement v) {
-    Update annotation = v.getAnnotation(Update.class);
-    if (annotation != null) {
-      return annotation.nullSavingStrategy() == NullSavingStrategy.DO_NOT_SET;
-    } else {
-      return false;
+    List<ExecutableElement> methodElements =
+        preparedStatements.stream().map(v -> v.methodElement).collect(Collectors.toList());
+    if (nullSavingStrategyValidation.hasDoNotSetOnAnyLevel(methodElements, interfaceElement)) {
+      builder.addStatement("throwIfProtocolVersionV3(context)");
     }
   }
 

@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
+import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
@@ -461,6 +462,71 @@ public class UpdateIT extends InventoryITBase {
     assertThat(dao.findById(FLAMETHROWER.getId()).getDimensions()).isNull();
   }
 
+  @Test
+  public void
+      should_update_entity_and_set_null_field_preferring_default_strategy_when_specific_not_set() {
+    // given
+    DefaultNullStrategyDao dao = inventoryMapper.defaultNullStrategyDao(sessionRule.keyspace());
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+    dao.update(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+
+    // when
+    dao.update(new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
+
+    // then
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNull();
+  }
+
+  @Test
+  public void
+      should_update_entity_and_not_set_null_field_preferring_method_strategy_when_both_are_set() {
+    // given
+    DefaultNullStrategyDao dao = inventoryMapper.defaultNullStrategyDao(sessionRule.keyspace());
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+    dao.update(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+
+    // when
+    dao.updateOverrideDefaultNullSavingStrategy(
+        new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
+
+    // then
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+  }
+
+  @Test
+  public void
+      should_update_entity_and_do_not_set_null_field_when_both_default_and_method_level_not_explicitly_set() {
+    // given
+    DoNotSetSavingStrategyDao dao = inventoryMapper.notSetNullStrategyDao(sessionRule.keyspace());
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+    dao.update(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+
+    // when
+    dao.update(new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
+
+    // then
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+  }
+
+  @Test
+  public void should_update_entity_and_set_null_field_preferring_specific_over_default() {
+    // given
+    MethodOverrideNullSavingStrategyDao dao =
+        inventoryMapper.methodOverrideNullStrategyDao(sessionRule.keyspace());
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+    dao.update(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+
+    // when
+    dao.update(new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
+
+    // then
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNull();
+  }
+
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
@@ -471,6 +537,16 @@ public class UpdateIT extends InventoryITBase {
 
     @DaoFactory
     ProductWithoutIdDao productWithoutIdDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    DefaultNullStrategyDao defaultNullStrategyDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    DoNotSetSavingStrategyDao notSetNullStrategyDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    MethodOverrideNullSavingStrategyDao methodOverrideNullStrategyDao(
+        @DaoKeyspace CqlIdentifier keyspace);
   }
 
   @Dao
@@ -535,6 +611,39 @@ public class UpdateIT extends InventoryITBase {
   public interface OnlyPKDao {
     @Update
     void update(OnlyPK onlyPK);
+  }
+
+  @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
+  public interface DefaultNullStrategyDao {
+
+    @Update
+    void update(Product product);
+
+    @Update(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
+    void updateOverrideDefaultNullSavingStrategy(Product product);
+
+    @Select
+    Product findById(UUID productId);
+  }
+
+  @Dao
+  public interface DoNotSetSavingStrategyDao {
+    @Update
+    void update(Product product);
+
+    @Select
+    Product findById(UUID productId);
+  }
+
+  @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.DO_NOT_SET)
+  public interface MethodOverrideNullSavingStrategyDao {
+    @Update(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
+    void update(Product product);
+
+    @Select
+    Product findById(UUID productId);
   }
 
   @Dao

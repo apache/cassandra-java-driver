@@ -36,11 +36,14 @@ import javax.lang.model.type.TypeMirror;
 
 public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
 
+  private final NullSavingStrategyValidation nullSavingStrategyValidation;
+
   public DaoSetEntityMethodGenerator(
       ExecutableElement methodElement,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
     super(methodElement, enclosingClass, context);
+    nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
   }
 
   @Override
@@ -119,7 +122,8 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
     String helperFieldName = enclosingClass.addEntityHelperField(ClassName.get(entityElement));
 
     NullSavingStrategy nullSavingStrategy =
-        methodElement.getAnnotation(SetEntity.class).nullSavingStrategy();
+        nullSavingStrategyValidation.getNullSavingStrategy(
+            SetEntity.class, SetEntity::nullSavingStrategy, methodElement, enclosingClass);
 
     // Forward to the base injector in the helper:
     return Optional.of(

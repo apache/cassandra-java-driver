@@ -134,7 +134,8 @@ public @interface Insert {
   /**
    * How to handle null entity properties during the insertion.
    *
-   * <p>This defaults to {@link NullSavingStrategy#DO_NOT_SET}.
+   * <p>This defaults either to the {@link DefaultNullSavingStrategy DAO-level strategy} (if set),
+   * or {@link NullSavingStrategy#DO_NOT_SET}.
    */
   NullSavingStrategy nullSavingStrategy() default NullSavingStrategy.DO_NOT_SET;
 }

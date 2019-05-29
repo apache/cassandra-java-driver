@@ -49,12 +49,14 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
           FUTURE_OF_ENTITY,
           OPTIONAL_ENTITY,
           FUTURE_OF_OPTIONAL_ENTITY);
+  private final NullSavingStrategyValidation nullSavingStrategyValidation;
 
   public DaoInsertMethodGenerator(
       ExecutableElement methodElement,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
     super(methodElement, enclosingClass, context);
+    nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
   }
 
   @Override
@@ -126,8 +128,11 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
           statementAttributesParam.getSimpleName().toString());
     }
     String entityParameterName = parameters.get(0).getSimpleName().toString();
+
     NullSavingStrategy nullSavingStrategy =
-        methodElement.getAnnotation(Insert.class).nullSavingStrategy();
+        nullSavingStrategyValidation.getNullSavingStrategy(
+            Insert.class, Insert::nullSavingStrategy, methodElement, enclosingClass);
+
     insertBuilder.addStatement(
         "$1L.set($2L, boundStatementBuilder, $3T.$4L)",
         helperFieldName,
