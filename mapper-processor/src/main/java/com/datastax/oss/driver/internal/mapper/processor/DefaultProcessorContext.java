@@ -35,7 +35,7 @@ public class DefaultProcessorContext implements ProcessorContext {
       new LazyReference<>("codeGeneratorFactory", this::buildCodeGeneratorFactory, cycleDetector);
 
   private final LazyReference<EntityFactory> entityFactoryRef =
-      new LazyReference<>("codeGeneratorFactory", this::buildEntityFactory, cycleDetector);
+      new LazyReference<>("entityFactory", this::buildEntityFactory, cycleDetector);
 
   private final DecoratedMessager messager;
   private final Types typeUtils;
