@@ -263,8 +263,9 @@ public abstract class PercentileTracker implements LatencyTracker {
    * errors are not good indicators of the host's responsiveness, and tend to make the host's score
    * look better than it actually is.
    */
+  @SuppressWarnings("unchecked")
   private static final Set<Class<? extends Exception>> EXCLUDED_EXCEPTIONS =
-      ImmutableSet.<Class<? extends Exception>>of(
+      ImmutableSet.of(
           UnavailableException.class, // this is done via the snitch and is usually very fast
           OverloadedException.class,
           BootstrappingException.class,

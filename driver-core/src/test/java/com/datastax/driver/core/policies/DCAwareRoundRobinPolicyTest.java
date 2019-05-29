@@ -46,12 +46,12 @@ import org.testng.annotations.Test;
 
 public class DCAwareRoundRobinPolicyTest {
 
-  Logger policyLogger = Logger.getLogger(DCAwareRoundRobinPolicy.class);
-  Level originalLevel;
-  MemoryAppender logs;
-  QueryTracker queryTracker;
+  private final Logger policyLogger = Logger.getLogger(DCAwareRoundRobinPolicy.class);
+  private Level originalLevel;
+  private MemoryAppender logs;
+  private QueryTracker queryTracker;
 
-  @Captor ArgumentCaptor<Collection<Host>> initHostsCaptor;
+  @Captor private ArgumentCaptor<Collection<Host>> initHostsCaptor;
 
   @BeforeMethod(groups = "short")
   public void setUp() {
@@ -121,6 +121,7 @@ public class DCAwareRoundRobinPolicyTest {
   public void should_not_use_remote_hosts_if_some_nodes_are_up_in_local_dc() {
     // given: a 10 node 2 DC cluster with DC policy with 2 remote hosts.
     ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(5, 5).build();
+    @SuppressWarnings("deprecation")
     Cluster cluster =
         builder()
             .addContactPoints(sCluster.address(1, 1).getAddress())
@@ -169,6 +170,7 @@ public class DCAwareRoundRobinPolicyTest {
   public void should_round_robin_on_remote_hosts_when_no_up_nodes_in_local_dc() {
     // given: a 10 node 2 DC cluster with DC policy with 2 remote hosts.
     ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(5, 5).build();
+    @SuppressWarnings("deprecation")
     Cluster cluster =
         builder()
             .addContactPoints(sCluster.address(1, 1).getAddress())
@@ -218,6 +220,7 @@ public class DCAwareRoundRobinPolicyTest {
     // given: a 4 node 2 DC Cluster with a LB policy that specifies to not allow remote dcs for
     // a local consistency level.
     ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2).build();
+    @SuppressWarnings("deprecation")
     Cluster cluster =
         builder()
             .addContactPoints(sCluster.address(1, 1).getAddress())
@@ -257,7 +260,7 @@ public class DCAwareRoundRobinPolicyTest {
 
   /**
    * Ensures that {@link DCAwareRoundRobinPolicy} will use remote hosts for non DC local Consistency
-   * Levels if {@link DCAwareRoundRobinPolicy.Builder#allowRemoteDCsForLocalConsistencyLevel} is
+   * Levels if {@code DCAwareRoundRobinPolicy.Builder#allowRemoteDCsForLocalConsistencyLevel} is
    * used. In the case that a DC local Consistency Level is provided a {@link
    * NoHostAvailableException} is raised.
    *
@@ -271,6 +274,7 @@ public class DCAwareRoundRobinPolicyTest {
     // given: a 4 node 2 DC Cluster with a LB policy that specifies to allow remote dcs for
     // a local consistency level.
     ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2).build();
+    @SuppressWarnings("deprecation")
     Cluster cluster =
         builder()
             .addContactPoints(sCluster.address(1, 1).getAddress())
@@ -317,6 +321,7 @@ public class DCAwareRoundRobinPolicyTest {
   public void should_not_send_requests_to_blacklisted_dc_using_host_filter_policy() {
     // given: a 6 node 3 DC cluster with a DCAwareRoundRobinPolicy that is filtering hosts in DC2.
     ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2, 2).build();
+    @SuppressWarnings("deprecation")
     LoadBalancingPolicy loadBalancingPolicy =
         HostFilterPolicy.fromDCBlackList(
             DCAwareRoundRobinPolicy.builder().withUsedHostsPerRemoteDc(2).build(),
@@ -374,6 +379,7 @@ public class DCAwareRoundRobinPolicyTest {
     // given: a 6 node 3 DC cluster with a DCAwareRoundRobinPolicy that is whitelisting hosts in DC1
     // and DC2.
     ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2, 2).build();
+    @SuppressWarnings("deprecation")
     LoadBalancingPolicy loadBalancingPolicy =
         HostFilterPolicy.fromDCWhiteList(
             DCAwareRoundRobinPolicy.builder().withUsedHostsPerRemoteDc(2).build(),

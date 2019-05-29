@@ -17,7 +17,7 @@ package com.datastax.driver.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
+import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.util.List;
@@ -32,7 +32,12 @@ public class TracingTest extends CCMTestsSupport {
 
   @Override
   public Cluster.Builder createClusterBuilder() {
-    return Cluster.builder().withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
+    @SuppressWarnings("deprecation")
+    Builder builder =
+        Cluster.builder()
+            .withRetryPolicy(
+                com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy.INSTANCE);
+    return builder;
   }
 
   @Override

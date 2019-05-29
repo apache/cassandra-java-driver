@@ -42,7 +42,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
@@ -552,7 +551,7 @@ public class ScassandraCluster {
         ImmutableMap.<String, Object>builder().put("cluster_name", "scassandra").build();
     client.prime(
         PrimingRequest.queryBuilder()
-            .withQuery("select cluster_name from system.local")
+            .withQuery("select cluster_name from system.local where key = 'local'")
             .withThen(
                 then()
                     .withColumnTypes(SELECT_CLUSTER_NAME)
