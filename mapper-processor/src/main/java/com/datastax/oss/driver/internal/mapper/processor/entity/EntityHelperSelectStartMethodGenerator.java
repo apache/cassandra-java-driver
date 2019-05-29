@@ -57,7 +57,11 @@ public class EntityHelperSelectStartMethodGenerator implements MethodGenerator {
             .addCode("$[return selectFrom");
 
     for (PropertyDefinition property : entityDefinition.getAllColumns()) {
-      selectStartBuilder.addCode("\n.column($L)", property.getCqlName());
+      selectStartBuilder.addCode("\n.column($L)", property.getSelector());
+    }
+    for (PropertyDefinition property : entityDefinition.getComputedValues()) {
+      selectStartBuilder.addCode(
+          "\n.raw($L).as($L)", property.getSelector(), property.getCqlName());
     }
     selectStartBuilder.addCode("$];\n");
     return Optional.of(selectStartBuilder.build());
