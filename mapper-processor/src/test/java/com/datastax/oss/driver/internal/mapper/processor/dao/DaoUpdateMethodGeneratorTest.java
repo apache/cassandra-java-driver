@@ -16,9 +16,11 @@
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.mock;
 
 import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
@@ -91,8 +93,9 @@ public class DaoUpdateMethodGeneratorTest extends DaoMethodGeneratorTest {
   @UseDataProvider("usingTimestampProvider")
   public void should_process_timestamp(String timestamp, CodeBlock expected) {
     // given
+    ProcessorContext processorContext = mock(ProcessorContext.class);
     DaoUpdateMethodGenerator daoUpdateMethodGenerator =
-        new DaoUpdateMethodGenerator(null, null, null);
+        new DaoUpdateMethodGenerator(null, null, processorContext);
     MethodSpec.Builder builder = MethodSpec.constructorBuilder();
 
     // when
@@ -106,8 +109,9 @@ public class DaoUpdateMethodGeneratorTest extends DaoMethodGeneratorTest {
   @UseDataProvider("usingTtlProvider")
   public void should_process_ttl(String ttl, CodeBlock expected) {
     // given
+    ProcessorContext processorContext = mock(ProcessorContext.class);
     DaoUpdateMethodGenerator daoUpdateMethodGenerator =
-        new DaoUpdateMethodGenerator(null, null, null);
+        new DaoUpdateMethodGenerator(null, null, processorContext);
     MethodSpec.Builder builder = MethodSpec.constructorBuilder();
 
     // when

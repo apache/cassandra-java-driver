@@ -94,7 +94,8 @@ public @interface SetEntity {
   /**
    * How to handle null entity properties.
    *
-   * <p>This defaults to {@link NullSavingStrategy#DO_NOT_SET}.
+   * <p>This defaults either to the {@link DefaultNullSavingStrategy DAO-level strategy} (if set),
+   * or {@link NullSavingStrategy#DO_NOT_SET}.
    */
   NullSavingStrategy nullSavingStrategy() default NullSavingStrategy.DO_NOT_SET;
 }

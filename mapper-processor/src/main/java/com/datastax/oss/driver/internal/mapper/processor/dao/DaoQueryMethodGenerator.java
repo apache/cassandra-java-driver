@@ -37,6 +37,7 @@ import javax.lang.model.element.VariableElement;
 public class DaoQueryMethodGenerator extends DaoMethodGenerator {
 
   private final String queryString;
+  private final NullSavingStrategyValidation nullSavingStrategyValidation;
 
   public DaoQueryMethodGenerator(
       ExecutableElement methodElement,
@@ -44,6 +45,7 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
       ProcessorContext context) {
     super(methodElement, enclosingClass, context);
     this.queryString = methodElement.getAnnotation(Query.class).value();
+    nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
   }
 
   @Override
@@ -131,8 +133,9 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
         BoundStatementBuilder.class,
         statementName);
 
-    Query annotation = methodElement.getAnnotation(Query.class);
-    NullSavingStrategy nullSavingStrategy = annotation.nullSavingStrategy();
+    NullSavingStrategy nullSavingStrategy =
+        nullSavingStrategyValidation.getNullSavingStrategy(
+            Query.class, Query::nullSavingStrategy, methodElement, enclosingClass);
 
     queryBuilder.addStatement(
         "$1T nullSavingStrategy = $1T.$2L", NullSavingStrategy.class, nullSavingStrategy);

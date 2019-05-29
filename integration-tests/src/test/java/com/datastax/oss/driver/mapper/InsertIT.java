@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
+import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
@@ -55,6 +56,7 @@ public class InsertIT extends InventoryITBase {
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
   private static ProductDao dao;
+  private static InventoryMapper inventoryMapper;
 
   @BeforeClass
   public static void setup() {
@@ -65,7 +67,7 @@ public class InsertIT extends InventoryITBase {
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }
 
-    InventoryMapper inventoryMapper = new InsertIT_InventoryMapperBuilder(session).build();
+    inventoryMapper = new InsertIT_InventoryMapperBuilder(session).build();
     dao = inventoryMapper.productDao(sessionRule.keyspace());
   }
 
@@ -255,10 +257,85 @@ public class InsertIT extends InventoryITBase {
     assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNull();
   }
 
+  @Test
+  public void
+      should_insert_entity_and_set_null_field_preferring_default_strategy_when_specific_not_set() {
+    // given
+    DefaultNullStrategyDao dao = inventoryMapper.defaultNullStrategyDao(sessionRule.keyspace());
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+    dao.insert(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+
+    // when
+    dao.insert(new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
+
+    // then
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNull();
+  }
+
+  @Test
+  public void
+      should_insert_entity_and_not_set_null_field_preferring_method_strategy_when_both_are_set() {
+    // given
+    DefaultNullStrategyDao dao = inventoryMapper.defaultNullStrategyDao(sessionRule.keyspace());
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+    dao.insert(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+
+    // when
+    dao.insertOverrideDefaultNullSavingStrategy(
+        new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
+
+    // then
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+  }
+
+  @Test
+  public void
+      should_insert_entity_and_do_not_set_field_when_both_default_and_method_level_not_explicitly_set() {
+    // given
+    DoNotSetSavingStrategyDao dao = inventoryMapper.notSetNullStrategyDao(sessionRule.keyspace());
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+    dao.insert(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+
+    // when
+    dao.insert(new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
+
+    // then
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+  }
+
+  @Test
+  public void should_insert_entity_and_set_null_field_preferring_specific_over_default() {
+    // given
+    MethodOverrideNullSavingStrategyDao dao =
+        inventoryMapper.methodOverrideNullStrategyDao(sessionRule.keyspace());
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+    dao.insert(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+
+    // when
+    dao.insert(new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
+
+    // then
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNull();
+  }
+
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
     ProductDao productDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    DefaultNullStrategyDao defaultNullStrategyDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    DoNotSetSavingStrategyDao notSetNullStrategyDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    MethodOverrideNullSavingStrategyDao methodOverrideNullStrategyDao(
+        @DaoKeyspace CqlIdentifier keyspace);
   }
 
   @Dao
@@ -302,6 +379,39 @@ public class InsertIT extends InventoryITBase {
 
     @Insert(ifNotExists = true)
     CompletableFuture<Optional<Product>> saveAsyncIfNotExistsOptional(Product product);
+
+    @Select
+    Product findById(UUID productId);
+  }
+
+  @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
+  public interface DefaultNullStrategyDao {
+
+    @Insert
+    void insert(Product product);
+
+    @Insert(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
+    void insertOverrideDefaultNullSavingStrategy(Product product);
+
+    @Select
+    Product findById(UUID productId);
+  }
+
+  @Dao
+  public interface DoNotSetSavingStrategyDao {
+    @Insert
+    void insert(Product product);
+
+    @Select
+    Product findById(UUID productId);
+  }
+
+  @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.DO_NOT_SET)
+  public interface MethodOverrideNullSavingStrategyDao {
+    @Insert(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
+    void insert(Product product);
 
     @Select
     Product findById(UUID productId);

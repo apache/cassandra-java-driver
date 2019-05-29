@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.mapper;
 
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
@@ -25,6 +26,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
+import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
@@ -79,16 +81,101 @@ public class NullSavingStrategyIT {
         .hasMessage("You cannot use NullSavingStrategy.DO_NOT_SET for protocol version V3.");
   }
 
+  @Test
+  public void
+      should_throw_when_try_to_construct_dao_with_DO_NOT_SET_implicit_strategy_for_V3_protocol() {
+    assertThatThrownBy(() -> mapper.productDaoImplicit(sessionRule.keyspace()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("You cannot use NullSavingStrategy.DO_NOT_SET for protocol version V3.");
+  }
+
+  @Test
+  public void
+      should_throw_when_try_to_construct_dao_with_DO_NOT_SET_strategy_set_globally_for_V3_protocol() {
+    assertThatThrownBy(() -> mapper.productDaoDefault(sessionRule.keyspace()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("You cannot use NullSavingStrategy.DO_NOT_SET for protocol version V3.");
+  }
+
+  @Test
+  public void should_do_not_throw_when_construct_dao_with_global_level_SET_TO_NULL() {
+    assertThatCode(() -> mapper.productDaoGlobalLevelSetToNull(sessionRule.keyspace()))
+        .doesNotThrowAnyException();
+  }
+
+  @Test
+  public void
+      should_do_not_throw_when_construct_dao_with_global_level_DO_NOT_SET_and_local_override_to_SET_TO_NULL() {
+    assertThatCode(() -> mapper.productDaoLocalOverride(sessionRule.keyspace()))
+        .doesNotThrowAnyException();
+  }
+
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
     ProductSimpleDao productDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    ProductSimpleDaoDefault productDaoDefault(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    ProductSimpleDaoImplicit productDaoImplicit(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    ProductSimpleDaoGlobalLevelSetToNull productDaoGlobalLevelSetToNull(
+        @DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    ProductSimpleDaoGlobalLevelDoNotSetOverrideSetToNull productDaoLocalOverride(
+        @DaoKeyspace CqlIdentifier keyspace);
   }
 
   @Dao
   public interface ProductSimpleDao {
 
     @Update(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
+    void update(ProductSimple product);
+
+    @Select
+    ProductSimple findById(UUID productId);
+  }
+
+  @Dao
+  public interface ProductSimpleDaoImplicit {
+
+    @Update
+    void update(ProductSimple product);
+
+    @Select
+    ProductSimple findById(UUID productId);
+  }
+
+  @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.DO_NOT_SET)
+  public interface ProductSimpleDaoDefault {
+    @Update
+    void update(ProductSimple product);
+
+    @Select
+    ProductSimple findById(UUID productId);
+  }
+
+  @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
+  public interface ProductSimpleDaoGlobalLevelSetToNull {
+
+    @Update
+    void update(ProductSimple product);
+
+    @Select
+    ProductSimple findById(UUID productId);
+  }
+
+  @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.DO_NOT_SET)
+  public interface ProductSimpleDaoGlobalLevelDoNotSetOverrideSetToNull {
+
+    @Update(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
     void update(ProductSimple product);
 
     @Select
