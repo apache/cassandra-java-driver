@@ -10,7 +10,7 @@ and a few utility classes. This one is a regular dependency, and it is required 
 ### Maven
 
 The best approach is to add the `annotationProcessorPaths` option to the compiler plugin's
-configuration:
+configuration (make sure you use version 3.5 or higher):
 
 ```xml
 <properties>
@@ -29,6 +29,7 @@ configuration:
   <plugins>
     <plugin>
       <artifactId>maven-compiler-plugin</artifactId>
+      <version>3.8.1</version>
       <configuration>
         <annotationProcessorPaths>
           <path>
