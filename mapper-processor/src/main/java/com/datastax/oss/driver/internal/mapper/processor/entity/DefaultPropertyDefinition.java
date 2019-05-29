@@ -21,6 +21,7 @@ import java.util.Optional;
 
 public class DefaultPropertyDefinition implements PropertyDefinition {
 
+  private final CodeBlock selector;
   private final CodeBlock cqlName;
   private final String getterName;
   private final String setterName;
@@ -29,17 +30,34 @@ public class DefaultPropertyDefinition implements PropertyDefinition {
   public DefaultPropertyDefinition(
       String javaName,
       Optional<String> customCqlName,
+      Optional<String> computedFormula,
       String getterName,
       String setterName,
       PropertyType type,
       CqlNameGenerator cqlNameGenerator) {
+
     this.cqlName =
         customCqlName
             .map(n -> CodeBlock.of("$S", n))
             .orElse(cqlNameGenerator.buildCqlName(javaName));
+
+    /*
+     * If computed formula is present, this property does not map to a particular column,
+     * but rather a computed result.  In this case, we need to use column aliasing
+     * i.e. 'count(*) as X' as the name is not deterministic from the computed formula.
+     * In this case we use the cqlName (or customCqlName if present) as the aliased name,
+     * and the formula as the selector.
+     */
+    this.selector = computedFormula.map(n -> CodeBlock.of("$S", n)).orElse(cqlName);
+
     this.getterName = getterName;
     this.setterName = setterName;
     this.type = type;
+  }
+
+  @Override
+  public CodeBlock getSelector() {
+    return selector;
   }
 
   @Override
