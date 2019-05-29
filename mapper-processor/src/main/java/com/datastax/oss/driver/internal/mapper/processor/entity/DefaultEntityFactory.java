@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
+import com.datastax.oss.driver.api.mapper.annotations.Computed;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.NamingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
@@ -56,7 +57,7 @@ public class DefaultEntityFactory implements EntityFactory {
 
   // property annotations of which only 1 is allowed on a property
   private static final Set<Class<? extends Annotation>> EXCLUSIVE_PROPERTY_ANNOTATIONS =
-      ImmutableSet.of(ClusteringColumn.class, PartitionKey.class, Transient.class);
+      ImmutableSet.of(ClusteringColumn.class, PartitionKey.class, Transient.class, Computed.class);
 
   // all valid property annotations to scan for.
   private static final Set<Class<? extends Annotation>> PROPERTY_ANNOTATIONS =
@@ -72,7 +73,6 @@ public class DefaultEntityFactory implements EntityFactory {
   @Override
   public EntityDefinition getDefinition(TypeElement classElement) {
 
-    // TODO property annotations: computed...
     // TODO inherit annotations and properties from superclass / parent interface
 
     CqlNameGenerator cqlNameGenerator = buildCqlNameGenerator(classElement);
@@ -81,6 +81,7 @@ public class DefaultEntityFactory implements EntityFactory {
     SortedMap<Integer, PropertyDefinition> partitionKey = new TreeMap<>();
     SortedMap<Integer, PropertyDefinition> clusteringColumns = new TreeMap<>();
     ImmutableList.Builder<PropertyDefinition> regularColumns = ImmutableList.builder();
+    ImmutableList.Builder<PropertyDefinition> computedValues = ImmutableList.builder();
     for (Element child : classElement.getEnclosedElements()) {
       Set<Modifier> modifiers = child.getModifiers();
       if (child.getKind() != ElementKind.METHOD
@@ -113,11 +114,15 @@ public class DefaultEntityFactory implements EntityFactory {
 
       int partitionKeyIndex = getPartitionKeyIndex(propertyAnnotations);
       int clusteringColumnIndex = getClusteringColumnIndex(propertyAnnotations);
+      Optional<String> customCqlName = getCustomCqlName(propertyAnnotations);
+      Optional<String> computedFormula = getComputedFormula(propertyAnnotations, getMethod, field);
+
       PropertyType propertyType = PropertyType.parse(typeMirror, context);
       PropertyDefinition property =
           new DefaultPropertyDefinition(
               propertyName,
-              getCustomCqlName(propertyAnnotations),
+              customCqlName,
+              computedFormula,
               getMethodName,
               setMethodName,
               propertyType,
@@ -154,6 +159,8 @@ public class DefaultEntityFactory implements EntityFactory {
                   previous.getGetterName(),
                   property.getGetterName());
         }
+      } else if (computedFormula.isPresent()) {
+        computedValues.add(property);
       } else {
         regularColumns.add(property);
       }
@@ -167,6 +174,7 @@ public class DefaultEntityFactory implements EntityFactory {
         ImmutableList.copyOf(partitionKey.values()),
         ImmutableList.copyOf(clusteringColumns.values()),
         regularColumns.build(),
+        computedValues.build(),
         cqlNameGenerator);
   }
 
@@ -220,6 +228,25 @@ public class DefaultEntityFactory implements EntityFactory {
   private int getClusteringColumnIndex(Map<Class<? extends Annotation>, Annotation> annotations) {
     ClusteringColumn clusteringColumn = (ClusteringColumn) annotations.get(ClusteringColumn.class);
     return clusteringColumn != null ? clusteringColumn.value() : -1;
+  }
+
+  private Optional<String> getComputedFormula(
+      Map<Class<? extends Annotation>, Annotation> annotations,
+      ExecutableElement getMethod,
+      VariableElement field) {
+    Computed annotation = (Computed) annotations.get(Computed.class);
+
+    if (annotation != null) {
+      // ensure formula is non-empty
+      String value = annotation.value();
+      if (value.isEmpty()) {
+        Element element =
+            field != null && field.getAnnotation(Computed.class) != null ? field : getMethod;
+        context.getMessager().error(element, "@Computed value should be non-empty.");
+      }
+      return Optional.of(value);
+    }
+    return Optional.empty();
   }
 
   private CqlNameGenerator buildCqlNameGenerator(TypeElement classElement) {

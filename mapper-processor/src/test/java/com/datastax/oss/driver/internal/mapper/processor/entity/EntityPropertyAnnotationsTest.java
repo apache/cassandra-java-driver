@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
+import com.datastax.oss.driver.api.mapper.annotations.Computed;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Transient;
@@ -268,6 +269,29 @@ public class EntityPropertyAnnotationsTest extends MapperProcessorTest {
                 FieldSpec.builder(UUID.class, "id", Modifier.PRIVATE)
                     .addModifiers(Modifier.TRANSIENT)
                     .addAnnotation(PartitionKey.class)
+                    .build())
+            .addMethod(
+                MethodSpec.methodBuilder("getId")
+                    .returns(UUID.class)
+                    .addModifiers(Modifier.PUBLIC)
+                    .addStatement("return id")
+                    .build())
+            .addMethod(
+                MethodSpec.methodBuilder("setId")
+                    .addParameter(UUID.class, "id")
+                    .addModifiers(Modifier.PUBLIC)
+                    .addStatement("this.id = id")
+                    .build())
+            .build(),
+      },
+      {
+        "@Computed value should be non-empty.",
+        TypeSpec.classBuilder(ClassName.get("test", "Product"))
+            .addAnnotation(Entity.class)
+            .addField(
+                FieldSpec.builder(UUID.class, "id", Modifier.PRIVATE)
+                    .addAnnotation(
+                        AnnotationSpec.builder(Computed.class).addMember("value", "$S", "").build())
                     .build())
             .addMethod(
                 MethodSpec.methodBuilder("getId")
