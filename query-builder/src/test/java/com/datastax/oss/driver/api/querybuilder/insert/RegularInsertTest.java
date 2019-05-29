@@ -22,6 +22,8 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.insert.DefaultInsert;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import java.util.Map;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -48,6 +50,20 @@ public class RegularInsertTest {
                 .value("b", bindMarker())
                 .value("a", literal(1)))
         .hasCql("INSERT INTO foo (b,a) VALUES (?,1)");
+  }
+
+  @Test
+  public void should_generate_bulk_column_assignments() {
+    Map<String, Term> assignments = ImmutableMap.of("a", literal(1), "b", literal(2));
+    assertThat(insertInto("ks", "foo").values(assignments))
+        .hasCql("INSERT INTO ks.foo (a,b) VALUES (1,2)");
+
+    assertThat(
+            insertInto("ks", "foo")
+                .value("a", literal(2))
+                .value("c", literal(3))
+                .values(assignments))
+        .hasCql("INSERT INTO ks.foo (c,a,b) VALUES (3,1,2)");
   }
 
   @Test

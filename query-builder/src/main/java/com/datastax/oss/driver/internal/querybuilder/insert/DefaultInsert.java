@@ -173,6 +173,20 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
 
   @NonNull
   @Override
+  public RegularInsert valuesByIds(@NonNull Map<CqlIdentifier, Term> newAssignments) {
+    return new DefaultInsert(
+        keyspace,
+        table,
+        null,
+        null,
+        ImmutableCollections.concat(assignments, newAssignments),
+        timestamp,
+        ttlInSeconds,
+        ifNotExists);
+  }
+
+  @NonNull
+  @Override
   public Insert ifNotExists() {
     return new DefaultInsert(
         keyspace, table, json, missingJsonBehavior, assignments, timestamp, ttlInSeconds, true);
