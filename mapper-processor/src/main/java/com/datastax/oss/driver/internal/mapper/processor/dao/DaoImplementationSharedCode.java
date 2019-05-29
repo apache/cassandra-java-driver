@@ -18,11 +18,14 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.BindableHandlingSharedCode;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeMirror;
@@ -61,4 +64,11 @@ public interface DaoImplementationSharedCode extends BindableHandlingSharedCode 
    */
   String addQueryProvider(
       ExecutableElement methodElement, TypeMirror providerClass, List<ClassName> entityHelperTypes);
+
+  /**
+   * @return {@link DefaultNullSavingStrategy#value()} ()} if annotation is present on a given
+   *     {@link Dao}. If this annotation is not present on a Dao level it Returns {@code
+   *     Optional.Empty}
+   */
+  Optional<NullSavingStrategy> getNullSavingStrategy();
 }

@@ -30,6 +30,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.DaoTable;
+import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
@@ -327,6 +328,70 @@ public class QueryIT {
     assertThat(defaultDao.findByIdAndRank(2000, 1).getValue()).isNull();
   }
 
+  @Test
+  public void
+      should_insert_entity_and_set_null_field_preferring_default_strategy_when_specific_not_set() {
+    // given
+    DefaultNullStrategyDao dao = mapper.defaultNullStrategyDao(sessionRule.keyspace(), TABLE_ID);
+    assertThat(dao.findByIdAndRank(3000, 1)).isNull();
+    dao.insert(3000, 1, 1);
+    assertThat(dao.findByIdAndRank(3000, 1).getValue()).isNotNull();
+
+    // when
+    dao.insert(3000, 1, null);
+
+    // then
+    assertThat(dao.findByIdAndRank(3000, 1).getValue()).isNull();
+  }
+
+  @Test
+  public void
+      should_insert_entity_and_not_set_null_field_preferring_method_strategy_when_both_are_set() {
+    // given
+    DefaultNullStrategyDao dao = mapper.defaultNullStrategyDao(sessionRule.keyspace(), TABLE_ID);
+    assertThat(dao.findByIdAndRank(4000, 1)).isNull();
+    dao.insert(4000, 1, 1);
+    assertThat(dao.findByIdAndRank(4000, 1).getValue()).isNotNull();
+
+    // when
+    dao.insertOverrideDefaultNullSavingStrategy(4000, 1, null);
+
+    // then
+    assertThat(dao.findByIdAndRank(4000, 1).getValue()).isNotNull();
+  }
+
+  @Test
+  public void
+      should_insert_entity_and_do_not_set_field_when_both_default_and_method_level_not_explicitly_set() {
+    // given
+    DoNotSetSavingStrategyDao dao = mapper.notSetNullStrategyDao(sessionRule.keyspace(), TABLE_ID);
+    assertThat(dao.findByIdAndRank(5000, 1)).isNull();
+    dao.insert(5000, 1, 1);
+    assertThat(dao.findByIdAndRank(5000, 1).getValue()).isNotNull();
+
+    // when
+    dao.insert(5000, 1, null);
+
+    // then
+    assertThat(dao.findByIdAndRank(5000, 1).getValue()).isNotNull();
+  }
+
+  @Test
+  public void should_insert_entity_and_set_null_field_preferring_specific_over_default() {
+    // given
+    MethodOverrideNullSavingStrategyDao dao =
+        mapper.methodOverrideNullStrategyDao(sessionRule.keyspace(), TABLE_ID);
+    assertThat(dao.findByIdAndRank(6000, 1)).isNull();
+    dao.insert(6000, 1, 1);
+    assertThat(dao.findByIdAndRank(6000, 1).getValue()).isNotNull();
+
+    // when
+    dao.insert(6000, 1, null);
+
+    // then
+    assertThat(dao.findByIdAndRank(6000, 1).getValue()).isNull();
+  }
+
   @Dao
   public interface TestDao {
     @Insert
@@ -404,6 +469,46 @@ public class QueryIT {
     CompletableFuture<MappedAsyncPagingIterable<TestEntity>> findByIdAsync(int id);
   }
 
+  @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
+  public interface DefaultNullStrategyDao {
+
+    @Query(value = "INSERT INTO ${qualifiedTableId} (id, rank, value) VALUES (:id, :rank, :value)")
+    void insert(int id, int rank, Integer value);
+
+    @Query(
+      value = "INSERT INTO ${qualifiedTableId} (id, rank, value) VALUES (:id, :rank, :value)",
+      nullSavingStrategy = NullSavingStrategy.DO_NOT_SET
+    )
+    void insertOverrideDefaultNullSavingStrategy(int id, int rank, Integer value);
+
+    @Query("SELECT * FROM ${qualifiedTableId} WHERE id = :id AND rank = :rank")
+    TestEntity findByIdAndRank(int id, int rank);
+  }
+
+  @Dao
+  public interface DoNotSetSavingStrategyDao {
+
+    @Query(value = "INSERT INTO ${qualifiedTableId} (id, rank, value) VALUES (:id, :rank, :value)")
+    void insert(int id, int rank, Integer value);
+
+    @Query("SELECT * FROM ${qualifiedTableId} WHERE id = :id AND rank = :rank")
+    TestEntity findByIdAndRank(int id, int rank);
+  }
+
+  @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.DO_NOT_SET)
+  public interface MethodOverrideNullSavingStrategyDao {
+    @Query(
+      value = "INSERT INTO ${qualifiedTableId} (id, rank, value) VALUES (:id, :rank, :value)",
+      nullSavingStrategy = NullSavingStrategy.SET_TO_NULL
+    )
+    void insert(int id, int rank, Integer value);
+
+    @Query("SELECT * FROM ${qualifiedTableId} WHERE id = :id AND rank = :rank")
+    TestEntity findByIdAndRank(int id, int rank);
+  }
+
   @Entity
   public static class TestEntity {
     @PartitionKey private int id;
@@ -452,5 +557,17 @@ public class QueryIT {
 
     @DaoFactory
     TestDao dao(@DaoKeyspace CqlIdentifier keyspace, @DaoTable CqlIdentifier table);
+
+    @DaoFactory
+    DefaultNullStrategyDao defaultNullStrategyDao(
+        @DaoKeyspace CqlIdentifier keyspace, @DaoTable CqlIdentifier table);
+
+    @DaoFactory
+    DoNotSetSavingStrategyDao notSetNullStrategyDao(
+        @DaoKeyspace CqlIdentifier keyspace, @DaoTable CqlIdentifier table);
+
+    @DaoFactory
+    MethodOverrideNullSavingStrategyDao methodOverrideNullStrategyDao(
+        @DaoKeyspace CqlIdentifier keyspace, @DaoTable CqlIdentifier table);
   }
 }

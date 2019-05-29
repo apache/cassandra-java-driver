@@ -31,6 +31,8 @@ import com.datastax.oss.driver.api.mapper.StatementAttributes;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
+import com.datastax.oss.protocol.internal.ProtocolConstants;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -247,5 +249,15 @@ public class DaoBase {
       CompletableFuture<MappedAsyncPagingIterable<EntityT>> executeAsyncAndMapToEntityIterable(
           Statement<?> statement, EntityHelper<EntityT> entityHelper) {
     return executeAsync(statement).thenApply(rs -> rs.map(entityHelper::get));
+  }
+
+  protected static void throwIfProtocolVersionV3(MapperContext context) {
+    if (context.getSession().getContext().getProtocolVersion().getCode()
+        <= ProtocolConstants.Version.V3) {
+      throw new IllegalArgumentException(
+          String.format(
+              "You cannot use %s.%s for protocol version V3.",
+              NullSavingStrategy.class.getSimpleName(), NullSavingStrategy.DO_NOT_SET.name()));
+    }
   }
 }

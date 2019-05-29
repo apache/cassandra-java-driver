@@ -49,12 +49,14 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
       EnumSet.of(
           VOID, FUTURE_OF_VOID, RESULT_SET, FUTURE_OF_ASYNC_RESULT_SET, BOOLEAN, FUTURE_OF_BOOLEAN);
   private EntityDefinition entityDefinition;
+  private final NullSavingStrategyValidation nullSavingStrategyValidation;
 
   public DaoUpdateMethodGenerator(
       ExecutableElement methodElement,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
     super(methodElement, enclosingClass, context);
+    nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
   }
 
   @Override
@@ -122,7 +124,10 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
 
     Update annotation = methodElement.getAnnotation(Update.class);
     String customWhereClause = annotation.customWhereClause();
-    NullSavingStrategy nullSavingStrategy = annotation.nullSavingStrategy();
+
+    NullSavingStrategy nullSavingStrategy =
+        nullSavingStrategyValidation.getNullSavingStrategy(
+            Update.class, Update::nullSavingStrategy, methodElement, enclosingClass);
 
     if (customWhereClause.isEmpty()) {
       // We generated an update by primary key (see maybeAddWhereClause), all entity properties are
