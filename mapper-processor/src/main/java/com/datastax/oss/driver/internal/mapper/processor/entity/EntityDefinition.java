@@ -43,6 +43,8 @@ public interface EntityDefinition {
 
   Iterable<PropertyDefinition> getRegularColumns();
 
+  Iterable<PropertyDefinition> getComputedValues();
+
   /**
    * @return the concatenation of {@link #getPartitionKey()}, {@link #getClusteringColumns()} and
    *     {@link #getRegularColumns()}, in that order.
@@ -52,6 +54,19 @@ public interface EntityDefinition {
         .addAll(getPartitionKey())
         .addAll(getClusteringColumns())
         .addAll(getRegularColumns())
+        .build();
+  }
+
+  /**
+   * @return the concatenation of {@link #getPartitionKey()}, {@link #getClusteringColumns()},
+   *     {@link #getRegularColumns()}, and {@link #getComputedValues()} in that order.
+   */
+  default List<PropertyDefinition> getAllValues() {
+    return ImmutableList.<PropertyDefinition>builder()
+        .addAll(getPartitionKey())
+        .addAll(getClusteringColumns())
+        .addAll(getRegularColumns())
+        .addAll(getComputedValues())
         .build();
   }
 }

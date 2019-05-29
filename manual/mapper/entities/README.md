@@ -159,6 +159,67 @@ private int day;
 This information is used by some of the DAO method annotations; for example,
 [@Select](../daos/select/)'s default behavior is to generate a selection by primary key.
 
+#### Computed properties
+
+Annotating an entity property with [@Computed] indicates that when retrieving data with the mapper
+this property should be set to the result of a computation on the Cassandra side, typically a
+function call:
+
+```java
+private int v;
+
+@Computed("writetime(v)")
+private long writetime;
+```
+
+The CQL return type of the formula must match the type of the property, otherwise an exception
+will be thrown.
+
+[@Computed] does not support case-sensitivity. If the expression contains case-sensitive column
+or function names, you'll have to escape them:
+
+```java
+@Computed("\"myFunction\"(\"myColumn\")")
+private int f;
+```
+
+[@Computed] fields are only used for select-based queries, so they will not be considered for
+[@Update] or [@Insert] operations.
+
+Also note that like all other properties, the expected name in a query result for a [@Computed]
+property is based on the property name and the employed [@NamingStrategy](#naming-strategy). You may
+override this behavior using [@CqlName](#user-provided-names).
+
+Mapping computed results to property names is accomplished using [aliases].  If you wish to use
+entities with [@Computed] properties with [@GetEntity] or [@Query]-annotated dao methods, you
+must also do the same:
+
+```java
+@Entity
+class MyEntity {
+  @PartitionKey private int k;
+
+  private int v;
+
+  @Computed("ttl(v)")
+  private int myTtl;
+
+  @Computed("writetime(v)")
+  @CqlName("ts")
+  private long writetime;
+}
+```
+
+would expect a [@Query] such as:
+
+```java
+@Dao
+class MyDao {
+  @Query("select k, v, ttl(v) as my_ttl, writetime(v) as ts from ${qualifiedTableId} where k=:id")
+  MyEntity findById(int id);
+}
+```
+
 #### Transient properties
 
 In some cases, one may opt to exclude properties defined on an entity from being considered
@@ -198,5 +259,12 @@ private transient int notAColumn;
 [NamingConvention]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/entity/naming/NamingConvention.html
 [@NamingStrategy]:      http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/NamingStrategy.html
 [@PartitionKey]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
+[@Computed]:            http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Computed.html
+[@Select]:              http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Select.html
+[@Insert]:              http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Insert.html
+[@Update]:              http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Update.html
+[@GetEntity]:           http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/GetEntity.html
+[@Query]:               http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Query.html
+[aliases]:              http://cassandra.apache.org/doc/latest/cql/dml.html?#aliases
 [@Transient]:           http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Transient.html
 [@TransientProperties]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Transient.html
