@@ -54,6 +54,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Supplier;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -246,14 +247,31 @@ public class DefaultSession implements CqlSession {
   @NonNull
   @Override
   public CompletionStage<Void> closeAsync() {
-    RunOrSchedule.on(adminExecutor, singleThreaded::close);
-    return singleThreaded.closeFuture;
+    return closeSafely(singleThreaded::close);
   }
 
   @NonNull
   @Override
   public CompletionStage<Void> forceCloseAsync() {
-    RunOrSchedule.on(adminExecutor, singleThreaded::forceClose);
+    return closeSafely(singleThreaded::forceClose);
+  }
+
+  private CompletionStage<Void> closeSafely(Runnable action) {
+    // Protect against getting closed twice: with the default NettyOptions, closing shuts down
+    // adminExecutor, so we don't want to call RunOrSchedule the second time.
+    if (!singleThreaded.closeFuture.isDone()) {
+      try {
+        RunOrSchedule.on(adminExecutor, action);
+      } catch (RejectedExecutionException e) {
+        // Checking the future is racy, there is still a tiny window that could get us here.
+        LOG.warn(
+            "[{}] Ignoring terminated executor. "
+                + "This generally happens if you close the session multiple times concurrently, "
+                + "and can be safely ignored if the close() call returns normally.",
+            logPrefix,
+            e);
+      }
+    }
     return singleThreaded.closeFuture;
   }
 

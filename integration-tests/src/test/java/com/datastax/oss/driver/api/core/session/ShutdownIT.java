@@ -128,4 +128,11 @@ public class ShutdownIT {
     // Then
     assertThat(unexpectedErrors).isEmpty();
   }
+
+  @Test
+  public void should_handle_getting_closed_twice() {
+    CqlSession session = SessionUtils.newSession(simulacronRule);
+    session.close();
+    session.close();
+  }
 }

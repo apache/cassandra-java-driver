@@ -4,6 +4,7 @@
 
 ### 4.1.0 (in progress)
 
+- [bug] JAVA-2234: Handle terminated executor when the session is closed twice
 - [documentation] JAVA-2220: Emphasize that query builder is now a separate artifact in root README
 - [documentation] JAVA-2217: Cover contact points and local datacenter earlier in the manual
 - [improvement] JAVA-2242: Allow skipping all integration tests with -DskipITs
