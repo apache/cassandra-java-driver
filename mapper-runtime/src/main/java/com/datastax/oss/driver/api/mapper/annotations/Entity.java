@@ -62,7 +62,9 @@ import java.lang.annotation.Target;
  * <ul>
  *   <li>{@link PartitionKey}
  *   <li>{@link ClusteringColumn}
- *       <!-- TODO list new ones as they get added -->
+ *   <li>{@link Computed}
+ *   <li>{@link Transient}
+ *   <li>{@link CqlName}
  * </ul>
  *
  * <p>The class must expose a no-arg constructor that is at least package-private.
