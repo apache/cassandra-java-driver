@@ -39,19 +39,19 @@ import java.lang.annotation.Target;
  * </pre>
  *
  * Entity classes follow the usual "POJO" conventions. Each property will be mapped to a CQL column.
- * In order to detect a property, the mapper processor looks for:
+ * In order to detect a property:
  *
  * <ul>
- *   <li>a getter method that follows the usual naming convention (e.g. {@code getDescription}) and
- *       has no parameters. The name of the property is obtained by removing the "get" prefix and
- *       decapitalizing ({@code description}), and the type of the property is the return type of
- *       the getter.
- *   <li>a matching setter method ({@code setDescription}), with a single parameter that has the
- *       same type as the property (the return type does not matter).
- *   <li>optionally, a matching field ({@code description}) that has the same type as the property.
+ *   <li>there <b>must</b> be a getter method that follows the usual naming convention (e.g. {@code
+ *       getDescription}) and has no parameters. The name of the property is obtained by removing
+ *       the "get" prefix and decapitalizing ({@code description}), and the type of the property is
+ *       the return type of the getter.
+ *   <li>there <b>must</b> be a matching setter method ({@code setDescription}), with a single
+ *       parameter that has the same type as the property (the return type does not matter).
  * </ul>
  *
- * Note that the field is not mandatory, a property can have only a getter and a setter (for example
+ * There <i>may</i> also be a matching field ({@code description}) that has the same type as the
+ * property, but this is not mandatory: a property can have only a getter and a setter (for example
  * if the value is computed, or the field has a different name, or is nested into another field,
  * etc.)
  *
