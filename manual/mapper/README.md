@@ -149,6 +149,6 @@ initialization time, then reused. It is thread-safe.
 From the mapper, you can then obtain a DAO instance and execute queries:
 
 ```java
-ProductDao dao = productDao(CqlIdentifier.fromCql("inventory"));
+ProductDao dao = inventoryMapper.productDao(CqlIdentifier.fromCql("inventory"));
 dao.save(new Product(UUID.randomUUID(), "Mechanical keyboard"));
 ```
