@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
@@ -28,12 +29,14 @@ import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.MapperException;
-import com.datastax.oss.driver.api.mapper.StatementAttributes;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
+import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -124,33 +127,45 @@ public class DaoBase {
     return SimpleStatement.newInstance(queryString);
   }
 
-  public static BoundStatementBuilder populateBoundStatementWithAttributes(
-      BoundStatementBuilder builder, StatementAttributes attributes) {
+  public BoundStatementBuilder populateBoundStatementWithStatementAttributes(
+      BoundStatementBuilder builder,
+      String profileName,
+      String consistencyLevel,
+      String serialConsistencyLevel,
+      Boolean idempotent,
+      int pageSize,
+      String timeout,
+      String keyspace) {
 
-    builder =
-        builder
-            .setExecutionProfileName(attributes.getExecutionProfileName())
-            .setExecutionProfile(attributes.getExecutionProfile())
-            .setConsistencyLevel(attributes.getConsistencyLevel())
-            .setSerialConsistencyLevel(attributes.getSerialConsistencyLevel())
-            .setIdempotence(attributes.isIdempotent())
-            .setPageSize(attributes.getPageSize())
-            .setRoutingKey(attributes.getRoutingKey())
-            .setRoutingKeyspace(attributes.getRoutingKeyspace())
-            .setPagingState(attributes.getPagingState())
-            .setTimeout(attributes.getTimeout())
-            .setQueryTimestamp(attributes.getQueryTimestamp())
-            .setNode(attributes.getNode())
-            .setRoutingToken(attributes.getRoutingToken());
-    for (String customPayloadKey : attributes.getCustomPayload().keySet()) {
-      builder =
-          builder.addCustomPayload(
-              customPayloadKey, attributes.getCustomPayload().get(customPayloadKey));
+    if (!profileName.isEmpty()) {
+      builder = builder.setExecutionProfileName(profileName);
     }
-    if (attributes.isTracing()) {
-      builder = builder.setTracing();
+    if (!consistencyLevel.isEmpty()) {
+      builder = builder.setConsistencyLevel(getConsistencyLevelFromName(consistencyLevel));
+    }
+    if (!serialConsistencyLevel.isEmpty()) {
+      builder =
+          builder.setSerialConsistencyLevel(getConsistencyLevelFromName(serialConsistencyLevel));
+    }
+    if (idempotent != null) {
+      builder = builder.setIdempotence(idempotent);
+    }
+    if (pageSize > 0) {
+      builder = builder.setPageSize(pageSize);
+    }
+    if (!timeout.isEmpty()) {
+      builder = builder.setTimeout(Duration.parse(timeout));
+    }
+    if (!keyspace.isEmpty()) {
+      builder = builder.setRoutingKeyspace(keyspace);
     }
     return builder;
+  }
+
+  private ConsistencyLevel getConsistencyLevelFromName(String name) {
+    InternalDriverContext idContext = (InternalDriverContext) (context.getSession().getContext());
+    ConsistencyLevelRegistry registry = idContext.getConsistencyLevelRegistry();
+    return registry.codeToLevel(registry.nameToCode(name));
   }
 
   protected final MapperContext context;

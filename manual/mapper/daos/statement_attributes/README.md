@@ -6,28 +6,58 @@ underlying statement, such as the consistency level, timeout, etc.
 
 ### As a parameter
 
-If the **last** parameter of any of those methods is a [StatementAttributes], it will automatically
-be used to customize the statement:
+If the **last** parameter of any of those methods is a `Function<BoundStatementBuilder,
+BoundStatementBuilder>` (or `UnaryOperator<BoundStatementBuilder>`), the mapper will apply that
+function to the statement before executing it:
 
 ```java
 @Dao
 public interface ProductDao {
   @Select
-  Product findById(int productId, StatementAttributes attributes);
+  Product findById(
+      int productId, Function<BoundStatementBuilder, BoundStatementBuilder> setAttributes);
 }
 
-StatementAttributes attributes =
-    StatementAttributes.builder()
-        .withTimeout(Duration.ofSeconds(3))
-        .withConsistencyLevel(DefaultConsistencyLevel.QUORUM)
-        .build();
-Product product = dao.findById(1, attributes);
+Function<BoundStatementBuilder, BoundStatementBuilder> statementFunction =
+    builder -> builder.setConsistencyLevel(DefaultConsistencyLevel.ONE).setPageSize(500);
+
+Product product = dao.findById(1, statementFunction);
 ``` 
 
 Use this if you need to execute the same DAO methods with different configurations that can change
 dynamically.
 
-Note that the default implementation of [StatementAttributes] returned by the builder is immutable.
-If you use the same combinations often, you can store them as constants to reduce allocation costs. 
+If you reuse the same set of attributes often, you can store the function as a constant to reduce
+allocation costs.
 
-[StatementAttributes]:  https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/StatementAttributes.html
+### As an annotation
+
+Attributes can also be provided statically by annotating the method with [@StatementAttributes]:
+
+```java
+@Dao
+public interface ProductDao {
+  @Select
+  @StatementAttributes(consistencyLevel = "ONE", pageSize = 500)
+  Product findById(int productId);
+}
+```
+
+It's possible to have both the annotation and the function parameter; in that case, the annotation
+will be applied first, and the function second:
+
+```java
+@Dao
+public interface ProductDao {
+  @Select
+  @StatementAttributes(consistencyLevel = "ONE", pageSize = 500)
+  Product findById(
+      int productId, Function<BoundStatementBuilder, BoundStatementBuilder> setAttributes);
+}
+
+// Will use CL = QUORUM, page size = 500
+Product product =
+    dao.findById(1, builder -> builder.setConsistencyLevel(DefaultConsistencyLevel.QUORUM));
+```
+
+[@StatementAttributes]: https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/StatementAttributes.html

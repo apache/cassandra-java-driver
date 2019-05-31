@@ -69,10 +69,10 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
     // Validate the parameters:
     // - the first one must be the entity.
     // - the others are completely free-form (they'll be used as additional bind variables)
-    // A StatementAttributes can be added in last position.
+    // A Function<BoundStatementBuilder, BoundStatementBuilder> can be added in last position.
     List<? extends VariableElement> parameters = methodElement.getParameters();
-    VariableElement statementAttributesParam = findStatementAttributesParam(methodElement);
-    if (statementAttributesParam != null) {
+    VariableElement boundStatementFunction = findBoundStatementFunction(methodElement);
+    if (boundStatementFunction != null) {
       parameters = parameters.subList(0, parameters.size() - 1);
     }
     TypeElement entityElement =
@@ -112,11 +112,8 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
         BoundStatementBuilder.class,
         statementName);
 
-    if (statementAttributesParam != null) {
-      methodBodyBuilder.addStatement(
-          "boundStatementBuilder = populateBoundStatementWithAttributes(boundStatementBuilder, $L)",
-          statementAttributesParam.getSimpleName().toString());
-    }
+    populateBuilderWithStatementAttributes(methodBodyBuilder, methodElement);
+    populateBuilderWithFunction(methodBodyBuilder, boundStatementFunction);
 
     String entityParameterName = parameters.get(0).getSimpleName().toString();
 
