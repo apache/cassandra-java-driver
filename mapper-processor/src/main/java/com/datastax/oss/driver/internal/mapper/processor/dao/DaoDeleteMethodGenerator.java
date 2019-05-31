@@ -80,12 +80,14 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
 
     // Validate the arguments: either an entity instance, or the PK components (in the latter case,
     // the entity class has to be provided via the annotation).
-    // In either case, a StatementAttributes can be added in last position.
+    // In either case, a Function<BoundStatementBuilder, BoundStatementBuilder> can be added in last
+    // position.
     List<? extends VariableElement> parameters = methodElement.getParameters();
-    VariableElement statementAttributeParam = findStatementAttributesParam(methodElement);
-    if (statementAttributeParam != null) {
+    VariableElement boundStatementFunction = findBoundStatementFunction(methodElement);
+    if (boundStatementFunction != null) {
       parameters = parameters.subList(0, parameters.size() - 1);
     }
+
     TypeElement entityElement;
     EntityDefinition entityDefinition;
     boolean hasEntityParameter;
@@ -163,11 +165,8 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
         "$T boundStatementBuilder = $L.boundStatementBuilder()",
         BoundStatementBuilder.class,
         statementName);
-    if (statementAttributeParam != null) {
-      methodBodyBuilder.addStatement(
-          "boundStatementBuilder = populateBoundStatementWithAttributes(boundStatementBuilder, $L)",
-          statementAttributeParam.getSimpleName().toString());
-    }
+    populateBuilderWithStatementAttributes(methodBodyBuilder, methodElement);
+    populateBuilderWithFunction(methodBodyBuilder, boundStatementFunction);
     int nextParameterIndex;
     if (hasEntityParameter) {
       // Bind entity's PK properties
