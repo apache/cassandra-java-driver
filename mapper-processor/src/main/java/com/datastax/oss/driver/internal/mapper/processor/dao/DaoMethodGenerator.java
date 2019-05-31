@@ -16,19 +16,26 @@
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.mapper.StatementAttributes;
+import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
+import com.datastax.oss.driver.api.mapper.annotations.StatementAttributes;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
 
 public abstract class DaoMethodGenerator implements MethodGenerator {
 
@@ -138,12 +145,55 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
     }
   }
 
-  protected VariableElement findStatementAttributesParam(ExecutableElement methodElement) {
+  protected void populateBuilderWithFunction(
+      CodeBlock.Builder builder, VariableElement functionParam) {
+    if (functionParam != null) {
+      builder.addStatement(
+          "boundStatementBuilder = $L.apply(boundStatementBuilder)",
+          functionParam.getSimpleName().toString());
+    }
+  }
+
+  protected void populateBuilderWithStatementAttributes(
+      CodeBlock.Builder builder, ExecutableElement methodElement) {
+    StatementAttributes statementAttributes =
+        methodElement.getAnnotation(StatementAttributes.class);
+    if (statementAttributes != null) {
+      builder.addStatement(
+          "boundStatementBuilder = populateBoundStatementWithStatementAttributes("
+              + "boundStatementBuilder, $1S, $2S, $3S, $4L, $5L, $6S, $7S)",
+          statementAttributes.executionProfileName(),
+          statementAttributes.consistencyLevel(),
+          statementAttributes.serialConsistencyLevel(),
+          (statementAttributes.idempotence().length == 0)
+              ? null
+              : statementAttributes.idempotence()[0],
+          statementAttributes.pageSize(),
+          statementAttributes.timeout(),
+          statementAttributes.routingKeyspace());
+    }
+  }
+
+  protected VariableElement findBoundStatementFunction(ExecutableElement methodElement) {
     if (methodElement.getParameters().size() > 0) {
       int lastParamIndex = methodElement.getParameters().size() - 1;
       VariableElement lastParam = methodElement.getParameters().get(lastParamIndex);
-      if (context.getClassUtils().isSame(lastParam.asType(), StatementAttributes.class)) {
-        return lastParam;
+      TypeMirror mirror = lastParam.asType();
+      if (mirror.getKind() == TypeKind.DECLARED) {
+        DeclaredType declaredType = (DeclaredType) mirror;
+        if ((context.getClassUtils().isSame(declaredType.asElement(), Function.class)
+                && context
+                    .getClassUtils()
+                    .isSame(declaredType.getTypeArguments().get(0), BoundStatementBuilder.class)
+                && context
+                    .getClassUtils()
+                    .isSame(declaredType.getTypeArguments().get(1), BoundStatementBuilder.class))
+            || (context.getClassUtils().isSame(declaredType.asElement(), UnaryOperator.class)
+                && context
+                    .getClassUtils()
+                    .isSame(declaredType.getTypeArguments().get(0), BoundStatementBuilder.class))) {
+          return lastParam;
+        }
       }
     }
     return null;

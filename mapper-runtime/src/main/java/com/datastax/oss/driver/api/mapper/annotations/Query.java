@@ -23,7 +23,6 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
-import com.datastax.oss.driver.api.mapper.StatementAttributes;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -32,6 +31,8 @@ import java.lang.annotation.Target;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * Annotates a {@link Dao} method that executes a user-provided query.
@@ -58,8 +59,10 @@ import java.util.concurrent.CompletionStage;
  * long countByIdAndYear(int id, int year);
  * </pre>
  *
- * A {@link StatementAttributes} can be added as the <b>last</b> parameter. This allows you to
- * customize certain aspects of the request (page size, timeout, etc.) at runtime.
+ * <p>A {@link Function Function&lt;BoundStatementBuilder, BoundStatementBuilder&gt;} or {@link
+ * UnaryOperator UnaryOperator&lt;BoundStatementBuilder&gt;} can be added as the <b>last</b>
+ * parameter. It will be applied to the statement before execution. This allows you to customize
+ * certain aspects of the request (page size, timeout, etc) at runtime.
  *
  * <h3>Return type</h3>
  *

@@ -89,8 +89,8 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
 
     List<? extends VariableElement> parameters = methodElement.getParameters();
 
-    VariableElement statementAttributeParam = findStatementAttributesParam(methodElement);
-    if (statementAttributeParam != null) {
+    VariableElement boundStatementFunction = findBoundStatementFunction(methodElement);
+    if (boundStatementFunction != null) {
       parameters = parameters.subList(0, methodElement.getParameters().size() - 1);
     }
 
@@ -106,11 +106,8 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
     methodBodyBuilder.addStatement(
         "$1T nullSavingStrategy = $1T.$2L", NullSavingStrategy.class, nullSavingStrategy);
 
-    if (statementAttributeParam != null) {
-      methodBodyBuilder.addStatement(
-          "boundStatementBuilder = populateBoundStatementWithAttributes(boundStatementBuilder, $L)",
-          statementAttributeParam.getSimpleName().toString());
-    }
+    populateBuilderWithStatementAttributes(methodBodyBuilder, methodElement);
+    populateBuilderWithFunction(methodBodyBuilder, boundStatementFunction);
 
     GeneratedCodePatterns.bindParameters(
         parameters, methodBodyBuilder, enclosingClass, context, true);

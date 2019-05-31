@@ -21,63 +21,178 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
-import com.datastax.oss.driver.api.mapper.StatementAttributes;
-import com.datastax.oss.driver.api.mapper.StatementAttributesBuilder;
+import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
-import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.Delete;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
+import com.datastax.oss.driver.api.mapper.annotations.StatementAttributes;
+import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
-import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Execute;
 import com.datastax.oss.simulacron.common.cluster.ClusterQueryLogReport;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.QueryLog;
+import com.datastax.oss.simulacron.common.stubbing.PrimeDsl;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import java.nio.ByteBuffer;
-import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 public class StatementAttributesIT {
 
-  @ClassRule
-  public static SimulacronRule simulacronRule =
+  private static SimulacronRule simulacronRule =
       new SimulacronRule(ClusterSpec.builder().withNodes(1));
-
   private static SessionRule<CqlSession> sessionRule = SessionRule.builder(simulacronRule).build();
+  @ClassRule public static TestRule chain = RuleChain.outerRule(simulacronRule).around(sessionRule);
 
-  private static SimpleDao simpleDao;
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private static String PAGING_STATE = "paging_state";
   private static int PAGE_SIZE = 13;
 
   private static final Simple simple = new Simple(UUID.randomUUID(), "DATA");
 
+  private static final Function<BoundStatementBuilder, BoundStatementBuilder> statementFunction =
+      builder ->
+          builder
+              .setConsistencyLevel(DefaultConsistencyLevel.ANY)
+              .setPageSize(PAGE_SIZE)
+              .setSerialConsistencyLevel(DefaultConsistencyLevel.QUORUM)
+              .setPagingState(ByteBuffer.wrap(PAGING_STATE.getBytes(UTF_8)));
+
+  private static final Function<BoundStatementBuilder, BoundStatementBuilder> badStatementFunction =
+      builder -> {
+        throw new IllegalStateException("mock error");
+      };
+
+  private static SimpleDao dao;
+
+  @BeforeClass
+  public static void setupClass() {
+    primeDeleteQuery();
+    primeInsertQuery();
+    primeSelectQuery();
+    primeCountQuery();
+    primeUpdateQuery();
+
+    InventoryMapper inventoryMapper =
+        new StatementAttributesIT_InventoryMapperBuilder(sessionRule.session()).build();
+    dao = inventoryMapper.simpleDao();
+  }
+
   @Before
   public void setup() {
-    simulacronRule.cluster().clearPrimes(true);
     simulacronRule.cluster().clearLogs();
   }
 
   @Test
-  public void should_honor_runtime_attributes_insert() {
+  public void should_honor_runtime_attributes_on_insert() {
+    dao.save(simple, statementFunction);
+
+    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    validateQueryOptions(report.getQueryLogs().get(0), true);
+  }
+
+  @Test
+  public void should_honor_annotation_attributes_on_insert() {
+    dao.save2(simple);
+    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    validateQueryOptions(report.getQueryLogs().get(0), false);
+  }
+
+  @Test
+  public void should_use_runtime_attributes_over_annotation_attributes() {
+    dao.save3(simple, statementFunction);
+    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    validateQueryOptions(report.getQueryLogs().get(0), false);
+  }
+
+  @Test
+  public void should_honor_runtime_attributes_on_delete() {
+    dao.delete(simple, statementFunction);
+    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    validateQueryOptions(report.getQueryLogs().get(0), true);
+  }
+
+  @Test
+  public void should_honor_annotation_attributes_on_delete() {
+    dao.delete2(simple);
+    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    validateQueryOptions(report.getQueryLogs().get(0), false);
+  }
+
+  @Test
+  public void should_honor_runtime_attributes_on_select() {
+    dao.findByPk(simple.getPk(), statementFunction);
+    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    validateQueryOptions(report.getQueryLogs().get(0), true);
+  }
+
+  @Test
+  public void should_honor_annotation_attributes_on_select() {
+    dao.findByPk2(simple.getPk());
+    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    validateQueryOptions(report.getQueryLogs().get(0), false);
+  }
+
+  @Test
+  public void should_honor_runtime_attributes_on_query() {
+    dao.count(simple.getPk(), statementFunction);
+    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    validateQueryOptions(report.getQueryLogs().get(0), true);
+  }
+
+  @Test
+  public void should_honor_annotation_attributes_on_query() {
+    dao.count2(simple.getPk());
+    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    validateQueryOptions(report.getQueryLogs().get(0), false);
+  }
+
+  @Test
+  public void should_honor_runtime_attributes_on_update() {
+    dao.update(simple, statementFunction);
+    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    validateQueryOptions(report.getQueryLogs().get(0), true);
+  }
+
+  @Test
+  public void should_honor_annotation_attributes_on_update() {
+    dao.update2(simple);
+    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    validateQueryOptions(report.getQueryLogs().get(0), false);
+  }
+
+  @Test
+  public void should_fail_runtime_attributes_bad() {
+    thrown.expect(IllegalStateException.class);
+    thrown.expectMessage("mock error");
+    dao.save(simple, badStatementFunction);
+  }
+
+  private static void primeInsertQuery() {
     Map<String, Object> params = ImmutableMap.of("pk", simple.getPk(), "data", simple.getData());
     Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid", "data", "ascii");
     simulacronRule
@@ -91,19 +206,9 @@ public class StatementAttributesIT {
                     params,
                     paramTypes))
                 .then(noRows()));
-    CqlSession session = SessionUtils.newSession(simulacronRule);
-    InventoryMapper inventoryMapper =
-        new StatementAttributesIT_InventoryMapperBuilder(session).build();
-    simpleDao = inventoryMapper.simpleDao(sessionRule.keyspace());
-    StatementAttributes attributes = buildRunTimeAttributes();
-    simulacronRule.cluster().clearLogs();
-    simpleDao.save(simple, attributes);
-    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
-    validateQueryOptions(report.getQueryLogs().get(0));
   }
 
-  @Test
-  public void should_honor_runtime_attributes_delete() {
+  private static void primeDeleteQuery() {
     Map<String, Object> params = ImmutableMap.of("pk", simple.getPk());
     Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid");
     simulacronRule
@@ -118,19 +223,9 @@ public class StatementAttributesIT {
                     paramTypes))
                 .then(noRows())
                 .delay(1, TimeUnit.MILLISECONDS));
-    CqlSession session = SessionUtils.newSession(simulacronRule);
-    InventoryMapper inventoryMapper =
-        new StatementAttributesIT_InventoryMapperBuilder(session).build();
-    simpleDao = inventoryMapper.simpleDao(sessionRule.keyspace());
-    StatementAttributes attributes = buildRunTimeAttributes();
-    simulacronRule.cluster().clearLogs();
-    simpleDao.delete(simple, attributes);
-    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
-    validateQueryOptions(report.getQueryLogs().get(0));
   }
 
-  @Test
-  public void should_honor_runtime_attributes_select() {
+  private static void primeSelectQuery() {
     Map<String, Object> params = ImmutableMap.of("pk", simple.getPk());
     Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid");
     simulacronRule
@@ -145,35 +240,42 @@ public class StatementAttributesIT {
                     paramTypes))
                 .then(noRows())
                 .delay(1, TimeUnit.MILLISECONDS));
-    CqlSession session = SessionUtils.newSession(simulacronRule);
-    InventoryMapper inventoryMapper =
-        new StatementAttributesIT_InventoryMapperBuilder(session).build();
-    simpleDao = inventoryMapper.simpleDao(sessionRule.keyspace());
-
-    StatementAttributes attributes = buildRunTimeAttributes();
-    simulacronRule.cluster().clearLogs();
-    simpleDao.findByPk(simple.getPk(), attributes);
-    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
-    validateQueryOptions(report.getQueryLogs().get(0));
   }
 
-  private StatementAttributes buildRunTimeAttributes() {
-    StatementAttributes attributes =
-        StatementAttributes.builder()
-            .withTimeout(Duration.ofSeconds(3))
-            .withConsistencyLevel(DefaultConsistencyLevel.QUORUM)
-            .build();
-    StatementAttributesBuilder builder = StatementAttributes.builder();
-
-    return builder
-        .withConsistencyLevel(DefaultConsistencyLevel.ANY)
-        .withPageSize(PAGE_SIZE)
-        .withSerialConsistencyLevel(DefaultConsistencyLevel.QUORUM)
-        .withPagingState(ByteBuffer.wrap(PAGING_STATE.getBytes(UTF_8)))
-        .build();
+  private static void primeCountQuery() {
+    Map<String, Object> params = ImmutableMap.of("pk", simple.getPk());
+    Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid");
+    simulacronRule
+        .cluster()
+        .prime(
+            when(query(
+                    "SELECT count(*) FROM simple WHERE pk=:pk",
+                    Lists.newArrayList(
+                        com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ONE,
+                        com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ANY),
+                    params,
+                    paramTypes))
+                .then(PrimeDsl.rows().row("count", 1L).columnTypes("count", "bigint").build())
+                .delay(1, TimeUnit.MILLISECONDS));
   }
 
-  private void validateQueryOptions(QueryLog log) {
+  private static void primeUpdateQuery() {
+    Map<String, Object> params = ImmutableMap.of("pk", simple.getPk(), "data", simple.getData());
+    Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid", "data", "ascii");
+    simulacronRule
+        .cluster()
+        .prime(
+            when(query(
+                    "UPDATE simple SET data=:data WHERE pk=:pk",
+                    Lists.newArrayList(
+                        com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ONE,
+                        com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ANY),
+                    params,
+                    paramTypes))
+                .then(noRows()));
+  }
+
+  private void validateQueryOptions(QueryLog log, boolean validatePageState) {
 
     Message message = log.getFrame().message;
     assertThat(message).isInstanceOf(Execute.class);
@@ -183,26 +285,58 @@ public class StatementAttributesIT {
     assertThat(queryExecute.options.serialConsistency)
         .isEqualTo(DefaultConsistencyLevel.QUORUM.getProtocolCode());
     assertThat(queryExecute.options.pageSize).isEqualTo(PAGE_SIZE);
-    String pagingState = UTF_8.decode(queryExecute.options.pagingState).toString();
-    assertThat(pagingState).isEqualTo(PAGING_STATE);
+    if (validatePageState) {
+      String pagingState = UTF_8.decode(queryExecute.options.pagingState).toString();
+      assertThat(pagingState).isEqualTo(PAGING_STATE);
+    }
   }
 
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
-    StatementAttributesIT.SimpleDao simpleDao(@DaoKeyspace CqlIdentifier keyspace);
+    StatementAttributesIT.SimpleDao simpleDao();
   }
 
   @Dao
   public interface SimpleDao {
     @Insert
-    void save(Simple simple, StatementAttributes attributes);
+    void save(Simple simple, Function<BoundStatementBuilder, BoundStatementBuilder> function);
+
+    @Insert
+    @StatementAttributes(consistencyLevel = "ANY", serialConsistencyLevel = "QUORUM", pageSize = 13)
+    void save2(Simple simple);
+
+    @Insert
+    @StatementAttributes(consistencyLevel = "ONE", pageSize = 500)
+    void save3(Simple simple, Function<BoundStatementBuilder, BoundStatementBuilder> function);
 
     @Delete
-    void delete(Simple simple, StatementAttributes attributes);
+    void delete(Simple simple, Function<BoundStatementBuilder, BoundStatementBuilder> function);
+
+    @Delete
+    @StatementAttributes(consistencyLevel = "ANY", serialConsistencyLevel = "QUORUM", pageSize = 13)
+    void delete2(Simple simple);
 
     @Select
-    Simple findByPk(UUID pk, StatementAttributes attributes);
+    Simple findByPk(UUID pk, Function<BoundStatementBuilder, BoundStatementBuilder> function);
+
+    @Select
+    @StatementAttributes(consistencyLevel = "ANY", serialConsistencyLevel = "QUORUM", pageSize = 13)
+    Simple findByPk2(UUID pk);
+
+    @Query("SELECT count(*) FROM simple WHERE pk=:pk")
+    long count(UUID pk, Function<BoundStatementBuilder, BoundStatementBuilder> function);
+
+    @Query("SELECT count(*) FROM simple WHERE pk=:pk")
+    @StatementAttributes(consistencyLevel = "ANY", serialConsistencyLevel = "QUORUM", pageSize = 13)
+    long count2(UUID pk);
+
+    @Update
+    void update(Simple simple, Function<BoundStatementBuilder, BoundStatementBuilder> function);
+
+    @Update
+    @StatementAttributes(consistencyLevel = "ANY", serialConsistencyLevel = "QUORUM", pageSize = 13)
+    void update2(Simple simple);
   }
 
   @Entity
