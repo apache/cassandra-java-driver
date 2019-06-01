@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.mapper.processor.util;
 
 import com.datastax.oss.driver.api.mapper.annotations.HierarchyScanStrategy;
+import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import java.util.Collection;
@@ -27,7 +28,6 @@ import java.util.function.Function;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Types;
 
 /** Provides mechanisms for building and traversing a class/interfaces hierarchy. */
 public class HierarchyScanner {
@@ -60,21 +60,22 @@ public class HierarchyScanner {
    * traversing the hierarchy again using the chosen strategy.
    *
    * @param typeElement The type whose hierarchy will be traversed.
-   * @param types Used to resolve parent type elements
+   * @param context provides utilities for working with types.
    * @return The type hierarchy, ordered from typeElement to the highestAncestor, as dictated by the
    *     resolved {@link HierarchyScanStrategy}
    */
-  public static Set<TypeElement> resolveTypeHierarchy(TypeElement typeElement, Types types) {
+  public static Set<TypeElement> resolveTypeHierarchy(
+      TypeElement typeElement, ProcessorContext context) {
     HierarchyScanStrategy hierarchyScanStrategy =
-        HierarchyScanner.resolveHierarchyScanStrategy(typeElement, types);
+        HierarchyScanner.resolveHierarchyScanStrategy(typeElement, context);
 
     ImmutableSet.Builder<TypeElement> hierarchy = ImmutableSet.builder();
-    traverseFullHierarchy(hierarchyScanStrategy, typeElement, types, hierarchy::add);
+    traverseFullHierarchy(hierarchyScanStrategy, typeElement, context, hierarchy::add);
     return hierarchy.build();
   }
 
   private static HierarchyScanStrategy resolveHierarchyScanStrategy(
-      TypeElement classElement, Types types) {
+      TypeElement classElement, ProcessorContext context) {
     // Use the default HierarchyScanStrategy to find the configured HierarchyScanStrategy.
     // This is done because the default strategy is the most permissive.
     HierarchyScanStrategy strategy =
@@ -85,7 +86,7 @@ public class HierarchyScanner {
     traverseHierarchy(
         strategy,
         classElement,
-        types,
+        context,
         (TypeElement t) -> {
           HierarchyScanStrategy discoveredStrategy = t.getAnnotation(HierarchyScanStrategy.class);
           // if we find a strategy, set it and stop traversing.
@@ -102,12 +103,12 @@ public class HierarchyScanner {
   private static void traverseFullHierarchy(
       HierarchyScanStrategy hierarchyScanStrategy,
       TypeElement classElement,
-      Types types,
+      ProcessorContext context,
       Consumer<TypeElement> typeConsumer) {
     traverseHierarchy(
         hierarchyScanStrategy,
         classElement,
-        types,
+        context,
         (TypeElement t) -> {
           typeConsumer.accept(t);
           return true;
@@ -117,10 +118,10 @@ public class HierarchyScanner {
   private static void traverseHierarchy(
       HierarchyScanStrategy hierarchyScanStrategy,
       TypeElement classElement,
-      Types types,
+      ProcessorContext context,
       Function<TypeElement, Boolean> typeConsumer) {
 
-    if (!typeConsumer.apply(classElement)) {
+    if (!typeConsumer.apply(classElement) || !hierarchyScanStrategy.scanAncestors()) {
       return;
     }
 
@@ -136,12 +137,11 @@ public class HierarchyScanner {
       TypeMirror superClass = classElement.getSuperclass();
       TypeElement superClassElement = null;
       if (superClass.getKind() == TypeKind.DECLARED) {
-        superClassElement = (TypeElement) types.asElement(superClass);
+        superClassElement = (TypeElement) context.getTypeUtils().asElement(superClass);
         atHighestClass =
-            superClassElement
-                .getQualifiedName()
-                .toString()
-                .equals(hierarchyScanStrategy.highestAncestor().getName());
+            context
+                .getClassUtils()
+                .isSame(superClassElement, hierarchyScanStrategy.highestAncestor());
         if (!atHighestClass || hierarchyScanStrategy.includeHighestAncestor()) {
           if (!typeConsumer.apply(superClassElement)) {
             return;
@@ -156,9 +156,15 @@ public class HierarchyScanner {
       Set<TypeMirror> newInterfacesToScan = Sets.newLinkedHashSet();
 
       // scan parent classes interfaces and add them.
-      scanInterfaces(classElement.getInterfaces(), newInterfacesToScan, types, typeConsumer);
+      scanInterfaces(
+          hierarchyScanStrategy,
+          classElement.getInterfaces(),
+          newInterfacesToScan,
+          context,
+          typeConsumer);
       // and then add interfaces to scan from previous class interfaces parents.
-      scanInterfaces(interfacesToScan, newInterfacesToScan, types, typeConsumer);
+      scanInterfaces(
+          hierarchyScanStrategy, interfacesToScan, newInterfacesToScan, context, typeConsumer);
 
       // navigate up to the superclass and to the class' encountered interfaces' parents.
       classElement = superClassElement;
@@ -168,23 +174,35 @@ public class HierarchyScanner {
     // if we've exhausted the class hierarchy, we may still need to consume the interface hierarchy.
     while (!interfacesToScan.isEmpty()) {
       Set<TypeMirror> newInterfacesToScan = Sets.newLinkedHashSet();
-      scanInterfaces(interfacesToScan, newInterfacesToScan, types, typeConsumer);
+      scanInterfaces(
+          hierarchyScanStrategy, interfacesToScan, newInterfacesToScan, context, typeConsumer);
       interfacesToScan = newInterfacesToScan;
     }
   }
 
   private static void scanInterfaces(
+      HierarchyScanStrategy hierarchyScanStrategy,
       Collection<? extends TypeMirror> interfacesToScan,
       Set<TypeMirror> newInterfacesToScan,
-      Types types,
+      ProcessorContext context,
       Function<TypeElement, Boolean> typeConsumer) {
     for (TypeMirror interfaceType : interfacesToScan) {
       if (interfaceType.getKind() == TypeKind.DECLARED) {
-        TypeElement interfaceElement = (TypeElement) types.asElement(interfaceType);
-        if (!typeConsumer.apply(interfaceElement)) {
-          return;
+        TypeElement interfaceElement =
+            (TypeElement) context.getTypeUtils().asElement(interfaceType);
+        // skip if at highest ancestor.
+        boolean atHighest =
+            context
+                .getClassUtils()
+                .isSame(interfaceElement, hierarchyScanStrategy.highestAncestor());
+        if (!atHighest || hierarchyScanStrategy.includeHighestAncestor()) {
+          if (!typeConsumer.apply(interfaceElement)) {
+            return;
+          }
         }
-        newInterfacesToScan.addAll(interfaceElement.getInterfaces());
+        if (!atHighest) {
+          newInterfacesToScan.addAll(interfaceElement.getInterfaces());
+        }
       }
     }
   }

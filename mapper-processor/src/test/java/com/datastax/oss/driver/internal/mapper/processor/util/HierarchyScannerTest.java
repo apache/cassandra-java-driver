@@ -18,9 +18,11 @@ package com.datastax.oss.driver.internal.mapper.processor.util;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.mapper.annotations.HierarchyScanStrategy;
+import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import java.util.Arrays;
 import java.util.List;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
@@ -31,7 +33,19 @@ import org.mockito.Mockito;
 
 public class HierarchyScannerTest {
 
-  Types types = Mockito.mock(Types.class);
+  private final ProcessorContext context;
+
+  public HierarchyScannerTest() {
+    this.context = Mockito.mock(ProcessorContext.class);
+    Types types = Mockito.mock(Types.class);
+    Classes classUtils = Mockito.mock(Classes.class);
+
+    Mockito.when(context.getTypeUtils()).thenReturn(types);
+    Mockito.when(context.getClassUtils()).thenReturn(classUtils);
+
+    Mockito.when(classUtils.isSame(Mockito.any(Element.class), Mockito.any(Class.class)))
+        .thenReturn(false);
+  }
 
   @Test
   public void should_build_proper_hierarchy_with_default_strategy() {
@@ -58,13 +72,49 @@ public class HierarchyScannerTest {
 
     // when no HierarchyScanStrategy is defined, then the default behavior should be used
     // which is to scan the entire tree and return it in the correct (bottom up) order.
-    assertThat(HierarchyScanner.resolveTypeHierarchy(c.classElement, types).toString())
+    assertThat(HierarchyScanner.resolveTypeHierarchy(c.classElement, context).toString())
         .isEqualTo("[c, b, x, w, a, y, z]");
   }
 
   @Test
+  public void should_not_scan_hierarchy_if_scanAncestors_is_false() {
+    /*
+     * given the following hierarchy
+     *
+     *                  a
+     *                 /
+     *                z
+     *               /
+     *         a   @y
+     *        /    /
+     *        b   x w
+     *         \ / /
+     *          c
+     */
+    // with a HierarchyScanStrategy annotation indicates to not scan ancestors
+    // then only traverse the base element.
+    // while odd, the strategy is defined on a parent interface, but for practical reasons
+    // this seems reasonable.  If the intent is not to allow annotations beyond y, it
+    // could be specified that way.
+    HierarchyScanStrategy strategy = Mockito.mock(HierarchyScanStrategy.class);
+    Mockito.when(strategy.scanAncestors()).thenReturn(false);
+    MockInterface a = i("a");
+    MockInterface z = i("z", a);
+    MockInterface y = i("y", strategy, z);
+    MockInterface x = i("x", y);
+    MockInterface w = i("w");
+    MockClass b = c("b", null, a);
+    MockClass c = c("c", b, x, w);
+
+    // when no HierarchyScanStrategy is defined, then the default behavior should be used
+    // which is to scan the entire tree and return it in the correct (bottom up) order.
+    assertThat(HierarchyScanner.resolveTypeHierarchy(c.classElement, context).toString())
+        .isEqualTo("[c]");
+  }
+
+  @Test
   @SuppressWarnings("unchecked")
-  public void should_build_property_hierarchy_with_strategy_defined() {
+  public void should_build_property_hierarchy_with_strategy_defined_on_class() {
     /*
      * given the following hierarchy
      *
@@ -81,9 +131,10 @@ public class HierarchyScannerTest {
     // with a HierarchyScanStrategy annotation on "d" that dictates that "b" is the highest class,
     // but to not include it.
     HierarchyScanStrategy bHighest = Mockito.mock(HierarchyScanStrategy.class);
-    // return this class's name, which will also be used for  b's class name.
+    // return this class' name just so we have something to check against.
     Mockito.when(bHighest.highestAncestor()).thenReturn((Class) this.getClass());
     Mockito.when(bHighest.includeHighestAncestor()).thenReturn(false);
+    Mockito.when(bHighest.scanAncestors()).thenReturn(true);
     MockInterface a = i("a");
     MockInterface r = i("r");
     MockInterface z = i("z", a);
@@ -91,32 +142,79 @@ public class HierarchyScannerTest {
     MockInterface x = i("x", y);
     MockInterface w = i("w");
 
-    MockClass b = c(this.getClass().getName(), null, a, r);
+    MockClass b = c("b", null, a, r);
+    // when checking to see if we're at the 'highest' class (this.getClass()) return true
+    // for b.
+    Mockito.when(context.getClassUtils().isSame(b.classElement, this.getClass())).thenReturn(true);
     MockClass d = c("d", bHighest, b);
     MockClass c = c("c", d, x, w);
 
     // b and its interfaces should be skipped, however a will also be encountered
     // as it is still in the hierarchy of c -> x -> y -> z -> a
-    assertThat(HierarchyScanner.resolveTypeHierarchy(c.classElement, types).toString())
+    assertThat(HierarchyScanner.resolveTypeHierarchy(c.classElement, context).toString())
         .isEqualTo("[c, d, x, w, y, z, a]");
   }
 
   private MockClass c(String name, MockClass parent, MockInterface... interfaces) {
-    return new MockClass(name, null, types, parent, interfaces);
+    return new MockClass(name, null, parent, interfaces);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void should_build_property_hierarchy_with_strategy_defined_on_interface_include_highest() {
+    /*
+     * given the following hierarchy
+     *
+     *                  a
+     *                 /
+     *        a r     z
+     *       / /     /
+     *      b       y
+     *       \     /
+     *        d  @x w
+     *         \ / /
+     *          c
+     */
+    // with a HierarchyScanStrategy annotation on "x" that dictates that "y" is the highest class,
+    // but to include it.
+    HierarchyScanStrategy yHighest = Mockito.mock(HierarchyScanStrategy.class);
+    // return this class' name just so we have something to check against.
+    Mockito.when(yHighest.highestAncestor()).thenReturn((Class) this.getClass());
+    Mockito.when(yHighest.includeHighestAncestor()).thenReturn(true);
+    Mockito.when(yHighest.scanAncestors()).thenReturn(true);
+    MockInterface a = i("a");
+    MockInterface r = i("r");
+    MockInterface z = i("z", a);
+    MockInterface y = i("y", z);
+    MockInterface x = i("x", yHighest, y);
+    // when checking to see if we're at the 'highest' class (this.getClass()) return true
+    // for y.
+    Mockito.when(context.getClassUtils().isSame(y.interfaceElement, this.getClass()))
+        .thenReturn(true);
+    MockInterface w = i("w");
+
+    MockClass b = c("b", null, a, r);
+    MockClass d = c("d", b);
+    MockClass c = c("c", d, x, w);
+
+    // y's parent interface z should be skipped, however a will also be encountered
+    // as it is still in the hierarchy of c -> d -> b -> a
+    assertThat(HierarchyScanner.resolveTypeHierarchy(c.classElement, context).toString())
+        .isEqualTo("[c, d, x, w, b, y, a, r]");
   }
 
   private MockClass c(
       String name, HierarchyScanStrategy strategy, MockClass parent, MockInterface... interfaces) {
-    return new MockClass(name, strategy, types, parent, interfaces);
+    return new MockClass(name, strategy, parent, interfaces);
   }
 
   private MockInterface i(String name, MockInterface... interfaces) {
-    return new MockInterface(name, null, types, interfaces);
+    return new MockInterface(name, null, interfaces);
   }
 
   private MockInterface i(
       String name, HierarchyScanStrategy strategy, MockInterface... interfaces) {
-    return new MockInterface(name, strategy, types, interfaces);
+    return new MockInterface(name, strategy, interfaces);
   }
 
   private TypeMirror root() {
@@ -140,7 +238,6 @@ public class HierarchyScannerTest {
     MockClass(
         String name,
         HierarchyScanStrategy strategy,
-        Types types,
         MockClass parent,
         MockInterface... interfaces) {
       this.name = name;
@@ -162,7 +259,7 @@ public class HierarchyScannerTest {
 
       this.mirror = Mockito.mock(TypeMirror.class);
       Mockito.when(mirror.getKind()).thenReturn(TypeKind.DECLARED);
-      Mockito.when(types.asElement(mirror)).thenReturn(classElement);
+      Mockito.when(context.getTypeUtils().asElement(mirror)).thenReturn(classElement);
 
       this.qfName = Mockito.mock(Name.class);
       Mockito.when(qfName.toString()).thenReturn(name);
@@ -178,8 +275,7 @@ public class HierarchyScannerTest {
     final Name qfName;
 
     @SuppressWarnings("unchecked")
-    public MockInterface(
-        String name, HierarchyScanStrategy strategy, Types types, MockInterface... interfaces) {
+    public MockInterface(String name, HierarchyScanStrategy strategy, MockInterface... interfaces) {
       this.name = name;
       this.interfaces = Arrays.asList(interfaces);
 
@@ -198,7 +294,7 @@ public class HierarchyScannerTest {
 
       this.mirror = Mockito.mock(TypeMirror.class);
       Mockito.when(mirror.getKind()).thenReturn(TypeKind.DECLARED);
-      Mockito.when(types.asElement(mirror)).thenReturn(interfaceElement);
+      Mockito.when(context.getTypeUtils().asElement(mirror)).thenReturn(interfaceElement);
 
       this.qfName = Mockito.mock(Name.class);
       Mockito.when(qfName.toString()).thenReturn(name);

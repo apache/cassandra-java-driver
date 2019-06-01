@@ -37,6 +37,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.beans.Introspector;
 import java.lang.annotation.Annotation;
 import java.util.Collections;
@@ -78,12 +79,11 @@ public class DefaultEntityFactory implements EntityFactory {
 
   @Override
   public EntityDefinition getDefinition(TypeElement classElement) {
-    Set<TypeElement> typeHierarchy =
-        HierarchyScanner.resolveTypeHierarchy(classElement, context.getTypeUtils());
+    Set<TypeElement> typeHierarchy = HierarchyScanner.resolveTypeHierarchy(classElement, context);
     CqlNameGenerator cqlNameGenerator = buildCqlNameGenerator(typeHierarchy);
     Set<String> transientProperties = getTransientPropertyNames(typeHierarchy);
 
-    Set<String> encounteredPropertyNames = Sets.newTreeSet();
+    Set<String> encounteredPropertyNames = Sets.newHashSet();
     SortedMap<Integer, PropertyDefinition> partitionKey = new TreeMap<>();
     SortedMap<Integer, PropertyDefinition> clusteringColumns = new TreeMap<>();
     ImmutableList.Builder<PropertyDefinition> regularColumns = ImmutableList.builder();
@@ -197,6 +197,7 @@ public class DefaultEntityFactory implements EntityFactory {
         cqlNameGenerator);
   }
 
+  @Nullable
   private VariableElement findField(
       Set<TypeElement> typeHierarchy, String propertyName, TypeMirror fieldType) {
     for (TypeElement classElement : typeHierarchy) {
@@ -218,6 +219,7 @@ public class DefaultEntityFactory implements EntityFactory {
     return null;
   }
 
+  @Nullable
   private ExecutableElement findSetMethod(
       TypeElement classElement, String setMethodName, TypeMirror fieldType) {
     for (Element child : classElement.getEnclosedElements()) {
@@ -258,7 +260,7 @@ public class DefaultEntityFactory implements EntityFactory {
   private Optional<String> getComputedFormula(
       Map<Class<? extends Annotation>, Annotation> annotations,
       ExecutableElement getMethod,
-      VariableElement field) {
+      @Nullable VariableElement field) {
     Computed annotation = (Computed) annotations.get(Computed.class);
 
     if (annotation != null) {
@@ -368,7 +370,7 @@ public class DefaultEntityFactory implements EntityFactory {
       String propertyName,
       Set<String> transientProperties,
       ExecutableElement getMethod,
-      VariableElement field) {
+      @Nullable VariableElement field) {
 
     Transient transientAnnotation = (Transient) annotations.get(Transient.class);
     // check if property name is included in @TransientProperties
@@ -426,7 +428,9 @@ public class DefaultEntityFactory implements EntityFactory {
   }
 
   private Map<Class<? extends Annotation>, Annotation> scanPropertyAnnotations(
-      Set<TypeElement> typeHierarchy, ExecutableElement getMethod, VariableElement field) {
+      Set<TypeElement> typeHierarchy,
+      ExecutableElement getMethod,
+      @Nullable VariableElement field) {
     Map<Class<? extends Annotation>, Annotation> annotations = Maps.newHashMap();
 
     // scan methods first as they should take precedence.
@@ -438,6 +442,7 @@ public class DefaultEntityFactory implements EntityFactory {
     return ImmutableMap.copyOf(annotations);
   }
 
+  @Nullable
   private Class<? extends Annotation> getExclusiveAnnotation(
       Map<Class<? extends Annotation>, Annotation> annotations) {
     for (Class<? extends Annotation> annotationClass : annotations.keySet()) {
