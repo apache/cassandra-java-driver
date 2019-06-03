@@ -67,7 +67,7 @@ public class ByteOrderedTokenRange extends TokenRangeBase {
         start = toBigInteger(startToken.getValue(), significantBytes);
         end = toBigInteger(endToken.getValue(), significantBytes);
         range = end.subtract(start);
-        if (addedBytes == 4 || range.compareTo(bigNumberOfSplits) >= 0) {
+        if (addedBytes == 4 || start.equals(end) || range.compareTo(bigNumberOfSplits) >= 0) {
           break;
         }
         significantBytes += 1;

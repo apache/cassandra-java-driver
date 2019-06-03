@@ -4,6 +4,7 @@
 
 ### 4.1.0 (in progress)
 
+- [bug] JAVA-2253: Don't strip trailing zeros in ByteOrderedToken
 - [improvement] JAVA-2207: Add bulk value assignment to QueryBuilder Insert
 - [bug] JAVA-2234: Handle terminated executor when the session is closed twice
 - [documentation] JAVA-2220: Emphasize that query builder is now a separate artifact in root README
