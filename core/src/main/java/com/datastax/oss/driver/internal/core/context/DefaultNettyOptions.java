@@ -33,12 +33,19 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import io.netty.util.concurrent.PromiseCombiner;
+import io.netty.util.internal.PlatformDependent;
+import java.time.Duration;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Immutable
 public class DefaultNettyOptions implements NettyOptions {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultNettyOptions.class);
+
   private final EventLoopGroup ioEventLoopGroup;
   private final EventLoopGroup adminEventLoopGroup;
   private final int ioShutdownQuietPeriod;
@@ -83,10 +90,21 @@ public class DefaultNettyOptions implements NettyOptions {
             .setThreadFactory(safeFactory)
             .setNameFormat(context.getSessionName() + "-timer-%d")
             .build();
+
+    Duration tickDuration = config.getDuration(DefaultDriverOption.NETTY_TIMER_TICK_DURATION);
+    // JAVA-2264: tick durations on Windows cannot be less than 100 milliseconds,
+    // see https://github.com/netty/netty/issues/356.
+    if (PlatformDependent.isWindows() && tickDuration.toMillis() < 100) {
+      LOG.warn(
+          "Timer tick duration was set to a value too aggressive for Windows: {} ms; "
+              + "doing so is known to cause extreme CPU usage. "
+              + "Please set advanced.netty.timer.tick-duration to 100 ms or higher.",
+          tickDuration.toMillis());
+    }
     timer =
         new HashedWheelTimer(
             timerThreadFactory,
-            config.getDuration(DefaultDriverOption.NETTY_TIMER_TICK_DURATION).toNanos(),
+            tickDuration.toNanos(),
             TimeUnit.NANOSECONDS,
             config.getInt(DefaultDriverOption.NETTY_TIMER_TICKS_PER_WHEEL));
   }
