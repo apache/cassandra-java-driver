@@ -4,6 +4,7 @@
 
 ### 4.1.0 (in progress)
 
+- [bug] JAVA-2264: Adjust HashedWheelTimer tick duration from 1 to 100 ms
 - [bug] JAVA-2260: Handle empty collections in PreparedStatement.bind(...)
 - [improvement] JAVA-2278: Pass the request's log prefix to RequestTracker
 - [bug] JAVA-2253: Don't strip trailing zeros in ByteOrderedToken
