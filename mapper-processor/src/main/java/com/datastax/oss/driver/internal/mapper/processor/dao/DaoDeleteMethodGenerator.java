@@ -15,30 +15,30 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.BOOLEAN;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_ASYNC_RESULT_SET;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_BOOLEAN;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_VOID;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.RESULT_SET;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.VOID;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOOLEAN;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_ASYNC_RESULT_SET;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_BOOLEAN;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_VOID;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.RESULT_SET;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.VOID;
 
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Delete;
-import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.entity.EntityDefinition;
 import com.datastax.oss.driver.internal.mapper.processor.entity.PropertyDefinition;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -50,16 +50,17 @@ import javax.lang.model.type.TypeMirror;
 
 public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
 
-  private static final EnumSet<ReturnTypeKind> SUPPORTED_RETURN_TYPES =
-      EnumSet.of(
-          VOID, FUTURE_OF_VOID, BOOLEAN, FUTURE_OF_BOOLEAN, RESULT_SET, FUTURE_OF_ASYNC_RESULT_SET);
-
   public DaoDeleteMethodGenerator(
       ExecutableElement methodElement,
       Map<Name, TypeElement> typeParameters,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
     super(methodElement, typeParameters, enclosingClass, context);
+  }
+
+  protected Set<DaoReturnTypeKind> getSupportedReturnTypes() {
+    return ImmutableSet.of(
+        VOID, FUTURE_OF_VOID, BOOLEAN, FUTURE_OF_BOOLEAN, RESULT_SET, FUTURE_OF_ASYNC_RESULT_SET);
   }
 
   @Override
@@ -99,7 +100,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
       return Optional.empty();
     }
     VariableElement firstParameter = parameters.get(0);
-    entityElement = asEntityElement(firstParameter);
+    entityElement = EntityUtils.asEntityElement(firstParameter, typeParameters);
     hasEntityParameter = (entityElement != null);
     if (hasEntityParameter) {
       entityDefinition = context.getEntityFactory().getDefinition(entityElement);
@@ -142,15 +143,9 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
     }
 
     // Validate the return type:
-    ReturnType returnType = parseReturnType(methodElement.getReturnType());
-    if (!SUPPORTED_RETURN_TYPES.contains(returnType.kind)) {
-      context
-          .getMessager()
-          .error(
-              methodElement,
-              "Invalid return type: %s methods must return void, boolean or a result set, "
-                  + "or a CompletableFuture/CompletionStage of Void, Boolean or AsyncResultSet",
-              Delete.class.getSimpleName());
+    DaoReturnType returnType =
+        parseAndValidateReturnType(getSupportedReturnTypes(), Delete.class.getSimpleName());
+    if (returnType == null) {
       return Optional.empty();
     }
 
@@ -162,18 +157,14 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
             (methodBuilder, requestName) ->
                 generatePrepareRequest(methodBuilder, requestName, helperFieldName));
 
-    MethodSpec.Builder deleteBuilder =
-        GeneratedCodePatterns.override(methodElement, typeParameters);
-    if (returnType.kind.isAsync) {
-      deleteBuilder.beginControlFlow("try");
-    }
+    CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
 
-    deleteBuilder.addStatement(
+    methodBodyBuilder.addStatement(
         "$T boundStatementBuilder = $L.boundStatementBuilder()",
         BoundStatementBuilder.class,
         statementName);
     if (statementAttributeParam != null) {
-      deleteBuilder.addStatement(
+      methodBodyBuilder.addStatement(
           "boundStatementBuilder = populateBoundStatementWithAttributes(boundStatementBuilder, $L)",
           statementAttributeParam.getSimpleName().toString());
     }
@@ -186,7 +177,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
             property.getType(),
             CodeBlock.of("$L.$L()", firstParameter.getSimpleName(), property.getGetterName()),
             "boundStatementBuilder",
-            deleteBuilder,
+            methodBodyBuilder,
             enclosingClass);
       }
       nextParameterIndex = 1;
@@ -202,7 +193,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
       GeneratedCodePatterns.bindParameters(
           parameters.subList(0, primaryKeyNames.size()),
           primaryKeyNames,
-          deleteBuilder,
+          methodBodyBuilder,
           enclosingClass,
           context,
           false);
@@ -222,25 +213,22 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
       }
       GeneratedCodePatterns.bindParameters(
           parameters.subList(nextParameterIndex, parameters.size()),
-          deleteBuilder,
+          methodBodyBuilder,
           enclosingClass,
           context,
           false);
     }
 
-    deleteBuilder
-        .addCode("\n")
+    methodBodyBuilder
+        .add("\n")
         .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
-    returnType.kind.addExecuteStatement(deleteBuilder, helperFieldName);
+    returnType.getKind().addExecuteStatement(methodBodyBuilder, helperFieldName);
 
-    if (returnType.kind.isAsync) {
-      deleteBuilder
-          .nextControlFlow("catch ($T t)", Throwable.class)
-          .addStatement("return $T.failedFuture(t)", CompletableFutures.class)
-          .endControlFlow();
-    }
-    return Optional.of(deleteBuilder.build());
+    CodeBlock methodBody = returnType.getKind().wrapWithErrorHandling(methodBodyBuilder.build());
+
+    return Optional.of(
+        GeneratedCodePatterns.override(methodElement, typeParameters).addCode(methodBody).build());
   }
 
   private TypeElement getEntityFromAnnotation() {
@@ -265,7 +253,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
           return null;
         }
         TypeMirror mirror = (TypeMirror) values.get(0).getValue();
-        TypeElement element = asEntityElement(mirror);
+        TypeElement element = EntityUtils.asEntityElement(mirror, typeParameters);
         if (values.size() > 1) {
           context
               .getMessager()

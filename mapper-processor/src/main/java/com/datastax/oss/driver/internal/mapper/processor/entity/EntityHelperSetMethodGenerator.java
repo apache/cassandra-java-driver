@@ -67,17 +67,18 @@ public class EntityHelperSetMethodGenerator implements MethodGenerator {
                 ParameterSpec.builder(NullSavingStrategy.class, "nullSavingStrategy").build())
             .returns(settableT);
 
+    CodeBlock.Builder injectBodyBuilder = CodeBlock.builder();
     for (PropertyDefinition property : entityDefinition.getAllColumns()) {
       GeneratedCodePatterns.setValue(
           property.getCqlName(),
           property.getType(),
           CodeBlock.of("entity.$L()", property.getGetterName()),
           "target",
-          injectBuilder,
+          injectBodyBuilder,
           enclosingClass,
           true);
     }
-    injectBuilder.addCode("\n").addStatement("return target");
-    return Optional.of(injectBuilder.build());
+    injectBodyBuilder.add("\n").addStatement("return target");
+    return Optional.of(injectBuilder.addCode(injectBodyBuilder.build()).build());
   }
 }

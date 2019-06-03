@@ -108,7 +108,7 @@ public class DaoQueryProviderMethodGenerator extends DaoMethodGenerator {
         List<ClassName> result = new ArrayList<>(values.size());
         for (AnnotationValue value : values) {
           TypeMirror entityMirror = (TypeMirror) value.getValue();
-          TypeElement entityElement = asEntityElement(entityMirror);
+          TypeElement entityElement = EntityUtils.asEntityElement(entityMirror, typeParameters);
           if (entityElement == null) {
             context
                 .getMessager()

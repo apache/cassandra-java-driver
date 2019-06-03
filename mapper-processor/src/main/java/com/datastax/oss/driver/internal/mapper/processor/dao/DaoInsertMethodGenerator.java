@@ -15,27 +15,28 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.ENTITY;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_ENTITY;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_OPTIONAL_ENTITY;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_VOID;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.OPTIONAL_ENTITY;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.VOID;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_OPTIONAL_ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_VOID;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.OPTIONAL_ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.VOID;
 
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
-import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
@@ -43,14 +44,6 @@ import javax.lang.model.element.VariableElement;
 
 public class DaoInsertMethodGenerator extends DaoMethodGenerator {
 
-  private static final EnumSet<ReturnTypeKind> SUPPORTED_RETURN_TYPES =
-      EnumSet.of(
-          VOID,
-          FUTURE_OF_VOID,
-          ENTITY,
-          FUTURE_OF_ENTITY,
-          OPTIONAL_ENTITY,
-          FUTURE_OF_OPTIONAL_ENTITY);
   private final NullSavingStrategyValidation nullSavingStrategyValidation;
 
   public DaoInsertMethodGenerator(
@@ -60,6 +53,11 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
       ProcessorContext context) {
     super(methodElement, typeParameters, enclosingClass, context);
     nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
+  }
+
+  protected Set<DaoReturnTypeKind> getSupportedReturnTypes() {
+    return ImmutableSet.of(
+        VOID, FUTURE_OF_VOID, ENTITY, FUTURE_OF_ENTITY, OPTIONAL_ENTITY, FUTURE_OF_OPTIONAL_ENTITY);
   }
 
   @Override
@@ -74,7 +72,10 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
     if (statementAttributesParam != null) {
       parameters = parameters.subList(0, parameters.size() - 1);
     }
-    TypeElement entityElement = parameters.isEmpty() ? null : asEntityElement(parameters.get(0));
+    TypeElement entityElement =
+        parameters.isEmpty()
+            ? null
+            : EntityUtils.asEntityElement(parameters.get(0), typeParameters);
     if (entityElement == null) {
       context
           .getMessager()
@@ -86,18 +87,13 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
     }
 
     // Validate the return type:
-    ReturnType returnType = parseReturnType(methodElement.getReturnType());
-    if (!SUPPORTED_RETURN_TYPES.contains(returnType.kind)) {
-      context
-          .getMessager()
-          .error(
-              methodElement,
-              "Invalid return type: %s methods must return either void or the entity class "
-                  + "(possibly wrapped in a CompletionStage/CompletableFuture)",
-              Insert.class.getSimpleName());
+    DaoReturnType returnType =
+        parseAndValidateReturnType(getSupportedReturnTypes(), Insert.class.getSimpleName());
+    if (returnType == null) {
       return Optional.empty();
     }
-    if (returnType.entityElement != null && !returnType.entityElement.equals(entityElement)) {
+    if (returnType.getEntityElement() != null
+        && !returnType.getEntityElement().equals(entityElement)) {
       context
           .getMessager()
           .error(
@@ -115,19 +111,15 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
             (methodBuilder, requestName) ->
                 generatePrepareRequest(methodBuilder, requestName, helperFieldName));
 
-    MethodSpec.Builder insertBuilder =
-        GeneratedCodePatterns.override(methodElement, typeParameters);
+    CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
 
-    if (returnType.kind.isAsync) {
-      insertBuilder.beginControlFlow("try");
-    }
-    insertBuilder.addStatement(
+    methodBodyBuilder.addStatement(
         "$T boundStatementBuilder = $L.boundStatementBuilder()",
         BoundStatementBuilder.class,
         statementName);
 
     if (statementAttributesParam != null) {
-      insertBuilder.addStatement(
+      methodBodyBuilder.addStatement(
           "boundStatementBuilder = populateBoundStatementWithAttributes(boundStatementBuilder, $L)",
           statementAttributesParam.getSimpleName().toString());
     }
@@ -137,7 +129,7 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
         nullSavingStrategyValidation.getNullSavingStrategy(
             Insert.class, Insert::nullSavingStrategy, methodElement, enclosingClass);
 
-    insertBuilder.addStatement(
+    methodBodyBuilder.addStatement(
         "$1L.set($2L, boundStatementBuilder, $3T.$4L)",
         helperFieldName,
         entityParameterName,
@@ -147,22 +139,23 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
     // Handle all remaining parameters as additional bound values
     if (parameters.size() > 1) {
       GeneratedCodePatterns.bindParameters(
-          parameters.subList(1, parameters.size()), insertBuilder, enclosingClass, context, false);
+          parameters.subList(1, parameters.size()),
+          methodBodyBuilder,
+          enclosingClass,
+          context,
+          false);
     }
 
-    insertBuilder
-        .addCode("\n")
+    methodBodyBuilder
+        .add("\n")
         .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
-    returnType.kind.addExecuteStatement(insertBuilder, helperFieldName);
+    returnType.getKind().addExecuteStatement(methodBodyBuilder, helperFieldName);
 
-    if (returnType.kind.isAsync) {
-      insertBuilder
-          .nextControlFlow("catch ($T t)", Throwable.class)
-          .addStatement("return $T.failedFuture(t)", CompletableFutures.class)
-          .endControlFlow();
-    }
-    return Optional.of(insertBuilder.build());
+    CodeBlock methodBody = returnType.getKind().wrapWithErrorHandling(methodBodyBuilder.build());
+
+    return Optional.of(
+        GeneratedCodePatterns.override(methodElement, typeParameters).addCode(methodBody).build());
   }
 
   private void generatePrepareRequest(

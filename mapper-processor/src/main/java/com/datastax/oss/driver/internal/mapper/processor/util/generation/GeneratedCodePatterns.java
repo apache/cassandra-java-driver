@@ -133,7 +133,7 @@ public class GeneratedCodePatterns {
    */
   public static void bindParameters(
       List<? extends VariableElement> parameters,
-      MethodSpec.Builder methodBuilder,
+      CodeBlock.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass,
       ProcessorContext context,
       boolean useNullSavingStrategy) {
@@ -150,7 +150,7 @@ public class GeneratedCodePatterns {
   public static void bindParameters(
       List<? extends VariableElement> parameters,
       List<CodeBlock> bindMarkerNames,
-      MethodSpec.Builder methodBuilder,
+      CodeBlock.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass,
       ProcessorContext context,
       boolean useNullSavingStrategy) {
@@ -204,7 +204,7 @@ public class GeneratedCodePatterns {
       PropertyType type,
       CodeBlock valueExtractor,
       String targetName,
-      MethodSpec.Builder methodBuilder,
+      CodeBlock.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass) {
     setValue(cqlName, type, valueExtractor, targetName, methodBuilder, enclosingClass, false);
   }
@@ -214,10 +214,10 @@ public class GeneratedCodePatterns {
       PropertyType type,
       CodeBlock valueExtractor,
       String targetName,
-      MethodSpec.Builder methodBuilder,
+      CodeBlock.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass,
       boolean useNullSavingStrategy) {
-    methodBuilder.addCode("\n");
+    methodBuilder.add("\n");
 
     if (type instanceof PropertyType.Simple) {
       TypeName typeName = ((PropertyType.Simple) type).typeName;
@@ -321,8 +321,8 @@ public class GeneratedCodePatterns {
           enclosingClass);
 
       methodBuilder
-          .addCode(udtTypesBuilder.build())
-          .addCode(conversionCodeBuilder.build())
+          .add(udtTypesBuilder.build())
+          .add(conversionCodeBuilder.build())
           .addStatement(
               "$1L = $1L.set($2L, $3L, $4L)",
               targetName,
@@ -347,7 +347,7 @@ public class GeneratedCodePatterns {
       CodeBlock cqlName,
       CodeBlock valueExtractor,
       String targetName,
-      MethodSpec.Builder methodBuilder,
+      CodeBlock.Builder methodBuilder,
       TypeName typeName,
       BindableHandlingSharedCode enclosingClass,
       boolean useNullSavingStrategy) {
@@ -367,7 +367,7 @@ public class GeneratedCodePatterns {
       CodeBlock cqlName,
       CodeBlock valueExtractor,
       String targetName,
-      MethodSpec.Builder methodBuilder,
+      CodeBlock.Builder methodBuilder,
       TypeName typeName,
       boolean useNullSavingStrategy) {
 
@@ -385,7 +385,7 @@ public class GeneratedCodePatterns {
    */
   private static void generateSetWithNullSavingStrategy(
       CodeBlock valueExtractor,
-      MethodSpec.Builder methodBuilder,
+      CodeBlock.Builder methodBuilder,
       CodeBlock nonNullStatement,
       boolean useNullSavingStrategy) {
     if (useNullSavingStrategy) {
@@ -403,7 +403,7 @@ public class GeneratedCodePatterns {
   }
 
   /**
-   * Shortcut for {@link #setValue(CodeBlock, PropertyType, CodeBlock, String, MethodSpec.Builder,
+   * Shortcut for {@link #setValue(CodeBlock, PropertyType, CodeBlock, String, CodeBlock.Builder,
    * BindableHandlingSharedCode)} when the cqlName is a string known at compile time.
    */
   public static void setValue(
@@ -411,7 +411,7 @@ public class GeneratedCodePatterns {
       PropertyType type,
       CodeBlock valueExtractor,
       String targetName,
-      MethodSpec.Builder methodBuilder,
+      CodeBlock.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass,
       boolean useNullSavingStrategy) {
     setValue(

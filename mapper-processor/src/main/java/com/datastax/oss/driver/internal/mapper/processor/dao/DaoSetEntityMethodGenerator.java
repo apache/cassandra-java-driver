@@ -71,7 +71,8 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
         targetParameterType = parameterElement.asType();
       } else if (parameterType.getKind() == TypeKind.DECLARED
           || parameterType.getKind() == TypeKind.TYPEVAR) {
-        TypeElement parameterTypeElement = asEntityElement(parameterType);
+        TypeElement parameterTypeElement =
+            EntityUtils.asEntityElement(parameterType, typeParameters);
         if (parameterTypeElement != null) {
           entityParameterName = parameterElement.getSimpleName().toString();
           entityElement = parameterTypeElement;
