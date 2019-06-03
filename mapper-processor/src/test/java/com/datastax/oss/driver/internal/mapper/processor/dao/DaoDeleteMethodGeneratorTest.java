@@ -81,8 +81,8 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
             .build(),
       },
       {
-        "Invalid return type: Delete methods must return void, boolean or a result set, "
-            + "or a CompletableFuture/CompletionStage of Void, Boolean or AsyncResultSet",
+        "Delete methods must return one of [VOID, FUTURE_OF_VOID, BOOLEAN, FUTURE_OF_BOOLEAN, "
+            + "RESULT_SET, FUTURE_OF_ASYNC_RESULT_SET]",
         MethodSpec.methodBuilder("delete")
             .addAnnotation(Delete.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)

@@ -31,9 +31,11 @@ import com.datastax.oss.driver.internal.mapper.processor.dao.DaoImplementationSh
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoInsertMethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoQueryMethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoQueryProviderMethodGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.dao.DaoReturnTypeParser;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoSelectMethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoSetEntityMethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoUpdateMethodGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeParser;
 import com.datastax.oss.driver.internal.mapper.processor.entity.EntityHelperGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.mapper.MapperBuilderGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.mapper.MapperDaoFactoryMethodGenerator;
@@ -49,9 +51,11 @@ import javax.lang.model.element.TypeElement;
 public class DefaultCodeGeneratorFactory implements CodeGeneratorFactory {
 
   private final ProcessorContext context;
+  private final DaoReturnTypeParser daoReturnTypeParser;
 
   public DefaultCodeGeneratorFactory(ProcessorContext context) {
     this.context = context;
+    this.daoReturnTypeParser = new DefaultDaoReturnTypeParser(context);
   }
 
   @Override
@@ -123,5 +127,10 @@ public class DefaultCodeGeneratorFactory implements CodeGeneratorFactory {
     } else {
       return Optional.empty();
     }
+  }
+
+  @Override
+  public DaoReturnTypeParser getDaoReturnTypeParser() {
+    return daoReturnTypeParser;
   }
 }

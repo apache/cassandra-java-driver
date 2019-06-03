@@ -56,8 +56,8 @@ public class DaoInsertMethodGeneratorTest extends DaoMethodGeneratorTest {
             .build(),
       },
       {
-        "Invalid return type: Insert methods must return either void or the entity class "
-            + "(possibly wrapped in a CompletionStage/CompletableFuture)",
+        "Invalid return type: Insert methods must return one of [VOID, FUTURE_OF_VOID, ENTITY, "
+            + "FUTURE_OF_ENTITY, OPTIONAL_ENTITY, FUTURE_OF_OPTIONAL_ENTITY]",
         MethodSpec.methodBuilder("insert")
             .addAnnotation(Insert.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)

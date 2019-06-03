@@ -15,35 +15,30 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.ENTITY;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_ASYNC_PAGING_ITERABLE;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_ENTITY;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.FUTURE_OF_OPTIONAL_ENTITY;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.OPTIONAL_ENTITY;
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.PAGING_ITERABLE;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_ASYNC_PAGING_ITERABLE;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_OPTIONAL_ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.OPTIONAL_ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.PAGING_ITERABLE;
 
-import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
-import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
-import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.entity.EntityDefinition;
 import com.datastax.oss.driver.internal.mapper.processor.entity.PropertyDefinition;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
@@ -51,15 +46,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 
 public class DaoSelectMethodGenerator extends DaoMethodGenerator {
-
-  private static final EnumSet<ReturnTypeKind> SUPPORTED_RETURN_TYPES =
-      EnumSet.of(
-          ENTITY,
-          OPTIONAL_ENTITY,
-          FUTURE_OF_ENTITY,
-          FUTURE_OF_OPTIONAL_ENTITY,
-          PAGING_ITERABLE,
-          FUTURE_OF_ASYNC_PAGING_ITERABLE);
 
   public DaoSelectMethodGenerator(
       ExecutableElement methodElement,
@@ -69,28 +55,26 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
     super(methodElement, typeParameters, enclosingClass, context);
   }
 
+  protected Set<DaoReturnTypeKind> getSupportedReturnTypes() {
+    return ImmutableSet.of(
+        ENTITY,
+        OPTIONAL_ENTITY,
+        FUTURE_OF_ENTITY,
+        FUTURE_OF_OPTIONAL_ENTITY,
+        PAGING_ITERABLE,
+        FUTURE_OF_ASYNC_PAGING_ITERABLE);
+  }
+
   @Override
   public Optional<MethodSpec> generate() {
 
     // Validate the return type:
-    ReturnType returnType = parseReturnType(methodElement.getReturnType());
-    if (!SUPPORTED_RETURN_TYPES.contains(returnType.kind)) {
-      context
-          .getMessager()
-          .error(
-              methodElement,
-              "Invalid return type: "
-                  + "%1$s methods must return an %2$s-annotated class, or a %3$s, %4$s, %5$s "
-                  + "or %3$s/%4$s<%6$s> thereof",
-              Select.class.getSimpleName(),
-              Entity.class.getSimpleName(),
-              CompletionStage.class.getSimpleName(),
-              CompletableFuture.class.getSimpleName(),
-              PagingIterable.class.getSimpleName(),
-              MappedAsyncPagingIterable.class.getSimpleName());
+    DaoReturnType returnType =
+        parseAndValidateReturnType(getSupportedReturnTypes(), Select.class.getSimpleName());
+    if (returnType == null) {
       return Optional.empty();
     }
-    TypeElement entityElement = returnType.entityElement;
+    TypeElement entityElement = returnType.getEntityElement();
     EntityDefinition entityDefinition = context.getEntityFactory().getDefinition(entityElement);
 
     // Validate the parameters:
@@ -138,18 +122,15 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
             methodElement,
             (methodBuilder, requestName) ->
                 generateSelectRequest(methodBuilder, requestName, helperFieldName));
-    MethodSpec.Builder selectBuilder =
-        GeneratedCodePatterns.override(methodElement, typeParameters);
 
-    if (returnType.kind.isAsync) {
-      selectBuilder.beginControlFlow("try");
-    }
-    selectBuilder.addStatement(
+    CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
+
+    methodBodyBuilder.addStatement(
         "$T boundStatementBuilder = $L.boundStatementBuilder()",
         BoundStatementBuilder.class,
         statementName);
     if (statementAttributesParam != null) {
-      selectBuilder.addStatement(
+      methodBodyBuilder.addStatement(
           "boundStatementBuilder = populateBoundStatementWithAttributes(boundStatementBuilder, $L)",
           statementAttributesParam.getSimpleName().toString());
     }
@@ -163,27 +144,24 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
                 .map(PropertyDefinition::getCqlName)
                 .collect(Collectors.toList());
         GeneratedCodePatterns.bindParameters(
-            parameters, primaryKeyNames, selectBuilder, enclosingClass, context, false);
+            parameters, primaryKeyNames, methodBodyBuilder, enclosingClass, context, false);
       } else {
         // We don't know the bind marker names in the custom clause, so use the same names as the
         // parameters, user is responsible to make them match.
         GeneratedCodePatterns.bindParameters(
-            parameters, selectBuilder, enclosingClass, context, false);
+            parameters, methodBodyBuilder, enclosingClass, context, false);
       }
     }
-    selectBuilder
-        .addCode("\n")
+    methodBodyBuilder
+        .add("\n")
         .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
-    returnType.kind.addExecuteStatement(selectBuilder, helperFieldName);
+    returnType.getKind().addExecuteStatement(methodBodyBuilder, helperFieldName);
 
-    if (returnType.kind.isAsync) {
-      selectBuilder
-          .nextControlFlow("catch ($T t)", Throwable.class)
-          .addStatement("return $T.failedFuture(t)", CompletableFutures.class)
-          .endControlFlow();
-    }
-    return Optional.of(selectBuilder.build());
+    CodeBlock methodBody = returnType.getKind().wrapWithErrorHandling(methodBodyBuilder.build());
+
+    return Optional.of(
+        GeneratedCodePatterns.override(methodElement, typeParameters).addCode(methodBody).build());
   }
 
   private void generateSelectRequest(

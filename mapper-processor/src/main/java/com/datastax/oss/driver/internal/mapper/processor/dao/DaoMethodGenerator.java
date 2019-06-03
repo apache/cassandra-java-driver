@@ -16,29 +16,19 @@
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
-import com.datastax.oss.driver.api.core.PagingIterable;
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
-import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.mapper.StatementAttributes;
-import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.squareup.javapoet.MethodSpec;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
-import java.util.Optional;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
+import java.util.Set;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.TypeVariable;
 
 public abstract class DaoMethodGenerator implements MethodGenerator {
 
@@ -58,112 +48,25 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
     this.context = context;
   }
 
-  /**
-   * If the type of this parameter is an {@link Entity}-annotated class, return that class's
-   * element, otherwise {@code null}.
-   */
-  protected TypeElement asEntityElement(VariableElement parameter) {
-    return asEntityElement(parameter.asType());
-  }
-
-  /**
-   * If this mirror's first type argument is an {@link Entity}-annotated class, return that class's
-   * element, otherwise {@code null}.
-   *
-   * <p>This method will fail if the mirror does not reference a generic type, the caller is
-   * responsible to perform that check beforehand.
-   */
-  protected TypeElement typeArgumentAsEntityElement(TypeMirror mirror) {
-    DeclaredType declaredType = (DeclaredType) mirror;
-    assert !declaredType.getTypeArguments().isEmpty();
-    return asEntityElement(declaredType.getTypeArguments().get(0));
-  }
-
-  protected TypeElement asEntityElement(TypeMirror mirror) {
-    Element element;
-    if (mirror.getKind() == TypeKind.TYPEVAR) {
-      // extract concrete implementation for type variable.
-      TypeVariable typeVariable = ((TypeVariable) mirror);
-      Name name = typeVariable.asElement().getSimpleName();
-      element = typeParameters.get(name);
-      if (element == null) {
-        // this should not happen, but error out just in case.
+  @Nullable
+  protected DaoReturnType parseAndValidateReturnType(
+      @NonNull Set<DaoReturnTypeKind> validKinds, @NonNull String annotationName) {
+    DaoReturnType returnType =
         context
-            .getMessager()
-            .error(methodElement, "Could not resolve the concrete implementation for %s", name);
-        return null;
-      }
-    } else if (mirror.getKind() == TypeKind.DECLARED) {
-      element = ((DeclaredType) mirror).asElement();
-    } else {
+            .getCodeGeneratorFactory()
+            .getDaoReturnTypeParser()
+            .parse(methodElement.getReturnType(), typeParameters);
+    if (!validKinds.contains(returnType.getKind())) {
+      context
+          .getMessager()
+          .error(
+              methodElement,
+              "Invalid return type: %s methods must return one of %s",
+              annotationName,
+              validKinds);
       return null;
     }
-    if (element.getKind() != ElementKind.CLASS) {
-      return null;
-    }
-    TypeElement typeElement = (TypeElement) element;
-    if (typeElement.getAnnotation(Entity.class) == null) {
-      return null;
-    }
-    return typeElement;
-  }
-
-  protected ReturnType parseReturnType(TypeMirror returnTypeMirror) {
-    TypeElement entityElement;
-    if (returnTypeMirror.getKind() == TypeKind.VOID) {
-      return new ReturnType(ReturnTypeKind.VOID);
-    } else if (returnTypeMirror.getKind() == TypeKind.BOOLEAN) {
-      return new ReturnType(ReturnTypeKind.BOOLEAN);
-    } else if (returnTypeMirror.getKind() == TypeKind.LONG) {
-      return new ReturnType(ReturnTypeKind.LONG);
-    } else if ((entityElement = asEntityElement(returnTypeMirror)) != null) {
-      return new ReturnType(ReturnTypeKind.ENTITY, entityElement);
-    } else if (returnTypeMirror.getKind() == TypeKind.DECLARED) {
-      DeclaredType declaredReturnType = (DeclaredType) returnTypeMirror;
-      Element returnElement = declaredReturnType.asElement();
-      if (context.getClassUtils().isSame(declaredReturnType, Boolean.class)) {
-        return new ReturnType(ReturnTypeKind.BOOLEAN);
-      } else if (context.getClassUtils().isSame(declaredReturnType, Long.class)) {
-        return new ReturnType(ReturnTypeKind.LONG);
-      } else if (context.getClassUtils().isSame(declaredReturnType, Row.class)) {
-        return new ReturnType(ReturnTypeKind.ROW);
-      } else if (context.getClassUtils().isSame(declaredReturnType, ResultSet.class)) {
-        return new ReturnType(ReturnTypeKind.RESULT_SET);
-      } else if (context.getClassUtils().isSame(returnElement, PagingIterable.class)
-          && (entityElement = typeArgumentAsEntityElement(returnTypeMirror)) != null) {
-        return new ReturnType(ReturnTypeKind.PAGING_ITERABLE, entityElement);
-      } else if (context.getClassUtils().isSame(returnElement, Optional.class)
-          && (entityElement = typeArgumentAsEntityElement(returnTypeMirror)) != null) {
-        return new ReturnType(ReturnTypeKind.OPTIONAL_ENTITY, entityElement);
-      } else if (context.getClassUtils().isFuture(declaredReturnType)) {
-        TypeMirror typeArgumentMirror = declaredReturnType.getTypeArguments().get(0);
-        if (context.getClassUtils().isSame(typeArgumentMirror, Void.class)) {
-          return new ReturnType(ReturnTypeKind.FUTURE_OF_VOID);
-        } else if (context.getClassUtils().isSame(typeArgumentMirror, Boolean.class)) {
-          return new ReturnType(ReturnTypeKind.FUTURE_OF_BOOLEAN);
-        } else if (context.getClassUtils().isSame(typeArgumentMirror, Long.class)) {
-          return new ReturnType(ReturnTypeKind.FUTURE_OF_LONG);
-        } else if (context.getClassUtils().isSame(typeArgumentMirror, Row.class)) {
-          return new ReturnType(ReturnTypeKind.FUTURE_OF_ROW);
-        } else if (context.getClassUtils().isSame(typeArgumentMirror, AsyncResultSet.class)) {
-          return new ReturnType(ReturnTypeKind.FUTURE_OF_ASYNC_RESULT_SET);
-        } else if ((entityElement = asEntityElement(typeArgumentMirror)) != null) {
-          return new ReturnType(ReturnTypeKind.FUTURE_OF_ENTITY, entityElement);
-        } else if (typeArgumentMirror.getKind() == TypeKind.DECLARED) {
-          Element typeArgumentElement = ((DeclaredType) typeArgumentMirror).asElement();
-          if (context.getClassUtils().isSame(typeArgumentElement, Optional.class)
-              && (entityElement = typeArgumentAsEntityElement(typeArgumentMirror)) != null) {
-            return new ReturnType(ReturnTypeKind.FUTURE_OF_OPTIONAL_ENTITY, entityElement);
-          } else if (context
-                  .getClassUtils()
-                  .isSame(typeArgumentElement, MappedAsyncPagingIterable.class)
-              && (entityElement = typeArgumentAsEntityElement(typeArgumentMirror)) != null) {
-            return new ReturnType(ReturnTypeKind.FUTURE_OF_ASYNC_PAGING_ITERABLE, entityElement);
-          }
-        }
-      }
-    }
-    return new ReturnType(ReturnTypeKind.UNSUPPORTED);
+    return returnType;
   }
 
   protected void maybeAddTtl(String ttl, MethodSpec.Builder methodBuilder) {
@@ -244,19 +147,5 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
       }
     }
     return null;
-  }
-
-  protected static class ReturnType {
-    final ReturnTypeKind kind;
-    final TypeElement entityElement;
-
-    ReturnType(ReturnTypeKind kind, TypeElement entityElement) {
-      this.kind = kind;
-      this.entityElement = entityElement;
-    }
-
-    ReturnType(ReturnTypeKind kind) {
-      this(kind, null);
-    }
   }
 }

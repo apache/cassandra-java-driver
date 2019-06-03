@@ -15,66 +15,58 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
-import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
-import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
-import com.squareup.javapoet.MethodSpec;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import com.squareup.javapoet.CodeBlock;
 
-/**
- * A kind of return type supported by by DAO query methods (excluding {@link GetEntity} and {@link
- * SetEntity}).
- *
- * <p>Not all kinds are supported by all methods, see the additional checks in each method
- * generator.
- */
-public enum ReturnTypeKind {
+public enum DefaultDaoReturnTypeKind implements DaoReturnTypeKind {
   VOID(false) {
     @Override
-    public void addExecuteStatement(MethodSpec.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
       // Note that the execute* methods in the generated code are defined in DaoBase
       methodBuilder.addStatement("execute(boundStatement)");
     }
   },
   BOOLEAN(false) {
     @Override
-    public void addExecuteStatement(MethodSpec.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
       methodBuilder.addStatement("return executeAndMapWasAppliedToBoolean(boundStatement)");
     }
   },
   LONG(false) {
     @Override
-    public void addExecuteStatement(MethodSpec.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
       methodBuilder.addStatement("return executeAndMapFirstColumnToLong(boundStatement)");
     }
   },
   ROW(false) {
     @Override
-    public void addExecuteStatement(MethodSpec.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
       methodBuilder.addStatement("return executeAndExtractFirstRow(boundStatement)");
     }
   },
   ENTITY(false) {
     @Override
-    public void addExecuteStatement(MethodSpec.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
       methodBuilder.addStatement(
           "return executeAndMapToSingleEntity(boundStatement, $L)", helperFieldName);
     }
   },
   OPTIONAL_ENTITY(false) {
     @Override
-    public void addExecuteStatement(MethodSpec.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
       methodBuilder.addStatement(
           "return executeAndMapToOptionalEntity(boundStatement, $L)", helperFieldName);
     }
   },
   RESULT_SET(false) {
     @Override
-    public void addExecuteStatement(MethodSpec.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
       methodBuilder.addStatement("return execute(boundStatement)");
     }
   },
   PAGING_ITERABLE(false) {
     @Override
-    public void addExecuteStatement(MethodSpec.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
       methodBuilder.addStatement(
           "return executeAndMapToEntityIterable(boundStatement, $L)", helperFieldName);
     }
@@ -82,51 +74,51 @@ public enum ReturnTypeKind {
 
   FUTURE_OF_VOID(true) {
     @Override
-    public void addExecuteStatement(MethodSpec.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
       methodBuilder.addStatement("return executeAsyncAndMapToVoid(boundStatement)");
     }
   },
   FUTURE_OF_BOOLEAN(true) {
     @Override
-    public void addExecuteStatement(MethodSpec.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
       methodBuilder.addStatement("return executeAsyncAndMapWasAppliedToBoolean(boundStatement)");
     }
   },
   FUTURE_OF_LONG(true) {
     @Override
-    public void addExecuteStatement(MethodSpec.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
       methodBuilder.addStatement("return executeAsyncAndMapFirstColumnToLong(boundStatement)");
     }
   },
   FUTURE_OF_ROW(true) {
     @Override
-    public void addExecuteStatement(MethodSpec.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
       methodBuilder.addStatement("return executeAsyncAndExtractFirstRow(boundStatement)");
     }
   },
   FUTURE_OF_ENTITY(true) {
     @Override
-    public void addExecuteStatement(MethodSpec.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
       methodBuilder.addStatement(
           "return executeAsyncAndMapToSingleEntity(boundStatement, $L)", helperFieldName);
     }
   },
   FUTURE_OF_OPTIONAL_ENTITY(true) {
     @Override
-    public void addExecuteStatement(MethodSpec.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
       methodBuilder.addStatement(
           "return executeAsyncAndMapToOptionalEntity(boundStatement, $L)", helperFieldName);
     }
   },
   FUTURE_OF_ASYNC_RESULT_SET(true) {
     @Override
-    public void addExecuteStatement(MethodSpec.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
       methodBuilder.addStatement("return executeAsync(boundStatement)");
     }
   },
   FUTURE_OF_ASYNC_PAGING_ITERABLE(true) {
     @Override
-    public void addExecuteStatement(MethodSpec.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
       methodBuilder.addStatement(
           "return executeAsyncAndMapToEntityIterable(boundStatement, $L)", helperFieldName);
     }
@@ -134,26 +126,35 @@ public enum ReturnTypeKind {
 
   UNSUPPORTED(false) {
     @Override
-    public void addExecuteStatement(MethodSpec.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
       throw new AssertionError("Should never get here");
     }
   },
   ;
 
-  final boolean isAsync;
+  private final boolean isAsync;
 
-  ReturnTypeKind(boolean isAsync) {
+  DefaultDaoReturnTypeKind(boolean isAsync) {
     this.isAsync = isAsync;
   }
 
-  /**
-   * Generate the code to execute a statement (called {@code boundStatement}) and return this kind
-   * of result.
-   *
-   * @param methodBuilder the method to add the code to.
-   * @param helperFieldName the name of the helper for entity conversions (might not get used for
-   *     certain kinds, in that case it's ok to pass null).
-   */
-  public abstract void addExecuteStatement(
-      MethodSpec.Builder methodBuilder, String helperFieldName);
+  @Override
+  public String getDescription() {
+    return name();
+  }
+
+  @Override
+  public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    if (isAsync) {
+      return CodeBlock.builder()
+          .beginControlFlow("try")
+          .add(innerBlock)
+          .nextControlFlow("catch ($T t)", Throwable.class)
+          .addStatement("return $T.failedFuture(t)", CompletableFutures.class)
+          .endControlFlow()
+          .build();
+    } else {
+      return innerBlock;
+    }
+  }
 }

@@ -15,21 +15,24 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
-import static com.datastax.oss.driver.internal.mapper.processor.dao.ReturnTypeKind.UNSUPPORTED;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.UNSUPPORTED;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.values;
 
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
-import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
@@ -50,25 +53,28 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
     nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
   }
 
+  protected Set<DaoReturnTypeKind> getSupportedReturnTypes() {
+    ImmutableSet.Builder<DaoReturnTypeKind> builder = ImmutableSet.builder();
+    for (DefaultDaoReturnTypeKind value : values()) {
+      if (value != UNSUPPORTED) {
+        builder.add(value);
+      }
+    }
+    return builder.build();
+  }
+
   @Override
   public Optional<MethodSpec> generate() {
 
     // Validate the return type:
-    ReturnType returnType = parseReturnType(methodElement.getReturnType());
-    if (returnType.kind == UNSUPPORTED) {
-      context
-          .getMessager()
-          .error(
-              methodElement,
-              "Invalid return type: %s methods must return void, boolean, Integer, Row, "
-                  + "an entity class, a result set, a mapped iterable, or a "
-                  + "CompletionStage/CompletableFuture of any of the above",
-              Query.class.getSimpleName());
+    DaoReturnType returnType =
+        parseAndValidateReturnType(getSupportedReturnTypes(), Query.class.getSimpleName());
+    if (returnType == null) {
       return Optional.empty();
     }
 
     // Generate the method:
-    TypeElement entityElement = returnType.entityElement;
+    TypeElement entityElement = returnType.getEntityElement();
     String helperFieldName =
         (entityElement == null)
             ? null
@@ -79,11 +85,7 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
             (methodBuilder, requestName) ->
                 generatePrepareRequest(methodBuilder, requestName, helperFieldName));
 
-    MethodSpec.Builder queryBuilder = GeneratedCodePatterns.override(methodElement, typeParameters);
-
-    if (returnType.kind.isAsync) {
-      queryBuilder.beginControlFlow("try");
-    }
+    CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
 
     List<? extends VariableElement> parameters = methodElement.getParameters();
 
@@ -92,7 +94,7 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
       parameters = parameters.subList(0, methodElement.getParameters().size() - 1);
     }
 
-    queryBuilder.addStatement(
+    methodBodyBuilder.addStatement(
         "$T boundStatementBuilder = $L.boundStatementBuilder()",
         BoundStatementBuilder.class,
         statementName);
@@ -101,31 +103,28 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
         nullSavingStrategyValidation.getNullSavingStrategy(
             Query.class, Query::nullSavingStrategy, methodElement, enclosingClass);
 
-    queryBuilder.addStatement(
+    methodBodyBuilder.addStatement(
         "$1T nullSavingStrategy = $1T.$2L", NullSavingStrategy.class, nullSavingStrategy);
 
     if (statementAttributeParam != null) {
-      queryBuilder.addStatement(
+      methodBodyBuilder.addStatement(
           "boundStatementBuilder = populateBoundStatementWithAttributes(boundStatementBuilder, $L)",
           statementAttributeParam.getSimpleName().toString());
     }
 
-    GeneratedCodePatterns.bindParameters(parameters, queryBuilder, enclosingClass, context, true);
+    GeneratedCodePatterns.bindParameters(
+        parameters, methodBodyBuilder, enclosingClass, context, true);
 
-    queryBuilder
-        .addCode("\n")
+    methodBodyBuilder
+        .add("\n")
         .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
-    returnType.kind.addExecuteStatement(queryBuilder, helperFieldName);
+    returnType.getKind().addExecuteStatement(methodBodyBuilder, helperFieldName);
 
-    if (returnType.kind.isAsync) {
-      queryBuilder
-          .nextControlFlow("catch ($T t)", Throwable.class)
-          .addStatement("return $T.failedFuture(t)", CompletableFutures.class)
-          .endControlFlow();
-    }
+    CodeBlock methodBody = returnType.getKind().wrapWithErrorHandling(methodBodyBuilder.build());
 
-    return Optional.of(queryBuilder.build());
+    return Optional.of(
+        GeneratedCodePatterns.override(methodElement, typeParameters).addCode(methodBody).build());
   }
 
   private void generatePrepareRequest(
