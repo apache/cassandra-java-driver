@@ -94,7 +94,7 @@ public class DaoGetEntityMethodGenerator extends DaoMethodGenerator {
     // Validate the return type. Make sure it matches the parameter type
     Transformation transformation = null;
     TypeMirror returnType = methodElement.getReturnType();
-    TypeElement entityElement = asEntityElement(returnType);
+    TypeElement entityElement = EntityUtils.asEntityElement(returnType, typeParameters);
     if (entityElement != null) {
       transformation = parameterIsGettable ? Transformation.NONE : Transformation.ONE;
     } else if (returnType.getKind() == TypeKind.DECLARED) {
@@ -111,7 +111,7 @@ public class DaoGetEntityMethodGenerator extends DaoMethodGenerator {
                   ResultSet.class.getSimpleName());
           return Optional.empty();
         }
-        entityElement = typeArgumentAsEntityElement(returnType);
+        entityElement = EntityUtils.typeArgumentAsEntityElement(returnType, typeParameters);
         transformation = Transformation.MAP;
       } else if (context.getClassUtils().isSame(element, MappedAsyncPagingIterable.class)) {
         if (!parameterIsAsyncResultSet) {
@@ -125,7 +125,7 @@ public class DaoGetEntityMethodGenerator extends DaoMethodGenerator {
                   AsyncResultSet.class.getSimpleName());
           return Optional.empty();
         }
-        entityElement = typeArgumentAsEntityElement(returnType);
+        entityElement = EntityUtils.typeArgumentAsEntityElement(returnType, typeParameters);
         transformation = Transformation.MAP;
       }
     }

@@ -41,9 +41,9 @@ public class DaoSelectMethodGeneratorTest extends DaoMethodGeneratorTest {
   public static Object[][] invalidSignatures() {
     return new Object[][] {
       {
-        "Invalid return type: Select methods must return an Entity-annotated class, or a "
-            + "CompletionStage, CompletableFuture, PagingIterable or "
-            + "CompletionStage/CompletableFuture<MappedAsyncPagingIterable> thereof",
+        "Invalid return type: Select methods must return one of [ENTITY, OPTIONAL_ENTITY, "
+            + "FUTURE_OF_ENTITY, FUTURE_OF_OPTIONAL_ENTITY, PAGING_ITERABLE, "
+            + "FUTURE_OF_ASYNC_PAGING_ITERABLE]",
         MethodSpec.methodBuilder("select")
             .addAnnotation(Select.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -51,9 +51,9 @@ public class DaoSelectMethodGeneratorTest extends DaoMethodGeneratorTest {
             .build(),
       },
       {
-        "Invalid return type: Select methods must return an Entity-annotated class, or a "
-            + "CompletionStage, CompletableFuture, PagingIterable or "
-            + "CompletionStage/CompletableFuture<MappedAsyncPagingIterable> thereof",
+        "Invalid return type: Select methods must return one of [ENTITY, OPTIONAL_ENTITY, "
+            + "FUTURE_OF_ENTITY, FUTURE_OF_OPTIONAL_ENTITY, PAGING_ITERABLE, "
+            + "FUTURE_OF_ASYNC_PAGING_ITERABLE]",
         MethodSpec.methodBuilder("select")
             .addAnnotation(Select.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)

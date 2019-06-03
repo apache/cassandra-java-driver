@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoImplementationSharedCode;
+import com.datastax.oss.driver.internal.mapper.processor.dao.DaoReturnTypeParser;
 import com.datastax.oss.driver.internal.mapper.processor.mapper.MapperImplementationSharedCode;
 import java.util.Map;
 import java.util.Optional;
@@ -80,4 +81,6 @@ public interface CodeGeneratorFactory {
       ExecutableElement methodElement,
       Map<Name, TypeElement> typeParameters,
       DaoImplementationSharedCode enclosingClass);
+
+  DaoReturnTypeParser getDaoReturnTypeParser();
 }
