@@ -41,9 +41,11 @@ public class DaoQueryMethodGeneratorTest extends DaoMethodGeneratorTest {
     // Not many error cases to cover, the return type/parameters are pretty open
     return new Object[][] {
       {
-        "Invalid return type: Query methods must return void, boolean, Integer, Row, an entity "
-            + "class, a result set, a mapped iterable, or a CompletionStage/CompletableFuture "
-            + "of any of the above",
+        "Invalid return type: Query methods must return one of [VOID, BOOLEAN, LONG, ROW, "
+            + "ENTITY, OPTIONAL_ENTITY, RESULT_SET, PAGING_ITERABLE, FUTURE_OF_VOID, "
+            + "FUTURE_OF_BOOLEAN, FUTURE_OF_LONG, FUTURE_OF_ROW, FUTURE_OF_ENTITY, "
+            + "FUTURE_OF_OPTIONAL_ENTITY, FUTURE_OF_ASYNC_RESULT_SET, "
+            + "FUTURE_OF_ASYNC_PAGING_ITERABLE]",
         MethodSpec.methodBuilder("select")
             .addAnnotation(
                 AnnotationSpec.builder(Query.class)

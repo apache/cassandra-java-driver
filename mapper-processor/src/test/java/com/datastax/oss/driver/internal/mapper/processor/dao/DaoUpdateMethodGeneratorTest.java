@@ -65,7 +65,8 @@ public class DaoUpdateMethodGeneratorTest extends DaoMethodGeneratorTest {
             .build(),
       },
       {
-        "Invalid return type: Update methods must return either void, ResultSet or boolean (possibly wrapped in a CompletionStage/CompletableFuture)",
+        "Invalid return type: Update methods must return one of [VOID, FUTURE_OF_VOID, "
+            + "RESULT_SET, FUTURE_OF_ASYNC_RESULT_SET, BOOLEAN, FUTURE_OF_BOOLEAN]",
         MethodSpec.methodBuilder("update")
             .addAnnotation(UPDATE_ANNOTATION)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
