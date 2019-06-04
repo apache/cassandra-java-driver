@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.channel.local.LocalAddress;
 import java.net.SocketAddress;
 
@@ -28,11 +29,13 @@ public class LocalEndPoint implements EndPoint {
     this.localAddress = new LocalAddress(id);
   }
 
+  @NonNull
   @Override
   public SocketAddress resolve() {
     return localAddress;
   }
 
+  @NonNull
   @Override
   public String asMetricPrefix() {
     throw new UnsupportedOperationException("This should not get called from unit tests");

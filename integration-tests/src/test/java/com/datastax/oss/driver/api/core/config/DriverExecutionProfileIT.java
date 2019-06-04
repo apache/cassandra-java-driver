@@ -36,7 +36,6 @@ import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.QueryLog;
@@ -79,11 +78,8 @@ public class DriverExecutionProfileIT {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
             .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(2))
-            .withProfile(
-                "olap",
-                DefaultDriverConfigLoaderBuilder.profileBuilder()
-                    .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(10))
-                    .build())
+            .startProfile("olap")
+            .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(10))
             .build();
     try (CqlSession session = SessionUtils.newSession(simulacron, loader)) {
       String query = "mockquery";
@@ -107,11 +103,8 @@ public class DriverExecutionProfileIT {
   public void should_use_profile_default_idempotence() {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
-            .withProfile(
-                "idem",
-                DefaultDriverConfigLoaderBuilder.profileBuilder()
-                    .withBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE, true)
-                    .build())
+            .startProfile("idem")
+            .withBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE, true)
             .build();
     try (CqlSession session = SessionUtils.newSession(simulacron, loader)) {
       String query = "mockquery";
@@ -136,12 +129,9 @@ public class DriverExecutionProfileIT {
   public void should_use_profile_consistency() {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
-            .withProfile(
-                "cl",
-                DefaultDriverConfigLoaderBuilder.profileBuilder()
-                    .withString(DefaultDriverOption.REQUEST_CONSISTENCY, "LOCAL_QUORUM")
-                    .withString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY, "LOCAL_SERIAL")
-                    .build())
+            .startProfile("cl")
+            .withString(DefaultDriverOption.REQUEST_CONSISTENCY, "LOCAL_QUORUM")
+            .withString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY, "LOCAL_SERIAL")
             .build();
     try (CqlSession session = SessionUtils.newSession(simulacron, loader)) {
       String query = "mockquery";
@@ -195,11 +185,8 @@ public class DriverExecutionProfileIT {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
             .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 100)
-            .withProfile(
-                "smallpages",
-                DefaultDriverConfigLoaderBuilder.profileBuilder()
-                    .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 10)
-                    .build())
+            .startProfile("smallpages")
+            .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 10)
             .build();
     try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
 
@@ -225,7 +212,7 @@ public class DriverExecutionProfileIT {
 
       String query = "SELECT * FROM test where k=0";
       // Execute query without profile, should use global page size (100)
-      CompletionStage<? extends AsyncResultSet> future = session.executeAsync(query);
+      CompletionStage<AsyncResultSet> future = session.executeAsync(query);
       AsyncResultSet result = CompletableFutures.getUninterruptibly(future);
       assertThat(result.remaining()).isEqualTo(100);
       result = CompletableFutures.getUninterruptibly(result.fetchNextPage());

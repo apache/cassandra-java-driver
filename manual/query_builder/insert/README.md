@@ -2,7 +2,7 @@
 
 To start an INSERT query, use one of the `insertInto` methods in [QueryBuilder]. There are
 several variants depending on whether your table name is qualified, and whether you use
-case-sensitive identifiers or case-insensitive strings:
+[identifiers](../../case_sensitivity/) or raw strings:
 
 ```java
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
@@ -87,4 +87,31 @@ insertInto("user").json(bindMarker()).usingTimestamp(bindMarker())
 
 If you call the method multiple times, the last value will be used.
 
-[QueryBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/QueryBuilder.html
+### Time To Live (TTL)
+
+You can generate a USING TTL clause that will cause column values to be deleted (marked with a
+tombstone) after the specified time (in seconds) has expired. This can be done with a literal:
+
+```java
+insertInto("user").value("a", bindMarker()).usingTtl(60)
+// INSERT INTO user (a) VALUES (?) USING TTL 60
+```
+
+Or a bind marker:
+
+```java
+insertInto("user").value("a", bindMarker()).usingTtl(bindMarker())
+// INSERT INTO user (a) VALUES (?) USING TTL ?
+```
+
+If you call the method multiple times, the last value will be used.
+
+The TTL value applies only to the inserted data, not the entire column. Any subsequent updates to
+the column resets the TTL.
+
+Setting the value to 0 will result in removing the TTL for the inserted data in Cassandra when the query
+is executed. This is distinctly different than setting the value to null. Passing a null value to
+this method will only remove the USING TTL clause from the query, which will not alter the TTL (if
+one is set) in Cassandra.
+
+[QueryBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html

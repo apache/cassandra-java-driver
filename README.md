@@ -3,7 +3,7 @@
 *If you're reading this on github.com, please note that this is the readme for the development 
 version and that some features described here might not yet have been released. You can find the
 documentation for latest version through [DataStax Docs] or via the release tags, e.g. 
-[4.0.0-rc1](https://github.com/datastax/java-driver/tree/4.0.0-rc1).*
+[4.0.1](https://github.com/datastax/java-driver/tree/4.0.1).*
 
 A modern, feature-rich and highly tunable Java client library for [Apache Cassandra®] \(2.1+) and 
 [DataStax Enterprise] \(4.7+), using exclusively Cassandra's binary protocol and Cassandra Query
@@ -16,7 +16,23 @@ Language v3.
 ## Getting the driver
 
 The driver artifacts are published in Maven central, under the group id [com.datastax.oss]; there
-are multiple modules, all prefixed with `java-driver-`. Refer to the [manual] for more details.
+are multiple modules, all prefixed with `java-driver-`.
+
+```xml
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-core</artifactId>
+  <version>4.0.1</version>
+</dependency>
+
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-query-builder</artifactId>
+  <version>4.0.1</version>
+</dependency>
+```
+
+Refer to the [manual] for more details.
 
 [com.datastax.oss]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.datastax.oss%22
 [manual]: manual/
@@ -49,7 +65,7 @@ See the [upgrade guide](upgrade_guide/) for details.
 
 ## License
 
-Copyright 2017, DataStax
+Copyright DataStax, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

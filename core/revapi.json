@@ -4435,6 +4435,313 @@
         "new": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>>::setConsistencyLevel(com.datastax.oss.driver.api.core.ConsistencyLevel)",
         "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
         "justification": "Add missing `@NonNull` annotation to Statement.setConsistencyLevel"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.concurrent.CompletionStage<? extends com.datastax.oss.driver.api.core.AsyncPagingIterable<ElementT>> com.datastax.oss.driver.api.core.AsyncPagingIterable<ElementT>::fetchNextPage() throws java.lang.IllegalStateException",
+        "new": "method java.util.concurrent.CompletionStage<SelfT> com.datastax.oss.driver.api.core.AsyncPagingIterable<ElementT, SelfT extends com.datastax.oss.driver.api.core.AsyncPagingIterable<ElementT extends java.lang.Object, SelfT extends com.datastax.oss.driver.api.core.AsyncPagingIterable<ElementT, SelfT>>>::fetchNextPage() throws java.lang.IllegalStateException",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeChangedCovariantly",
+        "old": "method <TargetT> com.datastax.oss.driver.api.core.AsyncPagingIterable<TargetT> com.datastax.oss.driver.api.core.AsyncPagingIterable<ElementT>::map(java.util.function.Function<? super ElementT, ? extends TargetT>)",
+        "new": "method <TargetT> com.datastax.oss.driver.api.core.MappedAsyncPagingIterable<TargetT> com.datastax.oss.driver.api.core.AsyncPagingIterable<ElementT, SelfT extends com.datastax.oss.driver.api.core.AsyncPagingIterable<ElementT extends java.lang.Object, SelfT extends com.datastax.oss.driver.api.core.AsyncPagingIterable<ElementT, SelfT>>>::map(java.util.function.Function<? super ElementT, ? extends TargetT>)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.generics.formalTypeParameterAdded",
+        "old": "interface com.datastax.oss.driver.api.core.AsyncPagingIterable<ElementT extends java.lang.Object>",
+        "new": "interface com.datastax.oss.driver.api.core.AsyncPagingIterable<ElementT extends java.lang.Object, SelfT extends com.datastax.oss.driver.api.core.AsyncPagingIterable<ElementT, SelfT>>",
+        "typeParameter": "SelfT extends com.datastax.oss.driver.api.core.AsyncPagingIterable<ElementT extends java.lang.Object, SelfT extends com.datastax.oss.driver.api.core.AsyncPagingIterable<ElementT, SelfT>>",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.concurrent.CompletionStage<? extends com.datastax.oss.driver.api.core.cql.AsyncResultSet> com.datastax.oss.driver.api.core.CqlSession::executeAsync(com.datastax.oss.driver.api.core.cql.Statement<?>)",
+        "new": "method java.util.concurrent.CompletionStage<com.datastax.oss.driver.api.core.cql.AsyncResultSet> com.datastax.oss.driver.api.core.CqlSession::executeAsync(com.datastax.oss.driver.api.core.cql.Statement<?>)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.concurrent.CompletionStage<? extends com.datastax.oss.driver.api.core.cql.AsyncResultSet> com.datastax.oss.driver.api.core.CqlSession::executeAsync(java.lang.String)",
+        "new": "method java.util.concurrent.CompletionStage<com.datastax.oss.driver.api.core.cql.AsyncResultSet> com.datastax.oss.driver.api.core.CqlSession::executeAsync(java.lang.String)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.concurrent.CompletionStage<? extends com.datastax.oss.driver.api.core.cql.PreparedStatement> com.datastax.oss.driver.api.core.CqlSession::prepareAsync(com.datastax.oss.driver.api.core.cql.PrepareRequest)",
+        "new": "method java.util.concurrent.CompletionStage<com.datastax.oss.driver.api.core.cql.PreparedStatement> com.datastax.oss.driver.api.core.CqlSession::prepareAsync(com.datastax.oss.driver.api.core.cql.PrepareRequest)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.concurrent.CompletionStage<? extends com.datastax.oss.driver.api.core.cql.PreparedStatement> com.datastax.oss.driver.api.core.CqlSession::prepareAsync(com.datastax.oss.driver.api.core.cql.SimpleStatement)",
+        "new": "method java.util.concurrent.CompletionStage<com.datastax.oss.driver.api.core.cql.PreparedStatement> com.datastax.oss.driver.api.core.CqlSession::prepareAsync(com.datastax.oss.driver.api.core.cql.SimpleStatement)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.concurrent.CompletionStage<? extends com.datastax.oss.driver.api.core.cql.PreparedStatement> com.datastax.oss.driver.api.core.CqlSession::prepareAsync(java.lang.String)",
+        "new": "method java.util.concurrent.CompletionStage<com.datastax.oss.driver.api.core.cql.PreparedStatement> com.datastax.oss.driver.api.core.CqlSession::prepareAsync(java.lang.String)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.concurrent.CompletionStage<? extends com.datastax.oss.driver.api.core.cql.AsyncResultSet> com.datastax.oss.driver.api.core.cql.AsyncResultSet::fetchNextPage() throws java.lang.IllegalStateException",
+        "new": "method java.util.concurrent.CompletionStage<SelfT> com.datastax.oss.driver.api.core.AsyncPagingIterable<ElementT, SelfT extends com.datastax.oss.driver.api.core.AsyncPagingIterable<ElementT extends java.lang.Object, SelfT extends com.datastax.oss.driver.api.core.AsyncPagingIterable<ElementT, SelfT>>>::fetchNextPage() throws java.lang.IllegalStateException @ com.datastax.oss.driver.api.core.cql.AsyncResultSet",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.class.noLongerImplementsInterface",
+        "old": "interface com.datastax.oss.driver.api.core.cql.AsyncResultSet",
+        "new": "interface com.datastax.oss.driver.api.core.cql.AsyncResultSet",
+        "interface": "com.datastax.oss.driver.api.core.AsyncPagingIterable<com.datastax.oss.driver.api.core.cql.Row>",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.class.superTypeTypeParametersChanged",
+        "old": "interface com.datastax.oss.driver.api.core.cql.AsyncResultSet",
+        "new": "interface com.datastax.oss.driver.api.core.cql.AsyncResultSet",
+        "oldSuperType": "com.datastax.oss.driver.api.core.AsyncPagingIterable<com.datastax.oss.driver.api.core.cql.Row>",
+        "newSuperType": "com.datastax.oss.driver.api.core.AsyncPagingIterable<com.datastax.oss.driver.api.core.cql.Row, com.datastax.oss.driver.api.core.cql.AsyncResultSet>",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.concurrent.CompletionStage<? extends com.datastax.oss.driver.api.core.metadata.Metadata> com.datastax.oss.driver.api.core.session.Session::refreshSchemaAsync()",
+        "new": "method java.util.concurrent.CompletionStage<com.datastax.oss.driver.api.core.metadata.Metadata> com.datastax.oss.driver.api.core.session.Session::refreshSchemaAsync()",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.concurrent.CompletionStage<? extends com.datastax.oss.driver.api.core.metadata.Metadata> com.datastax.oss.driver.api.core.session.Session::setSchemaMetadataEnabled(java.lang.Boolean)",
+        "new": "method java.util.concurrent.CompletionStage<com.datastax.oss.driver.api.core.metadata.Metadata> com.datastax.oss.driver.api.core.session.Session::setSchemaMetadataEnabled(java.lang.Boolean)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metrics.Metrics> com.datastax.oss.driver.api.core.session.Session::getMetrics()",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metrics.Metrics> com.datastax.oss.driver.api.core.session.Session::getMetrics()",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata> com.datastax.oss.driver.api.core.metadata.Metadata::getKeyspace(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata> com.datastax.oss.driver.api.core.metadata.Metadata::getKeyspace(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata> com.datastax.oss.driver.api.core.metadata.Metadata::getKeyspace(java.lang.String)",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata> com.datastax.oss.driver.api.core.metadata.Metadata::getKeyspace(java.lang.String)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, ? extends com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata> com.datastax.oss.driver.api.core.metadata.Metadata::getKeyspaces()",
+        "new": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata> com.datastax.oss.driver.api.core.metadata.Metadata::getKeyspaces()",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.TokenMap> com.datastax.oss.driver.api.core.metadata.Metadata::getTokenMap()",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.TokenMap> com.datastax.oss.driver.api.core.metadata.Metadata::getTokenMap()",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getAggregate(com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.type.DataType[])",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getAggregate(com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.type.DataType[])",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getAggregate(com.datastax.oss.driver.api.core.CqlIdentifier, java.lang.Iterable<com.datastax.oss.driver.api.core.type.DataType>)",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getAggregate(com.datastax.oss.driver.api.core.CqlIdentifier, java.lang.Iterable<com.datastax.oss.driver.api.core.type.DataType>)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getAggregate(com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature)",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getAggregate(com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getAggregate(java.lang.String, com.datastax.oss.driver.api.core.type.DataType[])",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getAggregate(java.lang.String, com.datastax.oss.driver.api.core.type.DataType[])",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getAggregate(java.lang.String, java.lang.Iterable<com.datastax.oss.driver.api.core.type.DataType>)",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getAggregate(java.lang.String, java.lang.Iterable<com.datastax.oss.driver.api.core.type.DataType>)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Map<com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature, ? extends com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getAggregates()",
+        "new": "method java.util.Map<com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature, com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getAggregates()",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getFunction(com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.type.DataType[])",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getFunction(com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.type.DataType[])",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getFunction(com.datastax.oss.driver.api.core.CqlIdentifier, java.lang.Iterable<com.datastax.oss.driver.api.core.type.DataType>)",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getFunction(com.datastax.oss.driver.api.core.CqlIdentifier, java.lang.Iterable<com.datastax.oss.driver.api.core.type.DataType>)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getFunction(com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature)",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getFunction(com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getFunction(java.lang.String, com.datastax.oss.driver.api.core.type.DataType[])",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getFunction(java.lang.String, com.datastax.oss.driver.api.core.type.DataType[])",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getFunction(java.lang.String, java.lang.Iterable<com.datastax.oss.driver.api.core.type.DataType>)",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getFunction(java.lang.String, java.lang.Iterable<com.datastax.oss.driver.api.core.type.DataType>)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Map<com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature, ? extends com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getFunctions()",
+        "new": "method java.util.Map<com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature, com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getFunctions()",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.TableMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getTable(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.TableMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getTable(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.TableMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getTable(java.lang.String)",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.TableMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getTable(java.lang.String)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, ? extends com.datastax.oss.driver.api.core.metadata.schema.TableMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getTables()",
+        "new": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.metadata.schema.TableMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getTables()",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.type.UserDefinedType> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getUserDefinedType(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.type.UserDefinedType> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getUserDefinedType(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.type.UserDefinedType> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getUserDefinedType(java.lang.String)",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.type.UserDefinedType> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getUserDefinedType(java.lang.String)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, ? extends com.datastax.oss.driver.api.core.type.UserDefinedType> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getUserDefinedTypes()",
+        "new": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.type.UserDefinedType> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getUserDefinedTypes()",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getView(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getView(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getView(java.lang.String)",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getView(java.lang.String)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, ? extends com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getViews()",
+        "new": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getViews()",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, ? extends com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getViewsOnTable(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "new": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata> com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::getViewsOnTable(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Map<? extends com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata, com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder> com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getClusteringColumns()",
+        "new": "method java.util.Map<com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata, com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder> com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getClusteringColumns()",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata> com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getColumn(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata> com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getColumn(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Optional<? extends com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata> com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getColumn(java.lang.String)",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata> com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getColumn(java.lang.String)",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, ? extends com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata> com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getColumns()",
+        "new": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata> com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getColumns()",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.List<? extends com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata> com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getPartitionKey()",
+        "new": "method java.util.List<com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata> com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getPartitionKey()",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.List<? extends com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata> com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getPrimaryKey()",
+        "new": "method java.util.List<com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata> com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getPrimaryKey()",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, ? extends com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata> com.datastax.oss.driver.api.core.metadata.schema.TableMetadata::getIndexes()",
+        "new": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata> com.datastax.oss.driver.api.core.metadata.schema.TableMetadata::getIndexes()",
+        "justification": "JAVA-2192: Don't return generic types with wildcards"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method com.datastax.oss.driver.api.core.config.DriverExecutionProfile com.datastax.oss.driver.api.core.config.DriverExecutionProfile::withLong(com.datastax.oss.driver.api.core.config.DriverOption, long)",
+        "new": "method SelfT com.datastax.oss.driver.api.core.config.OngoingConfigOptions<SelfT extends com.datastax.oss.driver.api.core.config.OngoingConfigOptions<SelfT extends com.datastax.oss.driver.api.core.config.OngoingConfigOptions<SelfT>>>::withLong(com.datastax.oss.driver.api.core.config.DriverOption, long) @ com.datastax.oss.driver.api.core.config.DriverExecutionProfile",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "Bugfix, the annotation should have been present from the beginning"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method java.lang.String com.datastax.oss.driver.api.core.metadata.EndPoint::asMetricPrefix()",
+        "new": "method java.lang.String com.datastax.oss.driver.api.core.metadata.EndPoint::asMetricPrefix()",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "EndPoint.asMetricPrefix() was missing @NonNull"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method java.net.SocketAddress com.datastax.oss.driver.api.core.metadata.EndPoint::resolve()",
+        "new": "method java.net.SocketAddress com.datastax.oss.driver.api.core.metadata.EndPoint::resolve()",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "EndPoint.resolve() was missing @NonNull"
       }
     ]
   }

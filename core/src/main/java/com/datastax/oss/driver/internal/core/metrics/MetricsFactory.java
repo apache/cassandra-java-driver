@@ -21,7 +21,7 @@ import java.util.Optional;
 
 public interface MetricsFactory {
 
-  Optional<? extends Metrics> getMetrics();
+  Optional<Metrics> getMetrics();
 
   /** @return the unique instance for this session (this must return the same object every time). */
   SessionMetricUpdater getSessionUpdater();

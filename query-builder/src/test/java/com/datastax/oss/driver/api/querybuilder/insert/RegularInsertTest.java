@@ -20,9 +20,15 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 
+import com.datastax.oss.driver.api.querybuilder.term.Term;
+import com.datastax.oss.driver.internal.querybuilder.insert.DefaultInsert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class RegularInsertTest {
+
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void should_generate_column_assignments() {
@@ -73,5 +79,64 @@ public class RegularInsertTest {
   public void should_generate_if_not_exists_and_timestamp_clauses() {
     assertThat(insertInto("foo").value("a", bindMarker()).ifNotExists().usingTimestamp(1))
         .hasCql("INSERT INTO foo (a) VALUES (?) IF NOT EXISTS USING TIMESTAMP 1");
+  }
+
+  @Test
+  public void should_generate_ttl_clause() {
+    assertThat(insertInto("foo").value("a", bindMarker()).usingTtl(10))
+        .hasCql("INSERT INTO foo (a) VALUES (?) USING TTL 10");
+  }
+
+  @Test
+  public void should_use_last_ttl_if_called_multiple_times() {
+    assertThat(insertInto("foo").value("a", bindMarker()).usingTtl(10).usingTtl(20).usingTtl(30))
+        .hasCql("INSERT INTO foo (a) VALUES (?) USING TTL 30");
+  }
+
+  @Test
+  public void should_generate_using_timestamp_and_ttl_clauses() {
+    assertThat(insertInto("foo").value("a", bindMarker()).usingTtl(10).usingTimestamp(30l))
+        .hasCql("INSERT INTO foo (a) VALUES (?) USING TIMESTAMP 30 AND TTL 10");
+    // order of TTL and TIMESTAMP method calls should not change the order of the generated clauses
+    assertThat(insertInto("foo").value("a", bindMarker()).usingTimestamp(30l).usingTtl(10))
+        .hasCql("INSERT INTO foo (a) VALUES (?) USING TIMESTAMP 30 AND TTL 10");
+  }
+
+  @Test
+  public void should_throw_exception_with_invalid_ttl() {
+    DefaultInsert defaultInsert =
+        (DefaultInsert) insertInto("foo").value("a", bindMarker()).usingTtl(10);
+
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("TTL value must be a BindMarker or an Integer");
+
+    new DefaultInsert(
+        defaultInsert.getKeyspace(),
+        defaultInsert.getTable(),
+        (Term) defaultInsert.getJson(),
+        defaultInsert.getMissingJsonBehavior(),
+        defaultInsert.getAssignments(),
+        defaultInsert.getTimestamp(),
+        new Object(), // invalid TTL object
+        defaultInsert.isIfNotExists());
+  }
+
+  @Test
+  public void should_throw_exception_with_invalid_timestamp() {
+    DefaultInsert defaultInsert =
+        (DefaultInsert) insertInto("foo").value("a", bindMarker()).usingTimestamp(1);
+
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("TIMESTAMP value must be a BindMarker or a Long");
+
+    new DefaultInsert(
+        defaultInsert.getKeyspace(),
+        defaultInsert.getTable(),
+        (Term) defaultInsert.getJson(),
+        defaultInsert.getMissingJsonBehavior(),
+        defaultInsert.getAssignments(),
+        new Object(), // invalid timestamp object)
+        defaultInsert.getTtlInSeconds(),
+        defaultInsert.isIfNotExists());
   }
 }

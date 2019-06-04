@@ -42,26 +42,25 @@ public interface KeyspaceMetadata extends Describable {
   Map<String, String> getReplication();
 
   @NonNull
-  Map<CqlIdentifier, ? extends TableMetadata> getTables();
+  Map<CqlIdentifier, TableMetadata> getTables();
 
   @NonNull
-  default Optional<? extends TableMetadata> getTable(@NonNull CqlIdentifier tableId) {
+  default Optional<TableMetadata> getTable(@NonNull CqlIdentifier tableId) {
     return Optional.ofNullable(getTables().get(tableId));
   }
 
   /** Shortcut for {@link #getTable(CqlIdentifier) getTable(CqlIdentifier.fromCql(tableName))}. */
   @NonNull
-  default Optional<? extends TableMetadata> getTable(@NonNull String tableName) {
+  default Optional<TableMetadata> getTable(@NonNull String tableName) {
     return getTable(CqlIdentifier.fromCql(tableName));
   }
 
   @NonNull
-  Map<CqlIdentifier, ? extends ViewMetadata> getViews();
+  Map<CqlIdentifier, ViewMetadata> getViews();
 
   /** Gets the views based on a given table. */
   @NonNull
-  default Map<CqlIdentifier, ? extends ViewMetadata> getViewsOnTable(
-      @NonNull CqlIdentifier tableId) {
+  default Map<CqlIdentifier, ViewMetadata> getViewsOnTable(@NonNull CqlIdentifier tableId) {
     ImmutableMap.Builder<CqlIdentifier, ViewMetadata> builder = ImmutableMap.builder();
     for (ViewMetadata view : getViews().values()) {
       if (view.getBaseTable().equals(tableId)) {
@@ -72,21 +71,21 @@ public interface KeyspaceMetadata extends Describable {
   }
 
   @NonNull
-  default Optional<? extends ViewMetadata> getView(@NonNull CqlIdentifier viewId) {
+  default Optional<ViewMetadata> getView(@NonNull CqlIdentifier viewId) {
     return Optional.ofNullable(getViews().get(viewId));
   }
 
   /** Shortcut for {@link #getView(CqlIdentifier) getView(CqlIdentifier.fromCql(viewName))}. */
   @NonNull
-  default Optional<? extends ViewMetadata> getView(@NonNull String viewName) {
+  default Optional<ViewMetadata> getView(@NonNull String viewName) {
     return getView(CqlIdentifier.fromCql(viewName));
   }
 
   @NonNull
-  Map<CqlIdentifier, ? extends UserDefinedType> getUserDefinedTypes();
+  Map<CqlIdentifier, UserDefinedType> getUserDefinedTypes();
 
   @NonNull
-  default Optional<? extends UserDefinedType> getUserDefinedType(@NonNull CqlIdentifier typeId) {
+  default Optional<UserDefinedType> getUserDefinedType(@NonNull CqlIdentifier typeId) {
     return Optional.ofNullable(getUserDefinedTypes().get(typeId));
   }
 
@@ -95,21 +94,20 @@ public interface KeyspaceMetadata extends Describable {
    * getUserDefinedType(CqlIdentifier.fromCql(typeName))}.
    */
   @NonNull
-  default Optional<? extends UserDefinedType> getUserDefinedType(@NonNull String typeName) {
+  default Optional<UserDefinedType> getUserDefinedType(@NonNull String typeName) {
     return getUserDefinedType(CqlIdentifier.fromCql(typeName));
   }
 
   @NonNull
-  Map<FunctionSignature, ? extends FunctionMetadata> getFunctions();
+  Map<FunctionSignature, FunctionMetadata> getFunctions();
 
   @NonNull
-  default Optional<? extends FunctionMetadata> getFunction(
-      @NonNull FunctionSignature functionSignature) {
+  default Optional<FunctionMetadata> getFunction(@NonNull FunctionSignature functionSignature) {
     return Optional.ofNullable(getFunctions().get(functionSignature));
   }
 
   @NonNull
-  default Optional<? extends FunctionMetadata> getFunction(
+  default Optional<FunctionMetadata> getFunction(
       @NonNull CqlIdentifier functionId, @NonNull Iterable<DataType> parameterTypes) {
     return Optional.ofNullable(
         getFunctions().get(new FunctionSignature(functionId, parameterTypes)));
@@ -120,7 +118,7 @@ public interface KeyspaceMetadata extends Describable {
    * getFunction(CqlIdentifier.fromCql(functionName), parameterTypes)}.
    */
   @NonNull
-  default Optional<? extends FunctionMetadata> getFunction(
+  default Optional<FunctionMetadata> getFunction(
       @NonNull String functionName, @NonNull Iterable<DataType> parameterTypes) {
     return getFunction(CqlIdentifier.fromCql(functionName), parameterTypes);
   }
@@ -129,7 +127,7 @@ public interface KeyspaceMetadata extends Describable {
    * @param parameterTypes neither the individual types, nor the vararg array itself, can be null.
    */
   @NonNull
-  default Optional<? extends FunctionMetadata> getFunction(
+  default Optional<FunctionMetadata> getFunction(
       @NonNull CqlIdentifier functionId, @NonNull DataType... parameterTypes) {
     return Optional.ofNullable(
         getFunctions().get(new FunctionSignature(functionId, parameterTypes)));
@@ -142,22 +140,21 @@ public interface KeyspaceMetadata extends Describable {
    * @param parameterTypes neither the individual types, nor the vararg array itself, can be null.
    */
   @NonNull
-  default Optional<? extends FunctionMetadata> getFunction(
+  default Optional<FunctionMetadata> getFunction(
       @NonNull String functionName, @NonNull DataType... parameterTypes) {
     return getFunction(CqlIdentifier.fromCql(functionName), parameterTypes);
   }
 
   @NonNull
-  Map<FunctionSignature, ? extends AggregateMetadata> getAggregates();
+  Map<FunctionSignature, AggregateMetadata> getAggregates();
 
   @NonNull
-  default Optional<? extends AggregateMetadata> getAggregate(
-      @NonNull FunctionSignature aggregateSignature) {
+  default Optional<AggregateMetadata> getAggregate(@NonNull FunctionSignature aggregateSignature) {
     return Optional.ofNullable(getAggregates().get(aggregateSignature));
   }
 
   @NonNull
-  default Optional<? extends AggregateMetadata> getAggregate(
+  default Optional<AggregateMetadata> getAggregate(
       @NonNull CqlIdentifier aggregateId, @NonNull Iterable<DataType> parameterTypes) {
     return Optional.ofNullable(
         getAggregates().get(new FunctionSignature(aggregateId, parameterTypes)));
@@ -168,7 +165,7 @@ public interface KeyspaceMetadata extends Describable {
    * getAggregate(CqlIdentifier.fromCql(aggregateName), parameterTypes)}.
    */
   @NonNull
-  default Optional<? extends AggregateMetadata> getAggregate(
+  default Optional<AggregateMetadata> getAggregate(
       @NonNull String aggregateName, @NonNull Iterable<DataType> parameterTypes) {
     return getAggregate(CqlIdentifier.fromCql(aggregateName), parameterTypes);
   }
@@ -177,7 +174,7 @@ public interface KeyspaceMetadata extends Describable {
    * @param parameterTypes neither the individual types, nor the vararg array itself, can be null.
    */
   @NonNull
-  default Optional<? extends AggregateMetadata> getAggregate(
+  default Optional<AggregateMetadata> getAggregate(
       @NonNull CqlIdentifier aggregateId, @NonNull DataType... parameterTypes) {
     return Optional.ofNullable(
         getAggregates().get(new FunctionSignature(aggregateId, parameterTypes)));
@@ -190,7 +187,7 @@ public interface KeyspaceMetadata extends Describable {
    * @param parameterTypes neither the individual types, nor the vararg array itself, can be null.
    */
   @NonNull
-  default Optional<? extends AggregateMetadata> getAggregate(
+  default Optional<AggregateMetadata> getAggregate(
       @NonNull String aggregateName, @NonNull DataType... parameterTypes) {
     return getAggregate(CqlIdentifier.fromCql(aggregateName), parameterTypes);
   }

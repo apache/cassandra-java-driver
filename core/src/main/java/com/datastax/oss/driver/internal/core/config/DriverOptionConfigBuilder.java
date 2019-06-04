@@ -15,8 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.config;
 
-import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
+import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
 import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -24,18 +24,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
-/**
- * A builder that allows specifying multiple configuration options keyed by {@link DriverOption}.
- *
- * <p>The intent of this interface is to reduce code duplication by sharing common {@code withXXX}
- * methods among types that build configuration. It is not meant to be used to represent anything
- * specifically.
- *
- * <p>The {@code withXXX} methods are similar to those found in {@link DriverExecutionProfile}, but
- * do not share an interface as this interface is intended for internal implementations only.
- *
- * <p>It is not recommended to create implementations of this interface or use directly in code.
- */
+/** @see DefaultDriverConfigLoaderBuilder */
+@Deprecated
 public interface DriverOptionConfigBuilder<SelfT extends DriverOptionConfigBuilder> {
 
   @NonNull

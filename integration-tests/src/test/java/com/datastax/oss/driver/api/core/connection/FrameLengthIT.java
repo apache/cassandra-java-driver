@@ -58,7 +58,7 @@ public class FrameLengthIT {
           .withClass(
               DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS, SortingLoadBalancingPolicy.class)
           .withClass(DefaultDriverOption.RETRY_POLICY_CLASS, AlwaysRetryAbortedPolicy.class)
-          .withBytes(DefaultDriverOption.PROTOCOL_MAX_FRAME_LENGTH, "100 kilobytes")
+          .withBytes(DefaultDriverOption.PROTOCOL_MAX_FRAME_LENGTH, 100 * 1024)
           .build();
 
   private static SessionRule<CqlSession> sessionRule =
@@ -94,7 +94,7 @@ public class FrameLengthIT {
 
   @Test
   public void should_fail_if_response_exceeds_max_frame_length() {
-    CompletionStage<? extends AsyncResultSet> slowResultFuture =
+    CompletionStage<AsyncResultSet> slowResultFuture =
         sessionRule.session().executeAsync(SLOW_QUERY);
     try {
       sessionRule.session().execute(LARGE_QUERY);

@@ -1,8 +1,8 @@
 ## UPDATE
 
 To start an UPDATE query, use one of the `update` methods in [QueryBuilder]. There are several
-variants depending on whether your table name is qualified, and whether you use case-sensitive
-identifiers or case-insensitive strings:
+variants depending on whether your table name is qualified, and whether you use
+[identifiers](../../case_sensitivity/) or raw strings:
 
 ```java
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
@@ -31,6 +31,35 @@ update("user").usingTimestamp(bindMarker());
 ```
 
 If you call the method multiple times, the last value will be used.
+
+### Time To Live (TTL)
+
+You can generate a USING TTL clause that will cause column values to be deleted (marked with a
+tombstone) after the specified time (in seconds) has expired. This can be done with a literal:
+
+```java
+update("user").usingTtl(60).setColumn("v", bindMarker()).whereColumn("k").isEqualTo(bindMarker());
+// UPDATE user USING TTL 60 SET v=? WHERE k=?
+```
+
+Or a bind marker:
+
+```java
+update("user").usingTtl(bindMarker()).setColumn("v", bindMarker()).whereColumn("k").isEqualTo(bindMarker());
+// UPDATE user USING TTL ? SET v=? WHERE k=?
+```
+
+You can clear a previously set TTL by setting the value to 0:
+
+```java
+update("user").usingTtl(0).setColumn("v", bindMarker()).whereColumn("k").isEqualTo(bindMarker());
+// UPDATE user USING TTL 0 SET v=? WHERE k=?
+```
+
+Setting the value to 0 will result in removing the TTL from the column in Cassandra when the query
+is executed. This is distinctly different than setting the value to null. Passing a null value to
+this method will only remove the USING TTL clause from the query, which will not alter the TTL (if
+one is set) in Cassandra.
 
 ### Assignments
 
@@ -222,5 +251,5 @@ update("foo")
 Conditions are a common feature used by UPDATE and DELETE, so they have a
 [dedicated page](../condition) in this manual.
 
-[QueryBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/QueryBuilder.html
-[Assignment]:   http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/update/Assignment.html
+[QueryBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html
+[Assignment]:   http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/update/Assignment.html

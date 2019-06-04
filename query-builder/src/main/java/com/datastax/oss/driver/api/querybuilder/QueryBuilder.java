@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.select.SelectFrom;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
+import com.datastax.oss.driver.api.querybuilder.truncate.Truncate;
 import com.datastax.oss.driver.api.querybuilder.update.UpdateStart;
 import com.datastax.oss.driver.internal.core.metadata.schema.ShallowUserDefinedType;
 import com.datastax.oss.driver.internal.querybuilder.ArithmeticOperator;
@@ -43,6 +44,7 @@ import com.datastax.oss.driver.internal.querybuilder.term.FunctionTerm;
 import com.datastax.oss.driver.internal.querybuilder.term.OppositeTerm;
 import com.datastax.oss.driver.internal.querybuilder.term.TupleTerm;
 import com.datastax.oss.driver.internal.querybuilder.term.TypeHintTerm;
+import com.datastax.oss.driver.internal.querybuilder.truncate.DefaultTruncate;
 import com.datastax.oss.driver.internal.querybuilder.update.DefaultUpdate;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -469,5 +471,54 @@ public class QueryBuilder {
   @NonNull
   public static UserDefinedType udt(@NonNull String name) {
     return udt(CqlIdentifier.fromCql(name));
+  }
+
+  /**
+   * Creates a new {@code TRUNCATE} query.
+   *
+   * @param table the name of the table to truncate.
+   * @return the truncation query.
+   */
+  public static Truncate truncate(@NonNull CqlIdentifier table) {
+    return truncate(null, table);
+  }
+
+  /**
+   * Creates a new {@code TRUNCATE} query.
+   *
+   * <p>This is a shortcut for {@link #truncate(CqlIdentifier)
+   * truncate(CqlIdentifier.fromCql(table))}.
+   *
+   * @param table the name of the table to truncate.
+   * @return the truncation query.
+   */
+  public static Truncate truncate(@NonNull String table) {
+    return truncate(null, CqlIdentifier.fromCql(table));
+  }
+
+  /**
+   * Creates a new {@code TRUNCATE} query.
+   *
+   * @param keyspace the name of the keyspace to use.
+   * @param table the name of the table to truncate.
+   * @return the truncation query.
+   */
+  public static Truncate truncate(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
+    return new DefaultTruncate(keyspace, table);
+  }
+
+  /**
+   * Creates a new {@code TRUNCATE} query.
+   *
+   * <p>This is a shortcut for {@link #truncate(CqlIdentifier, CqlIdentifier)
+   * truncate(CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(table))}.
+   *
+   * @param keyspace the name of the keyspace to use.
+   * @param table the name of the table to truncate.
+   * @return the truncation query.
+   */
+  public static Truncate truncate(@Nullable String keyspace, @NonNull String table) {
+    return truncate(
+        keyspace == null ? null : CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(table));
   }
 }

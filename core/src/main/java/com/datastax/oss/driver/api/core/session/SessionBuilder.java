@@ -79,25 +79,23 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * Sets the configuration loader to use.
    *
    * <p>If you don't call this method, the builder will use the default implementation, based on the
-   * Typesafe config library. More precisely:
+   * Typesafe config library. More precisely, configuration properties are loaded and merged from
+   * the following (first-listed are higher priority):
    *
    * <ul>
-   *   <li>configuration properties are loaded and merged from the following (first-listed are
-   *       higher priority):
-   *       <ul>
-   *         <li>system properties
-   *         <li>{@code application.conf} (all resources on classpath with this name)
-   *         <li>{@code application.json} (all resources on classpath with this name)
-   *         <li>{@code application.properties} (all resources on classpath with this name)
-   *         <li>{@code reference.conf} (all resources on classpath with this name)
-   *       </ul>
-   *   <li>the resulting configuration is expected to contain a {@code datastax-java-driver}
-   *       section.
-   *   <li>that section is validated against the {@link DefaultDriverOption core driver options}.
+   *   <li>system properties
+   *   <li>{@code application.conf} (all resources on classpath with this name)
+   *   <li>{@code application.json} (all resources on classpath with this name)
+   *   <li>{@code application.properties} (all resources on classpath with this name)
+   *   <li>{@code reference.conf} (all resources on classpath with this name). In particular, this
+   *       will load the {@code reference.conf} included in the core driver JAR, that defines
+   *       default options for all mandatory options.
    * </ul>
    *
-   * The core driver JAR includes a {@code reference.conf} file with sensible defaults for all
-   * mandatory options, except the contact points.
+   * The resulting configuration is expected to contain a {@code datastax-java-driver} section.
+   *
+   * <p>This default loader will honor the reload interval defined by the option {@code
+   * basic.config-reload-interval}.
    *
    * @see <a href="https://github.com/typesafehub/config#standard-behavior">Typesafe config's
    *     standard loading behavior</a>

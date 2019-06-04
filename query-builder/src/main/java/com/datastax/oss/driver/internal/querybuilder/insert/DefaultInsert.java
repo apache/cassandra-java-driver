@@ -49,10 +49,11 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
   private final MissingJsonBehavior missingJsonBehavior;
   private final ImmutableMap<CqlIdentifier, Term> assignments;
   private final Object timestamp;
+  private final Object ttlInSeconds;
   private final boolean ifNotExists;
 
   public DefaultInsert(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
-    this(keyspace, table, null, null, ImmutableMap.of(), null, false);
+    this(keyspace, table, null, null, ImmutableMap.of(), null, null, false);
   }
 
   public DefaultInsert(
@@ -62,17 +63,27 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
       @Nullable MissingJsonBehavior missingJsonBehavior,
       @NonNull ImmutableMap<CqlIdentifier, Term> assignments,
       @Nullable Object timestamp,
+      @Nullable Object ttlInSeconds,
       boolean ifNotExists) {
     // Note: the public API guarantees this, but check in case someone is calling the internal API
     // directly.
     Preconditions.checkArgument(
         json == null || assignments.isEmpty(), "JSON insert can't have regular assignments");
+    Preconditions.checkArgument(
+        timestamp == null || timestamp instanceof Long || timestamp instanceof BindMarker,
+        "TIMESTAMP value must be a BindMarker or a Long");
+    Preconditions.checkArgument(
+        ttlInSeconds == null
+            || ttlInSeconds instanceof Integer
+            || ttlInSeconds instanceof BindMarker,
+        "TTL value must be a BindMarker or an Integer");
     this.keyspace = keyspace;
     this.table = table;
     this.json = json;
     this.missingJsonBehavior = missingJsonBehavior;
     this.assignments = assignments;
     this.timestamp = timestamp;
+    this.ttlInSeconds = ttlInSeconds;
     this.ifNotExists = ifNotExists;
   }
 
@@ -86,6 +97,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         missingJsonBehavior,
         ImmutableMap.of(),
         timestamp,
+        ttlInSeconds,
         ifNotExists);
   }
 
@@ -93,7 +105,14 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
   @Override
   public JsonInsert json(@NonNull BindMarker json) {
     return new DefaultInsert(
-        keyspace, table, json, missingJsonBehavior, ImmutableMap.of(), timestamp, ifNotExists);
+        keyspace,
+        table,
+        json,
+        missingJsonBehavior,
+        ImmutableMap.of(),
+        timestamp,
+        ttlInSeconds,
+        ifNotExists);
   }
 
   @NonNull
@@ -106,6 +125,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         missingJsonBehavior,
         ImmutableMap.of(),
         timestamp,
+        ttlInSeconds,
         ifNotExists);
   }
 
@@ -113,7 +133,14 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
   @Override
   public JsonInsert defaultNull() {
     return new DefaultInsert(
-        keyspace, table, json, MissingJsonBehavior.NULL, ImmutableMap.of(), timestamp, ifNotExists);
+        keyspace,
+        table,
+        json,
+        MissingJsonBehavior.NULL,
+        ImmutableMap.of(),
+        timestamp,
+        ttlInSeconds,
+        ifNotExists);
   }
 
   @NonNull
@@ -126,6 +153,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         MissingJsonBehavior.UNSET,
         ImmutableMap.of(),
         timestamp,
+        ttlInSeconds,
         ifNotExists);
   }
 
@@ -139,6 +167,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         null,
         ImmutableCollections.append(assignments, columnId, value),
         timestamp,
+        ttlInSeconds,
         ifNotExists);
   }
 
@@ -146,21 +175,63 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
   @Override
   public Insert ifNotExists() {
     return new DefaultInsert(
-        keyspace, table, json, missingJsonBehavior, assignments, timestamp, true);
+        keyspace, table, json, missingJsonBehavior, assignments, timestamp, ttlInSeconds, true);
   }
 
   @NonNull
   @Override
   public Insert usingTimestamp(long timestamp) {
     return new DefaultInsert(
-        keyspace, table, json, missingJsonBehavior, assignments, timestamp, ifNotExists);
+        keyspace,
+        table,
+        json,
+        missingJsonBehavior,
+        assignments,
+        timestamp,
+        ttlInSeconds,
+        ifNotExists);
   }
 
   @NonNull
   @Override
   public Insert usingTimestamp(@Nullable BindMarker timestamp) {
     return new DefaultInsert(
-        keyspace, table, json, missingJsonBehavior, assignments, timestamp, ifNotExists);
+        keyspace,
+        table,
+        json,
+        missingJsonBehavior,
+        assignments,
+        timestamp,
+        ttlInSeconds,
+        ifNotExists);
+  }
+
+  @NonNull
+  @Override
+  public Insert usingTtl(int ttlInSeconds) {
+    return new DefaultInsert(
+        keyspace,
+        table,
+        json,
+        missingJsonBehavior,
+        assignments,
+        timestamp,
+        ttlInSeconds,
+        ifNotExists);
+  }
+
+  @NonNull
+  @Override
+  public Insert usingTtl(@Nullable BindMarker ttlInSeconds) {
+    return new DefaultInsert(
+        keyspace,
+        table,
+        json,
+        missingJsonBehavior,
+        assignments,
+        timestamp,
+        ttlInSeconds,
+        ifNotExists);
   }
 
   @NonNull
@@ -190,6 +261,14 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ((BindMarker) timestamp).appendTo(builder);
       } else {
         builder.append(timestamp);
+      }
+    }
+    if (ttlInSeconds != null) {
+      builder.append((timestamp != null) ? " AND " : " USING ").append("TTL ");
+      if (ttlInSeconds instanceof BindMarker) {
+        ((BindMarker) ttlInSeconds).appendTo(builder);
+      } else {
+        builder.append(ttlInSeconds);
       }
     }
     return builder.toString();
@@ -265,6 +344,11 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
   @Nullable
   public Object getTimestamp() {
     return timestamp;
+  }
+
+  @Nullable
+  public Object getTtlInSeconds() {
+    return ttlInSeconds;
   }
 
   public boolean isIfNotExists() {

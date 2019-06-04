@@ -14,7 +14,7 @@ To use it in your application, add the following dependency:
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-query-builder</artifactId>
-  <version>4.0.0-rc1</version>
+  <version>4.0.1</version>
 </dependency>
 ```
 
@@ -109,8 +109,8 @@ the query builder in your hot path**:
 #### Identifiers
 
 All fluent API methods use [CqlIdentifier] for schema element names (keyspaces, tables, columns...).
-But, for convenience, there are also `String` overloads if you use case-insensitive identifiers (as
-we recommend, see [Case sensitivity](../case_sensitivity) for more explanations).
+But, for convenience, there are also `String` overloads that take the CQL form (as see [Case
+sensitivity](../case_sensitivity) for more explanations).
 
 For conciseness, we'll use the string-based versions for the examples in this manual.
 
@@ -176,6 +176,7 @@ For a complete tour of the API, browse the child pages in this manual:
   * [INSERT](insert/)
   * [UPDATE](update/)
   * [DELETE](delete/)
+  * [TRUNCATE](truncate/)
   * [Schema builder](schema/) (for DDL statements such as CREATE TABLE, etc.)
 * common topics:
   * [Relations](relation/)
@@ -183,6 +184,6 @@ For a complete tour of the API, browse the child pages in this manual:
   * [Terms](term/)
   * [Idempotence](idempotence/)
   
-[QueryBuilder]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/QueryBuilder.html
-[SchemaBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/query-builder/SchemaBuilder.html
+[QueryBuilder]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html
+[SchemaBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
 [CqlIdentifier]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/CqlIdentifier.html

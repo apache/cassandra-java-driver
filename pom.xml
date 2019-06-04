@@ -20,7 +20,7 @@
 
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-parent</artifactId>
-  <version>4.0.0-rc2-SNAPSHOT</version>
+  <version>4.0.2-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>DataStax Java driver for Apache Cassandra(R)</name>
@@ -63,11 +63,11 @@
     <pax-exam.version>4.12.0</pax-exam.version>
     <simulacron.version>0.8.8</simulacron.version>
     <jsr353-api.version>1.0</jsr353-api.version>
-    <jersey.version>2.23.1</jersey.version>
-    <hk2.version>2.4.0-b34</hk2.version>
+    <jersey.version>2.28</jersey.version>
+    <hk2.version>2.5.0</hk2.version>
     <jax-rs.version>2.0.1</jax-rs.version>
     <jsr353-ri.version>1.1.4</jsr353-ri.version>
-    <jackson.version>2.9.8</jackson.version>
+    <jackson.version>2.9.9</jackson.version>
   </properties>
 
   <dependencyManagement>
@@ -229,6 +229,11 @@
         <version>${jersey.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.glassfish.jersey.inject</groupId>
+        <artifactId>jersey-hk2</artifactId>
+        <version>${jersey.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.glassfish.hk2</groupId>
         <artifactId>hk2-api</artifactId>
         <version>${hk2.version}</version>
@@ -337,7 +342,7 @@
         <plugin>
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.7.9</version>
+          <version>0.8.3</version>
         </plugin>
         <plugin>
           <groupId>org.apache.felix</groupId>
@@ -350,6 +355,7 @@
           <version>0.10.5</version>
           <configuration>
             <outputNonIdentifyingDifferenceInfo>false</outputNonIdentifyingDifferenceInfo>
+            <versionFormat>\d+\.\d+\.\d+</versionFormat>
           </configuration>
           <dependencies>
             <dependency>
@@ -597,7 +603,7 @@ limitations under the License.]]>
           <releaseProfiles>release</releaseProfiles>
           <goals>deploy</goals>
           <!-- Our integration tests are too long to run during a release, we run them in CI -->
-          <arguments>-DskipParallelizableITs -DskipSerialITs -DskipIsolatedITs</arguments>
+          <arguments>-DskipITs</arguments>
         </configuration>
       </plugin>
       <plugin>

@@ -2,8 +2,27 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.0.0 (in progress)
+### 4.0.2 (in progress)
 
+- [improvement] JAVA-2242: Allow skipping all integration tests with -DskipITs
+- [improvement] JAVA-2241: Make DefaultDriverContext.cycleDetector protected
+- [bug] JAVA-2226: Support IPv6 contact points in the configuration
+
+### 4.0.1
+
+- [new feature] JAVA-2201: Expose a public API for programmatic config
+- [new feature] JAVA-2205: Expose public factory methods for alternative config loaders
+- [bug] JAVA-2214: Fix flaky RequestLoggerIT test
+- [bug] JAVA-2203: Handle unresolved addresses in DefaultEndPoint
+- [bug] JAVA-2210: Add ability to set TTL for modification queries
+- [improvement] JAVA-2212: Add truncate to QueryBuilder 
+- [improvement] JAVA-2211: Upgrade Jersey examples to fix security issue sid-3606
+- [bug] JAVA-2193: Fix flaky tests in ExecutionInfoWarningsIT
+- [improvement] JAVA-2197: Skip deployment of examples and integration tests to Maven central
+
+### 4.0.0
+
+- [improvement] JAVA-2192: Don't return generic types with wildcards
 - [improvement] JAVA-2148: Add examples
 - [bug] JAVA-2189: Exclude virtual keyspaces from token map computation
 - [improvement] JAVA-2183: Enable materialized views when testing against Cassandra 4

@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.0.0-rc2-SNAPSHOT</version>
+    <version>4.0.2-SNAPSHOT</version>
   </parent>
 
   <artifactId>java-driver-integration-tests</artifactId>
@@ -30,9 +30,9 @@
   <name>DataStax Java driver for Apache Cassandra(R) - integration tests</name>
 
   <properties>
-    <skipParallelizableITs>false</skipParallelizableITs>
-    <skipSerialITs>false</skipSerialITs>
-    <skipIsolatedITs>false</skipIsolatedITs>
+    <skipParallelizableITs>${skipITs}</skipParallelizableITs>
+    <skipSerialITs>${skipITs}</skipSerialITs>
+    <skipIsolatedITs>${skipITs}</skipIsolatedITs>
   </properties>
 
   <dependencies>
@@ -228,6 +228,10 @@
           <skip>true</skip>
         </configuration>
       </plugin>
+      <!--
+        Don't disable the install or deploy plugins as downstream projects may rely on running
+        these integration tests as well.
+      -->
     </plugins>
   </build>
 </project>

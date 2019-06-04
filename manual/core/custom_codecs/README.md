@@ -105,7 +105,7 @@ session.execute(
 
 Custom codecs are used not only for their base type, but also recursively in collections, tuples and
 UDTs. For example, once your `int <-> String` codec is registered, you can also read a CQL
-`list<int>` as a Java `List<Integer>`:
+`list<int>` as a Java `List<String>`:
 
 ```java
 // cqlsh:ks> desc table test3;

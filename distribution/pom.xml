@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.0.0-rc2-SNAPSHOT</version>
+    <version>4.0.2-SNAPSHOT</version>
   </parent>
 
   <artifactId>java-driver-distribution</artifactId>
@@ -85,6 +85,13 @@
           <skip>true</skip>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <configuration>
+          <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
@@ -133,13 +140,6 @@
                 <descriptor>src/assembly/binary-tarball.xml</descriptor>
               </descriptors>
               <tarLongFileMode>posix</tarLongFileMode>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.sonatype.plugins</groupId>
-            <artifactId>nexus-staging-maven-plugin</artifactId>
-            <configuration>
-              <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
             </configuration>
           </plugin>
         </plugins>

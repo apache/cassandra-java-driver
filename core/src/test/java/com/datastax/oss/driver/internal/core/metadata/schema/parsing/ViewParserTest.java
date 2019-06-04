@@ -67,7 +67,7 @@ public class ViewParserTest extends SchemaParserTestBase {
     assertThat(pk0.getType()).isEqualTo(DataTypes.TEXT);
 
     assertThat(view.getClusteringColumns().entrySet()).hasSize(5);
-    Iterator<? extends ColumnMetadata> clusteringColumnsIterator =
+    Iterator<ColumnMetadata> clusteringColumnsIterator =
         view.getClusteringColumns().keySet().iterator();
     assertThat(clusteringColumnsIterator.next().getName().asInternal()).isEqualTo("score");
     assertThat(clusteringColumnsIterator.next().getName().asInternal()).isEqualTo("user");

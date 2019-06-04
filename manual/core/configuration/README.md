@@ -118,6 +118,46 @@ As shown so far, all options live under a `datastax-java-driver` prefix. This ca
 example if you need multiple driver instances in the same VM with different configurations. See the
 [Advanced topics](#changing-the-config-prefix) section.
 
+#### Alternate application config locations
+
+If loading `application.conf` from the classpath doesn't work for you, other loader implementations
+are available:
+
+* [DriverConfigLoader.fromClasspath]: still load from the classpath, but use a different resource
+  name. For example "config" will try to load `config.conf`, `config.json` or `config.properties`.
+* [DriverConfigLoader.fromFile]: load from a file on the local filesystem.
+* [DriverConfigLoader.fromUrl]: load from a URL.
+
+To use any of those loaders, pass it to the session builder:
+
+```java
+File file = new File("/path/to/application.conf");
+CqlSession session = CqlSession.builder()
+    .withConfigLoader(DriverConfigLoader.fromFile(file))
+    .build();
+```
+
+Apart from application-specific configuration, they work exactly like the default loader: they
+fall back to the driver's built-in `reference.conf` for defaults, accept overrides via system
+properties, and reload at the interval specified by the `basic.config-reload-interval` option. 
+
+#### Programmatic application config
+
+Alternatively, you can use [DriverConfigLoader.programmaticBuilder] to specify configuration options
+programmatically instead of loading them from a static resource:
+
+```java
+DriverConfigLoader loader =
+    DriverConfigLoader.programmaticBuilder()
+        .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(5))
+        .startProfile("slow")
+        .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+        .endProfile()
+        .build();
+CqlSession session = CqlSession.builder().withConfigLoader(loader).build();
+```
+
+This is useful for frameworks and tools that already have their own configuration mechanism.
 
 ### The configuration API
 
@@ -203,44 +243,6 @@ least, try to cache derived profiles if you reuse them multiple times.
 
 *Note: all the features described in this section use the driver's internal API, which is subject to
 the restrictions explained in [API conventions]*.
-
-#### Overriding configuration programmatically
-
-In some cases, an application may call for providing configuration programmatically.  For example,
-if configuration is determined at runtime or is derived from some other configuration source.
-The driver includes [DefaultDriverConfigLoaderBuilder] for this very purpose, which may be used in
-the following manner:
-
-```java
-import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
-import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
-import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
-import java.time.Duration;
-
-DefaultDriverConfigLoaderBuilder configBuilder =
-  DefaultDriverConfigLoader.builder()
-    .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofMillis(500))
-    .withProfile(
-      "profile1",
-      DefaultDriverConfigLoaderBuilder.profileBuilder()
-        .withString(
-          DefaultDriverOption.REQUEST_CONSISTENCY,
-          DefaultConsistencyLevel.EACH_QUORUM.name())
-        .build());
-
-CqlSession session = CqlSession.builder()
-  .withConfigLoader(configBuilder.build())
-  .build();
-```
-
-Note that any options provided to the builder will override values defined in configuration files
-and do not change the contents of the configuration files.
-
-Also note that we use the [DefaultDriverOption] enum to access built-in options, but the method
-takes a more generic [DriverOption] interface. This is intended to allow custom options, see the
-[Custom options](#custom-options) section.
 
 #### Changing the config prefix
 
@@ -486,13 +488,16 @@ config.getDefaultProfile().getString(MyCustomOption.ADMIN_EMAIL);
 config.getDefaultProfile().getInt(MyCustomOption.AWESOMENESS_FACTOR);
 ```
 
-[DriverConfig]:                     https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfig.html
-[DriverExecutionProfile]:           https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverExecutionProfile.html
-[DriverContext]:                    https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/context/DriverContext.html
-[DriverOption]:                     https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverOption.html
-[DefaultDriverOption]:              https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DefaultDriverOption.html
-[DriverConfigLoader]:               https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html
-[DefaultDriverConfigLoaderBuilder]: https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/internal/core/config/typesafe/DefaultDriverConfigLoaderBuilder.html
+[DriverConfig]:                           https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfig.html
+[DriverExecutionProfile]:                 https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverExecutionProfile.html
+[DriverContext]:                          https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/context/DriverContext.html
+[DriverOption]:                           https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverOption.html
+[DefaultDriverOption]:                    https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DefaultDriverOption.html
+[DriverConfigLoader]:                     https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html
+[DriverConfigLoader.fromClasspath]:       https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromClasspath-java.lang.String-
+[DriverConfigLoader.fromFile]:            https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromFile-java.io.File-
+[DriverConfigLoader.fromUrl]:             https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromUrl-java.net.URL-
+[DriverConfigLoader.programmaticBuilder]: https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#programmaticBuilder--
 
 [Typesafe Config]: https://github.com/typesafehub/config
 [config standard behavior]: https://github.com/typesafehub/config#standard-behavior

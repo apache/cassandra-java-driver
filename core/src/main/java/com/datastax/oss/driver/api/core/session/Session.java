@@ -113,7 +113,7 @@ public interface Session extends AsyncAutoCloseable {
    *     complete. Otherwise, a completed future with the current metadata.
    */
   @NonNull
-  CompletionStage<? extends Metadata> setSchemaMetadataEnabled(@Nullable Boolean newValue);
+  CompletionStage<Metadata> setSchemaMetadataEnabled(@Nullable Boolean newValue);
 
   /**
    * Force an immediate refresh of the schema metadata, even if it is currently disabled (either in
@@ -123,7 +123,7 @@ public interface Session extends AsyncAutoCloseable {
    * #getMetadata()} when that future completes).
    */
   @NonNull
-  CompletionStage<? extends Metadata> refreshSchemaAsync();
+  CompletionStage<Metadata> refreshSchemaAsync();
 
   /**
    * Convenience method to call {@link #refreshSchemaAsync()} and block for the result.
@@ -197,7 +197,7 @@ public interface Session extends AsyncAutoCloseable {
    * disabled.
    */
   @NonNull
-  Optional<? extends Metrics> getMetrics();
+  Optional<Metrics> getMetrics();
 
   /**
    * Executes an arbitrary request.

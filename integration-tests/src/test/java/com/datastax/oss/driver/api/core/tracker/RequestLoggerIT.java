@@ -22,9 +22,9 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -37,10 +37,10 @@ import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
+import com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
-import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogger;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.codec.ConsistencyLevel;
@@ -69,23 +69,6 @@ public class RequestLoggerIT {
 
   private SimulacronRule simulacronRule = new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
-  private final DefaultDriverConfigLoaderBuilder.Profile lowThresholdProfile =
-      DefaultDriverConfigLoaderBuilder.profileBuilder()
-          .withDuration(DefaultDriverOption.REQUEST_LOGGER_SLOW_THRESHOLD, Duration.ofNanos(1))
-          .build();
-
-  private final DefaultDriverConfigLoaderBuilder.Profile noLogsProfile =
-      DefaultDriverConfigLoaderBuilder.profileBuilder()
-          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, false)
-          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SLOW_ENABLED, false)
-          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, false)
-          .build();
-
-  private final DefaultDriverConfigLoaderBuilder.Profile noTracesProfile =
-      DefaultDriverConfigLoaderBuilder.profileBuilder()
-          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES, false)
-          .build();
-
   private final DriverConfigLoader requestLoader =
       SessionUtils.configLoaderBuilder()
           .withClass(DefaultDriverOption.REQUEST_TRACKER_CLASS, RequestLogger.class)
@@ -105,9 +88,14 @@ public class RequestLoggerIT {
               DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES,
               RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_VALUES)
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES, true)
-          .withProfile("low-threshold", lowThresholdProfile)
-          .withProfile("no-logs", noLogsProfile)
-          .withProfile("no-traces", noTracesProfile)
+          .startProfile("low-threshold")
+          .withDuration(DefaultDriverOption.REQUEST_LOGGER_SLOW_THRESHOLD, Duration.ofNanos(1))
+          .startProfile("no-logs")
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, false)
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SLOW_ENABLED, false)
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, false)
+          .startProfile("no-traces")
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES, false)
           .build();
 
   private SessionRule<CqlSession> sessionRuleRequest =
@@ -132,9 +120,17 @@ public class RequestLoggerIT {
               DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES,
               RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_VALUES)
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES, true)
-          .withProfile("low-threshold", lowThresholdProfile)
-          .withProfile("no-logs", noLogsProfile)
-          .withProfile("no-traces", noTracesProfile)
+          .startProfile("low-threshold")
+          .withDuration(DefaultDriverOption.REQUEST_LOGGER_SLOW_THRESHOLD, Duration.ofNanos(1))
+          .startProfile("no-logs")
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, false)
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SLOW_ENABLED, false)
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, false)
+          .startProfile("no-traces")
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES, false)
+          .startProfile("sorting-lbp")
+          .withClass(
+              DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS, SortingLoadBalancingPolicy.class)
           .build();
 
   private SessionRule<CqlSession> sessionRuleNode =
@@ -147,9 +143,15 @@ public class RequestLoggerIT {
                   .withClass(DefaultDriverOption.REQUEST_TRACKER_CLASS, RequestLogger.class)
                   .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, true)
                   .withBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, true)
-                  .withProfile("low-threshold", lowThresholdProfile)
-                  .withProfile("no-logs", noLogsProfile)
-                  .withProfile("no-traces", noTracesProfile)
+                  .startProfile("low-threshold")
+                  .withDuration(
+                      DefaultDriverOption.REQUEST_LOGGER_SLOW_THRESHOLD, Duration.ofNanos(1))
+                  .startProfile("no-logs")
+                  .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, false)
+                  .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SLOW_ENABLED, false)
+                  .withBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, false)
+                  .startProfile("no-traces")
+                  .withBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES, false)
                   .build())
           .build();
 
@@ -321,7 +323,10 @@ public class RequestLoggerIT {
         .prime(when(QUERY).then(rows().row("release_version", "3.0.0")));
 
     // When
-    ResultSet set = sessionRuleNode.session().execute(QUERY);
+    sessionRuleNode
+        .session()
+        // use the sorting LBP here to ensure that node 0 is always hit first
+        .execute(SimpleStatement.builder(QUERY).setExecutionProfileName("sorting-lbp").build());
 
     // Then
     verify(appender, new Timeout(500, VerificationModeFactory.times(3)))

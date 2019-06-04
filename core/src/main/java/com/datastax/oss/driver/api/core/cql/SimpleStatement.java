@@ -57,6 +57,8 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
   /**
    * Shortcut to create an instance of the default implementation with only a CQL query (see {@link
    * SimpleStatementBuilder} for the defaults for the other fields).
+   *
+   * <p>Note that the returned object is <b>immutable</b>.
    */
   static SimpleStatement newInstance(@NonNull String cqlQuery) {
     return new DefaultSimpleStatement(
@@ -84,6 +86,8 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
   /**
    * Shortcut to create an instance of the default implementation with only a CQL query and
    * positional values (see {@link SimpleStatementBuilder} for the defaults for the other fields).
+   *
+   * <p>Note that the returned object is <b>immutable</b>.
    *
    * @param positionalValues the values for placeholders in the query string. Individual values can
    *     be {@code null}, but the vararg array itself can't.
@@ -115,6 +119,8 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
   /**
    * Shortcut to create an instance of the default implementation with only a CQL query and named
    * values (see {@link SimpleStatementBuilder} for the defaults for other fields).
+   *
+   * <p>Note that the returned object is <b>immutable</b>.
    */
   static SimpleStatement newInstance(
       @NonNull String cqlQuery, @NonNull Map<String, Object> namedValues) {
