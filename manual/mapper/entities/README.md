@@ -251,8 +251,62 @@ i.e.:
 private transient int notAColumn;
 ```
 
+### Default keyspace
+
+You can specify a default keyspace to use when doing operations on a given entity:
+
+```java
+@Entity(defaultKeyspace = "inventory")
+public class Product {
+  //....
+}
+```
+
+This will be used when you build a DAO without an explicit keyspace parameter:
+
+```java
+@Mapper
+public interface InventoryMapper {
+  @DaoFactory
+  ProductDao productDao();
+
+  @DaoFactory
+  ProductDao productDao(@DaoKeyspace String keyspace);
+}
+
+ProductDao productDao = mapper.productDao();
+productDao.insert(product); // inserts into inventory.product
+
+ProductDao productDaoTest = mapper.productDao("test");
+productDaoTest.insert(product); // inserts into test.product
+```
+
+The default keyspace optional: if it is not specified, and you build a DAO without a keyspace, then
+the session **must** have a default keyspace, otherwise an error will be thrown:
+
+```java
+@Entity
+public class Product { ... }
+
+CqlSession session = CqlSession.builder()
+    .withKeyspace("default_ks")
+    .build();
+InventoryMapper mapper = new InventoryMapperBuilder(session).build();
+
+ProductDao productDao = mapper.productDao();
+productDao.insert(product); // inserts into default_ks.product
+```
+
+If you want the name to be case-sensitive, it must be enclosed in double-quotes, for example:
+
+```java
+@Entity(defaultKeyspace = "\"defaultKs\"")
+```
+
+
 [@ClusteringColumn]:    http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
 [@CqlName]:             http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/CqlName.html
+[@Dao]:                 http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Dao.html
 [@Entity]:              http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Entity.html
 [NameConverter]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/entity/naming/NameConverter.html
 [NamingConvention]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/entity/naming/NamingConvention.html

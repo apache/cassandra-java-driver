@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.mapper.annotations;
 
+import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -74,4 +75,54 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.CLASS)
-public @interface Entity {}
+public @interface Entity {
+  /**
+   * Specifies a default keyspace to use when doing operations on this entity.
+   *
+   * <p>This will be used when you build a DAO without an explicit keyspace parameter:
+   *
+   * <pre>
+   * &#64;Entity(defaultKeyspace = "inventory")
+   * public class Product { ... }
+   *
+   * &#64;Mapper
+   * public interface InventoryMapper {
+   *   &#64;DaoFactory
+   *   ProductDao productDao();
+   *
+   *   &#64;DaoFactory
+   *   ProductDao productDao(@DaoKeyspace String keyspace);
+   * }
+   *
+   * ProductDao productDao = mapper.productDao();
+   * productDao.insert(product); // inserts into inventory.product
+   *
+   * ProductDao productDaoTest = mapper.productDao("test");
+   * productDaoTest.insert(product); // inserts into test.product
+   * </pre>
+   *
+   * The default keyspace optional: if it is not specified, and you build a DAO without a keyspace,
+   * then the session <b>must</b> have a default keyspace (set with {@link
+   * SessionBuilder#withKeyspace(String)}), otherwise an error will be thrown:
+   *
+   * <pre>
+   * &#64;Entity
+   * public class Product { ... }
+   *
+   * CqlSession session = CqlSession.builder()
+   *     .withKeyspace("default_ks")
+   *     .build();
+   * InventoryMapper mapper = new InventoryMapperBuilder(session).build();
+   *
+   * ProductDao productDao = mapper.productDao();
+   * productDao.insert(product); // inserts into default_ks.product
+   * </pre>
+   *
+   * If you want the name to be case-sensitive, it must be enclosed in double-quotes, for example:
+   *
+   * <pre>
+   * &#64;Entity(defaultKeyspace = "\"defaultKs\"")
+   * </pre>
+   */
+  String defaultKeyspace() default "";
+}

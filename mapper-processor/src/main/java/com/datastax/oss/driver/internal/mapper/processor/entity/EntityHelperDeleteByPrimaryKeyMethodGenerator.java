@@ -54,6 +54,9 @@ public class EntityHelperDeleteByPrimaryKeyMethodGenerator implements MethodGene
     } else {
       deleteByPrimaryKeyBuilder
           .addStatement("$T keyspaceId = context.getKeyspaceId()", CqlIdentifier.class)
+          .beginControlFlow("if (keyspaceId == null)")
+          .addStatement("keyspaceId = defaultKeyspaceId")
+          .endControlFlow()
           .addStatement("$T tableId = context.getTableId()", CqlIdentifier.class)
           .beginControlFlow("if (tableId == null)")
           .addStatement("tableId = defaultTableId")
