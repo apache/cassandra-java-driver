@@ -24,10 +24,12 @@ import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
+import java.util.Map;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
@@ -40,9 +42,10 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
 
   public DaoSetEntityMethodGenerator(
       ExecutableElement methodElement,
+      Map<Name, TypeElement> typeParameters,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    super(methodElement, enclosingClass, context);
+    super(methodElement, typeParameters, enclosingClass, context);
     nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
   }
 
@@ -127,7 +130,7 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
 
     // Forward to the base injector in the helper:
     return Optional.of(
-        GeneratedCodePatterns.override(methodElement)
+        GeneratedCodePatterns.override(methodElement, typeParameters)
             .addStatement(
                 "$1L$2L.set($3L, $4L, $5T.$6L)",
                 isVoid ? "" : "return ",

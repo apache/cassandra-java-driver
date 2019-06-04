@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
@@ -55,9 +56,10 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
 
   public DaoDeleteMethodGenerator(
       ExecutableElement methodElement,
+      Map<Name, TypeElement> typeParameters,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    super(methodElement, enclosingClass, context);
+    super(methodElement, typeParameters, enclosingClass, context);
   }
 
   @Override
@@ -160,7 +162,8 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
             (methodBuilder, requestName) ->
                 generatePrepareRequest(methodBuilder, requestName, helperFieldName));
 
-    MethodSpec.Builder deleteBuilder = GeneratedCodePatterns.override(methodElement);
+    MethodSpec.Builder deleteBuilder =
+        GeneratedCodePatterns.override(methodElement, typeParameters);
     if (returnType.kind.isAsync) {
       deleteBuilder.beginControlFlow("try");
     }

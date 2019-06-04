@@ -36,11 +36,17 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import java.beans.Introspector;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.Name;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeVariable;
 
 /** A collection of recurring patterns in our generated sources. */
 public class GeneratedCodePatterns {
@@ -63,16 +69,33 @@ public class GeneratedCodePatterns {
 
   /** Starts the generation of a method that overrides an interface method. */
   public static MethodSpec.Builder override(ExecutableElement interfaceMethod) {
+    return override(interfaceMethod, Collections.emptyMap());
+  }
+
+  public static MethodSpec.Builder override(
+      ExecutableElement interfaceMethod, Map<Name, TypeElement> typeParameters) {
     MethodSpec.Builder result =
         MethodSpec.methodBuilder(interfaceMethod.getSimpleName().toString())
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
-            .returns(ClassName.get(interfaceMethod.getReturnType()));
+            .returns(
+                ClassName.get(getConcreteType(interfaceMethod.getReturnType(), typeParameters)));
     for (VariableElement parameterElement : interfaceMethod.getParameters()) {
-      result.addParameter(
-          ClassName.get(parameterElement.asType()), parameterElement.getSimpleName().toString());
+      TypeMirror type = getConcreteType(parameterElement.asType(), typeParameters);
+      result.addParameter(ClassName.get(type), parameterElement.getSimpleName().toString());
     }
     return result;
+  }
+
+  private static TypeMirror getConcreteType(
+      TypeMirror mirror, Map<Name, TypeElement> typeParameters) {
+    if (mirror.getKind() == TypeKind.TYPEVAR) {
+      TypeVariable typeVariable = ((TypeVariable) mirror);
+      Name name = typeVariable.asElement().getSimpleName();
+      TypeElement element = typeParameters.get(name);
+      return element != null ? element.asType() : mirror;
+    }
+    return mirror;
   }
 
   /** Adds a private final field to a class, that gets initialized through its constructor. */

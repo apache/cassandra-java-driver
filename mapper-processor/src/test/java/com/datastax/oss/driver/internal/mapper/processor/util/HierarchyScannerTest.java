@@ -189,8 +189,7 @@ public class HierarchyScannerTest {
     MockInterface x = i("x", yHighest, y);
     // when checking to see if we're at the 'highest' class (this.getClass()) return true
     // for y.
-    Mockito.when(context.getClassUtils().isSame(y.interfaceElement, this.getClass()))
-        .thenReturn(true);
+    Mockito.when(context.getClassUtils().isSame(y.classElement, this.getClass())).thenReturn(true);
     MockInterface w = i("w");
 
     MockClass b = c("b", null, a, r);
@@ -224,18 +223,16 @@ public class HierarchyScannerTest {
     return noneMirror;
   }
 
-  // TODO: Refactor these together.
-  class MockClass {
-
+  class MockElement {
     final String name;
     final TypeMirror mirror;
     final TypeElement classElement;
-    final List<MockInterface> interfaces;
+    final List<MockElement> interfaces;
     final MockClass parent;
     final Name qfName;
 
     @SuppressWarnings("unchecked")
-    MockClass(
+    MockElement(
         String name,
         HierarchyScanStrategy strategy,
         MockClass parent,
@@ -252,13 +249,15 @@ public class HierarchyScannerTest {
       Mockito.when(classElement.getSuperclass()).thenReturn(parentMirror);
 
       List interfaceList = Lists.newArrayList();
-      for (MockInterface i : interfaces) {
+      for (MockElement i : interfaces) {
         interfaceList.add(i.mirror);
       }
       Mockito.when(classElement.getInterfaces()).thenReturn(interfaceList);
 
       this.mirror = Mockito.mock(TypeMirror.class);
       Mockito.when(mirror.getKind()).thenReturn(TypeKind.DECLARED);
+      Mockito.when(mirror.toString()).thenReturn(name);
+      Mockito.when(classElement.asType()).thenReturn(mirror);
       Mockito.when(context.getTypeUtils().asElement(mirror)).thenReturn(classElement);
 
       this.qfName = Mockito.mock(Name.class);
@@ -267,38 +266,21 @@ public class HierarchyScannerTest {
     }
   }
 
-  class MockInterface {
-    final String name;
-    final TypeMirror mirror;
-    final TypeElement interfaceElement;
-    final List<MockInterface> interfaces;
-    final Name qfName;
+  class MockClass extends MockElement {
 
-    @SuppressWarnings("unchecked")
-    public MockInterface(String name, HierarchyScanStrategy strategy, MockInterface... interfaces) {
-      this.name = name;
-      this.interfaces = Arrays.asList(interfaces);
+    MockClass(
+        String name,
+        HierarchyScanStrategy strategy,
+        MockClass parent,
+        MockInterface... interfaces) {
+      super(name, strategy, parent, interfaces);
+    }
+  }
 
-      this.interfaceElement = Mockito.mock(TypeElement.class);
-      Mockito.when(interfaceElement.toString()).thenReturn(name);
-      Mockito.when(interfaceElement.getAnnotation(HierarchyScanStrategy.class))
-          .thenReturn(strategy);
+  class MockInterface extends MockElement {
 
-      TypeMirror root = root();
-      Mockito.when(interfaceElement.getSuperclass()).thenReturn(root);
-      List interfaceList = Lists.newArrayList();
-      for (MockInterface i : interfaces) {
-        interfaceList.add(i.mirror);
-      }
-      Mockito.when(interfaceElement.getInterfaces()).thenReturn(interfaceList);
-
-      this.mirror = Mockito.mock(TypeMirror.class);
-      Mockito.when(mirror.getKind()).thenReturn(TypeKind.DECLARED);
-      Mockito.when(context.getTypeUtils().asElement(mirror)).thenReturn(interfaceElement);
-
-      this.qfName = Mockito.mock(Name.class);
-      Mockito.when(qfName.toString()).thenReturn(name);
-      Mockito.when(interfaceElement.getQualifiedName()).thenReturn(qfName);
+    MockInterface(String name, HierarchyScanStrategy strategy, MockInterface... interfaces) {
+      super(name, strategy, null, interfaces);
     }
   }
 }

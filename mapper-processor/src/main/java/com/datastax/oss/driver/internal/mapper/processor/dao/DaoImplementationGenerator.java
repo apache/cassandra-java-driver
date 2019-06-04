@@ -26,8 +26,10 @@ import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.util.HierarchyScanner;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
+import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -51,8 +53,11 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeVariable;
 
 public class DaoImplementationGenerator extends SingleFileCodeGenerator
     implements DaoImplementationSharedCode {
@@ -146,21 +151,69 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
             .superclass(DaoBase.class)
             .addSuperinterface(ClassName.get(interfaceElement));
 
-    for (Element child : interfaceElement.getEnclosedElements()) {
-      if (child.getKind() == ElementKind.METHOD) {
-        ExecutableElement methodElement = (ExecutableElement) child;
-        Set<Modifier> modifiers = methodElement.getModifiers();
-        if (!modifiers.contains(Modifier.STATIC) && !modifiers.contains(Modifier.DEFAULT)) {
-          Optional<MethodGenerator> maybeGenerator =
-              context.getCodeGeneratorFactory().newDaoImplementationMethod(methodElement, this);
-          if (!maybeGenerator.isPresent()) {
-            context
-                .getMessager()
-                .error(
-                    methodElement,
-                    "Unrecognized method signature: no implementation will be generated");
-          } else {
-            maybeGenerator.flatMap(MethodGenerator::generate).ifPresent(classBuilder::addMethod);
+    Set<TypeMirror> interfaces = HierarchyScanner.resolveTypeHierarchy(interfaceElement, context);
+    Map<Name, TypeElement> previousTypeParameters = Maps.newHashMap();
+    for (TypeMirror mirror : interfaces) {
+      TypeElement interfaceElement = (TypeElement) context.getTypeUtils().asElement(mirror);
+
+      // Map interface type arguments to their concrete class.
+      Map<Name, TypeElement> typeParameters = Maps.newHashMap();
+      if (mirror instanceof DeclaredType) {
+        DeclaredType declaredType = (DeclaredType) mirror;
+        for (int i = 0; i < declaredType.getTypeArguments().size(); i++) {
+          Name name = interfaceElement.getTypeParameters().get(i).getSimpleName();
+          TypeMirror typeArgument = declaredType.getTypeArguments().get(i);
+          if (typeArgument instanceof DeclaredType) {
+            // if its a DeclaredType, we have the ConcreteType
+            Element concreteType = ((DeclaredType) typeArgument).asElement();
+            typeParameters.put(name, (TypeElement) concreteType);
+          } else if (typeArgument instanceof TypeVariable) {
+            // if its a TypeVariable, we need to resolve the concrete type
+            // from the previously encountered interface and alias it to the
+            // type on this class.
+            /*
+             * TODO: This won't work in cases where a type has multiple generic
+             * parent interfaces.  Need to track previous type parameters from
+             * child classes.
+             */
+            TypeVariable genericType = (TypeVariable) typeArgument;
+            Name previousName = genericType.asElement().getSimpleName();
+            if (previousTypeParameters.containsKey(previousName)) {
+              typeParameters.put(name, previousTypeParameters.get(previousName));
+            } else {
+              context
+                  .getMessager()
+                  .error(
+                      interfaceElement,
+                      "Could not resolve type parameter %s "
+                          + "on %s from child interfaces having type parameter %s.  Resolved type parameters: ",
+                      name,
+                      interfaceElement,
+                      previousName);
+            }
+          }
+        }
+        previousTypeParameters = typeParameters;
+      }
+
+      for (Element child : interfaceElement.getEnclosedElements()) {
+        if (child.getKind() == ElementKind.METHOD) {
+          ExecutableElement methodElement = (ExecutableElement) child;
+          Set<Modifier> modifiers = methodElement.getModifiers();
+          if (!modifiers.contains(Modifier.STATIC) && !modifiers.contains(Modifier.DEFAULT)) {
+            Optional<MethodGenerator> maybeGenerator =
+                context
+                    .getCodeGeneratorFactory()
+                    .newDaoImplementationMethod(methodElement, typeParameters, this);
+            if (!maybeGenerator.isPresent()) {
+              context
+                  .getMessager()
+                  .error(
+                      methodElement,
+                      "Unrecognized method signature: no implementation will be generated");
+            } else {
+              maybeGenerator.flatMap(MethodGenerator::generate).ifPresent(classBuilder::addMethod);
+            }
           }
         }
       }

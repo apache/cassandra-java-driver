@@ -79,7 +79,12 @@ public class DefaultEntityFactory implements EntityFactory {
 
   @Override
   public EntityDefinition getDefinition(TypeElement classElement) {
-    Set<TypeElement> typeHierarchy = HierarchyScanner.resolveTypeHierarchy(classElement, context);
+    Set<TypeMirror> types = HierarchyScanner.resolveTypeHierarchy(classElement, context);
+    Set<TypeElement> typeHierarchy = Sets.newLinkedHashSet();
+    for (TypeMirror type : types) {
+      typeHierarchy.add((TypeElement) context.getTypeUtils().asElement(type));
+    }
+
     CqlNameGenerator cqlNameGenerator = buildCqlNameGenerator(typeHierarchy);
     Set<String> transientProperties = getTransientPropertyNames(typeHierarchy);
 
@@ -114,7 +119,7 @@ public class DefaultEntityFactory implements EntityFactory {
         }
 
         String setMethodName = getMethodName.replaceFirst("get", "set");
-        ExecutableElement setMethod = findSetMethod(typeElement, setMethodName, typeMirror);
+        ExecutableElement setMethod = findSetMethod(typeHierarchy, setMethodName, typeMirror);
         if (setMethod == null) {
           continue; // must have both
         }
@@ -142,6 +147,7 @@ public class DefaultEntityFactory implements EntityFactory {
                 setMethodName,
                 propertyType,
                 cqlNameGenerator);
+        encounteredPropertyNames.add(propertyName);
 
         if (partitionKeyIndex >= 0) {
           PropertyDefinition previous = partitionKey.putIfAbsent(partitionKeyIndex, property);
@@ -211,7 +217,7 @@ public class DefaultEntityFactory implements EntityFactory {
         }
         VariableElement field = (VariableElement) child;
         if (field.getSimpleName().toString().equals(propertyName)
-            && context.getTypeUtils().isSameType(field.asType(), fieldType)) {
+            && context.getTypeUtils().isAssignable(fieldType, field.asType())) {
           return field;
         }
       }
@@ -221,21 +227,23 @@ public class DefaultEntityFactory implements EntityFactory {
 
   @Nullable
   private ExecutableElement findSetMethod(
-      TypeElement classElement, String setMethodName, TypeMirror fieldType) {
-    for (Element child : classElement.getEnclosedElements()) {
-      Set<Modifier> modifiers = child.getModifiers();
-      if (child.getKind() != ElementKind.METHOD
-          || modifiers.contains(Modifier.STATIC)
-          || modifiers.contains(Modifier.PRIVATE)) {
-        continue;
-      }
-      ExecutableElement setMethod = (ExecutableElement) child;
-      List<? extends VariableElement> parameters = setMethod.getParameters();
+      Set<TypeElement> typeHierarchy, String setMethodName, TypeMirror fieldType) {
+    for (TypeElement classElement : typeHierarchy) {
+      for (Element child : classElement.getEnclosedElements()) {
+        Set<Modifier> modifiers = child.getModifiers();
+        if (child.getKind() != ElementKind.METHOD
+            || modifiers.contains(Modifier.STATIC)
+            || modifiers.contains(Modifier.PRIVATE)) {
+          continue;
+        }
+        ExecutableElement setMethod = (ExecutableElement) child;
+        List<? extends VariableElement> parameters = setMethod.getParameters();
 
-      if (setMethod.getSimpleName().toString().equals(setMethodName)
-          && parameters.size() == 1
-          && context.getTypeUtils().isSameType(parameters.get(0).asType(), fieldType)) {
-        return setMethod;
+        if (setMethod.getSimpleName().toString().equals(setMethodName)
+            && parameters.size() == 1
+            && context.getTypeUtils().isAssignable(fieldType, parameters.get(0).asType())) {
+          return setMethod;
+        }
       }
     }
     return null;
@@ -466,7 +474,9 @@ public class DefaultEntityFactory implements EntityFactory {
             reportMultipleAnnotationError(field, exclusiveAnnotation, annotationClass);
           }
         }
-        annotations.put(annotationClass, annotation);
+        if (!annotations.containsKey(annotationClass)) {
+          annotations.put(annotationClass, annotation);
+        }
       }
     }
   }
@@ -488,7 +498,9 @@ public class DefaultEntityFactory implements EntityFactory {
                 annotation.get().getElement(), exclusiveAnnotation, annotationClass);
           }
         }
-        annotations.put(annotationClass, annotation.get().getAnnotation());
+        if (!annotations.containsKey(annotationClass)) {
+          annotations.put(annotationClass, annotation.get().getAnnotation());
+        }
       }
     }
   }

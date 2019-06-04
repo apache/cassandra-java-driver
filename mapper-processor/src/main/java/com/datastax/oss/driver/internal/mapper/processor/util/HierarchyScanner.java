@@ -43,17 +43,19 @@ public class HierarchyScanner {
    * follows:
    *
    * <ol>
-   *   <li>Initialize <code>i</code> as an empty set
-   *   <li>Visit typeElement (<code>e</code>)
-   *   <li>Visit <code>e</code>'s parent class (<code>p</code>), if <code>p</code> is null, stop
-   *       traversing after evaluating remaining interfaces
-   *   <li>Visit <code>e</code>'s interfaces, and record those interfaces' parents for later use (
-   *       <code>ni</code>)
-   *   <li>Visit <code>i</code>, and append those interface's parents to <code>ni</code> for later
-   *       use)
-   *   <li>If <code>p != null</code> </code>Set <code>e := p, i := ni</code> and repeat starting at
+   *   <li>Initialize <code>interfacesToScan</code> as an empty set
+   *   <li>Visit <code>typeElement</code>
+   *   <li>Visit <code>typeElement</code>'s parent class (<code>superClassElement</code>), if <code>
+   *       superClassElement</code> is null, stop traversing after evaluating remaining interfaces
+   *   <li>Visit <code>typeElements</code>'s interfaces, and record those interfaces' parents for
+   *       later use (<code>newInterfacesToScan</code>)
+   *   <li>Visit <code>interfacesToScan</code>, and append those interface's parents to <code>
+   *       newInterfacesToScan</code> for later use)
+   *   <li>If <code>superClassElement != null</code> </code>Set <code>typeElement :=
+   *       superClassElement, interfacesToScan := newInterfacesToScan</code> and repeat starting at
    *       step 3
-   *   <li>Visit <code>ni</code> interfaces and their parents until we've reached root
+   *   <li>Visit <code>newInterfacesToScan</code> interfaces and their parents until we've reached
+   *       root
    * </ol>
    *
    * Once a {@link HierarchyScanStrategy} is identified, the returning hierarchy is built by
@@ -64,12 +66,12 @@ public class HierarchyScanner {
    * @return The type hierarchy, ordered from typeElement to the highestAncestor, as dictated by the
    *     resolved {@link HierarchyScanStrategy}
    */
-  public static Set<TypeElement> resolveTypeHierarchy(
+  public static Set<TypeMirror> resolveTypeHierarchy(
       TypeElement typeElement, ProcessorContext context) {
     HierarchyScanStrategy hierarchyScanStrategy =
         HierarchyScanner.resolveHierarchyScanStrategy(typeElement, context);
 
-    ImmutableSet.Builder<TypeElement> hierarchy = ImmutableSet.builder();
+    ImmutableSet.Builder<TypeMirror> hierarchy = ImmutableSet.builder();
     traverseFullHierarchy(hierarchyScanStrategy, typeElement, context, hierarchy::add);
     return hierarchy.build();
   }
@@ -87,7 +89,8 @@ public class HierarchyScanner {
         strategy,
         classElement,
         context,
-        (TypeElement t) -> {
+        (TypeMirror mirror) -> {
+          TypeElement t = (TypeElement) context.getTypeUtils().asElement(mirror);
           HierarchyScanStrategy discoveredStrategy = t.getAnnotation(HierarchyScanStrategy.class);
           // if we find a strategy, set it and stop traversing.
           if (discoveredStrategy != null) {
@@ -104,12 +107,12 @@ public class HierarchyScanner {
       HierarchyScanStrategy hierarchyScanStrategy,
       TypeElement classElement,
       ProcessorContext context,
-      Consumer<TypeElement> typeConsumer) {
+      Consumer<TypeMirror> typeConsumer) {
     traverseHierarchy(
         hierarchyScanStrategy,
         classElement,
         context,
-        (TypeElement t) -> {
+        (TypeMirror t) -> {
           typeConsumer.accept(t);
           return true;
         });
@@ -119,14 +122,13 @@ public class HierarchyScanner {
       HierarchyScanStrategy hierarchyScanStrategy,
       TypeElement classElement,
       ProcessorContext context,
-      Function<TypeElement, Boolean> typeConsumer) {
+      Function<TypeMirror, Boolean> typeConsumer) {
 
-    if (!typeConsumer.apply(classElement) || !hierarchyScanStrategy.scanAncestors()) {
+    if (!typeConsumer.apply(classElement.asType()) || !hierarchyScanStrategy.scanAncestors()) {
       return;
     }
 
     Set<TypeMirror> interfacesToScan = Collections.emptySet();
-    // TODO: Probably should also consider interfaces for highest class
     boolean atHighestClass =
         classElement
             .getQualifiedName()
@@ -143,7 +145,7 @@ public class HierarchyScanner {
                 .getClassUtils()
                 .isSame(superClassElement, hierarchyScanStrategy.highestAncestor());
         if (!atHighestClass || hierarchyScanStrategy.includeHighestAncestor()) {
-          if (!typeConsumer.apply(superClassElement)) {
+          if (!typeConsumer.apply(superClass)) {
             return;
           }
         }
@@ -185,7 +187,7 @@ public class HierarchyScanner {
       Collection<? extends TypeMirror> interfacesToScan,
       Set<TypeMirror> newInterfacesToScan,
       ProcessorContext context,
-      Function<TypeElement, Boolean> typeConsumer) {
+      Function<TypeMirror, Boolean> typeConsumer) {
     for (TypeMirror interfaceType : interfacesToScan) {
       if (interfaceType.getKind() == TypeKind.DECLARED) {
         TypeElement interfaceElement =
@@ -196,7 +198,7 @@ public class HierarchyScanner {
                 .getClassUtils()
                 .isSame(interfaceElement, hierarchyScanStrategy.highestAncestor());
         if (!atHighest || hierarchyScanStrategy.includeHighestAncestor()) {
-          if (!typeConsumer.apply(interfaceElement)) {
+          if (!typeConsumer.apply(interfaceType)) {
             return;
           }
         }
