@@ -94,6 +94,10 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
             .addField(
                 FieldSpec.builder(
                         CqlIdentifier.class, "defaultTableId", Modifier.PUBLIC, Modifier.FINAL)
+                    .build())
+            .addField(
+                FieldSpec.builder(
+                        CqlIdentifier.class, "defaultKeyspaceId", Modifier.PUBLIC, Modifier.FINAL)
                     .build());
 
     for (MethodGenerator methodGenerator :
@@ -117,6 +121,15 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
 
     constructorContents.addStatement(
         "defaultTableId = $T.fromCql($L)", CqlIdentifier.class, entityDefinition.getCqlName());
+
+    if (entityDefinition.getDefaultKeyspace() == null) {
+      constructorContents.addStatement("defaultKeyspaceId = null");
+    } else {
+      constructorContents.addStatement(
+          "defaultKeyspaceId = $T.fromCql($S)",
+          CqlIdentifier.class,
+          entityDefinition.getDefaultKeyspace());
+    }
 
     genericTypeConstantGenerator.generate(classContents);
 

@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.mapper.processor.entity;
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.Computed;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
+import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.NamingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Transient;
@@ -167,9 +168,12 @@ public class DefaultEntityFactory implements EntityFactory {
     }
 
     String entityName = Introspector.decapitalize(classElement.getSimpleName().toString());
+    String defaultKeyspace = classElement.getAnnotation(Entity.class).defaultKeyspace();
+
     return new DefaultEntityDefinition(
         ClassName.get(classElement),
         entityName,
+        defaultKeyspace.isEmpty() ? null : defaultKeyspace,
         Optional.ofNullable(classElement.getAnnotation(CqlName.class)).map(CqlName::value),
         ImmutableList.copyOf(partitionKey.values()),
         ImmutableList.copyOf(clusteringColumns.values()),
