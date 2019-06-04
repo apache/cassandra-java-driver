@@ -49,12 +49,15 @@ builds, but if something looks off you can try a full rebuild with `mvn clean co
 
 One of the advantages of annotation processing is that the generated code is produced as regular
 source files, that you can read and debug like the rest of your application. With the above
-configuration, these files are in `target/generated-sources/annotations`. They follow the same
-package structure as your annotated types. Most end in a special `__MapperGenerated` suffix, in
-order to clearly identify them in stack traces (one exception is the mapper builder, because it is
-referenced directly from your code).
+configuration, these files are in `target/generated-sources/annotations`. Make sure that
+directory is marked as a source folder in your IDE (for example, in IntelliJ IDEA, this might
+require right-clicking on your `pom.xml` and selecting "Maven > Reimport").
 
-Do not edit the generated files directly: your changes would be overwritten during the next full
+Generated sources follow the same package structure as your annotated types. Most end in a special
+`__MapperGenerated` suffix, in order to clearly identify them in stack traces (one exception is the
+mapper builder, because it is referenced directly from your code).
+
+Do not edit those files files directly: your changes would be overwritten during the next full
 rebuild.
 
 ### Gradle
