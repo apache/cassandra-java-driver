@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.0.2 (in progress)
+### 4.1.0 (in progress)
 
 - [improvement] JAVA-2242: Allow skipping all integration tests with -DskipITs
 - [improvement] JAVA-2241: Make DefaultDriverContext.cycleDetector protected
