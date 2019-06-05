@@ -340,6 +340,8 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
             .addParameter(MapperContext.class, "context")
             .addStatement("super(context)");
 
+    context.getLoggingGenerator().addLoggerField(classBuilder, implementationName);
+
     // For each entity helper that was requested by a method generator, create a field for it and
     // add a constructor parameter for it (the instance gets created in initAsync).
     for (Map.Entry<ClassName, String> entry : entityHelperFields.entrySet()) {
@@ -401,6 +403,14 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
             .addParameter(MapperContext.class, "context");
 
+    LoggingGenerator loggingGenerator = context.getLoggingGenerator();
+    loggingGenerator.debug(
+        initAsyncBuilder,
+        "[{}] Initializing new instance for keyspace = {} and table = {}",
+        CodeBlock.of("context.getSession().getName()"),
+        CodeBlock.of("context.getKeyspaceId()"),
+        CodeBlock.of("context.getTableId()"));
+
     generateProtocolVersionCheck(initAsyncBuilder);
 
     initAsyncBuilder.beginControlFlow("try");
@@ -431,6 +441,13 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
       String simpleStatementName = preparedStatement.fieldName + "_simple";
       preparedStatement.simpleStatementGenerator.accept(initAsyncBuilder, simpleStatementName);
       // - prepare it asynchronously, store all CompletionStages in a list
+      loggingGenerator.debug(
+          initAsyncBuilder,
+          String.format(
+              "[{}] Preparing query `{}` for method %s",
+              preparedStatement.methodElement.toString()),
+          CodeBlock.of("context.getSession().getName()"),
+          CodeBlock.of("$L.getQuery()", simpleStatementName));
       initAsyncBuilder
           .addStatement(
               "$T $L = prepare($L, context)",
