@@ -104,6 +104,12 @@ public class NullSavingStrategyIT {
   }
 
   @Test
+  public void should_do_not_throw_when_construct_dao_with_parent_interface_SET_TO_NULL() {
+    assertThatCode(() -> mapper.productDaoSetToNullFromParentInterface(sessionRule.keyspace()))
+        .doesNotThrowAnyException();
+  }
+
+  @Test
   public void
       should_do_not_throw_when_construct_dao_with_global_level_DO_NOT_SET_and_local_override_to_SET_TO_NULL() {
     assertThatCode(() -> mapper.productDaoLocalOverride(sessionRule.keyspace()))
@@ -126,9 +132,16 @@ public class NullSavingStrategyIT {
         @DaoKeyspace CqlIdentifier keyspace);
 
     @DaoFactory
+    ProductSimpleDaoSetToNullFromParentInterface productDaoSetToNullFromParentInterface(
+        @DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
     ProductSimpleDaoGlobalLevelDoNotSetOverrideSetToNull productDaoLocalOverride(
         @DaoKeyspace CqlIdentifier keyspace);
   }
+
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
+  public interface SetToNull {}
 
   @Dao
   public interface ProductSimpleDao {
@@ -152,7 +165,7 @@ public class NullSavingStrategyIT {
 
   @Dao
   @DefaultNullSavingStrategy(NullSavingStrategy.DO_NOT_SET)
-  public interface ProductSimpleDaoDefault {
+  public interface ProductSimpleDaoDefault extends SetToNull {
     @Update
     void update(ProductSimple product);
 
@@ -170,6 +183,10 @@ public class NullSavingStrategyIT {
     @Select
     ProductSimple findById(UUID productId);
   }
+
+  @Dao
+  public interface ProductSimpleDaoSetToNullFromParentInterface
+      extends ProductSimpleDaoImplicit, SetToNull {}
 
   @Dao
   @DefaultNullSavingStrategy(NullSavingStrategy.DO_NOT_SET)

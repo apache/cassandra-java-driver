@@ -29,6 +29,8 @@ import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator
 import com.datastax.oss.driver.internal.mapper.processor.util.HierarchyScanner;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -39,6 +41,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import java.beans.Introspector;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -80,11 +83,39 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
   private final Map<TypeMirror, Map<Name, TypeElement>> typeMappingsForInterface =
       Maps.newHashMap();
 
+  private final Set<TypeMirror> interfaces;
+  private final Map<Class<? extends Annotation>, Annotation> annotations;
+
+  private static final Set<Class<? extends Annotation>> ANNOTATIONS =
+      ImmutableSet.of(DefaultNullSavingStrategy.class);
+
   public DaoImplementationGenerator(TypeElement interfaceElement, ProcessorContext context) {
     super(context);
     this.interfaceElement = interfaceElement;
+    this.interfaces = HierarchyScanner.resolveTypeHierarchy(interfaceElement, context);
+    this.annotations = scanAnnotations();
     implementationName = GeneratedNames.daoImplementation(interfaceElement);
     nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
+  }
+
+  private Map<Class<? extends Annotation>, Annotation> scanAnnotations() {
+    Map<Class<? extends Annotation>, Annotation> annotations = Maps.newHashMap();
+    for (TypeMirror mirror : interfaces) {
+      Element element = context.getTypeUtils().asElement(mirror);
+      for (Class<? extends Annotation> annotationClass : ANNOTATIONS) {
+        Annotation annotation = element.getAnnotation(annotationClass);
+        if (annotation != null) {
+          // don't replace annotations from lower levels.
+          annotations.putIfAbsent(annotationClass, annotation);
+        }
+      }
+    }
+    return ImmutableMap.copyOf(annotations);
+  }
+
+  @SuppressWarnings("unchecked")
+  private <A> Optional<A> getAnnotation(Class<A> annotationClass) {
+    return Optional.ofNullable((A) annotations.get(annotationClass));
   }
 
   @Override
@@ -137,8 +168,7 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
 
   @Override
   public Optional<NullSavingStrategy> getNullSavingStrategy() {
-    return Optional.ofNullable(interfaceElement.getAnnotation(DefaultNullSavingStrategy.class))
-        .map(DefaultNullSavingStrategy::value);
+    return getAnnotation(DefaultNullSavingStrategy.class).map(DefaultNullSavingStrategy::value);
   }
 
   @Override
@@ -222,7 +252,6 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
             .superclass(DaoBase.class)
             .addSuperinterface(ClassName.get(interfaceElement));
 
-    Set<TypeMirror> interfaces = HierarchyScanner.resolveTypeHierarchy(interfaceElement, context);
     for (TypeMirror mirror : interfaces) {
       TypeElement interfaceElement = (TypeElement) context.getTypeUtils().asElement(mirror);
       Map<Name, TypeElement> typeParameters = parseTypeParameters(mirror);
@@ -398,7 +427,9 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
   private void generateProtocolVersionCheck(MethodSpec.Builder builder) {
     List<ExecutableElement> methodElements =
         preparedStatements.stream().map(v -> v.methodElement).collect(Collectors.toList());
-    if (nullSavingStrategyValidation.hasDoNotSetOnAnyLevel(methodElements, interfaceElement)) {
+    DefaultNullSavingStrategy interfaceAnnotation =
+        getAnnotation(DefaultNullSavingStrategy.class).orElse(null);
+    if (nullSavingStrategyValidation.hasDoNotSetOnAnyLevel(methodElements, interfaceAnnotation)) {
       builder.addStatement("throwIfProtocolVersionV3(context)");
     }
   }
