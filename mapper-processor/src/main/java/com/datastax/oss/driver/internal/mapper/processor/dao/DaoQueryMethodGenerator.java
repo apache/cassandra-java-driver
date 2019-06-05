@@ -23,7 +23,6 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.datastax.oss.driver.internal.mapper.DaoBase;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
@@ -83,44 +82,6 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
       queryBuilder.beginControlFlow("try");
     }
 
-    if (queryString.contains(DaoBase.KEYSPACE_ID_PLACEHOLDER)) {
-      queryBuilder
-          .addComment("The query string contains $L", DaoBase.KEYSPACE_ID_PLACEHOLDER)
-          .beginControlFlow("if (context.getKeyspaceId() == null)")
-          .addComment(
-              "Make sure we have a keyspace (otherwise the substitutions in initAsync failed "
-                  + "and the prepared statement is null)")
-          .addStatement(
-              "throw new $T($S)",
-              IllegalStateException.class,
-              String.format(
-                  "Can't use %s in @%s method if the DAO wasn't built with a keyspace",
-                  DaoBase.KEYSPACE_ID_PLACEHOLDER, Query.class.getSimpleName()))
-          .endControlFlow();
-    }
-    if ((queryString.contains(DaoBase.TABLE_ID_PLACEHOLDER)
-            || queryString.contains(DaoBase.QUALIFIED_TABLE_ID_PLACEHOLDER))
-        && helperFieldName == null) {
-      queryBuilder
-          .addComment(
-              "The query string contains $L or $L",
-              DaoBase.TABLE_ID_PLACEHOLDER,
-              DaoBase.QUALIFIED_TABLE_ID_PLACEHOLDER)
-          .beginControlFlow("if (context.getTableId() == null)")
-          .addComment(
-              "Make sure we have a table (otherwise the substitutions in initAsync failed "
-                  + "and the prepared statement is null)")
-          .addStatement(
-              "throw new $T($S)",
-              IllegalStateException.class,
-              String.format(
-                  "Can't use %s or %s in @%s method if it doesn't return an entity class "
-                      + "and the DAO wasn't built with a table",
-                  DaoBase.TABLE_ID_PLACEHOLDER,
-                  DaoBase.QUALIFIED_TABLE_ID_PLACEHOLDER,
-                  Query.class.getSimpleName()))
-          .endControlFlow();
-    }
     List<? extends VariableElement> parameters = methodElement.getParameters();
 
     VariableElement statementAttributeParam = findStatementAttributesParam(methodElement);
@@ -171,6 +132,6 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
         SimpleStatement.class,
         requestName,
         queryString,
-        (helperFieldName == null) ? "null" : helperFieldName + ".defaultTableId");
+        helperFieldName);
   }
 }
