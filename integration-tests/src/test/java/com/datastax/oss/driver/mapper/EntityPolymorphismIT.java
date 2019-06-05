@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.api.mapper.annotations.HierarchyScanStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
@@ -68,7 +69,10 @@ public class EntityPolymorphismIT {
             "CREATE TABLE rectangles (rect_id uuid PRIMARY KEY, bottom_left frozen<point2d>, top_right frozen<point2d>, tags set<text>)",
             "CREATE TABLE squares (square_id uuid PRIMARY KEY, bottom_left frozen<point2d>, top_right frozen<point2d>, tags set<text>)",
             "CREATE TABLE spheres (sphere_id uuid PRIMARY KEY, center3d frozen<point3d>, radius "
-                + "double, tags set<text>)")) {
+                + "double, tags set<text>)",
+            "CREATE TABLE devices (device_id uuid PRIMARY KEY, name text)",
+            "CREATE TABLE tracked_devices (device_id uuid PRIMARY KEY, name text, location text)",
+            "CREATE TABLE simple_devices (id uuid PRIMARY KEY, in_use boolean)")) {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }
@@ -76,7 +80,7 @@ public class EntityPolymorphismIT {
   }
 
   // define parent interface with dao methods.
-  interface ShapeDao<T> {
+  interface BaseDao<T> {
     @Insert
     void save(T t);
 
@@ -85,24 +89,39 @@ public class EntityPolymorphismIT {
   }
 
   // another parent interface with dao methods
-  interface WriteTimeDao<Y extends WriteTimeProvider> extends ShapeDao<Y> {
+  interface WriteTimeDao<Y extends WriteTimeProvider> extends BaseDao<Y> {
     @Insert(timestamp = ":writeTime")
     void saveWithTime(Y y, long writeTime);
   };
 
-  // TODO: Get even crazier by having an interface with two parent interfaces that are general.
+  @Dao
+  interface RectangleDao extends BaseDao<Rectangle> {};
+
+  // Define an intermediate interface with same type variable name to ensure
+  // this doesn't cause any issue in code generation.
+  interface ArbitraryInterface<Y extends Number> {
+    default long increment(Y input) {
+      return input.longValue() + 1;
+    }
+  }
 
   @Dao
-  interface RectangleDao extends ShapeDao<Rectangle> {};
-
-  @Dao
-  interface SquareDao extends WriteTimeDao<Square> {};
+  interface SquareDao extends WriteTimeDao<Square>, ArbitraryInterface<Float> {};
 
   @Dao
   interface CircleDao extends WriteTimeDao<Circle> {}
 
   @Dao
   interface SphereDao extends WriteTimeDao<Sphere> {};
+
+  @Dao
+  interface DeviceDao extends BaseDao<Device> {}
+
+  @Dao
+  interface TrackedDeviceDao extends BaseDao<TrackedDevice> {}
+
+  @Dao
+  interface SimpleDeviceDao extends BaseDao<SimpleDevice> {}
 
   @Mapper
   public interface TestMapper {
@@ -117,6 +136,15 @@ public class EntityPolymorphismIT {
 
     @DaoFactory
     SphereDao sphereDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    DeviceDao deviceDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    TrackedDeviceDao trackedDeviceDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    SimpleDeviceDao simpleDeviceDao(@DaoKeyspace CqlIdentifier keyspace);
   }
 
   @Test
@@ -188,6 +216,58 @@ public class EntityPolymorphismIT {
     Sphere retrievedSphere = dao.findById(sphere.getId());
     assertThat(retrievedSphere).isEqualTo(sphere);
     assertThat(retrievedSphere.getWriteTime()).isEqualTo(writeTime);
+  }
+
+  @Test
+  public void should_save_and_retrieve_device() {
+    // verifies the hierarchy scanner behavior around Device:
+    // * by virtue of Assert setting highestAncestor to Asset.class, location property from
+    //   LocatableItem should not be included
+    DeviceDao dao = mapper.deviceDao(sessionRule.keyspace());
+
+    // save should be successful as location property omitted.
+    Device device = new Device("my device", "New York");
+    dao.save(device);
+
+    Device retrievedDevice = dao.findById(device.getId());
+    assertThat(retrievedDevice.getId()).isEqualTo(device.getId());
+    assertThat(retrievedDevice.getName()).isEqualTo(device.getName());
+    // location should be null.
+    assertThat(retrievedDevice.getLocation()).isNull();
+  }
+
+  @Test
+  public void should_save_and_retrieve_tracked_device() {
+    // verifies the hierarchy scanner behavior around TrackedDevice:
+    // * Since TrackedDevice defines a default @HierarchyScanStrategy it should
+    //   include LocatableItem's location property, even though Asset defines
+    //   a strategy that excludes it.
+    TrackedDeviceDao dao = mapper.trackedDeviceDao(sessionRule.keyspace());
+
+    TrackedDevice device = new TrackedDevice("my device", "New York");
+    dao.save(device);
+
+    // location property should be present, thus should equal saved item.
+    TrackedDevice retrievedDevice = dao.findById(device.getId());
+    assertThat(retrievedDevice).isEqualTo(device);
+  }
+
+  @Test
+  public void should_save_and_retrieve_simple_device() {
+    // verifies the hierarchy scanner behavior around SimpleDevice:
+    // * Since SimpleDevice defines a @HierarchyScanStrategy that prevents
+    //   scanning of ancestors, only its properties (id, inUse) should be included.
+    SimpleDeviceDao dao = mapper.simpleDeviceDao(sessionRule.keyspace());
+
+    SimpleDevice device = new SimpleDevice(true);
+    dao.save(device);
+
+    SimpleDevice retrievedDevice = dao.findById(device.getId());
+    assertThat(retrievedDevice.getId()).isEqualTo(device.getId());
+    assertThat(retrievedDevice.getInUse()).isEqualTo(device.getInUse());
+    // location and name should be null
+    assertThat(retrievedDevice.getLocation()).isNull();
+    assertThat(retrievedDevice.getName()).isNull();
   }
 
   @Entity
@@ -287,6 +367,8 @@ public class EntityPolymorphismIT {
     protected UUID id;
 
     protected Set<String> tags;
+
+    protected String location;
 
     public Shape() {
       this.id = UUID.randomUUID();
@@ -568,6 +650,179 @@ public class EntityPolymorphismIT {
     @Override
     public int hashCode() {
       return Objects.hash(super.hashCode(), writeTime);
+    }
+  }
+
+  abstract static class LocatableItem {
+
+    protected String location;
+
+    LocatableItem() {}
+
+    LocatableItem(String location) {
+      this.location = location;
+    }
+
+    public String getLocation() {
+      return location;
+    }
+
+    public void setLocation(String location) {
+      this.location = location;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      LocatableItem that = (LocatableItem) o;
+      return Objects.equals(location, that.location);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(location);
+    }
+  }
+
+  // define strategy that stops scanning at Asset, meaning LocatableItem's location will
+  // not be considered a property.
+  @HierarchyScanStrategy(highestAncestor = Asset.class, includeHighestAncestor = true)
+  abstract static class Asset extends LocatableItem {
+    protected String name;
+
+    Asset() {}
+
+    Asset(String name, String location) {
+      super(location);
+      this.name = name;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      if (!super.equals(o)) return false;
+      Asset asset = (Asset) o;
+      return Objects.equals(name, asset.name);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(super.hashCode(), name);
+    }
+  }
+
+  // should inherit scan strategy from Asset, thus location will not be present.
+  @Entity
+  @CqlName("devices")
+  static class Device extends Asset {
+
+    @PartitionKey protected UUID id;
+
+    Device() {}
+
+    Device(String name, String location) {
+      super(name, location);
+      this.id = UUID.randomUUID();
+    }
+
+    // rename to device_id, if Device not included in scanning, this won't be used.
+    @CqlName("device_id")
+    public UUID getId() {
+      return id;
+    }
+
+    public void setId(UUID id) {
+      this.id = id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      if (!super.equals(o)) return false;
+      Device device = (Device) o;
+      return id.equals(device.id);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(super.hashCode(), id);
+    }
+  }
+
+  // use default strategy, which should override Assert's strategy, and thus location
+  // should be considered a property.
+  @HierarchyScanStrategy
+  @Entity
+  @CqlName("tracked_devices")
+  static class TrackedDevice extends Device {
+    TrackedDevice() {}
+
+    TrackedDevice(String name, String location) {
+      super(name, location);
+    }
+  }
+
+  // do not scan ancestors, so only id and inUse should be considered properties.
+  @HierarchyScanStrategy(scanAncestors = false)
+  @Entity
+  @CqlName("simple_devices")
+  static class SimpleDevice extends Device {
+    boolean inUse;
+
+    // suppress error prone warning as we are doing this with intent
+    @SuppressWarnings("HidingField")
+    @PartitionKey
+    private UUID id;
+
+    SimpleDevice() {}
+
+    SimpleDevice(boolean inUse) {
+      super(null, null);
+      this.id = UUID.randomUUID();
+      this.inUse = inUse;
+    }
+
+    public boolean getInUse() {
+      return inUse;
+    }
+
+    public void setInUse(boolean inUse) {
+      this.inUse = inUse;
+    }
+
+    @Override
+    public UUID getId() {
+      return id;
+    }
+
+    @Override
+    public void setId(UUID id) {
+      this.id = id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      if (!super.equals(o)) return false;
+      SimpleDevice that = (SimpleDevice) o;
+      return inUse == that.inUse && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(super.hashCode(), inUse, id);
     }
   }
 }

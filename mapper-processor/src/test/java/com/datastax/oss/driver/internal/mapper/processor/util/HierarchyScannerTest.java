@@ -20,11 +20,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.oss.driver.api.mapper.annotations.HierarchyScanStrategy;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
+import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
@@ -100,7 +106,7 @@ public class HierarchyScannerTest {
     Mockito.when(strategy.scanAncestors()).thenReturn(false);
     MockInterface a = i("a");
     MockInterface z = i("z", a);
-    MockInterface y = i("y", strategy, z);
+    MockInterface y = i("y", strategy, null, z);
     MockInterface x = i("x", y);
     MockInterface w = i("w");
     MockClass b = c("b", null, a);
@@ -146,7 +152,7 @@ public class HierarchyScannerTest {
     // when checking to see if we're at the 'highest' class (this.getClass()) return true
     // for b.
     Mockito.when(context.getClassUtils().isSame(b.classElement, this.getClass())).thenReturn(true);
-    MockClass d = c("d", bHighest, b);
+    MockClass d = c("d", bHighest, b, b);
     MockClass c = c("c", d, x, w);
 
     // b and its interfaces should be skipped, however a will also be encountered
@@ -156,7 +162,7 @@ public class HierarchyScannerTest {
   }
 
   private MockClass c(String name, MockClass parent, MockInterface... interfaces) {
-    return new MockClass(name, null, parent, interfaces);
+    return new MockClass(name, null, null, parent, interfaces);
   }
 
   @Test
@@ -178,15 +184,13 @@ public class HierarchyScannerTest {
     // with a HierarchyScanStrategy annotation on "x" that dictates that "y" is the highest class,
     // but to include it.
     HierarchyScanStrategy yHighest = Mockito.mock(HierarchyScanStrategy.class);
-    // return this class' name just so we have something to check against.
-    Mockito.when(yHighest.highestAncestor()).thenReturn((Class) this.getClass());
     Mockito.when(yHighest.includeHighestAncestor()).thenReturn(true);
     Mockito.when(yHighest.scanAncestors()).thenReturn(true);
     MockInterface a = i("a");
     MockInterface r = i("r");
     MockInterface z = i("z", a);
     MockInterface y = i("y", z);
-    MockInterface x = i("x", yHighest, y);
+    MockInterface x = i("x", yHighest, y, y);
     // when checking to see if we're at the 'highest' class (this.getClass()) return true
     // for y.
     Mockito.when(context.getClassUtils().isSame(y.classElement, this.getClass())).thenReturn(true);
@@ -203,17 +207,24 @@ public class HierarchyScannerTest {
   }
 
   private MockClass c(
-      String name, HierarchyScanStrategy strategy, MockClass parent, MockInterface... interfaces) {
-    return new MockClass(name, strategy, parent, interfaces);
+      String name,
+      HierarchyScanStrategy strategy,
+      MockElement highestAncestor,
+      MockClass parent,
+      MockInterface... interfaces) {
+    return new MockClass(name, strategy, highestAncestor, parent, interfaces);
   }
 
   private MockInterface i(String name, MockInterface... interfaces) {
-    return new MockInterface(name, null, interfaces);
+    return new MockInterface(name, null, null, interfaces);
   }
 
   private MockInterface i(
-      String name, HierarchyScanStrategy strategy, MockInterface... interfaces) {
-    return new MockInterface(name, strategy, interfaces);
+      String name,
+      HierarchyScanStrategy strategy,
+      MockElement highestAncestor,
+      MockInterface... interfaces) {
+    return new MockInterface(name, strategy, highestAncestor, interfaces);
   }
 
   private TypeMirror root() {
@@ -235,6 +246,7 @@ public class HierarchyScannerTest {
     MockElement(
         String name,
         HierarchyScanStrategy strategy,
+        MockElement highestAncestor,
         MockClass parent,
         MockInterface... interfaces) {
       this.name = name;
@@ -243,7 +255,6 @@ public class HierarchyScannerTest {
 
       this.classElement = Mockito.mock(TypeElement.class);
       Mockito.when(classElement.toString()).thenReturn(name);
-      Mockito.when(classElement.getAnnotation(HierarchyScanStrategy.class)).thenReturn(strategy);
 
       TypeMirror parentMirror = parent != null ? parent.mirror : root();
       Mockito.when(classElement.getSuperclass()).thenReturn(parentMirror);
@@ -263,6 +274,46 @@ public class HierarchyScannerTest {
       this.qfName = Mockito.mock(Name.class);
       Mockito.when(qfName.toString()).thenReturn(name);
       Mockito.when(classElement.getQualifiedName()).thenReturn(qfName);
+
+      // mock annotation mirror logic.
+      if (strategy != null) {
+        Mockito.when(classElement.getAnnotation(HierarchyScanStrategy.class)).thenReturn(strategy);
+
+        AnnotationMirror annotationMirror = Mockito.mock(AnnotationMirror.class);
+        DeclaredType annotationType = Mockito.mock(DeclaredType.class);
+        Mockito.when(annotationMirror.getAnnotationType()).thenReturn(annotationType);
+        List annotationMirrors = Lists.newArrayList(annotationMirror);
+        Mockito.when(classElement.getAnnotationMirrors()).thenReturn(annotationMirrors);
+        Mockito.when(context.getClassUtils().isSame(annotationType, HierarchyScanStrategy.class))
+            .thenReturn(true);
+
+        Map annotationElementValues = Maps.newHashMap();
+        annotationElementValues.put(
+            mockAnnotationElement("scanAncestors"), mockAnnotationValue(strategy.scanAncestors()));
+        annotationElementValues.put(
+            mockAnnotationElement("includeHighestAncestor"),
+            mockAnnotationValue(strategy.includeHighestAncestor()));
+        if (highestAncestor != null) {
+          annotationElementValues.put(
+              mockAnnotationElement("highestAncestor"),
+              mockAnnotationValue(highestAncestor.mirror));
+        }
+        Mockito.when(annotationMirror.getElementValues()).thenReturn(annotationElementValues);
+      }
+    }
+
+    private ExecutableElement mockAnnotationElement(String key) {
+      ExecutableElement element = Mockito.mock(ExecutableElement.class);
+      Name name = Mockito.mock(Name.class);
+      Mockito.when(name.contentEquals(key)).thenReturn(true);
+      Mockito.when(element.getSimpleName()).thenReturn(name);
+      return element;
+    }
+
+    private AnnotationValue mockAnnotationValue(Object value) {
+      AnnotationValue aValue = Mockito.mock(AnnotationValue.class);
+      Mockito.when(aValue.getValue()).thenReturn(value);
+      return aValue;
     }
   }
 
@@ -271,16 +322,21 @@ public class HierarchyScannerTest {
     MockClass(
         String name,
         HierarchyScanStrategy strategy,
+        MockElement highestAncestor,
         MockClass parent,
         MockInterface... interfaces) {
-      super(name, strategy, parent, interfaces);
+      super(name, strategy, highestAncestor, parent, interfaces);
     }
   }
 
   class MockInterface extends MockElement {
 
-    MockInterface(String name, HierarchyScanStrategy strategy, MockInterface... interfaces) {
-      super(name, strategy, null, interfaces);
+    MockInterface(
+        String name,
+        HierarchyScanStrategy strategy,
+        MockElement highestAncestor,
+        MockInterface... interfaces) {
+      super(name, strategy, highestAncestor, null, interfaces);
     }
   }
 }

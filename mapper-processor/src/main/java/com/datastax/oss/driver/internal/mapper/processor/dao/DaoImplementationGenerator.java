@@ -40,6 +40,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import java.beans.Introspector;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +75,10 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
   private final List<GeneratedPreparedStatement> preparedStatements = new ArrayList<>();
   private final List<GeneratedQueryProvider> queryProviders = new ArrayList<>();
   private final NullSavingStrategyValidation nullSavingStrategyValidation;
+
+  // tracks interface type variable mappings as child interfaces discover them.
+  private final Map<TypeMirror, Map<Name, TypeElement>> typeMappingsForInterface =
+      Maps.newHashMap();
 
   public DaoImplementationGenerator(TypeElement interfaceElement, ProcessorContext context) {
     super(context);
@@ -141,6 +146,72 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
     return implementationName;
   }
 
+  private Map<Name, TypeElement> parseTypeParameters(TypeMirror mirror) {
+    // Map interface type arguments to their concrete class.
+    Map<Name, TypeElement> typeParameters = Maps.newHashMap();
+    Map<Name, TypeElement> childTypeParameters =
+        typeMappingsForInterface.getOrDefault(mirror, Collections.emptyMap());
+
+    if (mirror instanceof DeclaredType) {
+      TypeElement element = (TypeElement) context.getTypeUtils().asElement(mirror);
+      DeclaredType declaredType = (DeclaredType) mirror;
+      for (int i = 0;
+          i < declaredType.getTypeArguments().size() && i < element.getTypeParameters().size();
+          i++) {
+        Name name = element.getTypeParameters().get(i).getSimpleName();
+        TypeMirror typeArgument = declaredType.getTypeArguments().get(i);
+        if (typeArgument instanceof DeclaredType) {
+          // if its a DeclaredType, we have the concrete type
+          Element concreteType = ((DeclaredType) typeArgument).asElement();
+          typeParameters.put(name, (TypeElement) concreteType);
+        } else if (typeArgument instanceof TypeVariable) {
+          // if its a TypeVariable, we resolve the concrete type
+          // from the previously encountered interface and alias it to the
+          // type on this class.
+          TypeVariable genericType = (TypeVariable) typeArgument;
+          Name previousName = genericType.asElement().getSimpleName();
+          if (childTypeParameters.containsKey(previousName)) {
+            typeParameters.put(name, childTypeParameters.get(previousName));
+          } else {
+            context
+                .getMessager()
+                .error(
+                    element,
+                    "Could not resolve type parameter %s "
+                        + "on %s from child interfaces. This error usually means an interface "
+                        + "was inappropriately annotated with @Dao. Interfaces should only be annotated "
+                        + "with @Dao if all generic type variables are declared.",
+                    name,
+                    mirror);
+          }
+        }
+      }
+
+      // for each parent interface of this type, check that parent's type arguments for
+      // type variables.  For each of these variables carry up the discovered concrete
+      // type on the current interface so it has access to it.
+      for (TypeMirror parentInterface : element.getInterfaces()) {
+        if (parentInterface instanceof DeclaredType) {
+          Map<Name, TypeElement> typeMappingsForParent =
+              typeMappingsForInterface.computeIfAbsent(parentInterface, k -> Maps.newHashMap());
+          DeclaredType parentInterfaceType = (DeclaredType) parentInterface;
+          for (TypeMirror parentTypeArgument : parentInterfaceType.getTypeArguments()) {
+            if (parentTypeArgument instanceof TypeVariable) {
+              TypeVariable parentTypeVariable = (TypeVariable) parentTypeArgument;
+              Name parentTypeName = parentTypeVariable.asElement().getSimpleName();
+              TypeElement typeElement = typeParameters.get(parentTypeName);
+              if (typeElement != null) {
+                typeMappingsForParent.put(parentTypeName, typeElement);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return typeParameters;
+  }
+
   @Override
   protected JavaFile.Builder getContents() {
 
@@ -152,49 +223,9 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
             .addSuperinterface(ClassName.get(interfaceElement));
 
     Set<TypeMirror> interfaces = HierarchyScanner.resolveTypeHierarchy(interfaceElement, context);
-    Map<Name, TypeElement> previousTypeParameters = Maps.newHashMap();
     for (TypeMirror mirror : interfaces) {
       TypeElement interfaceElement = (TypeElement) context.getTypeUtils().asElement(mirror);
-
-      // Map interface type arguments to their concrete class.
-      Map<Name, TypeElement> typeParameters = Maps.newHashMap();
-      if (mirror instanceof DeclaredType) {
-        DeclaredType declaredType = (DeclaredType) mirror;
-        for (int i = 0; i < declaredType.getTypeArguments().size(); i++) {
-          Name name = interfaceElement.getTypeParameters().get(i).getSimpleName();
-          TypeMirror typeArgument = declaredType.getTypeArguments().get(i);
-          if (typeArgument instanceof DeclaredType) {
-            // if its a DeclaredType, we have the ConcreteType
-            Element concreteType = ((DeclaredType) typeArgument).asElement();
-            typeParameters.put(name, (TypeElement) concreteType);
-          } else if (typeArgument instanceof TypeVariable) {
-            // if its a TypeVariable, we need to resolve the concrete type
-            // from the previously encountered interface and alias it to the
-            // type on this class.
-            /*
-             * TODO: This won't work in cases where a type has multiple generic
-             * parent interfaces.  Need to track previous type parameters from
-             * child classes.
-             */
-            TypeVariable genericType = (TypeVariable) typeArgument;
-            Name previousName = genericType.asElement().getSimpleName();
-            if (previousTypeParameters.containsKey(previousName)) {
-              typeParameters.put(name, previousTypeParameters.get(previousName));
-            } else {
-              context
-                  .getMessager()
-                  .error(
-                      interfaceElement,
-                      "Could not resolve type parameter %s "
-                          + "on %s from child interfaces having type parameter %s.  Resolved type parameters: ",
-                      name,
-                      interfaceElement,
-                      previousName);
-            }
-          }
-        }
-        previousTypeParameters = typeParameters;
-      }
+      Map<Name, TypeElement> typeParameters = parseTypeParameters(mirror);
 
       for (Element child : interfaceElement.getEnclosedElements()) {
         if (child.getKind() == ElementKind.METHOD) {
