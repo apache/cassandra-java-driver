@@ -26,6 +26,7 @@ import com.datastax.oss.driver.internal.mapper.processor.util.generation.Bindabl
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
@@ -90,6 +91,8 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
                 ParameterizedTypeName.get(
                     ClassName.get(EntityHelperBase.class), ClassName.get(classElement)));
 
+    context.getLoggingGenerator().addLoggerField(classContents, helperName);
+
     classContents.addMethod(
         MethodSpec.methodBuilder("getEntityClass")
             .addModifiers(Modifier.PUBLIC)
@@ -126,6 +129,16 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
           entityDefinition.getDefaultKeyspace(),
           entityDefinition.getCqlName());
     }
+    context
+        .getLoggingGenerator()
+        .debug(
+            constructorContents,
+            String.format(
+                "[{}] Entity %s will be mapped to {}{}",
+                entityDefinition.getClassName().simpleName()),
+            CodeBlock.of("context.getSession().getName()"),
+            CodeBlock.of("getKeyspaceId() == null ? \"\" : getKeyspaceId() + \".\""),
+            CodeBlock.of("getTableId()"));
 
     genericTypeConstantGenerator.generate(classContents);
 

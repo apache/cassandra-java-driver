@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor;
 
+import com.datastax.oss.driver.internal.mapper.processor.dao.LoggingGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.entity.EntityFactory;
 import com.datastax.oss.driver.internal.mapper.processor.util.Classes;
 import javax.lang.model.util.Elements;
@@ -36,4 +37,6 @@ public interface ProcessorContext {
   CodeGeneratorFactory getCodeGeneratorFactory();
 
   EntityFactory getEntityFactory();
+
+  LoggingGenerator getLoggingGenerator();
 }

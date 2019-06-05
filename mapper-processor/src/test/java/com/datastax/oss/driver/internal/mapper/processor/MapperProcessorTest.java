@@ -22,6 +22,7 @@ import com.google.testing.compile.Compiler;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.tools.JavaFileObject;
 
@@ -32,14 +33,30 @@ public abstract class MapperProcessorTest {
    *
    * @param packageName the package of the types to process. Note that it is currently not possible
    *     to process multiple packages (and it's unlikely to be needed in unit tests).
+   * @param options the compiler options (use to pass -A options to the processor).
    * @param typeSpecs the contents of the classes or interfaces to process.
    */
-  protected Compilation compileWithMapperProcessor(String packageName, TypeSpec... typeSpecs) {
+  protected Compilation compileWithMapperProcessor(
+      String packageName, Iterable<?> options, TypeSpec... typeSpecs) {
     List<JavaFileObject> files = new ArrayList<>();
     for (TypeSpec typeSpec : typeSpecs) {
       files.add(JavaFile.builder(packageName, typeSpec).build().toJavaFileObject());
     }
-    return Compiler.javac().withProcessors(new MapperProcessor()).compile(files);
+    return Compiler.javac()
+        .withProcessors(new MapperProcessor())
+        .withOptions(options)
+        .compile(files);
+  }
+
+  /**
+   * Launches an in-process execution of javac with {@link MapperProcessor} enabled.
+   *
+   * @param packageName the package of the types to process. Note that it is currently not possible
+   *     to process multiple packages (and it's unlikely to be needed in unit tests).
+   * @param typeSpecs the contents of the classes or interfaces to process.
+   */
+  protected Compilation compileWithMapperProcessor(String packageName, TypeSpec... typeSpecs) {
+    return compileWithMapperProcessor(packageName, Collections.emptyList(), typeSpecs);
   }
 
   protected void should_fail_with_expected_error(
@@ -55,7 +72,8 @@ public abstract class MapperProcessorTest {
   }
 
   protected void should_succeed_without_warnings(String packageName, TypeSpec... typeSpecs) {
-    Compilation compilation = compileWithMapperProcessor(packageName, typeSpecs);
+    Compilation compilation =
+        compileWithMapperProcessor(packageName, Collections.emptyList(), typeSpecs);
     assertThat(compilation).succeededWithoutWarnings();
   }
 }
