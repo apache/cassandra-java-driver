@@ -4,6 +4,7 @@
 
 ### 4.1.0 (in progress)
 
+- [documentation] JAVA-2217: Cover contact points and local datacenter earlier in the manual
 - [improvement] JAVA-2242: Allow skipping all integration tests with -DskipITs
 - [improvement] JAVA-2241: Make DefaultDriverContext.cycleDetector protected
 - [bug] JAVA-2226: Support IPv6 contact points in the configuration
