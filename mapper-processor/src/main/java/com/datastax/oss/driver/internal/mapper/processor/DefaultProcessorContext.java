@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.mapper.processor;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
+import com.datastax.oss.driver.internal.mapper.processor.dao.LoggingGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.entity.DefaultEntityFactory;
 import com.datastax.oss.driver.internal.mapper.processor.entity.EntityFactory;
 import com.datastax.oss.driver.internal.mapper.processor.util.Classes;
@@ -40,20 +41,24 @@ public class DefaultProcessorContext implements ProcessorContext {
   private final DecoratedMessager messager;
   private final Types typeUtils;
   private final Elements elementUtils;
+  private boolean logsEnabled;
   private final Classes classUtils;
   private final JavaPoetFiler filer;
+  private final LoggingGenerator loggingGenerator;
 
   public DefaultProcessorContext(
       DecoratedMessager messager,
       Types typeUtils,
       Elements elementUtils,
       Filer filer,
-      String indent) {
+      String indent,
+      boolean logsEnabled) {
     this.messager = messager;
     this.typeUtils = typeUtils;
     this.elementUtils = elementUtils;
     this.classUtils = new Classes(typeUtils, elementUtils);
     this.filer = new JavaPoetFiler(filer, indent);
+    this.loggingGenerator = new LoggingGenerator(logsEnabled);
   }
 
   protected CodeGeneratorFactory buildCodeGeneratorFactory() {
@@ -97,5 +102,10 @@ public class DefaultProcessorContext implements ProcessorContext {
   @Override
   public EntityFactory getEntityFactory() {
     return entityFactoryRef.get();
+  }
+
+  @Override
+  public LoggingGenerator getLoggingGenerator() {
+    return loggingGenerator;
   }
 }

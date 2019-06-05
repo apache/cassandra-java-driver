@@ -40,16 +40,20 @@ import javax.lang.model.util.Types;
 
 @AutoService(Processor.class)
 public class MapperProcessor extends AbstractProcessor {
+  private static final boolean DEFAULT_MAPPER_LOGS_ENABLED = true;
 
   private static final String INDENT_AMOUNT_OPTION = "com.datastax.oss.driver.mapper.indent";
   private static final String INDENT_WITH_TABS_OPTION =
       "com.datastax.oss.driver.mapper.indentWithTabs";
+  private static final String MAPPER_LOGS_ENABLED_OPTION =
+      "com.datastax.oss.driver.mapper.logs.enabled";
 
   private DecoratedMessager messager;
   private Types typeUtils;
   private Elements elementUtils;
   private Filer filer;
   private String indent;
+  private boolean logsEnabled;
 
   @Override
   public synchronized void init(ProcessingEnvironment processingEnvironment) {
@@ -59,12 +63,22 @@ public class MapperProcessor extends AbstractProcessor {
     elementUtils = processingEnvironment.getElementUtils();
     filer = processingEnvironment.getFiler();
     indent = computeIndent(processingEnvironment.getOptions());
+    logsEnabled = isLogsEnabled(processingEnvironment.getOptions());
+  }
+
+  private boolean isLogsEnabled(Map<String, String> options) {
+    String mapperLogsEnabled = options.get(MAPPER_LOGS_ENABLED_OPTION);
+    if (mapperLogsEnabled != null) {
+      return Boolean.parseBoolean(mapperLogsEnabled);
+    }
+    return DEFAULT_MAPPER_LOGS_ENABLED;
   }
 
   @Override
   public boolean process(
       Set<? extends TypeElement> annotations, RoundEnvironment roundEnvironment) {
-    ProcessorContext context = buildContext(messager, typeUtils, elementUtils, filer, indent);
+    ProcessorContext context =
+        buildContext(messager, typeUtils, elementUtils, filer, indent, logsEnabled);
 
     CodeGeneratorFactory generatorFactory = context.getCodeGeneratorFactory();
     processAnnotatedTypes(
@@ -81,8 +95,10 @@ public class MapperProcessor extends AbstractProcessor {
       Types typeUtils,
       Elements elementUtils,
       Filer filer,
-      String indent) {
-    return new DefaultProcessorContext(messager, typeUtils, elementUtils, filer, indent);
+      String indent,
+      boolean logsEnabled) {
+    return new DefaultProcessorContext(
+        messager, typeUtils, elementUtils, filer, indent, logsEnabled);
   }
 
   protected void processAnnotatedTypes(
@@ -119,7 +135,8 @@ public class MapperProcessor extends AbstractProcessor {
 
   @Override
   public Set<String> getSupportedOptions() {
-    return ImmutableSet.of(INDENT_AMOUNT_OPTION, INDENT_WITH_TABS_OPTION);
+    return ImmutableSet.of(
+        INDENT_AMOUNT_OPTION, INDENT_WITH_TABS_OPTION, MAPPER_LOGS_ENABLED_OPTION);
   }
 
   @Override
