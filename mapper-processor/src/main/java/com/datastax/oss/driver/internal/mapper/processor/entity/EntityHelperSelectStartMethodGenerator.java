@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
-import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.datastax.oss.driver.api.querybuilder.select.SelectFrom;
@@ -43,14 +42,6 @@ public class EntityHelperSelectStartMethodGenerator implements MethodGenerator {
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
             .returns(Select.class)
-            .addStatement("$T keyspaceId = context.getKeyspaceId()", CqlIdentifier.class)
-            .beginControlFlow("if (keyspaceId == null)")
-            .addStatement("keyspaceId = defaultKeyspaceId")
-            .endControlFlow()
-            .addStatement("$T tableId = context.getTableId()", CqlIdentifier.class)
-            .beginControlFlow("if (tableId == null)")
-            .addStatement("tableId = defaultTableId")
-            .endControlFlow()
             .addStatement(
                 "$1T selectFrom = (keyspaceId == null)\n"
                     + "? $2T.selectFrom(tableId)\n"
