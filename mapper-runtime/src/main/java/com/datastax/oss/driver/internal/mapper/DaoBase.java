@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.mapper.MapperContext;
+import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.StatementAttributes;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
@@ -53,39 +54,42 @@ public class DaoBase {
 
   protected static CompletionStage<PreparedStatement> prepare(
       SimpleStatement statement, MapperContext context) {
-    if (statement == null) {
-      // Can happen, see replaceKeyspaceAndTablePlaceholders. Simply propagate null, the generated
-      // methods will know how to deal with this.
-      return CompletableFuture.completedFuture(null);
-    } else {
-      return context.getSession().prepareAsync(statement);
-    }
+    return context.getSession().prepareAsync(statement);
   }
 
   /**
    * Replaces {@link #KEYSPACE_ID_PLACEHOLDER}, {@link #TABLE_ID_PLACEHOLDER} and/or {@link
    * #QUALIFIED_TABLE_ID_PLACEHOLDER} in a query string, and turns it into a statement.
    *
-   * @param queryString the query string to process.
+   * <p>This is used for {@link Query} methods.
+   *
+   * @param queryStringTemplate the query string to process.
    * @param context the context that contains the keyspace and table that the DAO was created with
    *     (if any).
-   * @param defaultEntityTableId the default table name for the entity that is returned from this
-   *     query. Might be {@code null} if the query does not return entities.
-   * @return the statement, or {@code null} if we don't have enough information to fill the
-   *     placeholders (the generated code will throw, we know it won't try to use the statement).
+   * @param entityHelper the helper the entity that is returned from this query, or {@code null} if
+   *     the query does not return entities.
    */
   protected static SimpleStatement replaceKeyspaceAndTablePlaceholders(
-      String queryString, MapperContext context, CqlIdentifier defaultEntityTableId) {
+      String queryStringTemplate, MapperContext context, EntityHelper<?> entityHelper) {
 
-    CqlIdentifier keyspaceId = context.getKeyspaceId();
-    CqlIdentifier tableId = context.getTableId();
-    if (tableId == null) {
-      tableId = defaultEntityTableId;
-    }
+    CqlIdentifier keyspaceId =
+        (entityHelper != null) ? entityHelper.getKeyspaceId() : context.getKeyspaceId();
+    CqlIdentifier tableId =
+        (entityHelper != null) ? entityHelper.getTableId() : context.getTableId();
 
+    String queryString = queryStringTemplate;
     if (queryString.contains(KEYSPACE_ID_PLACEHOLDER)) {
       if (keyspaceId == null) {
-        return null;
+        throw new MapperException(
+            String.format(
+                "Cannot substitute %s in query '%s': the DAO wasn't built with a keyspace%s",
+                KEYSPACE_ID_PLACEHOLDER,
+                queryStringTemplate,
+                (entityHelper == null)
+                    ? ""
+                    : " and entity "
+                        + entityHelper.getEntityClass().getSimpleName()
+                        + " does not define a default keyspace"));
       } else {
         queryString = queryString.replace(KEYSPACE_ID_PLACEHOLDER, keyspaceId.asCql(false));
       }
@@ -93,7 +97,10 @@ public class DaoBase {
 
     if (queryString.contains(TABLE_ID_PLACEHOLDER)) {
       if (tableId == null) {
-        return null;
+        throw new MapperException(
+            String.format(
+                "Cannot substitute %s in query '%s': the DAO wasn't built with a table",
+                TABLE_ID_PLACEHOLDER, queryStringTemplate));
       } else {
         queryString = queryString.replace(TABLE_ID_PLACEHOLDER, tableId.asCql(false));
       }
@@ -101,7 +108,10 @@ public class DaoBase {
 
     if (queryString.contains(QUALIFIED_TABLE_ID_PLACEHOLDER)) {
       if (tableId == null) {
-        return null;
+        throw new MapperException(
+            String.format(
+                "Cannot substitute %s in query '%s': the DAO wasn't built with a table",
+                QUALIFIED_TABLE_ID_PLACEHOLDER, queryStringTemplate));
       } else {
         String qualifiedId =
             (keyspaceId == null)
