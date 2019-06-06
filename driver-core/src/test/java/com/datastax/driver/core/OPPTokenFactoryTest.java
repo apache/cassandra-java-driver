@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.driver.core.utils.Bytes;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -43,6 +44,15 @@ public class OPPTokenFactoryTest {
     // range (which is the whole ring)
     List<Token> splits = factory.split(minToken, zero, 3);
     assertThat(splits).containsExactly(zero, zero);
+  }
+
+  @Test(groups = "unit")
+  public void should_split_range_where_start_as_int_equals_end_as_int() {
+    Token start = token(Bytes.fromHexString("0x11"));
+    Token end = token(Bytes.fromHexString("0x1100"));
+
+    List<Token> splits = factory.split(start, end, 3);
+    assertThat(splits).containsExactly(end, end);
   }
 
   @Test(groups = "unit")
