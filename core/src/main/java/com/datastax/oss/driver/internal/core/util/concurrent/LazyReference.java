@@ -35,19 +35,29 @@ public class LazyReference<T> {
     this.checker = cycleDetector;
   }
 
+  public LazyReference(Supplier<T> supplier) {
+    this(null, supplier, null);
+  }
+
   public T get() {
     T t = value;
     if (t == null) {
-      checker.onTryLock(this);
+      if (checker != null) {
+        checker.onTryLock(this);
+      }
       lock.lock();
       try {
-        checker.onLockAcquired(this);
+        if (checker != null) {
+          checker.onLockAcquired(this);
+        }
         t = value;
         if (t == null) {
           value = t = supplier.get();
         }
       } finally {
-        checker.onReleaseLock(this);
+        if (checker != null) {
+          checker.onReleaseLock(this);
+        }
         lock.unlock();
       }
     }
