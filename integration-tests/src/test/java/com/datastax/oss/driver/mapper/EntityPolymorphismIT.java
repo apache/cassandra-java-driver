@@ -422,6 +422,7 @@ public class EntityPolymorphismIT {
     public Circle() {}
 
     public Circle(Point2D center, double radius) {
+      super();
       this.center = center;
       this.radius = radius;
     }
@@ -488,6 +489,7 @@ public class EntityPolymorphismIT {
     public Rectangle() {}
 
     public Rectangle(Point2D bottomLeft, Point2D topRight) {
+      super();
       this.bottomLeft = bottomLeft;
       this.topRight = topRight;
     }
@@ -605,8 +607,7 @@ public class EntityPolymorphismIT {
     public Sphere() {}
 
     public Sphere(Point3D center, double radius) {
-      this.center = center;
-      this.radius = radius;
+      super(center, radius);
     }
 
     @CqlName("sphere_id")
