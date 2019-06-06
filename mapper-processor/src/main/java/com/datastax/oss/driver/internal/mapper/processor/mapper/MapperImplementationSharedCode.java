@@ -31,10 +31,10 @@ public interface MapperImplementationSharedCode {
    * <p>For example:
    *
    * <pre>{@code
-   * private final ProductDao productDaoCache;
+   * private final LazyReference<ProductDao> productDaoCache;
    *
    * public MyMapper_Impl(MapperContext context) {
-   *   this.productDaoCache = ProductDao_Impl.init(context);
+   *   this.productDaoCache = new LazyReference<>(() -> ProductDao_Impl.init(context));
    * }
    * }</pre>
    *
