@@ -32,7 +32,6 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
@@ -73,8 +72,8 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
       if (context.getClassUtils().implementsSettableByName(parameterType)) {
         targetParameterName = parameterElement.getSimpleName().toString();
         targetParameterType = parameterElement.asType();
-      } else if (parameterType.getKind() == TypeKind.DECLARED) {
-        Element parameterTypeElement = ((DeclaredType) parameterType).asElement();
+      } else if (couldBeEntity(parameterType)) {
+        Element parameterTypeElement = asEntityElement(parameterType);
         if (parameterTypeElement.getKind() == ElementKind.CLASS
             && parameterTypeElement.getAnnotation(Entity.class) != null) {
           entityParameterName = parameterElement.getSimpleName().toString();

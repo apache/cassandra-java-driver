@@ -19,6 +19,10 @@ import static com.datastax.oss.driver.assertions.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Computed;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
@@ -26,30 +30,40 @@ import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
+import com.datastax.oss.driver.api.mapper.annotations.Delete;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
 import com.datastax.oss.driver.api.mapper.annotations.HierarchyScanStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
+import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 import com.datastax.oss.driver.api.mapper.annotations.Transient;
+import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
+import com.tngtech.java.junit.dataprovider.DataProvider;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
+import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
+import org.junit.runner.RunWith;
 
 @Category(ParallelizableTests.class)
+@RunWith(DataProviderRunner.class)
 public class EntityPolymorphismIT {
   private static CcmRule ccm = CcmRule.getInstance();
 
@@ -89,6 +103,18 @@ public class EntityPolymorphismIT {
 
     @Select
     T findById(UUID id);
+
+    @Delete
+    void delete(T t);
+
+    @SetEntity
+    void bind(T t, BoundStatementBuilder builder);
+
+    @GetEntity
+    T one(ResultSet result);
+
+    @Update
+    void update(T t);
   }
 
   // another parent interface with dao methods
@@ -148,6 +174,74 @@ public class EntityPolymorphismIT {
 
     @DaoFactory
     SimpleDeviceDao simpleDeviceDao(@DaoKeyspace CqlIdentifier keyspace);
+  }
+
+  @DataProvider
+  public static Object[][] setAndGetProvider() {
+    Function<CqlIdentifier, CircleDao> circleDao = keyspace -> mapper.circleDao(keyspace);
+    Function<CqlIdentifier, RectangleDao> rectangleDao = keyspace -> mapper.rectangleDao(keyspace);
+    Function<CqlIdentifier, SquareDao> squareDao = keyspace -> mapper.squareDao(keyspace);
+    Function<CqlIdentifier, SphereDao> sphereDao = keyspace -> mapper.sphereDao(keyspace);
+    return new Object[][] {
+      new Object[] {
+        new Rectangle(new Point2D(20, 30), new Point2D(50, 60)),
+        rectangleDao,
+        SimpleStatement.newInstance(
+            "insert into rectangles (rect_id, bottom_left, top_right, "
+                + "tags) values (?, ?, ?, ?)"),
+        SimpleStatement.newInstance("select * from rectangles where rect_id = :id limit 1")
+      },
+      new Object[] {
+        new Circle(new Point2D(11, 22), 12.34),
+        circleDao,
+        SimpleStatement.newInstance(
+            "insert into circles (circle_id, center2d, radius, tags) " + "values (?, ?, ?, ?)"),
+        SimpleStatement.newInstance(
+            "select circle_id, center2d, radius, tags, writetime(radius) "
+                + "as write_time from circles where circle_id = :id limit 1")
+      },
+      new Object[] {
+        new Square(new Point2D(20, 30), new Point2D(50, 60)),
+        squareDao,
+        SimpleStatement.newInstance(
+            "insert into squares (square_id, bottom_left, top_right, "
+                + "tags) values (?, ?, ?, ?)"),
+        SimpleStatement.newInstance(
+            "select square_id, bottom_left, top_right, tags, writetime"
+                + "(bottom_left) as write_time from squares where square_id = :id limit 1")
+      },
+      new Object[] {
+        new Sphere(new Point3D(11, 22, 33), 34.56),
+        sphereDao,
+        SimpleStatement.newInstance(
+            "insert into spheres (sphere_id, center3d, radius, tags) " + "values (?, ?, ?, ?)"),
+        SimpleStatement.newInstance(
+            "select sphere_id, center3d, radius, tags, writetime(radius) "
+                + "as write_time from spheres where sphere_id = :id limit 1")
+      },
+    };
+  }
+
+  @UseDataProvider("setAndGetProvider")
+  @Test
+  public <T extends Shape> void should_set_and_get_entity(
+      T t,
+      Function<CqlIdentifier, BaseDao<T>> daoProvider,
+      SimpleStatement insertStatement,
+      SimpleStatement selectStatement) {
+    BaseDao<T> dao = daoProvider.apply(sessionRule.keyspace());
+    CqlSession session = sessionRule.session();
+    PreparedStatement prepared = session.prepare(insertStatement);
+
+    BoundStatementBuilder bs = prepared.boundStatementBuilder();
+    dao.bind(t, bs);
+
+    session.execute(bs.build());
+
+    PreparedStatement selectPrepared = session.prepare(selectStatement);
+    BoundStatement selectBs = selectPrepared.bind(t.getId());
+    T retrieved = dao.one(session.execute(selectBs));
+    assertThat(retrieved).isEqualTo(t);
   }
 
   @Test
