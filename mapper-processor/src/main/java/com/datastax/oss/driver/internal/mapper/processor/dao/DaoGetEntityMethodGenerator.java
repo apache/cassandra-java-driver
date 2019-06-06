@@ -35,6 +35,8 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 public class DaoGetEntityMethodGenerator extends DaoMethodGenerator {
@@ -96,6 +98,10 @@ public class DaoGetEntityMethodGenerator extends DaoMethodGenerator {
     TypeMirror returnType = methodElement.getReturnType();
     if (couldBeEntity(returnType)) {
       Element element = asEntityElement(returnType);
+      if (element == null && returnType.getKind() == TypeKind.DECLARED) {
+        // if it's not an entity, treat it as a normal declared type.
+        element = ((DeclaredType) returnType).asElement();
+      }
       // Simple case return type is an entity type
       if (element.getKind() == ElementKind.CLASS && element.getAnnotation(Entity.class) != null) {
         entityElement = (TypeElement) element;

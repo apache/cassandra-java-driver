@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
+import com.datastax.oss.driver.api.mapper.annotations.DaoTable;
 import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Delete;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
@@ -37,6 +38,7 @@ import com.datastax.oss.driver.api.mapper.annotations.HierarchyScanStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 import com.datastax.oss.driver.api.mapper.annotations.Transient;
@@ -53,6 +55,8 @@ import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -143,11 +147,19 @@ public class EntityPolymorphismIT {
   @Dao
   interface SphereDao extends WriteTimeDao<Sphere> {};
 
-  @Dao
-  interface DeviceDao extends BaseDao<Device> {}
+  interface NamedDeviceDao<T extends Device> extends BaseDao<T> {
+    @Query("UPDATE ${qualifiedTableId} SET name = :name WHERE device_id = :id")
+    void updateName(String name, UUID id);
+
+    @Query("SELECT * FROM ${qualifiedTableId} WHERE device_id = :id")
+    CompletableFuture<T> findByIdQueryAsync(UUID id);
+  }
 
   @Dao
-  interface TrackedDeviceDao extends BaseDao<TrackedDevice> {}
+  interface DeviceDao extends NamedDeviceDao<Device> {}
+
+  @Dao
+  interface TrackedDeviceDao extends NamedDeviceDao<TrackedDevice> {}
 
   @Dao
   interface SimpleDeviceDao extends BaseDao<SimpleDevice> {}
@@ -167,10 +179,11 @@ public class EntityPolymorphismIT {
     SphereDao sphereDao(@DaoKeyspace CqlIdentifier keyspace);
 
     @DaoFactory
-    DeviceDao deviceDao(@DaoKeyspace CqlIdentifier keyspace);
+    DeviceDao deviceDao(@DaoKeyspace CqlIdentifier keyspace, @DaoTable CqlIdentifier table);
 
     @DaoFactory
-    TrackedDeviceDao trackedDeviceDao(@DaoKeyspace CqlIdentifier keyspace);
+    TrackedDeviceDao trackedDeviceDao(
+        @DaoKeyspace CqlIdentifier keyspace, @DaoTable CqlIdentifier table);
 
     @DaoFactory
     SimpleDeviceDao simpleDeviceDao(@DaoKeyspace CqlIdentifier keyspace);
@@ -186,6 +199,7 @@ public class EntityPolymorphismIT {
       new Object[] {
         new Rectangle(new Point2D(20, 30), new Point2D(50, 60)),
         rectangleDao,
+        (Consumer<Rectangle>) (Rectangle r) -> r.setTopRight(new Point2D(21, 31)),
         SimpleStatement.newInstance(
             "insert into rectangles (rect_id, bottom_left, top_right, "
                 + "tags) values (?, ?, ?, ?)"),
@@ -194,6 +208,7 @@ public class EntityPolymorphismIT {
       new Object[] {
         new Circle(new Point2D(11, 22), 12.34),
         circleDao,
+        (Consumer<Circle>) (Circle c) -> c.setRadius(13.33),
         SimpleStatement.newInstance(
             "insert into circles (circle_id, center2d, radius, tags) " + "values (?, ?, ?, ?)"),
         SimpleStatement.newInstance(
@@ -203,6 +218,7 @@ public class EntityPolymorphismIT {
       new Object[] {
         new Square(new Point2D(20, 30), new Point2D(50, 60)),
         squareDao,
+        (Consumer<Square>) (Square s) -> s.setBottomLeft(new Point2D(10, 20)),
         SimpleStatement.newInstance(
             "insert into squares (square_id, bottom_left, top_right, "
                 + "tags) values (?, ?, ?, ?)"),
@@ -213,6 +229,7 @@ public class EntityPolymorphismIT {
       new Object[] {
         new Sphere(new Point3D(11, 22, 33), 34.56),
         sphereDao,
+        (Consumer<Sphere>) (Sphere s) -> s.setCenter(new Point3D(10, 20, 30)),
         SimpleStatement.newInstance(
             "insert into spheres (sphere_id, center3d, radius, tags) " + "values (?, ?, ?, ?)"),
         SimpleStatement.newInstance(
@@ -224,9 +241,10 @@ public class EntityPolymorphismIT {
 
   @UseDataProvider("setAndGetProvider")
   @Test
-  public <T extends Shape> void should_set_and_get_entity(
+  public <T extends Shape> void should_set_and_get_entity_then_update_then_delete(
       T t,
       Function<CqlIdentifier, BaseDao<T>> daoProvider,
+      Consumer<T> updater,
       SimpleStatement insertStatement,
       SimpleStatement selectStatement) {
     BaseDao<T> dao = daoProvider.apply(sessionRule.keyspace());
@@ -242,6 +260,17 @@ public class EntityPolymorphismIT {
     BoundStatement selectBs = selectPrepared.bind(t.getId());
     T retrieved = dao.one(session.execute(selectBs));
     assertThat(retrieved).isEqualTo(t);
+
+    // update value
+    updater.accept(t);
+    dao.update(t);
+
+    // retrieve value to ensure update worked correctly.
+    assertThat(dao.one(session.execute(selectBs))).isEqualTo(t);
+
+    // delete value and ensure it's gone
+    dao.delete(t);
+    assertThat(dao.one(session.execute(selectBs))).isNull();
   }
 
   @Test
@@ -316,11 +345,11 @@ public class EntityPolymorphismIT {
   }
 
   @Test
-  public void should_save_and_retrieve_device() {
+  public void should_save_and_retrieve_device() throws Exception {
     // verifies the hierarchy scanner behavior around Device:
     // * by virtue of Assert setting highestAncestor to Asset.class, location property from
     //   LocatableItem should not be included
-    DeviceDao dao = mapper.deviceDao(sessionRule.keyspace());
+    DeviceDao dao = mapper.deviceDao(sessionRule.keyspace(), CqlIdentifier.fromCql("devices"));
 
     // save should be successful as location property omitted.
     Device device = new Device("my device", "New York");
@@ -331,15 +360,24 @@ public class EntityPolymorphismIT {
     assertThat(retrievedDevice.getName()).isEqualTo(device.getName());
     // location should be null.
     assertThat(retrievedDevice.getLocation()).isNull();
+
+    // should be able to use @Query with update
+    String name = "my new name";
+    dao.updateName(name, device.getId());
+
+    // should be able to use @Query returning Entity and name should be applied.
+    retrievedDevice = dao.findByIdQueryAsync(device.getId()).get();
+    assertThat(retrievedDevice.getName()).isEqualTo(name);
   }
 
   @Test
-  public void should_save_and_retrieve_tracked_device() {
+  public void should_save_and_retrieve_tracked_device() throws Exception {
     // verifies the hierarchy scanner behavior around TrackedDevice:
     // * Since TrackedDevice defines a default @HierarchyScanStrategy it should
     //   include LocatableItem's location property, even though Asset defines
     //   a strategy that excludes it.
-    TrackedDeviceDao dao = mapper.trackedDeviceDao(sessionRule.keyspace());
+    TrackedDeviceDao dao =
+        mapper.trackedDeviceDao(sessionRule.keyspace(), CqlIdentifier.fromCql("tracked_devices"));
 
     TrackedDevice device = new TrackedDevice("my device", "New York");
     dao.save(device);
@@ -347,6 +385,14 @@ public class EntityPolymorphismIT {
     // location property should be present, thus should equal saved item.
     TrackedDevice retrievedDevice = dao.findById(device.getId());
     assertThat(retrievedDevice).isEqualTo(device);
+
+    // should be able to use @Query with update
+    String name = "my new name";
+    dao.updateName(name, device.getId());
+
+    // should be able to use @Query returning Entity and name should be applied.
+    retrievedDevice = dao.findByIdQueryAsync(device.getId()).get();
+    assertThat(retrievedDevice.getName()).isEqualTo(name);
   }
 
   @Test

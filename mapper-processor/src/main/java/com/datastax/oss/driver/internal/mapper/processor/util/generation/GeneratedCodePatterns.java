@@ -44,6 +44,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVariable;
@@ -78,24 +79,37 @@ public class GeneratedCodePatterns {
         MethodSpec.methodBuilder(interfaceMethod.getSimpleName().toString())
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
-            .returns(
-                ClassName.get(getConcreteType(interfaceMethod.getReturnType(), typeParameters)));
+            .returns(getTypeName(interfaceMethod.getReturnType(), typeParameters));
     for (VariableElement parameterElement : interfaceMethod.getParameters()) {
-      TypeMirror type = getConcreteType(parameterElement.asType(), typeParameters);
-      result.addParameter(ClassName.get(type), parameterElement.getSimpleName().toString());
+      TypeName type = getTypeName(parameterElement.asType(), typeParameters);
+      result.addParameter(type, parameterElement.getSimpleName().toString());
     }
     return result;
   }
 
-  private static TypeMirror getConcreteType(
-      TypeMirror mirror, Map<Name, TypeElement> typeParameters) {
+  private static TypeName getTypeName(TypeMirror mirror, Map<Name, TypeElement> typeParameters) {
     if (mirror.getKind() == TypeKind.TYPEVAR) {
-      TypeVariable typeVariable = ((TypeVariable) mirror);
+      TypeVariable typeVariable = (TypeVariable) mirror;
       Name name = typeVariable.asElement().getSimpleName();
       TypeElement element = typeParameters.get(name);
-      return element != null ? element.asType() : mirror;
+      return ClassName.get(element);
+    } else if (mirror.getKind() == TypeKind.DECLARED) {
+      DeclaredType declaredType = (DeclaredType) mirror;
+      TypeElement element = (TypeElement) declaredType.asElement();
+      if (declaredType.getTypeArguments().size() == 0) {
+        return ClassName.get(element);
+      } else {
+        // resolve types for each type argument.
+        TypeName[] types = new TypeName[declaredType.getTypeArguments().size()];
+        for (int i = 0; i < declaredType.getTypeArguments().size(); i++) {
+          TypeMirror typeArgument = declaredType.getTypeArguments().get(i);
+          types[i] = getTypeName(typeArgument, typeParameters);
+        }
+        return ParameterizedTypeName.get(ClassName.get(element), types);
+      }
+    } else {
+      return ClassName.get(mirror);
     }
-    return mirror;
   }
 
   /** Adds a private final field to a class, that gets initialized through its constructor. */
