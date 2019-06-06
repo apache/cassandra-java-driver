@@ -164,7 +164,7 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
               daoImplementationName,
               isAsync ? "initAsync" : "init");
     } else {
-      overridingMethodBuilder.addStatement("return $L", fieldName);
+      overridingMethodBuilder.addStatement("return $L.get()", fieldName);
     }
     return Optional.of(overridingMethodBuilder.build());
   }

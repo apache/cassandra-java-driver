@@ -104,8 +104,12 @@ public class DefaultKeyspaceIT {
   public void should_fail_to_insert_if_default_ks_and_dao_ks_not_provided() {
     // Given
     assertThatThrownBy(
-            () ->
-                new DefaultKeyspaceIT_InventoryMapperKsNotSetBuilder(sessionRule.session()).build())
+            () -> {
+              InventoryMapperKsNotSet mapper =
+                  new DefaultKeyspaceIT_InventoryMapperKsNotSetBuilder(sessionRule.session())
+                      .build();
+              mapper.productDaoDefaultKsNotSet();
+            })
         .isInstanceOf(InvalidQueryException.class)
         .hasMessage("unconfigured table product_simple_default_ks_not_set");
   }
