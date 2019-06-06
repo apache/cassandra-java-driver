@@ -17,7 +17,6 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.data.SettableByName;
-import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
@@ -26,8 +25,6 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import java.util.Map;
 import java.util.Optional;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
@@ -73,11 +70,10 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
         targetParameterName = parameterElement.getSimpleName().toString();
         targetParameterType = parameterElement.asType();
       } else if (couldBeEntity(parameterType)) {
-        Element parameterTypeElement = asEntityElement(parameterType);
-        if (parameterTypeElement.getKind() == ElementKind.CLASS
-            && parameterTypeElement.getAnnotation(Entity.class) != null) {
+        TypeElement parameterTypeElement = asEntityElement(parameterType);
+        if (parameterTypeElement != null) {
           entityParameterName = parameterElement.getSimpleName().toString();
-          entityElement = ((TypeElement) parameterTypeElement);
+          entityElement = parameterTypeElement;
         }
       }
     }
