@@ -215,7 +215,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
       return CompletableFuture.completedFuture(true);
     }
     DriverChannel channel = controlConnection.channel();
-    return new SchemaAgreementChecker(channel, context, port, logPrefix).run();
+    return new SchemaAgreementChecker(channel, context, logPrefix).run();
   }
 
   @NonNull
