@@ -175,13 +175,13 @@ public class DaoBase {
 
   private long extractCount(Row row) {
     if (row == null) {
-      throw new IllegalArgumentException(
+      throw new MapperException(
           "Expected the query to return at least one row "
               + "(return type long is intended for COUNT queries)");
     }
     if (row.getColumnDefinitions().size() == 0
         || !row.getColumnDefinitions().get(0).getType().equals(DataTypes.BIGINT)) {
-      throw new IllegalStateException(
+      throw new MapperException(
           "Expected the query to return a column with CQL type BIGINT in first position "
               + "(return type long is intended for COUNT queries)");
     }
@@ -264,7 +264,7 @@ public class DaoBase {
   protected static void throwIfProtocolVersionV3(MapperContext context) {
     if (context.getSession().getContext().getProtocolVersion().getCode()
         <= ProtocolConstants.Version.V3) {
-      throw new IllegalArgumentException(
+      throw new MapperException(
           String.format(
               "You cannot use %s.%s for protocol version V3.",
               NullSavingStrategy.class.getSimpleName(), NullSavingStrategy.DO_NOT_SET.name()));

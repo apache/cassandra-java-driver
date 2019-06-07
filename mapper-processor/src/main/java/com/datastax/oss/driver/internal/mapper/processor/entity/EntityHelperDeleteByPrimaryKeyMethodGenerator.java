@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
+import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.delete.Delete;
 import com.datastax.oss.driver.api.querybuilder.delete.DeleteSelection;
@@ -46,7 +47,7 @@ public class EntityHelperDeleteByPrimaryKeyMethodGenerator implements MethodGene
     if (entityDefinition.getPrimaryKey().isEmpty()) {
       deleteByPrimaryKeyBuilder.addStatement(
           "throw new $T($S)",
-          UnsupportedOperationException.class,
+          MapperException.class,
           String.format(
               "Entity %s does not declare a primary key",
               entityDefinition.getClassName().simpleName()));

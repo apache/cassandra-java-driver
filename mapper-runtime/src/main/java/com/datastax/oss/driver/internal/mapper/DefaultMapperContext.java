@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.mapper;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.mapper.MapperContext;
+import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -106,7 +107,7 @@ public class DefaultMapperContext implements MapperContext {
         | IllegalAccessException
         | NoSuchMethodException
         | InvocationTargetException e) {
-      throw new IllegalStateException(
+      throw new MapperException(
           String.format(
               "Error while building an instance of %s. "
                   + "%s implementations must have a public no-arg constructor",
