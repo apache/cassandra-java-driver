@@ -131,7 +131,7 @@ If you are upgrading to _DataStax Enterprise_, use the [DataStax Enterprise Java
 features and better compatibility.
 
 ## License
-Copyright 2012-2018, DataStax
+Copyright DataStax, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
