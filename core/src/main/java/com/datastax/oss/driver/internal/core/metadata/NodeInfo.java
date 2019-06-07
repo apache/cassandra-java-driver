@@ -37,11 +37,12 @@ public interface NodeInfo {
   EndPoint getEndPoint();
 
   /**
-   * The node's broadcast RPC address.
+   * The node's broadcast RPC address and port. That is, the address that clients are supposed to
+   * use to communicate with that node.
    *
-   * <p>This is used to match status events coming in on the control connection. Note that it's not
-   * possible to fill it for the control node for some Cassandra versions, but that's less important
-   * because the control node doesn't receive events for itself.
+   * <p>This is currently only used to match broadcast RPC addresses received in status events
+   * coming in on the control connection. The driver does not use this value to actually connect to
+   * the node, but rather uses {@link #getEndPoint()}.
    *
    * @see Node#getBroadcastRpcAddress()
    */
