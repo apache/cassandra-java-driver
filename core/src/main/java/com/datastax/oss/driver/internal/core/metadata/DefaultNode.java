@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
@@ -97,19 +98,19 @@ public class DefaultNode implements Node {
     return Optional.ofNullable(listenAddress);
   }
 
-  @NonNull
+  @Nullable
   @Override
   public String getDatacenter() {
     return datacenter;
   }
 
-  @NonNull
+  @Nullable
   @Override
   public String getRack() {
     return rack;
   }
 
-  @NonNull
+  @Nullable
   @Override
   public Version getCassandraVersion() {
     return cassandraVersion;
@@ -121,7 +122,7 @@ public class DefaultNode implements Node {
     return hostId;
   }
 
-  @NonNull
+  @Nullable
   @Override
   public UUID getSchemaVersion() {
     return schemaVersion;
