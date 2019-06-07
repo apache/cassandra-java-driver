@@ -21,7 +21,7 @@ public class UnexpectedResponseException extends Exception {
 
   public final Message message;
 
-  UnexpectedResponseException(String requestName, Message message) {
+  public UnexpectedResponseException(String requestName, Message message) {
     super(String.format("%s got unexpected response %s", requestName, message));
     this.message = message;
   }
