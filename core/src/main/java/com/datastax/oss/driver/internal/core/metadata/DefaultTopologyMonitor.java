@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
-import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
@@ -65,7 +64,6 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   private final String logPrefix;
   private final InternalDriverContext context;
   private final ControlConnection controlConnection;
-  private final AddressTranslator addressTranslator;
   private final Duration timeout;
   private final boolean reconnectOnInit;
   private final CompletableFuture<Void> closeFuture;
@@ -77,7 +75,6 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     this.logPrefix = context.getSessionName();
     this.context = context;
     this.controlConnection = context.getControlConnection();
-    this.addressTranslator = context.getAddressTranslator();
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     this.timeout = config.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT);
     this.reconnectOnInit = config.getBoolean(DefaultDriverOption.RECONNECT_ON_INIT);
