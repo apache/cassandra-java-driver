@@ -32,6 +32,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.Error;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -348,22 +349,37 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     }
   }
 
-  private InetSocketAddress getBroadcastRpcAddress(AdminRow row) {
-    InetAddress nativeAddress = row.getInetAddress("native_address");
-    if (nativeAddress == null) {
-      // Cassandra < 4
-      InetAddress rpcAddress = row.getInetAddress("rpc_address");
-      if (rpcAddress == null) {
-        // This could only happen if system.peers is corrupted, but handle gracefully
+  /**
+   * Determines the broadcast RPC address of the node represented by the given row.
+   *
+   * @param row The row to inspect; can represent either a local (control) node or a peer node.
+   * @return the broadcast RPC address of the node, if it could be determined; or {@code null}
+   *     otherwise.
+   */
+  @Nullable
+  protected InetSocketAddress getBroadcastRpcAddress(@NonNull AdminRow row) {
+    // in system.peers or system.local
+    InetAddress broadcastRpcInetAddress = row.getInetAddress("rpc_address");
+    if (broadcastRpcInetAddress == null) {
+      // in system.peers_v2 (Cassandra >= 4.0)
+      broadcastRpcInetAddress = row.getInetAddress("native_address");
+      if (broadcastRpcInetAddress == null) {
+        // This could only happen if system tables are corrupted, but handle gracefully
         return null;
       }
-      return new InetSocketAddress(rpcAddress, port);
-    } else {
-      Integer rowPort = row.getInteger("native_port");
-      if (rowPort == null || rowPort == 0) {
-        rowPort = port;
-      }
-      return new InetSocketAddress(nativeAddress, rowPort);
     }
+    // system.local for Cassandra >= 4.0
+    Integer broadcastRpcPort = row.getInteger("rpc_port");
+    if (broadcastRpcPort == null || broadcastRpcPort == 0) {
+      // system.peers_v2
+      broadcastRpcPort = row.getInteger("native_port");
+      if (broadcastRpcPort == null || broadcastRpcPort == 0) {
+        // use the default port if no port information was found in the row;
+        // note that in rare situations, the default port might not be known, in which case we
+        // report zero, as advertised in the javadocs of Node and NodeInfo.
+        broadcastRpcPort = port == -1 ? 0 : port;
+      }
+    }
+    return new InetSocketAddress(broadcastRpcInetAddress, broadcastRpcPort);
   }
 }
