@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
@@ -77,7 +78,7 @@ public class NullSavingStrategyIT {
   @Test
   public void should_throw_when_try_to_construct_dao_with_DO_NOT_SET_strategy_for_V3_protocol() {
     assertThatThrownBy(() -> mapper.productDao(sessionRule.keyspace()))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(MapperException.class)
         .hasMessage("You cannot use NullSavingStrategy.DO_NOT_SET for protocol version V3.");
   }
 
@@ -85,7 +86,7 @@ public class NullSavingStrategyIT {
   public void
       should_throw_when_try_to_construct_dao_with_DO_NOT_SET_implicit_strategy_for_V3_protocol() {
     assertThatThrownBy(() -> mapper.productDaoImplicit(sessionRule.keyspace()))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(MapperException.class)
         .hasMessage("You cannot use NullSavingStrategy.DO_NOT_SET for protocol version V3.");
   }
 
@@ -93,7 +94,7 @@ public class NullSavingStrategyIT {
   public void
       should_throw_when_try_to_construct_dao_with_DO_NOT_SET_strategy_set_globally_for_V3_protocol() {
     assertThatThrownBy(() -> mapper.productDaoDefault(sessionRule.keyspace()))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(MapperException.class)
         .hasMessage("You cannot use NullSavingStrategy.DO_NOT_SET for protocol version V3.");
   }
 

@@ -19,8 +19,8 @@ Two strategies are available:
 
     Note that unset values ([CASSANDRA-7304]) are only supported with [native
     protocol](../../../core/native_protocol/) v4 (Cassandra 2.2) or above . If you try to use this
-    strategy with a lower Cassandra version, the mapper will throw an `IllegalArgumentException`
-    when you try to build the corresponding DAO.
+    strategy with a lower Cassandra version, the mapper will throw an [MapperException] when you try
+    to access the corresponding DAO.
 
 * [SET_TO_NULL]: the mapper will always call the setter, even with a null value. The generated code
   looks approximately like this:
@@ -95,6 +95,7 @@ public interface UserDao extends InventoryDao {
 
 [@DefaultNullSavingStrategy]: https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/DefaultNullSavingStrategy.html
 [BoundStatement]:             https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/BoundStatement.html
+[MapperException]:            https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/MapperException.html
 [DO_NOT_SET]:                 https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/entity/saving/NullSavingStrategy.html#DO_NOT_SET
 [SET_TO_NULL]:                https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/entity/saving/NullSavingStrategy.html#SET_TO_NULL
       
