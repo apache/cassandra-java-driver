@@ -287,21 +287,45 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
         DefaultNodeInfo.builder()
             .withEndPoint(endPoint)
             .withBroadcastRpcAddress(broadcastRpcAddress);
-    InetAddress broadcastAddress = row.getInetAddress("broadcast_address"); // in system.local
-    if (broadcastAddress == null) {
-      broadcastAddress = row.getInetAddress("peer"); // in system.peers
+
+    // in system.local
+    InetAddress broadcastInetAddress = row.getInetAddress("broadcast_address");
+    if (broadcastInetAddress == null) {
+      // in system.peers or system.peers_v2
+      broadcastInetAddress = row.getInetAddress("peer");
     }
-    int broadcastPort = 0;
-    if (row.contains("peer_port")) {
+
+    Integer broadcastPort = 0;
+    if (row.contains("broadcast_port")) {
+      // system.local for Cassandra >= 4.0
+      broadcastPort = row.getInteger("broadcast_port");
+    } else if (row.contains("peer_port")) {
+      // system.peers_v2
       broadcastPort = row.getInteger("peer_port");
     }
-    builder.withBroadcastAddress(new InetSocketAddress(broadcastAddress, broadcastPort));
-    InetAddress listenAddress = row.getInetAddress("listen_address");
-    int listen_port = 0;
-    if (row.contains("listen_port")) {
-      listen_port = row.getInteger("listen_port");
+
+    InetSocketAddress broadcastAddress = null;
+    if (broadcastInetAddress != null && broadcastPort != null) {
+      broadcastAddress = new InetSocketAddress(broadcastInetAddress, broadcastPort);
     }
-    builder.withListenAddress(new InetSocketAddress(listenAddress, listen_port));
+
+    // in system.local only, and only for Cassandra versions >= 2.0.17, 2.1.8, 2.2.0 rc2;
+    // not present in system.peers nor system.peers_v2
+    InetAddress listenInetAddress = row.getInetAddress("listen_address");
+
+    // in system.local only, and only for Cassandra >= 4.0
+    Integer listenPort = 0;
+    if (row.contains("listen_port")) {
+      listenPort = row.getInteger("listen_port");
+    }
+
+    InetSocketAddress listenAddress = null;
+    if (listenInetAddress != null && listenPort != null) {
+      listenAddress = new InetSocketAddress(listenInetAddress, listenPort);
+    }
+
+    builder.withBroadcastAddress(broadcastAddress);
+    builder.withListenAddress(listenAddress);
     builder.withDatacenter(row.getString("data_center"));
     builder.withRack(row.getString("rack"));
     builder.withCassandraVersion(row.getString("release_version"));
