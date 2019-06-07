@@ -178,10 +178,9 @@ public interface Node {
    * The host ID that is assigned to this node by Cassandra. This value can be used to uniquely
    * identify a node even when the underling IP address changes.
    *
-   * <p>This should be non-null in a healthy deployment, but the driver will still function, and
-   * report {@code null} here, if the server metadata was corrupted.
+   * <p>This information is always present.
    */
-  @Nullable
+  @NonNull
   UUID getHostId();
 
   /**
