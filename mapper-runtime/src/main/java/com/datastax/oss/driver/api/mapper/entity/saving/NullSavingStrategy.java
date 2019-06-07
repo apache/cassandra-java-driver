@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.mapper.entity.saving;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 
 /** Defines how null {@link Entity} properties will be handled during data insertion. */
@@ -39,7 +40,7 @@ public enum NullSavingStrategy {
    *
    * <p>Note that unset values are only supported with {@link DefaultProtocolVersion#V4 native
    * protocol v4} (Cassandra 2.2) or above. If you try to use this strategy with a lower Cassandra
-   * version, the mapper will throw an {@link IllegalArgumentException} when you try to build the
+   * version, the mapper will throw a {@link MapperException} when you try to build the
    * corresponding DAO.
    *
    * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-7304">CASSANDRA-7304</a>

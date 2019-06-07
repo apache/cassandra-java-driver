@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
@@ -119,7 +120,7 @@ public class QueryReturnTypesIT {
 
   @Test
   public void should_fail_to_map_to_long_if_query_returns_other_type() {
-    thrown.expect(IllegalStateException.class);
+    thrown.expect(MapperException.class);
     thrown.expectMessage(
         "Expected the query to return a column with CQL type BIGINT in first position "
             + "(return type long is intended for COUNT queries)");
