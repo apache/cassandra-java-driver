@@ -33,6 +33,7 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.internal.core.addresstranslation.PassThroughAddressTranslator;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
+import com.datastax.oss.driver.internal.core.adminrequest.UnexpectedResponseException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
@@ -41,6 +42,12 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
+import com.datastax.oss.protocol.internal.Message;
+import com.datastax.oss.protocol.internal.ProtocolConstants;
+import com.datastax.oss.protocol.internal.response.Error;
+import com.tngtech.java.junit.dataprovider.DataProvider;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
+import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -57,9 +64,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+@RunWith(DataProviderRunner.class)
 public class DefaultTopologyMonitorTest {
 
   private static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
@@ -193,7 +202,7 @@ public class DefaultTopologyMonitorTest {
     verify(peer3).getUuid("host_id");
     verify(peer3, never()).getString(anyString());
 
-    verify(peer2, times(2)).getUuid("host_id");
+    verify(peer2, times(3)).getUuid("host_id");
     verify(peer2).getString("data_center");
   }
 
@@ -223,7 +232,7 @@ public class DefaultTopologyMonitorTest {
     verify(peer3).getUuid("host_id");
     verify(peer3, never()).getString(anyString());
 
-    verify(peer2, times(2)).getUuid("host_id");
+    verify(peer2, times(3)).getUuid("host_id");
     verify(peer2).getString("data_center");
   }
 
@@ -256,7 +265,7 @@ public class DefaultTopologyMonitorTest {
     verify(peer2).getInetAddress("rpc_address");
     verify(peer2, never()).getString(anyString());
 
-    verify(peer1).getInetAddress("rpc_address");
+    verify(peer1, times(2)).getInetAddress("rpc_address");
     verify(peer1).getString("data_center");
   }
 
@@ -289,22 +298,19 @@ public class DefaultTopologyMonitorTest {
     verify(peer2).getInetAddress("native_address");
     verify(peer2, never()).getString(anyString());
 
-    verify(peer1).getInetAddress("native_address");
+    verify(peer1, times(2)).getInetAddress("native_address");
     verify(peer1).getString("data_center");
   }
 
   @Test
   public void should_refresh_node_list_from_local_and_peers() {
     // Given
+    AdminRow local = mockLocalRow(1, node1.getHostId());
     AdminRow peer3 = mockPeersRow(3, UUID.randomUUID());
     AdminRow peer2 = mockPeersRow(2, node2.getHostId());
     topologyMonitor.stubQueries(
-        new StubbedQuery("SELECT * FROM system.local", mockResult(mockLocalRow(1))),
-        new StubbedQuery(
-            "SELECT * FROM system.peers_v2",
-            Collections.emptyMap(),
-            mockResult(peer3, peer2),
-            true),
+        new StubbedQuery("SELECT * FROM system.local", mockResult(local)),
+        new StubbedQuery("SELECT * FROM system.peers_v2", Collections.emptyMap(), null, true),
         new StubbedQuery("SELECT * FROM system.peers", mockResult(peer3, peer2)));
 
     // When
@@ -329,7 +335,75 @@ public class DefaultTopologyMonitorTest {
   }
 
   @Test
-  public void should_stop_executing_queries_once_closed() throws Exception {
+  @UseDataProvider("columnsToCheckV1")
+  public void should_skip_invalid_peers_row(String columnToCheck) {
+    // Given
+    topologyMonitor.isSchemaV2 = false;
+    node2.broadcastAddress = ADDRESS2;
+    AdminRow peer2 = mockPeersRow(2, node2.getHostId());
+    if (columnToCheck.equals("rpc_address")) {
+      when(peer2.getInetAddress(columnToCheck)).thenReturn(null);
+    } else if (columnToCheck.equals("host_id")) {
+      when(peer2.getUuid(columnToCheck)).thenReturn(null);
+    }
+    topologyMonitor.stubQueries(
+        new StubbedQuery(
+            "SELECT * FROM system.peers WHERE peer = :address",
+            ImmutableMap.of("address", ADDRESS2.getAddress()),
+            mockResult(peer2)));
+
+    // When
+    CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.refreshNode(node2);
+
+    // Then
+    assertThatStage(futureInfo).isSuccess(maybeInfo -> assertThat(maybeInfo).isEmpty());
+    assertThat(node2.broadcastAddress).isNotNull().isEqualTo(ADDRESS2);
+  }
+
+  @Test
+  @UseDataProvider("columnsToCheckV2")
+  public void should_skip_invalid_peers_row_v2(String columnToCheck) {
+    // Given
+    topologyMonitor.isSchemaV2 = true;
+    node2.broadcastAddress = ADDRESS2;
+    AdminRow peer2 = mockPeersV2Row(2, node2.getHostId());
+    switch (columnToCheck) {
+      case "native_address":
+        when(peer2.getInetAddress(columnToCheck)).thenReturn(null);
+        break;
+      case "native_port":
+        when(peer2.getInteger(columnToCheck)).thenReturn(null);
+        break;
+      case "host_id":
+        when(peer2.getUuid(columnToCheck)).thenReturn(null);
+        break;
+    }
+    topologyMonitor.stubQueries(
+        new StubbedQuery(
+            "SELECT * FROM system.peers_v2 WHERE peer = :address and peer_port = :port",
+            ImmutableMap.of("address", ADDRESS2.getAddress(), "port", 9042),
+            mockResult(peer2)));
+
+    // When
+    CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.refreshNode(node2);
+
+    // Then
+    assertThatStage(futureInfo).isSuccess(maybeInfo -> assertThat(maybeInfo).isEmpty());
+    assertThat(node2.broadcastAddress).isNotNull().isEqualTo(ADDRESS2);
+  }
+
+  @DataProvider
+  public static Object[][] columnsToCheckV1() {
+    return new Object[][] {{"rpc_address"}, {"host_id"}};
+  }
+
+  @DataProvider
+  public static Object[][] columnsToCheckV2() {
+    return new Object[][] {{"native_address"}, {"native_port"}, {"host_id"}};
+  }
+
+  @Test
+  public void should_stop_executing_queries_once_closed() {
     // Given
     topologyMonitor.close();
 
@@ -396,9 +470,10 @@ public class DefaultTopologyMonitorTest {
     }
   }
 
-  private AdminRow mockLocalRow(int i) {
+  private AdminRow mockLocalRow(int i, UUID hostId) {
     try {
       AdminRow row = mock(AdminRow.class);
+      when(row.getUuid("host_id")).thenReturn(hostId);
       when(row.getInetAddress("broadcast_address"))
           .thenReturn(InetAddress.getByName("127.0.0." + i));
       when(row.getString("data_center")).thenReturn("dc" + i);
@@ -411,6 +486,7 @@ public class DefaultTopologyMonitorTest {
       when(row.getInetAddress("rpc_address")).thenReturn(InetAddress.getByName("0.0.0.0"));
 
       when(row.getSetOfString("tokens")).thenReturn(ImmutableSet.of("token" + i));
+      when(row.contains("peer")).thenReturn(false);
       return row;
     } catch (UnknownHostException e) {
       fail("unexpected", e);
@@ -428,6 +504,7 @@ public class DefaultTopologyMonitorTest {
       when(row.getString("release_version")).thenReturn("release_version" + i);
       when(row.getInetAddress("rpc_address")).thenReturn(InetAddress.getByName("127.0.0." + i));
       when(row.getSetOfString("tokens")).thenReturn(ImmutableSet.of("token" + i));
+      when(row.contains("peer")).thenReturn(true);
       return row;
     } catch (UnknownHostException e) {
       fail("unexpected", e);
@@ -447,6 +524,7 @@ public class DefaultTopologyMonitorTest {
       when(row.getInetAddress("native_address")).thenReturn(InetAddress.getByName("127.0.0." + i));
       when(row.getInteger("native_port")).thenReturn(9042);
       when(row.getSetOfString("tokens")).thenReturn(ImmutableSet.of("token" + i));
+      when(row.contains("peer")).thenReturn(true);
       when(row.contains("peer_port")).thenReturn(true);
       when(row.contains("native_port")).thenReturn(true);
       return row;
