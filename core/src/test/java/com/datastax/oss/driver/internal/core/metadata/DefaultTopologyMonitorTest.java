@@ -37,6 +37,7 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
@@ -71,7 +72,6 @@ public class DefaultTopologyMonitorTest {
   @Mock private DriverChannel channel;
   @Mock protected MetricsFactory metricsFactory;
 
-  private AddressTranslator addressTranslator;
   private DefaultNode node1;
   private DefaultNode node2;
 
@@ -90,7 +90,7 @@ public class DefaultTopologyMonitorTest {
     when(config.getDefaultProfile()).thenReturn(defaultConfig);
     when(context.getConfig()).thenReturn(config);
 
-    addressTranslator = spy(new PassThroughAddressTranslator(context));
+    AddressTranslator addressTranslator = spy(new PassThroughAddressTranslator(context));
     when(context.getAddressTranslator()).thenReturn(addressTranslator);
 
     when(channel.getEndPoint()).thenReturn(node1.getEndPoint());
@@ -363,7 +363,11 @@ public class DefaultTopologyMonitorTest {
       assertThat(nextQuery.queryString).isEqualTo(queryString);
       assertThat(nextQuery.parameters).isEqualTo(parameters);
       if (nextQuery.error) {
-        new CompletableFuture<AdminResult>().completeExceptionally(new Exception("PlaceHolder"));
+        Message error =
+            new Error(
+                ProtocolConstants.ErrorCode.SERVER_ERROR,
+                "Unknown keyspace/cf pair (system.peers_v2)");
+        return CompletableFutures.failedFuture(new UnexpectedResponseException(queryString, error));
       }
       return CompletableFuture.completedFuture(nextQuery.result);
     }
@@ -389,10 +393,6 @@ public class DefaultTopologyMonitorTest {
 
     private StubbedQuery(String queryString, AdminResult result) {
       this(queryString, Collections.emptyMap(), result);
-    }
-
-    private CompletionStage<AdminResult> throwException() throws Exception {
-      throw new Exception("Placeholder");
     }
   }
 
@@ -460,9 +460,5 @@ public class DefaultTopologyMonitorTest {
     AdminResult result = mock(AdminResult.class);
     when(result.iterator()).thenReturn(Iterators.forArray(rows));
     return result;
-  }
-
-  private AdminResult errorResult() throws Exception {
-    throw new Exception("Boiler plate Exception");
   }
 }
