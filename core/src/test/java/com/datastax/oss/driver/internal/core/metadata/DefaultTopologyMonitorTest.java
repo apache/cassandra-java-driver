@@ -150,7 +150,7 @@ public class DefaultTopologyMonitorTest {
     topologyMonitor.stubQueries(
         new StubbedQuery(
             "SELECT * FROM system.peers_v2 WHERE peer = :address and peer_port = :port",
-            ImmutableMap.of("address", ADDRESS2.getAddress(), "peer", 9042),
+            ImmutableMap.of("address", ADDRESS2.getAddress(), "port", 9042),
             mockResult(mockPeersV2Row(2, node2.getHostId()))));
 
     // When

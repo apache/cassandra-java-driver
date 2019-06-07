@@ -122,7 +122,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
                 ImmutableMap.of(
                     "address",
                     node.getBroadcastAddress().get().getAddress(),
-                    "peer",
+                    "port",
                     node.getBroadcastAddress().get().getPort()));
       } else {
         query =
