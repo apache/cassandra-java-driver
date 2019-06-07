@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Collections;
+import java.util.Objects;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +40,7 @@ abstract class NodesRefresh implements MetadataRefresh {
     node.listenAddress = nodeInfo.getListenAddress().orElse(null);
     node.datacenter = nodeInfo.getDatacenter();
     node.rack = nodeInfo.getRack();
-    node.hostId = nodeInfo.getHostId();
+    node.hostId = Objects.requireNonNull(nodeInfo.getHostId());
     node.schemaVersion = nodeInfo.getSchemaVersion();
     String versionString = nodeInfo.getCassandraVersion();
     try {

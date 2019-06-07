@@ -131,6 +131,9 @@ public interface NodeInfo {
   /**
    * The host ID that is assigned to this host by cassandra. The driver uses this to uniquely
    * identify a node.
+   *
+   * <p>This information is required; the driver will not function properly if this method returns
+   * {@code null}.
    */
   @NonNull
   UUID getHostId();

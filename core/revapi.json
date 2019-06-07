@@ -4742,6 +4742,20 @@
         "new": "method java.net.SocketAddress com.datastax.oss.driver.api.core.metadata.EndPoint::resolve()",
         "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
         "justification": "EndPoint.resolve() was missing @NonNull"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method java.util.UUID com.datastax.oss.driver.api.core.metadata.Node::getHostId()",
+        "new": "method java.util.UUID com.datastax.oss.driver.api.core.metadata.Node::getHostId()",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "Node.getHostId() should have been annotated with @NonNull"
+      },
+      {
+        "code": "java.annotation.removed",
+        "old": "method java.util.UUID com.datastax.oss.driver.api.core.metadata.Node::getHostId()",
+        "new": "method java.util.UUID com.datastax.oss.driver.api.core.metadata.Node::getHostId()",
+        "annotation": "@edu.umd.cs.findbugs.annotations.Nullable",
+        "justification": "Node.getHostId() should have been annotated with @NonNull"
       }
     ]
   }
