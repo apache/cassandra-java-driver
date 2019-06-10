@@ -60,12 +60,6 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     // is null")?
     methodBuilder.endControlFlow();
 
-    methodBuilder
-        .addStatement("$T tableId = context.getTableId()", CqlIdentifier.class)
-        .beginControlFlow("if (tableId == null)")
-        .addStatement("tableId = defaultTableId")
-        .endControlFlow();
-
     // Generates expected names to be present in cql (table or udt)
     List<CodeBlock> expectedCqlNames =
         entityDefinition
@@ -83,16 +77,14 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
           "expectedCqlNames.add($1T.fromCql($2L))", CqlIdentifier.class, expectedCqlName);
     }
 
-    // Generates TableMetadata - Assumes that MapperContext context is already defined
-    methodBuilder.addStatement("$T finalTableId = tableId", CqlIdentifier.class);
     methodBuilder.addStatement(
-        "$1T<$2T> tableMetadata = context.getSession().getMetadata().getKeyspace(context.getKeyspaceId()).flatMap(v -> v.getTable(finalTableId))",
+        "$1T<$2T> tableMetadata = context.getSession().getMetadata().getKeyspace(context.getKeyspaceId()).flatMap(v -> v.getTable(tableId))",
         Optional.class,
         TableMetadata.class);
 
     // Generated UserDefineTypes metadata
     methodBuilder.addStatement(
-        "$1T<$2T> userDefinedType = context.getSession().getMetadata().getKeyspace(context.getKeyspaceId()).flatMap(v -> v.getUserDefinedType(finalTableId))",
+        "$1T<$2T> userDefinedType = context.getSession().getMetadata().getKeyspace(context.getKeyspaceId()).flatMap(v -> v.getUserDefinedType(tableId))",
         Optional.class,
         UserDefinedType.class);
 
