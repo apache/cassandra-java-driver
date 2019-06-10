@@ -4,6 +4,7 @@
 
 ### 4.1.0 (in progress)
 
+- [improvement] JAVA-2278: Pass the request's log prefix to RequestTracker
 - [bug] JAVA-2253: Don't strip trailing zeros in ByteOrderedToken
 - [improvement] JAVA-2207: Add bulk value assignment to QueryBuilder Insert
 - [bug] JAVA-2234: Handle terminated executor when the session is closed twice

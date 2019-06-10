@@ -77,20 +77,31 @@ datastax-java-driver.advanced.request-tracker {
 All requests are logged under the category
 `com.datastax.oss.driver.internal.core.tracker.RequestLogger`.
 
+The prefix of the log will always contain at least: 
+
+```
+s0|274426173
+```
+
+Where `s0` is the session name (see the `basic.session-name` configuration option), and `274426173`
+is a unique hash code calculated per request, that can be used for correlation with the driver's
+debug and trace logs.
+
+
 Successful and slow requests use the `INFO` level:
 
 ```
-INFO  c.d.o.d.i.core.tracker.RequestLogger - [s0][/127.0.0.1:9042] Success (13 ms) [1 values]
+INFO  c.d.o.d.i.core.tracker.RequestLogger - [s0|274426173][/127.0.0.1:9042] Success (13 ms) [1 values]
 SELECT * FROM users WHERE user_id=? [v0=42]
 
-INFO  c.d.o.d.i.core.tracker.RequestLogger - [s0][/127.0.0.1:9042] Slow (1.245 s) [1 values] SELECT
+INFO  c.d.o.d.i.core.tracker.RequestLogger - [s0|1883237069][/127.0.0.1:9042] Slow (1.245 s) [1 values] SELECT
 * FROM users WHERE user_id=? [v0=42]
 ```
 
 Failed requests use the `ERROR` level:
 
 ```
-ERROR c.d.o.d.i.core.tracker.RequestLogger - [s0][/127.0.0.1:9042] Error (179 ms) [1 values] SELECT
+ERROR c.d.o.d.i.core.tracker.RequestLogger - [s0|1883237069][/127.0.0.1:9042] Error (179 ms) [1 values] SELECT
 all FROM users WHERE user_id=? [v0=42]
 com.datastax.oss.driver.api.core.servererrors.InvalidQueryException: Undefined column name all
 ```

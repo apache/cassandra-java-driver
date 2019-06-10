@@ -47,6 +47,8 @@ import com.datastax.oss.simulacron.common.codec.ConsistencyLevel;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -64,6 +66,13 @@ import org.slf4j.LoggerFactory;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RequestLoggerIT {
+  private static final Pattern LOG_PREFIX_PER_REQUEST = Pattern.compile("\\[s\\d*\\|\\d*]");
+  private static final Predicate<String> WITH_PER_REQUEST_PREFIX =
+      log -> LOG_PREFIX_PER_REQUEST.matcher(log).lookingAt();
+  private static final Pattern LOG_PREFIX_WITH_EXECUTION_NUMBER =
+      Pattern.compile("\\[s\\d*\\|\\d*\\|\\d*]");
+  private static final Predicate<String> WITH_EXECUTION_PREFIX =
+      log -> LOG_PREFIX_WITH_EXECUTION_NUMBER.matcher(log).lookingAt();
 
   private static final String QUERY = "SELECT release_version FROM system.local";
 
@@ -192,7 +201,8 @@ public class RequestLoggerIT {
     // Then
     verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
-        .contains("Success", "[0 values]", QUERY);
+        .contains("Success", "[0 values]", QUERY)
+        .matches(WITH_PER_REQUEST_PREFIX);
   }
 
   @Test
@@ -206,7 +216,8 @@ public class RequestLoggerIT {
     // Then
     verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
-        .contains("Success", "[0 values]", QUERY);
+        .contains("Success", "[0 values]", QUERY)
+        .matches(WITH_PER_REQUEST_PREFIX);
   }
 
   @Test
@@ -227,7 +238,8 @@ public class RequestLoggerIT {
     ILoggingEvent log = loggingEventCaptor.getValue();
     assertThat(log.getFormattedMessage())
         .contains("Error", "[0 values]", QUERY)
-        .doesNotContain(ServerError.class.getName());
+        .doesNotContain(ServerError.class.getName())
+        .matches(WITH_PER_REQUEST_PREFIX);
     assertThat(log.getThrowableProxy().getClassName()).isEqualTo(ServerError.class.getName());
   }
 
@@ -248,7 +260,8 @@ public class RequestLoggerIT {
     verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
     ILoggingEvent log = loggingEventCaptor.getValue();
     assertThat(log.getFormattedMessage())
-        .contains("Error", "[0 values]", QUERY, ServerError.class.getName());
+        .contains("Error", "[0 values]", QUERY, ServerError.class.getName())
+        .matches(WITH_PER_REQUEST_PREFIX);
   }
 
   @Test
@@ -270,7 +283,8 @@ public class RequestLoggerIT {
     verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
     ILoggingEvent log = loggingEventCaptor.getValue();
     assertThat(log.getFormattedMessage())
-        .contains("Error", "[0 values]", QUERY, ServerError.class.getName());
+        .contains("Error", "[0 values]", QUERY, ServerError.class.getName())
+        .matches(WITH_PER_REQUEST_PREFIX);
     assertThat(log.getThrowableProxy()).isNull();
   }
 
@@ -287,7 +301,8 @@ public class RequestLoggerIT {
     // Then
     verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
-        .contains("Slow", "[0 values]", QUERY);
+        .contains("Slow", "[0 values]", QUERY)
+        .matches(WITH_PER_REQUEST_PREFIX);
   }
 
   @Test
@@ -332,9 +347,15 @@ public class RequestLoggerIT {
     verify(appender, new Timeout(500, VerificationModeFactory.times(3)))
         .doAppend(loggingEventCaptor.capture());
     List<ILoggingEvent> events = loggingEventCaptor.getAllValues();
-    assertThat(events.get(0).getFormattedMessage()).contains("Error", "[0 values]", QUERY);
-    assertThat(events.get(1).getFormattedMessage()).contains("Success", "[0 values]", QUERY);
-    assertThat(events.get(2).getFormattedMessage()).contains("Success", "[0 values]", QUERY);
+    assertThat(events.get(0).getFormattedMessage())
+        .contains("Error", "[0 values]", QUERY)
+        .matches(WITH_EXECUTION_PREFIX);
+    assertThat(events.get(1).getFormattedMessage())
+        .contains("Success", "[0 values]", QUERY)
+        .matches(WITH_PER_REQUEST_PREFIX);
+    assertThat(events.get(2).getFormattedMessage())
+        .contains("Success", "[0 values]", QUERY)
+        .matches(WITH_PER_REQUEST_PREFIX);
   }
 
   @Test
@@ -359,7 +380,11 @@ public class RequestLoggerIT {
     verify(appender, new Timeout(500, VerificationModeFactory.times(2)))
         .doAppend(loggingEventCaptor.capture());
     List<ILoggingEvent> events = loggingEventCaptor.getAllValues();
-    assertThat(events.get(0).getFormattedMessage()).contains("Success", "[0 values]", QUERY);
-    assertThat(events.get(1).getFormattedMessage()).contains("Success", "[0 values]", QUERY);
+    assertThat(events.get(0).getFormattedMessage())
+        .contains("Success", "[0 values]", QUERY)
+        .matches(WITH_PER_REQUEST_PREFIX);
+    assertThat(events.get(1).getFormattedMessage())
+        .contains("Success", "[0 values]", QUERY)
+        .matches(WITH_PER_REQUEST_PREFIX);
   }
 }

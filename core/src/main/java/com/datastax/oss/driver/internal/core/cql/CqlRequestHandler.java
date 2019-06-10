@@ -341,8 +341,9 @@ public class CqlRequestHandler implements Throttled {
           totalLatencyNanos = completionTimeNanos - startTimeNanos;
           long nodeLatencyNanos = completionTimeNanos - callback.nodeStartTimeNanos;
           requestTracker.onNodeSuccess(
-              statement, nodeLatencyNanos, executionProfile, callback.node);
-          requestTracker.onSuccess(statement, totalLatencyNanos, executionProfile, callback.node);
+              statement, nodeLatencyNanos, executionProfile, callback.node, logPrefix);
+          requestTracker.onSuccess(
+              statement, totalLatencyNanos, executionProfile, callback.node, logPrefix);
         }
         if (sessionMetricUpdater.isEnabled(
             DefaultSessionMetric.CQL_REQUESTS, executionProfile.getName())) {
@@ -443,7 +444,7 @@ public class CqlRequestHandler implements Throttled {
       cancelScheduledTasks();
       if (!(requestTracker instanceof NoopRequestTracker)) {
         long latencyNanos = System.nanoTime() - startTimeNanos;
-        requestTracker.onError(statement, error, latencyNanos, executionProfile, node);
+        requestTracker.onError(statement, error, latencyNanos, executionProfile, node, logPrefix);
       }
       if (error instanceof DriverTimeoutException) {
         throttler.signalTimeout(this);
@@ -872,7 +873,7 @@ public class CqlRequestHandler implements Throttled {
         nodeResponseTimeNanos = System.nanoTime();
       }
       long latencyNanos = nodeResponseTimeNanos - this.nodeStartTimeNanos;
-      requestTracker.onNodeError(statement, error, latencyNanos, executionProfile, node);
+      requestTracker.onNodeError(statement, error, latencyNanos, executionProfile, node, logPrefix);
     }
 
     @Override
