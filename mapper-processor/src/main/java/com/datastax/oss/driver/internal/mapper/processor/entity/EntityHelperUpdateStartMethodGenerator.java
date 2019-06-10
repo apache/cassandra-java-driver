@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
-import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.update.UpdateStart;
@@ -48,20 +48,12 @@ public class EntityHelperUpdateStartMethodGenerator implements MethodGenerator {
     if (!entityDefinition.getRegularColumns().iterator().hasNext()) {
       updateBuilder.addStatement(
           "throw new $T($S)",
-          UnsupportedOperationException.class,
+          MapperException.class,
           String.format(
               "Entity %s does not have any non PK columns. %s is not possible",
               entityDefinition.getClassName().simpleName(), Update.class.getSimpleName()));
     } else {
       updateBuilder
-          .addStatement("$T keyspaceId = context.getKeyspaceId()", CqlIdentifier.class)
-          .beginControlFlow("if (keyspaceId == null)")
-          .addStatement("keyspaceId = defaultKeyspaceId")
-          .endControlFlow()
-          .addStatement("$T tableId = context.getTableId()", CqlIdentifier.class)
-          .beginControlFlow("if (tableId == null)")
-          .addStatement("tableId = defaultTableId")
-          .endControlFlow()
           .addStatement(
               "$1T update = (keyspaceId == null)\n"
                   + "? $2T.update(tableId)\n"

@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
@@ -332,8 +333,8 @@ public class UpdateIT extends InventoryITBase {
   @Test
   public void should_throw_when_try_to_use_dao_with_update_only_pk() {
     assertThatThrownBy(() -> inventoryMapper.onlyPkDao(sessionRule.keyspace()))
-        .hasCauseInstanceOf(UnsupportedOperationException.class)
-        .hasStackTraceContaining("Entity OnlyPK does not have any non PK columns.");
+        .isInstanceOf(MapperException.class)
+        .hasMessageContaining("Entity OnlyPK does not have any non PK columns.");
   }
 
   @Test

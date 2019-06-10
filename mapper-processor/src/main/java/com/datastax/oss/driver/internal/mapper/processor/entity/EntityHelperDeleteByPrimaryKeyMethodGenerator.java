@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
-import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.delete.Delete;
 import com.datastax.oss.driver.api.querybuilder.delete.DeleteSelection;
@@ -47,20 +47,12 @@ public class EntityHelperDeleteByPrimaryKeyMethodGenerator implements MethodGene
     if (entityDefinition.getPrimaryKey().isEmpty()) {
       deleteByPrimaryKeyBuilder.addStatement(
           "throw new $T($S)",
-          UnsupportedOperationException.class,
+          MapperException.class,
           String.format(
               "Entity %s does not declare a primary key",
               entityDefinition.getClassName().simpleName()));
     } else {
       deleteByPrimaryKeyBuilder
-          .addStatement("$T keyspaceId = context.getKeyspaceId()", CqlIdentifier.class)
-          .beginControlFlow("if (keyspaceId == null)")
-          .addStatement("keyspaceId = defaultKeyspaceId")
-          .endControlFlow()
-          .addStatement("$T tableId = context.getTableId()", CqlIdentifier.class)
-          .beginControlFlow("if (tableId == null)")
-          .addStatement("tableId = defaultTableId")
-          .endControlFlow()
           .addStatement(
               "$1T delete = (keyspaceId == null)\n"
                   + "? $2T.deleteFrom(tableId)\n"

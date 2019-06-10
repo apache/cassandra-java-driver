@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.mapper;
 
+import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
 import com.datastax.oss.driver.internal.mapper.DaoCacheKey;
 import com.datastax.oss.driver.internal.mapper.DefaultMapperContext;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
@@ -122,10 +123,16 @@ public class MapperImplementationGenerator extends SingleFileCodeGenerator
     // Add all the fields that were requested by DAO method generators:
     for (DaoSimpleField field : daoSimpleFields) {
       classContents.addField(
-          FieldSpec.builder(field.type, field.name, Modifier.PRIVATE, Modifier.FINAL).build());
+          FieldSpec.builder(
+                  ParameterizedTypeName.get(ClassName.get(LazyReference.class), field.type),
+                  field.name,
+                  Modifier.PRIVATE,
+                  Modifier.FINAL)
+              .build());
       constructorContents.addStatement(
-          "this.$L = $T.$L(context)",
+          "this.$1L = new $2T<>(() -> $3T.$4L(context))",
           field.name,
+          LazyReference.class,
           field.daoImplementationType,
           field.isAsync ? "initAsync" : "init");
     }

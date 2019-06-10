@@ -93,12 +93,36 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
                     ClassName.get(EntityHelper.class), ClassName.get(classElement)))
             .addField(
                 FieldSpec.builder(
-                        CqlIdentifier.class, "defaultTableId", Modifier.PUBLIC, Modifier.FINAL)
+                        CqlIdentifier.class, "keyspaceId", Modifier.PRIVATE, Modifier.FINAL)
                     .build())
             .addField(
-                FieldSpec.builder(
-                        CqlIdentifier.class, "defaultKeyspaceId", Modifier.PUBLIC, Modifier.FINAL)
+                FieldSpec.builder(CqlIdentifier.class, "tableId", Modifier.PRIVATE, Modifier.FINAL)
                     .build());
+
+    classContents
+        .addMethod(
+            MethodSpec.methodBuilder("getKeyspaceId")
+                .addModifiers(Modifier.PUBLIC)
+                .addAnnotation(Override.class)
+                .returns(CqlIdentifier.class)
+                .addStatement("return keyspaceId")
+                .build())
+        .addMethod(
+            MethodSpec.methodBuilder("getTableId")
+                .addModifiers(Modifier.PUBLIC)
+                .addAnnotation(Override.class)
+                .returns(CqlIdentifier.class)
+                .addStatement("return tableId")
+                .build())
+        .addMethod(
+            MethodSpec.methodBuilder("getEntityClass")
+                .addModifiers(Modifier.PUBLIC)
+                .addAnnotation(Override.class)
+                .returns(
+                    ParameterizedTypeName.get(
+                        ClassName.get(Class.class), entityDefinition.getClassName()))
+                .addStatement("return $T.class", entityDefinition.getClassName())
+                .build());
 
     for (MethodGenerator methodGenerator :
         ImmutableList.of(
@@ -121,13 +145,16 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
         ClassName.get(MapperContext.class), "context", classContents, constructorContents);
 
     constructorContents.addStatement(
-        "defaultTableId = $T.fromCql($L)", CqlIdentifier.class, entityDefinition.getCqlName());
+        "this.tableId = context.getTableId() != null ? context.getTableId() : $T.fromCql($L)",
+        CqlIdentifier.class,
+        entityDefinition.getCqlName());
 
     if (entityDefinition.getDefaultKeyspace() == null) {
-      constructorContents.addStatement("defaultKeyspaceId = null");
+      constructorContents.addStatement("this.keyspaceId = context.getKeyspaceId()");
     } else {
       constructorContents.addStatement(
-          "defaultKeyspaceId = $T.fromCql($S)",
+          "this.keyspaceId = "
+              + "context.getKeyspaceId() != null ? context.getKeyspaceId() : $T.fromCql($S)",
           CqlIdentifier.class,
           entityDefinition.getDefaultKeyspace());
     }
