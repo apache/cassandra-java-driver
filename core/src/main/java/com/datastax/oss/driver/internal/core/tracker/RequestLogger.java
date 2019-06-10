@@ -68,15 +68,13 @@ public class RequestLogger implements RequestTracker {
   public static final int DEFAULT_REQUEST_LOGGER_MAX_VALUES = 50;
   public static final int DEFAULT_REQUEST_LOGGER_MAX_VALUE_LENGTH = 50;
 
-  private final String logPrefix;
   private final RequestLogFormatter formatter;
 
   public RequestLogger(DriverContext context) {
-    this(context.getSessionName(), new RequestLogFormatter(context));
+    this(new RequestLogFormatter(context));
   }
 
-  protected RequestLogger(String logPrefix, RequestLogFormatter formatter) {
-    this.logPrefix = logPrefix;
+  protected RequestLogger(RequestLogFormatter formatter) {
     this.formatter = formatter;
   }
 
@@ -85,7 +83,8 @@ public class RequestLogger implements RequestTracker {
       @NonNull Request request,
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node) {
+      @NonNull Node node,
+      @NonNull String logPrefix) {
 
     boolean successEnabled =
         executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, false);
@@ -120,7 +119,15 @@ public class RequestLogger implements RequestTracker {
             DEFAULT_REQUEST_LOGGER_MAX_VALUE_LENGTH);
 
     logSuccess(
-        request, latencyNanos, isSlow, node, maxQueryLength, showValues, maxValues, maxValueLength);
+        request,
+        latencyNanos,
+        isSlow,
+        node,
+        maxQueryLength,
+        showValues,
+        maxValues,
+        maxValueLength,
+        logPrefix);
   }
 
   @Override
@@ -129,7 +136,8 @@ public class RequestLogger implements RequestTracker {
       @NonNull Throwable error,
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
-      Node node) {
+      Node node,
+      @NonNull String logPrefix) {
 
     if (!executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, false)) {
       return;
@@ -162,7 +170,8 @@ public class RequestLogger implements RequestTracker {
         showValues,
         maxValues,
         maxValueLength,
-        showStackTraces);
+        showStackTraces,
+        logPrefix);
   }
 
   @Override
@@ -171,7 +180,8 @@ public class RequestLogger implements RequestTracker {
       @NonNull Throwable error,
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node) {
+      @NonNull Node node,
+      @NonNull String logPrefix) {
     // Nothing to do
   }
 
@@ -180,7 +190,8 @@ public class RequestLogger implements RequestTracker {
       @NonNull Request request,
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node) {
+      @NonNull Node node,
+      @NonNull String logPrefix) {
     // Nothing to do
   }
 
@@ -197,7 +208,8 @@ public class RequestLogger implements RequestTracker {
       int maxQueryLength,
       boolean showValues,
       int maxValues,
-      int maxValueLength) {
+      int maxValueLength,
+      String logPrefix) {
 
     StringBuilder builder = formatter.logBuilder(logPrefix, node);
     if (isSlow) {
@@ -220,7 +232,8 @@ public class RequestLogger implements RequestTracker {
       boolean showValues,
       int maxValues,
       int maxValueLength,
-      boolean showStackTraces) {
+      boolean showStackTraces,
+      String logPrefix) {
 
     StringBuilder builder = formatter.logBuilder(logPrefix, node);
     formatter.appendErrorDescription(builder);

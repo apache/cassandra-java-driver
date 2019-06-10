@@ -27,7 +27,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public class RequestNodeLoggerExample extends RequestLogger {
 
   public RequestNodeLoggerExample(DriverContext context) {
-    super(context.getSessionName(), new RequestLogFormatter(context));
+    super(new RequestLogFormatter(context));
   }
 
   @Override
@@ -36,7 +36,8 @@ public class RequestNodeLoggerExample extends RequestLogger {
       @NonNull Throwable error,
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node) {
+      @NonNull Node node,
+      @NonNull String logPrefix) {
     if (!executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED)) {
       return;
     }
@@ -62,7 +63,8 @@ public class RequestNodeLoggerExample extends RequestLogger {
         showValues,
         maxValues,
         maxValueLength,
-        showStackTraces);
+        showStackTraces,
+        logPrefix);
   }
 
   @Override
@@ -70,7 +72,8 @@ public class RequestNodeLoggerExample extends RequestLogger {
       @NonNull Request request,
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node) {
+      @NonNull Node node,
+      @NonNull String logPrefix) {
     boolean successEnabled =
         executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED);
     boolean slowEnabled =
@@ -101,6 +104,14 @@ public class RequestNodeLoggerExample extends RequestLogger {
             : 0;
 
     logSuccess(
-        request, latencyNanos, isSlow, node, maxQueryLength, showValues, maxValues, maxValueLength);
+        request,
+        latencyNanos,
+        isSlow,
+        node,
+        maxQueryLength,
+        showValues,
+        maxValues,
+        maxValueLength,
+        logPrefix);
   }
 }
