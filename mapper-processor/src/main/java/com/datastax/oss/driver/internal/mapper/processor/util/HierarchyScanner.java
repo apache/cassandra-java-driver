@@ -33,6 +33,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
 
 /** Provides mechanisms for building and traversing a class/interfaces hierarchy. */
 public class HierarchyScanner {
@@ -91,7 +92,7 @@ public class HierarchyScanner {
 
     // traverse hierarchy until a strategy is found.
     final HierarchyScanStrategyOptions defaultOptions =
-        new HierarchyScanStrategyOptions(defaultStrategy);
+        new HierarchyScanStrategyOptions(context.getElementUtils());
     final AtomicReference<HierarchyScanStrategyOptions> ref = new AtomicReference<>(defaultOptions);
     traverseHierarchy(
         defaultOptions,
@@ -119,10 +120,11 @@ public class HierarchyScanner {
     TypeMirror highestAncestor = null;
     boolean includeHighestAncestor = defaultStrategy.includeHighestAncestor();
 
-    HierarchyScanStrategyOptions(HierarchyScanStrategy strategy) {
-      this.scanAncestors = strategy.scanAncestors();
-      this.highestAncestor = null;
-      this.includeHighestAncestor = strategy.includeHighestAncestor();
+    HierarchyScanStrategyOptions(Elements elements) {
+      // its assumed the defaultStrategy's highestAncestor is Object.class, or something
+      // that is already resolvable.
+      this.highestAncestor =
+          elements.getTypeElement(defaultStrategy.highestAncestor().getName()).asType();
     }
 
     HierarchyScanStrategyOptions(AnnotationMirror annotationMirror) {

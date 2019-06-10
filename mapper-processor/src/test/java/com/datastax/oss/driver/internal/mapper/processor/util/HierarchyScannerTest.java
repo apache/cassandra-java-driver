@@ -33,6 +33,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -46,8 +47,15 @@ public class HierarchyScannerTest {
     Types types = Mockito.mock(Types.class);
     Classes classUtils = Mockito.mock(Classes.class);
 
+    // used for resolving TypeMirror for default HierarchyScanStrategy highestAncestor
+    // (Object.class), in this case just return a mocked TypeElement.
+    Elements elements = Mockito.mock(Elements.class);
+    Mockito.when(elements.getTypeElement(Mockito.anyString()))
+        .thenReturn(Mockito.mock(TypeElement.class));
+
     Mockito.when(context.getTypeUtils()).thenReturn(types);
     Mockito.when(context.getClassUtils()).thenReturn(classUtils);
+    Mockito.when(context.getElementUtils()).thenReturn(elements);
 
     Mockito.when(classUtils.isSame(Mockito.any(Element.class), Mockito.any(Class.class)))
         .thenReturn(false);
