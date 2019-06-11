@@ -125,7 +125,7 @@ public class EntityPolymorphismIT {
   interface WriteTimeDao<Y extends WriteTimeProvider> extends BaseDao<Y> {
     @Insert(timestamp = ":writeTime")
     void saveWithTime(Y y, long writeTime);
-  };
+  }
 
   @Dao
   interface RectangleDao extends BaseDao<Rectangle> {};
@@ -139,13 +139,13 @@ public class EntityPolymorphismIT {
   }
 
   @Dao
-  interface SquareDao extends WriteTimeDao<Square>, ArbitraryInterface<Float> {};
+  interface SquareDao extends WriteTimeDao<Square>, ArbitraryInterface<Float> {}
 
   @Dao
   interface CircleDao extends WriteTimeDao<Circle> {}
 
   @Dao
-  interface SphereDao extends WriteTimeDao<Sphere> {};
+  interface SphereDao extends WriteTimeDao<Sphere> {}
 
   interface NamedDeviceDao<T extends Device> extends BaseDao<T> {
     @Query("UPDATE ${qualifiedTableId} SET name = :name WHERE device_id = :id")

@@ -93,7 +93,7 @@ Note that interfaces that declare generic type variables should not be annotated
 [@Dao].
 
 In addition to inheriting methods from parent interfaces, interface-level annotations such as
-[DefaultNullSavingStrategy] are also inherited:
+[@DefaultNullSavingStrategy] are also inherited:
 
 ```java
 import static com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy.SET_TO_NULL;

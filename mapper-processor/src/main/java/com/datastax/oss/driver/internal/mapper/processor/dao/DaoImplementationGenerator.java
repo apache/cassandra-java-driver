@@ -114,8 +114,8 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
   }
 
   @SuppressWarnings("unchecked")
-  private <A> Optional<A> getAnnotation(Class<A> annotationClass) {
-    return Optional.ofNullable((A) annotations.get(annotationClass));
+  private <A extends Annotation> Optional<A> getAnnotation(Class<A> annotationClass) {
+    return Optional.ofNullable(annotationClass.cast(annotations.get(annotationClass)));
   }
 
   @Override

@@ -79,7 +79,7 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
     return asEntityElement(declaredType.getTypeArguments().get(0));
   }
 
-  /** Evaluates whether or not this type argument could by an entity (declared or a typevar). */
+  /** Evaluates whether or not this type argument could be an entity (declared or a typevar). */
   protected boolean couldBeEntity(TypeMirror mirror) {
     return mirror.getKind() == TypeKind.DECLARED || mirror.getKind() == TypeKind.TYPEVAR;
   }
