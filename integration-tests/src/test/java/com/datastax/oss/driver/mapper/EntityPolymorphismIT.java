@@ -128,7 +128,7 @@ public class EntityPolymorphismIT {
   }
 
   @Dao
-  interface RectangleDao extends BaseDao<Rectangle> {};
+  interface RectangleDao extends BaseDao<Rectangle> {}
 
   // Define an intermediate interface with same type variable name to ensure
   // this doesn't cause any issue in code generation.

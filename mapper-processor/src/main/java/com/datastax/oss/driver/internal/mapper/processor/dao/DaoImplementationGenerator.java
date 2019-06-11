@@ -113,7 +113,6 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
     return ImmutableMap.copyOf(annotations);
   }
 
-  @SuppressWarnings("unchecked")
   private <A extends Annotation> Optional<A> getAnnotation(Class<A> annotationClass) {
     return Optional.ofNullable(annotationClass.cast(annotations.get(annotationClass)));
   }
