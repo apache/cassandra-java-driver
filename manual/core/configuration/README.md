@@ -111,6 +111,13 @@ great for temporary changes, for example in your development environment:
 java -Ddatastax-java-driver.advanced.heartbeat.interval="5 minutes" ...
 ```
 
+For array options, provide each element separately by appending an index to the path:
+
+```
+-Ddatastax-java-driver.basic.contact-points.0="127.0.0.1:9042"
+-Ddatastax-java-driver.basic.contact-points.1="127.0.0.2:9042"
+```
+
 We recommend reserving system properties for the early phases of the project; in production, having
 all the configuration in one place will make it easier to manage and review.
 
