@@ -530,6 +530,10 @@ public class EntityPolymorphismIT {
       return tags;
     }
 
+    public void setTags(Set<String> tags) {
+      this.tags = tags;
+    }
+
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
