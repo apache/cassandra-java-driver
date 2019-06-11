@@ -176,33 +176,28 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
     return implementationName;
   }
 
-  /**
+  /*
    * Parses the given interface mirror and returns a mapping of type variable names to their
    * resolved concrete declared type element.
    *
-   * <p>Also updates {@link #typeMappingsForInterface} for parent interfaces of this interface with
+   * Also updates typeMappingsForInterface for parent interfaces of this interface with
    * the type variable to concrete type mappings declared on this interface. This is needed to
    * resolve declared types parameter values between the interface hierarchy.
    *
-   * <p>For example, given the following hierarchy:
+   * For example, given the following hierarchy:
    *
-   * <pre>
-   *   interface BaseDao&lt;T&gt;
-   *   interface NamedDeviceDao&lt;Y extends Device&gt; extends BaseDao&lt;Y&gt;
-   *   interface TrackedDeviceDao extends NamedDeviceDao&lt;TrackedDevice&gt;
-   * </pre>
+   *   interface BaseDao<T>
+   *   interface NamedDeviceDao<Y extends Device> extends BaseDao<Y>
+   *   interface TrackedDeviceDao extends NamedDeviceDao<TrackedDevice>
    *
-   * In {@link #getContents()}, the following mirrors would be parsed for type parameters when
-   * generating code for <code>TrackedDeviceDao</code>:
+   * In getContents(), the following mirrors would be parsed for type parameters when
+   * generating code for TrackedDeviceDao:
    *
-   * <ul>
-   *   <li><code>parseTypeParameters(TrackedDeviceDao)</code>: returns empty map
-   *   <li><code>parseTypeParameters(NamedDeviceDao&lt;TrackedDevice&gt;)</code>: returns <code>Y
-   *   -> TrackedDevice</code> , <code>typeMappingsForInterface(BaseDao&lt;Y&gt;)</code> updated
-   *       with <code>Y -> TrackedDevice</code>
-   *   <li><code>parseTypeParameters(BaseDao&lt;Y&gt;)</code>: returns <code>T ->
-   *     TrackedDevice</code>
-   * </ul>
+   *  * parseTypeParameters(TrackedDeviceDao): returns empty map
+   *  * parseTypeParameters(NamedDeviceDao<TrackedDevice>): returns Y -> TrackedDevice,
+   *    typeMappingsForInterface(BaseDao<Y>) updated with <code>Y -> TrackedDevice
+   *  * parseTypeParameters(BaseDao<Y>): returns T -> TrackedDevice
+   *
    */
   private Map<Name, TypeElement> parseTypeParameters(TypeMirror mirror) {
     // Map interface type variable names to their concrete class.

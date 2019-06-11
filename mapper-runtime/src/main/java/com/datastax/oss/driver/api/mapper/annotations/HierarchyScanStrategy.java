@@ -59,12 +59,9 @@ public @interface HierarchyScanStrategy {
    * The {@link Class} to consider the highest ancestor, meaning the classes that this class extends
    * or implements will not be scanned for annotations.
    *
-   * <p>Note that a limitation of this configuration is that the chosen highest ancestor only
-   * applies to the part of the type hierarchy that contains this class.
-   *
-   * <p>If you have a complex hierarchy involving both parent classes and interfaces and
-   * highestAncestor applies to a class for example, all interfaces will be included. Therefore it
-   * is recommended to avoid creating complex type hierarchies or to only do so if you expect the
+   * <p>Note that If you have a complex hierarchy involving both parent classes and interfaces and
+   * highestAncestor specifies a class for example, all interfaces will still be included. Therefore
+   * it is recommended to avoid creating complex type hierarchies or to only do so if you expect the
    * entire hierarchy to be scanned.
    *
    * <p>Defaults to {@link Object}.
