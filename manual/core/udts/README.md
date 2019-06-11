@@ -61,7 +61,11 @@ various ways to get it:
 * from the driver's [schema metadata](../metadata/schema/):
 
     ```java
-    UserDefinedType udt = session.getMetadata().getKeyspace("ks").getUserDefinedType("type1");
+    UserDefinedType udt =
+        session.getMetadata()
+            .getKeyspace("ks")
+            .flatMap(ks -> ks.getUserDefinedType("type1"))
+            .orElseThrow(() -> new IllegalArgumentException("Missing UDT definition"));
     ```
 
 * from another UDT value:
