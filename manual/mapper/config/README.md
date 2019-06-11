@@ -81,7 +81,7 @@ dependencies {
 
 You will find the generated files in `build/generated/sources/annotationProcessor`.
 
-### Integration with other libraries
+### Integration with other languages and libraries
 
 #### Lombok
 
@@ -175,3 +175,91 @@ dependencies {
 
 You'll also need to install a Lombok plugin in your IDE (for IntelliJ IDEA, [this
 one](https://plugins.jetbrains.com/plugin/6317-lombok) is available in the marketplace).
+
+#### Kotlin
+
+[Kotlin](https://kotlinlang.org/) is an alternative language for the JVM. Its compact syntax and
+native support for annotation processing make it a good fit for the mapper.
+
+To set up your project, refer to the Kotlin website:
+
+* Maven: configure [dual compilation][maven_kotlin_java] of Kotlin and Java sources. In addition,
+  you'll need an additional execution of the [kotlin-maven-plugin:kapt][maven_kapt] goal with the
+  mapper processor before compilation:
+
+    ```xml
+    <plugin>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-maven-plugin</artifactId>
+      <version>${kotlin.version}</version>  
+      <executions>  
+        <execution>
+          <id>kapt</id>
+          <goals><goal>kapt</goal></goals>
+          <configuration>
+            <sourceDirs>
+              <sourceDir>src/main/kotlin</sourceDir>
+              <sourceDir>src/main/java</sourceDir>
+            </sourceDirs>
+            <annotationProcessorPaths>
+              <annotationProcessorPath>
+                <groupId>com.datastax.oss</groupId>
+                <artifactId>java-driver-mapper-processor</artifactId>
+                <version>${java-driver.version}</version>
+              </annotationProcessorPath>
+            </annotationProcessorPaths>
+          </configuration>
+        </execution>
+        <execution>
+          <id>compile</id>
+          <goals><goal>compile</goal></goals>
+          ...
+        </execution>
+      </executions>
+    </plugin>
+    ```
+    
+* Gradle: configure the [kotlin][gradle_kotlin] and [kotlin_kapt][gradle_kapt] plugins in your build
+  script. In addition, declare the dependency to the mapper processor with `kapt` instead of
+  `annotationProcessor`:
+  
+    ```groovy
+    apply plugin: 'kotlin'
+    apply plugin: 'kotlin-kapt'
+    
+    dependencies {
+        kapt group: 'com.datastax.oss', name: 'java-driver-mapper-processor', version: javaDriverVersion
+        ...
+    }
+    ```
+
+You can use Kotlin [data classes] for your entities. Just keep in mind that the mapper expects a
+no-arg constructor, which means that you must define default values; and setters, which means that
+properties must be declared with `var`, not `val`.
+
+```kotlin
+@Entity
+data class Product(@PartitionKey var id: Int? = null, var description: String? = null)
+```
+
+All of the [property annotations](../entities/#property-annotations) can be declared directly on the
+constructor properties.
+
+If you want to take advantage of [null saving strategies](../daos/null_saving/), your properties
+should be nullable.
+
+The other mapper interfaces are pretty similar to the Java versions:
+
+```kotlin
+@Dao
+interface ProductDao {
+  @Insert
+  fun insert(product: Product)
+}
+```
+
+[maven_kotlin_java]: https://kotlinlang.org/docs/reference/using-maven.html#compiling-kotlin-and-java-sources
+[maven_kapt]: https://kotlinlang.org/docs/reference/kapt.html#using-in-maven
+[gradle_kotlin]: https://kotlinlang.org/docs/reference/using-gradle.html
+[gradle_kapt]: https://kotlinlang.org/docs/reference/kapt.html#using-in-gradle
+[data classes]: https://kotlinlang.org/docs/reference/data-classes.html
