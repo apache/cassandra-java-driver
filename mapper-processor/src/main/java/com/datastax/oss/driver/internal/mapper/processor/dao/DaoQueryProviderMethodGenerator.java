@@ -29,6 +29,7 @@ import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
@@ -38,9 +39,10 @@ public class DaoQueryProviderMethodGenerator extends DaoMethodGenerator {
 
   public DaoQueryProviderMethodGenerator(
       ExecutableElement methodElement,
+      Map<Name, TypeElement> typeParameters,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    super(methodElement, enclosingClass, context);
+    super(methodElement, typeParameters, enclosingClass, context);
   }
 
   @Override
@@ -49,7 +51,8 @@ public class DaoQueryProviderMethodGenerator extends DaoMethodGenerator {
     // No parameter or return type validation, they're completely free-form as long as the provider
     // method matches.
 
-    MethodSpec.Builder methodBuilder = GeneratedCodePatterns.override(methodElement);
+    MethodSpec.Builder methodBuilder =
+        GeneratedCodePatterns.override(methodElement, typeParameters);
 
     // Request the instantiation of the provider during DAO initialization
     List<ClassName> entityHelperTypes = getEntityHelperTypes();

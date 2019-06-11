@@ -40,11 +40,13 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 
@@ -61,9 +63,10 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
 
   public DaoSelectMethodGenerator(
       ExecutableElement methodElement,
+      Map<Name, TypeElement> typeParameters,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    super(methodElement, enclosingClass, context);
+    super(methodElement, typeParameters, enclosingClass, context);
   }
 
   @Override
@@ -135,7 +138,8 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
             methodElement,
             (methodBuilder, requestName) ->
                 generateSelectRequest(methodBuilder, requestName, helperFieldName));
-    MethodSpec.Builder selectBuilder = GeneratedCodePatterns.override(methodElement);
+    MethodSpec.Builder selectBuilder =
+        GeneratedCodePatterns.override(methodElement, typeParameters);
 
     if (returnType.kind.isAsync) {
       selectBuilder.beginControlFlow("try");

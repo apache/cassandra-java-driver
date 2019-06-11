@@ -38,8 +38,10 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 
@@ -53,9 +55,10 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
 
   public DaoUpdateMethodGenerator(
       ExecutableElement methodElement,
+      Map<Name, TypeElement> typeParameters,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    super(methodElement, enclosingClass, context);
+    super(methodElement, typeParameters, enclosingClass, context);
     nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
   }
 
@@ -104,7 +107,8 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
             (methodBuilder, requestName) ->
                 generatePrepareRequest(methodBuilder, requestName, helperFieldName));
 
-    MethodSpec.Builder methodBuilder = GeneratedCodePatterns.override(methodElement);
+    MethodSpec.Builder methodBuilder =
+        GeneratedCodePatterns.override(methodElement, typeParameters);
 
     if (returnType.kind.isAsync) {
       methodBuilder.beginControlFlow("try");
