@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.mapper.MapperContext;
+import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
@@ -86,7 +87,7 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
   private final Set<TypeMirror> interfaces;
   private final Map<Class<? extends Annotation>, Annotation> annotations;
 
-  private static final Set<Class<? extends Annotation>> ANNOTATIONS =
+  private static final Set<Class<? extends Annotation>> ANNOTATIONS_TO_SCAN =
       ImmutableSet.of(DefaultNullSavingStrategy.class);
 
   public DaoImplementationGenerator(TypeElement interfaceElement, ProcessorContext context) {
@@ -102,7 +103,7 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
     Map<Class<? extends Annotation>, Annotation> annotations = Maps.newHashMap();
     for (TypeMirror mirror : interfaces) {
       Element element = context.getTypeUtils().asElement(mirror);
-      for (Class<? extends Annotation> annotationClass : ANNOTATIONS) {
+      for (Class<? extends Annotation> annotationClass : ANNOTATIONS_TO_SCAN) {
         Annotation annotation = element.getAnnotation(annotationClass);
         if (annotation != null) {
           // don't replace annotations from lower levels.
@@ -175,8 +176,36 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
     return implementationName;
   }
 
+  /**
+   * Parses the given interface mirror and returns a mapping of type variable names to their
+   * resolved concrete declared type element.
+   *
+   * <p>Also updates {@link #typeMappingsForInterface} for parent interfaces of this interface with
+   * the type variable to concrete type mappings declared on this interface. This is needed to
+   * resolve declared types parameter values between the interface hierarchy.
+   *
+   * <p>For example, given the following hierarchy:
+   *
+   * <pre>
+   *   interface BaseDao&lt;T&gt;
+   *   interface NamedDeviceDao&lt;Y extends Device&gt; extends BaseDao&lt;Y&gt;
+   *   interface TrackedDeviceDao extends NamedDeviceDao&lt;TrackedDevice&gt;
+   * </pre>
+   *
+   * In {@link #getContents()}, the following mirrors would be parsed for type parameters when
+   * generating code for <code>TrackedDeviceDao</code>:
+   *
+   * <ul>
+   *   <li><code>parseTypeParameters(TrackedDeviceDao)</code>: returns empty map
+   *   <li><code>parseTypeParameters(NamedDeviceDao&lt;TrackedDevice&gt;)</code>: returns <code>Y
+   *   -> TrackedDevice</code> , <code>typeMappingsForInterface(BaseDao&lt;Y&gt;)</code> updated
+   *       with <code>Y -> TrackedDevice</code>
+   *   <li><code>parseTypeParameters(BaseDao&lt;Y&gt;)</code>: returns <code>T ->
+   *     TrackedDevice</code>
+   * </ul>
+   */
   private Map<Name, TypeElement> parseTypeParameters(TypeMirror mirror) {
-    // Map interface type arguments to their concrete class.
+    // Map interface type variable names to their concrete class.
     Map<Name, TypeElement> typeParameters = Maps.newHashMap();
     Map<Name, TypeElement> childTypeParameters =
         typeMappingsForInterface.getOrDefault(mirror, Collections.emptyMap());
@@ -184,23 +213,45 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
     if (mirror instanceof DeclaredType) {
       TypeElement element = (TypeElement) context.getTypeUtils().asElement(mirror);
       DeclaredType declaredType = (DeclaredType) mirror;
-      for (int i = 0;
-          i < declaredType.getTypeArguments().size() && i < element.getTypeParameters().size();
-          i++) {
+      // For each type argument on this interface, resolve the declared (concrete) type
+      for (int i = 0; i < declaredType.getTypeArguments().size(); i++) {
         Name name = element.getTypeParameters().get(i).getSimpleName();
         TypeMirror typeArgument = declaredType.getTypeArguments().get(i);
         if (typeArgument instanceof DeclaredType) {
-          // if its a DeclaredType, we have the concrete type
+          /* If its a DeclaredType, we have the concrete type.
+           *
+           * For example, given:
+           *  * interface: NamedDeviceDao<Y extends Device> extends BaseDao<Y>
+           *  * mirror: NamedDeviceDao<TrackedDevice>
+           *
+           * Type parameter name would be 'Y', type argument would be declared type 'TrackedDevice',
+           * enabling mapping Y -> TrackedDevice.
+           */
           Element concreteType = ((DeclaredType) typeArgument).asElement();
           typeParameters.put(name, (TypeElement) concreteType);
         } else if (typeArgument instanceof TypeVariable) {
-          // if its a TypeVariable, we resolve the concrete type
-          // from the previously encountered interface and alias it to the
-          // type on this class.
-          TypeVariable genericType = (TypeVariable) typeArgument;
-          Name previousName = genericType.asElement().getSimpleName();
-          if (childTypeParameters.containsKey(previousName)) {
-            typeParameters.put(name, childTypeParameters.get(previousName));
+          /* If its a TypeVariable, we resolve the concrete type from type parameters declared in
+           * a child interface and alias it to the type on this class.
+           *
+           * For example, given:
+           * * interface: BaseDao<T>
+           * * mirror: BaseDao<Y>
+           *
+           * Type parameter name would be 'T', type argument would be declared type 'Y',
+           * enabling mapping T -> Y.
+           */
+          Name typeVariableName = ((TypeVariable) typeArgument).asElement().getSimpleName();
+          /* Resolve the concrete type from previous child interfaces we parsed types for.
+           *
+           * For example, given a child with:
+           * * interface: NamedDeviceDao<Y extends Device> extends BaseDao<Y>
+           * * mirror: NamedDeviceDao<TrackedDevice>
+           *
+           * We would have childTypeParameters mapping Y -> TrackedDevice enabling the resolution
+           * of T -> TrackedDevice from T -> Y -> TrackedDevice.
+           */
+          if (childTypeParameters.containsKey(typeVariableName)) {
+            typeParameters.put(name, childTypeParameters.get(typeVariableName));
           } else {
             context
                 .getMessager()
@@ -208,17 +259,21 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
                     element,
                     "Could not resolve type parameter %s "
                         + "on %s from child interfaces. This error usually means an interface "
-                        + "was inappropriately annotated with @Dao. Interfaces should only be annotated "
-                        + "with @Dao if all generic type variables are declared.",
+                        + "was inappropriately annotated with @%s. Interfaces should only be annotated "
+                        + "with @%s if all generic type variables are declared.",
                     name,
-                    mirror);
+                    mirror,
+                    Dao.class.getSimpleName(),
+                    Dao.class.getSimpleName());
           }
         }
       }
 
-      // for each parent interface of this type, check that parent's type arguments for
-      // type variables.  For each of these variables carry up the discovered concrete
-      // type on the current interface so it has access to it.
+      /* For each parent interface of this type, check that parent's type arguments for
+       * type variables.  For each of these variables keep track of the discovered concrete
+       * type on the current interface so it has access to it.  See the comments in the code
+       * above for an explanation of how these mappings are used.
+       */
       for (TypeMirror parentInterface : element.getInterfaces()) {
         if (parentInterface instanceof DeclaredType) {
           Map<Name, TypeElement> typeMappingsForParent =

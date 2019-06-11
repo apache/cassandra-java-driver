@@ -68,13 +68,13 @@ interface BaseDao<T> {
 }
 
 @Dao
-interface CircleDao extends BaseDao<Circle> {};
+interface CircleDao extends BaseDao<Circle> {}
 
 @Dao
-interface RectangleDao extends BaseDao<Rectangle> {};
+interface RectangleDao extends BaseDao<Rectangle> {}
 
 @Dao
-interface SphereDao extends BaseDao<Sphere> {};
+interface SphereDao extends BaseDao<Sphere> {}
 
 @Mapper
 public interface ShapeMapper {
@@ -102,12 +102,38 @@ import static com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrateg
 interface BaseDao {
 }
 
-interface RectangleDao extends BaseDao {};
+@Dao
+interface RectangleDao extends BaseDao {}
 ```
 
-Scanning priority is driven by proximity to the [@Dao] interface and within the same level 
-interfaces are given priority by the order they are in the type signature.  To control how the 
-hierarchy is scanned, annotate interfaces with [@HierarchyScanStrategy].
+Annotation priority is driven by proximity to the [@Dao]-annotated interface.  For example:
+
+```java
+import static com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy.SET_TO_NULL;
+import static com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy.DO_NOT_SET;
+
+@DefaultNullSavingStrategy(SET_TO_NULL)
+interface BaseDao {
+}
+
+@Dao
+@DefaultNullSavingStrategy(DO_NOT_SET)
+interface RectangleDao extends BaseDao {}
+```
+
+In this case `@DefaultNullSavingStrategy(DO_NOT_SET)` on `RectangleDao` would override the 
+annotation on `BaseDao`.
+
+If two parent interfaces at the same level declare the same annotation, the priority of annotation 
+chosen is controlled by the order the interfaces are declared, for example:
+
+```java
+interface RectangleDao extends Dao1, Dao2 {}
+```
+
+In this case, any annotations declared in `Dao1` would be chosen over `Dao2`.
+
+To control how the hierarchy is scanned, annotate interfaces with [@HierarchyScanStrategy].
 
 [@Dao]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Dao.html
 [@DefaultNullSavingStrategy]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/DefaultNullSavingStrategy.html

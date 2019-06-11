@@ -312,10 +312,6 @@ hierarchy into different CQL tables or UDTs.
 Each concrete class must be annotated with [@Entity] and abstract classes and interfaces must not
 use this annotation.
 
-Scanning priority is driven by proximity to the [@Entity] class and within the same level classes
-are given priority over interfaces.  To control how the class hierarchy is scanned, annotate
-classes with [@HierarchyScanStrategy].
-
 Here is an example of a polymorphic mapping:
 
 ```java
@@ -324,66 +320,34 @@ static class Point2D {
   private int x;
   private int y;
 
-  public Point2D() {}
-
-  public Point2D(int x, int y) {
-    this.x = x;
-    this.y = y;
-  }
-
   @CqlName("\"X\"")
-  public int getX() {
-    return x;
-  }
+  public int getX() { return x; }
 
-  public void setX(int x) {
-    this.x = x;
-  }
+  public void setX(int x) { this.x = x; }
 
   @CqlName("\"Y\"")
-  public int getY() {
-    return y;
-  }
+  public int getY() { return y; }
 
-  public void setY(int y) {
-    this.y = y;
-  }
+  public void setY(int y) { this.y = y; }
 }
 
 @Entity
 static class Point3D extends Point2D {
   private int z;
 
-  public Point3D() {}
-
-  public Point3D(int x, int y, int z) {
-    super(x, y);
-    this.z = z;
-  }
-
   @CqlName("\"Z\"")
-  public int getZ() {
-    return z;
-  }
+  public int getZ() { return z; }
 
-  public void setZ(int z) {
-    this.z = z;
-  }
+  public void setZ(int z) {  this.z = z; }
 }
 
 abstract static class Shape {
   @PartitionKey // annotated field on superclass; annotation will get inherited in all subclasses
   protected UUID id;
 
-  public Shape() {
-    this.id = UUID.randomUUID();
-  }
-
   public abstract UUID getId();
 
-  public void setId(UUID id) {
-    this.id = id;
-  }
+  public void setId(UUID id) { this.id = id; }
 }
 
 @CqlName("rectangles")
@@ -392,45 +356,21 @@ static class Rectangle extends Shape {
   private Point2D bottomLeft;
   private Point2D topRight;
 
-  public Rectangle() {
-    super();
-  }
-
-  public Rectangle(Point2D bottomLeft, Point2D topRight) {
-    super();
-    this.bottomLeft = bottomLeft;
-    this.topRight = topRight;
-  }
-
   @CqlName("rect_id")
   @Override
-  public UUID getId() {
-    return id;
-  }
+  public UUID getId() { return id; }
 
-  public Point2D getBottomLeft() {
-    return bottomLeft;
-  }
+  public Point2D getBottomLeft() { return bottomLeft; }
 
-  public void setBottomLeft(Point2D bottomLeft) {
-    this.bottomLeft = bottomLeft;
-  }
+  public void setBottomLeft(Point2D bottomLeft) { this.bottomLeft = bottomLeft; }
 
-  public Point2D getTopRight() {
-    return topRight;
-  }
+  public Point2D getTopRight() { return topRight; }
 
-  public void setTopRight(Point2D topRight) {
-    this.topRight = topRight;
-  }
+  public void setTopRight(Point2D topRight) { this.topRight = topRight; }
 
-  public double getWidth() {
-    return Math.abs(topRight.getX() - bottomLeft.getX());
-  }
+  public double getWidth() { return Math.abs(topRight.getX() - bottomLeft.getX()); }
 
-  public double getHeight() {
-    return Math.abs(topRight.getY() - bottomLeft.getY());
-  }
+  public double getHeight() { return Math.abs(topRight.getY() - bottomLeft.getY()); }
 }
 
 @CqlName("circles")
@@ -441,61 +381,35 @@ static class Circle extends Shape {
 
   protected double radius;
 
-  public Circle() {}
-
-  public Circle(Point2D center, double radius) {
-    super();
-    this.center = center;
-    this.radius = radius;
-  }
-
   @Override
   @CqlName("circle_id")
-  public UUID getId() {
-    return id;
-  }
+  public UUID getId() { return id; }
 
-  public double getRadius() {
-    return this.radius;
-  }
+  public double getRadius() { return this.radius; }
 
   public Circle setRadius(double radius) {
     this.radius = radius;
     return this;
   }
 
-  public Point2D getCenter() {
-    return center;
-  }
+  public Point2D getCenter() { return center; }
 
-  public void setCenter(Point2D center) {
-    this.center = center;
-  }
+  public void setCenter(Point2D center) { this.center = center; }
 }
 
 @CqlName("spheres")
 @Entity
 static class Sphere extends Circle {
 
-  public Sphere() {}
-
-  public Sphere(Point3D center, double radius) {
-    super(center, radius);
-  }
-
   @CqlName("sphere_id")
   @Override
-  public UUID getId() {
-    return id;
-  }
+  public UUID getId() { return id; }
 
   // overrides field annotation in Circle,
   // note that the property type is narrowed down to Point3D
   @CqlName("center3d")
   @Override
-  public Point3D getCenter() {
-    return (Point3D) center;
-  }
+  public Point3D getCenter() { return (Point3D) center; }
 
   @Override
   public void setCenter(Point2D center) {
@@ -521,6 +435,15 @@ CREATE TABLE rectangles (rect_id uuid PRIMARY KEY, bottom_left frozen<point2d>, 
 CREATE TABLE circles (circle_id uuid PRIMARY KEY, center2d frozen<point2d>, radius double)
 CREATE TABLE spheres (sphere_id uuid PRIMARY KEY, center3d frozen<point3d>, radius double)
 ```
+
+Annotation priority is driven by proximity to the [@Entity] class. For example, in the code above 
+the use of `@CqlName("sphere_id")` on `Sphere.getId()` overrides the annotation
+`@CqlName("circle_id")` on `Circle.getId()` for the `Sphere` entity.
+
+Annotations declared on classes are given priority over annotations declared by interfaces 
+the same level.
+
+To control how the class hierarchy is scanned, annotate classes with [@HierarchyScanStrategy].
 
 [@ClusteringColumn]:    http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
 [@CqlName]:             http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/CqlName.html

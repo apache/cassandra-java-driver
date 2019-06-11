@@ -15,9 +15,6 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
-import static com.datastax.oss.driver.internal.mapper.processor.util.AnnotationScanner.getClassAnnotation;
-import static com.datastax.oss.driver.internal.mapper.processor.util.AnnotationScanner.getMethodAnnotation;
-
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.Computed;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
@@ -28,6 +25,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Transient;
 import com.datastax.oss.driver.api.mapper.annotations.TransientProperties;
 import com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
+import com.datastax.oss.driver.internal.mapper.processor.util.AnnotationScanner;
 import com.datastax.oss.driver.internal.mapper.processor.util.HierarchyScanner;
 import com.datastax.oss.driver.internal.mapper.processor.util.ResolvedAnnotation;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
@@ -286,7 +284,7 @@ public class DefaultEntityFactory implements EntityFactory {
 
   private CqlNameGenerator buildCqlNameGenerator(Set<TypeElement> typeHierachy) {
     Optional<ResolvedAnnotation<NamingStrategy>> annotation =
-        getClassAnnotation(NamingStrategy.class, typeHierachy);
+        AnnotationScanner.getClassAnnotation(NamingStrategy.class, typeHierachy);
     if (!annotation.isPresent()) {
       return CqlNameGenerator.DEFAULT;
     }
@@ -407,7 +405,7 @@ public class DefaultEntityFactory implements EntityFactory {
 
   private Set<String> getTransientPropertyNames(Set<TypeElement> typeHierarchy) {
     Optional<ResolvedAnnotation<TransientProperties>> annotation =
-        getClassAnnotation(TransientProperties.class, typeHierarchy);
+        AnnotationScanner.getClassAnnotation(TransientProperties.class, typeHierarchy);
 
     return annotation.isPresent()
         ? Sets.newHashSet(annotation.get().getAnnotation().value())
@@ -488,7 +486,7 @@ public class DefaultEntityFactory implements EntityFactory {
     Class<? extends Annotation> exclusiveAnnotation = getExclusiveAnnotation(annotations);
     for (Class<? extends Annotation> annotationClass : PROPERTY_ANNOTATIONS) {
       Optional<? extends ResolvedAnnotation<? extends Annotation>> annotation =
-          getMethodAnnotation(annotationClass, getMethod, typeHierarchy);
+          AnnotationScanner.getMethodAnnotation(annotationClass, getMethod, typeHierarchy);
       if (annotation.isPresent()) {
         if (EXCLUSIVE_PROPERTY_ANNOTATIONS.contains(annotationClass)) {
           if (exclusiveAnnotation == null) {

@@ -30,7 +30,6 @@ import com.squareup.javapoet.MethodSpec;
 import java.util.Map;
 import java.util.Optional;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
@@ -93,20 +92,14 @@ public class DaoGetEntityMethodGenerator extends DaoMethodGenerator {
     }
 
     // Validate the return type. Make sure it matches the parameter type
-    TypeElement entityElement = null;
     Transformation transformation = null;
     TypeMirror returnType = methodElement.getReturnType();
-    if (couldBeEntity(returnType)) {
-      Element element = asEntityElement(returnType);
-      if (element == null && returnType.getKind() == TypeKind.DECLARED) {
-        // if it's not an entity, treat it as a normal declared type.
-        element = ((DeclaredType) returnType).asElement();
-      }
-      // Simple case return type is an entity type
-      if (element.getKind() == ElementKind.CLASS && element.getAnnotation(Entity.class) != null) {
-        entityElement = (TypeElement) element;
-        transformation = parameterIsGettable ? Transformation.NONE : Transformation.ONE;
-      } else if (context.getClassUtils().isSame(element, PagingIterable.class)) {
+    TypeElement entityElement = asEntityElement(returnType);
+    if (entityElement != null) {
+      transformation = parameterIsGettable ? Transformation.NONE : Transformation.ONE;
+    } else if (returnType.getKind() == TypeKind.DECLARED) {
+      Element element = ((DeclaredType) returnType).asElement();
+      if (context.getClassUtils().isSame(element, PagingIterable.class)) {
         if (!parameterIsResultSet) {
           context
               .getMessager()

@@ -63,7 +63,7 @@ public interface CodeGeneratorFactory {
   /**
    * The implementation of a {@link Dao}-annotated interface.
    *
-   * <p>The default code factory calls {@link #newDaoImplementationMethod(ExecutableElement,
+   * <p>The default code factory calls {@link #newDaoImplementationMethod(ExecutableElement, Map,
    * DaoImplementationSharedCode)} for each non-static, non-default method, but this is not a hard
    * requirement.
    */

@@ -147,12 +147,12 @@ public class EntityPolymorphismIT {
   @Dao
   interface SphereDao extends WriteTimeDao<Sphere> {}
 
-  interface NamedDeviceDao<T extends Device> extends BaseDao<T> {
+  interface NamedDeviceDao<Y extends Device> extends BaseDao<Y> {
     @Query("UPDATE ${qualifiedTableId} SET name = :name WHERE device_id = :id")
     void updateName(String name, UUID id);
 
     @Query("SELECT * FROM ${qualifiedTableId} WHERE device_id = :id")
-    CompletableFuture<T> findByIdQueryAsync(UUID id);
+    CompletableFuture<Y> findByIdQueryAsync(UUID id);
   }
 
   @Dao
@@ -196,7 +196,7 @@ public class EntityPolymorphismIT {
     Function<CqlIdentifier, SquareDao> squareDao = keyspace -> mapper.squareDao(keyspace);
     Function<CqlIdentifier, SphereDao> sphereDao = keyspace -> mapper.sphereDao(keyspace);
     return new Object[][] {
-      new Object[] {
+      {
         new Rectangle(new Point2D(20, 30), new Point2D(50, 60)),
         rectangleDao,
         (Consumer<Rectangle>) (Rectangle r) -> r.setTopRight(new Point2D(21, 31)),
@@ -205,7 +205,7 @@ public class EntityPolymorphismIT {
                 + "tags) values (?, ?, ?, ?)"),
         SimpleStatement.newInstance("select * from rectangles where rect_id = :id limit 1")
       },
-      new Object[] {
+      {
         new Circle(new Point2D(11, 22), 12.34),
         circleDao,
         (Consumer<Circle>) (Circle c) -> c.setRadius(13.33),
@@ -215,7 +215,7 @@ public class EntityPolymorphismIT {
             "select circle_id, center2d, radius, tags, writetime(radius) "
                 + "as write_time from circles where circle_id = :id limit 1")
       },
-      new Object[] {
+      {
         new Square(new Point2D(20, 30), new Point2D(50, 60)),
         squareDao,
         (Consumer<Square>) (Square s) -> s.setBottomLeft(new Point2D(10, 20)),
@@ -226,7 +226,7 @@ public class EntityPolymorphismIT {
             "select square_id, bottom_left, top_right, tags, writetime"
                 + "(bottom_left) as write_time from squares where square_id = :id limit 1")
       },
-      new Object[] {
+      {
         new Sphere(new Point3D(11, 22, 33), 34.56),
         sphereDao,
         (Consumer<Sphere>) (Sphere s) -> s.setCenter(new Point3D(10, 20, 30)),
