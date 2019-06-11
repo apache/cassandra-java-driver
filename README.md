@@ -49,7 +49,7 @@ See the [upgrade guide](upgrade_guide/) for details.
 
 ## Useful links
 
-* [Manual][manual]
+* [Manual](manual/)
 * [API docs]
 * Bug tracking: [JIRA]
 * [Mailing list]
