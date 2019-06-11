@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.Classes;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +31,6 @@ import java.util.function.Function;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 
 public class NullSavingStrategyValidation {
   private final Classes classUtils;
@@ -52,7 +52,7 @@ public class NullSavingStrategyValidation {
    *     (including the default one)
    */
   public boolean hasDoNotSetOnAnyLevel(
-      List<ExecutableElement> methodElements, TypeElement daoLevelInterface) {
+      List<ExecutableElement> methodElements, @Nullable DefaultNullSavingStrategy annotation) {
     boolean anyMethodHasOrDefaultsToDoNotSet =
         methodElements
             .stream()
@@ -86,38 +86,34 @@ public class NullSavingStrategyValidation {
 
     // if DAO level SET_TO_NULL check all underlying annotations for explicit set to DO_NOT_SET
     // (they may override it)
-    if (daoHasSetToNull(daoLevelInterface) && anyMethodHasDoNotSetExplicitly) {
+    if (daoHasSetToNull(annotation) && anyMethodHasDoNotSetExplicitly) {
       return true;
       // if DAO level DO_NOT_SET check if all underlying override it explicitly to SET_TO_NULL
-    } else if (daoHasDoNotSet(daoLevelInterface) && !allMethodsHaveSetToNull) {
+    } else if (daoHasDoNotSet(annotation) && !allMethodsHaveSetToNull) {
       return true;
       // if DAO level annotation do not present, check method level strategy
       // (including the default one)
     } else {
-      return daoIsNotAnnotated(daoLevelInterface) && anyMethodHasOrDefaultsToDoNotSet;
+      return daoIsNotAnnotated(annotation) && anyMethodHasOrDefaultsToDoNotSet;
     }
   }
 
-  private boolean daoHasDoNotSet(TypeElement interfaceElement) {
-    DefaultNullSavingStrategy annotation =
-        interfaceElement.getAnnotation(DefaultNullSavingStrategy.class);
+  private boolean daoHasDoNotSet(DefaultNullSavingStrategy annotation) {
     if (annotation != null) {
       return annotation.value() == NullSavingStrategy.DO_NOT_SET;
     }
     return false;
   }
 
-  private boolean daoHasSetToNull(TypeElement interfaceElement) {
-    DefaultNullSavingStrategy annotation =
-        interfaceElement.getAnnotation(DefaultNullSavingStrategy.class);
+  private boolean daoHasSetToNull(DefaultNullSavingStrategy annotation) {
     if (annotation != null) {
       return annotation.value() == NullSavingStrategy.SET_TO_NULL;
     }
     return false;
   }
 
-  private boolean daoIsNotAnnotated(TypeElement interfaceElement) {
-    return interfaceElement.getAnnotation(DefaultNullSavingStrategy.class) == null;
+  private boolean daoIsNotAnnotated(DefaultNullSavingStrategy annotation) {
+    return annotation == null;
   }
 
   private boolean queryHasDoNotSet(ExecutableElement v, boolean explicitSet) {

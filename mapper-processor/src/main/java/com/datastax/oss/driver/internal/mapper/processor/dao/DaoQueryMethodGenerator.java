@@ -28,8 +28,10 @@ import com.datastax.oss.driver.internal.mapper.processor.util.generation.Generat
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 
@@ -40,9 +42,10 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
 
   public DaoQueryMethodGenerator(
       ExecutableElement methodElement,
+      Map<Name, TypeElement> typeParameters,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    super(methodElement, enclosingClass, context);
+    super(methodElement, typeParameters, enclosingClass, context);
     this.queryString = methodElement.getAnnotation(Query.class).value();
     nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
   }
@@ -76,7 +79,7 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
             (methodBuilder, requestName) ->
                 generatePrepareRequest(methodBuilder, requestName, helperFieldName));
 
-    MethodSpec.Builder queryBuilder = GeneratedCodePatterns.override(methodElement);
+    MethodSpec.Builder queryBuilder = GeneratedCodePatterns.override(methodElement, typeParameters);
 
     if (returnType.kind.isAsync) {
       queryBuilder.beginControlFlow("try");

@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.mapper.MapperContext;
+import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
@@ -26,8 +27,12 @@ import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.util.HierarchyScanner;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -37,7 +42,9 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import java.beans.Introspector;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,8 +58,11 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeVariable;
 
 public class DaoImplementationGenerator extends SingleFileCodeGenerator
     implements DaoImplementationSharedCode {
@@ -70,11 +80,42 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
   private final List<GeneratedQueryProvider> queryProviders = new ArrayList<>();
   private final NullSavingStrategyValidation nullSavingStrategyValidation;
 
+  // tracks interface type variable mappings as child interfaces discover them.
+  private final Map<TypeMirror, Map<Name, TypeElement>> typeMappingsForInterface =
+      Maps.newHashMap();
+
+  private final Set<TypeMirror> interfaces;
+  private final Map<Class<? extends Annotation>, Annotation> annotations;
+
+  private static final Set<Class<? extends Annotation>> ANNOTATIONS_TO_SCAN =
+      ImmutableSet.of(DefaultNullSavingStrategy.class);
+
   public DaoImplementationGenerator(TypeElement interfaceElement, ProcessorContext context) {
     super(context);
     this.interfaceElement = interfaceElement;
+    this.interfaces = HierarchyScanner.resolveTypeHierarchy(interfaceElement, context);
+    this.annotations = scanAnnotations();
     implementationName = GeneratedNames.daoImplementation(interfaceElement);
     nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
+  }
+
+  private Map<Class<? extends Annotation>, Annotation> scanAnnotations() {
+    Map<Class<? extends Annotation>, Annotation> annotations = Maps.newHashMap();
+    for (TypeMirror mirror : interfaces) {
+      Element element = context.getTypeUtils().asElement(mirror);
+      for (Class<? extends Annotation> annotationClass : ANNOTATIONS_TO_SCAN) {
+        Annotation annotation = element.getAnnotation(annotationClass);
+        if (annotation != null) {
+          // don't replace annotations from lower levels.
+          annotations.putIfAbsent(annotationClass, annotation);
+        }
+      }
+    }
+    return ImmutableMap.copyOf(annotations);
+  }
+
+  private <A extends Annotation> Optional<A> getAnnotation(Class<A> annotationClass) {
+    return Optional.ofNullable(annotationClass.cast(annotations.get(annotationClass)));
   }
 
   @Override
@@ -127,13 +168,127 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
 
   @Override
   public Optional<NullSavingStrategy> getNullSavingStrategy() {
-    return Optional.ofNullable(interfaceElement.getAnnotation(DefaultNullSavingStrategy.class))
-        .map(DefaultNullSavingStrategy::value);
+    return getAnnotation(DefaultNullSavingStrategy.class).map(DefaultNullSavingStrategy::value);
   }
 
   @Override
   protected ClassName getPrincipalTypeName() {
     return implementationName;
+  }
+
+  /*
+   * Parses the given interface mirror and returns a mapping of type variable names to their
+   * resolved concrete declared type element.
+   *
+   * Also updates typeMappingsForInterface for parent interfaces of this interface with
+   * the type variable to concrete type mappings declared on this interface. This is needed to
+   * resolve declared types parameter values between the interface hierarchy.
+   *
+   * For example, given the following hierarchy:
+   *
+   *   interface BaseDao<T>
+   *   interface NamedDeviceDao<Y extends Device> extends BaseDao<Y>
+   *   interface TrackedDeviceDao extends NamedDeviceDao<TrackedDevice>
+   *
+   * In getContents(), the following mirrors would be parsed for type parameters when
+   * generating code for TrackedDeviceDao:
+   *
+   *  * parseTypeParameters(TrackedDeviceDao): returns empty map
+   *  * parseTypeParameters(NamedDeviceDao<TrackedDevice>): returns Y -> TrackedDevice,
+   *    typeMappingsForInterface(BaseDao<Y>) updated with <code>Y -> TrackedDevice
+   *  * parseTypeParameters(BaseDao<Y>): returns T -> TrackedDevice
+   *
+   */
+  private Map<Name, TypeElement> parseTypeParameters(TypeMirror mirror) {
+    // Map interface type variable names to their concrete class.
+    Map<Name, TypeElement> typeParameters = Maps.newHashMap();
+    Map<Name, TypeElement> childTypeParameters =
+        typeMappingsForInterface.getOrDefault(mirror, Collections.emptyMap());
+
+    if (mirror instanceof DeclaredType) {
+      TypeElement element = (TypeElement) context.getTypeUtils().asElement(mirror);
+      DeclaredType declaredType = (DeclaredType) mirror;
+      // For each type argument on this interface, resolve the declared (concrete) type
+      for (int i = 0; i < declaredType.getTypeArguments().size(); i++) {
+        Name name = element.getTypeParameters().get(i).getSimpleName();
+        TypeMirror typeArgument = declaredType.getTypeArguments().get(i);
+        if (typeArgument instanceof DeclaredType) {
+          /* If its a DeclaredType, we have the concrete type.
+           *
+           * For example, given:
+           *  * interface: NamedDeviceDao<Y extends Device> extends BaseDao<Y>
+           *  * mirror: NamedDeviceDao<TrackedDevice>
+           *
+           * Type parameter name would be 'Y', type argument would be declared type 'TrackedDevice',
+           * enabling mapping Y -> TrackedDevice.
+           */
+          Element concreteType = ((DeclaredType) typeArgument).asElement();
+          typeParameters.put(name, (TypeElement) concreteType);
+        } else if (typeArgument instanceof TypeVariable) {
+          /* If its a TypeVariable, we resolve the concrete type from type parameters declared in
+           * a child interface and alias it to the type on this class.
+           *
+           * For example, given:
+           * * interface: BaseDao<T>
+           * * mirror: BaseDao<Y>
+           *
+           * Type parameter name would be 'T', type argument would be declared type 'Y',
+           * enabling mapping T -> Y.
+           */
+          Name typeVariableName = ((TypeVariable) typeArgument).asElement().getSimpleName();
+          /* Resolve the concrete type from previous child interfaces we parsed types for.
+           *
+           * For example, given a child with:
+           * * interface: NamedDeviceDao<Y extends Device> extends BaseDao<Y>
+           * * mirror: NamedDeviceDao<TrackedDevice>
+           *
+           * We would have childTypeParameters mapping Y -> TrackedDevice enabling the resolution
+           * of T -> TrackedDevice from T -> Y -> TrackedDevice.
+           */
+          if (childTypeParameters.containsKey(typeVariableName)) {
+            typeParameters.put(name, childTypeParameters.get(typeVariableName));
+          } else {
+            context
+                .getMessager()
+                .error(
+                    element,
+                    "Could not resolve type parameter %s "
+                        + "on %s from child interfaces. This error usually means an interface "
+                        + "was inappropriately annotated with @%s. Interfaces should only be annotated "
+                        + "with @%s if all generic type variables are declared.",
+                    name,
+                    mirror,
+                    Dao.class.getSimpleName(),
+                    Dao.class.getSimpleName());
+          }
+        }
+      }
+
+      /* For each parent interface of this type, check that parent's type arguments for
+       * type variables.  For each of these variables keep track of the discovered concrete
+       * type on the current interface so it has access to it.  See the comments in the code
+       * above for an explanation of how these mappings are used.
+       */
+      for (TypeMirror parentInterface : element.getInterfaces()) {
+        if (parentInterface instanceof DeclaredType) {
+          Map<Name, TypeElement> typeMappingsForParent =
+              typeMappingsForInterface.computeIfAbsent(parentInterface, k -> Maps.newHashMap());
+          DeclaredType parentInterfaceType = (DeclaredType) parentInterface;
+          for (TypeMirror parentTypeArgument : parentInterfaceType.getTypeArguments()) {
+            if (parentTypeArgument instanceof TypeVariable) {
+              TypeVariable parentTypeVariable = (TypeVariable) parentTypeArgument;
+              Name parentTypeName = parentTypeVariable.asElement().getSimpleName();
+              TypeElement typeElement = typeParameters.get(parentTypeName);
+              if (typeElement != null) {
+                typeMappingsForParent.put(parentTypeName, typeElement);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return typeParameters;
   }
 
   @Override
@@ -146,21 +301,28 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
             .superclass(DaoBase.class)
             .addSuperinterface(ClassName.get(interfaceElement));
 
-    for (Element child : interfaceElement.getEnclosedElements()) {
-      if (child.getKind() == ElementKind.METHOD) {
-        ExecutableElement methodElement = (ExecutableElement) child;
-        Set<Modifier> modifiers = methodElement.getModifiers();
-        if (!modifiers.contains(Modifier.STATIC) && !modifiers.contains(Modifier.DEFAULT)) {
-          Optional<MethodGenerator> maybeGenerator =
-              context.getCodeGeneratorFactory().newDaoImplementationMethod(methodElement, this);
-          if (!maybeGenerator.isPresent()) {
-            context
-                .getMessager()
-                .error(
-                    methodElement,
-                    "Unrecognized method signature: no implementation will be generated");
-          } else {
-            maybeGenerator.flatMap(MethodGenerator::generate).ifPresent(classBuilder::addMethod);
+    for (TypeMirror mirror : interfaces) {
+      TypeElement interfaceElement = (TypeElement) context.getTypeUtils().asElement(mirror);
+      Map<Name, TypeElement> typeParameters = parseTypeParameters(mirror);
+
+      for (Element child : interfaceElement.getEnclosedElements()) {
+        if (child.getKind() == ElementKind.METHOD) {
+          ExecutableElement methodElement = (ExecutableElement) child;
+          Set<Modifier> modifiers = methodElement.getModifiers();
+          if (!modifiers.contains(Modifier.STATIC) && !modifiers.contains(Modifier.DEFAULT)) {
+            Optional<MethodGenerator> maybeGenerator =
+                context
+                    .getCodeGeneratorFactory()
+                    .newDaoImplementationMethod(methodElement, typeParameters, this);
+            if (!maybeGenerator.isPresent()) {
+              context
+                  .getMessager()
+                  .error(
+                      methodElement,
+                      "Unrecognized method signature: no implementation will be generated");
+            } else {
+              maybeGenerator.flatMap(MethodGenerator::generate).ifPresent(classBuilder::addMethod);
+            }
           }
         }
       }
@@ -314,7 +476,9 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
   private void generateProtocolVersionCheck(MethodSpec.Builder builder) {
     List<ExecutableElement> methodElements =
         preparedStatements.stream().map(v -> v.methodElement).collect(Collectors.toList());
-    if (nullSavingStrategyValidation.hasDoNotSetOnAnyLevel(methodElements, interfaceElement)) {
+    DefaultNullSavingStrategy interfaceAnnotation =
+        getAnnotation(DefaultNullSavingStrategy.class).orElse(null);
+    if (nullSavingStrategyValidation.hasDoNotSetOnAnyLevel(methodElements, interfaceAnnotation)) {
       builder.addStatement("throwIfProtocolVersionV3(context)");
     }
   }

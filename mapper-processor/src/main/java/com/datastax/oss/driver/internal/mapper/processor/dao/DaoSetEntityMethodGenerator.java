@@ -17,20 +17,18 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.data.SettableByName;
-import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
+import java.util.Map;
 import java.util.Optional;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
@@ -40,9 +38,10 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
 
   public DaoSetEntityMethodGenerator(
       ExecutableElement methodElement,
+      Map<Name, TypeElement> typeParameters,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    super(methodElement, enclosingClass, context);
+    super(methodElement, typeParameters, enclosingClass, context);
     nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
   }
 
@@ -70,12 +69,12 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
       if (context.getClassUtils().implementsSettableByName(parameterType)) {
         targetParameterName = parameterElement.getSimpleName().toString();
         targetParameterType = parameterElement.asType();
-      } else if (parameterType.getKind() == TypeKind.DECLARED) {
-        Element parameterTypeElement = ((DeclaredType) parameterType).asElement();
-        if (parameterTypeElement.getKind() == ElementKind.CLASS
-            && parameterTypeElement.getAnnotation(Entity.class) != null) {
+      } else if (parameterType.getKind() == TypeKind.DECLARED
+          || parameterType.getKind() == TypeKind.TYPEVAR) {
+        TypeElement parameterTypeElement = asEntityElement(parameterType);
+        if (parameterTypeElement != null) {
           entityParameterName = parameterElement.getSimpleName().toString();
-          entityElement = ((TypeElement) parameterTypeElement);
+          entityElement = parameterTypeElement;
         }
       }
     }
@@ -127,7 +126,7 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
 
     // Forward to the base injector in the helper:
     return Optional.of(
-        GeneratedCodePatterns.override(methodElement)
+        GeneratedCodePatterns.override(methodElement, typeParameters)
             .addStatement(
                 "$1L$2L.set($3L, $4L, $5T.$6L)",
                 isVoid ? "" : "return ",
