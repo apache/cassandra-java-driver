@@ -25,6 +25,9 @@ import com.datastax.oss.driver.api.mapper.annotations.Transient;
 import com.datastax.oss.driver.api.mapper.annotations.TransientProperties;
 import com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
+import com.datastax.oss.driver.internal.mapper.processor.util.AnnotationScanner;
+import com.datastax.oss.driver.internal.mapper.processor.util.HierarchyScanner;
+import com.datastax.oss.driver.internal.mapper.processor.util.ResolvedAnnotation;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -32,6 +35,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.beans.Introspector;
 import java.lang.annotation.Annotation;
 import java.util.Collections;
@@ -73,97 +77,112 @@ public class DefaultEntityFactory implements EntityFactory {
 
   @Override
   public EntityDefinition getDefinition(TypeElement classElement) {
+    Set<TypeMirror> types = HierarchyScanner.resolveTypeHierarchy(classElement, context);
+    Set<TypeElement> typeHierarchy = Sets.newLinkedHashSet();
+    for (TypeMirror type : types) {
+      typeHierarchy.add((TypeElement) context.getTypeUtils().asElement(type));
+    }
 
-    // TODO inherit annotations and properties from superclass / parent interface
+    CqlNameGenerator cqlNameGenerator = buildCqlNameGenerator(typeHierarchy);
+    Set<String> transientProperties = getTransientPropertyNames(typeHierarchy);
 
-    CqlNameGenerator cqlNameGenerator = buildCqlNameGenerator(classElement);
-    Set<String> transientProperties = getTransientPropertyNames(classElement);
-
+    Set<String> encounteredPropertyNames = Sets.newHashSet();
     SortedMap<Integer, PropertyDefinition> partitionKey = new TreeMap<>();
     SortedMap<Integer, PropertyDefinition> clusteringColumns = new TreeMap<>();
     ImmutableList.Builder<PropertyDefinition> regularColumns = ImmutableList.builder();
     ImmutableList.Builder<PropertyDefinition> computedValues = ImmutableList.builder();
-    for (Element child : classElement.getEnclosedElements()) {
-      Set<Modifier> modifiers = child.getModifiers();
-      if (child.getKind() != ElementKind.METHOD
-          || modifiers.contains(Modifier.STATIC)
-          || modifiers.contains(Modifier.PRIVATE)) {
-        continue;
-      }
-      ExecutableElement getMethod = (ExecutableElement) child;
-      String getMethodName = getMethod.getSimpleName().toString();
-      if (!getMethodName.startsWith("get") || !getMethod.getParameters().isEmpty()) {
-        continue;
-      }
-      TypeMirror typeMirror = getMethod.getReturnType();
-      if (typeMirror.getKind() == TypeKind.VOID) {
-        continue;
-      }
-      String propertyName = Introspector.decapitalize(getMethodName.substring(3));
-      String setMethodName = getMethodName.replaceFirst("get", "set");
-      ExecutableElement setMethod = findSetMethod(classElement, setMethodName, typeMirror);
-      if (setMethod == null) {
-        continue; // must have both
-      }
-      VariableElement field = findField(classElement, propertyName, typeMirror);
 
-      Map<Class<? extends Annotation>, Annotation> propertyAnnotations =
-          scanPropertyAnnotations(getMethod, field);
-      if (isTransient(propertyAnnotations, propertyName, transientProperties, getMethod, field)) {
-        continue;
-      }
-
-      int partitionKeyIndex = getPartitionKeyIndex(propertyAnnotations);
-      int clusteringColumnIndex = getClusteringColumnIndex(propertyAnnotations);
-      Optional<String> customCqlName = getCustomCqlName(propertyAnnotations);
-      Optional<String> computedFormula = getComputedFormula(propertyAnnotations, getMethod, field);
-
-      PropertyType propertyType = PropertyType.parse(typeMirror, context);
-      PropertyDefinition property =
-          new DefaultPropertyDefinition(
-              propertyName,
-              customCqlName,
-              computedFormula,
-              getMethodName,
-              setMethodName,
-              propertyType,
-              cqlNameGenerator);
-
-      if (partitionKeyIndex >= 0) {
-        PropertyDefinition previous = partitionKey.putIfAbsent(partitionKeyIndex, property);
-        if (previous != null) {
-          context
-              .getMessager()
-              .error(
-                  getMethod,
-                  "Duplicate partition key index: if multiple properties are annotated "
-                      + "with @%s, the annotation must be parameterized with an integer "
-                      + "indicating the position. Found duplicate index %d for %s and %s.",
-                  PartitionKey.class.getSimpleName(),
-                  partitionKeyIndex,
-                  previous.getGetterName(),
-                  property.getGetterName());
+    // scan hierarchy for properties
+    for (TypeElement typeElement : typeHierarchy) {
+      for (Element child : typeElement.getEnclosedElements()) {
+        Set<Modifier> modifiers = child.getModifiers();
+        if (child.getKind() != ElementKind.METHOD
+            || modifiers.contains(Modifier.STATIC)
+            || modifiers.contains(Modifier.PRIVATE)) {
+          continue;
         }
-      } else if (clusteringColumnIndex >= 0) {
-        PropertyDefinition previous =
-            clusteringColumns.putIfAbsent(clusteringColumnIndex, property);
-        if (previous != null) {
-          context
-              .getMessager()
-              .error(
-                  getMethod,
-                  "Duplicate clustering column index: if multiple properties are annotated "
-                      + "with @%s, the annotation must be parameterized with an integer "
-                      + "indicating the position. Found duplicate index %d for %s and %s.",
-                  ClusteringColumn.class.getSimpleName(),
-                  clusteringColumnIndex,
-                  previous.getGetterName(),
-                  property.getGetterName());
+        ExecutableElement getMethod = (ExecutableElement) child;
+        String getMethodName = getMethod.getSimpleName().toString();
+        if (!getMethodName.startsWith("get") || !getMethod.getParameters().isEmpty()) {
+          continue;
         }
-      } else if (computedFormula.isPresent()) {
-        computedValues.add(property);
-      } else {
-        regularColumns.add(property);
+        TypeMirror typeMirror = getMethod.getReturnType();
+        if (typeMirror.getKind() == TypeKind.VOID) {
+          continue;
+        }
+        String propertyName = Introspector.decapitalize(getMethodName.substring(3));
+        // skip properties we've already encountered.
+        if (encounteredPropertyNames.contains(propertyName)) {
+          continue;
+        }
+
+        String setMethodName = getMethodName.replaceFirst("get", "set");
+        ExecutableElement setMethod = findSetMethod(typeHierarchy, setMethodName, typeMirror);
+        if (setMethod == null) {
+          continue; // must have both
+        }
+        VariableElement field = findField(typeHierarchy, propertyName, typeMirror);
+
+        Map<Class<? extends Annotation>, Annotation> propertyAnnotations =
+            scanPropertyAnnotations(typeHierarchy, getMethod, field);
+        if (isTransient(propertyAnnotations, propertyName, transientProperties, getMethod, field)) {
+          continue;
+        }
+
+        int partitionKeyIndex = getPartitionKeyIndex(propertyAnnotations);
+        int clusteringColumnIndex = getClusteringColumnIndex(propertyAnnotations);
+        Optional<String> customCqlName = getCustomCqlName(propertyAnnotations);
+        Optional<String> computedFormula =
+            getComputedFormula(propertyAnnotations, getMethod, field);
+
+        PropertyType propertyType = PropertyType.parse(typeMirror, context);
+        PropertyDefinition property =
+            new DefaultPropertyDefinition(
+                propertyName,
+                customCqlName,
+                computedFormula,
+                getMethodName,
+                setMethodName,
+                propertyType,
+                cqlNameGenerator);
+        encounteredPropertyNames.add(propertyName);
+
+        if (partitionKeyIndex >= 0) {
+          PropertyDefinition previous = partitionKey.putIfAbsent(partitionKeyIndex, property);
+          if (previous != null) {
+            context
+                .getMessager()
+                .error(
+                    getMethod,
+                    "Duplicate partition key index: if multiple properties are annotated "
+                        + "with @%s, the annotation must be parameterized with an integer "
+                        + "indicating the position. Found duplicate index %d for %s and %s.",
+                    PartitionKey.class.getSimpleName(),
+                    partitionKeyIndex,
+                    previous.getGetterName(),
+                    property.getGetterName());
+          }
+        } else if (clusteringColumnIndex >= 0) {
+          PropertyDefinition previous =
+              clusteringColumns.putIfAbsent(clusteringColumnIndex, property);
+          if (previous != null) {
+            context
+                .getMessager()
+                .error(
+                    getMethod,
+                    "Duplicate clustering column index: if multiple properties are annotated "
+                        + "with @%s, the annotation must be parameterized with an integer "
+                        + "indicating the position. Found duplicate index %d for %s and %s.",
+                    ClusteringColumn.class.getSimpleName(),
+                    clusteringColumnIndex,
+                    previous.getGetterName(),
+                    property.getGetterName());
+          }
+        } else if (computedFormula.isPresent()) {
+          computedValues.add(property);
+        } else {
+          regularColumns.add(property);
+        }
       }
     }
 
@@ -182,37 +201,47 @@ public class DefaultEntityFactory implements EntityFactory {
         cqlNameGenerator);
   }
 
+  @Nullable
   private VariableElement findField(
-      TypeElement classElement, String propertyName, TypeMirror fieldType) {
-    for (Element child : classElement.getEnclosedElements()) {
-      if (child.getKind() != ElementKind.FIELD) {
+      Set<TypeElement> typeHierarchy, String propertyName, TypeMirror fieldType) {
+    for (TypeElement classElement : typeHierarchy) {
+      // skip interfaces as they can't have fields
+      if (classElement.getKind().isInterface()) {
         continue;
       }
-      VariableElement field = (VariableElement) child;
-      if (field.getSimpleName().toString().equals(propertyName)
-          && context.getTypeUtils().isSameType(field.asType(), fieldType)) {
-        return field;
+      for (Element child : classElement.getEnclosedElements()) {
+        if (child.getKind() != ElementKind.FIELD) {
+          continue;
+        }
+        VariableElement field = (VariableElement) child;
+        if (field.getSimpleName().toString().equals(propertyName)
+            && context.getTypeUtils().isAssignable(fieldType, field.asType())) {
+          return field;
+        }
       }
     }
     return null;
   }
 
+  @Nullable
   private ExecutableElement findSetMethod(
-      TypeElement classElement, String setMethodName, TypeMirror fieldType) {
-    for (Element child : classElement.getEnclosedElements()) {
-      Set<Modifier> modifiers = child.getModifiers();
-      if (child.getKind() != ElementKind.METHOD
-          || modifiers.contains(Modifier.STATIC)
-          || modifiers.contains(Modifier.PRIVATE)) {
-        continue;
-      }
-      ExecutableElement setMethod = (ExecutableElement) child;
-      List<? extends VariableElement> parameters = setMethod.getParameters();
+      Set<TypeElement> typeHierarchy, String setMethodName, TypeMirror fieldType) {
+    for (TypeElement classElement : typeHierarchy) {
+      for (Element child : classElement.getEnclosedElements()) {
+        Set<Modifier> modifiers = child.getModifiers();
+        if (child.getKind() != ElementKind.METHOD
+            || modifiers.contains(Modifier.STATIC)
+            || modifiers.contains(Modifier.PRIVATE)) {
+          continue;
+        }
+        ExecutableElement setMethod = (ExecutableElement) child;
+        List<? extends VariableElement> parameters = setMethod.getParameters();
 
-      if (setMethod.getSimpleName().toString().equals(setMethodName)
-          && parameters.size() == 1
-          && context.getTypeUtils().isSameType(parameters.get(0).asType(), fieldType)) {
-        return setMethod;
+        if (setMethod.getSimpleName().toString().equals(setMethodName)
+            && parameters.size() == 1
+            && context.getTypeUtils().isAssignable(fieldType, parameters.get(0).asType())) {
+          return setMethod;
+        }
       }
     }
     return null;
@@ -237,7 +266,7 @@ public class DefaultEntityFactory implements EntityFactory {
   private Optional<String> getComputedFormula(
       Map<Class<? extends Annotation>, Annotation> annotations,
       ExecutableElement getMethod,
-      VariableElement field) {
+      @Nullable VariableElement field) {
     Computed annotation = (Computed) annotations.get(Computed.class);
 
     if (annotation != null) {
@@ -253,9 +282,15 @@ public class DefaultEntityFactory implements EntityFactory {
     return Optional.empty();
   }
 
-  private CqlNameGenerator buildCqlNameGenerator(TypeElement classElement) {
+  private CqlNameGenerator buildCqlNameGenerator(Set<TypeElement> typeHierachy) {
+    Optional<ResolvedAnnotation<NamingStrategy>> annotation =
+        AnnotationScanner.getClassAnnotation(NamingStrategy.class, typeHierachy);
+    if (!annotation.isPresent()) {
+      return CqlNameGenerator.DEFAULT;
+    }
 
-    NamingStrategy namingStrategy = classElement.getAnnotation(NamingStrategy.class);
+    NamingStrategy namingStrategy = annotation.get().getAnnotation();
+    Element classElement = annotation.get().getElement();
     if (namingStrategy == null) {
       return CqlNameGenerator.DEFAULT;
     }
@@ -309,7 +344,7 @@ public class DefaultEntityFactory implements EntityFactory {
     }
   }
 
-  private TypeMirror[] readCustomConverterClasses(TypeElement classElement) {
+  private TypeMirror[] readCustomConverterClasses(Element classElement) {
     // customConverterClass references a class that might not be compiled yet, so we can't read it
     // directly, we need to go through mirrors.
     AnnotationMirror annotationMirror = null;
@@ -341,7 +376,7 @@ public class DefaultEntityFactory implements EntityFactory {
       String propertyName,
       Set<String> transientProperties,
       ExecutableElement getMethod,
-      VariableElement field) {
+      @Nullable VariableElement field) {
 
     Transient transientAnnotation = (Transient) annotations.get(Transient.class);
     // check if property name is included in @TransientProperties
@@ -368,11 +403,12 @@ public class DefaultEntityFactory implements EntityFactory {
     return isTransient;
   }
 
-  private Set<String> getTransientPropertyNames(TypeElement classElement) {
-    TransientProperties transientProperties = classElement.getAnnotation(TransientProperties.class);
+  private Set<String> getTransientPropertyNames(Set<TypeElement> typeHierarchy) {
+    Optional<ResolvedAnnotation<TransientProperties>> annotation =
+        AnnotationScanner.getClassAnnotation(TransientProperties.class, typeHierarchy);
 
-    return transientProperties != null
-        ? Sets.newHashSet(transientProperties.value())
+    return annotation.isPresent()
+        ? Sets.newHashSet(annotation.get().getAnnotation().value())
         : Collections.emptySet();
   }
 
@@ -398,18 +434,21 @@ public class DefaultEntityFactory implements EntityFactory {
   }
 
   private Map<Class<? extends Annotation>, Annotation> scanPropertyAnnotations(
-      ExecutableElement getMethod, VariableElement field) {
+      Set<TypeElement> typeHierarchy,
+      ExecutableElement getMethod,
+      @Nullable VariableElement field) {
     Map<Class<? extends Annotation>, Annotation> annotations = Maps.newHashMap();
 
     // scan methods first as they should take precedence.
-    scanMethodAnnotations(getMethod, annotations, null);
+    scanMethodAnnotations(typeHierarchy, getMethod, annotations);
     if (field != null) {
-      scanFieldAnnotations(field, annotations, getExclusiveAnnotation(annotations));
+      scanFieldAnnotations(field, annotations);
     }
 
     return ImmutableMap.copyOf(annotations);
   }
 
+  @Nullable
   private Class<? extends Annotation> getExclusiveAnnotation(
       Map<Class<? extends Annotation>, Annotation> annotations) {
     for (Class<? extends Annotation> annotationClass : annotations.keySet()) {
@@ -421,9 +460,8 @@ public class DefaultEntityFactory implements EntityFactory {
   }
 
   private void scanFieldAnnotations(
-      VariableElement field,
-      Map<Class<? extends Annotation>, Annotation> annotations,
-      Class<? extends Annotation> exclusiveAnnotation) {
+      VariableElement field, Map<Class<? extends Annotation>, Annotation> annotations) {
+    Class<? extends Annotation> exclusiveAnnotation = getExclusiveAnnotation(annotations);
     for (Class<? extends Annotation> annotationClass : PROPERTY_ANNOTATIONS) {
       Annotation annotation = field.getAnnotation(annotationClass);
       if (annotation != null) {
@@ -434,26 +472,33 @@ public class DefaultEntityFactory implements EntityFactory {
             reportMultipleAnnotationError(field, exclusiveAnnotation, annotationClass);
           }
         }
-        annotations.put(annotationClass, annotation);
+        if (!annotations.containsKey(annotationClass)) {
+          annotations.put(annotationClass, annotation);
+        }
       }
     }
   }
 
   private void scanMethodAnnotations(
+      Set<TypeElement> typeHierarchy,
       ExecutableElement getMethod,
-      Map<Class<? extends Annotation>, Annotation> annotations,
-      Class<? extends Annotation> exclusiveAnnotation) {
+      Map<Class<? extends Annotation>, Annotation> annotations) {
+    Class<? extends Annotation> exclusiveAnnotation = getExclusiveAnnotation(annotations);
     for (Class<? extends Annotation> annotationClass : PROPERTY_ANNOTATIONS) {
-      Annotation annotation = getMethod.getAnnotation(annotationClass);
-      if (annotation != null) {
+      Optional<? extends ResolvedAnnotation<? extends Annotation>> annotation =
+          AnnotationScanner.getMethodAnnotation(annotationClass, getMethod, typeHierarchy);
+      if (annotation.isPresent()) {
         if (EXCLUSIVE_PROPERTY_ANNOTATIONS.contains(annotationClass)) {
           if (exclusiveAnnotation == null) {
             exclusiveAnnotation = annotationClass;
           } else {
-            reportMultipleAnnotationError(getMethod, exclusiveAnnotation, annotationClass);
+            reportMultipleAnnotationError(
+                annotation.get().getElement(), exclusiveAnnotation, annotationClass);
           }
         }
-        annotations.put(annotationClass, annotation);
+        if (!annotations.containsKey(annotationClass)) {
+          annotations.put(annotationClass, annotation.get().getAnnotation());
+        }
       }
     }
   }

@@ -36,11 +36,18 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import java.beans.Introspector;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.Name;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeVariable;
 
 /** A collection of recurring patterns in our generated sources. */
 public class GeneratedCodePatterns {
@@ -63,16 +70,46 @@ public class GeneratedCodePatterns {
 
   /** Starts the generation of a method that overrides an interface method. */
   public static MethodSpec.Builder override(ExecutableElement interfaceMethod) {
+    return override(interfaceMethod, Collections.emptyMap());
+  }
+
+  public static MethodSpec.Builder override(
+      ExecutableElement interfaceMethod, Map<Name, TypeElement> typeParameters) {
     MethodSpec.Builder result =
         MethodSpec.methodBuilder(interfaceMethod.getSimpleName().toString())
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
-            .returns(ClassName.get(interfaceMethod.getReturnType()));
+            .returns(getTypeName(interfaceMethod.getReturnType(), typeParameters));
     for (VariableElement parameterElement : interfaceMethod.getParameters()) {
-      result.addParameter(
-          ClassName.get(parameterElement.asType()), parameterElement.getSimpleName().toString());
+      TypeName type = getTypeName(parameterElement.asType(), typeParameters);
+      result.addParameter(type, parameterElement.getSimpleName().toString());
     }
     return result;
+  }
+
+  private static TypeName getTypeName(TypeMirror mirror, Map<Name, TypeElement> typeParameters) {
+    if (mirror.getKind() == TypeKind.TYPEVAR) {
+      TypeVariable typeVariable = (TypeVariable) mirror;
+      Name name = typeVariable.asElement().getSimpleName();
+      TypeElement element = typeParameters.get(name);
+      return ClassName.get(element);
+    } else if (mirror.getKind() == TypeKind.DECLARED) {
+      DeclaredType declaredType = (DeclaredType) mirror;
+      TypeElement element = (TypeElement) declaredType.asElement();
+      if (declaredType.getTypeArguments().size() == 0) {
+        return ClassName.get(element);
+      } else {
+        // resolve types for each type argument.
+        TypeName[] types = new TypeName[declaredType.getTypeArguments().size()];
+        for (int i = 0; i < declaredType.getTypeArguments().size(); i++) {
+          TypeMirror typeArgument = declaredType.getTypeArguments().get(i);
+          types[i] = getTypeName(typeArgument, typeParameters);
+        }
+        return ParameterizedTypeName.get(ClassName.get(element), types);
+      }
+    } else {
+      return ClassName.get(mirror);
+    }
   }
 
   /** Adds a private final field to a class, that gets initialized through its constructor. */

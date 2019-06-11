@@ -89,7 +89,7 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
           // category. Their getter creates a GenericType under the hood, so there's no performance
           // advantage in calling them instead of the generic get().
           getBuilder.addStatement(
-              "returnValue.$L(source.get($L, $T))",
+              "returnValue.$L(source.get($L, $L))",
               setterName,
               cqlName,
               enclosingClass.addGenericTypeConstant(typeName));

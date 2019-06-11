@@ -27,27 +27,33 @@ import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.squareup.javapoet.MethodSpec;
+import java.util.Map;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeVariable;
 
 public abstract class DaoMethodGenerator implements MethodGenerator {
 
   protected final ExecutableElement methodElement;
   protected final DaoImplementationSharedCode enclosingClass;
   protected final ProcessorContext context;
+  protected final Map<Name, TypeElement> typeParameters;
 
   public DaoMethodGenerator(
       ExecutableElement methodElement,
+      Map<Name, TypeElement> typeParameters,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
     this.methodElement = methodElement;
+    this.typeParameters = typeParameters;
     this.enclosingClass = enclosingClass;
     this.context = context;
   }
@@ -74,10 +80,24 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
   }
 
   protected TypeElement asEntityElement(TypeMirror mirror) {
-    if (mirror.getKind() != TypeKind.DECLARED) {
+    Element element;
+    if (mirror.getKind() == TypeKind.TYPEVAR) {
+      // extract concrete implementation for type variable.
+      TypeVariable typeVariable = ((TypeVariable) mirror);
+      Name name = typeVariable.asElement().getSimpleName();
+      element = typeParameters.get(name);
+      if (element == null) {
+        // this should not happen, but error out just in case.
+        context
+            .getMessager()
+            .error(methodElement, "Could not resolve the concrete implementation for %s", name);
+        return null;
+      }
+    } else if (mirror.getKind() == TypeKind.DECLARED) {
+      element = ((DeclaredType) mirror).asElement();
+    } else {
       return null;
     }
-    Element element = ((DeclaredType) mirror).asElement();
     if (element.getKind() != ElementKind.CLASS) {
       return null;
     }
