@@ -25,11 +25,13 @@ import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
+import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -111,7 +113,7 @@ public class DefaultKeyspaceIT {
               mapper.productDaoDefaultKsNotSet();
             })
         .isInstanceOf(InvalidQueryException.class)
-        .hasMessage("unconfigured table product_simple_default_ks_not_set");
+        .hasMessageMatching("unconfigured (columnfamily|table) product_simple_default_ks_not_set");
   }
 
   @Test
@@ -163,35 +165,23 @@ public class DefaultKeyspaceIT {
     ProductSimpleDaoDefaultKsNotSet productDaoDefaultKsNotSet();
   }
 
-  @Dao
-  public interface ProductSimpleDaoDefaultKs {
-
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
+  public interface BaseDao<T> {
     @Update
-    void update(ProductSimpleDefaultKs product);
+    void update(T product);
 
     @Select
-    ProductSimpleDefaultKs findById(UUID productId);
+    T findById(UUID productId);
   }
 
   @Dao
-  public interface ProductSimpleDaoWithoutKs {
-
-    @Update
-    void update(ProductSimpleWithoutKs product);
-
-    @Select
-    ProductSimpleWithoutKs findById(UUID productId);
-  }
+  public interface ProductSimpleDaoDefaultKs extends BaseDao<ProductSimpleDefaultKs> {}
 
   @Dao
-  public interface ProductSimpleDaoDefaultKsNotSet {
+  public interface ProductSimpleDaoWithoutKs extends BaseDao<ProductSimpleWithoutKs> {}
 
-    @Update
-    void update(ProductSimpleDefaultKsNotSet product);
-
-    @Select
-    ProductSimpleDefaultKsNotSet findById(UUID productId);
-  }
+  @Dao
+  public interface ProductSimpleDaoDefaultKsNotSet extends BaseDao<ProductSimpleDefaultKsNotSet> {}
 
   @Entity(defaultKeyspace = DEFAULT_KEYSPACE)
   public static class ProductSimpleDefaultKs {
