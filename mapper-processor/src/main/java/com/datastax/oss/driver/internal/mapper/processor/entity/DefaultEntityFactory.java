@@ -186,6 +186,15 @@ public class DefaultEntityFactory implements EntityFactory {
       }
     }
 
+    if (encounteredPropertyNames.isEmpty()) {
+      context
+          .getMessager()
+          .error(
+              classElement,
+              "@%s-annotated class must have at least one property defined.",
+              Entity.class.getSimpleName());
+    }
+
     String entityName = Introspector.decapitalize(classElement.getSimpleName().toString());
     String defaultKeyspace = classElement.getAnnotation(Entity.class).defaultKeyspace();
 
