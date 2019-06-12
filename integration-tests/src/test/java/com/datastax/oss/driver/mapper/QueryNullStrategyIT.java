@@ -20,6 +20,7 @@ import static com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrateg
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
@@ -32,6 +33,7 @@ import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.function.BiConsumer;
+import org.junit.AssumptionViolatedException;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -63,6 +65,11 @@ public class QueryNullStrategyIT {
 
   @Test
   public void should_respect_strategy_inheritance_rules() {
+    if (sessionRule.session().getContext().getProtocolVersion() == DefaultProtocolVersion.V3) {
+      throw new AssumptionViolatedException(
+          "Test not valid for Protocol V3 as does not support UNSET");
+    }
+
     DaoWithNoStrategy daoWithNoStrategy = mapper.daoWithNoStrategy();
     DaoWithDoNotSet daoWithDoNotSet = mapper.daoWithDoNotSet();
     DaoWithSetToNull daoWithSetToNull = mapper.daoWithSetToNull();
