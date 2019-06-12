@@ -4,6 +4,7 @@
 
 ### 4.2.0 (in progress)
 
+- [improvement] JAVA-2236: Add methods to set the auth provider programmatically
 - [improvement] JAVA-2369: Change mapper annotations retention to runtime
 - [improvement] JAVA-2365: Redeclare default constants when an enum is abstracted behind an
   interface
