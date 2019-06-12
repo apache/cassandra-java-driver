@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.session;
 
+import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
@@ -48,6 +49,7 @@ public class ProgrammaticArguments {
   private final Map<String, String> localDatacenters;
   private final Map<String, Predicate<Node>> nodeFilters;
   private final ClassLoader classLoader;
+  private final AuthProvider authProvider;
 
   private ProgrammaticArguments(
       @NonNull List<TypeCodec<?>> typeCodecs,
@@ -56,7 +58,8 @@ public class ProgrammaticArguments {
       @Nullable RequestTracker requestTracker,
       @NonNull Map<String, String> localDatacenters,
       @NonNull Map<String, Predicate<Node>> nodeFilters,
-      @Nullable ClassLoader classLoader) {
+      @Nullable ClassLoader classLoader,
+      @Nullable AuthProvider authProvider) {
     this.typeCodecs = typeCodecs;
     this.nodeStateListener = nodeStateListener;
     this.schemaChangeListener = schemaChangeListener;
@@ -64,6 +67,7 @@ public class ProgrammaticArguments {
     this.localDatacenters = localDatacenters;
     this.nodeFilters = nodeFilters;
     this.classLoader = classLoader;
+    this.authProvider = authProvider;
   }
 
   @NonNull
@@ -101,6 +105,11 @@ public class ProgrammaticArguments {
     return classLoader;
   }
 
+  @Nullable
+  public AuthProvider getAuthProvider() {
+    return authProvider;
+  }
+
   public static class Builder {
 
     private ImmutableList.Builder<TypeCodec<?>> typeCodecsBuilder = ImmutableList.builder();
@@ -111,6 +120,7 @@ public class ProgrammaticArguments {
     private ImmutableMap.Builder<String, Predicate<Node>> nodeFiltersBuilder =
         ImmutableMap.builder();
     private ClassLoader classLoader;
+    private AuthProvider authProvider;
 
     @NonNull
     public Builder addTypeCodecs(@NonNull TypeCodec<?>... typeCodecs) {
@@ -173,6 +183,12 @@ public class ProgrammaticArguments {
     }
 
     @NonNull
+    public Builder withAuthProvider(@Nullable AuthProvider authProvider) {
+      this.authProvider = authProvider;
+      return this;
+    }
+
+    @NonNull
     public ProgrammaticArguments build() {
       return new ProgrammaticArguments(
           typeCodecsBuilder.build(),
@@ -181,7 +197,8 @@ public class ProgrammaticArguments {
           requestTracker,
           localDatacentersBuilder.build(),
           nodeFiltersBuilder.build(),
-          classLoader);
+          classLoader,
+          authProvider);
     }
   }
 }

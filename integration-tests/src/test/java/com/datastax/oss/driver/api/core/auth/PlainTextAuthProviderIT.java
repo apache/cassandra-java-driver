@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
@@ -55,6 +56,19 @@ public class PlainTextAuthProviderIT {
             .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "cassandra")
             .build();
     try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
+      session.execute("select * from system.local");
+    }
+  }
+
+  @Test
+  public void should_connect_with_programmatic_credentials() {
+
+    SessionBuilder builder =
+        SessionUtils.baseBuilder()
+            .addContactEndPoints(ccm.getContactPoints())
+            .withAuthCredentials("cassandra", "cassandra");
+
+    try (CqlSession session = (CqlSession) builder.build()) {
       session.execute("select * from system.local");
     }
   }

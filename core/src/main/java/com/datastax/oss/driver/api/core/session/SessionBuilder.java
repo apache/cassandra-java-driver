@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -29,6 +30,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.ContactPoints;
+import com.datastax.oss.driver.internal.core.auth.ProgrammaticPlainTextAuthProvider;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -215,6 +217,37 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   public SelfT withRequestTracker(@Nullable RequestTracker requestTracker) {
     this.programmaticArgumentsBuilder.withRequestTracker(requestTracker);
     return self;
+  }
+
+  /**
+   * Register an authentication provider to use with the session.
+   *
+   * <p>If the provider is specified programmatically with this method, it overrides the
+   * configuration (that is, the {@code advanced.auth-provider.class} option will be ignored).
+   */
+  @NonNull
+  public SelfT withAuthProvider(@Nullable AuthProvider authProvider) {
+    this.programmaticArgumentsBuilder.withAuthProvider(authProvider);
+    return self;
+  }
+
+  /**
+   * Configures the session to use plaintext authentication with the given username and password.
+   *
+   * <p>This methods calls {@link #withAuthProvider(AuthProvider)} to register a special provider
+   * implementation. Therefore calling it overrides the configuration (that is, the {@code
+   * advanced.auth-provider.class} option will be ignored).
+   *
+   * <p>Note that this approach holds the credentials in clear text in memory, which makes them
+   * vulnerable to an attacker who is able to perform memory dumps. If this is not acceptable for
+   * you, consider writing your own {@link AuthProvider} implementation (the internal class {@code
+   * PlainTextAuthProviderBase} is a good starting point), and providing it either with {@link
+   * #withAuthProvider(AuthProvider)} or via the configuration ({@code
+   * advanced.auth-provider.class}).
+   */
+  @NonNull
+  public SelfT withAuthCredentials(@NonNull String username, @NonNull String password) {
+    return withAuthProvider(new ProgrammaticPlainTextAuthProvider(username, password));
   }
 
   /**
