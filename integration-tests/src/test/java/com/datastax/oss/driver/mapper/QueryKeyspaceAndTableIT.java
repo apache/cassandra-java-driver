@@ -25,8 +25,10 @@ import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.DaoTable;
+import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -130,12 +132,14 @@ public class QueryKeyspaceAndTableIT {
   }
 
   @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
   public interface DaoWithKeyspaceAndTableId {
     @Query("SELECT count(*) FROM ${keyspaceId}.${tableId}")
     long count();
   }
 
   @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
   public interface DaoWithQualifiedTableId {
     @Query("SELECT count(*) FROM ${qualifiedTableId}")
     long count();
