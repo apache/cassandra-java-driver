@@ -307,6 +307,19 @@ public class EntityPropertyAnnotationsTest extends MapperProcessorTest {
                     .build())
             .build(),
       },
+      {
+        "@Entity-annotated class must have at least one property defined.",
+        TypeSpec.classBuilder(ClassName.get("test", "Product"))
+            .addAnnotation(Entity.class)
+            .addField(FieldSpec.builder(UUID.class, "id", Modifier.PRIVATE).build())
+            .addMethod(
+                MethodSpec.methodBuilder("getId")
+                    .returns(UUID.class)
+                    .addModifiers(Modifier.PUBLIC)
+                    .addStatement("return id")
+                    .build())
+            .build(),
+      },
     };
   }
 }
