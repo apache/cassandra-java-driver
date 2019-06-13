@@ -1,5 +1,9 @@
 ## Changelog
 
+### 3.7.2 (In progress)
+
+- [bug] JAVA-2249: Stop stripping trailing zeros in ByteOrderedTokens
+
 ### 3.7.1
 
 - [bug] JAVA-2174: Metadata.needsQuote should accept empty strings.

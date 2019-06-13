@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.driver.core.utils.Bytes;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -46,17 +47,12 @@ public class OPPTokenFactoryTest {
   }
 
   @Test(groups = "unit")
-  public void should_strip_trailing_0_bytes() {
-    Token with0Bytes = token(ByteBuffer.wrap(new byte[] {4, 0, 0, 0}));
-    Token without0Bytes = token(ByteBuffer.wrap(new byte[] {4}));
-    Token fromStringWith0Bytes = factory.fromString("040000");
+  public void should_split_range_where_start_as_int_equals_end_as_int() {
+    Token start = token(Bytes.fromHexString("0x11"));
+    Token end = token(Bytes.fromHexString("0x1100"));
 
-    assertThat(with0Bytes).isEqualTo(without0Bytes).isEqualTo(fromStringWith0Bytes);
-
-    Token withMixed0Bytes = factory.fromString("0004000400");
-    Token withoutMixed0Bytes = factory.fromString("00040004");
-
-    assertThat(withMixed0Bytes).isEqualTo(withoutMixed0Bytes);
+    List<Token> splits = factory.split(start, end, 3);
+    assertThat(splits).containsExactly(end, end);
   }
 
   @Test(groups = "unit")

@@ -418,7 +418,8 @@ public abstract class Token implements Comparable<Token> {
             start = toBigInteger(oppStartToken.value, significantBytes);
             end = toBigInteger(oppEndToken.value, significantBytes);
             range = end.subtract(start);
-            if (addedBytes == 4 || range.compareTo(bigNumberOfSplits) >= 0) break;
+            if (addedBytes == 4 || start.equals(end) || range.compareTo(bigNumberOfSplits) >= 0)
+              break;
             significantBytes += 1;
             addedBytes += 1;
           }
@@ -486,21 +487,7 @@ public abstract class Token implements Comparable<Token> {
 
     @VisibleForTesting
     OPPToken(ByteBuffer value) {
-      this.value = stripTrailingZeroBytes(value);
-    }
-
-    /** @return A new ByteBuffer from the input Buffer with any trailing 0-bytes stripped off. */
-    private static ByteBuffer stripTrailingZeroBytes(ByteBuffer b) {
-      byte result[] = Bytes.getArray(b);
-      int zeroIndex = result.length;
-      for (int i = result.length - 1; i > 0; i--) {
-        if (result[i] == 0) {
-          zeroIndex = i;
-        } else {
-          break;
-        }
-      }
-      return ByteBuffer.wrap(result, 0, zeroIndex);
+      this.value = value;
     }
 
     @Override
