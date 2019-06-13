@@ -22,9 +22,11 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
+import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
+import com.datastax.oss.driver.api.mapper.annotations.DaoTable;
 import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
@@ -51,8 +53,14 @@ public class DefaultKeyspaceIT {
 
   private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
 
+  private static SessionRule<CqlSession> sessionWithNoKeyspaceRule =
+      SessionRule.builder(ccm).withKeyspace(false).build();
+
   private static InventoryMapper mapper;
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+
+  @ClassRule
+  public static TestRule chain =
+      RuleChain.outerRule(ccm).around(sessionRule).around(sessionWithNoKeyspaceRule);
 
   @BeforeClass
   public static void setup() {
@@ -145,6 +153,48 @@ public class DefaultKeyspaceIT {
     assertThat(dao.findById(product.id)).isEqualTo(product);
   }
 
+  @Test
+  public void should_fail_dao_initialization_if_keyspace_not_specified() {
+    // Given
+    assertThatThrownBy(
+            () -> {
+              // session has no keyspace
+              // dao has no keyspace
+              // entity has no keyspace
+              InventoryMapperKsNotSet mapper =
+                  new DefaultKeyspaceIT_InventoryMapperKsNotSetBuilder(
+                          sessionWithNoKeyspaceRule.session())
+                      .build();
+              mapper.productDaoDefaultKsNotSet();
+            })
+        .isInstanceOf(MapperException.class)
+        .hasMessage(
+            "Missing keyspace. Suggestions: use SessionBuilder.withKeyspace() "
+                + "when creating your session, specify a default keyspace on class "
+                + "com.datastax.oss.driver.mapper.DefaultKeyspaceIT$ProductSimpleDefaultKsNotSet "
+                + "with @Entity(defaultKeyspace), or use a @DaoFactory method with a @DaoKeyspace "
+                + "parameter");
+  }
+
+  @Test
+  public void should_initialize_dao_if_default_ks_provided() {
+    InventoryMapper mapper =
+        new DefaultKeyspaceIT_InventoryMapperBuilder(sessionWithNoKeyspaceRule.session()).build();
+    // session has no keyspace, but entity does
+    mapper.productDaoDefaultKs();
+    mapper.productDaoEntityDefaultOverridden(sessionRule.keyspace());
+  }
+
+  @Test
+  public void should_initialize_dao_if_dao_ks_provided() {
+    InventoryMapperKsNotSet mapper =
+        new DefaultKeyspaceIT_InventoryMapperKsNotSetBuilder(sessionWithNoKeyspaceRule.session())
+            .build();
+    // session has no keyspace, but dao has parameter
+    mapper.productDaoDefaultKsNotSetOverridden(
+        sessionRule.keyspace(), CqlIdentifier.fromCql("product_simple_default_ks"));
+  }
+
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
@@ -163,6 +213,10 @@ public class DefaultKeyspaceIT {
 
     @DaoFactory
     ProductSimpleDaoDefaultKsNotSet productDaoDefaultKsNotSet();
+
+    @DaoFactory
+    ProductSimpleDaoDefaultKsNotSet productDaoDefaultKsNotSetOverridden(
+        @DaoKeyspace CqlIdentifier keyspace, @DaoTable CqlIdentifier table);
   }
 
   @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
