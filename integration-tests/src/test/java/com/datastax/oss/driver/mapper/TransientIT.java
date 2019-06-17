@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.DaoTable;
+import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
@@ -31,7 +32,7 @@ import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.Transient;
 import com.datastax.oss.driver.api.mapper.annotations.TransientProperties;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -44,7 +45,6 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
-@CassandraRequirement(min = "2.2", description = "support for unset values")
 public class TransientIT {
 
   private static CcmRule ccm = CcmRule.getInstance();
@@ -331,8 +331,11 @@ public class TransientIT {
     }
   }
 
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
+  interface BaseDao {}
+
   @Dao
-  public interface EntityWithTransientAnnotatedFieldDao {
+  public interface EntityWithTransientAnnotatedFieldDao extends BaseDao {
     @Select
     EntityWithTransientAnnotatedField findById(int id);
 
@@ -341,7 +344,7 @@ public class TransientIT {
   }
 
   @Dao
-  public interface EntityWithTransientAnnotatedGetterDao {
+  public interface EntityWithTransientAnnotatedGetterDao extends BaseDao {
     @Select
     EntityWithTransientAnnotatedGetter findById(int id);
 
@@ -350,7 +353,7 @@ public class TransientIT {
   }
 
   @Dao
-  public interface EntityWithTransientKeywordDao {
+  public interface EntityWithTransientKeywordDao extends BaseDao {
     @Select
     EntityWithTransientKeyword findById(int id);
 
@@ -359,7 +362,7 @@ public class TransientIT {
   }
 
   @Dao
-  public interface EntityWithTransientPropertiesAnnotationDao {
+  public interface EntityWithTransientPropertiesAnnotationDao extends BaseDao {
     @Select
     EntityWithTransientPropertiesAnnotation findById(int id);
 

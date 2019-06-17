@@ -15,8 +15,10 @@
  */
 package com.datastax.oss.driver.mapper;
 
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
@@ -29,22 +31,37 @@ public abstract class InventoryITBase {
       new Product(UUID.randomUUID(), "Flamethrower", new InventoryITBase.Dimensions(30, 10, 8));
   protected static Product MP3_DOWNLOAD = new Product(UUID.randomUUID(), "MP3 download", null);
 
-  protected static List<String> createStatements() {
-    return ImmutableList.of(
-        "CREATE TYPE dimensions(length int, width int, height int)",
-        "CREATE TABLE product(id uuid PRIMARY KEY, description text, dimensions dimensions)",
-        "CREATE TABLE product_without_id(id uuid, clustering int, description text, PRIMARY KEY((id), clustering))",
-        "CREATE CUSTOM INDEX product_description ON product(description) "
-            + "USING 'org.apache.cassandra.index.sasi.SASIIndex' "
-            + "WITH OPTIONS = {"
-            + "'mode': 'CONTAINS',"
-            + "'analyzer_class': 'org.apache.cassandra.index.sasi.analyzer.StandardAnalyzer',"
-            + "'tokenization_enable_stemming': 'true',"
-            + "'tokenization_locale': 'en',"
-            + "'tokenization_skip_stop_words': 'true',"
-            + "'analyzed': 'true',"
-            + "'tokenization_normalize_lowercase': 'true'"
-            + "}");
+  protected static List<String> createStatements(CcmRule ccmRule) {
+    ImmutableList.Builder<String> builder =
+        ImmutableList.<String>builder()
+            .add(
+                "CREATE TYPE dimensions(length int, width int, height int)",
+                "CREATE TABLE product(id uuid PRIMARY KEY, description text, dimensions frozen<dimensions>)",
+                "CREATE TABLE product_without_id(id uuid, clustering int, description text, "
+                    + "PRIMARY KEY((id), clustering))");
+
+    if (supportsSASI(ccmRule)) {
+      builder.add(
+          "CREATE CUSTOM INDEX product_description ON product(description) "
+              + "USING 'org.apache.cassandra.index.sasi.SASIIndex' "
+              + "WITH OPTIONS = {"
+              + "'mode': 'CONTAINS',"
+              + "'analyzer_class': 'org.apache.cassandra.index.sasi.analyzer.StandardAnalyzer',"
+              + "'tokenization_enable_stemming': 'true',"
+              + "'tokenization_locale': 'en',"
+              + "'tokenization_skip_stop_words': 'true',"
+              + "'analyzed': 'true',"
+              + "'tokenization_normalize_lowercase': 'true'"
+              + "}");
+    }
+
+    return builder.build();
+  }
+
+  private static final Version MINIMUM_SASI_VERSION = Version.parse("3.4.0");
+
+  protected static boolean supportsSASI(CcmRule ccmRule) {
+    return ccmRule.getCassandraVersion().compareTo(MINIMUM_SASI_VERSION) >= 0;
   }
 
   @Entity

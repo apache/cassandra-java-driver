@@ -62,7 +62,7 @@ public class InsertIT extends InventoryITBase {
   public static void setup() {
     CqlSession session = sessionRule.session();
 
-    for (String query : createStatements()) {
+    for (String query : createStatements(ccm)) {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }

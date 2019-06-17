@@ -49,7 +49,7 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
-@CassandraRequirement(min = "3.4", description = "Creates a SASI index")
+@CassandraRequirement(min = "2.2", description = "support for unset values")
 public class UpdateIT extends InventoryITBase {
 
   private static CcmRule ccm = CcmRule.getInstance();
@@ -65,7 +65,7 @@ public class UpdateIT extends InventoryITBase {
   public static void setup() {
     CqlSession session = sessionRule.session();
 
-    for (String query : createStatements()) {
+    for (String query : createStatements(ccm)) {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }
