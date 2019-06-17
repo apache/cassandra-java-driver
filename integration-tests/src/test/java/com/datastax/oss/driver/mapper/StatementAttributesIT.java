@@ -199,7 +199,7 @@ public class StatementAttributesIT {
         .cluster()
         .prime(
             when(query(
-                    "INSERT INTO simple (pk,data) VALUES (:pk,:data)",
+                    "INSERT INTO ks.simple (pk,data) VALUES (:pk,:data)",
                     Lists.newArrayList(
                         com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ONE,
                         com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ANY),
@@ -215,7 +215,7 @@ public class StatementAttributesIT {
         .cluster()
         .prime(
             when(query(
-                    "DELETE FROM simple WHERE pk=:pk",
+                    "DELETE FROM ks.simple WHERE pk=:pk",
                     Lists.newArrayList(
                         com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ONE,
                         com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ANY),
@@ -232,7 +232,7 @@ public class StatementAttributesIT {
         .cluster()
         .prime(
             when(query(
-                    "SELECT pk,data FROM simple WHERE pk=:pk",
+                    "SELECT pk,data FROM ks.simple WHERE pk=:pk",
                     Lists.newArrayList(
                         com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ONE,
                         com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ANY),
@@ -249,7 +249,7 @@ public class StatementAttributesIT {
         .cluster()
         .prime(
             when(query(
-                    "SELECT count(*) FROM simple WHERE pk=:pk",
+                    "SELECT count(*) FROM ks.simple WHERE pk=:pk",
                     Lists.newArrayList(
                         com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ONE,
                         com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ANY),
@@ -266,7 +266,7 @@ public class StatementAttributesIT {
         .cluster()
         .prime(
             when(query(
-                    "UPDATE simple SET data=:data WHERE pk=:pk",
+                    "UPDATE ks.simple SET data=:data WHERE pk=:pk",
                     Lists.newArrayList(
                         com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ONE,
                         com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ANY),
@@ -324,10 +324,10 @@ public class StatementAttributesIT {
     @StatementAttributes(consistencyLevel = "ANY", serialConsistencyLevel = "QUORUM", pageSize = 13)
     Simple findByPk2(UUID pk);
 
-    @Query("SELECT count(*) FROM simple WHERE pk=:pk")
+    @Query("SELECT count(*) FROM ks.simple WHERE pk=:pk")
     long count(UUID pk, Function<BoundStatementBuilder, BoundStatementBuilder> function);
 
-    @Query("SELECT count(*) FROM simple WHERE pk=:pk")
+    @Query("SELECT count(*) FROM ks.simple WHERE pk=:pk")
     @StatementAttributes(consistencyLevel = "ANY", serialConsistencyLevel = "QUORUM", pageSize = 13)
     long count2(UUID pk);
 
@@ -339,7 +339,7 @@ public class StatementAttributesIT {
     void update2(Simple simple);
   }
 
-  @Entity
+  @Entity(defaultKeyspace = "ks")
   public static class Simple {
     @PartitionKey private UUID pk;
     private String data;
