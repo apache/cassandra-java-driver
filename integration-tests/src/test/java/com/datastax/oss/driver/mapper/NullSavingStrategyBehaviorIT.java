@@ -175,6 +175,34 @@ public class NullSavingStrategyBehaviorIT extends InventoryITBase {
   }
 
   @Test
+  public void should_update_entity_and_do_not_set_null_field() {
+    // given
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+    dao.update(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+
+    // when
+    dao.updateDoNotSetNull(new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
+
+    // then
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
+  }
+
+  @Test
+  public void should_update_entity_udt_and_do_not_set_null_field() {
+    // given
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+    dao.update(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDimensions()).isNotNull();
+
+    // when
+    dao.updateDoNotSetNull(new Product(FLAMETHROWER.getId(), "desc", null));
+
+    // then
+    assertThat(dao.findById(FLAMETHROWER.getId()).getDimensions()).isNotNull();
+  }
+
+  @Test
   public void
       should_update_entity_and_set_null_field_preferring_default_strategy_when_specific_not_set() {
     // given
@@ -349,6 +377,12 @@ public class NullSavingStrategyBehaviorIT extends InventoryITBase {
 
     @Insert(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
     void saveSetNull(Product product);
+
+    @Update
+    void update(Product product);
+
+    @Update(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
+    void updateDoNotSetNull(Product product);
 
     @Select
     Product findById(UUID productId);

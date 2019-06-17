@@ -28,6 +28,7 @@ import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
+import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
@@ -355,20 +356,6 @@ public class UpdateIT extends InventoryITBase {
   }
 
   @Test
-  public void should_update_entity_and_do_not_set_null_field() {
-    // given
-    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
-    dao.update(FLAMETHROWER);
-    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
-
-    // when
-    dao.updateDoNotSetNull(new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
-
-    // then
-    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
-  }
-
-  @Test
   public void should_update_entity_and_set_null_field() {
     // given
     assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
@@ -380,20 +367,6 @@ public class UpdateIT extends InventoryITBase {
 
     // then
     assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNull();
-  }
-
-  @Test
-  public void should_update_entity_udt_and_do_not_set_null_field() {
-    // given
-    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
-    dao.update(FLAMETHROWER);
-    assertThat(dao.findById(FLAMETHROWER.getId()).getDimensions()).isNotNull();
-
-    // when
-    dao.updateDoNotSetNull(new Product(FLAMETHROWER.getId(), "desc", null));
-
-    // then
-    assertThat(dao.findById(FLAMETHROWER.getId()).getDimensions()).isNotNull();
   }
 
   @Test
@@ -423,13 +396,11 @@ public class UpdateIT extends InventoryITBase {
   }
 
   @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
   public interface ProductDao {
 
     @Update
     void update(Product product);
-
-    @Update(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
-    void updateDoNotSetNull(Product product);
 
     @Update(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
     void updateSetNull(Product product);
@@ -475,12 +446,14 @@ public class UpdateIT extends InventoryITBase {
   }
 
   @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
   public interface OnlyPKDao {
     @Update
     void update(OnlyPK onlyPK);
   }
 
   @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
   public interface ProductWithoutIdDao {
     @Update(customWhereClause = "id IN (:id, :id2) AND clustering = 1")
     void updateWhereIdInSetWithoutPKPlaceholders(ProductWithoutId product, UUID id, UUID id2);
