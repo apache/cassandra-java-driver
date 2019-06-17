@@ -26,14 +26,10 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
-import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
-import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
-import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
@@ -287,21 +283,6 @@ public class DaoBase {
           String.format(
               "You cannot use %s.%s for protocol version V3.",
               NullSavingStrategy.class.getSimpleName(), NullSavingStrategy.DO_NOT_SET.name()));
-    }
-  }
-
-  protected static <EntityT> void throwIfKeyspaceMissing(
-      EntityHelper<EntityT> helper, Session session) {
-    if (helper.getKeyspaceId() == null && !session.getKeyspace().isPresent()) {
-      throw new MapperException(
-          String.format(
-              "Missing keyspace. Suggestions: use SessionBuilder.withKeyspace() "
-                  + "when creating your session, specify a default keyspace on %s with @%s"
-                  + "(defaultKeyspace), or use a @%s method with a @%s parameter",
-              helper.getEntityClass(),
-              Entity.class.getSimpleName(),
-              DaoFactory.class.getSimpleName(),
-              DaoKeyspace.class.getSimpleName()));
     }
   }
 }

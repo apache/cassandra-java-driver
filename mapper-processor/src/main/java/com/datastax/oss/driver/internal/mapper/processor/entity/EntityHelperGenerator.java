@@ -15,16 +15,14 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
-import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.mapper.MapperContext;
-import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
+import com.datastax.oss.driver.internal.mapper.entity.EntityHelperBase;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.BindableHandlingSharedCode;
-import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
@@ -88,41 +86,19 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
         TypeSpec.classBuilder(helperName)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
             .addModifiers(Modifier.PUBLIC)
-            .addSuperinterface(
+            .superclass(
                 ParameterizedTypeName.get(
-                    ClassName.get(EntityHelper.class), ClassName.get(classElement)))
-            .addField(
-                FieldSpec.builder(
-                        CqlIdentifier.class, "keyspaceId", Modifier.PRIVATE, Modifier.FINAL)
-                    .build())
-            .addField(
-                FieldSpec.builder(CqlIdentifier.class, "tableId", Modifier.PRIVATE, Modifier.FINAL)
-                    .build());
+                    ClassName.get(EntityHelperBase.class), ClassName.get(classElement)));
 
-    classContents
-        .addMethod(
-            MethodSpec.methodBuilder("getKeyspaceId")
-                .addModifiers(Modifier.PUBLIC)
-                .addAnnotation(Override.class)
-                .returns(CqlIdentifier.class)
-                .addStatement("return keyspaceId")
-                .build())
-        .addMethod(
-            MethodSpec.methodBuilder("getTableId")
-                .addModifiers(Modifier.PUBLIC)
-                .addAnnotation(Override.class)
-                .returns(CqlIdentifier.class)
-                .addStatement("return tableId")
-                .build())
-        .addMethod(
-            MethodSpec.methodBuilder("getEntityClass")
-                .addModifiers(Modifier.PUBLIC)
-                .addAnnotation(Override.class)
-                .returns(
-                    ParameterizedTypeName.get(
-                        ClassName.get(Class.class), entityDefinition.getClassName()))
-                .addStatement("return $T.class", entityDefinition.getClassName())
-                .build());
+    classContents.addMethod(
+        MethodSpec.methodBuilder("getEntityClass")
+            .addModifiers(Modifier.PUBLIC)
+            .addAnnotation(Override.class)
+            .returns(
+                ParameterizedTypeName.get(
+                    ClassName.get(Class.class), entityDefinition.getClassName()))
+            .addStatement("return $T.class", entityDefinition.getClassName())
+            .build());
 
     for (MethodGenerator methodGenerator :
         ImmutableList.of(
@@ -140,22 +116,15 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
     MethodSpec.Builder constructorContents =
         MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC);
 
-    GeneratedCodePatterns.addFinalFieldAndConstructorArgument(
-        ClassName.get(MapperContext.class), "context", classContents, constructorContents);
-
-    constructorContents.addStatement(
-        "this.tableId = context.getTableId() != null ? context.getTableId() : $T.fromCql($L)",
-        CqlIdentifier.class,
-        entityDefinition.getCqlName());
+    constructorContents.addParameter(ClassName.get(MapperContext.class), "context");
 
     if (entityDefinition.getDefaultKeyspace() == null) {
-      constructorContents.addStatement("this.keyspaceId = context.getKeyspaceId()");
+      constructorContents.addStatement("super(context, $L)", entityDefinition.getCqlName());
     } else {
       constructorContents.addStatement(
-          "this.keyspaceId = "
-              + "context.getKeyspaceId() != null ? context.getKeyspaceId() : $T.fromCql($S)",
-          CqlIdentifier.class,
-          entityDefinition.getDefaultKeyspace());
+          "super(context, $S, $L)",
+          entityDefinition.getDefaultKeyspace(),
+          entityDefinition.getCqlName());
     }
 
     genericTypeConstantGenerator.generate(classContents);
