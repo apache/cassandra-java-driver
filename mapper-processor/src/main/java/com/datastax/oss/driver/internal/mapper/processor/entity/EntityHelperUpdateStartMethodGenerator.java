@@ -54,6 +54,7 @@ public class EntityHelperUpdateStartMethodGenerator implements MethodGenerator {
               entityDefinition.getClassName().simpleName(), Update.class.getSimpleName()));
     } else {
       updateBuilder
+          .addStatement("throwIfKeyspaceMissing()")
           .addStatement(
               "$1T update = (keyspaceId == null)\n"
                   + "? $2T.update(tableId)\n"

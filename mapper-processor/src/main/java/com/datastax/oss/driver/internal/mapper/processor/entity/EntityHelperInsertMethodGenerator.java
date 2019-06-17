@@ -42,6 +42,7 @@ public class EntityHelperInsertMethodGenerator implements MethodGenerator {
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
             .returns(RegularInsert.class)
+            .addStatement("throwIfKeyspaceMissing()")
             .addStatement(
                 "$1T insertInto = (keyspaceId == null)\n"
                     + "? $2T.insertInto(tableId)\n"

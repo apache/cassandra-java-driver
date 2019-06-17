@@ -53,6 +53,7 @@ public class EntityHelperDeleteByPrimaryKeyMethodGenerator implements MethodGene
               entityDefinition.getClassName().simpleName()));
     } else {
       deleteByPrimaryKeyBuilder
+          .addStatement("throwIfKeyspaceMissing()")
           .addStatement(
               "$1T delete = (keyspaceId == null)\n"
                   + "? $2T.deleteFrom(tableId)\n"

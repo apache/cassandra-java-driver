@@ -42,6 +42,7 @@ public class EntityHelperSelectStartMethodGenerator implements MethodGenerator {
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
             .returns(Select.class)
+            .addStatement("throwIfKeyspaceMissing()")
             .addStatement(
                 "$1T selectFrom = (keyspaceId == null)\n"
                     + "? $2T.selectFrom(tableId)\n"

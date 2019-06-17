@@ -61,7 +61,7 @@ public class EntityAnnotationTest extends MapperProcessorTest {
         .generatedFile(
             StandardLocation.SOURCE_OUTPUT, "test", "Foo_BarHelper__MapperGenerated.java")
         .contentsAsUtf8String()
-        .contains("class Foo_BarHelper__MapperGenerated implements EntityHelper<Foo.Bar>");
+        .contains("class Foo_BarHelper__MapperGenerated extends EntityHelperBase<Foo.Bar>");
   }
 
   @Test
