@@ -22,7 +22,6 @@ import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT> {
 
@@ -36,8 +35,7 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
     this(context, null, tableName);
   }
 
-  protected EntityHelperBase(
-      @NonNull MapperContext context, String keyspaceName, String tableName) {
+  protected EntityHelperBase(MapperContext context, String keyspaceName, String tableName) {
     this.context = context;
     this.tableId =
         context.getTableId() != null ? context.getTableId() : CqlIdentifier.fromCql(tableName);
