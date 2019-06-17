@@ -22,6 +22,8 @@ import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT> {
 
@@ -31,29 +33,30 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
 
   protected final MapperContext context;
 
-  protected EntityHelperBase(MapperContext context, String tableName) {
-    this(context, null, tableName);
+  protected EntityHelperBase(MapperContext context, String defaultTableName) {
+    this(context, null, defaultTableName);
   }
 
-  protected EntityHelperBase(MapperContext context, String keyspaceName, String tableName) {
+  protected EntityHelperBase(
+      MapperContext context, String defaultKeyspaceName, String defaultTableName) {
     this.context = context;
     this.tableId =
-        context.getTableId() != null ? context.getTableId() : CqlIdentifier.fromCql(tableName);
-    if (keyspaceName == null) {
-      this.keyspaceId = context.getKeyspaceId();
-    } else {
-      this.keyspaceId =
-          context.getKeyspaceId() != null
-              ? context.getKeyspaceId()
-              : CqlIdentifier.fromCql(keyspaceName);
-    }
+        context.getTableId() != null
+            ? context.getTableId()
+            : CqlIdentifier.fromCql(defaultTableName);
+    this.keyspaceId =
+        context.getKeyspaceId() != null
+            ? context.getKeyspaceId()
+            : (defaultKeyspaceName == null ? null : CqlIdentifier.fromCql(defaultKeyspaceName));
   }
 
+  @Nullable
   @Override
   public CqlIdentifier getKeyspaceId() {
     return keyspaceId;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getTableId() {
     return tableId;
