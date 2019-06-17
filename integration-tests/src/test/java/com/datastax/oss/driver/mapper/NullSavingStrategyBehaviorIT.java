@@ -401,7 +401,7 @@ public class NullSavingStrategyBehaviorIT extends InventoryITBase {
     @Insert(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
     void insert(Product product);
 
-    @Update
+    @Update(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
     void update(Product product);
 
     @SetEntity(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)

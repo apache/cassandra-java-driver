@@ -277,56 +277,6 @@ public class UpdateIT extends InventoryITBase {
   }
 
   @Test
-  public void should_update_entity_if_condition_is_met() {
-    dao.update(
-        new Product(FLAMETHROWER.getId(), "Description for length 10", new Dimensions(10, 1, 1)));
-    assertThat(dao.findById(FLAMETHROWER.getId())).isNotNull();
-
-    Product otherProduct =
-        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
-    assertThat(dao.updateIfLength(otherProduct, 10).wasApplied()).isEqualTo(true);
-  }
-
-  @Test
-  public void should_not_update_entity_if_condition_is_not_met() {
-    dao.update(
-        new Product(FLAMETHROWER.getId(), "Description for length 10", new Dimensions(10, 1, 1)));
-    assertThat(dao.findById(FLAMETHROWER.getId())).isNotNull();
-
-    Product otherProduct =
-        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
-    assertThat(dao.updateIfLength(otherProduct, 20).wasApplied()).isEqualTo(false);
-  }
-
-  @Test
-  public void should_async_update_entity_if_condition_is_met() {
-    dao.update(
-        new Product(FLAMETHROWER.getId(), "Description for length 10", new Dimensions(10, 1, 1)));
-    assertThat(dao.findById(FLAMETHROWER.getId())).isNotNull();
-
-    Product otherProduct =
-        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
-    assertThat(
-            CompletableFutures.getUninterruptibly(dao.updateIfLengthAsync(otherProduct, 10))
-                .wasApplied())
-        .isEqualTo(true);
-  }
-
-  @Test
-  public void should_not_async_update_entity_if_condition_is_not_met() {
-    dao.update(
-        new Product(FLAMETHROWER.getId(), "Description for length 10", new Dimensions(10, 1, 1)));
-    assertThat(dao.findById(FLAMETHROWER.getId())).isNotNull();
-
-    Product otherProduct =
-        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
-    assertThat(
-            CompletableFutures.getUninterruptibly(dao.updateIfLengthAsync(otherProduct, 20))
-                .wasApplied())
-        .isEqualTo(false);
-  }
-
-  @Test
   public void should_throw_when_try_to_use_dao_with_update_only_pk() {
     assertThatThrownBy(() -> inventoryMapper.onlyPkDao(sessionRule.keyspace()))
         .isInstanceOf(MapperException.class)
@@ -507,12 +457,6 @@ public class UpdateIT extends InventoryITBase {
 
     @Update
     CompletableFuture<Void> updateAsync(Product product);
-
-    @Update(customIfClause = "dimensions.length = :length")
-    ResultSet updateIfLength(Product product, int length);
-
-    @Update(customIfClause = "dimensions.length = :length")
-    CompletableFuture<AsyncResultSet> updateIfLengthAsync(Product product, int length);
 
     @Update(timestamp = ":timestamp")
     CompletableFuture<Void> updateAsyncWithBoundTimestamp(Product product, long timestamp);
