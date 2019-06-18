@@ -31,12 +31,13 @@ import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.DaoTable;
+import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -57,7 +58,6 @@ import org.junit.rules.TestRule;
 
 /** Covers the return types of {@link Query} methods. */
 @Category(ParallelizableTests.class)
-@CassandraRequirement(min = "2.2", description = "support for unset values")
 public class QueryReturnTypesIT {
 
   private static CcmRule ccm = CcmRule.getInstance();
@@ -233,6 +233,7 @@ public class QueryReturnTypesIT {
   }
 
   @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
   public interface TestDao {
     @Insert
     void insert(TestEntity entity);

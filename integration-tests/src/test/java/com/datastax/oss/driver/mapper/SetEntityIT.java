@@ -29,11 +29,9 @@ import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
-import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -45,7 +43,6 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
-@CassandraRequirement(min = "3.4", description = "Creates a SASI index")
 public class SetEntityIT extends InventoryITBase {
 
   private static CcmRule ccm = CcmRule.getInstance();
@@ -62,7 +59,7 @@ public class SetEntityIT extends InventoryITBase {
   public static void setup() {
     CqlSession session = sessionRule.session();
 
-    for (String query : createStatements()) {
+    for (String query : createStatements(ccm)) {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }
@@ -147,79 +144,6 @@ public class SetEntityIT extends InventoryITBase {
     assertThat(udtValue.getInt("height")).isEqualTo(dimensions.getHeight());
   }
 
-  @Test
-  public void
-      should_set_entity_and_set_null_field_preferring_default_strategy_when_specific_not_set() {
-    // given
-    CqlSession session = sessionRule.session();
-    PreparedStatement preparedStatement =
-        session.prepare("INSERT INTO product (id, description, dimensions) VALUES (?, ?, ?)");
-    BoundStatementBuilder builder = preparedStatement.boundStatementBuilder();
-
-    // when
-    DefaultNullStrategyDao dao = inventoryMapper.defaultNullStrategyDao(sessionRule.keyspace());
-    dao.set(builder, new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
-
-    // then
-    assertMatches(
-        builder.build(), new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
-  }
-
-  @Test
-  public void
-      should_set_entity_and_not_set_null_field_preferring_method_strategy_when_both_are_set() {
-    // given
-    CqlSession session = sessionRule.session();
-    PreparedStatement preparedStatement =
-        session.prepare("INSERT INTO product (id, description, dimensions) VALUES (?, ?, ?)");
-    BoundStatementBuilder builder = preparedStatement.boundStatementBuilder();
-
-    // when
-    DefaultNullStrategyDao dao = inventoryMapper.defaultNullStrategyDao(sessionRule.keyspace());
-    dao.setOverrideDefaultNullSavingStrategy(
-        builder, new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
-
-    // then
-    assertMatches(
-        builder.build(), new Product(FLAMETHROWER.getId(), "", FLAMETHROWER.getDimensions()));
-  }
-
-  @Test
-  public void
-      should_set_entity_and_do_not_set_field_when_both_default_and_method_level_not_explicitly_set() {
-    // given
-    CqlSession session = sessionRule.session();
-    PreparedStatement preparedStatement =
-        session.prepare("INSERT INTO product (id, description, dimensions) VALUES (?, ?, ?)");
-    BoundStatementBuilder builder = preparedStatement.boundStatementBuilder();
-
-    // when
-    DoNotSetSavingStrategyDao dao = inventoryMapper.notSetNullStrategyDao(sessionRule.keyspace());
-    dao.set(builder, new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
-
-    // then
-    assertMatches(
-        builder.build(), new Product(FLAMETHROWER.getId(), "", FLAMETHROWER.getDimensions()));
-  }
-
-  @Test
-  public void should_insert_entity_and_set_null_field_preferring_specific_over_default() {
-    // given
-    CqlSession session = sessionRule.session();
-    PreparedStatement preparedStatement =
-        session.prepare("INSERT INTO product (id, description, dimensions) VALUES (?, ?, ?)");
-    BoundStatementBuilder builder = preparedStatement.boundStatementBuilder();
-
-    // when
-    MethodOverrideNullSavingStrategyDao dao =
-        inventoryMapper.methodOverrideNullStrategyDao(sessionRule.keyspace());
-    dao.set(builder, new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
-
-    // then
-    assertMatches(
-        builder.build(), new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
-  }
-
   private static void assertMatches(GettableByName data, Product entity) {
     assertThat(data.getUuid("id")).isEqualTo(entity.getId());
     assertThat(data.getString("description")).isEqualTo(entity.getDescription());
@@ -234,16 +158,6 @@ public class SetEntityIT extends InventoryITBase {
   public interface InventoryMapper {
     @DaoFactory
     ProductDao productDao(@DaoKeyspace CqlIdentifier keyspace);
-
-    @DaoFactory
-    DefaultNullStrategyDao defaultNullStrategyDao(@DaoKeyspace CqlIdentifier keyspace);
-
-    @DaoFactory
-    DoNotSetSavingStrategyDao notSetNullStrategyDao(@DaoKeyspace CqlIdentifier keyspace);
-
-    @DaoFactory
-    MethodOverrideNullSavingStrategyDao methodOverrideNullStrategyDao(
-        @DaoKeyspace CqlIdentifier keyspace);
   }
 
   @Dao
@@ -263,29 +177,5 @@ public class SetEntityIT extends InventoryITBase {
 
     @SetEntity
     void set(Dimensions dimensions, UdtValue udtValue);
-  }
-
-  @Dao
-  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
-  public interface DefaultNullStrategyDao {
-
-    @SetEntity
-    void set(BoundStatementBuilder builder, Product product);
-
-    @SetEntity(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
-    void setOverrideDefaultNullSavingStrategy(BoundStatementBuilder builder, Product product);
-  }
-
-  @Dao
-  public interface DoNotSetSavingStrategyDao {
-    @SetEntity
-    void set(BoundStatementBuilder builder, Product product);
-  }
-
-  @Dao
-  @DefaultNullSavingStrategy(NullSavingStrategy.DO_NOT_SET)
-  public interface MethodOverrideNullSavingStrategyDao {
-    @SetEntity(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
-    void set(BoundStatementBuilder builder, Product product);
   }
 }
