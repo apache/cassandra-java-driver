@@ -33,7 +33,6 @@ import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -49,7 +48,6 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
-@CassandraRequirement(min = "3.4", description = "Creates a SASI index")
 public class UpdateIT extends InventoryITBase {
 
   private static CcmRule ccm = CcmRule.getInstance();
@@ -65,7 +63,7 @@ public class UpdateIT extends InventoryITBase {
   public static void setup() {
     CqlSession session = sessionRule.session();
 
-    for (String query : createStatements()) {
+    for (String query : createStatements(ccm)) {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }
@@ -280,56 +278,6 @@ public class UpdateIT extends InventoryITBase {
   }
 
   @Test
-  public void should_update_entity_if_condition_is_met() {
-    dao.update(
-        new Product(FLAMETHROWER.getId(), "Description for length 10", new Dimensions(10, 1, 1)));
-    assertThat(dao.findById(FLAMETHROWER.getId())).isNotNull();
-
-    Product otherProduct =
-        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
-    assertThat(dao.updateIfLength(otherProduct, 10).wasApplied()).isEqualTo(true);
-  }
-
-  @Test
-  public void should_not_update_entity_if_condition_is_not_met() {
-    dao.update(
-        new Product(FLAMETHROWER.getId(), "Description for length 10", new Dimensions(10, 1, 1)));
-    assertThat(dao.findById(FLAMETHROWER.getId())).isNotNull();
-
-    Product otherProduct =
-        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
-    assertThat(dao.updateIfLength(otherProduct, 20).wasApplied()).isEqualTo(false);
-  }
-
-  @Test
-  public void should_async_update_entity_if_condition_is_met() {
-    dao.update(
-        new Product(FLAMETHROWER.getId(), "Description for length 10", new Dimensions(10, 1, 1)));
-    assertThat(dao.findById(FLAMETHROWER.getId())).isNotNull();
-
-    Product otherProduct =
-        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
-    assertThat(
-            CompletableFutures.getUninterruptibly(dao.updateIfLengthAsync(otherProduct, 10))
-                .wasApplied())
-        .isEqualTo(true);
-  }
-
-  @Test
-  public void should_not_async_update_entity_if_condition_is_not_met() {
-    dao.update(
-        new Product(FLAMETHROWER.getId(), "Description for length 10", new Dimensions(10, 1, 1)));
-    assertThat(dao.findById(FLAMETHROWER.getId())).isNotNull();
-
-    Product otherProduct =
-        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
-    assertThat(
-            CompletableFutures.getUninterruptibly(dao.updateIfLengthAsync(otherProduct, 20))
-                .wasApplied())
-        .isEqualTo(false);
-  }
-
-  @Test
   public void should_throw_when_try_to_use_dao_with_update_only_pk() {
     assertThatThrownBy(() -> inventoryMapper.onlyPkDao(sessionRule.keyspace()))
         .isInstanceOf(MapperException.class)
@@ -408,20 +356,6 @@ public class UpdateIT extends InventoryITBase {
   }
 
   @Test
-  public void should_update_entity_and_do_not_set_null_field() {
-    // given
-    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
-    dao.update(FLAMETHROWER);
-    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
-
-    // when
-    dao.updateDoNotSetNull(new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
-
-    // then
-    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
-  }
-
-  @Test
   public void should_update_entity_and_set_null_field() {
     // given
     assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
@@ -433,20 +367,6 @@ public class UpdateIT extends InventoryITBase {
 
     // then
     assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNull();
-  }
-
-  @Test
-  public void should_update_entity_udt_and_do_not_set_null_field() {
-    // given
-    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
-    dao.update(FLAMETHROWER);
-    assertThat(dao.findById(FLAMETHROWER.getId()).getDimensions()).isNotNull();
-
-    // when
-    dao.updateDoNotSetNull(new Product(FLAMETHROWER.getId(), "desc", null));
-
-    // then
-    assertThat(dao.findById(FLAMETHROWER.getId()).getDimensions()).isNotNull();
   }
 
   @Test
@@ -463,71 +383,6 @@ public class UpdateIT extends InventoryITBase {
     assertThat(dao.findById(FLAMETHROWER.getId()).getDimensions()).isNull();
   }
 
-  @Test
-  public void
-      should_update_entity_and_set_null_field_preferring_default_strategy_when_specific_not_set() {
-    // given
-    DefaultNullStrategyDao dao = inventoryMapper.defaultNullStrategyDao(sessionRule.keyspace());
-    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
-    dao.update(FLAMETHROWER);
-    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
-
-    // when
-    dao.update(new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
-
-    // then
-    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNull();
-  }
-
-  @Test
-  public void
-      should_update_entity_and_not_set_null_field_preferring_method_strategy_when_both_are_set() {
-    // given
-    DefaultNullStrategyDao dao = inventoryMapper.defaultNullStrategyDao(sessionRule.keyspace());
-    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
-    dao.update(FLAMETHROWER);
-    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
-
-    // when
-    dao.updateOverrideDefaultNullSavingStrategy(
-        new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
-
-    // then
-    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
-  }
-
-  @Test
-  public void
-      should_update_entity_and_do_not_set_null_field_when_both_default_and_method_level_not_explicitly_set() {
-    // given
-    DoNotSetSavingStrategyDao dao = inventoryMapper.notSetNullStrategyDao(sessionRule.keyspace());
-    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
-    dao.update(FLAMETHROWER);
-    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
-
-    // when
-    dao.update(new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
-
-    // then
-    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
-  }
-
-  @Test
-  public void should_update_entity_and_set_null_field_preferring_specific_over_default() {
-    // given
-    MethodOverrideNullSavingStrategyDao dao =
-        inventoryMapper.methodOverrideNullStrategyDao(sessionRule.keyspace());
-    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
-    dao.update(FLAMETHROWER);
-    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNotNull();
-
-    // when
-    dao.update(new Product(FLAMETHROWER.getId(), null, FLAMETHROWER.getDimensions()));
-
-    // then
-    assertThat(dao.findById(FLAMETHROWER.getId()).getDescription()).isNull();
-  }
-
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
@@ -538,26 +393,14 @@ public class UpdateIT extends InventoryITBase {
 
     @DaoFactory
     ProductWithoutIdDao productWithoutIdDao(@DaoKeyspace CqlIdentifier keyspace);
-
-    @DaoFactory
-    DefaultNullStrategyDao defaultNullStrategyDao(@DaoKeyspace CqlIdentifier keyspace);
-
-    @DaoFactory
-    DoNotSetSavingStrategyDao notSetNullStrategyDao(@DaoKeyspace CqlIdentifier keyspace);
-
-    @DaoFactory
-    MethodOverrideNullSavingStrategyDao methodOverrideNullStrategyDao(
-        @DaoKeyspace CqlIdentifier keyspace);
   }
 
   @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
   public interface ProductDao {
 
     @Update
     void update(Product product);
-
-    @Update(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
-    void updateDoNotSetNull(Product product);
 
     @Update(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
     void updateSetNull(Product product);
@@ -586,12 +429,6 @@ public class UpdateIT extends InventoryITBase {
     @Update
     CompletableFuture<Void> updateAsync(Product product);
 
-    @Update(customIfClause = "dimensions.length = :length")
-    ResultSet updateIfLength(Product product, int length);
-
-    @Update(customIfClause = "dimensions.length = :length")
-    CompletableFuture<AsyncResultSet> updateIfLengthAsync(Product product, int length);
-
     @Update(timestamp = ":timestamp")
     CompletableFuture<Void> updateAsyncWithBoundTimestamp(Product product, long timestamp);
 
@@ -609,6 +446,7 @@ public class UpdateIT extends InventoryITBase {
   }
 
   @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
   public interface OnlyPKDao {
     @Update
     void update(OnlyPK onlyPK);
@@ -616,38 +454,6 @@ public class UpdateIT extends InventoryITBase {
 
   @Dao
   @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
-  public interface DefaultNullStrategyDao {
-
-    @Update
-    void update(Product product);
-
-    @Update(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
-    void updateOverrideDefaultNullSavingStrategy(Product product);
-
-    @Select
-    Product findById(UUID productId);
-  }
-
-  @Dao
-  public interface DoNotSetSavingStrategyDao {
-    @Update
-    void update(Product product);
-
-    @Select
-    Product findById(UUID productId);
-  }
-
-  @Dao
-  @DefaultNullSavingStrategy(NullSavingStrategy.DO_NOT_SET)
-  public interface MethodOverrideNullSavingStrategyDao {
-    @Update(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
-    void update(Product product);
-
-    @Select
-    Product findById(UUID productId);
-  }
-
-  @Dao
   public interface ProductWithoutIdDao {
     @Update(customWhereClause = "id IN (:id, :id2) AND clustering = 1")
     void updateWhereIdInSetWithoutPKPlaceholders(ProductWithoutId product, UUID id, UUID id2);

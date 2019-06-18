@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
+import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
@@ -32,7 +33,7 @@ import com.datastax.oss.driver.api.mapper.annotations.NamingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -58,7 +59,6 @@ import org.junit.rules.TestRule;
  * <p>See each entity's corresponding table schema in {@link #setup()}.
  */
 @Category(ParallelizableTests.class)
-@CassandraRequirement(min = "2.2", description = "support for unset values")
 public class NamingStrategyIT {
 
   private static CcmRule ccm = CcmRule.getInstance();
@@ -220,41 +220,26 @@ public class NamingStrategyIT {
     }
   }
 
-  @Dao
-  public interface DefaultStrategyEntityDao {
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
+  interface BaseDao<T> {
     @Select
-    DefaultStrategyEntity findById(int id);
+    T findById(int id);
 
     @Insert
-    void save(DefaultStrategyEntity entity);
+    void save(T entity);
   }
 
   @Dao
-  public interface UpperSnakeCaseEntityDao {
-    @Select
-    UpperSnakeCaseEntity findById(int id);
-
-    @Insert
-    void save(UpperSnakeCaseEntity entity);
-  }
+  public interface DefaultStrategyEntityDao extends BaseDao<DefaultStrategyEntity> {}
 
   @Dao
-  public interface NameConverterEntityDao {
-    @Select
-    NameConverterEntity findById(int id);
-
-    @Insert
-    void save(NameConverterEntity entity);
-  }
+  public interface UpperSnakeCaseEntityDao extends BaseDao<UpperSnakeCaseEntity> {}
 
   @Dao
-  public interface CustomNamesEntityDao {
-    @Select
-    CustomNamesEntity findById(int id);
+  public interface NameConverterEntityDao extends BaseDao<NameConverterEntity> {}
 
-    @Insert
-    void save(CustomNamesEntity entity);
-  }
+  @Dao
+  public interface CustomNamesEntityDao extends BaseDao<CustomNamesEntity> {}
 
   @Mapper
   public interface TestMapper {
