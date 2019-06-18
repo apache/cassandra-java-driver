@@ -82,12 +82,12 @@ public class DefaultNullSavingStrategyIT {
     DaoWithDoNotSet daoWithDoNotSet = mapper.daoWithDoNotSet();
     DaoWithSetToNull daoWithSetToNull = mapper.daoWithSetToNull();
 
+    assertStrategy(daoWithNoStrategy::queryWithNoStrategy, DO_NOT_SET);
+    assertStrategy(daoWithNoStrategy::queryWithDoNotSet, DO_NOT_SET);
+    assertStrategy(daoWithNoStrategy::queryWithSetToNull, SET_TO_NULL);
     assertStrategy(daoWithNoStrategy::insertWithNoStrategy, DO_NOT_SET);
     assertStrategy(daoWithNoStrategy::insertWithDoNotSet, DO_NOT_SET);
     assertStrategy(daoWithNoStrategy::insertWithSetToNull, SET_TO_NULL);
-    assertStrategy(daoWithNoStrategy::saveWithNoStrategy, DO_NOT_SET);
-    assertStrategy(daoWithNoStrategy::saveWithDoNotSet, DO_NOT_SET);
-    assertStrategy(daoWithNoStrategy::saveWithSetToNull, SET_TO_NULL);
     assertStrategy(daoWithNoStrategy::updateWithNoStrategy, DO_NOT_SET);
     assertStrategy(daoWithNoStrategy::updateWithDoNotSet, DO_NOT_SET);
     assertStrategy(daoWithNoStrategy::updateWithSetToNull, SET_TO_NULL);
@@ -95,12 +95,12 @@ public class DefaultNullSavingStrategyIT {
     assertSetEntityStrategy(daoWithNoStrategy::setWithDoNotSet, DO_NOT_SET);
     assertSetEntityStrategy(daoWithNoStrategy::setWithSetToNull, SET_TO_NULL);
 
+    assertStrategy(daoWithDoNotSet::queryWithNoStrategy, DO_NOT_SET);
+    assertStrategy(daoWithDoNotSet::queryWithDoNotSet, DO_NOT_SET);
+    assertStrategy(daoWithDoNotSet::queryWithSetToNull, SET_TO_NULL);
     assertStrategy(daoWithDoNotSet::insertWithNoStrategy, DO_NOT_SET);
     assertStrategy(daoWithDoNotSet::insertWithDoNotSet, DO_NOT_SET);
     assertStrategy(daoWithDoNotSet::insertWithSetToNull, SET_TO_NULL);
-    assertStrategy(daoWithDoNotSet::saveWithNoStrategy, DO_NOT_SET);
-    assertStrategy(daoWithDoNotSet::saveWithDoNotSet, DO_NOT_SET);
-    assertStrategy(daoWithDoNotSet::saveWithSetToNull, SET_TO_NULL);
     assertStrategy(daoWithDoNotSet::updateWithNoStrategy, DO_NOT_SET);
     assertStrategy(daoWithDoNotSet::updateWithDoNotSet, DO_NOT_SET);
     assertStrategy(daoWithDoNotSet::updateWithSetToNull, SET_TO_NULL);
@@ -108,12 +108,12 @@ public class DefaultNullSavingStrategyIT {
     assertSetEntityStrategy(daoWithDoNotSet::setWithDoNotSet, DO_NOT_SET);
     assertSetEntityStrategy(daoWithDoNotSet::setWithSetToNull, SET_TO_NULL);
 
+    assertStrategy(daoWithSetToNull::queryWithNoStrategy, SET_TO_NULL);
+    assertStrategy(daoWithSetToNull::queryWithDoNotSet, DO_NOT_SET);
+    assertStrategy(daoWithSetToNull::queryWithSetToNull, SET_TO_NULL);
     assertStrategy(daoWithSetToNull::insertWithNoStrategy, SET_TO_NULL);
     assertStrategy(daoWithSetToNull::insertWithDoNotSet, DO_NOT_SET);
     assertStrategy(daoWithSetToNull::insertWithSetToNull, SET_TO_NULL);
-    assertStrategy(daoWithSetToNull::saveWithNoStrategy, SET_TO_NULL);
-    assertStrategy(daoWithSetToNull::saveWithDoNotSet, DO_NOT_SET);
-    assertStrategy(daoWithSetToNull::saveWithSetToNull, SET_TO_NULL);
     assertStrategy(daoWithSetToNull::updateWithNoStrategy, SET_TO_NULL);
     assertStrategy(daoWithSetToNull::updateWithDoNotSet, DO_NOT_SET);
     assertStrategy(daoWithSetToNull::updateWithSetToNull, SET_TO_NULL);
@@ -169,22 +169,22 @@ public class DefaultNullSavingStrategyIT {
   @Dao
   public interface DaoWithNoStrategy {
     @Query("INSERT INTO foo (k, v) values (:k, :v)")
-    void insertWithNoStrategy(Integer k, Integer v);
+    void queryWithNoStrategy(Integer k, Integer v);
 
     @Query(value = "INSERT INTO foo (k, v) values (:k, :v)", nullSavingStrategy = SET_TO_NULL)
-    void insertWithSetToNull(Integer k, Integer v);
+    void queryWithSetToNull(Integer k, Integer v);
 
     @Query(value = "INSERT INTO foo (k, v) values (:k, :v)", nullSavingStrategy = DO_NOT_SET)
-    void insertWithDoNotSet(Integer k, Integer v);
+    void queryWithDoNotSet(Integer k, Integer v);
 
     @Insert
-    void saveWithNoStrategy(Foo foo);
+    void insertWithNoStrategy(Foo foo);
 
     @Insert(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
-    void saveWithSetToNull(Foo foo);
+    void insertWithSetToNull(Foo foo);
 
     @Insert(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
-    void saveWithDoNotSet(Foo foo);
+    void insertWithDoNotSet(Foo foo);
 
     @Update
     void updateWithNoStrategy(Foo foo);
@@ -209,22 +209,22 @@ public class DefaultNullSavingStrategyIT {
   @DefaultNullSavingStrategy(SET_TO_NULL)
   public interface DaoWithSetToNull {
     @Query("INSERT INTO foo (k, v) values (:k, :v)")
-    void insertWithNoStrategy(Integer k, Integer v);
+    void queryWithNoStrategy(Integer k, Integer v);
 
     @Query(value = "INSERT INTO foo (k, v) values (:k, :v)", nullSavingStrategy = SET_TO_NULL)
-    void insertWithSetToNull(Integer k, Integer v);
+    void queryWithSetToNull(Integer k, Integer v);
 
     @Query(value = "INSERT INTO foo (k, v) values (:k, :v)", nullSavingStrategy = DO_NOT_SET)
-    void insertWithDoNotSet(Integer k, Integer v);
+    void queryWithDoNotSet(Integer k, Integer v);
 
     @Insert
-    void saveWithNoStrategy(Foo foo);
+    void insertWithNoStrategy(Foo foo);
 
     @Insert(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
-    void saveWithSetToNull(Foo foo);
+    void insertWithSetToNull(Foo foo);
 
     @Insert(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
-    void saveWithDoNotSet(Foo foo);
+    void insertWithDoNotSet(Foo foo);
 
     @Update
     void updateWithNoStrategy(Foo foo);
@@ -249,22 +249,22 @@ public class DefaultNullSavingStrategyIT {
   @DefaultNullSavingStrategy(DO_NOT_SET)
   public interface DaoWithDoNotSet {
     @Query("INSERT INTO foo (k, v) values (:k, :v)")
-    void insertWithNoStrategy(Integer k, Integer v);
+    void queryWithNoStrategy(Integer k, Integer v);
 
     @Query(value = "INSERT INTO foo (k, v) values (:k, :v)", nullSavingStrategy = SET_TO_NULL)
-    void insertWithSetToNull(Integer k, Integer v);
+    void queryWithSetToNull(Integer k, Integer v);
 
     @Query(value = "INSERT INTO foo (k, v) values (:k, :v)", nullSavingStrategy = DO_NOT_SET)
-    void insertWithDoNotSet(Integer k, Integer v);
+    void queryWithDoNotSet(Integer k, Integer v);
 
     @Insert
-    void saveWithNoStrategy(Foo foo);
+    void insertWithNoStrategy(Foo foo);
 
     @Insert(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
-    void saveWithSetToNull(Foo foo);
+    void insertWithSetToNull(Foo foo);
 
     @Insert(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
-    void saveWithDoNotSet(Foo foo);
+    void insertWithDoNotSet(Foo foo);
 
     @Update
     void updateWithNoStrategy(Foo foo);
