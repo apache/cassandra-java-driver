@@ -22,8 +22,10 @@ import com.datastax.oss.driver.shaded.guava.common.util.concurrent.ThreadFactory
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.HashedWheelTimer;
@@ -46,6 +48,7 @@ public class DefaultNettyOptions implements NettyOptions {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultNettyOptions.class);
 
+  private final DriverExecutionProfile config;
   private final EventLoopGroup ioEventLoopGroup;
   private final EventLoopGroup adminEventLoopGroup;
   private final int ioShutdownQuietPeriod;
@@ -57,7 +60,7 @@ public class DefaultNettyOptions implements NettyOptions {
   private final Timer timer;
 
   public DefaultNettyOptions(InternalDriverContext context) {
-    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
+    this.config = context.getConfig().getDefaultProfile();
     int ioGroupSize = config.getInt(DefaultDriverOption.NETTY_IO_SIZE);
     this.ioShutdownQuietPeriod = config.getInt(DefaultDriverOption.NETTY_IO_SHUTDOWN_QUIET_PERIOD);
     this.ioShutdownTimeout = config.getInt(DefaultDriverOption.NETTY_IO_SHUTDOWN_TIMEOUT);
@@ -131,7 +134,30 @@ public class DefaultNettyOptions implements NettyOptions {
 
   @Override
   public void afterBootstrapInitialized(Bootstrap bootstrap) {
-    // nothing to do
+    boolean tcpNoDelay = config.getBoolean(DefaultDriverOption.SOCKET_TCP_NODELAY);
+    bootstrap.option(ChannelOption.TCP_NODELAY, tcpNoDelay);
+    if (config.isDefined(DefaultDriverOption.SOCKET_KEEP_ALIVE)) {
+      boolean keepAlive = config.getBoolean(DefaultDriverOption.SOCKET_KEEP_ALIVE);
+      bootstrap.option(ChannelOption.SO_KEEPALIVE, keepAlive);
+    }
+    if (config.isDefined(DefaultDriverOption.SOCKET_REUSE_ADDRESS)) {
+      boolean reuseAddress = config.getBoolean(DefaultDriverOption.SOCKET_REUSE_ADDRESS);
+      bootstrap.option(ChannelOption.SO_REUSEADDR, reuseAddress);
+    }
+    if (config.isDefined(DefaultDriverOption.SOCKET_LINGER_INTERVAL)) {
+      int lingerInterval = config.getInt(DefaultDriverOption.SOCKET_LINGER_INTERVAL);
+      bootstrap.option(ChannelOption.SO_LINGER, lingerInterval);
+    }
+    if (config.isDefined(DefaultDriverOption.SOCKET_RECEIVE_BUFFER_SIZE)) {
+      int receiveBufferSize = config.getInt(DefaultDriverOption.SOCKET_RECEIVE_BUFFER_SIZE);
+      bootstrap
+          .option(ChannelOption.SO_RCVBUF, receiveBufferSize)
+          .option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(receiveBufferSize));
+    }
+    if (config.isDefined(DefaultDriverOption.SOCKET_SEND_BUFFER_SIZE)) {
+      int sendBufferSize = config.getInt(DefaultDriverOption.SOCKET_SEND_BUFFER_SIZE);
+      bootstrap.option(ChannelOption.SO_SNDBUF, sendBufferSize);
+    }
   }
 
   @Override
