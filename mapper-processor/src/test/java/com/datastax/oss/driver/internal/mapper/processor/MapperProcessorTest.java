@@ -21,6 +21,7 @@ import com.google.testing.compile.Compilation;
 import com.google.testing.compile.Compiler;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -43,9 +44,14 @@ public abstract class MapperProcessorTest {
       files.add(JavaFile.builder(packageName, typeSpec).build().toJavaFileObject());
     }
     return Compiler.javac()
-        .withProcessors(new MapperProcessor())
+        .withProcessors(getMapperProcessor())
         .withOptions(options)
         .compile(files);
+  }
+
+  @NonNull
+  protected MapperProcessor getMapperProcessor() {
+    return new MapperProcessor();
   }
 
   /**
