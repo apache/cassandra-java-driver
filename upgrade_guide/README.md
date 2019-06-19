@@ -1,5 +1,15 @@
 ## Upgrade guide
 
+### 4.1.0
+
+#### Internal API
+
+`NettyOptions#afterBootstrapInitialized` is now responsible for setting socket options on driver
+connections (see `advanced.socket` in the configuration). If you had written a custom `NettyOptions`
+for 4.0, you'll have to copy over -- and possibly adapt -- the contents of
+`DefaultNettyOptions#afterBootstrapInitialized` (if you didn't override `NettyOptions`, you don't
+have to change anything).
+
 ### 4.0.0
 
 Version 4 is major redesign of the internal architecture. As such, it is **not binary compatible**

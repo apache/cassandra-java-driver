@@ -39,7 +39,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.FixedRecvByteBufAllocator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -148,35 +147,6 @@ public class ChannelFactory {
             .option(ChannelOption.ALLOCATOR, nettyOptions.allocator())
             .handler(
                 initializer(endPoint, currentVersion, options, nodeMetricUpdater, resultFuture));
-
-    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
-
-    boolean tcpNoDelay = config.getBoolean(DefaultDriverOption.SOCKET_TCP_NODELAY);
-    bootstrap = bootstrap.option(ChannelOption.TCP_NODELAY, tcpNoDelay);
-    if (config.isDefined(DefaultDriverOption.SOCKET_KEEP_ALIVE)) {
-      boolean keepAlive = config.getBoolean(DefaultDriverOption.SOCKET_KEEP_ALIVE);
-      bootstrap = bootstrap.option(ChannelOption.SO_KEEPALIVE, keepAlive);
-    }
-    if (config.isDefined(DefaultDriverOption.SOCKET_REUSE_ADDRESS)) {
-      boolean reuseAddress = config.getBoolean(DefaultDriverOption.SOCKET_REUSE_ADDRESS);
-      bootstrap = bootstrap.option(ChannelOption.SO_REUSEADDR, reuseAddress);
-    }
-    if (config.isDefined(DefaultDriverOption.SOCKET_LINGER_INTERVAL)) {
-      int lingerInterval = config.getInt(DefaultDriverOption.SOCKET_LINGER_INTERVAL);
-      bootstrap = bootstrap.option(ChannelOption.SO_LINGER, lingerInterval);
-    }
-    if (config.isDefined(DefaultDriverOption.SOCKET_RECEIVE_BUFFER_SIZE)) {
-      int receiveBufferSize = config.getInt(DefaultDriverOption.SOCKET_RECEIVE_BUFFER_SIZE);
-      bootstrap =
-          bootstrap
-              .option(ChannelOption.SO_RCVBUF, receiveBufferSize)
-              .option(
-                  ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(receiveBufferSize));
-    }
-    if (config.isDefined(DefaultDriverOption.SOCKET_SEND_BUFFER_SIZE)) {
-      int sendBufferSize = config.getInt(DefaultDriverOption.SOCKET_SEND_BUFFER_SIZE);
-      bootstrap = bootstrap.option(ChannelOption.SO_SNDBUF, sendBufferSize);
-    }
 
     nettyOptions.afterBootstrapInitialized(bootstrap);
 
