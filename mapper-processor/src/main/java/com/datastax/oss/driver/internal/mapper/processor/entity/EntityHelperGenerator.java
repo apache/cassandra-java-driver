@@ -33,6 +33,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.beans.Introspector;
 import java.util.HashMap;
 import java.util.Map;
@@ -65,6 +66,11 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
     return helperName;
   }
 
+  @NonNull
+  protected Class<?> getEntityHelperParentClass() {
+    return EntityHelperBase.class;
+  }
+
   @Override
   public String addGenericTypeConstant(TypeName type) {
     return genericTypeConstantGenerator.add(type);
@@ -89,7 +95,7 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
             .addModifiers(Modifier.PUBLIC)
             .superclass(
                 ParameterizedTypeName.get(
-                    ClassName.get(EntityHelperBase.class), ClassName.get(classElement)));
+                    ClassName.get(getEntityHelperParentClass()), ClassName.get(classElement)));
 
     context.getLoggingGenerator().addLoggerField(classContents, helperName);
 
