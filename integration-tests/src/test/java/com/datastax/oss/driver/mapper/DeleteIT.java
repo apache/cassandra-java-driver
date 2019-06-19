@@ -50,13 +50,13 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class DeleteIT extends InventoryITBase {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  protected static CcmRule ccm = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  protected static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
-  private static ProductDao dao;
+  protected static ProductDao dao;
 
   @BeforeClass
   public static void setup() {
