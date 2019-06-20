@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
@@ -143,8 +144,9 @@ public class UpdateCustomIfClauseIT extends InventoryITBase {
     @Update(customIfClause = "dimensions.length = :length")
     ResultSet updateIfLength(Product product, int length);
 
-    @Update(customIfClause = "dimensions.length = :length")
-    CompletableFuture<AsyncResultSet> updateIfLengthAsync(Product product, int length);
+    @Update(customIfClause = "dimensions.length = :\"Length\"")
+    CompletableFuture<AsyncResultSet> updateIfLengthAsync(
+        Product product, @CqlName("\"Length\"") int length);
 
     @Select
     Product findById(UUID productId);

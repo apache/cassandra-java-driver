@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
@@ -105,8 +106,9 @@ public class SelectCustomWhereClauseIT extends InventoryITBase {
     PagingIterable<Product> findByDescription(String searchString);
 
     /** Note that this relies on a SASI index. */
-    @Select(customWhereClause = "description LIKE :searchString")
-    CompletionStage<MappedAsyncPagingIterable<Product>> findByDescriptionAsync(String searchString);
+    @Select(customWhereClause = "description LIKE :\"Search String\"")
+    CompletionStage<MappedAsyncPagingIterable<Product>> findByDescriptionAsync(
+        @CqlName("\"Search String\"") String searchString);
 
     @Delete
     void delete(Product product);

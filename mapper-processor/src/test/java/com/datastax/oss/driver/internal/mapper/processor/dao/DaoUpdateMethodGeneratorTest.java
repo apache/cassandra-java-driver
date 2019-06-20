@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.mock;
 
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
@@ -88,6 +89,34 @@ public class DaoUpdateMethodGeneratorTest extends DaoMethodGeneratorTest {
             .build(),
       },
     };
+  }
+
+  @Test
+  public void should_warn_when_non_bind_marker_has_cql_name() {
+    should_succeed_with_expected_warning(
+        "Method update(test.Product,java.lang.String): parameter entity does not refer "
+            + "to a bind marker, @CqlName annotation will be ignored",
+        MethodSpec.methodBuilder("update")
+            .addAnnotation(
+                AnnotationSpec.builder(Update.class)
+                    .addMember("customIfClause", "$S", "description LIKE :searchString")
+                    .build())
+            .addParameter(
+                ParameterSpec.builder(ENTITY_CLASS_NAME, "entity")
+                    .addAnnotation(
+                        AnnotationSpec.builder(CqlName.class)
+                            .addMember("value", "$S", "irrelevant")
+                            .build())
+                    .build())
+            .addParameter(
+                ParameterSpec.builder(String.class, "searchString")
+                    .addAnnotation(
+                        AnnotationSpec.builder(CqlName.class)
+                            .addMember("value", "$S", "irrelevant")
+                            .build())
+                    .build())
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .build());
   }
 
   @Test

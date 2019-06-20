@@ -133,6 +133,8 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
 
     populateBuilderWithStatementAttributes(methodBodyBuilder, methodElement);
     populateBuilderWithFunction(methodBodyBuilder, boundStatementFunction);
+
+    warnIfCqlNamePresent(parameters.subList(0, 1));
     String entityParameterName = parameters.get(0).getSimpleName().toString();
 
     NullSavingStrategy nullSavingStrategy =
@@ -148,12 +150,13 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
 
     // Handle all remaining parameters as additional bound values
     if (parameters.size() > 1) {
-      GeneratedCodePatterns.bindParameters(
-          parameters.subList(1, parameters.size()),
-          methodBodyBuilder,
-          enclosingClass,
-          context,
-          false);
+      List<? extends VariableElement> bindMarkers = parameters.subList(1, parameters.size());
+      if (validateCqlNamesPresent(bindMarkers)) {
+        GeneratedCodePatterns.bindParameters(
+            bindMarkers, methodBodyBuilder, enclosingClass, context, false);
+      } else {
+        return Optional.empty();
+      }
     }
 
     methodBodyBuilder

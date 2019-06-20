@@ -109,19 +109,25 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
     populateBuilderWithStatementAttributes(methodBodyBuilder, methodElement);
     populateBuilderWithFunction(methodBodyBuilder, boundStatementFunction);
 
-    GeneratedCodePatterns.bindParameters(
-        parameters, methodBodyBuilder, enclosingClass, context, true);
+    if (validateCqlNamesPresent(parameters)) {
+      GeneratedCodePatterns.bindParameters(
+          parameters, methodBodyBuilder, enclosingClass, context, true);
 
-    methodBodyBuilder
-        .add("\n")
-        .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
+      methodBodyBuilder
+          .add("\n")
+          .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
-    returnType.getKind().addExecuteStatement(methodBodyBuilder, helperFieldName);
+      returnType.getKind().addExecuteStatement(methodBodyBuilder, helperFieldName);
 
-    CodeBlock methodBody = returnType.getKind().wrapWithErrorHandling(methodBodyBuilder.build());
+      CodeBlock methodBody = returnType.getKind().wrapWithErrorHandling(methodBodyBuilder.build());
 
-    return Optional.of(
-        GeneratedCodePatterns.override(methodElement, typeParameters).addCode(methodBody).build());
+      return Optional.of(
+          GeneratedCodePatterns.override(methodElement, typeParameters)
+              .addCode(methodBody)
+              .build());
+    } else {
+      return Optional.empty();
+    }
   }
 
   private void generatePrepareRequest(

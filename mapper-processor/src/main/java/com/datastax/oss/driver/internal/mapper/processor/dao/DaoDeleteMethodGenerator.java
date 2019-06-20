@@ -35,6 +35,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -169,6 +170,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
     populateBuilderWithFunction(methodBodyBuilder, boundStatementFunction);
     int nextParameterIndex;
     if (hasEntityParameter) {
+      warnIfCqlNamePresent(Collections.singletonList(firstParameter));
       // Bind entity's PK properties
       for (PropertyDefinition property : entityDefinition.getPrimaryKey()) {
         GeneratedCodePatterns.setValue(
@@ -189,13 +191,10 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
               .stream()
               .map(PropertyDefinition::getCqlName)
               .collect(Collectors.toList());
+      List<? extends VariableElement> bindMarkers = parameters.subList(0, primaryKeyNames.size());
+      warnIfCqlNamePresent(bindMarkers);
       GeneratedCodePatterns.bindParameters(
-          parameters.subList(0, primaryKeyNames.size()),
-          primaryKeyNames,
-          methodBodyBuilder,
-          enclosingClass,
-          context,
-          false);
+          bindMarkers, primaryKeyNames, methodBodyBuilder, enclosingClass, context, false);
       nextParameterIndex = primaryKeyNames.size();
     }
 
@@ -210,12 +209,14 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
                     + "parameters if they specify a custom IF clause",
                 Delete.class.getSimpleName());
       }
-      GeneratedCodePatterns.bindParameters(
-          parameters.subList(nextParameterIndex, parameters.size()),
-          methodBodyBuilder,
-          enclosingClass,
-          context,
-          false);
+      List<? extends VariableElement> bindMarkers =
+          parameters.subList(nextParameterIndex, parameters.size());
+      if (validateCqlNamesPresent(bindMarkers)) {
+        GeneratedCodePatterns.bindParameters(
+            bindMarkers, methodBodyBuilder, enclosingClass, context, false);
+      } else {
+        return Optional.empty();
+      }
     }
 
     methodBodyBuilder
