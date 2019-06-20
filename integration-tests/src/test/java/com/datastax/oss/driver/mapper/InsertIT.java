@@ -50,14 +50,14 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class InsertIT extends InventoryITBase {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  protected static CcmRule ccm = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  protected static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
-  private static ProductDao dao;
-  private static InventoryMapper inventoryMapper;
+  protected static ProductDao dao;
+  protected static InventoryMapper inventoryMapper;
 
   @BeforeClass
   public static void setup() {
