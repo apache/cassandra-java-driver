@@ -15,9 +15,11 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Delete;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterSpec;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
@@ -101,5 +103,28 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
             .build(),
       },
     };
+  }
+
+  @Test
+  public void should_warn_when_non_bind_marker_has_cql_name() {
+    should_succeed_with_expected_warning(
+        "delete(java.util.UUID,java.lang.String): parameter id does not refer "
+            + "to a bind marker, @CqlName annotation will be ignored",
+        MethodSpec.methodBuilder("delete")
+            .addAnnotation(
+                AnnotationSpec.builder(Delete.class)
+                    .addMember("entityClass", ENTITY_CLASS_NAME + ".class")
+                    .addMember("customIfClause", "$S", "description = :description")
+                    .build())
+            .addParameter(
+                ParameterSpec.builder(UUID.class, "id")
+                    .addAnnotation(
+                        AnnotationSpec.builder(CqlName.class)
+                            .addMember("value", "$S", "irrelevant")
+                            .build())
+                    .build())
+            .addParameter(String.class, "description")
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .build());
   }
 }

@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.StatementAttributes;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
@@ -25,6 +26,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -197,5 +199,55 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
       }
     }
     return null;
+  }
+
+  protected boolean validateCqlNamesPresent(List<? extends VariableElement> parameters) {
+    boolean valid = true;
+    if (isFromClassFile()) {
+      for (VariableElement parameter : parameters) {
+        CqlName cqlName = parameter.getAnnotation(CqlName.class);
+        if (cqlName == null) {
+          context
+              .getMessager()
+              .error(
+                  parameter,
+                  "Method %s: parameter %s is declared in a compiled method "
+                      + "and refers to a bind marker "
+                      + "and thus must be annotated with @%s",
+                  methodElement,
+                  parameter.getSimpleName(),
+                  CqlName.class.getSimpleName());
+          valid = false;
+        }
+      }
+    }
+    return valid;
+  }
+
+  protected void warnIfCqlNamePresent(List<? extends VariableElement> parameters) {
+    for (VariableElement parameter : parameters) {
+      CqlName cqlName = parameter.getAnnotation(CqlName.class);
+      if (cqlName != null) {
+        context
+            .getMessager()
+            .warn(
+                parameter,
+                "Method %s: parameter %s does not refer to a bind marker, "
+                    + "@%s annotation will be ignored",
+                methodElement,
+                parameter.getSimpleName(),
+                CqlName.class.getSimpleName());
+      }
+    }
+  }
+
+  protected boolean isFromClassFile() {
+    TypeElement enclosingElement = (TypeElement) methodElement.getEnclosingElement();
+    try {
+      Class.forName(enclosingElement.getQualifiedName().toString());
+      return true;
+    } catch (ClassNotFoundException e) {
+      return false;
+    }
   }
 }

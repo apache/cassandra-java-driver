@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.type.ListType;
 import com.datastax.oss.driver.api.core.type.MapType;
 import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -35,7 +36,9 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.beans.Introspector;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -125,19 +128,31 @@ public class GeneratedCodePatterns {
   }
 
   /**
-   * Treats a list of method parameters as bind variables in a query, assuming the bing markers have
-   * the same names as the parameters.
+   * Treats a list of method parameters as bind variables in a query, assuming that the bind markers
+   * have the same names as the parameters, unless they are annotated with {@link CqlName}.
    *
    * <p>The generated code assumes that a {@code BoundStatementBuilder boundStatementBuilder} local
    * variable already exists.
    */
   public static void bindParameters(
-      List<? extends VariableElement> parameters,
+      @NonNull List<? extends VariableElement> parameters,
       CodeBlock.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass,
       ProcessorContext context,
       boolean useNullSavingStrategy) {
-    bindParameters(parameters, null, methodBuilder, enclosingClass, context, useNullSavingStrategy);
+    List<CodeBlock> bindMarkerNames = new ArrayList<>();
+    for (VariableElement parameter : parameters) {
+      CqlName cqlName = parameter.getAnnotation(CqlName.class);
+      String parameterName;
+      if (cqlName == null) {
+        parameterName = parameter.getSimpleName().toString();
+      } else {
+        parameterName = cqlName.value();
+      }
+      bindMarkerNames.add(CodeBlock.of("$S", parameterName));
+    }
+    bindParameters(
+        parameters, bindMarkerNames, methodBuilder, enclosingClass, context, useNullSavingStrategy);
   }
 
   /**
@@ -148,37 +163,26 @@ public class GeneratedCodePatterns {
    * variable already exists.
    */
   public static void bindParameters(
-      List<? extends VariableElement> parameters,
-      List<CodeBlock> bindMarkerNames,
+      @NonNull List<? extends VariableElement> parameters,
+      @NonNull List<CodeBlock> bindMarkerNames,
       CodeBlock.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass,
       ProcessorContext context,
       boolean useNullSavingStrategy) {
 
-    assert bindMarkerNames == null || bindMarkerNames.size() == parameters.size();
+    assert bindMarkerNames.size() == parameters.size();
     for (int i = 0; i < parameters.size(); i++) {
       VariableElement parameter = parameters.get(i);
       String parameterName = parameter.getSimpleName().toString();
       PropertyType type = PropertyType.parse(parameter.asType(), context);
-      if (bindMarkerNames == null) {
-        setValue(
-            parameterName,
-            type,
-            CodeBlock.of("$L", parameterName),
-            "boundStatementBuilder",
-            methodBuilder,
-            enclosingClass,
-            useNullSavingStrategy);
-      } else {
-        setValue(
-            bindMarkerNames.get(i),
-            type,
-            CodeBlock.of("$L", parameterName),
-            "boundStatementBuilder",
-            methodBuilder,
-            enclosingClass,
-            useNullSavingStrategy);
-      }
+      setValue(
+          bindMarkerNames.get(i),
+          type,
+          CodeBlock.of("$L", parameterName),
+          "boundStatementBuilder",
+          methodBuilder,
+          enclosingClass,
+          useNullSavingStrategy);
     }
   }
 

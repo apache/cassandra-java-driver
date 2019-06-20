@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
@@ -203,9 +204,9 @@ public class DeleteIT extends InventoryITBase {
     @Delete(ifExists = true)
     CompletableFuture<Boolean> deleteAsyncIfExists(Product product);
 
-    @Delete(entityClass = Product.class, customIfClause = "description = :expectedDescription")
+    @Delete(entityClass = Product.class, customIfClause = "description = :\"ExpectedDescription\"")
     CompletableFuture<AsyncResultSet> deleteAsyncIfDescriptionMatches(
-        UUID productId, String expectedDescription);
+        UUID productId, @CqlName("\"ExpectedDescription\"") String expectedDescription);
 
     @Select
     Product findById(UUID productId);

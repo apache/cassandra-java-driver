@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
@@ -315,8 +316,9 @@ public class InsertIT extends InventoryITBase {
     @Insert
     CompletableFuture<AsyncResultSet> saveAsyncReturningAsyncResultSet(Product product);
 
-    @Insert(timestamp = ":timestamp")
-    CompletableFuture<Void> saveAsyncWithBoundTimestamp(Product product, long timestamp);
+    @Insert(timestamp = ":\"TIMESTAMP\"")
+    CompletableFuture<Void> saveAsyncWithBoundTimestamp(
+        Product product, @CqlName("\"TIMESTAMP\"") long timestamp);
 
     @Insert(ifNotExists = true)
     CompletableFuture<Product> saveAsyncIfNotExists(Product product);

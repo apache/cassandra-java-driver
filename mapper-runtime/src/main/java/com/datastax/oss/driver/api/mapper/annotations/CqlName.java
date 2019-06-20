@@ -24,6 +24,16 @@ import java.lang.annotation.Target;
  * Annotates an {@link Entity} class or one of its properties (field or getter), to specify a custom
  * CQL name.
  *
+ * <p>This annotation can also be used to annotate DAO method parameters when they correspond to
+ * bind markers in custom {@code WHERE} clauses; if the parameter is not annotated with {@link
+ * CqlName}, its programmatic name will be used instead as the bind marker name.
+ *
+ * <p>Beware that if the DAO interface was pre-compiled and is located in a jar, then all its bind
+ * marker parameters must be annotated with {@link CqlName}; failing to do so will result in a
+ * compilation failure because class files do not retain parameter names by default. If you intend
+ * to distribute your DAO interface in a pre-compiled fashion, it is preferable to always annotate
+ * such method parameters.
+ *
  * <p>Example:
  *
  * <pre>
@@ -34,12 +44,18 @@ import java.lang.annotation.Target;
  *   private int id;
  *   ...
  * }
+ * &#64;Dao
+ * public class ProductDao {
+ *     &#64;Query("SELECT count(*) FROM ${qualifiedTableId} WHERE product_id = :product_id")
+ *     long countById(@CqlName("product_id") int id);
+ *   ...
+ * }
  * </pre>
  *
  * This annotation takes precedence over the {@link NamingStrategy naming strategy} defined for the
  * entity.
  */
-@Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
+@Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.CLASS)
 public @interface CqlName {
 

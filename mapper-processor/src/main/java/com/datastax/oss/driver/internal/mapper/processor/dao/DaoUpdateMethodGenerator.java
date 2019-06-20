@@ -88,6 +88,7 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
               Update.class.getSimpleName());
       return Optional.empty();
     }
+    warnIfCqlNamePresent(parameters.subList(0, 1));
     EntityDefinition entityDefinition = context.getEntityFactory().getDefinition(entityElement);
 
     // Validate the return type:
@@ -143,7 +144,7 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
         GeneratedCodePatterns.setValue(
             property.getCqlName(),
             property.getType(),
-            CodeBlock.of("$L.$L()", parameters.get(0).getSimpleName(), property.getGetterName()),
+            CodeBlock.of("$L.$L()", entityParameterName, property.getGetterName()),
             "boundStatementBuilder",
             methodBodyBuilder,
             enclosingClass,
@@ -151,14 +152,16 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
       }
     }
 
-    // Handle all remaining parameters as additional bound values in customWhereClause
+    // Handle all remaining parameters as additional bound values in customWhereClause or
+    // customIfClause
     if (parameters.size() > 1) {
-      GeneratedCodePatterns.bindParameters(
-          parameters.subList(1, parameters.size()),
-          methodBodyBuilder,
-          enclosingClass,
-          context,
-          false);
+      List<? extends VariableElement> bindMarkers = parameters.subList(1, parameters.size());
+      if (validateCqlNamesPresent(bindMarkers)) {
+        GeneratedCodePatterns.bindParameters(
+            bindMarkers, methodBodyBuilder, enclosingClass, context, false);
+      } else {
+        return Optional.empty();
+      }
     }
 
     methodBodyBuilder

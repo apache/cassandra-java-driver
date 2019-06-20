@@ -15,8 +15,11 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
@@ -91,5 +94,24 @@ public class DaoSelectMethodGeneratorTest extends DaoMethodGeneratorTest {
             .build(),
       },
     };
+  }
+
+  @Test
+  public void should_warn_when_non_bind_marker_has_cql_name() {
+    should_succeed_with_expected_warning(
+        "Method select(java.util.UUID): parameter id does not refer "
+            + "to a bind marker, @CqlName annotation will be ignored",
+        MethodSpec.methodBuilder("select")
+            .addAnnotation(Select.class)
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .addParameter(
+                ParameterSpec.builder(UUID.class, "id")
+                    .addAnnotation(
+                        AnnotationSpec.builder(CqlName.class)
+                            .addMember("value", "$S", "irrelevant")
+                            .build())
+                    .build())
+            .returns(ENTITY_CLASS_NAME)
+            .build());
   }
 }
