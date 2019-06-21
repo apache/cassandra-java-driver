@@ -291,9 +291,9 @@ public class DefaultEntityFactory implements EntityFactory {
     return Optional.empty();
   }
 
-  private CqlNameGenerator buildCqlNameGenerator(Set<TypeElement> typeHierachy) {
+  private CqlNameGenerator buildCqlNameGenerator(Set<TypeElement> typeHierarchy) {
     Optional<ResolvedAnnotation<NamingStrategy>> annotation =
-        AnnotationScanner.getClassAnnotation(NamingStrategy.class, typeHierachy);
+        AnnotationScanner.getClassAnnotation(NamingStrategy.class, typeHierarchy);
     if (!annotation.isPresent()) {
       return CqlNameGenerator.DEFAULT;
     }
