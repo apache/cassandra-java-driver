@@ -133,6 +133,9 @@ generate additional classes that implement the mapping logic. Annotation process
 technique in modern frameworks, and is generally well supported by build tools and IDEs; this is
 covered in detail in [Configuring the annotation processor](config/).
 
+Pay attention to the compiler output: the mapper processor will sometimes generate warnings if
+annotations are used incorrectly.
+
 #### Using the generated code
 
 One of the classes generated during annotation processing is `InventoryMapperBuilder`. It allows you
