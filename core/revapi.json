@@ -4766,6 +4766,34 @@
         "code": "java.field.removed",
         "old": "field com.datastax.oss.driver.api.core.session.SessionBuilder<SelfT extends com.datastax.oss.driver.api.core.session.SessionBuilder, SessionT>.typeCodecs",
         "justification": "JAVA-2315: Improve extensibility of session builder"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method <TargetElementT> com.datastax.oss.driver.api.core.PagingIterable<TargetElementT> com.datastax.oss.driver.api.core.PagingIterable<ElementT>::map(java.util.function.Function<? super ElementT, ? extends TargetElementT>)",
+        "new": "method <TargetElementT> com.datastax.oss.driver.api.core.PagingIterable<TargetElementT> com.datastax.oss.driver.api.core.PagingIterable<ElementT>::map(java.util.function.Function<? super ElementT, ? extends TargetElementT>)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "PagingIterable.map() should have been annotated with @NonNull"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method <TargetElementT> com.datastax.oss.driver.api.core.PagingIterable<TargetElementT> com.datastax.oss.driver.api.core.PagingIterable<ElementT>::map(java.util.function.Function<? super ElementT, ? extends TargetElementT>) @ com.datastax.oss.driver.api.core.cql.ResultSet",
+        "new": "method <TargetElementT> com.datastax.oss.driver.api.core.PagingIterable<TargetElementT> com.datastax.oss.driver.api.core.PagingIterable<ElementT>::map(java.util.function.Function<? super ElementT, ? extends TargetElementT>) @ com.datastax.oss.driver.api.core.cql.ResultSet",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "PagingIterable.map() should have been annotated with @NonNull"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method java.util.Spliterator<T> java.lang.Iterable<T>::spliterator() @ com.datastax.oss.driver.api.core.PagingIterable<ElementT>",
+        "new": "method java.util.Spliterator<ElementT> com.datastax.oss.driver.api.core.PagingIterable<ElementT>::spliterator()",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "JAVA-2247: PagingIterable implementations should implement spliterator()"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method java.util.Spliterator<T> java.lang.Iterable<T>::spliterator() @ com.datastax.oss.driver.api.core.cql.ResultSet",
+        "new": "method java.util.Spliterator<ElementT> com.datastax.oss.driver.api.core.PagingIterable<ElementT>::spliterator() @ com.datastax.oss.driver.api.core.cql.ResultSet",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "JAVA-2247: PagingIterable implementations should implement spliterator()"
       }
     ]
   }
