@@ -56,8 +56,8 @@ public class DaoInsertMethodGeneratorTest extends DaoMethodGeneratorTest {
             .build(),
       },
       {
-        "Invalid return type: Insert methods must return one of [VOID, FUTURE_OF_VOID, ENTITY, "
-            + "FUTURE_OF_ENTITY, OPTIONAL_ENTITY, FUTURE_OF_OPTIONAL_ENTITY]",
+        "Insert methods must return one of [VOID, FUTURE_OF_VOID, ENTITY, FUTURE_OF_ENTITY, "
+            + "OPTIONAL_ENTITY, FUTURE_OF_OPTIONAL_ENTITY, BOOLEAN, FUTURE_OF_BOOLEAN, RESULT_SET, FUTURE_OF_ASYNC_RESULT_SET]",
         MethodSpec.methodBuilder("insert")
             .addAnnotation(Insert.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)

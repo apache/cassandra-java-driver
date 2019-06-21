@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
@@ -87,10 +89,29 @@ public class InsertIT extends InventoryITBase {
   }
 
   @Test
+  public void should_insert_entity_returning_result_set() {
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+
+    ResultSet rs = dao.saveReturningResultSet(FLAMETHROWER);
+    assertThat(rs.getAvailableWithoutFetching()).isZero();
+    assertThat(dao.findById(FLAMETHROWER.getId())).isEqualTo(FLAMETHROWER);
+  }
+
+  @Test
   public void should_insert_entity_asynchronously() {
     assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
 
     CompletableFutures.getUninterruptibly(dao.saveAsync(FLAMETHROWER));
+    assertThat(dao.findById(FLAMETHROWER.getId())).isEqualTo(FLAMETHROWER);
+  }
+
+  @Test
+  public void should_insert_entity_asynchronously_returning_result_set() {
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+
+    AsyncResultSet rs =
+        CompletableFutures.getUninterruptibly(dao.saveAsyncReturningAsyncResultSet(FLAMETHROWER));
+    assertThat(rs.currentPage().iterator()).isExhausted();
     assertThat(dao.findById(FLAMETHROWER.getId())).isEqualTo(FLAMETHROWER);
   }
 
@@ -195,6 +216,15 @@ public class InsertIT extends InventoryITBase {
   }
 
   @Test
+  public void should_insert_entity_if_not_exists_returning_boolean() {
+    assertThat(dao.saveIfNotExistsReturningBoolean(FLAMETHROWER)).isTrue();
+
+    Product otherProduct =
+        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
+    assertThat(dao.saveIfNotExistsReturningBoolean(otherProduct)).isFalse();
+  }
+
+  @Test
   public void should_insert_entity_if_not_exists_asynchronously() {
     assertThat(CompletableFutures.getUninterruptibly(dao.saveAsyncIfNotExists(FLAMETHROWER)))
         .isNull();
@@ -203,6 +233,21 @@ public class InsertIT extends InventoryITBase {
         new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
     assertThat(CompletableFutures.getUninterruptibly(dao.saveAsyncIfNotExists(otherProduct)))
         .isEqualTo(FLAMETHROWER);
+  }
+
+  @Test
+  public void should_insert_entity_if_not_exists_asynchronously_returning_boolean() {
+    assertThat(
+            CompletableFutures.getUninterruptibly(
+                dao.saveAsyncIfNotExistsReturningBoolean(FLAMETHROWER)))
+        .isTrue();
+
+    Product otherProduct =
+        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
+    assertThat(
+            CompletableFutures.getUninterruptibly(
+                dao.saveAsyncIfNotExistsReturningBoolean(otherProduct)))
+        .isFalse();
   }
 
   @Test
@@ -240,6 +285,9 @@ public class InsertIT extends InventoryITBase {
     @Insert
     void save(Product product);
 
+    @Insert
+    ResultSet saveReturningResultSet(Product product);
+
     @Insert(timestamp = ":timestamp")
     void saveWithBoundTimestamp(Product product, long timestamp);
 
@@ -256,16 +304,25 @@ public class InsertIT extends InventoryITBase {
     Product saveIfNotExists(Product product);
 
     @Insert(ifNotExists = true)
+    boolean saveIfNotExistsReturningBoolean(Product product);
+
+    @Insert(ifNotExists = true)
     Optional<Product> saveIfNotExistsOptional(Product product);
 
     @Insert
     CompletableFuture<Void> saveAsync(Product product);
+
+    @Insert
+    CompletableFuture<AsyncResultSet> saveAsyncReturningAsyncResultSet(Product product);
 
     @Insert(timestamp = ":timestamp")
     CompletableFuture<Void> saveAsyncWithBoundTimestamp(Product product, long timestamp);
 
     @Insert(ifNotExists = true)
     CompletableFuture<Product> saveAsyncIfNotExists(Product product);
+
+    @Insert(ifNotExists = true)
+    CompletableFuture<Boolean> saveAsyncIfNotExistsReturningBoolean(Product product);
 
     @Insert(ifNotExists = true)
     CompletableFuture<Optional<Product>> saveAsyncIfNotExistsOptional(Product product);

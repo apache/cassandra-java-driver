@@ -15,11 +15,15 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOOLEAN;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_ASYNC_RESULT_SET;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_BOOLEAN;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_ENTITY;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_OPTIONAL_ENTITY;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_VOID;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.OPTIONAL_ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.RESULT_SET;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.VOID;
 
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
@@ -57,7 +61,16 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
 
   protected Set<DaoReturnTypeKind> getSupportedReturnTypes() {
     return ImmutableSet.of(
-        VOID, FUTURE_OF_VOID, ENTITY, FUTURE_OF_ENTITY, OPTIONAL_ENTITY, FUTURE_OF_OPTIONAL_ENTITY);
+        VOID,
+        FUTURE_OF_VOID,
+        ENTITY,
+        FUTURE_OF_ENTITY,
+        OPTIONAL_ENTITY,
+        FUTURE_OF_OPTIONAL_ENTITY,
+        BOOLEAN,
+        FUTURE_OF_BOOLEAN,
+        RESULT_SET,
+        FUTURE_OF_ASYNC_RESULT_SET);
   }
 
   @Override
