@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.mapper.annotations;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
@@ -77,6 +78,18 @@ import java.util.function.UnaryOperator;
  *       <pre>
  * &#64;Insert(ifNotExists = true)
  * Optional&lt;Product&gt; insertIfNotExists(Product product);
+ *       </pre>
+ *   <li>a {@code boolean} or {@link Boolean}, which will be mapped to {@link
+ *       ResultSet#wasApplied()}. This is intended for IF NOT EXISTS queries:
+ *       <pre>
+ * &#64;Insert(ifNotExists = true)
+ * boolean saveIfNotExists(Product product);
+ *       </pre>
+ *   <li>a {@link ResultSet}. This is intended for cases where you intend to inspect data associated
+ *       with the result, such as {@link ResultSet#getExecutionInfo()}.
+ *       <pre>
+ * &#64;Insert
+ * ResultSet save(Product product);
  *       </pre>
  *   <li>a {@link CompletionStage} or {@link CompletableFuture} of any of the above. The mapper will
  *       execute the query asynchronously.

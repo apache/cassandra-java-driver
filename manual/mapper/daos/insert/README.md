@@ -52,7 +52,7 @@ The method can return:
     ```
 
 * a `boolean` or `Boolean`, which will be mapped to [ResultSet#wasApplied()]. This is intended for
-  IF EXISTS queries:
+  IF NOT EXISTS queries:
 
     ```java
     /** @return true if the product did not exist */
