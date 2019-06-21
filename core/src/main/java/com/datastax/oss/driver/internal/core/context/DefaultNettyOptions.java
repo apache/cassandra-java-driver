@@ -167,15 +167,18 @@ public class DefaultNettyOptions implements NettyOptions {
 
   @Override
   public Future<Void> onClose() {
-    PromiseCombiner combiner = new PromiseCombiner();
-    combiner.add(
-        adminEventLoopGroup.shutdownGracefully(
-            adminShutdownQuietPeriod, adminShutdownTimeout, adminShutdownUnit));
-    combiner.add(
-        ioEventLoopGroup.shutdownGracefully(
-            ioShutdownQuietPeriod, ioShutdownTimeout, ioShutdownUnit));
     DefaultPromise<Void> closeFuture = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
-    combiner.finish(closeFuture);
+    GlobalEventExecutor.INSTANCE.execute(
+        () -> {
+          PromiseCombiner combiner = new PromiseCombiner(GlobalEventExecutor.INSTANCE);
+          combiner.add(
+              adminEventLoopGroup.shutdownGracefully(
+                  adminShutdownQuietPeriod, adminShutdownTimeout, adminShutdownUnit));
+          combiner.add(
+              ioEventLoopGroup.shutdownGracefully(
+                  ioShutdownQuietPeriod, ioShutdownTimeout, ioShutdownUnit));
+          combiner.finish(closeFuture);
+        });
     closeFuture.addListener(f -> timer.stop());
     return closeFuture;
   }
