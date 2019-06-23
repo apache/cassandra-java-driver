@@ -4,6 +4,7 @@
 
 ### 4.1.0 (in progress)
 
+- [documentation] JAVA-2294: Fix wrong examples in manual page on batch statements
 - [bug] JAVA-2304: Avoid direct calls to ByteBuffer.array()
 - [new feature] JAVA-2078: Add object mapper
 - [improvement] JAVA-2297: Add a NettyOptions method to set socket options
