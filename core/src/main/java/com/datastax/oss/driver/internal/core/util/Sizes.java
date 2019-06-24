@@ -128,7 +128,7 @@ public class Sizes {
     } else if (statement instanceof BoundStatement) {
       size +=
           PrimitiveSizes.sizeOfShortBytes(
-              ((BoundStatement) statement).getPreparedStatement().getId().array());
+              ((BoundStatement) statement).getPreparedStatement().getId());
       size += sizeOfBoundStatementValues(((BoundStatement) statement));
     }
     return size;

@@ -4,6 +4,7 @@
 
 ### 4.1.0 (in progress)
 
+- [bug] JAVA-2304: Avoid direct calls to ByteBuffer.array()
 - [new feature] JAVA-2078: Add object mapper
 - [improvement] JAVA-2297: Add a NettyOptions method to set socket options
 - [bug] JAVA-2280: Ignore peer rows with missing host id or RPC address
