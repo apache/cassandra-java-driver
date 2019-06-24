@@ -31,8 +31,8 @@ import javax.lang.model.element.TypeElement;
 
 public class MapperBuilderGenerator extends SingleFileCodeGenerator {
 
-  private final ClassName builderName;
-  private final TypeElement interfaceElement;
+  protected final ClassName builderName;
+  protected final TypeElement interfaceElement;
 
   public MapperBuilderGenerator(TypeElement interfaceElement, ProcessorContext context) {
     super(context);
