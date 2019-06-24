@@ -4,6 +4,7 @@
 
 ### 4.1.0 (in progress)
 
+- [new feature] JAVA-2078: Add object mapper
 - [improvement] JAVA-2297: Add a NettyOptions method to set socket options
 - [bug] JAVA-2280: Ignore peer rows with missing host id or RPC address
 - [bug] JAVA-2264: Adjust HashedWheelTimer tick duration from 1 to 100 ms

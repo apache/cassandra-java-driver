@@ -4,6 +4,8 @@ Driver modules:
 
 * [Core](core/): the main entry point, deals with connectivity and query execution.
 * [Query builder](query_builder/): a fluent API to create CQL queries programmatically.
+* [Mapper](mapper/): generates the boilerplate to execute queries and convert the results into
+  application-level objects.
 
 Common topics:
 
