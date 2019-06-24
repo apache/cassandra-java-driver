@@ -31,11 +31,11 @@ import java.util.concurrent.ConcurrentMap;
 
 public class DefaultMapperContext implements MapperContext {
 
-  private final CqlSession session;
-  private final CqlIdentifier keyspaceId;
-  private final CqlIdentifier tableId;
-  private final ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache;
-  private final Map<Object, Object> customState;
+  protected final CqlSession session;
+  protected final CqlIdentifier keyspaceId;
+  protected final CqlIdentifier tableId;
+  protected final ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache;
+  protected final Map<Object, Object> customState;
 
   public DefaultMapperContext(
       @NonNull CqlSession session, @NonNull Map<Object, Object> customState) {
@@ -47,7 +47,7 @@ public class DefaultMapperContext implements MapperContext {
         NullAllowingImmutableMap.copyOf(customState));
   }
 
-  private DefaultMapperContext(
+  protected DefaultMapperContext(
       CqlSession session,
       CqlIdentifier keyspaceId,
       CqlIdentifier tableId,
