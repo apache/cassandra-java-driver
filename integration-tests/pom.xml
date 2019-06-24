@@ -32,6 +32,7 @@
   <name>DataStax Java driver for Apache Cassandra(R) - integration tests</name>
 
   <properties>
+    <skipITs>false</skipITs>
     <skipParallelizableITs>${skipITs}</skipParallelizableITs>
     <skipSerialITs>${skipITs}</skipSerialITs>
     <skipIsolatedITs>${skipITs}</skipIsolatedITs>
