@@ -49,7 +49,7 @@ the [configuration](../configuration/). Namely, these are: idempotent flag, quer
 consistency levels and page size. We recommended the configuration approach whenever possible (you
 can create execution profiles to capture common combinations of those options).
 
-[Statement]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/Statement.html
-[StatementBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/StatementBuilder.html
-[execute]:          http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/Session.html#execute-com.datastax.oss.driver.api.core.cql.Statement-
-[executeAsync]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/Session.html#executeAsync-com.datastax.oss.driver.api.core.cql.Statement-
+[Statement]:        https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/Statement.html
+[StatementBuilder]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/StatementBuilder.html
+[execute]:          https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/Session.html#execute-com.datastax.oss.driver.api.core.cql.Statement-
+[executeAsync]:     https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/Session.html#executeAsync-com.datastax.oss.driver.api.core.cql.Statement-

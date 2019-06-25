@@ -207,11 +207,11 @@ Some of the data in the [token map](../token/) relies on keyspace metadata (any 
 unavailable for the excluded keyspaces.
 
 
-[Metadata#getKeyspaces]:             http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
-[SchemaChangeListener]:              http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListener.html
-[SchemaChangeListenerBase]:          http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListenerBase.html
-[Session#setSchemaMetadataEnabled]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/Session.html#setSchemaMetadataEnabled-java.lang.Boolean-
-[Session#checkSchemaAgreementAsync]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/Session.html#checkSchemaAgreementAsync--
-[ExecutionInfo#isSchemaInAgreement]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#isSchemaInAgreement--
+[Metadata#getKeyspaces]:             https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
+[SchemaChangeListener]:              https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListener.html
+[SchemaChangeListenerBase]:          https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListenerBase.html
+[Session#setSchemaMetadataEnabled]:  https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/Session.html#setSchemaMetadataEnabled-java.lang.Boolean-
+[Session#checkSchemaAgreementAsync]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/Session.html#checkSchemaAgreementAsync--
+[ExecutionInfo#isSchemaInAgreement]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#isSchemaInAgreement--
 
 [JAVA-750]: https://datastax-oss.atlassian.net/browse/JAVA-750

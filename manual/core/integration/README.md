@@ -39,7 +39,7 @@ dependencies, and tell Maven that we're going to use Java 8:
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-core</artifactId>
-      <version>4.0.1</version>
+      <version>4.1.0</version>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
@@ -176,7 +176,7 @@ repositories {
 }
 
 dependencies {
-    compile group: 'com.datastax.oss', name: 'java-driver-core', version: '4.0.1'
+    compile group: 'com.datastax.oss', name: 'java-driver-core', version: '4.1.0'
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
 }
 ```
@@ -260,7 +260,7 @@ In that case, you can exclude the dependency:
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core</artifactId>
-  <version>4.0.1</version>
+  <version>4.1.0</version>
   <exclusions>
     <exclusion>
       <groupId>com.typesafe</groupId>
@@ -288,7 +288,7 @@ are not available on your platform, you can exclude the following dependencies:
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core</artifactId>
-  <version>4.0.1</version>
+  <version>4.1.0</version>
   <exclusions>
     <exclusion>
       <groupId>com.github.jnr</groupId>
@@ -322,7 +322,7 @@ and never call [Session.getMetrics] anywhere in your application, you can remove
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core</artifactId>
-  <version>4.0.1</version>
+  <version>4.1.0</version>
   <exclusions>
     <exclusion>
       <groupId>io.dropwizard.metrics</groupId>
@@ -343,7 +343,7 @@ If all of these metrics are disabled, you can remove the dependency:
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core</artifactId>
-  <version>4.0.1</version>
+  <version>4.1.0</version>
   <exclusions>
     <exclusion>
       <groupId>org.hdrhistogram</groupId>
@@ -369,7 +369,7 @@ exclude them:
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core</artifactId>
-  <version>4.0.1</version>
+  <version>4.1.0</version>
   <exclusions>
     <exclusion>
       <groupId>com.github.stephenc.jcip</groupId>
@@ -419,6 +419,6 @@ The remaining core driver dependencies are the only ones that are truly mandator
 [guava]: https://github.com/google/guava/issues/2721
 [annotation processing]: https://docs.oracle.com/javase/8/docs/technotes/tools/windows/javac.html#sthref65
 
-[Session.getMetrics]:             https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/Session.html#getMetrics--
-[SessionBuilder.addContactPoint]: https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoint-java.net.InetSocketAddress-
-[Uuids]:                          https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/uuid/Uuids.html
+[Session.getMetrics]:             https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/Session.html#getMetrics--
+[SessionBuilder.addContactPoint]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoint-java.net.InetSocketAddress-
+[Uuids]:                          https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/uuid/Uuids.html

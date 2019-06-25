@@ -177,5 +177,5 @@ think you can get away with the performance hit. We recommend that you:
 * set a hard limit on the highest possible page number, to prevent malicious clients from triggering
   queries that would skip a huge amount of rows.
 
-[ResultSet]:         http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/ResultSet.html
-[AsyncResultSet]:    http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
+[ResultSet]:         https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[AsyncResultSet]:    https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html

@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.1.0 (in progress)
+### 4.1.0
 
 - [documentation] JAVA-2294: Fix wrong examples in manual page on batch statements
 - [bug] JAVA-2304: Avoid direct calls to ByteBuffer.array()

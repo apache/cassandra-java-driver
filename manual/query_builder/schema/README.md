@@ -44,4 +44,4 @@ element type:
 * [function](function/)
 * [aggregate](aggregate/)
 
-[SchemaBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
+[SchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html

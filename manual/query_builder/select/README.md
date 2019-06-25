@@ -391,5 +391,5 @@ selectFrom("user").all().allowFiltering();
 // SELECT * FROM user ALLOW FILTERING
 ```
 
-[QueryBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html
-[Selector]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/select/Selector.html
+[QueryBuilder]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html
+[Selector]:     https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/querybuilder/select/Selector.html

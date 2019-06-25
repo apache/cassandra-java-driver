@@ -223,6 +223,6 @@ private static String formatRow(Row row) {
 }
 ```
 
-[CodecRegistry]: https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html
-[GenericType]:   https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
-[TypeCodec]:     https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html
+[CodecRegistry]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html
+[GenericType]:   https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
+[TypeCodec]:     https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html
