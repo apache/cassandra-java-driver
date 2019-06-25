@@ -50,7 +50,7 @@ import javax.lang.model.element.TypeElement;
 
 public class DefaultCodeGeneratorFactory implements CodeGeneratorFactory {
 
-  private final ProcessorContext context;
+  protected final ProcessorContext context;
   private final DaoReturnTypeParser daoReturnTypeParser;
 
   public DefaultCodeGeneratorFactory(ProcessorContext context) {

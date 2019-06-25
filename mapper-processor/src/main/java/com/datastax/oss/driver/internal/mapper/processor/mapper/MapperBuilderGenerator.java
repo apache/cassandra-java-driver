@@ -45,6 +45,10 @@ public class MapperBuilderGenerator extends SingleFileCodeGenerator {
     return builderName;
   }
 
+  protected Class<? extends CqlSession> getSessionClass() {
+    return CqlSession.class;
+  }
+
   @Override
   protected JavaFile.Builder getContents() {
     TypeSpec.Builder classContents =
@@ -55,14 +59,14 @@ public class MapperBuilderGenerator extends SingleFileCodeGenerator {
             .addJavadoc(
                 "Builds an instance of {@link $T} wrapping a driver {@link $T}.",
                 interfaceElement,
-                CqlSession.class)
+                getSessionClass())
             .addJavadoc(JAVADOC_PARAGRAPH_SEPARATOR)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
             .addModifiers(Modifier.PUBLIC)
             .addMethod(
                 MethodSpec.constructorBuilder()
                     .addModifiers(Modifier.PUBLIC)
-                    .addParameter(CqlSession.class, "session")
+                    .addParameter(getSessionClass(), "session")
                     .addStatement("super(session)")
                     .build())
             .addMethod(
