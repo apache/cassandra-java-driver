@@ -604,4 +604,19 @@ public class UserTypesTest extends CCMTestsSupport {
     PreparedStatement pst = session().prepare("SELECT v FROM not_frozen_table WHERE k = ?");
     assertThat(pst.getVariables().getType(0)).isNotFrozen();
   }
+
+  @Test(groups = "short")
+  public void should_handle_udt_named_like_a_collection() {
+    execute(
+        "CREATE TYPE tuple(a text)",
+        "CREATE TYPE list(a text)",
+        "CREATE TYPE frozen(a text)",
+        "CREATE TYPE udt(tuple frozen<tuple>, frozen frozen<frozen>, "
+            + "m map<frozen<list>,frozen<frozen>>)");
+    UserType udt = cluster().getMetadata().getKeyspace(keyspace).getUserType("udt");
+    assertThat(udt.getFieldType("tuple")).isInstanceOf(UserType.class);
+    assertThat(udt.getFieldType("frozen")).isInstanceOf(UserType.class);
+    assertThat((udt.getFieldType("m").getTypeArguments().get(0))).isInstanceOf(UserType.class);
+    assertThat((udt.getFieldType("m").getTypeArguments().get(1))).isInstanceOf(UserType.class);
+  }
 }

@@ -3,6 +3,7 @@
 ### 3.7.2 (In progress)
 
 - [bug] JAVA-2249: Stop stripping trailing zeros in ByteOrderedTokens
+- [bug] JAVA-2198: Handle UDTs with names that clash with collection types
 
 ### 3.7.1
 
