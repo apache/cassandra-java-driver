@@ -344,7 +344,7 @@ class HostConnectionPool implements Connection.Owner {
     return pendingBorrow.future;
   }
 
-  void returnConnection(Connection connection) {
+  void returnConnection(Connection connection, boolean busy) {
     connection.inFlight.decrementAndGet();
     totalInFlight.decrementAndGet();
 
@@ -362,7 +362,7 @@ class HostConnectionPool implements Connection.Owner {
     if (connection.state.get() != TRASHED) {
       if (connection.maxAvailableStreams() < minAllowedStreams) {
         replaceConnection(connection);
-      } else {
+      } else if (!busy) {
         dequeue(connection);
       }
     }

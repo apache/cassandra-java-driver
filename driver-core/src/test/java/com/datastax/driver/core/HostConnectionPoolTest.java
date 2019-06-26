@@ -798,7 +798,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
       // On returning of the connection, should detect that there are no available streams and trash
       // it.
       assertThat(pool.trash).hasSize(0);
-      pool.returnConnection(extra1);
+      pool.returnConnection(extra1, false);
       assertThat(pool.trash).hasSize(1);
     } finally {
       MockRequest.completeAll(allRequests);
