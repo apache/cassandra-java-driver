@@ -126,13 +126,7 @@ public class PerProfileLoadBalancingPolicyIT {
   private void assertQueryInDc(int dc, int expectedPerNode) {
     for (int i = 0; i < 2; i++) {
       assertThat(
-              simulacron
-                  .cluster()
-                  .dc(dc)
-                  .node(i)
-                  .getLogs()
-                  .getQueryLogs()
-                  .stream()
+              simulacron.cluster().dc(dc).node(i).getLogs().getQueryLogs().stream()
                   .filter(l -> l.getQuery().equals(QUERY_STRING)))
           .as("Expected query count to be %d for dc %d", 5, i)
           .hasSize(expectedPerNode);

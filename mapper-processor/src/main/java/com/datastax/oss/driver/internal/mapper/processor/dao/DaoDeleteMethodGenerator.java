@@ -121,9 +121,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
       }
       entityDefinition = context.getEntityFactory().getDefinition(entityElement);
       List<TypeName> primaryKeyTypes =
-          entityDefinition
-              .getPrimaryKey()
-              .stream()
+          entityDefinition.getPrimaryKey().stream()
               .map(d -> d.getType().asTypeName())
               .collect(Collectors.toList());
       List<TypeName> parameterTypes =
@@ -186,9 +184,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
       // The PK components are passed as arguments to the method (we've already checked that the
       // types match).
       List<CodeBlock> primaryKeyNames =
-          entityDefinition
-              .getPrimaryKey()
-              .stream()
+          entityDefinition.getPrimaryKey().stream()
               .map(PropertyDefinition::getCqlName)
               .collect(Collectors.toList());
       List<? extends VariableElement> bindMarkers = parameters.subList(0, primaryKeyNames.size());

@@ -54,8 +54,7 @@ public class NullSavingStrategyValidation {
   public boolean hasDoNotSetOnAnyLevel(
       List<ExecutableElement> methodElements, @Nullable DefaultNullSavingStrategy annotation) {
     boolean anyMethodHasOrDefaultsToDoNotSet =
-        methodElements
-            .stream()
+        methodElements.stream()
             .anyMatch(
                 v ->
                     updateHasDoNotSet(v, false)
@@ -64,8 +63,7 @@ public class NullSavingStrategyValidation {
                         || queryHasDoNotSet(v, false));
 
     boolean anyMethodHasDoNotSetExplicitly =
-        methodElements
-            .stream()
+        methodElements.stream()
             .anyMatch(
                 v ->
                     updateHasDoNotSet(v, true)
@@ -74,8 +72,7 @@ public class NullSavingStrategyValidation {
                         || queryHasDoNotSet(v, true));
 
     boolean allMethodsHaveSetToNull =
-        methodElements
-            .stream()
+        methodElements.stream()
             .filter(this::isOperationWithNullSavingStrategy)
             .allMatch(
                 v ->

@@ -322,10 +322,9 @@ public class ComputedIT {
     void save(ComputedEntity entity);
 
     @Insert(
-      ttl = ":ttl",
-      timestamp = ":writeTime",
-      nullSavingStrategy = NullSavingStrategy.SET_TO_NULL
-    )
+        ttl = ":ttl",
+        timestamp = ":writeTime",
+        nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
     void saveWithTime(ComputedEntity entity, int ttl, long writeTime);
 
     @Delete
@@ -338,12 +337,11 @@ public class ComputedIT {
     ComputedEntity get(Row row);
 
     @Query(
-      value =
-          "select id, c_id, v, ttl(v) as myttl, writetime(v) as writetime from "
-              + "${qualifiedTableId} WHERE id = :id and "
-              + "c_id = :cId",
-      nullSavingStrategy = NullSavingStrategy.SET_TO_NULL
-    )
+        value =
+            "select id, c_id, v, ttl(v) as myttl, writetime(v) as writetime from "
+                + "${qualifiedTableId} WHERE id = :id and "
+                + "c_id = :cId",
+        nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)
     ComputedEntity findByIdQuery(int id, int cId);
 
     @Update(nullSavingStrategy = NullSavingStrategy.SET_TO_NULL)

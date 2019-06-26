@@ -182,10 +182,7 @@ public class ProtocolVersionMixedClusterIT {
   }
 
   private Stream<QueryLog> queries(BoundTopic topic) {
-    return topic
-        .getLogs()
-        .getQueryLogs()
-        .stream()
+    return topic.getLogs().getQueryLogs().stream()
         .filter(q -> q.getFrame().message instanceof Query);
   }
 

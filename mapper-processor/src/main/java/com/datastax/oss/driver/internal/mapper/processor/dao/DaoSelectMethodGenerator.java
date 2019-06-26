@@ -93,9 +93,7 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
     String customClause = selectAnnotation.customWhereClause();
     if (customClause.isEmpty()) {
       List<TypeName> primaryKeyTypes =
-          entityDefinition
-              .getPrimaryKey()
-              .stream()
+          entityDefinition.getPrimaryKey().stream()
               .map(d -> d.getType().asTypeName())
               .collect(Collectors.toList());
       List<TypeName> parameterTypes =
@@ -136,9 +134,7 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
       if (customClause.isEmpty()) {
         // Parameters are the PK components, we allow them to be named differently
         List<CodeBlock> primaryKeyNames =
-            entityDefinition
-                .getPrimaryKey()
-                .stream()
+            entityDefinition.getPrimaryKey().stream()
                 .map(PropertyDefinition::getCqlName)
                 .collect(Collectors.toList());
         warnIfCqlNamePresent(parameters);

@@ -233,8 +233,7 @@ public class DataTypeIT {
               // udt of int, type.
               final AtomicInteger fieldNameCounter = new AtomicInteger();
               List<CqlIdentifier> typeNames =
-                  types
-                      .stream()
+                  types.stream()
                       .map(
                           n -> CqlIdentifier.fromCql("field_" + fieldNameCounter.incrementAndGet()))
                       .collect(Collectors.toList());
