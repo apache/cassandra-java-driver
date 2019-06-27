@@ -2,7 +2,8 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.2.0
+
+### 4.2.0 (in progress)
 
 - [improvement] JAVA-2307: Improve @Select and @Delete by not requiring full primary key
 
