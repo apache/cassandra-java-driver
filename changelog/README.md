@@ -4,6 +4,7 @@
 
 ### 4.2.0 (in progress)
 
+- [bug] JAVA-2312: Handle UDTs with names that clash with collection types
 
 ### 4.1.0
 

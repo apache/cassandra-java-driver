@@ -69,8 +69,23 @@ public class DataTypeCqlNameParser implements DataTypeParser {
       return nativeType;
     }
 
+    if (parser.isEOS()) {
+      // No parameters => it's a UDT
+      CqlIdentifier name = CqlIdentifier.fromCql(type);
+      if (userTypes != null) {
+        UserDefinedType userType = userTypes.get(name);
+        if (userType == null) {
+          throw new IllegalStateException(
+              String.format("Can't find referenced user type %s", type));
+        }
+        return userType.copy(frozen);
+      } else {
+        return new ShallowUserDefinedType(keyspaceId, name, frozen);
+      }
+    }
+
+    List<String> parameters = parser.parseTypeParameters();
     if (type.equalsIgnoreCase("list")) {
-      List<String> parameters = parser.parseTypeParameters();
       if (parameters.size() != 1) {
         throw new IllegalArgumentException(
             String.format("Expecting single parameter for list, got %s", parameters));
@@ -80,7 +95,6 @@ public class DataTypeCqlNameParser implements DataTypeParser {
     }
 
     if (type.equalsIgnoreCase("set")) {
-      List<String> parameters = parser.parseTypeParameters();
       if (parameters.size() != 1) {
         throw new IllegalArgumentException(
             String.format("Expecting single parameter for set, got %s", parameters));
@@ -90,7 +104,6 @@ public class DataTypeCqlNameParser implements DataTypeParser {
     }
 
     if (type.equalsIgnoreCase("map")) {
-      List<String> parameters = parser.parseTypeParameters();
       if (parameters.size() != 2) {
         throw new IllegalArgumentException(
             String.format("Expecting two parameters for map, got %s", parameters));
@@ -101,7 +114,6 @@ public class DataTypeCqlNameParser implements DataTypeParser {
     }
 
     if (type.equalsIgnoreCase("frozen")) {
-      List<String> parameters = parser.parseTypeParameters();
       if (parameters.size() != 1) {
         throw new IllegalArgumentException(
             String.format("Expecting single parameter for frozen keyword, got %s", parameters));
@@ -110,25 +122,17 @@ public class DataTypeCqlNameParser implements DataTypeParser {
     }
 
     if (type.equalsIgnoreCase("tuple")) {
-      List<String> rawTypes = parser.parseTypeParameters();
+      if (parameters.isEmpty()) {
+        throw new IllegalArgumentException("Expecting at list one parameter for tuple, got none");
+      }
       ImmutableList.Builder<DataType> componentTypesBuilder = ImmutableList.builder();
-      for (String rawType : rawTypes) {
+      for (String rawType : parameters) {
         componentTypesBuilder.add(parse(rawType, keyspaceId, false, userTypes, context));
       }
       return new DefaultTupleType(componentTypesBuilder.build(), context);
     }
 
-    // Otherwise it's a UDT
-    CqlIdentifier name = CqlIdentifier.fromCql(type);
-    if (userTypes != null) {
-      UserDefinedType userType = userTypes.get(name);
-      if (userType == null) {
-        throw new IllegalStateException(String.format("Can't find referenced user type %s", type));
-      }
-      return userType.copy(frozen);
-    } else {
-      return new ShallowUserDefinedType(keyspaceId, name, frozen);
-    }
+    throw new IllegalArgumentException("Could not parse type name " + toParse);
   }
 
   private static class Parser {
