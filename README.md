@@ -1,5 +1,7 @@
 # Datastax Java Driver for Apache Cassandra®
 
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.datastax.oss/java-driver-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.datastax.oss/java-driver-core)
+
 *If you're reading this on github.com, please note that this is the readme for the development 
 version and that some features described here might not yet have been released. You can find the
 documentation for latest version through [DataStax Docs] or via the release tags, e.g. 
