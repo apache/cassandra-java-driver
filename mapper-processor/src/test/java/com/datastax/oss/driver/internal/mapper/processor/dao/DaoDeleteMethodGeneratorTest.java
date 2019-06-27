@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Delete;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
+import com.squareup.javapoet.TypeSpec;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
@@ -34,8 +35,9 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
   @Test
   @Override
   @UseDataProvider("invalidSignatures")
-  public void should_fail_with_expected_error(String expectedError, MethodSpec method) {
-    super.should_fail_with_expected_error(expectedError, method);
+  public void should_fail_with_expected_error(
+      String expectedError, MethodSpec method, TypeSpec entitySpec) {
+    super.should_fail_with_expected_error(expectedError, method, entitySpec);
   }
 
   @DataProvider
@@ -51,6 +53,7 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
                     .build())
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .build(),
+        ENTITY_SPEC
       },
       {
         "Wrong number of parameters: Delete methods with no custom clause "
@@ -59,6 +62,7 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
             .addAnnotation(Delete.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .build(),
+        ENTITY_SPEC
       },
       {
         "Missing entity class: Delete methods that do not operate on an entity "
@@ -68,11 +72,13 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addParameter(UUID.class, "id")
             .build(),
+        ENTITY_SPEC
       },
       {
         "Invalid parameter list: Delete methods that do not operate on an entity instance "
-            + "must take the partition key components in the exact order "
-            + "(expected PK of Product: [java.util.UUID])",
+            + "must match the primary key components in the exact order "
+            + "(expected primary key of Product: [java.util.UUID]). Mismatch at index 0: java.lang"
+            + ".Integer should be java.util.UUID",
         MethodSpec.methodBuilder("delete")
             .addAnnotation(
                 AnnotationSpec.builder(Delete.class)
@@ -81,6 +87,21 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addParameter(Integer.class, "id")
             .build(),
+        ENTITY_SPEC
+      },
+      {
+        "Invalid parameter list: Delete methods that do not operate on an entity instance "
+            + "must at least specify partition key components "
+            + "(expected partition key of ProductSale: [java.util.UUID, java.lang.String])",
+        MethodSpec.methodBuilder("delete")
+            .addAnnotation(
+                AnnotationSpec.builder(Delete.class)
+                    .addMember("entityClass", "$T.class", SALE_ENTITY_CLASS_NAME)
+                    .build())
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .addParameter(Integer.class, "id")
+            .build(),
+        SALE_ENTITY_SPEC
       },
       {
         "Delete methods must return one of [VOID, FUTURE_OF_VOID, BOOLEAN, FUTURE_OF_BOOLEAN, "
@@ -91,6 +112,7 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
             .addParameter(ENTITY_CLASS_NAME, "entity")
             .returns(Integer.class)
             .build(),
+        ENTITY_SPEC
       },
       {
         "Wrong number of parameters: Delete methods can only have additional parameters "
@@ -101,6 +123,7 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
             .addParameter(ENTITY_CLASS_NAME, "entity")
             .addParameter(Integer.class, "extra")
             .build(),
+        ENTITY_SPEC
       },
     };
   }

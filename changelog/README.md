@@ -2,6 +2,10 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.2.0
+
+- [improvement] JAVA-2307: Improve @Select and @Delete by not requiring full primary key
+
 ### 4.1.0
 
 - [documentation] JAVA-2294: Fix wrong examples in manual page on batch statements

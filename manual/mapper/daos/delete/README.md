@@ -36,6 +36,19 @@ The method can operate on:
     In addition, because the entity class can't be inferred from the method signature, it must be
     specified via the annotation's `entityClass` element.
 
+* a subset of the primary key (partition key, or partition key + subset of clustering columns):
+
+    ```java
+    // given: PRIMARY KEY ((product_id, day), customer_id, ts)
+    // delete all rows in partition
+    @Delete(entityClass = ProductSale.class)
+    void deleteByIdForDay(UUID id, String day);
+
+    // delete by partition key and partial clustering key
+    @Delete(entityClass = ProductSale.class)
+    void deleteByIdForCustomer(UUID id, String day, int customerId);
+    ```
+
 An optional IF clause can be added to the generated query. It can contain placeholders, for which
 the method must have corresponding parameters (same name, and a compatible Java type):
 

@@ -15,18 +15,20 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
-import com.datastax.oss.driver.api.querybuilder.delete.Delete;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeName;
 import java.util.Optional;
 import javax.lang.model.element.Modifier;
 
-public class EntityHelperDeleteByPrimaryKeyMethodGenerator implements MethodGenerator {
+public class EntityHelperSelectByPrimaryKeyPartsMethodGenerator implements MethodGenerator {
 
   private final EntityDefinition entityDefinition;
 
-  public EntityHelperDeleteByPrimaryKeyMethodGenerator(
+  public EntityHelperSelectByPrimaryKeyPartsMethodGenerator(
       EntityDefinition entityDefinition,
       EntityHelperGenerator enclosingClass,
       ProcessorContext context) {
@@ -35,13 +37,24 @@ public class EntityHelperDeleteByPrimaryKeyMethodGenerator implements MethodGene
 
   @Override
   public Optional<MethodSpec> generate() {
-    MethodSpec.Builder deleteByPrimaryKeyBuilder =
-        MethodSpec.methodBuilder("deleteByPrimaryKey")
+    MethodSpec.Builder selectByPrimaryKeyPartsBuilder =
+        MethodSpec.methodBuilder("selectByPrimaryKeyParts")
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
-            .returns(Delete.class)
-            .addStatement("return deleteByPrimaryKeyParts(primaryKeys.size())");
+            .addParameter(TypeName.INT, "parameterCount")
+            .returns(Select.class);
 
-    return Optional.of(deleteByPrimaryKeyBuilder.build());
+    selectByPrimaryKeyPartsBuilder.addStatement("$1T select = selectStart()", Select.class);
+    selectByPrimaryKeyPartsBuilder.beginControlFlow(
+        "for (int i = 0; i < parameterCount && i < " + "primaryKeys.size(); i++)");
+    selectByPrimaryKeyPartsBuilder.addStatement(
+        "$1T columnName = primaryKeys.get(i)", String.class);
+    selectByPrimaryKeyPartsBuilder.addStatement(
+        "select = select.whereColumn(columnName).isEqualTo($1T.bindMarker(columnName))",
+        QueryBuilder.class);
+    selectByPrimaryKeyPartsBuilder.endControlFlow();
+    selectByPrimaryKeyPartsBuilder.addStatement("return select");
+
+    return Optional.of(selectByPrimaryKeyPartsBuilder.build());
   }
 }
