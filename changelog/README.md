@@ -4,6 +4,7 @@
 
 ### 4.2.0 (in progress)
 
+- [improvement] JAVA-2315: Improve extensibility of session builder
 
 ### 4.1.0
 
