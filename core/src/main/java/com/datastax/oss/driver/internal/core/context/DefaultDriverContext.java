@@ -28,6 +28,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
+import com.datastax.oss.driver.api.core.session.ProgrammaticArguments;
 import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
@@ -200,14 +201,7 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("requestLogFormatter", this::buildRequestLogFormatter, cycleDetector);
 
   public DefaultDriverContext(
-      DriverConfigLoader configLoader,
-      List<TypeCodec<?>> typeCodecs,
-      NodeStateListener nodeStateListener,
-      SchemaChangeListener schemaChangeListener,
-      RequestTracker requestTracker,
-      Map<String, String> localDatacenters,
-      Map<String, Predicate<Node>> nodeFilters,
-      ClassLoader classLoader) {
+      DriverConfigLoader configLoader, ProgrammaticArguments programmaticArguments) {
     this.config = configLoader.getInitialConfig();
     this.configLoader = configLoader;
     DriverExecutionProfile defaultProfile = config.getDefaultProfile();
@@ -216,26 +210,54 @@ public class DefaultDriverContext implements InternalDriverContext {
     } else {
       this.sessionName = "s" + SESSION_NAME_COUNTER.getAndIncrement();
     }
-    this.localDatacentersFromBuilder = localDatacenters;
-    this.codecRegistry = buildCodecRegistry(this.sessionName, typeCodecs);
-    this.nodeStateListenerFromBuilder = nodeStateListener;
+    this.localDatacentersFromBuilder = programmaticArguments.getLocalDatacenters();
+    this.codecRegistry =
+        buildCodecRegistry(this.sessionName, programmaticArguments.getTypeCodecs());
+    this.nodeStateListenerFromBuilder = programmaticArguments.getNodeStateListener();
     this.nodeStateListenerRef =
         new LazyReference<>(
             "nodeStateListener",
             () -> buildNodeStateListener(nodeStateListenerFromBuilder),
             cycleDetector);
-    this.schemaChangeListenerFromBuilder = schemaChangeListener;
+    this.schemaChangeListenerFromBuilder = programmaticArguments.getSchemaChangeListener();
     this.schemaChangeListenerRef =
         new LazyReference<>(
             "schemaChangeListener",
             () -> buildSchemaChangeListener(schemaChangeListenerFromBuilder),
             cycleDetector);
-    this.requestTrackerFromBuilder = requestTracker;
+    this.requestTrackerFromBuilder = programmaticArguments.getRequestTracker();
     this.requestTrackerRef =
         new LazyReference<>(
             "requestTracker", () -> buildRequestTracker(requestTrackerFromBuilder), cycleDetector);
-    this.nodeFiltersFromBuilder = nodeFilters;
-    this.classLoader = classLoader;
+    this.nodeFiltersFromBuilder = programmaticArguments.getNodeFilters();
+    this.classLoader = programmaticArguments.getClassLoader();
+  }
+
+  /**
+   * @deprecated this constructor only exists for backward compatibility. Please use {@link
+   *     #DefaultDriverContext(DriverConfigLoader, ProgrammaticArguments)} instead.
+   */
+  @Deprecated
+  public DefaultDriverContext(
+      DriverConfigLoader configLoader,
+      List<TypeCodec<?>> typeCodecs,
+      NodeStateListener nodeStateListener,
+      SchemaChangeListener schemaChangeListener,
+      RequestTracker requestTracker,
+      Map<String, String> localDatacenters,
+      Map<String, Predicate<Node>> nodeFilters,
+      ClassLoader classLoader) {
+    this(
+        configLoader,
+        ProgrammaticArguments.builder()
+            .addTypeCodecs(typeCodecs.toArray(new TypeCodec<?>[0]))
+            .withNodeStateListener(nodeStateListener)
+            .withSchemaChangeListener(schemaChangeListener)
+            .withRequestTracker(requestTracker)
+            .withLocalDatacenters(localDatacenters)
+            .withNodeFilters(nodeFilters)
+            .withClassLoader(classLoader)
+            .build());
   }
 
   /**
