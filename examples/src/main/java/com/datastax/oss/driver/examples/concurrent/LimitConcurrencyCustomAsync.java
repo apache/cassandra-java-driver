@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
 /**
- * Creates a keyspace and tables, and loads data using Async API into them.
+ * Creates a keyspace and table, and loads data using an async API.
  *
  * <p>This example makes usage of a {@link CqlSession#executeAsync(String)} method, which is
  * responsible for executing requests in a non-blocking way. It uses {@link CompletableFuture} to
