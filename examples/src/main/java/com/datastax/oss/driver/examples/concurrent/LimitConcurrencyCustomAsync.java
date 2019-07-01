@@ -40,7 +40,7 @@ import java.util.function.BiConsumer;
  * <p>Preconditions:
  *
  * <ul>
- *   <li>An Apache Cassandra(R) cluster is running and accessible through the contacts points
+ *   <li>An Apache Cassandra(R) cluster is running and accessible through the contact points
  *       identified by basic.contact-points (see application.conf).
  * </ul>
  *
