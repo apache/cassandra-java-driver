@@ -4756,6 +4756,16 @@
         "new": "method java.util.UUID com.datastax.oss.driver.api.core.metadata.Node::getHostId()",
         "annotation": "@edu.umd.cs.findbugs.annotations.Nullable",
         "justification": "Node.getHostId() should have been annotated with @NonNull"
+      },
+      {
+        "code": "java.field.removed",
+        "old": "field com.datastax.oss.driver.api.core.session.SessionBuilder<SelfT extends com.datastax.oss.driver.api.core.session.SessionBuilder, SessionT>.requestTracker",
+        "justification": "JAVA-2315: Improve extensibility of session builder"
+      },
+      {
+        "code": "java.field.removed",
+        "old": "field com.datastax.oss.driver.api.core.session.SessionBuilder<SelfT extends com.datastax.oss.driver.api.core.session.SessionBuilder, SessionT>.typeCodecs",
+        "justification": "JAVA-2315: Improve extensibility of session builder"
       }
     ]
   }
