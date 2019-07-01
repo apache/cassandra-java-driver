@@ -113,7 +113,7 @@ public class DaoImplementationGeneratorTest extends DaoMethodGeneratorTest {
     assertGeneratedFileDoesNotContain(compilation, "LOG.debug");
   }
 
-  private void assertGeneratedFileDoesNotContain(Compilation compilation, String string) {
+  protected void assertGeneratedFileDoesNotContain(Compilation compilation, String string) {
     assertThat(compilation)
         .generatedFile(
             StandardLocation.SOURCE_OUTPUT, "test", "ProductDaoImpl__MapperGenerated.java")
@@ -121,7 +121,7 @@ public class DaoImplementationGeneratorTest extends DaoMethodGeneratorTest {
         .doesNotContain(string);
   }
 
-  private void assertGeneratedFileContains(Compilation compilation, String string) {
+  protected void assertGeneratedFileContains(Compilation compilation, String string) {
     assertThat(compilation)
         .generatedFile(
             StandardLocation.SOURCE_OUTPUT, "test", "ProductDaoImpl__MapperGenerated.java")
