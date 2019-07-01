@@ -92,7 +92,7 @@ public class EntityUtils {
   /**
    * Validates that the given parameters are valid for an {@link EntityDefinition}, meaning that
    * there are at least enough parameters provided to match the number of partition key columns and
-   * that that parameter types match the primary key types.
+   * that parameter types match the primary key types.
    *
    * <p>If it is determined that the parameters are not valid, false is returned and an error
    * message is emitted on the given method element.
