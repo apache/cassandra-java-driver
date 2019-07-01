@@ -3,6 +3,7 @@
 ### 3.7.2 (In progress)
 
 - [bug] JAVA-2249: Stop stripping trailing zeros in ByteOrderedTokens
+- [bug] JAVA-2204: Avoid memory leak when client holds onto a stale TableMetadata instance
 
 ### 3.7.1
 
