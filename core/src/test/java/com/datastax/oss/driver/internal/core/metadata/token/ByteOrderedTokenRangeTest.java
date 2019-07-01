@@ -41,6 +41,16 @@ public class ByteOrderedTokenRangeTest {
   }
 
   @Test
+  public void should_split_range_when_padding_produces_same_token() {
+    // To compute the ranges, we pad with trailing zeroes until the range is big enough for the
+    // number of splits.
+    // But in this case padding produces the same token 0x1100, so adding more zeroes wouldn't help.
+    assertThat(range("0x11", "0x1100").splitEvenly(3))
+        .containsExactly(
+            range("0x11", "0x1100"), range("0x1100", "0x1100"), range("0x1100", "0x1100"));
+  }
+
+  @Test
   public void should_split_range_that_wraps_around_the_ring() {
     assertThat(range("0x0d", "0x0a").splitEvenly(2))
         .containsExactly(range("0x0d", "0x8c"), range("0x8c", "0x0a"));

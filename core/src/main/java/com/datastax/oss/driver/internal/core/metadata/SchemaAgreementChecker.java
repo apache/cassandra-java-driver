@@ -59,7 +59,6 @@ class SchemaAgreementChecker {
 
   private final DriverChannel channel;
   private final InternalDriverContext context;
-  private final int port;
   private final String logPrefix;
   private final Duration queryTimeout;
   private final long intervalNs;
@@ -68,11 +67,9 @@ class SchemaAgreementChecker {
   private final long start;
   private final CompletableFuture<Boolean> result = new CompletableFuture<>();
 
-  SchemaAgreementChecker(
-      DriverChannel channel, InternalDriverContext context, int port, String logPrefix) {
+  SchemaAgreementChecker(DriverChannel channel, InternalDriverContext context, String logPrefix) {
     this.channel = channel;
     this.context = context;
-    this.port = port;
     this.logPrefix = logPrefix;
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     this.queryTimeout = config.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT);

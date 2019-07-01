@@ -33,17 +33,31 @@ import java.util.UUID;
  */
 public interface Node {
 
-  /** The information that the driver uses to connect to the node. */
+  /**
+   * The information that the driver uses to connect to the node.
+   *
+   * <p>In default deployments, the endpoint address is usually derived from the node's {@linkplain
+   * #getBroadcastAddress() broadcast RPC address} for peers hosts. For the control host however,
+   * the driver doesn't rely on that value because it may be wrong (see CASSANDRA-11181); instead,
+   * it simply uses the control connection's own endpoint.
+   *
+   * <p>When behind a proxy, the endpoint reported here usually refers to the proxy itself, and is
+   * unrelated to the node's broadcast RPC address.
+   */
   @NonNull
   EndPoint getEndPoint();
 
   /**
-   * The node's broadcast RPC address.
+   * The node's broadcast RPC address. That is, the address that the node expects clients to connect
+   * to.
    *
-   * <p>This is the address that the node expects clients to connect to, as reported in {@code
-   * system.peers.rpc_address} (Cassandra 3) or {@code system.peers_v2.native_address/native_port}
-   * (Cassandra 4+). However, it might not be what the driver uses directly, if the node is accessed
-   * through a proxy.
+   * <p>This is computed from values reported in {@code system.local.rpc_address} and {@code
+   * system.peers.rpc_address} (Cassandra 3), or {@code system.local.rpc_address}, {@code
+   * system.local.rpc_port}, {@code system.peers_v2.native_address} and {@code
+   * system.peers_v2.native_port} (Cassandra 4+).
+   *
+   * <p>However, the address reported here might not be what the driver uses directly; to know which
+   * address the driver is really using to connect to this node, check {@link #getEndPoint()}.
    *
    * <p>This may not be known at all times. In particular, some Cassandra versions (less than
    * 2.0.16, 2.1.6 or 2.2.0-rc1) don't store it in the {@code system.local} table, so this will be
@@ -57,8 +71,12 @@ public interface Node {
 
   /**
    * The node's broadcast address. That is, the address that other nodes use to communicate with
-   * that node. This is also the value of the {@code peer} column in {@code system.peers}. If the
-   * port is set to 0 it is unknown.
+   * that node.
+   *
+   * <p>This is computed from values reported in {@code system.local.broadcast_address} and {@code
+   * system.peers.peer} (Cassandra 3), or {@code system.local.broadcast_address}, {@code
+   * system.local.broadcast_port}, {@code system.peers_v2.peer} and {@code
+   * system.peers_v2.peer_port} (Cassandra 4+). If the port is set to 0 it is unknown.
    *
    * <p>This may not be known at all times. In particular, some Cassandra versions (less than
    * 2.0.16, 2.1.6 or 2.2.0-rc1) don't store it in the {@code system.local} table, so this will be
@@ -71,11 +89,14 @@ public interface Node {
   Optional<InetSocketAddress> getBroadcastAddress();
 
   /**
-   * The node's listen address. That is, the address that the Cassandra process binds to. If the
-   * port is set to 0 it is unknown.
+   * The node's listen address. That is, the address that the Cassandra process binds to.
    *
-   * <p>This may not be know at all times. In particular, current Cassandra versions (3.10) only
-   * store it in {@code system.local}, so this will be known only for the control node.
+   * <p>This is computed from values reported in {@code system.local.listen_address} (Cassandra 3),
+   * or {@code system.local.listen_address} and {@code system.local.listen_port} (Cassandra 4+). If
+   * the port is set to 0 it is unknown.
+   *
+   * <p>This may not be known at all times. In particular, current Cassandra versions (up to 3.11)
+   * only store it in {@code system.local}, so this will be known only for the control node.
    */
   @NonNull
   Optional<InetSocketAddress> getListenAddress();
@@ -157,10 +178,9 @@ public interface Node {
    * The host ID that is assigned to this node by Cassandra. This value can be used to uniquely
    * identify a node even when the underling IP address changes.
    *
-   * <p>This should be non-null in a healthy deployment, but the driver will still function, and
-   * report {@code null} here, if the server metadata was corrupted.
+   * <p>This information is always present.
    */
-  @Nullable
+  @NonNull
   UUID getHostId();
 
   /**

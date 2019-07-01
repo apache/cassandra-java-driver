@@ -44,6 +44,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -187,6 +188,7 @@ public class MetadataManagerTest {
     Node node = TestNodeFactory.newNode(2, context);
     NodeInfo info = mock(NodeInfo.class);
     when(info.getDatacenter()).thenReturn("dc1");
+    when(info.getHostId()).thenReturn(UUID.randomUUID());
     when(topologyMonitor.refreshNode(node))
         .thenReturn(CompletableFuture.completedFuture(Optional.of(info)));
 

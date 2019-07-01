@@ -83,10 +83,7 @@ public class SimulacronRule extends CassandraResourceRule {
   /** @return All nodes in first data center. */
   @Override
   public Set<EndPoint> getContactPoints() {
-    return boundCluster
-        .dc(0)
-        .getNodes()
-        .stream()
+    return boundCluster.dc(0).getNodes().stream()
         .map(node -> new DefaultEndPoint(node.inetSocketAddress()))
         .collect(Collectors.toSet());
   }

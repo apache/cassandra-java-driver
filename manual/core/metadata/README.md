@@ -42,6 +42,6 @@ Set<TokenRange> tokenRanges = tokenMap.getTokenRanges(keyspace.getName(), node);
 This is a big improvement over previous versions of the driver, where it was possible to observe a
 new keyspace in the schema metadata before the token metadata was updated.
 
-[Session#getMetadata]:                          http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/Session.html#getMetadata--
-[Metadata]:                                     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/metadata/Metadata.html
-[Node]:                                         http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/metadata/Node.html
+[Session#getMetadata]:                          https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/Session.html#getMetadata--
+[Metadata]:                                     https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/metadata/Metadata.html
+[Node]:                                         https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/metadata/Node.html

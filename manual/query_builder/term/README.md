@@ -105,5 +105,5 @@ This should be used with caution, as it's possible to generate invalid CQL that 
 execution time; on the other hand, it can be used as a workaround to handle new CQL features that
 are not yet covered by the query builder.
 
-[QueryBuilder]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html
-[CodecRegistry]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html
+[QueryBuilder]:  https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html
+[CodecRegistry]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html

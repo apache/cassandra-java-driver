@@ -54,13 +54,15 @@ public class ExponentialReconnectionPolicyTest {
     ExponentialReconnectionPolicy policy = new ExponentialReconnectionPolicy(driverContext);
     ReconnectionPolicy.ReconnectionSchedule schedule = policy.newControlConnectionSchedule(false);
     // generate a number of delays and make sure they are all within the base/max values range
-    for (int i = 0; i < 128; ++i) {
-      // compute the min and max delays based on attempt count (i)
+    // limit the loop to 53 as the bit shift and min/max calculations will cause long overflows
+    // past that
+    for (int i = 0; i < 54; ++i) {
+      // compute the min and max delays based on attempt count (i) and prevent long overflows
       long exponentialDelay = Math.min(baseDelay * (1L << i), maxDelay);
       // min will be 85% of the pure exponential delay (with a floor of baseDelay)
-      long minJitterDelay = Math.min(baseDelay, (exponentialDelay * 85) / 100);
+      long minJitterDelay = Math.max(baseDelay, (exponentialDelay * 85) / 100);
       // max will be 115% of the pure exponential delay (with a ceiling of maxDelay)
-      long maxJitterDelay = Math.max(maxDelay, (exponentialDelay * 115) / 100);
+      long maxJitterDelay = Math.min(maxDelay, (exponentialDelay * 115) / 100);
       long delay = schedule.nextDelay().toMillis();
       assertThat(delay).isBetween(minJitterDelay, maxJitterDelay);
     }

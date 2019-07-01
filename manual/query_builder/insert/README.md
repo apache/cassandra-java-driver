@@ -114,4 +114,4 @@ is executed. This is distinctly different than setting the value to null. Passin
 this method will only remove the USING TTL clause from the query, which will not alter the TTL (if
 one is set) in Cassandra.
 
-[QueryBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html
+[QueryBuilder]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html

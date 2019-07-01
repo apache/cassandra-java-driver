@@ -1,5 +1,28 @@
 ## Upgrade guide
 
+### 4.1.0
+
+#### Object mapper
+
+4.1.0 marks the introduction of the new object mapper in the 4.x series.
+
+Like driver 3, it relies on annotations to configure mapped entities and queries. However, there are
+a few notable differences:
+
+* it uses compile-time annotation processing instead of runtime reflection;
+* the "mapper" and "accessor" concepts have been unified into a single "DAO" component, that handles
+  both pre-defined CRUD patterns, and user-provided queries.
+
+Refer to the [mapper manual](../manual/mapper/) for all the details.
+
+#### Internal API
+
+`NettyOptions#afterBootstrapInitialized` is now responsible for setting socket options on driver
+connections (see `advanced.socket` in the configuration). If you had written a custom `NettyOptions`
+for 4.0, you'll have to copy over -- and possibly adapt -- the contents of
+`DefaultNettyOptions#afterBootstrapInitialized` (if you didn't override `NettyOptions`, you don't
+have to change anything).
+
 ### 4.0.0
 
 Version 4 is major redesign of the internal architecture. As such, it is **not binary compatible**

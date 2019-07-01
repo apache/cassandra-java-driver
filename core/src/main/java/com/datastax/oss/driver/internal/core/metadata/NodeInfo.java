@@ -20,6 +20,8 @@ import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Optional;
@@ -34,17 +36,20 @@ import java.util.UUID;
 public interface NodeInfo {
 
   /** The endpoint that the driver will use to connect to the node. */
+  @NonNull
   EndPoint getEndPoint();
 
   /**
-   * The node's broadcast RPC address.
+   * The node's broadcast RPC address and port. That is, the address that clients are supposed to
+   * use to communicate with that node.
    *
-   * <p>This is used to match status events coming in on the control connection. Note that it's not
-   * possible to fill it for the control node for some Cassandra versions, but that's less important
-   * because the control node doesn't receive events for itself.
+   * <p>This is currently only used to match broadcast RPC addresses received in status events
+   * coming in on the control connection. The driver does not use this value to actually connect to
+   * the node, but rather uses {@link #getEndPoint()}.
    *
    * @see Node#getBroadcastRpcAddress()
    */
+  @NonNull
   Optional<InetSocketAddress> getBroadcastRpcAddress();
 
   /**
@@ -54,6 +59,7 @@ public interface NodeInfo {
    * <p>This is only used by the default topology monitor, so if you are writing a custom one and
    * don't need this information, you can leave it empty.
    */
+  @NonNull
   Optional<InetSocketAddress> getBroadcastAddress();
 
   /**
@@ -62,6 +68,7 @@ public interface NodeInfo {
    * <p>This is currently not used anywhere in the driver. If you write a custom topology monitor
    * and don't need this information, you can leave it empty.
    */
+  @NonNull
   Optional<InetSocketAddress> getListenAddress();
 
   /**
@@ -70,6 +77,7 @@ public interface NodeInfo {
    * <p>This is used by some {@link LoadBalancingPolicy} implementations to compute the {@link
    * NodeDistance}.
    */
+  @Nullable
   String getDatacenter();
 
   /**
@@ -78,6 +86,7 @@ public interface NodeInfo {
    * <p>This is used by some {@link LoadBalancingPolicy} implementations to compute the {@link
    * NodeDistance}.
    */
+  @Nullable
   String getRack();
 
   /**
@@ -87,6 +96,7 @@ public interface NodeInfo {
    * next, even if the protocol version stays the same). If this is null, schema parsing will use
    * the lowest version for the current protocol version, which might lead to inaccuracies.
    */
+  @Nullable
   String getCassandraVersion();
 
   /**
@@ -98,6 +108,7 @@ public interface NodeInfo {
    * list refresh (but it doesn't hurt to always include it if possible). If it is absent, {@link
    * Metadata#getTokenMap()} will remain empty.
    */
+  @Nullable
   String getPartitioner();
 
   /**
@@ -107,20 +118,27 @@ public interface NodeInfo {
    * relies on this information). If you're not using token metadata in any way, you may return an
    * empty set here.
    */
+  @Nullable
   Set<String> getTokens();
 
   /**
    * An additional map of free-form properties, that can be used by custom implementations. They
    * will be copied as-is into {@link Node#getExtras()}.
    */
+  @Nullable
   Map<String, Object> getExtras();
 
   /**
    * The host ID that is assigned to this host by cassandra. The driver uses this to uniquely
    * identify a node.
+   *
+   * <p>This information is required; the driver will not function properly if this method returns
+   * {@code null}.
    */
+  @NonNull
   UUID getHostId();
 
   /** The current version that is associated with the nodes schema. */
+  @Nullable
   UUID getSchemaVersion();
 }

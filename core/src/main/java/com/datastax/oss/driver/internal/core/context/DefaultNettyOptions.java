@@ -22,8 +22,10 @@ import com.datastax.oss.driver.shaded.guava.common.util.concurrent.ThreadFactory
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.HashedWheelTimer;
@@ -33,12 +35,20 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import io.netty.util.concurrent.PromiseCombiner;
+import io.netty.util.internal.PlatformDependent;
+import java.time.Duration;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Immutable
 public class DefaultNettyOptions implements NettyOptions {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultNettyOptions.class);
+
+  private final DriverExecutionProfile config;
   private final EventLoopGroup ioEventLoopGroup;
   private final EventLoopGroup adminEventLoopGroup;
   private final int ioShutdownQuietPeriod;
@@ -50,7 +60,7 @@ public class DefaultNettyOptions implements NettyOptions {
   private final Timer timer;
 
   public DefaultNettyOptions(InternalDriverContext context) {
-    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
+    this.config = context.getConfig().getDefaultProfile();
     int ioGroupSize = config.getInt(DefaultDriverOption.NETTY_IO_SIZE);
     this.ioShutdownQuietPeriod = config.getInt(DefaultDriverOption.NETTY_IO_SHUTDOWN_QUIET_PERIOD);
     this.ioShutdownTimeout = config.getInt(DefaultDriverOption.NETTY_IO_SHUTDOWN_TIMEOUT);
@@ -83,10 +93,21 @@ public class DefaultNettyOptions implements NettyOptions {
             .setThreadFactory(safeFactory)
             .setNameFormat(context.getSessionName() + "-timer-%d")
             .build();
+
+    Duration tickDuration = config.getDuration(DefaultDriverOption.NETTY_TIMER_TICK_DURATION);
+    // JAVA-2264: tick durations on Windows cannot be less than 100 milliseconds,
+    // see https://github.com/netty/netty/issues/356.
+    if (PlatformDependent.isWindows() && tickDuration.toMillis() < 100) {
+      LOG.warn(
+          "Timer tick duration was set to a value too aggressive for Windows: {} ms; "
+              + "doing so is known to cause extreme CPU usage. "
+              + "Please set advanced.netty.timer.tick-duration to 100 ms or higher.",
+          tickDuration.toMillis());
+    }
     timer =
         new HashedWheelTimer(
             timerThreadFactory,
-            config.getDuration(DefaultDriverOption.NETTY_TIMER_TICK_DURATION).toNanos(),
+            tickDuration.toNanos(),
             TimeUnit.NANOSECONDS,
             config.getInt(DefaultDriverOption.NETTY_TIMER_TICKS_PER_WHEEL));
   }
@@ -113,7 +134,30 @@ public class DefaultNettyOptions implements NettyOptions {
 
   @Override
   public void afterBootstrapInitialized(Bootstrap bootstrap) {
-    // nothing to do
+    boolean tcpNoDelay = config.getBoolean(DefaultDriverOption.SOCKET_TCP_NODELAY);
+    bootstrap.option(ChannelOption.TCP_NODELAY, tcpNoDelay);
+    if (config.isDefined(DefaultDriverOption.SOCKET_KEEP_ALIVE)) {
+      boolean keepAlive = config.getBoolean(DefaultDriverOption.SOCKET_KEEP_ALIVE);
+      bootstrap.option(ChannelOption.SO_KEEPALIVE, keepAlive);
+    }
+    if (config.isDefined(DefaultDriverOption.SOCKET_REUSE_ADDRESS)) {
+      boolean reuseAddress = config.getBoolean(DefaultDriverOption.SOCKET_REUSE_ADDRESS);
+      bootstrap.option(ChannelOption.SO_REUSEADDR, reuseAddress);
+    }
+    if (config.isDefined(DefaultDriverOption.SOCKET_LINGER_INTERVAL)) {
+      int lingerInterval = config.getInt(DefaultDriverOption.SOCKET_LINGER_INTERVAL);
+      bootstrap.option(ChannelOption.SO_LINGER, lingerInterval);
+    }
+    if (config.isDefined(DefaultDriverOption.SOCKET_RECEIVE_BUFFER_SIZE)) {
+      int receiveBufferSize = config.getInt(DefaultDriverOption.SOCKET_RECEIVE_BUFFER_SIZE);
+      bootstrap
+          .option(ChannelOption.SO_RCVBUF, receiveBufferSize)
+          .option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(receiveBufferSize));
+    }
+    if (config.isDefined(DefaultDriverOption.SOCKET_SEND_BUFFER_SIZE)) {
+      int sendBufferSize = config.getInt(DefaultDriverOption.SOCKET_SEND_BUFFER_SIZE);
+      bootstrap.option(ChannelOption.SO_SNDBUF, sendBufferSize);
+    }
   }
 
   @Override
@@ -123,15 +167,18 @@ public class DefaultNettyOptions implements NettyOptions {
 
   @Override
   public Future<Void> onClose() {
-    PromiseCombiner combiner = new PromiseCombiner();
-    combiner.add(
-        adminEventLoopGroup.shutdownGracefully(
-            adminShutdownQuietPeriod, adminShutdownTimeout, adminShutdownUnit));
-    combiner.add(
-        ioEventLoopGroup.shutdownGracefully(
-            ioShutdownQuietPeriod, ioShutdownTimeout, ioShutdownUnit));
     DefaultPromise<Void> closeFuture = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
-    combiner.finish(closeFuture);
+    GlobalEventExecutor.INSTANCE.execute(
+        () -> {
+          PromiseCombiner combiner = new PromiseCombiner(GlobalEventExecutor.INSTANCE);
+          combiner.add(
+              adminEventLoopGroup.shutdownGracefully(
+                  adminShutdownQuietPeriod, adminShutdownTimeout, adminShutdownUnit));
+          combiner.add(
+              ioEventLoopGroup.shutdownGracefully(
+                  ioShutdownQuietPeriod, ioShutdownTimeout, ioShutdownUnit));
+          combiner.finish(closeFuture);
+        });
     closeFuture.addListener(f -> timer.stop());
     return closeFuture;
   }

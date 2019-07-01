@@ -248,7 +248,7 @@ public class SchemaAgreementCheckerTest {
     private final Queue<StubbedQuery> queries = new ArrayDeque<>();
 
     TestSchemaAgreementChecker(DriverChannel channel, InternalDriverContext context) {
-      super(channel, context, 9042, "test");
+      super(channel, context, "test");
     }
 
     private void stubQueries(StubbedQuery... queries) {

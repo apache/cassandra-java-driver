@@ -140,11 +140,7 @@ public class DriverExecutionProfileIT {
       session.execute(query);
 
       Optional<QueryLog> log =
-          simulacron
-              .cluster()
-              .getLogs()
-              .getQueryLogs()
-              .stream()
+          simulacron.cluster().getLogs().getQueryLogs().stream()
               .filter(q -> q.getQuery().equals(query))
               .findFirst();
 
@@ -162,11 +158,7 @@ public class DriverExecutionProfileIT {
       session.execute(SimpleStatement.builder(query).setExecutionProfileName("cl").build());
 
       log =
-          simulacron
-              .cluster()
-              .getLogs()
-              .getQueryLogs()
-              .stream()
+          simulacron.cluster().getLogs().getQueryLogs().stream()
               .filter(q -> q.getQuery().equals(query))
               .findFirst();
 

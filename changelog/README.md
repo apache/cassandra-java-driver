@@ -2,8 +2,24 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.0.2 (in progress)
+### 4.2.0 (in progress)
 
+
+### 4.1.0
+
+- [documentation] JAVA-2294: Fix wrong examples in manual page on batch statements
+- [bug] JAVA-2304: Avoid direct calls to ByteBuffer.array()
+- [new feature] JAVA-2078: Add object mapper
+- [improvement] JAVA-2297: Add a NettyOptions method to set socket options
+- [bug] JAVA-2280: Ignore peer rows with missing host id or RPC address
+- [bug] JAVA-2264: Adjust HashedWheelTimer tick duration from 1 to 100 ms
+- [bug] JAVA-2260: Handle empty collections in PreparedStatement.bind(...)
+- [improvement] JAVA-2278: Pass the request's log prefix to RequestTracker
+- [bug] JAVA-2253: Don't strip trailing zeros in ByteOrderedToken
+- [improvement] JAVA-2207: Add bulk value assignment to QueryBuilder Insert
+- [bug] JAVA-2234: Handle terminated executor when the session is closed twice
+- [documentation] JAVA-2220: Emphasize that query builder is now a separate artifact in root README
+- [documentation] JAVA-2217: Cover contact points and local datacenter earlier in the manual
 - [improvement] JAVA-2242: Allow skipping all integration tests with -DskipITs
 - [improvement] JAVA-2241: Make DefaultDriverContext.cycleDetector protected
 - [bug] JAVA-2226: Support IPv6 contact points in the configuration

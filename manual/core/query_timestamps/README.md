@@ -174,7 +174,7 @@ Here is the order of precedence of all the methods described so far:
 3. otherwise, if the timestamp generator assigned a timestamp, use it;
 4. otherwise, let the server assign the timestamp.
 
-[TimestampGenerator]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/time/TimestampGenerator.html
+[TimestampGenerator]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/time/TimestampGenerator.html
 
 [gettimeofday]: http://man7.org/linux/man-pages/man2/settimeofday.2.html
 [JNR]: https://github.com/jnr/jnr-ffi

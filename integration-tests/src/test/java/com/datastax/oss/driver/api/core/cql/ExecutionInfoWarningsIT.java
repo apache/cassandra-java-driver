@@ -172,9 +172,7 @@ public class ExecutionInfoWarningsIT {
     // verify the log was generated
     verify(appender, timeout(500).atLeast(1)).doAppend(loggingEventCaptor.capture());
     List<String> logMessages =
-        loggingEventCaptor
-            .getAllValues()
-            .stream()
+        loggingEventCaptor.getAllValues().stream()
             .map(ILoggingEvent::getFormattedMessage)
             .collect(Collectors.toList());
     assertThat(logMessages)

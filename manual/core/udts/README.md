@@ -61,7 +61,11 @@ various ways to get it:
 * from the driver's [schema metadata](../metadata/schema/):
 
     ```java
-    UserDefinedType udt = session.getMetadata().getKeyspace("ks").getUserDefinedType("type1");
+    UserDefinedType udt =
+        session.getMetadata()
+            .getKeyspace("ks")
+            .flatMap(ks -> ks.getUserDefinedType("type1"))
+            .orElseThrow(() -> new IllegalArgumentException("Missing UDT definition"));
     ```
 
 * from another UDT value:
@@ -115,5 +119,5 @@ session.execute(bs);
 
 [cql_doc]: https://docs.datastax.com/en/cql/3.3/cql/cql_reference/cqlRefUDType.html
 
-[UdtValue]:        https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/data/UdtValue.html
-[UserDefinedType]: https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/type/UserDefinedType.html
+[UdtValue]:        https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/data/UdtValue.html
+[UserDefinedType]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/type/UserDefinedType.html

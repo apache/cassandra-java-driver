@@ -35,10 +35,9 @@ public class ProtocolVersionInitialNegotiationIT {
   @Rule public CcmRule ccm = CcmRule.getInstance();
 
   @CassandraRequirement(
-    min = "2.1",
-    max = "2.2",
-    description = "required to downgrade to an older version"
-  )
+      min = "2.1",
+      max = "2.2",
+      description = "required to downgrade to an older version")
   @Test
   public void should_downgrade_to_v3() {
     try (CqlSession session = SessionUtils.newSession(ccm)) {
@@ -48,10 +47,9 @@ public class ProtocolVersionInitialNegotiationIT {
   }
 
   @CassandraRequirement(
-    min = "2.1",
-    max = "2.2",
-    description = "required to downgrade to an older version"
-  )
+      min = "2.1",
+      max = "2.2",
+      description = "required to downgrade to an older version")
   @Test
   public void should_fail_if_provided_version_isnt_supported() {
     DriverConfigLoader loader =

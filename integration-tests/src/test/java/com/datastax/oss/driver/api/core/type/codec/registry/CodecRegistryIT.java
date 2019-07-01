@@ -39,6 +39,7 @@ import com.datastax.oss.driver.internal.core.type.codec.IntCodec;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -372,6 +373,55 @@ public class CodecRegistryIT {
       assertThat(row.get(0, mapWithOptionalValueCodec.getJavaType())).isEqualTo(v2Map);
       // getting with map should return a map without optional value.
       assertThat(row.getMap(0, Integer.class, String.class)).isEqualTo(Maps.newHashMap(1, "hello"));
+    }
+  }
+
+  @Test
+  public void should_be_able_to_handle_empty_collections() {
+    try (CqlSession session =
+        (CqlSession)
+            SessionUtils.<CqlSession>baseBuilder()
+                .addContactEndPoints(ccm.getContactPoints())
+                .withKeyspace(sessionRule.keyspace())
+                .build()) {
+
+      // Using prepared statements (CQL type is known)
+      PreparedStatement prepared =
+          session.prepare("INSERT INTO test2 (k0, k1, v) values (?, ?, ?)");
+
+      BoundStatement insert =
+          prepared
+              .boundStatementBuilder()
+              .setString(0, name.getMethodName())
+              .setInt(1, 0)
+              .setMap(2, new HashMap<>(), Integer.class, String.class)
+              .build();
+      session.execute(insert);
+
+      // Using simple statements (CQL type is unknown)
+      session.execute(
+          SimpleStatement.newInstance(
+              "INSERT INTO test2 (k0, k1, v) values (?, ?, ?)",
+              name.getMethodName(),
+              1,
+              new HashMap<>()));
+
+      ResultSet result =
+          session.execute(
+              SimpleStatement.builder("SELECT v from test2 where k0 = ?")
+                  .addPositionalValues(name.getMethodName())
+                  .build());
+
+      List<Row> rows = result.all();
+      assertThat(rows).hasSize(2);
+
+      Row row1 = rows.get(0);
+      assertThat(row1.isNull(0)).isTrue();
+      assertThat(row1.getMap(0, Integer.class, String.class)).isEmpty();
+
+      Row row2 = rows.get(1);
+      assertThat(row2.isNull(0)).isTrue();
+      assertThat(row2.getMap(0, Integer.class, String.class)).isEmpty();
     }
   }
 }

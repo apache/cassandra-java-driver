@@ -66,11 +66,11 @@ public interface BoundStatement
     // - timestamp
 
     // prepared ID
-    size += PrimitiveSizes.sizeOfShortBytes(getPreparedStatement().getId().array());
+    size += PrimitiveSizes.sizeOfShortBytes(getPreparedStatement().getId());
 
     // result metadata ID
     if (getPreparedStatement().getResultMetadataId() != null) {
-      size += PrimitiveSizes.sizeOfShortBytes(getPreparedStatement().getResultMetadataId().array());
+      size += PrimitiveSizes.sizeOfShortBytes(getPreparedStatement().getResultMetadataId());
     }
 
     // parameters (always sent as positional values for bound statements)

@@ -29,10 +29,11 @@ public class ByteOrderedToken implements Token {
 
   private final ByteBuffer value;
 
-  public ByteOrderedToken(ByteBuffer value) {
-    this.value = stripTrailingZeroBytes(value);
+  public ByteOrderedToken(@NonNull ByteBuffer value) {
+    this.value = ByteBuffer.wrap(Bytes.getArray(value)).asReadOnlyBuffer();
   }
 
+  @NonNull
   public ByteBuffer getValue() {
     return value;
   }
@@ -65,18 +66,5 @@ public class ByteOrderedToken implements Token {
   @Override
   public String toString() {
     return "ByteOrderedToken(" + Bytes.toHexString(value) + ")";
-  }
-
-  private static ByteBuffer stripTrailingZeroBytes(ByteBuffer b) {
-    byte result[] = Bytes.getArray(b);
-    int zeroIndex = result.length;
-    for (int i = result.length - 1; i > 0; i--) {
-      if (result[i] == 0) {
-        zeroIndex = i;
-      } else {
-        break;
-      }
-    }
-    return ByteBuffer.wrap(result, 0, zeroIndex);
   }
 }

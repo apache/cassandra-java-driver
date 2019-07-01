@@ -7,7 +7,7 @@ following coordinates:
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core</artifactId>
-  <version>4.0.1</version>
+  <version>4.1.0</version>
 </dependency>
 ```
 
@@ -55,6 +55,54 @@ customization is done through the driver configuration (refer to the
 We recommend that you take a look at the [reference configuration](configuration/reference/) for the
 list of available options, and cross-reference with the sub-sections in this manual for more
 explanations.
+
+##### Contact points
+
+If you don't specify any contact point, the driver defaults to `127.0.0.1:9042`:
+
+```java
+CqlSession session = CqlSession.builder().build();
+```
+
+This is fine for a quick start on a developer workstation, but you'll quickly want to provide
+specific addresses. There are two ways to do this:
+
+* via [SessionBuilder.addContactPoint()] or [SessionBuilder.addContactPoints()];
+* in the [configuration](configuration/) via the `basic.contact-points` option.
+
+As soon as there are explicit contact points, you also need to provide the name of the local
+datacenter. All contact points must belong to it (as reported in their system tables:
+`system.local.data_center` and `system.peers.data_center`). Again this can be specified either:
+
+* via [SessionBuilder.withLocalDatacenter()];
+* in the configuration via the `basic.load-balancing-policy.local-datacenter` option.
+
+Here is a full programmatic example:
+
+```java
+CqlSession session = CqlSession.builder()
+    .addContactPoint(new InetSocketAddress("1.2.3.4", 9042))
+    .addContactPoint(new InetSocketAddress("5.6.7.8", 9042))
+    .withLocalDatacenter("datacenter1")
+    .build();
+```
+
+And a full configuration example:
+
+```
+// Add `application.conf` to your classpath with the following contents:
+datastax-java-driver {
+  basic {
+    contact-points = [ "1.2.3.4:9042", "5.6.7.8:9042" ]
+    load-balancing-policy.local-datacenter = datacenter1
+  }
+}
+```
+
+For more details about the local datacenter, refer to the [load balancing
+policy](load_balancing/#local-only) section.
+
+##### Keyspace
 
 By default, a session isn't tied to any specific keyspace. You'll need to prefix table names in your
 queries:
@@ -262,15 +310,18 @@ for (ColumnDefinitions.Definition definition : row.getColumnDefinitions()) {
 }
 ```
 
-[CqlSession]:           http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/CqlSession.html
-[CqlSession#builder()]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/CqlSession.html#builder--
-[ResultSet]:            http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/ResultSet.html
-[Row]:                  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/Row.html
-[CqlIdentifier]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/CqlIdentifier.html
-[AccessibleByName]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/data/AccessibleByName.html
-[GenericType]:          http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
-[CqlDuration]:          https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/data/CqlDuration.html
-[TupleValue]:           https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/data/TupleValue.html
-[UdtValue]:             https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/data/UdtValue.html
+[CqlSession]:                           https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/CqlSession.html
+[CqlSession#builder()]:                 https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/CqlSession.html#builder--
+[ResultSet]:                            https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[Row]:                                  https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/Row.html
+[CqlIdentifier]:                        https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/CqlIdentifier.html
+[AccessibleByName]:                     https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/data/AccessibleByName.html
+[GenericType]:                          https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
+[CqlDuration]:                          https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/data/CqlDuration.html
+[TupleValue]:                           https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/data/TupleValue.html
+[UdtValue]:                             https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/data/UdtValue.html
+[SessionBuilder.addContactPoint()]:     https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoint-java.net.InetSocketAddress-
+[SessionBuilder.addContactPoints()]:    https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoints-java.util.Collection-
+[SessionBuilder.withLocalDatacenter()]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withLocalDatacenter-java.lang.String-
 
 [CASSANDRA-10145]: https://issues.apache.org/jira/browse/CASSANDRA-10145

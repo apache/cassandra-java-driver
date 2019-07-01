@@ -254,10 +254,7 @@ public class HeartbeatIT {
   }
 
   private List<QueryLog> getHeartbeatsForNode() {
-    return simulacronNode
-        .getLogs()
-        .getQueryLogs()
-        .stream()
+    return simulacronNode.getLogs().getQueryLogs().stream()
         .filter(l -> l.getQuery().equals("OPTIONS"))
         .collect(Collectors.toList());
   }

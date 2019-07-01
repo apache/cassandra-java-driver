@@ -31,8 +31,10 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.reflect.TypeToken;
+import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.util.IntMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
@@ -70,7 +72,9 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   private final IntMap<TypeCodec> primitiveCodecsByCode;
 
   protected CachingCodecRegistry(
-      String logPrefix, TypeCodec<?>[] primitiveCodecs, TypeCodec<?>[] userCodecs) {
+      @NonNull String logPrefix,
+      @NonNull TypeCodec<?>[] primitiveCodecs,
+      @NonNull TypeCodec<?>[] userCodecs) {
     this.logPrefix = logPrefix;
     this.primitiveCodecs = primitiveCodecs;
     this.userCodecs = userCodecs;
@@ -85,7 +89,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
    * future calls).
    */
   protected abstract TypeCodec<?> getCachedCodec(
-      DataType cqlType, GenericType<?> javaType, boolean isJavaCovariant);
+      @Nullable DataType cqlType, @Nullable GenericType<?> javaType, boolean isJavaCovariant);
 
   @NonNull
   @Override
@@ -95,8 +99,11 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   }
 
   // Not exposed publicly, (isJavaCovariant=true) is only used for internal recursion
+  @NonNull
   protected <JavaTypeT> TypeCodec<JavaTypeT> codecFor(
-      DataType cqlType, GenericType<JavaTypeT> javaType, boolean isJavaCovariant) {
+      @NonNull DataType cqlType,
+      @NonNull GenericType<JavaTypeT> javaType,
+      boolean isJavaCovariant) {
     LOG.trace("[{}] Looking up codec for {} <-> {}", logPrefix, cqlType, javaType);
     TypeCodec<?> primitiveCodec = primitiveCodecsByCode.get(cqlType.getProtocolCode());
     if (primitiveCodec != null && matches(primitiveCodec, javaType, isJavaCovariant)) {
@@ -175,7 +182,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
       return uncheckedCast(codecFor(cqlType, UdtValue.class));
     }
 
-    GenericType<?> javaType = inspectType(value);
+    GenericType<?> javaType = inspectType(value, cqlType);
     LOG.trace("[{}] Continuing based on inferred type {}", logPrefix, javaType);
     return uncheckedCast(getCachedCodec(cqlType, javaType, true));
   }
@@ -205,7 +212,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
       return uncheckedCast(codecFor(((UdtValue) value).getType(), UdtValue.class));
     }
 
-    GenericType<?> javaType = inspectType(value);
+    GenericType<?> javaType = inspectType(value, null);
     LOG.trace("[{}] Continuing based on inferred type {}", logPrefix, javaType);
     return uncheckedCast(getCachedCodec(null, javaType, true));
   }
@@ -217,8 +224,9 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   }
 
   // Not exposed publicly, (isJavaCovariant=true) is only used for internal recursion
+  @NonNull
   protected <JavaTypeT> TypeCodec<JavaTypeT> codecFor(
-      GenericType<JavaTypeT> javaType, boolean isJavaCovariant) {
+      @NonNull GenericType<JavaTypeT> javaType, boolean isJavaCovariant) {
     LOG.trace(
         "[{}] Looking up codec for Java type {} (covariant = {})",
         logPrefix,
@@ -239,38 +247,50 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     return uncheckedCast(getCachedCodec(null, javaType, isJavaCovariant));
   }
 
-  protected boolean matches(TypeCodec<?> codec, GenericType<?> javaType, boolean isJavaCovariant) {
+  protected boolean matches(
+      @NonNull TypeCodec<?> codec, @NonNull GenericType<?> javaType, boolean isJavaCovariant) {
     return (isJavaCovariant)
         ? codec.getJavaType().isSupertypeOf(javaType)
         : codec.accepts(javaType);
   }
 
-  protected GenericType<?> inspectType(Object value) {
+  @NonNull
+  protected GenericType<?> inspectType(@NonNull Object value, @Nullable DataType cqlType) {
     if (value instanceof List) {
       List<?> list = (List) value;
       if (list.isEmpty()) {
-        // The empty list is always encoded the same way, so any element type will do
-        return GenericType.listOf(Boolean.class);
+        // Empty collections are always encoded the same way, so any element type will do
+        // in the absence of a CQL type. When the CQL type is known, we try to infer the best Java
+        // type.
+        return cqlType == null ? JAVA_TYPE_FOR_EMPTY_LISTS : inferJavaTypeFromCqlType(cqlType);
       } else {
-        GenericType<?> elementType = inspectType(list.get(0));
+        GenericType<?> elementType =
+            inspectType(
+                list.get(0), cqlType == null ? null : ((ListType) cqlType).getElementType());
         return GenericType.listOf(elementType);
       }
     } else if (value instanceof Set) {
       Set<?> set = (Set) value;
       if (set.isEmpty()) {
-        return GenericType.setOf(Boolean.class);
+        return cqlType == null ? JAVA_TYPE_FOR_EMPTY_SETS : inferJavaTypeFromCqlType(cqlType);
       } else {
-        GenericType<?> elementType = inspectType(set.iterator().next());
+        GenericType<?> elementType =
+            inspectType(
+                set.iterator().next(),
+                cqlType == null ? null : ((SetType) cqlType).getElementType());
         return GenericType.setOf(elementType);
       }
     } else if (value instanceof Map) {
       Map<?, ?> map = (Map) value;
       if (map.isEmpty()) {
-        return GenericType.mapOf(Boolean.class, Boolean.class);
+        return cqlType == null ? JAVA_TYPE_FOR_EMPTY_MAPS : inferJavaTypeFromCqlType(cqlType);
       } else {
         Map.Entry<?, ?> entry = map.entrySet().iterator().next();
-        GenericType<?> keyType = inspectType(entry.getKey());
-        GenericType<?> valueType = inspectType(entry.getValue());
+        GenericType<?> keyType =
+            inspectType(entry.getKey(), cqlType == null ? null : ((MapType) cqlType).getKeyType());
+        GenericType<?> valueType =
+            inspectType(
+                entry.getValue(), cqlType == null ? null : ((MapType) cqlType).getValueType());
         return GenericType.mapOf(keyType, valueType);
       }
     } else {
@@ -279,9 +299,72 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     }
   }
 
+  @NonNull
+  protected GenericType<?> inferJavaTypeFromCqlType(@NonNull DataType cqlType) {
+    if (cqlType instanceof ListType) {
+      DataType elementType = ((ListType) cqlType).getElementType();
+      return GenericType.listOf(inferJavaTypeFromCqlType(elementType));
+    } else if (cqlType instanceof SetType) {
+      DataType elementType = ((SetType) cqlType).getElementType();
+      return GenericType.setOf(inferJavaTypeFromCqlType(elementType));
+    } else if (cqlType instanceof MapType) {
+      DataType keyType = ((MapType) cqlType).getKeyType();
+      DataType valueType = ((MapType) cqlType).getValueType();
+      return GenericType.mapOf(
+          inferJavaTypeFromCqlType(keyType), inferJavaTypeFromCqlType(valueType));
+    }
+    switch (cqlType.getProtocolCode()) {
+      case ProtocolConstants.DataType.CUSTOM:
+      case ProtocolConstants.DataType.BLOB:
+        return GenericType.BYTE_BUFFER;
+      case ProtocolConstants.DataType.ASCII:
+      case ProtocolConstants.DataType.VARCHAR:
+        return GenericType.STRING;
+      case ProtocolConstants.DataType.BIGINT:
+      case ProtocolConstants.DataType.COUNTER:
+        return GenericType.LONG;
+      case ProtocolConstants.DataType.BOOLEAN:
+        return GenericType.BOOLEAN;
+      case ProtocolConstants.DataType.DECIMAL:
+        return GenericType.BIG_DECIMAL;
+      case ProtocolConstants.DataType.DOUBLE:
+        return GenericType.DOUBLE;
+      case ProtocolConstants.DataType.FLOAT:
+        return GenericType.FLOAT;
+      case ProtocolConstants.DataType.INT:
+        return GenericType.INTEGER;
+      case ProtocolConstants.DataType.TIMESTAMP:
+        return GenericType.INSTANT;
+      case ProtocolConstants.DataType.UUID:
+      case ProtocolConstants.DataType.TIMEUUID:
+        return GenericType.UUID;
+      case ProtocolConstants.DataType.VARINT:
+        return GenericType.BIG_INTEGER;
+      case ProtocolConstants.DataType.INET:
+        return GenericType.INET_ADDRESS;
+      case ProtocolConstants.DataType.DATE:
+        return GenericType.LOCAL_DATE;
+      case ProtocolConstants.DataType.TIME:
+        return GenericType.LOCAL_TIME;
+      case ProtocolConstants.DataType.SMALLINT:
+        return GenericType.SHORT;
+      case ProtocolConstants.DataType.TINYINT:
+        return GenericType.BYTE;
+      case ProtocolConstants.DataType.DURATION:
+        return GenericType.CQL_DURATION;
+      case ProtocolConstants.DataType.UDT:
+        return GenericType.UDT_VALUE;
+      case ProtocolConstants.DataType.TUPLE:
+        return GenericType.TUPLE_VALUE;
+      default:
+        throw new CodecNotFoundException(cqlType, null);
+    }
+  }
+
   // Try to create a codec when we haven't found it in the cache
+  @NonNull
   protected TypeCodec<?> createCodec(
-      DataType cqlType, GenericType<?> javaType, boolean isJavaCovariant) {
+      @Nullable DataType cqlType, @Nullable GenericType<?> javaType, boolean isJavaCovariant) {
     LOG.trace("[{}] Cache miss, creating codec", logPrefix);
     // Either type can be null, but not both.
     if (javaType == null) {
@@ -345,7 +428,8 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
 
   // Try to create a codec when we haven't found it in the cache.
   // Variant where the CQL type is unknown. Can be covariant if we come from a lookup by Java value.
-  protected TypeCodec<?> createCodec(GenericType<?> javaType, boolean isJavaCovariant) {
+  @NonNull
+  protected TypeCodec<?> createCodec(@NonNull GenericType<?> javaType, boolean isJavaCovariant) {
     TypeToken<?> token = javaType.__getToken();
     if (List.class.isAssignableFrom(token.getRawType())
         && token.getType() instanceof ParameterizedType) {
@@ -373,7 +457,8 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
 
   // Try to create a codec when we haven't found it in the cache.
   // Variant where the Java type is unknown.
-  protected TypeCodec<?> createCodec(DataType cqlType) {
+  @NonNull
+  protected TypeCodec<?> createCodec(@NonNull DataType cqlType) {
     if (cqlType instanceof ListType) {
       DataType elementType = ((ListType) cqlType).getElementType();
       TypeCodec<Object> elementCodec = codecFor(elementType);
@@ -413,4 +498,14 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     TypeCodec<DeclaredT> result = (TypeCodec<DeclaredT>) codec;
     return result;
   }
+
+  // These are mock types that are used as placeholders when we try to find a codec for an empty
+  // Java collection instance. All empty collections are serialized in the same way, so any element
+  // type will do:
+  private static final GenericType<List<Boolean>> JAVA_TYPE_FOR_EMPTY_LISTS =
+      GenericType.listOf(Boolean.class);
+  private static final GenericType<Set<Boolean>> JAVA_TYPE_FOR_EMPTY_SETS =
+      GenericType.setOf(Boolean.class);
+  private static final GenericType<Map<Boolean, Boolean>> JAVA_TYPE_FOR_EMPTY_MAPS =
+      GenericType.mapOf(Boolean.class, Boolean.class);
 }

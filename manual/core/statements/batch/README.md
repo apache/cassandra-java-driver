@@ -15,7 +15,7 @@ SimpleStatement simpleInsertBalance =
 
 BatchStatement batch =
   BatchStatement.newInstance(
-      BatchType.LOGGED,
+      DefaultBatchType.LOGGED,
       simpleInsertBalance,
       preparedInsertExpense.bind("Vera ADRIAN", 1, 7.95f, "Breakfast", false));
 
@@ -27,7 +27,7 @@ builder:
 
 ```java
 BatchStatement batch =
-    BatchStatement.builder(BatchType.LOGGED)
+    BatchStatement.builder(DefaultBatchType.LOGGED)
         .addStatement(simpleInsertBalance)
         .addStatement(preparedInsertExpense.bind("Vera ADRIAN", 1, 7.95f, "Breakfast", false))
         .build();
@@ -37,10 +37,10 @@ Keep in mind that batch statements are **immutable**, and every method returns a
 
 ```java
 // Won't work: the object is not modified in place:
-batch.setConfigProfileName("oltp");
+batch.setExecutionProfileName("oltp");
 
 // Instead, reassign the statement every time:
-batch = batch.setConfigProfileName("oltp");
+batch = batch.setExecutionProfileName("oltp");
 ```
 
 As shown in the examples above, batches can contain any combination of simple statements and bound 
@@ -51,6 +51,6 @@ In addition, simple statements with named parameters are currently not supported
 due to a [protocol limitation][CASSANDRA-10246] that will be fixed in a future version). If you try
 to execute such a batch, an `IllegalArgumentException` is thrown.
 
-[BatchStatement]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/BatchStatement.html
-[batch_dse]: http://docs.datastax.com/en/dse/5.1/cql/cql/cql_using/useBatch.html
+[BatchStatement]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/BatchStatement.html
+[batch_dse]: http://docs.datastax.com/en/dse/6.7/cql/cql/cql_using/useBatch.html
 [CASSANDRA-10246]: https://issues.apache.org/jira/browse/CASSANDRA-10246

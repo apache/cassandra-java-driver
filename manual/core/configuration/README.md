@@ -111,6 +111,13 @@ great for temporary changes, for example in your development environment:
 java -Ddatastax-java-driver.advanced.heartbeat.interval="5 minutes" ...
 ```
 
+For array options, provide each element separately by appending an index to the path:
+
+```
+-Ddatastax-java-driver.basic.contact-points.0="127.0.0.1:9042"
+-Ddatastax-java-driver.basic.contact-points.1="127.0.0.2:9042"
+```
+
 We recommend reserving system properties for the early phases of the project; in production, having
 all the configuration in one place will make it easier to manage and review.
 
@@ -488,16 +495,16 @@ config.getDefaultProfile().getString(MyCustomOption.ADMIN_EMAIL);
 config.getDefaultProfile().getInt(MyCustomOption.AWESOMENESS_FACTOR);
 ```
 
-[DriverConfig]:                           https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfig.html
-[DriverExecutionProfile]:                 https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverExecutionProfile.html
-[DriverContext]:                          https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/context/DriverContext.html
-[DriverOption]:                           https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverOption.html
-[DefaultDriverOption]:                    https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DefaultDriverOption.html
-[DriverConfigLoader]:                     https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html
-[DriverConfigLoader.fromClasspath]:       https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromClasspath-java.lang.String-
-[DriverConfigLoader.fromFile]:            https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromFile-java.io.File-
-[DriverConfigLoader.fromUrl]:             https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromUrl-java.net.URL-
-[DriverConfigLoader.programmaticBuilder]: https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#programmaticBuilder--
+[DriverConfig]:                           https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DriverConfig.html
+[DriverExecutionProfile]:                 https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DriverExecutionProfile.html
+[DriverContext]:                          https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/context/DriverContext.html
+[DriverOption]:                           https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DriverOption.html
+[DefaultDriverOption]:                    https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DefaultDriverOption.html
+[DriverConfigLoader]:                     https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html
+[DriverConfigLoader.fromClasspath]:       https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromClasspath-java.lang.String-
+[DriverConfigLoader.fromFile]:            https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromFile-java.io.File-
+[DriverConfigLoader.fromUrl]:             https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromUrl-java.net.URL-
+[DriverConfigLoader.programmaticBuilder]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#programmaticBuilder--
 
 [Typesafe Config]: https://github.com/typesafehub/config
 [config standard behavior]: https://github.com/typesafehub/config#standard-behavior
