@@ -34,7 +34,6 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeName;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -91,36 +90,29 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
     Select selectAnnotation = methodElement.getAnnotation(Select.class);
     assert selectAnnotation != null; // otherwise we wouldn't have gotten into this class
     String customClause = selectAnnotation.customWhereClause();
-    if (customClause.isEmpty()) {
-      List<TypeName> primaryKeyTypes =
-          entityDefinition.getPrimaryKey().stream()
-              .map(d -> d.getType().asTypeName())
-              .collect(Collectors.toList());
-      List<TypeName> parameterTypes =
-          parameters.stream().map(p -> TypeName.get(p.asType())).collect(Collectors.toList());
-      // Note that we only check the types: we allow the names to be different.
-      if (!primaryKeyTypes.equals(parameterTypes)) {
-        context
-            .getMessager()
-            .error(
-                methodElement,
-                "Invalid parameter list: %s methods that don't use a custom clause "
-                    + "must take the partition key components in the exact order "
-                    + "(expected PK of %s: %s)",
-                Select.class.getSimpleName(),
-                entityElement.getSimpleName(),
-                primaryKeyTypes);
-        return Optional.empty();
-      }
+    // select without where criteria is ok.
+    // if parameters are provided, we must have at least enough to match partition key.
+    if (customClause.isEmpty()
+        && !parameters.isEmpty()
+        && !EntityUtils.areParametersValid(
+            context,
+            methodElement,
+            entityElement,
+            entityDefinition,
+            parameters,
+            Select.class,
+            "don't use a custom clause")) {
+      return Optional.empty();
     }
 
     // Generate the method:
+    final int parameterSize = parameters.size();
     String helperFieldName = enclosingClass.addEntityHelperField(ClassName.get(entityElement));
     String statementName =
         enclosingClass.addPreparedStatement(
             methodElement,
             (methodBuilder, requestName) ->
-                generateSelectRequest(methodBuilder, requestName, helperFieldName));
+                generateSelectRequest(methodBuilder, requestName, helperFieldName, parameterSize));
 
     CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
 
@@ -162,14 +154,18 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
   }
 
   private void generateSelectRequest(
-      MethodSpec.Builder methodBuilder, String requestName, String helperFieldName) {
+      MethodSpec.Builder methodBuilder,
+      String requestName,
+      String helperFieldName,
+      int parameterSize) {
     String customWhereClause = methodElement.getAnnotation(Select.class).customWhereClause();
     if (customWhereClause.isEmpty()) {
       methodBuilder.addStatement(
-          "$T $L = $L.selectByPrimaryKey().build()",
+          "$T $L = $L.selectByPrimaryKeyParts($L).build()",
           SimpleStatement.class,
           requestName,
-          helperFieldName);
+          helperFieldName,
+          parameterSize);
     } else {
       methodBuilder.addStatement(
           "$T $L = $L.selectStart().whereRaw($S).build()",

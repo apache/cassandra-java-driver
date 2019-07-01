@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.mapper;
 
 import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
@@ -31,6 +33,25 @@ public abstract class InventoryITBase {
       new Product(UUID.randomUUID(), "Flamethrower", new InventoryITBase.Dimensions(30, 10, 8));
   protected static Product MP3_DOWNLOAD = new Product(UUID.randomUUID(), "MP3 download", null);
 
+  protected static String DATE_1 = "2019-06-27";
+  protected static String DATE_2 = "2019-06-28";
+  protected static String DATE_3 = "2019-01-01";
+
+  protected static ProductSale FLAMETHROWER_SALE_1 =
+      new ProductSale(FLAMETHROWER.getId(), DATE_1, 1, Uuids.startOf(1561643130), 500.00, 5);
+
+  protected static ProductSale FLAMETHROWER_SALE_2 =
+      new ProductSale(FLAMETHROWER.getId(), DATE_1, 2, Uuids.startOf(1561645130), 500.00, 1);
+
+  protected static ProductSale FLAMETHROWER_SALE_3 =
+      new ProductSale(FLAMETHROWER.getId(), DATE_1, 1, Uuids.startOf(1561653130), 500.00, 2);
+
+  protected static ProductSale FLAMETHROWER_SALE_4 =
+      new ProductSale(FLAMETHROWER.getId(), DATE_2, 1, Uuids.startOf(1561729530), 500.00, 23);
+
+  protected static ProductSale MP3_DOWNLOAD_SALE_1 =
+      new ProductSale(MP3_DOWNLOAD.getId(), DATE_3, 7, Uuids.startOf(915192000), 0.99, 12);
+
   protected static List<String> createStatements(CcmRule ccmRule) {
     ImmutableList.Builder<String> builder =
         ImmutableList.<String>builder()
@@ -38,7 +59,9 @@ public abstract class InventoryITBase {
                 "CREATE TYPE dimensions(length int, width int, height int)",
                 "CREATE TABLE product(id uuid PRIMARY KEY, description text, dimensions frozen<dimensions>)",
                 "CREATE TABLE product_without_id(id uuid, clustering int, description text, "
-                    + "PRIMARY KEY((id), clustering))");
+                    + "PRIMARY KEY((id), clustering))",
+                "CREATE TABLE product_sale(id uuid, day text, ts uuid, customer_id int, price "
+                    + "double, count int, PRIMARY KEY ((id, day), customer_id, ts))");
 
     if (supportsSASI(ccmRule)) {
       builder.add(
@@ -269,6 +292,119 @@ public abstract class InventoryITBase {
     @Override
     public String toString() {
       return "OnlyPK{" + "id=" + id + '}';
+    }
+  }
+
+  @Entity
+  public static class ProductSale {
+    @PartitionKey private UUID id;
+
+    @PartitionKey(1)
+    private String day;
+
+    @ClusteringColumn private int customerId;
+
+    @ClusteringColumn(1)
+    private UUID ts;
+
+    private double price;
+
+    private int count;
+
+    public ProductSale() {}
+
+    public ProductSale(UUID id, String day, int customerId, UUID ts, double price, int count) {
+      this.id = id;
+      this.day = day;
+      this.customerId = customerId;
+      this.ts = ts;
+      this.price = price;
+      this.count = count;
+    }
+
+    public UUID getId() {
+      return id;
+    }
+
+    public void setId(UUID id) {
+      this.id = id;
+    }
+
+    public String getDay() {
+      return day;
+    }
+
+    public void setDay(String day) {
+      this.day = day;
+    }
+
+    public UUID getTs() {
+      return ts;
+    }
+
+    public void setTs(UUID ts) {
+      this.ts = ts;
+    }
+
+    public int getCustomerId() {
+      return customerId;
+    }
+
+    public void setCustomerId(int customerId) {
+      this.customerId = customerId;
+    }
+
+    public double getPrice() {
+      return price;
+    }
+
+    public void setPrice(double price) {
+      this.price = price;
+    }
+
+    public int getCount() {
+      return count;
+    }
+
+    public void setCount(int count) {
+      this.count = count;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ProductSale that = (ProductSale) o;
+      return Double.compare(that.price, price) == 0
+          && count == that.count
+          && id.equals(that.id)
+          && day.equals(that.day)
+          && ts.equals(that.ts)
+          && customerId == that.customerId;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(id, day, ts, customerId, price, count);
+    }
+
+    @Override
+    public String toString() {
+      return "ProductSale{"
+          + "id="
+          + id
+          + ", day='"
+          + day
+          + '\''
+          + ", customerId="
+          + customerId
+          + ", ts="
+          + ts
+          + ", price="
+          + price
+          + ", count="
+          + count
+          + '}';
     }
   }
 }

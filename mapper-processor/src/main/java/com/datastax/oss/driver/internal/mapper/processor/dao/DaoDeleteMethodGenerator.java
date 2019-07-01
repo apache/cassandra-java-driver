@@ -105,8 +105,10 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
     VariableElement firstParameter = parameters.get(0);
     entityElement = EntityUtils.asEntityElement(firstParameter, typeParameters);
     hasEntityParameter = (entityElement != null);
+    final int primaryKeyParameterCount;
     if (hasEntityParameter) {
       entityDefinition = context.getEntityFactory().getDefinition(entityElement);
+      primaryKeyParameterCount = entityDefinition.getPrimaryKey().size();
     } else {
       entityElement = getEntityFromAnnotation();
       if (entityElement == null) {
@@ -120,25 +122,40 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
         return Optional.empty();
       }
       entityDefinition = context.getEntityFactory().getDefinition(entityElement);
-      List<TypeName> primaryKeyTypes =
-          entityDefinition.getPrimaryKey().stream()
-              .map(d -> d.getType().asTypeName())
-              .collect(Collectors.toList());
-      List<TypeName> parameterTypes =
-          parameters.stream().map(p -> TypeName.get(p.asType())).collect(Collectors.toList());
-      // Note that we only check the types: we allow the names to be different.
-      if (parameterTypes.size() < primaryKeyTypes.size()
-          || !primaryKeyTypes.equals(parameterTypes.subList(0, primaryKeyTypes.size()))) {
-        context
-            .getMessager()
-            .error(
-                methodElement,
-                "Invalid parameter list: %s methods that do not operate on an entity instance "
-                    + "must take the partition key components in the exact order "
-                    + "(expected PK of %s: %s)",
-                Delete.class.getSimpleName(),
-                entityElement.getSimpleName(),
-                primaryKeyTypes);
+      // if a custom if clause is provided, the whole primary key must also be provided.
+      List<? extends VariableElement> primaryKeyParameters = parameters;
+      if (!annotation.customIfClause().isEmpty()) {
+        if (primaryKeyParameters.size() < entityDefinition.getPrimaryKey().size()) {
+          List<TypeName> primaryKeyTypes =
+              entityDefinition.getPrimaryKey().stream()
+                  .map(d -> d.getType().asTypeName())
+                  .collect(Collectors.toList());
+          context
+              .getMessager()
+              .error(
+                  methodElement,
+                  "Invalid parameter list: %s methods that have a custom if clause"
+                      + "must specify the entire primary key (expected primary keys of %s: %s)",
+                  Delete.class.getSimpleName(),
+                  entityElement.getSimpleName(),
+                  primaryKeyTypes);
+          return Optional.empty();
+        } else {
+          // restrict parameters to primary key length.
+          primaryKeyParameters =
+              primaryKeyParameters.subList(0, entityDefinition.getPrimaryKey().size());
+        }
+      }
+
+      primaryKeyParameterCount = primaryKeyParameters.size();
+      if (!EntityUtils.areParametersValid(
+          context,
+          methodElement,
+          entityElement,
+          entityDefinition,
+          primaryKeyParameters,
+          Delete.class,
+          "do not operate on an entity instance")) {
         return Optional.empty();
       }
     }
@@ -156,7 +173,8 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
         enclosingClass.addPreparedStatement(
             methodElement,
             (methodBuilder, requestName) ->
-                generatePrepareRequest(methodBuilder, requestName, helperFieldName));
+                generatePrepareRequest(
+                    methodBuilder, requestName, helperFieldName, primaryKeyParameterCount));
 
     CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
 
@@ -186,8 +204,9 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
       List<CodeBlock> primaryKeyNames =
           entityDefinition.getPrimaryKey().stream()
               .map(PropertyDefinition::getCqlName)
-              .collect(Collectors.toList());
-      List<? extends VariableElement> bindMarkers = parameters.subList(0, primaryKeyNames.size());
+              .collect(Collectors.toList())
+              .subList(0, primaryKeyParameterCount);
+      List<? extends VariableElement> bindMarkers = parameters.subList(0, primaryKeyParameterCount);
       warnIfCqlNamePresent(bindMarkers);
       GeneratedCodePatterns.bindParameters(
           bindMarkers, primaryKeyNames, methodBodyBuilder, enclosingClass, context, false);
@@ -267,30 +286,36 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
   }
 
   private void generatePrepareRequest(
-      MethodSpec.Builder methodBuilder, String requestName, String helperFieldName) {
+      MethodSpec.Builder methodBuilder,
+      String requestName,
+      String helperFieldName,
+      int parameterSize) {
 
     boolean ifExists = methodElement.getAnnotation(Delete.class).ifExists();
     String customIfClause = methodElement.getAnnotation(Delete.class).customIfClause();
 
     if (ifExists) {
       methodBuilder.addStatement(
-          "$T $L = $L.deleteByPrimaryKey().ifExists().build()",
-          SimpleStatement.class,
-          requestName,
-          helperFieldName);
-    } else if (!customIfClause.isEmpty()) {
-      methodBuilder.addStatement(
-          "$T $L = $L.deleteByPrimaryKey().ifRaw($S).build()",
+          "$T $L = $L.deleteByPrimaryKeyParts($L).ifExists().build()",
           SimpleStatement.class,
           requestName,
           helperFieldName,
+          parameterSize);
+    } else if (!customIfClause.isEmpty()) {
+      methodBuilder.addStatement(
+          "$T $L = $L.deleteByPrimaryKeyParts($L).ifRaw($S).build()",
+          SimpleStatement.class,
+          requestName,
+          helperFieldName,
+          parameterSize,
           customIfClause);
     } else {
       methodBuilder.addStatement(
-          "$T $L = $L.deleteByPrimaryKey().build()",
+          "$T $L = $L.deleteByPrimaryKeyParts($L).build()",
           SimpleStatement.class,
           requestName,
-          helperFieldName);
+          helperFieldName,
+          parameterSize);
     }
   }
 }
