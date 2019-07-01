@@ -22,10 +22,8 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -88,8 +86,6 @@ public class LimitConcurrencyCustom {
 
     // Used to track number of total inserts
     AtomicInteger insertsCounter = new AtomicInteger();
-    // Used to track threads that were involved in a processing
-    Set<String> threads = new ConcurrentSkipListSet<>();
 
     // Executor service with CONCURRENCY_LEVEL number of threads that states an upper limit
     // on number of request in progress.
@@ -106,14 +102,12 @@ public class LimitConcurrencyCustom {
       // We are running CqlSession.execute in a separate thread pool (executor)
       executor.submit(
           () -> {
-            insertsCounter.incrementAndGet();
-            threads.add(Thread.currentThread().getName());
-
             ResultSet executeRequest;
             try {
               executeRequest =
                   session.execute(
                       pst.bind().setUuid("id", UUID.randomUUID()).setInt("value", counter));
+              insertsCounter.incrementAndGet();
             } finally {
               // Signal that processing of this request finishes
               REQUEST_LATCH.countDown();
@@ -131,7 +125,7 @@ public class LimitConcurrencyCustom {
     System.out.println(
         String.format(
             "Finished executing %s queries with a concurrency level of %s.",
-            insertsCounter.get(), threads.size()));
+            insertsCounter.get(), CONCURRENCY_LEVEL));
     // Shutdown executor to free resources
     executor.shutdown();
     executor.awaitTermination(10, TimeUnit.SECONDS);
