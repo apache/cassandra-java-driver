@@ -130,7 +130,7 @@ public class SelectIT extends InventoryITBase {
   @Test
   public void should_select_all_sales() {
     assertThat(saleDao.all().all())
-        .containsExactly(
+        .containsOnly(
             FLAMETHROWER_SALE_1,
             FLAMETHROWER_SALE_3,
             FLAMETHROWER_SALE_2,
@@ -140,13 +140,13 @@ public class SelectIT extends InventoryITBase {
 
   @Test
   public void should_select_by_partition_key() {
-    assertThat(saleDao.salesByIdForDay(FLAMETHROWER.getId(), "2019-06-27").all())
+    assertThat(saleDao.salesByIdForDay(FLAMETHROWER.getId(), DATE_1).all())
         .containsOnly(FLAMETHROWER_SALE_1, FLAMETHROWER_SALE_3, FLAMETHROWER_SALE_2);
   }
 
   @Test
   public void should_select_by_partition_key_and_partial_clustering() {
-    assertThat(saleDao.salesByIdForCustomer(FLAMETHROWER.getId(), "2019-06-27", 1).all())
+    assertThat(saleDao.salesByIdForCustomer(FLAMETHROWER.getId(), DATE_1, 1).all())
         .containsOnly(FLAMETHROWER_SALE_1, FLAMETHROWER_SALE_3);
   }
 
@@ -154,7 +154,7 @@ public class SelectIT extends InventoryITBase {
   public void should_select_by_primary_key_sales() {
     assertThat(
             saleDao.salesByIdForCustomerAtTime(
-                MP3_DOWNLOAD.getId(), "1999-01-01", 7, MP3_DOWNLOAD_SALE_1.getTs()))
+                MP3_DOWNLOAD.getId(), DATE_3, 7, MP3_DOWNLOAD_SALE_1.getTs()))
         .isEqualTo(MP3_DOWNLOAD_SALE_1);
   }
 

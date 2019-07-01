@@ -39,7 +39,6 @@ public class EntityHelperSelectByPrimaryKeyPartsMethodGenerator implements Metho
   public Optional<MethodSpec> generate() {
     MethodSpec.Builder selectByPrimaryKeyPartsBuilder =
         MethodSpec.methodBuilder("selectByPrimaryKeyParts")
-            .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
             .addParameter(TypeName.INT, "parameterCount")
             .returns(Select.class);

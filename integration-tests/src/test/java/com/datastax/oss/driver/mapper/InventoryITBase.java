@@ -33,20 +33,24 @@ public abstract class InventoryITBase {
       new Product(UUID.randomUUID(), "Flamethrower", new InventoryITBase.Dimensions(30, 10, 8));
   protected static Product MP3_DOWNLOAD = new Product(UUID.randomUUID(), "MP3 download", null);
 
+  protected static String DATE_1 = "2019-06-27";
+  protected static String DATE_2 = "2019-06-28";
+  protected static String DATE_3 = "2019-01-01";
+
   protected static ProductSale FLAMETHROWER_SALE_1 =
-      new ProductSale(FLAMETHROWER.getId(), "2019-06-27", 1, Uuids.startOf(1561643130), 500.00, 5);
+      new ProductSale(FLAMETHROWER.getId(), DATE_1, 1, Uuids.startOf(1561643130), 500.00, 5);
 
   protected static ProductSale FLAMETHROWER_SALE_2 =
-      new ProductSale(FLAMETHROWER.getId(), "2019-06-27", 2, Uuids.startOf(1561645130), 500.00, 1);
+      new ProductSale(FLAMETHROWER.getId(), DATE_1, 2, Uuids.startOf(1561645130), 500.00, 1);
 
   protected static ProductSale FLAMETHROWER_SALE_3 =
-      new ProductSale(FLAMETHROWER.getId(), "2019-06-27", 1, Uuids.startOf(1561653130), 500.00, 2);
+      new ProductSale(FLAMETHROWER.getId(), DATE_1, 1, Uuids.startOf(1561653130), 500.00, 2);
 
   protected static ProductSale FLAMETHROWER_SALE_4 =
-      new ProductSale(FLAMETHROWER.getId(), "2019-06-28", 1, Uuids.startOf(1561729530), 500.00, 23);
+      new ProductSale(FLAMETHROWER.getId(), DATE_2, 1, Uuids.startOf(1561729530), 500.00, 23);
 
   protected static ProductSale MP3_DOWNLOAD_SALE_1 =
-      new ProductSale(MP3_DOWNLOAD.getId(), "1999-01-01", 7, Uuids.startOf(915192000), 0.99, 12);
+      new ProductSale(MP3_DOWNLOAD.getId(), DATE_3, 7, Uuids.startOf(915192000), 0.99, 12);
 
   protected static List<String> createStatements(CcmRule ccmRule) {
     ImmutableList.Builder<String> builder =

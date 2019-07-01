@@ -41,7 +41,6 @@ public class EntityHelperDeleteByPrimaryKeyPartsMethodGenerator implements Metho
   public Optional<MethodSpec> generate() {
     MethodSpec.Builder deleteByPrimaryKeyPartsBuilder =
         MethodSpec.methodBuilder("deleteByPrimaryKeyParts")
-            .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
             .addParameter(TypeName.INT, "parameterCount")
             .returns(Delete.class);

@@ -186,15 +186,15 @@ public class DeleteIT extends InventoryITBase {
 
   @Test
   public void should_delete_by_partition_key() {
-    // should delete FLAMETHROWER_SALE_[1,3]
-    saleDao.deleteByIdForDay(FLAMETHROWER.getId(), "2019-06-27");
+    // should delete FLAMETHROWER_SALE_{1,3}
+    saleDao.deleteByIdForDay(FLAMETHROWER.getId(), DATE_1);
     assertThat(saleDao.all().all()).containsOnly(FLAMETHROWER_SALE_4, MP3_DOWNLOAD_SALE_1);
   }
 
   @Test
   public void should_delete_by_partition_key_and_partial_clustering() {
-    // should delete FLAMETHROWER_SALE_{1,3}
-    saleDao.deleteByIdForCustomer(FLAMETHROWER.getId(), "2019-06-27", 1);
+    // should delete FLAMETHROWER_SALE_[1-3]
+    saleDao.deleteByIdForCustomer(FLAMETHROWER.getId(), DATE_1, 1);
     assertThat(saleDao.all().all())
         .containsOnly(FLAMETHROWER_SALE_2, FLAMETHROWER_SALE_4, MP3_DOWNLOAD_SALE_1);
   }
@@ -203,7 +203,7 @@ public class DeleteIT extends InventoryITBase {
   public void should_delete_by_primary_key_sales() {
     // should delete FLAMETHROWER_SALE_2
     saleDao.deleteByIdForCustomerAtTime(
-        FLAMETHROWER.getId(), "2019-06-27", 2, FLAMETHROWER_SALE_2.getTs());
+        FLAMETHROWER.getId(), DATE_1, 2, FLAMETHROWER_SALE_2.getTs());
     assertThat(saleDao.all().all())
         .containsOnly(
             FLAMETHROWER_SALE_1, FLAMETHROWER_SALE_3, FLAMETHROWER_SALE_4, MP3_DOWNLOAD_SALE_1);
@@ -213,7 +213,7 @@ public class DeleteIT extends InventoryITBase {
   public void should_delete_if_price_matches() {
     ResultSet result =
         saleDao.deleteIfPriceMatches(
-            FLAMETHROWER.getId(), "2019-06-27", 2, FLAMETHROWER_SALE_2.getTs(), 250.0);
+            FLAMETHROWER.getId(), DATE_1, 2, FLAMETHROWER_SALE_2.getTs(), 250.0);
 
     assertThat(result.wasApplied()).isFalse();
     Row row = result.one();
@@ -222,21 +222,17 @@ public class DeleteIT extends InventoryITBase {
 
     result =
         saleDao.deleteIfPriceMatches(
-            FLAMETHROWER.getId(), "2019-06-27", 2, FLAMETHROWER_SALE_2.getTs(), 500.0);
+            FLAMETHROWER.getId(), DATE_1, 2, FLAMETHROWER_SALE_2.getTs(), 500.0);
 
     assertThat(result.wasApplied()).isTrue();
   }
 
   @Test
   public void should_delete_if_exists_sales() {
-    assertThat(
-            saleDao.deleteIfExists(
-                FLAMETHROWER.getId(), "2019-06-27", 2, FLAMETHROWER_SALE_2.getTs()))
+    assertThat(saleDao.deleteIfExists(FLAMETHROWER.getId(), DATE_1, 2, FLAMETHROWER_SALE_2.getTs()))
         .isTrue();
 
-    assertThat(
-            saleDao.deleteIfExists(
-                FLAMETHROWER.getId(), "2019-06-27", 2, FLAMETHROWER_SALE_2.getTs()))
+    assertThat(saleDao.deleteIfExists(FLAMETHROWER.getId(), DATE_1, 2, FLAMETHROWER_SALE_2.getTs()))
         .isFalse();
   }
 

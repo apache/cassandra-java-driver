@@ -105,10 +105,10 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
     VariableElement firstParameter = parameters.get(0);
     entityElement = EntityUtils.asEntityElement(firstParameter, typeParameters);
     hasEntityParameter = (entityElement != null);
-    final int keyParameterSize;
+    final int primaryKeyParameterCount;
     if (hasEntityParameter) {
       entityDefinition = context.getEntityFactory().getDefinition(entityElement);
-      keyParameterSize = entityDefinition.getPrimaryKey().size();
+      primaryKeyParameterCount = entityDefinition.getPrimaryKey().size();
     } else {
       entityElement = getEntityFromAnnotation();
       if (entityElement == null) {
@@ -123,9 +123,9 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
       }
       entityDefinition = context.getEntityFactory().getDefinition(entityElement);
       // if a custom if clause is provided, the whole primary key must also be provided.
-      List<? extends VariableElement> keyParameters = parameters;
+      List<? extends VariableElement> primaryKeyParameters = parameters;
       if (!annotation.customIfClause().isEmpty()) {
-        if (keyParameters.size() < entityDefinition.getPrimaryKey().size()) {
+        if (primaryKeyParameters.size() < entityDefinition.getPrimaryKey().size()) {
           List<TypeName> primaryKeyTypes =
               entityDefinition.getPrimaryKey().stream()
                   .map(d -> d.getType().asTypeName())
@@ -142,17 +142,18 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
           return Optional.empty();
         } else {
           // restrict parameters to primary key length.
-          keyParameters = keyParameters.subList(0, entityDefinition.getPrimaryKey().size());
+          primaryKeyParameters =
+              primaryKeyParameters.subList(0, entityDefinition.getPrimaryKey().size());
         }
       }
 
-      keyParameterSize = keyParameters.size();
+      primaryKeyParameterCount = primaryKeyParameters.size();
       if (!EntityUtils.areParametersValid(
           context,
           methodElement,
           entityElement,
           entityDefinition,
-          keyParameters,
+          primaryKeyParameters,
           Delete.class,
           "do not operate on an entity instance")) {
         return Optional.empty();
@@ -173,7 +174,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
             methodElement,
             (methodBuilder, requestName) ->
                 generatePrepareRequest(
-                    methodBuilder, requestName, helperFieldName, keyParameterSize));
+                    methodBuilder, requestName, helperFieldName, primaryKeyParameterCount));
 
     CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
 
@@ -203,8 +204,9 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
       List<CodeBlock> primaryKeyNames =
           entityDefinition.getPrimaryKey().stream()
               .map(PropertyDefinition::getCqlName)
-              .collect(Collectors.toList());
-      List<? extends VariableElement> bindMarkers = parameters.subList(0, keyParameterSize);
+              .collect(Collectors.toList())
+              .subList(0, primaryKeyParameterCount);
+      List<? extends VariableElement> bindMarkers = parameters.subList(0, primaryKeyParameterCount);
       warnIfCqlNamePresent(bindMarkers);
       GeneratedCodePatterns.bindParameters(
           bindMarkers, primaryKeyNames, methodBodyBuilder, enclosingClass, context, false);

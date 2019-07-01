@@ -30,6 +30,14 @@ public interface ProductSaleDao {
   
   @Select
   PagingIterable<ProductSale> findByDayForCustomer(UUID productId, LocalDate day, UUID customerID);
+  
+  /* Note that the clustering columns in your primary key definition are significant. All
+   * proceeding clustering columns must be provided if any are.
+   *
+   * For example, the following is *NOT VALID* because ts is provided, but customer_id is
+   * not. */
+  @Select
+  PagingIterable<ProductSale> findByDayForTs(UUID productId, LocalDate day, long ts);
 }
 ```
 
