@@ -52,7 +52,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <ul>
  *   <li>creates a new keyspace "examples" in the session. If a keyspace with this name already
  *       exists, it will be reused;
- *   <li>creates a table "examples.tbl_sample_kv". If it exist already, it will be reused;
+ *   <li>creates a table "examples.tbl_sample_kv". If it exists already, it will be reused;
  *   <li>inserts a TOTAL_NUMBER_OF_INSERTS of rows into the table.
  * </ul>
  *
