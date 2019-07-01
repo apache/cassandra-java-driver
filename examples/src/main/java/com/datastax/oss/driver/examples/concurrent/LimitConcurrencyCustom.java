@@ -30,6 +30,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -103,7 +104,7 @@ public class LimitConcurrencyCustom {
       final int counter = i;
 
       // We are running CqlSession.execute in a separate thread pool (executor)
-      CompletableFuture.supplyAsync(
+      executor.submit(
           () -> {
             insertsCounter.incrementAndGet();
             threads.add(Thread.currentThread().getName());
@@ -122,9 +123,7 @@ public class LimitConcurrencyCustom {
             }
 
             return executeRequest;
-          },
-          // Here the separate thread pool is passed as the argument
-          executor);
+          });
     }
     // Await for execution of TOTAL_NUMBER_OF_INSERTS
     REQUEST_LATCH.await();
@@ -135,6 +134,7 @@ public class LimitConcurrencyCustom {
             insertsCounter.get(), threads.size()));
     // Shutdown executor to free resources
     executor.shutdown();
+    executor.awaitTermination(10, TimeUnit.SECONDS);
   }
 
   private static void createSchema(CqlSession session) {
