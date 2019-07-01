@@ -50,7 +50,7 @@ The method can operate on:
     void deleteByIdForCustomer(UUID productId, LocalDate day, UUID customerId);
    
     /* Note that the clustering columns in your primary key definition are significant. All
-     * proceeding clustering columns must be provided if any are.
+     * preceding clustering columns must be provided if any are.
      *
      * For example, the following is *NOT VALID* because ts is provided, but customer_id is
      * not. */
