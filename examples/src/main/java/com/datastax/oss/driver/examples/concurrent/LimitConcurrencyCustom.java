@@ -33,7 +33,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Creates a keyspace and tables, and loads data using Multi-Threaded approach into them.
+ * Creates a keyspace and table, and loads data using a multi-threaded approach.
  *
  * <p>This example makes usage of a {@link CqlSession#execute(String)} method, which is responsible
  * for executing requests in a blocking way. It uses {@link ExecutorService} to limit number of
