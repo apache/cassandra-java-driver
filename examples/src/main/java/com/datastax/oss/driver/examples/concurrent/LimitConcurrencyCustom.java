@@ -21,7 +21,6 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -102,12 +101,12 @@ public class LimitConcurrencyCustom {
       // We are running CqlSession.execute in a separate thread pool (executor)
       executor.submit(
           () -> {
-            ResultSet executeRequest;
             try {
-              executeRequest =
-                  session.execute(
-                      pst.bind().setUuid("id", UUID.randomUUID()).setInt("value", counter));
+              session.execute(pst.bind().setUuid("id", UUID.randomUUID()).setInt("value", counter));
               insertsCounter.incrementAndGet();
+            } catch (Throwable t) {
+              // On production you should leverage logger and use logger.error() method.
+              t.printStackTrace();
             } finally {
               // Signal that processing of this request finishes
               REQUEST_LATCH.countDown();
@@ -115,8 +114,6 @@ public class LimitConcurrencyCustom {
               // By doing so we allow caller thread to submit another async request.
               SEMAPHORE.release();
             }
-
-            return executeRequest;
           });
     }
     // Await for execution of TOTAL_NUMBER_OF_INSERTS
