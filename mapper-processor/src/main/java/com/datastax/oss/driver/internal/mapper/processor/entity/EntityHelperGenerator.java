@@ -35,6 +35,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import java.beans.Introspector;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -108,8 +109,10 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
             new EntityHelperSetMethodGenerator(entityDefinition, this, context),
             new EntityHelperGetMethodGenerator(entityDefinition, this, context),
             new EntityHelperInsertMethodGenerator(entityDefinition, this, context),
+            new EntityHelperSelectByPrimaryKeyPartsMethodGenerator(entityDefinition, this, context),
             new EntityHelperSelectByPrimaryKeyMethodGenerator(entityDefinition, this, context),
             new EntityHelperSelectStartMethodGenerator(entityDefinition, this, context),
+            new EntityHelperDeleteByPrimaryKeyPartsMethodGenerator(entityDefinition, this, context),
             new EntityHelperDeleteByPrimaryKeyMethodGenerator(entityDefinition, this, context),
             new EntityHelperUpdateStartMethodGenerator(entityDefinition, this, context),
             new EntityHelperUpdateByPrimaryKeyMethodGenerator(entityDefinition, this, context))) {
@@ -139,6 +142,23 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
             CodeBlock.of("context.getSession().getName()"),
             CodeBlock.of("getKeyspaceId() == null ? \"\" : getKeyspaceId() + \".\""),
             CodeBlock.of("getTableId()"));
+
+    // retain primary keys for reference in methods.
+    classContents.addField(
+        FieldSpec.builder(
+                ParameterizedTypeName.get(List.class, String.class),
+                "primaryKeys",
+                Modifier.PRIVATE,
+                Modifier.FINAL)
+            .build());
+
+    constructorContents.addCode(
+        "$[this.primaryKeys = $1T.<$2T>builder()", ImmutableList.class, String.class);
+    for (PropertyDefinition propertyDefinition : entityDefinition.getPrimaryKey()) {
+      constructorContents.addCode("\n.add($1L)", propertyDefinition.getCqlName());
+    }
+
+    constructorContents.addCode("\n.build()$];\n");
 
     genericTypeConstantGenerator.generate(classContents);
 

@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
@@ -55,6 +56,8 @@ public class SelectIT extends InventoryITBase {
 
   private static ProductDao dao;
 
+  private static ProductSaleDao saleDao;
+
   @BeforeClass
   public static void setup() {
     CqlSession session = sessionRule.session();
@@ -66,12 +69,19 @@ public class SelectIT extends InventoryITBase {
 
     InventoryMapper inventoryMapper = new SelectIT_InventoryMapperBuilder(session).build();
     dao = inventoryMapper.productDao(sessionRule.keyspace());
+    saleDao = inventoryMapper.productSaleDao(sessionRule.keyspace());
   }
 
   @Before
   public void insertData() {
     dao.save(FLAMETHROWER);
     dao.save(MP3_DOWNLOAD);
+
+    saleDao.save(FLAMETHROWER_SALE_1);
+    saleDao.save(FLAMETHROWER_SALE_2);
+    saleDao.save(FLAMETHROWER_SALE_3);
+    saleDao.save(FLAMETHROWER_SALE_4);
+    saleDao.save(MP3_DOWNLOAD_SALE_1);
   }
 
   @Test
@@ -80,6 +90,11 @@ public class SelectIT extends InventoryITBase {
 
     dao.delete(FLAMETHROWER);
     assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+  }
+
+  @Test
+  public void should_select_all() {
+    assertThat(dao.all().all()).hasSize(2);
   }
 
   @Test
@@ -112,10 +127,44 @@ public class SelectIT extends InventoryITBase {
         .isEmpty();
   }
 
+  @Test
+  public void should_select_all_sales() {
+    assertThat(saleDao.all().all())
+        .containsOnly(
+            FLAMETHROWER_SALE_1,
+            FLAMETHROWER_SALE_3,
+            FLAMETHROWER_SALE_2,
+            FLAMETHROWER_SALE_4,
+            MP3_DOWNLOAD_SALE_1);
+  }
+
+  @Test
+  public void should_select_by_partition_key() {
+    assertThat(saleDao.salesByIdForDay(FLAMETHROWER.getId(), DATE_1).all())
+        .containsOnly(FLAMETHROWER_SALE_1, FLAMETHROWER_SALE_3, FLAMETHROWER_SALE_2);
+  }
+
+  @Test
+  public void should_select_by_partition_key_and_partial_clustering() {
+    assertThat(saleDao.salesByIdForCustomer(FLAMETHROWER.getId(), DATE_1, 1).all())
+        .containsOnly(FLAMETHROWER_SALE_1, FLAMETHROWER_SALE_3);
+  }
+
+  @Test
+  public void should_select_by_primary_key_sales() {
+    assertThat(
+            saleDao.salesByIdForCustomerAtTime(
+                MP3_DOWNLOAD.getId(), DATE_3, 7, MP3_DOWNLOAD_SALE_1.getTs()))
+        .isEqualTo(MP3_DOWNLOAD_SALE_1);
+  }
+
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
     ProductDao productDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    ProductSaleDao productSaleDao(@DaoKeyspace CqlIdentifier keyspace);
   }
 
   @Dao
@@ -123,6 +172,9 @@ public class SelectIT extends InventoryITBase {
   public interface ProductDao {
     @Select
     Product findById(UUID productId);
+
+    @Select
+    PagingIterable<Product> all();
 
     @Select
     Optional<Product> findOptionalById(UUID productId);
@@ -138,5 +190,28 @@ public class SelectIT extends InventoryITBase {
 
     @Insert
     void save(Product product);
+  }
+
+  @Dao
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
+  public interface ProductSaleDao {
+    // range query
+    @Select
+    PagingIterable<ProductSale> all();
+
+    // partition key provided
+    @Select
+    PagingIterable<ProductSale> salesByIdForDay(UUID id, String day);
+
+    // partition key and partial clustering key
+    @Select
+    PagingIterable<ProductSale> salesByIdForCustomer(UUID id, String day, int customerId);
+
+    // full primary key
+    @Select
+    ProductSale salesByIdForCustomerAtTime(UUID id, String day, int customerId, UUID ts);
+
+    @Insert
+    void save(ProductSale sale);
   }
 }

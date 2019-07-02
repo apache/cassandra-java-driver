@@ -16,9 +16,16 @@
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
+import com.datastax.oss.driver.internal.mapper.processor.entity.EntityDefinition;
+import com.squareup.javapoet.TypeName;
+import java.lang.annotation.Annotation;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -80,5 +87,87 @@ public class EntityUtils {
       return null;
     }
     return typeElement;
+  }
+
+  /**
+   * Validates that the given parameters are valid for an {@link EntityDefinition}, meaning that
+   * there are at least enough parameters provided to match the number of partition key columns and
+   * that parameter types match the primary key types.
+   *
+   * <p>If it is determined that the parameters are not valid, false is returned and an error
+   * message is emitted on the given method element.
+   */
+  public static boolean areParametersValid(
+      ProcessorContext context,
+      ExecutableElement methodElement,
+      TypeElement entityElement,
+      EntityDefinition entityDefinition,
+      List<? extends VariableElement> parameters,
+      Class<? extends Annotation> annotationClass,
+      String exceptionCondition) {
+    List<TypeName> primaryKeyTypes =
+        entityDefinition.getPrimaryKey().stream()
+            .map(d -> d.getType().asTypeName())
+            .collect(Collectors.toList());
+    List<TypeName> partitionKeyTypes =
+        entityDefinition.getPartitionKey().stream()
+            .map(d -> d.getType().asTypeName())
+            .collect(Collectors.toList());
+    List<TypeName> parameterTypes =
+        parameters.stream().map(p -> TypeName.get(p.asType())).collect(Collectors.toList());
+    // if parameters are provided, we must have at least enough to match partition key.
+    if (parameterTypes.size() < partitionKeyTypes.size()) {
+      context
+          .getMessager()
+          .error(
+              methodElement,
+              "Invalid parameter list: %s methods that %s "
+                  + "must at least specify partition key components "
+                  + "(expected partition key of %s: %s)",
+              annotationClass.getSimpleName(),
+              exceptionCondition,
+              entityElement.getSimpleName(),
+              partitionKeyTypes);
+      return false;
+    }
+
+    if (parameterTypes.size() > primaryKeyTypes.size()) {
+      context
+          .getMessager()
+          .error(
+              methodElement,
+              "Invalid parameter list: %s methods that %s "
+                  + "must match the primary key components in the exact order "
+                  + "(expected primary key of %s: %s). Too many parameters provided",
+              annotationClass.getSimpleName(),
+              exceptionCondition,
+              entityElement.getSimpleName(),
+              primaryKeyTypes);
+      return false;
+    }
+
+    // validate that each parameter type matches the primary key type
+    for (int parameterIndex = 0; parameterIndex < parameterTypes.size(); parameterIndex++) {
+      TypeName parameterType = parameterTypes.get(parameterIndex);
+      TypeName primaryKeyParameterType = primaryKeyTypes.get(parameterIndex);
+      if (!parameterType.equals(primaryKeyParameterType)) {
+        context
+            .getMessager()
+            .error(
+                methodElement,
+                "Invalid parameter list: %s methods that %s "
+                    + "must match the primary key components in the exact order "
+                    + "(expected primary key of %s: %s). Mismatch at index %d: %s should be %s",
+                annotationClass.getSimpleName(),
+                exceptionCondition,
+                entityElement.getSimpleName(),
+                primaryKeyTypes,
+                parameterIndex,
+                parameterType,
+                primaryKeyParameterType);
+        return false;
+      }
+    }
+    return true;
   }
 }
