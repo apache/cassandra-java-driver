@@ -58,8 +58,19 @@ The method can operate on:
     void deleteByIdForTs(UUID productId, LocalDate day, long ts);
     ```
 
-An optional IF clause can be added to the generated query. It can contain placeholders, for which
-the method must have corresponding parameters (same name, and a compatible Java type):
+* a number of parameters matching the placeholder markers in `customWhereClause`, for which
+  the parameters match the name and compatible java type of the markers:
+
+    ```java
+    @Delete(
+        entityClass = ProductSale.class,
+        customWhereClause =
+            "id = :id and day = :day and customer_id = :customerId and ts >= :startTs and ts < :endTs")
+    ResultSet deleteInTimeRange(UUID id, String day, int customerId, UUID startTs, UUID endTs);
+    ```
+    
+An optional IF clause can be added to the generated query. Like `customWhereClause` it can contain 
+placeholders:
 
 ```java
 @Delete(entityClass = Product.class, customIfClause = "description = :expectedDescription")

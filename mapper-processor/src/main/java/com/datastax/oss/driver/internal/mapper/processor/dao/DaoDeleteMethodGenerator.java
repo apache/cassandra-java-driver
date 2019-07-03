@@ -102,11 +102,26 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
               Delete.class.getSimpleName());
       return Optional.empty();
     }
+    String customWhereClause = annotation.customWhereClause();
+    String customIfClause = annotation.customIfClause();
     VariableElement firstParameter = parameters.get(0);
     entityElement = EntityUtils.asEntityElement(firstParameter, typeParameters);
     hasEntityParameter = (entityElement != null);
+
+    // the number of primary key parameters provided, if -1 this implies a custom
+    // where clause where number of parameters that are primary key are irrelevant.
     final int primaryKeyParameterCount;
     if (hasEntityParameter) {
+      if (!customWhereClause.isEmpty()) {
+        context
+            .getMessager()
+            .error(
+                methodElement,
+                "Invalid parameter list: %s methods that have a custom where clause "
+                    + "must not take an Entity (%s) as a parameter",
+                Delete.class.getSimpleName(),
+                entityElement.getSimpleName());
+      }
       entityDefinition = context.getEntityFactory().getDefinition(entityElement);
       primaryKeyParameterCount = entityDefinition.getPrimaryKey().size();
     } else {
@@ -120,43 +135,51 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
                     + "instance must have an 'entityClass' argument",
                 Delete.class.getSimpleName());
         return Optional.empty();
-      }
-      entityDefinition = context.getEntityFactory().getDefinition(entityElement);
-      // if a custom if clause is provided, the whole primary key must also be provided.
-      List<? extends VariableElement> primaryKeyParameters = parameters;
-      if (!annotation.customIfClause().isEmpty()) {
-        if (primaryKeyParameters.size() < entityDefinition.getPrimaryKey().size()) {
-          List<TypeName> primaryKeyTypes =
-              entityDefinition.getPrimaryKey().stream()
-                  .map(d -> d.getType().asTypeName())
-                  .collect(Collectors.toList());
-          context
-              .getMessager()
-              .error(
-                  methodElement,
-                  "Invalid parameter list: %s methods that have a custom if clause"
-                      + "must specify the entire primary key (expected primary keys of %s: %s)",
-                  Delete.class.getSimpleName(),
-                  entityElement.getSimpleName(),
-                  primaryKeyTypes);
-          return Optional.empty();
-        } else {
-          // restrict parameters to primary key length.
-          primaryKeyParameters =
-              primaryKeyParameters.subList(0, entityDefinition.getPrimaryKey().size());
-        }
+      } else {
+        entityDefinition = context.getEntityFactory().getDefinition(entityElement);
       }
 
-      primaryKeyParameterCount = primaryKeyParameters.size();
-      if (!EntityUtils.areParametersValid(
-          context,
-          methodElement,
-          entityElement,
-          entityDefinition,
-          primaryKeyParameters,
-          Delete.class,
-          "do not operate on an entity instance")) {
-        return Optional.empty();
+      if (customWhereClause.isEmpty()) {
+        /* if a custom if clause is provided, the whole primary key must also be provided.
+         * we only do this check if there is no custom where clause as the order of
+         * keys may differ in that case.*/
+        List<? extends VariableElement> primaryKeyParameters = parameters;
+        if (!customIfClause.isEmpty()) {
+          if (primaryKeyParameters.size() < entityDefinition.getPrimaryKey().size()) {
+            List<TypeName> primaryKeyTypes =
+                entityDefinition.getPrimaryKey().stream()
+                    .map(d -> d.getType().asTypeName())
+                    .collect(Collectors.toList());
+            context
+                .getMessager()
+                .error(
+                    methodElement,
+                    "Invalid parameter list: %s methods that have a custom if clause"
+                        + "must specify the entire primary key (expected primary keys of %s: %s)",
+                    Delete.class.getSimpleName(),
+                    entityElement.getSimpleName(),
+                    primaryKeyTypes);
+            return Optional.empty();
+          } else {
+            // restrict parameters to primary key length.
+            primaryKeyParameters =
+                primaryKeyParameters.subList(0, entityDefinition.getPrimaryKey().size());
+          }
+        }
+
+        primaryKeyParameterCount = primaryKeyParameters.size();
+        if (!EntityUtils.areParametersValid(
+            context,
+            methodElement,
+            entityElement,
+            entityDefinition,
+            primaryKeyParameters,
+            Delete.class,
+            "do not operate on an entity instance and lack a custom where clause")) {
+          return Optional.empty();
+        }
+      } else {
+        primaryKeyParameterCount = -1;
       }
     }
 
@@ -184,7 +207,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
         statementName);
     populateBuilderWithStatementAttributes(methodBodyBuilder, methodElement);
     populateBuilderWithFunction(methodBodyBuilder, boundStatementFunction);
-    int nextParameterIndex;
+    int nextParameterIndex = 0;
     if (hasEntityParameter) {
       warnIfCqlNamePresent(Collections.singletonList(firstParameter));
       // Bind entity's PK properties
@@ -198,7 +221,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
             enclosingClass);
       }
       nextParameterIndex = 1;
-    } else {
+    } else if (customWhereClause.isEmpty()) {
       // The PK components are passed as arguments to the method (we've already checked that the
       // types match).
       List<CodeBlock> primaryKeyNames =
@@ -215,13 +238,13 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
 
     // Bind any remaining parameters, assuming they are values for a custom IF clause
     if (nextParameterIndex < parameters.size()) {
-      if (annotation.customIfClause().isEmpty()) {
+      if (customIfClause.isEmpty() && customWhereClause.isEmpty()) {
         context
             .getMessager()
             .error(
                 methodElement,
                 "Wrong number of parameters: %s methods can only have additional "
-                    + "parameters if they specify a custom IF clause",
+                    + "parameters if they specify a custom WHERE or IF clause",
                 Delete.class.getSimpleName());
       }
       List<? extends VariableElement> bindMarkers =
@@ -291,31 +314,25 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
       String helperFieldName,
       int parameterSize) {
 
-    boolean ifExists = methodElement.getAnnotation(Delete.class).ifExists();
-    String customIfClause = methodElement.getAnnotation(Delete.class).customIfClause();
+    Delete delete = methodElement.getAnnotation(Delete.class);
+    boolean ifExists = delete.ifExists();
+    String customWhereClause = delete.customWhereClause();
+    String customIfClause = delete.customIfClause();
+
+    methodBuilder.addCode("$[$T $L = $L", SimpleStatement.class, requestName, helperFieldName);
+
+    if (!customWhereClause.isEmpty()) {
+      methodBuilder.addCode(".deleteStart().whereRaw($S)", customWhereClause);
+    } else {
+      methodBuilder.addCode(".deleteByPrimaryKeyParts($L)", parameterSize);
+    }
 
     if (ifExists) {
-      methodBuilder.addStatement(
-          "$T $L = $L.deleteByPrimaryKeyParts($L).ifExists().build()",
-          SimpleStatement.class,
-          requestName,
-          helperFieldName,
-          parameterSize);
+      methodBuilder.addCode(".ifExists()");
     } else if (!customIfClause.isEmpty()) {
-      methodBuilder.addStatement(
-          "$T $L = $L.deleteByPrimaryKeyParts($L).ifRaw($S).build()",
-          SimpleStatement.class,
-          requestName,
-          helperFieldName,
-          parameterSize,
-          customIfClause);
-    } else {
-      methodBuilder.addStatement(
-          "$T $L = $L.deleteByPrimaryKeyParts($L).build()",
-          SimpleStatement.class,
-          requestName,
-          helperFieldName,
-          parameterSize);
+      methodBuilder.addCode(".ifRaw($S)", customIfClause);
     }
+
+    methodBuilder.addCode(".build();$]\n");
   }
 }
