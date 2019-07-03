@@ -149,7 +149,7 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
     @Override
     @Nullable
     public ByteBuffer initialResponseSync() {
-      return initialToken.duplicate();
+      return initialToken;
     }
 
     @Override
