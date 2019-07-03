@@ -35,7 +35,11 @@ public interface SyncAuthenticator extends Authenticator {
    * <p>{@link #initialResponse()} calls this and wraps the result in an immediately completed
    * future.
    *
-   * @return The initial response to send to the server (which may be {@code null}).
+   * @return The initial response to send to the server (which may be {@code null}). Note that, if
+   *     the returned byte buffer is writable, the driver will <b>clear its contents</b> immediately
+   *     after use (to avoid keeping sensitive information in memory); do not reuse the same buffer
+   *     across multiple invocations. Alternatively, if the contents are not sensitive, you can make
+   *     the buffer {@linkplain ByteBuffer#asReadOnlyBuffer() read-only} and safely reuse it.
    */
   @Nullable
   ByteBuffer initialResponseSync();
@@ -48,7 +52,11 @@ public interface SyncAuthenticator extends Authenticator {
    *
    * @param challenge the server's SASL challenge; may be {@code null}.
    * @return The updated SASL token (which may be {@code null} to indicate the client requires no
-   *     further action).
+   *     further action). Note that, if the returned byte buffer is writable, the driver will
+   *     <b>clear its contents</b> immediately after use (to avoid keeping sensitive information in
+   *     memory); do not reuse the same buffer across multiple invocations. Alternatively, if the
+   *     contents are not sensitive, you can make the buffer {@linkplain
+   *     ByteBuffer#asReadOnlyBuffer() read-only} and safely reuse it.
    */
   @Nullable
   ByteBuffer evaluateChallengeSync(@Nullable ByteBuffer challenge);
