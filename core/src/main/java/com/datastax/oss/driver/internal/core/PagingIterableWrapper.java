@@ -48,7 +48,7 @@ public class PagingIterableWrapper<SourceT, TargetT> implements PagingIterable<T
   /**
    * Creates a {@link PagingIterableWrapper} for the given source. If {@code sized} is {@code true},
    * spliterators for this iterable will report {@link Spliterator#SIZED} and {@link
-   * Spliterator#SIZED} and their estimated size will be {@link #getAvailableWithoutFetching()}.
+   * Spliterator#SUBSIZED} and their estimated size will be {@link #getAvailableWithoutFetching()}.
    *
    * @param source The source to wrap.
    * @param elementMapper The element mapper.
