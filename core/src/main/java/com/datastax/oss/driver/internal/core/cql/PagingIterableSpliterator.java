@@ -34,13 +34,6 @@ import net.jcip.annotations.NotThreadSafe;
 @NotThreadSafe
 public class PagingIterableSpliterator<ElementT> implements Spliterator<ElementT> {
 
-  /**
-   * Creates a new {@link Builder} for {@link PagingIterableSpliterator} instances.
-   *
-   * @param iterable The {@link PagingIterable} to create a spliterator for.
-   * @param <ElementT> The iterable's element type
-   * @return a new {@link Builder}.
-   */
   @NonNull
   public static <ElementT> Builder<ElementT> builder(@NonNull PagingIterable<ElementT> iterable) {
     return new Builder<>(iterable);
