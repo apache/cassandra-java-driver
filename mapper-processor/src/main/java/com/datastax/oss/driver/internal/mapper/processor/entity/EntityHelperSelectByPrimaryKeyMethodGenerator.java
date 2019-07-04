@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
-import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
@@ -41,15 +40,8 @@ public class EntityHelperSelectByPrimaryKeyMethodGenerator implements MethodGene
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
             .returns(Select.class)
-            .addCode("$[return selectStart()");
+            .addStatement("return selectByPrimaryKeyParts(primaryKeys.size())");
 
-    for (PropertyDefinition property : entityDefinition.getPrimaryKey()) {
-      selectByPrimaryKeyBuilder.addCode(
-          "\n.whereColumn($1L).isEqualTo($2T.bindMarker($1L))",
-          property.getCqlName(),
-          QueryBuilder.class);
-    }
-    selectByPrimaryKeyBuilder.addCode("$];\n");
     return Optional.of(selectByPrimaryKeyBuilder.build());
   }
 }

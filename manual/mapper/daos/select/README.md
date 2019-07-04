@@ -19,6 +19,38 @@ key (partition key + clustering columns). The method's parameters must match the
 [@PartitionKey] and [@ClusteringColumn] annotations). The parameter names don't necessarily need to
 match the names of the columns.
 
+To select more than one entity within a partition, a subset of primary key components may be 
+specified as long as enough parameters are provided to account for the partition key.
+
+```java
+// given: PRIMARY KEY ((product_id, day), customer_id, ts)
+public interface ProductSaleDao {
+  @Select
+  PagingIterable<ProductSale> findByDay(UUID productId, LocalDate day);
+  
+  @Select
+  PagingIterable<ProductSale> findByDayForCustomer(UUID productId, LocalDate day, UUID customerID);
+  
+  /* Note that the clustering columns in your primary key definition are significant. All
+   * preceding clustering columns must be provided if any are.
+   *
+   * For example, the following is *NOT VALID* because ts is provided, but customer_id is
+   * not. */
+  @Select
+  PagingIterable<ProductSale> findByDayForTs(UUID productId, LocalDate day, long ts);
+}
+```
+
+To select all rows within a table, you may also provide no parameters.
+
+```java
+@Dao
+public interface ProductDao {
+  @Select
+  PagingIterable<Product> all();
+}
+```
+
 If the annotation has a `customWhereClause`, it completely replaces the WHERE clause. The provided
 string can contain named placeholders. In that case, the method must have a corresponding parameter
 for each, with the same name and a compatible Java type.

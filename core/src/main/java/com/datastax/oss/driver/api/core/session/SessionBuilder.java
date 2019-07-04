@@ -36,11 +36,9 @@ import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -66,14 +64,10 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
 
   protected DriverConfigLoader configLoader;
   protected Set<EndPoint> programmaticContactPoints = new HashSet<>();
-  protected List<TypeCodec<?>> typeCodecs = new ArrayList<>();
-  private NodeStateListener nodeStateListener;
-  private SchemaChangeListener schemaChangeListener;
-  protected RequestTracker requestTracker;
-  private ImmutableMap.Builder<String, String> localDatacenters = ImmutableMap.builder();
-  private ImmutableMap.Builder<String, Predicate<Node>> nodeFilters = ImmutableMap.builder();
   protected CqlIdentifier keyspace;
-  private ClassLoader classLoader = null;
+
+  protected ProgrammaticArguments.Builder programmaticArgumentsBuilder =
+      ProgrammaticArguments.builder();
 
   /**
    * Sets the configuration loader to use.
@@ -182,7 +176,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    */
   @NonNull
   public SelfT addTypeCodecs(@NonNull TypeCodec<?>... typeCodecs) {
-    Collections.addAll(this.typeCodecs, typeCodecs);
+    this.programmaticArgumentsBuilder.addTypeCodecs(typeCodecs);
     return self;
   }
 
@@ -194,7 +188,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    */
   @NonNull
   public SelfT withNodeStateListener(@Nullable NodeStateListener nodeStateListener) {
-    this.nodeStateListener = nodeStateListener;
+    this.programmaticArgumentsBuilder.withNodeStateListener(nodeStateListener);
     return self;
   }
 
@@ -207,7 +201,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    */
   @NonNull
   public SelfT withSchemaChangeListener(@Nullable SchemaChangeListener schemaChangeListener) {
-    this.schemaChangeListener = schemaChangeListener;
+    this.programmaticArgumentsBuilder.withSchemaChangeListener(schemaChangeListener);
     return self;
   }
 
@@ -219,7 +213,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    */
   @NonNull
   public SelfT withRequestTracker(@Nullable RequestTracker requestTracker) {
-    this.requestTracker = requestTracker;
+    this.programmaticArgumentsBuilder.withRequestTracker(requestTracker);
     return self;
   }
 
@@ -235,7 +229,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * if you use a third-party implementation, refer to their documentation.
    */
   public SelfT withLocalDatacenter(@NonNull String profileName, @NonNull String localDatacenter) {
-    this.localDatacenters.put(profileName, localDatacenter);
+    this.programmaticArgumentsBuilder.withLocalDatacenter(profileName, localDatacenter);
     return self;
   }
 
@@ -263,7 +257,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    */
   @NonNull
   public SelfT withNodeFilter(@NonNull String profileName, @NonNull Predicate<Node> nodeFilter) {
-    this.nodeFilters.put(profileName, nodeFilter);
+    this.programmaticArgumentsBuilder.withNodeFilter(profileName, nodeFilter);
     return self;
   }
 
@@ -305,7 +299,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    */
   @NonNull
   public SelfT withClassLoader(@Nullable ClassLoader classLoader) {
-    this.classLoader = classLoader;
+    this.programmaticArgumentsBuilder.withClassLoader(classLoader);
     return self;
   }
 
@@ -356,16 +350,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       }
 
       return DefaultSession.init(
-          (InternalDriverContext)
-              buildContext(
-                  configLoader,
-                  typeCodecs,
-                  nodeStateListener,
-                  schemaChangeListener,
-                  requestTracker,
-                  localDatacenters.build(),
-                  nodeFilters.build(),
-                  classLoader),
+          (InternalDriverContext) buildContext(configLoader, programmaticArgumentsBuilder.build()),
           contactPoints,
           keyspace);
 
@@ -381,6 +366,35 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * directly in the signature to avoid leaking that type through the protected API).
    */
   protected DriverContext buildContext(
+      DriverConfigLoader configLoader, ProgrammaticArguments programmaticArguments) {
+
+    // Preserve backward compatibility with the deprecated method:
+    @SuppressWarnings("deprecation")
+    DriverContext legacyApiContext =
+        buildContext(
+            configLoader,
+            programmaticArguments.getTypeCodecs(),
+            programmaticArguments.getNodeStateListener(),
+            programmaticArguments.getSchemaChangeListener(),
+            programmaticArguments.getRequestTracker(),
+            programmaticArguments.getLocalDatacenters(),
+            programmaticArguments.getNodeFilters(),
+            programmaticArguments.getClassLoader());
+    if (legacyApiContext != null) {
+      return legacyApiContext;
+    }
+
+    return new DefaultDriverContext(configLoader, programmaticArguments);
+  }
+
+  /**
+   * @deprecated this method only exists for backward compatibility (if a subclass written for
+   *     driver 4.1.0 returns a non-null result, that value will be used). Please override {@link
+   *     #buildContext(DriverConfigLoader, ProgrammaticArguments)} instead.
+   */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  protected DriverContext buildContext(
       DriverConfigLoader configLoader,
       List<TypeCodec<?>> typeCodecs,
       NodeStateListener nodeStateListener,
@@ -389,15 +403,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       Map<String, String> localDatacenters,
       Map<String, Predicate<Node>> nodeFilters,
       ClassLoader classLoader) {
-    return new DefaultDriverContext(
-        configLoader,
-        typeCodecs,
-        nodeStateListener,
-        schemaChangeListener,
-        requestTracker,
-        localDatacenters,
-        nodeFilters,
-        classLoader);
+    return null;
   }
 
   private static <T> T buildIfNull(T value, Supplier<T> builder) {

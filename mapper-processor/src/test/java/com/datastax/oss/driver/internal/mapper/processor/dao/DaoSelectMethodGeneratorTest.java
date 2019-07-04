@@ -64,17 +64,9 @@ public class DaoSelectMethodGeneratorTest extends DaoMethodGeneratorTest {
             .build(),
       },
       {
-        "Select methods that don't use a custom clause must take the partition key components "
-            + "in the exact order (expected PK of Product: [java.util.UUID])",
-        MethodSpec.methodBuilder("select")
-            .addAnnotation(Select.class)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .returns(ENTITY_CLASS_NAME)
-            .build(),
-      },
-      {
-        "Select methods that don't use a custom clause must take the partition key components "
-            + "in the exact order (expected PK of Product: [java.util.UUID])",
+        "Select methods that don't use a custom clause must match the primary key components "
+            + "in the exact order (expected primary key of Product: [java.util.UUID]). Mismatch "
+            + "at index 0: java.lang.String should be java.util.UUID",
         MethodSpec.methodBuilder("select")
             .addAnnotation(Select.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -83,8 +75,9 @@ public class DaoSelectMethodGeneratorTest extends DaoMethodGeneratorTest {
             .build(),
       },
       {
-        "Select methods that don't use a custom clause must take the partition key components "
-            + "in the exact order (expected PK of Product: [java.util.UUID])",
+        "Select methods that don't use a custom clause must match the primary key components "
+            + "in the exact order (expected primary key of Product: [java.util.UUID]). Too many "
+            + "parameters provided",
         MethodSpec.methodBuilder("select")
             .addAnnotation(Select.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
