@@ -807,9 +807,14 @@ class Connection {
    * If the connection is part of a pool, return it to the pool. The connection should generally not
    * be reused after that.
    */
-  void release() {
+  void release(boolean busy) {
     Owner owner = ownerRef.get();
-    if (owner instanceof HostConnectionPool) ((HostConnectionPool) owner).returnConnection(this);
+    if (owner instanceof HostConnectionPool)
+      ((HostConnectionPool) owner).returnConnection(this, busy);
+  }
+
+  void release() {
+    release(false);
   }
 
   boolean isClosed() {
