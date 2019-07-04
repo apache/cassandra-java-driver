@@ -423,7 +423,7 @@ class RequestHandler {
               } catch (BusyConnectionException e) {
                 // The pool shouldn't have give us a busy connection unless we've maxed up the pool,
                 // so move on to the next host.
-                connection.release();
+                connection.release(true);
                 logError(host.getSocketAddress(), e);
                 findNextHostAndQuery();
               } catch (RuntimeException e) {

@@ -119,8 +119,28 @@ class DataTypeCqlNameParser {
     DataType nativeType = NATIVE_TYPES_MAP.get(type.toLowerCase());
     if (nativeType != null) return nativeType;
 
+    if (parser.isEOS()) {
+      // return a custom type for the special empty type
+      // so that it gets detected later on, see TableMetadata
+      if (type.equalsIgnoreCase(EMPTY)) return custom(type);
+
+      // We need to remove escaped double quotes within the type name as it is stored unescaped.
+      // Otherwise it's a UDT. If we only want a shallow definition build it, otherwise search known
+      // definitions.
+      if (shallowUserTypes)
+        return new UserType.Shallow(currentKeyspaceName, Metadata.handleId(type), frozen);
+
+      UserType userType = null;
+      if (currentUserTypes != null) userType = currentUserTypes.get(Metadata.handleId(type));
+      if (userType == null && oldUserTypes != null)
+        userType = oldUserTypes.get(Metadata.handleId(type));
+
+      if (userType == null) throw new UnresolvedUserTypeException(currentKeyspaceName, type);
+      else return userType.copy(frozen);
+    }
+
+    List<String> parameters = parser.parseTypeParameters();
     if (type.equalsIgnoreCase(LIST)) {
-      List<String> parameters = parser.parseTypeParameters();
       if (parameters.size() != 1)
         throw new DriverInternalError(
             String.format("Excepting single parameter for list, got %s", parameters));
@@ -137,7 +157,6 @@ class DataTypeCqlNameParser {
     }
 
     if (type.equalsIgnoreCase(SET)) {
-      List<String> parameters = parser.parseTypeParameters();
       if (parameters.size() != 1)
         throw new DriverInternalError(
             String.format("Excepting single parameter for set, got %s", parameters));
@@ -154,7 +173,6 @@ class DataTypeCqlNameParser {
     }
 
     if (type.equalsIgnoreCase(MAP)) {
-      List<String> parameters = parser.parseTypeParameters();
       if (parameters.size() != 2)
         throw new DriverInternalError(
             String.format("Excepting two parameters for map, got %s", parameters));
@@ -180,7 +198,6 @@ class DataTypeCqlNameParser {
     }
 
     if (type.equalsIgnoreCase(FROZEN)) {
-      List<String> parameters = parser.parseTypeParameters();
       if (parameters.size() != 1)
         throw new DriverInternalError(
             String.format("Excepting single parameter for frozen keyword, got %s", parameters));
@@ -195,9 +212,11 @@ class DataTypeCqlNameParser {
     }
 
     if (type.equalsIgnoreCase(TUPLE)) {
-      List<String> rawTypes = parser.parseTypeParameters();
-      List<DataType> types = new ArrayList<DataType>(rawTypes.size());
-      for (String rawType : rawTypes) {
+      if (parameters.isEmpty()) {
+        throw new IllegalArgumentException("Expecting at list one parameter for tuple, got none");
+      }
+      List<DataType> types = new ArrayList<DataType>(parameters.size());
+      for (String rawType : parameters) {
         types.add(
             parse(
                 rawType,
@@ -211,23 +230,7 @@ class DataTypeCqlNameParser {
       return cluster.getMetadata().newTupleType(types);
     }
 
-    // return a custom type for the special empty type
-    // so that it gets detected later on, see TableMetadata
-    if (type.equalsIgnoreCase(EMPTY)) return custom(type);
-
-    // We need to remove escaped double quotes within the type name as it is stored unescaped.
-    // Otherwise it's a UDT. If we only want a shallow definition build it, otherwise search known
-    // definitions.
-    if (shallowUserTypes)
-      return new UserType.Shallow(currentKeyspaceName, Metadata.handleId(type), frozen);
-
-    UserType userType = null;
-    if (currentUserTypes != null) userType = currentUserTypes.get(Metadata.handleId(type));
-    if (userType == null && oldUserTypes != null)
-      userType = oldUserTypes.get(Metadata.handleId(type));
-
-    if (userType == null) throw new UnresolvedUserTypeException(currentKeyspaceName, type);
-    else return userType.copy(frozen);
+    throw new IllegalArgumentException("Could not parse type name " + toParse);
   }
 
   private static class Parser {
