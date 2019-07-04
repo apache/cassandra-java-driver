@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.ListType;
+import com.datastax.oss.driver.api.core.type.MapType;
 import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -108,6 +109,19 @@ public class DataTypeCqlNameParserTest {
     assertThat(tupleType.getComponentTypes().get(0)).isEqualTo(DataTypes.INT);
     assertThat(tupleType.getComponentTypes().get(1)).isEqualTo(DataTypes.TEXT);
     assertThat(tupleType.getComponentTypes().get(2)).isEqualTo(DataTypes.FLOAT);
+  }
+
+  @Test
+  public void should_parse_udt_named_like_collection_type() {
+    // Those are all valid UDT names!
+    assertThat(parse("tuple")).isInstanceOf(UserDefinedType.class);
+    assertThat(parse("list")).isInstanceOf(UserDefinedType.class);
+    assertThat(parse("map")).isInstanceOf(UserDefinedType.class);
+    assertThat(parse("frozen")).isInstanceOf(UserDefinedType.class);
+
+    MapType mapType = (MapType) parse("map<list,frozen>");
+    assertThat(mapType.getKeyType()).isInstanceOf(UserDefinedType.class);
+    assertThat(mapType.getValueType()).isInstanceOf(UserDefinedType.class);
   }
 
   private DataType parse(String toParse) {
