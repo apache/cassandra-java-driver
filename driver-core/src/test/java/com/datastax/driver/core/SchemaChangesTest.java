@@ -35,6 +35,7 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import org.mockito.ArgumentCaptor;
 import org.testng.annotations.AfterClass;
@@ -80,13 +81,18 @@ public class SchemaChangesTest extends CCMTestsSupport {
 
   @BeforeClass(groups = "short")
   public void setup() throws InterruptedException {
-    Cluster.Builder builder =
+    cluster1 =
         Cluster.builder()
             .addContactPoints(getContactPoints())
             .withPort(ccm().getBinaryPort())
-            .withQueryOptions(nonDebouncingQueryOptions());
-    cluster1 = builder.build();
-    cluster2 = builder.build();
+            .withQueryOptions(nonDebouncingQueryOptions())
+            .build();
+    cluster2 =
+        Cluster.builder()
+            .addContactPoints(getContactPoints())
+            .withPort(ccm().getBinaryPort())
+            .withQueryOptions(nonDebouncingQueryOptions())
+            .build();
     schemaDisabledCluster =
         spy(
             Cluster.builder()
@@ -190,6 +196,40 @@ public class SchemaChangesTest extends CCMTestsSupport {
     }
     for (Metadata m : metadatas())
       assertThat(m.getKeyspace(keyspace).getTable("table1")).hasColumn("j");
+  }
+
+  /**
+   * JAVA-2204: Make sure we don't accidentally store new table instances in an old keyspace
+   * instance, otherwise this will create a memory leak if a client holds onto a stale table
+   * instance (in particular, the object mapper does).
+   */
+  @Test(groups = "short")
+  public void should_not_update_tables_on_stale_keyspace_instance() throws InterruptedException {
+    final Cluster cluster1 = session1.getCluster();
+    final String keyspaceName = "lowercase";
+    execute(CREATE_TABLE, keyspaceName);
+    final KeyspaceMetadata oldKeyspace = cluster1.getMetadata().getKeyspace(keyspaceName);
+    TableMetadata oldTable = oldKeyspace.getTable("table1");
+
+    // Force a full refresh
+    cluster1.getConfiguration().getQueryOptions().setMetadataEnabled(false);
+    cluster1.getConfiguration().getQueryOptions().setMetadataEnabled(true);
+    ConditionChecker.check()
+        .that(
+            new Callable<Boolean>() {
+              @Override
+              public Boolean call() {
+                return cluster1.getMetadata().getKeyspace(keyspaceName) == oldKeyspace;
+              }
+            })
+        .becomesFalse();
+
+    // Before the fix, the schema parser updated the old keyspace's tables during a full refresh:
+    //   oldTable -> oldKeyspace -> newTable
+    // If the client held onto the initial table instance, successive refreshes would grow the chain
+    // over time:
+    //   table1 -> keyspace1 -> table2 -> keyspace2 -> ...
+    assertThat(oldKeyspace.getTable("table1")).isSameAs(oldTable);
   }
 
   /**

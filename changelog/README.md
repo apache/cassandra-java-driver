@@ -5,6 +5,7 @@
 - [bug] JAVA-2249: Stop stripping trailing zeros in ByteOrderedTokens.
 - [bug] JAVA-1492: Don't immediately reuse busy connections for another request.
 - [bug] JAVA-2198: Handle UDTs with names that clash with collection types.
+- [bug] JAVA-2204: Avoid memory leak when client holds onto a stale TableMetadata instance.
 
 
 ### 3.7.1

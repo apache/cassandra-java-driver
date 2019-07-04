@@ -441,19 +441,29 @@ abstract class SchemaParser {
         metadata.triggerOnKeyspaceChanged(newKeyspace, oldKeyspace);
       }
       Map<String, TableMetadata> oldTables =
-          oldKeyspace == null ? new HashMap<String, TableMetadata>() : oldKeyspace.tables;
+          oldKeyspace == null
+              ? new HashMap<String, TableMetadata>()
+              : new HashMap<String, TableMetadata>(oldKeyspace.tables);
       updateTables(metadata, oldTables, newKeyspace.tables, null);
       Map<String, UserType> oldTypes =
-          oldKeyspace == null ? new HashMap<String, UserType>() : oldKeyspace.userTypes;
+          oldKeyspace == null
+              ? new HashMap<String, UserType>()
+              : new HashMap<String, UserType>(oldKeyspace.userTypes);
       updateUserTypes(metadata, oldTypes, newKeyspace.userTypes, null);
       Map<String, FunctionMetadata> oldFunctions =
-          oldKeyspace == null ? new HashMap<String, FunctionMetadata>() : oldKeyspace.functions;
+          oldKeyspace == null
+              ? new HashMap<String, FunctionMetadata>()
+              : new HashMap<String, FunctionMetadata>(oldKeyspace.functions);
       updateFunctions(metadata, oldFunctions, newKeyspace.functions, null);
       Map<String, AggregateMetadata> oldAggregates =
-          oldKeyspace == null ? new HashMap<String, AggregateMetadata>() : oldKeyspace.aggregates;
+          oldKeyspace == null
+              ? new HashMap<String, AggregateMetadata>()
+              : new HashMap<String, AggregateMetadata>(oldKeyspace.aggregates);
       updateAggregates(metadata, oldAggregates, newKeyspace.aggregates, null);
       Map<String, MaterializedViewMetadata> oldViews =
-          oldKeyspace == null ? new HashMap<String, MaterializedViewMetadata>() : oldKeyspace.views;
+          oldKeyspace == null
+              ? new HashMap<String, MaterializedViewMetadata>()
+              : new HashMap<String, MaterializedViewMetadata>(oldKeyspace.views);
       updateViews(metadata, oldViews, newKeyspace.views, null);
     }
   }
