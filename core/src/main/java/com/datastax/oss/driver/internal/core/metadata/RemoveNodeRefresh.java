@@ -61,7 +61,7 @@ public class RemoveNodeRefresh extends NodesRefresh {
     if (removedNode == null) {
       // This should never happen because we already check the event in NodeStateManager, but handle
       // just in case.
-      LOG.debug("[{}] Couldn't find node {} to remove", broadcastRpcAddressToRemove);
+      LOG.debug("[{}] Couldn't find node {} to remove", logPrefix, broadcastRpcAddressToRemove);
       return new Result(oldMetadata);
     } else {
       LOG.debug("[{}] Removing node {}", logPrefix, removedNode);
