@@ -19,6 +19,7 @@ import static com.google.testing.compile.CompilationSubject.assertThat;
 
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.internal.mapper.processor.MapperProcessorTest;
+import com.google.common.truth.StringSubject;
 import com.google.testing.compile.Compilation;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
@@ -62,6 +63,41 @@ public class EntityAnnotationTest extends MapperProcessorTest {
             StandardLocation.SOURCE_OUTPUT, "test", "Foo_BarHelper__MapperGenerated.java")
         .contentsAsUtf8String()
         .contains("class Foo_BarHelper__MapperGenerated extends EntityHelperBase<Foo.Bar>");
+  }
+
+  @Test
+  public void should_detect_boolean_getter() {
+    Compilation compilation =
+        compileWithMapperProcessor(
+            "test",
+            TypeSpec.classBuilder(ClassName.get("test", "Foo"))
+                .addModifiers(Modifier.PUBLIC)
+                .addType(
+                    TypeSpec.classBuilder("Bar")
+                        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                        .addAnnotation(Entity.class)
+                        // Dummy getter and setter to have at least one mapped property
+                        .addMethod(
+                            MethodSpec.methodBuilder("setBool")
+                                .addParameter(TypeName.BOOLEAN, "bool")
+                                .addModifiers(Modifier.PUBLIC)
+                                .build())
+                        .addMethod(
+                            MethodSpec.methodBuilder("isBool")
+                                .returns(TypeName.BOOLEAN)
+                                .addModifiers(Modifier.PUBLIC)
+                                .addStatement("return true")
+                                .build())
+                        .build())
+                .build());
+    assertThat(compilation).succeededWithoutWarnings();
+    StringSubject contents =
+        assertThat(compilation)
+            .generatedFile(
+                StandardLocation.SOURCE_OUTPUT, "test", "Foo_BarHelper__MapperGenerated.java")
+            .contentsAsUtf8String();
+    contents.contains("target = target.setBoolean(\"bool\", entity.isBool())");
+    contents.contains("returnValue.setBool(source.getBoolean(\"bool\"))");
   }
 
   @Test

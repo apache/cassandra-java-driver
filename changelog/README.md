@@ -4,6 +4,7 @@
 
 ### 4.2.0 (in progress)
 
+- [bug] JAVA-2325: Allow "is" prefix for boolean getters in mapped entities
 - [improvement] JAVA-2308: Add customWhereClause to `@Delete`
 - [improvement] JAVA-2247: PagingIterable implementations should implement spliterator()
 - [bug] JAVA-2312: Handle UDTs with names that clash with collection types
