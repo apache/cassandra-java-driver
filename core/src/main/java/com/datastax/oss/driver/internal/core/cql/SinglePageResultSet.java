@@ -15,15 +15,19 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.internal.core.PagingIterableWrapper;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Spliterator;
+import java.util.function.Function;
 import net.jcip.annotations.NotThreadSafe;
 
 @NotThreadSafe
@@ -68,6 +72,21 @@ public class SinglePageResultSet implements ResultSet {
   @Override
   public Iterator<Row> iterator() {
     return onlyPage.currentPage().iterator();
+  }
+
+  @NonNull
+  @Override
+  public Spliterator<Row> spliterator() {
+    return PagingIterableSpliterator.builder(this)
+        .withEstimatedSize(getAvailableWithoutFetching())
+        .build();
+  }
+
+  @NonNull
+  @Override
+  public <TargetElementT> PagingIterable<TargetElementT> map(
+      Function<? super Row, ? extends TargetElementT> elementMapper) {
+    return new PagingIterableWrapper<>(this, elementMapper, true);
   }
 
   @Override
