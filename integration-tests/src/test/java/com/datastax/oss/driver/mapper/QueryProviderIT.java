@@ -21,9 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.PagingIterable;
-import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
-import com.datastax.oss.driver.api.core.cql.PreparedStatement;
-import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.cql.*;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
@@ -121,7 +120,7 @@ public class QueryProviderIT {
   }
 
   public static class FindSliceProvider {
-    private final CqlSession session;
+    private final Session session;
     private final AtomicInteger executionCount;
     private final EntityHelper<SensorReading> sensorReadingHelper;
     private final Select selectStart;
@@ -149,7 +148,7 @@ public class QueryProviderIT {
           select = select.whereColumn("day").isEqualTo(bindMarker());
         }
       }
-      PreparedStatement preparedStatement = session.prepare(select.build());
+      PreparedStatement preparedStatement = session.execute(select.build(), PrepareRequest.SYNC);
       BoundStatementBuilder boundStatementBuilder =
           preparedStatement.boundStatementBuilder().setInt("id", id);
       if (month != null) {
@@ -158,7 +157,9 @@ public class QueryProviderIT {
           boundStatementBuilder = boundStatementBuilder.setInt("day", day);
         }
       }
-      return session.execute(boundStatementBuilder.build()).map(sensorReadingHelper::get);
+      return session
+          .execute(boundStatementBuilder.build(), Statement.SYNC)
+          .map(sensorReadingHelper::get);
     }
   }
 

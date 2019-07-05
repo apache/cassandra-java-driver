@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.mapper;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
@@ -31,14 +31,13 @@ import java.util.concurrent.ConcurrentMap;
 
 public class DefaultMapperContext implements MapperContext {
 
-  private final CqlSession session;
+  private final Session session;
   private final CqlIdentifier keyspaceId;
   private final CqlIdentifier tableId;
   private final ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache;
   private final Map<Object, Object> customState;
 
-  public DefaultMapperContext(
-      @NonNull CqlSession session, @NonNull Map<Object, Object> customState) {
+  public DefaultMapperContext(@NonNull Session session, @NonNull Map<Object, Object> customState) {
     this(
         session,
         null,
@@ -48,7 +47,7 @@ public class DefaultMapperContext implements MapperContext {
   }
 
   private DefaultMapperContext(
-      CqlSession session,
+      Session session,
       CqlIdentifier keyspaceId,
       CqlIdentifier tableId,
       ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache,
@@ -71,7 +70,7 @@ public class DefaultMapperContext implements MapperContext {
 
   @NonNull
   @Override
-  public CqlSession getSession() {
+  public Session getSession() {
     return session;
   }
 

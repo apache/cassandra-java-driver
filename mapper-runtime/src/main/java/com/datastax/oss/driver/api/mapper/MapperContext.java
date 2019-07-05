@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.api.mapper;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -29,7 +29,7 @@ import java.util.Map;
 public interface MapperContext {
 
   @NonNull
-  CqlSession getSession();
+  Session getSession();
 
   /**
    * If this context belongs to a DAO that was built with a keyspace-parameterized mapper method,

@@ -17,6 +17,38 @@
           ]
         }
       }
-    }
+    },
+    "ignore": [
+      {
+        "code": "java.field.typeChanged",
+        "old": "field com.datastax.oss.driver.api.mapper.MapperBuilder<MapperT>.session",
+        "new": "field com.datastax.oss.driver.api.mapper.MapperBuilder<MapperT>.session",
+        "justification": "Downcast to Session to support pluggable RequestProcessors (e.g. GuavaSession etc)."
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter void com.datastax.oss.driver.api.mapper.MapperBuilder<MapperT>::<init>(===com.datastax.oss.driver.api.core.CqlSession===)",
+        "new": "parameter void com.datastax.oss.driver.api.mapper.MapperBuilder<MapperT>::<init>(===com.datastax.oss.driver.api.core.session.Session===)",
+        "justification": "Downcast to Session to support pluggable RequestProcessors (e.g. GuavaSession etc)."
+      },
+      {
+        "code": "java.method.returnTypeChanged",
+        "old": "method com.datastax.oss.driver.api.core.CqlSession com.datastax.oss.driver.api.mapper.MapperContext::getSession()",
+        "new": "method com.datastax.oss.driver.api.core.session.Session com.datastax.oss.driver.api.mapper.MapperContext::getSession()",
+        "justification": "Downcast to Session to support pluggable RequestProcessors (e.g. GuavaSession etc)."
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter void com.datastax.oss.driver.internal.mapper.DefaultMapperContext::<init>(===com.datastax.oss.driver.api.core.CqlSession===, java.util.Map<java.lang.Object, java.lang.Object>)",
+        "new": "parameter void com.datastax.oss.driver.internal.mapper.DefaultMapperContext::<init>(===com.datastax.oss.driver.api.core.session.Session===, java.util.Map<java.lang.Object, java.lang.Object>)",
+        "justification": "Downcast to Session to support pluggable RequestProcessors (e.g. GuavaSession etc)."
+      },
+      {
+        "code": "java.method.returnTypeChanged",
+        "old": "method com.datastax.oss.driver.api.core.CqlSession com.datastax.oss.driver.internal.mapper.DefaultMapperContext::getSession()",
+        "new": "method com.datastax.oss.driver.api.core.session.Session com.datastax.oss.driver.internal.mapper.DefaultMapperContext::getSession()",
+        "justification": "Downcast to Session to support pluggable RequestProcessors (e.g. GuavaSession etc)."
+      }
+    ]
   }
 }

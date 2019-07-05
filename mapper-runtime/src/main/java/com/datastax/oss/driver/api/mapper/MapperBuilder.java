@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.mapper;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -31,10 +32,10 @@ import java.util.Map;
  */
 public abstract class MapperBuilder<MapperT> {
 
-  protected final CqlSession session;
+  protected final Session session;
   protected Map<Object, Object> customState;
 
-  protected MapperBuilder(CqlSession session) {
+  protected MapperBuilder(Session session) {
     this.session = session;
     this.customState = new HashMap<>();
   }
@@ -44,8 +45,8 @@ public abstract class MapperBuilder<MapperT> {
    *
    * <p>This is intended mainly for {@link QueryProvider} methods: since provider classes are
    * instantiated directly by the generated mapper code, they have no way to access non-static state
-   * from the rest of your application. This method allows you to pass that state while building the
-   * mapper, and access it later at runtime.
+   * from the rest of your application. This method allows you to psass that state while building
+   * the mapper, and access it later at runtime.
    *
    * <p>Note that this state will be accessed concurrently, it should be thread-safe.
    */

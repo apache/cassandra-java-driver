@@ -19,13 +19,7 @@ import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
-import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
-import com.datastax.oss.driver.api.core.cql.PreparedStatement;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
-import com.datastax.oss.driver.api.core.cql.Row;
-import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.cql.*;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.MapperException;
@@ -57,7 +51,7 @@ public class DaoBase {
 
   protected static CompletionStage<PreparedStatement> prepare(
       SimpleStatement statement, MapperContext context) {
-    return context.getSession().prepareAsync(statement);
+    return context.getSession().execute(statement, PrepareRequest.ASYNC);
   }
 
   /**
@@ -175,7 +169,7 @@ public class DaoBase {
   }
 
   protected ResultSet execute(Statement<?> statement) {
-    return context.getSession().execute(statement);
+    return context.getSession().execute(statement, Statement.SYNC);
   }
 
   protected boolean executeAndMapWasAppliedToBoolean(Statement<?> statement) {
@@ -234,7 +228,8 @@ public class DaoBase {
   }
 
   protected CompletableFuture<AsyncResultSet> executeAsync(Statement<?> statement) {
-    CompletionStage<AsyncResultSet> stage = context.getSession().executeAsync(statement);
+    CompletionStage<AsyncResultSet> stage =
+        context.getSession().execute(statement, Statement.ASYNC);
     // We allow DAO interfaces to return CompletableFuture instead of CompletionStage. This method
     // returns CompletableFuture, which makes the implementation code a bit simpler to generate.
     // In practice this has no performance impact, because the default implementation of

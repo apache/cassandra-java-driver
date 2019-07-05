@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.mapper;
 
-import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.mapper.MapperBuilder;
 import com.datastax.oss.driver.internal.mapper.DefaultMapperContext;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
@@ -45,8 +45,8 @@ public class MapperBuilderGenerator extends SingleFileCodeGenerator {
     return builderName;
   }
 
-  protected Class<? extends CqlSession> getSessionClass() {
-    return CqlSession.class;
+  protected Class<? extends Session> getSessionClass() {
+    return Session.class;
   }
 
   @Override
