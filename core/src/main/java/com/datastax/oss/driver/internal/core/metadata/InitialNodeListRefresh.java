@@ -74,7 +74,7 @@ class InitialNodeListRefresh extends NodesRefresh {
       if (tokenFactory == null && nodeInfo.getPartitioner() != null) {
         tokenFactory = tokenFactoryRegistry.tokenFactoryFor(nodeInfo.getPartitioner());
       }
-      tokensChanged |= copyInfos(nodeInfo, node, tokenFactory, logPrefix);
+      tokensChanged |= copyInfos(nodeInfo, node, tokenFactory, context);
       newNodesBuilder.put(node.getHostId(), node);
     }
 
@@ -82,7 +82,7 @@ class InitialNodeListRefresh extends NodesRefresh {
     ImmutableList.Builder<Object> eventsBuilder = ImmutableList.builder();
 
     for (DefaultNode newNode : newNodes.values()) {
-      if (!contactPoints.contains(newNode)) {
+      if (findIn(contactPoints, newNode.getEndPoint()) == null) {
         eventsBuilder.add(NodeStateEvent.added(newNode));
       }
     }

@@ -189,6 +189,7 @@ public class MetadataManagerTest {
     NodeInfo info = mock(NodeInfo.class);
     when(info.getDatacenter()).thenReturn("dc1");
     when(info.getHostId()).thenReturn(UUID.randomUUID());
+    when(info.getEndPoint()).thenReturn(node.getEndPoint());
     when(topologyMonitor.refreshNode(node))
         .thenReturn(CompletableFuture.completedFuture(Optional.of(info)));
 
