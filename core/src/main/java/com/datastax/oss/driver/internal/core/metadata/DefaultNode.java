@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
+import com.datastax.oss.driver.internal.core.metrics.NoopNodeMetricUpdater;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
@@ -39,8 +40,8 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class DefaultNode implements Node {
 
-  private final EndPoint endPoint;
-  private final NodeMetricUpdater metricUpdater;
+  private volatile EndPoint endPoint;
+  private volatile NodeMetricUpdater metricUpdater;
 
   volatile InetSocketAddress broadcastRpcAddress;
   volatile InetSocketAddress broadcastAddress;
@@ -78,6 +79,18 @@ public class DefaultNode implements Node {
   @Override
   public EndPoint getEndPoint() {
     return endPoint;
+  }
+
+  public void setEndPoint(@NonNull EndPoint newEndPoint, @NonNull InternalDriverContext context) {
+    if (!newEndPoint.equals(endPoint)) {
+      endPoint = newEndPoint;
+
+      // The endpoint is also used to build metric names, so make sure they get updated
+      NodeMetricUpdater previousMetricUpdater = metricUpdater;
+      if (!(previousMetricUpdater instanceof NoopNodeMetricUpdater)) {
+        metricUpdater = context.getMetricsFactory().newNodeUpdater(this);
+      }
+    }
   }
 
   @NonNull
@@ -166,27 +179,8 @@ public class DefaultNode implements Node {
   }
 
   @Override
-  public boolean equals(Object other) {
-    if (other == this) {
-      return true;
-    } else if (other instanceof Node) {
-      Node that = (Node) other;
-      // hostId is the natural identifier, but unfortunately we don't know it for contact points
-      // until the driver has opened the first connection.
-      return this.endPoint.equals(that.getEndPoint());
-    } else {
-      return false;
-    }
-  }
-
-  @Override
-  public int hashCode() {
-    return endPoint.hashCode();
-  }
-
-  @Override
   public String toString() {
-    return endPoint.toString();
+    return String.format("%s(%s,%s)", super.toString(), hostId, endPoint);
   }
 
   /** Note: deliberately not exposed by the public interface. */

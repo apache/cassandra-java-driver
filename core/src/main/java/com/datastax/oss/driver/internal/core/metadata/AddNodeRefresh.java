@@ -37,11 +37,10 @@ public class AddNodeRefresh extends NodesRefresh {
   public Result compute(
       DefaultMetadata oldMetadata, boolean tokenMapEnabled, InternalDriverContext context) {
     Map<UUID, Node> oldNodes = oldMetadata.getNodes();
-    if (oldNodes.containsKey(newNodeInfo.getHostId())) {
-      return new Result(oldMetadata);
-    } else {
+    Node existing = oldNodes.get(newNodeInfo.getHostId());
+    if (existing == null) {
       DefaultNode newNode = new DefaultNode(newNodeInfo.getEndPoint(), context);
-      copyInfos(newNodeInfo, newNode, null, context.getSessionName());
+      copyInfos(newNodeInfo, newNode, null, context);
       Map<UUID, Node> newNodes =
           ImmutableMap.<UUID, Node>builder()
               .putAll(oldNodes)
@@ -50,6 +49,19 @@ public class AddNodeRefresh extends NodesRefresh {
       return new Result(
           oldMetadata.withNodes(newNodes, tokenMapEnabled, false, null, context),
           ImmutableList.of(NodeStateEvent.added(newNode)));
+    } else {
+      // If a node is restarted after changing its broadcast RPC address, Cassandra considers that
+      // an addition, even though the host_id hasn't changed :(
+      // Update the existing instance and emit an UP event to trigger a pool reconnection.
+      if (!existing.getEndPoint().equals(newNodeInfo.getEndPoint())) {
+        copyInfos(newNodeInfo, ((DefaultNode) existing), null, context);
+        assert newNodeInfo.getBroadcastRpcAddress().isPresent(); // always for peer nodes
+        return new Result(
+            oldMetadata,
+            ImmutableList.of(TopologyEvent.suggestUp(newNodeInfo.getBroadcastRpcAddress().get())));
+      } else {
+        return new Result(oldMetadata);
+      }
     }
   }
 }

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Collections;
@@ -34,7 +35,12 @@ abstract class NodesRefresh implements MetadataRefresh {
    *     mutate the tokens in-place, so there is no way to check this after the fact).
    */
   protected static boolean copyInfos(
-      NodeInfo nodeInfo, DefaultNode node, TokenFactory tokenFactory, String logPrefix) {
+      NodeInfo nodeInfo,
+      DefaultNode node,
+      TokenFactory tokenFactory,
+      InternalDriverContext context) {
+
+    node.setEndPoint(nodeInfo.getEndPoint(), context);
     node.broadcastRpcAddress = nodeInfo.getBroadcastRpcAddress().orElse(null);
     node.broadcastAddress = nodeInfo.getBroadcastAddress().orElse(null);
     node.listenAddress = nodeInfo.getListenAddress().orElse(null);
@@ -48,7 +54,7 @@ abstract class NodesRefresh implements MetadataRefresh {
     } catch (IllegalArgumentException e) {
       LOG.warn(
           "[{}] Error converting Cassandra version '{}' for {}",
-          logPrefix,
+          context.getSessionName(),
           versionString,
           node.getEndPoint());
     }

@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
@@ -39,7 +40,8 @@ public class FullNodeListRefreshTest {
 
   private DefaultNode node1;
   private DefaultNode node2;
-  private DefaultNode node3;
+  private EndPoint endPoint3;
+  private UUID hostId3;
 
   @Before
   public void setup() {
@@ -47,7 +49,9 @@ public class FullNodeListRefreshTest {
 
     node1 = TestNodeFactory.newNode(1, context);
     node2 = TestNodeFactory.newNode(2, context);
-    node3 = TestNodeFactory.newNode(3, context);
+
+    endPoint3 = TestNodeFactory.newEndPoint(3);
+    hostId3 = UUID.randomUUID();
   }
 
   @Test
@@ -64,18 +68,15 @@ public class FullNodeListRefreshTest {
                 .withEndPoint(node2.getEndPoint())
                 .withHostId(node2.getHostId())
                 .build(),
-            DefaultNodeInfo.builder()
-                .withEndPoint(node3.getEndPoint())
-                .withHostId(node3.getHostId())
-                .build());
+            DefaultNodeInfo.builder().withEndPoint(endPoint3).withHostId(hostId3).build());
     FullNodeListRefresh refresh = new FullNodeListRefresh(newInfos);
 
     // When
     MetadataRefresh.Result result = refresh.compute(oldMetadata, false, context);
 
     // Then
-    assertThat(result.newMetadata.getNodes())
-        .containsOnlyKeys(node2.getHostId(), node3.getHostId());
+    assertThat(result.newMetadata.getNodes()).containsOnlyKeys(node2.getHostId(), hostId3);
+    DefaultNode node3 = (DefaultNode) result.newMetadata.getNodes().get(hostId3);
     assertThat(result.events)
         .containsOnly(NodeStateEvent.removed(node1), NodeStateEvent.added(node3));
   }

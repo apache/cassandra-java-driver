@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.metadata;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.api.core.session.Session;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
@@ -30,6 +31,11 @@ import java.util.UUID;
  *
  * <p>This object is mutable, all of its properties may be updated at runtime to reflect the latest
  * state of the node.
+ *
+ * <p>Note that the default implementation returned by the driver uses <b>reference equality</b>. A
+ * {@link Session} will always return the same instance for a given {@link #getHostId() host id}.
+ * However, instances coming from different sessions will not be equal, even if they refer to the
+ * same host id.
  */
 public interface Node {
 

@@ -163,7 +163,7 @@ public class MetadataManager implements AsyncAutoCloseable {
             maybeInfo -> {
               if (maybeInfo.isPresent()) {
                 boolean tokensChanged =
-                    NodesRefresh.copyInfos(maybeInfo.get(), (DefaultNode) node, null, logPrefix);
+                    NodesRefresh.copyInfos(maybeInfo.get(), (DefaultNode) node, null, context);
                 if (tokensChanged) {
                   apply(new TokensChangedRefresh());
                 }
