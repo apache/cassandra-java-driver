@@ -79,43 +79,22 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
   }
 
   protected void maybeAddTtl(String ttl, MethodSpec.Builder methodBuilder) {
-    if (!ttl.isEmpty()) {
-      if (ttl.startsWith(":")) {
-        String bindMarkerName = ttl.substring(1);
-        try {
-          CqlIdentifier.fromCql(bindMarkerName);
-        } catch (IllegalArgumentException ignored) {
-          context
-              .getMessager()
-              .warn(
-                  methodElement,
-                  "Invalid ttl value: "
-                      + "'%s' is not a valid placeholder, the generated query will probably fail",
-                  ttl);
-        }
-        methodBuilder.addCode(".usingTtl($T.bindMarker($S))", QueryBuilder.class, bindMarkerName);
-      } else {
-        try {
-          Integer.parseInt(ttl);
-        } catch (NumberFormatException ignored) {
-          context
-              .getMessager()
-              .warn(
-                  methodElement,
-                  "Invalid ttl value: "
-                      + "'%s' is not a bind marker name and can't be parsed as a literal integer "
-                      + "either, the generated query will probably fail",
-                  ttl);
-        }
-        methodBuilder.addCode(".usingTtl($L)", ttl);
-      }
-    }
+    maybeAddSimpleClause(ttl, Integer::parseInt, "usingTtl", "ttl", methodBuilder);
   }
 
   protected void maybeAddTimestamp(String timestamp, MethodSpec.Builder methodBuilder) {
-    if (!timestamp.isEmpty()) {
-      if (timestamp.startsWith(":")) {
-        String bindMarkerName = timestamp.substring(1);
+    maybeAddSimpleClause(timestamp, Long::parseLong, "usingTimestamp", "timestamp", methodBuilder);
+  }
+
+  protected void maybeAddSimpleClause(
+      String annotationValue,
+      Function<String, ? extends Number> numberParser,
+      String dslMethodName,
+      String valueDescription,
+      MethodSpec.Builder methodBuilder) {
+    if (!annotationValue.isEmpty()) {
+      if (annotationValue.startsWith(":")) {
+        String bindMarkerName = annotationValue.substring(1);
         try {
           CqlIdentifier.fromCql(bindMarkerName);
         } catch (IllegalArgumentException ignored) {
@@ -123,26 +102,30 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
               .getMessager()
               .warn(
                   methodElement,
-                  "Invalid timestamp value: "
+                  "Invalid "
+                      + valueDescription
+                      + " value: "
                       + "'%s' is not a valid placeholder, the generated query will probably fail",
-                  timestamp);
+                  annotationValue);
         }
         methodBuilder.addCode(
-            ".usingTimestamp($T.bindMarker($S))", QueryBuilder.class, bindMarkerName);
+            ".$L($T.bindMarker($S))", dslMethodName, QueryBuilder.class, bindMarkerName);
       } else {
         try {
-          Long.parseLong(timestamp);
+          Number ignored = numberParser.apply(annotationValue);
         } catch (NumberFormatException ignored) {
           context
               .getMessager()
               .warn(
                   methodElement,
-                  "Invalid timestamp value: "
-                      + "'%s' is not a bind marker name and can't be parsed as a literal long "
+                  "Invalid "
+                      + valueDescription
+                      + " value: "
+                      + "'%s' is not a bind marker name and can't be parsed as a number literal "
                       + "either, the generated query will probably fail",
-                  timestamp);
+                  annotationValue);
         }
-        methodBuilder.addCode(".usingTimestamp($L)", timestamp);
+        methodBuilder.addCode(".$L($L)", dslMethodName, annotationValue);
       }
     }
   }
