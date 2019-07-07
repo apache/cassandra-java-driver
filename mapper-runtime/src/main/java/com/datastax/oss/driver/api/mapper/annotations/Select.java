@@ -50,7 +50,9 @@ import java.util.function.UnaryOperator;
  * (partition key + clustering columns). The method's parameters must match the types of the primary
  * key columns, in the exact order (which is defined by the integer values of the {@link
  * PartitionKey} and {@link ClusteringColumn} annotations in the entity class). The parameter names
- * don't necessarily need to match the names of the columns.
+ * don't necessarily need to match the names of the columns. It is also possible for the method to
+ * only take a partial primary key (the first <i>n</i> columns), in which case it will return
+ * multiple entities.
  *
  * <p>If {@link #customWhereClause()} is not empty, it completely replaces the WHERE clause. The
  * provided string can contain named placeholders. In that case, the method must have a
@@ -59,6 +61,21 @@ import java.util.function.UnaryOperator;
  * <pre>
  * &#64;Select(customWhereClause = "description LIKE :searchString")
  * PagingIterable&lt;Product&gt; findByDescription(String searchString);
+ * </pre>
+ *
+ * The generated SELECT query can be further customized with {@link #limit()}, {@link
+ * #perPartitionLimit()}, {@link #orderBy()}, {@link #groupBy()} and {@link #allowFiltering()}. Some
+ * of these clauses can also contain placeholders whose values will be provided through additional
+ * method parameters. Note that it is sometimes not possible to determine if a parameter is a
+ * primary key component or a placeholder value; therefore the rule is that <b>if your method takes
+ * a partial primary key, the first parameter that is not a primary key component must be explicitly
+ * annotated with {@link CqlName}.</b> For example if the primary key is {@code ((day int, hour int,
+ * minute int), ts timestamp)}:
+ *
+ * <pre>
+ * // Annotate 'l' so that it's not mistaken for the second PK component
+ * &#64;Select(limit = ":l")
+ * PagingIterable&lt;Sale&gt; findDailySales(int day, &#64;CqlName("l") int l);
  * </pre>
  *
  * <p>A {@link Function Function&lt;BoundStatementBuilder, BoundStatementBuilder&gt;} or {@link
@@ -130,4 +147,50 @@ public @interface Select {
    * the top-level javadocs of this class for more explanations.
    */
   String customWhereClause() default "";
+
+  /**
+   * The LIMIT to use in the SELECT query.
+   *
+   * <p>If this starts with ":", it is interpreted as a named placeholder (that must have a
+   * corresponding parameter in the method signature). Otherwise, it must be a literal integer
+   * value.
+   *
+   * <p>If the placeholder name is invalid or the literal can't be parsed as an integer (according
+   * to the rules of {@link Integer#parseInt(String)}), the mapper will issue a compile-time
+   * warning.
+   */
+  String limit() default "";
+
+  /**
+   * The PER PARTITION LIMIT to use in the SELECT query.
+   *
+   * <p>If this starts with ":", it is interpreted as a named placeholder (that must have a
+   * corresponding parameter in the method signature). Otherwise, it must be a literal integer
+   * value.
+   *
+   * <p>If the placeholder name is invalid or the literal can't be parsed as an integer (according
+   * to the rules of {@link Integer#parseInt(String)}), the mapper will issue a compile-time
+   * warning.
+   */
+  String perPartitionLimit() default "";
+
+  /**
+   * A list of orderings to add to an ORDER BY clause in the SELECT query.
+   *
+   * <p>Each element must be a column name followed by a space and the word "ASC" or "DESC". If
+   * there are multiple columns, pass an array:
+   *
+   * <pre>
+   * &#64;Select(orderBy = {"hour DESC", "minute DESC"})
+   * </pre>
+   *
+   * <p>If an element can't be parsed, the mapper will issue a compile-time error.
+   */
+  String[] orderBy() default {};
+
+  /** A list of column names to be added to a GROUP BY clause in the SELECT query. */
+  String[] groupBy() default {};
+
+  /** Whether to add an ALLOW FILTERING clause to the SELECT query. */
+  boolean allowFiltering() default false;
 }

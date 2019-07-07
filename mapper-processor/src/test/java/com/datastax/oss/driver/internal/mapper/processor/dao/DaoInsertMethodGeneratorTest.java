@@ -90,7 +90,7 @@ public class DaoInsertMethodGeneratorTest extends DaoMethodGeneratorTest {
       },
       {
         "Invalid ttl value: "
-            + "'foo' is not a bind marker name and can't be parsed as a literal integer either, "
+            + "'foo' is not a bind marker name and can't be parsed as a number literal either, "
             + "the generated query will probably fail",
         MethodSpec.methodBuilder("insert")
             .addAnnotation(
@@ -113,7 +113,7 @@ public class DaoInsertMethodGeneratorTest extends DaoMethodGeneratorTest {
       },
       {
         "Invalid timestamp value: "
-            + "'foo' is not a bind marker name and can't be parsed as a literal long either, "
+            + "'foo' is not a bind marker name and can't be parsed as a number literal either, "
             + "the generated query will probably fail",
         MethodSpec.methodBuilder("insert")
             .addAnnotation(
