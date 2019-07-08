@@ -67,7 +67,7 @@ class RequestHandler {
   private static final QueryLogger QUERY_LOGGER = QueryLogger.builder().build();
   static final String DISABLE_QUERY_WARNING_LOGS = "com.datastax.driver.DISABLE_QUERY_WARNING_LOGS";
 
-  final String id;
+  private volatile String id;
 
   private final SessionManager manager;
   private final Callback callback;
@@ -90,8 +90,7 @@ class RequestHandler {
   private final AtomicInteger executionIndex = new AtomicInteger();
 
   public RequestHandler(SessionManager manager, Callback callback, Statement statement) {
-    this.id = Long.toString(System.identityHashCode(this));
-    if (logger.isTraceEnabled()) logger.trace("[{}] {}", id, statement);
+    if (logger.isTraceEnabled()) logger.trace("[{}] {}", getId(), statement);
     this.manager = manager;
     this.callback = callback;
     this.scheduler = manager.cluster.manager.connectionFactory.timer;
@@ -129,6 +128,14 @@ class RequestHandler {
     cancelPendingExecutions(null);
   }
 
+  String getId() {
+    // atomicity is not required to set the value
+    if (id == null) {
+      id = Long.toString(System.identityHashCode(this));
+    }
+    return id;
+  }
+
   private void startNewExecution() {
     if (isDone.get()) return;
 
@@ -143,7 +150,7 @@ class RequestHandler {
   private void scheduleExecution(long delayMillis) {
     if (isDone.get() || delayMillis < 0) return;
     if (logger.isTraceEnabled())
-      logger.trace("[{}] Schedule next speculative execution in {} ms", id, delayMillis);
+      logger.trace("[{}] Schedule next speculative execution in {} ms", getId(), delayMillis);
     if (delayMillis == 0) {
       // kick off request immediately
       scheduleExecutionImmediately();
@@ -189,11 +196,11 @@ class RequestHandler {
       SpeculativeExecution execution, Connection connection, Message.Response response) {
     if (!isDone.compareAndSet(false, true)) {
       if (logger.isTraceEnabled())
-        logger.trace("[{}] Got beaten to setting the result", execution.id);
+        logger.trace("[{}] Got beaten to setting the result", execution.getId());
       return;
     }
 
-    if (logger.isTraceEnabled()) logger.trace("[{}] Setting final result", execution.id);
+    if (logger.isTraceEnabled()) logger.trace("[{}] Setting final result", execution.getId());
 
     cancelPendingExecutions(execution);
 
@@ -257,11 +264,11 @@ class RequestHandler {
       SpeculativeExecution execution, Connection connection, Exception exception) {
     if (!isDone.compareAndSet(false, true)) {
       if (logger.isTraceEnabled())
-        logger.trace("[{}] Got beaten to setting final exception", execution.id);
+        logger.trace("[{}] Got beaten to setting final exception", execution.getId());
       return;
     }
 
-    if (logger.isTraceEnabled()) logger.trace("[{}] Setting final exception", execution.id);
+    if (logger.isTraceEnabled()) logger.trace("[{}] Setting final exception", execution.getId());
 
     cancelPendingExecutions(execution);
 
@@ -324,7 +331,7 @@ class RequestHandler {
    * informs the RequestHandler, which will decide what to do
    */
   class SpeculativeExecution implements Connection.ResponseCallback {
-    final String id;
+    private volatile String id;
     private final Message.Request request;
     private final int position;
     private volatile Host current;
@@ -344,11 +351,18 @@ class RequestHandler {
     private volatile Connection.ResponseHandler connectionHandler;
 
     SpeculativeExecution(Message.Request request, int position) {
-      this.id = RequestHandler.this.id + "-" + position;
       this.request = request;
       this.position = position;
       this.queryStateRef = new AtomicReference<QueryState>(QueryState.INITIAL);
-      if (logger.isTraceEnabled()) logger.trace("[{}] Starting", id);
+      if (logger.isTraceEnabled()) logger.trace("[{}] Starting", getId());
+    }
+
+    String getId() {
+      // atomicity is not required to set the value
+      if (id == null) {
+        id = RequestHandler.this.getId() + "-" + position;
+      }
+      return id;
     }
 
     void findNextHostAndQuery() {
@@ -387,7 +401,7 @@ class RequestHandler {
       HostConnectionPool pool = manager.pools.get(host);
       if (pool == null || pool.isClosed()) return false;
 
-      if (logger.isTraceEnabled()) logger.trace("[{}] Querying node {}", id, host);
+      if (logger.isTraceEnabled()) logger.trace("[{}] Querying node {}", getId(), host);
 
       if (allowSpeculativeExecutions && nextExecutionScheduled.compareAndSet(false, true))
         scheduleExecution(speculativeExecutionPlan.nextExecution(host));
@@ -530,7 +544,7 @@ class RequestHandler {
           if (logger.isDebugEnabled())
             logger.debug(
                 "[{}] Doing retry {} for query {} at consistency {}",
-                id,
+                getId(),
                 retriesByPolicy,
                 statement,
                 retryDecision.getRetryConsistencyLevel());
@@ -559,7 +573,7 @@ class RequestHandler {
     }
 
     private void logError(InetSocketAddress address, Throwable exception) {
-      logger.debug("[{}] Error querying {} : {}", id, address, exception.toString());
+      logger.debug("[{}] Error querying {} : {}", getId(), address, exception.toString());
       if (errors == null) {
         synchronized (RequestHandler.this) {
           if (errors == null) {
@@ -580,7 +594,7 @@ class RequestHandler {
           return;
         } else if (previous.inProgress
             && queryStateRef.compareAndSet(previous, QueryState.CANCELLED_WHILE_IN_PROGRESS)) {
-          if (logger.isTraceEnabled()) logger.trace("[{}] Cancelled while in progress", id);
+          if (logger.isTraceEnabled()) logger.trace("[{}] Cancelled while in progress", getId());
           // The connectionHandler should be non-null, but we might miss the update if we're racing
           // with write().
           // If it's still null, this will be handled by re-checking queryStateRef at the end of
@@ -598,7 +612,7 @@ class RequestHandler {
           return;
         } else if (!previous.inProgress
             && queryStateRef.compareAndSet(previous, QueryState.CANCELLED_WHILE_COMPLETE)) {
-          if (logger.isTraceEnabled()) logger.trace("[{}] Cancelled while complete", id);
+          if (logger.isTraceEnabled()) logger.trace("[{}] Cancelled while complete", getId());
           Host queriedHost = current;
           if (queriedHost != null && statement != Statement.DEFAULT) {
             manager.cluster.manager.reportQuery(
