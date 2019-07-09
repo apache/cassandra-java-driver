@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.7.2 (In progress)
+### 3.7.2
 
 - [bug] JAVA-2249: Stop stripping trailing zeros in ByteOrderedTokens.
 - [bug] JAVA-1492: Don't immediately reuse busy connections for another request.
