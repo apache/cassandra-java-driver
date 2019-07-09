@@ -67,7 +67,7 @@ versions:
   - name: '4.0'
     ref: '4.0.1'
   - name: '3.7'
-    ref: '2cd92139e'
+    ref: '3.7.2'
   - name: '3.6'
     ref: '3.6.0_docs'
   - name: '3.5'
