@@ -236,7 +236,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
       nextParameterIndex = primaryKeyNames.size();
     }
 
-    // Bind any remaining parameters, assuming they are values for a custom IF clause
+    // Bind any remaining parameters, assuming they are values for a custom WHERE or IF clause
     if (nextParameterIndex < parameters.size()) {
       if (customIfClause.isEmpty() && customWhereClause.isEmpty()) {
         context
