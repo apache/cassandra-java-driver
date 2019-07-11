@@ -228,6 +228,10 @@ public class CcmBridge implements AutoCloseable {
     }
   }
 
+  public void nodetool(int node, String... args) {
+    execute(String.format("node%d nodetool %s", node, Joiner.on(" ").join(args)));
+  }
+
   public void dsetool(int node, String... args) {
     execute(String.format("node%d dsetool %s", node, Joiner.on(" ").join(args)));
   }

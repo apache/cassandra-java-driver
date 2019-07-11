@@ -4,6 +4,7 @@
 
 ### 4.2.0 (in progress)
 
+- [bug] JAVA-2332: Destroy connection pool when a node gets removed
 - [bug] JAVA-2324: Add support for primitive shorts in mapper
 - [bug] JAVA-2325: Allow "is" prefix for boolean getters in mapped entities
 - [improvement] JAVA-2308: Add customWhereClause to `@Delete`
