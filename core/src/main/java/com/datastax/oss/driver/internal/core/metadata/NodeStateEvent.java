@@ -20,6 +20,12 @@ import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
+/**
+ * The transition of a node from one {@linkplain NodeState state} to another.
+ *
+ * <p>For simplicity, this is also used to represent a node addition ({@code oldState=null,
+ * newState=UNKNOWN}) or removal ({@code oldState=newState=null}).
+ */
 @Immutable
 public class NodeStateEvent {
   public static NodeStateEvent changed(NodeState oldState, NodeState newState, DefaultNode node) {
@@ -36,8 +42,15 @@ public class NodeStateEvent {
     return new NodeStateEvent(null, null, node);
   }
 
+  /** The state before the change, or {@code null} if this is an addition or a removal. */
   public final NodeState oldState;
+
+  /**
+   * The state after the change ({@link NodeState#UNKNOWN} if the node was just added), or {@code
+   * null} if this is a removal.
+   */
   public final NodeState newState;
+
   public final DefaultNode node;
 
   private NodeStateEvent(NodeState oldState, NodeState newState, DefaultNode node) {
