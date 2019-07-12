@@ -254,7 +254,7 @@ See [AccessibleByName] for an explanation of the conversion rules.
 | user-defined types  | getUDTValue    | [UDTValue]           | [User-defined types](udts/)         |
 | uuid                | getUuid        | java.util.UUID       |                                     |
 | varchar             | getString      | java.lang.String     |                                     |
-| varint              | getVarint      | java.math.BigInteger |                                     |
+| varint              | getBigInteger  | java.math.BigInteger |                                     |
 
 Sometimes the driver has to infer a CQL type from a Java type (for example when handling the values 
 of [simple statements](statements/simple/)); for those that have multiple CQL equivalents, it makes
