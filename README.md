@@ -70,7 +70,7 @@ See the [upgrade guide](upgrade_guide/) for details.
 
 ## License
 
-Copyright DataStax, Inc.
+&copy; DataStax, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
