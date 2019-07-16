@@ -77,9 +77,10 @@ placeholders:
 void deleteIfDescriptionMatches(UUID productId, String expectedDescription);
 ```
 
-A [StatementAttributes](../statement_attributes/) can be added as the **last** parameter. This
-allows you to customize customize certain aspects of the request (page size, timeout, etc.) at
-runtime.
+A `Function<BoundStatementBuilder, BoundStatementBuilder>` or `UnaryOperator<BoundStatementBuilder>`
+can be added as the **last** parameter. It will be applied to the statement before execution. This
+allows you to customize certain aspects of the request (page size, timeout, etc) at runtime. See
+[statement attributes](../statement_attributes/).
 
 ### Return type
 
@@ -133,13 +134,13 @@ If a table was specified when creating the DAO, then the generated query targets
 Otherwise, it uses the default table name for the entity (which is determined by the name of the
 entity class and the [naming strategy](../../entities/#naming-strategy)).
 
-[default keyspace]:       https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
-[AsyncResultSet]:         https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
-[@ClusteringColumn]:      https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
-[@Delete]:                https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Delete.html
-[@PartitionKey]:          https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
-[ResultSet]:              https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/ResultSet.html
-[ResultSet#wasApplied()]: https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/ResultSet.html#wasApplied--
+[default keyspace]:       https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
+[AsyncResultSet]:         https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
+[@ClusteringColumn]:      https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
+[@Delete]:                https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/Delete.html
+[@PartitionKey]:          https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
+[ResultSet]:              https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[ResultSet#wasApplied()]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/ResultSet.html#wasApplied--
 
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
 [CompletableFuture]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html
