@@ -140,8 +140,8 @@ ProductDao dao3 = inventoryMapper.productDao("keyspace3", "table3");
 The DAO's keyspace and table can also be injected into custom query strings; see [Query
 methods](../daos/query/).
 
-[CqlIdentifier]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/CqlIdentifier.html
-[@DaoFactory]:   http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/DaoFactory.html
-[@DaoKeyspace]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/DaoKeyspace.html
-[@DaoTable]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/DaoTable.html
-[@Mapper]:       http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Mapper.html
+[CqlIdentifier]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/CqlIdentifier.html
+[@DaoFactory]:   https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/DaoFactory.html
+[@DaoKeyspace]:  https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/DaoKeyspace.html
+[@DaoTable]:     https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/DaoTable.html
+[@Mapper]:       https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/Mapper.html

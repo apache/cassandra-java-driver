@@ -85,12 +85,12 @@ If a table was specified when creating the DAO, then the generated query targets
 Otherwise, it uses the default table name for the entity (which is determined by the name of the
 entity class and the [naming strategy](../../entities/#naming-strategy)).
 
-[default keyspace]:          https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
-[@ClusteringColumn]:         https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
-[@PartitionKey]:             https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
-[@Select]:                   https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/mapper/annotations/Select.html
-[MappedAsyncPagingIterable]: https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/MappedAsyncPagingIterable.html
-[PagingIterable]:            https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/PagingIterable.html
+[default keyspace]:          https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
+[@ClusteringColumn]:         https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
+[@PartitionKey]:             https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
+[@Select]:                   https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/Select.html
+[MappedAsyncPagingIterable]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/MappedAsyncPagingIterable.html
+[PagingIterable]:            https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/PagingIterable.html
 
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
 [CompletableFuture]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html
