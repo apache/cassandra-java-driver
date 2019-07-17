@@ -231,7 +231,7 @@ See [AccessibleByName] for an explanation of the conversion rules.
 |---------------------|----------------|----------------------|-------------------------------------|
 | ascii               | getString      | java.lang.String     |                                     |
 | bigint              | getLong        | long                 |                                     |
-| blob                | getBytes       | java.nio.ByteBuffer  |                                     |
+| blob                | getByteBuffer  | java.nio.ByteBuffer  |                                     |
 | boolean             | getBoolean     | boolean              |                                     |
 | counter             | getLong        | long                 |                                     |
 | date                | getLocalDate   | java.time.LocalDate  | [Temporal types](temporal_types/)   |

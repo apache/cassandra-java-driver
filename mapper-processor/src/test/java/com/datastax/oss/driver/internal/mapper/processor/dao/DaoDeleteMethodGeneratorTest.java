@@ -76,8 +76,8 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
       },
       {
         "Invalid parameter list: Delete methods that do not operate on an entity instance "
-            + "must match the primary key components in the exact order "
-            + "(expected primary key of Product: [java.util.UUID]). Mismatch at index 0: java.lang"
+            + "and lack a custom where clause must match the primary key components in the exact "
+            + "order (expected primary key of Product: [java.util.UUID]). Mismatch at index 0: java.lang"
             + ".Integer should be java.util.UUID",
         MethodSpec.methodBuilder("delete")
             .addAnnotation(
@@ -91,7 +91,7 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
       },
       {
         "Invalid parameter list: Delete methods that do not operate on an entity instance "
-            + "must at least specify partition key components "
+            + "and lack a custom where clause must at least specify partition key components "
             + "(expected partition key of ProductSale: [java.util.UUID, java.lang.String])",
         MethodSpec.methodBuilder("delete")
             .addAnnotation(
@@ -116,12 +116,26 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
       },
       {
         "Wrong number of parameters: Delete methods can only have additional parameters "
-            + "if they specify a custom IF clause",
+            + "if they specify a custom WHERE or IF clause",
         MethodSpec.methodBuilder("delete")
             .addAnnotation(Delete.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addParameter(ENTITY_CLASS_NAME, "entity")
             .addParameter(Integer.class, "extra")
+            .build(),
+        ENTITY_SPEC
+      },
+      {
+        "Delete methods that have a custom where clause must not take an Entity (Product) as a "
+            + "parameter",
+        MethodSpec.methodBuilder("delete")
+            .addAnnotation(
+                AnnotationSpec.builder(Delete.class)
+                    .addMember("customWhereClause", "$S", "hello")
+                    .build())
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .addParameter(ENTITY_CLASS_NAME, "entity")
+            .returns(Integer.class)
             .build(),
         ENTITY_SPEC
       },

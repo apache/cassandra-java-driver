@@ -129,10 +129,14 @@ public @interface Delete {
    * A hint to indicate the entity class, for cases where it can't be determined from the method's
    * signature.
    *
-   * <p>This is only needed if the method receives the primary key components as arguments:
+   * <p>This is only needed if the method receives the primary key components as arguments or uses a
+   * custom where clause:
    *
    * <pre>
    * &#64;Delete(entityClass = Product.class)
+   * void delete(UUID productId);
+   *
+   * &#64;Delete(entityClass = Product.class, customWhereClause="product_id = :productId")
    * void delete(UUID productId);
    * </pre>
    *
@@ -141,6 +145,21 @@ public @interface Delete {
    * proceed with the first one.
    */
   Class<?>[] entityClass() default {};
+
+  /**
+   * A custom WHERE clause for the DELETE query.
+   *
+   * <p>If this is not empty, it completely replaces the WHERE clause in the generated query. Note
+   * that the provided string <b>must not</b> contain the {@code WHERE} keyword and {@link
+   * #entityClass()} must be specified.
+   *
+   * <p>This clause can contain placeholders that will be bound with the method's parameters; see
+   * the top-level javadocs of this class for more explanations.
+   *
+   * <p>Also note that this can be used in conjunction with {@link #customIfClause()} or {@link
+   * #ifExists()}.
+   */
+  String customWhereClause() default "";
 
   /**
    * Whether to append an IF EXISTS clause at the end of the generated DELETE query.
