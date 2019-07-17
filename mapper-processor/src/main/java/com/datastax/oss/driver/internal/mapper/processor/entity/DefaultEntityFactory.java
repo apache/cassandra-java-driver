@@ -102,21 +102,38 @@ public class DefaultEntityFactory implements EntityFactory {
           continue;
         }
         ExecutableElement getMethod = (ExecutableElement) child;
-        String getMethodName = getMethod.getSimpleName().toString();
-        if (!getMethodName.startsWith("get") || !getMethod.getParameters().isEmpty()) {
+        if (!getMethod.getParameters().isEmpty()) {
           continue;
         }
         TypeMirror typeMirror = getMethod.getReturnType();
         if (typeMirror.getKind() == TypeKind.VOID) {
           continue;
         }
-        String propertyName = Introspector.decapitalize(getMethodName.substring(3));
+
+        String getMethodName = getMethod.getSimpleName().toString();
+        boolean regularGetterName = getMethodName.startsWith("get");
+        boolean booleanGetterName =
+            getMethodName.startsWith("is")
+                && (typeMirror.getKind() == TypeKind.BOOLEAN
+                    || context.getClassUtils().isSame(typeMirror, Boolean.class));
+        if (!regularGetterName && !booleanGetterName) {
+          continue;
+        }
+
+        String propertyName;
+        String setMethodName;
+        if (regularGetterName) {
+          propertyName = Introspector.decapitalize(getMethodName.substring(3));
+          setMethodName = getMethodName.replaceFirst("get", "set");
+        } else {
+          propertyName = Introspector.decapitalize(getMethodName.substring(2));
+          setMethodName = getMethodName.replaceFirst("is", "set");
+        }
         // skip properties we've already encountered.
         if (encounteredPropertyNames.contains(propertyName)) {
           continue;
         }
 
-        String setMethodName = getMethodName.replaceFirst("get", "set");
         ExecutableElement setMethod = findSetMethod(typeHierarchy, setMethodName, typeMirror);
         if (setMethod == null) {
           continue; // must have both

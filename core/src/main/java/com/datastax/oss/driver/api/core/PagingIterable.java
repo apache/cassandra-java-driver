@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.internal.core.PagingIterableWrapper;
+import com.datastax.oss.driver.internal.core.cql.PagingIterableSpliterator;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -26,6 +27,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Spliterator;
 import java.util.function.Function;
 
 /**
@@ -154,8 +156,28 @@ public interface PagingIterable<ElementT> extends Iterable<ElementT> {
    * <p>Note that both instances share the same underlying data: consuming elements from the
    * transformed iterable will also consume them from this object, and vice-versa.
    */
+  @NonNull
   default <TargetElementT> PagingIterable<TargetElementT> map(
       Function<? super ElementT, ? extends TargetElementT> elementMapper) {
     return new PagingIterableWrapper<>(this, elementMapper);
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Default spliterators created by the driver will report the following characteristics: {@link
+   * Spliterator#ORDERED}, {@link Spliterator#IMMUTABLE}, {@link Spliterator#NONNULL}. Single-page
+   * result sets will also report {@link Spliterator#SIZED} and {@link Spliterator#SUBSIZED}, since
+   * the result set size is known.
+   *
+   * <p>This method should be called at most once. Spliterators share the same underlying data but
+   * do not support concurrent consumption; once a spliterator for this iterable is obtained, the
+   * iterable should <em>not</em> be consumed through calls to other methods such as {@link
+   * #iterator()}, {@link #one()} or {@link #all()}; doing so will result in unpredictable results.
+   */
+  @NonNull
+  @Override
+  default Spliterator<ElementT> spliterator() {
+    return new PagingIterableSpliterator<>(this);
   }
 }

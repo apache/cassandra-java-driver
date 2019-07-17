@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
@@ -84,6 +85,7 @@ public class DeleteIT extends InventoryITBase {
     saleDao.save(FLAMETHROWER_SALE_2);
     saleDao.save(FLAMETHROWER_SALE_3);
     saleDao.save(FLAMETHROWER_SALE_4);
+    saleDao.save(FLAMETHROWER_SALE_5);
     saleDao.save(MP3_DOWNLOAD_SALE_1);
   }
 
@@ -186,17 +188,17 @@ public class DeleteIT extends InventoryITBase {
 
   @Test
   public void should_delete_by_partition_key() {
-    // should delete FLAMETHROWER_SALE_{1,3}
+    // should delete FLAMETHROWER_SALE_[1-4]
     saleDao.deleteByIdForDay(FLAMETHROWER.getId(), DATE_1);
-    assertThat(saleDao.all().all()).containsOnly(FLAMETHROWER_SALE_4, MP3_DOWNLOAD_SALE_1);
+    assertThat(saleDao.all().all()).containsOnly(FLAMETHROWER_SALE_5, MP3_DOWNLOAD_SALE_1);
   }
 
   @Test
   public void should_delete_by_partition_key_and_partial_clustering() {
-    // should delete FLAMETHROWER_SALE_[1-3]
+    // should delete FLAMETHROWER_SALE_{1,3,4]
     saleDao.deleteByIdForCustomer(FLAMETHROWER.getId(), DATE_1, 1);
     assertThat(saleDao.all().all())
-        .containsOnly(FLAMETHROWER_SALE_2, FLAMETHROWER_SALE_4, MP3_DOWNLOAD_SALE_1);
+        .containsOnly(FLAMETHROWER_SALE_2, FLAMETHROWER_SALE_5, MP3_DOWNLOAD_SALE_1);
   }
 
   @Test
@@ -206,7 +208,11 @@ public class DeleteIT extends InventoryITBase {
         FLAMETHROWER.getId(), DATE_1, 2, FLAMETHROWER_SALE_2.getTs());
     assertThat(saleDao.all().all())
         .containsOnly(
-            FLAMETHROWER_SALE_1, FLAMETHROWER_SALE_3, FLAMETHROWER_SALE_4, MP3_DOWNLOAD_SALE_1);
+            FLAMETHROWER_SALE_1,
+            FLAMETHROWER_SALE_3,
+            FLAMETHROWER_SALE_4,
+            FLAMETHROWER_SALE_5,
+            MP3_DOWNLOAD_SALE_1);
   }
 
   @Test
@@ -234,6 +240,39 @@ public class DeleteIT extends InventoryITBase {
 
     assertThat(saleDao.deleteIfExists(FLAMETHROWER.getId(), DATE_1, 2, FLAMETHROWER_SALE_2.getTs()))
         .isFalse();
+  }
+
+  @Test
+  public void should_delete_within_time_range() {
+    // should delete FLAMETHROWER_SALE_{1,3}, but not 4 because range ends before
+    saleDao.deleteInTimeRange(
+        FLAMETHROWER.getId(),
+        DATE_1,
+        1,
+        FLAMETHROWER_SALE_1.getTs(),
+        Uuids.startOf(Uuids.unixTimestamp(FLAMETHROWER_SALE_4.getTs()) - 1000));
+
+    assertThat(saleDao.all().all())
+        .containsOnly(
+            FLAMETHROWER_SALE_2, FLAMETHROWER_SALE_4, FLAMETHROWER_SALE_5, MP3_DOWNLOAD_SALE_1);
+  }
+
+  @Test
+  public void should_delete_if_price_matches_custom_where() {
+    ResultSet result =
+        saleDao.deleteCustomWhereCustomIf(
+            2, FLAMETHROWER.getId(), DATE_1, FLAMETHROWER_SALE_2.getTs(), 250.0);
+
+    assertThat(result.wasApplied()).isFalse();
+    Row row = result.one();
+    assertThat(row).isNotNull();
+    assertThat(row.getDouble("price")).isEqualTo(500.0);
+
+    result =
+        saleDao.deleteCustomWhereCustomIf(
+            2, FLAMETHROWER.getId(), DATE_1, FLAMETHROWER_SALE_2.getTs(), 500.0);
+
+    assertThat(result.wasApplied()).isTrue();
   }
 
   @Mapper
@@ -302,6 +341,21 @@ public class DeleteIT extends InventoryITBase {
     @Delete(entityClass = ProductSale.class, customIfClause = "price = :expectedPrice")
     ResultSet deleteIfPriceMatches(
         UUID id, String day, int customerId, UUID ts, double expectedPrice);
+
+    @Delete(
+        entityClass = ProductSale.class,
+        customWhereClause =
+            "id = :id and day = :day and customer_id = :customerId and ts >= :startTs and ts < "
+                + ":endTs")
+    ResultSet deleteInTimeRange(UUID id, String day, int customerId, UUID startTs, UUID endTs);
+
+    // transpose order of parameters so doesn't match primary key to ensure that works.
+    @Delete(
+        entityClass = ProductSale.class,
+        customWhereClause = "id = :id and day = :day and customer_id = :customerId and ts = :ts",
+        customIfClause = "price = :expectedPrice")
+    ResultSet deleteCustomWhereCustomIf(
+        int customerId, UUID id, String day, UUID ts, double expectedPrice);
 
     @Delete(entityClass = ProductSale.class, ifExists = true)
     boolean deleteIfExists(UUID id, String day, int customerId, UUID ts);

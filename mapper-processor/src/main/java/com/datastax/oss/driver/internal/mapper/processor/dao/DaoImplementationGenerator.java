@@ -41,6 +41,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.beans.Introspector;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -298,7 +299,7 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
         TypeSpec.classBuilder(implementationName)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
             .addModifiers(Modifier.PUBLIC)
-            .superclass(DaoBase.class)
+            .superclass(getDaoParentClass())
             .addSuperinterface(ClassName.get(interfaceElement));
 
     for (TypeMirror mirror : interfaces) {
@@ -384,6 +385,11 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
     classBuilder.addMethod(constructorBuilder.build());
 
     return JavaFile.builder(implementationName.packageName(), classBuilder.build());
+  }
+
+  @NonNull
+  protected Class<?> getDaoParentClass() {
+    return DaoBase.class;
   }
 
   /**

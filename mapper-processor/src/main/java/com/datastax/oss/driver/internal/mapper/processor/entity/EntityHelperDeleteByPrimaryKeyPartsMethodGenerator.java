@@ -58,14 +58,8 @@ public class EntityHelperDeleteByPrimaryKeyPartsMethodGenerator implements Metho
           "throw new $T($S)", MapperException.class, "parameterCount must be greater than 0");
       deleteByPrimaryKeyPartsBuilder.endControlFlow();
 
-      deleteByPrimaryKeyPartsBuilder
-          .addStatement("throwIfKeyspaceMissing()")
-          .addStatement(
-              "$1T deleteSelection = (keyspaceId == null)\n"
-                  + "? $2T.deleteFrom(tableId)\n"
-                  + ": $2T.deleteFrom(keyspaceId, tableId)",
-              DeleteSelection.class,
-              QueryBuilder.class);
+      deleteByPrimaryKeyPartsBuilder.addStatement(
+          "$1T deleteSelection = deleteStart()", DeleteSelection.class);
 
       deleteByPrimaryKeyPartsBuilder.addStatement(
           "$1T columnName = primaryKeys.get(0)", String.class);

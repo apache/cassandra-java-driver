@@ -67,6 +67,7 @@ public class GeneratedCodePatterns {
           .put(TypeName.FLOAT, "Float")
           .put(TypeName.INT, "Int")
           .put(TypeName.LONG, "Long")
+          .put(TypeName.SHORT, "Short")
           .build();
 
   private static final String NULL_SAVING_STRATEGY = "nullSavingStrategy";

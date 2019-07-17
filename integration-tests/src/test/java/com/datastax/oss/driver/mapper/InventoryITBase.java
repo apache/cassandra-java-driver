@@ -47,6 +47,9 @@ public abstract class InventoryITBase {
       new ProductSale(FLAMETHROWER.getId(), DATE_1, 1, Uuids.startOf(1561653130), 500.00, 2);
 
   protected static ProductSale FLAMETHROWER_SALE_4 =
+      new ProductSale(FLAMETHROWER.getId(), DATE_1, 1, Uuids.startOf(1561657504), 702.00, 3);
+
+  protected static ProductSale FLAMETHROWER_SALE_5 =
       new ProductSale(FLAMETHROWER.getId(), DATE_2, 1, Uuids.startOf(1561729530), 500.00, 23);
 
   protected static ProductSale MP3_DOWNLOAD_SALE_1 =

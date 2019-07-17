@@ -112,6 +112,7 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
             new EntityHelperSelectByPrimaryKeyPartsMethodGenerator(entityDefinition, this, context),
             new EntityHelperSelectByPrimaryKeyMethodGenerator(entityDefinition, this, context),
             new EntityHelperSelectStartMethodGenerator(entityDefinition, this, context),
+            new EntityHelperDeleteStartMethodGenerator(entityDefinition, this, context),
             new EntityHelperDeleteByPrimaryKeyPartsMethodGenerator(entityDefinition, this, context),
             new EntityHelperDeleteByPrimaryKeyMethodGenerator(entityDefinition, this, context),
             new EntityHelperUpdateStartMethodGenerator(entityDefinition, this, context),

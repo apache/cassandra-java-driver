@@ -81,6 +81,7 @@ public class SelectIT extends InventoryITBase {
     saleDao.save(FLAMETHROWER_SALE_2);
     saleDao.save(FLAMETHROWER_SALE_3);
     saleDao.save(FLAMETHROWER_SALE_4);
+    saleDao.save(FLAMETHROWER_SALE_5);
     saleDao.save(MP3_DOWNLOAD_SALE_1);
   }
 
@@ -133,21 +134,23 @@ public class SelectIT extends InventoryITBase {
         .containsOnly(
             FLAMETHROWER_SALE_1,
             FLAMETHROWER_SALE_3,
-            FLAMETHROWER_SALE_2,
             FLAMETHROWER_SALE_4,
+            FLAMETHROWER_SALE_2,
+            FLAMETHROWER_SALE_5,
             MP3_DOWNLOAD_SALE_1);
   }
 
   @Test
   public void should_select_by_partition_key() {
     assertThat(saleDao.salesByIdForDay(FLAMETHROWER.getId(), DATE_1).all())
-        .containsOnly(FLAMETHROWER_SALE_1, FLAMETHROWER_SALE_3, FLAMETHROWER_SALE_2);
+        .containsOnly(
+            FLAMETHROWER_SALE_1, FLAMETHROWER_SALE_3, FLAMETHROWER_SALE_2, FLAMETHROWER_SALE_4);
   }
 
   @Test
   public void should_select_by_partition_key_and_partial_clustering() {
     assertThat(saleDao.salesByIdForCustomer(FLAMETHROWER.getId(), DATE_1, 1).all())
-        .containsOnly(FLAMETHROWER_SALE_1, FLAMETHROWER_SALE_3);
+        .containsOnly(FLAMETHROWER_SALE_1, FLAMETHROWER_SALE_3, FLAMETHROWER_SALE_4);
   }
 
   @Test
