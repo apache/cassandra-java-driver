@@ -17,6 +17,14 @@
           ]
         }
       }
-    }
+    },
+    "ignore": [
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method void com.datastax.oss.driver.api.mapper.entity.EntityHelper<EntityT>::validateEntityFields()",
+        "justification": "JAVA-2263: Add optional schema validation"
+
+      }
+    ]
   }
 }
