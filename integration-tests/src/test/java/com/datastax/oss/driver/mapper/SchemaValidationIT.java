@@ -71,7 +71,7 @@ public class SchemaValidationIT extends InventoryITBase {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }
-    for (String query : createStatements()) {
+    for (String query : createStatements(ccm)) {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }

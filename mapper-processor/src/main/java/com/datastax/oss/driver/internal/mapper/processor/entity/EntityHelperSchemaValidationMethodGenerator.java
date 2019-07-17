@@ -62,9 +62,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
 
     // Generates expected names to be present in cql (table or udt)
     List<CodeBlock> expectedCqlNames =
-        entityDefinition
-            .getAllColumns()
-            .stream()
+        entityDefinition.getAllColumns().stream()
             .map(PropertyDefinition::getCqlName)
             .collect(Collectors.toList());
     methodBuilder.addStatement(
