@@ -4,6 +4,7 @@
 
 ### 4.2.0 (in progress)
 
+- [improvement] JAVA-2338: Revisit toString() for data container types
 - [bug] JAVA-2367: Fix column names in EntityHelper.updateByPrimaryKey
 - [bug] JAVA-2358: Fix list of reserved CQL keywords
 - [improvement] JAVA-2359: Allow default keyspace at the mapper level

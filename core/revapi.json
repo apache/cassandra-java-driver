@@ -4794,6 +4794,21 @@
         "new": "method java.util.Spliterator<ElementT> com.datastax.oss.driver.api.core.PagingIterable<ElementT>::spliterator() @ com.datastax.oss.driver.api.core.cql.ResultSet",
         "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
         "justification": "JAVA-2247: PagingIterable implementations should implement spliterator()"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method java.lang.String com.datastax.oss.driver.api.core.cql.Row::toString()",
+        "justification": "False positive -- all objects implicitly have toString()"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method java.lang.String com.datastax.oss.driver.api.core.data.TupleValue::toString()",
+        "justification": "False positive -- all objects implicitly have toString()"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method java.lang.String com.datastax.oss.driver.api.core.data.UdtValue::toString()",
+        "justification": "False positive -- all objects implicitly have toString()"
       }
     ]
   }

@@ -123,7 +123,7 @@ public class DefaultUdtValueTest extends AccessibleByIdTestBase<UdtValue> {
 
     UdtValue udt = type.newValue().setString("t", "foobar").setDouble("d", 3.14);
 
-    assertThat(udt.toString()).isEqualTo("{t:'foobar',i:NULL,d:3.14}");
+    assertThat(udt.getFormattedContents()).isEqualTo("{t:'foobar',i:NULL,d:3.14}");
   }
 
   @Test
