@@ -64,9 +64,15 @@ public interface Session extends AsyncAutoCloseable {
           Session.class.getResource("/com/datastax/oss/driver/Driver.properties"));
 
   /**
-   * The unique name identifying this client.
+   * The unique name identifying this session instance. This is used as a prefix for log messages
+   * and metrics.
    *
-   * @see DefaultDriverOption#SESSION_NAME
+   * <p>This gets populated from the option {@code basic.session-name} in the configuration. If that
+   * option is absent, the driver will generate an identifier composed of the letter 's' followed by
+   * an incrementing counter.
+   *
+   * <p>Note that this is purely a client-side identifier; in particular, it has no relation with
+   * {@code system.local.cluster_name} on the server.
    */
   @NonNull
   String getName();
