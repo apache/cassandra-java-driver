@@ -167,11 +167,6 @@ public class DefaultTupleValue implements TupleValue, Serializable {
     return result;
   }
 
-  @Override
-  public String toString() {
-    return codecRegistry().codecFor(type).format(this);
-  }
-
   private static class SerializationProxy implements Serializable {
 
     private static final long serialVersionUID = 1;
