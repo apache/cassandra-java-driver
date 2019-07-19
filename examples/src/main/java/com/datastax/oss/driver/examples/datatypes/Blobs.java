@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
-import com.datastax.oss.protocol.internal.util.Bytes;
+import com.datastax.oss.driver.api.core.data.ByteUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -143,7 +143,7 @@ public class Blobs {
     // - even then, the backing array might be larger than the buffer's contents
     //
     // The driver provides a utility method that handles those details for you:
-    byte[] array = Bytes.getArray(buffer);
+    byte[] array = ByteUtils.getArray(buffer);
     assert array.length == 16;
     for (byte b : array) {
       assert b == (byte) 0xFF;
@@ -175,7 +175,7 @@ public class Blobs {
         session.prepare("INSERT INTO examples.blobs (k, b) VALUES (1, :b)");
 
     // This is another convenient utility provided by the driver. It's useful for tests.
-    ByteBuffer buffer = Bytes.fromHexString("0xffffff");
+    ByteBuffer buffer = ByteUtils.fromHexString("0xffffff");
 
     // When you pass a byte buffer to a bound statement, it creates a shallow copy internally with
     // the buffer.duplicate() method.
@@ -188,7 +188,7 @@ public class Blobs {
     session.execute(boundStatement);
     Row row = session.execute("SELECT b FROM examples.blobs WHERE k = 1").one();
     assert row != null;
-    assert Objects.equals(Bytes.toHexString(row.getByteBuffer("b")), "0xffffff");
+    assert Objects.equals(ByteUtils.toHexString(row.getByteBuffer("b")), "0xffffff");
 
     buffer.flip();
 
@@ -199,7 +199,7 @@ public class Blobs {
     session.execute(boundStatement);
     row = session.execute("SELECT b FROM examples.blobs WHERE k = 1").one();
     assert row != null;
-    assert Objects.equals(Bytes.toHexString(row.getByteBuffer("b")), "0xaaffff");
+    assert Objects.equals(ByteUtils.toHexString(row.getByteBuffer("b")), "0xaaffff");
 
     // This will also happen if you use the async API, e.g. create the bound statement, call
     // executeAsync() on it and reuse the buffer immediately.
