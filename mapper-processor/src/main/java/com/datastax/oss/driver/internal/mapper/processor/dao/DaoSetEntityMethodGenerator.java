@@ -39,9 +39,10 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
   public DaoSetEntityMethodGenerator(
       ExecutableElement methodElement,
       Map<Name, TypeElement> typeParameters,
+      TypeElement processedType,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    super(methodElement, typeParameters, enclosingClass, context);
+    super(methodElement, typeParameters, processedType, enclosingClass, context);
     nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
   }
 
@@ -59,6 +60,7 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
+              processedType,
               "Wrong number of parameters: %s methods must have two",
               SetEntity.class.getSimpleName());
       return Optional.empty();
@@ -84,6 +86,7 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
+              processedType,
               "Wrong parameter types: %s methods must take a %s "
                   + "and an annotated entity (in any order)",
               SetEntity.class.getSimpleName(),
@@ -100,6 +103,7 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
             .getMessager()
             .warn(
                 methodElement,
+                processedType,
                 "BoundStatement is immutable, "
                     + "this method will not modify '%s' in place. "
                     + "It should probably return BoundStatement rather than void",
@@ -110,6 +114,7 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
+              processedType,
               "Invalid return type: %s methods must either be void, or return the same "
                   + "type as their settable parameter (in this case, %s to match '%s')",
               SetEntity.class.getSimpleName(),

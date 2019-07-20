@@ -109,7 +109,7 @@ public class MapperProcessor extends AbstractProcessor {
     for (Element element : roundEnvironment.getElementsAnnotatedWith(annotationClass)) {
       if (element.getKind() != expectedKind) {
         messager.error(
-            element,
+            (TypeElement) element,
             "Only %s elements can be annotated with %s",
             expectedKind,
             annotationClass.getSimpleName());
@@ -120,7 +120,7 @@ public class MapperProcessor extends AbstractProcessor {
           generatorFactory.apply(typeElement).generate();
         } catch (Exception e) {
           messager.error(
-              element,
+              (TypeElement) element,
               "Unexpected error while writing generated code: %s",
               Throwables.getStackTraceAsString(e));
         }

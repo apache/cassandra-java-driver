@@ -42,6 +42,7 @@ import javax.lang.model.type.TypeMirror;
 public abstract class DaoMethodGenerator implements MethodGenerator {
 
   protected final ExecutableElement methodElement;
+  protected final TypeElement processedType;
   protected final DaoImplementationSharedCode enclosingClass;
   protected final ProcessorContext context;
   protected final Map<Name, TypeElement> typeParameters;
@@ -49,10 +50,12 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
   public DaoMethodGenerator(
       ExecutableElement methodElement,
       Map<Name, TypeElement> typeParameters,
+      TypeElement processedType,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
     this.methodElement = methodElement;
     this.typeParameters = typeParameters;
+    this.processedType = processedType;
     this.enclosingClass = enclosingClass;
     this.context = context;
   }
@@ -70,6 +73,7 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               methodElement,
+              processedType,
               "Invalid return type: %s methods must return one of %s",
               annotationName,
               validKinds);
@@ -102,6 +106,7 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
               .getMessager()
               .warn(
                   methodElement,
+                  processedType,
                   "Invalid "
                       + valueDescription
                       + " value: "
@@ -118,6 +123,7 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
               .getMessager()
               .warn(
                   methodElement,
+                  processedType,
                   "Invalid "
                       + valueDescription
                       + " value: "
@@ -193,11 +199,11 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
           context
               .getMessager()
               .error(
-                  parameter,
-                  "Method %s: parameter %s is declared in a compiled method "
+                  methodElement,
+                  processedType,
+                  "Parameter %s is declared in a compiled method "
                       + "and refers to a bind marker "
                       + "and thus must be annotated with @%s",
-                  methodElement,
                   parameter.getSimpleName(),
                   CqlName.class.getSimpleName());
           valid = false;
@@ -214,10 +220,9 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
         context
             .getMessager()
             .warn(
-                parameter,
-                "Method %s: parameter %s does not refer to a bind marker, "
-                    + "@%s annotation will be ignored",
                 methodElement,
+                processedType,
+                "Parameter %s does not refer to a bind marker, " + "@%s annotation will be ignored",
                 parameter.getSimpleName(),
                 CqlName.class.getSimpleName());
       }

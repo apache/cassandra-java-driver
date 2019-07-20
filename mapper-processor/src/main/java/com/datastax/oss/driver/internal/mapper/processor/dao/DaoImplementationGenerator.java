@@ -253,6 +253,7 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
                 .getMessager()
                 .error(
                     element,
+                    interfaceElement,
                     "Could not resolve type parameter %s "
                         + "on %s from child interfaces. This error usually means an interface "
                         + "was inappropriately annotated with @%s. Interfaces should only be annotated "
@@ -303,10 +304,10 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
             .addSuperinterface(ClassName.get(interfaceElement));
 
     for (TypeMirror mirror : interfaces) {
-      TypeElement interfaceElement = (TypeElement) context.getTypeUtils().asElement(mirror);
+      TypeElement parentInterfaceElement = (TypeElement) context.getTypeUtils().asElement(mirror);
       Map<Name, TypeElement> typeParameters = parseTypeParameters(mirror);
 
-      for (Element child : interfaceElement.getEnclosedElements()) {
+      for (Element child : parentInterfaceElement.getEnclosedElements()) {
         if (child.getKind() == ElementKind.METHOD) {
           ExecutableElement methodElement = (ExecutableElement) child;
           Set<Modifier> modifiers = methodElement.getModifiers();
@@ -314,12 +315,14 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
             Optional<MethodGenerator> maybeGenerator =
                 context
                     .getCodeGeneratorFactory()
-                    .newDaoImplementationMethod(methodElement, typeParameters, this);
+                    .newDaoImplementationMethod(
+                        methodElement, typeParameters, interfaceElement, this);
             if (!maybeGenerator.isPresent()) {
               context
                   .getMessager()
                   .error(
                       methodElement,
+                      interfaceElement,
                       "Unrecognized method signature: no implementation will be generated");
             } else {
               maybeGenerator.flatMap(MethodGenerator::generate).ifPresent(classBuilder::addMethod);
