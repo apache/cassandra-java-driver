@@ -53,9 +53,10 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
   public DaoInsertMethodGenerator(
       ExecutableElement methodElement,
       Map<Name, TypeElement> typeParameters,
+      TypeElement processedType,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    super(methodElement, typeParameters, enclosingClass, context);
+    super(methodElement, typeParameters, processedType, enclosingClass, context);
     nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
   }
 
@@ -94,6 +95,7 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
+              processedType,
               "%s methods must take the entity to insert as the first parameter",
               Insert.class.getSimpleName());
       return Optional.empty();
@@ -111,6 +113,7 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
+              processedType,
               "Invalid return type: %s methods must return the same entity as their argument ",
               Insert.class.getSimpleName());
       return Optional.empty();

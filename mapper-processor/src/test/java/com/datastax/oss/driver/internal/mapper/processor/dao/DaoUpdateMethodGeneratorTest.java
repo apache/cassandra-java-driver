@@ -94,7 +94,7 @@ public class DaoUpdateMethodGeneratorTest extends DaoMethodGeneratorTest {
   @Test
   public void should_warn_when_non_bind_marker_has_cql_name() {
     should_succeed_with_expected_warning(
-        "Method update(test.Product,java.lang.String): parameter entity does not refer "
+        "Parameter entity does not refer "
             + "to a bind marker, @CqlName annotation will be ignored",
         MethodSpec.methodBuilder("update")
             .addAnnotation(
@@ -125,7 +125,7 @@ public class DaoUpdateMethodGeneratorTest extends DaoMethodGeneratorTest {
     // given
     ProcessorContext processorContext = mock(ProcessorContext.class);
     DaoUpdateMethodGenerator daoUpdateMethodGenerator =
-        new DaoUpdateMethodGenerator(null, null, null, processorContext);
+        new DaoUpdateMethodGenerator(null, null, null, null, processorContext);
     MethodSpec.Builder builder = MethodSpec.constructorBuilder();
 
     // when
@@ -141,7 +141,7 @@ public class DaoUpdateMethodGeneratorTest extends DaoMethodGeneratorTest {
     // given
     ProcessorContext processorContext = mock(ProcessorContext.class);
     DaoUpdateMethodGenerator daoUpdateMethodGenerator =
-        new DaoUpdateMethodGenerator(null, null, null, processorContext);
+        new DaoUpdateMethodGenerator(null, null, null, null, processorContext);
     MethodSpec.Builder builder = MethodSpec.constructorBuilder();
 
     // when

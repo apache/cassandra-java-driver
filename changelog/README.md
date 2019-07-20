@@ -4,6 +4,7 @@
 
 ### 4.2.0 (in progress)
 
+- [improvement] JAVA-2302: Better target mapper errors and warnings for inherited methods
 - [improvement] JAVA-2336: Expose byte utility methods in the public API 
 - [improvement] JAVA-2338: Revisit toString() for data container types
 - [bug] JAVA-2367: Fix column names in EntityHelper.updateByPrimaryKey

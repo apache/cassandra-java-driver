@@ -76,8 +76,8 @@ public class DefaultEntityFactory implements EntityFactory {
   }
 
   @Override
-  public EntityDefinition getDefinition(TypeElement classElement) {
-    Set<TypeMirror> types = HierarchyScanner.resolveTypeHierarchy(classElement, context);
+  public EntityDefinition getDefinition(TypeElement processedClass) {
+    Set<TypeMirror> types = HierarchyScanner.resolveTypeHierarchy(processedClass, context);
     Set<TypeElement> typeHierarchy = Sets.newLinkedHashSet();
     for (TypeMirror type : types) {
       typeHierarchy.add((TypeElement) context.getTypeUtils().asElement(type));
@@ -141,8 +141,14 @@ public class DefaultEntityFactory implements EntityFactory {
         VariableElement field = findField(typeHierarchy, propertyName, typeMirror);
 
         Map<Class<? extends Annotation>, Annotation> propertyAnnotations =
-            scanPropertyAnnotations(typeHierarchy, getMethod, field);
-        if (isTransient(propertyAnnotations, propertyName, transientProperties, getMethod, field)) {
+            scanPropertyAnnotations(typeHierarchy, getMethod, field, processedClass);
+        if (isTransient(
+            propertyAnnotations,
+            propertyName,
+            transientProperties,
+            getMethod,
+            field,
+            processedClass)) {
           continue;
         }
 
@@ -150,7 +156,7 @@ public class DefaultEntityFactory implements EntityFactory {
         int clusteringColumnIndex = getClusteringColumnIndex(propertyAnnotations);
         Optional<String> customCqlName = getCustomCqlName(propertyAnnotations);
         Optional<String> computedFormula =
-            getComputedFormula(propertyAnnotations, getMethod, field);
+            getComputedFormula(propertyAnnotations, getMethod, field, processedClass);
 
         PropertyType propertyType = PropertyType.parse(typeMirror, context);
         PropertyDefinition property =
@@ -171,6 +177,7 @@ public class DefaultEntityFactory implements EntityFactory {
                 .getMessager()
                 .error(
                     getMethod,
+                    processedClass,
                     "Duplicate partition key index: if multiple properties are annotated "
                         + "with @%s, the annotation must be parameterized with an integer "
                         + "indicating the position. Found duplicate index %d for %s and %s.",
@@ -187,6 +194,7 @@ public class DefaultEntityFactory implements EntityFactory {
                 .getMessager()
                 .error(
                     getMethod,
+                    processedClass,
                     "Duplicate clustering column index: if multiple properties are annotated "
                         + "with @%s, the annotation must be parameterized with an integer "
                         + "indicating the position. Found duplicate index %d for %s and %s.",
@@ -207,19 +215,19 @@ public class DefaultEntityFactory implements EntityFactory {
       context
           .getMessager()
           .error(
-              classElement,
+              processedClass,
               "@%s-annotated class must have at least one property defined.",
               Entity.class.getSimpleName());
     }
 
-    String entityName = Introspector.decapitalize(classElement.getSimpleName().toString());
-    String defaultKeyspace = classElement.getAnnotation(Entity.class).defaultKeyspace();
+    String entityName = Introspector.decapitalize(processedClass.getSimpleName().toString());
+    String defaultKeyspace = processedClass.getAnnotation(Entity.class).defaultKeyspace();
 
     return new DefaultEntityDefinition(
-        ClassName.get(classElement),
+        ClassName.get(processedClass),
         entityName,
         defaultKeyspace.isEmpty() ? null : defaultKeyspace,
-        Optional.ofNullable(classElement.getAnnotation(CqlName.class)).map(CqlName::value),
+        Optional.ofNullable(processedClass.getAnnotation(CqlName.class)).map(CqlName::value),
         ImmutableList.copyOf(partitionKey.values()),
         ImmutableList.copyOf(clusteringColumns.values()),
         regularColumns.build(),
@@ -292,7 +300,8 @@ public class DefaultEntityFactory implements EntityFactory {
   private Optional<String> getComputedFormula(
       Map<Class<? extends Annotation>, Annotation> annotations,
       ExecutableElement getMethod,
-      @Nullable VariableElement field) {
+      @Nullable VariableElement field,
+      TypeElement processedClass) {
     Computed annotation = (Computed) annotations.get(Computed.class);
 
     if (annotation != null) {
@@ -301,7 +310,9 @@ public class DefaultEntityFactory implements EntityFactory {
       if (value.isEmpty()) {
         Element element =
             field != null && field.getAnnotation(Computed.class) != null ? field : getMethod;
-        context.getMessager().error(element, "@Computed value should be non-empty.");
+        context
+            .getMessager()
+            .error(element, processedClass, "@Computed value should be non-empty.");
       }
       return Optional.of(value);
     }
@@ -316,7 +327,8 @@ public class DefaultEntityFactory implements EntityFactory {
     }
 
     NamingStrategy namingStrategy = annotation.get().getAnnotation();
-    Element classElement = annotation.get().getElement();
+    // Safe cast because the annotation can only be used on types:
+    TypeElement classElement = (TypeElement) annotation.get().getElement();
     if (namingStrategy == null) {
       return CqlNameGenerator.DEFAULT;
     }
@@ -402,7 +414,8 @@ public class DefaultEntityFactory implements EntityFactory {
       String propertyName,
       Set<String> transientProperties,
       ExecutableElement getMethod,
-      @Nullable VariableElement field) {
+      @Nullable VariableElement field,
+      TypeElement processedClass) {
 
     Transient transientAnnotation = (Transient) annotations.get(Transient.class);
     // check if property name is included in @TransientProperties
@@ -422,6 +435,7 @@ public class DefaultEntityFactory implements EntityFactory {
           .getMessager()
           .error(
               element,
+              processedClass,
               "Property that is considered transient cannot be annotated with @%s.",
               exclusiveAnnotation.getSimpleName());
     }
@@ -439,12 +453,16 @@ public class DefaultEntityFactory implements EntityFactory {
   }
 
   private void reportMultipleAnnotationError(
-      Element element, Class<? extends Annotation> a0, Class<? extends Annotation> a1) {
+      Element element,
+      Class<? extends Annotation> a0,
+      Class<? extends Annotation> a1,
+      TypeElement processedClass) {
     if (a0 == a1) {
       context
           .getMessager()
           .warn(
               element,
+              processedClass,
               "@%s should be used either on the field or the getter, but not both. "
                   + "The annotation on this field will be ignored.",
               a0.getSimpleName());
@@ -453,6 +471,7 @@ public class DefaultEntityFactory implements EntityFactory {
           .getMessager()
           .error(
               element,
+              processedClass,
               "Properties can't be annotated with both @%s and @%s.",
               a0.getSimpleName(),
               a1.getSimpleName());
@@ -462,13 +481,14 @@ public class DefaultEntityFactory implements EntityFactory {
   private Map<Class<? extends Annotation>, Annotation> scanPropertyAnnotations(
       Set<TypeElement> typeHierarchy,
       ExecutableElement getMethod,
-      @Nullable VariableElement field) {
+      @Nullable VariableElement field,
+      TypeElement processedClass) {
     Map<Class<? extends Annotation>, Annotation> annotations = Maps.newHashMap();
 
     // scan methods first as they should take precedence.
-    scanMethodAnnotations(typeHierarchy, getMethod, annotations);
+    scanMethodAnnotations(typeHierarchy, getMethod, annotations, processedClass);
     if (field != null) {
-      scanFieldAnnotations(field, annotations);
+      scanFieldAnnotations(field, annotations, processedClass);
     }
 
     return ImmutableMap.copyOf(annotations);
@@ -486,7 +506,9 @@ public class DefaultEntityFactory implements EntityFactory {
   }
 
   private void scanFieldAnnotations(
-      VariableElement field, Map<Class<? extends Annotation>, Annotation> annotations) {
+      VariableElement field,
+      Map<Class<? extends Annotation>, Annotation> annotations,
+      TypeElement processedClass) {
     Class<? extends Annotation> exclusiveAnnotation = getExclusiveAnnotation(annotations);
     for (Class<? extends Annotation> annotationClass : PROPERTY_ANNOTATIONS) {
       Annotation annotation = field.getAnnotation(annotationClass);
@@ -495,7 +517,8 @@ public class DefaultEntityFactory implements EntityFactory {
           if (exclusiveAnnotation == null) {
             exclusiveAnnotation = annotationClass;
           } else {
-            reportMultipleAnnotationError(field, exclusiveAnnotation, annotationClass);
+            reportMultipleAnnotationError(
+                field, exclusiveAnnotation, annotationClass, processedClass);
           }
         }
         if (!annotations.containsKey(annotationClass)) {
@@ -508,7 +531,8 @@ public class DefaultEntityFactory implements EntityFactory {
   private void scanMethodAnnotations(
       Set<TypeElement> typeHierarchy,
       ExecutableElement getMethod,
-      Map<Class<? extends Annotation>, Annotation> annotations) {
+      Map<Class<? extends Annotation>, Annotation> annotations,
+      TypeElement processedClass) {
     Class<? extends Annotation> exclusiveAnnotation = getExclusiveAnnotation(annotations);
     for (Class<? extends Annotation> annotationClass : PROPERTY_ANNOTATIONS) {
       Optional<? extends ResolvedAnnotation<? extends Annotation>> annotation =
@@ -519,7 +543,10 @@ public class DefaultEntityFactory implements EntityFactory {
             exclusiveAnnotation = annotationClass;
           } else {
             reportMultipleAnnotationError(
-                annotation.get().getElement(), exclusiveAnnotation, annotationClass);
+                annotation.get().getElement(),
+                exclusiveAnnotation,
+                annotationClass,
+                processedClass);
           }
         }
         if (!annotations.containsKey(annotationClass)) {

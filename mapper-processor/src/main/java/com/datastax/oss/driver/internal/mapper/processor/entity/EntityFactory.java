@@ -24,5 +24,5 @@ public interface EntityFactory {
    * Parses an {@link Entity}-annotated POJO and returns a descriptor of its properties and
    * annotations.
    */
-  EntityDefinition getDefinition(TypeElement classElement);
+  EntityDefinition getDefinition(TypeElement processedClass);
 }

@@ -53,9 +53,10 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
   public DaoSelectMethodGenerator(
       ExecutableElement methodElement,
       Map<Name, TypeElement> typeParameters,
+      TypeElement processedType,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    super(methodElement, typeParameters, enclosingClass, context);
+    super(methodElement, typeParameters, processedType, enclosingClass, context);
   }
 
   protected Set<DaoReturnTypeKind> getSupportedReturnTypes() {
@@ -130,12 +131,13 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
     // If we have parameters for some primary key components, validate that the types match:
     if (!primaryKeyParameters.isEmpty()
         && !EntityUtils.areParametersValid(
-            context,
-            methodElement,
             entityElement,
             entityDefinition,
             primaryKeyParameters,
             Select.class,
+            context,
+            methodElement,
+            processedType,
             "don't use a custom clause")) {
       return Optional.empty();
     }
@@ -238,6 +240,7 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
+              processedType,
               "Can't parse ordering '%s', expected a column name followed by ASC or DESC",
               orderingSpec);
       return;

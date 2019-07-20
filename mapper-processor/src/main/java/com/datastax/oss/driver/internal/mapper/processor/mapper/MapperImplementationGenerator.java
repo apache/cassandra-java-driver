@@ -100,12 +100,15 @@ public class MapperImplementationGenerator extends SingleFileCodeGenerator
         Set<Modifier> modifiers = methodElement.getModifiers();
         if (!modifiers.contains(Modifier.STATIC) && !modifiers.contains(Modifier.DEFAULT)) {
           Optional<MethodGenerator> maybeGenerator =
-              context.getCodeGeneratorFactory().newMapperImplementationMethod(methodElement, this);
+              context
+                  .getCodeGeneratorFactory()
+                  .newMapperImplementationMethod(methodElement, interfaceElement, this);
           if (!maybeGenerator.isPresent()) {
             context
                 .getMessager()
                 .error(
                     methodElement,
+                    interfaceElement,
                     "Unrecognized method signature: no implementation will be generated");
           } else {
             maybeGenerator.flatMap(MethodGenerator::generate).ifPresent(classContents::addMethod);

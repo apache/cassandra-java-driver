@@ -98,12 +98,13 @@ public class EntityUtils {
    * message is emitted on the given method element.
    */
   public static boolean areParametersValid(
-      ProcessorContext context,
-      ExecutableElement methodElement,
       TypeElement entityElement,
       EntityDefinition entityDefinition,
       List<? extends VariableElement> parameters,
       Class<? extends Annotation> annotationClass,
+      ProcessorContext context,
+      ExecutableElement methodElement,
+      TypeElement processedType,
       String exceptionCondition) {
     List<TypeName> primaryKeyTypes =
         entityDefinition.getPrimaryKey().stream()
@@ -121,6 +122,7 @@ public class EntityUtils {
           .getMessager()
           .error(
               methodElement,
+              processedType,
               "Invalid parameter list: %s methods that %s "
                   + "must at least specify partition key components "
                   + "(expected partition key of %s: %s)",
@@ -136,6 +138,7 @@ public class EntityUtils {
           .getMessager()
           .error(
               methodElement,
+              processedType,
               "Invalid parameter list: %s methods that %s "
                   + "must match the primary key components in the exact order "
                   + "(expected primary key of %s: %s). Too many parameters provided",
@@ -155,6 +158,7 @@ public class EntityUtils {
             .getMessager()
             .error(
                 methodElement,
+                processedType,
                 "Invalid parameter list: %s methods that %s "
                     + "must match the primary key components in the exact order "
                     + "(expected primary key of %s: %s). Mismatch at index %d: %s should be %s",

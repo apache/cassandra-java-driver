@@ -52,9 +52,10 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
   public DaoUpdateMethodGenerator(
       ExecutableElement methodElement,
       Map<Name, TypeElement> typeParameters,
+      TypeElement processedType,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    super(methodElement, typeParameters, enclosingClass, context);
+    super(methodElement, typeParameters, processedType, enclosingClass, context);
     nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
   }
 
@@ -84,6 +85,7 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
+              processedType,
               "%s methods must take the entity to update as the first parameter",
               Update.class.getSimpleName());
       return Optional.empty();
@@ -220,6 +222,7 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
+              processedType,
               "Invalid annotation parameters: %s cannot have both ifExists and customIfClause",
               Update.class.getSimpleName());
     }
