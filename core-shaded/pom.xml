@@ -303,6 +303,7 @@
             </goals>
             <configuration>
               <instructions>
+                <Automatic-Module-Name>com.datastax.oss.driver.core</Automatic-Module-Name>
                 <Bundle-SymbolicName>com.datastax.oss.driver.core</Bundle-SymbolicName>
                 <!--
                 Allow importing code from other packages
