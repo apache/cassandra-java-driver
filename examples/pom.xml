@@ -153,6 +153,16 @@
         </configuration>
       </plugin>
       <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Automatic-Module-Name>com.datastax.oss.driver.examples</Automatic-Module-Name>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.revapi</groupId>
         <artifactId>revapi-maven-plugin</artifactId>
         <configuration>

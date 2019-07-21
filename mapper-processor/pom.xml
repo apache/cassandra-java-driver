@@ -121,6 +121,13 @@
       </plugin>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Automatic-Module-Name>com.datastax.oss.driver.mapper.processor</Automatic-Module-Name>
+            </manifestEntries>
+          </archive>
+        </configuration>
         <executions>
           <!--
             This module only has internal classes, yet we need a javadoc JAR to pass Maven central
