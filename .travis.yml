@@ -13,6 +13,7 @@ matrix:
 before_install:
   # Require JDK8 for compiling
   - jdk_switcher use openjdk8
+  - ./install-snapshots.sh
 install: mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 script: mvn test -Djacoco.skip=true -B -V
 cache:
