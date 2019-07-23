@@ -4,6 +4,7 @@
 
 ### 4.2.0 (in progress)
 
+- [improvement] JAVA-2359: Allow default keyspace at the mapper level
 - [improvement] JAVA-2306: Clear security tokens from memory immediately after use
 - [improvement] JAVA-2320: Expose more attributes on mapper Select for individual query clauses
 - [bug] JAVA-2332: Destroy connection pool when a node gets removed
