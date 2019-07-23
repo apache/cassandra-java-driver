@@ -81,6 +81,15 @@ ProductDao productDao(@DaoKeyspace String keyspace);
 ProductDao productDao(@DaoTable CqlIdentifier table);
 ```
 
+You can also specify a default keyspace when building the mapper, it will be used for all methods
+that don't have a `@DaoKeyspace` parameter:
+
+```java
+InventoryMapper inventoryMapper = new InventoryMapperBuilder(session)
+    .withDefaultKeyspace("keyspace1")
+    .build();
+```
+
 The mapper maintains an interface cache. Calling a factory method with the same arguments will yield
 the same DAO instance:
 
