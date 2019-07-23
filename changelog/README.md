@@ -4,6 +4,7 @@
 
 ### 4.2.0 (in progress)
 
+- [improvement] JAVA-2351: Add a driver example for the object mapper
 - [bug] JAVA-2323: Handle restart of a node with same host_id but a different address
 - [improvement] JAVA-2303: Ignore peer rows matching the control host's RPC address
 - [improvement] JAVA-2236: Add methods to set the auth provider programmatically
