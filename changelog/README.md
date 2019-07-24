@@ -4,6 +4,7 @@
 
 ### 4.2.0 (in progress)
 
+- [bug] JAVA-2358: Fix list of reserved CQL keywords
 - [improvement] JAVA-2359: Allow default keyspace at the mapper level
 - [improvement] JAVA-2306: Clear security tokens from memory immediately after use
 - [improvement] JAVA-2320: Expose more attributes on mapper Select for individual query clauses
