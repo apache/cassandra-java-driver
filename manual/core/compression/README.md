@@ -70,4 +70,4 @@ Dependency:
 
 Always double-check the exact Snappy version needed; you can find it in the driver's [parent POM].
 
-[parent POM]: https://search.maven.org/#artifactdetails%7Ccom.datastax.oss%7Cjava-driver-parent%7C4.1.0%7Cpom
+[parent POM]: https://search.maven.org/search?q=g:com.datastax.oss%20AND%20a:java-driver-parent&core=gav

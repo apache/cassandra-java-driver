@@ -14,7 +14,7 @@ To use it in your application, add the following dependency:
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-query-builder</artifactId>
-  <version>4.1.0</version>
+  <version>${driver.version}</version>
 </dependency>
 ```
 
