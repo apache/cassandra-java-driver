@@ -35,6 +35,9 @@ public enum DefaultConsistencyLevel implements ConsistencyLevel {
   SERIAL(ProtocolConstants.ConsistencyLevel.SERIAL),
   LOCAL_SERIAL(ProtocolConstants.ConsistencyLevel.LOCAL_SERIAL),
   ;
+  // Note that, for the sake of convenience, we also expose shortcuts to these constants on the
+  // ConsistencyLevel interface. If you add a new enum constant, remember to update the interface as
+  // well.
 
   private final int protocolCode;
 

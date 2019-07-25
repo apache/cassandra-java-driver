@@ -26,6 +26,18 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  */
 public interface ConsistencyLevel {
 
+  ConsistencyLevel ANY = DefaultConsistencyLevel.ANY;
+  ConsistencyLevel ONE = DefaultConsistencyLevel.ONE;
+  ConsistencyLevel TWO = DefaultConsistencyLevel.TWO;
+  ConsistencyLevel THREE = DefaultConsistencyLevel.THREE;
+  ConsistencyLevel QUORUM = DefaultConsistencyLevel.QUORUM;
+  ConsistencyLevel ALL = DefaultConsistencyLevel.ALL;
+  ConsistencyLevel LOCAL_ONE = DefaultConsistencyLevel.LOCAL_ONE;
+  ConsistencyLevel LOCAL_QUORUM = DefaultConsistencyLevel.LOCAL_QUORUM;
+  ConsistencyLevel EACH_QUORUM = DefaultConsistencyLevel.EACH_QUORUM;
+  ConsistencyLevel SERIAL = DefaultConsistencyLevel.SERIAL;
+  ConsistencyLevel LOCAL_SERIAL = DefaultConsistencyLevel.LOCAL_SERIAL;
+
   /** The numerical value that the level is encoded to in protocol frames. */
   int getProtocolCode();
 

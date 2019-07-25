@@ -24,6 +24,10 @@ package com.datastax.oss.driver.api.core.cql;
  */
 public interface BatchType {
 
+  BatchType LOGGED = DefaultBatchType.LOGGED;
+  BatchType UNLOGGED = DefaultBatchType.UNLOGGED;
+  BatchType COUNTER = DefaultBatchType.COUNTER;
+
   /** The numerical value that the batch type is encoded to. */
   byte getProtocolCode();
 

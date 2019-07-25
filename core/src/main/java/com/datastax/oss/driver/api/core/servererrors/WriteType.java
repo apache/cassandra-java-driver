@@ -29,6 +29,15 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  */
 public interface WriteType {
 
+  WriteType SIMPLE = DefaultWriteType.SIMPLE;
+  WriteType BATCH = DefaultWriteType.BATCH;
+  WriteType UNLOGGED_BATCH = DefaultWriteType.UNLOGGED_BATCH;
+  WriteType COUNTER = DefaultWriteType.COUNTER;
+  WriteType BATCH_LOG = DefaultWriteType.BATCH_LOG;
+  WriteType CAS = DefaultWriteType.CAS;
+  WriteType VIEW = DefaultWriteType.VIEW;
+  WriteType CDC = DefaultWriteType.CDC;
+
   /** The textual representation that the write type is encoded to in protocol frames. */
   @NonNull
   String name();

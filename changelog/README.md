@@ -4,6 +4,8 @@
 
 ### 4.2.0 (in progress)
 
+- [improvement] JAVA-2365: Redeclare default constants when an enum is abstracted behind an
+  interface
 - [improvement] JAVA-2302: Better target mapper errors and warnings for inherited methods
 - [improvement] JAVA-2336: Expose byte utility methods in the public API 
 - [improvement] JAVA-2338: Revisit toString() for data container types
