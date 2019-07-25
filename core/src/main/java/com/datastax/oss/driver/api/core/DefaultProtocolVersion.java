@@ -37,7 +37,11 @@ public enum DefaultProtocolVersion implements ProtocolVersion {
    *
    * @see ProtocolVersion#isBeta()
    */
-  V5(ProtocolConstants.Version.V5, true);
+  V5(ProtocolConstants.Version.V5, true),
+  ;
+  // Note that, for the sake of convenience, we also expose shortcuts to these constants on the
+  // ProtocolVersion interface. If you add a new enum constant, remember to update the interface as
+  // well.
 
   private final int code;
   private final boolean beta;

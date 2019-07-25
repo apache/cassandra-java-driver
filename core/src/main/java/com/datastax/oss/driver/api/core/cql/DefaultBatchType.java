@@ -38,6 +38,9 @@ public enum DefaultBatchType implements BatchType {
    */
   COUNTER(ProtocolConstants.BatchType.COUNTER),
   ;
+  // Note that, for the sake of convenience, we also expose shortcuts to these constants on the
+  // BatchType interface. If you add a new enum constant, remember to update the interface as
+  // well.
 
   private final byte code;
 

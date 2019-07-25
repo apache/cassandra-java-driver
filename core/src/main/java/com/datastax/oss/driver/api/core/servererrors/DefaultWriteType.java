@@ -57,4 +57,7 @@ public enum DefaultWriteType implements WriteType {
    */
   CDC,
   ;
+  // Note that, for the sake of convenience, we also expose shortcuts to these constants on the
+  // WriteType interface. If you add a new enum constant, remember to update the interface as
+  // well.
 }
