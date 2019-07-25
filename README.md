@@ -32,13 +32,19 @@ are multiple modules, all prefixed with `java-driver-`.
   <artifactId>java-driver-query-builder</artifactId>
   <version>${driver.version}</version>
 </dependency>
+
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-mapper-runtime</artifactId>
+  <version>${driver.version}</version>
+</dependency>
 ```
 
 Note that the query builder is now published as a separate artifact, you'll need to add the
 dependency if you plan to use it.
 
 Refer to each module's manual for more details ([core](manual/core/), [query
-builder](manual/query_builder/)).
+builder](manual/query_builder/), [mapper](manual/mapper)).
 
 [com.datastax.oss]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.datastax.oss%22
 
