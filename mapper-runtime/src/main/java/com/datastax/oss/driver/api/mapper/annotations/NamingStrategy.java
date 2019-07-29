@@ -41,7 +41,7 @@ import java.lang.annotation.Target;
  * NamingConvention#SNAKE_CASE_INSENSITIVE}.
  */
 @Target(ElementType.TYPE)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface NamingStrategy {
 
   /**

@@ -101,5 +101,5 @@ import java.lang.annotation.Target;
  * {@link AsyncResultSet}), the mapper processor will issue a compile-time error.
  */
 @Target(ElementType.METHOD)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface GetEntity {}

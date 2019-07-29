@@ -117,7 +117,7 @@ import java.util.function.UnaryOperator;
  * entity class and the naming convention).
  */
 @Target(ElementType.METHOD)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Insert {
   /** Whether to append an IF NOT EXISTS clause at the end of the generated INSERT query. */
   boolean ifNotExists() default false;

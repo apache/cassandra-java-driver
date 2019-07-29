@@ -33,7 +33,7 @@ import java.time.Duration;
  * second.
  */
 @Target(ElementType.METHOD)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface StatementAttributes {
   /**
    * The name of the execution profile to use.

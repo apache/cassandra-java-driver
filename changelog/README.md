@@ -4,6 +4,7 @@
 
 ### 4.2.0 (in progress)
 
+- [improvement] JAVA-2369: Change mapper annotations retention to runtime
 - [improvement] JAVA-2365: Redeclare default constants when an enum is abstracted behind an
   interface
 - [improvement] JAVA-2302: Better target mapper errors and warnings for inherited methods

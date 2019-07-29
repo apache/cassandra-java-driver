@@ -134,7 +134,7 @@ import java.util.function.UnaryOperator;
  * entity class and the naming convention).
  */
 @Target(ElementType.METHOD)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Select {
 
   /**

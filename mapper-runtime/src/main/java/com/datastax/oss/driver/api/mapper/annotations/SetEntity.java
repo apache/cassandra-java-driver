@@ -88,7 +88,7 @@ import java.lang.annotation.Target;
  * compile-time warning.
  */
 @Target(ElementType.METHOD)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface SetEntity {
 
   /**

@@ -47,7 +47,7 @@ import java.lang.annotation.Target;
  * <p>This annotation is mutually exclusive with {@link PartitionKey}.
  */
 @Target({ElementType.FIELD, ElementType.METHOD})
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface ClusteringColumn {
 
   /**

@@ -57,7 +57,7 @@ import java.lang.annotation.Target;
  * @see MapperBuilder#withCustomState(Object, Object)
  */
 @Target(ElementType.METHOD)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface QueryProvider {
 
   /**

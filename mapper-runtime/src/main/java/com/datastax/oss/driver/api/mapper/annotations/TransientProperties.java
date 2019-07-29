@@ -15,6 +15,11 @@
  */
 package com.datastax.oss.driver.api.mapper.annotations;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
  * Annotates an {@link Entity} to indicate which properties should be considered 'transient',
  * meaning that they should not be mapped to any column (neither during reads nor writes).
@@ -39,6 +44,8 @@ package com.datastax.oss.driver.api.mapper.annotations;
  * implementing classes will share a common configuration without needing to explicitly annotate
  * each property with a {@link Transient} annotation.
  */
+@Target({ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
 public @interface TransientProperties {
 
   /** Specifies a list of property names that should be considered transient. */

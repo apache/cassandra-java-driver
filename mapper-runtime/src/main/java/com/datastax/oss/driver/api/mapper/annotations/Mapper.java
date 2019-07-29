@@ -47,7 +47,7 @@ import java.lang.annotation.Target;
  * <p>The interface should define one or more {@link DaoFactory} methods.
  */
 @Target(ElementType.TYPE)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Mapper {
 
   /**

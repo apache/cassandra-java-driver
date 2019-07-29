@@ -92,5 +92,5 @@ import java.lang.annotation.Target;
  * Note that the cache is a simple map with no eviction mechanism.
  */
 @Target(ElementType.METHOD)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface DaoFactory {}

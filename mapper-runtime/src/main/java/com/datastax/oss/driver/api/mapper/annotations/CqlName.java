@@ -56,7 +56,7 @@ import java.lang.annotation.Target;
  * entity.
  */
 @Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface CqlName {
 
   /**

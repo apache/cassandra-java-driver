@@ -36,5 +36,5 @@ import java.lang.annotation.Target;
  * ClusteringColumn} annotations.
  */
 @Target({ElementType.FIELD, ElementType.METHOD})
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Transient {}

@@ -137,7 +137,7 @@ import java.util.function.UnaryOperator;
  * </ul>
  */
 @Target(ElementType.METHOD)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Query {
 
   /**
