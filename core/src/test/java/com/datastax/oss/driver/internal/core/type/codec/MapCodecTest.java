@@ -119,6 +119,16 @@ public class MapCodecTest extends CodecTestBase<Map<String, Integer>> {
   }
 
   @Test
+  public void should_decode_map_with_null_elements() {
+    when(keyCodec.decode(Bytes.fromHexString("0x10"), ProtocolVersion.DEFAULT)).thenReturn("a");
+    when(valueCodec.decode(Bytes.fromHexString("0x0002"), ProtocolVersion.DEFAULT)).thenReturn(2);
+    assertThat(decode("0x" + "00000002" + "0000000110" + "FFFFFFFF" + "FFFFFFFF" + "000000020002"))
+        .containsOnlyKeys("a", null)
+        .containsEntry("a", null)
+        .containsEntry(null, 2);
+  }
+
+  @Test
   public void should_format_null_map() {
     assertThat(format(null)).isEqualTo("NULL");
   }
