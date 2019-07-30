@@ -49,9 +49,10 @@ import java.lang.annotation.Target;
  *   <li>{@link GetEntity}
  *   <li>{@link Insert}
  *   <li>{@link Query}
+ *   <li>{@link QueryProvider}
  *   <li>{@link Select}
  *   <li>{@link SetEntity}
- *       <!-- TODO list new ones as they get added -->
+ *   <li>{@link Update}
  * </ul>
  */
 @Target(ElementType.TYPE)
