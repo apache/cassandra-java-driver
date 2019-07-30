@@ -134,18 +134,28 @@ public class MapCodec<KeyT, ValueT> implements TypeCodec<Map<KeyT, ValueT>> {
       int size = input.getInt();
       Map<KeyT, ValueT> result = Maps.newLinkedHashMapWithExpectedSize(size);
       for (int i = 0; i < size; i++) {
+        KeyT key;
         int keySize = input.getInt();
-        ByteBuffer encodedKey = input.slice();
-        encodedKey.limit(keySize);
-        input.position(input.position() + keySize);
-        KeyT key = keyCodec.decode(encodedKey, protocolVersion);
-
+        // Allow null elements on the decode path, because Cassandra might return such collections
+        // for some computed values in the future -- e.g. SELECT ttl(some_collection)
+        if (keySize < 0) {
+          key = null;
+        } else {
+          ByteBuffer encodedKey = input.slice();
+          encodedKey.limit(keySize);
+          input.position(input.position() + keySize);
+          key = keyCodec.decode(encodedKey, protocolVersion);
+        }
+        ValueT value;
         int valueSize = input.getInt();
-        ByteBuffer encodedValue = input.slice();
-        encodedValue.limit(valueSize);
-        input.position(input.position() + valueSize);
-        ValueT value = valueCodec.decode(encodedValue, protocolVersion);
-
+        if (valueSize < 0) {
+          value = null;
+        } else {
+          ByteBuffer encodedValue = input.slice();
+          encodedValue.limit(valueSize);
+          input.position(input.position() + valueSize);
+          value = valueCodec.decode(encodedValue, protocolVersion);
+        }
         result.put(key, value);
       }
       return result;
