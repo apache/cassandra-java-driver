@@ -17,6 +17,46 @@
           ]
         }
       }
-    }
+    },
+    "ignore": [
+      {
+        "regex": true,
+        "code": "java.annotation.attributeValueChanged",
+        "old": "@interface com\.datastax\.oss\.driver\.api\.mapper\.annotations\..*",
+        "annotationType": "java.lang.annotation.Retention",
+        "attribute": "value",
+        "oldValue": "java.lang.annotation.RetentionPolicy.CLASS",
+        "newValue": "java.lang.annotation.RetentionPolicy.RUNTIME",
+        "justification": "JAVA-2369: Change mapper annotations retention to runtime"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "@interface com.datastax.oss.driver.api.mapper.annotations.Computed",
+        "new": "@interface com.datastax.oss.driver.api.mapper.annotations.Computed",
+        "annotation": "@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)",
+        "justification": "Oversight, should have been annotated this way from the start"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "@interface com.datastax.oss.driver.api.mapper.annotations.Computed",
+        "new": "@interface com.datastax.oss.driver.api.mapper.annotations.Computed",
+        "annotation": "@java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD})",
+        "justification": "Oversight, should have been annotated this way from the start"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "@interface com.datastax.oss.driver.api.mapper.annotations.TransientProperties",
+        "new": "@interface com.datastax.oss.driver.api.mapper.annotations.TransientProperties",
+        "annotation": "@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)",
+        "justification": "Oversight, should have been annotated this way from the start"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "@interface com.datastax.oss.driver.api.mapper.annotations.TransientProperties",
+        "new": "@interface com.datastax.oss.driver.api.mapper.annotations.TransientProperties",
+        "annotation": "@java.lang.annotation.Target({java.lang.annotation.ElementType.TYPE})",
+        "justification": "Oversight, should have been annotated this way from the start"
+      }
+    ]
   }
 }
