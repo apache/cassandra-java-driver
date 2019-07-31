@@ -227,7 +227,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
         wasInFlight = false;
         callback = orphaned.get(streamId);
         if (callback == null) {
-          LOG.trace("[{}] Got response on unknown stream id {}, skipping", streamId);
+          LOG.trace("[{}] Got response on unknown stream id {}, skipping", logPrefix, streamId);
           return;
         }
       }
