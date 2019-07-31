@@ -1,4 +1,5 @@
 language: java
+dist: trusty
 sudo: false
 # see https://sormuras.github.io/blog/2018-03-20-jdk-matrix.html
 matrix:
