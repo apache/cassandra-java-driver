@@ -120,7 +120,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
             query(
                 channel,
                 "SELECT * FROM "
-                    + retrievePeerTableName()
+                    + getPeerTableName()
                     + " WHERE peer = :address and peer_port = :port",
                 ImmutableMap.of(
                     "address",
@@ -131,12 +131,12 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
         query =
             query(
                 channel,
-                "SELECT * FROM " + retrievePeerTableName() + " WHERE peer = :address",
+                "SELECT * FROM " + getPeerTableName() + " WHERE peer = :address",
                 ImmutableMap.of("address", node.getBroadcastAddress().get().getAddress()));
       }
       return query.thenApply(result -> firstPeerRowAsNodeInfo(result, localEndPoint));
     } else {
-      return query(channel, "SELECT * FROM " + retrievePeerTableName())
+      return query(channel, "SELECT * FROM " + getPeerTableName())
           .thenApply(result -> findInPeers(result, node.getHostId(), localEndPoint));
     }
   }
@@ -149,7 +149,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     LOG.debug("[{}] Fetching info for new node {}", logPrefix, broadcastRpcAddress);
     DriverChannel channel = controlConnection.channel();
     EndPoint localEndPoint = channel.getEndPoint();
-    return query(channel, "SELECT * FROM " + retrievePeerTableName())
+    return query(channel, "SELECT * FROM " + getPeerTableName())
         .thenApply(result -> findInPeers(result, broadcastRpcAddress, localEndPoint));
   }
 
@@ -255,11 +255,8 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     return query(channel, queryString, Collections.emptyMap());
   }
 
-  private String retrievePeerTableName() {
-    if (isSchemaV2) {
-      return "system.peers_v2";
-    }
-    return "system.peers";
+  private String getPeerTableName() {
+    return isSchemaV2 ? "system.peers_v2" : "system.peers";
   }
 
   private Optional<NodeInfo> firstPeerRowAsNodeInfo(AdminResult result, EndPoint localEndPoint) {
@@ -459,7 +456,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
               + "configuration in cassandra.yaml on all nodes in your cluster.",
           logPrefix,
           localEndPoint,
-          retrievePeerTableName());
+          getPeerTableName());
       return null;
     }
 
@@ -485,7 +482,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
           "[{}] Found invalid row in {} for peer: {}. "
               + "This is likely a gossip or snitch issue, this node will be ignored.",
           logPrefix,
-          retrievePeerTableName(),
+          getPeerTableName(),
           peerRow.getInetAddress("peer"));
     }
     return valid;
