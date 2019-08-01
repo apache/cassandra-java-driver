@@ -34,11 +34,15 @@ import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.ContactPoints;
 import com.datastax.oss.driver.internal.core.auth.ProgrammaticPlainTextAuthProvider;
+import com.datastax.oss.driver.internal.core.config.cloud.DbaasConfig;
+import com.datastax.oss.driver.internal.core.config.cloud.DbaasConfigUtil;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
+import com.datastax.oss.driver.internal.core.metadata.SniEndPoint;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
+import com.datastax.oss.driver.internal.core.ssl.SniSslEngineFactory;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -73,6 +77,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   protected DriverConfigLoader configLoader;
   protected Set<EndPoint> programmaticContactPoints = new HashSet<>();
   protected CqlIdentifier keyspace;
+  protected String cloudConfigPath;
 
   protected ProgrammaticArguments.Builder programmaticArgumentsBuilder =
       ProgrammaticArguments.builder();
@@ -378,6 +383,20 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
+   * Creates a SessionBuilder pre-configured for a specific Cloud endpoint or configuration file.
+   * Currently this supports only a path on the local filesystem pointing to the secure connect
+   * bundle zip file. In the future this will be extended to work with CaaS service provider
+   * endpoints.
+   *
+   * @param cloudConfigPath Absolute path to the secure connect bundle zip file.
+   */
+  @NonNull
+  public SelfT withCloudSecureConnectBundle(@NonNull String cloudConfigPath) {
+    this.cloudConfigPath = cloudConfigPath;
+    return self;
+  }
+
+  /**
    * Creates the session with the options set by this builder.
    *
    * @return a completion stage that completes with the session when it is fully initialized.
@@ -390,7 +409,6 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
     CompletableFutures.propagateCancellation(wrapStage, buildStage);
     return wrapStage;
   }
-
   /**
    * Convenience method to call {@link #buildAsync()} and block on the result.
    *
@@ -410,6 +428,28 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       DriverConfigLoader configLoader = buildIfNull(this.configLoader, this::defaultConfigLoader);
 
       DriverExecutionProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
+      if (cloudConfigPath == null) {
+        cloudConfigPath =
+            defaultConfig.getString(DefaultDriverOption.CLOUD_SECURE_CONNECT_BUNDLE, null);
+      }
+      if (cloudConfigPath != null) {
+        DbaasConfig dbaasConfig = DbaasConfigUtil.getConfig(cloudConfigPath);
+        for (String hostID : dbaasConfig.getHostIds()) {
+          programmaticContactPoints.add(
+              new SniEndPoint(
+                  new InetSocketAddress(dbaasConfig.getSniHost(), dbaasConfig.getSniPort()),
+                  hostID));
+        }
+        withLocalDatacenter(dbaasConfig.getLocalDataCenter());
+        if (dbaasConfig.getUsername() != null && dbaasConfig.getPassword() != null) {
+          withAuthCredentials(dbaasConfig.getUsername(), dbaasConfig.getPassword());
+        }
+        SSLContext sslContext = DbaasConfigUtil.getSSLContext(dbaasConfig);
+        withSslEngineFactory(new SniSslEngineFactory(sslContext));
+        programmaticArgumentsBuilder.withCloudAddress(
+            new InetSocketAddress(dbaasConfig.getSniHost(), dbaasConfig.getSniPort()));
+      }
+
       List<String> configContactPoints =
           defaultConfig.getStringList(DefaultDriverOption.CONTACT_POINTS, Collections.emptyList());
       boolean resolveAddresses =
