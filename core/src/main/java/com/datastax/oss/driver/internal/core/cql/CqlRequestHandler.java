@@ -654,7 +654,7 @@ public class CqlRequestHandler implements Throttled {
                   "Tried to execute unprepared query %s but we don't have the data to reprepare it",
                   Bytes.toHexString(id)));
         }
-        Prepare reprepareMessage = new Prepare(repreparePayload.query);
+        Prepare reprepareMessage = repreparePayload.toMessage();
         ThrottledAdminRequestHandler reprepareHandler =
             new ThrottledAdminRequestHandler(
                 channel,
