@@ -25,6 +25,8 @@ import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import java.nio.ByteBuffer;
+import java.time.Duration;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -202,5 +204,44 @@ public class PerRequestKeyspaceIT {
                     .setKeyspace(sessionRule.keyspace()))
             .one();
     assertThat(row.getInt(0)).isEqualTo(1);
+  }
+
+  @Test
+  @CassandraRequirement(min = "4.0")
+  public void should_reprepare_statement_with_keyspace_on_the_fly() {
+    // Create a separate session because we don't want it to have a default keyspace
+    try (CqlSession session = SessionUtils.newSession(ccmRule)) {
+      executeDdl(
+          session,
+          String.format(
+              "CREATE TABLE IF NOT EXISTS %s.bar (k int primary key)", sessionRule.keyspace()));
+      PreparedStatement pst =
+          session.prepare(
+              SimpleStatement.newInstance("SELECT * FROM bar WHERE k=?")
+                  .setKeyspace(sessionRule.keyspace()));
+
+      // Drop and re-create the table to invalidate the prepared statement server side
+      executeDdl(session, String.format("DROP TABLE %s.bar", sessionRule.keyspace()));
+      executeDdl(
+          session,
+          String.format("CREATE TABLE %s.bar (k int primary key)", sessionRule.keyspace()));
+      assertThat(preparedStatementExistsOnServer(session, pst.getId())).isFalse();
+
+      // This will re-prepare on the fly
+      session.execute(pst.bind(0));
+      assertThat(preparedStatementExistsOnServer(session, pst.getId())).isTrue();
+    }
+  }
+
+  private void executeDdl(CqlSession session, String query) {
+    session.execute(SimpleStatement.builder(query).setTimeout(Duration.ofSeconds(30)).build());
+  }
+
+  private boolean preparedStatementExistsOnServer(CqlSession session, ByteBuffer id) {
+    ResultSet resultSet =
+        session.execute(
+            SimpleStatement.newInstance(
+                "SELECT * FROM system.prepared_statements WHERE prepared_id = ?", id));
+    return resultSet.iterator().hasNext();
   }
 }

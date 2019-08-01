@@ -4,6 +4,7 @@
 
 ### 4.2.0 (in progress)
 
+- [bug] JAVA-2375: Use per-request keyspace when repreparing on the fly
 - [improvement] JAVA-2370: Remove auto-service plugin from mapper processor
 - [improvement] JAVA-2377: Add a config option to make driver threads daemon
 - [improvement] JAVA-2371: Handle null elements in collections on the decode path
