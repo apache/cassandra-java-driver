@@ -577,7 +577,6 @@ public class DefaultSessionPoolsTest {
     when(node2.getDistance()).thenReturn(NodeDistance.IGNORED);
 
     ChannelPool pool1 = mockPool(node1);
-    ChannelPool pool2 = mockPool(node2);
     ChannelPool pool3 = mockPool(node3);
     MockChannelPoolFactoryHelper factoryHelper =
         MockChannelPoolFactoryHelper.builder(channelPoolFactory)

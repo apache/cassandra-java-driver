@@ -468,15 +468,15 @@ public abstract class AccessibleByIdTestBase<
     assertThat(s).isEqualTo("1");
   }
 
-  @SuppressWarnings("UnusedAssignment")
   @Test(expected = IllegalArgumentException.class)
+  @SuppressWarnings("CheckReturnValue")
   public void should_fail_when_id_does_not_exists() {
     final CqlIdentifier invalidField = CqlIdentifier.fromInternal("invalidField");
     // Given
     T t = newInstance(ImmutableList.of(DataTypes.INT), attachmentPoint);
 
     // When
-    t = t.setInt(invalidField, 1);
+    t.setInt(invalidField, 1);
 
     // Then the method will throw IllegalArgumentException up to the client.
   }

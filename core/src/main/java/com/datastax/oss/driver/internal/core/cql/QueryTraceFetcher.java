@@ -58,7 +58,7 @@ class QueryTraceFetcher {
     String regularConsistency = config.getString(DefaultDriverOption.REQUEST_CONSISTENCY);
     String traceConsistency = config.getString(DefaultDriverOption.REQUEST_TRACE_CONSISTENCY);
     this.config =
-        (traceConsistency.equals(regularConsistency))
+        traceConsistency.equals(regularConsistency)
             ? config
             : config.withString(DefaultDriverOption.REQUEST_CONSISTENCY, traceConsistency);
 

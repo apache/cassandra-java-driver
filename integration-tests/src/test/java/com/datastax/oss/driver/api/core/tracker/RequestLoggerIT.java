@@ -34,7 +34,6 @@ import ch.qos.logback.core.Appender;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
 import com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy;
@@ -374,7 +373,7 @@ public class RequestLoggerIT {
         .prime(when(QUERY).then(rows().row("release_version", "3.0.0")));
 
     // When
-    ResultSet set = sessionRuleNode.session().execute(QUERY);
+    sessionRuleNode.session().execute(QUERY);
 
     // Then
     verify(appender, new Timeout(500, VerificationModeFactory.times(2)))

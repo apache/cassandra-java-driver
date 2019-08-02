@@ -137,12 +137,12 @@ public class ShallowUserDefinedType implements UserDefinedType, Serializable {
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
-  private void readObject(ObjectInputStream s) throws IOException {
+  private void readObject(@SuppressWarnings("unused") ObjectInputStream s) throws IOException {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
-  private void writeObject(ObjectOutputStream s) throws IOException {
+  private void writeObject(@SuppressWarnings("unused") ObjectOutputStream s) throws IOException {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }

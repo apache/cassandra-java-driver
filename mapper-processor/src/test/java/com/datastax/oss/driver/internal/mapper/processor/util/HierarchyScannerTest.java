@@ -59,6 +59,8 @@ public class HierarchyScannerTest {
 
     Mockito.when(classUtils.isSame(Mockito.any(Element.class), Mockito.any(Class.class)))
         .thenReturn(false);
+    Mockito.when(types.isSameType(Mockito.any(TypeMirror.class), Mockito.any(TypeMirror.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0) == invocation.getArgument(1));
   }
 
   @Test

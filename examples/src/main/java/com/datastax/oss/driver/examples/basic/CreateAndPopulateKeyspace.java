@@ -42,6 +42,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
  * @see <a href="https://docs.datastax.com/en/developer/java-driver/4.0">Java driver online
  *     manual</a>
  */
+@SuppressWarnings("CatchAndPrintStackTrace")
 public class CreateAndPopulateKeyspace {
 
   public static void main(String[] args) {

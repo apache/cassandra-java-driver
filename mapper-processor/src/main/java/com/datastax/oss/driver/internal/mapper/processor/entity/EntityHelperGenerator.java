@@ -106,17 +106,17 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
 
     for (MethodGenerator methodGenerator :
         ImmutableList.of(
-            new EntityHelperSetMethodGenerator(entityDefinition, this, context),
-            new EntityHelperGetMethodGenerator(entityDefinition, this, context),
-            new EntityHelperInsertMethodGenerator(entityDefinition, this, context),
-            new EntityHelperSelectByPrimaryKeyPartsMethodGenerator(entityDefinition, this, context),
-            new EntityHelperSelectByPrimaryKeyMethodGenerator(entityDefinition, this, context),
-            new EntityHelperSelectStartMethodGenerator(entityDefinition, this, context),
-            new EntityHelperDeleteStartMethodGenerator(entityDefinition, this, context),
-            new EntityHelperDeleteByPrimaryKeyPartsMethodGenerator(entityDefinition, this, context),
-            new EntityHelperDeleteByPrimaryKeyMethodGenerator(entityDefinition, this, context),
-            new EntityHelperUpdateStartMethodGenerator(entityDefinition, this, context),
-            new EntityHelperUpdateByPrimaryKeyMethodGenerator(entityDefinition, this, context))) {
+            new EntityHelperSetMethodGenerator(entityDefinition, this),
+            new EntityHelperGetMethodGenerator(entityDefinition, this),
+            new EntityHelperInsertMethodGenerator(entityDefinition),
+            new EntityHelperSelectByPrimaryKeyPartsMethodGenerator(),
+            new EntityHelperSelectByPrimaryKeyMethodGenerator(),
+            new EntityHelperSelectStartMethodGenerator(entityDefinition),
+            new EntityHelperDeleteStartMethodGenerator(),
+            new EntityHelperDeleteByPrimaryKeyPartsMethodGenerator(entityDefinition),
+            new EntityHelperDeleteByPrimaryKeyMethodGenerator(),
+            new EntityHelperUpdateStartMethodGenerator(entityDefinition),
+            new EntityHelperUpdateByPrimaryKeyMethodGenerator(entityDefinition))) {
       methodGenerator.generate().ifPresent(classContents::addMethod);
     }
 

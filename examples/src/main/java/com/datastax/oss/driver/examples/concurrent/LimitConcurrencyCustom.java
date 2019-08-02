@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @see <a href="https://docs.datastax.com/en/developer/java-driver/4.0">Java driver online
  *     manual</a>
  */
+@SuppressWarnings("CatchAndPrintStackTrace")
 public class LimitConcurrencyCustom {
   private static final int CONCURRENCY_LEVEL = 32;
   private static final int TOTAL_NUMBER_OF_INSERTS = 10_000;

@@ -65,7 +65,7 @@ public class PagingIterableWrapper<SourceT, TargetT> implements PagingIterable<T
         new AbstractIterator<TargetT>() {
           @Override
           protected TargetT computeNext() {
-            return (sourceIterator.hasNext())
+            return sourceIterator.hasNext()
                 ? elementMapper.apply(sourceIterator.next())
                 : endOfData();
           }

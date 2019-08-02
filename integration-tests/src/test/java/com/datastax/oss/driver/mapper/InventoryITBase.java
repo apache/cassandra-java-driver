@@ -130,17 +130,17 @@ public abstract class InventoryITBase {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) {
+    public boolean equals(Object other) {
+      if (other == this) {
         return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
+      } else if (other instanceof Product) {
+        Product that = (Product) other;
+        return Objects.equals(id, that.id)
+            && Objects.equals(description, that.description)
+            && Objects.equals(dimensions, that.dimensions);
+      } else {
         return false;
       }
-      Product product = (Product) o;
-      return Objects.equals(id, product.id)
-          && Objects.equals(description, product.description)
-          && Objects.equals(dimensions, product.dimensions);
     }
 
     @Override
@@ -181,11 +181,15 @@ public abstract class InventoryITBase {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      ProductWithoutId that = (ProductWithoutId) o;
-      return Objects.equals(description, that.description);
+    public boolean equals(Object other) {
+      if (other == this) {
+        return true;
+      } else if (other instanceof ProductWithoutId) {
+        ProductWithoutId that = (ProductWithoutId) other;
+        return Objects.equals(description, that.description);
+      } else {
+        return false;
+      }
     }
 
     @Override
@@ -239,15 +243,15 @@ public abstract class InventoryITBase {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) {
+    public boolean equals(Object other) {
+      if (this == other) {
         return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
+      } else if (other instanceof Dimensions) {
+        Dimensions that = (Dimensions) other;
+        return this.length == that.length && this.width == that.width && this.height == that.height;
+      } else {
         return false;
       }
-      Dimensions that = (Dimensions) o;
-      return length == that.length && width == that.width && height == that.height;
     }
 
     @Override
@@ -280,11 +284,15 @@ public abstract class InventoryITBase {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      OnlyPK onlyPK = (OnlyPK) o;
-      return Objects.equals(id, onlyPK.id);
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      } else if (other instanceof OnlyPK) {
+        OnlyPK that = (OnlyPK) other;
+        return Objects.equals(this.id, that.id);
+      } else {
+        return false;
+      }
     }
 
     @Override
@@ -374,16 +382,20 @@ public abstract class InventoryITBase {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      ProductSale that = (ProductSale) o;
-      return Double.compare(that.price, price) == 0
-          && count == that.count
-          && id.equals(that.id)
-          && day.equals(that.day)
-          && ts.equals(that.ts)
-          && customerId == that.customerId;
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      } else if (other instanceof ProductSale) {
+        ProductSale that = (ProductSale) other;
+        return Double.compare(this.price, that.price) == 0
+            && this.count == that.count
+            && this.id.equals(that.id)
+            && this.day.equals(that.day)
+            && this.ts.equals(that.ts)
+            && this.customerId == that.customerId;
+      } else {
+        return false;
+      }
     }
 
     @Override

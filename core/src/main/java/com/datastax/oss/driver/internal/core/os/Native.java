@@ -156,7 +156,9 @@ public class Native {
 
   /** @see LibCLoader */
   private static class PosixLoader {
+    @SuppressWarnings("VariableNameSameAsType")
     private static final jnr.posix.POSIX POSIX;
+
     private static final boolean GET_PID_AVAILABLE;
 
     static {

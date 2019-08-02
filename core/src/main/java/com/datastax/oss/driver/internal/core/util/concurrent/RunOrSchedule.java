@@ -81,13 +81,13 @@ public class RunOrSchedule {
       executor
           .submit(task)
           .addListener(
-              ((Future<CompletionStage<T>> f) -> {
+              (Future<CompletionStage<T>> f) -> {
                 if (f.isSuccess()) {
                   CompletableFutures.completeFrom(f.getNow(), result);
                 } else {
                   result.completeExceptionally(f.cause());
                 }
-              }));
+              });
       return result;
     }
   }

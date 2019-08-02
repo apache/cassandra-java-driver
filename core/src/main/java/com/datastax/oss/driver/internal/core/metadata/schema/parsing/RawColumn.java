@@ -17,7 +17,6 @@ package com.datastax.oss.driver.internal.core.metadata.schema.parsing;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
-import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import com.datastax.oss.driver.shaded.guava.common.primitives.Ints;
@@ -51,8 +50,7 @@ public class RawColumn implements Comparable<RawColumn> {
   public final String indexType;
   public final Map<String, String> indexOptions;
 
-  private RawColumn(
-      AdminRow row, CqlIdentifier keyspaceId, Map<CqlIdentifier, UserDefinedType> userTypes) {
+  private RawColumn(AdminRow row) {
     // Cassandra < 3.0:
     // CREATE TABLE system.schema_columns (
     //     keyspace_name text,
@@ -139,17 +137,15 @@ public class RawColumn implements Comparable<RawColumn> {
     }
   }
 
-  public static List<RawColumn> toRawColumns(
-      Collection<AdminRow> rows,
-      CqlIdentifier keyspaceId,
-      Map<CqlIdentifier, UserDefinedType> userTypes) {
+  @SuppressWarnings("MixedMutabilityReturnType")
+  public static List<RawColumn> toRawColumns(Collection<AdminRow> rows) {
     if (rows.isEmpty()) {
       return Collections.emptyList();
     } else {
       // Use a mutable list, we might remove some elements later
       List<RawColumn> result = Lists.newArrayListWithExpectedSize(rows.size());
       for (AdminRow row : rows) {
-        result.add(new RawColumn(row, keyspaceId, userTypes));
+        result.add(new RawColumn(row));
       }
       return result;
     }

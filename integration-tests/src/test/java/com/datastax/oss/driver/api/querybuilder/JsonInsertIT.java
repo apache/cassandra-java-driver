@@ -247,11 +247,15 @@ public class JsonInsertIT {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      User user = (User) o;
-      return id == user.id && age == user.age && Objects.equals(name, user.name);
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      } else if (other instanceof User) {
+        User that = (User) other;
+        return this.id == that.id && this.age == that.age && Objects.equals(this.name, that.name);
+      } else {
+        return false;
+      }
     }
 
     @Override

@@ -444,11 +444,14 @@ public class EntityPolymorphismIT {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      Point2D point2D = (Point2D) o;
-      return x == point2D.x && y == point2D.y;
+    public boolean equals(Object other) {
+      if (this == other) return true;
+      else if (other instanceof Point2D) {
+        Point2D that = (Point2D) other;
+        return this.x == that.x && this.y == that.y;
+      } else {
+        return false;
+      }
     }
 
     @Override
@@ -478,12 +481,15 @@ public class EntityPolymorphismIT {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
-      Point3D point3D = (Point3D) o;
-      return z == point3D.z;
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      } else if (other instanceof Point3D) {
+        Point3D that = (Point3D) other;
+        return super.equals(that) && this.z == that.z;
+      } else {
+        return false;
+      }
     }
 
     @Override
@@ -535,11 +541,15 @@ public class EntityPolymorphismIT {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      Shape shape = (Shape) o;
-      return Objects.equals(id, shape.id) && Objects.equals(tags, shape.tags);
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      } else if (other instanceof Shape) {
+        Shape that = (Shape) other;
+        return Objects.equals(id, that.id) && Objects.equals(tags, that.tags);
+      } else {
+        return false;
+      }
     }
 
     @Override
@@ -579,7 +589,7 @@ public class EntityPolymorphismIT {
 
     @Override
     public double getArea() {
-      return Math.PI * (Math.pow(getRadius(), 2));
+      return Math.PI * Math.pow(getRadius(), 2);
     }
 
     public double getRadius() {
@@ -610,12 +620,17 @@ public class EntityPolymorphismIT {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
-      Circle circle = (Circle) o;
-      return Double.compare(circle.radius, radius) == 0 && center.equals(circle.center);
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      } else if (other instanceof Circle) {
+        Circle that = (Circle) other;
+        return super.equals(that)
+            && Double.compare(that.radius, radius) == 0
+            && center.equals(that.center);
+      } else {
+        return false;
+      }
     }
 
     @Override
@@ -679,12 +694,17 @@ public class EntityPolymorphismIT {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
-      Rectangle rectangle = (Rectangle) o;
-      return bottomLeft.equals(rectangle.bottomLeft) && topRight.equals(rectangle.topRight);
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      } else if (other instanceof Rectangle) {
+        Rectangle that = (Rectangle) other;
+        return super.equals(that)
+            && bottomLeft.equals(that.bottomLeft)
+            && topRight.equals(that.topRight);
+      } else {
+        return false;
+      }
     }
 
     @Override
@@ -696,8 +716,6 @@ public class EntityPolymorphismIT {
   @CqlName("squares")
   @Entity
   static class Square extends Rectangle implements WriteTimeProvider {
-
-    private Point2D height;
 
     @Computed("writetime(bottom_left)")
     private long writeTime;
@@ -787,12 +805,15 @@ public class EntityPolymorphismIT {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
-      Sphere sphere = (Sphere) o;
-      return writeTime == sphere.writeTime;
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      } else if (other instanceof Sphere) {
+        Sphere that = (Sphere) other;
+        return super.equals(that) && writeTime == that.writeTime;
+      } else {
+        return false;
+      }
     }
 
     @Override
@@ -820,11 +841,15 @@ public class EntityPolymorphismIT {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      LocatableItem that = (LocatableItem) o;
-      return Objects.equals(location, that.location);
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      } else if (other instanceof LocatableItem) {
+        LocatableItem that = (LocatableItem) other;
+        return Objects.equals(this.location, that.location);
+      } else {
+        return false;
+      }
     }
 
     @Override
@@ -855,12 +880,15 @@ public class EntityPolymorphismIT {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
-      Asset asset = (Asset) o;
-      return Objects.equals(name, asset.name);
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      } else if (other instanceof Asset) {
+        Asset that = (Asset) other;
+        return super.equals(that) && Objects.equals(this.name, that.name);
+      } else {
+        return false;
+      }
     }
 
     @Override
@@ -894,12 +922,15 @@ public class EntityPolymorphismIT {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
-      Device device = (Device) o;
-      return id.equals(device.id);
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      } else if (other instanceof Device) {
+        Device that = (Device) other;
+        return super.equals(that) && this.id.equals(that.id);
+      } else {
+        return false;
+      }
     }
 
     @Override
@@ -960,12 +991,15 @@ public class EntityPolymorphismIT {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
-      SimpleDevice that = (SimpleDevice) o;
-      return inUse == that.inUse && id.equals(that.id);
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      } else if (other instanceof SimpleDevice) {
+        SimpleDevice that = (SimpleDevice) other;
+        return super.equals(that) && this.inUse == that.inUse && this.id.equals(that.id);
+      } else {
+        return false;
+      }
     }
 
     @Override

@@ -231,7 +231,7 @@ public class CqlRequestHandler implements Throttled {
         // If we raced with session shutdown the timer might be closed already, rethrow with a more
         // explicit message
         result.completeExceptionally(
-            ("cannot be started once stopped".equals(e.getMessage()))
+            "cannot be started once stopped".equals(e.getMessage())
                 ? new IllegalStateException("Session is closed")
                 : e);
       }
@@ -616,8 +616,8 @@ public class CqlRequestHandler implements Throttled {
                           }),
                   (schemaInAgreement, metadata) -> schemaInAgreement)
               .whenComplete(
-                  ((schemaInAgreement, error) ->
-                      setFinalResult(schemaChange, responseFrame, schemaInAgreement, this)));
+                  (schemaInAgreement, error) ->
+                      setFinalResult(schemaChange, responseFrame, schemaInAgreement, this));
         } else if (responseMessage instanceof SetKeyspace) {
           SetKeyspace setKeyspace = (SetKeyspace) responseMessage;
           session

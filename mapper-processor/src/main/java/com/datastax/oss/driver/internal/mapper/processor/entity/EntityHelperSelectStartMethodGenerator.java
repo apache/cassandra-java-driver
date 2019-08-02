@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.datastax.oss.driver.api.querybuilder.select.SelectFrom;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
-import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.squareup.javapoet.MethodSpec;
 import java.util.Optional;
 import javax.lang.model.element.Modifier;
@@ -28,10 +27,7 @@ public class EntityHelperSelectStartMethodGenerator implements MethodGenerator {
 
   private final EntityDefinition entityDefinition;
 
-  public EntityHelperSelectStartMethodGenerator(
-      EntityDefinition entityDefinition,
-      EntityHelperGenerator enclosingClass,
-      ProcessorContext context) {
+  public EntityHelperSelectStartMethodGenerator(EntityDefinition entityDefinition) {
     this.entityDefinition = entityDefinition;
   }
 

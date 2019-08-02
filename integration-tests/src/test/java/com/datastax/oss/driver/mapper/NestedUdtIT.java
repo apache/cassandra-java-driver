@@ -128,9 +128,6 @@ public class NestedUdtIT {
 
   @Test
   public void should_insert_and_retrieve_entity_with_nested_udts() {
-    // Given
-    CqlSession session = sessionRule.session();
-
     // When
     containerDao.save(SAMPLE_CONTAINER);
     Container retrievedEntity = containerDao.loadByPk(SAMPLE_CONTAINER.getId());
@@ -142,8 +139,6 @@ public class NestedUdtIT {
   @Test
   public void should_insert_do_not_set_to_null_udts() {
     // Given
-    CqlSession session = sessionRule.session();
-
     containerDao.save(SAMPLE_CONTAINER);
     Container retrievedEntity = containerDao.loadByPk(SAMPLE_CONTAINER.getId());
 
@@ -158,8 +153,6 @@ public class NestedUdtIT {
   @Test
   public void should_insert_set_to_null_udts() {
     // Given
-    CqlSession session = sessionRule.session();
-
     containerDao.save(SAMPLE_CONTAINER);
     Container retrievedEntity = containerDao.loadByPk(SAMPLE_CONTAINER.getId());
 

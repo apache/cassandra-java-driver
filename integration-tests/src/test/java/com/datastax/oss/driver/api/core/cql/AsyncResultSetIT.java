@@ -126,7 +126,7 @@ public class AsyncResultSetIT {
     PageStatistics stats = result.toCompletableFuture().get();
 
     assertThat(stats.rows).isEqualTo(ROWS_PER_PARTITION);
-    assertThat(stats.pages).isEqualTo((int) (Math.ceil(ROWS_PER_PARTITION / (double) PAGE_SIZE)));
+    assertThat(stats.pages).isEqualTo((int) Math.ceil(ROWS_PER_PARTITION / (double) PAGE_SIZE));
   }
 
   @Test
@@ -141,8 +141,7 @@ public class AsyncResultSetIT {
     PageStatistics stats = result.toCompletableFuture().get();
 
     assertThat(stats.rows).isEqualTo(ROWS_PER_PARTITION * 2);
-    assertThat(stats.pages)
-        .isEqualTo((int) (Math.ceil(ROWS_PER_PARTITION * 2 / (double) PAGE_SIZE)));
+    assertThat(stats.pages).isEqualTo((int) Math.ceil(ROWS_PER_PARTITION * 2 / (double) PAGE_SIZE));
   }
 
   private static class PageStatistics {

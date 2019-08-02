@@ -294,12 +294,16 @@ public class DefaultKeyspaceIT {
     }
 
     @Override
-    public boolean equals(Object o) {
-
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      ProductSimpleDefaultKs that = (ProductSimpleDefaultKs) o;
-      return Objects.equals(id, that.id) && Objects.equals(description, that.description);
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      } else if (other instanceof ProductSimpleDefaultKs) {
+        ProductSimpleDefaultKs that = (ProductSimpleDefaultKs) other;
+        return Objects.equals(this.id, that.id)
+            && Objects.equals(this.description, that.description);
+      } else {
+        return false;
+      }
     }
 
     @Override
@@ -342,12 +346,16 @@ public class DefaultKeyspaceIT {
     }
 
     @Override
-    public boolean equals(Object o) {
-
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      ProductSimpleDefaultKsNotSet that = (ProductSimpleDefaultKsNotSet) o;
-      return Objects.equals(id, that.id) && Objects.equals(description, that.description);
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      } else if (other instanceof ProductSimpleDefaultKsNotSet) {
+        ProductSimpleDefaultKsNotSet that = (ProductSimpleDefaultKsNotSet) other;
+        return Objects.equals(this.id, that.id)
+            && Objects.equals(this.description, that.description);
+      } else {
+        return false;
+      }
     }
 
     @Override
@@ -390,12 +398,16 @@ public class DefaultKeyspaceIT {
     }
 
     @Override
-    public boolean equals(Object o) {
-
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      ProductSimpleWithoutKs that = (ProductSimpleWithoutKs) o;
-      return Objects.equals(id, that.id) && Objects.equals(description, that.description);
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      } else if (other instanceof ProductSimpleWithoutKs) {
+        ProductSimpleWithoutKs that = (ProductSimpleWithoutKs) other;
+        return Objects.equals(this.id, that.id)
+            && Objects.equals(this.description, that.description);
+      } else {
+        return false;
+      }
     }
 
     @Override

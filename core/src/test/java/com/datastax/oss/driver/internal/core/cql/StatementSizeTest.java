@@ -170,7 +170,7 @@ public class StatementSizeTest {
             + (2 + PREPARED_ID.length)
             + (2 + RESULT_METADATA_ID.length)
             + 2 // size of value list
-            + 2 * (4) // two null values (size = -1)
+            + 2 * 4 // two null values (size = -1)
             + 4 // fetch size
         ;
     assertThat(v5SizeOf(statement)).isEqualTo(expectedSize);

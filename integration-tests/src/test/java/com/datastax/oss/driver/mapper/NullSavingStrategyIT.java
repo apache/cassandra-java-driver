@@ -229,12 +229,17 @@ public class NullSavingStrategyIT {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(Object other) {
 
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      ProductSimple that = (ProductSimple) o;
-      return Objects.equals(id, that.id) && Objects.equals(description, that.description);
+      if (this == other) {
+        return true;
+      } else if (other instanceof ProductSimple) {
+        ProductSimple that = (ProductSimple) other;
+        return Objects.equals(this.id, that.id)
+            && Objects.equals(this.description, that.description);
+      } else {
+        return false;
+      }
     }
 
     @Override

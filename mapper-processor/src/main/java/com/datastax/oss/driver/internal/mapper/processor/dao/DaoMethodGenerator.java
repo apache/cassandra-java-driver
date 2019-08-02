@@ -117,7 +117,7 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
             ".$L($T.bindMarker($S))", dslMethodName, QueryBuilder.class, bindMarkerName);
       } else {
         try {
-          Number ignored = numberParser.apply(annotationValue);
+          Number unused = numberParser.apply(annotationValue);
         } catch (NumberFormatException ignored) {
           context
               .getMessager()

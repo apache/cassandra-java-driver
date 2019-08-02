@@ -53,7 +53,6 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CapturingTimer;
 import com.datastax.oss.driver.internal.core.util.concurrent.CapturingTimer.CapturedTimeout;
 import com.datastax.oss.protocol.internal.Frame;
 import io.netty.channel.EventLoopGroup;
-import io.netty.util.TimerTask;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -187,10 +186,6 @@ public class RequestHandlerTestHarness implements AutoCloseable {
    */
   public CapturedTimeout nextScheduledTimeout() {
     return timer.getNextTimeout();
-  }
-
-  public void runNextTask() {
-    TimerTask task = timer.getNextTimeout().task();
   }
 
   @Override

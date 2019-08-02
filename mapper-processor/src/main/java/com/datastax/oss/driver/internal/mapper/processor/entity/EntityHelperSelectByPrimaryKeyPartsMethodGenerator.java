@@ -18,22 +18,12 @@ package com.datastax.oss.driver.internal.mapper.processor.entity;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
-import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import java.util.Optional;
 import javax.lang.model.element.Modifier;
 
 public class EntityHelperSelectByPrimaryKeyPartsMethodGenerator implements MethodGenerator {
-
-  private final EntityDefinition entityDefinition;
-
-  public EntityHelperSelectByPrimaryKeyPartsMethodGenerator(
-      EntityDefinition entityDefinition,
-      EntityHelperGenerator enclosingClass,
-      ProcessorContext context) {
-    this.entityDefinition = entityDefinition;
-  }
 
   @Override
   public Optional<MethodSpec> generate() {

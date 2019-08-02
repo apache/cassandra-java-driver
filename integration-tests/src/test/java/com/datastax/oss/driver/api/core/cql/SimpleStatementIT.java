@@ -200,10 +200,9 @@ public class SimpleStatementIT {
   public void should_use_tracing_when_set() {
     // TODO currently there's no way to validate tracing was set since trace id is not set
     // also write test to verify it is not set.
-    ResultSet result =
-        sessionRule
-            .session()
-            .execute(SimpleStatement.builder("select * from test").setTracing().build());
+    sessionRule
+        .session()
+        .execute(SimpleStatement.builder("select * from test").setTracing().build());
   }
 
   @Test

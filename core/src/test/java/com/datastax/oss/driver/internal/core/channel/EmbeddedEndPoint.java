@@ -17,17 +17,10 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.netty.channel.embedded.EmbeddedChannel;
 import java.net.SocketAddress;
 
 /** Endpoint implementation for unit tests that use an embedded Netty channel. */
 public class EmbeddedEndPoint implements EndPoint {
-
-  private final SocketAddress address;
-
-  public EmbeddedEndPoint(EmbeddedChannel channel) {
-    this.address = channel.remoteAddress();
-  }
 
   @NonNull
   @Override

@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.mapper.processor.entity;
 import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
-import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.BindableHandlingSharedCode;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
@@ -41,9 +40,7 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
   private final BindableHandlingSharedCode enclosingClass;
 
   public EntityHelperGetMethodGenerator(
-      EntityDefinition entityDefinition,
-      BindableHandlingSharedCode enclosingClass,
-      ProcessorContext context) {
+      EntityDefinition entityDefinition, BindableHandlingSharedCode enclosingClass) {
     this.entityDefinition = entityDefinition;
     this.enclosingClass = enclosingClass;
   }

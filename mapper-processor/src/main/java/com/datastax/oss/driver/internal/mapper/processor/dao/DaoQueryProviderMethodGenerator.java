@@ -99,6 +99,7 @@ public class DaoQueryProviderMethodGenerator extends DaoMethodGenerator {
     return context.getTypeUtils().getPrimitiveType(TypeKind.INT);
   }
 
+  @SuppressWarnings("MixedMutabilityReturnType")
   private List<ClassName> getEntityHelperTypes() {
     AnnotationMirror annotationMirror = getQueryProviderAnnotationMirror();
     for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry :

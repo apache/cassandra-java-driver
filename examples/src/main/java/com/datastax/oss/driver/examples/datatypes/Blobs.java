@@ -150,6 +150,7 @@ public class Blobs {
     }
   }
 
+  @SuppressWarnings("ByteBufferBackingArray")
   private static void retrieveMapColumn(CqlSession session) {
     Row row = session.execute("SELECT b, m FROM examples.blobs WHERE k = 1").one();
 

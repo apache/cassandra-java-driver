@@ -249,9 +249,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
 
   protected boolean matches(
       @NonNull TypeCodec<?> codec, @NonNull GenericType<?> javaType, boolean isJavaCovariant) {
-    return (isJavaCovariant)
-        ? codec.getJavaType().isSupertypeOf(javaType)
-        : codec.accepts(javaType);
+    return isJavaCovariant ? codec.getJavaType().isSupertypeOf(javaType) : codec.accepts(javaType);
   }
 
   @NonNull

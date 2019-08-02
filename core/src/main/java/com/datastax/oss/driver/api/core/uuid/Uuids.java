@@ -165,6 +165,7 @@ public final class Uuids {
     }
     if (pid == null) {
       try {
+        @SuppressWarnings("StringSplitter")
         String pidJmx = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
         pid = Integer.parseInt(pidJmx);
         LOG.info("PID obtained through JMX: {}", pid);

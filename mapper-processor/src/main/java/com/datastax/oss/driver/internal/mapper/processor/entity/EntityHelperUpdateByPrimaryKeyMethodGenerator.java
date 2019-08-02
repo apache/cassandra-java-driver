@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.mapper.processor.entity;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
-import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.querybuilder.update.DefaultUpdate;
 import com.squareup.javapoet.MethodSpec;
 import java.util.Optional;
@@ -28,10 +27,7 @@ public class EntityHelperUpdateByPrimaryKeyMethodGenerator implements MethodGene
 
   private final EntityDefinition entityDefinition;
 
-  EntityHelperUpdateByPrimaryKeyMethodGenerator(
-      EntityDefinition entityDefinition,
-      EntityHelperGenerator enclosingClass,
-      ProcessorContext context) {
+  EntityHelperUpdateByPrimaryKeyMethodGenerator(EntityDefinition entityDefinition) {
     this.entityDefinition = entityDefinition;
   }
 

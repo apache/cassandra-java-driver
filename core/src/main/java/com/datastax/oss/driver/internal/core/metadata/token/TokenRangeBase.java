@@ -159,8 +159,8 @@ public abstract class TokenRangeBase implements TokenRange {
         if (t1.intersects(t2)) {
           intersected.add(
               newTokenRange(
-                  (contains(t1, t2.getStart(), true)) ? t2.getStart() : t1.getStart(),
-                  (contains(t1, t2.getEnd(), false)) ? t2.getEnd() : t1.getEnd()));
+                  contains(t1, t2.getStart(), true) ? t2.getStart() : t1.getStart(),
+                  contains(t1, t2.getEnd(), false) ? t2.getEnd() : t1.getEnd()));
         }
       }
     }
