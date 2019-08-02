@@ -264,6 +264,7 @@
                   !org.jboss.marshalling.*,
                   !sun.misc.*,
                   !sun.security.*,
+                  !com.oracle.svm.core.annotate.*,
                   *
                 </Import-Package>
                 <!--
