@@ -48,6 +48,20 @@ builder](manual/query_builder/), [mapper](manual/mapper)).
 
 [com.datastax.oss]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.datastax.oss%22
 
+## Compatibility
+
+The driver is compatible with Apache Cassandra® 2.1 and higher, and DataStax Enterprise 4.7 and
+higher.
+
+It requires Java 8 or higher.
+
+If using DataStax Enterprise, the [DataStax Enterprise Java
+driver](http://docs.datastax.com/en/developer/java-driver-dse/latest) provides more features and
+better compatibility.
+
+Disclaimer: Some DataStax/DataStax Enterprise products might partially work on big-endian systems,
+but DataStax does not officially support these systems.
+
 ## Migrating from previous versions
 
 Java driver 4 is **not binary compatible** with previous versions. However, most of the concepts
