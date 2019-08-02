@@ -173,6 +173,8 @@ public enum DefaultDriverOption implements DriverOption {
   NETTY_TIMER_TICKS_PER_WHEEL("advanced.netty.timer.ticks-per-wheel"),
 
   REQUEST_LOG_WARNINGS("advanced.request.log-warnings"),
+
+  NETTY_DAEMON("advanced.netty.daemon"),
   ;
 
   private final String path;

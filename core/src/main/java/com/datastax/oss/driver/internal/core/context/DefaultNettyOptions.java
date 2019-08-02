@@ -61,6 +61,7 @@ public class DefaultNettyOptions implements NettyOptions {
 
   public DefaultNettyOptions(InternalDriverContext context) {
     this.config = context.getConfig().getDefaultProfile();
+    boolean daemon = config.getBoolean(DefaultDriverOption.NETTY_DAEMON);
     int ioGroupSize = config.getInt(DefaultDriverOption.NETTY_IO_SIZE);
     this.ioShutdownQuietPeriod = config.getInt(DefaultDriverOption.NETTY_IO_SHUTDOWN_QUIET_PERIOD);
     this.ioShutdownTimeout = config.getInt(DefaultDriverOption.NETTY_IO_SHUTDOWN_TIMEOUT);
@@ -78,6 +79,7 @@ public class DefaultNettyOptions implements NettyOptions {
         new ThreadFactoryBuilder()
             .setThreadFactory(safeFactory)
             .setNameFormat(context.getSessionName() + "-io-%d")
+            .setDaemon(daemon)
             .build();
     this.ioEventLoopGroup = new NioEventLoopGroup(ioGroupSize, ioThreadFactory);
 
@@ -85,6 +87,7 @@ public class DefaultNettyOptions implements NettyOptions {
         new ThreadFactoryBuilder()
             .setThreadFactory(safeFactory)
             .setNameFormat(context.getSessionName() + "-admin-%d")
+            .setDaemon(daemon)
             .build();
     this.adminEventLoopGroup = new DefaultEventLoopGroup(adminGroupSize, adminThreadFactory);
     // setup the Timer
@@ -92,6 +95,7 @@ public class DefaultNettyOptions implements NettyOptions {
         new ThreadFactoryBuilder()
             .setThreadFactory(safeFactory)
             .setNameFormat(context.getSessionName() + "-timer-%d")
+            .setDaemon(daemon)
             .build();
 
     Duration tickDuration = config.getDuration(DefaultDriverOption.NETTY_TIMER_TICK_DURATION);
