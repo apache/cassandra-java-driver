@@ -55,6 +55,7 @@ import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -279,16 +280,15 @@ public class CqlPrepareHandler implements Throttled {
       LOG.trace("[{}] Could not get a channel to reprepare on {}, skipping", logPrefix, node);
       return CompletableFuture.completedFuture(null);
     } else {
-      ThrottledAdminRequestHandler handler =
-          new ThrottledAdminRequestHandler(
+      ThrottledAdminRequestHandler<ByteBuffer> handler =
+          ThrottledAdminRequestHandler.prepare(
               channel,
               message,
               request.getCustomPayload(),
               timeout,
               throttler,
               session.getMetricUpdater(),
-              logPrefix,
-              message.toString());
+              logPrefix);
       return handler
           .start()
           .handle(
