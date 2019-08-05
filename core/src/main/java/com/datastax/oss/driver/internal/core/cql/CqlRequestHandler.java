@@ -655,16 +655,15 @@ public class CqlRequestHandler implements Throttled {
                   Bytes.toHexString(id)));
         }
         Prepare reprepareMessage = repreparePayload.toMessage();
-        ThrottledAdminRequestHandler reprepareHandler =
-            new ThrottledAdminRequestHandler(
+        ThrottledAdminRequestHandler<ByteBuffer> reprepareHandler =
+            ThrottledAdminRequestHandler.prepare(
                 channel,
                 reprepareMessage,
                 repreparePayload.customPayload,
                 timeout,
                 throttler,
                 sessionMetricUpdater,
-                logPrefix,
-                "Reprepare " + reprepareMessage.toString());
+                logPrefix);
         reprepareHandler
             .start()
             .handle(
