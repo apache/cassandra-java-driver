@@ -15,8 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import static junit.framework.TestCase.fail;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.codahale.metrics.Gauge;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -37,6 +37,7 @@ import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
+import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -83,13 +84,15 @@ public class PreparedStatementIT {
             "INSERT INTO prepared_statement_test (a, b, c) VALUES (2, 2, 2)",
             "INSERT INTO prepared_statement_test (a, b, c) VALUES (3, 3, 3)",
             "INSERT INTO prepared_statement_test (a, b, c) VALUES (4, 4, 4)")) {
-      sessionRule
-          .session()
-          .execute(
-              SimpleStatement.builder(query)
-                  .setExecutionProfile(sessionRule.slowProfile())
-                  .build());
+      executeDdl(query);
     }
+  }
+
+  private void executeDdl(String query) {
+    sessionRule
+        .session()
+        .execute(
+            SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
   }
 
   @Test
@@ -194,7 +197,7 @@ public class PreparedStatementIT {
     for (Row row : rows.currentPage()) {
       try {
         row.getInt("d");
-        fail("expected an error");
+        TestCase.fail("expected an error");
       } catch (IllegalArgumentException e) {
         /*expected*/
       }
@@ -415,6 +418,32 @@ public class PreparedStatementIT {
     // Each bound statement uses the page size it was prepared with
     assertThat(firstPageOf(session.executeAsync(preparedStatement1.bind()))).hasSize(1);
     assertThat(firstPageOf(session.executeAsync(preparedStatement2.bind()))).hasSize(4);
+  }
+
+  /**
+   * This test relies on CASSANDRA-15252 to reproduce the error condition. If the bug gets fixed in
+   * Cassandra, we'll need to add a version restriction.
+   *
+   * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-15252">CASSANDRA-15252</a>
+   */
+  @Test
+  public void should_fail_fast_if_id_changes_on_reprepare() {
+    try (CqlSession session = SessionUtils.newSession(ccmRule)) {
+      PreparedStatement preparedStatement =
+          session.prepare(
+              String.format(
+                  "SELECT * FROM %s.prepared_statement_test WHERE a = ?", sessionRule.keyspace()));
+
+      session.execute("USE " + sessionRule.keyspace().asCql(false));
+
+      // Drop and recreate the table to invalidate the prepared statement server-side
+      executeDdl("DROP TABLE prepared_statement_test");
+      executeDdl("CREATE TABLE prepared_statement_test (a int PRIMARY KEY, b int, c int)");
+
+      assertThatThrownBy(() -> session.execute(preparedStatement.bind(1)))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining("ID mismatch while trying to reprepare");
+    }
   }
 
   private static Iterable<Row> firstPageOf(CompletionStage<AsyncResultSet> stage) {

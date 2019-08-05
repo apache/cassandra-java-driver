@@ -4,6 +4,7 @@
 
 ### 4.2.0 (in progress)
 
+- [improvement] JAVA-2379: Fail fast if prepared id doesn't match when repreparing on the fly
 - [bug] JAVA-2375: Use per-request keyspace when repreparing on the fly
 - [improvement] JAVA-2370: Remove auto-service plugin from mapper processor
 - [improvement] JAVA-2377: Add a config option to make driver threads daemon

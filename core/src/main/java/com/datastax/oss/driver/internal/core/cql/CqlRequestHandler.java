@@ -645,14 +645,18 @@ public class CqlRequestHandler implements Throttled {
 
     private void processErrorResponse(Error errorMessage) {
       if (errorMessage.code == ProtocolConstants.ErrorCode.UNPREPARED) {
-        LOG.trace("[{}] Statement is not prepared on {}, repreparing", logPrefix, node);
-        ByteBuffer id = ByteBuffer.wrap(((Unprepared) errorMessage).id);
-        RepreparePayload repreparePayload = session.getRepreparePayloads().get(id);
+        ByteBuffer idToReprepare = ByteBuffer.wrap(((Unprepared) errorMessage).id);
+        LOG.trace(
+            "[{}] Statement {} is not prepared on {}, repreparing",
+            logPrefix,
+            Bytes.toHexString(idToReprepare),
+            node);
+        RepreparePayload repreparePayload = session.getRepreparePayloads().get(idToReprepare);
         if (repreparePayload == null) {
           throw new IllegalStateException(
               String.format(
                   "Tried to execute unprepared query %s but we don't have the data to reprepare it",
-                  Bytes.toHexString(id)));
+                  Bytes.toHexString(idToReprepare)));
         }
         Prepare reprepareMessage = repreparePayload.toMessage();
         ThrottledAdminRequestHandler<ByteBuffer> reprepareHandler =
@@ -667,7 +671,7 @@ public class CqlRequestHandler implements Throttled {
         reprepareHandler
             .start()
             .handle(
-                (result, exception) -> {
+                (repreparedId, exception) -> {
                   if (exception != null) {
                     // If the error is not recoverable, surface it to the client instead of retrying
                     if (exception instanceof UnexpectedResponseException) {
@@ -695,6 +699,19 @@ public class CqlRequestHandler implements Throttled {
                     LOG.trace("[{}] Reprepare failed, trying next node", logPrefix);
                     sendRequest(null, queryPlan, execution, retryCount, false);
                   } else {
+                    if (!repreparedId.equals(idToReprepare)) {
+                      IllegalStateException illegalStateException =
+                          new IllegalStateException(
+                              String.format(
+                                  "ID mismatch while trying to reprepare (expected %s, got %s). "
+                                      + "This prepared statement won't work anymore. "
+                                      + "This usually happens when you run a 'USE...' query after "
+                                      + "the statement was prepared.",
+                                  Bytes.toHexString(idToReprepare),
+                                  Bytes.toHexString(repreparedId)));
+                      trackNodeError(node, illegalStateException, NANOTIME_NOT_MEASURED_YET);
+                      setFinalError(illegalStateException, node, execution);
+                    }
                     LOG.trace("[{}] Reprepare sucessful, retrying", logPrefix);
                     sendRequest(node, queryPlan, execution, retryCount, false);
                   }
