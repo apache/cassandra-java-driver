@@ -687,6 +687,7 @@ public class CqlRequestHandler implements Throttled {
                         }
                       }
                     } else if (exception instanceof RequestThrottlingException) {
+                      trackNodeError(node, exception, NANOTIME_NOT_MEASURED_YET);
                       setFinalError(exception, node, execution);
                       return null;
                     }
