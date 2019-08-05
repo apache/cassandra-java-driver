@@ -18,14 +18,11 @@ package com.datastax.oss.driver.api.core.cql;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.DriverExecutionException;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.net.InetSocketAddress;
-import org.hamcrest.Description;
-import org.hamcrest.TypeSafeMatcher;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -55,24 +52,8 @@ public class QueryTraceIT {
 
     assertThat(executionInfo.getTracingId()).isNull();
 
-    // Should get a DriverExecutionException with an underlying IllegalStateException indicating
-    // Tracing was disabled.
-    thrown.expect(DriverExecutionException.class);
-    String expectedMessage = "Tracing was disabled for this request";
-    thrown.expectCause(
-        new TypeSafeMatcher<Throwable>() {
-          @Override
-          public void describeTo(Description description) {
-            description.appendText(
-                "Expected IllegalStateException with message of '" + expectedMessage + "'");
-          }
-
-          @Override
-          protected boolean matchesSafely(Throwable item) {
-            return item instanceof IllegalStateException
-                && item.getMessage().equals(expectedMessage);
-          }
-        });
+    thrown.expect(IllegalStateException.class);
+    thrown.expectMessage("Tracing was disabled for this request");
     executionInfo.getQueryTrace();
   }
 
