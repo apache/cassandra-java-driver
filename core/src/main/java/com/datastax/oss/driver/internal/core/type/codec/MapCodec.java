@@ -143,8 +143,8 @@ public class MapCodec<KeyT, ValueT> implements TypeCodec<Map<KeyT, ValueT>> {
         } else {
           ByteBuffer encodedKey = input.slice();
           encodedKey.limit(keySize);
-          input.position(input.position() + keySize);
           key = keyCodec.decode(encodedKey, protocolVersion);
+          input.position(input.position() + keySize);
         }
         ValueT value;
         int valueSize = input.getInt();
@@ -153,8 +153,8 @@ public class MapCodec<KeyT, ValueT> implements TypeCodec<Map<KeyT, ValueT>> {
         } else {
           ByteBuffer encodedValue = input.slice();
           encodedValue.limit(valueSize);
-          input.position(input.position() + valueSize);
           value = valueCodec.decode(encodedValue, protocolVersion);
+          input.position(input.position() + valueSize);
         }
         result.put(key, value);
       }

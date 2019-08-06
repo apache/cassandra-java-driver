@@ -124,8 +124,8 @@ public class ListCodec<ElementT> implements TypeCodec<List<ElementT>> {
         } else {
           ByteBuffer encodedElement = input.slice();
           encodedElement.limit(elementSize);
-          input.position(input.position() + elementSize);
           element = elementCodec.decode(encodedElement, protocolVersion);
+          input.position(input.position() + elementSize);
         }
         result.add(element);
       }
