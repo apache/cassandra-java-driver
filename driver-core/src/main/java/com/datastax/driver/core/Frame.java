@@ -179,9 +179,10 @@ class Frame {
       WARNING,
       USE_BETA;
 
+      private static final Flag[] values = Flag.values();
+
       static EnumSet<Flag> deserialize(int flags) {
         EnumSet<Flag> set = EnumSet.noneOf(Flag.class);
-        Flag[] values = Flag.values();
         for (int n = 0; n < 8; n++) {
           if ((flags & (1 << n)) != 0) set.add(values[n]);
         }

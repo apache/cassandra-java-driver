@@ -393,9 +393,10 @@ class Responses {
           NO_METADATA,
           METADATA_CHANGED;
 
+          private static final Flag[] values = Flag.values();
+
           static EnumSet<Flag> deserialize(int flags) {
             EnumSet<Flag> set = EnumSet.noneOf(Flag.class);
-            Flag[] values = Flag.values();
             for (int n = 0; n < values.length; n++) {
               if ((flags & (1 << n)) != 0) set.add(values[n]);
             }

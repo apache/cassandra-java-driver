@@ -731,7 +731,8 @@ class Connection {
       throw new ConnectionException(address, "Connection has been closed");
     }
 
-    logger.trace("{}, stream {}, writing request {}", this, request.getStreamId(), request);
+    if (logger.isTraceEnabled())
+      logger.trace("{}, stream {}, writing request {}", this, request.getStreamId(), request);
     writer.incrementAndGet();
 
     if (DISABLE_COALESCING) {
@@ -787,8 +788,9 @@ class Connection {
                   }
                 });
         } else {
-          logger.trace(
-              "{}, stream {}, request sent successfully", Connection.this, request.getStreamId());
+          if (logger.isTraceEnabled())
+            logger.trace(
+                "{}, stream {}, request sent successfully", Connection.this, request.getStreamId());
         }
       }
     };
@@ -1103,11 +1105,11 @@ class Connection {
         }
       }
 
-      // Always flush what we have (don't artificially delay to try to coalesce more messages)
-      for (Channel channel : channels) channel.flush();
-      channels.clear();
-
       if (doneWork) {
+        // Always flush what we have (don't artificially delay to try to coalesce more messages)
+        for (Channel channel : channels) channel.flush();
+        channels.clear();
+
         runsWithNoWork = 0;
       } else {
         // either reschedule or cancel

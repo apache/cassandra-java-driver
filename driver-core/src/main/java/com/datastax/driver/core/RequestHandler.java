@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import com.codahale.metrics.Timer;
 import com.datastax.driver.core.exceptions.BootstrappingException;
 import com.datastax.driver.core.exceptions.BusyConnectionException;
 import com.datastax.driver.core.exceptions.BusyPoolException;
@@ -83,7 +82,6 @@ class RequestHandler {
   private volatile List<Host> triedHosts;
   private volatile ConcurrentMap<InetSocketAddress, Throwable> errors;
 
-  private final Timer.Context timerContext;
   private final long startTime;
 
   private final AtomicBoolean isDone = new AtomicBoolean();
@@ -113,7 +111,6 @@ class RequestHandler {
             && statement.isIdempotentWithDefault(manager.configuration().getQueryOptions());
     this.statement = statement;
 
-    this.timerContext = metricsEnabled() ? metrics().getRequestsTimer().time() : null;
     this.startTime = System.nanoTime();
   }
 
@@ -205,7 +202,8 @@ class RequestHandler {
     cancelPendingExecutions(execution);
 
     try {
-      if (timerContext != null) timerContext.stop();
+      if (metricsEnabled())
+        metrics().getRequestsTimer().update(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
 
       ExecutionInfo info;
       int speculativeExecutions = executionIndex.get() - 1;
@@ -273,7 +271,8 @@ class RequestHandler {
     cancelPendingExecutions(execution);
 
     try {
-      if (timerContext != null) timerContext.stop();
+      if (metricsEnabled())
+        metrics().getRequestsTimer().update(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
     } finally {
       callback.onException(connection, exception, System.nanoTime() - startTime, /*unused*/ 0);
     }
