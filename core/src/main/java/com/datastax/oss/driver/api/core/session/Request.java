@@ -78,47 +78,53 @@ public interface Request {
   CqlIdentifier getKeyspace();
 
   /**
-   * The keyspace to use for token-aware routing, if no {@link #getKeyspace() per-request keyspace}
-   * is defined, or {@code null} if this request does not use token-aware routing.
+   * The keyspace to use for token-aware routing.
+   *
+   * <p>Note that if a {@linkplain #getKeyspace() per-request keyspace} is already defined for this
+   * request, it takes precedence over this method.
    *
    * <p>See {@link #getRoutingKey()} for a detailed explanation of token-aware routing.
-   *
-   * <p>Note that this is the only way to define a routing keyspace for protocol v4 or lower.
    */
   @Nullable
   CqlIdentifier getRoutingKeyspace();
 
   /**
-   * The (encoded) partition key to use for token-aware routing, or {@code null} if this request
-   * does not use token-aware routing.
+   * The partition key to use for token-aware routing.
    *
-   * <p>When the driver picks a coordinator to execute a request, it prioritizes the replicas of the
-   * partition that this query operates on, in order to avoid an extra network jump on the server
-   * side. To find these replicas, it needs a keyspace (which is where the replication settings are
-   * defined) and a key, that are computed the following way:
+   * <p>For each request, the driver tries to determine a <em>routing keyspace</em> and a
+   * <em>routing key</em> by calling the following methods:
    *
    * <ul>
-   *   <li>if a per-request keyspace is specified with {@link #getKeyspace()}, it is used as the
-   *       keyspace;
-   *   <li>otherwise, if {@link #getRoutingKeyspace()} is specified, it is used as the keyspace;
-   *   <li>otherwise, if {@link Session#getKeyspace()} is not {@code null}, it is used as the
-   *       keyspace;
-   *   <li>if a routing token is defined with {@link #getRoutingToken()}, it is used as the key;
-   *   <li>otherwise, the result of this method is used as the key.
+   *   <li>routing keyspace:
+   *       <ul>
+   *         <li>the result of {@link #getKeyspace()}, if not null;
+   *         <li>otherwise, the result of {@link #getRoutingKeyspace()}, if not null;
+   *         <li>otherwise, the result of {@link Session#getKeyspace()}, if not empty;
+   *         <li>otherwise, null.
+   *       </ul>
+   *   <li>routing key:
+   *       <ul>
+   *         <li>the result of {@link #getRoutingToken()}, if not null;
+   *         <li>otherwise, the result of {@link #getRoutingKey()}, if not null;
+   *         <li>otherwise, null.
+   *       </ul>
    * </ul>
    *
-   * If either keyspace or key is {@code null} at the end of this process, then token-aware routing
-   * is disabled.
+   * This provides a hint of the partition that the request operates on. When the driver picks a
+   * coordinator for execution, it will prioritize the replicas that own that partition, in order to
+   * avoid an extra network jump on the server side.
+   *
+   * <p>Routing information is optional: if either keyspace or key is null, token-aware routing is
+   * disabled for this request.
    */
   @Nullable
   ByteBuffer getRoutingKey();
 
   /**
-   * The token to use for token-aware routing, or {@code null} if this request does not use
-   * token-aware routing.
+   * The token to use for token-aware routing.
    *
-   * <p>This is the same information as {@link #getRoutingKey()}, but already hashed in a token. It
-   * is probably more useful for analytics tools that "shard" a query on a set of token ranges.
+   * <p>This is an alternative to {@link #getRoutingKey()}. Both methods represent the same
+   * information, a request can provide one or the other.
    *
    * <p>See {@link #getRoutingKey()} for a detailed explanation of token-aware routing.
    */
