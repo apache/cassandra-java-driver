@@ -1,5 +1,15 @@
 ## Authentication
 
+### Quick overview
+
+* `advanced.auth-provider` in the configuration.
+* disabled by default. Also available: plain-text credentials, or write your own.
+* can also be defined programmatically:
+  [CqlSession.builder().withAuthCredentials][SessionBuilder.withAuthCredentials] or
+  [CqlSession.builder().withAuthProvider][SessionBuilder.withAuthProvider].
+
+-----
+
 Cassandra's binary protocol supports [SASL]-based authentication. To use it, you must provide an
 *auth provider* that will authenticate with the server every time a new connection gets established.
 
@@ -69,3 +79,5 @@ acceptable for you, consider writing your own [AuthProvider] implementation
 [AuthProvider]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/auth/AuthProvider.html
 [DriverContext]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/context/DriverContext.html
 [PlainTextAuthProviderBase]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/auth/PlainTextAuthProviderBase.html
+[SessionBuilder.withAuthCredentials]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withAuthCredentials-java.lang.String-java.lang.String-
+[SessionBuilder.withAuthProvider]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withAuthProvider-com.datastax.oss.driver.api.core.auth.AuthProvider-

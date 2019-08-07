@@ -1,5 +1,17 @@
 ## Speculative query execution
 
+### Quick overview
+
+Pre-emptively query another node if the current one takes too long to respond.
+
+* `advanced.speculative-execution-policy` in the configuration.
+* disabled by default. Also available: constant delay, or write your own policy. 
+* can have per-profile policies. 
+* only kicks in if the query is idempotent.
+* creates more traffic: tune your pool and provision your cluster accordingly.
+
+-----
+
 Sometimes a Cassandra node might be experiencing difficulties (ex: long GC pause) and take longer
 than usual to reply. Queries sent to that node will experience bad latency.
 

@@ -1,5 +1,18 @@
 ## Custom codecs
 
+### Quick overview
+
+Define custom Java to CQL mappings.
+
+* implement the [TypeCodec] interface.
+* registering a codec:
+  * at init time: [CqlSession.builder().addTypeCodecs()][SessionBuilder.addTypeCodecs]
+* using a codec:
+  * if already registered: `row.get("columnName", MyCustomType.class)`
+  * otherwise: `row.get("columnName", myCodec)`
+
+-----
+
 Out of the box, the driver comes with [default CQL to Java mappings](../#cql-to-java-type-mapping).
 For example, if you read a CQL `text` column, it is mapped to its natural counterpart
 `java.lang.String`:
@@ -226,3 +239,4 @@ private static String formatRow(Row row) {
 [CodecRegistry]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html
 [GenericType]:   https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
 [TypeCodec]:     https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html
+[SessionBuilder.addTypeCodecs]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addTypeCodecs-com.datastax.oss.driver.api.core.type.codec.TypeCodec...-

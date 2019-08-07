@@ -1,5 +1,20 @@
 ## Schema metadata
 
+### Quick overview
+
+[session.getMetadata().getKeyspaces()][Metadata#getKeyspaces]
+
+* immutable (must invoke again to observe changes).
+* getting notifications:
+  [CqlSession.builder().withSchemaChangeListener][SessionBuilder#withSchemaChangeListener].
+* enabling/disabling: `advanced.metadata.schema.enabled` in the configuration, or
+  [session.setSchemaMetadataEnabled()][Session#setSchemaMetadataEnabled].
+* filtering: `advanced.metadata.schema.refreshed-keyspaces` in the configuration.
+* schema agreement: wait for the schema to replicate to all nodes (may add latency to DDL
+  statements).
+
+-----
+
 [Metadata#getKeyspaces] returns a client-side representation of the database schema:
 
 ```java
@@ -27,13 +42,15 @@ you can register a listener to get notified when changes occur:
 
 ```java
 SchemaChangeListener listener =
-  new SchemaChangeListenerBase() {
-    @Override
-    public void onTableCreated(TableMetadata table) {
-      System.out.println("New table: " + table.getName().asCql(true));
-    }
-  };
-session.register(listener);
+    new SchemaChangeListenerBase() {
+      @Override
+      public void onTableCreated(TableMetadata table) {
+        System.out.println("New table: " + table.getName().asCql(true));
+      }
+    };
+CqlSession session = CqlSession.builder()
+    .withSchemaChangeListener(listener)
+    .build();
 
 session.execute("CREATE TABLE test.foo (k int PRIMARY KEY)");
 ```
@@ -216,6 +233,7 @@ take a look at the [Performance](../../performance/#schema-updates) page for a f
 [SchemaChangeListenerBase]:          https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListenerBase.html
 [Session#setSchemaMetadataEnabled]:  https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/session/Session.html#setSchemaMetadataEnabled-java.lang.Boolean-
 [Session#checkSchemaAgreementAsync]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/session/Session.html#checkSchemaAgreementAsync--
+[SessionBuilder#withSchemaChangeListener]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withSchemaChangeListener-com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener-
 [ExecutionInfo#isSchemaInAgreement]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#isSchemaInAgreement--
 
 [JAVA-750]: https://datastax-oss.atlassian.net/browse/JAVA-750

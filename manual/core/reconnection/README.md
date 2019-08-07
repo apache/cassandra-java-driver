@@ -1,5 +1,15 @@
 ## Reconnection
 
+### Quick overview
+
+When a connection is lost, try to reestablish it at configured intervals.
+
+* `advanced.reconnection-policy` in the configuration; defaults to exponential backoff, also
+  available: constant delay, write your own.
+* applies to connection pools and the control connection.
+
+-----
+
 If the driver loses a connection to a node, it tries to re-establish it according to a configurable
 policy. This is used in two places:
 
