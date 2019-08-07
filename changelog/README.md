@@ -4,6 +4,7 @@
 
 ### 4.2.0 (in progress)
 
+- [improvement] JAVA-2370: Remove auto-service plugin from mapper processor
 - [improvement] JAVA-2377: Add a config option to make driver threads daemon
 - [improvement] JAVA-2371: Handle null elements in collections on the decode path
 - [improvement] JAVA-2351: Add a driver example for the object mapper

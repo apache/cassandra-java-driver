@@ -21,7 +21,6 @@ import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.shaded.guava.common.base.Strings;
 import com.datastax.oss.driver.shaded.guava.common.base.Throwables;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
-import com.google.auto.service.AutoService;
 import java.lang.annotation.Annotation;
 import java.util.Map;
 import java.util.Set;
@@ -29,7 +28,6 @@ import java.util.function.Function;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -38,7 +36,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
-@AutoService(Processor.class)
 public class MapperProcessor extends AbstractProcessor {
   private static final boolean DEFAULT_MAPPER_LOGS_ENABLED = true;
 
