@@ -2,7 +2,7 @@
 
 ### 3.7.3 (In progress)
 
-- [improvement] JAVA-2326: Avoid String allocations required only for trace in RequestHandler
+- [improvement] JAVA-2326: Reduce memory allocations in Flusher.run, RequestHandler and flags decoding logic
 
 
 ### 3.7.2
