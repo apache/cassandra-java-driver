@@ -1,5 +1,18 @@
 ## Query timestamps
 
+### Quick overview
+
+Defines the order in which mutations are applied on the server. Ways to set it (by order of
+precedence, higher priority first):
+
+* `USING TIMESTAMP` in the query string.
+* programmatically with [Statement.setQueryTimestamp()].
+* timestamp generator: `advanced.timestamp-generator` in the configuration. Defaults to session-wide
+  monotonic, also available: per-thread monotonic, server-side, or write your own.
+* if the generator didn't set it, assigned server-side.
+
+-----
+
 In Cassandra, each mutation has a microsecond-precision timestamp, which is used to order operations
 relative to each other.
 
@@ -179,3 +192,4 @@ Here is the order of precedence of all the methods described so far:
 [gettimeofday]: http://man7.org/linux/man-pages/man2/settimeofday.2.html
 [JNR]: https://github.com/jnr/jnr-ffi
 [Lightweight transactions]: https://docs.datastax.com/en/dse/6.0/cql/cql/cql_using/useInsertLWT.html
+[Statement.setQueryTimestamp()]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/Statement.html#setQueryTimestamp-long-

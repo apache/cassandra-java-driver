@@ -1,5 +1,20 @@
 ## Paging
 
+### Quick overview
+
+How the server splits large result sets into multiple network responses.
+
+* `basic.request.page-size` in the configuration.
+* transparent in the synchronous API (`session.execute`): the driver fetches new pages in the
+  background as you iterate.
+* explicit in the asynchronous API (`session.executeAsync`):
+  [AsyncResultSet.hasMorePages()][AsyncPagingIterable.hasMorePages] and
+  [AsyncResultSet.fetchNextPage()][AsyncPagingIterable.fetchNextPage].
+* paging state: record the current position and reuse it later (forward only).
+* offset queries: not supported natively, but can be emulated client-side.
+
+-----
+
 When a query returns many rows, it would be inefficient to return them as a single response message.
 Instead, the driver breaks the results into *pages* which get returned as they are needed.
 
@@ -173,5 +188,7 @@ and random (offset-based) paging.
 
 [ResultSet]:         https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/ResultSet.html
 [AsyncResultSet]:    https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
+[AsyncPagingIterable.hasMorePages]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/AsyncPagingIterable.html#hasMorePages--
+[AsyncPagingIterable.fetchNextPage]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/AsyncPagingIterable.html#fetchNextPage--
 
 [driver examples]: https://github.com/datastax/java-driver/tree/4.x/examples/src/main/java/com/datastax/oss/driver/examples/paging

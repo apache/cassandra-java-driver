@@ -1,6 +1,18 @@
 ## SSL
 
-You can secure traffic between the driver and Cassandra with SSL. There are two aspects to that:
+### Quick overview
+
+Secure the traffic between the driver and Cassandra.
+
+* `advanced.ssl-engine-factory` in the configuration; defaults to none, also available: JSSE, or
+  write your own.
+* or programmatically:
+  [CqlSession.builder().withSslEngineFactory()][SessionBuilder.withSslEngineFactory] or
+  [CqlSession.builder().withSslContext()][SessionBuilder.withSslContext].
+
+-----
+
+There are two aspects to SSL:
 
 * **client-to-node encryption**, where the traffic is encrypted, and the client verifies the
   identity of the Cassandra nodes it connects to;
@@ -190,3 +202,5 @@ Note that this approach relies on the driver's [internal API](../../api_conventi
 [dsClientToNode]: https://docs.datastax.com/en/cassandra/3.0/cassandra/configuration/secureSSLClientToNode.html
 [pickle]: http://thelastpickle.com/blog/2015/09/30/hardening-cassandra-step-by-step-part-1-server-to-server.html
 [JSSE system properties]: http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html#Customization
+[SessionBuilder.withSslEngineFactory]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withSslEngineFactory-com.datastax.oss.driver.api.core.ssl.SslEngineFactory-
+[SessionBuilder.withSslContext]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withSslContext-javax.net.ssl.SSLContext-

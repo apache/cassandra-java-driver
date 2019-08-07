@@ -1,5 +1,16 @@
 ## Metadata
 
+### Quick overview
+
+[session.getMetadata()][Session#getMetadata]: node states, schema and token map.
+
+* immutable, provides a consistent view at a given point in time (e.g. token map always matches
+  schema).
+* pitfall: holding onto a stale instance; must call `session.getMetadata()` again to observe
+  changes.
+
+-----
+
 The driver exposes metadata about the Cassandra cluster via the [Session#getMetadata] method. It
 returns a [Metadata] object, which contains three types of information:
 

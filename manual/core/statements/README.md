@@ -1,5 +1,15 @@
 ## Statements
 
+### Quick overview
+
+What you pass to `session.execute()`.
+
+* three types: simple (textual query), bound (prepared) and batch.
+* built-in implementations are **immutable**. Setters always return a new object, don't ignore the
+  result.
+
+-----
+
 To execute a CQL query, you  create a [Statement] instance and pass it to
 [Session#execute][execute] or [Session#executeAsync][executeAsync]. The driver provides various
 implementations:

@@ -1,5 +1,23 @@
 ## Entities
 
+### Quick overview
+
+POJO annotated with [@Entity], must expose a no-arg constructor.
+
+* class-level annotations:
+  * [@NamingStrategy]
+  * [@CqlName]
+  * [@HierarchyScanStrategy]
+* field/method-level annotations:
+  * [@PartitionKey], [@ClusteringColumn]
+  * [@Computed]
+  * [@Transient]
+  * [@CqlName]
+* can inherit annotated fields/methods and [@NamingStrategy]. Only use [@Entity] on concrete
+  classes.
+
+-----
+
 An entity is a Java class that will be mapped to a Cassandra table or [UDT](../../core/udts).
 Entities are used as arguments or return types of [DAO](../daos/) methods; they can also be nested
 inside other entities (to map UDT columns).
@@ -250,6 +268,11 @@ i.e.:
 ```java
 private transient int notAColumn;
 ```
+
+#### Custom column name
+
+Override the CQL name manually with [@CqlName], see [User-provided names](#user-provided-names)
+above.
 
 ### Default keyspace
 

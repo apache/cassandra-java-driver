@@ -1,5 +1,21 @@
 ## Prepared statements
 
+### Quick overview
+
+Prepare a query string once, reuse with different values. More efficient than simple statements for
+queries that are used often.
+
+* create the prepared statement with `session.prepare()`, call [bind()][PreparedStatement.bind] or
+  [boundStatementBuilder()][PreparedStatement.boundStatementBuilder] on it to create executable
+  statements.
+* the session has a built-in cache, it's OK to prepare the same string twice.
+* values: `?` or `:name`, fill with `setXxx(int, ...)` or `setXxx(String, ...)` respectively.
+* some values can be left unset with Cassandra 2.2+ / DSE 5+.   
+* built-in implementation is **immutable**. Setters always return a new object, don't ignore the
+  result.
+
+-----
+
 Use prepared statements for queries that are executed multiple times in your application:
 
 ```java
@@ -181,9 +197,9 @@ parameters.
 #### Unset values
 
 With [native protocol](../../native_protocol/) V3, all variables must be bound. With native protocol
-V4 or above, variables can be left unset, in which case they will be ignored (no tombstones will be
-generated). If you're reusing a bound statement, you can use the `unset` method to unset variables
-that were previously set:
+V4 (Cassandra 2.2 / DSE 5) or above, variables can be left unset, in which case they will be ignored
+(no tombstones will be generated). If you're reusing a bound statement, you can use the `unset`
+method to unset variables that were previously set:
 
 ```java
 BoundStatement bound = ps1.bind()
@@ -317,3 +333,5 @@ observe the new columns in the result set.
 [CASSANDRA-10786]: https://issues.apache.org/jira/browse/CASSANDRA-10786
 [CASSANDRA-10813]: https://issues.apache.org/jira/browse/CASSANDRA-10813
 [guava eviction]: https://github.com/google/guava/wiki/CachesExplained#reference-based-eviction
+[PreparedStatement.bind]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/PreparedStatement.html#bind-java.lang.Object...-
+[PreparedStatement.boundStatementBuilder]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/PreparedStatement.html#boundStatementBuilder-java.lang.Object...-

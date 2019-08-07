@@ -1,5 +1,16 @@
 ## Retries
 
+### Quick overview
+
+What to do when a request failed on a node: retry (same or other node), rethrow, or ignore.
+
+* `advanced.retry-policy` in the configuration. Default policy retries at most once, in cases that
+  have a high chance of success; you can also write your own.
+* can have per-profile policies. 
+* only kicks in if the query is idempotent.
+
+-----
+
 When a query fails, it sometimes makes sense to retry it: the error might be temporary, or the query
 might work on a different node. The driver uses a *retry policy* to determine when and how to retry.
 It is defined in the [configuration](../configuration/):

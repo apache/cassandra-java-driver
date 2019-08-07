@@ -1,7 +1,18 @@
 ## Temporal types
 
+### Quick overview
+
 This page provides more details about the various CQL time types, and the Java types they are mapped
 to in the driver.
+
+| CQL | Java | |
+|---|---|---|
+|`date` | `java.time.LocalDate` ||
+|`time` | `java.time.LocalTime` ||
+|`timestamp` | `java.time.Instant` | No time zone. Use `Instant.atZone` or register [TypeCodecs.ZONED_TIMESTAMP_SYSTEM], [TypeCodecs.ZONED_TIMESTAMP_UTC] or [TypeCodecs.zonedTimestampAt()] |
+|`duration` | [CqlDuration] | Custom driver type; can't be accurately represented by any of the `java.time` types. |
+
+-----
 
 ### Date and time
 

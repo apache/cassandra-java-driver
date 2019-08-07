@@ -1,5 +1,15 @@
 ## Mapper interface
 
+### Quick overview
+
+Interface annotated with [@Mapper], entry point to mapper features.
+
+* a corresponding builder gets generated (default: `[YourInterfacesName]Builder`).
+* defines [@DaoFactory] methods that provide DAO instances. They can be parameterized by keyspace
+  and/or table. 
+
+-----
+
 The mapper interface is the top-level entry point to mapping features. It wraps a core driver
 session, and acts as a factory of [DAO](../daos/) objects that will be used to execute requests.
 

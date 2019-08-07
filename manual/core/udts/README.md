@@ -1,5 +1,21 @@
 ## User-defined types
 
+### Quick overview
+
+Ordered set of named, typed fields, e.g. `{ street: '1 Main St', zip: 12345}`.
+
+* `row.getUdtValue()` / `boundStatement.setUdtValue()`.
+* positional or named getters and setters: `udtValue.getString("street")`,
+  `udtValue.setInt(1, 12345)`...
+* getting hold of the [UserDefinedType]:
+  * statement or session metadata, or `udtValue.getType()`.
+  * `UserDefinedTypeBuilder` (not recommended, dangerous if you build a type that doesn't match the
+    database schema).
+* creating a value from a type: `userDefinedType.newValue()`.
+
+-----
+
+
 [CQL user-defined types][cql_doc] are ordered sets of named, typed fields. They must be defined in a
 keyspace:
 

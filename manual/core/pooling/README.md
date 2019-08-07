@@ -1,5 +1,19 @@
 ## Connection pooling
 
+### Quick overview
+
+One connection pool per node. **Many concurrent requests** per connection (don't tune like a JDBC
+pool).
+
+* `advanced.connection` in the configuration: `max-requests-per-connection`, `pool.local.size`,
+  `pool.remote.size`.
+* metrics (per node): `pool.open-connections`, `pool.in-flight`, `pool.available-streams`,
+  `pool.orphaned-streams`.
+* heartbeat: driver-level keepalive, prevents idle connections from being dropped;
+  `advanced.heartbeat` in the configuration. 
+
+-----
+
 ### Basics
 
 The driver communicates with Cassandra over TCP, using the Cassandra binary protocol. This protocol

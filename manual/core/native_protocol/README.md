@@ -1,5 +1,19 @@
 ## Native protocol
 
+### Quick overview
+
+Low-level binary format. Mostly irrelevant for everyday use, only governs whether certain features
+are available.
+
+* setting the version:
+  * automatically negotiated during the connection (improved algorithm in driver 4, no longer an
+    issue in mixed clusters).
+  * or force with `advanced.protocol.version` in the configuration.
+* reading the version:
+  [session.getContext().getProtocolVersion()][AttachmentPoint.getProtocolVersion].
+
+-----
+
 The native protocol defines the format of the binary messages exchanged between the driver and
 Cassandra over TCP. As a driver user, you don't need to know the fine details (although the
 [protocol spec] is available if you're curious); the most visible aspect is that some features are
@@ -108,3 +122,4 @@ If you want to see the details of mixed cluster negotiation, enable `DEBUG` leve
 
 [ExecutionInfo.getWarnings]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getWarnings--
 [Request.getCustomPayload]:  https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/session/Request.html#getCustomPayload--
+[AttachmentPoint.getProtocolVersion]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/detach/AttachmentPoint.html#getProtocolVersion--
