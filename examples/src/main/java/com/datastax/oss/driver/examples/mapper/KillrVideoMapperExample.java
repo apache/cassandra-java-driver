@@ -70,6 +70,7 @@ import java.util.stream.Collectors;
  * @see <a href="https://docs.datastax.com/en/developer/java-driver/latest/manual/mapper/">Java
  *     Driver Mapper manual</a>
  */
+@SuppressWarnings("CatchAndPrintStackTrace")
 public class KillrVideoMapperExample {
 
   private static final CqlIdentifier KEYSPACE_ID = CqlIdentifier.fromCql("killrvideo");

@@ -401,8 +401,9 @@
           <compilerArgs combine.children="override">
             <compilerArg>-Xep:FutureReturnValueIgnored:OFF</compilerArg>
             <compilerArg>-Xep:MockitoInternalUsage:OFF</compilerArg>
-            <compilerArg>-XepExcludedPaths:.*/target/generated-sources/.*</compilerArg>
-            <compilerArg>-XepExcludedPaths:.*/target/generated-test-sources/.*</compilerArg>
+            <compilerArg>
+              -XepExcludedPaths:.*/target/(?:generated-sources|generated-test-sources)/.*
+            </compilerArg>
           </compilerArgs>
           <showWarnings>true</showWarnings>
           <failOnWarning>true</failOnWarning>
