@@ -45,12 +45,12 @@ import org.junit.rules.TestRule;
 public class PerProfileLoadBalancingPolicyIT {
 
   // 3 2-node DCs
-  private static SimulacronRule simulacron =
+  private static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(2, 2, 2));
 
   // default lb policy should consider dc1 local, profile1 dc3, profile2 empty.
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(simulacron)
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(SIMULACRON_RULE)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, "dc1")
@@ -61,20 +61,21 @@ public class PerProfileLoadBalancingPolicyIT {
                   .build())
           .build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(simulacron).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(SIMULACRON_RULE).around(SESSION_RULE);
 
   private static String QUERY_STRING = "select * from foo";
   private static final SimpleStatement QUERY = SimpleStatement.newInstance(QUERY_STRING);
 
   @Before
   public void clear() {
-    simulacron.cluster().clearLogs();
+    SIMULACRON_RULE.cluster().clearLogs();
   }
 
   @BeforeClass
   public static void setup() {
     // sanity checks
-    DriverContext context = sessionRule.session().getContext();
+    DriverContext context = SESSION_RULE.session().getContext();
     DriverConfig config = context.getConfig();
     assertThat(config.getProfiles()).containsKeys("profile1", "profile2");
 
@@ -89,7 +90,7 @@ public class PerProfileLoadBalancingPolicyIT {
 
     assertThat(defaultPolicy).isSameAs(policy2).isNotSameAs(policy1);
 
-    for (Node node : sessionRule.session().getMetadata().getNodes().values()) {
+    for (Node node : SESSION_RULE.session().getMetadata().getNodes().values()) {
       // if node is in dc2 it should be ignored, otherwise (dc1, dc3) it should be local.
       NodeDistance expectedDistance =
           node.getDatacenter().equals("dc2") ? NodeDistance.IGNORED : NodeDistance.LOCAL;
@@ -102,7 +103,7 @@ public class PerProfileLoadBalancingPolicyIT {
     // Since profile1 uses dc3 as localDC, only those nodes should receive these queries.
     Statement statement = QUERY.setExecutionProfileName("profile1");
     for (int i = 0; i < 10; i++) {
-      ResultSet result = sessionRule.session().execute(statement);
+      ResultSet result = SESSION_RULE.session().execute(statement);
       assertThat(result.getExecutionInfo().getCoordinator().getDatacenter()).isEqualTo("dc3");
     }
 
@@ -116,7 +117,7 @@ public class PerProfileLoadBalancingPolicyIT {
     // Since profile2 does not define an lbp config, it should use default which uses dc1.
     Statement statement = QUERY.setExecutionProfileName("profile2");
     for (int i = 0; i < 10; i++) {
-      ResultSet result = sessionRule.session().execute(statement);
+      ResultSet result = SESSION_RULE.session().execute(statement);
       assertThat(result.getExecutionInfo().getCoordinator().getDatacenter()).isEqualTo("dc1");
     }
 
@@ -128,7 +129,7 @@ public class PerProfileLoadBalancingPolicyIT {
   private void assertQueryInDc(int dc, int expectedPerNode) {
     for (int i = 0; i < 2; i++) {
       assertThat(
-              simulacron.cluster().dc(dc).node(i).getLogs().getQueryLogs().stream()
+              SIMULACRON_RULE.cluster().dc(dc).node(i).getLogs().getQueryLogs().stream()
                   .filter(l -> l.getQuery().equals(QUERY_STRING)))
           .as("Expected query count to be %d for dc %d", 5, i)
           .hasSize(expectedPerNode);

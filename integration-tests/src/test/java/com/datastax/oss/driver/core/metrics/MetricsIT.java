@@ -39,7 +39,7 @@ import org.junit.experimental.categories.Category;
 @Category(ParallelizableTests.class)
 public class MetricsIT {
 
-  @ClassRule public static CcmRule ccmRule = CcmRule.getInstance();
+  @ClassRule public static final CcmRule CCM_RULE = CcmRule.getInstance();
 
   @Test
   public void should_expose_metrics() {
@@ -49,7 +49,7 @@ public class MetricsIT {
                 DefaultDriverOption.METRICS_SESSION_ENABLED,
                 Collections.singletonList("cql-requests"))
             .build();
-    try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, loader)) {
       for (int i = 0; i < 10; i++) {
         session.execute("SELECT release_version FROM system.local");
       }
@@ -86,7 +86,7 @@ public class MetricsIT {
                 DefaultDriverOption.METRICS_NODE_ENABLED,
                 Lists.newArrayList("bytes-sent", "bytes-received"))
             .build();
-    try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, loader)) {
       for (int i = 0; i < 10; i++) {
         session.execute("SELECT release_version FROM system.local");
       }
@@ -121,7 +121,7 @@ public class MetricsIT {
             .withStringList(DefaultDriverOption.METRICS_SESSION_ENABLED, Collections.emptyList())
             .withStringList(DefaultDriverOption.METRICS_NODE_ENABLED, Collections.emptyList())
             .build();
-    try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, loader)) {
       for (int i = 0; i < 10; i++) {
         session.execute("SELECT release_version FROM system.local");
       }

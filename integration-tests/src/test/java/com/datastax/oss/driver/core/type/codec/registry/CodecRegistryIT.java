@@ -59,11 +59,12 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class CodecRegistryIT {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Rule public TestName name = new TestName();
 
@@ -72,19 +73,19 @@ public class CodecRegistryIT {
   @BeforeClass
   public static void createSchema() {
     // table with simple primary key, single cell.
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(
             SimpleStatement.builder("CREATE TABLE IF NOT EXISTS test (k text primary key, v int)")
-                .setExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(SESSION_RULE.slowProfile())
                 .build());
     // table with map value
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(
             SimpleStatement.builder(
                     "CREATE TABLE IF NOT EXISTS test2 (k0 text, k1 int, v map<int,text>, primary key (k0, k1))")
-                .setExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(SESSION_RULE.slowProfile())
                 .build());
   }
 
@@ -130,7 +131,7 @@ public class CodecRegistryIT {
   @Test
   public void should_throw_exception_if_no_codec_registered_for_type_set() {
     PreparedStatement prepared =
-        sessionRule.session().prepare("INSERT INTO test (k, v) values (?, ?)");
+        SESSION_RULE.session().prepare("INSERT INTO test (k, v) values (?, ?)");
 
     thrown.expect(CodecNotFoundException.class);
 
@@ -141,14 +142,14 @@ public class CodecRegistryIT {
   @Test
   public void should_throw_exception_if_no_codec_registered_for_type_get() {
     PreparedStatement prepared =
-        sessionRule.session().prepare("INSERT INTO test (k, v) values (?, ?)");
+        SESSION_RULE.session().prepare("INSERT INTO test (k, v) values (?, ?)");
 
     BoundStatement insert =
         prepared.boundStatementBuilder().setString(0, name.getMethodName()).setInt(1, 2).build();
-    sessionRule.session().execute(insert);
+    SESSION_RULE.session().execute(insert);
 
     ResultSet result =
-        sessionRule
+        SESSION_RULE
             .session()
             .execute(
                 SimpleStatement.builder("SELECT v from test where k = ?")
@@ -173,8 +174,8 @@ public class CodecRegistryIT {
         (CqlSession)
             SessionUtils.baseBuilder()
                 .addTypeCodecs(new FloatCIntCodec())
-                .addContactEndPoints(ccm.getContactPoints())
-                .withKeyspace(sessionRule.keyspace())
+                .addContactEndPoints(CCM_RULE.getContactPoints())
+                .withKeyspace(SESSION_RULE.keyspace())
                 .build()) {
       PreparedStatement prepared = session.prepare("INSERT INTO test (k, v) values (?, ?)");
 
@@ -294,8 +295,8 @@ public class CodecRegistryIT {
         (CqlSession)
             SessionUtils.baseBuilder()
                 .addTypeCodecs(optionalMapCodec, mapWithOptionalValueCodec)
-                .addContactEndPoints(ccm.getContactPoints())
-                .withKeyspace(sessionRule.keyspace())
+                .addContactEndPoints(CCM_RULE.getContactPoints())
+                .withKeyspace(SESSION_RULE.keyspace())
                 .build()) {
       PreparedStatement prepared =
           session.prepare("INSERT INTO test2 (k0, k1, v) values (?, ?, ?)");
@@ -381,8 +382,8 @@ public class CodecRegistryIT {
     try (CqlSession session =
         (CqlSession)
             SessionUtils.<CqlSession>baseBuilder()
-                .addContactEndPoints(ccm.getContactPoints())
-                .withKeyspace(sessionRule.keyspace())
+                .addContactEndPoints(CCM_RULE.getContactPoints())
+                .withKeyspace(SESSION_RULE.keyspace())
                 .build()) {
 
       // Using prepared statements (CQL type is known)

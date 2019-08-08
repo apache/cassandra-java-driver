@@ -49,30 +49,32 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 @CassandraRequirement(min = "2.2", description = "JSON support in Cassandra was added in 2.2")
 public class JsonInsertIT {
-  private static final CcmRule ccmRule = CcmRule.getInstance();
-  private static final JacksonJsonCodec<User> JACKSON_JSON_CODEC =
-      new JacksonJsonCodec<>(User.class);
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule)
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(CCM_RULE)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
                   .build())
           .build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
+
+  private static final JacksonJsonCodec<User> JACKSON_JSON_CODEC =
+      new JacksonJsonCodec<>(User.class);
 
   @BeforeClass
   public static void setup() {
-    sessionRule
+    SESSION_RULE
         .session()
         .execute("CREATE TABLE json_jackson_row(id int PRIMARY KEY, name text, age int)");
   }
 
   @After
   public void clearTable() {
-    sessionRule.session().execute("TRUNCATE TABLE json_jackson_row");
+    SESSION_RULE.session().execute("TRUNCATE TABLE json_jackson_row");
   }
 
   @Test
@@ -195,8 +197,8 @@ public class JsonInsertIT {
   private CqlSession sessionWithCustomCodec() {
     return (CqlSession)
         SessionUtils.baseBuilder()
-            .addContactEndPoints(ccmRule.getContactPoints())
-            .withKeyspace(sessionRule.keyspace())
+            .addContactEndPoints(CCM_RULE.getContactPoints())
+            .withKeyspace(SESSION_RULE.keyspace())
             .addTypeCodecs(JACKSON_JSON_CODEC)
             .build();
   }
@@ -205,8 +207,8 @@ public class JsonInsertIT {
   private CqlSession sessionWithoutCustomCodec() {
     return (CqlSession)
         SessionUtils.baseBuilder()
-            .addContactEndPoints(ccmRule.getContactPoints())
-            .withKeyspace(sessionRule.keyspace())
+            .addContactEndPoints(CCM_RULE.getContactPoints())
+            .withKeyspace(SESSION_RULE.keyspace())
             .build();
   }
 

@@ -61,17 +61,18 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class NamingStrategyIT {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private static TestMapper mapper;
 
   @BeforeClass
   public static void setup() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
     for (String query :
         ImmutableList.of(
@@ -80,7 +81,7 @@ public class NamingStrategyIT {
             "CREATE TABLE test_NameConverterEntity(test_entityId int primary key)",
             "CREATE TABLE custom_entity(custom_id int primary key)")) {
       session.execute(
-          SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
+          SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
     }
 
     mapper = new NamingStrategyIT_TestMapperBuilder(session).build();
@@ -88,7 +89,7 @@ public class NamingStrategyIT {
 
   @Test
   public void should_map_entity_with_default_naming_strategy() {
-    DefaultStrategyEntityDao dao = mapper.defaultStrategyEntityDao(sessionRule.keyspace());
+    DefaultStrategyEntityDao dao = mapper.defaultStrategyEntityDao(SESSION_RULE.keyspace());
     DefaultStrategyEntity entity = new DefaultStrategyEntity(1);
 
     dao.save(entity);
@@ -98,7 +99,7 @@ public class NamingStrategyIT {
 
   @Test
   public void should_map_entity_with_non_default_convention() {
-    UpperSnakeCaseEntityDao dao = mapper.upperSnakeCaseEntityDao(sessionRule.keyspace());
+    UpperSnakeCaseEntityDao dao = mapper.upperSnakeCaseEntityDao(SESSION_RULE.keyspace());
     UpperSnakeCaseEntity entity = new UpperSnakeCaseEntity(1);
 
     dao.save(entity);
@@ -108,7 +109,7 @@ public class NamingStrategyIT {
 
   @Test
   public void should_map_entity_with_name_converter() {
-    NameConverterEntityDao dao = mapper.nameConverterEntityDao(sessionRule.keyspace());
+    NameConverterEntityDao dao = mapper.nameConverterEntityDao(SESSION_RULE.keyspace());
     NameConverterEntity entity = new NameConverterEntity(1);
 
     dao.save(entity);
@@ -118,7 +119,7 @@ public class NamingStrategyIT {
 
   @Test
   public void should_map_entity_with_custom_names() {
-    CustomNamesEntityDao dao = mapper.customNamesEntityDao(sessionRule.keyspace());
+    CustomNamesEntityDao dao = mapper.customNamesEntityDao(SESSION_RULE.keyspace());
     CustomNamesEntity entity = new CustomNamesEntity(1);
 
     dao.save(entity);

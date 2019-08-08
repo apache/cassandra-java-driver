@@ -33,7 +33,8 @@ import org.junit.Test;
 public class HeartbeatDisabledIT {
 
   @ClassRule
-  public static SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(2));
+  public static final SimulacronRule SIMULACRON_RULE =
+      new SimulacronRule(ClusterSpec.builder().withNodes(2));
 
   @Test
   public void should_not_send_heartbeat_when_disabled() throws InterruptedException {
@@ -43,7 +44,7 @@ public class HeartbeatDisabledIT {
         SessionUtils.configLoaderBuilder()
             .withDuration(DefaultDriverOption.HEARTBEAT_INTERVAL, Duration.ofSeconds(0))
             .build();
-    try (CqlSession session = SessionUtils.newSession(simulacron, loader)) {
+    try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE, loader)) {
       AtomicInteger heartbeats = registerHeartbeatListener();
       SECONDS.sleep(35);
 
@@ -53,7 +54,7 @@ public class HeartbeatDisabledIT {
 
   private AtomicInteger registerHeartbeatListener() {
     AtomicInteger nonControlHeartbeats = new AtomicInteger();
-    simulacron
+    SIMULACRON_RULE
         .cluster()
         .registerQueryListener(
             (n, l) -> nonControlHeartbeats.incrementAndGet(),

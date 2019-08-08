@@ -57,13 +57,13 @@ public class ExecutionInfoWarningsIT {
 
   private static final String KEY = "test";
 
-  private final CustomCcmRule ccm =
+  private CustomCcmRule ccmRule =
       new CustomCcmRule.Builder()
           // set the warn threshold to 5Kb (default is 64Kb in newer versions)
           .withCassandraConfiguration("batch_size_warn_threshold_in_kb", "5")
           .build();
-  private final SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccm)
+  private SessionRule<CqlSession> sessionRule =
+      SessionRule.builder(ccmRule)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 20)
@@ -75,7 +75,7 @@ public class ExecutionInfoWarningsIT {
                   .build())
           .build();
 
-  @Rule public final TestRule ccmRule = RuleChain.outerRule(ccm).around(sessionRule);
+  @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   @Mock private Appender<ILoggingEvent> appender;
   @Captor private ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
@@ -83,7 +83,7 @@ public class ExecutionInfoWarningsIT {
   private Level originalLoggerLevel;
 
   @Before
-  public void setupLogger() {
+  public void createSchema() {
     // table with simple primary key, single cell.
     sessionRule
         .session()
@@ -99,7 +99,10 @@ public class ExecutionInfoWarningsIT {
                   .addPositionalValues(KEY, i)
                   .build());
     }
-    // setup the log appender
+  }
+
+  @Before
+  public void setupLogger() {
     logger = (Logger) LoggerFactory.getLogger(CqlRequestHandler.class);
     originalLoggerLevel = logger.getLevel();
     logger.setLevel(Level.WARN);

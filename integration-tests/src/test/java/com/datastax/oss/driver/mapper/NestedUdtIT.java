@@ -56,11 +56,12 @@ import org.junit.rules.TestRule;
 @CassandraRequirement(min = "2.2", description = "support for unset values")
 public class NestedUdtIT {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private static UUID CONTAINER_ID = UUID.randomUUID();
   private static final Container SAMPLE_CONTAINER =
@@ -97,7 +98,7 @@ public class NestedUdtIT {
 
   @BeforeClass
   public static void setup() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
     for (String query :
         ImmutableList.of(
@@ -110,19 +111,19 @@ public class NestedUdtIT {
                 + "map3 frozen<map<type1, map<text, set<type2>>>>"
                 + ")")) {
       session.execute(
-          SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
+          SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
     }
 
     UdtsMapper udtsMapper = new NestedUdtIT_UdtsMapperBuilder(session).build();
-    containerDao = udtsMapper.containerDao(sessionRule.keyspace());
+    containerDao = udtsMapper.containerDao(SESSION_RULE.keyspace());
   }
 
   @Before
   public void clearContainerData() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     session.execute(
         SimpleStatement.builder("TRUNCATE container")
-            .setExecutionProfile(sessionRule.slowProfile())
+            .setExecutionProfile(SESSION_RULE.slowProfile())
             .build());
   }
 

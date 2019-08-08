@@ -30,7 +30,8 @@ import org.junit.experimental.categories.Category;
 @Category(IsolatedTests.class)
 public class DefaultSslEngineFactoryPropertyBasedWithClientAuthIT {
 
-  @ClassRule public static CustomCcmRule ccm = CustomCcmRule.builder().withSslAuth().build();
+  @ClassRule
+  public static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().withSslAuth().build();
 
   @Test
   public void should_connect_with_ssl_using_client_auth() {
@@ -47,7 +48,7 @@ public class DefaultSslEngineFactoryPropertyBasedWithClientAuthIT {
             .withClass(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS, DefaultSslEngineFactory.class)
             .withBoolean(DefaultDriverOption.SSL_HOSTNAME_VALIDATION, false)
             .build();
-    try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, loader)) {
       session.execute("select * from system.local");
     }
   }

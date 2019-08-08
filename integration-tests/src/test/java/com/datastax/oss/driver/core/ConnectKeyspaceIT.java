@@ -35,23 +35,24 @@ import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 public class ConnectKeyspaceIT {
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Test
   public void should_connect_to_existing_keyspace() {
-    CqlIdentifier keyspace = sessionRule.keyspace();
-    try (Session session = SessionUtils.newSession(ccm, keyspace)) {
+    CqlIdentifier keyspace = SESSION_RULE.keyspace();
+    try (Session session = SessionUtils.newSession(CCM_RULE, keyspace)) {
       assertThat(session.getKeyspace()).hasValue(keyspace);
     }
   }
 
   @Test
   public void should_connect_with_no_keyspace() {
-    try (Session session = SessionUtils.newSession(ccm)) {
+    try (Session session = SessionUtils.newSession(CCM_RULE)) {
       assertThat(session.getKeyspace()).isEmpty();
     }
   }
@@ -72,6 +73,6 @@ public class ConnectKeyspaceIT {
 
   private void should_fail_to_connect_to_non_existent_keyspace(DriverConfigLoader loader) {
     CqlIdentifier keyspace = CqlIdentifier.fromInternal("does not exist");
-    SessionUtils.newSession(ccm, keyspace, loader);
+    SessionUtils.newSession(CCM_RULE, keyspace, loader);
   }
 }

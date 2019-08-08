@@ -37,18 +37,19 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class QueryTraceIT {
 
-  private static CcmRule ccmRule = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void should_not_have_tracing_id_when_tracing_disabled() {
     ExecutionInfo executionInfo =
-        sessionRule
+        SESSION_RULE
             .session()
             .execute("SELECT release_version FROM system.local")
             .getExecutionInfo();
@@ -63,7 +64,7 @@ public class QueryTraceIT {
   @Test
   public void should_fetch_trace_when_tracing_enabled() {
     ExecutionInfo executionInfo =
-        sessionRule
+        SESSION_RULE
             .session()
             .execute(
                 SimpleStatement.builder("SELECT release_version FROM system.local")
@@ -77,7 +78,7 @@ public class QueryTraceIT {
     assertThat(queryTrace.getTracingId()).isEqualTo(executionInfo.getTracingId());
     assertThat(queryTrace.getRequestType()).isEqualTo("Execute CQL3 query");
     assertThat(queryTrace.getDurationMicros()).isPositive();
-    EndPoint contactPoint = ccmRule.getContactPoints().iterator().next();
+    EndPoint contactPoint = CCM_RULE.getContactPoints().iterator().next();
     assertThat(queryTrace.getCoordinator())
         .isEqualTo(((InetSocketAddress) contactPoint.resolve()).getAddress());
     assertThat(queryTrace.getParameters())

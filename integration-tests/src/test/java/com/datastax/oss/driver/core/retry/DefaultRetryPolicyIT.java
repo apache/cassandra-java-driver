@@ -74,12 +74,12 @@ import org.slf4j.helpers.MessageFormatter;
 
 @RunWith(DataProviderRunner.class)
 public class DefaultRetryPolicyIT {
-
-  public static @ClassRule SimulacronRule simulacron =
+  @ClassRule
+  public static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
   public @Rule SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(simulacron)
+      SessionRule.builder(SIMULACRON_RULE)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE, true)
@@ -104,7 +104,7 @@ public class DefaultRetryPolicyIT {
 
   @SuppressWarnings("deprecation")
   private final QueryCounter counter =
-      QueryCounter.builder(simulacron.cluster())
+      QueryCounter.builder(SIMULACRON_RULE.cluster())
           .withFilter((l) -> l.getQuery().equals(queryStr))
           .build();
 
@@ -117,8 +117,8 @@ public class DefaultRetryPolicyIT {
     // the log prefix we expect in retry logging messages.
     logPrefix = sessionRule.session().getName() + "|default";
     // clear activity logs and primes between tests since simulacron instance is shared.
-    simulacron.cluster().clearLogs();
-    simulacron.cluster().clearPrimes(true);
+    SIMULACRON_RULE.cluster().clearLogs();
+    SIMULACRON_RULE.cluster().clearPrimes(true);
   }
 
   @After
@@ -130,7 +130,10 @@ public class DefaultRetryPolicyIT {
   @Test
   public void should_not_retry_on_read_timeout_when_data_present() {
     // given a node that will respond to query with a read timeout where data is present.
-    simulacron.cluster().node(0).prime(when(queryStr).then(readTimeout(LOCAL_QUORUM, 1, 3, true)));
+    SIMULACRON_RULE
+        .cluster()
+        .node(0)
+        .prime(when(queryStr).then(readTimeout(LOCAL_QUORUM, 1, 3, true)));
 
     try {
       // when executing a query
@@ -156,7 +159,10 @@ public class DefaultRetryPolicyIT {
     // given a node that will respond to a query with a read timeout where 2 out of 3 responses are
     // received.
     // in this case, digest requests succeeded, but not the data request.
-    simulacron.cluster().node(0).prime(when(queryStr).then(readTimeout(LOCAL_QUORUM, 2, 3, false)));
+    SIMULACRON_RULE
+        .cluster()
+        .node(0)
+        .prime(when(queryStr).then(readTimeout(LOCAL_QUORUM, 2, 3, false)));
 
     try {
       // when executing a query
@@ -182,7 +188,10 @@ public class DefaultRetryPolicyIT {
     // given a node that will respond to a query with a read timeout where 3 out of 3 responses are
     // received,
     // but data is not present.
-    simulacron.cluster().node(0).prime(when(queryStr).then(readTimeout(LOCAL_QUORUM, 3, 3, false)));
+    SIMULACRON_RULE
+        .cluster()
+        .node(0)
+        .prime(when(queryStr).then(readTimeout(LOCAL_QUORUM, 3, 3, false)));
 
     try {
       // when executing a query.
@@ -217,7 +226,7 @@ public class DefaultRetryPolicyIT {
   @Test
   public void should_retry_on_next_host_on_connection_error_if_idempotent() {
     // given a node that will close its connection as result of receiving a query.
-    simulacron
+    SIMULACRON_RULE
         .cluster()
         .node(0)
         .prime(
@@ -232,11 +241,11 @@ public class DefaultRetryPolicyIT {
     assertThat(result.getExecutionInfo().getErrors()).hasSize(1);
     Map.Entry<Node, Throwable> error = result.getExecutionInfo().getErrors().get(0);
     assertThat(error.getKey().getEndPoint().resolve())
-        .isEqualTo(simulacron.cluster().node(0).inetSocketAddress());
+        .isEqualTo(SIMULACRON_RULE.cluster().node(0).inetSocketAddress());
     assertThat(error.getValue()).isInstanceOf(ClosedConnectionException.class);
     // the host that returned the response should be node 1.
     assertThat(result.getExecutionInfo().getCoordinator().getEndPoint().resolve())
-        .isEqualTo(simulacron.cluster().node(1).inetSocketAddress());
+        .isEqualTo(SIMULACRON_RULE.cluster().node(1).inetSocketAddress());
 
     // should have been retried.
     counter.assertTotalCount(2);
@@ -252,7 +261,7 @@ public class DefaultRetryPolicyIT {
   @Test
   public void should_keep_retrying_on_next_host_on_connection_error() {
     // given a request for which every node will close its connection upon receiving it.
-    simulacron
+    SIMULACRON_RULE
         .cluster()
         .prime(
             when(queryStr)
@@ -284,7 +293,7 @@ public class DefaultRetryPolicyIT {
   @Test
   public void should_not_retry_on_connection_error_if_non_idempotent() {
     // given a node that will close its connection as result of receiving a query.
-    simulacron
+    SIMULACRON_RULE
         .cluster()
         .node(0)
         .prime(
@@ -316,7 +325,7 @@ public class DefaultRetryPolicyIT {
   @Test
   public void should_retry_on_write_timeout_if_write_type_batch_log() {
     // given a node that will respond to query with a write timeout with write type of batch log.
-    simulacron
+    SIMULACRON_RULE
         .cluster()
         .node(0)
         .prime(when(queryStr).then(writeTimeout(LOCAL_QUORUM, 1, 3, BATCH_LOG)));
@@ -368,7 +377,7 @@ public class DefaultRetryPolicyIT {
       com.datastax.oss.simulacron.common.codec.WriteType writeType) {
     // given a node that will respond to query with a write timeout with write type that is not
     // batch log.
-    simulacron
+    SIMULACRON_RULE
         .cluster()
         .node(0)
         .prime(when(queryStr).then(writeTimeout(LOCAL_QUORUM, 1, 3, writeType)));
@@ -394,7 +403,7 @@ public class DefaultRetryPolicyIT {
   @Test
   public void should_not_retry_on_write_timeout_if_write_type_batch_log_but_non_idempotent() {
     // given a node that will respond to query with a write timeout with write type of batch log.
-    simulacron
+    SIMULACRON_RULE
         .cluster()
         .node(0)
         .prime(when(queryStr).then(writeTimeout(LOCAL_QUORUM, 1, 3, BATCH_LOG)));
@@ -423,7 +432,7 @@ public class DefaultRetryPolicyIT {
   @Test
   public void should_retry_on_next_host_on_unavailable() {
     // given a node that will respond to a query with an unavailable.
-    simulacron.cluster().node(0).prime(when(queryStr).then(unavailable(LOCAL_QUORUM, 3, 0)));
+    SIMULACRON_RULE.cluster().node(0).prime(when(queryStr).then(unavailable(LOCAL_QUORUM, 3, 0)));
 
     // when executing a query.
     ResultSet result = sessionRule.session().execute(queryStr);
@@ -433,11 +442,11 @@ public class DefaultRetryPolicyIT {
     assertThat(result.getExecutionInfo().getErrors()).hasSize(1);
     Map.Entry<Node, Throwable> error = result.getExecutionInfo().getErrors().get(0);
     assertThat(error.getKey().getEndPoint().resolve())
-        .isEqualTo(simulacron.cluster().node(0).inetSocketAddress());
+        .isEqualTo(SIMULACRON_RULE.cluster().node(0).inetSocketAddress());
     assertThat(error.getValue()).isInstanceOf(UnavailableException.class);
     // the host that returned the response should be node 1.
     assertThat(result.getExecutionInfo().getCoordinator().getEndPoint().resolve())
-        .isEqualTo(simulacron.cluster().node(1).inetSocketAddress());
+        .isEqualTo(SIMULACRON_RULE.cluster().node(1).inetSocketAddress());
 
     // should have been retried on another host.
     counter.assertTotalCount(2);
@@ -454,8 +463,8 @@ public class DefaultRetryPolicyIT {
   @Test
   public void should_only_retry_once_on_unavailable() {
     // given two nodes that will respond to a query with an unavailable.
-    simulacron.cluster().node(0).prime(when(queryStr).then(unavailable(LOCAL_QUORUM, 3, 0)));
-    simulacron.cluster().node(1).prime(when(queryStr).then(unavailable(LOCAL_QUORUM, 3, 0)));
+    SIMULACRON_RULE.cluster().node(0).prime(when(queryStr).then(unavailable(LOCAL_QUORUM, 3, 0)));
+    SIMULACRON_RULE.cluster().node(1).prime(when(queryStr).then(unavailable(LOCAL_QUORUM, 3, 0)));
 
     try {
       // when executing a query.
@@ -465,7 +474,7 @@ public class DefaultRetryPolicyIT {
       // then we should get an unavailable exception with the host being node 1 (since it was second
       // tried).
       assertThat(ue.getCoordinator().getEndPoint().resolve())
-          .isEqualTo(simulacron.cluster().node(1).inetSocketAddress());
+          .isEqualTo(SIMULACRON_RULE.cluster().node(1).inetSocketAddress());
       assertThat(ue.getConsistencyLevel()).isEqualTo(DefaultConsistencyLevel.LOCAL_QUORUM);
       assertThat(ue.getRequired()).isEqualTo(3);
       assertThat(ue.getAlive()).isEqualTo(0);
@@ -479,7 +488,7 @@ public class DefaultRetryPolicyIT {
   @Test
   public void should_keep_retrying_on_next_host_on_error_response() {
     // given every node responding with a server error.
-    simulacron.cluster().prime(when(queryStr).then(serverError("this is a server error")));
+    SIMULACRON_RULE.cluster().prime(when(queryStr).then(serverError("this is a server error")));
 
     try {
       // when executing a query.
@@ -507,7 +516,7 @@ public class DefaultRetryPolicyIT {
   @Test
   public void should_not_retry_on_next_host_on_error_response_if_non_idempotent() {
     // given every node responding with a server error.
-    simulacron.cluster().prime(when(queryStr).then(serverError("this is a server error")));
+    SIMULACRON_RULE.cluster().prime(when(queryStr).then(serverError("this is a server error")));
 
     try {
       // when executing a query that is not idempotent

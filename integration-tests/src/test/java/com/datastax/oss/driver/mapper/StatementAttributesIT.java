@@ -62,10 +62,13 @@ import org.junit.rules.TestRule;
 
 public class StatementAttributesIT {
 
-  private static SimulacronRule simulacronRule =
+  private static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(1));
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(simulacronRule).build();
-  @ClassRule public static TestRule chain = RuleChain.outerRule(simulacronRule).around(sessionRule);
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(SIMULACRON_RULE).build();
+
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(SIMULACRON_RULE).around(SESSION_RULE);
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
@@ -98,90 +101,90 @@ public class StatementAttributesIT {
     primeUpdateQuery();
 
     InventoryMapper inventoryMapper =
-        new StatementAttributesIT_InventoryMapperBuilder(sessionRule.session()).build();
+        new StatementAttributesIT_InventoryMapperBuilder(SESSION_RULE.session()).build();
     dao = inventoryMapper.simpleDao();
   }
 
   @Before
   public void setup() {
-    simulacronRule.cluster().clearLogs();
+    SIMULACRON_RULE.cluster().clearLogs();
   }
 
   @Test
   public void should_honor_runtime_attributes_on_insert() {
     dao.save(simple, statementFunction);
 
-    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
     validateQueryOptions(report.getQueryLogs().get(0), true);
   }
 
   @Test
   public void should_honor_annotation_attributes_on_insert() {
     dao.save2(simple);
-    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
     validateQueryOptions(report.getQueryLogs().get(0), false);
   }
 
   @Test
   public void should_use_runtime_attributes_over_annotation_attributes() {
     dao.save3(simple, statementFunction);
-    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
     validateQueryOptions(report.getQueryLogs().get(0), false);
   }
 
   @Test
   public void should_honor_runtime_attributes_on_delete() {
     dao.delete(simple, statementFunction);
-    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
     validateQueryOptions(report.getQueryLogs().get(0), true);
   }
 
   @Test
   public void should_honor_annotation_attributes_on_delete() {
     dao.delete2(simple);
-    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
     validateQueryOptions(report.getQueryLogs().get(0), false);
   }
 
   @Test
   public void should_honor_runtime_attributes_on_select() {
     dao.findByPk(simple.getPk(), statementFunction);
-    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
     validateQueryOptions(report.getQueryLogs().get(0), true);
   }
 
   @Test
   public void should_honor_annotation_attributes_on_select() {
     dao.findByPk2(simple.getPk());
-    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
     validateQueryOptions(report.getQueryLogs().get(0), false);
   }
 
   @Test
   public void should_honor_runtime_attributes_on_query() {
     dao.count(simple.getPk(), statementFunction);
-    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
     validateQueryOptions(report.getQueryLogs().get(0), true);
   }
 
   @Test
   public void should_honor_annotation_attributes_on_query() {
     dao.count2(simple.getPk());
-    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
     validateQueryOptions(report.getQueryLogs().get(0), false);
   }
 
   @Test
   public void should_honor_runtime_attributes_on_update() {
     dao.update(simple, statementFunction);
-    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
     validateQueryOptions(report.getQueryLogs().get(0), true);
   }
 
   @Test
   public void should_honor_annotation_attributes_on_update() {
     dao.update2(simple);
-    ClusterQueryLogReport report = simulacronRule.cluster().getLogs();
+    ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
     validateQueryOptions(report.getQueryLogs().get(0), false);
   }
 
@@ -195,7 +198,7 @@ public class StatementAttributesIT {
   private static void primeInsertQuery() {
     Map<String, Object> params = ImmutableMap.of("pk", simple.getPk(), "data", simple.getData());
     Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid", "data", "ascii");
-    simulacronRule
+    SIMULACRON_RULE
         .cluster()
         .prime(
             when(query(
@@ -211,7 +214,7 @@ public class StatementAttributesIT {
   private static void primeDeleteQuery() {
     Map<String, Object> params = ImmutableMap.of("pk", simple.getPk());
     Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid");
-    simulacronRule
+    SIMULACRON_RULE
         .cluster()
         .prime(
             when(query(
@@ -228,7 +231,7 @@ public class StatementAttributesIT {
   private static void primeSelectQuery() {
     Map<String, Object> params = ImmutableMap.of("pk", simple.getPk());
     Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid");
-    simulacronRule
+    SIMULACRON_RULE
         .cluster()
         .prime(
             when(query(
@@ -245,7 +248,7 @@ public class StatementAttributesIT {
   private static void primeCountQuery() {
     Map<String, Object> params = ImmutableMap.of("pk", simple.getPk());
     Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid");
-    simulacronRule
+    SIMULACRON_RULE
         .cluster()
         .prime(
             when(query(
@@ -262,7 +265,7 @@ public class StatementAttributesIT {
   private static void primeUpdateQuery() {
     Map<String, Object> params = ImmutableMap.of("pk", simple.getPk(), "data", simple.getData());
     Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid", "data", "ascii");
-    simulacronRule
+    SIMULACRON_RULE
         .cluster()
         .prime(
             when(query(

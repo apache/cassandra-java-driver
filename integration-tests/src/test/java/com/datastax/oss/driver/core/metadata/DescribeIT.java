@@ -46,13 +46,13 @@ import org.slf4j.LoggerFactory;
 @Category(ParallelizableTests.class)
 public class DescribeIT {
 
-  private static final Logger logger = LoggerFactory.getLogger(DescribeIT.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DescribeIT.class);
 
-  private static CcmRule ccmRule = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
   // disable debouncer to speed up test.
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule)
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(CCM_RULE)
           .withKeyspace(false)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
@@ -61,7 +61,8 @@ public class DescribeIT {
                   .build())
           .build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   /**
    * Creates a keyspace using a variety of features and ensures {@link
@@ -82,7 +83,7 @@ public class DescribeIT {
     String keyspaceAsCql = keyspace.asCql(true);
     String expectedCql = getExpectedCqlString(keyspaceAsCql);
 
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
     // create keyspace
     session.execute(
@@ -128,7 +129,7 @@ public class DescribeIT {
             keyspaceAsCql));
 
     // date type requries 2.2+
-    if (ccmRule.getCassandraVersion().compareTo(Version.V2_2_0) >= 0) {
+    if (CCM_RULE.getCassandraVersion().compareTo(Version.V2_2_0) >= 0) {
       // A table that will have materialized views (copied from mv docs)
       session.execute(
           "CREATE TABLE cyclist_mv(cid uuid, name text, age int, birthday date, country text, "
@@ -138,7 +139,7 @@ public class DescribeIT {
       session.execute("CREATE INDEX cyclist_by_country ON cyclist_mv(country)");
 
       // materialized views require 3.0+
-      if (ccmRule.getCassandraVersion().compareTo(Version.V3_0_0) >= 0) {
+      if (CCM_RULE.getCassandraVersion().compareTo(Version.V3_0_0) >= 0) {
         // A materialized view for cyclist_mv, reverse clustering.  created first to ensure creation
         // order does not matter, alphabetical does.
         session.execute(
@@ -177,7 +178,7 @@ public class DescribeIT {
     session.execute("CREATE INDEX rrank ON rank_by_year_and_name(rank)");
 
     // udfs and udas require 2.22+
-    if (ccmRule.getCassandraVersion().compareTo(Version.V2_2_0) >= 0) {
+    if (CCM_RULE.getCassandraVersion().compareTo(Version.V2_2_0) >= 0) {
       // UDFs
       session.execute(
           "CREATE OR REPLACE FUNCTION avgState ( state tuple<int,bigint>, val int ) CALLED ON NULL INPUT RETURNS tuple<int,bigint> LANGUAGE java AS \n"
@@ -205,12 +206,12 @@ public class DescribeIT {
     assertThat(originalKsMeta.get().getUserDefinedTypes()).isEmpty();
 
     // validate that the exported schema matches what was expected exactly.
-    Optional<KeyspaceMetadata> ks = sessionRule.session().getMetadata().getKeyspace(keyspace);
+    Optional<KeyspaceMetadata> ks = SESSION_RULE.session().getMetadata().getKeyspace(keyspace);
     assertThat(ks.get().describeWithChildren(true).trim()).isEqualTo(expectedCql);
 
     // Also validate that when you create a Session with schema already created that the exported
     // string is the same.
-    try (CqlSession newSession = SessionUtils.newSession(ccmRule)) {
+    try (CqlSession newSession = SessionUtils.newSession(CCM_RULE)) {
       ks = newSession.getMetadata().getKeyspace(keyspace);
       assertThat(ks.get().describeWithChildren(true).trim()).isEqualTo(expectedCql);
     }
@@ -218,7 +219,7 @@ public class DescribeIT {
 
   private String getExpectedCqlString(String keyspace) {
     String majorMinor =
-        ccmRule.getCassandraVersion().getMajor() + "." + ccmRule.getCassandraVersion().getMinor();
+        CCM_RULE.getCassandraVersion().getMajor() + "." + CCM_RULE.getCassandraVersion().getMinor();
     String resourceName = "/describe_it_test_" + majorMinor + ".cql";
 
     Closer closer = Closer.create();
@@ -226,8 +227,8 @@ public class DescribeIT {
       InputStream is = DescribeIT.class.getResourceAsStream(resourceName);
       if (is == null) {
         // If no schema file is defined for tested cassandra version, just try 3.11.
-        if (ccmRule.getCassandraVersion().compareTo(Version.V3_0_0) >= 0) {
-          logger.warn("Could not find schema file for {}, assuming C* 3.11.x", majorMinor);
+        if (CCM_RULE.getCassandraVersion().compareTo(Version.V3_0_0) >= 0) {
+          LOG.warn("Could not find schema file for {}, assuming C* 3.11.x", majorMinor);
           is = DescribeIT.class.getResourceAsStream("/describe_it_test_3.11.cql");
           if (is == null) {
             throw new IOException();
@@ -241,13 +242,13 @@ public class DescribeIT {
       ByteStreams.copy(is, ps);
       return baos.toString().replaceAll("ks_0", keyspace).trim();
     } catch (IOException e) {
-      logger.warn("Failure to read {}", resourceName, e);
+      LOG.warn("Failure to read {}", resourceName, e);
       fail("Unable to read " + resourceName + " is it defined?", e);
     } finally {
       try {
         closer.close();
       } catch (IOException e) { // no op
-        logger.warn("Failure closing streams", e);
+        LOG.warn("Failure closing streams", e);
       }
     }
     return "";

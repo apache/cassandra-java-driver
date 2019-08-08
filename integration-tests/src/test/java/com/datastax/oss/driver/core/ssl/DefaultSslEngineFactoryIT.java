@@ -28,7 +28,7 @@ import org.junit.Test;
 
 public class DefaultSslEngineFactoryIT {
 
-  @ClassRule public static CustomCcmRule ccm = CustomCcmRule.builder().withSsl().build();
+  @ClassRule public static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().withSsl().build();
 
   @Test
   public void should_connect_with_ssl() {
@@ -44,7 +44,7 @@ public class DefaultSslEngineFactoryIT {
                 CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD)
             .build();
 
-    try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, loader)) {
       session.execute("select * from system.local");
     }
   }
@@ -63,7 +63,7 @@ public class DefaultSslEngineFactoryIT {
                 DefaultDriverOption.SSL_TRUSTSTORE_PASSWORD,
                 CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD)
             .build();
-    try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, loader)) {
       session.execute("select * from system.local");
     }
   }
@@ -75,14 +75,14 @@ public class DefaultSslEngineFactoryIT {
             .withClass(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS, DefaultSslEngineFactory.class)
             .withBoolean(DefaultDriverOption.SSL_HOSTNAME_VALIDATION, false)
             .build();
-    try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, loader)) {
       session.execute("select * from system.local");
     }
   }
 
   @Test(expected = AllNodesFailedException.class)
   public void should_not_connect_if_not_using_ssl() {
-    try (CqlSession session = SessionUtils.newSession(ccm)) {
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE)) {
       session.execute("select * from system.local");
     }
   }

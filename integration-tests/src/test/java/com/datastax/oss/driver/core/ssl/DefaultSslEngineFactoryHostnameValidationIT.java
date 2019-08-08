@@ -27,7 +27,8 @@ import org.junit.Test;
 
 public class DefaultSslEngineFactoryHostnameValidationIT {
 
-  @ClassRule public static CustomCcmRule ccm = CustomCcmRule.builder().withSslLocalhostCn().build();
+  @ClassRule
+  public static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().withSslLocalhostCn().build();
 
   /**
    * Ensures that SSL connectivity can be established with hostname validation enabled when the
@@ -48,7 +49,7 @@ public class DefaultSslEngineFactoryHostnameValidationIT {
                 DefaultDriverOption.SSL_TRUSTSTORE_PASSWORD,
                 CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD)
             .build();
-    try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, loader)) {
       session.execute("select * from system.local");
     }
   }

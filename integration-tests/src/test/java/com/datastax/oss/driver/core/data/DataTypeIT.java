@@ -87,11 +87,12 @@ import org.junit.runner.RunWith;
 @Category(ParallelizableTests.class)
 @RunWith(DataProviderRunner.class)
 public class DataTypeIT {
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Rule public TestName name = new TestName();
 
@@ -148,7 +149,7 @@ public class DataTypeIT {
           }
         };
 
-    Version version = ccm.getCassandraVersion();
+    Version version = CCM_RULE.getCassandraVersion();
     // Filter types if they aren't supported by cassandra version in use.
     return Arrays.stream(samples)
         .filter(
@@ -245,7 +246,7 @@ public class DataTypeIT {
 
               UserDefinedType udt =
                   new DefaultUserDefinedType(
-                      sessionRule.keyspace(),
+                      SESSION_RULE.keyspace(),
                       CqlIdentifier.fromCql(userTypeFor(types)),
                       false,
                       typeNames,
@@ -286,14 +287,14 @@ public class DataTypeIT {
       }
     }
 
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(
             SimpleStatement.builder(
                     String.format(
                         "CREATE TABLE IF NOT EXISTS %s (k int primary key, %s)",
                         tableName, String.join(",", columnData)))
-                .setExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(SESSION_RULE.slowProfile())
                 .build());
   }
 
@@ -309,7 +310,7 @@ public class DataTypeIT {
   @Test
   public <K> void should_insert_non_primary_key_column_simple_statement_using_format(
       DataType dataType, K value, K expectedPrimitiveValue) {
-    TypeCodec<K> codec = sessionRule.session().getContext().getCodecRegistry().codecFor(dataType);
+    TypeCodec<K> codec = SESSION_RULE.session().getContext().getCodecRegistry().codecFor(dataType);
 
     int key = nextKey();
     String columnName = columnNameFor(dataType);
@@ -322,7 +323,7 @@ public class DataTypeIT {
             .addPositionalValue(key)
             .build();
 
-    sessionRule.session().execute(insert);
+    SESSION_RULE.session().execute(insert);
 
     SimpleStatement select =
         SimpleStatement.builder(String.format("SELECT %s FROM %s where k=?", columnName, tableName))
@@ -345,7 +346,7 @@ public class DataTypeIT {
             .addPositionalValues(key, value)
             .build();
 
-    sessionRule.session().execute(insert);
+    SESSION_RULE.session().execute(insert);
 
     SimpleStatement select =
         SimpleStatement.builder(String.format("SELECT %s FROM %s where k=?", columnName, tableName))
@@ -369,7 +370,7 @@ public class DataTypeIT {
             .addNamedValue("v", value)
             .build();
 
-    sessionRule.session().execute(insert);
+    SESSION_RULE.session().execute(insert);
 
     SimpleStatement select =
         SimpleStatement.builder(String.format("SELECT %s FROM %s where k=?", columnName, tableName))
@@ -391,18 +392,18 @@ public class DataTypeIT {
                 String.format("INSERT INTO %s (k, %s) values (?, ?)", tableName, columnName))
             .build();
 
-    PreparedStatement preparedInsert = sessionRule.session().prepare(insert);
+    PreparedStatement preparedInsert = SESSION_RULE.session().prepare(insert);
     BoundStatementBuilder boundBuilder = preparedInsert.boundStatementBuilder();
     boundBuilder = setValue(0, boundBuilder, DataTypes.INT, key);
     boundBuilder = setValue(1, boundBuilder, dataType, value);
     BoundStatement boundInsert = boundBuilder.build();
-    sessionRule.session().execute(boundInsert);
+    SESSION_RULE.session().execute(boundInsert);
 
     SimpleStatement select =
         SimpleStatement.builder(String.format("SELECT %s FROM %s where k=?", columnName, tableName))
             .build();
 
-    PreparedStatement preparedSelect = sessionRule.session().prepare(select);
+    PreparedStatement preparedSelect = SESSION_RULE.session().prepare(select);
     BoundStatement boundSelect = setValue(0, preparedSelect.bind(), DataTypes.INT, key);
 
     readValue(boundSelect, dataType, value, expectedPrimitiveValue);
@@ -420,19 +421,19 @@ public class DataTypeIT {
                 String.format("INSERT INTO %s (k, %s) values (:k, :v)", tableName, columnName))
             .build();
 
-    PreparedStatement preparedInsert = sessionRule.session().prepare(insert);
+    PreparedStatement preparedInsert = SESSION_RULE.session().prepare(insert);
     BoundStatementBuilder boundBuilder = preparedInsert.boundStatementBuilder();
     boundBuilder = setValue("k", boundBuilder, DataTypes.INT, key);
     boundBuilder = setValue("v", boundBuilder, dataType, value);
     BoundStatement boundInsert = boundBuilder.build();
-    sessionRule.session().execute(boundInsert);
+    SESSION_RULE.session().execute(boundInsert);
 
     SimpleStatement select =
         SimpleStatement.builder(
                 String.format("SELECT %s FROM %s where k=:k", columnName, tableName))
             .build();
 
-    PreparedStatement preparedSelect = sessionRule.session().prepare(select);
+    PreparedStatement preparedSelect = SESSION_RULE.session().prepare(select);
     BoundStatement boundSelect = setValue("k", preparedSelect.bind(), DataTypes.INT, key);
     boundSelect = boundSelect.setInt("k", key);
 
@@ -442,8 +443,8 @@ public class DataTypeIT {
   private static <S extends SettableByIndex<S>> S setValue(
       int index, S bs, DataType dataType, Object value) {
     TypeCodec<Object> codec =
-        sessionRule.session() != null
-            ? sessionRule.session().getContext().getCodecRegistry().codecFor(dataType)
+        SESSION_RULE.session() != null
+            ? SESSION_RULE.session().getContext().getCodecRegistry().codecFor(dataType)
             : null;
 
     // set to null if value is null instead of getting possible NPE when casting from null to
@@ -534,8 +535,8 @@ public class DataTypeIT {
   private static <S extends SettableByName<S>> S setValue(
       String name, S bs, DataType dataType, Object value) {
     TypeCodec<Object> codec =
-        sessionRule.session() != null
-            ? sessionRule.session().getContext().getCodecRegistry().codecFor(dataType)
+        SESSION_RULE.session() != null
+            ? SESSION_RULE.session().getContext().getCodecRegistry().codecFor(dataType)
             : null;
 
     // set to null if value is null instead of getting possible NPE when casting from null to
@@ -626,8 +627,8 @@ public class DataTypeIT {
   private <K> void readValue(
       Statement<?> select, DataType dataType, K value, K expectedPrimitiveValue) {
     TypeCodec<Object> codec =
-        sessionRule.session().getContext().getCodecRegistry().codecFor(dataType);
-    ResultSet result = sessionRule.session().execute(select);
+        SESSION_RULE.session().getContext().getCodecRegistry().codecFor(dataType);
+    ResultSet result = SESSION_RULE.session().execute(select);
 
     String columnName = columnNameFor(dataType);
 
@@ -750,7 +751,7 @@ public class DataTypeIT {
     }
 
     // Decode directly using the codec
-    ProtocolVersion protocolVersion = sessionRule.session().getContext().getProtocolVersion();
+    ProtocolVersion protocolVersion = SESSION_RULE.session().getContext().getProtocolVersion();
     assertThat(codec.decode(row.getBytesUnsafe(columnName), protocolVersion)).isEqualTo(value);
     assertThat(codec.decode(row.getBytesUnsafe(0), protocolVersion)).isEqualTo(value);
   }
@@ -768,14 +769,14 @@ public class DataTypeIT {
         fieldParts.add(fieldName + " " + fieldType);
       }
 
-      sessionRule
+      SESSION_RULE
           .session()
           .execute(
               SimpleStatement.builder(
                       String.format(
                           "CREATE TYPE IF NOT EXISTS %s (%s)",
                           udt.getName().asCql(false), String.join(",", fieldParts)))
-                  .setExecutionProfile(sessionRule.slowProfile())
+                  .setExecutionProfile(SESSION_RULE.slowProfile())
                   .build());
 
       // Chances are the UDT isn't labeled as frozen in the context we're given, so we add it as

@@ -40,21 +40,22 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class DirectCompressionIT {
 
-  private static CcmRule ccmRule = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> schemaSessionRule =
-      SessionRule.builder(ccmRule)
+  private static final SessionRule<CqlSession> SCHEMA_SESSION_RULE =
+      SessionRule.builder(CCM_RULE)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
                   .build())
           .build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(schemaSessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SCHEMA_SESSION_RULE);
 
   @BeforeClass
   public static void setup() {
-    schemaSessionRule
+    SCHEMA_SESSION_RULE
         .session()
         .execute("CREATE TABLE test (k text PRIMARY KEY, t text, i int, f float)");
   }
@@ -89,7 +90,7 @@ public class DirectCompressionIT {
             .withString(DefaultDriverOption.PROTOCOL_COMPRESSION, compressorOption)
             .build();
     try (CqlSession session =
-        SessionUtils.newSession(ccmRule, schemaSessionRule.keyspace(), loader)) {
+        SessionUtils.newSession(CCM_RULE, SCHEMA_SESSION_RULE.keyspace(), loader)) {
       // Run a couple of simple test queries
       ResultSet rs =
           session.execute(

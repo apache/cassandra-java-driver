@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -32,7 +33,10 @@ import org.junit.rules.ExpectedException;
 @Category(ParallelizableTests.class)
 public class DriverConfigValidationIT {
 
-  @Rule public SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(1));
+  @ClassRule
+  public static final SimulacronRule SIMULACRON_RULE =
+      new SimulacronRule(ClusterSpec.builder().withNodes(1));
+
   @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
@@ -55,7 +59,7 @@ public class DriverConfigValidationIT {
   private void should_fail_to_init_with_invalid_policy(DefaultDriverOption option) {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder().withString(option, "AClassThatDoesNotExist").build();
-    assertThatThrownBy(() -> SessionUtils.newSession(simulacron, loader))
+    assertThatThrownBy(() -> SessionUtils.newSession(SIMULACRON_RULE, loader))
         .satisfies(
             error -> {
               assertThat(error)

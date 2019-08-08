@@ -258,9 +258,11 @@ process, which can be either one of:
     
     For an example of a CCM-based test, see `PlainTextAuthProviderIT`.
 
+#### Categories
+
 Integration tests are divided into three categories:
 
-#### Parallelizable tests
+##### Parallelizable tests
 
 These tests can be run in parallel, to speed up the build. They either use:
 * dedicated Simulacron instances. These are lightweight, and Simulacron will manage the ports to
@@ -268,7 +270,9 @@ These tests can be run in parallel, to speed up the build. They either use:
 * a shared, one-node CCM cluster. Each test works in its own keyspace.
 
 The build runs them with a configurable degree of parallelism (currently 8). The shared CCM cluster
-is initialized the first time it's used, and stopped before moving on to serial tests.
+is initialized the first time it's used, and stopped before moving on to serial tests. Note that we
+run with `parallel=classes`, which means methods within the same class never run concurrent to each
+other.
 
 To make an integration test parallelizable, annotate it with `@Category(ParallelizableTests.class)`.
 If you use CCM, it **must** be with `CcmRule`.
@@ -276,7 +280,7 @@ If you use CCM, it **must** be with `CcmRule`.
 For an example of a Simulacron-based parallelizable test, see `NodeTargetingIT`. For a CCM-based
 test, see `DirectCompressionIT`.
 
-#### Serial tests
+##### Serial tests
 
 These tests cannot run in parallel, in general because they require CCM clusters of different sizes,
 or with a specific configuration (we never run more than one CCM cluster simultaneously: it would be
@@ -293,7 +297,7 @@ Note: if multiple serial tests have a common "base" class, do not pull up `Custo
 child class must have its own instance. Otherwise they share the same CCM instance, and the first
 one destroys it on teardown. See `TokenITBase` for how to organize code in those cases.
 
-#### Isolated tests
+##### Isolated tests
 
 Not only can those tests not run in parallel, they also require specific environment tweaks,
 typically system properties that need to be set before initialization.
@@ -305,6 +309,33 @@ To isolate an integration test, annotate it with `@Category(IsolatedTests.class)
 
 For an example, see `HeapCompressionIT`.
 
+#### About test rules
+
+Do not mix `CcmRule` and `SimulacronRule` in the same test. It makes things harder to follow, and
+can be inefficient (if the `SimulacronRule` is method-level, it will create a Simulacron cluster for
+every test method, even those that only need CCM).
+
+Try to use `@ClassRule` as much as possible: it's more efficient to reuse the same resource across
+all test methods. The only exceptions are:
+* CCM tests that use `@CassandraRequirement` restrictions at the method level (ex:
+  `BatchStatementIT`).
+* tests where you *really* need to restart from a clean state for every method.
+
+When you use `@ClassRule`, your rules need to be static; also make them final and use constant
+naming conventions, like `CCM_RULE`.
+
+When you use a server rule (`CcmRule` or `SimulacronRule`) and a `SessionRule` at the same level,
+wrap them into a rule chain to ensure proper initialization order:
+
+```java
+private static final CcmRule CCM_RULE = CcmRule.getInstance();
+private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
+
+@ClassRule
+public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
+```
+
+This is not necessary if the server rule is a `@ClassRule` and the session rule is a `@Rule`.
 
 ## Running the tests
 

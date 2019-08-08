@@ -64,17 +64,14 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class PreparedStatementIT {
 
-  private final CcmRule ccmRule = CcmRule.getInstance();
+  private CcmRule ccmRule = CcmRule.getInstance();
 
-  private final SessionRule<CqlSession> sessionRule =
+  private SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccmRule)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 2)
                   .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
-                  .withStringList(
-                      DefaultDriverOption.METRICS_SESSION_ENABLED,
-                      ImmutableList.of(DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE.getPath()))
                   .build())
           .build();
 
@@ -86,6 +83,7 @@ public class PreparedStatementIT {
   public void setupSchema() {
     for (String query :
         ImmutableList.of(
+            "DROP TABLE IF EXISTS prepared_statement_test",
             "CREATE TABLE prepared_statement_test (a int PRIMARY KEY, b int, c int)",
             "INSERT INTO prepared_statement_test (a, b, c) VALUES (1, 1, 1)",
             "INSERT INTO prepared_statement_test (a, b, c) VALUES (2, 2, 2)",
@@ -375,56 +373,59 @@ public class PreparedStatementIT {
 
   @Test
   public void should_return_same_instance_when_repreparing_query() {
-    // Given
-    CqlSession session = sessionRule.session();
-    assertThat(getPreparedCacheSize(session)).isEqualTo(0);
-    String query = "SELECT * FROM prepared_statement_test WHERE a = ?";
+    try (CqlSession session = sessionWithCacheSizeMetric()) {
+      // Given
+      assertThat(getPreparedCacheSize(session)).isEqualTo(0);
+      String query = "SELECT * FROM prepared_statement_test WHERE a = ?";
 
-    // When
-    PreparedStatement preparedStatement1 = session.prepare(query);
-    PreparedStatement preparedStatement2 = session.prepare(query);
+      // When
+      PreparedStatement preparedStatement1 = session.prepare(query);
+      PreparedStatement preparedStatement2 = session.prepare(query);
 
-    // Then
-    assertThat(preparedStatement1).isSameAs(preparedStatement2);
-    assertThat(getPreparedCacheSize(session)).isEqualTo(1);
+      // Then
+      assertThat(preparedStatement1).isSameAs(preparedStatement2);
+      assertThat(getPreparedCacheSize(session)).isEqualTo(1);
+    }
   }
 
   /** Just to illustrate that the driver does not sanitize query strings. */
   @Test
   public void should_create_separate_instances_for_differently_formatted_queries() {
-    // Given
-    CqlSession session = sessionRule.session();
-    assertThat(getPreparedCacheSize(session)).isEqualTo(0);
+    try (CqlSession session = sessionWithCacheSizeMetric()) {
+      // Given
+      assertThat(getPreparedCacheSize(session)).isEqualTo(0);
 
-    // When
-    PreparedStatement preparedStatement1 =
-        session.prepare("SELECT * FROM prepared_statement_test WHERE a = ?");
-    PreparedStatement preparedStatement2 =
-        session.prepare("select * from prepared_statement_test where a = ?");
+      // When
+      PreparedStatement preparedStatement1 =
+          session.prepare("SELECT * FROM prepared_statement_test WHERE a = ?");
+      PreparedStatement preparedStatement2 =
+          session.prepare("select * from prepared_statement_test where a = ?");
 
-    // Then
-    assertThat(preparedStatement1).isNotSameAs(preparedStatement2);
-    assertThat(getPreparedCacheSize(session)).isEqualTo(2);
+      // Then
+      assertThat(preparedStatement1).isNotSameAs(preparedStatement2);
+      assertThat(getPreparedCacheSize(session)).isEqualTo(2);
+    }
   }
 
   @Test
   public void should_create_separate_instances_for_different_statement_parameters() {
-    // Given
-    CqlSession session = sessionRule.session();
-    assertThat(getPreparedCacheSize(session)).isEqualTo(0);
-    SimpleStatement statement =
-        SimpleStatement.newInstance("SELECT * FROM prepared_statement_test");
+    try (CqlSession session = sessionWithCacheSizeMetric()) {
+      // Given
+      assertThat(getPreparedCacheSize(session)).isEqualTo(0);
+      SimpleStatement statement =
+          SimpleStatement.newInstance("SELECT * FROM prepared_statement_test");
 
-    // When
-    PreparedStatement preparedStatement1 = session.prepare(statement.setPageSize(1));
-    PreparedStatement preparedStatement2 = session.prepare(statement.setPageSize(4));
+      // When
+      PreparedStatement preparedStatement1 = session.prepare(statement.setPageSize(1));
+      PreparedStatement preparedStatement2 = session.prepare(statement.setPageSize(4));
 
-    // Then
-    assertThat(preparedStatement1).isNotSameAs(preparedStatement2);
-    assertThat(getPreparedCacheSize(session)).isEqualTo(2);
-    // Each bound statement uses the page size it was prepared with
-    assertThat(firstPageOf(session.executeAsync(preparedStatement1.bind()))).hasSize(1);
-    assertThat(firstPageOf(session.executeAsync(preparedStatement2.bind()))).hasSize(4);
+      // Then
+      assertThat(preparedStatement1).isNotSameAs(preparedStatement2);
+      assertThat(getPreparedCacheSize(session)).isEqualTo(2);
+      // Each bound statement uses the page size it was prepared with
+      assertThat(firstPageOf(session.executeAsync(preparedStatement1.bind()))).hasSize(1);
+      assertThat(firstPageOf(session.executeAsync(preparedStatement2.bind()))).hasSize(4);
+    }
   }
 
   /**
@@ -455,6 +456,19 @@ public class PreparedStatementIT {
 
   private static Iterable<Row> firstPageOf(CompletionStage<AsyncResultSet> stage) {
     return CompletableFutures.getUninterruptibly(stage).currentPage();
+  }
+
+  private CqlSession sessionWithCacheSizeMetric() {
+    return SessionUtils.newSession(
+        ccmRule,
+        sessionRule.keyspace(),
+        SessionUtils.configLoaderBuilder()
+            .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 2)
+            .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+            .withStringList(
+                DefaultDriverOption.METRICS_SESSION_ENABLED,
+                ImmutableList.of(DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE.getPath()))
+            .build());
   }
 
   @SuppressWarnings("unchecked")

@@ -40,7 +40,7 @@ import com.datastax.oss.simulacron.server.BoundNode;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
@@ -49,17 +49,20 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class NodeTargetingIT {
 
-  private SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(5));
+  private static final SimulacronRule SIMULACRON_RULE =
+      new SimulacronRule(ClusterSpec.builder().withNodes(5));
 
-  private SessionRule<CqlSession> sessionRule = SessionRule.builder(simulacron).build();
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(SIMULACRON_RULE).build();
 
-  @Rule public TestRule chain = RuleChain.outerRule(simulacron).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(SIMULACRON_RULE).around(SESSION_RULE);
 
   @Before
   public void clear() {
-    simulacron.cluster().clearLogs();
-    simulacron.cluster().clearPrimes(true);
-    simulacron.cluster().node(4).stop();
+    SIMULACRON_RULE.cluster().clearLogs();
+    SIMULACRON_RULE.cluster().clearPrimes(true);
+    SIMULACRON_RULE.cluster().node(4).stop();
     ConditionChecker.checkThat(() -> getNode(4).getState() == NodeState.DOWN)
         .before(5, TimeUnit.SECONDS);
   }
@@ -74,7 +77,7 @@ public class NodeTargetingIT {
       Statement statement = SimpleStatement.newInstance("select * system.local").setNode(node);
 
       // when statement is executed
-      ResultSet result = sessionRule.session().execute(statement);
+      ResultSet result = SESSION_RULE.session().execute(statement);
 
       // then the query should have been sent to the configured node.
       assertThat(result.getExecutionInfo().getCoordinator()).isEqualTo(node);
@@ -84,14 +87,17 @@ public class NodeTargetingIT {
   @Test
   public void should_fail_if_node_fails_query() {
     String query = "mock";
-    simulacron.cluster().node(3).prime(when(query).then(unavailable(ConsistencyLevel.ALL, 1, 0)));
+    SIMULACRON_RULE
+        .cluster()
+        .node(3)
+        .prime(when(query).then(unavailable(ConsistencyLevel.ALL, 1, 0)));
 
     // given a statement with a node configured to fail the given query.
     Node node3 = getNode(3);
     Statement statement = SimpleStatement.newInstance(query).setNode(node3);
     // when statement is executed an error should be raised.
     try {
-      sessionRule.session().execute(statement);
+      SESSION_RULE.session().execute(statement);
       fail("Should have thrown AllNodesFailedException");
     } catch (AllNodesFailedException e) {
       assertThat(e.getErrors().size()).isEqualTo(1);
@@ -107,7 +113,7 @@ public class NodeTargetingIT {
     Statement statement = SimpleStatement.newInstance("select * system.local").setNode(node4);
     try {
       // when statement is executed
-      sessionRule.session().execute(statement);
+      SESSION_RULE.session().execute(statement);
       fail("Query should have failed");
     } catch (NoNodeAvailableException e) {
       assertThat(e.getErrors()).isEmpty();
@@ -121,10 +127,10 @@ public class NodeTargetingIT {
   }
 
   private Node getNode(int id) {
-    BoundNode boundNode = simulacron.cluster().node(id);
+    BoundNode boundNode = SIMULACRON_RULE.cluster().node(id);
     assertThat(boundNode).isNotNull();
     InetSocketAddress address = (InetSocketAddress) boundNode.getAddress();
-    return sessionRule
+    return SESSION_RULE
         .session()
         .getMetadata()
         .findNode(address)

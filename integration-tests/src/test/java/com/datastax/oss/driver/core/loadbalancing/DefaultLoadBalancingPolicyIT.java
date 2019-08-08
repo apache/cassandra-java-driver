@@ -58,10 +58,10 @@ public class DefaultLoadBalancingPolicyIT {
 
   private static final String LOCAL_DC = "dc1";
 
-  private static CustomCcmRule ccmRule = CustomCcmRule.builder().withNodes(4, 1).build();
+  private static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().withNodes(4, 1).build();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule)
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(CCM_RULE)
           .withKeyspace(false)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
@@ -69,11 +69,12 @@ public class DefaultLoadBalancingPolicyIT {
                   .build())
           .build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @BeforeClass
   public static void setup() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     session.execute(
         "CREATE KEYSPACE test "
             + "WITH replication = {'class': 'NetworkTopologyStrategy', 'dc1': 2, 'dc2': 1}");
@@ -82,7 +83,7 @@ public class DefaultLoadBalancingPolicyIT {
 
   @Test
   public void should_ignore_remote_dcs() {
-    for (Node node : sessionRule.session().getMetadata().getNodes().values()) {
+    for (Node node : SESSION_RULE.session().getMetadata().getNodes().values()) {
       if (LOCAL_DC.equals(node.getDatacenter())) {
         assertThat(node.getDistance()).isEqualTo(NodeDistance.LOCAL);
         assertThat(node.getState()).isEqualTo(NodeState.UP);
@@ -100,7 +101,7 @@ public class DefaultLoadBalancingPolicyIT {
   @Test
   public void should_use_round_robin_on_local_dc_when_not_enough_routing_information() {
     ByteBuffer routingKey = TypeCodecs.INT.encodePrimitive(1, ProtocolVersion.DEFAULT);
-    TokenMap tokenMap = sessionRule.session().getMetadata().getTokenMap().get();
+    TokenMap tokenMap = SESSION_RULE.session().getMetadata().getTokenMap().get();
     // TODO add statements with setKeyspace when that is supported
     List<Statement> statements =
         ImmutableList.of(
@@ -119,7 +120,7 @@ public class DefaultLoadBalancingPolicyIT {
     for (Statement statement : statements) {
       List<Node> coordinators = new ArrayList<>();
       for (int i = 0; i < 12; i++) {
-        ResultSet rs = sessionRule.session().execute(statement);
+        ResultSet rs = SESSION_RULE.session().execute(statement);
         Node coordinator = rs.getExecutionInfo().getCoordinator();
         assertThat(coordinator.getDatacenter()).isEqualTo(LOCAL_DC);
         coordinators.add(coordinator);
@@ -136,7 +137,7 @@ public class DefaultLoadBalancingPolicyIT {
   public void should_prioritize_replicas_when_routing_information_present() {
     CqlIdentifier keyspace = CqlIdentifier.fromCql("test");
     ByteBuffer routingKey = TypeCodecs.INT.encodePrimitive(1, ProtocolVersion.DEFAULT);
-    TokenMap tokenMap = sessionRule.session().getMetadata().getTokenMap().get();
+    TokenMap tokenMap = SESSION_RULE.session().getMetadata().getTokenMap().get();
     Set<Node> localReplicas = new HashSet<>();
     for (Node replica : tokenMap.getReplicas(keyspace, routingKey)) {
       if (replica.getDatacenter().equals(LOCAL_DC)) {
@@ -160,7 +161,7 @@ public class DefaultLoadBalancingPolicyIT {
       // reasonable distribution:
       Map<Node, Integer> hits = new HashMap<>();
       for (int i = 0; i < 2000; i++) {
-        ResultSet rs = sessionRule.session().execute(statement);
+        ResultSet rs = SESSION_RULE.session().execute(statement);
         Node coordinator = rs.getExecutionInfo().getCoordinator();
         assertThat(localReplicas).contains(coordinator);
         assertThat(coordinator.getDatacenter()).isEqualTo(LOCAL_DC);
@@ -177,9 +178,9 @@ public class DefaultLoadBalancingPolicyIT {
   public void should_hit_non_replicas_when_routing_information_present_but_all_replicas_down() {
     CqlIdentifier keyspace = CqlIdentifier.fromCql("test");
     ByteBuffer routingKey = TypeCodecs.INT.encodePrimitive(1, ProtocolVersion.DEFAULT);
-    TokenMap tokenMap = sessionRule.session().getMetadata().getTokenMap().get();
+    TokenMap tokenMap = SESSION_RULE.session().getMetadata().getTokenMap().get();
 
-    InternalDriverContext context = (InternalDriverContext) sessionRule.session().getContext();
+    InternalDriverContext context = (InternalDriverContext) SESSION_RULE.session().getContext();
 
     Set<Node> localReplicas = new HashSet<>();
     for (Node replica : tokenMap.getReplicas(keyspace, routingKey)) {
@@ -205,7 +206,7 @@ public class DefaultLoadBalancingPolicyIT {
     for (Statement statement : statements) {
       List<Node> coordinators = new ArrayList<>();
       for (int i = 0; i < 6; i++) {
-        ResultSet rs = sessionRule.session().execute(statement);
+        ResultSet rs = SESSION_RULE.session().execute(statement);
         Node coordinator = rs.getExecutionInfo().getCoordinator();
         coordinators.add(coordinator);
         assertThat(coordinator.getDatacenter()).isEqualTo(LOCAL_DC);
@@ -229,7 +230,7 @@ public class DefaultLoadBalancingPolicyIT {
   @Test
   public void should_apply_node_filter() {
     Set<Node> localNodes = new HashSet<>();
-    for (Node node : sessionRule.session().getMetadata().getNodes().values()) {
+    for (Node node : SESSION_RULE.session().getMetadata().getNodes().values()) {
       if (node.getDatacenter().equals(LOCAL_DC)) {
         localNodes.add(node);
       }
@@ -243,8 +244,8 @@ public class DefaultLoadBalancingPolicyIT {
     // Open a separate session with a filter
     try (CqlSession session =
         SessionUtils.newSession(
-            ccmRule,
-            sessionRule.keyspace(),
+            CCM_RULE,
+            SESSION_RULE.keyspace(),
             null,
             null,
             node -> !node.getEndPoint().equals(ignoredEndPoint))) {

@@ -44,7 +44,7 @@ import org.junit.experimental.categories.Category;
 public class LifecycleListenerIT {
 
   @ClassRule
-  public static SimulacronRule simulacronRule =
+  public static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
   @Test
@@ -67,12 +67,12 @@ public class LifecycleListenerIT {
     assertThat(listener.ready).isFalse();
     assertThat(listener.closed).isFalse();
 
-    simulacronRule.cluster().rejectConnections(0, RejectScope.STOP);
+    SIMULACRON_RULE.cluster().rejectConnections(0, RejectScope.STOP);
     try (CqlSession session = newSession(listener)) {
       fail("Expected AllNodesFailedException");
     } catch (AllNodesFailedException ignored) {
     } finally {
-      simulacronRule.cluster().acceptConnections();
+      SIMULACRON_RULE.cluster().acceptConnections();
     }
     assertThat(listener.ready).isFalse();
     ConditionChecker.checkThat(() -> listener.closed).before(1, SECONDS).becomesTrue();
@@ -81,7 +81,7 @@ public class LifecycleListenerIT {
   private CqlSession newSession(TestLifecycleListener listener) {
     TestContext context = new TestContext(new DefaultDriverConfigLoader(), listener);
     return CompletableFutures.getUninterruptibly(
-        DefaultSession.init(context, simulacronRule.getContactPoints(), null));
+        DefaultSession.init(context, SIMULACRON_RULE.getContactPoints(), null));
   }
 
   public static class TestLifecycleListener implements LifecycleListener {

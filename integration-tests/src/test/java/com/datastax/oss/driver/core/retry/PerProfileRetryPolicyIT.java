@@ -58,10 +58,11 @@ import org.junit.rules.TestRule;
 public class PerProfileRetryPolicyIT {
 
   // Shared across all tests methods.
-  private static SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(2));
+  private static final SimulacronRule SIMULACRON_RULE =
+      new SimulacronRule(ClusterSpec.builder().withNodes(2));
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(simulacron)
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(SIMULACRON_RULE)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withClass(
@@ -75,26 +76,27 @@ public class PerProfileRetryPolicyIT {
                   .build())
           .build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(simulacron).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(SIMULACRON_RULE).around(SESSION_RULE);
 
   private static String QUERY_STRING = "select * from foo";
   private static final SimpleStatement QUERY = SimpleStatement.newInstance(QUERY_STRING);
 
   @SuppressWarnings("deprecation")
   private final QueryCounter counter =
-      QueryCounter.builder(simulacron.cluster())
+      QueryCounter.builder(SIMULACRON_RULE.cluster())
           .withFilter((l) -> l.getQuery().equals(QUERY_STRING))
           .build();
 
   @Before
   public void clear() {
-    simulacron.cluster().clearLogs();
+    SIMULACRON_RULE.cluster().clearLogs();
   }
 
   @BeforeClass
   public static void setup() {
     // node 0 will return an unavailable to query.
-    simulacron
+    SIMULACRON_RULE
         .cluster()
         .node(0)
         .prime(
@@ -103,10 +105,10 @@ public class PerProfileRetryPolicyIT {
                     unavailable(
                         com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ONE, 1, 0)));
     // node 1 will return a valid empty rows response.
-    simulacron.cluster().node(1).prime(when(QUERY_STRING).then(noRows()));
+    SIMULACRON_RULE.cluster().node(1).prime(when(QUERY_STRING).then(noRows()));
 
     // sanity checks
-    DriverContext context = sessionRule.session().getContext();
+    DriverContext context = SESSION_RULE.session().getContext();
     DriverConfig config = context.getConfig();
     assertThat(config.getProfiles()).containsKeys("profile1", "profile2");
 
@@ -127,14 +129,14 @@ public class PerProfileRetryPolicyIT {
   @Test(expected = UnavailableException.class)
   public void should_use_policy_from_request_profile() {
     // since profile1 uses a NoRetryPolicy, UnavailableException should surface to client.
-    sessionRule.session().execute(QUERY.setExecutionProfileName("profile1"));
+    SESSION_RULE.session().execute(QUERY.setExecutionProfileName("profile1"));
   }
 
   @Test
   public void should_use_policy_from_config_when_not_configured_in_request_profile() {
     // since profile2 has no configured retry policy, it should defer to configuration which uses
     // DefaultRetryPolicy, which should try request on next host (host 1).
-    ResultSet result = sessionRule.session().execute(QUERY.setExecutionProfileName("profile2"));
+    ResultSet result = SESSION_RULE.session().execute(QUERY.setExecutionProfileName("profile2"));
 
     // expect an unavailable exception to be present in errors.
     List<Map.Entry<Node, Throwable>> errors = result.getExecutionInfo().getErrors();

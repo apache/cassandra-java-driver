@@ -56,27 +56,27 @@ import org.junit.rules.ExpectedException;
 public class ConnectIT {
 
   @ClassRule
-  public static SimulacronRule simulacronRule =
+  public static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(2));
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Before
   public void setup() {
-    simulacronRule.cluster().acceptConnections();
+    SIMULACRON_RULE.cluster().acceptConnections();
   }
 
   @Test
   public void should_fail_fast_if_contact_points_unreachable_and_reconnection_disabled() {
     // Given
-    simulacronRule.cluster().rejectConnections(0, RejectScope.STOP);
+    SIMULACRON_RULE.cluster().rejectConnections(0, RejectScope.STOP);
 
     thrown.expect(AllNodesFailedException.class);
     thrown.expectMessage(
         "Could not reach any contact point, make sure you've provided valid addresses");
 
     // When
-    SessionUtils.newSession(simulacronRule);
+    SessionUtils.newSession(SIMULACRON_RULE);
 
     // Then the exception is thrown
   }
@@ -84,7 +84,7 @@ public class ConnectIT {
   @Test
   public void should_wait_for_contact_points_if_reconnection_enabled() throws Exception {
     // Given
-    simulacronRule.cluster().rejectConnections(0, RejectScope.STOP);
+    SIMULACRON_RULE.cluster().rejectConnections(0, RejectScope.STOP);
 
     // When
     DriverConfigLoader loader =
@@ -96,7 +96,7 @@ public class ConnectIT {
             .withDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY, Duration.ofMillis(500))
             .build();
     CompletableFuture<? extends Session> sessionFuture =
-        newSessionAsync(simulacronRule, loader).toCompletableFuture();
+        newSessionAsync(SIMULACRON_RULE, loader).toCompletableFuture();
     // wait a bit to ensure we have a couple of reconnections, otherwise we might race and allow
     // reconnections before the initial attempt
     TimeUnit.SECONDS.sleep(2);
@@ -105,7 +105,7 @@ public class ConnectIT {
     assertThat(sessionFuture).isNotCompleted();
 
     // When
-    simulacronRule.cluster().acceptConnections();
+    SIMULACRON_RULE.cluster().acceptConnections();
 
     // Then this doesn't throw
     Session session = sessionFuture.get(2, TimeUnit.SECONDS);
@@ -125,14 +125,14 @@ public class ConnectIT {
               .without(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)
               .build();
       CqlSession.builder()
-          .addContactEndPoints(simulacronRule.getContactPoints())
+          .addContactEndPoints(SIMULACRON_RULE.getContactPoints())
           .withConfigLoader(loader)
           .build();
       fail("Should have thrown a DriverException for no DC with explicit contact point");
     } catch (DriverException ignored) {
     }
     // One second should be plenty of time for connections to close server side
-    checkThat(() -> simulacronRule.cluster().getConnections().getConnections().isEmpty())
+    checkThat(() -> SIMULACRON_RULE.cluster().getConnections().getConnections().isEmpty())
         .before(1, SECONDS)
         .becomesTrue();
   }
@@ -144,10 +144,10 @@ public class ConnectIT {
   @Test
   public void should_mark_unreachable_contact_points_as_local_and_schedule_reconnections() {
     // Reject connections only on one node
-    BoundCluster boundCluster = simulacronRule.cluster();
+    BoundCluster boundCluster = SIMULACRON_RULE.cluster();
     boundCluster.node(0).rejectConnections(0, RejectScope.STOP);
 
-    try (CqlSession session = SessionUtils.newSession(simulacronRule)) {
+    try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE)) {
       Map<UUID, Node> nodes = session.getMetadata().getNodes();
       // Node states are updated asynchronously, so guard against race conditions
       ConditionChecker.checkThat(

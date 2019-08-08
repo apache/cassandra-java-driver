@@ -50,14 +50,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category(ParallelizableTests.class)
 public class HeartbeatIT {
 
-  @Rule public SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(1));
+  @ClassRule
+  public static final SimulacronRule SIMULACRON_RULE =
+      new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
   private static final String QUERY = "select * from foo";
   private static final Predicate<QueryLog> IS_OPTION_REQUEST =
@@ -67,9 +69,10 @@ public class HeartbeatIT {
 
   @Before
   public void setUp() {
-    simulacron.cluster().clearLogs();
-    simulacron.cluster().clearPrimes(true);
-    simulacronNode = simulacron.cluster().getNodes().iterator().next();
+    SIMULACRON_RULE.cluster().acceptConnections();
+    SIMULACRON_RULE.cluster().clearLogs();
+    SIMULACRON_RULE.cluster().clearPrimes(true);
+    simulacronNode = SIMULACRON_RULE.cluster().getNodes().iterator().next();
   }
 
   @Test
@@ -151,7 +154,7 @@ public class HeartbeatIT {
       throws InterruptedException {
     // Prime a query that will never return a response.
     String noResponseQueryStr = "delay";
-    simulacron.cluster().prime(when(noResponseQueryStr).then(noResult()));
+    SIMULACRON_RULE.cluster().prime(when(noResponseQueryStr).then(noResult()));
 
     try (CqlSession session = newSession()) {
       AtomicInteger heartbeats = countHeartbeatsOnRegularConnection();
@@ -218,7 +221,7 @@ public class HeartbeatIT {
             .withDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT, Duration.ofSeconds(2))
             .withDuration(DefaultDriverOption.RECONNECTION_MAX_DELAY, Duration.ofSeconds(1))
             .build();
-    return SessionUtils.newSession(simulacron, loader);
+    return SessionUtils.newSession(SIMULACRON_RULE, loader);
   }
 
   private AtomicInteger countHeartbeatsOnRegularConnection() {
@@ -232,7 +235,7 @@ public class HeartbeatIT {
   private AtomicInteger countHeartbeats(boolean regularConnection) {
     SocketAddress controlConnectionAddress = findControlConnectionAddress();
     AtomicInteger count = new AtomicInteger();
-    simulacron
+    SIMULACRON_RULE
         .cluster()
         .registerQueryListener(
             (n, l) -> count.incrementAndGet(),

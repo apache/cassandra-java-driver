@@ -53,28 +53,28 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class DefaultKeyspaceIT {
   private static final String DEFAULT_KEYSPACE = "default_keyspace";
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  private static SessionRule<CqlSession> sessionWithNoKeyspaceRule =
-      SessionRule.builder(ccm).withKeyspace(false).build();
+  private static final SessionRule<CqlSession> SESSION_WITH_NO_KEYSPACE_RULE =
+      SessionRule.builder(CCM_RULE).withKeyspace(false).build();
+
+  @ClassRule
+  public static final TestRule chain =
+      RuleChain.outerRule(CCM_RULE).around(SESSION_RULE).around(SESSION_WITH_NO_KEYSPACE_RULE);
 
   private static InventoryMapper mapper;
 
-  @ClassRule
-  public static TestRule chain =
-      RuleChain.outerRule(ccm).around(sessionRule).around(sessionWithNoKeyspaceRule);
-
   @BeforeClass
   public static void setup() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     session.execute(
         SimpleStatement.builder(
                 String.format(
                     "CREATE KEYSPACE IF NOT EXISTS %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}",
                     DEFAULT_KEYSPACE))
-            .setExecutionProfile(sessionRule.slowProfile())
+            .setExecutionProfile(SESSION_RULE.slowProfile())
             .build());
 
     session.execute(
@@ -82,19 +82,19 @@ public class DefaultKeyspaceIT {
                 String.format(
                     "CREATE TABLE %s.product_simple_default_ks(id uuid PRIMARY KEY, description text)",
                     DEFAULT_KEYSPACE))
-            .setExecutionProfile(sessionRule.slowProfile())
+            .setExecutionProfile(SESSION_RULE.slowProfile())
             .build());
 
     session.execute(
         SimpleStatement.builder(
                 "CREATE TABLE product_simple_without_ks(id uuid PRIMARY KEY, description text)")
-            .setExecutionProfile(sessionRule.slowProfile())
+            .setExecutionProfile(SESSION_RULE.slowProfile())
             .build());
 
     session.execute(
         SimpleStatement.builder(
                 "CREATE TABLE product_simple_default_ks(id uuid PRIMARY KEY, description text)")
-            .setExecutionProfile(sessionRule.slowProfile())
+            .setExecutionProfile(SESSION_RULE.slowProfile())
             .build());
 
     mapper = new DefaultKeyspaceIT_InventoryMapperBuilder(session).build();
@@ -120,7 +120,7 @@ public class DefaultKeyspaceIT {
     assertThatThrownBy(
             () -> {
               InventoryMapperKsNotSet mapper =
-                  new DefaultKeyspaceIT_InventoryMapperKsNotSetBuilder(sessionRule.session())
+                  new DefaultKeyspaceIT_InventoryMapperKsNotSetBuilder(SESSION_RULE.session())
                       .build();
               mapper.productDaoDefaultKsNotSet();
             })
@@ -147,7 +147,7 @@ public class DefaultKeyspaceIT {
     // Given
     ProductSimpleDefaultKs product = new ProductSimpleDefaultKs(UUID.randomUUID(), "desc_1");
     ProductSimpleDaoDefaultKs dao =
-        mapper.productDaoEntityDefaultOverridden(sessionRule.keyspace());
+        mapper.productDaoEntityDefaultOverridden(SESSION_RULE.keyspace());
     assertThat(dao.findById(product.id)).isNull();
 
     // When
@@ -167,7 +167,7 @@ public class DefaultKeyspaceIT {
               // entity has no keyspace
               InventoryMapperKsNotSet mapper =
                   new DefaultKeyspaceIT_InventoryMapperKsNotSetBuilder(
-                          sessionWithNoKeyspaceRule.session())
+                          SESSION_WITH_NO_KEYSPACE_RULE.session())
                       .build();
               mapper.productDaoDefaultKsNotSet();
             })
@@ -186,7 +186,8 @@ public class DefaultKeyspaceIT {
     // entity has no keyspace
     // but dao methods don't require keyspace (GetEntity, SetEntity)
     InventoryMapperKsNotSet mapper =
-        new DefaultKeyspaceIT_InventoryMapperKsNotSetBuilder(sessionWithNoKeyspaceRule.session())
+        new DefaultKeyspaceIT_InventoryMapperKsNotSetBuilder(
+                SESSION_WITH_NO_KEYSPACE_RULE.session())
             .build();
     mapper.productDaoGetAndSetOnly();
   }
@@ -194,20 +195,22 @@ public class DefaultKeyspaceIT {
   @Test
   public void should_initialize_dao_if_default_ks_provided() {
     InventoryMapper mapper =
-        new DefaultKeyspaceIT_InventoryMapperBuilder(sessionWithNoKeyspaceRule.session()).build();
+        new DefaultKeyspaceIT_InventoryMapperBuilder(SESSION_WITH_NO_KEYSPACE_RULE.session())
+            .build();
     // session has no keyspace, but entity does
     mapper.productDaoDefaultKs();
-    mapper.productDaoEntityDefaultOverridden(sessionRule.keyspace());
+    mapper.productDaoEntityDefaultOverridden(SESSION_RULE.keyspace());
   }
 
   @Test
   public void should_initialize_dao_if_dao_ks_provided() {
     InventoryMapperKsNotSet mapper =
-        new DefaultKeyspaceIT_InventoryMapperKsNotSetBuilder(sessionWithNoKeyspaceRule.session())
+        new DefaultKeyspaceIT_InventoryMapperKsNotSetBuilder(
+                SESSION_WITH_NO_KEYSPACE_RULE.session())
             .build();
     // session has no keyspace, but dao has parameter
     mapper.productDaoDefaultKsNotSetOverridden(
-        sessionRule.keyspace(), CqlIdentifier.fromCql("product_simple_default_ks"));
+        SESSION_RULE.keyspace(), CqlIdentifier.fromCql("product_simple_default_ks"));
   }
 
   @Mapper

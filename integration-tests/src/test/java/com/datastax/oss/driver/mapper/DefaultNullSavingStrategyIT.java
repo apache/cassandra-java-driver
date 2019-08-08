@@ -56,24 +56,26 @@ import org.junit.rules.TestRule;
 @CassandraRequirement(min = "2.2", description = "support for unset values")
 public class DefaultNullSavingStrategyIT {
 
-  private static CcmRule ccm = CcmRule.getInstance();
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
+
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private static TestMapper mapper;
   private static PreparedStatement prepared;
 
   @BeforeClass
   public static void createSchema() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
     session.execute(
         SimpleStatement.builder("CREATE TABLE foo(k int PRIMARY KEY, v int)")
-            .setExecutionProfile(sessionRule.slowProfile())
+            .setExecutionProfile(SESSION_RULE.slowProfile())
             .build());
 
     mapper = new DefaultNullSavingStrategyIT_TestMapperBuilder(session).build();
-    prepared = sessionRule.session().prepare("INSERT INTO foo (k, v) values (:k, :v)");
+    prepared = SESSION_RULE.session().prepare("INSERT INTO foo (k, v) values (:k, :v)");
   }
 
   @Test
@@ -142,17 +144,17 @@ public class DefaultNullSavingStrategyIT {
     Foo foo = new Foo(1, null);
     BoundStatementBuilder builder = prepared.boundStatementBuilder();
     daoMethod.accept(builder, foo);
-    sessionRule.session().execute(builder.build());
+    SESSION_RULE.session().execute(builder.build());
     validateData(expectedStrategy);
   }
 
   private void reset() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     session.execute("INSERT INTO foo (k, v) VALUES (1, 1)");
   }
 
   private void validateData(NullSavingStrategy expectedStrategy) {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     Row row = session.execute("SELECT v FROM foo WHERE k = 1").one();
     switch (expectedStrategy) {
       case DO_NOT_SET:

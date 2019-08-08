@@ -22,49 +22,45 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
-import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
-import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
-import com.datastax.oss.driver.api.core.cql.BatchStatement;
-import com.datastax.oss.driver.api.core.cql.BatchStatementBuilder;
-import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
-import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
-import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.QueryLog;
 import java.time.Duration;
 import java.util.Optional;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
 
 @Category(ParallelizableTests.class)
-public class DriverExecutionProfileIT {
+public class DriverExecutionProfileSimulacronIT {
 
-  @Rule public SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(3));
-
-  @Rule public CcmRule ccm = CcmRule.getInstance();
+  @ClassRule
+  public static final SimulacronRule SIMULACRON_RULE =
+      new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
-  // TODO: Test with reprepare on all nodes profile configuration
+  @Before
+  public void clearPrimes() {
+    SIMULACRON_RULE.cluster().clearLogs();
+    SIMULACRON_RULE.cluster().clearPrimes(true);
+  }
 
   @Test
   public void should_fail_if_config_profile_specified_doesnt_exist() {
-    try (CqlSession session = SessionUtils.newSession(simulacron)) {
+    try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE)) {
       SimpleStatement statement =
           SimpleStatement.builder("select * from system.local")
               .setExecutionProfileName("IDONTEXIST")
@@ -84,10 +80,10 @@ public class DriverExecutionProfileIT {
             .startProfile("olap")
             .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(10))
             .build();
-    try (CqlSession session = SessionUtils.newSession(simulacron, loader)) {
+    try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE, loader)) {
       String query = "mockquery";
       // configure query with delay of 4 seconds.
-      simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
+      SIMULACRON_RULE.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
       // Execute query without profile, should timeout with default session timeout (2s).
       try {
@@ -109,10 +105,10 @@ public class DriverExecutionProfileIT {
             .startProfile("idem")
             .withBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE, true)
             .build();
-    try (CqlSession session = SessionUtils.newSession(simulacron, loader)) {
+    try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE, loader)) {
       String query = "mockquery";
       // configure query with server error which should invoke onRequestError in retry policy.
-      simulacron.cluster().prime(when(query).then(serverError("fail")));
+      SIMULACRON_RULE.cluster().prime(when(query).then(serverError("fail")));
 
       // Execute query without profile, should fail because couldn't be retried.
       try {
@@ -136,14 +132,14 @@ public class DriverExecutionProfileIT {
             .withString(DefaultDriverOption.REQUEST_CONSISTENCY, "LOCAL_QUORUM")
             .withString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY, "LOCAL_SERIAL")
             .build();
-    try (CqlSession session = SessionUtils.newSession(simulacron, loader)) {
+    try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE, loader)) {
       String query = "mockquery";
 
       // Execute query without profile, should use default CLs (LOCAL_ONE, SERIAL).
       session.execute(query);
 
       Optional<QueryLog> log =
-          simulacron.cluster().getLogs().getQueryLogs().stream()
+          SIMULACRON_RULE.cluster().getLogs().getQueryLogs().stream()
               .filter(q -> q.getQuery().equals(query))
               .findFirst();
 
@@ -155,13 +151,13 @@ public class DriverExecutionProfileIT {
                 assertThat(l.getSerialConsistency().toString()).isEqualTo("SERIAL");
               });
 
-      simulacron.cluster().clearLogs();
+      SIMULACRON_RULE.cluster().clearLogs();
 
       // Execute query with profile, should use profile CLs
       session.execute(SimpleStatement.builder(query).setExecutionProfileName("cl").build());
 
       log =
-          simulacron.cluster().getLogs().getQueryLogs().stream()
+          SIMULACRON_RULE.cluster().getLogs().getQueryLogs().stream()
               .filter(q -> q.getQuery().equals(query))
               .findFirst();
 
@@ -172,59 +168,6 @@ public class DriverExecutionProfileIT {
                 assertThat(l.getConsistency().toString()).isEqualTo("LOCAL_QUORUM");
                 assertThat(l.getSerialConsistency().toString()).isEqualTo("LOCAL_SERIAL");
               });
-    }
-  }
-
-  @Test
-  public void should_use_profile_page_size() {
-    DriverConfigLoader loader =
-        SessionUtils.configLoaderBuilder()
-            .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 100)
-            .startProfile("smallpages")
-            .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 10)
-            .build();
-    try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
-
-      CqlIdentifier keyspace = SessionUtils.uniqueKeyspaceId();
-      DriverExecutionProfile slowProfile = SessionUtils.slowProfile(session);
-      SessionUtils.createKeyspace(session, keyspace, slowProfile);
-
-      session.execute(String.format("USE %s", keyspace.asCql(false)));
-
-      // load 500 rows (value beyond page size).
-      session.execute(
-          SimpleStatement.builder(
-                  "CREATE TABLE IF NOT EXISTS test (k int, v int, PRIMARY KEY (k,v))")
-              .setExecutionProfile(slowProfile)
-              .build());
-      PreparedStatement prepared = session.prepare("INSERT INTO test (k, v) values (0, ?)");
-      BatchStatementBuilder bs =
-          BatchStatement.builder(DefaultBatchType.UNLOGGED).setExecutionProfile(slowProfile);
-      for (int i = 0; i < 500; i++) {
-        bs.addStatement(prepared.bind(i));
-      }
-      session.execute(bs.build());
-
-      String query = "SELECT * FROM test where k=0";
-      // Execute query without profile, should use global page size (100)
-      CompletionStage<AsyncResultSet> future = session.executeAsync(query);
-      AsyncResultSet result = CompletableFutures.getUninterruptibly(future);
-      assertThat(result.remaining()).isEqualTo(100);
-      result = CompletableFutures.getUninterruptibly(result.fetchNextPage());
-      // next fetch should also be 100 pages.
-      assertThat(result.remaining()).isEqualTo(100);
-
-      // Execute query with profile, should use profile page size
-      future =
-          session.executeAsync(
-              SimpleStatement.builder(query).setExecutionProfileName("smallpages").build());
-      result = CompletableFutures.getUninterruptibly(future);
-      assertThat(result.remaining()).isEqualTo(10);
-      // next fetch should also be 10 pages.
-      result = CompletableFutures.getUninterruptibly(result.fetchNextPage());
-      assertThat(result.remaining()).isEqualTo(10);
-
-      SessionUtils.dropKeyspace(session, keyspace, slowProfile);
     }
   }
 }

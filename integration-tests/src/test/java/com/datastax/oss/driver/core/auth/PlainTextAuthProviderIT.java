@@ -33,7 +33,7 @@ import org.junit.Test;
 public class PlainTextAuthProviderIT {
 
   @ClassRule
-  public static CustomCcmRule ccm =
+  public static final CustomCcmRule CCM_RULE =
       CustomCcmRule.builder()
           .withCassandraConfiguration("authenticator", "PasswordAuthenticator")
           .withJvmArgs("-Dcassandra.superuser_setup_delay_ms=0")
@@ -41,7 +41,7 @@ public class PlainTextAuthProviderIT {
 
   @BeforeClass
   public static void sleepForAuth() {
-    if (ccm.getCassandraVersion().compareTo(Version.V2_2_0) < 0) {
+    if (CCM_RULE.getCassandraVersion().compareTo(Version.V2_2_0) < 0) {
       // Sleep for 1 second to allow C* auth to do its work.  This is only needed for 2.1
       Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
     }
@@ -55,7 +55,7 @@ public class PlainTextAuthProviderIT {
             .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, "cassandra")
             .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "cassandra")
             .build();
-    try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, loader)) {
       session.execute("select * from system.local");
     }
   }
@@ -65,7 +65,7 @@ public class PlainTextAuthProviderIT {
 
     SessionBuilder builder =
         SessionUtils.baseBuilder()
-            .addContactEndPoints(ccm.getContactPoints())
+            .addContactEndPoints(CCM_RULE.getContactPoints())
             .withAuthCredentials("cassandra", "cassandra");
 
     try (CqlSession session = (CqlSession) builder.build()) {
@@ -81,14 +81,14 @@ public class PlainTextAuthProviderIT {
             .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, "baduser")
             .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "badpass")
             .build();
-    try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, loader)) {
       session.execute("select * from system.local");
     }
   }
 
   @Test(expected = AllNodesFailedException.class)
   public void should_not_connect_without_credentials() {
-    try (CqlSession session = SessionUtils.newSession(ccm)) {
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE)) {
       session.execute("select * from system.local");
     }
   }

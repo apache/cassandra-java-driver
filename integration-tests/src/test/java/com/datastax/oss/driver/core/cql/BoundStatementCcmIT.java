@@ -15,9 +15,6 @@
  */
 package com.datastax.oss.driver.core.cql;
 
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.query;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
@@ -25,7 +22,6 @@ import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
-import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -42,7 +38,6 @@ import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
-import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.core.type.codec.CqlIntToStringCodec;
 import com.datastax.oss.driver.internal.core.DefaultProtocolFeature;
@@ -51,20 +46,13 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.RoutingKey;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.protocol.internal.Message;
-import com.datastax.oss.protocol.internal.request.Execute;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
-import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
-import com.datastax.oss.simulacron.common.cluster.QueryLog;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import org.junit.Before;
 import org.junit.Rule;
@@ -76,23 +64,21 @@ import org.junit.rules.TestName;
 import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
-public class BoundStatementIT {
+public class BoundStatementCcmIT {
 
-  @Rule public SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(1));
+  private CcmRule ccmRule = CcmRule.getInstance();
 
-  private CcmRule ccm = CcmRule.getInstance();
-
-  private final boolean atLeastV4 = ccm.getHighestProtocolVersion().getCode() >= 4;
+  private final boolean atLeastV4 = ccmRule.getHighestProtocolVersion().getCode() >= 4;
 
   private SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccm)
+      SessionRule.builder(ccmRule)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 20)
                   .build())
           .build();
 
-  @Rule public TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   @Rule public TestName name = new TestName();
 
@@ -141,19 +127,13 @@ public class BoundStatementIT {
                 .build());
   }
 
-  @Before
-  public void clearPrimes() {
-    simulacron.cluster().clearLogs();
-    simulacron.cluster().clearPrimes(true);
-  }
-
   @Test(expected = IllegalStateException.class)
   public void should_not_allow_unset_value_when_protocol_less_than_v4() {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V3")
             .build();
-    try (CqlSession v3Session = SessionUtils.newSession(ccm, sessionRule.keyspace(), loader)) {
+    try (CqlSession v3Session = SessionUtils.newSession(ccmRule, sessionRule.keyspace(), loader)) {
       PreparedStatement prepared = v3Session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
 
       BoundStatement boundStatement =
@@ -166,7 +146,7 @@ public class BoundStatementIT {
   @Test
   public void should_not_write_tombstone_if_value_is_implicitly_unset() {
     assumeThat(atLeastV4).as("unset values require protocol V4+").isTrue();
-    try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
       PreparedStatement prepared = session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
 
       session.execute(prepared.bind(name.getMethodName(), VALUE));
@@ -181,7 +161,7 @@ public class BoundStatementIT {
   @Test
   public void should_write_tombstone_if_value_is_explicitly_unset() {
     assumeThat(atLeastV4).as("unset values require protocol V4+").isTrue();
-    try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
       PreparedStatement prepared = session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
 
       session.execute(prepared.bind(name.getMethodName(), VALUE));
@@ -200,7 +180,7 @@ public class BoundStatementIT {
   @Test
   public void should_write_tombstone_if_value_is_explicitly_unset_on_builder() {
     assumeThat(atLeastV4).as("unset values require protocol V4+").isTrue();
-    try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
       PreparedStatement prepared = session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
 
       session.execute(prepared.bind(name.getMethodName(), VALUE));
@@ -219,7 +199,7 @@ public class BoundStatementIT {
 
   @Test
   public void should_have_empty_result_definitions_for_update_query() {
-    try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
       PreparedStatement prepared = session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
 
       assertThat(prepared.getResultSetDefinitions()).hasSize(0);
@@ -231,7 +211,7 @@ public class BoundStatementIT {
 
   @Test
   public void should_bind_null_value_when_setting_values_in_bulk() {
-    try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
       PreparedStatement prepared = session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
       BoundStatement boundStatement = prepared.bind(name.getMethodName(), null);
       assertThat(boundStatement.get(1, TypeCodecs.INT)).isNull();
@@ -261,7 +241,7 @@ public class BoundStatementIT {
 
   @Test
   public void should_use_page_size_from_simple_statement() {
-    try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
       SimpleStatement st = SimpleStatement.builder("SELECT v FROM test").setPageSize(10).build();
       PreparedStatement prepared = session.prepare(st);
       CompletionStage<AsyncResultSet> future = session.executeAsync(prepared.bind());
@@ -274,7 +254,7 @@ public class BoundStatementIT {
 
   @Test
   public void should_use_page_size() {
-    try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
       // set page size on simple statement, but will be unused since
       // overridden by bound statement.
       SimpleStatement st = SimpleStatement.builder("SELECT v FROM test").setPageSize(10).build();
@@ -285,132 +265,6 @@ public class BoundStatementIT {
 
       // Should have fetched 12 (page size) rows.
       assertThat(result.remaining()).isEqualTo(12);
-    }
-  }
-
-  @Test
-  public void should_use_consistencies_from_simple_statement() {
-    try (CqlSession session = SessionUtils.newSession(simulacron)) {
-      SimpleStatement st =
-          SimpleStatement.builder("SELECT * FROM test where k = ?")
-              .setConsistencyLevel(DefaultConsistencyLevel.TWO)
-              .setSerialConsistencyLevel(DefaultConsistencyLevel.LOCAL_SERIAL)
-              .build();
-      PreparedStatement prepared = session.prepare(st);
-      simulacron.cluster().clearLogs();
-      // since query is unprimed, we use a text value for bind parameter as this is
-      // what simulacron expects for unprimed statements.
-      session.execute(prepared.bind("0"));
-
-      List<QueryLog> logs = simulacron.cluster().getLogs().getQueryLogs();
-      assertThat(logs).hasSize(1);
-
-      QueryLog log = logs.get(0);
-
-      Message message = log.getFrame().message;
-      assertThat(message).isInstanceOf(Execute.class);
-      Execute execute = (Execute) message;
-      assertThat(execute.options.consistency)
-          .isEqualTo(DefaultConsistencyLevel.TWO.getProtocolCode());
-      assertThat(execute.options.serialConsistency)
-          .isEqualTo(DefaultConsistencyLevel.LOCAL_SERIAL.getProtocolCode());
-    }
-  }
-
-  @Test
-  public void should_use_consistencies() {
-    try (CqlSession session = SessionUtils.newSession(simulacron)) {
-      // set consistencies on simple statement, but they will be unused since
-      // overridden by bound statement.
-      SimpleStatement st =
-          SimpleStatement.builder("SELECT * FROM test where k = ?")
-              .setConsistencyLevel(DefaultConsistencyLevel.TWO)
-              .setSerialConsistencyLevel(DefaultConsistencyLevel.LOCAL_SERIAL)
-              .build();
-      PreparedStatement prepared = session.prepare(st);
-      simulacron.cluster().clearLogs();
-      // since query is unprimed, we use a text value for bind parameter as this is
-      // what simulacron expects for unprimed statements.
-      session.execute(
-          prepared
-              .boundStatementBuilder("0")
-              .setConsistencyLevel(DefaultConsistencyLevel.THREE)
-              .setSerialConsistencyLevel(DefaultConsistencyLevel.SERIAL)
-              .build());
-
-      List<QueryLog> logs = simulacron.cluster().getLogs().getQueryLogs();
-      assertThat(logs).hasSize(1);
-
-      QueryLog log = logs.get(0);
-
-      Message message = log.getFrame().message;
-      assertThat(message).isInstanceOf(Execute.class);
-      Execute execute = (Execute) message;
-      assertThat(execute.options.consistency)
-          .isEqualTo(DefaultConsistencyLevel.THREE.getProtocolCode());
-      assertThat(execute.options.serialConsistency)
-          .isEqualTo(DefaultConsistencyLevel.SERIAL.getProtocolCode());
-    }
-  }
-
-  @Test
-  public void should_use_timeout_from_simple_statement() {
-    try (CqlSession session = SessionUtils.newSession(simulacron)) {
-      Map<String, Object> params = ImmutableMap.of("k", 0);
-      Map<String, String> paramTypes = ImmutableMap.of("k", "int");
-      simulacron
-          .cluster()
-          .prime(
-              when(query(
-                      "mock query",
-                      Lists.newArrayList(
-                          com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ONE),
-                      params,
-                      paramTypes))
-                  .then(noRows())
-                  .delay(1500, TimeUnit.MILLISECONDS));
-      SimpleStatement st =
-          SimpleStatement.builder("mock query")
-              .setTimeout(Duration.ofSeconds(1))
-              .setConsistencyLevel(DefaultConsistencyLevel.ONE)
-              .build();
-      PreparedStatement prepared = session.prepare(st);
-
-      thrown.expect(DriverTimeoutException.class);
-      thrown.expectMessage("Query timed out after PT1S");
-
-      session.execute(prepared.bind(0));
-    }
-  }
-
-  @Test
-  public void should_use_timeout() {
-    try (CqlSession session = SessionUtils.newSession(simulacron)) {
-      Map<String, Object> params = ImmutableMap.of("k", 0);
-      Map<String, String> paramTypes = ImmutableMap.of("k", "int");
-      // set timeout on simple statement, but will be unused since overridden by bound statement.
-      simulacron
-          .cluster()
-          .prime(
-              when(query(
-                      "mock query",
-                      Lists.newArrayList(
-                          com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ONE),
-                      params,
-                      paramTypes))
-                  .then(noRows())
-                  .delay(1500, TimeUnit.MILLISECONDS));
-      SimpleStatement st =
-          SimpleStatement.builder("mock query")
-              .setTimeout(Duration.ofSeconds(1))
-              .setConsistencyLevel(DefaultConsistencyLevel.ONE)
-              .build();
-      PreparedStatement prepared = session.prepare(st);
-
-      thrown.expect(DriverTimeoutException.class);
-      thrown.expectMessage("Query timed out after PT0.15S");
-
-      session.execute(prepared.bind(0).setTimeout(Duration.ofMillis(150)));
     }
   }
 
@@ -498,7 +352,7 @@ public class BoundStatementIT {
   @Test
   @CassandraRequirement(min = "2.2")
   public void should_compute_routing_key_when_indices_randomly_distributed() {
-    try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
 
       PreparedStatement ps = session.prepare("INSERT INTO test3 (v, pk2, pk1) VALUES (?,?,?)");
 
@@ -533,7 +387,7 @@ public class BoundStatementIT {
   private CqlSession sessionWithCustomCodec(CqlIntToStringCodec codec) {
     return (CqlSession)
         SessionUtils.baseBuilder()
-            .addContactEndPoints(ccm.getContactPoints())
+            .addContactEndPoints(ccmRule.getContactPoints())
             .withKeyspace(sessionRule.keyspace())
             .addTypeCodecs(codec)
             .build();

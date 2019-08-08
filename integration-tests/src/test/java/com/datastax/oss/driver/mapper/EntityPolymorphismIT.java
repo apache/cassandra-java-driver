@@ -69,17 +69,18 @@ import org.junit.runner.RunWith;
 @Category(ParallelizableTests.class)
 @RunWith(DataProviderRunner.class)
 public class EntityPolymorphismIT {
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
+
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private static TestMapper mapper;
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
-
   @BeforeClass
   public static void setup() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     for (String query :
         ImmutableList.of(
             "CREATE TYPE point2d (\"X\" int, \"Y\" int)",
@@ -94,7 +95,7 @@ public class EntityPolymorphismIT {
             "CREATE TABLE tracked_devices (device_id uuid PRIMARY KEY, name text, location text)",
             "CREATE TABLE simple_devices (id uuid PRIMARY KEY, in_use boolean)")) {
       session.execute(
-          SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
+          SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
     }
     mapper = new EntityPolymorphismIT_TestMapperBuilder(session).build();
   }
@@ -247,8 +248,8 @@ public class EntityPolymorphismIT {
       Consumer<T> updater,
       SimpleStatement insertStatement,
       SimpleStatement selectStatement) {
-    BaseDao<T> dao = daoProvider.apply(sessionRule.keyspace());
-    CqlSession session = sessionRule.session();
+    BaseDao<T> dao = daoProvider.apply(SESSION_RULE.keyspace());
+    CqlSession session = SESSION_RULE.session();
     PreparedStatement prepared = session.prepare(insertStatement);
 
     BoundStatementBuilder bs = prepared.boundStatementBuilder();
@@ -280,7 +281,7 @@ public class EntityPolymorphismIT {
     // * annotations, but these are primarily used for
     //   verifying inheritance behavior in Sphere.
     // * verifies writeTime is set.
-    CircleDao dao = mapper.circleDao(sessionRule.keyspace());
+    CircleDao dao = mapper.circleDao(SESSION_RULE.keyspace());
 
     long writeTime = System.currentTimeMillis() - 1000;
     Circle circle = new Circle(new Point2D(11, 22), 12.34);
@@ -297,7 +298,7 @@ public class EntityPolymorphismIT {
     // * CqlName("rect_id") on getId renames id property to rect_id
     // * annotations work, but these are primarily used for
     //   verifying inheritance behavior in Square.
-    RectangleDao dao = mapper.rectangleDao(sessionRule.keyspace());
+    RectangleDao dao = mapper.rectangleDao(SESSION_RULE.keyspace());
 
     Rectangle rectangle = new Rectangle(new Point2D(20, 30), new Point2D(50, 60));
     dao.save(rectangle);
@@ -312,7 +313,7 @@ public class EntityPolymorphismIT {
     // * height remains transient even though we define field/getter/setter
     // * getBottomLeft() retains CqlName from parent.
     // * verifies writeTime is set.
-    SquareDao dao = mapper.squareDao(sessionRule.keyspace());
+    SquareDao dao = mapper.squareDao(SESSION_RULE.keyspace());
 
     long writeTime = System.currentTimeMillis() - 1000;
     Square square = new Square(new Point2D(20, 30), new Point2D(50, 60));
@@ -333,7 +334,7 @@ public class EntityPolymorphismIT {
     // * Override setRadius to return Sphere causes no issues.
     // * Interface method getVolume() is skipped because no field exists.
     // * WriteTime is inherited, so queried and set.
-    SphereDao dao = mapper.sphereDao(sessionRule.keyspace());
+    SphereDao dao = mapper.sphereDao(SESSION_RULE.keyspace());
 
     long writeTime = System.currentTimeMillis() - 1000;
     Sphere sphere = new Sphere(new Point3D(11, 22, 33), 34.56);
@@ -349,7 +350,7 @@ public class EntityPolymorphismIT {
     // verifies the hierarchy scanner behavior around Device:
     // * by virtue of Assert setting highestAncestor to Asset.class, location property from
     //   LocatableItem should not be included
-    DeviceDao dao = mapper.deviceDao(sessionRule.keyspace(), CqlIdentifier.fromCql("devices"));
+    DeviceDao dao = mapper.deviceDao(SESSION_RULE.keyspace(), CqlIdentifier.fromCql("devices"));
 
     // save should be successful as location property omitted.
     Device device = new Device("my device", "New York");
@@ -377,7 +378,7 @@ public class EntityPolymorphismIT {
     //   include LocatableItem's location property, even though Asset defines
     //   a strategy that excludes it.
     TrackedDeviceDao dao =
-        mapper.trackedDeviceDao(sessionRule.keyspace(), CqlIdentifier.fromCql("tracked_devices"));
+        mapper.trackedDeviceDao(SESSION_RULE.keyspace(), CqlIdentifier.fromCql("tracked_devices"));
 
     TrackedDevice device = new TrackedDevice("my device", "New York");
     dao.save(device);
@@ -400,7 +401,7 @@ public class EntityPolymorphismIT {
     // verifies the hierarchy scanner behavior around SimpleDevice:
     // * Since SimpleDevice defines a @HierarchyScanStrategy that prevents
     //   scanning of ancestors, only its properties (id, inUse) should be included.
-    SimpleDeviceDao dao = mapper.simpleDeviceDao(sessionRule.keyspace());
+    SimpleDeviceDao dao = mapper.simpleDeviceDao(SESSION_RULE.keyspace());
 
     SimpleDevice device = new SimpleDevice(true);
     dao.save(device);
