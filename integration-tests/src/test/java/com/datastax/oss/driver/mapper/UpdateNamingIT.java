@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.mapper;
 
+import static com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy.SET_TO_NULL;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -22,6 +23,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.MapperBuilder;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
+import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.NamingStrategy;
@@ -85,6 +87,7 @@ public class UpdateNamingIT {
   }
 
   @Dao
+  @DefaultNullSavingStrategy(SET_TO_NULL)
   public interface TestDao {
     @Select
     Foo get(int key);
