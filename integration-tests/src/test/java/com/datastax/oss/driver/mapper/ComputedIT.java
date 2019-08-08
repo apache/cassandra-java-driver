@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.mapper;
 
 import static com.datastax.oss.driver.assertions.Assertions.assertThat;
+import static org.assertj.core.data.Offset.offset;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -113,7 +114,7 @@ public class ComputedIT {
     assertThat(retrievedValue.getId()).isEqualTo(key);
     assertThat(retrievedValue.getcId()).isEqualTo(1);
     assertThat(retrievedValue.getV()).isEqualTo(2);
-    assertThat(retrievedValue.getTtl()).isEqualTo(3600);
+    assertThat(retrievedValue.getTtl()).isCloseTo(3600, offset(10));
     assertThat(retrievedValue.getWritetime()).isEqualTo(time);
   }
 
@@ -192,7 +193,7 @@ public class ComputedIT {
     assertThat(retrievedValue.getV()).isEqualTo(2);
 
     // these should be set
-    assertThat(retrievedValue.getTtl()).isEqualTo(3600);
+    assertThat(retrievedValue.getTtl()).isCloseTo(3600, offset(10));
     assertThat(retrievedValue.getWritetime()).isEqualTo(time);
   }
 
@@ -244,7 +245,7 @@ public class ComputedIT {
     assertThat(retrievedValue.getV()).isEqualTo(2);
 
     // these should be set
-    assertThat(retrievedValue.getTtl()).isEqualTo(3600);
+    assertThat(retrievedValue.getTtl()).isCloseTo(3600, offset(10));
     assertThat(retrievedValue.getWritetime()).isEqualTo(time);
   }
 
