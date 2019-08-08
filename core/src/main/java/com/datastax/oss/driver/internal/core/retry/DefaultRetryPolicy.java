@@ -59,26 +59,27 @@ public class DefaultRetryPolicy implements RetryPolicy {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultRetryPolicy.class);
 
   @VisibleForTesting
-  static final String RETRYING_ON_READ_TIMEOUT =
+  public static final String RETRYING_ON_READ_TIMEOUT =
       "[{}] Retrying on read timeout on same host (consistency: {}, required responses: {}, "
           + "received responses: {}, data retrieved: {}, retries: {})";
 
   @VisibleForTesting
-  static final String RETRYING_ON_WRITE_TIMEOUT =
+  public static final String RETRYING_ON_WRITE_TIMEOUT =
       "[{}] Retrying on write timeout on same host (consistency: {}, write type: {}, "
           + "required acknowledgments: {}, received acknowledgments: {}, retries: {})";
 
   @VisibleForTesting
-  static final String RETRYING_ON_UNAVAILABLE =
+  public static final String RETRYING_ON_UNAVAILABLE =
       "[{}] Retrying on unavailable exception on next host (consistency: {}, "
           + "required replica: {}, alive replica: {}, retries: {})";
 
   @VisibleForTesting
-  static final String RETRYING_ON_ABORTED =
+  public static final String RETRYING_ON_ABORTED =
       "[{}] Retrying on aborted request on next host (retries: {})";
 
   @VisibleForTesting
-  static final String RETRYING_ON_ERROR = "[{}] Retrying on node error on next host (retries: {})";
+  public static final String RETRYING_ON_ERROR =
+      "[{}] Retrying on node error on next host (retries: {})";
 
   private final String logPrefix;
 
