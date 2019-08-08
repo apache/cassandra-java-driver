@@ -35,9 +35,9 @@ import org.junit.rules.TestName;
 
 public class SchemaAgreementIT {
 
-  private static CustomCcmRule ccm = CustomCcmRule.builder().withNodes(3).build();
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccm)
+  private static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().withNodes(3).build();
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(CCM_RULE)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
@@ -50,7 +50,8 @@ public class SchemaAgreementIT {
                   .build())
           .build();
 
-  @ClassRule public static RuleChain ruleChain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final RuleChain CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Rule public TestName name = new TestName();
 
@@ -59,34 +60,34 @@ public class SchemaAgreementIT {
     ResultSet result = createTable();
 
     assertThat(result.getExecutionInfo().isSchemaInAgreement()).isTrue();
-    assertThat(sessionRule.session().checkSchemaAgreement()).isTrue();
+    assertThat(SESSION_RULE.session().checkSchemaAgreement()).isTrue();
   }
 
   @Test
   public void should_fail_on_timeout() {
-    ccm.getCcmBridge().pause(2);
+    CCM_RULE.getCcmBridge().pause(2);
     try {
       // Can't possibly agree since one node is paused.
       ResultSet result = createTable();
 
       assertThat(result.getExecutionInfo().isSchemaInAgreement()).isFalse();
-      assertThat(sessionRule.session().checkSchemaAgreement()).isFalse();
+      assertThat(SESSION_RULE.session().checkSchemaAgreement()).isFalse();
     } finally {
-      ccm.getCcmBridge().resume(2);
+      CCM_RULE.getCcmBridge().resume(2);
     }
   }
 
   @Test
   public void should_agree_when_up_nodes_agree() {
-    ccm.getCcmBridge().stop(2);
+    CCM_RULE.getCcmBridge().stop(2);
     try {
       // Should agree since up hosts should agree.
       ResultSet result = createTable();
 
       assertThat(result.getExecutionInfo().isSchemaInAgreement()).isTrue();
-      assertThat(sessionRule.session().checkSchemaAgreement()).isTrue();
+      assertThat(SESSION_RULE.session().checkSchemaAgreement()).isTrue();
     } finally {
-      ccm.getCcmBridge().start(2);
+      CCM_RULE.getCcmBridge().start(2);
     }
   }
 
@@ -98,7 +99,7 @@ public class SchemaAgreementIT {
             .withDuration(
                 DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_TIMEOUT, Duration.ofSeconds(0))
             .build();
-    try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace(), loader)) {
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, SESSION_RULE.keyspace(), loader)) {
       ResultSet result = createTable(session);
 
       // Should not agree because schema metadata is disabled
@@ -108,7 +109,7 @@ public class SchemaAgreementIT {
   }
 
   private ResultSet createTable() {
-    return createTable(sessionRule.session());
+    return createTable(SESSION_RULE.session());
   }
 
   private final AtomicInteger tableCounter = new AtomicInteger();

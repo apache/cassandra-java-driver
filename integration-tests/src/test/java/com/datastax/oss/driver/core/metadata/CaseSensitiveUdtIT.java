@@ -46,23 +46,24 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class CaseSensitiveUdtIT {
 
-  private static CcmRule ccmRule = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule)
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(CCM_RULE)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
                   .build())
           .build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Test
   public void should_expose_metadata_with_correct_case() {
-    boolean supportsFunctions = ccmRule.getCassandraVersion().compareTo(Version.V2_2_0) >= 0;
+    boolean supportsFunctions = CCM_RULE.getCassandraVersion().compareTo(Version.V2_2_0) >= 0;
 
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
     session.execute("CREATE TYPE \"Address\"(street text)");
 
@@ -91,7 +92,7 @@ public class CaseSensitiveUdtIT {
     KeyspaceMetadata keyspace =
         session
             .getMetadata()
-            .getKeyspace(sessionRule.keyspace())
+            .getKeyspace(SESSION_RULE.keyspace())
             .orElseThrow(() -> new AssertionError("Couldn't find rule's keyspace"));
 
     UserDefinedType addressType =

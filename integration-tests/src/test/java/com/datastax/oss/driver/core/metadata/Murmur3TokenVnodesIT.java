@@ -29,11 +29,11 @@ import org.junit.rules.TestRule;
 
 public class Murmur3TokenVnodesIT extends TokenITBase {
 
-  private static CustomCcmRule ccmRule =
+  private static final CustomCcmRule CCM_RULE =
       CustomCcmRule.builder().withNodes(3).withCreateOption("--vnodes").build();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule)
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(CCM_RULE)
           .withKeyspace(false)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
@@ -41,7 +41,8 @@ public class Murmur3TokenVnodesIT extends TokenITBase {
                   .build())
           .build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   public Murmur3TokenVnodesIT() {
     super("org.apache.cassandra.dht.Murmur3Partitioner", Murmur3Token.class, true);
@@ -49,11 +50,11 @@ public class Murmur3TokenVnodesIT extends TokenITBase {
 
   @Override
   protected CqlSession session() {
-    return sessionRule.session();
+    return SESSION_RULE.session();
   }
 
   @BeforeClass
   public static void createSchema() {
-    createSchema(sessionRule.session());
+    createSchema(SESSION_RULE.session());
   }
 }

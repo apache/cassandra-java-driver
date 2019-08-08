@@ -48,11 +48,11 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class BatchStatementIT {
 
-  private CcmRule ccm = CcmRule.getInstance();
+  private CcmRule ccmRule = CcmRule.getInstance();
 
-  private SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  private SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
 
-  @Rule public TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   @Rule public TestName name = new TestName();
 
@@ -345,7 +345,7 @@ public class BatchStatementIT {
         SessionUtils.configLoaderBuilder()
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V3")
             .build();
-    try (CqlSession v3Session = SessionUtils.newSession(ccm, sessionRule.keyspace(), loader)) {
+    try (CqlSession v3Session = SessionUtils.newSession(ccmRule, sessionRule.keyspace(), loader)) {
       PreparedStatement prepared =
           v3Session.prepare("INSERT INTO test (k0, k1, v) values (?, ?, ?)");
 

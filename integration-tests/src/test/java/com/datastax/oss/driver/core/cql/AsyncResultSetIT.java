@@ -49,31 +49,32 @@ public class AsyncResultSetIT {
   private static final String PARTITION_KEY1 = "part";
   private static final String PARTITION_KEY2 = "part2";
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccm)
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(CCM_RULE)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, PAGE_SIZE)
                   .build())
           .build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @BeforeClass
   public static void setupSchema() {
     // create table and load data across two partitions so we can test paging across tokens.
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(
             SimpleStatement.builder(
                     "CREATE TABLE IF NOT EXISTS test (k0 text, k1 int, v int, PRIMARY KEY(k0, k1))")
-                .setExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(SESSION_RULE.slowProfile())
                 .build());
 
     PreparedStatement prepared =
-        sessionRule.session().prepare("INSERT INTO test (k0, k1, v) VALUES (?, ?, ?)");
+        SESSION_RULE.session().prepare("INSERT INTO test (k0, k1, v) VALUES (?, ?, ?)");
 
     BatchStatementBuilder batchPart1 = BatchStatement.builder(DefaultBatchType.UNLOGGED);
     BatchStatementBuilder batchPart2 = BatchStatement.builder(DefaultBatchType.UNLOGGED);
@@ -83,12 +84,12 @@ public class AsyncResultSetIT {
           prepared.bind(PARTITION_KEY2, i + ROWS_PER_PARTITION, i + ROWS_PER_PARTITION));
     }
 
-    sessionRule
+    SESSION_RULE
         .session()
-        .execute(batchPart1.setExecutionProfile(sessionRule.slowProfile()).build());
-    sessionRule
+        .execute(batchPart1.setExecutionProfile(SESSION_RULE.slowProfile()).build());
+    SESSION_RULE
         .session()
-        .execute(batchPart2.setExecutionProfile(sessionRule.slowProfile()).build());
+        .execute(batchPart2.setExecutionProfile(SESSION_RULE.slowProfile()).build());
   }
 
   @Test
@@ -96,7 +97,7 @@ public class AsyncResultSetIT {
     // very basic test that just ensures that iterating over an AsyncResultSet only visits the first
     // page.
     CompletionStage<AsyncResultSet> result =
-        sessionRule
+        SESSION_RULE
             .session()
             .executeAsync(
                 SimpleStatement.builder("SELECT * FROM test where k0 = ?")
@@ -122,7 +123,7 @@ public class AsyncResultSetIT {
   public void should_iterate_over_all_pages_asynchronously_single_partition() throws Exception {
     // Validates async paging behavior over single partition.
     CompletionStage<PageStatistics> result =
-        sessionRule
+        SESSION_RULE
             .session()
             .executeAsync(
                 SimpleStatement.builder("SELECT * FROM test where k0 = ?")
@@ -140,7 +141,7 @@ public class AsyncResultSetIT {
   public void should_iterate_over_all_pages_asynchronously_cross_partition() throws Exception {
     // Validates async paging behavior over a range query.
     CompletionStage<PageStatistics> result =
-        sessionRule
+        SESSION_RULE
             .session()
             .executeAsync("SELECT * FROM test")
             .thenCompose(new AsyncResultSetConsumingFunction());

@@ -60,9 +60,11 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class QueryReturnTypesIT {
 
-  private static CcmRule ccm = CcmRule.getInstance();
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
+
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
@@ -70,16 +72,16 @@ public class QueryReturnTypesIT {
 
   @BeforeClass
   public static void createSchema() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
     session.execute(
         SimpleStatement.builder(
                 "CREATE TABLE test_entity(id int, rank int, value int, PRIMARY KEY(id, rank))")
-            .setExecutionProfile(sessionRule.slowProfile())
+            .setExecutionProfile(SESSION_RULE.slowProfile())
             .build());
 
     TestMapper mapper = new QueryReturnTypesIT_TestMapperBuilder(session).build();
-    dao = mapper.dao(sessionRule.keyspace(), CqlIdentifier.fromCql("test_entity"));
+    dao = mapper.dao(SESSION_RULE.keyspace(), CqlIdentifier.fromCql("test_entity"));
   }
 
   @Before

@@ -49,7 +49,8 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class ChannelSocketOptionsIT {
 
-  private static SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(1));
+  private static final SimulacronRule SIMULACRON_RULE =
+      new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
   private static DriverConfigLoader loader =
       SessionUtils.configLoaderBuilder()
@@ -61,14 +62,15 @@ public class ChannelSocketOptionsIT {
           .withInt(DefaultDriverOption.SOCKET_SEND_BUFFER_SIZE, 123456)
           .build();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(simulacron).withConfigLoader(loader).build();
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(SIMULACRON_RULE).withConfigLoader(loader).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(simulacron).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(SIMULACRON_RULE).around(SESSION_RULE);
 
   @Test
   public void should_report_socket_options() {
-    Session session = sessionRule.session();
+    Session session = SESSION_RULE.session();
     DriverExecutionProfile config = session.getContext().getConfig().getDefaultProfile();
     assertThat(config.getBoolean(SOCKET_TCP_NODELAY)).isTrue();
     assertThat(config.getBoolean(SOCKET_KEEP_ALIVE)).isFalse();

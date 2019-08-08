@@ -45,24 +45,24 @@ import org.junit.rules.TestRule;
  */
 @Category(ParallelizableTests.class)
 public class UpdateNamingIT {
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
-
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private static TestDao dao;
 
   @BeforeClass
   public static void setup() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     session.execute(
         SimpleStatement.builder("CREATE TABLE foo(mykey int PRIMARY KEY, value int)")
-            .setExecutionProfile(sessionRule.slowProfile())
+            .setExecutionProfile(SESSION_RULE.slowProfile())
             .build());
 
     TestMapper mapper =
-        TestMapper.builder(session).withDefaultKeyspace(sessionRule.keyspace()).build();
+        TestMapper.builder(session).withDefaultKeyspace(SESSION_RULE.keyspace()).build();
     dao = mapper.dao();
   }
 

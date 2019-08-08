@@ -34,15 +34,25 @@ import com.typesafe.config.ConfigFactory;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 public class DriverExecutionProfileReloadIT {
 
-  @Rule public SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(3));
+  @ClassRule
+  public static final SimulacronRule SIMULACRON_RULE =
+      new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
   @Rule public ExpectedException thrown = ExpectedException.none();
+
+  @Before
+  public void clearPrimes() {
+    SIMULACRON_RULE.cluster().clearLogs();
+    SIMULACRON_RULE.cluster().clearPrimes(true);
+  }
 
   @Test
   public void should_periodically_reload_configuration() throws Exception {
@@ -61,9 +71,9 @@ public class DriverExecutionProfileReloadIT {
         (CqlSession)
             SessionUtils.baseBuilder()
                 .withConfigLoader(loader)
-                .addContactEndPoints(simulacron.getContactPoints())
+                .addContactEndPoints(SIMULACRON_RULE.getContactPoints())
                 .build()) {
-      simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
+      SIMULACRON_RULE.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
       // Expect timeout since default session timeout is 2s
       try {
@@ -99,9 +109,9 @@ public class DriverExecutionProfileReloadIT {
         (CqlSession)
             SessionUtils.baseBuilder()
                 .withConfigLoader(loader)
-                .addContactEndPoints(simulacron.getContactPoints())
+                .addContactEndPoints(SIMULACRON_RULE.getContactPoints())
                 .build()) {
-      simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
+      SIMULACRON_RULE.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
       // Expect timeout since default session timeout is 2s
       try {
@@ -136,9 +146,9 @@ public class DriverExecutionProfileReloadIT {
         (CqlSession)
             SessionUtils.baseBuilder()
                 .withConfigLoader(loader)
-                .addContactEndPoints(simulacron.getContactPoints())
+                .addContactEndPoints(SIMULACRON_RULE.getContactPoints())
                 .build()) {
-      simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
+      SIMULACRON_RULE.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
       // Expect failure because profile doesn't exist.
       try {
@@ -178,9 +188,9 @@ public class DriverExecutionProfileReloadIT {
         (CqlSession)
             SessionUtils.baseBuilder()
                 .withConfigLoader(loader)
-                .addContactEndPoints(simulacron.getContactPoints())
+                .addContactEndPoints(SIMULACRON_RULE.getContactPoints())
                 .build()) {
-      simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
+      SIMULACRON_RULE.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
       // Expect failure because profile doesn't exist.
       try {

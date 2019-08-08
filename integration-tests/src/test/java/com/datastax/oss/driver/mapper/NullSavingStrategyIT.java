@@ -49,27 +49,28 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class NullSavingStrategyIT {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccm)
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(CCM_RULE)
           .withConfigLoader(
               DriverConfigLoader.programmaticBuilder()
                   .withString(DefaultDriverOption.PROTOCOL_VERSION, "V3")
                   .build())
           .build();
 
-  private static InventoryMapper mapper;
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  private static InventoryMapper mapper;
 
   @BeforeClass
   public static void setup() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     session.execute(
         SimpleStatement.builder(
                 "CREATE TABLE product_simple(id uuid PRIMARY KEY, description text)")
-            .setExecutionProfile(sessionRule.slowProfile())
+            .setExecutionProfile(SESSION_RULE.slowProfile())
             .build());
 
     mapper = new NullSavingStrategyIT_InventoryMapperBuilder(session).build();
@@ -77,7 +78,7 @@ public class NullSavingStrategyIT {
 
   @Test
   public void should_throw_when_try_to_construct_dao_with_DO_NOT_SET_strategy_for_V3_protocol() {
-    assertThatThrownBy(() -> mapper.productDao(sessionRule.keyspace()))
+    assertThatThrownBy(() -> mapper.productDao(SESSION_RULE.keyspace()))
         .isInstanceOf(MapperException.class)
         .hasMessage("You cannot use NullSavingStrategy.DO_NOT_SET for protocol version V3.");
   }
@@ -85,7 +86,7 @@ public class NullSavingStrategyIT {
   @Test
   public void
       should_throw_when_try_to_construct_dao_with_DO_NOT_SET_implicit_strategy_for_V3_protocol() {
-    assertThatThrownBy(() -> mapper.productDaoImplicit(sessionRule.keyspace()))
+    assertThatThrownBy(() -> mapper.productDaoImplicit(SESSION_RULE.keyspace()))
         .isInstanceOf(MapperException.class)
         .hasMessage("You cannot use NullSavingStrategy.DO_NOT_SET for protocol version V3.");
   }
@@ -93,27 +94,27 @@ public class NullSavingStrategyIT {
   @Test
   public void
       should_throw_when_try_to_construct_dao_with_DO_NOT_SET_strategy_set_globally_for_V3_protocol() {
-    assertThatThrownBy(() -> mapper.productDaoDefault(sessionRule.keyspace()))
+    assertThatThrownBy(() -> mapper.productDaoDefault(SESSION_RULE.keyspace()))
         .isInstanceOf(MapperException.class)
         .hasMessage("You cannot use NullSavingStrategy.DO_NOT_SET for protocol version V3.");
   }
 
   @Test
   public void should_do_not_throw_when_construct_dao_with_global_level_SET_TO_NULL() {
-    assertThatCode(() -> mapper.productDaoGlobalLevelSetToNull(sessionRule.keyspace()))
+    assertThatCode(() -> mapper.productDaoGlobalLevelSetToNull(SESSION_RULE.keyspace()))
         .doesNotThrowAnyException();
   }
 
   @Test
   public void should_do_not_throw_when_construct_dao_with_parent_interface_SET_TO_NULL() {
-    assertThatCode(() -> mapper.productDaoSetToNullFromParentInterface(sessionRule.keyspace()))
+    assertThatCode(() -> mapper.productDaoSetToNullFromParentInterface(SESSION_RULE.keyspace()))
         .doesNotThrowAnyException();
   }
 
   @Test
   public void
       should_do_not_throw_when_construct_dao_with_global_level_DO_NOT_SET_and_local_override_to_SET_TO_NULL() {
-    assertThatCode(() -> mapper.productDaoLocalOverride(sessionRule.keyspace()))
+    assertThatCode(() -> mapper.productDaoLocalOverride(SESSION_RULE.keyspace()))
         .doesNotThrowAnyException();
   }
 

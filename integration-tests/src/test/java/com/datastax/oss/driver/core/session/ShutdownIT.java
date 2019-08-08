@@ -42,7 +42,7 @@ import org.junit.experimental.categories.Category;
 public class ShutdownIT {
 
   @ClassRule
-  public static SimulacronRule simulacronRule =
+  public static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
   private static final String QUERY_STRING = "select * from foo";
@@ -52,10 +52,10 @@ public class ShutdownIT {
     // Given
     // Prime with a bit of delay to increase the chance that a query will be aborted in flight when
     // we force-close the session
-    simulacronRule
+    SIMULACRON_RULE
         .cluster()
         .prime(when(QUERY_STRING).then(noRows()).delay(20, TimeUnit.MILLISECONDS));
-    CqlSession session = SessionUtils.newSession(simulacronRule);
+    CqlSession session = SessionUtils.newSession(SIMULACRON_RULE);
 
     // When
     // Max out the in-flight requests on the connection (from a separate thread pool to get a bit of
@@ -131,7 +131,7 @@ public class ShutdownIT {
 
   @Test
   public void should_handle_getting_closed_twice() {
-    CqlSession session = SessionUtils.newSession(simulacronRule);
+    CqlSession session = SessionUtils.newSession(SIMULACRON_RULE);
     session.close();
     session.close();
   }

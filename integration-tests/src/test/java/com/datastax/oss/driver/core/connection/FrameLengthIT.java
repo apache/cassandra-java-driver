@@ -43,7 +43,7 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -52,7 +52,8 @@ import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 public class FrameLengthIT {
-  private static SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(1));
+  private static final SimulacronRule SIMULACRON_RULE =
+      new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
   private static DriverConfigLoader loader =
       SessionUtils.configLoaderBuilder()
@@ -62,10 +63,11 @@ public class FrameLengthIT {
           .withBytes(DefaultDriverOption.PROTOCOL_MAX_FRAME_LENGTH, 100 * 1024)
           .build();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(simulacron).withConfigLoader(loader).build();
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(SIMULACRON_RULE).withConfigLoader(loader).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(simulacron).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(SIMULACRON_RULE).around(SESSION_RULE);
 
   private static final SimpleStatement LARGE_QUERY =
       SimpleStatement.newInstance("select * from foo").setIdempotent(true);
@@ -74,21 +76,21 @@ public class FrameLengthIT {
 
   private static final Buffer ONE_HUNDRED_KB = ByteBuffer.allocate(100 * 1024).limit(100 * 1024);
 
-  @Before
-  public void primeQueries() {
-    simulacron
+  @BeforeClass
+  public static void primeQueries() {
+    SIMULACRON_RULE
         .cluster()
         .prime(
             when(LARGE_QUERY.getQuery())
                 .then(rows().row("result", ONE_HUNDRED_KB).columnTypes("result", "blob").build()));
-    simulacron
+    SIMULACRON_RULE
         .cluster()
         .prime(when(SLOW_QUERY.getQuery()).then(noRows()).delay(60, TimeUnit.SECONDS));
   }
 
   @Test(expected = FrameTooLongException.class)
   public void should_fail_if_request_exceeds_max_frame_length() {
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(SimpleStatement.newInstance("insert into foo (k) values (?)", ONE_HUNDRED_KB));
   }
@@ -96,9 +98,9 @@ public class FrameLengthIT {
   @Test
   public void should_fail_if_response_exceeds_max_frame_length() {
     CompletionStage<AsyncResultSet> slowResultFuture =
-        sessionRule.session().executeAsync(SLOW_QUERY);
+        SESSION_RULE.session().executeAsync(SLOW_QUERY);
     try {
-      sessionRule.session().execute(LARGE_QUERY);
+      SESSION_RULE.session().execute(LARGE_QUERY);
       fail("Expected a " + FrameTooLongException.class.getSimpleName());
     } catch (FrameTooLongException e) {
       // expected

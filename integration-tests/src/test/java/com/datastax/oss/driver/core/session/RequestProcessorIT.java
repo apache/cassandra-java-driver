@@ -65,11 +65,12 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class RequestProcessorIT {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
@@ -78,15 +79,15 @@ public class RequestProcessorIT {
   @BeforeClass
   public static void setupSchema() {
     // table with clustering key where v1 == v0 * 2.
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(
             SimpleStatement.builder(
                     "CREATE TABLE IF NOT EXISTS test (k text, v0 int, v1 int, PRIMARY KEY(k, v0))")
-                .setExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(SESSION_RULE.slowProfile())
                 .build());
     for (int i = 0; i < 100; i++) {
-      sessionRule
+      SESSION_RULE
           .session()
           .execute(
               SimpleStatement.builder("INSERT INTO test (k, v0, v1) VALUES (?, ?, ?)")
@@ -97,14 +98,14 @@ public class RequestProcessorIT {
 
   private GuavaSession newSession(CqlIdentifier keyspace) {
     return GuavaSessionUtils.builder()
-        .addContactEndPoints(ccm.getContactPoints())
+        .addContactEndPoints(CCM_RULE.getContactPoints())
         .withKeyspace(keyspace)
         .build();
   }
 
   @Test
   public void should_use_custom_request_processor_for_prepareAsync() throws Exception {
-    try (GuavaSession session = newSession(sessionRule.keyspace())) {
+    try (GuavaSession session = newSession(SESSION_RULE.keyspace())) {
       ListenableFuture<PreparedStatement> preparedFuture =
           session.prepareAsync("select * from test");
 
@@ -123,7 +124,7 @@ public class RequestProcessorIT {
   @Test
   public void should_use_custom_request_processor_for_handling_special_request_type()
       throws Exception {
-    try (GuavaSession session = newSession(sessionRule.keyspace())) {
+    try (GuavaSession session = newSession(SESSION_RULE.keyspace())) {
       // RequestProcessor executes "select v from test where k = <KEY>" and returns v as Integer.
       int v1 = session.execute(new KeyRequest(5), KeyRequestProcessor.INT_TYPE);
       assertThat(v1).isEqualTo(10); // v1 = v0 * 2
@@ -136,7 +137,7 @@ public class RequestProcessorIT {
 
   @Test
   public void should_use_custom_request_processor_for_executeAsync() throws Exception {
-    try (GuavaSession session = newSession(sessionRule.keyspace())) {
+    try (GuavaSession session = newSession(SESSION_RULE.keyspace())) {
       ListenableFuture<AsyncResultSet> future = session.executeAsync("select * from test");
       AsyncResultSet result = Uninterruptibles.getUninterruptibly(future);
       assertThat(Iterables.size(result.currentPage())).isEqualTo(100);
@@ -150,7 +151,7 @@ public class RequestProcessorIT {
     // IllegalArgumentException
     // should be thrown.
     thrown.expect(IllegalArgumentException.class);
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(SimpleStatement.newInstance("select * from test"), GuavaSession.ASYNC);
   }

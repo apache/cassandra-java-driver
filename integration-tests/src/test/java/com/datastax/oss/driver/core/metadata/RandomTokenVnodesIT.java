@@ -29,15 +29,15 @@ import org.junit.rules.TestRule;
 
 public class RandomTokenVnodesIT extends TokenITBase {
 
-  private static CustomCcmRule ccmRule =
+  private static final CustomCcmRule CCM_RULE =
       CustomCcmRule.builder()
           .withNodes(3)
           .withCreateOption("-p RandomPartitioner")
           .withCreateOption("--vnodes")
           .build();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule)
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(CCM_RULE)
           .withKeyspace(false)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
@@ -45,7 +45,8 @@ public class RandomTokenVnodesIT extends TokenITBase {
                   .build())
           .build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   public RandomTokenVnodesIT() {
     super("org.apache.cassandra.dht.RandomPartitioner", RandomToken.class, true);
@@ -53,11 +54,11 @@ public class RandomTokenVnodesIT extends TokenITBase {
 
   @Override
   protected CqlSession session() {
-    return sessionRule.session();
+    return SESSION_RULE.session();
   }
 
   @BeforeClass
   public static void createSchema() {
-    TokenITBase.createSchema(sessionRule.session());
+    TokenITBase.createSchema(SESSION_RULE.session());
   }
 }

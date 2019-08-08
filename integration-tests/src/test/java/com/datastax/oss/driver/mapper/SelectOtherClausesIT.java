@@ -52,26 +52,26 @@ import org.junit.rules.TestRule;
 @CassandraRequirement(min = "3.6", description = "Uses PER PARTITION LIMIT")
 public class SelectOtherClausesIT {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
-
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private static SimpleDao dao;
 
   @BeforeClass
   public static void setup() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
     for (String query :
         ImmutableList.of("CREATE TABLE simple (k int, cc int, v int, PRIMARY KEY (k, cc))")) {
       session.execute(
-          SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
+          SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
     }
 
     TestMapper mapper = TestMapper.builder(session).build();
-    dao = mapper.simpleDao(sessionRule.keyspace());
+    dao = mapper.simpleDao(SESSION_RULE.keyspace());
 
     for (int k = 0; k < 2; k++) {
       for (int cc = 0; cc < 10; cc++) {

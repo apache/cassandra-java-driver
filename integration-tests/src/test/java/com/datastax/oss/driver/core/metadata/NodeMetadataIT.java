@@ -38,11 +38,11 @@ import org.junit.experimental.categories.Category;
 @Category(ParallelizableTests.class)
 public class NodeMetadataIT {
 
-  @ClassRule public static CcmRule ccmRule = CcmRule.getInstance();
+  @ClassRule public static final CcmRule CCM_RULE = CcmRule.getInstance();
 
   @Test
   public void should_expose_node_metadata() {
-    try (CqlSession session = SessionUtils.newSession(ccmRule)) {
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE)) {
       Node node = getUniqueNode(session);
       // Run a few basic checks given what we know about our test environment:
       assertThat(node.getEndPoint()).isNotNull();
@@ -56,7 +56,7 @@ public class NodeMetadataIT {
       assertThat(node.getRack()).isEqualTo("r1");
       if (!CcmBridge.DSE_ENABLEMENT) {
         // CcmBridge does not report accurate C* versions for DSE, only approximated values
-        assertThat(node.getCassandraVersion()).isEqualTo(ccmRule.getCassandraVersion());
+        assertThat(node.getCassandraVersion()).isEqualTo(CCM_RULE.getCassandraVersion());
       }
       assertThat(node.getState()).isSameAs(NodeState.UP);
       assertThat(node.getDistance()).isSameAs(NodeDistance.LOCAL);

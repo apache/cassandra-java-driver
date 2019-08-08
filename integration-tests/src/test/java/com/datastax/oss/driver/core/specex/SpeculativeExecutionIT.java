@@ -56,18 +56,19 @@ public class SpeculativeExecutionIT {
   private static final SimpleStatement QUERY = SimpleStatement.newInstance(QUERY_STRING);
 
   // Shared across all tests methods.
-  public static @ClassRule SimulacronRule simulacron =
+  @ClassRule
+  public static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
   @SuppressWarnings("deprecation")
   private final QueryCounter counter =
-      QueryCounter.builder(simulacron.cluster())
+      QueryCounter.builder(SIMULACRON_RULE.cluster())
           .withFilter((l) -> l.getQuery().equals(QUERY_STRING))
           .build();
 
   @Before
   public void clear() {
-    simulacron.cluster().clearPrimes(true);
+    SIMULACRON_RULE.cluster().clearPrimes(true);
   }
 
   @Test
@@ -308,7 +309,7 @@ public class SpeculativeExecutionIT {
   // Build a new Cluster instance for each test, because we need different configurations
   private CqlSession buildSession(int maxSpeculativeExecutions, long speculativeDelayMs) {
     return SessionUtils.newSession(
-        simulacron,
+        SIMULACRON_RULE,
         SessionUtils.configLoaderBuilder()
             .withDuration(
                 DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofMillis(SPECULATIVE_DELAY * 10))
@@ -390,7 +391,7 @@ public class SpeculativeExecutionIT {
     builder =
         builder.startProfile("profile2").withString(DefaultDriverOption.REQUEST_CONSISTENCY, "ONE");
 
-    CqlSession session = SessionUtils.newSession(simulacron, builder.build());
+    CqlSession session = SessionUtils.newSession(SIMULACRON_RULE, builder.build());
 
     // validate profile data
     DriverContext context = session.getContext();
@@ -429,6 +430,6 @@ public class SpeculativeExecutionIT {
   }
 
   private void primeNode(int id, PrimeDsl.PrimeBuilder primeBuilder) {
-    simulacron.cluster().node(id).prime(primeBuilder);
+    SIMULACRON_RULE.cluster().node(id).prime(primeBuilder);
   }
 }

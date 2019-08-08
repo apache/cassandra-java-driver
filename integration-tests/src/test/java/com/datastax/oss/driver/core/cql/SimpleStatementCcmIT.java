@@ -15,14 +15,10 @@
  */
 package com.datastax.oss.driver.core.cql;
 
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
-import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
@@ -33,71 +29,53 @@ import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
-import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.datastax.oss.protocol.internal.Message;
-import com.datastax.oss.protocol.internal.request.Query;
-import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
-import com.datastax.oss.simulacron.common.cluster.QueryLog;
-import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestName;
 import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
-public class SimpleStatementIT {
+public class SimpleStatementCcmIT {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(1));
-
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccm)
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(CCM_RULE)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 20)
                   .build())
           .build();
 
-  private static SessionRule<CqlSession> simulacronSessionRule =
-      SessionRule.builder(simulacron).build();
-
-  @ClassRule public static TestRule ccmChain = RuleChain.outerRule(ccm).around(sessionRule);
-
   @ClassRule
-  public static TestRule simulacronChain =
-      RuleChain.outerRule(simulacron).around(simulacronSessionRule);
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Rule public TestName name = new TestName();
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private static final String KEY = "test";
 
   @BeforeClass
   public static void setupSchema() {
     // table where every column forms the primary key.
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(
             SimpleStatement.builder(
                     "CREATE TABLE IF NOT EXISTS test (k text, v int, PRIMARY KEY(k, v))")
-                .setExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(SESSION_RULE.slowProfile())
                 .build());
     for (int i = 0; i < 100; i++) {
-      sessionRule
+      SESSION_RULE
           .session()
           .execute(
               SimpleStatement.builder("INSERT INTO test (k, v) VALUES (?, ?)")
@@ -106,32 +84,26 @@ public class SimpleStatementIT {
     }
 
     // table with simple primary key, single cell.
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(
             SimpleStatement.builder("CREATE TABLE IF NOT EXISTS test2 (k text primary key, v int)")
-                .setExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(SESSION_RULE.slowProfile())
                 .build());
-  }
-
-  @Before
-  public void clearPrimes() {
-    simulacron.cluster().clearLogs();
-    simulacron.cluster().clearPrimes(true);
   }
 
   @Test
   public void should_use_paging_state_when_copied() {
     Statement<?> st =
         SimpleStatement.builder(String.format("SELECT v FROM test WHERE k='%s'", KEY)).build();
-    ResultSet result = sessionRule.session().execute(st);
+    ResultSet result = SESSION_RULE.session().execute(st);
 
     // given a query created from a copy of a previous query with paging state from previous queries
     // response.
     st = st.copy(result.getExecutionInfo().getPagingState());
 
     // when executing that query.
-    result = sessionRule.session().execute(st);
+    result = SESSION_RULE.session().execute(st);
 
     // then the response should start on the page boundary.
     assertThat(result.iterator().next().getInt("v")).isEqualTo(20);
@@ -141,7 +113,7 @@ public class SimpleStatementIT {
   public void should_use_paging_state_when_provided_to_new_statement() {
     Statement<?> st =
         SimpleStatement.builder(String.format("SELECT v FROM test WHERE k='%s'", KEY)).build();
-    ResultSet result = sessionRule.session().execute(st);
+    ResultSet result = SESSION_RULE.session().execute(st);
 
     // given a query created from a copy of a previous query with paging state from previous queries
     // response.
@@ -151,7 +123,7 @@ public class SimpleStatementIT {
             .build();
 
     // when executing that query.
-    result = sessionRule.session().execute(st);
+    result = SESSION_RULE.session().execute(st);
 
     // then the response should start on the page boundary.
     assertThat(result.iterator().next().getInt("v")).isEqualTo(20);
@@ -162,7 +134,7 @@ public class SimpleStatementIT {
   public void should_fail_if_using_paging_state_from_different_query() {
     Statement<?> st =
         SimpleStatement.builder("SELECT v FROM test WHERE k=:k").addNamedValue("k", KEY).build();
-    ResultSet result = sessionRule.session().execute(st);
+    ResultSet result = SESSION_RULE.session().execute(st);
 
     // TODO Expect PagingStateException
 
@@ -183,7 +155,7 @@ public class SimpleStatementIT {
             .setQueryTimestamp(timestamp)
             .build();
 
-    sessionRule.session().execute(insert);
+    SESSION_RULE.session().execute(insert);
 
     // when retrieving writetime of cell from that insert.
     SimpleStatement select =
@@ -191,7 +163,7 @@ public class SimpleStatementIT {
             .addPositionalValue(name.getMethodName())
             .build();
 
-    ResultSet result = sessionRule.session().execute(select);
+    ResultSet result = SESSION_RULE.session().execute(select);
     List<Row> rows = result.all();
     assertThat(rows).hasSize(1);
 
@@ -205,7 +177,7 @@ public class SimpleStatementIT {
   public void should_use_tracing_when_set() {
     // TODO currently there's no way to validate tracing was set since trace id is not set
     // also write test to verify it is not set.
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(SimpleStatement.builder("select * from test").setTracing().build());
   }
@@ -220,7 +192,7 @@ public class SimpleStatementIT {
             .build();
 
     // when executing that statement
-    sessionRule.session().execute(insert);
+    SESSION_RULE.session().execute(insert);
 
     // then we should be able to retrieve the data as inserted.
     SimpleStatement select =
@@ -228,7 +200,7 @@ public class SimpleStatementIT {
             .addPositionalValue(name.getMethodName())
             .build();
 
-    ResultSet result = sessionRule.session().execute(select);
+    ResultSet result = SESSION_RULE.session().execute(select);
     List<Row> rows = result.all();
     assertThat(rows).hasSize(1);
 
@@ -247,7 +219,7 @@ public class SimpleStatementIT {
             .build();
 
     // when executing that statement
-    sessionRule.session().execute(insert);
+    SESSION_RULE.session().execute(insert);
 
     // then we should be able to retrieve the data as inserted.
     SimpleStatement select =
@@ -255,7 +227,7 @@ public class SimpleStatementIT {
             .addPositionalValue(name.getMethodName())
             .build();
 
-    ResultSet result = sessionRule.session().execute(select);
+    ResultSet result = SESSION_RULE.session().execute(select);
     List<Row> rows = result.all();
     assertThat(rows).hasSize(1);
 
@@ -273,7 +245,7 @@ public class SimpleStatementIT {
             .build();
 
     // when executing that statement
-    sessionRule.session().execute(insert);
+    SESSION_RULE.session().execute(insert);
 
     // then the server will throw an InvalidQueryException which is thrown up to the client.
   }
@@ -287,7 +259,7 @@ public class SimpleStatementIT {
             .build();
 
     // when executing that statement
-    sessionRule.session().execute(insert);
+    SESSION_RULE.session().execute(insert);
 
     // then the server will throw an InvalidQueryException which is thrown up to the client.
   }
@@ -302,7 +274,7 @@ public class SimpleStatementIT {
             .build();
 
     // when executing that statement
-    sessionRule.session().execute(insert);
+    SESSION_RULE.session().execute(insert);
 
     // then we should be able to retrieve the data as inserted.
     SimpleStatement select =
@@ -310,7 +282,7 @@ public class SimpleStatementIT {
             .addNamedValue("k", name.getMethodName())
             .build();
 
-    ResultSet result = sessionRule.session().execute(select);
+    ResultSet result = SESSION_RULE.session().execute(select);
     List<Row> rows = result.all();
     assertThat(rows).hasSize(1);
 
@@ -329,7 +301,7 @@ public class SimpleStatementIT {
             .build();
 
     // when executing that statement
-    sessionRule.session().execute(insert);
+    SESSION_RULE.session().execute(insert);
 
     // then we should be able to retrieve the data as inserted.
     SimpleStatement select =
@@ -337,7 +309,7 @@ public class SimpleStatementIT {
             .addNamedValue("k", name.getMethodName())
             .build();
 
-    ResultSet result = sessionRule.session().execute(select);
+    ResultSet result = SESSION_RULE.session().execute(select);
     List<Row> rows = result.all();
     assertThat(rows).hasSize(1);
 
@@ -355,7 +327,7 @@ public class SimpleStatementIT {
             .build();
 
     // when executing that statement
-    sessionRule.session().execute(insert);
+    SESSION_RULE.session().execute(insert);
 
     // then the server will throw an InvalidQueryException which is thrown up to the client.
   }
@@ -382,56 +354,17 @@ public class SimpleStatementIT {
         SimpleStatement.builder("SELECT count(*) FROM test2 WHERE k=:\"theKey\"")
             .addNamedValue(CqlIdentifier.fromCql("\"theKey\""), 0)
             .build();
-    Row row = sessionRule.session().execute(statement).one();
+    Row row = SESSION_RULE.session().execute(statement).one();
     assertThat(row.getLong(0)).isEqualTo(0);
   }
 
   @Test
   public void should_use_page_size() {
     Statement<?> st = SimpleStatement.builder("SELECT v FROM test").setPageSize(10).build();
-    CompletionStage<AsyncResultSet> future = sessionRule.session().executeAsync(st);
+    CompletionStage<AsyncResultSet> future = SESSION_RULE.session().executeAsync(st);
     AsyncResultSet result = CompletableFutures.getUninterruptibly(future);
 
     // Should have only fetched 10 (page size) rows.
     assertThat(result.remaining()).isEqualTo(10);
-  }
-
-  @Test
-  public void should_use_consistencies() {
-    SimpleStatement st =
-        SimpleStatement.builder("SELECT * FROM test where k = ?")
-            .setConsistencyLevel(DefaultConsistencyLevel.TWO)
-            .setSerialConsistencyLevel(DefaultConsistencyLevel.LOCAL_SERIAL)
-            .build();
-    simulacronSessionRule.session().execute(st);
-
-    List<QueryLog> logs = simulacron.cluster().getLogs().getQueryLogs();
-    assertThat(logs).hasSize(1);
-
-    QueryLog log = logs.get(0);
-
-    Message message = log.getFrame().message;
-    assertThat(message).isInstanceOf(Query.class);
-    Query query = (Query) message;
-    assertThat(query.options.consistency).isEqualTo(DefaultConsistencyLevel.TWO.getProtocolCode());
-    assertThat(query.options.serialConsistency)
-        .isEqualTo(DefaultConsistencyLevel.LOCAL_SERIAL.getProtocolCode());
-  }
-
-  @Test
-  public void should_use_timeout() {
-    simulacron
-        .cluster()
-        .prime(when("mock query").then(noRows()).delay(1500, TimeUnit.MILLISECONDS));
-    SimpleStatement st =
-        SimpleStatement.builder("mock query")
-            .setTimeout(Duration.ofSeconds(1))
-            .setConsistencyLevel(DefaultConsistencyLevel.ONE)
-            .build();
-
-    thrown.expect(DriverTimeoutException.class);
-    thrown.expectMessage("Query timed out after PT1S");
-
-    simulacronSessionRule.session().execute(st);
   }
 }

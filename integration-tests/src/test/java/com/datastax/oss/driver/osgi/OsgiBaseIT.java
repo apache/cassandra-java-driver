@@ -45,7 +45,8 @@ import org.ops4j.pax.exam.spi.reactors.PerClass;
 @Category(IsolatedTests.class)
 public abstract class OsgiBaseIT {
 
-  @ClassRule public static CustomCcmRule ccmRule = CustomCcmRule.builder().withNodes(1).build();
+  @ClassRule
+  public static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().withNodes(1).build();
 
   /** @return config loader to be used to create session. */
   protected abstract DriverConfigLoader configLoader();
@@ -58,7 +59,7 @@ public abstract class OsgiBaseIT {
   public void should_connect_and_query() {
     SessionBuilder<CqlSessionBuilder, CqlSession> builder =
         CqlSession.builder()
-            .addContactEndPoints(ccmRule.getContactPoints())
+            .addContactEndPoints(CCM_RULE.getContactPoints())
             // use the driver's ClassLoader instead of the OSGI application thread's.
             .withClassLoader(CqlSession.class.getClassLoader())
             .withConfigLoader(configLoader());

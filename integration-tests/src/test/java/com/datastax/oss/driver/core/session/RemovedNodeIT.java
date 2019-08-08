@@ -29,13 +29,14 @@ import org.junit.Test;
 
 public class RemovedNodeIT {
 
-  @ClassRule public static CustomCcmRule ccmRule = CustomCcmRule.builder().withNodes(2).build();
+  @ClassRule
+  public static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().withNodes(2).build();
 
   @Test
   public void should_signal_and_destroy_pool_when_node_gets_removed() {
     RemovalListener removalListener = new RemovalListener();
     try (CqlSession session = CqlSession.builder().withNodeStateListener(removalListener).build()) {
-      ccmRule.getCcmBridge().nodetool(2, "decommission");
+      CCM_RULE.getCcmBridge().nodetool(2, "decommission");
       ConditionChecker.checkThat(() -> removalListener.removedNode != null).becomesTrue();
 
       Map<Node, ChannelPool> pools = ((DefaultSession) session).getPools();

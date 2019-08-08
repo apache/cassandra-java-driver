@@ -46,9 +46,11 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class QueryKeyspaceAndTableIT {
 
-  private static CcmRule ccm = CcmRule.getInstance();
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
+
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private static final CqlIdentifier FOO_TABLE_ID = CqlIdentifier.fromCql("foo");
   private static final CqlIdentifier OTHER_KEYSPACE =
@@ -60,7 +62,7 @@ public class QueryKeyspaceAndTableIT {
 
   @BeforeClass
   public static void createSchema() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
     for (String query :
         ImmutableList.of(
@@ -70,7 +72,7 @@ public class QueryKeyspaceAndTableIT {
                 OTHER_KEYSPACE.asCql(false)),
             String.format("CREATE TABLE %s.foo(k int PRIMARY KEY)", OTHER_KEYSPACE.asCql(false)))) {
       session.execute(
-          SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
+          SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
     }
 
     session.execute("INSERT INTO foo (k) VALUES (1)");
@@ -85,7 +87,7 @@ public class QueryKeyspaceAndTableIT {
   @Test
   public void should_substitute_keyspaceId_and_tableId() {
     DaoWithKeyspaceAndTableId dao =
-        mapper.daoWithKeyspaceAndTableId(sessionRule.keyspace(), FOO_TABLE_ID);
+        mapper.daoWithKeyspaceAndTableId(SESSION_RULE.keyspace(), FOO_TABLE_ID);
     assertThat(dao.count()).isEqualTo(1);
   }
 
@@ -106,7 +108,7 @@ public class QueryKeyspaceAndTableIT {
         "Cannot substitute ${tableId} in query "
             + "'SELECT count(*) FROM ${keyspaceId}.${tableId}': "
             + "the DAO wasn't built with a table");
-    mapper.daoWithKeyspaceAndTableId(sessionRule.keyspace(), null);
+    mapper.daoWithKeyspaceAndTableId(SESSION_RULE.keyspace(), null);
   }
 
   @Test
@@ -128,7 +130,7 @@ public class QueryKeyspaceAndTableIT {
         "Cannot substitute ${qualifiedTableId} in query "
             + "'SELECT count(*) FROM ${qualifiedTableId}': "
             + "the DAO wasn't built with a table");
-    mapper.daoWithQualifiedTableId(sessionRule.keyspace(), null);
+    mapper.daoWithQualifiedTableId(SESSION_RULE.keyspace(), null);
   }
 
   @Dao

@@ -30,7 +30,8 @@ import org.junit.experimental.categories.Category;
 @Category(IsolatedTests.class)
 public class DefaultSslEngineFactoryPropertyBasedIT {
 
-  @ClassRule public static CustomCcmRule ccm = CustomCcmRule.builder().withSslLocalhostCn().build();
+  @ClassRule
+  public static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().withSslLocalhostCn().build();
 
   @Test
   public void should_connect_with_ssl() {
@@ -42,7 +43,7 @@ public class DefaultSslEngineFactoryPropertyBasedIT {
         SessionUtils.configLoaderBuilder()
             .withClass(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS, DefaultSslEngineFactory.class)
             .build();
-    try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, loader)) {
       session.execute("select * from system.local");
     }
   }

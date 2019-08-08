@@ -47,10 +47,11 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class ExceptionIT {
 
-  private static SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(2));
+  private static final SimulacronRule SIMULACRON_RULE =
+      new SimulacronRule(ClusterSpec.builder().withNodes(2));
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(simulacron)
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(SIMULACRON_RULE)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withClass(
@@ -60,19 +61,20 @@ public class ExceptionIT {
                   .build())
           .build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(simulacron).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(SIMULACRON_RULE).around(SESSION_RULE);
 
   private static String QUERY_STRING = "select * from foo";
 
   @Before
   public void clear() {
-    simulacron.cluster().clearLogs();
+    SIMULACRON_RULE.cluster().clearLogs();
   }
 
   @Test
   public void should_expose_execution_info_on_exceptions() {
     // Given
-    simulacron
+    SIMULACRON_RULE
         .cluster()
         .node(0)
         .prime(
@@ -80,20 +82,20 @@ public class ExceptionIT {
                 .then(
                     unavailable(
                         com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ONE, 1, 0)));
-    simulacron
+    SIMULACRON_RULE
         .cluster()
         .node(1)
         .prime(when(QUERY_STRING).then(PrimeDsl.invalid("Mock error message")));
 
     // Then
-    assertThatThrownBy(() -> sessionRule.session().execute(QUERY_STRING))
+    assertThatThrownBy(() -> SESSION_RULE.session().execute(QUERY_STRING))
         .isInstanceOf(InvalidQueryException.class)
         .satisfies(
             exception -> {
               ExecutionInfo info = ((InvalidQueryException) exception).getExecutionInfo();
               assertThat(info).isNotNull();
               assertThat(info.getCoordinator().getEndPoint().resolve())
-                  .isEqualTo(simulacron.cluster().node(1).inetSocketAddress());
+                  .isEqualTo(SIMULACRON_RULE.cluster().node(1).inetSocketAddress());
               assertThat(((SimpleStatement) info.getStatement()).getQuery())
                   .isEqualTo(QUERY_STRING);
 
@@ -114,7 +116,7 @@ public class ExceptionIT {
               assertThat(errors).hasSize(1);
               Map.Entry<Node, Throwable> entry0 = errors.get(0);
               assertThat(entry0.getKey().getEndPoint().resolve())
-                  .isEqualTo(simulacron.cluster().node(0).inetSocketAddress());
+                  .isEqualTo(SIMULACRON_RULE.cluster().node(0).inetSocketAddress());
               Throwable node0Exception = entry0.getValue();
               assertThat(node0Exception).isInstanceOf(UnavailableException.class);
               // ExecutionInfo is not exposed for retried errors

@@ -50,37 +50,38 @@ import org.junit.runner.RunWith;
 @Category(ParallelizableTests.class)
 public class PagingIterableSpliteratorIT {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @BeforeClass
   public static void setupSchema() {
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(
             SimpleStatement.builder(
                     "CREATE TABLE IF NOT EXISTS test (k0 int, k1 int, v int, PRIMARY KEY(k0, k1))")
-                .setExecutionProfile(sessionRule.slowProfile())
+                .setExecutionProfile(SESSION_RULE.slowProfile())
                 .build());
     PreparedStatement prepared =
-        sessionRule.session().prepare("INSERT INTO test (k0, k1, v) VALUES (?, ?, ?)");
+        SESSION_RULE.session().prepare("INSERT INTO test (k0, k1, v) VALUES (?, ?, ?)");
     for (int i = 0; i < 20_000; i += 1_000) {
       BatchStatementBuilder batch = BatchStatement.builder(DefaultBatchType.UNLOGGED);
       for (int j = 0; j < 1_000; j++) {
         int n = i + j;
         batch.addStatement(prepared.bind(0, n, n));
       }
-      sessionRule.session().execute(batch.setExecutionProfile(sessionRule.slowProfile()).build());
+      SESSION_RULE.session().execute(batch.setExecutionProfile(SESSION_RULE.slowProfile()).build());
     }
   }
 
   @Test
   @UseDataProvider("pageSizes")
   public void should_consume_spliterator(int pageSize, boolean parallel) throws Exception {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     DriverExecutionProfile profile =
         session
             .getContext()

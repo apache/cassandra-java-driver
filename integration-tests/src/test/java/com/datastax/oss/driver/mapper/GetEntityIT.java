@@ -48,25 +48,26 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class GetEntityIT extends InventoryITBase {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private static ProductDao dao;
 
   @BeforeClass
   public static void setup() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
-    for (String query : createStatements(ccm)) {
+    for (String query : createStatements(CCM_RULE)) {
       session.execute(
-          SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
+          SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
     }
 
     InventoryMapper inventoryMapper = new GetEntityIT_InventoryMapperBuilder(session).build();
-    dao = inventoryMapper.productDao(sessionRule.keyspace());
+    dao = inventoryMapper.productDao(SESSION_RULE.keyspace());
 
     dao.save(FLAMETHROWER);
     dao.save(MP3_DOWNLOAD);
@@ -74,7 +75,7 @@ public class GetEntityIT extends InventoryITBase {
 
   @Test
   public void should_get_entity_from_row() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     ResultSet rs =
         session.execute(
             SimpleStatement.newInstance(
@@ -88,7 +89,7 @@ public class GetEntityIT extends InventoryITBase {
 
   @Test
   public void should_get_entity_from_first_row_of_result_set() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     ResultSet rs = session.execute("SELECT * FROM product");
 
     Product product = dao.getOne(rs);
@@ -98,7 +99,7 @@ public class GetEntityIT extends InventoryITBase {
 
   @Test
   public void should_get_entity_from_first_row_of_async_result_set() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     AsyncResultSet rs =
         CompletableFutures.getUninterruptibly(session.executeAsync("SELECT * FROM product"));
 
@@ -109,7 +110,7 @@ public class GetEntityIT extends InventoryITBase {
 
   @Test
   public void should_get_iterable_from_result_set() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     ResultSet rs = session.execute("SELECT * FROM product");
     PagingIterable<Product> products = dao.get(rs);
     assertThat(Sets.newHashSet(products)).containsOnly(FLAMETHROWER, MP3_DOWNLOAD);
@@ -117,7 +118,7 @@ public class GetEntityIT extends InventoryITBase {
 
   @Test
   public void should_get_async_iterable_from_async_result_set() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     AsyncResultSet rs =
         CompletableFutures.getUninterruptibly(session.executeAsync("SELECT * FROM product"));
     MappedAsyncPagingIterable<Product> products = dao.get(rs);

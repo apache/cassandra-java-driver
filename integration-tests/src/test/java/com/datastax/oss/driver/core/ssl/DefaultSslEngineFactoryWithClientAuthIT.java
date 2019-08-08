@@ -28,7 +28,8 @@ import org.junit.Test;
 
 public class DefaultSslEngineFactoryWithClientAuthIT {
 
-  @ClassRule public static CustomCcmRule ccm = CustomCcmRule.builder().withSslAuth().build();
+  @ClassRule
+  public static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().withSslAuth().build();
 
   @Test
   public void should_connect_with_ssl_using_client_auth() {
@@ -49,7 +50,7 @@ public class DefaultSslEngineFactoryWithClientAuthIT {
                 DefaultDriverOption.SSL_TRUSTSTORE_PASSWORD,
                 CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD)
             .build();
-    try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, loader)) {
       session.execute("select * from system.local");
     }
   }
@@ -67,7 +68,7 @@ public class DefaultSslEngineFactoryWithClientAuthIT {
                 DefaultDriverOption.SSL_TRUSTSTORE_PASSWORD,
                 CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD)
             .build();
-    try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, loader)) {
       session.execute("select * from system.local");
     }
   }
