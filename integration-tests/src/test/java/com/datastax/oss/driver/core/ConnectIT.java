@@ -17,12 +17,11 @@ package com.datastax.oss.driver.core;
 
 import static com.datastax.oss.driver.api.testinfra.utils.ConditionChecker.checkThat;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static junit.framework.TestCase.fail;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.context.DriverContext;
@@ -119,18 +118,19 @@ public class ConnectIT {
    */
   @Test
   public void should_cleanup_on_lbp_init_failure() {
-    try {
-      DriverConfigLoader loader =
-          SessionUtils.configLoaderBuilder()
-              .without(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)
-              .build();
-      CqlSession.builder()
-          .addContactEndPoints(SIMULACRON_RULE.getContactPoints())
-          .withConfigLoader(loader)
-          .build();
-      fail("Should have thrown a DriverException for no DC with explicit contact point");
-    } catch (DriverException ignored) {
-    }
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .without(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)
+            .build();
+    assertThatThrownBy(
+            () ->
+                CqlSession.builder()
+                    .addContactEndPoints(SIMULACRON_RULE.getContactPoints())
+                    .withConfigLoader(loader)
+                    .build())
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining(
+            "You provided explicit contact points, the local DC must be specified");
     // One second should be plenty of time for connections to close server side
     checkThat(() -> SIMULACRON_RULE.cluster().getConnections().getConnections().isEmpty())
         .before(1, SECONDS)
