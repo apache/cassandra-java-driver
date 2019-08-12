@@ -110,7 +110,7 @@ use [JSSE system properties]:
 -Djavax.net.ssl.keyStorePassword=password123
 ```
 
-#### JSSE, programmatic
+#### JSSE, custom factory
 
 If you need more control than what system properties allow, you need to write your own engine
 factory. If you just need specific configuration on the `SSLEngine`, you can extend the default
@@ -143,6 +143,27 @@ datastax-java-driver {
     class = com.mycompany.CustomSslEngineFactory
   }
 }
+```
+
+#### JSSE, programmatic
+
+You can also provide a factory instance programmatically. This will take precedence over the
+configuration:
+
+```java
+SslEngineFactory yourFactory = ...
+CqlSession session = CqlSession.builder()
+    .withSslEngineFactory(yourFactory)
+    .build();
+```
+
+There is also a convenience shortcut if you just want to use an existing `javax.net.ssl.SSLContext`:
+
+```java
+SSLContext sslContext = ...
+CqlSession session = CqlSession.builder()
+    .withSslContext(sslContext)
+    .build();
 ```
 
 #### Netty

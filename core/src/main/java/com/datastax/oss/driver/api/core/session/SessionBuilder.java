@@ -28,6 +28,8 @@ import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
+import com.datastax.oss.driver.api.core.ssl.ProgrammaticSslEngineFactory;
+import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.ContactPoints;
@@ -51,6 +53,7 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import javax.net.ssl.SSLContext;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -249,6 +252,36 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   @NonNull
   public SelfT withAuthCredentials(@NonNull String username, @NonNull String password) {
     return withAuthProvider(new ProgrammaticPlainTextAuthProvider(username, password));
+  }
+
+  /**
+   * Registers an SSL engine factory for the session.
+   *
+   * <p>If the factory is provided programmatically with this method, it overrides the configuration
+   * (that is, the {@code advanced.ssl-engine-factory} option will be ignored).
+   */
+  @NonNull
+  public SelfT withSslEngineFactory(@Nullable SslEngineFactory sslEngineFactory) {
+    this.programmaticArgumentsBuilder.withSslEngineFactory(sslEngineFactory);
+    return self;
+  }
+
+  /**
+   * Configures the session to use SSL with the given context.
+   *
+   * <p>This is a convenience method for clients that already have an {@link SSLContext} instance.
+   * It wraps its argument into a {@link ProgrammaticSslEngineFactory}, and passes it to {@link
+   * #withSslEngineFactory(SslEngineFactory)}.
+   *
+   * <p>If you use this method, there is no way to customize cipher suites, or turn on host name
+   * validation. Also, note that SSL engines will be created with advisory peer information ({@link
+   * SSLContext#createSSLEngine(String, int)}) whenever possible. If you need finer control, write
+   * your own factory.
+   */
+  @NonNull
+  public SelfT withSslContext(@Nullable SSLContext sslContext) {
+    return withSslEngineFactory(
+        sslContext == null ? null : new ProgrammaticSslEngineFactory(sslContext));
   }
 
   /**

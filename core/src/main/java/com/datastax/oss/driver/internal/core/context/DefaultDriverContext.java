@@ -126,8 +126,7 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("timestampGenerator", this::buildTimestampGenerator, cycleDetector);
   private final LazyReference<AddressTranslator> addressTranslatorRef =
       new LazyReference<>("addressTranslator", this::buildAddressTranslator, cycleDetector);
-  private final LazyReference<Optional<SslEngineFactory>> sslEngineFactoryRef =
-      new LazyReference<>("sslEngineFactory", this::buildSslEngineFactory, cycleDetector);
+  private final LazyReference<Optional<SslEngineFactory>> sslEngineFactoryRef;
 
   private final LazyReference<EventBus> eventBusRef =
       new LazyReference<>("eventBus", this::buildEventBus, cycleDetector);
@@ -234,6 +233,11 @@ public class DefaultDriverContext implements InternalDriverContext {
     this.requestTrackerRef =
         new LazyReference<>(
             "requestTracker", () -> buildRequestTracker(requestTrackerFromBuilder), cycleDetector);
+    this.sslEngineFactoryRef =
+        new LazyReference<>(
+            "sslEngineFactory",
+            () -> buildSslEngineFactory(programmaticArguments.getSslEngineFactory()),
+            cycleDetector);
     this.nodeFiltersFromBuilder = programmaticArguments.getNodeFilters();
     this.classLoader = programmaticArguments.getClassLoader();
   }
@@ -340,12 +344,14 @@ public class DefaultDriverContext implements InternalDriverContext {
                         DefaultDriverOption.ADDRESS_TRANSLATOR_CLASS)));
   }
 
-  protected Optional<SslEngineFactory> buildSslEngineFactory() {
-    return Reflection.buildFromConfig(
-        this,
-        DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS,
-        SslEngineFactory.class,
-        "com.datastax.oss.driver.internal.core.ssl");
+  protected Optional<SslEngineFactory> buildSslEngineFactory(SslEngineFactory factoryFromBuilder) {
+    return (factoryFromBuilder != null)
+        ? Optional.of(factoryFromBuilder)
+        : Reflection.buildFromConfig(
+            this,
+            DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS,
+            SslEngineFactory.class,
+            "com.datastax.oss.driver.internal.core.ssl");
   }
 
   protected EventBus buildEventBus() {
@@ -394,8 +400,8 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected Optional<SslHandlerFactory> buildSslHandlerFactory() {
-    // If a JDK-based factory was provided through the public API, syncWrapper it
-    return buildSslEngineFactory().map(JdkSslHandlerFactory::new);
+    // If a JDK-based factory was provided through the public API, wrap it
+    return getSslEngineFactory().map(JdkSslHandlerFactory::new);
 
     // For more advanced options (like using Netty's native OpenSSL support instead of the JDK),
     // extend DefaultDriverContext and override this method
