@@ -36,7 +36,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -59,7 +58,7 @@ public abstract class NativeGraphDataTypeITBase {
       new DseSessionRuleBuilder(ccmRule)
           .withCreateGraph()
           .withGraphProtocol(GraphProtocol.GRAPH_BINARY_1_0.toInternalCode())
-          .withNativeEngine()
+          .withCoreEngine()
           .build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
@@ -244,8 +243,7 @@ public abstract class NativeGraphDataTypeITBase {
     Map<Object, Object> results = insertVertexThenReadProperties(properties, vertexID, vertexLabel);
 
     // test valid properties are returned
-    properties.forEach(
-        (k, v) -> assertThat(((List) results.get(formatPropertyName(k))).get(0)).isEqualTo(v));
+    properties.forEach((k, v) -> assertThat(results.get(formatPropertyName(k))).isEqualTo(v));
   }
 
   private static GraphStatement createVertexLabelStatement(
