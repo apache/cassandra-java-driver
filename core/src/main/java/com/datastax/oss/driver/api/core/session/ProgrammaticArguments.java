@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
+import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -50,6 +51,7 @@ public class ProgrammaticArguments {
   private final Map<String, Predicate<Node>> nodeFilters;
   private final ClassLoader classLoader;
   private final AuthProvider authProvider;
+  private final SslEngineFactory sslEngineFactory;
 
   private ProgrammaticArguments(
       @NonNull List<TypeCodec<?>> typeCodecs,
@@ -59,7 +61,8 @@ public class ProgrammaticArguments {
       @NonNull Map<String, String> localDatacenters,
       @NonNull Map<String, Predicate<Node>> nodeFilters,
       @Nullable ClassLoader classLoader,
-      @Nullable AuthProvider authProvider) {
+      @Nullable AuthProvider authProvider,
+      @Nullable SslEngineFactory sslEngineFactory) {
     this.typeCodecs = typeCodecs;
     this.nodeStateListener = nodeStateListener;
     this.schemaChangeListener = schemaChangeListener;
@@ -68,6 +71,7 @@ public class ProgrammaticArguments {
     this.nodeFilters = nodeFilters;
     this.classLoader = classLoader;
     this.authProvider = authProvider;
+    this.sslEngineFactory = sslEngineFactory;
   }
 
   @NonNull
@@ -110,6 +114,11 @@ public class ProgrammaticArguments {
     return authProvider;
   }
 
+  @Nullable
+  public SslEngineFactory getSslEngineFactory() {
+    return sslEngineFactory;
+  }
+
   public static class Builder {
 
     private ImmutableList.Builder<TypeCodec<?>> typeCodecsBuilder = ImmutableList.builder();
@@ -121,6 +130,7 @@ public class ProgrammaticArguments {
         ImmutableMap.builder();
     private ClassLoader classLoader;
     private AuthProvider authProvider;
+    private SslEngineFactory sslEngineFactory;
 
     @NonNull
     public Builder addTypeCodecs(@NonNull TypeCodec<?>... typeCodecs) {
@@ -189,6 +199,12 @@ public class ProgrammaticArguments {
     }
 
     @NonNull
+    public Builder withSslEngineFactory(@Nullable SslEngineFactory sslEngineFactory) {
+      this.sslEngineFactory = sslEngineFactory;
+      return this;
+    }
+
+    @NonNull
     public ProgrammaticArguments build() {
       return new ProgrammaticArguments(
           typeCodecsBuilder.build(),
@@ -198,7 +214,8 @@ public class ProgrammaticArguments {
           localDatacentersBuilder.build(),
           nodeFiltersBuilder.build(),
           classLoader,
-          authProvider);
+          authProvider,
+          sslEngineFactory);
     }
   }
 }
