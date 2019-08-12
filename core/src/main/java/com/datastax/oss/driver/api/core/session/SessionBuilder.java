@@ -208,7 +208,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
-   * Register a request tracker to use with the session.
+   * Registers a request tracker to use with the session.
    *
    * <p>If the tracker is specified programmatically with this method, it overrides the
    * configuration (that is, the {@code request.tracker.class} option will be ignored).
@@ -220,7 +220,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
-   * Register an authentication provider to use with the session.
+   * Registers an authentication provider to use with the session.
    *
    * <p>If the provider is specified programmatically with this method, it overrides the
    * configuration (that is, the {@code advanced.auth-provider.class} option will be ignored).

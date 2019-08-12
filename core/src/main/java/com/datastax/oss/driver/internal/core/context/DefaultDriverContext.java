@@ -193,7 +193,6 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final NodeStateListener nodeStateListenerFromBuilder;
   private final SchemaChangeListener schemaChangeListenerFromBuilder;
   private final RequestTracker requestTrackerFromBuilder;
-  private final AuthProvider authProviderFromBuilder;
   private final Map<String, String> localDatacentersFromBuilder;
   private final Map<String, Predicate<Node>> nodeFiltersFromBuilder;
   private final ClassLoader classLoader;
@@ -226,11 +225,12 @@ public class DefaultDriverContext implements InternalDriverContext {
             () -> buildSchemaChangeListener(schemaChangeListenerFromBuilder),
             cycleDetector);
     this.requestTrackerFromBuilder = programmaticArguments.getRequestTracker();
-    this.authProviderFromBuilder = programmaticArguments.getAuthProvider();
 
     this.authProviderRef =
         new LazyReference<>(
-            "authProvider", () -> buildAuthProvider(authProviderFromBuilder), cycleDetector);
+            "authProvider",
+            () -> buildAuthProvider(programmaticArguments.getAuthProvider()),
+            cycleDetector);
     this.requestTrackerRef =
         new LazyReference<>(
             "requestTracker", () -> buildRequestTracker(requestTrackerFromBuilder), cycleDetector);
