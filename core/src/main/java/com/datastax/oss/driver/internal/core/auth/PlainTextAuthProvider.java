@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.auth;
 
+import com.datastax.oss.driver.api.core.auth.PlainTextAuthProviderBase;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;

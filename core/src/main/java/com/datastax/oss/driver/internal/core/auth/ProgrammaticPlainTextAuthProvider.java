@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.auth;
 
+import com.datastax.oss.driver.api.core.auth.PlainTextAuthProviderBase;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.ThreadSafe;

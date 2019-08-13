@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.session;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
+import com.datastax.oss.driver.api.core.auth.PlainTextAuthProviderBase;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -240,7 +241,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *
    * <p>Note that this approach holds the credentials in clear text in memory, which makes them
    * vulnerable to an attacker who is able to perform memory dumps. If this is not acceptable for
-   * you, consider writing your own {@link AuthProvider} implementation (the internal class {@code
+   * you, consider writing your own {@link AuthProvider} implementation ({@link
    * PlainTextAuthProviderBase} is a good starting point), and providing it either with {@link
    * #withAuthProvider(AuthProvider)} or via the configuration ({@code
    * advanced.auth-provider.class}).
