@@ -79,7 +79,7 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
     // nothing to do
   }
 
-  protected static class Credentials {
+  public static class Credentials {
 
     private final char[] username;
     private final char[] password;
