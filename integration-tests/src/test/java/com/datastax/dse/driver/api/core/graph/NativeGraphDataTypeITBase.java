@@ -28,7 +28,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -41,9 +40,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
-import org.junit.runner.RunWith;
 
-@RunWith(DataProviderRunner.class)
 public abstract class NativeGraphDataTypeITBase {
 
   private static CustomCcmRule ccmRule =

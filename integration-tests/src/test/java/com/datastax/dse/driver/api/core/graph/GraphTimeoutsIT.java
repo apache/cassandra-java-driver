@@ -33,7 +33,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@DseRequirement(min = "5.0.0", description = "DSE 5 required for Graph")
+@DseRequirement(min = "5.0.0", description = "DSE 5 required for Graph", max = "6.8.0")
 public class GraphTimeoutsIT {
 
   public static CustomCcmRule ccmRule = CustomCcmRule.builder().withDseWorkloads("graph").build();

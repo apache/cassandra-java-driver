@@ -11,11 +11,17 @@ import static com.datastax.dse.driver.api.core.graph.DseGraph.g;
 import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
 import com.datastax.dse.driver.api.core.graph.NativeGraphDataTypeITBase;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
+import com.datastax.oss.driver.categories.IsolatedTests;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import java.util.Map;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
 
 @DseRequirement(min = "6.8.0", description = "DSE 6.8.0 required for Native graph support")
+@RunWith(DataProviderRunner.class)
+@Category(IsolatedTests.class)
 public class NativeGraphDataTypeFluentIT extends NativeGraphDataTypeITBase {
 
   @Override
