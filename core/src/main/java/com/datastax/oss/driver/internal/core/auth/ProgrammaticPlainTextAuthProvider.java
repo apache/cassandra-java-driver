@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.auth;
 
 import com.datastax.oss.driver.api.core.auth.PlainTextAuthProviderBase;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.ThreadSafe;
@@ -41,7 +42,8 @@ public class ProgrammaticPlainTextAuthProvider extends PlainTextAuthProviderBase
 
   @NonNull
   @Override
-  protected Credentials getCredentials() {
+  protected Credentials getCredentials(
+      @NonNull EndPoint endPoint, @NonNull String serverAuthenticator) {
     return new Credentials(username.toCharArray(), password.toCharArray());
   }
 }

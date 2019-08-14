@@ -56,13 +56,14 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
    * <p>This is invoked every time the driver opens a new connection.
    */
   @NonNull
-  protected abstract Credentials getCredentials();
+  protected abstract Credentials getCredentials(
+      @NonNull EndPoint endPoint, @NonNull String serverAuthenticator);
 
   @NonNull
   @Override
   public Authenticator newAuthenticator(
       @NonNull EndPoint endPoint, @NonNull String serverAuthenticator) {
-    return new PlainTextAuthenticator(getCredentials());
+    return new PlainTextAuthenticator(getCredentials(endPoint, serverAuthenticator));
   }
 
   @Override
