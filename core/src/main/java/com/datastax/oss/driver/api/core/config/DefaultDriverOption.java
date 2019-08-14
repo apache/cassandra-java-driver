@@ -175,7 +175,10 @@ public enum DefaultDriverOption implements DriverOption {
   REQUEST_LOG_WARNINGS("advanced.request.log-warnings"),
 
   NETTY_DAEMON("advanced.netty.daemon"),
-  ;
+
+  FAILOVER_POLICY("advanced.failover-policy"),
+  FAILOVER_POLICY_CLASS("advanced.failover-policy.class"),
+  FAILOVER_POLICY_PROFILE("advanced.failover-policy.profile");
 
   private final String path;
 

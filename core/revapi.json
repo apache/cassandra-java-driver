@@ -4809,6 +4809,10 @@
         "code": "java.method.addedToInterface",
         "new": "method java.lang.String com.datastax.oss.driver.api.core.data.UdtValue::toString()",
         "justification": "False positive -- all objects implicitly have toString()"
+      },{
+        "code": "java.method.addedToInterface",
+        "new": "method java.util.Map<java.lang.String, com.datastax.oss.driver.api.core.failover.FailoverPolicy> com.datastax.oss.driver.api.core.context.DriverContext::getFailoverPolicies()",
+        "justification": "Added FailoverPolicy"
       }
     ]
   }

@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
+import com.datastax.oss.driver.api.core.failover.FailoverPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
@@ -110,6 +111,8 @@ public class DefaultDriverContext implements InternalDriverContext {
   protected final CycleDetector cycleDetector =
       new CycleDetector("Detected cycle in context initialization");
 
+  private final LazyReference<Map<String, FailoverPolicy>> failoverPoliciesRef =
+      new LazyReference<>("failoverPolicies", this::buildFailoverPolicies, cycleDetector);
   private final LazyReference<Map<String, LoadBalancingPolicy>> loadBalancingPoliciesRef =
       new LazyReference<>("loadBalancingPolicies", this::buildLoadBalancingPolicies, cycleDetector);
   private final LazyReference<ReconnectionPolicy> reconnectionPolicyRef =
@@ -276,6 +279,14 @@ public class DefaultDriverContext implements InternalDriverContext {
    */
   protected Map<String, String> buildStartupOptions() {
     return new StartupOptionsBuilder(this).build();
+  }
+
+  protected Map<String, FailoverPolicy> buildFailoverPolicies() {
+    return Reflection.buildFromConfigProfiles(
+        this,
+        DefaultDriverOption.FAILOVER_POLICY,
+        FailoverPolicy.class,
+        "com.datastax.oss.driver.internal.core.failover");
   }
 
   protected Map<String, LoadBalancingPolicy> buildLoadBalancingPolicies() {
@@ -554,6 +565,12 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public DriverConfigLoader getConfigLoader() {
     return configLoader;
+  }
+
+  @NonNull
+  @Override
+  public Map<String, FailoverPolicy> getFailoverPolicies() {
+    return failoverPoliciesRef.get();
   }
 
   @NonNull

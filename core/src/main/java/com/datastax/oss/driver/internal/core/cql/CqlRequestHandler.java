@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.core.connection.FrameTooLongException;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.failover.FailoverPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
@@ -103,6 +104,7 @@ public class CqlRequestHandler implements Throttled {
   private final DefaultSession session;
   private final CqlIdentifier keyspace;
   private final InternalDriverContext context;
+  private final String sessionLogPrefix;
   @NonNull private final DriverExecutionProfile executionProfile;
   private final boolean isIdempotent;
   protected final CompletableFuture<AsyncResultSet> result;
@@ -149,6 +151,7 @@ public class CqlRequestHandler implements Throttled {
     this.session = session;
     this.keyspace = session.getKeyspace().orElse(null);
     this.context = context;
+    this.sessionLogPrefix = sessionLogPrefix;
     this.executionProfile = Conversions.resolveExecutionProfile(statement, context);
     this.retryPolicy = context.getRetryPolicy(executionProfile.getName());
     this.speculativeExecutionPolicy =
@@ -213,7 +216,24 @@ public class CqlRequestHandler implements Throttled {
   }
 
   public CompletionStage<AsyncResultSet> handle() {
-    return result;
+    DriverExecutionProfile driverExecutionProfile =
+        Conversions.resolveExecutionProfile(statement, context);
+    if (driverExecutionProfile.isDefined(DefaultDriverOption.FAILOVER_POLICY_CLASS)) {
+      FailoverPolicy failoverPolicy = context.getFailoverPolicy(executionProfile.getName());
+      return result.exceptionally(
+          (e) -> {
+            if (failoverPolicy.shouldFailover(e, statement)) {
+              return new CqlRequestHandler(
+                      failoverPolicy.processRequest(statement), session, context, sessionLogPrefix)
+                  .handle()
+                  .toCompletableFuture()
+                  .join();
+            }
+            return result.toCompletableFuture().join();
+          });
+    } else {
+      return result;
+    }
   }
 
   private Timeout scheduleTimeout(Duration timeoutDuration) {

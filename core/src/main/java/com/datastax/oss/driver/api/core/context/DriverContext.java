@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
+import com.datastax.oss.driver.api.core.failover.FailoverPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
@@ -54,6 +55,25 @@ public interface DriverContext extends AttachmentPoint {
   @NonNull
   DriverConfigLoader getConfigLoader();
 
+  /**
+   * @return The driver's failover policies, keyed by profile name; the returned map is guaranteed
+   *     to never be {@code null} and to always contain an entry for the {@value
+   *     DriverExecutionProfile#DEFAULT_NAME} profile.
+   */
+  @NonNull
+  Map<String, FailoverPolicy> getFailoverPolicies();
+
+  /**
+   * @param profileName the profile name; never {@code null}.
+   * @return The driver's failover policy for the given profile; never {@code null}.
+   */
+  @NonNull
+  default FailoverPolicy getFailoverPolicy(@NonNull String profileName) {
+    FailoverPolicy policy = getFailoverPolicies().get(profileName);
+    return (policy != null)
+        ? policy
+        : getFailoverPolicies().get(DriverExecutionProfile.DEFAULT_NAME);
+  }
   /**
    * @return The driver's load balancing policies, keyed by profile name; the returned map is
    *     guaranteed to never be {@code null} and to always contain an entry for the {@value
