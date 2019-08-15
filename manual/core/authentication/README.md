@@ -60,11 +60,12 @@ CqlSession session =
 
 One downside of `withAuthCredentials` is that the credentials are stored in clear text in memory;
 this means they are vulnerable to an attacker who is able to perform memory dumps. If this is not
-acceptable for you, consider writing your own [AuthProvider] implementation (the internal class
-`PlainTextAuthProviderBase` is a good starting point). 
+acceptable for you, consider writing your own [AuthProvider] implementation
+([PlainTextAuthProviderBase] is a good starting point). 
 
 
 [SASL]: https://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer
 
-[AuthProvider]:          https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/auth/AuthProvider.html
-[DriverContext]:         https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/context/DriverContext.html
+[AuthProvider]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/auth/AuthProvider.html
+[DriverContext]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/context/DriverContext.html
+([PlainTextAuthProviderBase]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/auth/PlainTextAuthProviderBase.html
