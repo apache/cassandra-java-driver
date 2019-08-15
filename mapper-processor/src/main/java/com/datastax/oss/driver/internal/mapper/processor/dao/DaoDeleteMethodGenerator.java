@@ -101,7 +101,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
               methodElement,
               processedType,
               "Wrong number of parameters: %s methods with no custom clause "
-                  + "must take either an entity instance, or the partition key components",
+                  + "must take either an entity instance, or the primary key components",
               Delete.class.getSimpleName());
       return Optional.empty();
     }

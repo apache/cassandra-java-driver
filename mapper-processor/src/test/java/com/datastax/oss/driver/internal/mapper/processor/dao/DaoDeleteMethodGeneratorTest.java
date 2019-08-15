@@ -57,7 +57,7 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
       },
       {
         "Wrong number of parameters: Delete methods with no custom clause "
-            + "must take either an entity instance, or the partition key components",
+            + "must take either an entity instance, or the primary key components",
         MethodSpec.methodBuilder("delete")
             .addAnnotation(Delete.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
