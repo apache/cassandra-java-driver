@@ -122,7 +122,7 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
         if (!dseRequirement.max().isEmpty()) {
           Version maxVersion = Version.parse(dseRequirement.max());
 
-          if (maxVersion.compareTo(ccmBridge.getCassandraVersion()) <= 0) {
+          if (maxVersion.compareTo(dseVersion) <= 0) {
             return buildErrorStatement(maxVersion, dseRequirement.description(), true, true);
           }
         }
