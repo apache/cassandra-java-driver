@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.fail;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
@@ -33,7 +34,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@DseRequirement(min = "5.0.0", description = "DSE 5 required for Graph", max = "6.8.0")
+@DseRequirement(min = "5.0.0", description = "DSE 5 required for Graph")
 public class GraphTimeoutsIT {
 
   public static CustomCcmRule ccmRule = CustomCcmRule.builder().withDseWorkloads("graph").build();
@@ -76,8 +77,13 @@ public class GraphTimeoutsIT {
                   .setExecutionProfile(drivertest1));
       fail("The request should have timed out");
     } catch (InvalidQueryException e) {
-      assertThat(e.toString())
-          .contains("evaluation exceeded", "threshold of ", desiredTimeout + " ms");
+      if (ccmRule.getCcmBridge().getDseVersion().get().compareTo(Version.parse("6.8.0")) >= 0) {
+        assertThat(e.toString())
+            .contains("evaluation exceeded", "threshold of ", desiredTimeout + "ms");
+      } else {
+        assertThat(e.toString())
+            .contains("evaluation exceeded", "threshold of ", desiredTimeout + " ms");
+      }
     }
   }
 
