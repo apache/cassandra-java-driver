@@ -33,6 +33,7 @@
 - [bug] JAVA-2312: Handle UDTs with names that clash with collection types
 - [improvement] JAVA-2307: Improve `@Select` and `@Delete` by not requiring full primary key
 - [improvement] JAVA-2315: Improve extensibility of session builder
+- [buh] JAVA-2394: BaseCcmRule DseRequirement max should use DseVersion, not Cassandra version
 
 ### 4.1.0
 
