@@ -29,6 +29,8 @@ import org.ops4j.pax.exam.util.PathUtils;
 public class BundleOptions {
 
   public static CompositeOption baseOptions() {
+    // These options should only include dependencies that must be present in both the non-shaded
+    // and shaded driver versions.
     // Note: the bundles below include Netty; these bundles are not required by
     // the shaded core driver bundle, but they need to be present in all cases because
     // the test-infra bundle requires the (non-shaded) Netty bundle.
@@ -119,9 +121,10 @@ public class BundleOptions {
 
   public static CompositeOption jacksonBundles() {
     String jacksonVersion = getVersion("jackson.version");
+    String jacksonDatabindVersion = getVersion("jackson-databind.version");
     return () ->
         options(
-            mavenBundle("com.fasterxml.jackson.core", "jackson-databind", jacksonVersion),
+            mavenBundle("com.fasterxml.jackson.core", "jackson-databind", jacksonDatabindVersion),
             mavenBundle("com.fasterxml.jackson.core", "jackson-core", jacksonVersion),
             mavenBundle("com.fasterxml.jackson.core", "jackson-annotations", jacksonVersion));
   }
