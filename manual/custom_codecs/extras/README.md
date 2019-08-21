@@ -75,10 +75,13 @@ session.execute("INSERT INTO example (id, t) VALUES (1, ?)",
 
 [InstantCodec]: http://docs.datastax.com/en/drivers/java/3.7/com/datastax/driver/extras/codecs/jdk8/InstantCodec.html
 [LocalDateCodec]: http://docs.datastax.com/en/drivers/java/3.7/com/datastax/driver/extras/codecs/jdk8/LocalDateCodec.html
+[LocalDateTimeCodec]: http://docs.datastax.com/en/drivers/java/3.7/com/datastax/driver/extras/codecs/jdk8/LocalDateTimeCodec.html
 [LocalTimeCodec]: http://docs.datastax.com/en/drivers/java/3.7/com/datastax/driver/extras/codecs/jdk8/LocalTimeCodec.html
 [ZonedDateTimeCodec]: http://docs.datastax.com/en/drivers/java/3.7/com/datastax/driver/extras/codecs/jdk8/ZonedDateTimeCodec.html
+[ZoneIdCodec]: http://docs.datastax.com/en/drivers/java/3.7/com/datastax/driver/extras/codecs/jdk8/ZoneIdCodec.html
 [Instant]: https://docs.oracle.com/javase/8/docs/api/java/time/Instant.html
 [LocalDate]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalDate.html
+[LocalDateTime]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalDateTime.html
 [LocalTime]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalTime.html
 [ZonedDateTime]: https://docs.oracle.com/javase/8/docs/api/java/time/ZonedDateTime.html
 [ZoneId]: https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html
