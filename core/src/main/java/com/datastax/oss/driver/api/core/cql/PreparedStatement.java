@@ -134,6 +134,8 @@ public interface PreparedStatement {
   /**
    * Returns a builder to construct an executable statement.
    *
+   * <p>Note that this builder is mutable and not thread-safe.
+   *
    * @see #bind(Object...)
    */
   @NonNull

@@ -24,6 +24,11 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;
 import net.jcip.annotations.NotThreadSafe;
 
+/**
+ * A builder to create a batch statement.
+ *
+ * <p>This class is mutable and not thread-safe.
+ */
 @NotThreadSafe
 public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilder, BatchStatement> {
 

@@ -146,7 +146,11 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
         null);
   }
 
-  /** Returns a builder to create an instance of the default implementation. */
+  /**
+   * Returns a builder to create an instance of the default implementation.
+   *
+   * <p>Note that this builder is mutable and not thread-safe.
+   */
   @NonNull
   static SimpleStatementBuilder builder(@NonNull String query) {
     return new SimpleStatementBuilder(query);
@@ -155,6 +159,8 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
   /**
    * Returns a builder to create an instance of the default implementation, copying the fields of
    * the given statement.
+   *
+   * <p>Note that this builder is mutable and not thread-safe.
    */
   @NonNull
   static SimpleStatementBuilder builder(@NonNull SimpleStatement template) {

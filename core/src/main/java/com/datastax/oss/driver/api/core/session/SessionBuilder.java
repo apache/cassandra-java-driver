@@ -61,6 +61,8 @@ import net.jcip.annotations.NotThreadSafe;
  *
  * <p>You only need to deal with this directly if you use custom driver extensions. For the default
  * session implementation, see {@link CqlSession#builder()}.
+ *
+ * <p>This class is mutable and not thread-safe.
  */
 @NotThreadSafe
 public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {

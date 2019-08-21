@@ -19,7 +19,11 @@ import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.NotThreadSafe;
 
-/** Helper class to build a {@link CqlSession} instance. */
+/**
+ * Helper class to build a {@link CqlSession} instance.
+ *
+ * <p>This class is mutable and not thread-safe.
+ */
 @NotThreadSafe
 public class CqlSessionBuilder extends SessionBuilder<CqlSessionBuilder, CqlSession> {
 

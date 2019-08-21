@@ -26,9 +26,9 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  *
  * <p>A tuple value is attached if and only if its type is attached (see {@link Detachable}).
  *
- * <p>The default implementation returned by the driver is immutable and serializable. If you write
- * your own implementation, it should at least be thread-safe; serializability is not mandatory, but
- * recommended for use with some 3rd-party tools like Apache Spark &trade;.
+ * <p>The default implementation returned by the driver is mutable and serializable. If you write
+ * your own implementation, serializability is not mandatory, but recommended for use with some
+ * 3rd-party tools like Apache Spark &trade;.
  */
 public interface TupleValue extends GettableByIndex, SettableByIndex<TupleValue> {
 

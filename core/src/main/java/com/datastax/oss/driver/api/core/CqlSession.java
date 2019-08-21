@@ -31,7 +31,11 @@ import java.util.concurrent.CompletionStage;
 /** A specialized session with convenience methods to execute CQL statements. */
 public interface CqlSession extends Session {
 
-  /** Returns a builder to create a new instance. */
+  /**
+   * Returns a builder to create a new instance.
+   *
+   * <p>Note that this builder is mutable and not thread-safe.
+   */
   @NonNull
   static CqlSessionBuilder builder() {
     return new CqlSessionBuilder();
