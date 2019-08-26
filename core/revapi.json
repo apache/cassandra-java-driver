@@ -4809,6 +4809,13 @@
         "code": "java.method.addedToInterface",
         "new": "method java.lang.String com.datastax.oss.driver.api.core.data.UdtValue::toString()",
         "justification": "False positive -- all objects implicitly have toString()"
+      },
+      {
+        "regex": true,
+        "code": "java.annotation.added",
+        "old": "field com\\.datastax\\.oss\\.driver\\.api\\.core\\.Version.V.*",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "Marking constants as non-null doesn't break existing code"
       }
     ]
   }
