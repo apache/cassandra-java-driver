@@ -39,7 +39,8 @@ import net.jcip.annotations.Immutable;
 public class Version implements Comparable<Version> {
 
   private static final String VERSION_REGEXP =
-      "(\\d+)\\.(\\d+)(\\.\\d+)?(\\.\\d+)?([~\\-]\\w[.\\w]*(?:\\-\\w[.\\w]*)*)?(\\+[.\\w]+)?";
+      "(\\d+)\\.(\\d+)(\\.\\d+)?(\\.\\d+)?([~\\-]\\w[.\\w]*(?:-\\w[.\\w]*)*)?(\\+[.\\w]+)?";
+
   private static final Pattern pattern = Pattern.compile(VERSION_REGEXP);
 
   public static final Version V2_1_0 = parse("2.1.0");
@@ -111,7 +112,7 @@ public class Version implements Comparable<Version> {
           pr == null || pr.isEmpty()
               ? null
               : pr.substring(1)
-                  .split("\\-"); // drop initial '-' or '~' then split on the remaining ones
+                  .split("-"); // drop initial '-' or '~' then split on the remaining ones
 
       String bl = matcher.group(6);
       String build = bl == null || bl.isEmpty() ? null : bl.substring(1); // drop the initial '+'
