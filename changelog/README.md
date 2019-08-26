@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.2.0 (in progress)
+### 4.2.0
 
 - [improvement] JAVA-2390: Add methods to set the SSL engine factory programmatically
 - [improvement] JAVA-2379: Fail fast if prepared id doesn't match when repreparing on the fly

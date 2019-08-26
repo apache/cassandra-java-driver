@@ -100,5 +100,5 @@ for (TraceEvent event : trace.getEvents()) {
 If you call `getQueryTrace()` for a statement that didn't have tracing enabled, an exception is
 thrown.
 
-[ExecutionInfo]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html
-[QueryTrace]:    https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/QueryTrace.html
+[ExecutionInfo]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html
+[QueryTrace]:    https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/QueryTrace.html

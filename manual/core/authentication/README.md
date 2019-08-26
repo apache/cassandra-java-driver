@@ -66,6 +66,6 @@ acceptable for you, consider writing your own [AuthProvider] implementation
 
 [SASL]: https://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer
 
-[AuthProvider]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/auth/AuthProvider.html
-[DriverContext]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/context/DriverContext.html
-([PlainTextAuthProviderBase]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/auth/PlainTextAuthProviderBase.html
+[AuthProvider]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/auth/AuthProvider.html
+[DriverContext]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/context/DriverContext.html
+[PlainTextAuthProviderBase]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/auth/PlainTextAuthProviderBase.html

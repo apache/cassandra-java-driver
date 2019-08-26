@@ -170,4 +170,4 @@ session.execute(
 Or you could also use [prepared statements](../prepared/), which don't have this limitation since
 parameter types are known in advance. 
 
-[SimpleStatement]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/SimpleStatement.html
+[SimpleStatement]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/SimpleStatement.html
