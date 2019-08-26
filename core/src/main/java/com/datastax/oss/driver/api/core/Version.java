@@ -252,9 +252,7 @@ public class Version implements Comparable<Version> {
       }
     }
 
-    return preReleases.length == other.preReleases.length
-        ? 0
-        : (preReleases.length < other.preReleases.length ? -1 : 1);
+    return Integer.compare(preReleases.length, other.preReleases.length);
   }
 
   @Override
