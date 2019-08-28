@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.config.typesafe;
 
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
-import com.datastax.oss.driver.internal.core.config.DriverOptionConfigBuilder;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -33,7 +32,8 @@ import net.jcip.annotations.NotThreadSafe;
 @NotThreadSafe
 @Deprecated
 public class DefaultDriverConfigLoaderBuilder
-    implements DriverOptionConfigBuilder<DefaultDriverConfigLoaderBuilder> {
+    implements com.datastax.oss.driver.internal.core.config.DriverOptionConfigBuilder<
+        DefaultDriverConfigLoaderBuilder> {
 
   private NullAllowingImmutableMap.Builder<String, Object> values =
       NullAllowingImmutableMap.builder();
@@ -86,7 +86,10 @@ public class DefaultDriverConfigLoaderBuilder
   }
 
   /** A builder for specifying options at a profile level using {@code withXXX} methods. */
-  public static final class ProfileBuilder implements DriverOptionConfigBuilder<ProfileBuilder> {
+  @Deprecated
+  public static final class ProfileBuilder
+      implements com.datastax.oss.driver.internal.core.config.DriverOptionConfigBuilder<
+          ProfileBuilder> {
 
     final NullAllowingImmutableMap.Builder<String, Object> values =
         NullAllowingImmutableMap.builder();

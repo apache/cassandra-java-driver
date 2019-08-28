@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.config;
 
 import com.datastax.oss.driver.api.core.config.DriverOption;
-import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
 import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -24,7 +23,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
-/** @see DefaultDriverConfigLoaderBuilder */
+/** @see com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder */
 @Deprecated
 public interface DriverOptionConfigBuilder<SelfT extends DriverOptionConfigBuilder> {
 
