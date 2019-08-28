@@ -2,6 +2,10 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.2.1 (in progress)
+
+- [improvement] JAVA-2407: Improve handling of logback configuration files in IDEs
+
 ### 4.2.0
 
 - [improvement] JAVA-2390: Add methods to set the SSL engine factory programmatically
