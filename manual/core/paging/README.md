@@ -64,26 +64,6 @@ for (Row row : rs) {
       |<------------------------ |                     |
 ```
 
-By default, the background fetch happens at the last moment, when there are no more "local" rows
-available. If you need finer control, [ResultSet] provides the following methods:
-
-* `getAvailableWithoutFetching()` and `isFullyFetched()` to check the current state;
-* `fetchMoreResults()` to force a page fetch.
-
-Here's how you could use these methods to pre-fetch the next page in advance, in order to avoid the
-performance hit at the end of each page:
-
-```java
-ResultSet rs = session.execute("your query");
-for (Row row : rs) {
-  // Fetch when there's only half a page left:
-  if (rs.getAvailableWithoutFetching() == 10 && !rs.isFullyFetched()) {
-    rs.fetchMoreResults(); // this is asynchronous
-  }
-  // Process the row...
-}
-```
-
 
 ### Asynchronous paging
 
@@ -93,8 +73,8 @@ accidentally trigger background synchronous queries (which would defeat the whol
 or potentially introduce deadlocks).
 
 To avoid this problem, the driver's asynchronous API now returns a dedicated [AsyncResultSet];
-iteration only yields the current page, and the next page must be explicitly fetched. Here's how
-that translates to our example:
+iteration only yields the current page, and the next page must be explicitly fetched. Here's the
+idiomatic way to process a result set asynchronously:
 
 ```java
 CompletionStage<AsyncResultSet> futureRs =
@@ -115,6 +95,7 @@ void processRows(AsyncResultSet rs, Throwable error) {
 }
 ```
 
+See [Asynchronous programming](../async/) for more tips about the async API.
 
 ### Saving and reusing the paging state
 
@@ -129,11 +110,20 @@ The driver exposes a *paging state* for that:
 ResultSet rs = session.execute("your query");
 ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
 
+// Finish processing the current page
+while (rs.getAvailableWithoutFetching() > 0) {
+  Row row = rs.one();
+  // process the row
+}
+
 // Later:
 SimpleStatement statement =
     SimpleStatement.builder("your query").setPagingState(pagingState).build();
 session.execute(statement);
 ```
+
+Note the loop to finish the current page after we extract the state. The new statement will start at
+the beginning of the next page, so we want to make sure we don't leave a gap of unprocessed rows.  
 
 The paging state can only be reused with the exact same statement (same query string, same
 parameters). It is an opaque value that is only meant to be collected, stored and re-used. If you
@@ -177,5 +167,11 @@ think you can get away with the performance hit. We recommend that you:
 * set a hard limit on the highest possible page number, to prevent malicious clients from triggering
   queries that would skip a huge amount of rows.
 
+
+The [driver examples] include two complete web service implementations demonstrating forward-only
+and random (offset-based) paging.
+
 [ResultSet]:         https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/ResultSet.html
 [AsyncResultSet]:    https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
+
+[driver examples]: https://github.com/datastax/java-driver/tree/4.x/examples/src/main/java/com/datastax/oss/driver/examples/paging
