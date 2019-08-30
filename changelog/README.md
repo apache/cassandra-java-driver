@@ -4,6 +4,7 @@
 
 ### 4.3.0 (in progress)
 
+- [documentation] JAVA-2416: Update paging section in the manual
 - [improvement] JAVA-2402: Add setTracing(boolean) to StatementBuilder
 - [bug] JAVA-2466: Set idempotence to null in BatchStatement.newInstance
 
