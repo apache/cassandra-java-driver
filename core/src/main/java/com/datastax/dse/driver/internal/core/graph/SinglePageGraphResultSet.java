@@ -54,6 +54,6 @@ public class SinglePageGraphResultSet implements GraphResultSet {
 
   @Override
   public void cancel() {
-    // nothing to do
+    onlyPage.cancel();
   }
 }

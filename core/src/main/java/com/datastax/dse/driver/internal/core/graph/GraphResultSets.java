@@ -22,7 +22,7 @@ public class GraphResultSets {
 
   public static GraphResultSet toSync(AsyncGraphResultSet firstPage) {
     if (firstPage.hasMorePages()) {
-      throw new UnsupportedOperationException("TODO implement multi-page results");
+      return new MultiPageGraphResultSet(firstPage);
     } else {
       return new SinglePageGraphResultSet(firstPage);
     }

@@ -44,7 +44,8 @@ public class ContinuousCqlRequestAsyncProcessor
       DefaultSession session,
       InternalDriverContext context,
       String sessionLogPrefix) {
-    return new ContinuousCqlRequestHandler(request, session, context, sessionLogPrefix).handle();
+    return new ContinuousCqlRequestHandler(request, session, context, sessionLogPrefix)
+        .dequeueOrCreatePending();
   }
 
   @Override

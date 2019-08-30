@@ -36,8 +36,6 @@ import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -487,11 +485,10 @@ public class GraphTraversalIT {
     List<String> results =
         rs.all().stream().map(GraphNode::asString).sorted().collect(Collectors.toList());
 
-    List<String> expected =
-        Arrays.asList("knows", "created", "created", "knows", "created", "created");
-    Collections.sort(expected);
-
-    assertThat(results).isEqualTo(expected);
+    assertThat(results)
+        .hasSize(6)
+        .containsSequence("created", "created", "created", "created")
+        .containsSequence("knows", "knows");
   }
 
   @Test

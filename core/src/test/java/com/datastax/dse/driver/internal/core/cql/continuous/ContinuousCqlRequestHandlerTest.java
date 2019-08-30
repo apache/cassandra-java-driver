@@ -116,7 +116,7 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
               UNDEFINED_IDEMPOTENCE_STATEMENT, harness.getSession(), harness.getContext(), "test");
       CompletionStage<ContinuousAsyncResultSet> page1Future = handler.handle();
 
-      assertThat(handler.pendingResult).isNotNull();
+      assertThat(handler.getPendingResult()).isNotNull();
       node1Behavior.setResponseSuccess(defaultFrameOf(DseTestFixtures.tenDseRows(1, false)));
 
       assertThatStage(page1Future)
@@ -138,9 +138,9 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
               });
 
       ContinuousAsyncResultSet page1 = CompletableFutures.getCompleted(page1Future);
-      assertThat(handler.pendingResult).isNull();
+      assertThat(handler.getPendingResult()).isNull();
       CompletionStage<ContinuousAsyncResultSet> page2Future = page1.fetchNextPage();
-      assertThat(handler.pendingResult).isNotNull();
+      assertThat(handler.getPendingResult()).isNotNull();
       node1Behavior.setResponseSuccess(defaultFrameOf(DseTestFixtures.tenDseRows(2, true)));
 
       assertThatStage(page2Future)
@@ -311,7 +311,7 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
       ContinuousAsyncResultSet page1 = CompletableFutures.getUninterruptibly(page1Future);
       page1.cancel();
 
-      assertThat(handler.state).isEqualTo(-2);
+      assertThat(handler.getState()).isEqualTo(-2);
       assertThat(page1.fetchNextPage()).isCancelled();
     }
   }
@@ -332,7 +332,7 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
       page1Future.toCompletableFuture().cancel(true);
       // this should be ignored
       node1Behavior.setResponseSuccess(defaultFrameOf(DseTestFixtures.tenDseRows(1, false)));
-      assertThat(handler.state).isEqualTo(-2);
+      assertThat(handler.getState()).isEqualTo(-2);
     }
   }
 
@@ -355,7 +355,7 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
 
       // to late
       page1Future.toCompletableFuture().cancel(true);
-      assertThat(handler.state).isEqualTo(-1);
+      assertThat(handler.getState()).isEqualTo(-1);
     }
   }
 
@@ -372,7 +372,7 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
       CompletionStage<ContinuousAsyncResultSet> page1Future = handler.handle();
 
       page1Future.toCompletableFuture().cancel(true);
-      assertThat(handler.state).isEqualTo(-2);
+      assertThat(handler.getState()).isEqualTo(-2);
       verify(node1Behavior.getChannel())
           .write(argThat(this::isCancelRequest), anyBoolean(), anyMap(), any());
     }

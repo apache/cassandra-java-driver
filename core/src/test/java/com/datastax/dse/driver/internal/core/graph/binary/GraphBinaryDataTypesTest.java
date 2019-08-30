@@ -44,6 +44,7 @@ import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import org.apache.tinkerpop.gremlin.driver.ser.SerializationException;
 import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryReader;
 import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryWriter;
@@ -92,8 +93,8 @@ public class GraphBinaryDataTypesTest {
       {23f},
       {(short) 23},
       {InetAddress.getLocalHost()},
-      {LocalDate.now()},
-      {LocalTime.now()},
+      {LocalDate.now(ZoneOffset.UTC)},
+      {LocalTime.now(ZoneOffset.UTC)},
       {CqlDuration.newInstance(10, 10, 10000)},
       {java.util.UUID.randomUUID()},
       {Instant.now()},

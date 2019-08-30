@@ -39,7 +39,7 @@ import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerIoRegistryV3d0;
 import org.apache.tinkerpop.shaded.jackson.core.Version;
 import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
 
-class GraphSONUtils {
+public class GraphSONUtils {
 
   private static final LoadingCache<GraphProtocol, ObjectMapper> OBJECT_MAPPERS =
       CacheBuilder.newBuilder()
@@ -123,7 +123,7 @@ class GraphSONUtils {
     }
   }
 
-  static GraphNode createGraphNode(List<ByteBuffer> data, GraphProtocol graphSubProtocol)
+  public static GraphNode createGraphNode(List<ByteBuffer> data, GraphProtocol graphSubProtocol)
       throws IOException {
     try {
       ObjectMapper mapper = OBJECT_MAPPERS.get(graphSubProtocol);

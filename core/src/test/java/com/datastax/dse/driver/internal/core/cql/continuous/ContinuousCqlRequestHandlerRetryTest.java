@@ -90,7 +90,7 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
               statement, harness.getSession(), harness.getContext(), "test");
       CompletionStage<ContinuousAsyncResultSet> resultSetFuture = handler.handle();
 
-      assertThat(handler.state).isEqualTo(-1);
+      assertThat(handler.getState()).isEqualTo(-1);
 
       assertThatStage(resultSetFuture)
           .isSuccess(
@@ -139,7 +139,7 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
               statement, harness.getSession(), harness.getContext(), "test");
       CompletionStage<ContinuousAsyncResultSet> resultSetFuture = handler.handle();
 
-      assertThat(handler.state).isEqualTo(-2);
+      assertThat(handler.getState()).isEqualTo(-2);
 
       assertThatStage(resultSetFuture)
           .isFailed(
@@ -190,7 +190,7 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
               statement, harness.getSession(), harness.getContext(), "test");
       CompletionStage<ContinuousAsyncResultSet> resultSetFuture = handler.handle();
 
-      assertThat(handler.state).isEqualTo(-1);
+      assertThat(handler.getState()).isEqualTo(-1);
 
       assertThatStage(resultSetFuture)
           .isSuccess(
@@ -249,7 +249,7 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
               statement, harness.getSession(), harness.getContext(), "test");
       CompletionStage<ContinuousAsyncResultSet> resultSetFuture = handler.handle();
 
-      assertThat(handler.state).isEqualTo(-1);
+      assertThat(handler.getState()).isEqualTo(-1);
 
       assertThatStage(resultSetFuture)
           .isSuccess(
@@ -307,7 +307,7 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
               statement, harness.getSession(), harness.getContext(), "test");
       CompletionStage<ContinuousAsyncResultSet> resultSetFuture = handler.handle();
 
-      assertThat(handler.state).isEqualTo(-1);
+      assertThat(handler.getState()).isEqualTo(-1);
 
       assertThatStage(resultSetFuture)
           .isSuccess(
@@ -364,7 +364,7 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
               statement, harness.getSession(), harness.getContext(), "test");
       CompletionStage<ContinuousAsyncResultSet> resultSetFuture = handler.handle();
 
-      assertThat(handler.state).isEqualTo(-2);
+      assertThat(handler.getState()).isEqualTo(-2);
 
       assertThatStage(resultSetFuture)
           .isFailed(
@@ -421,7 +421,7 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
               statement, harness.getSession(), harness.getContext(), "test");
       CompletionStage<ContinuousAsyncResultSet> resultSetFuture = handler.handle();
 
-      assertThat(handler.state).isEqualTo(-2);
+      assertThat(handler.getState()).isEqualTo(-2);
 
       assertThatStage(resultSetFuture)
           .isFailed(

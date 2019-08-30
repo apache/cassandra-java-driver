@@ -107,7 +107,7 @@ public class DefaultContinuousAsyncResultSet implements ContinuousAsyncResultSet
     handler.cancel();
   }
 
-  static ContinuousAsyncResultSet empty(ExecutionInfo executionInfo) {
+  public static ContinuousAsyncResultSet empty(ExecutionInfo executionInfo) {
 
     return new ContinuousAsyncResultSet() {
 

@@ -72,6 +72,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.List;
@@ -187,7 +188,10 @@ public class GraphRequestHandlerTest {
         ImmutableList.of(
             // randomly testing some complex data types. Complete suite of data types test is in
             // GraphBinaryDataTypesTest
-            DseGraph.g.addV("person").property("p1", 2.3f).property("p2", LocalDateTime.now()),
+            DseGraph.g
+                .addV("person")
+                .property("p1", 2.3f)
+                .property("p2", LocalDateTime.now(ZoneOffset.UTC)),
             DseGraph.g
                 .addV("software")
                 .property("p3", new BigInteger("123456789123456789123456789123456789"))
@@ -421,7 +425,11 @@ public class GraphRequestHandlerTest {
     DseDriverContext mockContext = Mockito.mock(DseDriverContext.class);
     GraphBinaryModule module = createGraphBinaryModule(mockContext);
 
-    GraphRequestAsyncProcessor p = Mockito.spy(new GraphRequestAsyncProcessor(mockContext));
+    GraphPagingSupportChecker graphPagingSupportChecker = mock(GraphPagingSupportChecker.class);
+    when(graphPagingSupportChecker.isPagingEnabled(any(), any())).thenReturn(false);
+
+    GraphRequestAsyncProcessor p =
+        Mockito.spy(new GraphRequestAsyncProcessor(mockContext, graphPagingSupportChecker));
     when(p.getGraphBinaryModule()).thenReturn(module);
 
     Vertex v =
@@ -481,7 +489,8 @@ public class GraphRequestHandlerTest {
     DseDriverContext mockContext = Mockito.mock(DseDriverContext.class);
     GraphBinaryModule module = createGraphBinaryModule(mockContext);
 
-    GraphRequestAsyncProcessor p = Mockito.spy(new GraphRequestAsyncProcessor(mockContext));
+    GraphRequestAsyncProcessor p =
+        Mockito.spy(new GraphRequestAsyncProcessor(mockContext, new GraphPagingSupportChecker()));
     when(p.getGraphBinaryModule()).thenReturn(module);
 
     Vertex v =
@@ -506,9 +515,12 @@ public class GraphRequestHandlerTest {
     when(harness.getContext().getRequestTracker()).thenReturn(requestTracker);
 
     GraphStatement graphStatement = ScriptGraphStatement.newInstance("mockQuery");
+    GraphPagingSupportChecker graphPagingSupportChecker = mock(GraphPagingSupportChecker.class);
+    when(graphPagingSupportChecker.isPagingEnabled(any(), any())).thenReturn(false);
     GraphResultSet grs =
         new GraphRequestSyncProcessor(
-                new GraphRequestAsyncProcessor((DseDriverContext) harness.getContext()))
+                new GraphRequestAsyncProcessor(
+                    (DseDriverContext) harness.getContext(), graphPagingSupportChecker))
             .process(graphStatement, harness.getSession(), harness.getContext(), "test-graph");
 
     List<GraphNode> nodes = grs.all();

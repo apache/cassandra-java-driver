@@ -18,6 +18,8 @@ package com.datastax.oss.driver.api.testinfra.session;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
+import com.datastax.dse.driver.api.core.graph.PagingEnabledOptions;
+import com.datastax.dse.driver.internal.core.config.typesafe.DefaultDseDriverConfigLoader;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
@@ -63,7 +65,10 @@ public class CqlSessionRuleBuilder extends SessionRuleBuilder<CqlSessionRuleBuil
                   .get()
                   .withValue(
                       DseDriverOption.GRAPH_NAME.getPath(),
-                      ConfigValueFactory.fromAnyRef(graphName));
+                      ConfigValueFactory.fromAnyRef(graphName))
+                  .withValue(
+                      DseDriverOption.GRAPH_PAGING_ENABLED.getPath(),
+                      ConfigValueFactory.fromAnyRef(PagingEnabledOptions.DISABLED.name()));
     } else {
       graphName = null;
       if (loader == null) {

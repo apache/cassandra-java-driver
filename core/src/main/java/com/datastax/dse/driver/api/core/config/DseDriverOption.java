@@ -173,6 +173,8 @@ public enum DseDriverOption implements DriverOption {
    * <p>Value type: boolean
    */
   MONITOR_REPORTING_ENABLED("advanced.monitor-reporting.enabled"),
+
+  GRAPH_PAGING_ENABLED("advanced.graph.paging-enabled"),
   ;
 
   private final String path;

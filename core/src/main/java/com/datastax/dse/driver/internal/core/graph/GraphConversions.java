@@ -22,6 +22,7 @@ import com.datastax.dse.driver.api.core.graph.*;
 import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.dse.protocol.internal.request.RawBytesQuery;
+import com.datastax.dse.protocol.internal.request.query.ContinuousPagingOptions;
 import com.datastax.dse.protocol.internal.request.query.DseQueryOptions;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
@@ -29,6 +30,7 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.cql.Conversions;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
@@ -70,7 +72,7 @@ public class GraphConversions extends Conversions {
 
   @VisibleForTesting static final byte[] EMPTY_STRING_QUERY = "".getBytes(UTF_8);
 
-  static GraphProtocol inferSubProtocol(
+  public static GraphProtocol inferSubProtocol(
       GraphStatement<?> statement, DriverExecutionProfile config) {
     String graphProtocol = statement.getSubProtocol();
     if (graphProtocol == null) {
@@ -88,6 +90,74 @@ public class GraphConversions extends Conversions {
     return GraphProtocol.fromString(graphProtocol);
   }
 
+  public static Message createContinuousMessageFromGraphStatement(
+      GraphStatement<?> statement,
+      GraphProtocol subProtocol,
+      DriverExecutionProfile config,
+      InternalDriverContext context,
+      GraphBinaryModule graphBinaryModule) {
+
+    final List<ByteBuffer> encodedQueryParams;
+    if (!(statement instanceof ScriptGraphStatement)
+        || ((ScriptGraphStatement) statement).getQueryParams().isEmpty()) {
+      encodedQueryParams = Collections.emptyList();
+    } else {
+      try {
+        Map<String, Object> queryParams = ((ScriptGraphStatement) statement).getQueryParams();
+        if (subProtocol.isGraphBinary()) {
+          ByteBuf graphBinaryParams = graphBinaryModule.serialize(queryParams);
+          encodedQueryParams =
+              Collections.singletonList(ByteBufUtil.toByteBuffer(graphBinaryParams));
+          graphBinaryParams.release();
+        } else {
+          encodedQueryParams =
+              Collections.singletonList(
+                  GraphSONUtils.serializeToByteBuffer(queryParams, subProtocol));
+        }
+      } catch (IOException e) {
+        throw new UncheckedIOException(
+            "Couldn't serialize parameters for GraphStatement: " + statement, e);
+      }
+    }
+
+    int consistencyLevel =
+        DefaultConsistencyLevel.valueOf(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
+            .getProtocolCode();
+
+    long timestamp = statement.getTimestamp();
+    if (timestamp == Long.MIN_VALUE) {
+      timestamp = context.getTimestampGenerator().next();
+    }
+
+    int pageSize = config.getInt(DseDriverOption.CONTINUOUS_PAGING_PAGE_SIZE);
+    boolean pageSizeInBytes = config.getBoolean(DseDriverOption.CONTINUOUS_PAGING_PAGE_SIZE_BYTES);
+    int maxPages = config.getInt(DseDriverOption.CONTINUOUS_PAGING_MAX_PAGES);
+    int maxPagesPerSecond = config.getInt(DseDriverOption.CONTINUOUS_PAGING_MAX_PAGES_PER_SECOND);
+    int maxEnqueuedPages = config.getInt(DseDriverOption.CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES);
+    ContinuousPagingOptions options =
+        new ContinuousPagingOptions(maxPages, maxPagesPerSecond, maxEnqueuedPages);
+
+    DseQueryOptions queryOptions =
+        new DseQueryOptions(
+            consistencyLevel,
+            encodedQueryParams,
+            Collections.emptyMap(), // ignored by the DSE Graph server
+            true, // also ignored
+            pageSize,
+            null,
+            ProtocolConstants.ConsistencyLevel.LOCAL_SERIAL, // also ignored
+            timestamp,
+            null, // also ignored
+            pageSizeInBytes,
+            options);
+
+    if (statement instanceof ScriptGraphStatement) {
+      return new Query(((ScriptGraphStatement) statement).getScript(), queryOptions);
+    } else {
+      return new RawBytesQuery(getQueryBytes(statement, subProtocol), queryOptions);
+    }
+  }
+
   static Message createMessageFromGraphStatement(
       GraphStatement<?> statement,
       GraphProtocol subProtocol,
@@ -96,7 +166,7 @@ public class GraphConversions extends Conversions {
       GraphBinaryModule graphBinaryModule) {
 
     final List<ByteBuffer> encodedQueryParams;
-    if ((!(statement instanceof ScriptGraphStatement))
+    if (!(statement instanceof ScriptGraphStatement)
         || ((ScriptGraphStatement) statement).getQueryParams().isEmpty()) {
       encodedQueryParams = Collections.emptyList();
     } else {
@@ -188,11 +258,11 @@ public class GraphConversions extends Conversions {
     }
   }
 
-  static Map<String, ByteBuffer> createCustomPayload(
+  public static Map<String, ByteBuffer> createCustomPayload(
       GraphStatement<?> statement,
       GraphProtocol subProtocol,
       DriverExecutionProfile config,
-      DseDriverContext context,
+      InternalDriverContext context,
       GraphBinaryModule graphBinaryModule) {
 
     ProtocolVersion protocolVersion = context.getProtocolVersion();
@@ -207,7 +277,7 @@ public class GraphConversions extends Conversions {
     // Don't override anything that's already provided at the statement level
     if (!statementOptions.containsKey(GRAPH_LANG_OPTION_KEY)) {
       graphLanguage =
-          (statement instanceof ScriptGraphStatement) ? LANGUAGE_GROOVY : LANGUAGE_BYTECODE;
+          statement instanceof ScriptGraphStatement ? LANGUAGE_GROOVY : LANGUAGE_BYTECODE;
       payload.put(GRAPH_LANG_OPTION_KEY, TypeCodecs.TEXT.encode(graphLanguage, protocolVersion));
     } else {
       graphLanguage =
@@ -264,7 +334,7 @@ public class GraphConversions extends Conversions {
     if (!statementOptions.containsKey(GRAPH_READ_CONSISTENCY_LEVEL_OPTION_KEY)) {
       ConsistencyLevel readCl = statement.getReadConsistencyLevel();
       String readClString =
-          (readCl != null)
+          readCl != null
               ? readCl.name()
               : config.getString(DseDriverOption.GRAPH_READ_CONSISTENCY_LEVEL, null);
       if (readClString != null) {
@@ -277,7 +347,7 @@ public class GraphConversions extends Conversions {
     if (!statementOptions.containsKey(GRAPH_WRITE_CONSISTENCY_LEVEL_OPTION_KEY)) {
       ConsistencyLevel writeCl = statement.getWriteConsistencyLevel();
       String writeClString =
-          (writeCl != null)
+          writeCl != null
               ? writeCl.name()
               : config.getString(DseDriverOption.GRAPH_WRITE_CONSISTENCY_LEVEL, null);
       if (writeClString != null) {
@@ -311,7 +381,7 @@ public class GraphConversions extends Conversions {
     return config.getBoolean(DseDriverOption.GRAPH_IS_SYSTEM_QUERY, false);
   }
 
-  static GraphNode createGraphBinaryGraphNode(
+  public static GraphNode createGraphBinaryGraphNode(
       List<ByteBuffer> data, GraphBinaryModule graphBinaryModule) throws IOException {
     // there should be only one column in the given row
     Preconditions.checkArgument(data.size() == 1, "Invalid row given to deserialize");
