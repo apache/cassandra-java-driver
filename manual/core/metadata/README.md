@@ -42,6 +42,9 @@ Set<TokenRange> tokenRanges = tokenMap.getTokenRanges(keyspace.getName(), node);
 This is a big improvement over previous versions of the driver, where it was possible to observe a
 new keyspace in the schema metadata before the token metadata was updated.
 
+Schema and node state events are debounced. This allows you to control how often the metadata gets
+refreshed. See the [Performance](../performance/#debouncing) page for more details.
+
 [Session#getMetadata]:                          https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/session/Session.html#getMetadata--
 [Metadata]:                                     https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/metadata/Metadata.html
 [Node]:                                         https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/metadata/Node.html
