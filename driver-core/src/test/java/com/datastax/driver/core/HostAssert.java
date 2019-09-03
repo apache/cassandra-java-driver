@@ -188,7 +188,7 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
   }
 
   public HostAssert hasSocketAddress(InetSocketAddress address) {
-    assertThat(actual.getSocketAddress()).isNotNull().isEqualTo(address);
+    assertThat(actual.getEndPoint().resolve()).isNotNull().isEqualTo(address);
     return this;
   }
 

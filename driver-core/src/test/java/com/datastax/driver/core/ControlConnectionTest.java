@@ -43,7 +43,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.log4j.Level;
@@ -157,8 +156,9 @@ public class ControlConnectionTest extends CCMTestsSupport {
     cluster.init();
 
     // Ensure the control connection host is that of the first node.
-    InetAddress controlHost = cluster.manager.controlConnection.connectedHost().getAddress();
-    assertThat(controlHost).isEqualTo(firstHost.getAddress());
+    InetSocketAddress controlHost =
+        cluster.manager.controlConnection.connectedHost().getEndPoint().resolve();
+    assertThat(controlHost).isEqualTo(firstHost);
 
     // Decommission the node.
     ccm().decommission(1);
@@ -205,7 +205,14 @@ public class ControlConnectionTest extends CCMTestsSupport {
 
         try {
           cluster.init();
-          occurrencesByHost.add(cluster.manager.controlConnection.connectedHost().getAddress());
+          occurrencesByHost.add(
+              cluster
+                  .manager
+                  .controlConnection
+                  .connectedHost()
+                  .getEndPoint()
+                  .resolve()
+                  .getAddress());
         } finally {
           cluster.close();
         }
@@ -242,17 +249,17 @@ public class ControlConnectionTest extends CCMTestsSupport {
   @DataProvider
   public static Object[][] disallowedNullColumnsInPeerData() {
     return new Object[][] {
-      {"host_id", false, true},
+      {"host_id", false, false}, // JAVA-2171: host_id does not require extended peer check anymore
       {"data_center", false, true},
       {"rack", false, true},
       {"tokens", false, true},
-      {"host_id,data_center,rack,tokens", false, true},
+      {"data_center,rack,tokens", false, true},
       {"rpc_address", false, false},
-      {"host_id", true, true},
+      {"host_id", true, false},
       {"data_center", true, true},
       {"rack", true, true},
       {"tokens", true, true},
-      {"host_id,data_center,rack,tokens", true, true},
+      {"data_center,rack,tokens", true, true},
       {"native_address", true, false},
       {"native_port", true, false},
       {"native_address,native_port", true, false},
@@ -408,7 +415,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
           new InetSocketAddress(InetAddress.getByName("1.2.3.4"), scassandras.getBinaryPort());
 
       // host 2 has the old broadcast_address (which is identical to its rpc_broadcast_address)
-      assertThat(host2.getSocketAddress().getAddress())
+      assertThat(host2.getEndPoint().resolve().getAddress())
           .isEqualTo(node2OldBroadcastAddress.getAddress());
 
       // simulate a change in host 2 public IP
@@ -416,8 +423,13 @@ public class ControlConnectionTest extends CCMTestsSupport {
           ImmutableMap.<String, Object>builder()
               .put(
                   "peer", node2NewBroadcastAddress.getAddress()) // new broadcast address for host 2
-              .put("rpc_address", host2.getAddress()) // rpc_broadcast_address remains unchanged
-              .put("host_id", UUID.randomUUID())
+              .put(
+                  "rpc_address",
+                  host2
+                      .getEndPoint()
+                      .resolve()
+                      .getAddress()) // rpc_broadcast_address remains unchanged
+              .put("host_id", host2.getHostId())
               .put("data_center", datacenter(1))
               .put("rack", "rack1")
               .put("release_version", "2.1.8")
@@ -460,7 +472,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
           .isEqualTo(node2NewBroadcastAddress.getAddress());
 
       // host 2 should keep its old rpc broadcast address
-      assertThat(host2.getSocketAddress()).isEqualTo(node2RpcAddress);
+      assertThat(host2.getEndPoint().resolve()).isEqualTo(node2RpcAddress);
 
     } finally {
       cluster.close();
@@ -517,8 +529,8 @@ public class ControlConnectionTest extends CCMTestsSupport {
         } else {
           assertThat(host).hasNoListenSocketAddress();
         }
-        uniqueAddresses.add(host.getAddress());
-        uniqueSocketAddresses.add(host.getSocketAddress());
+        uniqueAddresses.add(host.getEndPoint().resolve().getAddress());
+        uniqueSocketAddresses.add(host.getEndPoint().resolve());
       }
 
       if (!sharedIP) {
@@ -575,6 +587,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
       super(delegate);
     }
 
+    @Override
     public Iterator<Host> newQueryPlan(String loggedKeyspace, Statement statement) {
       counter.incrementAndGet();
       return super.newQueryPlan(loggedKeyspace, statement);

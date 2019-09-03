@@ -44,7 +44,6 @@ import com.datastax.driver.core.exceptions.WriteTimeoutException;
 import com.datastax.driver.core.utils.Bytes;
 import io.netty.buffer.ByteBuf;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -147,49 +146,51 @@ class Responses {
       this.infos = infos;
     }
 
-    DriverException asException(InetSocketAddress host) {
+    DriverException asException(EndPoint endPoint) {
       switch (code) {
         case SERVER_ERROR:
-          return new ServerError(host, message);
+          return new ServerError(endPoint, message);
         case PROTOCOL_ERROR:
-          return new ProtocolError(host, message);
+          return new ProtocolError(endPoint, message);
         case BAD_CREDENTIALS:
-          return new AuthenticationException(host, message);
+          return new AuthenticationException(endPoint, message);
         case UNAVAILABLE:
-          return ((UnavailableException) infos).copy(host); // We copy to have a nice stack trace
+          return ((UnavailableException) infos)
+              .copy(endPoint); // We copy to have a nice stack trace
         case OVERLOADED:
-          return new OverloadedException(host, message);
+          return new OverloadedException(endPoint, message);
         case IS_BOOTSTRAPPING:
-          return new BootstrappingException(host, message);
+          return new BootstrappingException(endPoint, message);
         case TRUNCATE_ERROR:
-          return new TruncateException(host, message);
+          return new TruncateException(endPoint, message);
         case WRITE_TIMEOUT:
-          return ((WriteTimeoutException) infos).copy(host);
+          return ((WriteTimeoutException) infos).copy(endPoint);
         case READ_TIMEOUT:
-          return ((ReadTimeoutException) infos).copy(host);
+          return ((ReadTimeoutException) infos).copy(endPoint);
         case WRITE_FAILURE:
-          return ((WriteFailureException) infos).copy(host);
+          return ((WriteFailureException) infos).copy(endPoint);
         case READ_FAILURE:
-          return ((ReadFailureException) infos).copy(host);
+          return ((ReadFailureException) infos).copy(endPoint);
         case FUNCTION_FAILURE:
-          return new FunctionExecutionException(host, message);
+          return new FunctionExecutionException(endPoint, message);
         case SYNTAX_ERROR:
-          return new SyntaxError(host, message);
+          return new SyntaxError(endPoint, message);
         case UNAUTHORIZED:
-          return new UnauthorizedException(host, message);
+          return new UnauthorizedException(endPoint, message);
         case INVALID:
-          return new InvalidQueryException(host, message);
+          return new InvalidQueryException(endPoint, message);
         case CONFIG_ERROR:
-          return new InvalidConfigurationInQueryException(host, message);
+          return new InvalidConfigurationInQueryException(endPoint, message);
         case ALREADY_EXISTS:
-          return ((AlreadyExistsException) infos).copy(host);
+          return ((AlreadyExistsException) infos).copy(endPoint);
         case UNPREPARED:
-          return new UnpreparedException(host, message);
+          return new UnpreparedException(endPoint, message);
+
         default:
           return new DriverInternalError(
               String.format(
                   "Unknown protocol error code %s returned by %s. The error message was: %s",
-                  code, host, message));
+                  code, endPoint, message));
       }
     }
 

@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.EndPoint;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -27,36 +28,41 @@ public class ProtocolError extends DriverInternalError implements CoordinatorExc
 
   private static final long serialVersionUID = 0;
 
-  private final InetSocketAddress address;
+  private final EndPoint endPoint;
 
-  public ProtocolError(InetSocketAddress address, String message) {
+  public ProtocolError(EndPoint endPoint, String message) {
     super(
         String.format(
             "An unexpected protocol error occurred on host %s. This is a bug in this library, please report: %s",
-            address, message));
-    this.address = address;
+            endPoint, message));
+    this.endPoint = endPoint;
   }
 
   /** Private constructor used solely when copying exceptions. */
-  private ProtocolError(InetSocketAddress address, String message, ProtocolError cause) {
+  private ProtocolError(EndPoint endPoint, String message, ProtocolError cause) {
     super(message, cause);
-    this.address = address;
+    this.endPoint = endPoint;
   }
 
-  /** {@inheritDoc} */
   @Override
-  public InetAddress getHost() {
-    return address != null ? address.getAddress() : null;
+  public EndPoint getEndPoint() {
+    return endPoint;
   }
 
-  /** {@inheritDoc} */
   @Override
+  @Deprecated
   public InetSocketAddress getAddress() {
-    return address;
+    return (endPoint == null) ? null : endPoint.resolve();
+  }
+
+  @Override
+  @Deprecated
+  public InetAddress getHost() {
+    return (endPoint == null) ? null : endPoint.resolve().getAddress();
   }
 
   @Override
   public ProtocolError copy() {
-    return new ProtocolError(address, getMessage(), this);
+    return new ProtocolError(endPoint, getMessage(), this);
   }
 }

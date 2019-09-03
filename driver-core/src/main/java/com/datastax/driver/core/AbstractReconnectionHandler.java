@@ -171,7 +171,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
       } else {
         logger.error(
             "Retries against {} have been suspended. It won't be retried unless the node is restarted.",
-            e.getHost());
+            e.getEndPoint());
         currentAttempt.compareAndSet(handlerFuture, null);
       }
     } catch (InterruptedException e) {
@@ -184,7 +184,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
       } else {
         logger.error(
             "Retries against {} have been suspended. It won't be retried unless the node is restarted.",
-            e.getHost());
+            e.getEndPoint());
         currentAttempt.compareAndSet(handlerFuture, null);
       }
     } catch (ClusterNameMismatchException e) {
@@ -195,7 +195,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
       } else {
         logger.error(
             "Retries against {} have been suspended. It won't be retried unless the node is restarted.",
-            e.address.getAddress());
+            e.endPoint);
         currentAttempt.compareAndSet(handlerFuture, null);
       }
     } catch (Exception e) {

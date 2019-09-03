@@ -15,8 +15,8 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.EndPoint;
 import com.datastax.driver.core.SocketOptions;
-import java.net.InetSocketAddress;
 
 /**
  * Thrown on a client-side timeout, i.e. when the client didn't hear back from the server within
@@ -26,20 +26,20 @@ public class OperationTimedOutException extends ConnectionException {
 
   private static final long serialVersionUID = 0;
 
-  public OperationTimedOutException(InetSocketAddress address) {
-    super(address, "Operation timed out");
+  public OperationTimedOutException(EndPoint endPoint) {
+    super(endPoint, "Operation timed out");
   }
 
-  public OperationTimedOutException(InetSocketAddress address, String msg) {
-    super(address, msg);
+  public OperationTimedOutException(EndPoint endPoint, String msg) {
+    super(endPoint, msg);
   }
 
-  public OperationTimedOutException(InetSocketAddress address, String msg, Throwable cause) {
-    super(address, msg, cause);
+  public OperationTimedOutException(EndPoint endPoint, String msg, Throwable cause) {
+    super(endPoint, msg, cause);
   }
 
   @Override
   public OperationTimedOutException copy() {
-    return new OperationTimedOutException(address, getRawMessage(), this);
+    return new OperationTimedOutException(getEndPoint(), getRawMessage(), this);
   }
 }

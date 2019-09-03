@@ -20,6 +20,7 @@ import static com.datastax.driver.core.ParseUtils.quote;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.IgnoreJDK6Requirement;
 import com.datastax.driver.core.ParseUtils;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TupleType;

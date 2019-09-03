@@ -16,6 +16,8 @@
 package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.AtomicMonotonicTimestampGenerator;
+import com.datastax.driver.core.DefaultEndPointFactory;
+import com.datastax.driver.core.EndPointFactory;
 import com.datastax.driver.core.TimestampGenerator;
 
 /** Policies configured for a {@link com.datastax.driver.core.Cluster} instance. */
@@ -43,6 +45,7 @@ public class Policies {
   private final AddressTranslator addressTranslator;
   private final TimestampGenerator timestampGenerator;
   private final SpeculativeExecutionPolicy speculativeExecutionPolicy;
+  private final EndPointFactory endPointFactory;
 
   private Policies(
       LoadBalancingPolicy loadBalancingPolicy,
@@ -50,13 +53,15 @@ public class Policies {
       RetryPolicy retryPolicy,
       AddressTranslator addressTranslator,
       TimestampGenerator timestampGenerator,
-      SpeculativeExecutionPolicy speculativeExecutionPolicy) {
+      SpeculativeExecutionPolicy speculativeExecutionPolicy,
+      EndPointFactory endPointFactory) {
     this.loadBalancingPolicy = loadBalancingPolicy;
     this.reconnectionPolicy = reconnectionPolicy;
     this.retryPolicy = retryPolicy;
     this.addressTranslator = addressTranslator;
     this.timestampGenerator = timestampGenerator;
     this.speculativeExecutionPolicy = speculativeExecutionPolicy;
+    this.endPointFactory = endPointFactory;
   }
 
   /**
@@ -134,6 +139,10 @@ public class Policies {
     return DEFAULT_SPECULATIVE_EXECUTION_POLICY;
   }
 
+  public static EndPointFactory defaultEndPointFactory() {
+    return new DefaultEndPointFactory();
+  }
+
   /**
    * The load balancing policy in use.
    *
@@ -195,6 +204,10 @@ public class Policies {
     return speculativeExecutionPolicy;
   }
 
+  public EndPointFactory getEndPointFactory() {
+    return endPointFactory;
+  }
+
   /** A builder to create a new {@code Policies} object. */
   public static class Builder {
     private LoadBalancingPolicy loadBalancingPolicy;
@@ -203,6 +216,7 @@ public class Policies {
     private AddressTranslator addressTranslator;
     private TimestampGenerator timestampGenerator;
     private SpeculativeExecutionPolicy speculativeExecutionPolicy;
+    private EndPointFactory endPointFactory;
 
     /**
      * Sets the load balancing policy.
@@ -271,6 +285,11 @@ public class Policies {
       return this;
     }
 
+    public Builder withEndPointFactory(EndPointFactory endPointFactory) {
+      this.endPointFactory = endPointFactory;
+      return this;
+    }
+
     /**
      * Builds the final object from this builder.
      *
@@ -287,7 +306,8 @@ public class Policies {
           timestampGenerator == null ? defaultTimestampGenerator() : timestampGenerator,
           speculativeExecutionPolicy == null
               ? defaultSpeculativeExecutionPolicy()
-              : speculativeExecutionPolicy);
+              : speculativeExecutionPolicy,
+          endPointFactory == null ? defaultEndPointFactory() : endPointFactory);
     }
   }
 }

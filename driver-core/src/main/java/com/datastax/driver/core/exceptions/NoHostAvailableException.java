@@ -15,9 +15,9 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.EndPoint;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,15 +40,15 @@ public class NoHostAvailableException extends DriverException {
 
   private static final int MAX_ERRORS_IN_DEFAULT_MESSAGE = 3;
 
-  private final Map<InetSocketAddress, Throwable> errors;
+  private final Map<EndPoint, Throwable> errors;
 
-  public NoHostAvailableException(Map<InetSocketAddress, Throwable> errors) {
+  public NoHostAvailableException(Map<EndPoint, Throwable> errors) {
     super(makeMessage(errors, MAX_ERRORS_IN_DEFAULT_MESSAGE, false, false));
     this.errors = errors;
   }
 
   private NoHostAvailableException(
-      String message, Throwable cause, Map<InetSocketAddress, Throwable> errors) {
+      String message, Throwable cause, Map<EndPoint, Throwable> errors) {
     super(message, cause);
     this.errors = errors;
   }
@@ -58,8 +58,8 @@ public class NoHostAvailableException extends DriverException {
    *
    * @return a map containing for each tried host the error triggered when trying it.
    */
-  public Map<InetSocketAddress, Throwable> getErrors() {
-    return new HashMap<InetSocketAddress, Throwable>(errors);
+  public Map<EndPoint, Throwable> getErrors() {
+    return new HashMap<EndPoint, Throwable>(errors);
   }
 
   /**
@@ -84,7 +84,7 @@ public class NoHostAvailableException extends DriverException {
   }
 
   private static String makeMessage(
-      Map<InetSocketAddress, Throwable> errors,
+      Map<EndPoint, Throwable> errors,
       int maxErrorsInMessage,
       boolean formatted,
       boolean includeStackTraces) {
@@ -98,7 +98,7 @@ public class NoHostAvailableException extends DriverException {
 
     int n = 0;
     boolean truncated = false;
-    for (Map.Entry<InetSocketAddress, Throwable> entry : errors.entrySet()) {
+    for (Map.Entry<EndPoint, Throwable> entry : errors.entrySet()) {
       if (n > 0) out.print(formatted ? "\n" : ", ");
       out.print(entry.getKey());
       if (n < maxErrorsInMessage) {

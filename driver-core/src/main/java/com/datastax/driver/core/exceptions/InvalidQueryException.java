@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.EndPoint;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -24,38 +25,45 @@ public class InvalidQueryException extends QueryValidationException
 
   private static final long serialVersionUID = 0;
 
-  private final InetSocketAddress address;
+  private final EndPoint endPoint;
 
   public InvalidQueryException(String msg) {
     this(null, msg);
   }
 
-  public InvalidQueryException(InetSocketAddress address, String msg) {
+  public InvalidQueryException(EndPoint endPoint, String msg) {
     super(msg);
-    this.address = address;
+    this.endPoint = endPoint;
   }
 
   public InvalidQueryException(String msg, Throwable cause) {
     this(null, msg, cause);
   }
 
-  public InvalidQueryException(InetSocketAddress address, String msg, Throwable cause) {
+  public InvalidQueryException(EndPoint endPoint, String msg, Throwable cause) {
     super(msg, cause);
-    this.address = address;
+    this.endPoint = endPoint;
   }
 
   @Override
   public DriverException copy() {
-    return new InvalidQueryException(getAddress(), getMessage(), this);
+    return new InvalidQueryException(getEndPoint(), getMessage(), this);
   }
 
   @Override
-  public InetAddress getHost() {
-    return address != null ? address.getAddress() : null;
+  public EndPoint getEndPoint() {
+    return endPoint;
   }
 
   @Override
+  @Deprecated
   public InetSocketAddress getAddress() {
-    return address;
+    return (endPoint == null) ? null : endPoint.resolve();
+  }
+
+  @Override
+  @Deprecated
+  public InetAddress getHost() {
+    return (endPoint == null) ? null : endPoint.resolve().getAddress();
   }
 }

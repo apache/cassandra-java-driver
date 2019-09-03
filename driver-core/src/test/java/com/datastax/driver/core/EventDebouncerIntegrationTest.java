@@ -133,7 +133,8 @@ public class EventDebouncerIntegrationTest extends CCMTestsSupport {
     public void onDown(Host host) {
       if (!init) onDownCalledBeforeInit = true;
       super.onDown(host);
-      if (host.getAddress().toString().contains(ipOfNode(3))) onDownCalled.countDown();
+      if (host.getEndPoint().resolve().getAddress().toString().contains(ipOfNode(3)))
+        onDownCalled.countDown();
     }
 
     void stop() throws InterruptedException {

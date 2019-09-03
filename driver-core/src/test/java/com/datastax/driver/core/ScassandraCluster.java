@@ -34,13 +34,16 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import org.scassandra.Scassandra;
@@ -49,6 +52,7 @@ import org.scassandra.cql.MapType;
 import org.scassandra.http.client.PrimingClient;
 import org.scassandra.http.client.PrimingRequest;
 import org.scassandra.http.client.Result;
+import org.scassandra.http.client.types.ColumnMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -231,7 +235,7 @@ public class ScassandraCluster {
   public Host host(Cluster cluster, int dc, int node) {
     InetSocketAddress address = address(dc, node);
     for (Host host : cluster.getMetadata().getAllHosts()) {
-      if (host.getSocketAddress().equals(address)) {
+      if (host.getEndPoint().resolve().equals(address)) {
         return host;
       }
     }
@@ -254,7 +258,11 @@ public class ScassandraCluster {
   public void stop() {
     logger.debug("Stopping ScassandraCluster.");
     for (Scassandra node : instances) {
-      node.stop();
+      try {
+        node.stop();
+      } catch (Exception e) {
+        logger.error("Could not stop node " + node, e);
+      }
     }
   }
 
@@ -298,7 +306,11 @@ public class ScassandraCluster {
   public void stop(Cluster cluster, int node) {
     logger.debug("Stopping node {}.", node);
     Scassandra scassandra = node(node);
-    scassandra.stop();
+    try {
+      scassandra.stop();
+    } catch (Exception e) {
+      logger.error("Could not stop node " + scassandra, e);
+    }
     assertThat(cluster).host(node).goesDownWithin(10, TimeUnit.SECONDS);
   }
 
@@ -718,6 +730,24 @@ public class ScassandraCluster {
     column("type", TEXT),
     column("validator", TEXT),
   };
+
+  // Primes a minimal system.local row on an Scassandra node.
+  // We need a host_id so that the driver can store it in Metadata.hosts
+  public static void primeSystemLocalRow(Scassandra scassandra) {
+    Set<ColumnMetadata> localMetadata = Sets.newHashSet(SELECT_LOCAL);
+    Map<String, Object> row = new HashMap<String, Object>();
+    row.put("host_id", java.util.UUID.randomUUID());
+    scassandra
+        .primingClient()
+        .prime(
+            PrimingRequest.queryBuilder()
+                .withQuery("SELECT * FROM system.local WHERE key='local'")
+                .withThen(
+                    then()
+                        .withColumnTypes(
+                            localMetadata.toArray(new ColumnMetadata[localMetadata.size()]))
+                        .withRows(Collections.<Map<String, ?>>singletonList(row))));
+  }
 
   public static ScassandraClusterBuilder builder() {
     return new ScassandraClusterBuilder();

@@ -18,7 +18,7 @@ package com.datastax.driver.core.exceptions;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
-import java.net.InetSocketAddress;
+import com.datastax.driver.core.EndPoints;
 import org.testng.annotations.Test;
 
 public class ConnectionExceptionTest {
@@ -26,7 +26,7 @@ public class ConnectionExceptionTest {
   /** @jira_ticket JAVA-1139 */
   @Test(groups = "unit")
   public void getHost_should_return_null_if_address_is_null() {
-    assertNull(new ConnectionException(null, "Test message").getHost());
+    assertNull(new ConnectionException(null, "Test message").getEndPoint());
   }
 
   /** @jira_ticket JAVA-1139 */
@@ -39,17 +39,16 @@ public class ConnectionExceptionTest {
   @Test(groups = "unit")
   public void getMessage_should_return_message_if_address_is_unresolved() {
     assertEquals(
-        new ConnectionException(
-                InetSocketAddress.createUnresolved("127.0.0.1", 9042), "Test message")
+        new ConnectionException(EndPoints.forAddress("127.0.0.1", 9042), "Test message")
             .getMessage(),
-        "[127.0.0.1:9042] Test message");
+        "[/127.0.0.1:9042] Test message");
   }
 
   /** @jira_ticket JAVA-1139 */
   @Test(groups = "unit")
   public void getMessage_should_return_message_if_address_is_resolved() {
     assertEquals(
-        new ConnectionException(new InetSocketAddress("127.0.0.1", 9042), "Test message")
+        new ConnectionException(EndPoints.forAddress("127.0.0.1", 9042), "Test message")
             .getMessage(),
         "[/127.0.0.1:9042] Test message");
   }

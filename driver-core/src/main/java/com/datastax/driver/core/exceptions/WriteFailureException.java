@@ -16,9 +16,9 @@
 package com.datastax.driver.core.exceptions;
 
 import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.EndPoint;
 import com.datastax.driver.core.WriteType;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
 
@@ -62,7 +62,7 @@ public class WriteFailureException extends QueryConsistencyException {
   }
 
   public WriteFailureException(
-      InetSocketAddress address,
+      EndPoint endPoint,
       ConsistencyLevel consistency,
       WriteType writeType,
       int received,
@@ -70,7 +70,7 @@ public class WriteFailureException extends QueryConsistencyException {
       int failed,
       Map<InetAddress, Integer> failuresMap) {
     super(
-        address,
+        endPoint,
         String.format(
             "Cassandra failure during write query at consistency %s "
                 + "(%d responses were required but only %d replica responded, %d failed)",
@@ -86,14 +86,14 @@ public class WriteFailureException extends QueryConsistencyException {
   /** @deprecated Legacy constructor for backward compatibility. */
   @Deprecated
   public WriteFailureException(
-      InetSocketAddress address,
+      EndPoint endPoint,
       ConsistencyLevel consistency,
       WriteType writeType,
       int received,
       int required,
       int failed) {
     this(
-        address,
+        endPoint,
         consistency,
         writeType,
         received,
@@ -103,7 +103,7 @@ public class WriteFailureException extends QueryConsistencyException {
   }
 
   private WriteFailureException(
-      InetSocketAddress address,
+      EndPoint endPoint,
       String msg,
       Throwable cause,
       ConsistencyLevel consistency,
@@ -112,7 +112,7 @@ public class WriteFailureException extends QueryConsistencyException {
       int required,
       int failed,
       Map<InetAddress, Integer> failuresMap) {
-    super(address, msg, cause, consistency, received, required);
+    super(endPoint, msg, cause, consistency, received, required);
     this.writeType = writeType;
     this.failed = failed;
     this.failuresMap = failuresMap;
@@ -164,7 +164,7 @@ public class WriteFailureException extends QueryConsistencyException {
   @Override
   public WriteFailureException copy() {
     return new WriteFailureException(
-        getAddress(),
+        getEndPoint(),
         getMessage(),
         this,
         getConsistencyLevel(),
@@ -175,9 +175,9 @@ public class WriteFailureException extends QueryConsistencyException {
         failuresMap);
   }
 
-  public WriteFailureException copy(InetSocketAddress address) {
+  public WriteFailureException copy(EndPoint endPoint) {
     return new WriteFailureException(
-        address,
+        endPoint,
         getMessage(),
         this,
         getConsistencyLevel(),

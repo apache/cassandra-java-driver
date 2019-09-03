@@ -31,7 +31,7 @@ import java.net.InetSocketAddress;
  */
 @SuppressWarnings("deprecation")
 public class RemoteEndpointAwareNettySSLOptions extends NettySSLOptions
-    implements RemoteEndpointAwareSSLOptions {
+    implements ExtendedRemoteEndpointAwareSslOptions {
 
   /**
    * Create a new instance from a given context.
@@ -50,8 +50,15 @@ public class RemoteEndpointAwareNettySSLOptions extends NettySSLOptions
   }
 
   @Override
+  public SslHandler newSSLHandler(SocketChannel channel, EndPoint remoteEndpoint) {
+    InetSocketAddress address = remoteEndpoint.resolve();
+    return context.newHandler(channel.alloc(), address.getHostName(), address.getPort());
+  }
+
+  @Override
   public SslHandler newSSLHandler(SocketChannel channel, InetSocketAddress remoteEndpoint) {
-    return context.newHandler(
-        channel.alloc(), remoteEndpoint.getHostName(), remoteEndpoint.getPort());
+    throw new AssertionError(
+        "The driver should never call this method on an object that implements "
+            + this.getClass().getSimpleName());
   }
 }

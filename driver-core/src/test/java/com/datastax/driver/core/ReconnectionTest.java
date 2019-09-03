@@ -31,7 +31,6 @@ import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
@@ -284,7 +283,7 @@ public class ReconnectionTest extends CCMTestsSupport {
     }
 
     @Override
-    public Authenticator newAuthenticator(InetSocketAddress host, String authenticator) {
+    public Authenticator newAuthenticator(EndPoint host, String authenticator) {
       count.incrementAndGet();
       return super.newAuthenticator(host, authenticator);
     }

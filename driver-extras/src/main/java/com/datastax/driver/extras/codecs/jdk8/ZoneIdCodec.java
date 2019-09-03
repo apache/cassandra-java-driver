@@ -16,6 +16,7 @@
 package com.datastax.driver.extras.codecs.jdk8;
 
 import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.IgnoreJDK6Requirement;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;

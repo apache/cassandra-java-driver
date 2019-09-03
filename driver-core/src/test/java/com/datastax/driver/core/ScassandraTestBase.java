@@ -22,6 +22,8 @@ import org.scassandra.Scassandra;
 import org.scassandra.http.client.ActivityClient;
 import org.scassandra.http.client.CurrentClient;
 import org.scassandra.http.client.PrimingClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -36,9 +38,11 @@ import org.testng.annotations.BeforeMethod;
  */
 public abstract class ScassandraTestBase {
 
+  private static final Logger logger = LoggerFactory.getLogger(ScassandraTestBase.class);
+
   protected Scassandra scassandra;
 
-  protected InetSocketAddress hostAddress;
+  protected EndPoint hostEndPoint;
 
   protected PrimingClient primingClient;
 
@@ -55,12 +59,19 @@ public abstract class ScassandraTestBase {
     primingClient = scassandra.primingClient();
     activityClient = scassandra.activityClient();
     currentClient = scassandra.currentClient();
-    hostAddress = new InetSocketAddress(ip, scassandra.getBinaryPort());
+    hostEndPoint =
+        new TranslatedAddressEndPoint(new InetSocketAddress(ip, scassandra.getBinaryPort()));
   }
 
   @AfterClass(groups = {"short", "long"})
   public void afterTestClass() {
-    if (scassandra != null) scassandra.stop();
+    if (scassandra != null) {
+      try {
+        scassandra.stop();
+      } catch (Exception e) {
+        logger.error("Could not stop node " + scassandra, e);
+      }
+    }
   }
 
   @BeforeMethod(groups = {"short", "long"})
@@ -69,12 +80,13 @@ public abstract class ScassandraTestBase {
     activityClient.clearAllRecordedActivity();
     primingClient.clearAllPrimes();
     currentClient.enableListener();
+    ScassandraCluster.primeSystemLocalRow(scassandra);
   }
 
   protected Cluster.Builder createClusterBuilder() {
     return Cluster.builder()
         .withPort(scassandra.getBinaryPort())
-        .addContactPoints(hostAddress.getAddress())
+        .addContactPoint(hostEndPoint)
         .withPort(scassandra.getBinaryPort())
         .withPoolingOptions(
             new PoolingOptions()
@@ -84,7 +96,7 @@ public abstract class ScassandraTestBase {
   }
 
   protected Host retrieveSingleHost(Cluster cluster) {
-    Host host = cluster.getMetadata().getHost(hostAddress);
+    Host host = cluster.getMetadata().getHost(hostEndPoint);
     if (host == null) {
       fail("Unable to retrieve host");
     }
@@ -103,15 +115,18 @@ public abstract class ScassandraTestBase {
 
     protected Host host;
 
+    @Override
     @BeforeClass(groups = {"short", "long"})
     public void beforeTestClass() {
       super.beforeTestClass();
+      ScassandraCluster.primeSystemLocalRow(scassandra);
       Cluster.Builder builder = createClusterBuilder();
       cluster = builder.build();
       host = retrieveSingleHost(cluster);
       session = cluster.connect();
     }
 
+    @Override
     @AfterClass(groups = {"short", "long"})
     public void afterTestClass() {
       if (cluster != null) cluster.close();

@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.EndPoint;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -23,30 +24,37 @@ public class BusyConnectionException extends DriverException implements Coordina
 
   private static final long serialVersionUID = 0;
 
-  private final InetSocketAddress address;
+  private final EndPoint endPoint;
 
-  public BusyConnectionException(InetSocketAddress address) {
-    super(String.format("[%s] Connection has run out of stream IDs", address.getAddress()));
-    this.address = address;
+  public BusyConnectionException(EndPoint endPoint) {
+    super(String.format("[%s] Connection has run out of stream IDs", endPoint));
+    this.endPoint = endPoint;
   }
 
-  public BusyConnectionException(InetSocketAddress address, Throwable cause) {
-    super(String.format("[%s] Connection has run out of stream IDs", address.getAddress()), cause);
-    this.address = address;
-  }
-
-  @Override
-  public InetAddress getHost() {
-    return address != null ? address.getAddress() : null;
+  public BusyConnectionException(EndPoint endPoint, Throwable cause) {
+    super(String.format("[%s] Connection has run out of stream IDs", endPoint), cause);
+    this.endPoint = endPoint;
   }
 
   @Override
+  public EndPoint getEndPoint() {
+    return endPoint;
+  }
+
+  @Override
+  @Deprecated
   public InetSocketAddress getAddress() {
-    return address;
+    return (endPoint == null) ? null : endPoint.resolve();
+  }
+
+  @Override
+  @Deprecated
+  public InetAddress getHost() {
+    return (endPoint == null) ? null : endPoint.resolve().getAddress();
   }
 
   @Override
   public BusyConnectionException copy() {
-    return new BusyConnectionException(address, this);
+    return new BusyConnectionException(endPoint, this);
   }
 }

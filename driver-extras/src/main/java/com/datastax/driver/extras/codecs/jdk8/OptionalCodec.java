@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.extras.codecs.jdk8;
 
+import com.datastax.driver.core.IgnoreJDK6Requirement;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.extras.codecs.MappingCodec;
 import com.google.common.reflect.TypeParameter;

@@ -34,8 +34,8 @@ public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
           new Comparator<Host>() {
             @Override
             public int compare(Host host1, Host host2) {
-              byte[] address1 = host1.getAddress().getAddress();
-              byte[] address2 = host2.getAddress().getAddress();
+              byte[] address1 = host1.getEndPoint().resolve().getAddress().getAddress();
+              byte[] address2 = host2.getEndPoint().resolve().getAddress().getAddress();
               return UnsignedBytes.compare(
                   address1[address1.length - 1], address2[address2.length - 1]);
             }

@@ -92,7 +92,8 @@ public class QueryTracker {
       for (ListenableFuture<ResultSet> future : futures) {
         try {
           ResultSet result = Uninterruptibles.getUninterruptibly(future, 1, TimeUnit.SECONDS);
-          InetSocketAddress address = result.getExecutionInfo().getQueriedHost().getSocketAddress();
+          InetSocketAddress address =
+              result.getExecutionInfo().getQueriedHost().getEndPoint().resolve();
           InetAddress coordinator = address.getAddress();
           Integer n = coordinators.get(coordinator);
           coordinators.put(coordinator, n == null ? 1 : n + 1);
@@ -108,7 +109,8 @@ public class QueryTracker {
           }
 
           if (cause instanceof CoordinatorException) {
-            assertThat(((CoordinatorException) cause).getAddress()).isEqualTo(expectedHost);
+            assertThat(((CoordinatorException) cause).getEndPoint().resolve())
+                .isEqualTo(expectedHost);
           }
         }
       }

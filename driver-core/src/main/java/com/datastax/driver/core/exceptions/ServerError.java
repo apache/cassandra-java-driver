@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.EndPoint;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -26,33 +27,38 @@ public class ServerError extends DriverInternalError implements CoordinatorExcep
 
   private static final long serialVersionUID = 0;
 
-  private final InetSocketAddress address;
+  private final EndPoint endPoint;
 
-  public ServerError(InetSocketAddress address, String message) {
-    super(String.format("An unexpected error occurred server side on %s: %s", address, message));
-    this.address = address;
+  public ServerError(EndPoint endPoint, String message) {
+    super(String.format("An unexpected error occurred server side on %s: %s", endPoint, message));
+    this.endPoint = endPoint;
   }
 
   /** Private constructor used solely when copying exceptions. */
-  private ServerError(InetSocketAddress address, String message, ServerError cause) {
+  private ServerError(EndPoint endPoint, String message, ServerError cause) {
     super(message, cause);
-    this.address = address;
+    this.endPoint = endPoint;
   }
 
-  /** {@inheritDoc} */
   @Override
-  public InetAddress getHost() {
-    return address != null ? address.getAddress() : null;
+  public EndPoint getEndPoint() {
+    return endPoint;
   }
 
-  /** {@inheritDoc} */
   @Override
+  @Deprecated
   public InetSocketAddress getAddress() {
-    return address;
+    return (endPoint == null) ? null : endPoint.resolve();
+  }
+
+  @Override
+  @Deprecated
+  public InetAddress getHost() {
+    return (endPoint == null) ? null : endPoint.resolve().getAddress();
   }
 
   @Override
   public ServerError copy() {
-    return new ServerError(address, getMessage(), this);
+    return new ServerError(endPoint, getMessage(), this);
   }
 }

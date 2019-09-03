@@ -16,8 +16,8 @@
 package com.datastax.driver.core.exceptions;
 
 import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.EndPoint;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
 
@@ -62,7 +62,7 @@ public class ReadFailureException extends QueryConsistencyException {
   }
 
   public ReadFailureException(
-      InetSocketAddress address,
+      EndPoint endPoint,
       ConsistencyLevel consistency,
       int received,
       int required,
@@ -70,7 +70,7 @@ public class ReadFailureException extends QueryConsistencyException {
       Map<InetAddress, Integer> failuresMap,
       boolean dataPresent) {
     super(
-        address,
+        endPoint,
         String.format(
             "Cassandra failure during read query at consistency %s "
                 + "(%d responses were required but only %d replica responded, %d failed)",
@@ -86,14 +86,14 @@ public class ReadFailureException extends QueryConsistencyException {
   /** @deprecated Legacy constructor for backward compatibility. */
   @Deprecated
   public ReadFailureException(
-      InetSocketAddress address,
+      EndPoint endPoint,
       ConsistencyLevel consistency,
       int received,
       int required,
       int failed,
       boolean dataPresent) {
     this(
-        address,
+        endPoint,
         consistency,
         received,
         required,
@@ -103,7 +103,7 @@ public class ReadFailureException extends QueryConsistencyException {
   }
 
   private ReadFailureException(
-      InetSocketAddress address,
+      EndPoint endPoint,
       String msg,
       Throwable cause,
       ConsistencyLevel consistency,
@@ -112,7 +112,7 @@ public class ReadFailureException extends QueryConsistencyException {
       int failed,
       Map<InetAddress, Integer> failuresMap,
       boolean dataPresent) {
-    super(address, msg, cause, consistency, received, required);
+    super(endPoint, msg, cause, consistency, received, required);
     this.failed = failed;
     this.failuresMap = failuresMap;
     this.dataPresent = dataPresent;
@@ -169,7 +169,7 @@ public class ReadFailureException extends QueryConsistencyException {
   @Override
   public ReadFailureException copy() {
     return new ReadFailureException(
-        getAddress(),
+        getEndPoint(),
         getMessage(),
         this,
         getConsistencyLevel(),
@@ -180,9 +180,9 @@ public class ReadFailureException extends QueryConsistencyException {
         wasDataRetrieved());
   }
 
-  public ReadFailureException copy(InetSocketAddress address) {
+  public ReadFailureException copy(EndPoint endPoint) {
     return new ReadFailureException(
-        address,
+        endPoint,
         getMessage(),
         this,
         getConsistencyLevel(),

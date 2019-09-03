@@ -25,6 +25,7 @@ import static com.datastax.driver.core.ParseUtils.unquote;
 import static java.lang.Long.parseLong;
 
 import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.IgnoreJDK6Requirement;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;

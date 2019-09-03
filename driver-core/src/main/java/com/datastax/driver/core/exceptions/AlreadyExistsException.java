@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.EndPoint;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -24,7 +25,7 @@ public class AlreadyExistsException extends QueryValidationException
 
   private static final long serialVersionUID = 0;
 
-  private final InetSocketAddress address;
+  private final EndPoint endPoint;
   private final String keyspace;
   private final String table;
 
@@ -32,17 +33,17 @@ public class AlreadyExistsException extends QueryValidationException
     this(null, keyspace, table);
   }
 
-  public AlreadyExistsException(InetSocketAddress address, String keyspace, String table) {
+  public AlreadyExistsException(EndPoint endPoint, String keyspace, String table) {
     super(makeMsg(keyspace, table));
-    this.address = address;
+    this.endPoint = endPoint;
     this.keyspace = keyspace;
     this.table = table;
   }
 
   private AlreadyExistsException(
-      InetSocketAddress address, String msg, Throwable cause, String keyspace, String table) {
+      EndPoint endPoint, String msg, Throwable cause, String keyspace, String table) {
     super(msg, cause);
-    this.address = address;
+    this.endPoint = endPoint;
     this.keyspace = keyspace;
     this.table = table;
   }
@@ -52,16 +53,21 @@ public class AlreadyExistsException extends QueryValidationException
     else return String.format("Table %s.%s already exists", keyspace, table);
   }
 
-  /** {@inheritDoc} */
   @Override
-  public InetAddress getHost() {
-    return address != null ? address.getAddress() : null;
+  public EndPoint getEndPoint() {
+    return endPoint;
   }
 
-  /** {@inheritDoc} */
   @Override
+  @Deprecated
   public InetSocketAddress getAddress() {
-    return address;
+    return (endPoint == null) ? null : endPoint.resolve();
+  }
+
+  @Override
+  @Deprecated
+  public InetAddress getHost() {
+    return (endPoint == null) ? null : endPoint.resolve().getAddress();
   }
 
   /**
@@ -98,7 +104,7 @@ public class AlreadyExistsException extends QueryValidationException
 
   @Override
   public DriverException copy() {
-    return new AlreadyExistsException(getAddress(), getMessage(), this, keyspace, table);
+    return new AlreadyExistsException(getEndPoint(), getMessage(), this, keyspace, table);
   }
 
   /**
@@ -114,11 +120,11 @@ public class AlreadyExistsException extends QueryValidationException
    *       generally yields a more user-friendly stack trace that the original one.
    * </ol>
    *
-   * @param address The full address of the host that caused this exception to be thrown.
+   * @param endPoint The full address of the host that caused this exception to be thrown.
    * @return a copy/clone of this exception, but with the given host address instead of the original
    *     one.
    */
-  public AlreadyExistsException copy(InetSocketAddress address) {
-    return new AlreadyExistsException(address, getMessage(), this, keyspace, table);
+  public AlreadyExistsException copy(EndPoint endPoint) {
+    return new AlreadyExistsException(endPoint, getMessage(), this, keyspace, table);
   }
 }

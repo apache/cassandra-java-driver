@@ -68,7 +68,10 @@ public class WhiteListPolicy extends HostFilterPolicy {
     return new Predicate<Host>() {
       @Override
       public boolean apply(Host host) {
-        return hosts.contains(host.getSocketAddress());
+        // This policy shouldn't be used with endpoints that don't resolve to unique addresses. This
+        // should be pretty obvious from the API. We don't really have any way to check it here.
+        InetSocketAddress socketAddress = host.getEndPoint().resolve();
+        return hosts.contains(socketAddress);
       }
     };
   }
@@ -116,7 +119,8 @@ public class WhiteListPolicy extends HostFilterPolicy {
         new Predicate<Host>() {
           @Override
           public boolean apply(Host host) {
-            return addresses.contains(host.getAddress());
+            InetSocketAddress socketAddress = host.getEndPoint().resolve();
+            return addresses.contains(socketAddress.getAddress());
           }
         });
   }

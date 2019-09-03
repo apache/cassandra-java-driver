@@ -31,8 +31,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,8 +47,10 @@ public class Metadata {
   final Cluster.Manager cluster;
   volatile String clusterName;
   volatile String partitioner;
-  private final ConcurrentMap<InetSocketAddress, Host> hosts =
-      new ConcurrentHashMap<InetSocketAddress, Host>();
+  // Holds the contact points until we have a connection to the cluster
+  private final List<Host> contactPoints = new CopyOnWriteArrayList<Host>();
+  // The hosts, keyed by their host_id
+  private final ConcurrentMap<UUID, Host> hosts = new ConcurrentHashMap<UUID, Host>();
   final ConcurrentMap<String, KeyspaceMetadata> keyspaces =
       new ConcurrentHashMap<String, KeyspaceMetadata>();
   private volatile TokenMap tokenMap;
@@ -146,24 +150,62 @@ public class Metadata {
     }
   }
 
-  Host newHost(InetSocketAddress address) {
-    return new Host(address, cluster.convictionPolicyFactory, cluster);
+  Host newHost(EndPoint endPoint) {
+    return new Host(endPoint, cluster.convictionPolicyFactory, cluster);
+  }
+
+  void addContactPoint(EndPoint contactPoint) {
+    contactPoints.add(newHost(contactPoint));
+  }
+
+  List<Host> getContactPoints() {
+    return contactPoints;
+  }
+
+  Host getContactPoint(EndPoint endPoint) {
+    for (Host host : contactPoints) {
+      if (host.getEndPoint().equals(endPoint)) {
+        return host;
+      }
+    }
+    return null;
   }
 
   /**
-   * @return the previous host associated with this socket address, or {@code null} if there was no
-   *     such host.
+   * @return the previous host associated with this id, or {@code null} if there was no such host.
    */
   Host addIfAbsent(Host host) {
-    return hosts.putIfAbsent(host.getSocketAddress(), host);
+    return hosts.putIfAbsent(host.getHostId(), host);
   }
 
   boolean remove(Host host) {
-    return hosts.remove(host.getSocketAddress()) != null;
+    return hosts.remove(host.getHostId()) != null;
   }
 
-  Host getHost(InetSocketAddress address) {
-    return hosts.get(address);
+  Host getHost(UUID hostId) {
+    return hosts.get(hostId);
+  }
+
+  /**
+   * @param broadcastRpcAddress the <em>untranslated</em> broadcast RPC address, as indicated in
+   *     server events.
+   */
+  Host getHost(InetSocketAddress broadcastRpcAddress) {
+    for (Host host : hosts.values()) {
+      if (broadcastRpcAddress.equals(host.getBroadcastRpcAddress())) {
+        return host;
+      }
+    }
+    return null;
+  }
+
+  Host getHost(EndPoint endPoint) {
+    for (Host host : hosts.values()) {
+      if (host.getEndPoint().equals(endPoint)) {
+        return host;
+      }
+    }
+    return null;
   }
 
   // For internal use only

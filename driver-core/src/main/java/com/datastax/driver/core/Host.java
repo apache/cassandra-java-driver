@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.policies.AddressTranslator;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -38,7 +37,11 @@ public class Host {
   static final Logger statesLogger = LoggerFactory.getLogger(Host.class.getName() + ".STATES");
 
   // The address we'll use to connect to the node
-  private final InetSocketAddress address;
+  private final EndPoint endPoint;
+
+  // The broadcast RPC address, as reported in system tables.
+  // Note that, unlike previous versions of the driver, this address is NOT TRANSLATED.
+  private volatile InetSocketAddress broadcastRpcAddress;
 
   // The broadcast_address as known by Cassandra.
   // We use that internally because
@@ -84,16 +87,13 @@ public class Host {
   private volatile boolean dseGraphEnabled;
   private volatile VersionNumber dseVersion;
 
-  // ClusterMetadata keeps one Host object per inet address and we rely on this (more precisely,
-  // we rely on the fact that we can use Object equality as a valid equality), so don't use
-  // that constructor but ClusterMetadata.getHost instead.
   Host(
-      InetSocketAddress address,
+      EndPoint endPoint,
       ConvictionPolicy.Factory convictionPolicyFactory,
       Cluster.Manager manager) {
-    if (address == null || convictionPolicyFactory == null) throw new NullPointerException();
+    if (endPoint == null || convictionPolicyFactory == null) throw new NullPointerException();
 
-    this.address = address;
+    this.endPoint = endPoint;
     this.convictionPolicy = convictionPolicyFactory.create(this, manager.reconnectionPolicy());
     this.manager = manager;
     this.defaultExecutionInfo = new ExecutionInfo(this);
@@ -116,6 +116,10 @@ public class Host {
           "Error parsing Cassandra version {}. This shouldn't have happened", cassandraVersion);
     }
     this.cassandraVersion = versionNumber;
+  }
+
+  void setBroadcastRpcAddress(InetSocketAddress broadcastRpcAddress) {
+    this.broadcastRpcAddress = broadcastRpcAddress;
   }
 
   void setBroadcastSocketAddress(InetSocketAddress broadcastAddress) {
@@ -159,38 +163,56 @@ public class Host {
         || version.minCassandraVersion().compareTo(getCassandraVersion().nextStable()) <= 0;
   }
 
+  /** Returns information to connect to the node. */
+  public EndPoint getEndPoint() {
+    return endPoint;
+  }
+
   /**
    * Returns the address that the driver will use to connect to the node.
    *
-   * <p>This is a shortcut for {@code getSocketAddress().getAddress()}.
-   *
-   * @return the address.
-   * @see #getSocketAddress()
+   * @deprecated This is exposed mainly for historical reasons. Internally, the driver uses {@link
+   *     #getEndPoint()} to establish connections. This is a shortcut for {@code
+   *     getEndPoint().resolve().getAddress()}.
    */
+  @Deprecated
   public InetAddress getAddress() {
-    return address.getAddress();
+    return endPoint.resolve().getAddress();
   }
 
   /**
    * Returns the address and port that the driver will use to connect to the node.
    *
-   * <p>This is the node's broadcast RPC address, possibly translated if an {@link
-   * AddressTranslator} has been configured for this cluster.
-   *
-   * <p>The broadcast RPC address is inferred from the following cassandra.yaml file settings:
-   *
-   * <ol>
-   *   <li>{@code rpc_address}, {@code rpc_interface} or {@code broadcast_rpc_address}
-   *   <li>{@code native_transport_port}
-   * </ol>
-   *
-   * @return the address and port.
+   * @deprecated This is exposed mainly for historical reasons. Internally, the driver uses {@link
+   *     #getEndPoint()} to establish connections. This is a shortcut for {@code
+   *     getEndPoint().resolve()}.
    * @see <a
    *     href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The
    *     cassandra.yaml configuration file</a>
    */
+  @Deprecated
   public InetSocketAddress getSocketAddress() {
-    return address;
+    return endPoint.resolve();
+  }
+
+  /**
+   * Returns the broadcast RPC address, as reported by the node.
+   *
+   * <p>This is address reported in {@code system.peers.rpc_address} (Cassandra 3) or {@code
+   * system.peers_v2.native_address/native_port} (Cassandra 4+).
+   *
+   * <p>Note that this is not necessarily the address that the driver will use to connect: if the
+   * node is accessed through a proxy, a translation might be necessary; this is handled by {@link
+   * #getEndPoint()}.
+   *
+   * <p>For versions of Cassandra less than 2.0.16, 2.1.6 or 2.2.0-rc1, this will be {@code null}
+   * for the control host. It will get updated if the control connection switches to another host.
+   *
+   * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-9436">CASSANDRA-9436 (where the
+   *     information was added for the control host)</a>
+   */
+  public InetSocketAddress getBroadcastRpcAddress() {
+    return broadcastRpcAddress;
   }
 
   /**
@@ -463,14 +485,14 @@ public class Host {
   public boolean equals(Object other) {
     if (other instanceof Host) {
       Host that = (Host) other;
-      return this.address.equals(that.address);
+      return this.endPoint.equals(that.endPoint);
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    return address.hashCode();
+    return endPoint.hashCode();
   }
 
   boolean wasJustAdded() {
@@ -479,7 +501,7 @@ public class Host {
 
   @Override
   public String toString() {
-    return address.toString();
+    return endPoint.toString();
   }
 
   void setDown() {

@@ -121,7 +121,7 @@ public class LatencyAwarePolicyTest extends ScassandraTestBase {
         fail("Should have thrown NoHostAvailableException");
       } catch (NoHostAvailableException e) {
         // ok
-        Throwable error = e.getErrors().get(hostAddress);
+        Throwable error = e.getErrors().get(hostEndPoint);
         assertThat(error).isNotNull();
         assertThat(error).isInstanceOf(UnavailableException.class);
       }

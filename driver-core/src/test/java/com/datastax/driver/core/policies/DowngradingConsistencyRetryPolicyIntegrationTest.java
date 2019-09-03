@@ -409,18 +409,14 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest
       } catch (NoHostAvailableException e) {
         assertThat(e.getErrors().keySet())
             .hasSize(3)
-            .containsOnly(
-                host1.getSocketAddress(), host2.getSocketAddress(), host3.getSocketAddress());
+            .containsOnly(host1.getEndPoint(), host2.getEndPoint(), host3.getEndPoint());
         assertThat(e.getErrors().values())
             .hasOnlyElementsOfType(OperationTimedOutException.class)
             .extractingResultOf("getMessage")
             .containsOnlyOnce(
-                String.format(
-                    "[%s] Timed out waiting for server response", host1.getSocketAddress()),
-                String.format(
-                    "[%s] Timed out waiting for server response", host2.getSocketAddress()),
-                String.format(
-                    "[%s] Timed out waiting for server response", host3.getSocketAddress()));
+                String.format("[%s] Timed out waiting for server response", host1.getEndPoint()),
+                String.format("[%s] Timed out waiting for server response", host2.getEndPoint()),
+                String.format("[%s] Timed out waiting for server response", host3.getEndPoint()));
       }
       assertOnRequestErrorWasCalled(3, OperationTimedOutException.class);
       assertThat(errors.getRetries().getCount()).isEqualTo(3);
@@ -459,8 +455,7 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest
     } catch (NoHostAvailableException e) {
       assertThat(e.getErrors().keySet())
           .hasSize(3)
-          .containsOnly(
-              host1.getSocketAddress(), host2.getSocketAddress(), host3.getSocketAddress());
+          .containsOnly(host1.getEndPoint(), host2.getEndPoint(), host3.getEndPoint());
       assertThat(e.getErrors().values()).hasOnlyElementsOfType(exception);
     }
     assertOnRequestErrorWasCalled(3, exception);
@@ -489,8 +484,7 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest
     } catch (NoHostAvailableException e) {
       assertThat(e.getErrors().keySet())
           .hasSize(3)
-          .containsOnly(
-              host1.getSocketAddress(), host2.getSocketAddress(), host3.getSocketAddress());
+          .containsOnly(host1.getEndPoint(), host2.getEndPoint(), host3.getEndPoint());
       assertThat(e.getErrors().values()).hasOnlyElementsOfType(TransportException.class);
     }
     assertOnRequestErrorWasCalled(3, TransportException.class);

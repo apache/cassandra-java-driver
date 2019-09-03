@@ -21,7 +21,7 @@
 
     <groupId>com.datastax.cassandra</groupId>
     <artifactId>cassandra-driver-parent</artifactId>
-    <version>3.7.3-SNAPSHOT</version>
+    <version>3.8.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>DataStax Java Driver for Apache Cassandra</name>
     <description>
@@ -725,8 +725,7 @@ limitations under the License.
                                     <version>1.0</version>
                                 </signature>
                                 <annotations>
-                                    <annotation>com.datastax.driver.extras.codecs.jdk8.IgnoreJDK6Requirement
-                                    </annotation>
+                                    <annotation>com.datastax.driver.core.IgnoreJDK6Requirement</annotation>
                                 </annotations>
                             </configuration>
                         </execution>
@@ -1141,7 +1140,7 @@ limitations under the License.
         <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
         <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
         <url>https://github.com/datastax/java-driver</url>
-        <tag>HEAD</tag>
+        <tag>3.7.2-cloud-01</tag>
     </scm>
 
     <developers>

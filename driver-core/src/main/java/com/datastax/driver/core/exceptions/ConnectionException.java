@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.EndPoint;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -23,36 +24,43 @@ public class ConnectionException extends DriverException implements CoordinatorE
 
   private static final long serialVersionUID = 0;
 
-  public final InetSocketAddress address;
+  private final EndPoint endPoint;
 
-  public ConnectionException(InetSocketAddress address, String msg, Throwable cause) {
+  public ConnectionException(EndPoint endPoint, String msg, Throwable cause) {
     super(msg, cause);
-    this.address = address;
+    this.endPoint = endPoint;
   }
 
-  public ConnectionException(InetSocketAddress address, String msg) {
+  public ConnectionException(EndPoint endPoint, String msg) {
     super(msg);
-    this.address = address;
+    this.endPoint = endPoint;
   }
 
   @Override
-  public InetAddress getHost() {
-    return address == null ? null : address.getAddress();
+  public EndPoint getEndPoint() {
+    return endPoint;
   }
 
   @Override
+  @Deprecated
   public InetSocketAddress getAddress() {
-    return address;
+    return (endPoint == null) ? null : endPoint.resolve();
+  }
+
+  @Override
+  @Deprecated
+  public InetAddress getHost() {
+    return (endPoint == null) ? null : endPoint.resolve().getAddress();
   }
 
   @Override
   public String getMessage() {
-    return address == null ? getRawMessage() : String.format("[%s] %s", address, getRawMessage());
+    return endPoint == null ? getRawMessage() : String.format("[%s] %s", endPoint, getRawMessage());
   }
 
   @Override
   public ConnectionException copy() {
-    return new ConnectionException(address, getRawMessage(), this);
+    return new ConnectionException(endPoint, getRawMessage(), this);
   }
 
   String getRawMessage() {

@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.driver.extras.codecs.jdk8;
+package com.datastax.driver.core;
 
-/**
- * Annotation used to mark classes in this package as excluded from JDK signature check performed by
- * <a
- * href="http://www.mojohaus.org/animal-sniffer/animal-sniffer-maven-plugin/check-mojo.html">animal-sniffer</a>
- * Maven plugin as they require JDK 8 and not the usual JDK 6.
- */
-@interface IgnoreJDK6Requirement {}
+import java.net.InetSocketAddress;
+
+/** Encapsulates the information needed by the driver to open connections to a node. */
+public interface EndPoint {
+
+  /**
+   * Resolves this instance to a socket address.
+   *
+   * <p>This will be called each time the driver opens a new connection to the node. The returned
+   * address cannot be null.
+   */
+  InetSocketAddress resolve();
+}

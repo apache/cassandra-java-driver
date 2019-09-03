@@ -140,7 +140,6 @@
         <className>com/datastax/driver/core/FrameCompressor$SnappyCompressor</className>
         <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
     </difference>
-
     <difference>
         <differenceType>8001</differenceType> <!-- class removed -->
         <className>com/datastax/driver/core/FrameCompressor$LZ4Compressor</className>
@@ -158,5 +157,198 @@
         <to>*</to>
         <justification>Relaxed parameters from List to Iterable for in, lt, lte, eq, gt, and gte</justification>
     </difference>
-
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/AlreadyExistsException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/AuthenticationException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/BootstrappingException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/BusyConnectionException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/BusyPoolException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>6001</differenceType> <!-- Removed field -->
+        <className>com/datastax/driver/core/exceptions/ConnectionException</className>
+        <field>address</field>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/ConnectionException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7012</differenceType> <!-- Method added to interface -->
+        <className>com/datastax/driver/core/exceptions/CoordinatorException</className>
+        <method>com.datastax.driver.core.EndPoint getEndPoint()</method>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/FunctionExecutionException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/InvalidConfigurationInQueryException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/InvalidQueryException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/OperationTimedOutException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/OperationTimedOutException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/OverloadedException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/ProtocolError</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/QueryConsistencyException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/ReadFailureException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/ReadTimeoutException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/ServerError</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/SyntaxError</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/TransportException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/TruncateException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/UnauthorizedException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/UnavailableException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/UnpreparedException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/UnsupportedProtocolVersionException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/WriteFailureException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
+    <difference>
+        <differenceType>7005</differenceType> <!-- Method argument type changed -->
+        <className>com/datastax/driver/core/exceptions/WriteTimeoutException</className>
+        <method>*java.net.InetSocketAddress*</method>
+        <to>*com.datastax.driver.core.EndPoint*</to>
+        <justification>JAVA-2355: Abstract connection information into new EndPoint type for sni support</justification>
+    </difference>
 </differences>

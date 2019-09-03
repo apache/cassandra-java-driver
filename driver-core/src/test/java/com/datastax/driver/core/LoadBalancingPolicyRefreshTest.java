@@ -41,33 +41,43 @@ public class LoadBalancingPolicyRefreshTest extends CCMTestsSupport {
       cluster.getConfiguration().getPoolingOptions().refreshConnectedHosts();
     }
 
+    @Override
     public void init(Cluster cluster, Collection<Host> hosts) {
       this.cluster = cluster;
       try {
         for (Host h : hosts)
-          if (h.getAddress().equals(InetAddress.getByName(TestUtils.IP_PREFIX + '1')))
-            this.theHost = h;
+          if (h.getEndPoint()
+              .resolve()
+              .getAddress()
+              .equals(InetAddress.getByName(TestUtils.IP_PREFIX + '1'))) this.theHost = h;
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
     }
 
+    @Override
     public HostDistance distance(Host host) {
       return host == theHost ? HostDistance.LOCAL : HostDistance.IGNORED;
     }
 
+    @Override
     public Iterator<Host> newQueryPlan(String loggedKeyspace, Statement statement) {
       return Iterators.<Host>singletonIterator(theHost);
     }
 
+    @Override
     public void onAdd(Host h) {}
 
+    @Override
     public void onRemove(Host h) {}
 
+    @Override
     public void onUp(Host h) {}
 
+    @Override
     public void onDown(Host h) {}
 
+    @Override
     public void close() {}
   }
 
@@ -77,7 +87,7 @@ public class LoadBalancingPolicyRefreshTest extends CCMTestsSupport {
     // Ugly
     Host[] hosts = new Host[2];
     for (Host h : cluster().getMetadata().getAllHosts()) {
-      if (h.getAddress().equals(ccm().addressOfNode(1).getAddress())) hosts[0] = h;
+      if (h.getEndPoint().resolve().equals(ccm().addressOfNode(1))) hosts[0] = h;
       else hosts[1] = h;
     }
 

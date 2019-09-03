@@ -105,7 +105,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
         assertThat(e.getMessage())
             .isEqualTo(
                 String.format(
-                    "[%s] Timed out waiting for server response", host1.getSocketAddress()));
+                    "[%s] Timed out waiting for server response", host1.getEndPoint().resolve()));
       }
       // Should not have even been called as statement was not idempotent.
       assertOnRequestErrorWasCalled(0, OperationTimedOutException.class);
@@ -184,8 +184,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
     } catch (NoHostAvailableException e) {
       assertThat(e.getErrors().keySet())
           .hasSize(3)
-          .containsOnly(
-              host1.getSocketAddress(), host2.getSocketAddress(), host3.getSocketAddress());
+          .containsOnly(host1.getEndPoint(), host2.getEndPoint(), host3.getEndPoint());
       assertThat(e.getErrors().values()).hasOnlyElementsOfType(exception);
     }
     assertOnRequestErrorWasCalled(3, exception);
@@ -208,7 +207,8 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
       Fail.fail("expected a TransportException");
     } catch (TransportException e) {
       assertThat(e.getMessage())
-          .isEqualTo(String.format("[%s] Connection has been closed", host1.getSocketAddress()));
+          .isEqualTo(
+              String.format("[%s] Connection has been closed", host1.getEndPoint().resolve()));
     }
     // Should not have even been called as statement was not idempotent.
     assertOnRequestErrorWasCalled(0, TransportException.class);
@@ -233,8 +233,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
     } catch (NoHostAvailableException e) {
       assertThat(e.getErrors().keySet())
           .hasSize(3)
-          .containsOnly(
-              host1.getSocketAddress(), host2.getSocketAddress(), host3.getSocketAddress());
+          .containsOnly(host1.getEndPoint(), host2.getEndPoint(), host3.getEndPoint());
       assertThat(e.getErrors().values()).hasOnlyElementsOfType(TransportException.class);
     }
     assertOnRequestErrorWasCalled(3, TransportException.class);

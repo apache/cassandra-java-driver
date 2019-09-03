@@ -16,6 +16,7 @@
 package com.datastax.driver.core.exceptions;
 
 import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.EndPoint;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -37,33 +38,29 @@ import java.net.InetSocketAddress;
 public abstract class QueryConsistencyException extends QueryExecutionException
     implements CoordinatorException {
 
-  private final InetSocketAddress address;
+  private final EndPoint endPoint;
   private final ConsistencyLevel consistency;
   private final int received;
   private final int required;
 
   protected QueryConsistencyException(
-      InetSocketAddress address,
-      String msg,
-      ConsistencyLevel consistency,
-      int received,
-      int required) {
+      EndPoint endPoint, String msg, ConsistencyLevel consistency, int received, int required) {
     super(msg);
-    this.address = address;
+    this.endPoint = endPoint;
     this.consistency = consistency;
     this.received = received;
     this.required = required;
   }
 
   protected QueryConsistencyException(
-      InetSocketAddress address,
+      EndPoint endPoint,
       String msg,
       Throwable cause,
       ConsistencyLevel consistency,
       int received,
       int required) {
     super(msg, cause);
-    this.address = address;
+    this.endPoint = endPoint;
     this.consistency = consistency;
     this.received = received;
     this.required = required;
@@ -99,26 +96,25 @@ public abstract class QueryConsistencyException extends QueryExecutionException
   }
 
   /**
-   * The coordinator host that caused this exception to be thrown. Note that this is the query
-   * coordinator host, <em>not</em> the host which timed out.
+   * {@inheritDoc}
    *
-   * @return The coordinator host that caused this exception to be thrown, or {@code null} if this
-   *     exception has been generated driver-side.
+   * <p>Note that this is the information of the host that coordinated the query, <em>not</em> the
+   * one that timed out.
    */
   @Override
-  public InetAddress getHost() {
-    return address != null ? address.getAddress() : null;
+  public EndPoint getEndPoint() {
+    return endPoint;
   }
 
-  /**
-   * The full address of the coordinator host that caused this exception to be thrown. Note that
-   * this is the query coordinator host, <em>not</em> the host which timed out.
-   *
-   * @return the full address of the coordinator host that caused this exception to be thrown, or
-   *     {@code null} if this exception has been generated driver-side.
-   */
   @Override
+  @Deprecated
   public InetSocketAddress getAddress() {
-    return address;
+    return (endPoint == null) ? null : endPoint.resolve();
+  }
+
+  @Override
+  @Deprecated
+  public InetAddress getHost() {
+    return (endPoint == null) ? null : endPoint.resolve().getAddress();
   }
 }

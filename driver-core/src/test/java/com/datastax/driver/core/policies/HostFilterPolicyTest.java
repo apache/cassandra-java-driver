@@ -31,7 +31,6 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -45,10 +44,6 @@ public class HostFilterPolicyTest {
 
   @Mock Host host1, host2, host3;
 
-  InetSocketAddress address1 = InetSocketAddress.createUnresolved("192.168.1.1", 2345);
-  InetSocketAddress address2 = InetSocketAddress.createUnresolved("192.168.1.2", 9876);
-  InetSocketAddress address3 = InetSocketAddress.createUnresolved("192.168.1.3", 6666);
-
   @Mock LoadBalancingPolicy wrappedPolicy;
 
   @Captor ArgumentCaptor<Collection<Host>> hostsCaptor;
@@ -56,11 +51,6 @@ public class HostFilterPolicyTest {
   @BeforeMethod(groups = "unit")
   public void setup() {
     MockitoAnnotations.initMocks(this);
-
-    when(host1.getSocketAddress()).thenReturn(address1);
-    when(host2.getSocketAddress()).thenReturn(address2);
-    when(host3.getSocketAddress()).thenReturn(address3);
-
     when(wrappedPolicy.distance(any(Host.class))).thenReturn(HostDistance.LOCAL);
   }
 

@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.EndPoint;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -23,32 +24,43 @@ public class AuthenticationException extends DriverException implements Coordina
 
   private static final long serialVersionUID = 0;
 
-  private final InetSocketAddress address;
+  private final EndPoint endPoint;
 
+  public AuthenticationException(EndPoint endPoint, String message) {
+    super(String.format("Authentication error on host %s: %s", endPoint, message));
+    this.endPoint = endPoint;
+  }
+
+  // Preserve a constructor with InetSocketAddress for backward compatibility, because legacy
+  // authenticators might use it
   public AuthenticationException(InetSocketAddress address, String message) {
-    super(String.format("Authentication error on host %s: %s", address, message));
-    this.address = address;
+    this(new WrappingEndPoint(address), message);
   }
 
-  private AuthenticationException(InetSocketAddress address, String message, Throwable cause) {
+  private AuthenticationException(EndPoint endPoint, String message, Throwable cause) {
     super(message, cause);
-    this.address = address;
+    this.endPoint = endPoint;
   }
 
-  /** {@inheritDoc} */
   @Override
-  public InetAddress getHost() {
-    return address != null ? address.getAddress() : null;
+  public EndPoint getEndPoint() {
+    return endPoint;
   }
 
-  /** {@inheritDoc} */
   @Override
+  @Deprecated
   public InetSocketAddress getAddress() {
-    return address;
+    return (endPoint == null) ? null : endPoint.resolve();
+  }
+
+  @Override
+  @Deprecated
+  public InetAddress getHost() {
+    return (endPoint == null) ? null : endPoint.resolve().getAddress();
   }
 
   @Override
   public DriverException copy() {
-    return new AuthenticationException(address, getMessage(), this);
+    return new AuthenticationException(endPoint, getMessage(), this);
   }
 }

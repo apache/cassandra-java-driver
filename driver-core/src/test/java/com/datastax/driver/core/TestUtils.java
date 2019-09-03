@@ -657,7 +657,7 @@ public abstract class TestUtils {
           new StateListenerBase() {
             @Override
             public void onAdd(Host host) {
-              if (host.getAddress().getHostAddress().equals(address)) {
+              if (host.getEndPoint().resolve().getAddress().getHostAddress().equals(address)) {
                 // for a new node, because of this we also listen for add events.
                 addSignal.countDown();
               }
@@ -689,7 +689,7 @@ public abstract class TestUtils {
     // create the Cluster
     // (JAVA-860 will solve that)
     for (Host host : cluster.getMetadata().allHosts()) {
-      if (host.getAddress().getHostAddress().equals(address)) return host;
+      if (host.getEndPoint().resolve().getAddress().getHostAddress().equals(address)) return host;
     }
     return null;
   }
@@ -814,9 +814,9 @@ public abstract class TestUtils {
   public static Cluster buildControlCluster(Cluster cluster, CCMAccess ccm) {
     Host controlHost = cluster.manager.controlConnection.connectedHost();
     List<InetSocketAddress> singleAddress =
-        Collections.singletonList(controlHost.getSocketAddress());
+        Collections.singletonList(controlHost.getEndPoint().resolve());
     return Cluster.builder()
-        .addContactPoints(controlHost.getSocketAddress().getAddress())
+        .addContactPoints(controlHost.getEndPoint().resolve().getAddress())
         .withPort(ccm.getBinaryPort())
         .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), singleAddress))
         .build();

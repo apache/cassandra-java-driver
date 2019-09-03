@@ -212,24 +212,24 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet>
           }
           break;
         case ERROR:
-          setException(((Responses.Error) response).asException(connection.address));
+          setException(((Responses.Error) response).asException(connection.endPoint));
           break;
         default:
           // This mean we have probably have a bad node, so defunct the connection
           connection.defunct(
               new ConnectionException(
-                  connection.address, String.format("Got unexpected %s response", response.type)));
+                  connection.endPoint, String.format("Got unexpected %s response", response.type)));
           setException(
               new DriverInternalError(
                   String.format(
-                      "Got unexpected %s response from %s", response.type, connection.address)));
+                      "Got unexpected %s response from %s", response.type, connection.endPoint)));
           break;
       }
     } catch (Throwable e) {
       // If we get a bug here, the client will not get it, so better forwarding the error
       setException(
           new DriverInternalError(
-              "Unexpected error while processing response from " + connection.address, e));
+              "Unexpected error while processing response from " + connection.endPoint, e));
     }
   }
 
@@ -254,7 +254,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet>
     // RequestHandler).
     // So just set an exception for the final result, which should be handled correctly by said
     // internal call.
-    setException(new OperationTimedOutException(connection.address));
+    setException(new OperationTimedOutException(connection.endPoint));
     return true;
   }
 

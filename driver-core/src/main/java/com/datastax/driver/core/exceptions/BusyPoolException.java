@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.EndPoint;
 import com.datastax.driver.core.HostDistance;
 import com.datastax.driver.core.Statement;
 import java.net.InetAddress;
@@ -47,45 +48,52 @@ public class BusyPoolException extends DriverException implements CoordinatorExc
 
   private static final long serialVersionUID = 0;
 
-  private final InetSocketAddress address;
+  private final EndPoint endPoint;
 
-  public BusyPoolException(InetSocketAddress address, int queueSize) {
-    this(address, buildMessage(address, queueSize), null);
+  public BusyPoolException(EndPoint endPoint, int queueSize) {
+    this(endPoint, buildMessage(endPoint, queueSize), null);
   }
 
-  public BusyPoolException(InetSocketAddress address, long timeout, TimeUnit unit) {
-    this(address, buildMessage(address, timeout, unit), null);
+  public BusyPoolException(EndPoint endPoint, long timeout, TimeUnit unit) {
+    this(endPoint, buildMessage(endPoint, timeout, unit), null);
   }
 
-  private BusyPoolException(InetSocketAddress address, String message, Throwable cause) {
+  private BusyPoolException(EndPoint endPoint, String message, Throwable cause) {
     super(message, cause);
-    this.address = address;
+    this.endPoint = endPoint;
   }
 
-  private static String buildMessage(InetSocketAddress address, int queueSize) {
+  private static String buildMessage(EndPoint endPoint, int queueSize) {
     return String.format(
         "[%s] Pool is busy (no available connection and the queue has reached its max size %d)",
-        address.getAddress(), queueSize);
+        endPoint, queueSize);
   }
 
-  private static String buildMessage(InetSocketAddress address, long timeout, TimeUnit unit) {
+  private static String buildMessage(EndPoint endPoint, long timeout, TimeUnit unit) {
     return String.format(
         "[%s] Pool is busy (no available connection and timed out after %d %s)",
-        address.getAddress(), timeout, unit);
+        endPoint, timeout, unit);
   }
 
   @Override
-  public InetAddress getHost() {
-    return address != null ? address.getAddress() : null;
+  public EndPoint getEndPoint() {
+    return endPoint;
   }
 
   @Override
+  @Deprecated
   public InetSocketAddress getAddress() {
-    return address;
+    return (endPoint == null) ? null : endPoint.resolve();
+  }
+
+  @Override
+  @Deprecated
+  public InetAddress getHost() {
+    return (endPoint == null) ? null : endPoint.resolve().getAddress();
   }
 
   @Override
   public BusyPoolException copy() {
-    return new BusyPoolException(address, getMessage(), this);
+    return new BusyPoolException(endPoint, getMessage(), this);
   }
 }

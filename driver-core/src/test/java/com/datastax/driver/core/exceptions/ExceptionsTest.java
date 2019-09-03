@@ -22,16 +22,17 @@ import static org.testng.Assert.assertTrue;
 
 import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.EndPoint;
+import com.datastax.driver.core.EndPoints;
 import com.datastax.driver.core.TestUtils;
 import com.datastax.driver.core.WriteType;
-import java.net.InetSocketAddress;
 import org.testng.annotations.Test;
 
 /** Tests Exception classes with separate clusters per test, when applicable */
 public class ExceptionsTest extends CCMTestsSupport {
 
-  private InetSocketAddress address1 = new InetSocketAddress("127.0.0.1", 9042);
-  private InetSocketAddress address2 = new InetSocketAddress("127.0.0.2", 9042);
+  private EndPoint endPoint1 = EndPoints.forAddress("127.0.0.1", 9042);
+  private EndPoint endPoint2 = EndPoints.forAddress("127.0.0.2", 9042);
 
   /**
    * Tests the AlreadyExistsException. Create a keyspace twice and a table twice. Catch and test all
@@ -63,8 +64,8 @@ public class ExceptionsTest extends CCMTestsSupport {
       assertEquals(e.getKeyspace(), keyspace.toLowerCase());
       assertEquals(e.getTable(), null);
       assertEquals(e.wasTableCreation(), false);
-      assertEquals(e.getHost(), ccm().addressOfNode(1).getAddress());
-      assertEquals(e.getAddress(), ccm().addressOfNode(1));
+      assertEquals(e.getEndPoint().resolve().getAddress(), ccm().addressOfNode(1).getAddress());
+      assertEquals(e.getEndPoint().resolve(), ccm().addressOfNode(1));
     }
 
     session().execute(cqlCommands[1]);
@@ -77,8 +78,8 @@ public class ExceptionsTest extends CCMTestsSupport {
       assertEquals(e.getKeyspace(), keyspace.toLowerCase());
       assertEquals(e.getTable(), table.toLowerCase());
       assertEquals(e.wasTableCreation(), true);
-      assertEquals(e.getHost(), ccm().addressOfNode(1).getAddress());
-      assertEquals(e.getAddress(), ccm().addressOfNode(1));
+      assertEquals(e.getEndPoint().resolve().getAddress(), ccm().addressOfNode(1).getAddress());
+      assertEquals(e.getEndPoint().resolve(), ccm().addressOfNode(1));
     }
   }
 
@@ -127,48 +128,42 @@ public class ExceptionsTest extends CCMTestsSupport {
 
   @Test(groups = "unit")
   public void should_create_proper_already_exists_exception_for_keyspaces() {
-    AlreadyExistsException e = new AlreadyExistsException(address1, "keyspace1", "");
+    AlreadyExistsException e = new AlreadyExistsException(endPoint1, "keyspace1", "");
     assertThat(e.getMessage()).isEqualTo("Keyspace keyspace1 already exists");
     assertThat(e.getKeyspace()).isEqualTo("keyspace1");
     assertThat(e.getTable()).isNull();
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
-    e = e.copy(address2);
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
+    e = e.copy(endPoint2);
     assertThat(e.getMessage()).isEqualTo("Keyspace keyspace1 already exists");
     assertThat(e.getKeyspace()).isEqualTo("keyspace1");
     assertThat(e.getTable()).isNull();
-    assertThat(e.getAddress()).isEqualTo(address2);
-    assertThat(e.getHost()).isEqualTo(address2.getAddress());
+    assertThat(e.getEndPoint()).isEqualTo(endPoint2);
   }
 
   @Test(groups = "unit")
   public void should_create_proper_already_exists_exception_for_tables() {
-    AlreadyExistsException e = new AlreadyExistsException(address1, "keyspace1", "table1");
+    AlreadyExistsException e = new AlreadyExistsException(endPoint1, "keyspace1", "table1");
     assertThat(e.getMessage()).isEqualTo("Table keyspace1.table1 already exists");
     assertThat(e.getKeyspace()).isEqualTo("keyspace1");
     assertThat(e.getTable()).isEqualTo("table1");
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
-    e = e.copy(address2);
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
+    e = e.copy(endPoint2);
     assertThat(e.getMessage()).isEqualTo("Table keyspace1.table1 already exists");
     assertThat(e.getKeyspace()).isEqualTo("keyspace1");
     assertThat(e.getTable()).isEqualTo("table1");
-    assertThat(e.getAddress()).isEqualTo(address2);
-    assertThat(e.getHost()).isEqualTo(address2.getAddress());
+    assertThat(e.getEndPoint()).isEqualTo(endPoint2);
   }
 
   @Test(groups = "unit")
   public void should_create_proper_bootstrapping_exception() {
-    BootstrappingException e = new BootstrappingException(address1, "Sorry mate");
+    BootstrappingException e = new BootstrappingException(endPoint1, "Sorry mate");
     assertThat(e.getMessage())
-        .isEqualTo("Queried host (" + address1 + ") was bootstrapping: Sorry mate");
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
+        .isEqualTo("Queried host (" + endPoint1 + ") was bootstrapping: Sorry mate");
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
     e = e.copy();
     assertThat(e.getMessage())
-        .isEqualTo("Queried host (" + address1 + ") was bootstrapping: Sorry mate");
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
+        .isEqualTo("Queried host (" + endPoint1 + ") was bootstrapping: Sorry mate");
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
   }
 
   @Test(groups = "unit")
@@ -197,109 +192,96 @@ public class ExceptionsTest extends CCMTestsSupport {
   @Test(groups = "unit")
   public void should_create_proper_invalid_configuration_in_query_exception() {
     InvalidConfigurationInQueryException e =
-        new InvalidConfigurationInQueryException(address1, "Bad, really bad");
+        new InvalidConfigurationInQueryException(endPoint1, "Bad, really bad");
     assertThat(e.getMessage()).isEqualTo("Bad, really bad");
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
     InvalidQueryException e1 = (InvalidQueryException) e.copy();
     assertThat(e1.getMessage()).isEqualTo("Bad, really bad");
   }
 
   @Test(groups = "unit")
   public void should_create_proper_overloaded_exception() {
-    OverloadedException e = new OverloadedException(address1, "I'm busy");
+    OverloadedException e = new OverloadedException(endPoint1, "I'm busy");
     assertThat(e.getMessage())
-        .isEqualTo("Queried host (" + address1 + ") was overloaded: I'm busy");
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
+        .isEqualTo("Queried host (" + endPoint1 + ") was overloaded: I'm busy");
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
     e = e.copy();
     assertThat(e.getMessage())
-        .isEqualTo("Queried host (" + address1 + ") was overloaded: I'm busy");
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
+        .isEqualTo("Queried host (" + endPoint1 + ") was overloaded: I'm busy");
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
   }
 
   @Test(groups = "unit")
   public void should_create_proper_syntax_error() {
-    SyntaxError e = new SyntaxError(address1, "Missing ) at EOF");
+    SyntaxError e = new SyntaxError(endPoint1, "Missing ) at EOF");
     assertThat(e.getMessage()).isEqualTo("Missing ) at EOF");
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
     e = (SyntaxError) e.copy();
     assertThat(e.getMessage()).isEqualTo("Missing ) at EOF");
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
   }
 
   @Test(groups = "unit")
   public void should_create_proper_truncate_exception() {
-    TruncateException e = new TruncateException(address1, "I'm running headless now");
+    TruncateException e = new TruncateException(endPoint1, "I'm running headless now");
     assertThat(e.getMessage()).isEqualTo("I'm running headless now");
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
     e = (TruncateException) e.copy();
     assertThat(e.getMessage()).isEqualTo("I'm running headless now");
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
   }
 
   @Test(groups = "unit")
   public void should_create_proper_unauthorized_exception() {
-    UnauthorizedException e = new UnauthorizedException(address1, "You talking to me?");
+    UnauthorizedException e = new UnauthorizedException(endPoint1, "You talking to me?");
     assertThat(e.getMessage()).isEqualTo("You talking to me?");
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
     e = (UnauthorizedException) e.copy();
     assertThat(e.getMessage()).isEqualTo("You talking to me?");
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
   }
 
   @Test(groups = "unit")
   public void should_create_proper_unavailable_exception() {
-    UnavailableException e = new UnavailableException(address1, LOCAL_QUORUM, 3, 2);
+    UnavailableException e = new UnavailableException(endPoint1, LOCAL_QUORUM, 3, 2);
     assertThat(e.getMessage())
         .isEqualTo(
             "Not enough replicas available for query at consistency LOCAL_QUORUM (3 required but only 2 alive)");
     assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_QUORUM);
     assertThat(e.getAliveReplicas()).isEqualTo(2);
     assertThat(e.getRequiredReplicas()).isEqualTo(3);
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
-    e = e.copy(address2);
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
+    e = e.copy(endPoint2);
     assertThat(e.getMessage())
         .isEqualTo(
             "Not enough replicas available for query at consistency LOCAL_QUORUM (3 required but only 2 alive)");
     assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_QUORUM);
     assertThat(e.getAliveReplicas()).isEqualTo(2);
     assertThat(e.getRequiredReplicas()).isEqualTo(3);
-    assertThat(e.getAddress()).isEqualTo(address2);
-    assertThat(e.getHost()).isEqualTo(address2.getAddress());
+    assertThat(e.getEndPoint()).isEqualTo(endPoint2);
   }
 
   @Test(groups = "unit")
   public void should_create_proper_unprepared_exception() {
-    UnpreparedException e = new UnpreparedException(address1, "Caught me unawares");
+    UnpreparedException e = new UnpreparedException(endPoint1, "Caught me unawares");
     assertThat(e.getMessage())
         .isEqualTo(
             "A prepared query was submitted on "
-                + address1
+                + endPoint1
                 + " but was not known of that node: Caught me unawares");
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
     e = e.copy();
     assertThat(e.getMessage())
         .isEqualTo(
             "A prepared query was submitted on "
-                + address1
+                + endPoint1
                 + " but was not known of that node: Caught me unawares");
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
   }
 
   @Test(groups = "unit")
   public void should_create_proper_read_timeout_exception() {
-    ReadTimeoutException e = new ReadTimeoutException(address1, LOCAL_QUORUM, 2, 3, true);
+    ReadTimeoutException e = new ReadTimeoutException(endPoint1, LOCAL_QUORUM, 2, 3, true);
     assertThat(e.getMessage())
         .isEqualTo(
             "Cassandra timeout during read query at consistency LOCAL_QUORUM (3 responses were required but only 2 replica responded)");
@@ -307,9 +289,8 @@ public class ExceptionsTest extends CCMTestsSupport {
     assertThat(e.getReceivedAcknowledgements()).isEqualTo(2);
     assertThat(e.getRequiredAcknowledgements()).isEqualTo(3);
     assertThat(e.wasDataRetrieved()).isTrue();
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
-    e = e.copy(address2);
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
+    e = e.copy(endPoint2);
     assertThat(e.getMessage())
         .isEqualTo(
             "Cassandra timeout during read query at consistency LOCAL_QUORUM (3 responses were required but only 2 replica responded)");
@@ -317,14 +298,13 @@ public class ExceptionsTest extends CCMTestsSupport {
     assertThat(e.getReceivedAcknowledgements()).isEqualTo(2);
     assertThat(e.getRequiredAcknowledgements()).isEqualTo(3);
     assertThat(e.wasDataRetrieved()).isTrue();
-    assertThat(e.getAddress()).isEqualTo(address2);
-    assertThat(e.getHost()).isEqualTo(address2.getAddress());
+    assertThat(e.getEndPoint()).isEqualTo(endPoint2);
   }
 
   @Test(groups = "unit")
   public void should_create_proper_write_timeout_exception() {
     WriteTimeoutException e =
-        new WriteTimeoutException(address1, LOCAL_QUORUM, WriteType.BATCH, 2, 3);
+        new WriteTimeoutException(endPoint1, LOCAL_QUORUM, WriteType.BATCH, 2, 3);
     assertThat(e.getMessage())
         .isEqualTo(
             "Cassandra timeout during BATCH write query at consistency LOCAL_QUORUM (3 replica were required but only 2 acknowledged the write)");
@@ -332,9 +312,8 @@ public class ExceptionsTest extends CCMTestsSupport {
     assertThat(e.getReceivedAcknowledgements()).isEqualTo(2);
     assertThat(e.getRequiredAcknowledgements()).isEqualTo(3);
     assertThat(e.getWriteType()).isEqualTo(WriteType.BATCH);
-    assertThat(e.getAddress()).isEqualTo(address1);
-    assertThat(e.getHost()).isEqualTo(address1.getAddress());
-    e = e.copy(address2);
+    assertThat(e.getEndPoint()).isEqualTo(endPoint1);
+    e = e.copy(endPoint2);
     assertThat(e.getMessage())
         .isEqualTo(
             "Cassandra timeout during BATCH write query at consistency LOCAL_QUORUM (3 replica were required but only 2 acknowledged the write)");
@@ -342,7 +321,6 @@ public class ExceptionsTest extends CCMTestsSupport {
     assertThat(e.getReceivedAcknowledgements()).isEqualTo(2);
     assertThat(e.getRequiredAcknowledgements()).isEqualTo(3);
     assertThat(e.getWriteType()).isEqualTo(WriteType.BATCH);
-    assertThat(e.getAddress()).isEqualTo(address2);
-    assertThat(e.getHost()).isEqualTo(address2.getAddress());
+    assertThat(e.getEndPoint()).isEqualTo(endPoint2);
   }
 }

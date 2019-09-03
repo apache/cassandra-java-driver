@@ -69,6 +69,7 @@ public class ClusterInitTest {
       // - 1 is an actual Scassandra instance that will accept connections:
       scassandra = TestUtils.createScassandraServer();
       scassandra.start();
+      ScassandraCluster.primeSystemLocalRow(scassandra);
       int port = scassandra.getBinaryPort();
 
       // - the remaining 4 are fake servers that will throw connect timeouts:
@@ -183,8 +184,7 @@ public class ClusterInitTest {
             new FakeHost(TestUtils.ipOfNode(0), 9042, THROWING_CONNECT_TIMEOUTS),
             new FakeHost(TestUtils.ipOfNode(1), 9042, THROWING_CONNECT_TIMEOUTS));
     // Use a low reconnection interval and keep the default connect timeout (5 seconds). So if a
-    // reconnection was scheduled,
-    // we would see a call to the reconnection policy.
+    // reconnection was scheduled, we would see a call to the reconnection policy.
     CountingReconnectionPolicy reconnectionPolicy =
         new CountingReconnectionPolicy(new ConstantReconnectionPolicy(100));
     Cluster cluster =

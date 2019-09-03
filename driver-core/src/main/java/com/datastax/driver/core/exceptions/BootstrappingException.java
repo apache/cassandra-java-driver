@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.EndPoint;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -24,34 +25,38 @@ public class BootstrappingException extends QueryExecutionException
 
   private static final long serialVersionUID = 0;
 
-  private final InetSocketAddress address;
+  private final EndPoint endPoint;
 
-  public BootstrappingException(InetSocketAddress address, String message) {
-    super(String.format("Queried host (%s) was bootstrapping: %s", address, message));
-    this.address = address;
+  public BootstrappingException(EndPoint endPoint, String message) {
+    super(String.format("Queried host (%s) was bootstrapping: %s", endPoint, message));
+    this.endPoint = endPoint;
   }
 
   /** Private constructor used solely when copying exceptions. */
-  private BootstrappingException(
-      InetSocketAddress address, String message, BootstrappingException cause) {
+  private BootstrappingException(EndPoint endPoint, String message, BootstrappingException cause) {
     super(message, cause);
-    this.address = address;
+    this.endPoint = endPoint;
   }
 
-  /** {@inheritDoc} */
   @Override
-  public InetAddress getHost() {
-    return address != null ? address.getAddress() : null;
+  public EndPoint getEndPoint() {
+    return endPoint;
   }
 
-  /** {@inheritDoc} */
   @Override
+  @Deprecated
   public InetSocketAddress getAddress() {
-    return address;
+    return (endPoint == null) ? null : endPoint.resolve();
+  }
+
+  @Override
+  @Deprecated
+  public InetAddress getHost() {
+    return (endPoint == null) ? null : endPoint.resolve().getAddress();
   }
 
   @Override
   public BootstrappingException copy() {
-    return new BootstrappingException(address, getMessage(), this);
+    return new BootstrappingException(endPoint, getMessage(), this);
   }
 }

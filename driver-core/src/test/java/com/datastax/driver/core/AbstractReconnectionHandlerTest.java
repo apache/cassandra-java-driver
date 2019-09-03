@@ -369,7 +369,8 @@ public class AbstractReconnectionHandlerTest {
         case THROW_EXCEPTION:
           logger.debug("simulate reconnection error");
           throw new ConnectionException(
-              new InetSocketAddress(8888), "Simulated exception from mock reconnection");
+              EndPoints.forAddress(new InetSocketAddress(8888)),
+              "Simulated exception from mock reconnection");
         default:
           throw new AssertionError();
       }

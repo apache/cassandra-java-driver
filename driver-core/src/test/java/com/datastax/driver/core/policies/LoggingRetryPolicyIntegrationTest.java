@@ -161,7 +161,7 @@ public class LoggingRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
                 IGNORING_REQUEST_ERROR,
                 defaultCL,
                 0,
-                new ServerError(host1.getSocketAddress(), "Server Error").toString()));
+                new ServerError(host1.getEndPoint(), "Server Error").toString()));
   }
 
   @Test(groups = "short")
@@ -178,7 +178,7 @@ public class LoggingRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
                 LOCAL_ONE,
                 defaultCL,
                 0,
-                new ServerError(host1.getSocketAddress(), "Server Error").toString()));
+                new ServerError(host1.getEndPoint(), "Server Error").toString()));
   }
 
   @Test(groups = "short")

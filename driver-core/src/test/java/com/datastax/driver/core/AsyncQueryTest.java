@@ -88,7 +88,7 @@ public class AsyncQueryTest extends CCMTestsSupport {
     Cluster cluster2 =
         register(
             Cluster.builder()
-                .addContactPointsWithPorts(Lists.newArrayList(host.getSocketAddress()))
+                .addContactPointsWithPorts(Lists.newArrayList(host.getEndPoint().resolve()))
                 .build());
     try {
       Session session2 = cluster2.newSession();

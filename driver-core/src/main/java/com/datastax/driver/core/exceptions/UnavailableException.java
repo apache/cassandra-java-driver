@@ -16,6 +16,7 @@
 package com.datastax.driver.core.exceptions;
 
 import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.EndPoint;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -27,7 +28,7 @@ public class UnavailableException extends QueryExecutionException implements Coo
 
   private static final long serialVersionUID = 0;
 
-  private final InetSocketAddress address;
+  private final EndPoint endPoint;
   private final ConsistencyLevel consistency;
   private final int required;
   private final int alive;
@@ -40,26 +41,26 @@ public class UnavailableException extends QueryExecutionException implements Coo
   }
 
   public UnavailableException(
-      InetSocketAddress address, ConsistencyLevel consistency, int required, int alive) {
+      EndPoint endPoint, ConsistencyLevel consistency, int required, int alive) {
     super(
         String.format(
             "Not enough replicas available for query at consistency %s (%d required but only %d alive)",
             consistency, required, alive));
-    this.address = address;
+    this.endPoint = endPoint;
     this.consistency = consistency;
     this.required = required;
     this.alive = alive;
   }
 
   private UnavailableException(
-      InetSocketAddress address,
+      EndPoint endPoint,
       String message,
       Throwable cause,
       ConsistencyLevel consistency,
       int required,
       int alive) {
     super(message, cause);
-    this.address = address;
+    this.endPoint = endPoint;
     this.consistency = consistency;
     this.required = required;
     this.alive = alive;
@@ -95,21 +96,27 @@ public class UnavailableException extends QueryExecutionException implements Coo
     return alive;
   }
 
-  /** {@inheritDoc} */
   @Override
-  public InetAddress getHost() {
-    return address != null ? address.getAddress() : null;
+  public EndPoint getEndPoint() {
+    return endPoint;
   }
 
-  /** {@inheritDoc} */
   @Override
+  @Deprecated
   public InetSocketAddress getAddress() {
-    return address;
+    return (endPoint == null) ? null : endPoint.resolve();
+  }
+
+  @Override
+  @Deprecated
+  public InetAddress getHost() {
+    return (endPoint == null) ? null : endPoint.resolve().getAddress();
   }
 
   @Override
   public UnavailableException copy() {
-    return new UnavailableException(getAddress(), getMessage(), this, consistency, required, alive);
+    return new UnavailableException(
+        getEndPoint(), getMessage(), this, consistency, required, alive);
   }
 
   /**
@@ -125,11 +132,12 @@ public class UnavailableException extends QueryExecutionException implements Coo
    *       generally yields a more user-friendly stack trace that the original one.
    * </ol>
    *
-   * @param address The full address of the host that caused this exception to be thrown.
+   * @param endPoint The full connection information of the host that caused this exception to be
+   *     thrown.
    * @return a copy/clone of this exception, but with the given host address instead of the original
    *     one.
    */
-  public UnavailableException copy(InetSocketAddress address) {
-    return new UnavailableException(address, getMessage(), this, consistency, required, alive);
+  public UnavailableException copy(EndPoint endPoint) {
+    return new UnavailableException(endPoint, getMessage(), this, consistency, required, alive);
   }
 }

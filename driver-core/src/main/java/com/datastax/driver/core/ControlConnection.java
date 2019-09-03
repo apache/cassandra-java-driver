@@ -73,9 +73,9 @@ class ControlConnection implements Connection.Owner {
   private static final String SELECT_LOCAL = "SELECT * FROM system.local WHERE key='local'";
 
   private static final String SELECT_SCHEMA_PEERS =
-      "SELECT peer, rpc_address, schema_version FROM system.peers";
+      "SELECT peer, rpc_address, schema_version, host_id FROM system.peers";
   private static final String SELECT_SCHEMA_LOCAL =
-      "SELECT schema_version FROM system.local WHERE key='local'";
+      "SELECT schema_version, host_id FROM system.local WHERE key='local'";
 
   @VisibleForTesting
   final AtomicReference<Connection> connectionRef = new AtomicReference<Connection>();
@@ -99,8 +99,7 @@ class ControlConnection implements Connection.Owner {
   void connect() throws UnsupportedProtocolVersionException {
     if (isShutdown) return;
 
-    // NB: at this stage, allHosts() only contains the initial contact points
-    List<Host> hosts = new ArrayList<Host>(cluster.metadata.allHosts());
+    List<Host> hosts = new ArrayList<Host>(cluster.metadata.getContactPoints());
     // shuffle so that multiple clients with the same contact points don't all pick the same control
     // host
     Collections.shuffle(hosts);
@@ -123,7 +122,7 @@ class ControlConnection implements Connection.Owner {
 
   Host connectedHost() {
     Connection current = connectionRef.get();
-    return (current == null) ? null : cluster.metadata.getHost(current.address);
+    return (current == null) ? null : cluster.metadata.getHost(current.endPoint);
   }
 
   void triggerReconnect() {
@@ -213,7 +212,7 @@ class ControlConnection implements Connection.Owner {
   }
 
   private void setNewConnection(Connection newConnection) {
-    Host.statesLogger.debug("[Control connection] established to {}", newConnection.address);
+    Host.statesLogger.debug("[Control connection] established to {}", newConnection.endPoint);
     newConnection.setOwner(this);
     Connection old = connectionRef.getAndSet(newConnection);
     if (old != null && !old.isClosed()) old.closeAsync().force();
@@ -222,7 +221,7 @@ class ControlConnection implements Connection.Owner {
   private Connection reconnectInternal(Iterator<Host> iter, boolean isInitialConnection)
       throws UnsupportedProtocolVersionException {
 
-    Map<InetSocketAddress, Throwable> errors = null;
+    Map<EndPoint, Throwable> errors = null;
 
     Host host = null;
     try {
@@ -265,17 +264,14 @@ class ControlConnection implements Connection.Owner {
                 iter.next(), new DriverException("Connection thread interrupted"), errors, iter);
     }
     throw new NoHostAvailableException(
-        errors == null ? Collections.<InetSocketAddress, Throwable>emptyMap() : errors);
+        errors == null ? Collections.<EndPoint, Throwable>emptyMap() : errors);
   }
 
-  private static Map<InetSocketAddress, Throwable> logError(
-      Host host,
-      Throwable exception,
-      Map<InetSocketAddress, Throwable> errors,
-      Iterator<Host> iter) {
-    if (errors == null) errors = new HashMap<InetSocketAddress, Throwable>();
+  private static Map<EndPoint, Throwable> logError(
+      Host host, Throwable exception, Map<EndPoint, Throwable> errors, Iterator<Host> iter) {
+    if (errors == null) errors = new HashMap<EndPoint, Throwable>();
 
-    errors.put(host.getSocketAddress(), exception);
+    errors.put(host.getEndPoint(), exception);
 
     if (logger.isDebugEnabled()) {
       if (iter.hasNext()) {
@@ -377,7 +373,7 @@ class ControlConnection implements Connection.Owner {
       Cluster.Manager cluster)
       throws ConnectionException, BusyConnectionException, ExecutionException,
           InterruptedException {
-    Host host = cluster.metadata.getHost(connection.address);
+    Host host = cluster.metadata.getHost(connection.endPoint);
     // Neither host, nor it's version should be null. But instead of dying if there is a race or
     // something, we can kind of try to infer
     // a Cassandra version from the protocol version (this is not full proof, we can have the
@@ -390,7 +386,7 @@ class ControlConnection implements Connection.Owner {
       logger.warn(
           "Cannot find Cassandra version for host {} to parse the schema, using {} based on protocol version in use. "
               + "If parsing the schema fails, this could be the cause",
-          connection.address,
+          connection.endPoint,
           cassandraVersion);
     } else {
       cassandraVersion = host.getCassandraVersion();
@@ -447,52 +443,27 @@ class ControlConnection implements Connection.Owner {
     }
   }
 
-  private static InetSocketAddress nativeAddressForPeerHost(
-      Row peersRow, InetSocketAddress connectedHost, Cluster.Manager cluster) {
-    // if native_address is present, this comes from the peers_v2 table.
-    if (peersRow.getColumnDefinitions().contains("native_address")) {
-      InetAddress nativeAddress = peersRow.getInet("native_address");
-      int nativePort = peersRow.getInt("native_port");
-      return cluster.translateAddress(new InetSocketAddress(nativeAddress, nativePort));
-    } else {
-      // after CASSANDRA-9436, system.peers contains the following inet columns:
-      // - peer: this is actually broadcast_address
-      // - rpc_address: the address we are looking for (this corresponds to broadcast_rpc_address in
-      // the peer's cassandra yaml file;
-      //                if this setting if unset, it defaults to the value for rpc_address or
-      // rpc_interface)
-      // - preferred_ip: used by Ec2MultiRegionSnitch and GossipingPropertyFileSnitch, possibly
-      // others; contents unclear
-      InetAddress broadcastAddress = peersRow.getInet("peer");
-      InetAddress rpcAddress = peersRow.getInet("rpc_address");
-
-      if (broadcastAddress == null) {
-        return null;
-      } else if (broadcastAddress.equals(connectedHost.getAddress())
-          || (rpcAddress != null && rpcAddress.equals(connectedHost.getAddress()))) {
-        // Some DSE versions were inserting a line for the local node in peers (with mostly null
-        // values). This has been fixed, but if we
-        // detect that's the case, ignore it as it's not really a big deal.
-        logger.debug(
-            "System.peers on node {} has a line for itself. This is not normal but is a known problem of some DSE version. Ignoring the entry.",
-            connectedHost);
-        return null;
-      } else if (rpcAddress == null) {
-        return null;
-      } else if (rpcAddress.equals(bindAllAddress)) {
-        logger.warn(
-            "Found host with 0.0.0.0 as rpc_address, using broadcast_address ({}) to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.",
-            broadcastAddress);
-        rpcAddress = broadcastAddress;
-      }
-      return cluster.translateAddress(rpcAddress);
+  private static EndPoint endPointForPeerHost(
+      Row peersRow, EndPoint connectedEndPoint, Cluster.Manager cluster) {
+    EndPoint endPoint = cluster.configuration.getPolicies().getEndPointFactory().create(peersRow);
+    if (connectedEndPoint.equals(endPoint)) {
+      // Some DSE versions were inserting a line for the local node in peers (with mostly null
+      // values). This has been fixed, but if we detect that's the case, ignore it as it's not
+      // really a big deal.
+      logger.debug(
+          "System.peers on node {} has a line for itself. "
+              + "This is not normal but is a known problem of some DSE versions. "
+              + "Ignoring the entry.",
+          connectedEndPoint);
+      return null;
     }
+    return endPoint;
   }
 
   private Row fetchNodeInfo(Host host, Connection c)
       throws ConnectionException, BusyConnectionException, ExecutionException,
           InterruptedException {
-    boolean isConnectedHost = c.address.equals(host.getSocketAddress());
+    boolean isConnectedHost = c.endPoint.equals(host.getEndPoint());
     if (isConnectedHost || host.getBroadcastSocketAddress() != null) {
       String query;
       if (isConnectedHost) {
@@ -534,8 +505,10 @@ class ControlConnection implements Connection.Owner {
     // We have to fetch the whole peers table and find the host we're looking for
     ListenableFuture<ResultSet> future = selectPeersFuture(c);
     for (Row row : future.get()) {
-      InetSocketAddress addr = nativeAddressForPeerHost(row, c.address, cluster);
-      if (addr != null && addr.equals(host.getSocketAddress())) return row;
+      UUID rowId = row.getUUID("host_id");
+      if (host.getHostId().equals(rowId)) {
+        return row;
+      }
     }
     return null;
   }
@@ -561,9 +534,9 @@ class ControlConnection implements Connection.Owner {
         } else {
           logger.warn(
               "No row found for host {} in {}'s peers system table. {} will be ignored.",
-              host.getAddress(),
-              c.address,
-              host.getAddress());
+              host.getEndPoint(),
+              c.endPoint,
+              host.getEndPoint());
           return false;
         }
         // Ignore hosts with a null rpc_address, as this is most likely a phantom row in
@@ -571,7 +544,7 @@ class ControlConnection implements Connection.Owner {
         // Don't test this for the control host since we're already connected to it anyway, and we
         // read the info from system.local
         // which didn't have an rpc_address column (JAVA-546) until CASSANDRA-9436
-      } else if (!c.address.equals(host.getSocketAddress()) && !isValidPeer(row, true)) {
+      } else if (!c.endPoint.equals(host.getEndPoint()) && !isValidPeer(row, true)) {
         return false;
       }
 
@@ -623,17 +596,32 @@ class ControlConnection implements Connection.Owner {
     // - broadcast_port
     // - listen_port
 
-    InetSocketAddress broadcastAddress = null;
+    InetSocketAddress broadcastRpcAddress = null;
+    if (row.getColumnDefinitions().contains("native_address")) {
+      InetAddress nativeAddress = row.getInet("native_address");
+      int nativePort = row.getInt("native_port");
+      broadcastRpcAddress = new InetSocketAddress(nativeAddress, nativePort);
+    } else if (row.getColumnDefinitions().contains("rpc_address")) {
+      InetAddress rpcAddress = row.getInet("rpc_address");
+      broadcastRpcAddress = new InetSocketAddress(rpcAddress, cluster.connectionFactory.getPort());
+    }
+    // Before CASSANDRA-9436, system.local doesn't have rpc_address, so this might be null. It's not
+    // a big deal because we only use this for server events, and the control node doesn't receive
+    // events for itself.
+    host.setBroadcastRpcAddress(broadcastRpcAddress);
+
+    InetSocketAddress broadcastSocketAddress = null;
     if (row.getColumnDefinitions().contains("peer")) { // system.peers
       int broadcastPort =
           row.getColumnDefinitions().contains("peer_port") ? row.getInt("peer_port") : 0;
-      broadcastAddress = new InetSocketAddress(row.getInet("peer"), broadcastPort);
+      broadcastSocketAddress = new InetSocketAddress(row.getInet("peer"), broadcastPort);
     } else if (row.getColumnDefinitions().contains("broadcast_address")) { // system.local
       int broadcastPort =
           row.getColumnDefinitions().contains("broadcast_port") ? row.getInt("broadcast_port") : 0;
-      broadcastAddress = new InetSocketAddress(row.getInet("broadcast_address"), broadcastPort);
+      broadcastSocketAddress =
+          new InetSocketAddress(row.getInet("broadcast_address"), broadcastPort);
     }
-    host.setBroadcastSocketAddress(broadcastAddress);
+    host.setBroadcastSocketAddress(broadcastSocketAddress);
 
     // in system.local only for C* versions >= 2.0.17, 2.1.8, 2.2.0 rc2,
     // not yet in system.peers as of C* 3.2
@@ -760,39 +748,53 @@ class ControlConnection implements Connection.Owner {
 
     // Update cluster name, DC and rack for the one node we are connected to
     Row localRow = localFuture.get().one();
-    if (localRow != null) {
-      String clusterName = localRow.getString("cluster_name");
-      if (clusterName != null) cluster.metadata.clusterName = clusterName;
+    if (localRow == null) {
+      throw new IllegalStateException(
+          String.format(
+              "system.local is empty on %s, this should not happen", connection.endPoint));
+    }
+    String clusterName = localRow.getString("cluster_name");
+    if (clusterName != null) cluster.metadata.clusterName = clusterName;
 
-      partitioner = localRow.getString("partitioner");
-      if (partitioner != null) {
-        cluster.metadata.partitioner = partitioner;
-        factory = Token.getFactory(partitioner);
-      }
+    partitioner = localRow.getString("partitioner");
+    if (partitioner != null) {
+      cluster.metadata.partitioner = partitioner;
+      factory = Token.getFactory(partitioner);
+    }
 
-      Host host = cluster.metadata.getHost(connection.address);
-      // In theory host can't be null. However there is no point in risking a NPE in case we
-      // have a race between a node removal and this.
-      if (host == null) {
-        logger.debug(
-            "Host in local system table ({}) unknown to us (ok if said host just got removed)",
-            connection.address);
-      } else {
-        updateInfo(host, localRow, cluster, isInitialConnection);
-        if (metadataEnabled && factory != null) {
-          Set<String> tokensStr = localRow.getSet("tokens", String.class);
-          if (!tokensStr.isEmpty()) {
-            Set<Token> tokens = toTokens(factory, tokensStr);
-            tokenMap.put(host, tokens);
-          }
+    // During init, metadata.allHosts is still empty, the contact points are in
+    // metadata.contactPoints. We need to copy them over, but we can only do it after having
+    // called updateInfo, because we need to know the host id.
+    // This is the same for peer hosts (see further down).
+    Host controlHost =
+        isInitialConnection
+            ? cluster.metadata.getContactPoint(connection.endPoint)
+            : cluster.metadata.getHost(connection.endPoint);
+    // In theory host can't be null. However there is no point in risking a NPE in case we
+    // have a race between a node removal and this.
+    if (controlHost == null) {
+      logger.debug(
+          "Host in local system table ({}) unknown to us (ok if said host just got removed)",
+          connection.endPoint);
+    } else {
+      updateInfo(controlHost, localRow, cluster, isInitialConnection);
+      if (metadataEnabled && factory != null) {
+        Set<String> tokensStr = localRow.getSet("tokens", String.class);
+        if (!tokensStr.isEmpty()) {
+          Set<Token> tokens = toTokens(factory, tokensStr);
+          tokenMap.put(controlHost, tokens);
         }
+      }
+      if (isInitialConnection) {
+        cluster.metadata.addIfAbsent(controlHost);
       }
     }
 
-    List<InetSocketAddress> foundHosts = new ArrayList<InetSocketAddress>();
+    List<EndPoint> foundHosts = new ArrayList<EndPoint>();
     List<String> dcs = new ArrayList<String>();
     List<String> racks = new ArrayList<String>();
     List<String> cassandraVersions = new ArrayList<String>();
+    List<InetSocketAddress> broadcastRpcAddresses = new ArrayList<InetSocketAddress>();
     List<InetSocketAddress> broadcastAddresses = new ArrayList<InetSocketAddress>();
     List<InetSocketAddress> listenAddresses = new ArrayList<InetSocketAddress>();
     List<Set<Token>> allTokens = new ArrayList<Set<Token>>();
@@ -805,12 +807,26 @@ class ControlConnection implements Connection.Owner {
     for (Row row : peersFuture.get()) {
       if (!isValidPeer(row, logInvalidPeers)) continue;
 
-      InetSocketAddress rpcAddress = nativeAddressForPeerHost(row, connection.address, cluster);
-      if (rpcAddress == null) continue;
-      foundHosts.add(rpcAddress);
+      EndPoint endPoint = endPointForPeerHost(row, connection.endPoint, cluster);
+      if (endPoint == null) {
+        continue;
+      }
+      foundHosts.add(endPoint);
       dcs.add(row.getString("data_center"));
       racks.add(row.getString("rack"));
       cassandraVersions.add(row.getString("release_version"));
+
+      InetSocketAddress broadcastRpcAddress;
+      if (row.getColumnDefinitions().contains("native_address")) {
+        InetAddress nativeAddress = row.getInet("native_address");
+        int nativePort = row.getInt("native_port");
+        broadcastRpcAddress = new InetSocketAddress(nativeAddress, nativePort);
+      } else {
+        InetAddress rpcAddress = row.getInet("rpc_address");
+        broadcastRpcAddress =
+            new InetSocketAddress(rpcAddress, cluster.connectionFactory.getPort());
+      }
+      broadcastRpcAddresses.add(broadcastRpcAddress);
 
       int broadcastPort =
           row.getColumnDefinitions().contains("peer_port") ? row.getInt("peer_port") : 0;
@@ -850,49 +866,60 @@ class ControlConnection implements Connection.Owner {
     }
 
     for (int i = 0; i < foundHosts.size(); i++) {
-      Host host = cluster.metadata.getHost(foundHosts.get(i));
+      Host peerHost =
+          isInitialConnection
+              ? cluster.metadata.getContactPoint(foundHosts.get(i))
+              : cluster.metadata.getHost(foundHosts.get(i));
       boolean isNew = false;
-      if (host == null) {
+      if (peerHost == null) {
         // We don't know that node, create the Host object but wait until we've set the known
         // info before signaling the addition.
         Host newHost = cluster.metadata.newHost(foundHosts.get(i));
+        newHost.setHostId(hostIds.get(i)); // we need an id to add to the metadata
         Host previous = cluster.metadata.addIfAbsent(newHost);
         if (previous == null) {
-          host = newHost;
+          peerHost = newHost;
           isNew = true;
         } else {
-          host = previous;
+          peerHost = previous;
           isNew = false;
         }
       }
       if (dcs.get(i) != null || racks.get(i) != null)
-        updateLocationInfo(host, dcs.get(i), racks.get(i), isInitialConnection, cluster);
-      if (cassandraVersions.get(i) != null) host.setVersion(cassandraVersions.get(i));
+        updateLocationInfo(peerHost, dcs.get(i), racks.get(i), isInitialConnection, cluster);
+      if (cassandraVersions.get(i) != null) peerHost.setVersion(cassandraVersions.get(i));
+      if (broadcastRpcAddresses.get(i) != null)
+        peerHost.setBroadcastRpcAddress(broadcastRpcAddresses.get(i));
       if (broadcastAddresses.get(i) != null)
-        host.setBroadcastSocketAddress(broadcastAddresses.get(i));
-      if (listenAddresses.get(i) != null) host.setListenSocketAddress(listenAddresses.get(i));
+        peerHost.setBroadcastSocketAddress(broadcastAddresses.get(i));
+      if (listenAddresses.get(i) != null) peerHost.setListenSocketAddress(listenAddresses.get(i));
 
-      if (dseVersions.get(i) != null) host.setDseVersion(dseVersions.get(i));
-      if (dseWorkloads.get(i) != null) host.setDseWorkload(dseWorkloads.get(i));
-      if (dseGraphEnabled.get(i) != null) host.setDseGraphEnabled(dseGraphEnabled.get(i));
-      if (hostIds.get(i) != null) {
-        host.setHostId(hostIds.get(i));
-      }
+      if (dseVersions.get(i) != null) peerHost.setDseVersion(dseVersions.get(i));
+      if (dseWorkloads.get(i) != null) peerHost.setDseWorkload(dseWorkloads.get(i));
+      if (dseGraphEnabled.get(i) != null) peerHost.setDseGraphEnabled(dseGraphEnabled.get(i));
+      peerHost.setHostId(hostIds.get(i));
       if (schemaVersions.get(i) != null) {
-        host.setSchemaVersion(schemaVersions.get(i));
+        peerHost.setSchemaVersion(schemaVersions.get(i));
       }
 
       if (metadataEnabled && factory != null && allTokens.get(i) != null)
-        tokenMap.put(host, allTokens.get(i));
+        tokenMap.put(peerHost, allTokens.get(i));
 
-      if (isNew && !isInitialConnection) cluster.triggerOnAdd(host);
+      if (!isNew && isInitialConnection) {
+        // If we're at init and the node already existed, it means it was a contact point, so we
+        // need to copy it over to the regular host list
+        cluster.metadata.addIfAbsent(peerHost);
+      }
+      if (isNew && !isInitialConnection) {
+        cluster.triggerOnAdd(peerHost);
+      }
     }
 
-    // Removes all those that seems to have been removed (since we lost the control connection)
-    Set<InetSocketAddress> foundHostsSet = new HashSet<InetSocketAddress>(foundHosts);
+    // Removes all those that seem to have been removed (since we lost the control connection)
+    Set<EndPoint> foundHostsSet = new HashSet<EndPoint>(foundHosts);
     for (Host host : cluster.metadata.allHosts())
-      if (!host.getSocketAddress().equals(connection.address)
-          && !foundHostsSet.contains(host.getSocketAddress()))
+      if (!host.getEndPoint().equals(connection.endPoint)
+          && !foundHostsSet.contains(host.getEndPoint()))
         cluster.removeHost(host, isInitialConnection);
 
     if (metadataEnabled && factory != null && !tokenMap.isEmpty())
@@ -909,19 +936,22 @@ class ControlConnection implements Connection.Owner {
 
   private boolean isValidPeer(Row peerRow, boolean logIfInvalid) {
     boolean isValid =
-        isPeersV2
-            ? peerRow.getColumnDefinitions().contains("native_address")
-                && peerRow.getColumnDefinitions().contains("native_port")
-                && !peerRow.isNull("native_address")
-                && !peerRow.isNull("native_port")
-            : peerRow.getColumnDefinitions().contains("rpc_address")
-                && !peerRow.isNull("rpc_address");
+        peerRow.getColumnDefinitions().contains("host_id") && !peerRow.isNull("host_id");
+
+    if (isPeersV2) {
+      isValid &=
+          peerRow.getColumnDefinitions().contains("native_address")
+              && peerRow.getColumnDefinitions().contains("native_port")
+              && !peerRow.isNull("native_address")
+              && !peerRow.isNull("native_port");
+    } else {
+      isValid &=
+          peerRow.getColumnDefinitions().contains("rpc_address") && !peerRow.isNull("rpc_address");
+    }
 
     if (EXTENDED_PEER_CHECK) {
       isValid &=
-          peerRow.getColumnDefinitions().contains("host_id")
-              && !peerRow.isNull("host_id")
-              && peerRow.getColumnDefinitions().contains("data_center")
+          peerRow.getColumnDefinitions().contains("data_center")
               && !peerRow.isNull("data_center")
               && peerRow.getColumnDefinitions().contains("rack")
               && !peerRow.isNull("rack")
@@ -1001,10 +1031,10 @@ class ControlConnection implements Connection.Owner {
 
     for (Row row : peersFuture.get()) {
 
-      InetSocketAddress addr = nativeAddressForPeerHost(row, connection.address, cluster);
-      if (addr == null || row.isNull("schema_version")) continue;
+      UUID hostId = row.getUUID("host_id");
+      if (row.isNull("schema_version")) continue;
 
-      Host peer = cluster.metadata.getHost(addr);
+      Host peer = cluster.metadata.getHost(hostId);
       if (peer != null && peer.isUp()) versions.add(row.getUUID("schema_version"));
     }
     logger.debug("Checking for schema agreement: versions are {}", versions);
@@ -1040,10 +1070,10 @@ class ControlConnection implements Connection.Owner {
   private void onHostGone(Host host) {
     Connection current = connectionRef.get();
 
-    if (current != null && current.address.equals(host.getSocketAddress())) {
+    if (current != null && current.endPoint.equals(host.getEndPoint())) {
       logger.debug(
           "[Control connection] {} is down/removed and it was the control host, triggering reconnect",
-          current.address);
+          current.endPoint);
       if (!current.isClosed()) current.closeAsync().force();
       backgroundReconnect(0);
     }

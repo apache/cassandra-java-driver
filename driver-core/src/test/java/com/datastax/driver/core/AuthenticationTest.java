@@ -62,8 +62,7 @@ public class AuthenticationTest extends CCMTestsSupport {
     cluster.connect();
     verify(authProvider, atLeastOnce())
         .newAuthenticator(
-            findHost(cluster, 1).getSocketAddress(),
-            "org.apache.cassandra.auth.PasswordAuthenticator");
+            findHost(cluster, 1).getEndPoint(), "org.apache.cassandra.auth.PasswordAuthenticator");
     assertThat(cluster.getMetrics().getErrorMetrics().getAuthenticationErrors().getCount())
         .isEqualTo(0);
   }
@@ -141,7 +140,7 @@ public class AuthenticationTest extends CCMTestsSupport {
     }
 
     @Override
-    public Authenticator newAuthenticator(InetSocketAddress host, String authenticator)
+    public Authenticator newAuthenticator(EndPoint host, String authenticator)
         throws AuthenticationException {
       simulateBusyServer();
       return super.newAuthenticator(host, authenticator);

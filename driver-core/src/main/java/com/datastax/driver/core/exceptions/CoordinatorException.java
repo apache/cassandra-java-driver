@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.EndPoint;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -25,20 +26,29 @@ import java.net.InetSocketAddress;
 public interface CoordinatorException {
 
   /**
-   * The coordinator host that was contacted.
-   *
-   * <p>This is a shortcut for {@link InetSocketAddress#getAddress() getAddress().getAddress()}.
-   *
-   * @return The coordinator host that was contacted; may be {@code null} if the coordinator is not
-   *     known.
+   * The connection information of the coordinator host that was contacted. May be {@code null} if
+   * the coordinator is not known.
    */
+  EndPoint getEndPoint();
+
+  /**
+   * The coordinator host that was contacted; may be {@code null} if the coordinator is not known.
+   *
+   * @deprecated {@link #getEndPoint()} provides more accurate information if the connection
+   *     information consists of more than a socket address. This method is a shortcut for {@code
+   *     getEndPoint().resolve().getAddress()}.
+   */
+  @Deprecated
   InetAddress getHost();
 
   /**
-   * The full address of the coordinator host that was contacted.
+   * The full address of the coordinator host that was contacted; may be {@code null} if the
+   * coordinator is not known.
    *
-   * @return the full address of the coordinator host that was contacted; may be {@code null} if the
-   *     coordinator is not known.
+   * @deprecated {@link #getEndPoint()} provides more accurate information if the connection
+   *     information consists of more than a socket address. This method is a shortcut for {@code
+   *     getEndPoint().resolve()}.
    */
+  @Deprecated
   InetSocketAddress getAddress();
 }

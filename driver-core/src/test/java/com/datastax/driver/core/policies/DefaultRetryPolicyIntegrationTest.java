@@ -137,7 +137,7 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
     LoadBalancingPolicy firstHostOnlyPolicy =
         new WhiteListPolicy(
             Policies.defaultLoadBalancingPolicy(),
-            Collections.singletonList(host1.getSocketAddress()));
+            Collections.singletonList(host1.getEndPoint().resolve()));
 
     Cluster whiteListedCluster =
         Cluster.builder()
@@ -161,7 +161,7 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         fail("expected an NoHostAvailableException");
       } catch (NoHostAvailableException e) {
         // ok
-        Throwable error = e.getErrors().get(host1.getSocketAddress());
+        Throwable error = e.getErrors().get(host1.getEndPoint());
         assertThat(error).isNotNull();
         assertThat(error).isInstanceOf(UnavailableException.class);
       }
@@ -212,18 +212,14 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
       } catch (NoHostAvailableException e) {
         assertThat(e.getErrors().keySet())
             .hasSize(3)
-            .containsOnly(
-                host1.getSocketAddress(), host2.getSocketAddress(), host3.getSocketAddress());
+            .containsOnly(host1.getEndPoint(), host2.getEndPoint(), host3.getEndPoint());
         assertThat(e.getErrors().values())
             .hasOnlyElementsOfType(OperationTimedOutException.class)
             .extractingResultOf("getMessage")
             .containsOnlyOnce(
-                String.format(
-                    "[%s] Timed out waiting for server response", host1.getSocketAddress()),
-                String.format(
-                    "[%s] Timed out waiting for server response", host2.getSocketAddress()),
-                String.format(
-                    "[%s] Timed out waiting for server response", host3.getSocketAddress()));
+                String.format("[%s] Timed out waiting for server response", host1.getEndPoint()),
+                String.format("[%s] Timed out waiting for server response", host2.getEndPoint()),
+                String.format("[%s] Timed out waiting for server response", host3.getEndPoint()));
       }
       assertOnRequestErrorWasCalled(3, OperationTimedOutException.class);
       assertThat(errors.getRetries().getCount()).isEqualTo(3);
@@ -252,8 +248,7 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
     } catch (NoHostAvailableException e) {
       assertThat(e.getErrors().keySet())
           .hasSize(3)
-          .containsOnly(
-              host1.getSocketAddress(), host2.getSocketAddress(), host3.getSocketAddress());
+          .containsOnly(host1.getEndPoint(), host2.getEndPoint(), host3.getEndPoint());
       assertThat(e.getErrors().values()).hasOnlyElementsOfType(exception);
     }
     assertOnRequestErrorWasCalled(3, exception);
@@ -316,8 +311,7 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
     } catch (NoHostAvailableException e) {
       assertThat(e.getErrors().keySet())
           .hasSize(3)
-          .containsOnly(
-              host1.getSocketAddress(), host2.getSocketAddress(), host3.getSocketAddress());
+          .containsOnly(host1.getEndPoint(), host2.getEndPoint(), host3.getEndPoint());
       assertThat(e.getErrors().values()).hasOnlyElementsOfType(TransportException.class);
     }
     assertOnRequestErrorWasCalled(3, TransportException.class);

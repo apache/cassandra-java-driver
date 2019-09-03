@@ -44,7 +44,10 @@ public class AbstractReplicationStrategyTest {
     private final InetSocketAddress address;
 
     private HostMock(InetSocketAddress address, Cluster.Manager manager) {
-      super(address, new ConvictionPolicy.DefaultConvictionPolicy.Factory(), manager);
+      super(
+          EndPoints.forAddress(address),
+          new ConvictionPolicy.DefaultConvictionPolicy.Factory(),
+          manager);
       this.address = address;
     }
 

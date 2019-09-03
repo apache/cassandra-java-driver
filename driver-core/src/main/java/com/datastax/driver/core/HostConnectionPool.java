@@ -170,7 +170,7 @@ class HostConnectionPool implements Connection.Owner {
             if (isClosed()) {
               initFuture.setException(
                   new ConnectionException(
-                      host.getSocketAddress(), "Pool was closed during initialization"));
+                      host.getEndPoint(), "Pool was closed during initialization"));
               // we're not sure if closeAsync() saw the connections, so ensure they get closed
               forceClose(connections);
             } else {
@@ -238,7 +238,7 @@ class HostConnectionPool implements Connection.Owner {
     Phase phase = this.phase.get();
     if (phase != Phase.READY)
       return Futures.immediateFailedFuture(
-          new ConnectionException(host.getSocketAddress(), "Pool is " + phase));
+          new ConnectionException(host.getEndPoint(), "Pool is " + phase));
 
     if (connections.isEmpty()) {
       if (host.convictionPolicy.canReconnectNow()) {
@@ -270,7 +270,7 @@ class HostConnectionPool implements Connection.Owner {
       // We could have raced with a shutdown since the last check
       if (isClosed())
         return Futures.immediateFailedFuture(
-            new ConnectionException(host.getSocketAddress(), "Pool is shutdown"));
+            new ConnectionException(host.getEndPoint(), "Pool is shutdown"));
       // This might maybe happen if the number of core connections per host is 0 and a connection
       // was trashed between
       // the previous check to connections and now. But in that case, the line above will have
@@ -316,14 +316,14 @@ class HostConnectionPool implements Connection.Owner {
 
   private ListenableFuture<Connection> enqueue(long timeout, TimeUnit unit, int maxQueueSize) {
     if (timeout == 0 || maxQueueSize == 0) {
-      return Futures.immediateFailedFuture(new BusyPoolException(host.getSocketAddress(), 0));
+      return Futures.immediateFailedFuture(new BusyPoolException(host.getEndPoint(), 0));
     }
 
     while (true) {
       int count = pendingBorrowCount.get();
       if (count >= maxQueueSize) {
         return Futures.immediateFailedFuture(
-            new BusyPoolException(host.getSocketAddress(), maxQueueSize));
+            new BusyPoolException(host.getEndPoint(), maxQueueSize));
       }
       if (pendingBorrowCount.compareAndSet(count, count + 1)) {
         break;
@@ -337,8 +337,7 @@ class HostConnectionPool implements Connection.Owner {
     // was properly
     // handled in closeAsync.
     if (phase.get() == Phase.CLOSING) {
-      pendingBorrow.setException(
-          new ConnectionException(host.getSocketAddress(), "Pool is shutdown"));
+      pendingBorrow.setException(new ConnectionException(host.getEndPoint(), "Pool is shutdown"));
     }
 
     return pendingBorrow.future;
@@ -658,8 +657,7 @@ class HostConnectionPool implements Connection.Owner {
     phase.set(Phase.CLOSING);
 
     for (PendingBorrow pendingBorrow : pendingBorrows) {
-      pendingBorrow.setException(
-          new ConnectionException(host.getSocketAddress(), "Pool is shutdown"));
+      pendingBorrow.setException(new ConnectionException(host.getEndPoint(), "Pool is shutdown"));
     }
 
     future = new CloseFuture.Forwarding(discardAvailableConnections());
@@ -743,8 +741,7 @@ class HostConnectionPool implements Connection.Owner {
               new Runnable() {
                 @Override
                 public void run() {
-                  future.setException(
-                      new BusyPoolException(host.getSocketAddress(), timeout, unit));
+                  future.setException(new BusyPoolException(host.getEndPoint(), timeout, unit));
                 }
               },
               timeout,

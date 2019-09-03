@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.EndPoint;
 import com.datastax.driver.core.ProtocolVersion;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -28,53 +29,56 @@ public class UnsupportedProtocolVersionException extends DriverException
 
   private static final long serialVersionUID = 0;
 
-  private final InetSocketAddress address;
+  private final EndPoint endPoint;
 
   private final ProtocolVersion unsupportedVersion;
 
   private final ProtocolVersion serverVersion;
 
   public UnsupportedProtocolVersionException(
-      InetSocketAddress address,
-      ProtocolVersion unsupportedVersion,
-      ProtocolVersion serverVersion) {
-    super(makeErrorMessage(address, unsupportedVersion, serverVersion));
-    this.address = address;
+      EndPoint endPoint, ProtocolVersion unsupportedVersion, ProtocolVersion serverVersion) {
+    super(makeErrorMessage(endPoint, unsupportedVersion, serverVersion));
+    this.endPoint = endPoint;
     this.unsupportedVersion = unsupportedVersion;
     this.serverVersion = serverVersion;
   }
 
   public UnsupportedProtocolVersionException(
-      InetSocketAddress address,
+      EndPoint endPoint,
       ProtocolVersion unsupportedVersion,
       ProtocolVersion serverVersion,
       Throwable cause) {
-    super(makeErrorMessage(address, unsupportedVersion, serverVersion), cause);
-    this.address = address;
+    super(makeErrorMessage(endPoint, unsupportedVersion, serverVersion), cause);
+    this.endPoint = endPoint;
     this.unsupportedVersion = unsupportedVersion;
     this.serverVersion = serverVersion;
   }
 
   private static String makeErrorMessage(
-      InetSocketAddress address,
-      ProtocolVersion unsupportedVersion,
-      ProtocolVersion serverVersion) {
+      EndPoint endPoint, ProtocolVersion unsupportedVersion, ProtocolVersion serverVersion) {
     return unsupportedVersion == serverVersion
         ? String.format(
-            "[%s] Host does not support protocol version %s", address, unsupportedVersion)
+            "[%s] Host does not support protocol version %s", endPoint, unsupportedVersion)
         : String.format(
             "[%s] Host does not support protocol version %s but %s",
-            address, unsupportedVersion, serverVersion);
+            endPoint, unsupportedVersion, serverVersion);
   }
 
   @Override
-  public InetAddress getHost() {
-    return address != null ? address.getAddress() : null;
+  public EndPoint getEndPoint() {
+    return endPoint;
   }
 
   @Override
+  @Deprecated
   public InetSocketAddress getAddress() {
-    return address;
+    return (endPoint == null) ? null : endPoint.resolve();
+  }
+
+  @Override
+  @Deprecated
+  public InetAddress getHost() {
+    return (endPoint == null) ? null : endPoint.resolve().getAddress();
   }
 
   /**
@@ -102,6 +106,6 @@ public class UnsupportedProtocolVersionException extends DriverException
   @Override
   public UnsupportedProtocolVersionException copy() {
     return new UnsupportedProtocolVersionException(
-        address, unsupportedVersion, serverVersion, this);
+        endPoint, unsupportedVersion, serverVersion, this);
   }
 }

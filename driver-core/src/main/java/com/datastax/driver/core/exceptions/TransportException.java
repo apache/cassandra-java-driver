@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core.exceptions;
 
-import java.net.InetSocketAddress;
+import com.datastax.driver.core.EndPoint;
 
 /**
  * A connection exception that has to do with the transport itself, i.e. that suggests the node is
@@ -25,16 +25,16 @@ public class TransportException extends ConnectionException {
 
   private static final long serialVersionUID = 0;
 
-  public TransportException(InetSocketAddress address, String msg, Throwable cause) {
-    super(address, msg, cause);
+  public TransportException(EndPoint endPoint, String msg, Throwable cause) {
+    super(endPoint, msg, cause);
   }
 
-  public TransportException(InetSocketAddress address, String msg) {
-    super(address, msg);
+  public TransportException(EndPoint endPoint, String msg) {
+    super(endPoint, msg);
   }
 
   @Override
   public TransportException copy() {
-    return new TransportException(address, getRawMessage(), this);
+    return new TransportException(getEndPoint(), getRawMessage(), this);
   }
 }

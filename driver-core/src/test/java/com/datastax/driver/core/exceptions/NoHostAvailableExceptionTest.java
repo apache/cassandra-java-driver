@@ -17,8 +17,9 @@ package com.datastax.driver.core.exceptions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.driver.core.EndPoint;
+import com.datastax.driver.core.EndPoints;
 import java.io.PrintWriter;
-import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import org.testng.annotations.Test;
@@ -84,10 +85,10 @@ public class NoHostAvailableExceptionTest {
     assertThat(message).contains("/127.0.0.2:9042\nmock stack trace 2\n");
   }
 
-  private static Map<InetSocketAddress, Throwable> buildMockErrors(int count) {
-    Map<InetSocketAddress, Throwable> errors = new HashMap<InetSocketAddress, Throwable>();
+  private static Map<EndPoint, Throwable> buildMockErrors(int count) {
+    Map<EndPoint, Throwable> errors = new HashMap<EndPoint, Throwable>();
     for (int i = 1; i <= count; i++) {
-      errors.put(new InetSocketAddress("127.0.0." + i, 9042), new MockError(i));
+      errors.put(EndPoints.forAddress("127.0.0." + i, 9042), new MockError(i));
     }
     return errors;
   }

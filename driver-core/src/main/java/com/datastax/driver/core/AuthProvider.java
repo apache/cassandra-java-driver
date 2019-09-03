@@ -31,17 +31,7 @@ public interface AuthProvider {
    *
    * <p>This is only useful as a placeholder when no authentication is to be used.
    */
-  public static final AuthProvider NONE =
-      new AuthProvider() {
-        @Override
-        public Authenticator newAuthenticator(InetSocketAddress host, String authenticator) {
-          throw new AuthenticationException(
-              host,
-              String.format(
-                  "Host %s requires authentication, but no authenticator found in Cluster configuration",
-                  host));
-        }
-      };
+  AuthProvider NONE = new ExtendedAuthProvider.NoAuthProvider();
 
   /**
    * The {@code Authenticator} to use when connecting to {@code host}
@@ -52,4 +42,19 @@ public interface AuthProvider {
    */
   public Authenticator newAuthenticator(InetSocketAddress host, String authenticator)
       throws AuthenticationException;
+
+  /**
+   * Dummy Authenticator that accounts for DSE authentication configured with transitional mode.
+   *
+   * <p>In this situation, the client is allowed to connect without authentication, but DSE would
+   * still send an AUTHENTICATE response. This Authenticator handles this situation by sending back
+   * a dummy credential.
+   */
+  class TransitionalModePlainTextAuthenticator
+      extends PlainTextAuthProvider.PlainTextAuthenticator {
+
+    public TransitionalModePlainTextAuthenticator() {
+      super("", "");
+    }
+  }
 }

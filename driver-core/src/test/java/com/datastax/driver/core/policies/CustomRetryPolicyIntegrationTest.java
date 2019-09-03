@@ -100,7 +100,7 @@ public class CustomRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegra
         assertThat(e.getMessage())
             .isEqualTo(
                 String.format(
-                    "[%s] Timed out waiting for server response", host1.getSocketAddress()));
+                    "[%s] Timed out waiting for server response", host1.getEndPoint().resolve()));
       }
       assertOnRequestErrorWasCalled(1, OperationTimedOutException.class);
       assertThat(errors.getRetries().getCount()).isEqualTo(0);
@@ -144,7 +144,8 @@ public class CustomRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegra
       fail("expected a TransportException");
     } catch (TransportException e) {
       assertThat(e.getMessage())
-          .isEqualTo(String.format("[%s] Connection has been closed", host1.getSocketAddress()));
+          .isEqualTo(
+              String.format("[%s] Connection has been closed", host1.getEndPoint().resolve()));
     }
     assertOnRequestErrorWasCalled(1, TransportException.class);
     assertThat(errors.getRetries().getCount()).isEqualTo(0);

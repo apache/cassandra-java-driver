@@ -22,7 +22,7 @@
     <parent>
         <groupId>com.datastax.cassandra</groupId>
         <artifactId>cassandra-driver-parent</artifactId>
-        <version>3.7.3-SNAPSHOT</version>
+        <version>3.8.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>cassandra-driver-core</artifactId>
@@ -153,6 +153,10 @@
                     <artifactId>testng</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
         </dependency>
 
     </dependencies>

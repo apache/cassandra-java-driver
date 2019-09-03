@@ -298,8 +298,8 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
       // Note that this relies on all queries going to node 1, which is why we use a WhiteList LBP
       // in setup().
       boolean isControlHost =
-          host.getSocketAddress()
-              .equals(cluster().manager.controlConnection.connectionRef.get().address);
+          host.getEndPoint()
+              .equals(cluster().manager.controlConnection.connectionRef.get().endPoint);
       Row row;
       if (isControlHost) {
         row = session().execute("select tokens from system.local").one();

@@ -16,6 +16,9 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.policies.Policies;
+import com.google.common.base.Joiner;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The configuration of the cluster. It configures the following:
@@ -55,6 +58,7 @@ public class Configuration {
   private final ThreadingOptions threadingOptions;
   private final NettyOptions nettyOptions;
   private final CodecRegistry codecRegistry;
+  private final String defaultKeyspace;
 
   private Configuration(
       Policies policies,
@@ -65,7 +69,8 @@ public class Configuration {
       QueryOptions queryOptions,
       ThreadingOptions threadingOptions,
       NettyOptions nettyOptions,
-      CodecRegistry codecRegistry) {
+      CodecRegistry codecRegistry,
+      String defaultKeyspace) {
     this.policies = policies;
     this.protocolOptions = protocolOptions;
     this.poolingOptions = poolingOptions;
@@ -75,6 +80,7 @@ public class Configuration {
     this.threadingOptions = threadingOptions;
     this.nettyOptions = nettyOptions;
     this.codecRegistry = codecRegistry;
+    this.defaultKeyspace = defaultKeyspace;
   }
 
   /**
@@ -92,13 +98,45 @@ public class Configuration {
         toCopy.getQueryOptions(),
         toCopy.getThreadingOptions(),
         toCopy.getNettyOptions(),
-        toCopy.getCodecRegistry());
+        toCopy.getCodecRegistry(),
+        toCopy.getDefaultKeyspace());
   }
 
   void register(Cluster.Manager manager) {
     protocolOptions.register(manager);
     poolingOptions.register(manager);
     queryOptions.register(manager);
+    policies.getEndPointFactory().init(manager.getCluster());
+
+    checkPoliciesIfSni();
+  }
+
+  // If using SNI endpoints, the SSL options and auth provider MUST be the "extended" versions, the
+  // base versions work with IP addresses that might not be unique to a node.
+  // Throw now since that's probably a configuration error.
+  private void checkPoliciesIfSni() {
+    if (policies.getEndPointFactory() instanceof SniEndPointFactory) {
+      SSLOptions sslOptions = protocolOptions.getSSLOptions();
+      List<String> errors = new ArrayList<String>();
+      if (sslOptions != null && !(sslOptions instanceof ExtendedRemoteEndpointAwareSslOptions)) {
+        errors.add(
+            String.format(
+                "the configured %s must implement %s",
+                SSLOptions.class.getSimpleName(),
+                ExtendedRemoteEndpointAwareSslOptions.class.getSimpleName()));
+      }
+      AuthProvider authProvider = protocolOptions.getAuthProvider();
+      if (authProvider != null && !(authProvider instanceof ExtendedAuthProvider)) {
+        errors.add(
+            String.format(
+                "the configured %s must implement %s",
+                AuthProvider.class.getSimpleName(), ExtendedAuthProvider.class.getSimpleName()));
+      }
+      if (!errors.isEmpty()) {
+        throw new IllegalStateException(
+            "Configuration error: if SNI endpoints are in use, " + Joiner.on(',').join(errors));
+      }
+    }
   }
 
   /**
@@ -172,6 +210,9 @@ public class Configuration {
     return nettyOptions;
   }
 
+  public String getDefaultKeyspace() {
+    return defaultKeyspace;
+  }
   /**
    * Returns the {@link CodecRegistry} instance for this configuration.
    *
@@ -197,6 +238,7 @@ public class Configuration {
     private ThreadingOptions threadingOptions;
     private NettyOptions nettyOptions;
     private CodecRegistry codecRegistry;
+    private String defaultKeyspace;
 
     /**
      * Sets the policies for this cluster.
@@ -301,6 +343,11 @@ public class Configuration {
       return this;
     }
 
+    public Builder withDefaultKeyspace(String keyspace) {
+      this.defaultKeyspace = keyspace;
+      return this;
+    }
+
     /**
      * Builds the final object from this builder.
      *
@@ -318,7 +365,8 @@ public class Configuration {
           queryOptions != null ? queryOptions : new QueryOptions(),
           threadingOptions != null ? threadingOptions : new ThreadingOptions(),
           nettyOptions != null ? nettyOptions : NettyOptions.DEFAULT_INSTANCE,
-          codecRegistry != null ? codecRegistry : CodecRegistry.DEFAULT_INSTANCE);
+          codecRegistry != null ? codecRegistry : CodecRegistry.DEFAULT_INSTANCE,
+          defaultKeyspace);
     }
   }
 }

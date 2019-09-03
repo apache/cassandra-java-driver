@@ -15,12 +15,25 @@
  */
 package com.datastax.driver.core;
 
+import java.net.InetAddress;
+
 public class MetricsUtil {
 
   public static String hostMetricName(String prefix, Host host) {
+    EndPoint endPoint = host.getEndPoint();
+    if (endPoint instanceof TranslatedAddressEndPoint) {
+      InetAddress address = endPoint.resolve().getAddress();
+      return hostMetricNameFromAddress(prefix, address);
+    } else {
+      // We have no guarantee that endpoints resolve to unique addresses
+      return prefix + endPoint.toString();
+    }
+  }
+
+  private static String hostMetricNameFromAddress(String prefix, InetAddress address) {
     StringBuilder result = new StringBuilder(prefix);
     boolean first = true;
-    for (byte b : host.getSocketAddress().getAddress().getAddress()) {
+    for (byte b : address.getAddress()) {
       if (first) {
         first = false;
       } else {

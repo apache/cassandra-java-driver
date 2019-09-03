@@ -16,7 +16,7 @@
 package com.datastax.driver.core.exceptions;
 
 import com.datastax.driver.core.ConsistencyLevel;
-import java.net.InetSocketAddress;
+import com.datastax.driver.core.EndPoint;
 
 /** A Cassandra timeout during a read query. */
 public class ReadTimeoutException extends QueryConsistencyException {
@@ -34,13 +34,13 @@ public class ReadTimeoutException extends QueryConsistencyException {
   }
 
   public ReadTimeoutException(
-      InetSocketAddress address,
+      EndPoint endPoint,
       ConsistencyLevel consistency,
       int received,
       int required,
       boolean dataPresent) {
     super(
-        address,
+        endPoint,
         String.format(
             "Cassandra timeout during read query at consistency %s (%s)",
             consistency, formatDetails(received, required, dataPresent)),
@@ -51,14 +51,14 @@ public class ReadTimeoutException extends QueryConsistencyException {
   }
 
   private ReadTimeoutException(
-      InetSocketAddress address,
+      EndPoint endPoint,
       String msg,
       Throwable cause,
       ConsistencyLevel consistency,
       int received,
       int required,
       boolean dataPresent) {
-    super(address, msg, cause, consistency, received, required);
+    super(endPoint, msg, cause, consistency, received, required);
     this.dataPresent = dataPresent;
   }
 
@@ -87,7 +87,7 @@ public class ReadTimeoutException extends QueryConsistencyException {
   @Override
   public ReadTimeoutException copy() {
     return new ReadTimeoutException(
-        getAddress(),
+        getEndPoint(),
         getMessage(),
         this,
         getConsistencyLevel(),
@@ -109,13 +109,13 @@ public class ReadTimeoutException extends QueryConsistencyException {
    *       generally yields a more user-friendly stack trace that the original one.
    * </ol>
    *
-   * @param address The full address of the host that caused this exception to be thrown.
+   * @param endPoint The full address of the host that caused this exception to be thrown.
    * @return a copy/clone of this exception, but with the given host address instead of the original
    *     one.
    */
-  public ReadTimeoutException copy(InetSocketAddress address) {
+  public ReadTimeoutException copy(EndPoint endPoint) {
     return new ReadTimeoutException(
-        address,
+        endPoint,
         getMessage(),
         this,
         getConsistencyLevel(),

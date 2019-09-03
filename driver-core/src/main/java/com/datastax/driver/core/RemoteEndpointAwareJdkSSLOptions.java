@@ -29,7 +29,7 @@ import javax.net.ssl.SSLEngine;
  */
 @SuppressWarnings("deprecation")
 public class RemoteEndpointAwareJdkSSLOptions extends JdkSSLOptions
-    implements RemoteEndpointAwareSSLOptions {
+    implements ExtendedRemoteEndpointAwareSslOptions {
 
   /**
    * Creates a builder to create a new instance.
@@ -57,9 +57,17 @@ public class RemoteEndpointAwareJdkSSLOptions extends JdkSSLOptions
   }
 
   @Override
-  public SslHandler newSSLHandler(SocketChannel channel, InetSocketAddress remoteEndpoint) {
-    SSLEngine engine = newSSLEngine(channel, remoteEndpoint);
+  public SslHandler newSSLHandler(SocketChannel channel, EndPoint remoteEndpoint) {
+    SSLEngine engine =
+        newSSLEngine(channel, remoteEndpoint == null ? null : remoteEndpoint.resolve());
     return new SslHandler(engine);
+  }
+
+  @Override
+  public SslHandler newSSLHandler(SocketChannel channel, InetSocketAddress remoteEndpoint) {
+    throw new AssertionError(
+        "The driver should never call this method on an object that implements "
+            + this.getClass().getSimpleName());
   }
 
   /**
@@ -75,10 +83,12 @@ public class RemoteEndpointAwareJdkSSLOptions extends JdkSSLOptions
    */
   protected SSLEngine newSSLEngine(
       @SuppressWarnings("unused") SocketChannel channel, InetSocketAddress remoteEndpoint) {
-    SSLEngine engine =
-        remoteEndpoint == null
-            ? context.createSSLEngine()
-            : context.createSSLEngine(remoteEndpoint.getHostName(), remoteEndpoint.getPort());
+    SSLEngine engine;
+    if (remoteEndpoint == null) {
+      engine = context.createSSLEngine();
+    } else {
+      engine = context.createSSLEngine(remoteEndpoint.getHostName(), remoteEndpoint.getPort());
+    }
     engine.setUseClientMode(true);
     if (cipherSuites != null) engine.setEnabledCipherSuites(cipherSuites);
     return engine;

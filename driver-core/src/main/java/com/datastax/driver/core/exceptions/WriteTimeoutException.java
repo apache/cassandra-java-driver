@@ -16,8 +16,8 @@
 package com.datastax.driver.core.exceptions;
 
 import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.EndPoint;
 import com.datastax.driver.core.WriteType;
-import java.net.InetSocketAddress;
 
 /** A Cassandra timeout during a write query. */
 public class WriteTimeoutException extends QueryConsistencyException {
@@ -35,13 +35,13 @@ public class WriteTimeoutException extends QueryConsistencyException {
   }
 
   public WriteTimeoutException(
-      InetSocketAddress address,
+      EndPoint endPoint,
       ConsistencyLevel consistency,
       WriteType writeType,
       int received,
       int required) {
     super(
-        address,
+        endPoint,
         String.format(
             "Cassandra timeout during %s write query at consistency %s "
                 + "(%d replica were required but only %d acknowledged the write)",
@@ -53,14 +53,14 @@ public class WriteTimeoutException extends QueryConsistencyException {
   }
 
   private WriteTimeoutException(
-      InetSocketAddress address,
+      EndPoint endPoint,
       String msg,
       Throwable cause,
       ConsistencyLevel consistency,
       WriteType writeType,
       int received,
       int required) {
-    super(address, msg, cause, consistency, received, required);
+    super(endPoint, msg, cause, consistency, received, required);
     this.writeType = writeType;
   }
 
@@ -76,7 +76,7 @@ public class WriteTimeoutException extends QueryConsistencyException {
   @Override
   public WriteTimeoutException copy() {
     return new WriteTimeoutException(
-        getAddress(),
+        getEndPoint(),
         getMessage(),
         this,
         getConsistencyLevel(),
@@ -102,7 +102,7 @@ public class WriteTimeoutException extends QueryConsistencyException {
    * @return a copy/clone of this exception, but with the given host address instead of the original
    *     one.
    */
-  public WriteTimeoutException copy(InetSocketAddress address) {
+  public WriteTimeoutException copy(EndPoint address) {
     return new WriteTimeoutException(
         address,
         getMessage(),

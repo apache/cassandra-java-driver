@@ -82,7 +82,7 @@ public class ConnectionReleaseTest extends ScassandraTestBase {
 
       cluster =
           Cluster.builder()
-              .addContactPoints(hostAddress.getAddress())
+              .addContactPoint(hostEndPoint)
               .withPort(scassandra.getBinaryPort())
               .withPoolingOptions(
                   new PoolingOptions()

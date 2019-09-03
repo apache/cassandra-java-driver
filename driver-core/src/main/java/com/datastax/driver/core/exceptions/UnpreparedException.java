@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.EndPoint;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -23,37 +24,41 @@ public class UnpreparedException extends QueryValidationException implements Coo
 
   private static final long serialVersionUID = 0;
 
-  private final InetSocketAddress address;
+  private final EndPoint endPoint;
 
-  public UnpreparedException(InetSocketAddress address, String message) {
+  public UnpreparedException(EndPoint endPoint, String message) {
     super(
         String.format(
             "A prepared query was submitted on %s but was not known of that node: %s",
-            address, message));
-    this.address = address;
+            endPoint, message));
+    this.endPoint = endPoint;
   }
 
   /** Private constructor used solely when copying exceptions. */
-  private UnpreparedException(
-      InetSocketAddress address, String message, UnpreparedException cause) {
+  private UnpreparedException(EndPoint endPoint, String message, UnpreparedException cause) {
     super(message, cause);
-    this.address = address;
+    this.endPoint = endPoint;
   }
 
-  /** {@inheritDoc} */
   @Override
-  public InetAddress getHost() {
-    return address != null ? address.getAddress() : null;
+  public EndPoint getEndPoint() {
+    return endPoint;
   }
 
-  /** {@inheritDoc} */
   @Override
+  @Deprecated
   public InetSocketAddress getAddress() {
-    return address;
+    return (endPoint == null) ? null : endPoint.resolve();
+  }
+
+  @Override
+  @Deprecated
+  public InetAddress getHost() {
+    return (endPoint == null) ? null : endPoint.resolve().getAddress();
   }
 
   @Override
   public UnpreparedException copy() {
-    return new UnpreparedException(address, getMessage(), this);
+    return new UnpreparedException(endPoint, getMessage(), this);
   }
 }

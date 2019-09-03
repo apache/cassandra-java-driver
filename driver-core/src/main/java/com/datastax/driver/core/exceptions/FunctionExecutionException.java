@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.EndPoint;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -24,32 +25,37 @@ public class FunctionExecutionException extends QueryExecutionException
 
   private static final long serialVersionUID = 0;
 
-  private final InetSocketAddress address;
+  private final EndPoint endPoint;
 
-  public FunctionExecutionException(InetSocketAddress address, String msg) {
+  public FunctionExecutionException(EndPoint endPoint, String msg) {
     super(msg);
-    this.address = address;
+    this.endPoint = endPoint;
   }
 
-  private FunctionExecutionException(InetSocketAddress address, String msg, Throwable cause) {
+  private FunctionExecutionException(EndPoint endPoint, String msg, Throwable cause) {
     super(msg, cause);
-    this.address = address;
+    this.endPoint = endPoint;
   }
 
-  /** {@inheritDoc} */
   @Override
-  public InetAddress getHost() {
-    return address != null ? address.getAddress() : null;
+  public EndPoint getEndPoint() {
+    return endPoint;
   }
 
-  /** {@inheritDoc} */
   @Override
+  @Deprecated
   public InetSocketAddress getAddress() {
-    return address;
+    return (endPoint == null) ? null : endPoint.resolve();
+  }
+
+  @Override
+  @Deprecated
+  public InetAddress getHost() {
+    return (endPoint == null) ? null : endPoint.resolve().getAddress();
   }
 
   @Override
   public DriverException copy() {
-    return new FunctionExecutionException(address, getMessage(), this);
+    return new FunctionExecutionException(endPoint, getMessage(), this);
   }
 }

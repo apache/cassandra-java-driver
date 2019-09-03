@@ -1,5 +1,11 @@
 ## Changelog
 
+
+## DataStax Cloud (in progress)
+
+- [new feature] JAVA-2355: CaaS Enablement
+
+
 ### 3.7.2
 
 - [bug] JAVA-2249: Stop stripping trailing zeros in ByteOrderedTokens.

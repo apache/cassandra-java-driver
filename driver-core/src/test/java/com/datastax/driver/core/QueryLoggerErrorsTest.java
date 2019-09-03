@@ -243,7 +243,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
       } else if (expectedException == BootstrappingException.class) {
         // Special case BootstrappingException, it's wrapped in NHAE since it's always retried.
         assertThat(e).isInstanceOf(NoHostAvailableException.class);
-        assertThat(((NoHostAvailableException) e).getErrors().get(hostAddress))
+        assertThat(((NoHostAvailableException) e).getErrors().get(hostEndPoint))
             .isInstanceOf(expectedException);
       } else {
         assertThat(e).isInstanceOf(expectedException);

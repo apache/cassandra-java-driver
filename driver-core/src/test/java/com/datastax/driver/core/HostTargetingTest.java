@@ -46,7 +46,7 @@ public class HostTargetingTest {
               new Predicate<Host>() {
                 @Override
                 public boolean apply(Host host) {
-                  return !host.getAddress().getHostAddress().endsWith("4");
+                  return !host.getEndPoint().resolve().getAddress().getHostAddress().endsWith("4");
                 }
               }));
 
@@ -70,8 +70,12 @@ public class HostTargetingTest {
 
   @AfterMethod(groups = "short")
   public void tearDown() {
-    cluster.close();
-    sCluster.stop();
+    if (cluster != null) {
+      cluster.close();
+    }
+    if (sCluster != null) {
+      sCluster.stop();
+    }
   }
 
   private void verifyNoLbpInteractions() {

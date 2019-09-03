@@ -16,7 +16,6 @@
 package com.datastax.driver.core;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import java.net.InetSocketAddress;
 import java.util.Collections;
 
 /**
@@ -47,7 +46,7 @@ public abstract class DelegatingCluster extends Cluster {
 
     // Construct parent class with dummy parameters that will never get used (since super.init() is
     // never called).
-    super("delegating_cluster", Collections.<InetSocketAddress>emptyList(), null);
+    super("delegating_cluster", Collections.<EndPoint>emptyList(), null);
 
     // Immediately close the parent class's internal Manager, to make sure that it will fail fast if
     // it's ever

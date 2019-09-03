@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
@@ -27,7 +28,7 @@ import java.util.Map;
  * apply to all hosts. The PlainTextAuthenticator instances it returns support SASL authentication
  * using the PLAIN mechanism for version 2 (or above) of the CQL native protocol.
  */
-public class PlainTextAuthProvider implements AuthProvider {
+public class PlainTextAuthProvider implements ExtendedAuthProvider {
 
   private volatile String username;
   private volatile String password;
@@ -74,16 +75,23 @@ public class PlainTextAuthProvider implements AuthProvider {
    *     behalf of the client
    */
   @Override
-  public Authenticator newAuthenticator(InetSocketAddress host, String authenticator) {
+  public Authenticator newAuthenticator(EndPoint host, String authenticator) {
     return new PlainTextAuthenticator(username, password);
+  }
+
+  @Override
+  public Authenticator newAuthenticator(InetSocketAddress host, String authenticator)
+      throws AuthenticationException {
+    throw new AssertionError(
+        "The driver should never call this method on an object that implements "
+            + this.getClass().getSimpleName());
   }
 
   /**
    * Simple implementation of {@link Authenticator} which can perform authentication against
    * Cassandra servers configured with PasswordAuthenticator.
    */
-  private static class PlainTextAuthenticator extends ProtocolV1Authenticator
-      implements Authenticator {
+  static class PlainTextAuthenticator extends ProtocolV1Authenticator implements Authenticator {
 
     private final byte[] username;
     private final byte[] password;

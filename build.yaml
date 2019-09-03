@@ -77,6 +77,7 @@ build:
       failIfNoTests=false
       maven.test.failure.ignore=true
       maven.javadoc.skip=true
+      proxy.path=$HOME/proxy
   - type: maven
     version: 3.2.5
     goals: verify --fail-never -Pisolated

@@ -83,7 +83,8 @@ public abstract class AbstractPoliciesTest extends CCMTestsSupport {
 
   /** Coordinator management/count */
   protected void addCoordinator(ResultSet rs) {
-    InetAddress coordinator = rs.getExecutionInfo().getQueriedHost().getAddress();
+    InetAddress coordinator =
+        rs.getExecutionInfo().getQueriedHost().getEndPoint().resolve().getAddress();
     Integer n = coordinators.get(coordinator);
     coordinators.put(coordinator, n == null ? 1 : n + 1);
   }

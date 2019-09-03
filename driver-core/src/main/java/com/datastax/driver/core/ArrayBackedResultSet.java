@@ -467,13 +467,13 @@ abstract class ArrayBackedResultSet implements ResultSet {
                       // This mean we have probably have a bad node, so defunct the connection
                       connection.defunct(
                           new ConnectionException(
-                              connection.address,
+                              connection.endPoint,
                               String.format("Got unexpected %s result response", rm.kind)));
                       future.setException(
                           new DriverInternalError(
                               String.format(
                                   "Got unexpected %s result response from %s",
-                                  rm.kind, connection.address)));
+                                  rm.kind, connection.endPoint)));
                       return;
                     }
 
@@ -482,26 +482,26 @@ abstract class ArrayBackedResultSet implements ResultSet {
                     break;
                   case ERROR:
                     future.setException(
-                        ((Responses.Error) response).asException(connection.address));
+                        ((Responses.Error) response).asException(connection.endPoint));
                     break;
                   default:
                     // This mean we have probably have a bad node, so defunct the connection
                     connection.defunct(
                         new ConnectionException(
-                            connection.address,
+                            connection.endPoint,
                             String.format("Got unexpected %s response", response.type)));
                     future.setException(
                         new DriverInternalError(
                             String.format(
                                 "Got unexpected %s response from %s",
-                                response.type, connection.address)));
+                                response.type, connection.endPoint)));
                     break;
                 }
               } catch (RuntimeException e) {
                 // If we get a bug here, the client will not get it, so better forwarding the error
                 future.setException(
                     new DriverInternalError(
-                        "Unexpected error while processing response from " + connection.address,
+                        "Unexpected error while processing response from " + connection.endPoint,
                         e));
               }
             }
