@@ -68,3 +68,15 @@ The driver now uses Java 8's improved date and time API. CQL type `timestamp` is
 `java.time.Instant`, and the corresponding getter and setter are `getInstant` and `setInstant`.
 
 See [Temporal types](../manual/core/temporal_types/) for more details.
+
+### Why do DDL queries have a higher latency than driver 3?
+
+If you benchmark DDL queries such as `session.execute("CREATE TABLE ...")`, you will observe a
+noticeably higher latency than driver 3 (about 1 second).
+
+This is because those queries are now *debounced*: the driver adds a short wait in an attempt to
+group multiple schema changes into a single metadata refresh. If you want to mitigate this, you can
+either adjust the debouncing settings, or group your schema updates while temporarily disabling the
+metadata; see the [performance](../manual/core/performance/#debouncing) page.
+
+This only applies to DDL queries; DML statements (`SELECT`, `INSERT`...) are not debounced.
