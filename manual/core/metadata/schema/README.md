@@ -200,12 +200,16 @@ practice anyway: if you're in the middle of a rolling upgrade, you're probably n
 changes at the same time.  
 
 
-#### Relation to token metadata
+### Relation to token metadata
 
 Some of the data in the [token map](../token/) relies on keyspace metadata (any method that takes a
 `CqlIdentifier` argument). If schema metadata is disabled or filtered, token metadata will also be
 unavailable for the excluded keyspaces.
 
+### Performing schema updates from the client
+
+If you issue schema-altering requests from the driver (e.g. `session.execute("CREATE TABLE ..")`),
+take a look at the [Performance](../../performance/#schema-updates) page for a few tips.
 
 [Metadata#getKeyspaces]:             https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
 [SchemaChangeListener]:              https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListener.html

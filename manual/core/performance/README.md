@@ -300,9 +300,9 @@ You should group your schema changes as much as possible.
 
 Every change made from a client will be pushed to all other clients, causing them to refresh their
 metadata. If you have multiple client instances, it might be a good idea to
-[deactivate the metadata](../metadata/schema/#enabling-disabling) on other clients while you apply
-the updates, and reactivate it at the end. Reactivating will trigger an immediate refresh, so you
-can even ramp this up to avoid a "thundering herd" effect.
+[deactivate the metadata](../metadata/schema/#enabling-disabling) on all clients while you apply the
+updates, and reactivate it at the end (reactivating will trigger an immediate refresh, so you might
+want to ramp up clients to avoid a "thundering herd" effect).
 
 Schema changes have to replicate to all nodes in the cluster. To minimize the chance of schema
 disagreement errors:
