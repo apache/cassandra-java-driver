@@ -4,6 +4,7 @@
 
 ### 4.3.0 (in progress)
 
+- [improvement] JAVA-2419: Allow registration of user codecs at runtime
 - [documentation] JAVA-2384: Add quick overview section to each manual page
 - [documentation] JAVA-2412: Cover DDL query debouncing in FAQ and upgrade guide
 - [documentation] JAVA-2416: Update paging section in the manual

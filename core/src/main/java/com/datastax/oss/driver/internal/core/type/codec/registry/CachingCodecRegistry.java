@@ -27,7 +27,7 @@ import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
-import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.reflect.TypeToken;
@@ -41,6 +41,9 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +60,7 @@ import org.slf4j.LoggerFactory;
  * implement {@link #getCachedCodec(DataType, GenericType, boolean)}.
  */
 @ThreadSafe
-public abstract class CachingCodecRegistry implements CodecRegistry {
+public abstract class CachingCodecRegistry implements MutableCodecRegistry {
 
   private static final Logger LOG = LoggerFactory.getLogger(CachingCodecRegistry.class);
 
@@ -68,17 +71,81 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
 
   protected final String logPrefix;
   private final TypeCodec<?>[] primitiveCodecs;
-  private final TypeCodec<?>[] userCodecs;
+  private final CopyOnWriteArrayList<TypeCodec<?>> userCodecs = new CopyOnWriteArrayList<>();
   private final IntMap<TypeCodec> primitiveCodecsByCode;
+  private final Lock registerLock = new ReentrantLock();
 
+  protected CachingCodecRegistry(
+      @NonNull String logPrefix, @NonNull TypeCodec<?>[] primitiveCodecs) {
+    this.logPrefix = logPrefix;
+    this.primitiveCodecs = primitiveCodecs;
+    this.primitiveCodecsByCode = sortByProtocolCode(primitiveCodecs);
+  }
+
+  /**
+   * @deprecated this constructor calls an overridable method ({@link #register(TypeCodec[])}),
+   *     which is a bad practice. The recommended alternative is to use {@link
+   *     #CachingCodecRegistry(String, TypeCodec[])}, then add the codecs with one of the {@link
+   *     #register} methods.
+   */
+  @Deprecated
   protected CachingCodecRegistry(
       @NonNull String logPrefix,
       @NonNull TypeCodec<?>[] primitiveCodecs,
       @NonNull TypeCodec<?>[] userCodecs) {
-    this.logPrefix = logPrefix;
-    this.primitiveCodecs = primitiveCodecs;
-    this.userCodecs = userCodecs;
-    this.primitiveCodecsByCode = sortByProtocolCode(primitiveCodecs);
+    this(logPrefix, primitiveCodecs);
+    register(userCodecs);
+  }
+
+  @Override
+  public void register(TypeCodec<?> newCodec) {
+    // This method could work without synchronization, but there is a tiny race condition that would
+    // allow two threads to register colliding codecs (the last added codec would later be ignored,
+    // but without any warning). Serialize calls to avoid that:
+    registerLock.lock();
+    try {
+      for (TypeCodec<?> primitiveCodec : primitiveCodecs) {
+        if (collides(newCodec, primitiveCodec)) {
+          LOG.warn(
+              "[{}] Ignoring codec {} because it collides with built-in primitive codec {}",
+              logPrefix,
+              newCodec,
+              primitiveCodec);
+          return;
+        }
+      }
+      for (TypeCodec<?> userCodec : userCodecs) {
+        if (collides(newCodec, userCodec)) {
+          LOG.warn(
+              "[{}] Ignoring codec {} because it collides with previously registered codec {}",
+              logPrefix,
+              newCodec,
+              userCodec);
+          return;
+        }
+      }
+      // Technically this would cover the two previous cases as well, but we want precise messages.
+      try {
+        TypeCodec<?> cachedCodec =
+            getCachedCodec(newCodec.getCqlType(), newCodec.getJavaType(), false);
+        LOG.warn(
+            "[{}] Ignoring codec {} because it collides with previously generated codec {}",
+            logPrefix,
+            newCodec,
+            cachedCodec);
+        return;
+      } catch (CodecNotFoundException ignored) {
+        // Catching the exception is ugly, but it avoids breaking the internal API (e.g. by adding a
+        // getCachedCodecIfExists)
+      }
+      userCodecs.add(newCodec);
+    } finally {
+      registerLock.unlock();
+    }
+  }
+
+  private boolean collides(TypeCodec<?> newCodec, TypeCodec<?> oldCodec) {
+    return oldCodec.accepts(newCodec.getCqlType()) && oldCodec.accepts(newCodec.getJavaType());
   }
 
   /**
