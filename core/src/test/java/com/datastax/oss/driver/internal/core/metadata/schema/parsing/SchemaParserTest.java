@@ -22,11 +22,11 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.metadata.MetadataRefresh;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.CassandraSchemaRows;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
 import com.datastax.oss.driver.internal.core.metadata.schema.refresh.SchemaRefresh;
-import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -59,7 +59,7 @@ public class SchemaParserTest extends SchemaParserTestBase {
   @Test
   public void should_parse_keyspace_with_all_children() {
     // Needed to parse the aggregate
-    when(context.getCodecRegistry()).thenReturn(new DefaultCodecRegistry("test"));
+    when(context.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
 
     SchemaRefresh refresh =
         (SchemaRefresh)

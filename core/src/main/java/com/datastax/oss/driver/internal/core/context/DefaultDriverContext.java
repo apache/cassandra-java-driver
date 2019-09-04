@@ -36,6 +36,7 @@ import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
 import com.datastax.oss.driver.internal.core.CassandraProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.DefaultConsistencyLevelRegistry;
@@ -436,8 +437,9 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected CodecRegistry buildCodecRegistry(String logPrefix, List<TypeCodec<?>> codecs) {
-    TypeCodec<?>[] array = new TypeCodec<?>[codecs.size()];
-    return new DefaultCodecRegistry(logPrefix, codecs.toArray(array));
+    MutableCodecRegistry registry = new DefaultCodecRegistry(logPrefix);
+    registry.register(codecs);
+    return registry;
   }
 
   protected SchemaQueriesFactory buildSchemaQueriesFactory() {

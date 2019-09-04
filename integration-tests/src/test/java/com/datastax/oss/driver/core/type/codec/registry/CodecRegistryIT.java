@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
+import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericTypeParameter;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
@@ -177,6 +178,43 @@ public class CodecRegistryIT {
                 .addContactEndPoints(CCM_RULE.getContactPoints())
                 .withKeyspace(SESSION_RULE.keyspace())
                 .build()) {
+      PreparedStatement prepared = session.prepare("INSERT INTO test (k, v) values (?, ?)");
+
+      // float value for int column should work.
+      BoundStatement insert =
+          prepared
+              .boundStatementBuilder()
+              .setString(0, name.getMethodName())
+              .setFloat(1, 3.14f)
+              .build();
+      session.execute(insert);
+
+      ResultSet result =
+          session.execute(
+              SimpleStatement.builder("SELECT v from test where k = ?")
+                  .addPositionalValue(name.getMethodName())
+                  .build());
+
+      List<Row> rows = result.all();
+      assertThat(rows).hasSize(1);
+
+      // should be able to retrieve value back as float, some precision is lost due to going from
+      // int -> float.
+      Row row = rows.iterator().next();
+      assertThat(row.getFloat("v")).isEqualTo(3.0f);
+      assertThat(row.getFloat(0)).isEqualTo(3.0f);
+    }
+  }
+
+  @Test
+  public void should_register_custom_codec_at_runtime() {
+    // Still create a separate session because we don't want to interfere with other tests
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, SESSION_RULE.keyspace())) {
+
+      MutableCodecRegistry registry =
+          (MutableCodecRegistry) session.getContext().getCodecRegistry();
+      registry.register(new FloatCIntCodec());
+
       PreparedStatement prepared = session.prepare("INSERT INTO test (k, v) values (?, ?)");
 
       // float value for int column should work.
