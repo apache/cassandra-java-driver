@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata.schema.parsing;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
@@ -24,6 +25,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.IndexKind;
 import com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.CassandraSchemaRows;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
@@ -112,6 +114,24 @@ public class TableParserTest extends SchemaParserTestBase {
         .hasSize(2)
         .containsEntry("keys", "ALL")
         .containsEntry("rows_per_partition", "NONE");
+  }
+
+  /** Covers two additional Cassandra 4.0 options added in JAVA-2090. */
+  @Test
+  public void should_parse_read_repair_and_additional_write_policy() {
+    AdminRow tableRow40 = mockModernTableRow("ks", "foo");
+    when(tableRow40.get("read_repair", TypeCodecs.TEXT)).thenReturn("NONE");
+    when(tableRow40.get("additional_write_policy", TypeCodecs.TEXT)).thenReturn("40p");
+
+    SchemaRows rows = modernRows(tableRow40, COLUMN_ROWS_3_0, INDEX_ROWS_3_0);
+    TableParser parser = new TableParser(rows, context);
+    TableMetadata table = parser.parseTable(tableRow40, KEYSPACE_ID, Collections.emptyMap());
+
+    checkTable(table);
+
+    assertThat(table.getOptions())
+        .containsEntry(CqlIdentifier.fromInternal("read_repair"), "NONE")
+        .containsEntry(CqlIdentifier.fromInternal("additional_write_policy"), "40p");
   }
 
   // Shared between 2.2 and 3.0 tests, all expected values are the same except the 'caching' option
