@@ -4,6 +4,7 @@
 
 ### 4.4.0 (in progress)
 
+- [improvement] JAVA-2107: Add XML formatting plugin
 
 ### 4.3.0
 
