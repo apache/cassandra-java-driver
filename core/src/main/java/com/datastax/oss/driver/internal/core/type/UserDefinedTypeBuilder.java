@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.type;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -37,6 +38,7 @@ public class UserDefinedTypeBuilder {
   private boolean frozen;
   private final ImmutableList.Builder<CqlIdentifier> fieldNames;
   private final ImmutableList.Builder<DataType> fieldTypes;
+  private AttachmentPoint attachmentPoint = AttachmentPoint.NONE;
 
   public UserDefinedTypeBuilder(CqlIdentifier keyspaceName, CqlIdentifier typeName) {
     this.keyspaceName = keyspaceName;
@@ -69,8 +71,13 @@ public class UserDefinedTypeBuilder {
     return this;
   }
 
+  public UserDefinedTypeBuilder withAttachmentPoint(AttachmentPoint attachmentPoint) {
+    this.attachmentPoint = attachmentPoint;
+    return this;
+  }
+
   public UserDefinedType build() {
     return new DefaultUserDefinedType(
-        keyspaceName, typeName, frozen, fieldNames.build(), fieldTypes.build());
+        keyspaceName, typeName, frozen, fieldNames.build(), fieldTypes.build(), attachmentPoint);
   }
 }
