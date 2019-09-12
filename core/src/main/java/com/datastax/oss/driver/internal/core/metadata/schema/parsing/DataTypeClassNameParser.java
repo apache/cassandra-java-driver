@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.metadata.schema.parsing;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
@@ -60,6 +61,30 @@ public class DataTypeClassNameParser implements DataTypeParser {
       String toParse,
       Map<CqlIdentifier, UserDefinedType> userTypes,
       InternalDriverContext context) {
+    // We take keyspaceId as a parameter because of the parent interface, but it's actually unused
+    // by this implementation.
+    return parse(toParse, userTypes, context, context.getSessionName());
+  }
+
+  /**
+   * Simplified parse method for external use.
+   *
+   * <p>This is intended for use in Cassandra's UDF implementation (the current version uses the
+   * similar method from driver 3).
+   */
+  public DataType parse(String toParse, AttachmentPoint attachmentPoint) {
+    return parse(
+        toParse,
+        null, // No caching of user types: nested types will always be fully re-parsed
+        attachmentPoint,
+        "parser");
+  }
+
+  private DataType parse(
+      String toParse,
+      Map<CqlIdentifier, UserDefinedType> userTypes,
+      AttachmentPoint attachmentPoint,
+      String logPrefix) {
     boolean frozen = false;
     if (isReversed(toParse)) {
       // Just skip the ReversedType part, we don't care
@@ -74,20 +99,20 @@ public class DataTypeClassNameParser implements DataTypeParser {
 
     if (next.startsWith("org.apache.cassandra.db.marshal.ListType")) {
       DataType elementType =
-          parse(keyspaceId, parser.getTypeParameters().get(0), userTypes, context);
+          parse(parser.getTypeParameters().get(0), userTypes, attachmentPoint, logPrefix);
       return DataTypes.listOf(elementType, frozen);
     }
 
     if (next.startsWith("org.apache.cassandra.db.marshal.SetType")) {
       DataType elementType =
-          parse(keyspaceId, parser.getTypeParameters().get(0), userTypes, context);
+          parse(parser.getTypeParameters().get(0), userTypes, attachmentPoint, logPrefix);
       return DataTypes.setOf(elementType, frozen);
     }
 
     if (next.startsWith("org.apache.cassandra.db.marshal.MapType")) {
       List<String> parameters = parser.getTypeParameters();
-      DataType keyType = parse(keyspaceId, parameters.get(0), userTypes, context);
-      DataType valueType = parse(keyspaceId, parameters.get(1), userTypes, context);
+      DataType keyType = parse(parameters.get(0), userTypes, attachmentPoint, logPrefix);
+      DataType valueType = parse(parameters.get(1), userTypes, attachmentPoint, logPrefix);
       return DataTypes.mapOf(keyType, valueType, frozen);
     }
 
@@ -95,7 +120,7 @@ public class DataTypeClassNameParser implements DataTypeParser {
       LOG.warn(
           "[{}] Got o.a.c.db.marshal.FrozenType for something else than a collection, "
               + "this driver version might be too old for your version of Cassandra",
-          context.getSessionName());
+          logPrefix);
 
     if (next.startsWith("org.apache.cassandra.db.marshal.UserType")) {
       ++parser.idx; // skipping '('
@@ -104,7 +129,7 @@ public class DataTypeClassNameParser implements DataTypeParser {
       parser.skipBlankAndComma();
       String typeName =
           TypeCodecs.TEXT.decode(
-              Bytes.fromHexString("0x" + parser.readOne()), context.getProtocolVersion());
+              Bytes.fromHexString("0x" + parser.readOne()), attachmentPoint.getProtocolVersion());
       if (typeName == null) {
         throw new AssertionError("Type name cannot be null, this is a server bug");
       }
@@ -120,11 +145,11 @@ public class DataTypeClassNameParser implements DataTypeParser {
         parser.skipBlankAndComma();
         for (Map.Entry<String, String> entry : nameAndTypeParameters.entrySet()) {
           CqlIdentifier fieldName = CqlIdentifier.fromInternal(entry.getKey());
-          DataType fieldType = parse(keyspaceId, entry.getValue(), userTypes, context);
+          DataType fieldType = parse(entry.getValue(), userTypes, attachmentPoint, logPrefix);
           builder.withField(fieldName, fieldType);
         }
-        // create a frozen UserType since C* 2.x UDTs are always frozen.
-        return builder.frozen().build();
+        // Create a frozen UserType since C* 2.x UDTs are always frozen.
+        return builder.frozen().withAttachmentPoint(attachmentPoint).build();
       }
     }
 
@@ -132,9 +157,9 @@ public class DataTypeClassNameParser implements DataTypeParser {
       List<String> rawTypes = parser.getTypeParameters();
       ImmutableList.Builder<DataType> componentTypesBuilder = ImmutableList.builder();
       for (String rawType : rawTypes) {
-        componentTypesBuilder.add(parse(keyspaceId, rawType, userTypes, context));
+        componentTypesBuilder.add(parse(rawType, userTypes, attachmentPoint, logPrefix));
       }
-      return new DefaultTupleType(componentTypesBuilder.build(), context);
+      return new DefaultTupleType(componentTypesBuilder.build(), attachmentPoint);
     }
 
     DataType type = NATIVE_TYPES_BY_CLASS_NAME.get(next);
