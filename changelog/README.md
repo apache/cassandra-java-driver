@@ -4,6 +4,7 @@
 
 ### 4.2.1 (in progress)
 
+- [documentation] JAVA-2429: Document expected types on DefaultDriverOption
 - [documentation] JAVA-2426: Fix month pattern in CqlDuration documentation
 - [bug] JAVA-2451: Make zero a valid estimated size for PagingIterableSpliterator
 - [bug] JAVA-2443: Compute prepared statement PK indices for protocol v3
