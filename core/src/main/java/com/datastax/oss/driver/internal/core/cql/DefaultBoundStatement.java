@@ -258,7 +258,7 @@ public class DefaultBoundStatement implements BoundStatement {
     if (routingKeyspace != null) {
       return routingKeyspace;
     } else {
-      ColumnDefinitions definitions = preparedStatement.getResultSetDefinitions();
+      ColumnDefinitions definitions = preparedStatement.getVariableDefinitions();
       return (definitions.size() == 0) ? null : definitions.get(0).getKeyspace();
     }
   }

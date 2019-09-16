@@ -4,6 +4,7 @@
 
 ### 4.2.1 (in progress)
 
+- [bug] JAVA-2430: Use variable metadata to infer the routing keyspace on bound statements
 
 ### 4.2.0
 
