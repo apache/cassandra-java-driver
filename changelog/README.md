@@ -4,6 +4,7 @@
 
 ### 4.2.1 (in progress)
 
+- [bug] JAVA-2443: Compute prepared statement PK indices for protocol v3
 - [bug] JAVA-2430: Use variable metadata to infer the routing keyspace on bound statements
 
 ### 4.2.0
