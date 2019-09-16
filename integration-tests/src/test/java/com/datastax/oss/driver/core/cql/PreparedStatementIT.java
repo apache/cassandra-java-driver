@@ -30,6 +30,7 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.type.DataTypes;
@@ -38,6 +39,8 @@ import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.metadata.token.DefaultTokenMap;
+import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
@@ -452,6 +455,37 @@ public class PreparedStatementIT {
           .isInstanceOf(IllegalStateException.class)
           .hasMessageContaining("ID mismatch while trying to reprepare");
     }
+  }
+
+  @Test
+  public void should_infer_routing_information_when_partition_key_is_bound() {
+    should_infer_routing_information_when_partition_key_is_bound(
+        "SELECT a FROM prepared_statement_test WHERE a = ?");
+    should_infer_routing_information_when_partition_key_is_bound(
+        "INSERT INTO prepared_statement_test (a) VALUES (?)");
+    should_infer_routing_information_when_partition_key_is_bound(
+        "UPDATE prepared_statement_test SET b = 1 WHERE a = ?");
+    should_infer_routing_information_when_partition_key_is_bound(
+        "DELETE FROM prepared_statement_test WHERE a = ?");
+  }
+
+  private void should_infer_routing_information_when_partition_key_is_bound(String queryString) {
+    CqlSession session = sessionRule.session();
+    TokenFactory tokenFactory =
+        ((DefaultTokenMap) session.getMetadata().getTokenMap().orElseThrow(AssertionError::new))
+            .getTokenFactory();
+
+    // We'll bind a=1 in the query, check what token this is supposed to produce
+    Token expectedToken =
+        session
+            .execute("SELECT token(a) FROM prepared_statement_test WHERE a = 1")
+            .one()
+            .getToken(0);
+
+    BoundStatement boundStatement = session.prepare(queryString).bind().setInt("a", 1);
+
+    assertThat(boundStatement.getRoutingKeyspace()).isEqualTo(sessionRule.keyspace());
+    assertThat(tokenFactory.hash(boundStatement.getRoutingKey())).isEqualTo(expectedToken);
   }
 
   private static Iterable<Row> firstPageOf(CompletionStage<AsyncResultSet> stage) {
