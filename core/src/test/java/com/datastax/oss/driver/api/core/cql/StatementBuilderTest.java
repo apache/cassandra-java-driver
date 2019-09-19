@@ -22,55 +22,56 @@ import org.junit.Test;
 
 public class StatementBuilderTest {
 
-	private class NullStatementBuilder extends StatementBuilder<NullStatementBuilder, SimpleStatement> {
+  private class NullStatementBuilder
+      extends StatementBuilder<NullStatementBuilder, SimpleStatement> {
 
-		public NullStatementBuilder() {
-			super();
-		}
+    public NullStatementBuilder() {
+      super();
+    }
 
-		public NullStatementBuilder(SimpleStatement template) {
-			super(template);
-		}
+    public NullStatementBuilder(SimpleStatement template) {
+      super(template);
+    }
 
-		@Override
-		public SimpleStatement build() {
-			return null;
-		}
-	}
-	
-	@Test
-	public void should_handle_set_tracing_without_args() {
+    @Override
+    public SimpleStatement build() {
+      return null;
+    }
+  }
 
-		NullStatementBuilder builder = new NullStatementBuilder();
-		assertFalse(builder.tracing);
-		builder.setTracing();
-		assertTrue(builder.tracing);
-	}
+  @Test
+  public void should_handle_set_tracing_without_args() {
 
-	@Test
-	public void should_handle_set_tracing_with_args() {
+    NullStatementBuilder builder = new NullStatementBuilder();
+    assertFalse(builder.tracing);
+    builder.setTracing();
+    assertTrue(builder.tracing);
+  }
 
-		NullStatementBuilder builder = new NullStatementBuilder();
-		assertFalse(builder.tracing);
-		builder.setTracing(true);
-		assertTrue(builder.tracing);
-		builder.setTracing(false);
-		assertFalse(builder.tracing);
-	}
-	
-	@Test
-	public void should_override_template() {
+  @Test
+  public void should_handle_set_tracing_with_args() {
 
-		SimpleStatement template = SimpleStatement.builder("select * from system.peers").build();
-		NullStatementBuilder builder = new NullStatementBuilder(template);
-		assertFalse(builder.tracing);
-		builder.setTracing(true);
-		assertTrue(builder.tracing);
+    NullStatementBuilder builder = new NullStatementBuilder();
+    assertFalse(builder.tracing);
+    builder.setTracing(true);
+    assertTrue(builder.tracing);
+    builder.setTracing(false);
+    assertFalse(builder.tracing);
+  }
 
-		template = SimpleStatement.builder("select * from system.peers").setTracing().build();
-		builder = new NullStatementBuilder(template);
-		assertTrue(builder.tracing);
-		builder.setTracing(false);
-		assertFalse(builder.tracing);
-	}
+  @Test
+  public void should_override_template() {
+
+    SimpleStatement template = SimpleStatement.builder("select * from system.peers").build();
+    NullStatementBuilder builder = new NullStatementBuilder(template);
+    assertFalse(builder.tracing);
+    builder.setTracing(true);
+    assertTrue(builder.tracing);
+
+    template = SimpleStatement.builder("select * from system.peers").setTracing().build();
+    builder = new NullStatementBuilder(template);
+    assertTrue(builder.tracing);
+    builder.setTracing(false);
+    assertFalse(builder.tracing);
+  }
 }
