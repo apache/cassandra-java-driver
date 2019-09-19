@@ -15,77 +15,62 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
-import java.net.InetSocketAddress;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
-import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
-import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.api.core.cql.StatementBuilder;
-
 public class StatementBuilderTest {
 
-	private CqlSession session() {
-		
-		return CqlSession.builder()
-				.addContactPoint(new InetSocketAddress("127.0.0.1",9042))
-				.withLocalDatacenter("Cassandra")
-				.build();
-	}
-	
-	private StatementBuilder<SimpleStatementBuilder, SimpleStatement> builder() {
-		
-		return SimpleStatement.builder("select * from system.compaction_history");
+	private class NullStatementBuilder extends StatementBuilder<NullStatementBuilder, SimpleStatement> {
+
+		public NullStatementBuilder() {
+			super();
+		}
+
+		public NullStatementBuilder(SimpleStatement template) {
+			super(template);
+		}
+
+		@Override
+		public SimpleStatement build() {
+			return null;
+		}
 	}
 	
 	@Test
-	public void testExisingTracingUsingBuilder() {
-		
-		CqlSession s = session();
-		Statement<SimpleStatement> stmt = builder()
-				.setTracing()
-				.build();
-		ResultSet rs = s.execute(stmt);
-		assertNotNull(rs.getExecutionInfo().getTracingId());
-		
-		stmt = builder()
-				.build();
-		rs = s.execute(stmt);
-		assertNull(rs.getExecutionInfo().getTracingId());
+	public void should_handle_set_tracing_without_args() {
+
+		NullStatementBuilder builder = new NullStatementBuilder();
+		assertFalse(builder.tracing);
+		builder.setTracing();
+		assertTrue(builder.tracing);
 	}
 
 	@Test
-	public void testNewTracingUsingBuilder() {
-		
-		CqlSession s = session();
-		Statement<SimpleStatement> stmt = builder()
-				.setTracing(true)
-				.build();
-		ResultSet rs = s.execute(stmt);
-		assertNotNull(rs.getExecutionInfo().getTracingId());
-		
-		stmt = builder()
-				.setTracing(false)
-				.build();
-		rs = s.execute(stmt);
-		assertNull(rs.getExecutionInfo().getTracingId());
+	public void should_handle_set_tracing_with_args() {
+
+		NullStatementBuilder builder = new NullStatementBuilder();
+		assertFalse(builder.tracing);
+		builder.setTracing(true);
+		assertTrue(builder.tracing);
+		builder.setTracing(false);
+		assertFalse(builder.tracing);
 	}
 	
 	@Test
-	public void testNewTracingOverrideTemplate() {
-		
-		CqlSession s = session();
-		SimpleStatement stmt1 = builder()
-				.setTracing()
-				.build();
-		SimpleStatement stmt2 = SimpleStatement.builder(stmt1).setTracing(false).build();
-		ResultSet rs = s.execute(stmt2);
-		assertNull(rs.getExecutionInfo().getTracingId());
+	public void should_override_template() {
+
+		SimpleStatement template = SimpleStatement.builder("select * from system.peers").build();
+		NullStatementBuilder builder = new NullStatementBuilder(template);
+		assertFalse(builder.tracing);
+		builder.setTracing(true);
+		assertTrue(builder.tracing);
+
+		template = SimpleStatement.builder("select * from system.peers").setTracing().build();
+		builder = new NullStatementBuilder(template);
+		assertTrue(builder.tracing);
+		builder.setTracing(false);
+		assertFalse(builder.tracing);
 	}
 }
