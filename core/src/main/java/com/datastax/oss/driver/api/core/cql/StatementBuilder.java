@@ -157,7 +157,13 @@ public abstract class StatementBuilder<
   /** @see Statement#setTracing(boolean) */
   @NonNull
   public SelfT setTracing() {
-    this.tracing = true;
+    return setTracing(true);
+  }
+
+  /** @see Statement#setTracing(boolean) */
+  @NonNull
+  public SelfT setTracing(boolean tracing) {
+    this.tracing = tracing;
     return self;
   }
 
