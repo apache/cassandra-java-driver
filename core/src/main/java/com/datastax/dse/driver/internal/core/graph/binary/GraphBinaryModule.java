@@ -22,6 +22,7 @@ import org.apache.tinkerpop.gremlin.driver.ser.SerializationException;
 import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryReader;
 import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryWriter;
 import org.apache.tinkerpop.gremlin.driver.ser.binary.TypeSerializerRegistry;
+import org.javatuples.Pair;
 
 public class GraphBinaryModule {
   public static final UnpooledByteBufAllocator ALLOCATOR = new UnpooledByteBufAllocator(false);
@@ -34,6 +35,7 @@ public class GraphBinaryModule {
   static final String GRAPH_BINARY_EDIT_DISTANCE_TYPE_NAME = "driver.dse.search.EditDistance";
   static final String GRAPH_BINARY_TUPLE_VALUE_TYPE_NAME = "driver.core.TupleValue";
   static final String GRAPH_BINARY_UDT_VALUE_TYPE_NAME = "driver.core.UDTValue";
+  static final String GRAPH_BINARY_PAIR_TYPE_NAME = "org.javatuples.Pair";
 
   private final GraphBinaryReader reader;
   private final GraphBinaryWriter writer;
@@ -54,6 +56,7 @@ public class GraphBinaryModule {
         .addCustomType(EditDistance.class, new EditDistanceSerializer())
         .addCustomType(TupleValue.class, new TupleValueSerializer(driverContext))
         .addCustomType(UdtValue.class, new UdtValueSerializer(driverContext))
+        .addCustomType(Pair.class, new PairSerializer())
         .create();
   }
 

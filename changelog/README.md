@@ -4,6 +4,7 @@
 
 ### NGDG (in progress)
 
+- [new feature] JAVA-2098: Add filter predicates for collections
 - [improvement] JAVA-2245: Rename graph engine Legacy to Classic and Modern to Core
 - [new feature] JAVA-2099: Enable Paging Through DSE Driver for Gremlin Traversals (2.x)
 - [new feature] JAVA-1898: Expose new table-level graph metadata
