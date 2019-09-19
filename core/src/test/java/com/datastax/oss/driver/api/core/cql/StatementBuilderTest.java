@@ -22,7 +22,7 @@ import org.junit.Test;
 
 public class StatementBuilderTest {
 
-  private class NullStatementBuilder
+  private static class NullStatementBuilder
       extends StatementBuilder<NullStatementBuilder, SimpleStatement> {
 
     public NullStatementBuilder() {
