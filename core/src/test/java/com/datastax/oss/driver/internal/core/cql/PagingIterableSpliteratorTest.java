@@ -86,6 +86,7 @@ public class PagingIterableSpliteratorTest {
   @DataProvider
   public static Iterable<?> splitsWithEstimatedSize() {
     List<List<Object>> arguments = new ArrayList<>();
+    arguments.add(Lists.newArrayList(0, 1, ImmutableList.of(), ImmutableList.of()));
     arguments.add(Lists.newArrayList(1, 1, ImmutableList.of(), ImmutableList.of(0)));
     arguments.add(Lists.newArrayList(1, 2, ImmutableList.of(), ImmutableList.of(0)));
     arguments.add(Lists.newArrayList(2, 1, ImmutableList.of(0), ImmutableList.of(1)));
@@ -144,6 +145,7 @@ public class PagingIterableSpliteratorTest {
   @DataProvider
   public static Iterable<?> splitsWithUnknownSize() {
     List<List<Object>> arguments = new ArrayList<>();
+    arguments.add(Lists.newArrayList(0, 1, ImmutableList.of(), ImmutableList.of()));
     arguments.add(Lists.newArrayList(1, 1, ImmutableList.of(0), ImmutableList.of()));
     arguments.add(Lists.newArrayList(1, 2, ImmutableList.of(0), ImmutableList.of()));
     arguments.add(Lists.newArrayList(2, 1, ImmutableList.of(0), ImmutableList.of(1)));
