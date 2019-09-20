@@ -15,8 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 
@@ -43,20 +42,20 @@ public class StatementBuilderTest {
   public void should_handle_set_tracing_without_args() {
 
     NullStatementBuilder builder = new NullStatementBuilder();
-    assertFalse(builder.tracing);
+    assertThat(builder.tracing).isFalse();
     builder.setTracing();
-    assertTrue(builder.tracing);
+    assertThat(builder.tracing).isTrue();
   }
 
   @Test
   public void should_handle_set_tracing_with_args() {
 
     NullStatementBuilder builder = new NullStatementBuilder();
-    assertFalse(builder.tracing);
+    assertThat(builder.tracing).isFalse();
     builder.setTracing(true);
-    assertTrue(builder.tracing);
+    assertThat(builder.tracing).isTrue();
     builder.setTracing(false);
-    assertFalse(builder.tracing);
+    assertThat(builder.tracing).isFalse();
   }
 
   @Test
@@ -64,14 +63,14 @@ public class StatementBuilderTest {
 
     SimpleStatement template = SimpleStatement.builder("select * from system.peers").build();
     NullStatementBuilder builder = new NullStatementBuilder(template);
-    assertFalse(builder.tracing);
+    assertThat(builder.tracing).isFalse();
     builder.setTracing(true);
-    assertTrue(builder.tracing);
+    assertThat(builder.tracing).isTrue();
 
     template = SimpleStatement.builder("select * from system.peers").setTracing().build();
     builder = new NullStatementBuilder(template);
-    assertTrue(builder.tracing);
+    assertThat(builder.tracing).isTrue();
     builder.setTracing(false);
-    assertFalse(builder.tracing);
+    assertThat(builder.tracing).isFalse();
   }
 }

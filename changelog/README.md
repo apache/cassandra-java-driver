@@ -4,6 +4,7 @@
 
 ### 4.3.0 (in progress)
 
+- [improvement] JAVA-2402: Add setTracing(boolean) to StatementBuilder
 
 ### 4.2.0
 
