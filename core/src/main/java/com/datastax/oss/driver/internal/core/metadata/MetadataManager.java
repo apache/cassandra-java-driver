@@ -106,7 +106,18 @@ public class MetadataManager implements AsyncAutoCloseable {
             || !keyspacesBefore.equals(refreshedKeyspaces)
             || (!tokenMapEnabledBefore && tokenMapEnabled))
         && isSchemaEnabled()) {
-      refreshSchema(null, false, true);
+      refreshSchema(null, false, true)
+          .whenComplete(
+              (metadata, error) -> {
+                if (error != null) {
+                  Loggers.warnWithException(
+                      LOG,
+                      "[{}] Unexpected error while refreshing schema after it was re-enabled "
+                          + "in the configuration, keeping the previous version",
+                      logPrefix,
+                      error);
+                }
+              });
     }
   }
 
@@ -404,11 +415,7 @@ public class MetadataManager implements AsyncAutoCloseable {
             .whenComplete(
                 (v, error) -> {
                   if (error != null) {
-                    Loggers.warnWithException(
-                        LOG,
-                        "[{}] Unexpected error while refreshing schema, skipping",
-                        logPrefix,
-                        error);
+                    currentSchemaRefresh.completeExceptionally(error);
                   }
                   singleThreaded.firstSchemaRefreshFuture.complete(null);
                 });
