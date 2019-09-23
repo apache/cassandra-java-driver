@@ -41,6 +41,14 @@ public class RawColumn implements Comparable<RawColumn> {
   public static final String KIND_COMPACT_VALUE = "compact_value";
   public static final String KIND_STATIC = "static";
 
+  /**
+   * Upon migration from thrift to CQL, Cassandra internally creates a surrogate column "value" of
+   * type {@code EmptyType} for dense tables. This resolves into this CQL type name.
+   *
+   * <p>This column shouldn't be exposed to the user but is currently exposed in system tables.
+   */
+  public static final String THRIFT_EMPTY_TYPE = "empty";
+
   public final CqlIdentifier name;
   public String kind;
   public final int position;
@@ -154,7 +162,7 @@ public class RawColumn implements Comparable<RawColumn> {
   /**
    * Helper method to filter columns while parsing a table's metadata.
    *
-   * <p>Upon migration from thrift to CQL, we internally create a pair of surrogate
+   * <p>Upon migration from thrift to CQL, Cassandra internally creates a pair of surrogate
    * clustering/regular columns for compact static tables. These columns shouldn't be exposed to the
    * user but are currently returned by C*. We also need to remove the static keyword for all other
    * columns in the table.
@@ -177,18 +185,12 @@ public class RawColumn implements Comparable<RawColumn> {
     }
   }
 
-  /**
-   * Helper method to filter columns while parsing a table's metadata.
-   *
-   * <p>Upon migration from thrift to CQL, we internally create a surrogate column "value" of type
-   * EmptyType for dense tables. This column shouldn't be exposed to the user but is currently
-   * returned by C*.
-   */
+  /** Helper method to filter columns while parsing a table's metadata. */
   public static void pruneDenseTableColumnsV3(List<RawColumn> columns) {
     ListIterator<RawColumn> iterator = columns.listIterator();
     while (iterator.hasNext()) {
       RawColumn column = iterator.next();
-      if (column.kind.equals(KIND_REGULAR) && "empty".equals(column.dataType)) {
+      if (column.kind.equals(KIND_REGULAR) && THRIFT_EMPTY_TYPE.equals(column.dataType)) {
         iterator.remove();
       }
     }

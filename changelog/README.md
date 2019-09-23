@@ -4,6 +4,7 @@
 
 ### 4.2.1 (in progress)
 
+- [bug] JAVA-2454: Handle "empty" CQL type while parsing schema
 - [improvement] JAVA-2455: Improve logging of schema refresh errors
 - [documentation] JAVA-2429: Document expected types on DefaultDriverOption
 - [documentation] JAVA-2426: Fix month pattern in CqlDuration documentation
