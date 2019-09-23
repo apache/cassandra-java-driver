@@ -395,7 +395,7 @@ public class DefaultSession implements CqlSession {
                       Loggers.warnWithException(
                           LOG,
                           "[{}] Unexpected error while refreshing schema during intialization, "
-                              + "keeping the previous version",
+                              + "keeping previous version",
                           logPrefix,
                           error);
                     }

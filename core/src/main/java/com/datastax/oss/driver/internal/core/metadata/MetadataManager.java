@@ -113,7 +113,7 @@ public class MetadataManager implements AsyncAutoCloseable {
                   Loggers.warnWithException(
                       LOG,
                       "[{}] Unexpected error while refreshing schema after it was re-enabled "
-                          + "in the configuration, keeping the previous version",
+                          + "in the configuration, keeping previous version",
                       logPrefix,
                       error);
                 }
