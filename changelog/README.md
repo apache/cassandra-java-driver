@@ -4,6 +4,7 @@
 
 ### 4.2.1 (in progress)
 
+- [improvement] JAVA-2455: Improve logging of schema refresh errors
 - [documentation] JAVA-2429: Document expected types on DefaultDriverOption
 - [documentation] JAVA-2426: Fix month pattern in CqlDuration documentation
 - [bug] JAVA-2451: Make zero a valid estimated size for PagingIterableSpliterator

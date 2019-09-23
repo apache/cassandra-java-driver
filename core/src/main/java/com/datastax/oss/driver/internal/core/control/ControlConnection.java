@@ -226,7 +226,20 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
   private void processSchemaChange(Event event) {
     SchemaChangeEvent sce = (SchemaChangeEvent) event;
-    context.getMetadataManager().refreshSchema(sce.keyspace, false, false);
+    context
+        .getMetadataManager()
+        .refreshSchema(sce.keyspace, false, false)
+        .whenComplete(
+            (metadata, error) -> {
+              if (error != null) {
+                Loggers.warnWithException(
+                    LOG,
+                    "[{}] Unexpected error while refreshing schema for a SCHEMA_CHANGE event, "
+                        + "keeping previous version",
+                    logPrefix,
+                    error);
+              }
+            });
   }
 
   private class SingleThreaded {
@@ -467,7 +480,20 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                     // first successful refresh; make sure the LBP gets initialized (this is a no-op
                     // if it was initialized already).
                     context.getLoadBalancingPolicyWrapper().init();
-                    context.getMetadataManager().refreshSchema(null, false, true);
+                    context
+                        .getMetadataManager()
+                        .refreshSchema(null, false, true)
+                        .whenComplete(
+                            (metadata, schemaError) -> {
+                              if (schemaError != null) {
+                                Loggers.warnWithException(
+                                    LOG,
+                                    "[{}] Unexpected error while refreshing schema after a "
+                                        + "successful reconnection, keeping previous version",
+                                    logPrefix,
+                                    schemaError);
+                              }
+                            });
                   } catch (Throwable t) {
                     Loggers.warnWithException(
                         LOG, "[{}] Unexpected error on control connection reconnect", logPrefix, t);

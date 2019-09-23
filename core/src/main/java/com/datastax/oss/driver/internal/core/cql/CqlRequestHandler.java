@@ -608,8 +608,8 @@ public class CqlRequestHandler implements Throttled {
                           error -> {
                             Loggers.warnWithException(
                                 LOG,
-                                "[{}] Error while refreshing schema after DDL query, "
-                                    + "new metadata might be incomplete",
+                                "[{}] Unexpected error while refreshing schema after DDL query, "
+                                    + "keeping previous version",
                                 logPrefix,
                                 error);
                             return null;
