@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.2.1 (in progress)
+### 4.2.1
 
 - [bug] JAVA-2454: Handle "empty" CQL type while parsing schema
 - [improvement] JAVA-2455: Improve logging of schema refresh errors
