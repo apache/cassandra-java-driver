@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.2.1</version>
+    <version>4.2.2-SNAPSHOT</version>
   </parent>
 
   <artifactId>java-driver-mapper-runtime</artifactId>
