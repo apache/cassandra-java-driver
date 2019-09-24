@@ -6,6 +6,8 @@
  */
 package com.datastax.dse.driver.api.core.graph.remote;
 
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
+
 import com.datastax.dse.driver.api.core.graph.DseGraph;
 import com.datastax.dse.driver.api.core.graph.NativeGraphDataTypeITBase;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
@@ -42,6 +44,6 @@ public class NativeGraphDataTypeRemoteIT extends NativeGraphDataTypeITBase {
     traversal.iterate();
 
     // query properties
-    return g.V().has(vertexLabel, "id", vertexID).valueMap().next();
+    return g.V().has(vertexLabel, "id", vertexID).valueMap().by(unfold()).next();
   }
 }

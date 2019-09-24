@@ -7,6 +7,7 @@
 package com.datastax.dse.driver.api.core.graph.statement;
 
 import static com.datastax.dse.driver.api.core.graph.DseGraph.g;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 
 import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
 import com.datastax.dse.driver.api.core.graph.NativeGraphDataTypeITBase;
@@ -40,7 +41,8 @@ public class NativeGraphDataTypeFluentIT extends NativeGraphDataTypeITBase {
 
     return session()
         .execute(
-            FluentGraphStatement.newInstance(g.V().has(vertexLabel, "id", vertexID).valueMap()))
+            FluentGraphStatement.newInstance(
+                g.V().has(vertexLabel, "id", vertexID).valueMap().by(unfold())))
         .one()
         .asMap();
   }

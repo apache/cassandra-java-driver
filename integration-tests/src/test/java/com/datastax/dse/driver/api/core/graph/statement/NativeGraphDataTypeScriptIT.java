@@ -44,7 +44,8 @@ public class NativeGraphDataTypeScriptIT extends NativeGraphDataTypeITBase {
 
     return session()
         .execute(
-            ScriptGraphStatement.newInstance("g.V().has(vertexLabel, 'id', vertexID).valueMap()")
+            ScriptGraphStatement.newInstance(
+                    "g.V().has(vertexLabel, 'id', vertexID).valueMap().by(unfold())")
                 .setQueryParam("vertexID", vertexID)
                 .setQueryParam("vertexLabel", vertexLabel))
         .one()
