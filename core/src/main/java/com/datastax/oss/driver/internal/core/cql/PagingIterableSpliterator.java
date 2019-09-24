@@ -89,7 +89,7 @@ public class PagingIterableSpliterator<ElementT> implements Spliterator<ElementT
   @Nullable
   public Spliterator<ElementT> trySplit() {
     if (estimatedSize != Long.MAX_VALUE && estimatedSize <= chunkSize) {
-      // There is not point in splitting if the number of remaining elements is below the chunk size
+      // There is no point in splitting if the number of remaining elements is below the chunk size
       return null;
     }
     ElementT row = iterable.one();
@@ -140,7 +140,7 @@ public class PagingIterableSpliterator<ElementT> implements Spliterator<ElementT
 
     @NonNull
     public Builder<ElementT> withEstimatedSize(long estimatedSize) {
-      Preconditions.checkArgument(estimatedSize > 0, "estimatedSize must be > 0");
+      Preconditions.checkArgument(estimatedSize >= 0, "estimatedSize must be >= 0");
       this.estimatedSize = estimatedSize;
       return this;
     }

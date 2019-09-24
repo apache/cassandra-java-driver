@@ -64,6 +64,10 @@ public class DataTypeCqlNameParser implements DataTypeParser {
     Parser parser = new Parser(toParse, 0);
     String type = parser.parseTypeName();
 
+    if (type.equalsIgnoreCase(RawColumn.THRIFT_EMPTY_TYPE)) {
+      return DataTypes.custom(type);
+    }
+
     DataType nativeType = NATIVE_TYPES_BY_NAME.get(type.toLowerCase());
     if (nativeType != null) {
       return nativeType;

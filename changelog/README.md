@@ -6,6 +6,16 @@
 
 - [improvement] JAVA-2402: Add setTracing(boolean) to StatementBuilder
 
+### 4.2.1
+
+- [bug] JAVA-2454: Handle "empty" CQL type while parsing schema
+- [improvement] JAVA-2455: Improve logging of schema refresh errors
+- [documentation] JAVA-2429: Document expected types on DefaultDriverOption
+- [documentation] JAVA-2426: Fix month pattern in CqlDuration documentation
+- [bug] JAVA-2451: Make zero a valid estimated size for PagingIterableSpliterator
+- [bug] JAVA-2443: Compute prepared statement PK indices for protocol v3
+- [bug] JAVA-2430: Use variable metadata to infer the routing keyspace on bound statements
+
 ### 4.2.0
 
 - [improvement] JAVA-2390: Add methods to set the SSL engine factory programmatically
