@@ -41,7 +41,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-public abstract class NativeGraphDataTypeITBase {
+public abstract class CoreGraphDataTypeITBase {
 
   private static CustomCcmRule ccmRule =
       CustomCcmRule.builder()

@@ -44,7 +44,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DataProviderRunner.class)
-public abstract class LegacyGraphDataTypeITBase {
+public abstract class ClassicGraphDataTypeITBase {
 
   private static final boolean IS_DSE50 = CcmBridge.VERSION.compareTo(Version.parse("5.1")) < 0;
   private static final Set<String> TYPES_REQUIRING_DSE51 =

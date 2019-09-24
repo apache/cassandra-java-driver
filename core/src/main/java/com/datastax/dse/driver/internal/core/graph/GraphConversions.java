@@ -79,7 +79,7 @@ public class GraphConversions extends Conversions {
       graphProtocol =
           config.getString(
               DseDriverOption.GRAPH_SUB_PROTOCOL,
-              // TODO pick graphson-3.0 if the target graph uses the native engine
+              // TODO pick graphson-3.0 if the target graph uses the core engine
               "graphson-2.0");
     }
     // should not be null because we call config.getString() with a default value

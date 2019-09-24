@@ -6,7 +6,7 @@
  */
 package com.datastax.dse.driver.api.core.graph.statement;
 
-import com.datastax.dse.driver.api.core.graph.NativeGraphDataTypeITBase;
+import com.datastax.dse.driver.api.core.graph.CoreGraphDataTypeITBase;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatementBuilder;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
@@ -16,10 +16,10 @@ import java.util.Map;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
-@DseRequirement(min = "6.8.0", description = "DSE 6.8.0 required for Native graph support")
+@DseRequirement(min = "6.8.0", description = "DSE 6.8.0 required for Core graph support")
 @RunWith(DataProviderRunner.class)
 @Category(IsolatedTests.class)
-public class NativeGraphDataTypeScriptIT extends NativeGraphDataTypeITBase {
+public class CoreGraphDataTypeScriptIT extends CoreGraphDataTypeITBase {
 
   @Override
   protected Map<Object, Object> insertVertexThenReadProperties(

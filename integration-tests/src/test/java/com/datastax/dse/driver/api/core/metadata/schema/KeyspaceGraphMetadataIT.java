@@ -7,6 +7,7 @@
 package com.datastax.dse.driver.api.core.metadata.schema;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
@@ -46,6 +47,33 @@ public class KeyspaceGraphMetadataIT {
             keyspaceMetadata ->
                 assertThat(((DseKeyspaceMetadata) keyspaceMetadata).getGraphEngine())
                     .hasValue("Tinker"));
+  }
+
+  @Test
+  public void should_not_allow_classic_graph_engine_to_be_specified_on_keyspace() {
+    DseSession session = SESSION_RULE.session();
+    assertThatThrownBy(
+            () ->
+                session.execute(
+                    "CREATE KEYSPACE keyspace_metadata_it_graph_engine_classic "
+                        + "WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1} "
+                        + "AND graph_engine = 'Classic'"))
+        .hasMessageContaining("Invalid/unknown graph engine name 'Classic'");
+  }
+
+  @Test
+  public void should_expose_core_graph_engine_if_set() {
+    DseSession session = SESSION_RULE.session();
+    session.execute(
+        "CREATE KEYSPACE keyspace_metadata_it_graph_engine_core "
+            + "WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1} "
+            + "AND graph_engine = 'Core'");
+    Metadata metadata = session.getMetadata();
+    assertThat(metadata.getKeyspace("keyspace_metadata_it_graph_engine_core"))
+        .hasValueSatisfying(
+            keyspaceMetadata ->
+                assertThat(((DseKeyspaceMetadata) keyspaceMetadata).getGraphEngine())
+                    .hasValue("Core"));
   }
 
   @Test

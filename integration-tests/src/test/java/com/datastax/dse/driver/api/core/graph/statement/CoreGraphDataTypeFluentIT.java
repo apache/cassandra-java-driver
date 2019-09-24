@@ -9,8 +9,8 @@ package com.datastax.dse.driver.api.core.graph.statement;
 import static com.datastax.dse.driver.api.core.graph.DseGraph.g;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 
+import com.datastax.dse.driver.api.core.graph.CoreGraphDataTypeITBase;
 import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
-import com.datastax.dse.driver.api.core.graph.NativeGraphDataTypeITBase;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.categories.IsolatedTests;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
@@ -20,10 +20,10 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
-@DseRequirement(min = "6.8.0", description = "DSE 6.8.0 required for Native graph support")
+@DseRequirement(min = "6.8.0", description = "DSE 6.8.0 required for Core graph support")
 @RunWith(DataProviderRunner.class)
 @Category(IsolatedTests.class)
-public class NativeGraphDataTypeFluentIT extends NativeGraphDataTypeITBase {
+public class CoreGraphDataTypeFluentIT extends CoreGraphDataTypeITBase {
 
   @Override
   public Map<Object, Object> insertVertexThenReadProperties(
