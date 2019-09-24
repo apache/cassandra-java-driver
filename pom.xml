@@ -48,7 +48,7 @@
     <netty.version>4.1.45.Final</netty.version>
     <slf4j.version>1.7.26</slf4j.version>
     <esri.version>1.2.1</esri.version>
-    <tinkerpop.version>3.3.3</tinkerpop.version>
+    <tinkerpop.version>3.4.3-20190731-199be4b5</tinkerpop.version>
     <reactive-streams.version>1.0.2</reactive-streams.version>
     <jackson.version>2.10.0</jackson.version>
     <jackson-databind.version>2.10.0</jackson-databind.version>
