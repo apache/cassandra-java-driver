@@ -154,10 +154,21 @@ public abstract class StatementBuilder<
     return self;
   }
 
-  /** @see Statement#setTracing(boolean) */
+  /**
+   * This method is a shortcut to {@link #setTracing(boolean)} with an argument of true. It is
+   * preserved to maintain API compatibility.
+   *
+   * @see Statement#setTracing(boolean)
+   */
   @NonNull
   public SelfT setTracing() {
-    this.tracing = true;
+    return setTracing(true);
+  }
+
+  /** @see Statement#setTracing(boolean) */
+  @NonNull
+  public SelfT setTracing(boolean tracing) {
+    this.tracing = tracing;
     return self;
   }
 
