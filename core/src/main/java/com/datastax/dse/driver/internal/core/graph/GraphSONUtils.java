@@ -33,9 +33,7 @@ import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONMapper;
 import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONReader;
 import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONVersion;
 import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONXModuleV2d0;
-import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONXModuleV3d0;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerIoRegistryV2d0;
-import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerIoRegistryV3d0;
 import org.apache.tinkerpop.shaded.jackson.core.Version;
 import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
 
@@ -85,15 +83,6 @@ public class GraphSONUtils {
                           .addCustomModule(new GraphSON2SerdeTP.DriverObjectsModule())
                           .create()
                           .createMapper();
-                    case GRAPHSON_3_0:
-                      return GraphSONMapper.build()
-                          .version(GraphSONVersion.V3_0)
-                          .addCustomModule(GraphSONXModuleV3d0.build().create(false))
-                          .addRegistry(TinkerIoRegistryV3d0.instance())
-                          .addCustomModule(new GraphSON3SerdeTP.DseGraphModule())
-                          .addCustomModule(new GraphSON3SerdeTP.DriverObjectsModule())
-                          .create()
-                          .createMapper();
 
                     default:
                       throw new IllegalStateException(
@@ -131,7 +120,6 @@ public class GraphSONUtils {
         case GRAPHSON_1_0:
           return new LegacyGraphNode(mapper.readTree(Bytes.getArray(data.get(0))), mapper);
         case GRAPHSON_2_0:
-        case GRAPHSON_3_0:
           return new ObjectGraphNode(mapper.readValue(Bytes.getArray(data.get(0)), Object.class));
         default:
           // Should already be caught when we lookup in the cache

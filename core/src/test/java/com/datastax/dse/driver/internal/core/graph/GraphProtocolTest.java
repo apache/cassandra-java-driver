@@ -73,16 +73,21 @@ public class GraphProtocolTest {
     assertThatThrownBy(() -> GraphProtocol.fromString("invalid"))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage(
-            "Graph protocol used [\"invalid\"] unknown. Possible values are: [ \"graphson-1.0\", \"graphson-2.0\", \"graphson-3.0\", \"graph-binary-1.0\"]");
+            "Graph protocol used [\"invalid\"] unknown. Possible values are: [ \"graphson-1.0\", \"graphson-2.0\", \"graph-binary-1.0\"]");
+  }
+
+  @Test
+  public void should_fail_if_graph_protocol_used_is_graphson_3() {
+    assertThatThrownBy(() -> GraphProtocol.fromString("graphson-3.0"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Graph protocol used [\"graphson-3.0\"] unknown. Possible values are: [ \"graphson-1.0\", \"graphson-2.0\", \"graph-binary-1.0\"]");
   }
 
   @DataProvider
   public static Object[][] protocolObjects() {
     return new Object[][] {
-      {GraphProtocol.GRAPHSON_1_0},
-      {GraphProtocol.GRAPHSON_2_0},
-      {GraphProtocol.GRAPHSON_3_0},
-      {GraphProtocol.GRAPH_BINARY_1_0}
+      {GraphProtocol.GRAPHSON_1_0}, {GraphProtocol.GRAPHSON_2_0}, {GraphProtocol.GRAPH_BINARY_1_0}
     };
   }
 
@@ -90,8 +95,6 @@ public class GraphProtocolTest {
   public static Object[][] protocolStrings() {
     // putting manual strings here to be sure to be notified if a value in
     // GraphProtocol ever changes
-    return new Object[][] {
-      {"graphson-1.0"}, {"graphson-2.0"}, {"graphson-3.0"}, {"graph-binary-1.0"}
-    };
+    return new Object[][] {{"graphson-1.0"}, {"graphson-2.0"}, {"graph-binary-1.0"}};
   }
 }

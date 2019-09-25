@@ -16,7 +16,6 @@
 package com.datastax.dse.driver.internal.core.graph;
 
 import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_2_0;
-import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_3_0;
 import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPH_BINARY_1_0;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.api.core.type.codec.TypeCodecs.BIGINT;
@@ -481,7 +480,7 @@ public class GraphRequestHandlerTest {
 
   @DataProvider
   public static Object[][] bytecodeEnabledGraphProtocols() {
-    return new Object[][] {{GRAPHSON_2_0}, {GRAPHSON_3_0}, {GRAPH_BINARY_1_0}};
+    return new Object[][] {{GRAPHSON_2_0}, {GRAPH_BINARY_1_0}};
   }
 
   @Test

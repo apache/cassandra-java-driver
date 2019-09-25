@@ -17,7 +17,6 @@ package com.datastax.dse.driver.internal.core.graph;
 
 import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_1_0;
 import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_2_0;
-import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_3_0;
 import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPH_BINARY_1_0;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,7 +40,6 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryReader;
 import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryWriter;
 import org.apache.tinkerpop.gremlin.driver.ser.binary.TypeSerializerRegistry;
@@ -74,17 +72,6 @@ public class GraphNodeTest {
   }
 
   @Test
-  public void should_create_graph_node_for_set_for_graphson_3_0() throws IOException {
-    // when
-    GraphNode graphNode = serdeAndCreateGraphNode(ImmutableSet.of("value"), GRAPHSON_3_0);
-
-    // then
-    assertThat(graphNode.isSet()).isTrue();
-    Set<String> set = graphNode.asSet();
-    assertThat(set).isEqualTo(ImmutableSet.of("value"));
-  }
-
-  @Test
   public void should_not_support_set_for_graphson_2_0() throws IOException {
     // when
     GraphNode graphNode = serdeAndCreateGraphNode(ImmutableSet.of("value"), GRAPHSON_2_0);
@@ -113,17 +100,6 @@ public class GraphNodeTest {
     assertThat(graphNode.isList()).isTrue();
     List<String> result = graphNode.asList();
     assertThat(result).isEqualTo(ImmutableList.of("value"));
-  }
-
-  @Test
-  public void should_create_graph_node_for_map_for_graphson_3_0() throws IOException {
-    // when
-    GraphNode graphNode = serdeAndCreateGraphNode(ImmutableMap.of(12, 1234), GRAPHSON_3_0);
-
-    // then
-    assertThat(graphNode.isMap()).isTrue();
-    Map<String, Integer> result = graphNode.asMap();
-    assertThat(result).isEqualTo(ImmutableMap.of(12, 1234));
   }
 
   @Test
@@ -306,7 +282,7 @@ public class GraphNodeTest {
 
   @DataProvider
   public static Object[][] allGraphProtocols() {
-    return new Object[][] {{GRAPHSON_1_0}, {GRAPHSON_2_0}, {GRAPHSON_3_0}, {GRAPH_BINARY_1_0}};
+    return new Object[][] {{GRAPHSON_1_0}, {GRAPHSON_2_0}, {GRAPH_BINARY_1_0}};
   }
 
   @DataProvider
@@ -316,6 +292,6 @@ public class GraphNodeTest {
 
   @DataProvider
   public static Object[][] objectGraphNodeProtocols() {
-    return new Object[][] {{GRAPHSON_2_0}, {GRAPHSON_3_0}, {GRAPH_BINARY_1_0}};
+    return new Object[][] {{GRAPHSON_2_0}, {GRAPH_BINARY_1_0}};
   }
 }

@@ -15,8 +15,8 @@ import java.util.Map;
 public enum GraphProtocol {
   GRAPHSON_1_0("graphson-1.0"),
   GRAPHSON_2_0("graphson-2.0"),
-  GRAPHSON_3_0("graphson-3.0"),
-  GRAPH_BINARY_1_0("graph-binary-1.0");
+  GRAPH_BINARY_1_0("graph-binary-1.0"),
+  ;
 
   private static final Map<String, GraphProtocol> BY_CODE;
 
