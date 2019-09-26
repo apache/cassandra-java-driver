@@ -16,11 +16,14 @@
 package com.datastax.oss.driver.core;
 
 import static com.datastax.oss.driver.api.testinfra.utils.ConditionChecker.checkThat;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.rows;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
@@ -63,6 +66,13 @@ public class ConnectIT {
   @Before
   public void setup() {
     SIMULACRON_RULE.cluster().acceptConnections();
+    SIMULACRON_RULE
+        .cluster()
+        .prime(
+            // Absolute minimum for a working schema metadata (we just want to check that it gets
+            // loaded at startup).
+            when("SELECT * FROM system_schema.keyspaces")
+                .then(rows().row("keyspace_name", "system")));
   }
 
   @Test
@@ -107,7 +117,9 @@ public class ConnectIT {
     SIMULACRON_RULE.cluster().acceptConnections();
 
     // Then this doesn't throw
-    try (Session ignored = sessionFuture.get(30, TimeUnit.SECONDS)) {}
+    try (Session session = sessionFuture.get(30, TimeUnit.SECONDS)) {
+      assertThat(session.getMetadata().getKeyspaces()).containsKey(CqlIdentifier.fromCql("system"));
+    }
   }
 
   /**

@@ -405,7 +405,7 @@ public class MetadataManager implements AsyncAutoCloseable {
       if (currentSchemaRefresh == null) {
         currentSchemaRefresh = future;
         LOG.debug("[{}] Starting schema refresh", logPrefix);
-        maybeInitControlConnection()
+        initControlConnectionForSchema()
             .thenCompose(v -> context.getTopologyMonitor().checkSchemaAgreement())
             // 1. Query system tables
             .thenCompose(b -> schemaQueriesFactory.newInstance(future).execute())
@@ -426,17 +426,17 @@ public class MetadataManager implements AsyncAutoCloseable {
       }
     }
 
-    // The control connection may or may not have been initialized already by TopologyMonitor.
-    private CompletionStage<Void> maybeInitControlConnection() {
+    // To query schema tables, we need the control connection.
+    // Normally that the topology monitor has already initialized it to query node tables. But if a
+    // custom topology monitor is in place, it might not use the control connection at all.
+    private CompletionStage<Void> initControlConnectionForSchema() {
       if (firstSchemaRefreshFuture.isDone()) {
-        // Not the first schema refresh, so we know init was attempted already
+        // We tried to refresh the schema before, so we know we called init already. Don't call it
+        // again since that is cheaper.
         return firstSchemaRefreshFuture;
       } else {
-        controlConnection.init(false, true, false);
-        // The control connection might fail to connect and reattempt, but for the metadata refresh
-        // that led us here we only care about the first attempt (metadata is not vital, so if we
-        // can't get it right now it's OK to move on)
-        return controlConnection.firstConnectionAttemptFuture();
+        // Trigger init (a no-op if the topology monitor already done so)
+        return controlConnection.init(false, true, false);
       }
     }
 
