@@ -377,8 +377,11 @@ public class DefaultSession implements CqlSession {
                 currentVersion,
                 bestVersion);
             context.getChannelFactory().setProtocolVersion(bestVersion);
+
+            // If the control connection has already initialized, force a reconnect to use the new
+            // version.
+            // (note: it might not have initialized yet if there is a custom TopologyMonitor)
             ControlConnection controlConnection = context.getControlConnection();
-            // Might not have initialized yet if there is a custom TopologyMonitor
             if (controlConnection.isInit()) {
               controlConnection.reconnectNow();
               // Reconnection already triggers a full schema refresh
@@ -394,7 +397,7 @@ public class DefaultSession implements CqlSession {
                     if (error != null) {
                       Loggers.warnWithException(
                           LOG,
-                          "[{}] Unexpected error while refreshing schema during intialization, "
+                          "[{}] Unexpected error while refreshing schema during initialization, "
                               + "keeping previous version",
                           logPrefix,
                           error);
