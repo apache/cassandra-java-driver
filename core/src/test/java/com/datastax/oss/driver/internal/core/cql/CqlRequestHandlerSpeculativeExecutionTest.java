@@ -47,7 +47,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
   @Test
   @UseDataProvider("nonIdempotentConfig")
   public void should_not_schedule_speculative_executions_if_not_idempotent(
-      boolean defaultIdempotence, Statement statement) {
+      boolean defaultIdempotence, Statement<?> statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =
         RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
@@ -71,7 +71,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
   @Test
   @UseDataProvider("idempotentConfig")
   public void should_schedule_speculative_executions(
-      boolean defaultIdempotence, Statement statement) throws Exception {
+      boolean defaultIdempotence, Statement<?> statement) throws Exception {
     RequestHandlerTestHarness.Builder harnessBuilder =
         RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
@@ -133,7 +133,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
   @Test
   @UseDataProvider("idempotentConfig")
   public void should_not_start_execution_if_result_complete(
-      boolean defaultIdempotence, Statement statement) throws Exception {
+      boolean defaultIdempotence, Statement<?> statement) throws Exception {
     RequestHandlerTestHarness.Builder harnessBuilder =
         RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
@@ -191,7 +191,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
   @Test
   @UseDataProvider("idempotentConfig")
-  public void should_fail_if_no_nodes(boolean defaultIdempotence, Statement statement) {
+  public void should_fail_if_no_nodes(boolean defaultIdempotence, Statement<?> statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =
         RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     // No configured behaviors => will yield an empty query plan
@@ -218,7 +218,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
   @Test
   @UseDataProvider("idempotentConfig")
   public void should_fail_if_no_more_nodes_and_initial_execution_is_last(
-      boolean defaultIdempotence, Statement statement) throws Exception {
+      boolean defaultIdempotence, Statement<?> statement) throws Exception {
     RequestHandlerTestHarness.Builder harnessBuilder =
         RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
@@ -272,7 +272,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
   @Test
   @UseDataProvider("idempotentConfig")
   public void should_fail_if_no_more_nodes_and_speculative_execution_is_last(
-      boolean defaultIdempotence, Statement statement) throws Exception {
+      boolean defaultIdempotence, Statement<?> statement) throws Exception {
     RequestHandlerTestHarness.Builder harnessBuilder =
         RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
@@ -326,7 +326,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
   @Test
   @UseDataProvider("idempotentConfig")
   public void should_retry_in_speculative_executions(
-      boolean defaultIdempotence, Statement statement) throws Exception {
+      boolean defaultIdempotence, Statement<?> statement) throws Exception {
     RequestHandlerTestHarness.Builder harnessBuilder =
         RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
@@ -375,7 +375,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
   @Test
   @UseDataProvider("idempotentConfig")
   public void should_stop_retrying_other_executions_if_result_complete(
-      boolean defaultIdempotence, Statement statement) throws Exception {
+      boolean defaultIdempotence, Statement<?> statement) throws Exception {
     RequestHandlerTestHarness.Builder harnessBuilder =
         RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);

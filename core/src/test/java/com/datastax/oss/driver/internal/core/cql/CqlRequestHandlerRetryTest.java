@@ -63,7 +63,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
   @Test
   @UseDataProvider("allIdempotenceConfigs")
   public void should_always_try_next_node_if_bootstrapping(
-      boolean defaultIdempotence, Statement statement) {
+      boolean defaultIdempotence, Statement<?> statement) {
     try (RequestHandlerTestHarness harness =
         RequestHandlerTestHarness.builder()
             .withDefaultIdempotence(defaultIdempotence)
@@ -105,7 +105,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
   @Test
   @UseDataProvider("allIdempotenceConfigs")
   public void should_always_rethrow_query_validation_error(
-      boolean defaultIdempotence, Statement statement) {
+      boolean defaultIdempotence, Statement<?> statement) {
     try (RequestHandlerTestHarness harness =
         RequestHandlerTestHarness.builder()
             .withDefaultIdempotence(defaultIdempotence)
@@ -145,7 +145,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
   @Test
   @UseDataProvider("failureAndIdempotent")
   public void should_try_next_node_if_idempotent_and_retry_policy_decides_so(
-      FailureScenario failureScenario, boolean defaultIdempotence, Statement statement) {
+      FailureScenario failureScenario, boolean defaultIdempotence, Statement<?> statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =
         RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     failureScenario.mockRequestError(harnessBuilder, node1);
@@ -196,7 +196,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
   @Test
   @UseDataProvider("failureAndIdempotent")
   public void should_try_same_node_if_idempotent_and_retry_policy_decides_so(
-      FailureScenario failureScenario, boolean defaultIdempotence, Statement statement) {
+      FailureScenario failureScenario, boolean defaultIdempotence, Statement<?> statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =
         RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     failureScenario.mockRequestError(harnessBuilder, node1);
@@ -247,7 +247,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
   @Test
   @UseDataProvider("failureAndIdempotent")
   public void should_ignore_error_if_idempotent_and_retry_policy_decides_so(
-      FailureScenario failureScenario, boolean defaultIdempotence, Statement statement) {
+      FailureScenario failureScenario, boolean defaultIdempotence, Statement<?> statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =
         RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     failureScenario.mockRequestError(harnessBuilder, node1);
@@ -295,7 +295,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
   @Test
   @UseDataProvider("failureAndIdempotent")
   public void should_rethrow_error_if_idempotent_and_retry_policy_decides_so(
-      FailureScenario failureScenario, boolean defaultIdempotence, Statement statement) {
+      FailureScenario failureScenario, boolean defaultIdempotence, Statement<?> statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =
         RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     failureScenario.mockRequestError(harnessBuilder, node1);
@@ -333,7 +333,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
   @Test
   @UseDataProvider("failureAndNotIdempotent")
   public void should_rethrow_error_if_not_idempotent_and_error_unsafe_or_policy_rethrows(
-      FailureScenario failureScenario, boolean defaultIdempotence, Statement statement) {
+      FailureScenario failureScenario, boolean defaultIdempotence, Statement<?> statement) {
 
     // For two of the possible exceptions, the retry policy is called even if the statement is not
     // idempotent
