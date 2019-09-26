@@ -5,7 +5,7 @@
 ### 4.3.0 (in progress)
 
 - [improvement] JAVA-2402: Add setTracing(boolean) to StatementBuilder
-- [bug] JAVA-2466: BatchStatement.newInstance is setting idempotence to false explicitly but should set to null
+- [bug] JAVA-2466: Set idempotence to null in BatchStatement.newInstance
 
 ### 4.2.1
 
