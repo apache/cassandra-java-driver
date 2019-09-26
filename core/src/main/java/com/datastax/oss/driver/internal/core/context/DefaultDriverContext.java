@@ -359,23 +359,22 @@ public class DefaultDriverContext implements InternalDriverContext {
     return new EventBus(getSessionName());
   }
 
-  @SuppressWarnings("unchecked")
   protected Compressor<ByteBuf> buildCompressor() {
     DriverExecutionProfile defaultProfile = getConfig().getDefaultProfile();
-    if (defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_COMPRESSION)) {
-      String name = defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION);
-      if (name.equalsIgnoreCase("lz4")) {
+    String name = defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none");
+    assert name != null : "should use default value";
+    switch (name.toLowerCase()) {
+      case "lz4":
         return new Lz4Compressor(this);
-      } else if (name.equalsIgnoreCase("snappy")) {
+      case "snappy":
         return new SnappyCompressor(this);
-      } else {
+      case "none":
+        return Compressor.none();
+      default:
         throw new IllegalArgumentException(
             String.format(
                 "Unsupported compression algorithm '%s' (from configuration option %s)",
                 name, DefaultDriverOption.PROTOCOL_COMPRESSION.getPath()));
-      }
-    } else {
-      return Compressor.none();
     }
   }
 
