@@ -30,7 +30,6 @@ import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import net.jcip.annotations.ThreadSafe;
@@ -62,12 +61,6 @@ public class SchemaRefresh implements MetadataRefresh {
         oldMetadata.withSchema(this.newKeyspaces, tokenMapEnabled, context), events.build());
   }
 
-  private static boolean shallowEquals(KeyspaceMetadata keyspace1, KeyspaceMetadata keyspace2) {
-    return Objects.equals(keyspace1.getName(), keyspace2.getName())
-        && keyspace1.isDurableWrites() == keyspace2.isDurableWrites()
-        && Objects.equals(keyspace1.getReplication(), keyspace2.getReplication());
-  }
-
   /**
    * Computes the exact set of events to emit when a keyspace has changed.
    *
@@ -83,7 +76,7 @@ public class SchemaRefresh implements MetadataRefresh {
     if (oldKeyspace == null) {
       events.add(KeyspaceChangeEvent.created(newKeyspace));
     } else {
-      if (!shallowEquals(oldKeyspace, newKeyspace)) {
+      if (!oldKeyspace.shallowEquals(newKeyspace)) {
         events.add(KeyspaceChangeEvent.updated(oldKeyspace, newKeyspace));
       }
       computeChildEvents(oldKeyspace, newKeyspace, events);
