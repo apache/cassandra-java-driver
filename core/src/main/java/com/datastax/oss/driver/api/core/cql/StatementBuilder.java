@@ -124,6 +124,7 @@ public abstract class StatementBuilder<
     return self;
   }
 
+  /** @see Statement#setRoutingKey(ByteBuffer...) */
   @NonNull
   public SelfT setRoutingKey(@NonNull ByteBuffer... newRoutingKeyComponents) {
     return setRoutingKey(RoutingKey.compose(newRoutingKeyComponents));
