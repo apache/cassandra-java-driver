@@ -160,4 +160,19 @@ public class DefaultDseKeyspaceMetadata implements DseKeyspaceMetadata {
         functions,
         aggregates);
   }
+
+  @Override
+  public boolean shallowEquals(Object other) {
+    if (other == this) {
+      return true;
+    } else if (other instanceof DseKeyspaceMetadata) {
+      DseKeyspaceMetadata that = (DseKeyspaceMetadata) other;
+      return Objects.equals(this.name, that.getName())
+          && this.durableWrites == that.isDurableWrites()
+          && Objects.equals(this.graphEngine, that.getGraphEngine().orElse(null))
+          && Objects.equals(this.replication, that.getReplication());
+    } else {
+      return false;
+    }
+  }
 }

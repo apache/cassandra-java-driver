@@ -40,13 +40,33 @@ public class KeyspaceGraphMetadataIT {
     session.execute(
         "CREATE KEYSPACE keyspace_metadata_it_graph_engine "
             + "WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1} "
-            + "AND graph_engine = 'Tinker'");
+            + "AND graph_engine = 'Core'");
     Metadata metadata = session.getMetadata();
     assertThat(metadata.getKeyspace("keyspace_metadata_it_graph_engine"))
         .hasValueSatisfying(
             keyspaceMetadata ->
                 assertThat(((DseKeyspaceMetadata) keyspaceMetadata).getGraphEngine())
-                    .hasValue("Tinker"));
+                    .hasValue("Core"));
+  }
+
+  @Test
+  public void should_expose_graph_engine_if_keyspace_altered() {
+    DseSession session = SESSION_RULE.session();
+    session.execute(
+        "CREATE KEYSPACE keyspace_metadata_it_graph_engine_alter "
+            + "WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
+    assertThat(session.getMetadata().getKeyspace("keyspace_metadata_it_graph_engine_alter"))
+        .hasValueSatisfying(
+            keyspaceMetadata ->
+                assertThat(((DseKeyspaceMetadata) keyspaceMetadata).getGraphEngine()).isEmpty());
+
+    session.execute(
+        "ALTER KEYSPACE keyspace_metadata_it_graph_engine_alter WITH graph_engine = 'Core'");
+    assertThat(session.getMetadata().getKeyspace("keyspace_metadata_it_graph_engine_alter"))
+        .hasValueSatisfying(
+            keyspaceMetadata ->
+                assertThat(((DseKeyspaceMetadata) keyspaceMetadata).getGraphEngine())
+                    .hasValue("Core"));
   }
 
   @Test
