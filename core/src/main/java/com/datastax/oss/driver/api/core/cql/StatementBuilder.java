@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
+import com.datastax.oss.driver.internal.core.util.RoutingKey;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -121,6 +122,11 @@ public abstract class StatementBuilder<
   public SelfT setRoutingKey(@Nullable ByteBuffer routingKey) {
     this.routingKey = routingKey;
     return self;
+  }
+
+  @NonNull
+  public SelfT setRoutingKey(@NonNull ByteBuffer... newRoutingKeyComponents) {
+    return setRoutingKey(RoutingKey.compose(newRoutingKeyComponents));
   }
 
   /** @see Statement#setRoutingToken(Token) */

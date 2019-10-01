@@ -16,61 +16,95 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import java.nio.ByteBuffer;
+import java.util.Random;
 import org.junit.Test;
 
 public class StatementBuilderTest {
 
-  private static class NullStatementBuilder
-      extends StatementBuilder<NullStatementBuilder, SimpleStatement> {
+  private static class MockSimpleStatementBuilder
+      extends StatementBuilder<MockSimpleStatementBuilder, SimpleStatement> {
 
-    public NullStatementBuilder() {
+    public MockSimpleStatementBuilder() {
       super();
     }
 
-    public NullStatementBuilder(SimpleStatement template) {
+    public MockSimpleStatementBuilder(SimpleStatement template) {
       super(template);
     }
 
     @Override
     public SimpleStatement build() {
-      return null;
+
+      SimpleStatement rv = mock(SimpleStatement.class);
+      when(rv.isTracing()).thenReturn(this.tracing);
+      when(rv.getRoutingKey()).thenReturn(this.routingKey);
+      return rv;
     }
   }
 
   @Test
   public void should_handle_set_tracing_without_args() {
 
-    NullStatementBuilder builder = new NullStatementBuilder();
-    assertThat(builder.tracing).isFalse();
+    MockSimpleStatementBuilder builder = new MockSimpleStatementBuilder();
+    assertThat(builder.build().isTracing()).isFalse();
     builder.setTracing();
-    assertThat(builder.tracing).isTrue();
+    assertThat(builder.build().isTracing()).isTrue();
   }
 
   @Test
   public void should_handle_set_tracing_with_args() {
 
-    NullStatementBuilder builder = new NullStatementBuilder();
-    assertThat(builder.tracing).isFalse();
+    MockSimpleStatementBuilder builder = new MockSimpleStatementBuilder();
+    assertThat(builder.build().isTracing()).isFalse();
     builder.setTracing(true);
-    assertThat(builder.tracing).isTrue();
+    assertThat(builder.build().isTracing()).isTrue();
     builder.setTracing(false);
-    assertThat(builder.tracing).isFalse();
+    assertThat(builder.build().isTracing()).isFalse();
   }
 
   @Test
-  public void should_override_template() {
+  public void should_override_set_tracing_in_template() {
 
     SimpleStatement template = SimpleStatement.builder("select * from system.peers").build();
-    NullStatementBuilder builder = new NullStatementBuilder(template);
-    assertThat(builder.tracing).isFalse();
+    MockSimpleStatementBuilder builder = new MockSimpleStatementBuilder(template);
+    assertThat(builder.build().isTracing()).isFalse();
     builder.setTracing(true);
-    assertThat(builder.tracing).isTrue();
+    assertThat(builder.build().isTracing()).isTrue();
 
     template = SimpleStatement.builder("select * from system.peers").setTracing().build();
-    builder = new NullStatementBuilder(template);
-    assertThat(builder.tracing).isTrue();
+    builder = new MockSimpleStatementBuilder(template);
+    assertThat(builder.build().isTracing()).isTrue();
     builder.setTracing(false);
-    assertThat(builder.tracing).isFalse();
+    assertThat(builder.build().isTracing()).isFalse();
+  }
+
+  private ByteBuffer randomBuffer(Random random) {
+
+    byte[] arr = new byte[8];
+    random.nextBytes(arr);
+    return ByteBuffer.wrap(arr);
+  }
+
+  @Test
+  public void should_match_set_routing_key_vararg() {
+
+    Random random = new Random();
+    ByteBuffer buff1 = randomBuffer(random);
+    ByteBuffer buff2 = randomBuffer(random);
+
+    Statement<?> expectedStmt =
+        SimpleStatement.builder("select * from system.peers").build().setRoutingKey(buff1, buff2);
+
+    MockSimpleStatementBuilder builder = new MockSimpleStatementBuilder();
+    Statement<?> builderStmt = builder.setRoutingKey(buff1, buff2).build();
+    assertThat(expectedStmt.getRoutingKey()).isEqualTo(builderStmt.getRoutingKey());
+
+    /* Confirm that order matters here */
+    builderStmt = builder.setRoutingKey(buff2, buff1).build();
+    assertThat(expectedStmt.getRoutingKey()).isNotEqualTo(builderStmt.getRoutingKey());
   }
 }
