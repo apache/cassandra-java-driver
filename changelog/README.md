@@ -4,6 +4,7 @@
 
 ### 4.2.1
 
+- [bug] JAVA-2470: Fix Session.OSS_DRIVER_COORDINATES for shaded JAR
 - [bug] JAVA-2454: Handle "empty" CQL type while parsing schema
 - [improvement] JAVA-2455: Improve logging of schema refresh errors
 - [documentation] JAVA-2429: Document expected types on DefaultDriverOption
