@@ -4,6 +4,7 @@
 
 ### 4.3.0 (in progress)
 
+- [bug] JAVA-2470: Fix Session.OSS_DRIVER_COORDINATES for shaded JAR
 - [improvement] JAVA-2452: Allow "none" as a compression option
 - [improvement] JAVA-2419: Allow registration of user codecs at runtime
 - [documentation] JAVA-2384: Add quick overview section to each manual page
