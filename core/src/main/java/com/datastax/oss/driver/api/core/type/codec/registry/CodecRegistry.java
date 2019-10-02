@@ -40,13 +40,28 @@ import java.util.List;
  *
  * <p>They may also provide additional mappings to other Java types (for use with methods such as
  * {@link Row#get(int, Class)}, {@link TupleValue#set(int, Object, Class)}, etc.)
+ *
+ * <p>The default implementation returned by the driver also implements {@link
+ * MutableCodecRegistry}, and we strongly recommend that custom implementations do as well. The two
+ * interfaces are only separate for backward compatibility, because mutability was introduced in
+ * 4.3.0.
  */
 public interface CodecRegistry {
   /**
    * An immutable instance, that only handles built-in driver types (that is, primitive types, and
    * collections, tuples, and user defined types thereof).
+   *
+   * <p>Note that, due to implementation details, this instance is a {@link MutableCodecRegistry},
+   * but any attempt to {@linkplain MutableCodecRegistry#register(TypeCodec) register new codecs}
+   * will throw {@link UnsupportedOperationException}.
    */
-  CodecRegistry DEFAULT = new DefaultCodecRegistry("default");
+  CodecRegistry DEFAULT =
+      new DefaultCodecRegistry("default") {
+        @Override
+        public void register(TypeCodec<?> newCodec) {
+          throw new UnsupportedOperationException("CodecRegistry.DEFAULT is immutable");
+        }
+      };
 
   /**
    * Returns a codec to handle the conversion between the given types.

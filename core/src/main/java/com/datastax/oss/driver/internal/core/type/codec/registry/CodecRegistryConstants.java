@@ -28,7 +28,7 @@ public class CodecRegistryConstants {
    *
    * <p>This is exposed in case you want to call {@link
    * DefaultCodecRegistry#DefaultCodecRegistry(String, int, BiFunction, int, BiConsumer,
-   * TypeCodec[], TypeCodec[])} but only customize the caching options.
+   * TypeCodec[])} but only customize the caching options.
    */
   public static final TypeCodec<?>[] PRIMITIVE_CODECS =
       new TypeCodec<?>[] {

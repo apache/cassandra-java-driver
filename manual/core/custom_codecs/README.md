@@ -7,6 +7,13 @@ Define custom Java to CQL mappings.
 * implement the [TypeCodec] interface.
 * registering a codec:
   * at init time: [CqlSession.builder().addTypeCodecs()][SessionBuilder.addTypeCodecs]
+  * at runtime:
+  
+    ```java
+    MutableCodecRegistry registry =
+        (MutableCodecRegistry) session.getContext().getCodecRegistry();    
+    registry.register(myCodec);
+    ```
 * using a codec:
   * if already registered: `row.get("columnName", MyCustomType.class)`
   * otherwise: `row.get("columnName", myCodec)`
@@ -98,6 +105,18 @@ Once you have your codec, register it when building your session:
 CqlSession session = CqlSession.builder()
     .addTypeCodecs(new CqlIntToStringCodec())
     .build();
+```
+
+You may also add codecs to an existing session at runtime:
+
+```java
+// The cast is required for backward compatibility reasons (registry mutability was introduced in
+// 4.3.0). It is safe as long as you didn't hack the driver internals to plug a custom registry
+// implementation.
+MutableCodecRegistry registry =
+    (MutableCodecRegistry) session.getContext().getCodecRegistry();
+
+registry.register(new CqlIntToStringCodec());
 ```
 
 You can now use the new mapping in your code:
