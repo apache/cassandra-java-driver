@@ -2,9 +2,12 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.2.1
+### 4.2.2 (in progress)
 
 - [bug] JAVA-2470: Fix Session.OSS_DRIVER_COORDINATES for shaded JAR
+
+### 4.2.1
+
 - [bug] JAVA-2454: Handle "empty" CQL type while parsing schema
 - [improvement] JAVA-2455: Improve logging of schema refresh errors
 - [documentation] JAVA-2429: Document expected types on DefaultDriverOption
