@@ -20,7 +20,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.nio.ByteBuffer;
-import java.util.Random;
 import org.junit.Test;
 
 public class StatementBuilderTest {
@@ -82,19 +81,11 @@ public class StatementBuilderTest {
     assertThat(builder.build().isTracing()).isFalse();
   }
 
-  private ByteBuffer randomBuffer(Random random) {
-
-    byte[] arr = new byte[8];
-    random.nextBytes(arr);
-    return ByteBuffer.wrap(arr);
-  }
-
   @Test
   public void should_match_set_routing_key_vararg() {
 
-    Random random = new Random();
-    ByteBuffer buff1 = randomBuffer(random);
-    ByteBuffer buff2 = randomBuffer(random);
+    ByteBuffer buff1 = ByteBuffer.wrap("the quick brown fox".getBytes());
+    ByteBuffer buff2 = ByteBuffer.wrap("jumped over the lazy dog".getBytes());
 
     Statement<?> expectedStmt =
         SimpleStatement.builder("select * from system.peers").build().setRoutingKey(buff1, buff2);
