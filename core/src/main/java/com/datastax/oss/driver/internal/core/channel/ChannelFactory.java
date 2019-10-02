@@ -58,7 +58,7 @@ public class ChannelFactory {
   protected final InternalDriverContext context;
 
   /** either set from the configuration, or null and will be negotiated */
-  @VisibleForTesting ProtocolVersion protocolVersion;
+  @VisibleForTesting volatile ProtocolVersion protocolVersion;
 
   @VisibleForTesting volatile String clusterName;
 
