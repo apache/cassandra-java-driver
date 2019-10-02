@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import java.nio.ByteBuffer;
 import org.junit.Test;
 
@@ -84,8 +85,8 @@ public class StatementBuilderTest {
   @Test
   public void should_match_set_routing_key_vararg() {
 
-    ByteBuffer buff1 = ByteBuffer.wrap("the quick brown fox".getBytes());
-    ByteBuffer buff2 = ByteBuffer.wrap("jumped over the lazy dog".getBytes());
+    ByteBuffer buff1 = ByteBuffer.wrap("the quick brown fox".getBytes(Charsets.UTF_8));
+    ByteBuffer buff2 = ByteBuffer.wrap("jumped over the lazy dog".getBytes(Charsets.UTF_8));
 
     Statement<?> expectedStmt =
         SimpleStatement.builder("select * from system.peers").build().setRoutingKey(buff1, buff2);
