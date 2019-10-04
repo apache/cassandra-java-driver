@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.os;
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 
