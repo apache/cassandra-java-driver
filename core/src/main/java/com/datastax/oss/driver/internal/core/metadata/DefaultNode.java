@@ -180,7 +180,7 @@ public class DefaultNode implements Node {
 
   @Override
   public String toString() {
-    return String.format("%s(%s,%s)", super.toString(), hostId, endPoint);
+    return String.join("@", getHostId().toString().trim(), getEndPoint().toString().trim());
   }
 
   /** Note: deliberately not exposed by the public interface. */
