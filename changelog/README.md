@@ -4,6 +4,7 @@
 
 ### 4.3.0 (in progress)
 
+- [improvement] JAVA-2444: Add method setRoutingKey(ByteBuffer...) to StatementBuilder
 - [improvement] JAVA-2398: Improve support for optional dependencies in OSGi
 - [bug] JAVA-2470: Fix Session.OSS_DRIVER_COORDINATES for shaded JAR
 - [improvement] JAVA-2452: Allow "none" as a compression option
