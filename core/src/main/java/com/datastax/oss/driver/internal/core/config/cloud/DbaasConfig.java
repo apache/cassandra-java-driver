@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.config.cloud;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.nio.file.Path;
+import java.net.URL;
 import java.util.List;
 
 /**
@@ -37,7 +37,7 @@ public class DbaasConfig {
   private String localDC;
   private String keyStorePassword;
   private String trustStorePassword;
-  private Path secureConnectBundlePath;
+  private URL secureConnectBundleUrl;
 
   public void setUsername(String username) {
     this.username = username;
@@ -119,11 +119,11 @@ public class DbaasConfig {
     this.hostIds = hostIds;
   }
 
-  public Path getSecureConnectBundlePath() {
-    return secureConnectBundlePath;
+  public URL getSecureConnectBundleUrl() {
+    return secureConnectBundleUrl;
   }
 
-  public void setSecureConnectBundlePath(Path secureConnectBundlePath) {
-    this.secureConnectBundlePath = secureConnectBundlePath;
+  public void setSecureConnectBundleUrl(URL secureConnectBundleUrl) {
+    this.secureConnectBundleUrl = secureConnectBundleUrl;
   }
 }

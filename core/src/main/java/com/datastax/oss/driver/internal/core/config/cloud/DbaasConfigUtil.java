@@ -26,14 +26,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -53,14 +51,13 @@ public class DbaasConfigUtil {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   @NonNull
-  public static DbaasConfig getConfig(@NonNull String secureConnectBundlePath) {
+  public static DbaasConfig getConfig(@NonNull URL secureConnectBundleUrl) {
     try {
-      DbaasConfig config = getBaseConfig(Paths.get(secureConnectBundlePath));
+      DbaasConfig config = getBaseConfig(secureConnectBundleUrl);
       return getProxyMetadata(config);
     } catch (Exception exception) {
       throw new IllegalStateException(
-          "Unable to construct cloud configuration from path " + secureConnectBundlePath,
-          exception);
+          "Unable to construct cloud configuration from url " + secureConnectBundleUrl, exception);
     }
   }
 
@@ -69,7 +66,7 @@ public class DbaasConfigUtil {
     SSLContext context = SSLContext.getInstance("SSL");
     TrustManagerFactory tmf;
     try (InputStream trustStoreStream =
-        openZippedFileInputStream(config.getSecureConnectBundlePath(), CONFIG_TRUSTSTORE_FILE)) {
+        openZippedFileInputStream(config.getSecureConnectBundleUrl(), CONFIG_TRUSTSTORE_FILE)) {
       KeyStore ts = KeyStore.getInstance("JKS");
       char[] trustPassword = config.getTrustStorePassword().toCharArray();
       ts.load(trustStoreStream, trustPassword);
@@ -79,7 +76,7 @@ public class DbaasConfigUtil {
     // initialize keystore.
     KeyManagerFactory kmf;
     try (InputStream keyStoreStream =
-        openZippedFileInputStream(config.getSecureConnectBundlePath(), CONFIG_KEYSTORE_FILE)) {
+        openZippedFileInputStream(config.getSecureConnectBundleUrl(), CONFIG_KEYSTORE_FILE)) {
       KeyStore ks = KeyStore.getInstance("JKS");
       char[] keyStorePassword = config.getKeyStorePassword().toCharArray();
       ks.load(keyStoreStream, keyStorePassword);
@@ -92,22 +89,29 @@ public class DbaasConfigUtil {
 
   @VisibleForTesting
   @NonNull
-  static DbaasConfig getBaseConfig(@NonNull Path secureConnectBundlePath) throws Exception {
+  static DbaasConfig getBaseConfig(@NonNull URL secureConnectBundleUrl) throws Exception {
     try (InputStream jsonConfigInputStream =
-        openZippedFileInputStream(secureConnectBundlePath, CONFIG_FILE)) {
+        openZippedFileInputStream(secureConnectBundleUrl, CONFIG_FILE)) {
       ObjectMapper mapper = new ObjectMapper();
       DbaasConfig config = mapper.readValue(jsonConfigInputStream, DbaasConfig.class);
-      config.setSecureConnectBundlePath(secureConnectBundlePath);
+      config.setSecureConnectBundleUrl(secureConnectBundleUrl);
       return config;
     }
   }
 
   @NonNull
   private static InputStream openZippedFileInputStream(
-      @NonNull Path zipFile, @NonNull String innerFileName) throws IOException {
-    ZipFile zip = new ZipFile(zipFile.toFile());
-    ZipEntry configEntry = zip.getEntry(innerFileName);
-    return zip.getInputStream(configEntry);
+      @NonNull URL zipFileUrl, @NonNull String innerFileName) throws IOException {
+    ZipInputStream zipInputStream = new ZipInputStream(zipFileUrl.openStream());
+    ZipEntry entry;
+    while ((entry = zipInputStream.getNextEntry()) != null) {
+      if (entry.getName().equals(innerFileName)) {
+        return zipInputStream;
+      }
+    }
+    throw new IllegalArgumentException(
+        String.format(
+            "Unable to find innerFileName: %s in the zipFileUrl: %s", innerFileName, zipFileUrl));
   }
 
   @NonNull

@@ -31,6 +31,9 @@ import org.slf4j.LoggerFactory;
 
 public class SniProxyServer {
   private static final Logger logger = LoggerFactory.getLogger(SniProxyServer.class);
+  static final String CERTS_BUNDLE_SUFFIX = "/certs/bundles/creds-v1.zip";
+  private static final String CERTS_BUNDLE_SUFFIX_RELATIVE =
+      "/certs/bundles/../bundles/creds-v1.zip";
   private final String proxyPath;
   private boolean isRunning = false;
 
@@ -60,7 +63,11 @@ public class SniProxyServer {
   }
 
   public String getSecureBundlePath() {
-    return proxyPath + "/certs/bundles/creds-v1.zip";
+    return proxyPath + CERTS_BUNDLE_SUFFIX;
+  }
+
+  public String getSecureBundleRelativePath() {
+    return proxyPath + CERTS_BUNDLE_SUFFIX_RELATIVE;
   }
 
   public String getSecureBundleNoCredsPath() {

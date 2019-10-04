@@ -2,6 +2,9 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### DSOD (in progress)
+- [new feature] JAVA-2478: Allow to provide secureBundle via URL
+
 ### 4.3.0 (in progress)
 
 - [improvement] JAVA-2407: Improve handling of logback configuration files in IDEs

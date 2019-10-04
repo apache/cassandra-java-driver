@@ -48,6 +48,10 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -77,7 +81,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   protected DriverConfigLoader configLoader;
   protected Set<EndPoint> programmaticContactPoints = new HashSet<>();
   protected CqlIdentifier keyspace;
-  protected String cloudConfigPath;
+  protected URL cloudConfigUrl;
 
   protected ProgrammaticArguments.Builder programmaticArgumentsBuilder =
       ProgrammaticArguments.builder();
@@ -388,11 +392,26 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * bundle zip file. In the future this will be extended to work with CaaS service provider
    * endpoints.
    *
-   * @param cloudConfigPath Absolute path to the secure connect bundle zip file.
+   * @param cloudConfigPath Path to the secure connect bundle zip file.
    */
   @NonNull
-  public SelfT withCloudSecureConnectBundle(@NonNull String cloudConfigPath) {
-    this.cloudConfigPath = cloudConfigPath;
+  public SelfT withCloudSecureConnectBundle(@NonNull Path cloudConfigPath) {
+    try {
+      this.cloudConfigUrl = cloudConfigPath.toAbsolutePath().normalize().toUri().toURL();
+    } catch (MalformedURLException e) {
+      throw new IllegalArgumentException("Incorrect format of cloudConfigUrl.", e);
+    }
+    return self;
+  }
+
+  /**
+   * Creates a SessionBuilder pre-configured for a specific Cloud endpoint or configuration file.
+   *
+   * @param cloudConfigUrl URL from which the secure connect bundle zip could be retrieved.
+   */
+  @NonNull
+  public SelfT withCloudSecureConnectBundle(@NonNull URL cloudConfigUrl) {
+    this.cloudConfigUrl = cloudConfigUrl;
     return self;
   }
 
@@ -428,12 +447,16 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       DriverConfigLoader configLoader = buildIfNull(this.configLoader, this::defaultConfigLoader);
 
       DriverExecutionProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
-      if (cloudConfigPath == null) {
-        cloudConfigPath =
+      if (cloudConfigUrl == null) {
+
+        String configUrlString =
             defaultConfig.getString(DefaultDriverOption.CLOUD_SECURE_CONNECT_BUNDLE, null);
+        if (configUrlString != null) {
+          cloudConfigUrl = getURL(configUrlString);
+        }
       }
-      if (cloudConfigPath != null) {
-        DbaasConfig dbaasConfig = DbaasConfigUtil.getConfig(cloudConfigPath);
+      if (cloudConfigUrl != null) {
+        DbaasConfig dbaasConfig = DbaasConfigUtil.getConfig(cloudConfigUrl);
         for (String hostID : dbaasConfig.getHostIds()) {
           programmaticContactPoints.add(
               new SniEndPoint(
@@ -472,6 +495,23 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       // We construct the session synchronously (until the init() call), but async clients expect a
       // failed future if anything goes wrong. So wrap any error from that synchronous part.
       return CompletableFutures.failedFuture(t);
+    }
+  }
+
+  /**
+   * Returns URL based on the configUrl setting. If the configUrl has no protocol provided, the
+   * method will fallback to file:// protocol and return URL that has file protocol specified.
+   *
+   * @param configUrl url to config secure bundle
+   * @return URL with file protocol if there was not explicit protocol provided in the configUrl
+   *     setting
+   */
+  private URL getURL(String configUrl) throws MalformedURLException {
+
+    try {
+      return new URL(configUrl);
+    } catch (MalformedURLException e) {
+      return Paths.get(configUrl).toAbsolutePath().normalize().toUri().toURL();
     }
   }
 
