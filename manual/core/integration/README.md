@@ -1,6 +1,11 @@
 ## Integration
 
-This page contains various information on how to integrate the driver in your application.
+### Quick overview
+
+* sample project structures for Maven and Gradle.
+* explanations about driver dependencies and when they can be manually excluded.
+
+-----
 
 ### Minimal project structure
 

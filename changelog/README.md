@@ -2,9 +2,28 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.2.1 (in progress)
+### 4.3.0 (in progress)
 
 - [improvement] JAVA-2407: Improve handling of logback configuration files in IDEs
+- [improvement] JAVA-2398: Improve support for optional dependencies in OSGi
+- [bug] JAVA-2470: Fix Session.OSS_DRIVER_COORDINATES for shaded JAR
+- [improvement] JAVA-2452: Allow "none" as a compression option
+- [improvement] JAVA-2419: Allow registration of user codecs at runtime
+- [documentation] JAVA-2384: Add quick overview section to each manual page
+- [documentation] JAVA-2412: Cover DDL query debouncing in FAQ and upgrade guide
+- [documentation] JAVA-2416: Update paging section in the manual
+- [improvement] JAVA-2402: Add setTracing(boolean) to StatementBuilder
+- [bug] JAVA-2466: Set idempotence to null in BatchStatement.newInstance
+
+### 4.2.1
+
+- [bug] JAVA-2454: Handle "empty" CQL type while parsing schema
+- [improvement] JAVA-2455: Improve logging of schema refresh errors
+- [documentation] JAVA-2429: Document expected types on DefaultDriverOption
+- [documentation] JAVA-2426: Fix month pattern in CqlDuration documentation
+- [bug] JAVA-2451: Make zero a valid estimated size for PagingIterableSpliterator
+- [bug] JAVA-2443: Compute prepared statement PK indices for protocol v3
+- [bug] JAVA-2430: Use variable metadata to infer the routing keyspace on bound statements
 
 ### 4.2.0
 

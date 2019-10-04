@@ -115,7 +115,7 @@ public final class CqlDuration implements TemporalAmount {
    *   <li>multiple digits followed by a time unit like: 12h30m where the time unit can be:
    *       <ul>
    *         <li>{@code y}: years
-   *         <li>{@code m}: months
+   *         <li>{@code mo}: months
    *         <li>{@code w}: weeks
    *         <li>{@code d}: days
    *         <li>{@code h}: hours

@@ -23,6 +23,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /** A keyspace in the schema metadata. */
@@ -244,5 +245,18 @@ public interface KeyspaceMetadata extends Describable {
     }
 
     return builder.build();
+  }
+
+  default boolean shallowEquals(Object other) {
+    if (other == this) {
+      return true;
+    } else if (other instanceof KeyspaceMetadata) {
+      KeyspaceMetadata that = (KeyspaceMetadata) other;
+      return Objects.equals(this.getName(), that.getName())
+          && this.isDurableWrites() == that.isDurableWrites()
+          && Objects.equals(this.getReplication(), that.getReplication());
+    } else {
+      return false;
+    }
   }
 }

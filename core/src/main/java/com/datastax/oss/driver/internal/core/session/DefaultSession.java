@@ -387,7 +387,19 @@ public class DefaultSession implements CqlSession {
           }
         }
         if (needSchemaRefresh) {
-          metadataManager.refreshSchema(null, false, true);
+          metadataManager
+              .refreshSchema(null, false, true)
+              .whenComplete(
+                  (metadata, error) -> {
+                    if (error != null) {
+                      Loggers.warnWithException(
+                          LOG,
+                          "[{}] Unexpected error while refreshing schema during intialization, "
+                              + "keeping previous version",
+                          logPrefix,
+                          error);
+                    }
+                  });
         }
         metadataManager
             .firstSchemaRefreshFuture()

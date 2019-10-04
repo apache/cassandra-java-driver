@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.detach;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /** @see Detachable */
@@ -39,6 +40,12 @@ public interface AttachmentPoint {
   @NonNull
   ProtocolVersion getProtocolVersion();
 
+  /**
+   * Note that the default registry implementation returned by the driver also implements {@link
+   * MutableCodecRegistry}, which allows you to register new codecs at runtime. You can safely cast
+   * the result of this method (as long as you didn't extend the driver context to plug a custom
+   * registry implementation).
+   */
   @NonNull
   CodecRegistry getCodecRegistry();
 }

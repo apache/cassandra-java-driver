@@ -1,5 +1,15 @@
 ## Compression
 
+### Quick overview
+
+Compress request and response bodies to save bandwidth.
+
+* `advanced.protocol.compression` in the configuration.
+* disabled by default. Also available: LZ4, Snappy.
+* your application **must** re-declare an explicit dependency to the compression library. 
+
+-----
+
 Cassandra's binary protocol supports optional compression of requests and responses. This reduces
 network traffic at the cost of a slight CPU overhead, therefore it will likely be beneficial when
 you have larger payloads, such as:

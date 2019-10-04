@@ -1,5 +1,12 @@
 ## Detachable types
 
+### Quick overview
+
+Advanced topic, only needed if you use Java serialization with driver rows or data types, or create
+tuple or UDT types manually.
+
+-----
+
 Some driver components need to keep an internal reference to their originating [Session]. Under
 specific circumstances, they can lose that reference, and you might need to reattach them.
 

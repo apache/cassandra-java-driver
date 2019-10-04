@@ -1,5 +1,16 @@
 ## Load balancing
 
+### Quick overview
+
+Which nodes the driver talks to, and in which order they are tried.
+
+* `basic.load-balancing-policy` in the configuration.
+* defaults to `DefaultLoadBalancingPolicy` (opinionated best practices). No out-of-the-box
+  alternatives, but you can write your own.
+* can have per-profile policies. 
+
+-----
+
 A Cassandra cluster is typically composed of multiple nodes; the *load balancing policy* (sometimes
 abbreviated LBP) is a central component that determines:
 

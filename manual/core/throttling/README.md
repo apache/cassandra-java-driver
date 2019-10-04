@@ -1,5 +1,16 @@
 ## Request throttling
 
+### Quick overview
+
+Limit session throughput. 
+
+* `advanced.throttler` in the configuration; defaults to pass-through (no throttling), also
+  available: concurrency-based (max simultaneous requests), rate-based (max requests per time unit),
+  or write your own.
+* metrics: `throttling.delay`, `throttling.queue-size`, `throttling.errors`.
+
+-----
+
 Throttling allows you to limit how many requests a session can execute concurrently. This is
 useful if you have multiple applications connecting to the same Cassandra cluster, and want to
 enforce some kind of SLA to ensure fair resource allocation.
@@ -47,9 +58,7 @@ This is a no-op implementation: requests are simply allowed to proceed all the t
 
 Note that you will still hit a limit if all your connections run out of stream ids. In that case,
 requests will fail with an [AllNodesFailedException], with the `getErrors()` method returning a
-[BusyConnectionException] for each node.
-
-<!-- TODO link to the "pooling" section (when that gets added) -->
+[BusyConnectionException] for each node. See the [connection pooling](../pooling/) page.
 
 #### Concurrency-based
 
@@ -76,9 +85,7 @@ function of the number of connected nodes and the `connection.pool.*.size` and
 `connection.max-requests-per-connection` configuration options. Keep in mind that aggressive
 speculative executions and timeout options can inflate stream id consumption, so keep a safety
 margin. One good way to get this right is to track the `pool.available-streams` [metric](../metrics)
-on every node, and make sure it never reaches 0.
-
-<!-- TODO link to the "pooling" section (when that gets added) -->
+on every node, and make sure it never reaches 0. See the [connection pooling](../pooling/) page.
 
 #### Rate-based
 

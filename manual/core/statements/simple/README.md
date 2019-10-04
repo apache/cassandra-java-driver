@@ -1,5 +1,17 @@
 ## Simple statements
 
+### Quick overview
+
+For one-off executions of a raw query string.
+
+* create with [SimpleStatement.newInstance()] or [SimpleStatement.builder()].
+* values: `?` or `:name`, fill with `setPositionalValues()` or `setNamedValues()` respectively.
+  Driver has to guess target CQL types, this can lead to ambiguities.
+* built-in implementation is **immutable**. Setters always return a new object, don't ignore the
+  result.
+
+-----
+
 Use [SimpleStatement] for queries that will be executed only once (or just a few times):
 
 ```java
@@ -171,3 +183,5 @@ Or you could also use [prepared statements](../prepared/), which don't have this
 parameter types are known in advance. 
 
 [SimpleStatement]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/SimpleStatement.html
+[SimpleStatement.newInstance()]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/SimpleStatement.html#newInstance-java.lang.String-
+[SimpleStatement.builder()]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/SimpleStatement.html#builder-java.lang.String-

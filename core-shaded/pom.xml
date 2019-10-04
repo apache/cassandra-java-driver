@@ -22,7 +22,7 @@
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.2.1-SNAPSHOT</version>
+    <version>4.3.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>java-driver-core-shaded</artifactId>
@@ -239,17 +239,31 @@
                 (so reflection-based loading of policies works)
                 -->
                 <DynamicImport-Package>*</DynamicImport-Package>
-                <!--
-                Don't import the packages below because either:
-                1) they were shaded (except Guava which resides in a separate bundle); or
-                2) they aren't OSGi bundles, and the driver bundle can live without them; or
-                3) they are imported by shaded classes, but not used by the driver bundle.
-                -->
                 <Import-Package>
+                  <!--
+                  1) Don't import packages shaded in the OSS driver, such as Netty (this excludes
+                  Guava, which resides in a separate bundle);
+                  -->
                   !com.datastax.oss.driver.shaded.netty.*,
-                  !jnr.*,
+                  <!--
+                  2) Don't include the packages below because they contain annotations only and are
+                  not required at runtime.
+                  -->
                   !net.jcip.annotations.*,
                   !edu.umd.cs.findbugs.annotations.*,
+                  <!--
+                  3) Use resolution:=optional whenever possible in order to make it possible to use
+                  the OSS driver without such dependencies in an OSGi environment, as long as the
+                  application does not attempt to access their packages.
+                  Note: dependencies marked as optional are by default included with optional
+                  resolution in the manifest; we only need to manually set the resolution to
+                  optional for dependencies declared as non-optional in the pom files.
+                  -->
+                  jnr.*;resolution:=optional,
+                  <!--
+                  4) Don't import packages imported by shaded classes, if they are not used by the
+                  driver bundle.
+                  -->
                   !com.google.protobuf.*,
                   !com.jcraft.jzlib.*,
                   !com.ning.compress.*,

@@ -1,5 +1,14 @@
 ## Per-query keyspace
 
+### Quick overview
+
+Specify the keyspace separately instead of hardcoding it in the query string.
+
+* Cassandra 4+ / DSE 6+.
+* only works with simple statements.
+
+-----
+
 Sometimes it is convenient to send the keyspace separately from the query string, and without
 switching the whole session to that keyspace either. For example, you might have a multi-tenant
 setup where identical requests are executed against different keyspaces.

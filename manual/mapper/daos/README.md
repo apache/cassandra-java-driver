@@ -1,5 +1,17 @@
 ## DAOs
 
+### Quick overview
+
+Interface annotated with [@Dao].
+
+* interface-level annotations:
+  * [@DefaultNullSavingStrategy]
+  * [@HierarchyScanStrategy]
+* method-level annotations: query methods (see child pages).
+* instantiated from a [@DaoFactory] method on the mapper.
+
+-----
+
 A DAO is an interface that defines a set of query methods. In general, those queries will relate to
 the same [entity](../entities/) (although that is not a requirement).
 
@@ -136,6 +148,7 @@ In this case, any annotations declared in `Dao1` would be chosen over `Dao2`.
 To control how the hierarchy is scanned, annotate interfaces with [@HierarchyScanStrategy].
 
 [@Dao]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/mapper/annotations/Dao.html
+[@DaoFactory]:   https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/mapper/annotations/DaoFactory.html
 [@DefaultNullSavingStrategy]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/mapper/annotations/DefaultNullSavingStrategy.html
 [@HierarchyScanStrategy]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/mapper/annotations/HierarchyScanStrategy.html
 [Entity Inheritance]: ../entities/#inheritance

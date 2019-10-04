@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.2.1-SNAPSHOT</version>
+    <version>4.3.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>java-driver-core</artifactId>
@@ -180,14 +180,22 @@
                 (so reflection-based loading of policies works)
                 -->
                 <DynamicImport-Package>*</DynamicImport-Package>
-                <!--
-                Don't include the packages below because they aren't OSGi bundles,
-                and the driver can live without them.
-                -->
                 <Import-Package>
+                  <!--
+                  1) Don't include the packages below because they contain annotations only and are
+                  not required at runtime.
+                  -->
                   !net.jcip.annotations.*,
                   !edu.umd.cs.findbugs.annotations.*,
-                  !jnr.*,
+                  <!--
+                  2) Use resolution:=optional for optional dependencies in order to make it possible
+                  to use the OSS driver without such dependencies in an OSGi environment, as long as
+                  the application does not attempt to access their packages.
+                  Note: dependencies marked as optional are by default included with optional
+                  resolution in the manifest; we only need to manually set the resolution to
+                  optional for dependencies declared as non-optional in the pom files.
+                  -->
+                  jnr.*;resolution:=optional,
                   *
                 </Import-Package>
                 <Export-Package>

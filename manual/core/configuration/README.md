@@ -1,13 +1,19 @@
 ## Configuration
 
+### Quick overview
+
 The driver's configuration is composed of options, organized in a hierarchical manner. Optionally,
 it can define *profiles* that customize a set of options for a particular kind of request.
 
-The default implementation is based on the Typesafe Config framework. It can be completely
-overridden if needed.
+* the default implementation is based on the Typesafe Config framework:
+  * the driver JAR comes with a [reference.conf] file that defines the defaults.
+  * you can add an `application.conf` file in the classpath (or an absolute path, or an URL). It
+    only needs to contain the options that you override.
+  * hot reloading is supported out of the box.
+* the config mechanism can be completely overridden by implementing a set of driver interfaces
+  ([DriverConfig], [DriverExecutionProfile] and [DriverConfigLoader])
 
-For a complete list of built-in options, see the [reference configuration][reference.conf].
-
+-----
 
 ### Concepts
 
