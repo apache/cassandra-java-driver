@@ -4,6 +4,7 @@
 
 ### 4.2.2 (in progress)
 
+- [bug] JAVA-2475: Fix message size when query string contains Unicode surrogates
 - [bug] JAVA-2470: Fix Session.OSS_DRIVER_COORDINATES for shaded JAR
 
 ### 4.2.1
