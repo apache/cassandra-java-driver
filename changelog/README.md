@@ -4,6 +4,7 @@
 
 ### 4.3.0 (in progress)
 
+- [improvement] JAVA-2471: Consider DSE version when parsing the schema
 - [improvement] JAVA-2444: Add method setRoutingKey(ByteBuffer...) to StatementBuilder
 - [improvement] JAVA-2398: Improve support for optional dependencies in OSGi
 - [improvement] JAVA-2452: Allow "none" as a compression option

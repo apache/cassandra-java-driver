@@ -48,6 +48,8 @@ public class Version implements Comparable<Version> {
   @NonNull public static final Version V3_0_0 = Objects.requireNonNull(parse("3.0.0"));
   @NonNull public static final Version V4_0_0 = Objects.requireNonNull(parse("4.0.0"));
 
+  @NonNull public static final Version V6_7_0 = Objects.requireNonNull(parse("6.7.0"));
+
   private final int major;
   private final int minor;
   private final int patch;

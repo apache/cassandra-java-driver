@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
@@ -347,18 +348,23 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
       listenAddress = new InetSocketAddress(listenInetAddress, listenPort);
     }
 
-    return DefaultNodeInfo.builder()
-        .withEndPoint(endPoint)
-        .withBroadcastRpcAddress(broadcastRpcAddress)
-        .withBroadcastAddress(broadcastAddress)
-        .withListenAddress(listenAddress)
-        .withDatacenter(row.getString("data_center"))
-        .withRack(row.getString("rack"))
-        .withCassandraVersion(row.getString("release_version"))
-        .withTokens(row.getSetOfString("tokens"))
-        .withPartitioner(row.getString("partitioner"))
-        .withHostId(Objects.requireNonNull(row.getUuid("host_id")))
-        .withSchemaVersion(row.getUuid("schema_version"));
+    DefaultNodeInfo.Builder rv =
+        DefaultNodeInfo.builder()
+            .withEndPoint(endPoint)
+            .withBroadcastRpcAddress(broadcastRpcAddress)
+            .withBroadcastAddress(broadcastAddress)
+            .withListenAddress(listenAddress)
+            .withDatacenter(row.getString("data_center"))
+            .withRack(row.getString("rack"))
+            .withCassandraVersion(row.getString("release_version"))
+            .withTokens(row.getSetOfString("tokens"))
+            .withPartitioner(row.getString("partitioner"))
+            .withHostId(Objects.requireNonNull(row.getUuid("host_id")))
+            .withSchemaVersion(row.getUuid("schema_version"));
+
+    return row.contains("dse_version")
+        ? rv.withExtra(NodeProperties.DSE_VERSION, Version.parse(row.getString("dse_version")))
+        : rv;
   }
 
   // Called when a new node is being added; the peers table is keyed by broadcast_address,
