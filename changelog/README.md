@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.2.2 (in progress)
+### 4.2.2
 
 - [bug] JAVA-2475: Fix message size when query string contains Unicode surrogates
 - [bug] JAVA-2470: Fix Session.OSS_DRIVER_COORDINATES for shaded JAR
