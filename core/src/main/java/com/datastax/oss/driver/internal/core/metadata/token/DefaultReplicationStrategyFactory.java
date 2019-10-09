@@ -41,6 +41,8 @@ public class DefaultReplicationStrategyFactory implements ReplicationStrategyFac
         return new SimpleReplicationStrategy(replicationConfig);
       case "org.apache.cassandra.locator.NetworkTopologyStrategy":
         return new NetworkTopologyReplicationStrategy(replicationConfig, logPrefix);
+      case "org.apache.cassandra.locator.EverywhereStrategy":
+        return new EverywhereReplicationStrategy();
       default:
         throw new IllegalArgumentException("Unsupported replication strategy: " + strategyClass);
     }
