@@ -48,6 +48,11 @@
     <native-protocol.version>1.4.8</native-protocol.version>
     <netty.version>4.1.39.Final</netty.version>
     <slf4j.version>1.7.26</slf4j.version>
+    <esri.version>1.2.1</esri.version>
+    <tinkerpop.version>3.3.3</tinkerpop.version>
+    <reactive-streams.version>1.0.2</reactive-streams.version>
+    <jackson.version>2.10.0</jackson.version>
+    <jackson-databind.version>2.10.0</jackson-databind.version>
     <!-- optional dependencies -->
     <snappy.version>1.1.7.3</snappy.version>
     <lz4.version>1.6.0</lz4.version>
@@ -63,8 +68,11 @@
     <hk2.version>2.5.0</hk2.version>
     <jax-rs.version>2.0.1</jax-rs.version>
     <jsr353-ri.version>1.1.4</jsr353-ri.version>
-    <jackson.version>2.10.0</jackson.version>
-    <jackson-databind.version>2.10.0</jackson-databind.version>
+    <rxjava.version>2.2.2</rxjava.version>
+    <json.version>20180130</json.version> <!-- esri dependency (used only in OSGi integration tests) -->
+    <legacy-jackson.version>1.9.12</legacy-jackson.version> <!-- esri dependency (used only in OSGi integration tests) -->
+    <awaitility.version>3.1.6</awaitility.version>
+    <apacheds.version>2.0.0-M19</apacheds.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -171,6 +179,31 @@
         <version>${hdrhistogram.version}</version>
       </dependency>
       <dependency>
+        <groupId>com.esri.geometry</groupId>
+        <artifactId>esri-geometry-api</artifactId>
+        <version>${esri.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.tinkerpop</groupId>
+        <artifactId>gremlin-core</artifactId>
+        <version>${tinkerpop.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.tinkerpop</groupId>
+        <artifactId>tinkergraph-gremlin</artifactId>
+        <version>${tinkerpop.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.reactivestreams</groupId>
+        <artifactId>reactive-streams</artifactId>
+        <version>${reactive-streams.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.reactivestreams</groupId>
+        <artifactId>reactive-streams-tck</artifactId>
+        <version>${reactive-streams.version}</version>
+      </dependency>
+      <dependency>
         <groupId>com.github.stephenc.jcip</groupId>
         <artifactId>jcip-annotations</artifactId>
         <version>1.0-1</version>
@@ -204,6 +237,11 @@
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
         <version>2.28.2</version>
+      </dependency>
+      <dependency>
+        <groupId>io.reactivex.rxjava2</groupId>
+        <artifactId>rxjava</artifactId>
+        <version>${rxjava.version}</version>
       </dependency>
       <dependency>
         <groupId>com.datastax.oss.simulacron</groupId>
@@ -299,6 +337,57 @@
         <groupId>com.google.testing.compile</groupId>
         <artifactId>compile-testing</artifactId>
         <version>0.18</version>
+      </dependency>
+      <dependency>
+        <groupId>org.awaitility</groupId>
+        <artifactId>awaitility</artifactId>
+        <version>${awaitility.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.testng</groupId>
+        <artifactId>testng</artifactId>
+        <version>6.14.3</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.directory.server</groupId>
+        <artifactId>apacheds-core</artifactId>
+        <version>${apacheds.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.directory.server</groupId>
+        <artifactId>apacheds-protocol-kerberos</artifactId>
+        <version>${apacheds.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.directory.server</groupId>
+        <artifactId>apacheds-interceptor-kerberos</artifactId>
+        <version>${apacheds.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.directory.server</groupId>
+        <artifactId>apacheds-protocol-ldap</artifactId>
+        <version>${apacheds.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.directory.server</groupId>
+        <artifactId>apacheds-ldif-partition</artifactId>
+        <version>${apacheds.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.directory.server</groupId>
+        <artifactId>apacheds-jdbm-partition</artifactId>
+        <version>${apacheds.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.directory.api</groupId>
+        <artifactId>api-ldap-codec-standalone</artifactId>
+        <version>1.0.0-M26</version>
       </dependency>
       <dependency>
         <groupId>com.github.tomakehurst</groupId>
