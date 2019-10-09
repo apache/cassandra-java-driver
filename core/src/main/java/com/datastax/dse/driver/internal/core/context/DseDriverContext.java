@@ -1,0 +1,297 @@
+/*
+ * Copyright DataStax, Inc.
+ *
+ * This software can be used solely with DataStax Enterprise. Please consult the license at
+ * http://www.datastax.com/terms/datastax-dse-driver-license-terms
+ */
+package com.datastax.dse.driver.internal.core.context;
+
+import com.datastax.dse.driver.api.core.config.DseDriverConfigLoader;
+import com.datastax.dse.driver.api.core.config.DseDriverOption;
+import com.datastax.dse.driver.api.core.session.DseProgrammaticArguments;
+import com.datastax.dse.driver.internal.core.DseProtocolVersionRegistry;
+import com.datastax.dse.driver.internal.core.InsightsClientLifecycleListener;
+import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousCqlRequestAsyncProcessor;
+import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousCqlRequestSyncProcessor;
+import com.datastax.dse.driver.internal.core.cql.continuous.reactive.ContinuousCqlRequestReactiveProcessor;
+import com.datastax.dse.driver.internal.core.cql.reactive.CqlRequestReactiveProcessor;
+import com.datastax.dse.driver.internal.core.graph.GraphRequestAsyncProcessor;
+import com.datastax.dse.driver.internal.core.graph.GraphRequestSyncProcessor;
+import com.datastax.dse.driver.internal.core.metadata.DseTopologyMonitor;
+import com.datastax.dse.driver.internal.core.metadata.schema.parsing.DseSchemaParserFactory;
+import com.datastax.dse.driver.internal.core.metadata.schema.queries.DseSchemaQueriesFactory;
+import com.datastax.dse.driver.internal.core.metadata.token.DseReplicationStrategyFactory;
+import com.datastax.dse.driver.internal.core.metrics.DseDropwizardMetricsFactory;
+import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
+import com.datastax.dse.protocol.internal.DseProtocolV1ClientCodecs;
+import com.datastax.dse.protocol.internal.DseProtocolV2ClientCodecs;
+import com.datastax.dse.protocol.internal.ProtocolV4ClientCodecsForDse;
+import com.datastax.oss.driver.api.core.auth.AuthProvider;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
+import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
+import com.datastax.oss.driver.api.core.session.ProgrammaticArguments;
+import com.datastax.oss.driver.api.core.tracker.RequestTracker;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
+import com.datastax.oss.driver.internal.core.context.LifecycleListener;
+import com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor;
+import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
+import com.datastax.oss.driver.internal.core.cql.CqlRequestAsyncProcessor;
+import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
+import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
+import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParserFactory;
+import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
+import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyFactory;
+import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
+import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
+import com.datastax.oss.driver.internal.core.session.RequestProcessor;
+import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
+import com.datastax.oss.driver.internal.core.util.Loggers;
+import com.datastax.oss.driver.internal.core.util.Reflection;
+import com.datastax.oss.protocol.internal.FrameCodec;
+import com.datastax.oss.protocol.internal.ProtocolV3ClientCodecs;
+import com.datastax.oss.protocol.internal.ProtocolV5ClientCodecs;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import io.netty.buffer.ByteBuf;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Predicate;
+import net.jcip.annotations.ThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/** Extends the default driver context to plug-in DSE-specific implementations. */
+@ThreadSafe
+public class DseDriverContext extends DefaultDriverContext {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DseDriverContext.class);
+
+  private final UUID startupClientId;
+  private final String startupApplicationName;
+  private final String startupApplicationVersion;
+  private final List<LifecycleListener> listeners;
+
+  public DseDriverContext(
+      DriverConfigLoader configLoader,
+      ProgrammaticArguments programmaticArguments,
+      DseProgrammaticArguments dseProgrammaticArguments) {
+    super(configLoader, programmaticArguments);
+    this.startupClientId = dseProgrammaticArguments.getStartupClientId();
+    this.startupApplicationName = dseProgrammaticArguments.getStartupApplicationName();
+    this.startupApplicationVersion = dseProgrammaticArguments.getStartupApplicationVersion();
+    StackTraceElement[] stackTrace = {};
+    try {
+      stackTrace = Thread.currentThread().getStackTrace();
+    } catch (Exception ex) {
+      // ignore and use empty
+    }
+    this.listeners =
+        Collections.singletonList(new InsightsClientLifecycleListener(this, stackTrace));
+
+    if (!getConfig().getDefaultProfile().isDefined(DseDriverOption.CONTINUOUS_PAGING_PAGE_SIZE)) {
+      LOG.warn(
+          "[{}] It looks like your configuration is missing DSE-specific options. "
+              + "If you use a built-in config loader, make sure you create it with {}.",
+          getSessionName(),
+          DseDriverConfigLoader.class.getSimpleName());
+    }
+  }
+  /**
+   * @deprecated this constructor only exists for backward compatibility. Please use {@link
+   *     #DseDriverContext(DriverConfigLoader, ProgrammaticArguments, DseProgrammaticArguments)}
+   *     instead.
+   */
+  public DseDriverContext(
+      DriverConfigLoader configLoader,
+      List<TypeCodec<?>> typeCodecs,
+      NodeStateListener nodeStateListener,
+      SchemaChangeListener schemaChangeListener,
+      RequestTracker requestTracker,
+      Map<String, String> localDatacenters,
+      Map<String, Predicate<Node>> nodeFilters,
+      ClassLoader classLoader,
+      UUID clientId,
+      String applicationName,
+      String applicationVersion) {
+    this(
+        configLoader,
+        ProgrammaticArguments.builder()
+            .addTypeCodecs(typeCodecs.toArray(new TypeCodec<?>[0]))
+            .withNodeStateListener(nodeStateListener)
+            .withSchemaChangeListener(schemaChangeListener)
+            .withRequestTracker(requestTracker)
+            .withLocalDatacenters(localDatacenters)
+            .withNodeFilters(nodeFilters)
+            .withClassLoader(classLoader)
+            .build(),
+        DseProgrammaticArguments.builder()
+            .withStartupClientId(clientId)
+            .withStartupApplicationName(applicationName)
+            .withStartupApplicationVersion(applicationVersion)
+            .build());
+  }
+
+  @Override
+  protected ProtocolVersionRegistry buildProtocolVersionRegistry() {
+    return new DseProtocolVersionRegistry(getSessionName());
+  }
+
+  @Override
+  protected FrameCodec<ByteBuf> buildFrameCodec() {
+    return new FrameCodec<>(
+        new ByteBufPrimitiveCodec(getNettyOptions().allocator()),
+        getCompressor(),
+        new ProtocolV3ClientCodecs(),
+        new ProtocolV4ClientCodecsForDse(),
+        new ProtocolV5ClientCodecs(),
+        new DseProtocolV1ClientCodecs(),
+        new DseProtocolV2ClientCodecs());
+  }
+
+  @Override
+  protected RequestProcessorRegistry buildRequestProcessorRegistry() {
+    String logPrefix = getSessionName();
+
+    List<RequestProcessor<?, ?>> processors = new ArrayList<>();
+
+    // regular requests (sync and async)
+    CqlRequestAsyncProcessor cqlRequestAsyncProcessor = new CqlRequestAsyncProcessor();
+    CqlRequestSyncProcessor cqlRequestSyncProcessor =
+        new CqlRequestSyncProcessor(cqlRequestAsyncProcessor);
+    processors.add(cqlRequestAsyncProcessor);
+    processors.add(cqlRequestSyncProcessor);
+
+    // prepare requests (sync and async)
+    CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor = new CqlPrepareAsyncProcessor();
+    CqlPrepareSyncProcessor cqlPrepareSyncProcessor =
+        new CqlPrepareSyncProcessor(cqlPrepareAsyncProcessor);
+    processors.add(cqlPrepareAsyncProcessor);
+    processors.add(cqlPrepareSyncProcessor);
+
+    // continuous requests (sync and async)
+    ContinuousCqlRequestAsyncProcessor continuousCqlRequestAsyncProcessor =
+        new ContinuousCqlRequestAsyncProcessor();
+    ContinuousCqlRequestSyncProcessor continuousCqlRequestSyncProcessor =
+        new ContinuousCqlRequestSyncProcessor(continuousCqlRequestAsyncProcessor);
+    processors.add(continuousCqlRequestAsyncProcessor);
+    processors.add(continuousCqlRequestSyncProcessor);
+
+    // graph requests (sync and async)
+    try {
+      Class.forName("org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal");
+      GraphRequestAsyncProcessor graphRequestAsyncProcessor = new GraphRequestAsyncProcessor();
+      GraphRequestSyncProcessor graphRequestSyncProcessor =
+          new GraphRequestSyncProcessor(graphRequestAsyncProcessor);
+      processors.add(graphRequestAsyncProcessor);
+      processors.add(graphRequestSyncProcessor);
+    } catch (ClassNotFoundException | LinkageError error) {
+      Loggers.warnWithException(
+          LOG,
+          "Could not register Graph extensions; Tinkerpop API might be missing from classpath",
+          error);
+    }
+
+    // reactive requests (regular and continuous)
+    try {
+      Class.forName("org.reactivestreams.Publisher");
+      CqlRequestReactiveProcessor cqlRequestReactiveProcessor =
+          new CqlRequestReactiveProcessor(cqlRequestAsyncProcessor);
+      ContinuousCqlRequestReactiveProcessor continuousCqlRequestReactiveProcessor =
+          new ContinuousCqlRequestReactiveProcessor(continuousCqlRequestAsyncProcessor);
+      processors.add(cqlRequestReactiveProcessor);
+      processors.add(continuousCqlRequestReactiveProcessor);
+    } catch (ClassNotFoundException | LinkageError error) {
+      Loggers.warnWithException(
+          LOG,
+          "Could not register Reactive extensions; Reactive Streams API might be missing from classpath",
+          error);
+    }
+
+    return new RequestProcessorRegistry(logPrefix, processors.toArray(new RequestProcessor[0]));
+  }
+
+  @Override
+  protected TopologyMonitor buildTopologyMonitor() {
+    return new DseTopologyMonitor(this);
+  }
+
+  @Override
+  protected ReplicationStrategyFactory buildReplicationStrategyFactory() {
+    return new DseReplicationStrategyFactory(this);
+  }
+
+  @Override
+  protected SchemaQueriesFactory buildSchemaQueriesFactory() {
+    return new DseSchemaQueriesFactory(this);
+  }
+
+  @Override
+  protected SchemaParserFactory buildSchemaParserFactory() {
+    return new DseSchemaParserFactory(this);
+  }
+
+  @Override
+  protected MetricsFactory buildMetricsFactory() {
+    return new DseDropwizardMetricsFactory(this);
+  }
+
+  @Override
+  protected Map<String, String> buildStartupOptions() {
+    return new DseStartupOptionsBuilder(this)
+        .withClientId(startupClientId)
+        .withApplicationName(startupApplicationName)
+        .withApplicationVersion(startupApplicationVersion)
+        .build();
+  }
+
+  @Override
+  protected RequestTracker buildRequestTracker(RequestTracker requestTrackerFromBuilder) {
+    RequestTracker requestTrackerFromConfig = super.buildRequestTracker(requestTrackerFromBuilder);
+    if (requestTrackerFromConfig instanceof MultiplexingRequestTracker) {
+      return requestTrackerFromConfig;
+    } else {
+      MultiplexingRequestTracker multiplexingRequestTracker = new MultiplexingRequestTracker();
+      multiplexingRequestTracker.register(requestTrackerFromConfig);
+      return multiplexingRequestTracker;
+    }
+  }
+
+  @NonNull
+  @Override
+  public List<LifecycleListener> getLifecycleListeners() {
+    return listeners;
+  }
+
+  @Override
+  protected Map<String, LoadBalancingPolicy> buildLoadBalancingPolicies() {
+    return Reflection.buildFromConfigProfiles(
+        this,
+        DefaultDriverOption.LOAD_BALANCING_POLICY,
+        LoadBalancingPolicy.class,
+        "com.datastax.oss.driver.internal.core.loadbalancing",
+        // Add the DSE default package
+        "com.datastax.dse.driver.internal.core.loadbalancing");
+  }
+
+  @Override
+  protected Optional<AuthProvider> buildAuthProvider(AuthProvider authProviderFromBuilder) {
+    return (authProviderFromBuilder != null)
+        ? Optional.of(authProviderFromBuilder)
+        : Reflection.buildFromConfig(
+            this,
+            DefaultDriverOption.AUTH_PROVIDER_CLASS,
+            AuthProvider.class,
+            "com.datastax.oss.driver.internal.core.auth",
+            // Add the DSE default package
+            "com.datastax.dse.driver.internal.core.auth");
+  }
+}

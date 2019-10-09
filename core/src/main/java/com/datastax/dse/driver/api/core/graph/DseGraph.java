@@ -1,0 +1,51 @@
+/*
+ * Copyright DataStax, Inc.
+ *
+ * This software can be used solely with DataStax Enterprise. Please consult the license at
+ * http://www.datastax.com/terms/datastax-dse-driver-license-terms
+ */
+package com.datastax.dse.driver.api.core.graph;
+
+import com.datastax.dse.driver.api.core.DseSession;
+import com.datastax.dse.driver.internal.core.graph.DefaultDseRemoteConnectionBuilder;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
+
+/**
+ * General purpose utility class for interaction with DSE Graph via the DataStax Enterprise Java
+ * driver.
+ */
+public class DseGraph {
+
+  /**
+   * A general-purpose shortcut for a <b>non-connected</b> TinkerPop {@link GraphTraversalSource}
+   * based on an immutable empty graph. This is really just a shortcut to {@code
+   * EmptyGraph.instance().traversal();}.
+   *
+   * <p>Can be used to create {@link FluentGraphStatement} instances (recommended), or can be
+   * configured to be remotely connected to DSE Graph using the {@link #remoteConnectionBuilder}
+   * method.
+   *
+   * <p>For ease of use you may statically import this variable.
+   *
+   * <p>Calling {@code g.getGraph()} will return a local immutable empty graph which is in no way
+   * connected to the DSE Graph server, it will not allow to modify a DSE Graph directly. To act on
+   * data stored in DSE Graph you must use {@linkplain
+   * org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal traversal}s such as
+   * {@code DseGraph.g.V()}, {@code DseGraph.g.addV/addE()}.
+   */
+  public static final GraphTraversalSource g = EmptyGraph.instance().traversal();
+
+  /**
+   * Returns a builder helper class to help create {@link
+   * org.apache.tinkerpop.gremlin.process.remote.RemoteConnection} implementations that seamlessly
+   * connect to DSE Graph using the {@link DseSession} in parameter.
+   */
+  public static DseGraphRemoteConnectionBuilder remoteConnectionBuilder(DseSession dseSession) {
+    return new DefaultDseRemoteConnectionBuilder(dseSession);
+  }
+
+  private DseGraph() {
+    // nothing to do
+  }
+}

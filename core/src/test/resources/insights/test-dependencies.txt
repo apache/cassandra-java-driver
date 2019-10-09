@@ -1,0 +1,31 @@
+
+The following files have been resolved:
+   com.github.jnr:jffi:jar:1.2.16:compile
+   org.ow2.asm:asm:jar:5.0.3:compile
+   com.github.jnr:jnr-constants:jar:0.9.9:compile
+   com.esri.geometry:esri-geometry-api:jar:1.2.1:compile
+   com.google.guava:guava:jar:19.0:compile
+   com.fasterxml.jackson.core:jackson-annotations:jar:2.8.11:compile
+   com.github.jnr:jnr-posix:jar:3.0.44:compile
+   org.codehaus.jackson:jackson-core-asl:jar:1.9.12:compile
+   io.netty:netty-handler:jar:4.0.56.Final:compile
+   org.ow2.asm:asm-commons:jar:5.0.3:compile
+   org.ow2.asm:asm-util:jar:5.0.3:compile
+   org.xerial.snappy:snappy-java:jar:1.1.2.6:compile (optional)
+   io.netty:netty-buffer:jar:4.0.56.Final:compile
+   com.github.jnr:jnr-ffi:jar:2.1.7:compile
+   com.fasterxml.jackson.core:jackson-core:jar:2.8.11:compile
+   org.hdrhistogram:HdrHistogram:jar:2.1.10:compile (optional)
+   org.ow2.asm:asm-tree:jar:5.0.3:compile
+   org.lz4:lz4-java:jar:1.4.1:compile (optional)
+   io.netty:netty-transport:jar:4.0.56.Final:compile
+   io.dropwizard.metrics:metrics-core:jar:3.2.2:compile
+   io.netty:netty-common:jar:4.0.56.Final:compile
+   com.fasterxml.jackson.core:jackson-databind:jar:2.7.9.3:compile
+   org.slf4j:slf4j-api:jar:1.7.25:compile
+   io.netty:netty-transport-native-epoll:jar:4.0.56.Final:compile (optional)
+   org.ow2.asm:asm-analysis:jar:5.0.3:compile
+   com.github.jnr:jnr-x86asm:jar:1.0.2:compile
+   io.netty:netty-codec:jar:4.0.56.Final:compile
+   org.json:json:jar:20090211:compile
+   com.github.jnr:jffi:jar:native:1.2.16:runtime

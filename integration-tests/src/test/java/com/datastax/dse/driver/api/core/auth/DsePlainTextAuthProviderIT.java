@@ -1,0 +1,115 @@
+/*
+ * Copyright DataStax, Inc.
+ *
+ * This software can be used solely with DataStax Enterprise. Please consult the license at
+ * http://www.datastax.com/terms/datastax-dse-driver-license-terms
+ */
+package com.datastax.dse.driver.api.core.auth;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
+
+import com.datastax.dse.driver.api.core.DseSession;
+import com.datastax.dse.driver.api.core.config.DseDriverOption;
+import com.datastax.dse.driver.internal.core.auth.DsePlainTextAuthProvider;
+import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.api.core.auth.AuthenticationException;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.testinfra.DseRequirement;
+import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
+import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
+import java.util.concurrent.TimeUnit;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Test;
+
+@DseRequirement(min = "5.0", description = "Required for DseAuthenticator")
+public class DsePlainTextAuthProviderIT {
+
+  @ClassRule
+  public static CustomCcmRule ccm =
+      CustomCcmRule.builder()
+          .withCassandraConfiguration(
+              "authenticator", "com.datastax.bdp.cassandra.auth.DseAuthenticator")
+          .withDseConfiguration("authentication_options.enabled", true)
+          .withDseConfiguration("authentication_options.default_scheme", "internal")
+          .withJvmArgs("-Dcassandra.superuser_setup_delay_ms=0")
+          .build();
+
+  @BeforeClass
+  public static void sleepForAuth() {
+    if (ccm.getCassandraVersion().compareTo(Version.V2_2_0) < 0) {
+      // Sleep for 1 second to allow C* auth to do its work.  This is only needed for 2.1
+      Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
+    }
+  }
+
+  @Test
+  public void should_connect_dse_plaintext_auth() {
+    try (DseSession session =
+        SessionUtils.newSession(
+            ccm,
+            SessionUtils.configLoaderBuilder()
+                .withString(DseDriverOption.AUTH_PROVIDER_AUTHORIZATION_ID, "")
+                .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, "cassandra")
+                .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "cassandra")
+                .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, DsePlainTextAuthProvider.class)
+                .build())) {
+      session.execute("select * from system.local");
+    }
+  }
+
+  @Test
+  public void should_connect_dse_plaintext_auth_programmatically() {
+    try (DseSession session =
+        DseSession.builder()
+            .addContactEndPoints(ccm.getContactPoints())
+            .withAuthCredentials("cassandra", "cassandra")
+            .build()) {
+      session.execute("select * from system.local");
+    }
+  }
+
+  @SuppressWarnings("unused")
+  @Test
+  public void should_not_connect_with_invalid_credentials() {
+    try (CqlSession session =
+        SessionUtils.newSession(
+            ccm,
+            SessionUtils.configLoaderBuilder()
+                .withString(DseDriverOption.AUTH_PROVIDER_AUTHORIZATION_ID, "")
+                .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, "cassandra")
+                .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "NotARealPassword")
+                .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, DsePlainTextAuthProvider.class)
+                .build())) {
+      fail("Expected an AllNodesFailedException");
+    } catch (AllNodesFailedException e) {
+      assertThat(e.getErrors().size()).isEqualTo(1);
+      for (Throwable t : e.getErrors().values()) {
+        assertThat(t).isInstanceOf(AuthenticationException.class);
+      }
+    }
+  }
+
+  @SuppressWarnings("unused")
+  @Test
+  public void should_not_connect_without_credentials() {
+    try (DseSession session =
+        SessionUtils.newSession(
+            ccm,
+            SessionUtils.configLoaderBuilder()
+                .withString(DseDriverOption.AUTH_PROVIDER_AUTHORIZATION_ID, "")
+                .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, DsePlainTextAuthProvider.class)
+                .build())) {
+      fail("Expected AllNodesFailedException");
+    } catch (AllNodesFailedException e) {
+      assertThat(e.getErrors().size()).isEqualTo(1);
+      for (Throwable t : e.getErrors().values()) {
+        assertThat(t).isInstanceOf(AuthenticationException.class);
+      }
+    }
+  }
+}
