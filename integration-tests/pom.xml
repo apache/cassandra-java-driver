@@ -106,6 +106,57 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>io.reactivex.rxjava2</groupId>
+      <artifactId>rxjava</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.directory.server</groupId>
+      <artifactId>apacheds-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.directory.server</groupId>
+      <artifactId>apacheds-protocol-kerberos</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.directory.server</groupId>
+      <artifactId>apacheds-interceptor-kerberos</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.directory.server</groupId>
+      <artifactId>apacheds-protocol-ldap</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.directory.server</groupId>
+      <artifactId>apacheds-ldif-partition</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.directory.server</groupId>
+      <artifactId>apacheds-jdbm-partition</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.directory.api</groupId>
+      <artifactId>api-ldap-codec-standalone</artifactId>
+      <version>1.0.0-M26</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.ops4j.pax.exam</groupId>
+      <artifactId>pax-exam-junit4</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.ops4j.pax.exam</groupId>
+      <artifactId>pax-exam-container-native</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.ops4j.pax.exam</groupId>
       <artifactId>pax-exam-junit4</artifactId>
       <scope>test</scope>
@@ -171,6 +222,12 @@
             <simulacron.version>${simulacron.version}</simulacron.version>
             <slf4j.version>${slf4j.version}</slf4j.version>
             <snappy.version>${snappy.version}</snappy.version>
+            <esri.version>${esri.version}</esri.version>
+            <json.version>${json.version}</json.version>
+            <legacy-jackson.version>${legacy-jackson.version}</legacy-jackson.version>
+            <reactive-streams.version>${reactive-streams.version}</reactive-streams.version>
+            <rxjava.version>${rxjava.version}</rxjava.version>
+            <tinkerpop.version>${tinkerpop.version}</tinkerpop.version>
           </systemPropertyVariables>
         </configuration>
       </plugin>
@@ -196,6 +253,12 @@
             <simulacron.version>${simulacron.version}</simulacron.version>
             <slf4j.version>${slf4j.version}</slf4j.version>
             <snappy.version>${snappy.version}</snappy.version>
+            <esri.version>${esri.version}</esri.version>
+            <json.version>${json.version}</json.version>
+            <legacy-jackson.version>${legacy-jackson.version}</legacy-jackson.version>
+            <reactive-streams.version>${reactive-streams.version}</reactive-streams.version>
+            <rxjava.version>${rxjava.version}</rxjava.version>
+            <tinkerpop.version>${tinkerpop.version}</tinkerpop.version>
           </systemPropertyVariables>
         </configuration>
         <executions>

@@ -688,7 +688,8 @@ limitations under the License.]]></inlineHeader>
           <verbose>false</verbose>
           <quiet>true</quiet>
           <doclint>all,-missing</doclint>
-          <excludePackageNames>com.datastax.oss.driver.internal</excludePackageNames>
+          <excludePackageNames>com.datastax.oss.driver.internal:com.datastax.dse.driver.internal
+          </excludePackageNames>
           <tags>
             <!--
               For custom `leaks-private-api` tag (apparently dash separators are not handled
@@ -725,6 +726,7 @@ limitations under the License.]]></inlineHeader>
                 <!-- API types do not leak internal types -->
                 <additionalparam>-preventleak</additionalparam>
                 <additionalparam>com.datastax.oss.driver.internal</additionalparam>
+                <additionalparam>com.datastax.dse.driver.internal</additionalparam>
                 <!-- Shaded dependencies (Guava, Netty, etc.) -->
                 <additionalparam>-preventleak</additionalparam>
                 <additionalparam>com.datastax.oss.driver.shaded</additionalparam>
