@@ -45,7 +45,7 @@
     <guava.version>25.1-jre</guava.version>
     <hdrhistogram.version>2.1.11</hdrhistogram.version>
     <metrics.version>4.0.5</metrics.version>
-    <native-protocol.version>1.4.7</native-protocol.version>
+    <native-protocol.version>1.4.8</native-protocol.version>
     <netty.version>4.1.39.Final</netty.version>
     <slf4j.version>1.7.26</slf4j.version>
     <!-- optional dependencies -->
