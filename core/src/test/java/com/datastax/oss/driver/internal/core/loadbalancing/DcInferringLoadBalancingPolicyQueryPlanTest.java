@@ -15,24 +15,33 @@
  */
 package com.datastax.oss.driver.internal.core.loadbalancing;
 
+import static com.datastax.oss.driver.api.core.config.DriverExecutionProfile.DEFAULT_NAME;
 import static org.mockito.Mockito.spy;
 
-import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.UUID;
 
 public class DcInferringLoadBalancingPolicyQueryPlanTest
-    extends BasicLoadBalancingPolicyQueryPlanTest {
+    extends DefaultLoadBalancingPolicyQueryPlanTest {
 
   @Override
-  protected DcInferringLoadBalancingPolicy createAndInitPolicy() {
-    // Use a subclass to disable shuffling, we just spy to make sure that the shuffling method was
-    // called (makes tests easier)
-    NonShufflingDcInferringLoadBalancingPolicy policy =
+  protected DefaultLoadBalancingPolicy createAndInitPolicy() {
+    DcInferringLoadBalancingPolicy policy =
         spy(
-            new NonShufflingDcInferringLoadBalancingPolicy(
-                context, DriverExecutionProfile.DEFAULT_NAME));
+            new DcInferringLoadBalancingPolicy(context, DEFAULT_NAME) {
+              @Override
+              protected void shuffleHead(Object[] array, int n) {}
+
+              @Override
+              protected long nanoTime() {
+                return nanoTime;
+              }
+
+              @Override
+              protected int diceRoll1d4() {
+                return diceRoll;
+              }
+            });
     policy.init(
         ImmutableMap.of(
             UUID.randomUUID(), node1,
@@ -42,16 +51,5 @@ public class DcInferringLoadBalancingPolicyQueryPlanTest
             UUID.randomUUID(), node5),
         distanceReporter);
     return policy;
-  }
-
-  static class NonShufflingDcInferringLoadBalancingPolicy extends DcInferringLoadBalancingPolicy {
-    NonShufflingDcInferringLoadBalancingPolicy(DriverContext context, String profileName) {
-      super(context, profileName);
-    }
-
-    @Override
-    protected void shuffleHead(Object[] currentNodes, int replicaCount) {
-      // nothing (keep in same order)
-    }
   }
 }

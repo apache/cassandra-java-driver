@@ -13,32 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.dse.driver.internal.core.loadbalancing;
+package com.datastax.oss.driver.internal.core.loadbalancing;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.api.core.config.DriverExecutionProfile.DEFAULT_NAME;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
+import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
-public class DseLoadBalancingPolicyRequestTrackerTest extends DseLoadBalancingPolicyTestBase {
+public class DefaultLoadBalancingPolicyRequestTrackerTest
+    extends DefaultLoadBalancingPolicyTestBase {
 
-  private DseLoadBalancingPolicy policy;
+  @Mock Request request;
+  @Mock DriverExecutionProfile profile;
+  final String logPrefix = "lbp-test-log-prefix";
+
+  private DefaultLoadBalancingPolicy policy;
   private long nextNanoTime;
 
   @Before
   @Override
-  public void setUp() {
-    super.setUp();
+  public void setup() {
+    given(context.getRequestTracker()).willReturn(new MultiplexingRequestTracker());
+    super.setup();
     given(metadataManager.getContactPoints()).willReturn(ImmutableSet.of(node1));
     policy =
-        new DseLoadBalancingPolicy(context, DEFAULT_NAME) {
+        new DefaultLoadBalancingPolicy(context, DEFAULT_NAME) {
           @Override
-          long nanoTime() {
+          protected long nanoTime() {
             return nextNanoTime;
           }
         };

@@ -158,7 +158,7 @@ public class BasicLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPoli
   @NonNull
   protected BasicLoadBalancingPolicy createAndInitPolicy() {
     BasicLoadBalancingPolicy policy =
-        new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
+        new BasicLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
     policy.init(
         ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2), distanceReporter);
     assertThat(policy.liveNodes).containsExactlyInAnyOrder(node1, node2);

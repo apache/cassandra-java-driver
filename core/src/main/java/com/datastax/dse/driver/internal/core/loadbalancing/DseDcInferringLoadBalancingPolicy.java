@@ -16,16 +16,17 @@
 package com.datastax.dse.driver.internal.core.loadbalancing;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.internal.core.loadbalancing.DefaultLoadBalancingPolicy;
+import com.datastax.oss.driver.internal.core.loadbalancing.DcInferringLoadBalancingPolicy;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * @deprecated This class only exists for backward compatibility. It is equivalent to {@link
- *     DefaultLoadBalancingPolicy}, which should now be used instead.
+ *     DcInferringLoadBalancingPolicy}, which should now be used instead.
  */
 @Deprecated
-public class DseLoadBalancingPolicy extends DefaultLoadBalancingPolicy {
-  public DseLoadBalancingPolicy(@NonNull DriverContext context, @NonNull String profileName) {
+public class DseDcInferringLoadBalancingPolicy extends DcInferringLoadBalancingPolicy {
+  public DseDcInferringLoadBalancingPolicy(
+      @NonNull DriverContext context, @NonNull String profileName) {
     super(context, profileName);
   }
 }

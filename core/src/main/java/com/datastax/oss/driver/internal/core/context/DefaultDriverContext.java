@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
+import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
@@ -70,6 +71,7 @@ import com.datastax.oss.driver.internal.core.session.PoolManager;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
 import com.datastax.oss.driver.internal.core.ssl.JdkSslHandlerFactory;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
+import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogFormatter;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
 import com.datastax.oss.driver.internal.core.util.Reflection;
@@ -288,7 +290,8 @@ public class DefaultDriverContext implements InternalDriverContext {
         this,
         DefaultDriverOption.LOAD_BALANCING_POLICY,
         LoadBalancingPolicy.class,
-        "com.datastax.oss.driver.internal.core.loadbalancing");
+        "com.datastax.oss.driver.internal.core.loadbalancing",
+        "com.datastax.dse.driver.internal.core.loadbalancing");
   }
 
   protected Map<String, RetryPolicy> buildRetryPolicies() {
@@ -521,19 +524,31 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected RequestTracker buildRequestTracker(RequestTracker requestTrackerFromBuilder) {
-    return (requestTrackerFromBuilder != null)
-        ? requestTrackerFromBuilder
-        : Reflection.buildFromConfig(
-                this,
-                DefaultDriverOption.REQUEST_TRACKER_CLASS,
-                RequestTracker.class,
-                "com.datastax.oss.driver.internal.core.tracker")
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        String.format(
-                            "Missing request tracker, check your configuration (%s)",
-                            DefaultDriverOption.REQUEST_TRACKER_CLASS)));
+    RequestTracker requestTrackerFromConfig =
+        (requestTrackerFromBuilder != null)
+            ? requestTrackerFromBuilder
+            : Reflection.buildFromConfig(
+                    this,
+                    DefaultDriverOption.REQUEST_TRACKER_CLASS,
+                    RequestTracker.class,
+                    "com.datastax.oss.driver.internal.core.tracker")
+                .orElseThrow(
+                    () ->
+                        new IllegalArgumentException(
+                            String.format(
+                                "Missing request tracker, check your configuration (%s)",
+                                DefaultDriverOption.REQUEST_TRACKER_CLASS)));
+
+    // The default LBP needs to add its own tracker
+    if (requestTrackerFromConfig instanceof MultiplexingRequestTracker) {
+      return requestTrackerFromConfig;
+    } else {
+      MultiplexingRequestTracker multiplexingRequestTracker = new MultiplexingRequestTracker();
+      if (!(requestTrackerFromConfig instanceof NoopRequestTracker)) {
+        multiplexingRequestTracker.register(requestTrackerFromConfig);
+      }
+      return multiplexingRequestTracker;
+    }
   }
 
   protected Optional<AuthProvider> buildAuthProvider(AuthProvider authProviderFromBuilder) {
