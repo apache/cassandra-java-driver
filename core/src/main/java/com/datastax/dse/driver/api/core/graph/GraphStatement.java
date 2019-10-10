@@ -15,9 +15,9 @@
  */
 package com.datastax.dse.driver.api.core.graph;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.NoNodeAvailableException;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
@@ -48,7 +48,7 @@ public interface GraphStatement<SelfT extends GraphStatement<SelfT>> extends Req
    *
    * <p>Most users won't use this explicitly. It is needed for the generic execute method ({@link
    * Session#execute(Request, GenericType)}), but graph statements will generally be run with one of
-   * the DSE driver's built-in helper methods (such as {@link DseSession#execute(GraphStatement)}).
+   * the DSE driver's built-in helper methods (such as {@link CqlSession#execute(GraphStatement)}).
    */
   GenericType<GraphResultSet> SYNC = GenericType.of(GraphResultSet.class);
 
@@ -58,7 +58,7 @@ public interface GraphStatement<SelfT extends GraphStatement<SelfT>> extends Req
    * <p>Most users won't use this explicitly. It is needed for the generic execute method ({@link
    * Session#execute(Request, GenericType)}), but graph statements will generally be run with one of
    * the DSE driver's built-in helper methods (such as {@link
-   * DseSession#executeAsync(GraphStatement)}).
+   * CqlSession#executeAsync(GraphStatement)}).
    */
   GenericType<CompletionStage<AsyncGraphResultSet>> ASYNC =
       new GenericType<CompletionStage<AsyncGraphResultSet>>() {};

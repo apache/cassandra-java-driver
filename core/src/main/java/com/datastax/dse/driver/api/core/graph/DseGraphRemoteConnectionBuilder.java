@@ -15,7 +15,7 @@
  */
 package com.datastax.dse.driver.api.core.graph;
 
-import com.datastax.dse.driver.api.core.DseSession;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import org.apache.tinkerpop.gremlin.process.remote.RemoteConnection;
 
@@ -23,7 +23,7 @@ import org.apache.tinkerpop.gremlin.process.remote.RemoteConnection;
  * A builder helper to create a {@link RemoteConnection} that will be used to build
  * implicitly-executing fluent traversals.
  *
- * <p>To create an instance of this, use the {@link DseGraph#remoteConnectionBuilder(DseSession)}
+ * <p>To create an instance of this, use the {@link DseGraph#remoteConnectionBuilder(CqlSession)}
  * method:
  *
  * <pre>{@code
@@ -32,7 +32,7 @@ import org.apache.tinkerpop.gremlin.process.remote.RemoteConnection;
  * List<Vertex> vertices = g.V().hasLabel("person").toList();
  * }</pre>
  *
- * @see DseSession
+ * @see CqlSession
  */
 public interface DseGraphRemoteConnectionBuilder {
 

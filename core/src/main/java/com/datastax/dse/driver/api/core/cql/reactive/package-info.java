@@ -13,19 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.dse.driver.api.core;
-
-import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.session.SessionBuilder;
-import net.jcip.annotations.NotThreadSafe;
-
 /**
- * @deprecated DSE functionality is now exposed directly on {@link CqlSession}. This class is
- *     preserved for backward compatibility, but {@link CqlSession#builder()} should be used
- *     instead.
+ * Types related to CQL execution using reactive-style programming.
+ *
+ * <p>Note that this is located in a {@code dse} package for historical reasons; reactive queries
+ * can now be used with open-source Cassandra as well.
  */
-@NotThreadSafe
-@Deprecated
-public abstract class DseSessionBuilderBase<
-        SelfT extends DseSessionBuilderBase<SelfT, SessionT>, SessionT>
-    extends SessionBuilder<SelfT, SessionT> {}
+package com.datastax.dse.driver.api.core.cql.reactive;

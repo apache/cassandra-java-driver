@@ -24,8 +24,6 @@ import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.SSL_EN
 import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.SSL_HOSTNAME_VALIDATION;
 
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
-import com.datastax.dse.driver.api.core.DseSessionBuilder;
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.dse.driver.internal.core.insights.PackageUtil.ClassSettingDetails;
 import com.datastax.dse.driver.internal.core.insights.configuration.InsightsConfiguration;
 import com.datastax.dse.driver.internal.core.insights.exceptions.InsightEventFormatException;
@@ -44,6 +42,7 @@ import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.StartupOptionsBuilder;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
@@ -418,8 +417,7 @@ public class InsightsClient {
   }
 
   private static boolean isClusterStackTrace(StackTraceElement stackTraceElement) {
-    return stackTraceElement.getClassName().equals(DseDriverContext.class.getName())
-        || stackTraceElement.getClassName().equals(DseSessionBuilder.class.getName())
+    return stackTraceElement.getClassName().equals(DefaultDriverContext.class.getName())
         || stackTraceElement.getClassName().equals(SessionBuilder.class.getName());
   }
 

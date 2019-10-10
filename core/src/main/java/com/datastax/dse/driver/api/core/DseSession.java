@@ -15,25 +15,20 @@
  */
 package com.datastax.dse.driver.api.core;
 
-import com.datastax.dse.driver.api.core.cql.continuous.ContinuousSession;
-import com.datastax.dse.driver.api.core.cql.continuous.reactive.ContinuousReactiveSession;
-import com.datastax.dse.driver.api.core.cql.reactive.ReactiveSession;
-import com.datastax.dse.driver.api.core.graph.GraphSession;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.MavenCoordinates;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
-/** A custom session with DSE-specific capabilities. */
-public interface DseSession
-    extends CqlSession,
-        ContinuousSession,
-        GraphSession,
-        ReactiveSession,
-        ContinuousReactiveSession {
+/**
+ * @deprecated All DSE functionality is now available directly on {@link CqlSession}. This type is
+ *     preserved for backward compatibility, but you should now use {@link CqlSession} instead.
+ */
+@Deprecated
+public interface DseSession extends CqlSession {
 
   /**
-   * @deprecated the DSE driver is now part of the DataStax Java driver for Apache Cassandra&reg;.
-   *     This field is preserved for backward compatibility, but it returns the same value as {@link
+   * @deprecated the DSE driver is no longer published as a separate artifact. This field is
+   *     preserved for backward compatibility, but it returns the same value as {@link
    *     CqlSession#OSS_DRIVER_COORDINATES}.
    */
   @Deprecated @NonNull MavenCoordinates DSE_DRIVER_COORDINATES = CqlSession.OSS_DRIVER_COORDINATES;

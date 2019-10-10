@@ -15,17 +15,17 @@
  */
 package com.datastax.dse.driver.api.core.session;
 
-import com.datastax.dse.driver.api.core.DseSessionBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.UUID;
 
 /**
- * The DSE-specific arguments that can be set programmatically when building a session.
- *
- * <p>This is mostly for internal use, you only need to deal with this directly if you write custom
- * {@link DseSessionBuilder} subclasses.
+ * @deprecated All DSE functionality is now available directly on {@link CqlSession}. This type is
+ *     preserved for backward compatibility, but clients should now build {@link CqlSession}
+ *     instances instead of DSE sessions.
  */
+@Deprecated
 public class DseProgrammaticArguments {
 
   @NonNull

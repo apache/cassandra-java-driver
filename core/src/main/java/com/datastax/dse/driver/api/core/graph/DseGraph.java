@@ -15,8 +15,8 @@
  */
 package com.datastax.dse.driver.api.core.graph;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.internal.core.graph.DefaultDseRemoteConnectionBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
 
@@ -48,9 +48,9 @@ public class DseGraph {
   /**
    * Returns a builder helper class to help create {@link
    * org.apache.tinkerpop.gremlin.process.remote.RemoteConnection} implementations that seamlessly
-   * connect to DSE Graph using the {@link DseSession} in parameter.
+   * connect to DSE Graph using the {@link CqlSession} in parameter.
    */
-  public static DseGraphRemoteConnectionBuilder remoteConnectionBuilder(DseSession dseSession) {
+  public static DseGraphRemoteConnectionBuilder remoteConnectionBuilder(CqlSession dseSession) {
     return new DefaultDseRemoteConnectionBuilder(dseSession);
   }
 

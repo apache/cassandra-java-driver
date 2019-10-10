@@ -15,8 +15,8 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.graph.DseGraphRemoteConnectionBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import net.jcip.annotations.NotThreadSafe;
 import org.apache.tinkerpop.gremlin.process.remote.RemoteConnection;
@@ -24,17 +24,17 @@ import org.apache.tinkerpop.gremlin.process.remote.RemoteConnection;
 @NotThreadSafe
 public class DefaultDseRemoteConnectionBuilder implements DseGraphRemoteConnectionBuilder {
 
-  private final DseSession dseSession;
+  private final CqlSession session;
   private DriverExecutionProfile executionProfile;
   private String executionProfileName;
 
-  public DefaultDseRemoteConnectionBuilder(DseSession dseSession) {
-    this.dseSession = dseSession;
+  public DefaultDseRemoteConnectionBuilder(CqlSession session) {
+    this.session = session;
   }
 
   @Override
   public RemoteConnection build() {
-    return new DseGraphRemoteConnection(dseSession, executionProfile, executionProfileName);
+    return new DseGraphRemoteConnection(session, executionProfile, executionProfileName);
   }
 
   @Override

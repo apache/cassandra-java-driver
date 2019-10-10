@@ -15,6 +15,7 @@
  */
 package com.datastax.dse.driver.api.core.cql.continuous.reactive;
 
+import com.datastax.dse.driver.api.core.cql.continuous.ContinuousSession;
 import com.datastax.dse.driver.api.core.cql.reactive.ReactiveRow;
 import com.datastax.dse.driver.internal.core.cql.continuous.reactive.ContinuousCqlRequestReactiveProcessor;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -48,6 +49,11 @@ public interface ContinuousReactiveSession extends Session {
    * Returns a {@link Publisher} that, once subscribed to, executes the given query continuously and
    * emits all the results.
    *
+   * <p>See {@link ContinuousSession} for more explanations about continuous paging.
+   *
+   * <p>This feature is only available with Datastax Enterprise. Executing continuous queries
+   * against an Apache Cassandra&reg; cluster will result in a runtime error.
+   *
    * @param query the query to execute.
    * @return The {@link Publisher} that will publish the returned results.
    */
@@ -59,6 +65,11 @@ public interface ContinuousReactiveSession extends Session {
   /**
    * Returns a {@link Publisher} that, once subscribed to, executes the given query continuously and
    * emits all the results.
+   *
+   * <p>See {@link ContinuousSession} for more explanations about continuous paging.
+   *
+   * <p>This feature is only available with Datastax Enterprise. Executing continuous queries
+   * against an Apache Cassandra&reg; cluster will result in a runtime error.
    *
    * @param statement the statement to execute.
    * @return The {@link Publisher} that will publish the returned results.

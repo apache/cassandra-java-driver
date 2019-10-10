@@ -78,6 +78,11 @@ public interface ContinuousSession extends Session {
    * using the {@linkplain #executeContinuouslyAsync(Statement) asynchronous variant} of this method
    * instead.
    *
+   * <p>See {@link ContinuousSession} for more explanations about continuous paging.
+   *
+   * <p>This feature is only available with Datastax Enterprise. Executing continuous queries
+   * against an Apache Cassandra&copy; cluster will result in a runtime error.
+   *
    * @param statement the query to execute.
    * @return a synchronous iterable on the results.
    */
@@ -95,6 +100,11 @@ public interface ContinuousSession extends Session {
    * avoid blocking the server for too long. The server will adjust the rate according to the client
    * speed, but it will give up if the client does not consume any pages in a period of time equal
    * to the read request timeout.
+   *
+   * <p>See {@link ContinuousSession} for more explanations about continuous paging.
+   *
+   * <p>This feature is only available with Datastax Enterprise. Executing continuous queries
+   * against an Apache Cassandra&copy; cluster will result in a runtime error.
    *
    * @param statement the query to execute.
    * @return a future to the first asynchronous result.

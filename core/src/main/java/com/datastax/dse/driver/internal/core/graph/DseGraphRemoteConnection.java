@@ -15,7 +15,7 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
-import com.datastax.dse.driver.api.core.DseSession;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
@@ -31,13 +31,13 @@ import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
 @Immutable
 public class DseGraphRemoteConnection implements RemoteConnection {
 
-  private final DseSession dseSession;
+  private final CqlSession session;
   private final DriverExecutionProfile executionProfile;
   private final String executionProfileName;
 
   public DseGraphRemoteConnection(
-      DseSession dseSession, DriverExecutionProfile executionProfile, String executionProfileName) {
-    this.dseSession = dseSession;
+      CqlSession session, DriverExecutionProfile executionProfile, String executionProfileName) {
+    this.session = session;
     this.executionProfile = executionProfile;
     this.executionProfileName = executionProfileName;
   }
@@ -62,7 +62,7 @@ public class DseGraphRemoteConnection implements RemoteConnection {
   @Override
   public <E> CompletableFuture<RemoteTraversal<?, E>> submitAsync(Bytecode bytecode)
       throws RemoteConnectionException {
-    return dseSession
+    return session
         .executeAsync(new BytecodeGraphStatement(bytecode, executionProfile, executionProfileName))
         .toCompletableFuture()
         .thenApply(DseGraphTraversal::new);

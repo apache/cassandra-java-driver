@@ -18,6 +18,12 @@ package com.datastax.oss.driver.internal.core.context;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.type.codec.DseTypeCodecs;
 import com.datastax.dse.driver.internal.core.InsightsClientLifecycleListener;
+import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousCqlRequestAsyncProcessor;
+import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousCqlRequestSyncProcessor;
+import com.datastax.dse.driver.internal.core.cql.continuous.reactive.ContinuousCqlRequestReactiveProcessor;
+import com.datastax.dse.driver.internal.core.cql.reactive.CqlRequestReactiveProcessor;
+import com.datastax.dse.driver.internal.core.graph.GraphRequestAsyncProcessor;
+import com.datastax.dse.driver.internal.core.graph.GraphRequestSyncProcessor;
 import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.dse.protocol.internal.DseProtocolV1ClientCodecs;
 import com.datastax.dse.protocol.internal.DseProtocolV2ClientCodecs;
@@ -52,6 +58,10 @@ import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.DefaultWriteCoalescer;
 import com.datastax.oss.driver.internal.core.channel.WriteCoalescer;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
+import com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor;
+import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
+import com.datastax.oss.driver.internal.core.cql.CqlRequestAsyncProcessor;
+import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
 import com.datastax.oss.driver.internal.core.metadata.CloudTopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.DefaultTopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
@@ -74,6 +84,7 @@ import com.datastax.oss.driver.internal.core.protocol.SnappyCompressor;
 import com.datastax.oss.driver.internal.core.servererrors.DefaultWriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.servererrors.WriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.session.PoolManager;
+import com.datastax.oss.driver.internal.core.session.RequestProcessor;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
 import com.datastax.oss.driver.internal.core.ssl.JdkSslHandlerFactory;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
@@ -92,6 +103,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.buffer.ByteBuf;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -485,7 +497,65 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected RequestProcessorRegistry buildRequestProcessorRegistry() {
-    return RequestProcessorRegistry.defaultCqlProcessors(getSessionName());
+    String logPrefix = getSessionName();
+
+    List<RequestProcessor<?, ?>> processors = new ArrayList<>();
+
+    // regular requests (sync and async)
+    CqlRequestAsyncProcessor cqlRequestAsyncProcessor = new CqlRequestAsyncProcessor();
+    CqlRequestSyncProcessor cqlRequestSyncProcessor =
+        new CqlRequestSyncProcessor(cqlRequestAsyncProcessor);
+    processors.add(cqlRequestAsyncProcessor);
+    processors.add(cqlRequestSyncProcessor);
+
+    // prepare requests (sync and async)
+    CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor = new CqlPrepareAsyncProcessor();
+    CqlPrepareSyncProcessor cqlPrepareSyncProcessor =
+        new CqlPrepareSyncProcessor(cqlPrepareAsyncProcessor);
+    processors.add(cqlPrepareAsyncProcessor);
+    processors.add(cqlPrepareSyncProcessor);
+
+    // continuous requests (sync and async)
+    ContinuousCqlRequestAsyncProcessor continuousCqlRequestAsyncProcessor =
+        new ContinuousCqlRequestAsyncProcessor();
+    ContinuousCqlRequestSyncProcessor continuousCqlRequestSyncProcessor =
+        new ContinuousCqlRequestSyncProcessor(continuousCqlRequestAsyncProcessor);
+    processors.add(continuousCqlRequestAsyncProcessor);
+    processors.add(continuousCqlRequestSyncProcessor);
+
+    // graph requests (sync and async)
+    try {
+      Class.forName("org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal");
+      GraphRequestAsyncProcessor graphRequestAsyncProcessor = new GraphRequestAsyncProcessor();
+      GraphRequestSyncProcessor graphRequestSyncProcessor =
+          new GraphRequestSyncProcessor(graphRequestAsyncProcessor);
+      processors.add(graphRequestAsyncProcessor);
+      processors.add(graphRequestSyncProcessor);
+    } catch (ClassNotFoundException | LinkageError error) {
+      Loggers.warnWithException(
+          LOG,
+          "Could not register Graph extensions; Tinkerpop API might be missing from classpath",
+          error);
+    }
+
+    // reactive requests (regular and continuous)
+    try {
+      Class.forName("org.reactivestreams.Publisher");
+      CqlRequestReactiveProcessor cqlRequestReactiveProcessor =
+          new CqlRequestReactiveProcessor(cqlRequestAsyncProcessor);
+      ContinuousCqlRequestReactiveProcessor continuousCqlRequestReactiveProcessor =
+          new ContinuousCqlRequestReactiveProcessor(continuousCqlRequestAsyncProcessor);
+      processors.add(cqlRequestReactiveProcessor);
+      processors.add(continuousCqlRequestReactiveProcessor);
+    } catch (ClassNotFoundException | LinkageError error) {
+      Loggers.warnWithException(
+          LOG,
+          "Could not register Reactive extensions; "
+              + "Reactive Streams API might be missing from classpath",
+          error);
+    }
+
+    return new RequestProcessorRegistry(logPrefix, processors.toArray(new RequestProcessor[0]));
   }
 
   protected CodecRegistry buildCodecRegistry(String logPrefix, List<TypeCodec<?>> codecs) {

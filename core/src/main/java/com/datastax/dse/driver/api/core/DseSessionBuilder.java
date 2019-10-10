@@ -21,11 +21,12 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
- * Helper class to build a {@link DseSession} instance.
- *
- * <p>This class is mutable and not thread-safe.
+ * @deprecated DSE functionality is now exposed directly on {@link CqlSession}. This class is
+ *     preserved for backward compatibility, but {@link CqlSession#builder()} should be used
+ *     instead.
  */
 @NotThreadSafe
+@Deprecated
 public class DseSessionBuilder extends DseSessionBuilderBase<DseSessionBuilder, DseSession> {
 
   @NonNull

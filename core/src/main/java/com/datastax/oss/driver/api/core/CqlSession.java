@@ -15,6 +15,10 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import com.datastax.dse.driver.api.core.cql.continuous.ContinuousSession;
+import com.datastax.dse.driver.api.core.cql.continuous.reactive.ContinuousReactiveSession;
+import com.datastax.dse.driver.api.core.cql.reactive.ReactiveSession;
+import com.datastax.dse.driver.api.core.graph.GraphSession;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
@@ -28,8 +32,14 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 
-/** A specialized session with convenience methods to execute CQL statements. */
-public interface CqlSession extends Session {
+/**
+ * The default session type built by the driver.
+ *
+ * <p>It provides friendlier execution methods for the request types most commonly used with Apache
+ * Cassandra&reg; and Datastax Enterprise.
+ */
+public interface CqlSession
+    extends Session, ReactiveSession, ContinuousSession, GraphSession, ContinuousReactiveSession {
 
   /**
    * Returns a builder to create a new instance.

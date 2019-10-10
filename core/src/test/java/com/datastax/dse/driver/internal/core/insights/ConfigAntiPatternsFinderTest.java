@@ -21,9 +21,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
@@ -48,27 +48,26 @@ public class ConfigAntiPatternsFinderTest {
       boolean hostnameValidation,
       Map<String, String> expected) {
     // given
-    DseDriverContext dseDriverContext =
+    InternalDriverContext context =
         mockDefaultProfile(sslEngineFactoryClassDefined, hostnameValidation);
 
     // when
-    Map<String, String> antiPatterns =
-        new ConfigAntiPatternsFinder().findAntiPatterns(dseDriverContext);
+    Map<String, String> antiPatterns = new ConfigAntiPatternsFinder().findAntiPatterns(context);
 
     // then
     assertThat(antiPatterns).isEqualTo(expected);
   }
 
-  private DseDriverContext mockDefaultProfile(
+  private InternalDriverContext mockDefaultProfile(
       boolean sslEngineFactoryClassDefined, boolean hostnameValidation) {
-    DseDriverContext dseDriverContext = mock(DseDriverContext.class);
+    InternalDriverContext context = mock(InternalDriverContext.class);
     DriverConfig driverConfig = mock(DriverConfig.class);
-    when(dseDriverContext.getConfig()).thenReturn(driverConfig);
+    when(context.getConfig()).thenReturn(driverConfig);
     DriverExecutionProfile profile = mock(DriverExecutionProfile.class);
     when(profile.isDefined(SSL_ENGINE_FACTORY_CLASS)).thenReturn(sslEngineFactoryClassDefined);
     when(profile.getBoolean(SSL_HOSTNAME_VALIDATION, false)).thenReturn(hostnameValidation);
     when(driverConfig.getDefaultProfile()).thenReturn(profile);
-    return dseDriverContext;
+    return context;
   }
 
   @DataProvider

@@ -32,12 +32,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.dse.driver.internal.core.insights.schema.LoadBalancingInfo;
 import com.datastax.dse.driver.internal.core.insights.schema.SpecificExecutionProfile;
 import com.datastax.dse.driver.internal.core.insights.schema.SpeculativeExecutionInfo;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -59,12 +59,12 @@ public class ExecutionProfilesInfoFinderTest {
     Map<String, DriverExecutionProfile> profiles =
         ImmutableMap.of("default", defaultExecutionProfile);
 
-    DseDriverContext dseDriverContext =
+    InternalDriverContext context =
         mockDriverContextWithProfiles(defaultExecutionProfile, profiles);
 
     // when
     Map<String, SpecificExecutionProfile> executionProfilesInfo =
-        new ExecutionProfilesInfoFinder().getExecutionProfilesInfo(dseDriverContext);
+        new ExecutionProfilesInfoFinder().getExecutionProfilesInfo(context);
 
     // then
     assertThat(executionProfilesInfo)
@@ -96,11 +96,11 @@ public class ExecutionProfilesInfoFinderTest {
     Map<String, DriverExecutionProfile> profiles =
         ImmutableMap.of(
             "default", defaultExecutionProfile, "non-default", nonDefaultExecutionProfile);
-    DseDriverContext dseDriverContext =
+    InternalDriverContext context =
         mockDriverContextWithProfiles(defaultExecutionProfile, profiles);
     // when
     Map<String, SpecificExecutionProfile> executionProfilesInfo =
-        new ExecutionProfilesInfoFinder().getExecutionProfilesInfo(dseDriverContext);
+        new ExecutionProfilesInfoFinder().getExecutionProfilesInfo(context);
 
     // then
     assertThat(executionProfilesInfo)
@@ -219,15 +219,15 @@ public class ExecutionProfilesInfoFinderTest {
     assertThat(result).isEqualTo("{\"p\":{}}");
   }
 
-  private DseDriverContext mockDriverContextWithProfiles(
+  private InternalDriverContext mockDriverContextWithProfiles(
       DriverExecutionProfile defaultExecutionProfile,
       Map<String, DriverExecutionProfile> profiles) {
-    DseDriverContext dseDriverContext = mock(DseDriverContext.class);
+    InternalDriverContext context = mock(InternalDriverContext.class);
     DriverConfig driverConfig = mock(DriverConfig.class);
     Mockito.<Map<String, ? extends DriverExecutionProfile>>when(driverConfig.getProfiles())
         .thenReturn(profiles);
     when(driverConfig.getDefaultProfile()).thenReturn(defaultExecutionProfile);
-    when(dseDriverContext.getConfig()).thenReturn(driverConfig);
-    return dseDriverContext;
+    when(context.getConfig()).thenReturn(driverConfig);
+    return context;
   }
 }

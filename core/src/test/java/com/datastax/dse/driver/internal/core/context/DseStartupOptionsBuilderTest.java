@@ -15,14 +15,12 @@
  */
 package com.datastax.dse.driver.internal.core.context;
 
-import static com.datastax.dse.driver.api.core.DseSession.DSE_DRIVER_COORDINATES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
-import com.datastax.dse.driver.api.core.session.DseProgrammaticArguments;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
@@ -31,6 +29,7 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.session.ProgrammaticArguments;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.context.StartupOptionsBuilder;
 import com.datastax.oss.protocol.internal.request.Startup;
 import com.tngtech.java.junit.dataprovider.DataProvider;
@@ -44,7 +43,7 @@ import org.mockito.Mock;
 @RunWith(DataProviderRunner.class)
 public class DseStartupOptionsBuilderTest {
 
-  private DseDriverContext driverContext;
+  private DefaultDriverContext driverContext;
 
   // Mocks for instantiating the DSE driver context
   @Mock private DriverConfigLoader configLoader;
@@ -61,10 +60,9 @@ public class DseStartupOptionsBuilderTest {
 
   private void buildContext(UUID clientId, String applicationName, String applicationVersion) {
     this.driverContext =
-        new DseDriverContext(
+        new DefaultDriverContext(
             configLoader,
-            ProgrammaticArguments.builder().build(),
-            DseProgrammaticArguments.builder()
+            ProgrammaticArguments.builder()
                 .withStartupClientId(clientId)
                 .withStartupApplicationName(applicationName)
                 .withStartupApplicationVersion(applicationVersion)
@@ -74,7 +72,8 @@ public class DseStartupOptionsBuilderTest {
   private void assertDefaultStartupOptions(Startup startup) {
     assertThat(startup.options).containsEntry(Startup.CQL_VERSION_KEY, "3.0.0");
     assertThat(startup.options)
-        .containsEntry(StartupOptionsBuilder.DRIVER_NAME_KEY, DSE_DRIVER_COORDINATES.getName());
+        .containsEntry(
+            StartupOptionsBuilder.DRIVER_NAME_KEY, Session.OSS_DRIVER_COORDINATES.getName());
     assertThat(startup.options).containsKey(StartupOptionsBuilder.DRIVER_VERSION_KEY);
     Version version = Version.parse(startup.options.get(StartupOptionsBuilder.DRIVER_VERSION_KEY));
     assertThat(version).isEqualTo(Session.OSS_DRIVER_COORDINATES.getVersion());
