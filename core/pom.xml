@@ -208,13 +208,35 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <threadCount>1</threadCount>
           <properties>
             <property>
               <name>listener</name>
               <value>com.datastax.oss.driver.DriverRunListener</value>
             </property>
+            <!-- tell TestNG not to run jUnit tests -->
+            <property>
+              <name>junit</name>
+              <value>false</value>
+            </property>
+            <property>
+              <name>suitename</name>
+              <value>Reactive Streams TCK</value>
+            </property>
           </properties>
         </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>surefire-junit47</artifactId>
+            <version>${surefire.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>surefire-testng</artifactId>
+            <version>${surefire.version}</version>
+          </dependency>
+        </dependencies>
       </plugin>
       <plugin>
         <groupId>org.apache.felix</groupId>
