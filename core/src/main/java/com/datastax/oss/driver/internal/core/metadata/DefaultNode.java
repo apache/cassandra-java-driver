@@ -25,6 +25,7 @@ import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.NoopNodeMetricUpdater;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
@@ -38,8 +39,8 @@ import net.jcip.annotations.ThreadSafe;
  * from {@link MetadataManager}'s admin thread.
  */
 @ThreadSafe
-public class DefaultNode implements Node {
-
+public class DefaultNode implements Node, Serializable {
+  private static final long serialVersionUID = 1;
   private volatile EndPoint endPoint;
   private volatile NodeMetricUpdater metricUpdater;
 

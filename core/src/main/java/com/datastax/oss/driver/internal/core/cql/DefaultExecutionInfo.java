@@ -26,6 +26,7 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.protocol.internal.Frame;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
@@ -35,8 +36,8 @@ import java.util.concurrent.CompletionStage;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultExecutionInfo implements ExecutionInfo {
-
+public class DefaultExecutionInfo implements ExecutionInfo, Serializable {
+  private static final long serialVersionUID = 1;
   private final Statement<?> statement;
   private final Node coordinator;
   private final int speculativeExecutionCount;
