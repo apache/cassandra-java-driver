@@ -21,8 +21,6 @@ import com.datastax.dse.driver.api.core.cql.reactive.ReactiveSession;
 import com.datastax.dse.driver.api.core.graph.GraphSession;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.MavenCoordinates;
-import com.datastax.oss.driver.api.core.session.Session;
-import com.datastax.oss.driver.internal.core.DefaultMavenCoordinates;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /** A custom session with DSE-specific capabilities. */
@@ -34,15 +32,11 @@ public interface DseSession
         ContinuousReactiveSession {
 
   /**
-   * The Maven coordinates of the core DSE driver artifact.
-   *
-   * <p>Note that this DSE driver depends on the DataStax Java driver for Apache Cassandra&reg;. You
-   * can find the coordinates of the Cassandra driver at {@link Session#OSS_DRIVER_COORDINATES}.
+   * @deprecated the DSE driver is now part of the DataStax Java driver for Apache Cassandra&reg;.
+   *     This field is preserved for backward compatibility, but it returns the same value as {@link
+   *     CqlSession#OSS_DRIVER_COORDINATES}.
    */
-  @NonNull
-  MavenCoordinates DSE_DRIVER_COORDINATES =
-      DefaultMavenCoordinates.buildFromResourceAndPrint(
-          DseSession.class.getResource("/com/datastax/dse/driver/Driver.properties"));
+  @Deprecated @NonNull MavenCoordinates DSE_DRIVER_COORDINATES = CqlSession.OSS_DRIVER_COORDINATES;
 
   /**
    * Returns a builder to create a new instance.

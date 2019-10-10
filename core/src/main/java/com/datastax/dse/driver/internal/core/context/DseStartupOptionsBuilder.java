@@ -15,8 +15,6 @@
  */
 package com.datastax.dse.driver.internal.core.context;
 
-import static com.datastax.dse.driver.api.core.DseSession.DSE_DRIVER_COORDINATES;
-
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -39,17 +37,6 @@ public class DseStartupOptionsBuilder extends StartupOptionsBuilder {
 
   public DseStartupOptionsBuilder(InternalDriverContext context) {
     super(context);
-  }
-
-  @Override
-  protected String getDriverVersion() {
-    // use the DSE Version instead
-    return DSE_DRIVER_COORDINATES.getVersion().toString();
-  }
-
-  @Override
-  protected String getDriverName() {
-    return DSE_DRIVER_COORDINATES.getName();
   }
 
   /**

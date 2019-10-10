@@ -15,8 +15,8 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.shaded.guava.common.base.Suppliers;
 import com.datastax.oss.driver.shaded.guava.common.base.Throwables;
 import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
@@ -53,7 +53,7 @@ class GraphSONUtils {
                   switch (graphSubProtocol) {
                     case GRAPHSON_1_0:
                       com.datastax.oss.driver.api.core.Version driverVersion =
-                          DseSession.DSE_DRIVER_COORDINATES.getVersion();
+                          CqlSession.OSS_DRIVER_COORDINATES.getVersion();
                       Version driverJacksonVersion =
                           new Version(
                               driverVersion.getMajor(),
