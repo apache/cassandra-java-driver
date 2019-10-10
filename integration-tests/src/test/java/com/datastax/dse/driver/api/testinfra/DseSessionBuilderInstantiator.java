@@ -16,7 +16,7 @@
 package com.datastax.dse.driver.api.testinfra;
 
 import com.datastax.dse.driver.api.core.DseSession;
-import com.datastax.dse.driver.api.core.config.DseDriverConfigLoader;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 
@@ -26,6 +26,6 @@ public class DseSessionBuilderInstantiator {
   }
 
   public static ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder() {
-    return DseDriverConfigLoader.programmaticBuilder();
+    return DriverConfigLoader.programmaticBuilder();
   }
 }

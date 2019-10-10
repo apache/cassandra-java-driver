@@ -15,7 +15,6 @@
  */
 package com.datastax.dse.driver.api.core;
 
-import com.datastax.dse.driver.api.core.config.DseDriverConfigLoader;
 import com.datastax.dse.driver.api.core.session.DseProgrammaticArguments;
 import com.datastax.dse.driver.api.core.type.codec.DseTypeCodecs;
 import com.datastax.dse.driver.internal.core.auth.DseProgrammaticPlainTextAuthProvider;
@@ -119,8 +118,7 @@ public abstract class DseSessionBuilderBase<
    *
    * <p>Note that this loader must produce a configuration that includes the DSE-specific options:
    * if you're using one of the built-in implementations provided by the driver, use the static
-   * factory methods from {@link DseDriverConfigLoader} (<b>not</b> the ones from {@link
-   * DriverConfigLoader}).
+   * factory methods from {@link DriverConfigLoader}.
    *
    * <p>If you don't call this method, the builder will use the default implementation, based on the
    * Typesafe config library. More precisely, configuration properties are loaded and merged from

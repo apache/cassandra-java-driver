@@ -15,8 +15,6 @@
  */
 package com.datastax.dse.driver.internal.core.context;
 
-import com.datastax.dse.driver.api.core.config.DseDriverConfigLoader;
-import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.session.DseProgrammaticArguments;
 import com.datastax.dse.driver.internal.core.DseProtocolVersionRegistry;
 import com.datastax.dse.driver.internal.core.InsightsClientLifecycleListener;
@@ -105,14 +103,6 @@ public class DseDriverContext extends DefaultDriverContext {
     }
     this.listeners =
         Collections.singletonList(new InsightsClientLifecycleListener(this, stackTrace));
-
-    if (!getConfig().getDefaultProfile().isDefined(DseDriverOption.CONTINUOUS_PAGING_PAGE_SIZE)) {
-      LOG.warn(
-          "[{}] It looks like your configuration is missing DSE-specific options. "
-              + "If you use a built-in config loader, make sure you create it with {}.",
-          getSessionName(),
-          DseDriverConfigLoader.class.getSimpleName());
-    }
   }
   /**
    * @deprecated this constructor only exists for backward compatibility. Please use {@link
