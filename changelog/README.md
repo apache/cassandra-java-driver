@@ -2,8 +2,10 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### DSOD (in progress)
-- [new feature] JAVA-2478: Allow to provide secureBundle via URL
+### DataStax Cloud (in progress)
+
+- [improvement] JAVA-2490: Allow to read the secure bundle from an InputStream
+- [new feature] JAVA-2478: Allow to provide the secure bundle via URL
 
 ### 4.3.0 (in progress)
 

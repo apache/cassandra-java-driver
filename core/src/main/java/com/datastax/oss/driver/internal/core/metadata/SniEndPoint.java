@@ -36,7 +36,7 @@ public class SniEndPoint implements EndPoint {
    *     InetSocketAddress#isUnresolved() unresolved}, each call to {@link #resolve()} will
    *     re-resolve it, fetch all of its A-records, and if there are more than 1 pick one in a
    *     round-robin fashion.
-   * @param serverName the SNI server name. In the context of DBaas, this is the string
+   * @param serverName the SNI server name. In the context of Cloud, this is the string
    *     representation of the host id.
    */
   public SniEndPoint(InetSocketAddress proxyAddress, String serverName) {

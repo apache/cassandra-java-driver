@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.cloud;
 import org.junit.rules.ExternalResource;
 
 public class SniProxyRule extends ExternalResource {
+
   private final SniProxyServer proxy;
 
   public SniProxyRule() {

@@ -34,19 +34,18 @@ import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.ContactPoints;
 import com.datastax.oss.driver.internal.core.auth.ProgrammaticPlainTextAuthProvider;
-import com.datastax.oss.driver.internal.core.config.cloud.DbaasConfig;
-import com.datastax.oss.driver.internal.core.config.cloud.DbaasConfigUtil;
+import com.datastax.oss.driver.internal.core.config.cloud.CloudConfig;
+import com.datastax.oss.driver.internal.core.config.cloud.CloudConfigFactory;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
-import com.datastax.oss.driver.internal.core.metadata.SniEndPoint;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
-import com.datastax.oss.driver.internal.core.ssl.SniSslEngineFactory;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -58,6 +57,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -81,7 +81,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   protected DriverConfigLoader configLoader;
   protected Set<EndPoint> programmaticContactPoints = new HashSet<>();
   protected CqlIdentifier keyspace;
-  protected URL cloudConfigUrl;
+  protected Callable<InputStream> cloudConfigInputStream;
 
   protected ProgrammaticArguments.Builder programmaticArgumentsBuilder =
       ProgrammaticArguments.builder();
@@ -387,31 +387,93 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
-   * Creates a SessionBuilder pre-configured for a specific Cloud endpoint or configuration file.
-   * Currently this supports only a path on the local filesystem pointing to the secure connect
-   * bundle zip file. In the future this will be extended to work with CaaS service provider
-   * endpoints.
+   * Configures this SessionBuilder for Cloud deployments by retrieving connection information from
+   * the provided {@link Path}.
+   *
+   * <p>To connect to a Cloud database, you must first download the secure database bundle from the
+   * DataStax Constellation console that contains the connection information, then instruct the
+   * driver to read its contents using either this method or one if its variants.
+   *
+   * <p>For more information, please refer to the DataStax Constellation documentation.
    *
    * @param cloudConfigPath Path to the secure connect bundle zip file.
+   * @see #withCloudSecureConnectBundle(URL)
+   * @see #withCloudSecureConnectBundle(InputStream)
    */
   @NonNull
   public SelfT withCloudSecureConnectBundle(@NonNull Path cloudConfigPath) {
     try {
-      this.cloudConfigUrl = cloudConfigPath.toAbsolutePath().normalize().toUri().toURL();
+      URL cloudConfigUrl = cloudConfigPath.toAbsolutePath().normalize().toUri().toURL();
+      this.cloudConfigInputStream = cloudConfigUrl::openStream;
     } catch (MalformedURLException e) {
-      throw new IllegalArgumentException("Incorrect format of cloudConfigUrl.", e);
+      throw new IllegalArgumentException("Incorrect format of cloudConfigPath", e);
     }
     return self;
   }
 
   /**
-   * Creates a SessionBuilder pre-configured for a specific Cloud endpoint or configuration file.
+   * Configures this SessionBuilder for Cloud deployments by retrieving connection information from
+   * the provided {@link URL}.
    *
-   * @param cloudConfigUrl URL from which the secure connect bundle zip could be retrieved.
+   * <p>To connect to a Cloud database, you must first download the secure database bundle from the
+   * DataStax Constellation console that contains the connection information, then instruct the
+   * driver to read its contents using either this method or one if its variants.
+   *
+   * <p>For more information, please refer to the DataStax Constellation documentation.
+   *
+   * @param cloudConfigUrl URL to the secure connect bundle zip file.
+   * @see #withCloudSecureConnectBundle(Path)
+   * @see #withCloudSecureConnectBundle(InputStream)
    */
   @NonNull
   public SelfT withCloudSecureConnectBundle(@NonNull URL cloudConfigUrl) {
-    this.cloudConfigUrl = cloudConfigUrl;
+    this.cloudConfigInputStream = cloudConfigUrl::openStream;
+    return self;
+  }
+
+  /**
+   * Configures this SessionBuilder for Cloud deployments by retrieving connection information from
+   * the provided {@link InputStream}.
+   *
+   * <p>To connect to a Cloud database, you must first download the secure database bundle from the
+   * DataStax Constellation console that contains the connection information, then instruct the
+   * driver to read its contents using either this method or one if its variants.
+   *
+   * <p>For more information, please refer to the DataStax Constellation documentation.
+   *
+   * <p>Note that the provided stream will be consumed <em>and closed</em> when either {@link
+   * #build()} or {@link #buildAsync()} are called; attempting to reuse it afterwards will result in
+   * an error being thrown.
+   *
+   * @param cloudConfigInputStream A stream containing the secure connect bundle zip file.
+   * @see #withCloudSecureConnectBundle(Path)
+   * @see #withCloudSecureConnectBundle(URL)
+   */
+  @NonNull
+  public SelfT withCloudSecureConnectBundle(@NonNull InputStream cloudConfigInputStream) {
+    this.cloudConfigInputStream = () -> cloudConfigInputStream;
+    return self;
+  }
+
+  /**
+   * Configures this SessionBuilder to use the provided Cloud proxy endpoint.
+   *
+   * <p>Normally, this method should not be called directly; the normal and easiest way to configure
+   * the driver for Cloud deployments is through a {@linkplain #withCloudSecureConnectBundle(URL)
+   * secure connect bundle}.
+   *
+   * <p>Setting this option to any non-null address will make the driver use a special topology
+   * monitor tailored for Cloud deployments. This topology monitor assumes that the target cluster
+   * should be contacted through the proxy specified here, using SNI routing.
+   *
+   * <p>For more information, please refer to the DataStax Constellation documentation.
+   *
+   * @param cloudProxyAddress The address of the Cloud proxy to use.
+   * @see <a href="https://en.wikipedia.org/wiki/Server_Name_Indication">Server Name Indication</a>
+   */
+  @NonNull
+  public SelfT withCloudProxyAddress(@Nullable InetSocketAddress cloudProxyAddress) {
+    this.programmaticArgumentsBuilder.withCloudProxyAddress(cloudProxyAddress);
     return self;
   }
 
@@ -447,30 +509,23 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       DriverConfigLoader configLoader = buildIfNull(this.configLoader, this::defaultConfigLoader);
 
       DriverExecutionProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
-      if (cloudConfigUrl == null) {
-
+      if (cloudConfigInputStream == null) {
         String configUrlString =
             defaultConfig.getString(DefaultDriverOption.CLOUD_SECURE_CONNECT_BUNDLE, null);
         if (configUrlString != null) {
-          cloudConfigUrl = getURL(configUrlString);
+          cloudConfigInputStream = () -> getURL(configUrlString).openStream();
         }
       }
-      if (cloudConfigUrl != null) {
-        DbaasConfig dbaasConfig = DbaasConfigUtil.getConfig(cloudConfigUrl);
-        for (String hostID : dbaasConfig.getHostIds()) {
-          programmaticContactPoints.add(
-              new SniEndPoint(
-                  new InetSocketAddress(dbaasConfig.getSniHost(), dbaasConfig.getSniPort()),
-                  hostID));
+      if (cloudConfigInputStream != null) {
+        CloudConfig cloudConfig =
+            new CloudConfigFactory().createCloudConfig(cloudConfigInputStream.call());
+        addContactEndPoints(cloudConfig.getEndPoints());
+        withLocalDatacenter(cloudConfig.getLocalDatacenter());
+        withSslEngineFactory(cloudConfig.getSslEngineFactory());
+        withCloudProxyAddress(cloudConfig.getProxyAddress());
+        if (cloudConfig.getAuthProvider().isPresent()) {
+          withAuthProvider(cloudConfig.getAuthProvider().get());
         }
-        withLocalDatacenter(dbaasConfig.getLocalDataCenter());
-        if (dbaasConfig.getUsername() != null && dbaasConfig.getPassword() != null) {
-          withAuthCredentials(dbaasConfig.getUsername(), dbaasConfig.getPassword());
-        }
-        SSLContext sslContext = DbaasConfigUtil.getSSLContext(dbaasConfig);
-        withSslEngineFactory(new SniSslEngineFactory(sslContext));
-        programmaticArgumentsBuilder.withCloudAddress(
-            new InetSocketAddress(dbaasConfig.getSniHost(), dbaasConfig.getSniPort()));
       }
 
       List<String> configContactPoints =
@@ -507,11 +562,15 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *     setting
    */
   private URL getURL(String configUrl) throws MalformedURLException {
-
     try {
       return new URL(configUrl);
-    } catch (MalformedURLException e) {
-      return Paths.get(configUrl).toAbsolutePath().normalize().toUri().toURL();
+    } catch (MalformedURLException e1) {
+      try {
+        return Paths.get(configUrl).toAbsolutePath().normalize().toUri().toURL();
+      } catch (MalformedURLException e2) {
+        e2.addSuppressed(e1);
+        throw e2;
+      }
     }
   }
 

@@ -53,7 +53,7 @@ public class ProgrammaticArguments {
   private final ClassLoader classLoader;
   private final AuthProvider authProvider;
   private final SslEngineFactory sslEngineFactory;
-  private final InetSocketAddress cloudAddress;
+  private final InetSocketAddress cloudProxyAddress;
 
   private ProgrammaticArguments(
       @NonNull List<TypeCodec<?>> typeCodecs,
@@ -65,7 +65,7 @@ public class ProgrammaticArguments {
       @Nullable ClassLoader classLoader,
       @Nullable AuthProvider authProvider,
       @Nullable SslEngineFactory sslEngineFactory,
-      @Nullable InetSocketAddress cloudAddress) {
+      @Nullable InetSocketAddress cloudProxyAddress) {
     this.typeCodecs = typeCodecs;
     this.nodeStateListener = nodeStateListener;
     this.schemaChangeListener = schemaChangeListener;
@@ -75,7 +75,7 @@ public class ProgrammaticArguments {
     this.classLoader = classLoader;
     this.authProvider = authProvider;
     this.sslEngineFactory = sslEngineFactory;
-    this.cloudAddress = cloudAddress;
+    this.cloudProxyAddress = cloudProxyAddress;
   }
 
   @NonNull
@@ -124,8 +124,8 @@ public class ProgrammaticArguments {
   }
 
   @Nullable
-  public InetSocketAddress getCloudAddress() {
-    return cloudAddress;
+  public InetSocketAddress getCloudProxyAddress() {
+    return cloudProxyAddress;
   }
 
   public static class Builder {
@@ -140,7 +140,7 @@ public class ProgrammaticArguments {
     private ClassLoader classLoader;
     private AuthProvider authProvider;
     private SslEngineFactory sslEngineFactory;
-    private InetSocketAddress cloudAddress;
+    private InetSocketAddress cloudProxyAddress;
 
     @NonNull
     public Builder addTypeCodecs(@NonNull TypeCodec<?>... typeCodecs) {
@@ -203,8 +203,8 @@ public class ProgrammaticArguments {
     }
 
     @NonNull
-    public Builder withCloudAddress(@Nullable InetSocketAddress cloudAddress) {
-      this.cloudAddress = cloudAddress;
+    public Builder withCloudProxyAddress(@Nullable InetSocketAddress cloudAddress) {
+      this.cloudProxyAddress = cloudAddress;
       return this;
     }
 
@@ -232,7 +232,7 @@ public class ProgrammaticArguments {
           classLoader,
           authProvider,
           sslEngineFactory,
-          cloudAddress);
+          cloudProxyAddress);
     }
   }
 }
