@@ -129,7 +129,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
     // in the initialization sequence.
     private Step step;
     private Authenticator authenticator;
-    private ByteBuffer authReponseToken;
+    private ByteBuffer authResponseToken;
 
     InitRequest(ChannelHandlerContext ctx) {
       super(ctx, timeoutMillis);
@@ -151,7 +151,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
         case SET_KEYSPACE:
           return new Query("USE " + options.keyspace.asCql(false));
         case AUTH_RESPONSE:
-          return new AuthResponse(authReponseToken);
+          return new AuthResponse(authResponseToken);
         case REGISTER:
           return new Register(options.eventTypes);
         default:
@@ -184,7 +184,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
                               endPoint, "authenticator threw an exception", error));
                     } else {
                       step = Step.AUTH_RESPONSE;
-                      authReponseToken = token;
+                      authResponseToken = token;
                       send();
                     }
                   },
@@ -202,7 +202,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
                               endPoint, "authenticator threw an exception", error));
                     } else {
                       step = Step.AUTH_RESPONSE;
-                      authReponseToken = token;
+                      authResponseToken = token;
                       send();
                     }
                   },
