@@ -6,7 +6,6 @@
 
 - [improvement] JAVA-2444: Add method setRoutingKey(ByteBuffer...) to StatementBuilder
 - [improvement] JAVA-2398: Improve support for optional dependencies in OSGi
-- [bug] JAVA-2470: Fix Session.OSS_DRIVER_COORDINATES for shaded JAR
 - [improvement] JAVA-2452: Allow "none" as a compression option
 - [improvement] JAVA-2419: Allow registration of user codecs at runtime
 - [documentation] JAVA-2384: Add quick overview section to each manual page
@@ -14,6 +13,11 @@
 - [documentation] JAVA-2416: Update paging section in the manual
 - [improvement] JAVA-2402: Add setTracing(boolean) to StatementBuilder
 - [bug] JAVA-2466: Set idempotence to null in BatchStatement.newInstance
+
+### 4.2.2
+
+- [bug] JAVA-2475: Fix message size when query string contains Unicode surrogates
+- [bug] JAVA-2470: Fix Session.OSS_DRIVER_COORDINATES for shaded JAR
 
 ### 4.2.1
 
