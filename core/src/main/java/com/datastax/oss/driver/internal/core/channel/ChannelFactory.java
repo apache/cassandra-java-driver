@@ -15,14 +15,17 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
+import com.datastax.oss.driver.internal.core.config.typesafe.TypesafeDriverConfig;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
@@ -33,6 +36,7 @@ import com.datastax.oss.driver.internal.core.protocol.FrameDecoder;
 import com.datastax.oss.driver.internal.core.protocol.FrameEncoder;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -40,6 +44,7 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -54,6 +59,15 @@ public class ChannelFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(ChannelFactory.class);
 
+  /** A value for {@link #productType} that indicates that we are connected to Datastax Cloud. */
+  private static final String DATASTAX_CLOUD_PRODUCT_TYPE = "DATASTAX_APOLLO";
+
+  /**
+   * A value for {@link #productType} that indicates that the server does not report any product
+   * type.
+   */
+  private static final String UNKNOWN_PRODUCT_TYPE = "UNKNOWN";
+
   private final String logPrefix;
   protected final InternalDriverContext context;
 
@@ -61,6 +75,14 @@ public class ChannelFactory {
   @VisibleForTesting volatile ProtocolVersion protocolVersion;
 
   @VisibleForTesting volatile String clusterName;
+
+  /**
+   * The value of the {@code PRODUCT_TYPE} option reported by the first channel we opened, in
+   * response to a {@code SUPPORTED} request.
+   *
+   * <p>If the server does not return that option, the value will be {@link #UNKNOWN_PRODUCT_TYPE}.
+   */
+  @VisibleForTesting volatile String productType;
 
   public ChannelFactory(InternalDriverContext context) {
     this.logPrefix = context.getSessionName();
@@ -166,6 +188,24 @@ public class ChannelFactory {
             if (ChannelFactory.this.clusterName == null) {
               ChannelFactory.this.clusterName = driverChannel.getClusterName();
             }
+            Map<String, List<String>> supportedOptions = driverChannel.getOptions();
+            if (ChannelFactory.this.productType == null && supportedOptions != null) {
+              List<String> productTypes = supportedOptions.get("PRODUCT_TYPE");
+              String productType =
+                  productTypes != null && !productTypes.isEmpty()
+                      ? productTypes.get(0)
+                      : UNKNOWN_PRODUCT_TYPE;
+              ChannelFactory.this.productType = productType;
+              DriverConfig driverConfig = context.getConfig();
+              if (driverConfig instanceof TypesafeDriverConfig
+                  && productType.equals(DATASTAX_CLOUD_PRODUCT_TYPE)) {
+                ((TypesafeDriverConfig) driverConfig)
+                    .overrideDefaults(
+                        ImmutableMap.of(
+                            DefaultDriverOption.REQUEST_CONSISTENCY,
+                            ConsistencyLevel.LOCAL_QUORUM.name()));
+              }
+            }
             resultFuture.complete(driverChannel);
           } else {
             Throwable error = connectFuture.cause();
@@ -237,7 +277,13 @@ public class ChannelFactory {
           HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultConfig);
           ProtocolInitHandler initHandler =
               new ProtocolInitHandler(
-                  context, protocolVersion, clusterName, endPoint, options, heartbeatHandler);
+                  context,
+                  protocolVersion,
+                  clusterName,
+                  endPoint,
+                  options,
+                  heartbeatHandler,
+                  productType == null);
 
           ChannelPipeline pipeline = channel.pipeline();
           context

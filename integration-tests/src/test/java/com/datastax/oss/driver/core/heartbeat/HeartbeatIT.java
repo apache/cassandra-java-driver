@@ -107,11 +107,12 @@ public class HeartbeatIT {
     // Try to create a session. Note that the init query timeout is twice the heartbeat interval, so
     // we're sure that at least one heartbeat would be sent if it was not properly disabled during
     // init.
-    try (CqlSession session = newSession()) {
+    try (CqlSession ignored = newSession()) {
       fail("Expected session creation to fail");
     } catch (Exception expected) {
-      // no heartbeats should have been sent while protocol was initializing.
-      assertThat(getHeartbeatsForNode()).isEmpty();
+      // no heartbeats should have been sent while protocol was initializing, but one OPTIONS
+      // message is expected to be sent as part of the initialization process.
+      assertThat(getHeartbeatsForNode()).hasSize(1);
     }
   }
 

@@ -31,7 +31,9 @@ import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import com.datastax.oss.protocol.internal.ProtocolConstants.ErrorCode;
 import com.datastax.oss.protocol.internal.request.AuthResponse;
+import com.datastax.oss.protocol.internal.request.Options;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.request.Register;
 import com.datastax.oss.protocol.internal.request.Startup;
@@ -40,6 +42,7 @@ import com.datastax.oss.protocol.internal.response.AuthSuccess;
 import com.datastax.oss.protocol.internal.response.Authenticate;
 import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.Ready;
+import com.datastax.oss.protocol.internal.response.Supported;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import io.netty.channel.ChannelHandlerContext;
@@ -69,14 +72,21 @@ class ProtocolInitHandler extends ConnectInitHandler {
   private final HeartbeatHandler heartbeatHandler;
   private String logPrefix;
   private ChannelHandlerContext ctx;
+  private boolean querySupportedOptions;
 
+  /**
+   * @param querySupportedOptions whether to send OPTIONS as the first message, to request which
+   *     protocol options the channel supports. If this is true, the options will be stored as a
+   *     channel attribute, and exposed via {@link DriverChannel#getOptions()}.
+   */
   ProtocolInitHandler(
       InternalDriverContext context,
       ProtocolVersion protocolVersion,
       String expectedClusterName,
       EndPoint endPoint,
       DriverChannelOptions options,
-      HeartbeatHandler heartbeatHandler) {
+      HeartbeatHandler heartbeatHandler,
+      boolean querySupportedOptions) {
 
     this.context = context;
     this.endPoint = endPoint;
@@ -89,6 +99,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
     this.expectedClusterName = expectedClusterName;
     this.options = options;
     this.heartbeatHandler = heartbeatHandler;
+    this.querySupportedOptions = querySupportedOptions;
     this.logPrefix = options.ownerLogPrefix + "|connecting...";
   }
 
@@ -117,6 +128,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
   }
 
   private enum Step {
+    OPTIONS,
     STARTUP,
     GET_CLUSTER_NAME,
     SET_KEYSPACE,
@@ -133,7 +145,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
 
     InitRequest(ChannelHandlerContext ctx) {
       super(ctx, timeoutMillis);
-      this.step = Step.STARTUP;
+      this.step = querySupportedOptions ? Step.OPTIONS : Step.STARTUP;
     }
 
     @Override
@@ -144,6 +156,8 @@ class ProtocolInitHandler extends ConnectInitHandler {
     @Override
     Message getRequest() {
       switch (step) {
+        case OPTIONS:
+          return Options.INSTANCE;
         case STARTUP:
           return new Startup(context.getStartupOptions());
         case GET_CLUSTER_NAME:
@@ -167,7 +181,11 @@ class ProtocolInitHandler extends ConnectInitHandler {
           step,
           ProtocolUtils.opcodeString(response.opcode));
       try {
-        if (step == Step.STARTUP && response instanceof Ready) {
+        if (step == Step.OPTIONS && response instanceof Supported) {
+          channel.attr(DriverChannel.OPTIONS_KEY).set(((Supported) response).options);
+          step = Step.STARTUP;
+          send();
+        } else if (step == Step.STARTUP && response instanceof Ready) {
           context.getAuthProvider().ifPresent(provider -> provider.onMissingChallenge(endPoint));
           step = Step.GET_CLUSTER_NAME;
           send();
@@ -265,12 +283,14 @@ class ProtocolInitHandler extends ConnectInitHandler {
         } else if (response instanceof Error) {
           Error error = (Error) response;
           // Testing for a specific string is a tad fragile but Cassandra doesn't give us a more
-          // precise error
-          // code.
+          // precise error code.
           // C* 2.1 reports a server error instead of protocol error, see CASSANDRA-9451.
-          if (step == Step.STARTUP
-              && (error.code == ProtocolConstants.ErrorCode.PROTOCOL_ERROR
-                  || error.code == ProtocolConstants.ErrorCode.SERVER_ERROR)
+          boolean firstRequest =
+              (step == Step.OPTIONS && querySupportedOptions) || step == Step.STARTUP;
+          boolean serverOrProtocolError =
+              error.code == ErrorCode.PROTOCOL_ERROR || error.code == ErrorCode.SERVER_ERROR;
+          if (firstRequest
+              && serverOrProtocolError
               && error.message.contains("Invalid or unsupported protocol version")) {
             fail(
                 UnsupportedProtocolVersionException.forSingleAttempt(
