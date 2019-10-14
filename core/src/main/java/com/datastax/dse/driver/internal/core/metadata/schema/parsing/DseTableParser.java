@@ -35,7 +35,6 @@ import com.datastax.oss.driver.api.core.type.ListType;
 import com.datastax.oss.driver.api.core.type.MapType;
 import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
-import com.datastax.oss.driver.internal.core.CqlIdentifiers;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.DataTypeClassNameCompositeParser;
@@ -48,10 +47,12 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.Multimap;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import net.jcip.annotations.ThreadSafe;
@@ -389,12 +390,24 @@ public class DseTableParser extends RelationParser {
         getLabel(row),
         fromTable,
         findVertexLabel(fromTable, keyspaceVertices, "incoming"),
-        CqlIdentifiers.wrap(row.getListOfString("from_partition_key_columns")),
-        CqlIdentifiers.wrap(row.getListOfString("from_clustering_columns")),
+        wrapInternal(row.getListOfString("from_partition_key_columns")),
+        wrapInternal(row.getListOfString("from_clustering_columns")),
         toTable,
         findVertexLabel(toTable, keyspaceVertices, "outgoing"),
-        CqlIdentifiers.wrap(row.getListOfString("to_partition_key_columns")),
-        CqlIdentifiers.wrap(row.getListOfString("to_clustering_columns")));
+        wrapInternal(row.getListOfString("to_partition_key_columns")),
+        wrapInternal(row.getListOfString("to_clustering_columns")));
+  }
+
+  // TODO replace by CqlIdentifiers.wrapInternal() when this is rebased on OSS 4.3.0
+  @NonNull
+  private List<CqlIdentifier> wrapInternal(@NonNull Iterable<String> in) {
+
+    Objects.requireNonNull(in, "Input Iterable must not be null");
+    ImmutableList.Builder<CqlIdentifier> builder = ImmutableList.<CqlIdentifier>builder();
+    for (String name : in) {
+      builder.add(CqlIdentifier.fromInternal(name));
+    }
+    return builder.build();
   }
 
   private CqlIdentifier getLabel(AdminRow row) {

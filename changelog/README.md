@@ -4,6 +4,7 @@
 
 ### NGDG (in progress)
 
+- [bug] JAVA-2492: Parse edge metadata using internal identifiers
 - [improvement] JAVA-2282: Remove GraphSON3 support
 - [new feature] JAVA-2098: Add filter predicates for collections
 - [improvement] JAVA-2245: Rename graph engine Legacy to Classic and Modern to Core
