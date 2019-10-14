@@ -16,19 +16,34 @@
 package com.datastax.oss.driver.internal.core;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public class CqlIdentifiers {
 
-  public static List<CqlIdentifier> wrap(Iterable<String> in) {
+  public static List<CqlIdentifier> wrap(
+      @NonNull Iterable<String> in, @NonNull Function<String, CqlIdentifier> fn) {
+
+    Preconditions.checkNotNull(in, "Input Iterable must not be null");
+    Preconditions.checkNotNull(fn, "CqlIdentifier conversion function must not be null");
     ImmutableList.Builder<CqlIdentifier> out = ImmutableList.builder();
     for (String name : in) {
-      out.add(CqlIdentifier.fromCql(name));
+      out.add(fn.apply(name));
     }
     return out.build();
+  }
+
+  public static List<CqlIdentifier> wrap(Iterable<String> in) {
+    return wrap(in, CqlIdentifier::fromCql);
+  }
+
+  public static List<CqlIdentifier> wrapInternal(Iterable<String> in) {
+    return wrap(in, CqlIdentifier::fromInternal);
   }
 
   public static <V> Map<CqlIdentifier, V> wrapKeys(Map<String, V> in) {
