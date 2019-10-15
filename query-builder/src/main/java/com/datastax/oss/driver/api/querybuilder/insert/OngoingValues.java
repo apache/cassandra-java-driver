@@ -67,6 +67,6 @@ public interface OngoingValues {
   /** Shortcut for {@link #valuesByIds(Map)} when the keys are plain strings. */
   @NonNull
   default RegularInsert values(@NonNull Map<String, Term> newAssignments) {
-    return valuesByIds(CqlIdentifiers.wrapKeys(newAssignments));
+    return valuesByIds(CqlIdentifiers.wrapKeysCql(newAssignments));
   }
 }

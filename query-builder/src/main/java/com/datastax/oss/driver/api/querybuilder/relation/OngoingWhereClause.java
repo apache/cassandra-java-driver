@@ -152,7 +152,7 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    */
   @NonNull
   default TokenRelationBuilder<SelfT> whereToken(@NonNull Iterable<String> names) {
-    return whereTokenFromIds(CqlIdentifiers.wrap(names));
+    return whereTokenFromIds(CqlIdentifiers.wrapCql(names));
   }
 
   /**
@@ -198,7 +198,7 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    */
   @NonNull
   default MultiColumnRelationBuilder<SelfT> whereColumns(@NonNull Iterable<String> names) {
-    return whereColumnIds(CqlIdentifiers.wrap(names));
+    return whereColumnIds(CqlIdentifiers.wrapCql(names));
   }
 
   /**

@@ -58,7 +58,7 @@ public interface CreateMaterializedViewSelection {
   @NonNull
   default CreateMaterializedViewSelectionWithColumns columns(
       @NonNull Iterable<String> columnNames) {
-    return columnsIds(CqlIdentifiers.wrap(columnNames));
+    return columnsIds(CqlIdentifiers.wrapCql(columnNames));
   }
 
   /** Var-arg equivalent of {@link #columns(Iterable)}. */

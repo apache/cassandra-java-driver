@@ -16,41 +16,58 @@
 package com.datastax.oss.driver.internal.core;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 public class CqlIdentifiers {
 
+  @NonNull
   public static List<CqlIdentifier> wrap(
       @NonNull Iterable<String> in, @NonNull Function<String, CqlIdentifier> fn) {
 
-    Preconditions.checkNotNull(in, "Input Iterable must not be null");
-    Preconditions.checkNotNull(fn, "CqlIdentifier conversion function must not be null");
-    ImmutableList.Builder<CqlIdentifier> out = ImmutableList.builder();
+    Objects.requireNonNull(in, "Input Iterable must not be null");
+    Objects.requireNonNull(fn, "CqlIdentifier conversion function must not be null");
+    ImmutableList.Builder<CqlIdentifier> builder = ImmutableList.<CqlIdentifier>builder();
     for (String name : in) {
-      out.add(fn.apply(name));
+      builder.add(fn.apply(name));
     }
-    return out.build();
+    return builder.build();
   }
 
-  public static List<CqlIdentifier> wrap(Iterable<String> in) {
+  @NonNull
+  public static List<CqlIdentifier> wrapCql(@NonNull Iterable<String> in) {
     return wrap(in, CqlIdentifier::fromCql);
   }
 
-  public static List<CqlIdentifier> wrapInternal(Iterable<String> in) {
+  @NonNull
+  public static List<CqlIdentifier> wrapInternal(@NonNull Iterable<String> in) {
     return wrap(in, CqlIdentifier::fromInternal);
   }
 
-  public static <V> Map<CqlIdentifier, V> wrapKeys(Map<String, V> in) {
-    ImmutableMap.Builder<CqlIdentifier, V> out = ImmutableMap.builder();
+  @NonNull
+  public static <V> Map<CqlIdentifier, V> wrapKeys(
+      @NonNull Map<String, V> in, @NonNull Function<String, CqlIdentifier> fn) {
+    Objects.requireNonNull(in, "Input Map must not be null");
+    Objects.requireNonNull(fn, "CqlIdentifier conversion function must not be null");
+    ImmutableMap.Builder<CqlIdentifier, V> builder = ImmutableMap.<CqlIdentifier, V>builder();
     for (Map.Entry<String, V> entry : in.entrySet()) {
-      out.put(CqlIdentifier.fromCql(entry.getKey()), entry.getValue());
+      builder.put(fn.apply(entry.getKey()), entry.getValue());
     }
-    return out.build();
+    return builder.build();
+  }
+
+  @NonNull
+  public static <V> Map<CqlIdentifier, V> wrapKeysCql(@NonNull Map<String, V> in) {
+    return wrapKeys(in, CqlIdentifier::fromCql);
+  }
+
+  @NonNull
+  public static <V> Map<CqlIdentifier, V> wrapKeysInternal(@NonNull Map<String, V> in) {
+    return wrapKeys(in, CqlIdentifier::fromInternal);
   }
 }

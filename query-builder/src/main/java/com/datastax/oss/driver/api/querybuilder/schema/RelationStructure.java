@@ -46,7 +46,7 @@ public interface RelationStructure<SelfT extends RelationStructure<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT withClusteringOrder(@NonNull Map<String, ClusteringOrder> orderings) {
-    return withClusteringOrderByIds(CqlIdentifiers.wrapKeys(orderings));
+    return withClusteringOrderByIds(CqlIdentifiers.wrapKeysCql(orderings));
   }
 
   /**
