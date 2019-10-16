@@ -268,6 +268,12 @@ class Connection {
     return " (" + msg + ')';
   }
 
+  public ListenableFuture<String> optionsQuery() {
+    Future startupOptionsFuture = write(new Requests.Options());
+
+    return GuavaCompatibility.INSTANCE.transformAsync(startupOptionsFuture, onSupportedResponse());
+  }
+
   private AsyncFunction<Void, Void> onChannelReady(
       final ProtocolVersion protocolVersion, final Executor initExecutor) {
     return new AsyncFunction<Void, Void>() {
@@ -280,6 +286,28 @@ class Connection {
                     protocolOptions.getCompression(), protocolOptions.isNoCompact()));
         return GuavaCompatibility.INSTANCE.transformAsync(
             startupResponseFuture, onStartupResponse(protocolVersion, initExecutor), initExecutor);
+      }
+    };
+  }
+
+  private AsyncFunction<Message.Response, String> onSupportedResponse() {
+    return new AsyncFunction<Message.Response, String>() {
+      @Override
+      public ListenableFuture<String> apply(Message.Response response) throws Exception {
+        switch (response.type) {
+          case SUPPORTED:
+            return getProductType((Responses.Supported) response);
+          case ERROR:
+            Responses.Error error = (Responses.Error) response;
+            throw new TransportException(
+                endPoint, String.format("Error initializing connection: %s", error.message));
+          default:
+            throw new TransportException(
+                endPoint,
+                String.format(
+                    "Unexpected %s response message from server to a STARTUP message",
+                    response.type));
+        }
       }
     };
   }
@@ -379,6 +407,15 @@ class Connection {
           executor);
     } catch (Exception e) {
       return Futures.immediateFailedFuture(e);
+    }
+  }
+
+  private ListenableFuture<String> getProductType(Responses.Supported response) {
+    if (response.supported.containsKey("PRODUCT_TYPE")
+        && response.supported.get("PRODUCT_TYPE").size() > 0) {
+      return Futures.immediateFuture(response.supported.get("PRODUCT_TYPE").get(0));
+    } else {
+      return Futures.immediateFuture("");
     }
   }
 

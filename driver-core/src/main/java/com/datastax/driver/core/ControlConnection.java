@@ -90,6 +90,7 @@ class ControlConnection implements Connection.Owner {
   // set to true initially, if ever fails will be set to false and peers table will be used
   // from here on out.
   private volatile boolean isPeersV2 = true;
+  private volatile boolean isCloud = false;
 
   public ControlConnection(Cluster.Manager manager) {
     this.cluster = manager;
@@ -291,7 +292,10 @@ class ControlConnection implements Connection.Owner {
       throws ConnectionException, ExecutionException, InterruptedException,
           UnsupportedProtocolVersionException, ClusterNameMismatchException {
     Connection connection = cluster.connectionFactory.open(host);
-
+    String productType = connection.optionsQuery().get();
+    if (productType.equals("DATASTAX_APOLLO")) {
+      isCloud = true;
+    }
     // If no protocol version was specified, set the default as soon as a connection succeeds (it's
     // needed to parse UDTs in refreshSchema)
     if (cluster.connectionFactory.protocolVersion == null)
@@ -1053,6 +1057,10 @@ class ControlConnection implements Connection.Owner {
   boolean isOpen() {
     Connection c = connectionRef.get();
     return c != null && !c.isClosed();
+  }
+
+  boolean isCloud() {
+    return isCloud;
   }
 
   public void onUp(Host host) {}

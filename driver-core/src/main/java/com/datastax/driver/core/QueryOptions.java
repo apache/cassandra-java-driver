@@ -53,6 +53,7 @@ public class QueryOptions {
   private volatile int fetchSize = DEFAULT_FETCH_SIZE;
   private volatile boolean defaultIdempotence = DEFAULT_IDEMPOTENCE;
 
+  private volatile boolean consistencySet = false;
   private volatile boolean metadataEnabled = true;
 
   private volatile int maxPendingRefreshNodeListRequests =
@@ -89,6 +90,7 @@ public class QueryOptions {
    * @return this {@code QueryOptions} instance.
    */
   public QueryOptions setConsistencyLevel(ConsistencyLevel consistencyLevel) {
+    this.consistencySet = true;
     this.consistency = consistencyLevel;
     return this;
   }
@@ -514,5 +516,9 @@ public class QueryOptions {
         refreshSchemaIntervalMillis,
         reprepareOnUp,
         prepareOnAllHosts);
+  }
+
+  public boolean isConsistencySet() {
+    return consistencySet;
   }
 }

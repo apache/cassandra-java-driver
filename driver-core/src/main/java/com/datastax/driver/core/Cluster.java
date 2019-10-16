@@ -1706,7 +1706,9 @@ public class Cluster implements Closeable {
         }
         // Initialize the control connection:
         negotiateProtocolVersionAndConnect();
-
+        if (controlConnection.isCloud() && !configuration.getQueryOptions().isConsistencySet()) {
+          configuration.getQueryOptions().setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+        }
         // The control connection:
         // - marked contact points down if they couldn't be reached
         // - triggered an initial full refresh of metadata.allHosts. If any contact points weren't
