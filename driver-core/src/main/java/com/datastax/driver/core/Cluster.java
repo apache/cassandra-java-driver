@@ -53,9 +53,15 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.UnknownHostException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -1366,25 +1372,103 @@ public class Cluster implements Closeable {
     }
 
     /**
-     * Creates a {@link Builder} pre-configured for a specific DBaaS endpoint or configuration file.
-     * Currently this supports the format provided by DBaaS cloud provider, a creds.zip file. In the
-     * future this will be extended to work with DBaaS service provider endpoints.
+     * Configures this Builder for Cloud deployments by retrieving connection information from the
+     * provided {@link String}.
      *
-     * @param secureBundlePath Absolute path to secure bundle zip file.
-     * @return a preconfigured {@link Builder} ready for use.
+     * <p>To connect to a Cloud database, you must first download the secure database bundle from
+     * the DataStax Constellation console that contains the connection information, then instruct
+     * the driver to read its contents using either this method or one if its variants.
+     *
+     * <p>For more information, please refer to the DataStax Constellation documentation.
+     *
+     * <p>Note that the provided stream will be consumed <em>and closed</em> when this method will
+     * return; attempting to reuse it afterwards will result in an error being thrown.
+     *
+     * @param cloudConfigFile File that contains secure connect bundle zip file.
+     * @see #withCloudSecureConnectBundle(URL)
+     * @see #withCloudSecureConnectBundle(InputStream)
      */
-    public Builder withCloudSecureConnectBundle(String secureBundlePath) {
-      DbaasConfiguration dbaasConfig = DbaasConfigUtil.getConfig(secureBundlePath);
-      SSLOptions sslOptions = DbaasConfigUtil.getSSLOptions(dbaasConfig);
-      InetSocketAddress proxyAddress =
-          new InetSocketAddress(dbaasConfig.getSniHost(), dbaasConfig.getSniPort());
-      Builder builder =
-          withEndPointFactory(new SniEndPointFactory(proxyAddress)).withSSL(sslOptions);
-      if (dbaasConfig.getUsername() != null && dbaasConfig.getPassword() != null) {
-        builder = builder.withCredentials(dbaasConfig.getUsername(), dbaasConfig.getPassword());
+    public Builder withCloudSecureConnectBundle(File cloudConfigFile) {
+      try {
+        return withCloudSecureConnectBundle(cloudConfigFile.toURI().toURL());
+      } catch (MalformedURLException e) {
+        throw new IllegalArgumentException(
+            "The cloudConfigFile URL " + cloudConfigFile + " is in the wrong format.", e);
       }
-      for (String hostID : dbaasConfig.getHostIds()) {
-        builder.addContactPoint(new SniEndPoint(proxyAddress, hostID));
+    }
+
+    /**
+     * Configures this Builder for Cloud deployments by retrieving connection information from the
+     * provided {@link URL}.
+     *
+     * <p>To connect to a Cloud database, you must first download the secure database bundle from
+     * the DataStax Constellation console that contains the connection information, then instruct
+     * the driver to read its contents using either this method or one if its variants.
+     *
+     * <p>For more information, please refer to the DataStax Constellation documentation.
+     *
+     * <p>Note that the provided stream will be consumed <em>and closed</em> when this method will
+     * return; attempting to reuse it afterwards will result in an error being thrown.
+     *
+     * @param cloudConfigUrl URL to the secure connect bundle zip file.
+     * @see #withCloudSecureConnectBundle(File)
+     * @see #withCloudSecureConnectBundle(InputStream)
+     */
+    public Builder withCloudSecureConnectBundle(URL cloudConfigUrl) {
+      CloudConfig cloudConfig;
+      try {
+        cloudConfig = new CloudConfigFactory().createCloudConfig(cloudConfigUrl.openStream());
+      } catch (GeneralSecurityException e) {
+        throw new IllegalStateException(
+            "Cannot construct cloud config from the cloudConfigUrl: " + cloudConfigUrl, e);
+      } catch (IOException e) {
+        throw new IllegalStateException(
+            "Cannot construct cloud config from the cloudConfigUrl: " + cloudConfigUrl, e);
+      }
+
+      return addCloudConfigToBuilder(cloudConfig);
+    }
+
+    /**
+     * Configures this Builder for Cloud deployments by retrieving connection information from the
+     * provided {@link InputStream}.
+     *
+     * <p>To connect to a Cloud database, you must first download the secure database bundle from
+     * the DataStax Constellation console that contains the connection information, then instruct
+     * the driver to read its contents using either this method or one if its variants.
+     *
+     * <p>For more information, please refer to the DataStax Constellation documentation.
+     *
+     * <p>Note that the provided stream will be consumed <em>and closed</em> when this method will
+     * return; attempting to reuse it afterwards will result in an error being thrown.
+     *
+     * @param cloudConfigInputStream A stream containing the secure connect bundle zip file.
+     * @see #withCloudSecureConnectBundle(File)
+     * @see #withCloudSecureConnectBundle(URL)
+     */
+    public Builder withCloudSecureConnectBundle(InputStream cloudConfigInputStream) {
+      CloudConfig cloudConfig;
+      try {
+        cloudConfig = new CloudConfigFactory().createCloudConfig(cloudConfigInputStream);
+      } catch (GeneralSecurityException e) {
+        throw new IllegalStateException("Cannot construct cloud config from the InputStream.", e);
+      } catch (IOException e) {
+        throw new IllegalStateException("Cannot construct cloud config from the InputStream.", e);
+      }
+
+      return addCloudConfigToBuilder(cloudConfig);
+    }
+
+    private Builder addCloudConfigToBuilder(CloudConfig cloudConfig) {
+      Builder builder =
+          withEndPointFactory(new SniEndPointFactory(cloudConfig.getProxyAddress()))
+              .withSSL(cloudConfig.getSslOptions());
+
+      if (cloudConfig.getAuthProvider() != null) {
+        builder = builder.withAuthProvider(cloudConfig.getAuthProvider());
+      }
+      for (EndPoint endPoint : cloudConfig.getEndPoints()) {
+        builder.addContactPoint(endPoint);
       }
       return builder;
     }

@@ -4,6 +4,8 @@
 ## DataStax Cloud (in progress)
 
 - [new feature] JAVA-2355: CaaS Enablement
+- [improvement] JAVA-2483: Allow to provide secureBundle via URL
+- [improvement] JAVA-2499: Allow to read the secure bundle from an InputStream
 
 
 ### 3.7.2

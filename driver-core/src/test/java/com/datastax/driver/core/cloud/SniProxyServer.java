@@ -32,11 +32,13 @@ import org.slf4j.LoggerFactory;
 
 public class SniProxyServer {
   private static final Logger logger = LoggerFactory.getLogger(SniProxyServer.class);
-  private final String proxyPath;
+  private final File proxyPath;
   private boolean isRunning = false;
 
+  static final String CERTS_BUNDLE_SUFFIX = "/certs/bundles/creds-v1.zip";
+
   public SniProxyServer() {
-    proxyPath = System.getProperty("proxy.path", "./");
+    proxyPath = new File(System.getProperty("proxy.path", "./"));
   }
 
   public void startProxy() {
@@ -60,16 +62,20 @@ public class SniProxyServer {
     return isRunning;
   }
 
-  public String getSecureBundlePath() {
-    return proxyPath + "/certs/bundles/creds-v1.zip";
+  public File getProxyRootPath() {
+    return proxyPath;
   }
 
-  public String getSecureBundleNoCredsPath() {
-    return proxyPath + "/certs/bundles/creds-v1-wo-creds.zip";
+  public File getSecureBundleFile() {
+    return new File(proxyPath + CERTS_BUNDLE_SUFFIX);
   }
 
-  public String getSecureBundleUnreachable() {
-    return proxyPath + "/certs/bundles/creds-v1-unreachable.zip";
+  public File getSecureBundleNoCredsPath() {
+    return new File(proxyPath + "/certs/bundles/creds-v1-wo-creds.zip");
+  }
+
+  public File getSecureBundleUnreachable() {
+    return new File(proxyPath + "/certs/bundles/creds-v1-unreachable.zip");
   }
 
   private String execute(CommandLine cli) {
@@ -88,7 +94,7 @@ public class SniProxyServer {
       ExecuteStreamHandler streamHandler = new PumpStreamHandler(outStream, errStream);
       executor.setStreamHandler(streamHandler);
       executor.setWatchdog(watchDog);
-      executor.setWorkingDirectory(new File(proxyPath));
+      executor.setWorkingDirectory(proxyPath);
       int retValue = executor.execute(cli);
       if (retValue != 0) {
         logger.error(
