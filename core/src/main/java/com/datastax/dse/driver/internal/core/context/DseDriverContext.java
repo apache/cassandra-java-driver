@@ -32,10 +32,7 @@ import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.dse.protocol.internal.DseProtocolV1ClientCodecs;
 import com.datastax.dse.protocol.internal.DseProtocolV2ClientCodecs;
 import com.datastax.dse.protocol.internal.ProtocolV4ClientCodecsForDse;
-import com.datastax.oss.driver.api.core.auth.AuthProvider;
-import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
-import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
@@ -57,7 +54,6 @@ import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
 import com.datastax.oss.driver.internal.core.util.Loggers;
-import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import com.datastax.oss.protocol.internal.ProtocolV3ClientCodecs;
 import com.datastax.oss.protocol.internal.ProtocolV5ClientCodecs;
@@ -67,7 +63,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 import net.jcip.annotations.ThreadSafe;
@@ -261,29 +256,5 @@ public class DseDriverContext extends DefaultDriverContext {
   @Override
   public List<LifecycleListener> getLifecycleListeners() {
     return listeners;
-  }
-
-  @Override
-  protected Map<String, LoadBalancingPolicy> buildLoadBalancingPolicies() {
-    return Reflection.buildFromConfigProfiles(
-        this,
-        DefaultDriverOption.LOAD_BALANCING_POLICY,
-        LoadBalancingPolicy.class,
-        "com.datastax.oss.driver.internal.core.loadbalancing",
-        // Add the DSE default package
-        "com.datastax.dse.driver.internal.core.loadbalancing");
-  }
-
-  @Override
-  protected Optional<AuthProvider> buildAuthProvider(AuthProvider authProviderFromBuilder) {
-    return (authProviderFromBuilder != null)
-        ? Optional.of(authProviderFromBuilder)
-        : Reflection.buildFromConfig(
-            this,
-            DefaultDriverOption.AUTH_PROVIDER_CLASS,
-            AuthProvider.class,
-            "com.datastax.oss.driver.internal.core.auth",
-            // Add the DSE default package
-            "com.datastax.dse.driver.internal.core.auth");
   }
 }
