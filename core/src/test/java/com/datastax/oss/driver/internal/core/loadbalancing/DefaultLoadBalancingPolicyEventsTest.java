@@ -28,6 +28,7 @@ import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.UUID;
 import java.util.function.Predicate;
 import org.junit.Before;
@@ -47,17 +48,10 @@ public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPo
   @Override
   public void setup() {
     super.setup();
-
     when(filter.test(any(Node.class))).thenReturn(true);
     when(context.getNodeFilter(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(filter);
-
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1));
-
-    policy = new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
-    policy.init(
-        ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2), distanceReporter);
-    assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1, node2);
-
+    policy = createAndInitPolicy();
     reset(distanceReporter);
   }
 
@@ -159,5 +153,15 @@ public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPo
     // Then
     verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
     assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1, node2);
+  }
+
+  @NonNull
+  protected DefaultLoadBalancingPolicy createAndInitPolicy() {
+    DefaultLoadBalancingPolicy policy =
+        new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
+    policy.init(
+        ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2), distanceReporter);
+    assertThat(policy.localDcLiveNodes).containsExactlyInAnyOrder(node1, node2);
+    return policy;
   }
 }

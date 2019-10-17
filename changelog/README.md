@@ -4,6 +4,7 @@
 
 ### 4.3.0 (in progress)
 
+- [improvement] JAVA-2459: Improve extensibility of existing load balancing policies
 - [improvement] JAVA-1708: Support DSE "everywhere" replication strategy
 - [improvement] JAVA-2471: Consider DSE version when parsing the schema
 - [improvement] JAVA-2444: Add method setRoutingKey(ByteBuffer...) to StatementBuilder

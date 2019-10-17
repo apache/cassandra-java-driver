@@ -49,34 +49,22 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
   private static final CqlIdentifier KEYSPACE = CqlIdentifier.fromInternal("ks");
   private static final ByteBuffer ROUTING_KEY = Bytes.fromHexString("0xdeadbeef");
 
-  @Mock private Request request;
-  @Mock private DefaultSession session;
-  @Mock private Metadata metadata;
-  @Mock private TokenMap tokenMap;
+  @Mock protected Request request;
+  @Mock protected DefaultSession session;
+  @Mock protected Metadata metadata;
+  @Mock protected TokenMap tokenMap;
 
-  private DefaultLoadBalancingPolicy policy;
+  protected DefaultLoadBalancingPolicy policy;
 
   @Before
   @Override
   public void setup() {
     super.setup();
-
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1));
-
     when(metadataManager.getMetadata()).thenReturn(metadata);
     when(metadata.getTokenMap()).thenAnswer(invocation -> Optional.of(this.tokenMap));
 
-    // Use a subclass to disable shuffling, we just spy to make sure that the shuffling method was
-    // called (makes tests easier)
-    policy = spy(new NonShufflingPolicy(context, DriverExecutionProfile.DEFAULT_NAME));
-    policy.init(
-        ImmutableMap.of(
-            UUID.randomUUID(), node1,
-            UUID.randomUUID(), node2,
-            UUID.randomUUID(), node3,
-            UUID.randomUUID(), node4,
-            UUID.randomUUID(), node5),
-        distanceReporter);
+    policy = createAndInitPolicy();
 
     // Note: this test relies on the fact that the policy uses a CopyOnWriteArraySet which preserves
     // insertion order.
@@ -181,6 +169,22 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
     verify(policy, times(3)).shuffleHead(any(), eq(2));
     // No power of two choices with only two replicas
     verify(session, never()).getPools();
+  }
+
+  protected DefaultLoadBalancingPolicy createAndInitPolicy() {
+    // Use a subclass to disable shuffling, we just spy to make sure that the shuffling method was
+    // called (makes tests easier)
+    NonShufflingPolicy policy =
+        spy(new NonShufflingPolicy(context, DriverExecutionProfile.DEFAULT_NAME));
+    policy.init(
+        ImmutableMap.of(
+            UUID.randomUUID(), node1,
+            UUID.randomUUID(), node2,
+            UUID.randomUUID(), node3,
+            UUID.randomUUID(), node4,
+            UUID.randomUUID(), node5),
+        distanceReporter);
+    return policy;
   }
 
   static class NonShufflingPolicy extends DefaultLoadBalancingPolicy {
