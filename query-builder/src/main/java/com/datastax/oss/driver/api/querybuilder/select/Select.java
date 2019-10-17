@@ -123,7 +123,7 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    */
   @NonNull
   default Select orderBy(@NonNull Map<String, ClusteringOrder> orderings) {
-    return orderByIds(CqlIdentifiers.wrapKeysCql(orderings));
+    return orderByIds(CqlIdentifiers.wrapKeys(orderings));
   }
 
   /**

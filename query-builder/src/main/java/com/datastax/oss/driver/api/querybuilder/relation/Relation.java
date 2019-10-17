@@ -109,7 +109,7 @@ public interface Relation extends CqlSnippet {
    */
   @NonNull
   static TokenRelationBuilder<Relation> token(@NonNull Iterable<String> names) {
-    return tokenFromIds(CqlIdentifiers.wrapCql(names));
+    return tokenFromIds(CqlIdentifiers.wrap(names));
   }
 
   /** Var-arg equivalent of {@link #token(Iterable)}. */
@@ -137,7 +137,7 @@ public interface Relation extends CqlSnippet {
    */
   @NonNull
   static MultiColumnRelationBuilder<Relation> columns(@NonNull Iterable<String> names) {
-    return columnIds(CqlIdentifiers.wrapCql(names));
+    return columnIds(CqlIdentifiers.wrap(names));
   }
 
   /** Var-arg equivalent of {@link #columns(Iterable)}. */

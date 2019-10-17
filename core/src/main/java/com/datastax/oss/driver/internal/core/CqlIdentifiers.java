@@ -27,7 +27,7 @@ import java.util.function.Function;
 public class CqlIdentifiers {
 
   @NonNull
-  public static List<CqlIdentifier> wrap(
+  private static List<CqlIdentifier> wrap(
       @NonNull Iterable<String> in, @NonNull Function<String, CqlIdentifier> fn) {
 
     Objects.requireNonNull(in, "Input Iterable must not be null");
@@ -40,7 +40,7 @@ public class CqlIdentifiers {
   }
 
   @NonNull
-  public static List<CqlIdentifier> wrapCql(@NonNull Iterable<String> in) {
+  public static List<CqlIdentifier> wrap(@NonNull Iterable<String> in) {
     return wrap(in, CqlIdentifier::fromCql);
   }
 
@@ -50,7 +50,7 @@ public class CqlIdentifiers {
   }
 
   @NonNull
-  public static <V> Map<CqlIdentifier, V> wrapKeys(
+  private static <V> Map<CqlIdentifier, V> wrapKeys(
       @NonNull Map<String, V> in, @NonNull Function<String, CqlIdentifier> fn) {
     Objects.requireNonNull(in, "Input Map must not be null");
     Objects.requireNonNull(fn, "CqlIdentifier conversion function must not be null");
@@ -62,7 +62,7 @@ public class CqlIdentifiers {
   }
 
   @NonNull
-  public static <V> Map<CqlIdentifier, V> wrapKeysCql(@NonNull Map<String, V> in) {
+  public static <V> Map<CqlIdentifier, V> wrapKeys(@NonNull Map<String, V> in) {
     return wrapKeys(in, CqlIdentifier::fromCql);
   }
 
