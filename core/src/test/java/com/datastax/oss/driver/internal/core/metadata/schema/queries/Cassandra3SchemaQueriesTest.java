@@ -329,7 +329,7 @@ public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
   @Test
   public void should_abort_if_query_fails() {
     SchemaQueriesWithMockedChannel queries =
-        new SchemaQueriesWithMockedChannel(driverChannel, null, config, "test");
+        new SchemaQueriesWithMockedChannel(driverChannel, node, null, config, "test");
     CompletionStage<SchemaRows> result = queries.execute();
 
     Exception mockQueryError = new Exception("mock query error");

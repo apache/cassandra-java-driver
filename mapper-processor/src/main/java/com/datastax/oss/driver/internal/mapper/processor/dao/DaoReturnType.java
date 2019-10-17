@@ -38,6 +38,8 @@ public class DaoReturnType {
       new DaoReturnType(DefaultDaoReturnTypeKind.FUTURE_OF_ROW);
   public static final DaoReturnType FUTURE_OF_ASYNC_RESULT_SET =
       new DaoReturnType(DefaultDaoReturnTypeKind.FUTURE_OF_ASYNC_RESULT_SET);
+  public static final DaoReturnType REACTIVE_RESULT_SET =
+      new DaoReturnType(DefaultDaoReturnTypeKind.REACTIVE_RESULT_SET);
   public static final DaoReturnType UNSUPPORTED =
       new DaoReturnType(DefaultDaoReturnTypeKind.UNSUPPORTED);
 
