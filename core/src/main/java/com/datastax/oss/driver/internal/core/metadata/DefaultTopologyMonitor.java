@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.dse.driver.api.core.metadata.DseNodeProperties;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -30,6 +31,7 @@ import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.Error;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -45,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -333,7 +336,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
       listenAddress = new InetSocketAddress(listenInetAddress, listenPort);
     }
 
-    DefaultNodeInfo.Builder rv =
+    DefaultNodeInfo.Builder builder =
         DefaultNodeInfo.builder()
             .withEndPoint(endPoint)
             .withBroadcastRpcAddress(broadcastRpcAddress)
@@ -347,9 +350,42 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
             .withHostId(Objects.requireNonNull(row.getUuid("host_id")))
             .withSchemaVersion(row.getUuid("schema_version"));
 
-    return row.contains("dse_version")
-        ? rv.withExtra(NodeProperties.DSE_VERSION, Version.parse(row.getString("dse_version")))
-        : rv;
+    // Handle DSE-specific columns, if present
+    String rawVersion = row.getString("dse_version");
+    if (rawVersion != null) {
+      builder.withExtra(DseNodeProperties.DSE_VERSION, Version.parse(rawVersion));
+    }
+
+    ImmutableSet.Builder<String> workloadsBuilder = ImmutableSet.builder();
+    Boolean legacyGraph = row.getBoolean("graph"); // DSE 5.0
+    if (legacyGraph != null && legacyGraph) {
+      workloadsBuilder.add("Graph");
+    }
+    String legacyWorkload = row.getString("workload"); // DSE 5.0 (other than graph)
+    if (legacyWorkload != null) {
+      workloadsBuilder.add(legacyWorkload);
+    }
+    Set<String> modernWorkloads = row.getSetOfString("workloads"); // DSE 5.1+
+    if (modernWorkloads != null) {
+      workloadsBuilder.addAll(modernWorkloads);
+    }
+    ImmutableSet<String> workloads = workloadsBuilder.build();
+    if (!workloads.isEmpty()) {
+      builder.withExtra(DseNodeProperties.DSE_WORKLOADS, workloads);
+    }
+
+    // Note: withExtra discards null values
+    builder
+        .withExtra(DseNodeProperties.SERVER_ID, row.getString("server_id"))
+        .withExtra(DseNodeProperties.NATIVE_TRANSPORT_PORT, row.getInteger("native_transport_port"))
+        .withExtra(
+            DseNodeProperties.NATIVE_TRANSPORT_PORT_SSL,
+            row.getInteger("native_transport_port_ssl"))
+        .withExtra(DseNodeProperties.STORAGE_PORT, row.getInteger("storage_port"))
+        .withExtra(DseNodeProperties.STORAGE_PORT_SSL, row.getInteger("storage_port_ssl"))
+        .withExtra(DseNodeProperties.JMX_PORT, row.getInteger("jmx_port"));
+
+    return builder;
   }
 
   /**
