@@ -27,7 +27,6 @@ import com.datastax.dse.driver.internal.core.graph.GraphRequestSyncProcessor;
 import com.datastax.dse.driver.internal.core.metadata.DseTopologyMonitor;
 import com.datastax.dse.driver.internal.core.metadata.schema.parsing.DseSchemaParserFactory;
 import com.datastax.dse.driver.internal.core.metadata.schema.queries.DseSchemaQueriesFactory;
-import com.datastax.dse.driver.internal.core.metadata.token.DseReplicationStrategyFactory;
 import com.datastax.dse.driver.internal.core.metrics.DseDropwizardMetricsFactory;
 import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.dse.protocol.internal.DseProtocolV1ClientCodecs;
@@ -53,7 +52,6 @@ import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
 import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParserFactory;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
-import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyFactory;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
@@ -221,11 +219,6 @@ public class DseDriverContext extends DefaultDriverContext {
   @Override
   protected TopologyMonitor buildTopologyMonitor() {
     return new DseTopologyMonitor(this);
-  }
-
-  @Override
-  protected ReplicationStrategyFactory buildReplicationStrategyFactory() {
-    return new DseReplicationStrategyFactory(this);
   }
 
   @Override
