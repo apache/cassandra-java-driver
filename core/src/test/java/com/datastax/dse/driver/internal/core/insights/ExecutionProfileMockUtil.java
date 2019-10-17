@@ -51,6 +51,7 @@ class ExecutionProfileMockUtil {
     when(profile.getDuration(REQUEST_TIMEOUT)).thenReturn(Duration.ofMillis(100));
     when(profile.getString(LOAD_BALANCING_POLICY_CLASS)).thenReturn("LoadBalancingPolicyImpl");
     when(profile.isDefined(LOAD_BALANCING_FILTER_CLASS)).thenReturn(true);
+    when(profile.isDefined(LOAD_BALANCING_LOCAL_DATACENTER)).thenReturn(true);
     when(profile.getString(LOAD_BALANCING_LOCAL_DATACENTER)).thenReturn(DEFAULT_LOCAL_DC);
     when(profile.isDefined(SPECULATIVE_EXECUTION_MAX)).thenReturn(true);
     when(profile.getInt(SPECULATIVE_EXECUTION_MAX)).thenReturn(SPECEX_MAX_DEFAULT);
@@ -80,6 +81,12 @@ class ExecutionProfileMockUtil {
   static DriverExecutionProfile mockNonDefaultLoadBalancingExecutionProfile() {
     DriverExecutionProfile profile = mockDefaultExecutionProfile();
     when(profile.getString(LOAD_BALANCING_POLICY_CLASS)).thenReturn("NonDefaultLoadBalancing");
+    return profile;
+  }
+
+  static DriverExecutionProfile mockUndefinedLocalDcExecutionProfile() {
+    DriverExecutionProfile profile = mockNonDefaultLoadBalancingExecutionProfile();
+    when(profile.isDefined(LOAD_BALANCING_LOCAL_DATACENTER)).thenReturn(false);
     return profile;
   }
 

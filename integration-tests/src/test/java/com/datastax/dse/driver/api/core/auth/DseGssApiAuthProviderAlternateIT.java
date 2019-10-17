@@ -25,17 +25,29 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.tngtech.java.junit.dataprovider.DataProvider;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
+import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @DseRequirement(min = "5.0", description = "Required for DseAuthenticator")
+@RunWith(DataProviderRunner.class)
 public class DseGssApiAuthProviderAlternateIT {
   @ClassRule public static EmbeddedAdsRule ads = new EmbeddedAdsRule(true);
 
+  @DataProvider
+  public static Object[][] saslSystemProperties() {
+    return new Object[][] {{"dse.sasl.service"}, {"dse.sasl.protocol"}};
+  }
+
   @Test
+  @UseDataProvider("saslSystemProperties")
   public void
-      should_authenticate_using_kerberos_with_keytab_and_alternate_service_principal_using_system_property() {
-    System.setProperty("dse.sasl.service", "alternate");
+      should_authenticate_using_kerberos_with_keytab_and_alternate_service_principal_using_system_property(
+          String saslSystemProperty) {
+    System.setProperty(saslSystemProperty, "alternate");
     try (DseSession session =
         SessionUtils.newSession(
             ads.getCcm(),
@@ -59,7 +71,7 @@ public class DseGssApiAuthProviderAlternateIT {
       Row row = session.execute("select * from system.local").one();
       assertThat(row).isNotNull();
     } finally {
-      System.clearProperty("dse.sasl.service");
+      System.clearProperty(saslSystemProperty);
     }
   }
 

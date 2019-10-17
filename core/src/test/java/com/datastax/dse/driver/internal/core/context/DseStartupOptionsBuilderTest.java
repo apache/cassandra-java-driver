@@ -54,6 +54,7 @@ public class DseStartupOptionsBuilderTest {
     initMocks(this);
     when(configLoader.getInitialConfig()).thenReturn(driverConfig);
     when(driverConfig.getDefaultProfile()).thenReturn(defaultProfile);
+    when(defaultProfile.isDefined(DseDriverOption.CONTINUOUS_PAGING_PAGE_SIZE)).thenReturn(true);
   }
 
   private void buildContext(UUID clientId, String applicationName, String applicationVersion) {
@@ -180,10 +181,6 @@ public class DseStartupOptionsBuilderTest {
 
   @Test
   public void should_ignore_configuration_when_programmatic_values_provided() {
-    when(defaultProfile.getString(DseDriverOption.APPLICATION_NAME, null))
-        .thenReturn("Config_App_Name");
-    when(defaultProfile.getString(DseDriverOption.APPLICATION_VERSION, null))
-        .thenReturn("Config_App_Version");
     when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none"))
         .thenReturn("none");
 

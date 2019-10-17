@@ -51,6 +51,7 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.request.Query;
@@ -88,7 +89,7 @@ public class InsightsClient {
   private static final Map<String, String> TAGS = ImmutableMap.of("language", "java");
   private static final String STARTUP_VERSION_1_ID = "v1";
   private static final String STATUS_VERSION_1_ID = "v1";
-  private static final ObjectMapper objectMapper = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final int MAX_NUMBER_OF_STATUS_ERROR_LOGS = 5;
   static final String DEFAULT_JAVA_APPLICATION = "Default Java Application";
 
@@ -104,8 +105,9 @@ public class InsightsClient {
   private final ExecutionProfilesInfoFinder executionProfilesInfoFinder;
   private final ConfigAntiPatternsFinder configAntiPatternsFinder;
   private final DataCentersFinder dataCentersFinder;
-  private StackTraceElement[] initCallStackTrace;
-  private ScheduledFuture<?> scheduleInsightsTask;
+  private final StackTraceElement[] initCallStackTrace;
+
+  private volatile ScheduledFuture<?> scheduleInsightsTask;
 
   public static InsightsClient createInsightsClient(
       InsightsConfiguration insightsConfiguration,
@@ -147,24 +149,26 @@ public class InsightsClient {
   }
 
   public CompletionStage<Void> sendStartupMessage() {
-    if (!shouldSendEvent()) {
-      return CompletableFuture.completedFuture(null);
+    try {
+      if (!shouldSendEvent()) {
+        return CompletableFuture.completedFuture(null);
+      } else {
+        String startupMessage = createStartupMessage();
+        return sendJsonMessage(startupMessage)
+            .whenComplete(
+                (aVoid, throwable) -> {
+                  if (throwable != null) {
+                    LOGGER.debug(
+                        "Error while sending startup message to Insights. Message was: "
+                            + trimToFirst500characters(startupMessage),
+                        throwable);
+                  }
+                });
+      }
+    } catch (Exception e) {
+      LOGGER.debug("Unexpected error while sending startup message to Insights.", e);
+      return CompletableFutures.failedFuture(e);
     }
-    final String startupMessage = createStartupMessage();
-    CompletionStage<Void> result = sendJsonMessage(startupMessage);
-
-    return result.whenComplete(
-        (aVoid, throwable) -> {
-          if (throwable != null) {
-            LOGGER.debug(
-                "Error while sending: "
-                    + trimToFirst500characters(startupMessage)
-                    + " to insights. Aborting sending all future: "
-                    + STARTUP_MESSAGE_NAME
-                    + " events",
-                throwable);
-          }
-        });
   }
 
   private static String trimToFirst500characters(String startupMessage) {
@@ -190,24 +194,27 @@ public class InsightsClient {
 
   @VisibleForTesting
   public CompletionStage<Void> sendStatusMessage() {
-    if (!shouldSendEvent()) {
-      return CompletableFuture.completedFuture(null);
-    }
-    final String statusMessage = createStatusMessage();
-    CompletionStage<Void> result = sendJsonMessage(statusMessage);
-
-    return result.whenComplete(
-        (aVoid, throwable) -> {
-          if (throwable != null) {
-            if (numberOfStatusEventErrors.getAndIncrement() < MAX_NUMBER_OF_STATUS_ERROR_LOGS) {
-              LOGGER.debug(
-                  "Error while sending: "
-                      + trimToFirst500characters(statusMessage)
-                      + " to insights.",
-                  throwable);
+    try {
+      if (!shouldSendEvent()) {
+        return CompletableFuture.completedFuture(null);
+      }
+      String statusMessage = createStatusMessage();
+      CompletionStage<Void> result = sendJsonMessage(statusMessage);
+      return result.whenComplete(
+          (aVoid, throwable) -> {
+            if (throwable != null) {
+              if (numberOfStatusEventErrors.getAndIncrement() < MAX_NUMBER_OF_STATUS_ERROR_LOGS) {
+                LOGGER.debug(
+                    "Error while sending status message to Insights. Message was: "
+                        + trimToFirst500characters(statusMessage),
+                    throwable);
+              }
             }
-          }
-        });
+          });
+    } catch (Exception e) {
+      LOGGER.debug("Unexpected error while sending status message to Insights.", e);
+      return CompletableFutures.failedFuture(e);
+    }
   }
 
   private CompletionStage<Void> sendJsonMessage(String jsonMessage) {
@@ -253,7 +260,7 @@ public class InsightsClient {
     InsightsStartupData data = createStartupData();
 
     try {
-      return objectMapper.writeValueAsString(new Insight<>(insightMetadata, data));
+      return OBJECT_MAPPER.writeValueAsString(new Insight<>(insightMetadata, data));
     } catch (JsonProcessingException e) {
       throw new InsightEventFormatException("Problem when creating: " + STARTUP_MESSAGE_NAME, e);
     }
@@ -265,7 +272,7 @@ public class InsightsClient {
     InsightsStatusData data = createStatusData();
 
     try {
-      return objectMapper.writeValueAsString(new Insight<>(insightMetadata, data));
+      return OBJECT_MAPPER.writeValueAsString(new Insight<>(insightMetadata, data));
     } catch (JsonProcessingException e) {
       throw new InsightEventFormatException("Problem when creating: " + STATUS_MESSAGE_NAME, e);
     }

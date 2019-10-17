@@ -25,6 +25,7 @@ import static com.datastax.dse.driver.internal.core.insights.ExecutionProfileMoc
 import static com.datastax.dse.driver.internal.core.insights.ExecutionProfileMockUtil.mockNonDefaultRequestTimeoutExecutionProfile;
 import static com.datastax.dse.driver.internal.core.insights.ExecutionProfileMockUtil.mockNonDefaultSerialConsistency;
 import static com.datastax.dse.driver.internal.core.insights.ExecutionProfileMockUtil.mockNonDefaultSpeculativeExecutionInfo;
+import static com.datastax.dse.driver.internal.core.insights.ExecutionProfileMockUtil.mockUndefinedLocalDcExecutionProfile;
 import static com.datastax.dse.driver.internal.core.insights.PackageUtil.DEFAULT_LOAD_BALANCING_PACKAGE;
 import static com.datastax.dse.driver.internal.core.insights.PackageUtil.DEFAULT_SPECULATIVE_EXECUTION_PACKAGE;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -137,6 +138,19 @@ public class ExecutionProfilesInfoFinderTest {
             new LoadBalancingInfo(
                 "NonDefaultLoadBalancing",
                 ImmutableMap.of("localDataCenter", DEFAULT_LOCAL_DC, "filterFunction", true),
+                DEFAULT_LOAD_BALANCING_PACKAGE),
+            null,
+            null,
+            null,
+            null)
+      },
+      {
+        mockUndefinedLocalDcExecutionProfile(),
+        new SpecificExecutionProfile(
+            null,
+            new LoadBalancingInfo(
+                "NonDefaultLoadBalancing",
+                ImmutableMap.of("filterFunction", true),
                 DEFAULT_LOAD_BALANCING_PACKAGE),
             null,
             null,

@@ -152,9 +152,11 @@ class ExecutionProfilesInfoFinder {
 
   private LoadBalancingInfo getLoadBalancingInfo(DriverExecutionProfile driverExecutionProfile) {
     Map<String, Object> options = new LinkedHashMap<>();
-    options.put(
-        "localDataCenter",
-        driverExecutionProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER));
+    if (driverExecutionProfile.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)) {
+      options.put(
+          "localDataCenter",
+          driverExecutionProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER));
+    }
     options.put(
         "filterFunction",
         driverExecutionProfile.isDefined(DefaultDriverOption.LOAD_BALANCING_FILTER_CLASS));

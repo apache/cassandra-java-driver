@@ -54,6 +54,12 @@ public abstract class DseGssApiAuthProviderBase implements AuthProvider {
   /** The name of the system property to use to specify the SASL service name. */
   public static final String SASL_SERVICE_NAME_PROPERTY = "dse.sasl.service";
 
+  /**
+   * Legacy system property for SASL protocol name. Clients should migrate to
+   * SASL_SERVICE_NAME_PROPERTY above.
+   */
+  private static final String LEGACY_SASL_PROTOCOL_PROPERTY = "dse.sasl.protocol";
+
   private static final Logger LOG = LoggerFactory.getLogger(DseGssApiAuthProviderBase.class);
 
   private final String logPrefix;
@@ -267,7 +273,10 @@ public abstract class DseGssApiAuthProviderBase implements AuthProvider {
         }
         String protocol = options.getSaslProtocol();
         if (protocol == null) {
-          protocol = System.getProperty(SASL_SERVICE_NAME_PROPERTY, DEFAULT_SASL_SERVICE_NAME);
+          protocol =
+              System.getProperty(
+                  SASL_SERVICE_NAME_PROPERTY,
+                  System.getProperty(LEGACY_SASL_PROTOCOL_PROPERTY, DEFAULT_SASL_SERVICE_NAME));
         }
         this.saslClient =
             Sasl.createSaslClient(
