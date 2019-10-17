@@ -25,7 +25,6 @@ import com.datastax.dse.driver.internal.core.cql.reactive.CqlRequestReactiveProc
 import com.datastax.dse.driver.internal.core.graph.GraphRequestAsyncProcessor;
 import com.datastax.dse.driver.internal.core.graph.GraphRequestSyncProcessor;
 import com.datastax.dse.driver.internal.core.metadata.schema.parsing.DseSchemaParserFactory;
-import com.datastax.dse.driver.internal.core.metadata.schema.queries.DseSchemaQueriesFactory;
 import com.datastax.dse.driver.internal.core.metrics.DseDropwizardMetricsFactory;
 import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.dse.protocol.internal.DseProtocolV1ClientCodecs;
@@ -46,7 +45,6 @@ import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestAsyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParserFactory;
-import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
@@ -207,11 +205,6 @@ public class DseDriverContext extends DefaultDriverContext {
     }
 
     return new RequestProcessorRegistry(logPrefix, processors.toArray(new RequestProcessor[0]));
-  }
-
-  @Override
-  protected SchemaQueriesFactory buildSchemaQueriesFactory() {
-    return new DseSchemaQueriesFactory(this);
   }
 
   @Override

@@ -62,40 +62,48 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
 
   protected SchemaQueries newInstance(
       Node node, DriverChannel channel, CompletableFuture<Metadata> refreshFuture) {
-    Version version = node.getCassandraVersion();
-    if (version == null) {
-      LOG.warn(
-          "[{}] Cassandra version missing for {}, defaulting to {}",
-          logPrefix,
-          node,
-          Version.V3_0_0);
-      version = Version.V3_0_0;
-    } else {
-      version = version.nextStable();
-    }
+
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
-    LOG.debug("[{}] Sending schema queries to {} with version {}", logPrefix, node, version);
-    if (version.compareTo(Version.V2_2_0) < 0) {
-      return new Cassandra21SchemaQueries(channel, refreshFuture, config, logPrefix);
-    } else if (version.compareTo(Version.V3_0_0) < 0) {
-      return new Cassandra22SchemaQueries(channel, refreshFuture, config, logPrefix);
-    } else if (version.compareTo(Version.V4_0_0) < 0) {
-      return new Cassandra3SchemaQueries(channel, refreshFuture, config, logPrefix);
-    } else {
 
-      // A bit of custom logic for DSE 6.0.x.  These versions report a Cassandra version of 4.0.0
-      // but don't have support for system_virtual_schema tables supported by that version.  To
-      // compensate we return the Cassandra 3 schema queries here for those versions
-      if (node.getExtras().containsKey(DseNodeProperties.DSE_VERSION)) {
+    Version dseVersion = (Version) node.getExtras().get(DseNodeProperties.DSE_VERSION);
+    if (dseVersion != null) {
+      dseVersion = dseVersion.nextStable();
 
-        Object dseVersionObj = node.getExtras().get(DseNodeProperties.DSE_VERSION);
-        assert (dseVersionObj instanceof Version);
-        if (((Version) dseVersionObj).compareTo(Version.V6_7_0) < 0) {
-
-          return new Cassandra3SchemaQueries(channel, refreshFuture, config, logPrefix);
-        }
+      LOG.debug(
+          "[{}] Sending schema queries to {} with DSE version {}", logPrefix, node, dseVersion);
+      // 4.8 is the oldest version supported, which uses C* 2.1 schema
+      if (dseVersion.compareTo(Version.V5_0_0) < 0) {
+        return new Cassandra21SchemaQueries(channel, refreshFuture, config, logPrefix);
+      } else if (dseVersion.compareTo(Version.V6_7_0) < 0) {
+        // 5.0 - 6.7 uses C* 3.0 schema
+        return new Cassandra3SchemaQueries(channel, refreshFuture, config, logPrefix);
+      } else {
+        // 6.7+ uses C* 4.0 schema
+        return new Cassandra4SchemaQueries(channel, refreshFuture, config, logPrefix);
       }
-      return new Cassandra4SchemaQueries(channel, refreshFuture, config, logPrefix);
+    } else {
+      Version cassandraVersion = node.getCassandraVersion();
+      if (cassandraVersion == null) {
+        LOG.warn(
+            "[{}] Cassandra version missing for {}, defaulting to {}",
+            logPrefix,
+            node,
+            Version.V3_0_0);
+        cassandraVersion = Version.V3_0_0;
+      } else {
+        cassandraVersion = cassandraVersion.nextStable();
+      }
+      LOG.debug(
+          "[{}] Sending schema queries to {} with version {}", logPrefix, node, cassandraVersion);
+      if (cassandraVersion.compareTo(Version.V2_2_0) < 0) {
+        return new Cassandra21SchemaQueries(channel, refreshFuture, config, logPrefix);
+      } else if (cassandraVersion.compareTo(Version.V3_0_0) < 0) {
+        return new Cassandra22SchemaQueries(channel, refreshFuture, config, logPrefix);
+      } else if (cassandraVersion.compareTo(Version.V4_0_0) < 0) {
+        return new Cassandra3SchemaQueries(channel, refreshFuture, config, logPrefix);
+      } else {
+        return new Cassandra4SchemaQueries(channel, refreshFuture, config, logPrefix);
+      }
     }
   }
 }
