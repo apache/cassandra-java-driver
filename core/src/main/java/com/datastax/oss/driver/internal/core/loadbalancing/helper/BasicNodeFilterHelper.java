@@ -55,7 +55,7 @@ public class BasicNodeFilterHelper implements NodeFilterHelper {
   @NonNull
   @Override
   public Predicate<Node> createNodeFilter(@Nullable String localDc) {
-    Predicate<Node> userFilter = nodeFilterFromConfig();
+    Predicate<Node> filterFromConfig = nodeFilterFromConfig();
     return node -> {
       if (localDc != null && !localDc.equals(node.getDatacenter())) {
         LOG.debug(
@@ -64,7 +64,7 @@ public class BasicNodeFilterHelper implements NodeFilterHelper {
             node,
             localDc);
         return false;
-      } else if (!userFilter.test(node)) {
+      } else if (!filterFromConfig.test(node)) {
         LOG.debug(
             "[{}] Ignoring {} because it doesn't match the user-provided predicate",
             logPrefix,
