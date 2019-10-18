@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.EndPoint;
 import com.datastax.driver.core.PlainTextAuthProvider;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
@@ -31,6 +32,7 @@ import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.URL;
 import org.parboiled.common.FileUtils;
 import org.testng.annotations.AfterClass;
@@ -169,6 +171,66 @@ public class CloudTest {
       fail("Expected an IllegalStateException");
     } catch (IllegalStateException e) {
       assertThat(e).hasMessageStartingWith("Cannot construct cloud config from the cloudConfigUrl");
+    }
+  }
+
+  @Test(groups = "short")
+  public void should_not_allow_contact_points_and_cloud() {
+    try {
+      Session session =
+          Cluster.builder()
+              .addContactPoint("127.0.0.1")
+              .withCloudSecureConnectBundle(proxy.getSecureBundleNoCredsPath())
+              .withCredentials("cassandra", "cassandra")
+              .build()
+              .connect();
+      fail("Expected an IllegalStateException");
+    } catch (IllegalStateException e) {
+      assertThat(e)
+          .hasMessageStartingWith(
+              "Can't use withCloudSecureConnectBundle if you've already called addContactPoint(s)");
+    }
+  }
+
+  @Test(groups = "short")
+  public void should_not_allow_cloud_with_contact_points_string() {
+    try {
+      Session session =
+          Cluster.builder()
+              .withCloudSecureConnectBundle(proxy.getSecureBundleNoCredsPath())
+              .addContactPoint("127.0.0.1")
+              .withCredentials("cassandra", "cassandra")
+              .build()
+              .connect();
+      fail("Expected an IllegalStateException");
+    } catch (IllegalStateException e) {
+      assertThat(e)
+          .hasMessageStartingWith(
+              "Can't use addContactPoint(s) if you've already called withCloudSecureConnectBundle");
+    }
+  }
+
+  @Test(groups = "short")
+  public void should_not_allow_cloud_with_contact_points_endpoint() {
+    try {
+      Session session =
+          Cluster.builder()
+              .withCloudSecureConnectBundle(proxy.getSecureBundleNoCredsPath())
+              .addContactPoint(
+                  new EndPoint() {
+                    @Override
+                    public InetSocketAddress resolve() {
+                      return null;
+                    }
+                  })
+              .withCredentials("cassandra", "cassandra")
+              .build()
+              .connect();
+      fail("Expected an IllegalStateException");
+    } catch (IllegalStateException e) {
+      assertThat(e)
+          .hasMessageStartingWith(
+              "Can't use addContactPoint(s) if you've already called withCloudSecureConnectBundle");
     }
   }
 }

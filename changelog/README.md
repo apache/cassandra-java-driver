@@ -7,6 +7,7 @@
 - [improvement] JAVA-2483: Allow to provide secureBundle via URL
 - [improvement] JAVA-2499: Allow to read the secure bundle from an InputStream
 - [improvement] JAVA-2457: Detect CaaS and change default consistency
+- [improvement] JAVA-2485: Add errors for cloud misconfiguration
 
 
 ### 3.7.2

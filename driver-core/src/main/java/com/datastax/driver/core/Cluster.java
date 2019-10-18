@@ -740,6 +740,7 @@ public class Cluster implements Closeable {
     private boolean jmxEnabled = true;
     private boolean allowBetaProtocolVersion = false;
     private boolean noCompact = false;
+    private boolean isCloud = false;
 
     private Collection<Host.StateListener> listeners;
 
@@ -934,6 +935,7 @@ public class Cluster implements Closeable {
       // We explicitly check for nulls because InetAdress.getByName() will happily
       // accept it and use localhost (while a null here almost likely mean a user error,
       // not "connect to localhost")
+      failIfCloud();
       if (address == null) throw new NullPointerException();
 
       try {
@@ -953,6 +955,7 @@ public class Cluster implements Closeable {
      * host-and-port-based variants such as {@link #addContactPoint(String)}.
      */
     public Builder addContactPoint(EndPoint contactPoint) {
+      failIfCloud();
       contactPoints.add(contactPoint);
       return this;
     }
@@ -993,6 +996,7 @@ public class Cluster implements Closeable {
      * @see Builder#addContactPoint
      */
     public Builder addContactPoints(InetAddress... addresses) {
+      failIfCloud();
       Collections.addAll(this.rawHostContactPoints, addresses);
       return this;
     }
@@ -1007,6 +1011,7 @@ public class Cluster implements Closeable {
      * @see Builder#addContactPoint
      */
     public Builder addContactPoints(Collection<InetAddress> addresses) {
+      failIfCloud();
       this.rawHostContactPoints.addAll(addresses);
       return this;
     }
@@ -1030,6 +1035,7 @@ public class Cluster implements Closeable {
      * @see Builder#addContactPoint
      */
     public Builder addContactPointsWithPorts(InetSocketAddress... addresses) {
+      failIfCloud();
       Collections.addAll(this.rowHostAndPortContactPoints, addresses);
       return this;
     }
@@ -1053,6 +1059,7 @@ public class Cluster implements Closeable {
      * @see Builder#addContactPoint
      */
     public Builder addContactPointsWithPorts(Collection<InetSocketAddress> addresses) {
+      failIfCloud();
       this.rowHostAndPortContactPoints.addAll(addresses);
       return this;
     }
@@ -1467,10 +1474,24 @@ public class Cluster implements Closeable {
       if (cloudConfig.getAuthProvider() != null) {
         builder = builder.withAuthProvider(cloudConfig.getAuthProvider());
       }
+      if (builder.rawHostContactPoints.size() > 0
+          || builder.rowHostAndPortContactPoints.size() > 0
+          || builder.contactPoints.size() > 0) {
+        throw new IllegalStateException(
+            "Can't use withCloudSecureConnectBundle if you've already called addContactPoint(s)");
+      }
       for (EndPoint endPoint : cloudConfig.getEndPoints()) {
         builder.addContactPoint(endPoint);
       }
+      isCloud = true;
       return builder;
+    }
+
+    private void failIfCloud() {
+      if (isCloud) {
+        throw new IllegalStateException(
+            "Can't use addContactPoint(s) if you've already called withCloudSecureConnectBundle");
+      }
     }
 
     /**
