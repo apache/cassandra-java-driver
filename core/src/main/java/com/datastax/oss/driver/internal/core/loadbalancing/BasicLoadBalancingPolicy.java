@@ -96,7 +96,6 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
 
   @NonNull protected final String logPrefix;
   @NonNull protected final InternalDriverContext context;
-  @NonNull protected final String profileName;
   @NonNull protected final DriverExecutionProfile profile;
 
   protected final AtomicInteger roundRobinAmount = new AtomicInteger();
@@ -108,7 +107,6 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
 
   public BasicLoadBalancingPolicy(@NonNull DriverContext context, @NonNull String profileName) {
     this.context = (InternalDriverContext) context;
-    this.profileName = profileName;
     profile = context.getConfig().getProfile(profileName);
     logPrefix = context.getSessionName() + "|" + profileName;
   }
@@ -163,7 +161,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
    */
   @NonNull
   protected Predicate<Node> createNodeFilter() {
-    Predicate<Node> filter = context.getNodeFilter(profileName);
+    Predicate<Node> filter = context.getNodeFilter(profile.getName());
     if (filter != null) {
       LOG.debug("[{}] Node filter set programmatically", logPrefix);
     } else {
@@ -171,7 +169,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
       Predicate<Node> filterFromConfig =
           Reflection.buildFromConfig(
                   context,
-                  profileName,
+                  profile.getName(),
                   DefaultDriverOption.LOAD_BALANCING_FILTER_CLASS,
                   Predicate.class)
               .orElse(INCLUDE_ALL_NODES);
@@ -220,7 +218,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
    */
   @NonNull
   protected Optional<String> discoverLocalDatacenter() {
-    String localDc = context.getLocalDatacenter(profileName);
+    String localDc = context.getLocalDatacenter(profile.getName());
     if (localDc != null) {
       LOG.debug("[{}] Local DC set programmatically: {}", logPrefix, localDc);
       checkLocalDatacenterCompatibility(localDc, context.getMetadataManager().getContactPoints());
