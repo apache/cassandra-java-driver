@@ -53,6 +53,13 @@ import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A basic implementation of {@link LoadBalancingPolicy} that can serve as a building block for
+ * advanced use cases.
+ *
+ * <p>This class is not recommended for normal users who should always prefer {@link
+ * DefaultLoadBalancingPolicy}.
+ */
 @ThreadSafe
 public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
 
@@ -65,7 +72,6 @@ public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
   @NonNull protected final InternalDriverContext context;
   @NonNull protected final String profileName;
   @NonNull protected final DriverExecutionProfile profile;
-  protected final boolean isDefaultProfile;
 
   protected final AtomicInteger roundRobinAmount = new AtomicInteger();
   protected final CopyOnWriteArraySet<Node> localDcLiveNodes = new CopyOnWriteArraySet<>();
@@ -80,7 +86,6 @@ public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
     this.profileName = profileName;
     profile = context.getConfig().getProfile(profileName);
     logPrefix = context.getSessionName() + "|" + profileName;
-    isDefaultProfile = profileName.equals(DriverExecutionProfile.DEFAULT_NAME);
   }
 
   public String getLocalDatacenter() {
@@ -147,7 +152,7 @@ public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
   }
 
   /**
-   * Wraps the user-supplied filter within a filter that always rejects nodes belongin to non-local
+   * Wraps the user-supplied filter within a filter that always rejects nodes belonging to non-local
    * datacenters.
    *
    * @param userFilter The user-supplied filter.
@@ -320,7 +325,8 @@ public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
     return new QueryPlan(currentNodes);
   }
 
-  protected Set<Node> getReplicas(Request request, Session session) {
+  @NonNull
+  protected Set<Node> getReplicas(@Nullable Request request, @Nullable Session session) {
     if (request == null || session == null) {
       return Collections.emptySet();
     }
