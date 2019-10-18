@@ -319,6 +319,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
     }
   }
 
+  /** Exposed as a protected method so that it can be accessed by tests */
   protected void shuffleHead(Object[] currentNodes, int replicaCount) {
     ArrayUtils.shuffleHead(currentNodes, replicaCount);
   }

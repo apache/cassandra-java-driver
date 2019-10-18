@@ -28,6 +28,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class DefaultLoadBalancingPolicyEventsTest extends BasicLoadBalancingPolicyEventsTest {
 
   @NonNull
+  @Override
   protected DefaultLoadBalancingPolicy createAndInitPolicy() {
     DefaultLoadBalancingPolicy policy =
         new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);

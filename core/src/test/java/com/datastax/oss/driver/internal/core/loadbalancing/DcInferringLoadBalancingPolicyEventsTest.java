@@ -28,6 +28,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class DcInferringLoadBalancingPolicyEventsTest extends BasicLoadBalancingPolicyEventsTest {
 
   @NonNull
+  @Override
   protected DcInferringLoadBalancingPolicy createAndInitPolicy() {
     DcInferringLoadBalancingPolicy policy =
         new DcInferringLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
