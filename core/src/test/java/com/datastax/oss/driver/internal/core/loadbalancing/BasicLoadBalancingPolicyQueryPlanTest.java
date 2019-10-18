@@ -15,10 +15,13 @@
  */
 package com.datastax.oss.driver.internal.core.loadbalancing;
 
+import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -31,6 +34,7 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -46,13 +50,14 @@ import org.mockito.Mock;
 
 public class BasicLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingPolicyTestBase {
 
-  private static final CqlIdentifier KEYSPACE = CqlIdentifier.fromInternal("ks");
-  private static final ByteBuffer ROUTING_KEY = Bytes.fromHexString("0xdeadbeef");
+  protected static final CqlIdentifier KEYSPACE = CqlIdentifier.fromInternal("ks");
+  protected static final ByteBuffer ROUTING_KEY = Bytes.fromHexString("0xdeadbeef");
 
   @Mock protected Request request;
   @Mock protected DefaultSession session;
   @Mock protected Metadata metadata;
   @Mock protected TokenMap tokenMap;
+  @Mock protected Token routingToken;
 
   protected BasicLoadBalancingPolicy policy;
 
@@ -69,6 +74,32 @@ public class BasicLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingP
     // Note: this test relies on the fact that the policy uses a CopyOnWriteArraySet which preserves
     // insertion order.
     assertThat(policy.liveNodes).containsExactly(node1, node2, node3, node4, node5);
+  }
+
+  @Test
+  public void should_use_round_robin_when_no_request() {
+    // Given
+    request = null;
+
+    // When
+    assertRoundRobinQueryPlans();
+
+    // Then
+    then(metadataManager).should(never()).getMetadata();
+  }
+
+  @Test
+  public void should_use_round_robin_when_no_session() {
+    // Given
+    session = null;
+
+    // When
+    assertRoundRobinQueryPlans();
+
+    // Then
+    then(request).should(never()).getRoutingKey();
+    then(request).should(never()).getRoutingToken();
+    then(metadataManager).should(never()).getMetadata();
   }
 
   @Test
@@ -108,7 +139,8 @@ public class BasicLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingP
   }
 
   @Test
-  public void should_use_round_robin_when_token_map_returns_no_replicas() {
+  public void
+      should_use_round_robin_when_token_map_returns_no_replicas_using_request_keyspace_and_routing_key() {
     when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
     when(request.getRoutingKey()).thenReturn(ROUTING_KEY);
     when(tokenMap.getReplicas(KEYSPACE, ROUTING_KEY)).thenReturn(Collections.emptySet());
@@ -116,6 +148,35 @@ public class BasicLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingP
     assertRoundRobinQueryPlans();
 
     verify(tokenMap, atLeast(1)).getReplicas(KEYSPACE, ROUTING_KEY);
+  }
+
+  @Test
+  public void
+      should_use_round_robin_when_token_map_returns_no_replicas_using_session_keyspace_and_routing_key() {
+    // Given
+    given(request.getKeyspace()).willReturn(null);
+    given(request.getRoutingKeyspace()).willReturn(null);
+    given(session.getKeyspace()).willReturn(Optional.of(KEYSPACE));
+    given(request.getRoutingKey()).willReturn(ROUTING_KEY);
+    given(tokenMap.getReplicas(KEYSPACE, ROUTING_KEY)).willReturn(emptySet());
+    // When
+    assertRoundRobinQueryPlans();
+    // Then
+    then(tokenMap).should(atLeast(1)).getReplicas(KEYSPACE, ROUTING_KEY);
+  }
+
+  @Test
+  public void
+      should_use_round_robin_when_token_map_returns_no_replicas_using_request_keyspace_and_routing_token() {
+    // Given
+    given(request.getKeyspace()).willReturn(null);
+    given(request.getRoutingKeyspace()).willReturn(KEYSPACE);
+    given(request.getRoutingToken()).willReturn(routingToken);
+    given(tokenMap.getReplicas(KEYSPACE, routingToken)).willReturn(emptySet());
+    // When
+    assertRoundRobinQueryPlans();
+    // Then
+    then(tokenMap).should(atLeast(1)).getReplicas(KEYSPACE, routingToken);
   }
 
   private void assertRoundRobinQueryPlans() {
