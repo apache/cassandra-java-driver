@@ -32,6 +32,20 @@ import org.slf4j.LoggerFactory;
  * An implementation of {@link LoadBalancingPolicy} that infers the local datacenter from the
  * contact points, if no datacenter was provided neither through configuration nor programmatically.
  *
+ * <p>To activate this policy, modify the {@code basic.load-balancing-policy} section in the driver
+ * configuration, for example:
+ *
+ * <pre>
+ * datastax-java-driver {
+ *   basic.load-balancing-policy {
+ *     class = DcInferringLoadBalancingPolicy
+ *     local-datacenter = datacenter1 # optional
+ *   }
+ * }
+ * </pre>
+ *
+ * See {@code reference.conf} (in the manual or core driver JAR) for more details.
+ *
  * <p><b>Local datacenter</b>: This implementation requires a local datacenter to be defined,
  * otherwise it will throw an {@link IllegalStateException}. A local datacenter can be supplied
  * either:

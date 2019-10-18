@@ -57,6 +57,20 @@ import org.slf4j.LoggerFactory;
  * A basic implementation of {@link LoadBalancingPolicy} that can serve as a building block for more
  * advanced use cases.
  *
+ * <p>To activate this policy, modify the {@code basic.load-balancing-policy} section in the driver
+ * configuration, for example:
+ *
+ * <pre>
+ * datastax-java-driver {
+ *   basic.load-balancing-policy {
+ *     class = BasicLoadBalancingPolicy
+ *     local-datacenter = datacenter1 # optional
+ *   }
+ * }
+ * </pre>
+ *
+ * See {@code reference.conf} (in the manual or core driver JAR) for more details.
+ *
  * <p><b>Local datacenter</b>: This implementation will only define a local datacenter if it is
  * explicitly set either through configuration or programmatically; if the local datacenter is
  * unspecified, this implementation will effectively act as a datacenter-agnostic load balancing
