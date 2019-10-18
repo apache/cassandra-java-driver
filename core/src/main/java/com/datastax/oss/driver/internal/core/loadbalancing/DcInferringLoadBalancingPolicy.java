@@ -71,7 +71,7 @@ public class DcInferringLoadBalancingPolicy extends BasicLoadBalancingPolicy {
   }
 
   @Override
-  protected LocalDcHelper createLocalDcHelper() {
+  protected LocalDcHelper newLocalDcHelper() {
     return new InferringLocalDcHelper(context, profile, logPrefix);
   }
 }

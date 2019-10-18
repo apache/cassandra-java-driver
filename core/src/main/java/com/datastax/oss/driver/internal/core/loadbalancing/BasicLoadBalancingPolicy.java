@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.loadbalancing;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
@@ -29,9 +28,10 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.loadbalancing.helper.BasicLocalDcHelper;
+import com.datastax.oss.driver.internal.core.loadbalancing.helper.BasicNodeFilterHelper;
 import com.datastax.oss.driver.internal.core.loadbalancing.helper.LocalDcHelper;
+import com.datastax.oss.driver.internal.core.loadbalancing.helper.NodeFilterHelper;
 import com.datastax.oss.driver.internal.core.util.ArrayUtils;
-import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -99,9 +99,10 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   protected final AtomicInteger roundRobinAmount = new AtomicInteger();
   protected final CopyOnWriteArraySet<Node> liveNodes = new CopyOnWriteArraySet<>();
 
-  protected volatile DistanceReporter distanceReporter;
-  protected volatile Predicate<Node> filter;
-  protected volatile String localDc;
+  // private because they should be set in init() and never be modified after
+  private volatile DistanceReporter distanceReporter;
+  private volatile Predicate<Node> filter;
+  private volatile String localDc;
 
   public BasicLoadBalancingPolicy(@NonNull DriverContext context, @NonNull String profileName) {
     this.context = (InternalDriverContext) context;
@@ -125,8 +126,8 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   @Override
   public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
     this.distanceReporter = distanceReporter;
-    filter = createNodeFilter();
-    localDc = createLocalDcHelper().discoverLocalDc().orElse(null);
+    localDc = newLocalDcHelper().discoverLocalDc().orElse(null);
+    filter = newNodeFilterHelper().createNodeFilter(localDc);
     for (Node node : nodes.values()) {
       if (filter.test(node)) {
         distanceReporter.setDistance(node, NodeDistance.LOCAL);
@@ -143,62 +144,23 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   }
 
   /**
-   * Returns the node filter to use with this policy.
+   * Returns a new {@link LocalDcHelper} instance to use to perform local datacenter discovery.
    *
-   * <p>This method should be called upon {@linkplain #init(Map, DistanceReporter) initialization}.
-   *
-   * <p>The default implementation fetches the user-supplied filter, if any, from the programmatic
-   * configuration API, or else, from the driver configuration. If no user-supplied filter can be
-   * retrieved, a dummy filter will be used which accepts all nodes unconditionally.
-   *
-   * <p>Note that, regardless of the filter supplied by the end user, if a local datacenter is
-   * defined the filter returned by this implementation will always reject nodes that report a
-   * datacenter different from the local one.
-   *
-   * @return the node filter to use.
+   * <p>This method should be called only once called during {@linkplain #init(Map,
+   * DistanceReporter) initialization}.
    */
-  @NonNull
-  protected Predicate<Node> createNodeFilter() {
-    Predicate<Node> filter = context.getNodeFilter(profile.getName());
-    if (filter != null) {
-      LOG.debug("[{}] Node filter set programmatically", logPrefix);
-    } else {
-      @SuppressWarnings("unchecked")
-      Predicate<Node> filterFromConfig =
-          Reflection.buildFromConfig(
-                  context,
-                  profile.getName(),
-                  DefaultDriverOption.LOAD_BALANCING_FILTER_CLASS,
-                  Predicate.class)
-              .orElse(INCLUDE_ALL_NODES);
-      filter = filterFromConfig;
-      LOG.debug("[{}] Node filter set from configuration", logPrefix);
-    }
-    Predicate<Node> userFilter = filter;
-    return node -> {
-      String localDc1 = localDc;
-      if (localDc1 != null && !localDc1.equals(node.getDatacenter())) {
-        LOG.debug(
-            "[{}] Ignoring {} because it doesn't belong to the local DC {}",
-            logPrefix,
-            node,
-            localDc1);
-        return false;
-      } else if (!userFilter.test(node)) {
-        LOG.debug(
-            "[{}] Ignoring {} because it doesn't match the user-provided predicate",
-            logPrefix,
-            node);
-        return false;
-      } else {
-        return true;
-      }
-    };
+  protected LocalDcHelper newLocalDcHelper() {
+    return new BasicLocalDcHelper(context, profile, logPrefix);
   }
 
-  /** @return The {@link LocalDcHelper} instance to use to perform local datacenter discovery. */
-  protected LocalDcHelper createLocalDcHelper() {
-    return new BasicLocalDcHelper(context, profile, logPrefix);
+  /**
+   * Returns a new {@link NodeFilterHelper} instance to use to create node filters.
+   *
+   * <p>This method should be called only once called during {@linkplain #init(Map,
+   * DistanceReporter) initialization}.
+   */
+  protected NodeFilterHelper newNodeFilterHelper() {
+    return new BasicNodeFilterHelper(context, profile, logPrefix);
   }
 
   @NonNull

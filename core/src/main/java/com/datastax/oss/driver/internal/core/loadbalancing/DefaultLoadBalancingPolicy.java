@@ -65,7 +65,7 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy {
   }
 
   @Override
-  protected LocalDcHelper createLocalDcHelper() {
+  protected LocalDcHelper newLocalDcHelper() {
     return new DefaultLocalDcHelper(context, profile, logPrefix);
   }
 }
