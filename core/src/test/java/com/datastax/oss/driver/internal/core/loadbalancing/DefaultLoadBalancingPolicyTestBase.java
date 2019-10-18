@@ -68,6 +68,7 @@ public abstract class DefaultLoadBalancingPolicyTestBase {
     when(context.getConfig()).thenReturn(config);
     when(config.getProfile(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(defaultProfile);
 
+    when(defaultProfile.getName()).thenReturn(DriverExecutionProfile.DEFAULT_NAME);
     when(defaultProfile.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER))
         .thenReturn(true);
     when(defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER))

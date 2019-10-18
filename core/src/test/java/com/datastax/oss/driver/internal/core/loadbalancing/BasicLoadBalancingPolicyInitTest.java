@@ -41,6 +41,7 @@ public class BasicLoadBalancingPolicyInitTest extends DefaultLoadBalancingPolicy
   public void setup() {
     super.setup();
     reset(defaultProfile);
+    when(defaultProfile.getName()).thenReturn(DriverExecutionProfile.DEFAULT_NAME);
   }
 
   @Test

@@ -41,7 +41,7 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
     // Given
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1));
     // the parent class sets the config option to "dc1"
-    DcInferringLoadBalancingPolicy policy = createPolicy();
+    BasicLoadBalancingPolicy policy = createPolicy();
 
     // When
     policy.init(ImmutableMap.of(UUID.randomUUID(), node1), distanceReporter);
@@ -57,7 +57,7 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1));
     // note: programmatic takes priority, the config won't even be inspected so no need to stub the
     // option to null
-    DcInferringLoadBalancingPolicy policy = createPolicy();
+    BasicLoadBalancingPolicy policy = createPolicy();
 
     // When
     policy.init(ImmutableMap.of(UUID.randomUUID(), node1), distanceReporter);
@@ -74,8 +74,7 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
     when(defaultProfile.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER))
         .thenReturn(false);
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1));
-    DcInferringLoadBalancingPolicy policy =
-        new DcInferringLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME) {};
+    BasicLoadBalancingPolicy policy = createPolicy();
 
     // When
     policy.init(ImmutableMap.of(UUID.randomUUID(), node1), distanceReporter);
@@ -91,8 +90,7 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
         .thenReturn(false);
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2));
     when(node2.getDatacenter()).thenReturn("dc2");
-    DcInferringLoadBalancingPolicy policy =
-        new DcInferringLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME) {};
+    BasicLoadBalancingPolicy policy = createPolicy();
 
     thrown.expect(IllegalStateException.class);
     thrown.expectMessage(
@@ -111,8 +109,7 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2));
     when(node1.getDatacenter()).thenReturn(null);
     when(node2.getDatacenter()).thenReturn(null);
-    DcInferringLoadBalancingPolicy policy =
-        new DcInferringLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME) {};
+    BasicLoadBalancingPolicy policy = createPolicy();
 
     thrown.expect(IllegalStateException.class);
     thrown.expectMessage(
@@ -129,7 +126,7 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
     when(node2.getDatacenter()).thenReturn("dc2");
     when(node3.getDatacenter()).thenReturn("dc3");
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2, node3));
-    DcInferringLoadBalancingPolicy policy = createPolicy();
+    BasicLoadBalancingPolicy policy = createPolicy();
 
     // When
     policy.init(
@@ -156,7 +153,7 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
     when(node1.getState()).thenReturn(NodeState.UP);
     when(node2.getState()).thenReturn(NodeState.DOWN);
     when(node3.getState()).thenReturn(NodeState.UNKNOWN);
-    DcInferringLoadBalancingPolicy policy = createPolicy();
+    BasicLoadBalancingPolicy policy = createPolicy();
 
     // When
     policy.init(
@@ -179,7 +176,7 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
     when(node2.getDatacenter()).thenReturn("dc2");
     when(node3.getDatacenter()).thenReturn("dc3");
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2));
-    DcInferringLoadBalancingPolicy policy = createPolicy();
+    BasicLoadBalancingPolicy policy = createPolicy();
 
     // When
     policy.init(
@@ -201,7 +198,7 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
     when(context.getNodeFilter(DriverExecutionProfile.DEFAULT_NAME))
         .thenReturn(node -> node.equals(node1));
 
-    DcInferringLoadBalancingPolicy policy = createPolicy();
+    BasicLoadBalancingPolicy policy = createPolicy();
 
     // When
     policy.init(
@@ -217,7 +214,7 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
   }
 
   @NonNull
-  protected DcInferringLoadBalancingPolicy createPolicy() {
+  protected BasicLoadBalancingPolicy createPolicy() {
     return new DcInferringLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
   }
 }

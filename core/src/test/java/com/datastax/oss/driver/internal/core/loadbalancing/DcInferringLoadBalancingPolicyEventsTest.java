@@ -29,7 +29,7 @@ public class DcInferringLoadBalancingPolicyEventsTest extends BasicLoadBalancing
 
   @NonNull
   @Override
-  protected DcInferringLoadBalancingPolicy createAndInitPolicy() {
+  protected BasicLoadBalancingPolicy createAndInitPolicy() {
     DcInferringLoadBalancingPolicy policy =
         new DcInferringLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
     policy.init(
