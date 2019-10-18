@@ -89,7 +89,6 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
 
   private static final Logger LOG = LoggerFactory.getLogger(BasicLoadBalancingPolicy.class);
 
-  protected static final Predicate<Node> INCLUDE_ALL_NODES = n -> true;
   protected static final IntUnaryOperator INCREMENT = i -> (i == Integer.MAX_VALUE) ? 0 : i + 1;
 
   @NonNull protected final InternalDriverContext context;
