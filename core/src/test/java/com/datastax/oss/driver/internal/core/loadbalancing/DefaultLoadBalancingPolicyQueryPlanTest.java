@@ -24,6 +24,7 @@ import java.util.UUID;
 
 public class DefaultLoadBalancingPolicyQueryPlanTest extends BasicLoadBalancingPolicyQueryPlanTest {
 
+  @Override
   protected DefaultLoadBalancingPolicy createAndInitPolicy() {
     // Use a subclass to disable shuffling, we just spy to make sure that the shuffling method was
     // called (makes tests easier)
