@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -36,7 +37,9 @@ import net.jcip.annotations.Immutable;
  * are ignored for sorting versions.
  */
 @Immutable
-public class Version implements Comparable<Version> {
+public class Version implements Comparable<Version>, Serializable {
+
+  private static final long serialVersionUID = 1;
 
   private static final String VERSION_REGEXP =
       "(\\d+)\\.(\\d+)(\\.\\d+)?(\\.\\d+)?([~\\-]\\w[.\\w]*(?:-\\w[.\\w]*)*)?(\\+[.\\w]+)?";
