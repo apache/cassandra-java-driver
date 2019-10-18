@@ -4,6 +4,7 @@
 
 ### 4.3.0 (in progress)
 
+- [improvement] JAVA-2497: Ensure nodes and exceptions are serializable
 - [bug] JAVA-2464: Fix initial schema refresh when reconnect-on-init is enabled
 - [improvement] JAVA-2516: Enable hostname validation with Cloud
 - [documentation]: JAVA-2460: Document how to determine the local DC

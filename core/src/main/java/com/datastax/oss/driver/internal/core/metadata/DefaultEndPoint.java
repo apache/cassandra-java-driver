@@ -17,10 +17,13 @@ package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.util.Objects;
 
-public class DefaultEndPoint implements EndPoint {
+public class DefaultEndPoint implements EndPoint, Serializable {
+
+  private static final long serialVersionUID = 1;
 
   private final InetSocketAddress address;
   private final String metricPrefix;
