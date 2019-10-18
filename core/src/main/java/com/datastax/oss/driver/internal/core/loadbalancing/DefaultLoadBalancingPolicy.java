@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import net.jcip.annotations.ThreadSafe;
@@ -42,6 +43,24 @@ import org.slf4j.LoggerFactory;
  * </pre>
  *
  * See {@code reference.conf} (in the manual or core driver JAR) for more details.
+ *
+ * <p><b>Local datacenter</b>: This implementation requires a local datacenter to be defined,
+ * otherwise it will throw an {@link IllegalStateException}. A local datacenter can be supplied
+ * either:
+ *
+ * <ol>
+ *   <li>Programmatically with {@link
+ *       com.datastax.oss.driver.api.core.session.SessionBuilder#withLocalDatacenter(String)
+ *       SessionBuilder#withLocalDatacenter(String)};
+ *   <li>Through configuration, by defining the option {@link
+ *       DefaultDriverOption#LOAD_BALANCING_LOCAL_DATACENTER
+ *       basic.load-balancing-policy.local-datacenter};
+ *   <li>Or implicitly, if and only if no explicit contact points were provided: in this case this
+ *       implementation will infer the local datacenter from the implicit contact point (localhost).
+ * </ol>
+ *
+ * <p><b>Query plan</b>: see {@link BasicLoadBalancingPolicy} for details on the computation of
+ * query plans.
  */
 @ThreadSafe
 public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy {
@@ -53,10 +72,13 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy {
   }
 
   /**
-   * {@inheritDoc}
+   * Discovers the local datacenter to use with this policy.
    *
-   * <p>If the local datacenter is not provided through configuration nor programmatically, this
-   * implementation will consider two distinct situations:
+   * <p>This method should be called upon {@linkplain #init(Map, DistanceReporter) initialization}.
+   *
+   * <p>This implementation fetches the user-supplied datacenter, if any, from the programmatic
+   * configuration API, or else, from the driver configuration. If no local datacenter is explicitly
+   * defined, this implementation will consider two distinct situations:
    *
    * <ol>
    *   <li>If no explicit contact points were provided, this implementation will infer the local
@@ -70,14 +92,14 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy {
    */
   @NonNull
   @Override
-  protected Optional<String> inferLocalDatacenter() {
-    Optional<String> optionalLocalDc = super.inferLocalDatacenter();
+  protected Optional<String> discoverLocalDatacenter() {
+    Optional<String> optionalLocalDc = super.discoverLocalDatacenter();
     if (optionalLocalDc.isPresent()) {
       return optionalLocalDc;
     }
+    Set<DefaultNode> contactPoints = context.getMetadataManager().getContactPoints();
     if (context.getMetadataManager().wasImplicitContactPoint()) {
       // We only allow automatic inference of the local DC in this specific case
-      Set<DefaultNode> contactPoints = context.getMetadataManager().getContactPoints();
       assert contactPoints.size() == 1;
       Node contactPoint = contactPoints.iterator().next();
       String localDc = contactPoint.getDatacenter();
@@ -90,15 +112,17 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy {
         return Optional.of(localDc);
       } else {
         throw new IllegalStateException(
-            "The local DC could not be inferred from contact points, please set it explicitly (see "
+            "The local DC could not be inferred from implicit contact point, please set it explicitly (see "
                 + DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER.getPath()
                 + " in the config, or set it programmatically with SessionBuilder.withLocalDatacenter)");
       }
     } else {
       throw new IllegalStateException(
-          "You provided explicit contact points, the local DC must be explicitly set (see "
+          "Since you provided explicit contact points, the local DC must be explicitly set (see "
               + DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER.getPath()
-              + " in the config, or set it programmatically with SessionBuilder.withLocalDatacenter");
+              + " in the config, or set it programmatically with SessionBuilder.withLocalDatacenter). "
+              + "Current contact points are: "
+              + formatNodes(contactPoints));
     }
   }
 }

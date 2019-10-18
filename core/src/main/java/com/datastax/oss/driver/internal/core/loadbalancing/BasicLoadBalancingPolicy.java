@@ -57,14 +57,20 @@ import org.slf4j.LoggerFactory;
  * A basic implementation of {@link LoadBalancingPolicy} that can serve as a building block for more
  * advanced use cases.
  *
- * <p><b>Local datacenter inference</b>: This implementation will only infer the local datacenter if
- * it is explicitly set either through configuration or programmatically; if the local datacenter is
+ * <p><b>Local datacenter</b>: This implementation will only define a local datacenter if it is
+ * explicitly set either through configuration or programmatically; if the local datacenter is
  * unspecified, this implementation will effectively act as a datacenter-agnostic load balancing
  * policy and will consider all nodes in the cluster when creating query plans, regardless of their
  * datacenter.
  *
- * <p>This class is not recommended for normal users who should always prefer {@link
- * DefaultLoadBalancingPolicy}.
+ * <p><b>Query plan</b>: This implementation prioritizes replica nodes over non-replica ones; if
+ * more than one replica is available, the replicas will be shuffled. Non-replica nodes will be
+ * included in a round-robin fashion. If the local datacenter is defined (see above), query plans
+ * will only include local nodes, never remote ones; if it is unspecified however, query plans may
+ * contain nodes from different datacenters.
+ *
+ * <p><b>This class is not recommended for normal users who should always prefer {@link
+ * DefaultLoadBalancingPolicy}</b>.
  */
 @ThreadSafe
 public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
@@ -110,7 +116,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
     this.distanceReporter = distanceReporter;
     filter = createNodeFilter();
-    localDc = inferLocalDatacenter().orElse(null);
+    localDc = discoverLocalDatacenter().orElse(null);
     for (Node node : nodes.values()) {
       if (filter.test(node)) {
         distanceReporter.setDistance(node, NodeDistance.LOCAL);
@@ -181,19 +187,25 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   }
 
   /**
-   * Infers the local datacenter to use with this policy.
+   * Discovers the local datacenter to use with this policy.
    *
    * <p>This method should be called upon {@linkplain #init(Map, DistanceReporter) initialization}.
    *
    * <p>This implementation fetches the user-supplied datacenter, if any, from the programmatic
    * configuration API, or else, from the driver configuration. If no user-supplied datacenter can
-   * be retrieved, this implementation returns empty, effectively causing this load balancing policy
-   * to operate in a datacenter-agnostic fashion.
+   * be retrieved, this implementation returns {@link Optional#empty empty}, effectively causing
+   * this load balancing policy to operate in a datacenter-agnostic fashion.
    *
-   * @return The local datacenter, or empty if none found.
+   * <p>Subclasses may choose to throw {@link IllegalStateException} instead of returning {@link
+   * Optional#empty empty}, if they require a local datacenter to be defined in order to operate
+   * properly.
+   *
+   * @return The local datacenter, or {@link Optional#empty empty} if none found.
+   * @throws IllegalStateException if the local datacenter could not be discovered, and this policy
+   *     cannot operate without it.
    */
   @NonNull
-  protected Optional<String> inferLocalDatacenter() {
+  protected Optional<String> discoverLocalDatacenter() {
     String localDc = context.getLocalDatacenter(profileName);
     if (localDc != null) {
       LOG.debug("[{}] Local DC set programmatically: {}", logPrefix, localDc);
@@ -237,6 +249,10 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
     }
   }
 
+  /**
+   * Formats the given nodes as a string detailing each contact point and its datacenter, for
+   * informational purposes.
+   */
   @NonNull
   protected String formatNodes(Iterable<? extends Node> nodes) {
     List<String> l = new ArrayList<>();

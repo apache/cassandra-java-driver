@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import net.jcip.annotations.ThreadSafe;
@@ -31,8 +32,26 @@ import org.slf4j.LoggerFactory;
  * An implementation of {@link LoadBalancingPolicy} that infers the local datacenter from the
  * contact points, if no datacenter was provided neither through configuration nor programmatically.
  *
- * <p>This class is not recommended for normal users, who should always prefer {@link
- * DefaultLoadBalancingPolicy}.
+ * <p><b>Local datacenter</b>: This implementation requires a local datacenter to be defined,
+ * otherwise it will throw an {@link IllegalStateException}. A local datacenter can be supplied
+ * either:
+ *
+ * <ol>
+ *   <li>Programmatically with {@link
+ *       com.datastax.oss.driver.api.core.session.SessionBuilder#withLocalDatacenter(String)
+ *       SessionBuilder#withLocalDatacenter(String)};
+ *   <li>Through configuration, by defining the option {@link
+ *       DefaultDriverOption#LOAD_BALANCING_LOCAL_DATACENTER
+ *       basic.load-balancing-policy.local-datacenter};
+ *   <li>Or implicitly: in this case this implementation will infer the local datacenter from the
+ *       provided contact points, if and only if they are all located in the same datacenter.
+ * </ol>
+ *
+ * <p><b>Query plan</b>: see {@link BasicLoadBalancingPolicy} for details on the computation of
+ * query plans.
+ *
+ * <p><b>This class is not recommended for normal users who should always prefer {@link
+ * DefaultLoadBalancingPolicy}</b>.
  */
 @ThreadSafe
 public class DcInferringLoadBalancingPolicy extends BasicLoadBalancingPolicy {
@@ -45,11 +64,15 @@ public class DcInferringLoadBalancingPolicy extends BasicLoadBalancingPolicy {
   }
 
   /**
-   * {@inheritDoc}
+   * Discovers the local datacenter to use with this policy.
    *
-   * <p>This implementation infers the local datacenter from the contact points: if all contact
-   * points share the same datacenter, that datacenter is returned. If the contact points are from
-   * different datacenters, or if no contact points reported any datacenter, an {@link
+   * <p>This method should be called upon {@linkplain #init(Map, DistanceReporter) initialization}.
+   *
+   * <p>This implementation fetches the user-supplied datacenter, if any, from the programmatic
+   * configuration API, or else, from the driver configuration. If no local datacenter is explicitly
+   * defined, this implementation infers the local datacenter from the contact points: if all
+   * contact points share the same datacenter, that datacenter is returned. If the contact points
+   * are from different datacenters, or if no contact points reported any datacenter, an {@link
    * IllegalStateException} is thrown.
    *
    * @return The local datacenter; always present.
@@ -57,8 +80,8 @@ public class DcInferringLoadBalancingPolicy extends BasicLoadBalancingPolicy {
    */
   @NonNull
   @Override
-  protected Optional<String> inferLocalDatacenter() {
-    Optional<String> optionalLocalDc = super.inferLocalDatacenter();
+  protected Optional<String> discoverLocalDatacenter() {
+    Optional<String> optionalLocalDc = super.discoverLocalDatacenter();
     if (optionalLocalDc.isPresent()) {
       return optionalLocalDc;
     }
