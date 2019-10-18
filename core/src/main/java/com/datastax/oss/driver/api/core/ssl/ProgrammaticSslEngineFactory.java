@@ -18,18 +18,19 @@ package com.datastax.oss.driver.api.core.ssl;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
 
 /**
  * An SSL engine factory that allows you to configure the driver programmatically, by passing your
  * own {@link SSLContext}.
  *
- * <p>Unlike the configuration-based approach, this class does not allow you to customize cipher
- * suites, or turn on host name validation. Also, note that it will create SSL engines with advisory
- * peer information ({@link SSLContext#createSSLEngine(String, int)}) whenever possible.
+ * <p>Note that this class will create SSL engines with advisory peer information ({@link
+ * SSLContext#createSSLEngine(String, int)}) whenever possible.
  *
  * <p>If those defaults do not work for you, it should be pretty straightforward to write your own
  * implementation by extending or duplicating this class.
@@ -40,9 +41,45 @@ import javax.net.ssl.SSLEngine;
 public class ProgrammaticSslEngineFactory implements SslEngineFactory {
 
   protected final SSLContext sslContext;
+  protected final String[] cipherSuites;
+  protected final boolean requireHostnameValidation;
 
-  public ProgrammaticSslEngineFactory(SSLContext sslContext) {
+  /**
+   * Creates an instance with the given {@link SSLContext}, default cipher suites and no host name
+   * validation.
+   *
+   * @param sslContext the {@link SSLContext} to use.
+   */
+  public ProgrammaticSslEngineFactory(@NonNull SSLContext sslContext) {
+    this(sslContext, null);
+  }
+
+  /**
+   * Creates an instance with the given {@link SSLContext} and cipher suites, and no host name
+   * validation.
+   *
+   * @param sslContext the {@link SSLContext} to use.
+   * @param cipherSuites the cipher suites to use, or null to use the default ones.
+   */
+  public ProgrammaticSslEngineFactory(
+      @NonNull SSLContext sslContext, @Nullable String[] cipherSuites) {
+    this(sslContext, cipherSuites, false);
+  }
+
+  /**
+   * Creates an instance with the given {@link SSLContext}, cipher suites and host name validation.
+   *
+   * @param sslContext the {@link SSLContext} to use.
+   * @param cipherSuites the cipher suites to use, or null to use the default ones.
+   * @param requireHostnameValidation whether to enable host name validation.
+   */
+  public ProgrammaticSslEngineFactory(
+      @NonNull SSLContext sslContext,
+      @Nullable String[] cipherSuites,
+      boolean requireHostnameValidation) {
     this.sslContext = sslContext;
+    this.cipherSuites = cipherSuites;
+    this.requireHostnameValidation = requireHostnameValidation;
   }
 
   @NonNull
@@ -57,11 +94,19 @@ public class ProgrammaticSslEngineFactory implements SslEngineFactory {
       engine = sslContext.createSSLEngine();
     }
     engine.setUseClientMode(true);
+    if (cipherSuites != null) {
+      engine.setEnabledCipherSuites(cipherSuites);
+    }
+    if (requireHostnameValidation) {
+      SSLParameters parameters = engine.getSSLParameters();
+      parameters.setEndpointIdentificationAlgorithm("HTTPS");
+      engine.setSSLParameters(parameters);
+    }
     return engine;
   }
 
   @Override
-  public void close() {
+  public void close() throws Exception {
     // nothing to do
   }
 }
