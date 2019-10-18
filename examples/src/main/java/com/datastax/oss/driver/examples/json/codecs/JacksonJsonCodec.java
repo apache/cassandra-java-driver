@@ -62,7 +62,7 @@ public class JacksonJsonCodec<T> implements TypeCodec<T> {
    * @param javaClass the Java class this codec maps to.
    */
   public JacksonJsonCodec(Class<T> javaClass) {
-    this(javaClass, new JsonMapper());
+    this(javaClass, JsonMapper.builder().build());
   }
 
   /**

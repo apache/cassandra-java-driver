@@ -37,7 +37,7 @@ public class JacksonJsonCodec<T> implements TypeCodec<T> {
   private final GenericType<T> javaType;
 
   JacksonJsonCodec(Class<T> javaClass) {
-    this(javaClass, new JsonMapper());
+    this(javaClass, JsonMapper.builder().build());
   }
 
   private JacksonJsonCodec(Class<T> javaClass, JsonMapper objectMapper) {
