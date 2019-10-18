@@ -4816,6 +4816,20 @@
         "old": "field com\\.datastax\\.oss\\.driver\\.api\\.core\\.Version.V.*",
         "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
         "justification": "Marking constants as non-null doesn't break existing code"
+      },
+      {
+        "code": "java.annotation.removed",
+        "old": "method java.util.UUID com.datastax.oss.driver.api.core.metadata.Node::getHostId()",
+        "new": "method java.util.UUID com.datastax.oss.driver.api.core.metadata.Node::getHostId()",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "JAVA-2505: Annotate Node.getHostId() as nullable"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method java.util.UUID com.datastax.oss.driver.api.core.metadata.Node::getHostId()",
+        "new": "method java.util.UUID com.datastax.oss.driver.api.core.metadata.Node::getHostId()",
+        "annotation": "@edu.umd.cs.findbugs.annotations.Nullable",
+        "justification": "JAVA-2505: Annotate Node.getHostId() as nullable"
       }
     ]
   }
