@@ -195,60 +195,25 @@ public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
     String localDc = context.getLocalDatacenter(profileName);
     if (localDc != null) {
       LOG.debug("[{}] Local DC set programmatically: {}", logPrefix, localDc);
+      checkLocalDatacenter(localDc);
     } else if (profile.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)) {
       localDc = profile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER);
       LOG.debug("[{}] Local DC set from configuration: {}", logPrefix, localDc);
+      checkLocalDatacenter(localDc);
     } else {
       localDc = inferLocalDatacenter();
     }
-    checkLocalDatacenter(localDc);
     return localDc;
   }
 
   /**
-   * Infers the local datacenter.
-   *
-   * <p>The default implementation infers the local datacenter from the contact points.
-   *
-   * <p>If all contact points share the same datacenter, that datacenter is returned. If the contact
-   * points are from different datacenters, or if no contact points reported any datacenter, an
-   * {@link IllegalStateException} is thrown.
-   *
-   * @return The inferred local datacenter.
-   * @throws IllegalStateException if the local datacenter cannot be inferred.
-   */
-  @NonNull
-  protected String inferLocalDatacenter() {
-    Set<String> datacenters = new HashSet<>();
-    Set<? extends Node> contactPoints = context.getMetadataManager().getContactPoints();
-    for (Node node : contactPoints) {
-      String datacenter = node.getDatacenter();
-      if (datacenter != null) {
-        datacenters.add(datacenter);
-      }
-    }
-    if (datacenters.size() > 1) {
-      throw new IllegalStateException(
-          String.format(
-              "No local DC was provided, but the contact points are from different DCs: %s; "
-                  + "please set the local DC explicitly, or check your contact points",
-              formatNodes(contactPoints)));
-    }
-    if (!datacenters.isEmpty()) {
-      LOG.info("[{}] Inferred local DC from contact points: {}", logPrefix, localDc);
-      return datacenters.iterator().next();
-    }
-    throw new IllegalStateException(
-        "The local DC could not be inferred from contact points, please set it explicitly");
-  }
-
-  /**
-   * Checks if the contact points are compatible with the local datacenter.
+   * Checks if the contact points are compatible with the local datacenter specified either through
+   * configuration, or programmatically.
    *
    * <p>The default implementation logs a warning when a contact point reports a datacenter
    * different from the local one.
    *
-   * @param localDc The local datacenter.
+   * @param localDc The local datacenter, as specified in the config, or programmatically.
    */
   protected void checkLocalDatacenter(@NonNull String localDc) {
     Set<? extends Node> contactPoints = context.getMetadataManager().getContactPoints();
@@ -266,6 +231,48 @@ public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
           localDc,
           formatNodes(badContactPoints));
     }
+  }
+
+  /**
+   * Infers the local datacenter when no local datacenter was specified neither through
+   * configuration nor programmatically.
+   *
+   * <p>The default implementation infers the local datacenter from the contact points: if all
+   * contact points share the same datacenter, that datacenter is returned. If the contact points
+   * are from different datacenters, or if no contact points reported any datacenter, an {@link
+   * IllegalStateException} is thrown.
+   *
+   * @return The inferred local datacenter.
+   * @throws IllegalStateException if the local datacenter cannot be inferred.
+   */
+  @NonNull
+  protected String inferLocalDatacenter() {
+    Set<String> datacenters = new HashSet<>();
+    Set<? extends Node> contactPoints = context.getMetadataManager().getContactPoints();
+    for (Node node : contactPoints) {
+      String datacenter = node.getDatacenter();
+      if (datacenter != null) {
+        datacenters.add(datacenter);
+      }
+    }
+    if (datacenters.size() == 1) {
+      String localDc = datacenters.iterator().next();
+      LOG.info("[{}] Inferred local DC from contact points: {}", logPrefix, localDc);
+      return localDc;
+    }
+    if (datacenters.isEmpty()) {
+      throw new IllegalStateException(
+          "The local DC could not be inferred from contact points, please set it explicitly (see "
+              + DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER.getPath()
+              + " in the config, or set it programmatically with SessionBuilder.withLocalDatacenter)");
+    }
+    throw new IllegalStateException(
+        String.format(
+            "No local DC was provided, but the contact points are from different DCs: %s; "
+                + "please set the local DC explicitly (see "
+                + DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER.getPath()
+                + " in the config, or set it programmatically with SessionBuilder.withLocalDatacenter)",
+            formatNodes(contactPoints)));
   }
 
   @NonNull

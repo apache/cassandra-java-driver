@@ -62,13 +62,22 @@ public class DefaultLoadBalancingPolicy extends LoadBalancingPolicyBase {
       Node contactPoint = contactPoints.iterator().next();
       String localDc = contactPoint.getDatacenter();
       if (localDc != null) {
-        LOG.debug("[{}] Local DC set from contact point {}: {}", logPrefix, contactPoint, localDc);
+        LOG.debug(
+            "[{}] Local DC set from implicit contact point {}: {}",
+            logPrefix,
+            contactPoint,
+            localDc);
         return localDc;
+      } else {
+        throw new IllegalStateException(
+            "The local DC could not be inferred from contact points, please set it explicitly (see "
+                + DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER.getPath()
+                + " in the config, or set it programmatically with SessionBuilder.withLocalDatacenter)");
       }
     }
     throw new IllegalStateException(
-        "You provided explicit contact points, the local DC must be specified (see "
+        "You provided explicit contact points, the local DC must be explicitly set (see "
             + DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER.getPath()
-            + " in the config)");
+            + " in the config, or set it programmatically with SessionBuilder.withLocalDatacenter");
   }
 }

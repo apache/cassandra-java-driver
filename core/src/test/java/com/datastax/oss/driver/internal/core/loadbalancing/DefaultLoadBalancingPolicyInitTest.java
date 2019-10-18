@@ -93,7 +93,8 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     DefaultLoadBalancingPolicy policy = createPolicy();
 
     thrown.expect(IllegalStateException.class);
-    thrown.expectMessage("You provided explicit contact points, the local DC must be specified");
+    thrown.expectMessage(
+        "You provided explicit contact points, the local DC must be explicitly set");
 
     // When
     policy.init(ImmutableMap.of(UUID.randomUUID(), node2), distanceReporter);
