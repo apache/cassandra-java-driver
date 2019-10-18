@@ -4,6 +4,7 @@
 
 ### 4.3.0 (in progress)
 
+- [improvement] JAVA-2480: Upgrade Jackson to 2.10.0
 - [improvement] JAVA-1708: Support DSE "everywhere" replication strategy
 - [improvement] JAVA-2471: Consider DSE version when parsing the schema
 - [improvement] JAVA-2444: Add method setRoutingKey(ByteBuffer...) to StatementBuilder
