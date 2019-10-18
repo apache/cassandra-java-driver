@@ -6,6 +6,7 @@
 
 - [improvement] JAVA-2490: Allow to read the secure bundle from an InputStream
 - [new feature] JAVA-2478: Allow to provide the secure bundle via URL
+- [improvement] JAVA-2484: Add errors for cloud misconfiguration
 
 ### 4.3.0 (in progress)
 

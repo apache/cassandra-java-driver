@@ -21,8 +21,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
@@ -30,6 +32,7 @@ import com.datastax.oss.driver.categories.IsolatedTests;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -200,5 +203,20 @@ public class CloudIT {
       set = session.execute("select * from system.local");
     }
     assertThat(set).isNotNull();
+  }
+
+  @Test
+  public void should_error_when_contact_points_and_secure_bundle_used() {
+    // given
+    Path bundle = proxyRule.getProxy().getBundleWithoutCredentialsPath();
+    CqlSessionBuilder builder =
+        CqlSession.builder()
+            .withCloudSecureConnectBundle(bundle)
+            .addContactPoint(new InetSocketAddress("127.0.0.1", 9042))
+            .withAuthCredentials("cassandra", "cassandra");
+    assertThatThrownBy(() -> builder.build())
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage(
+            "Can't use withCloudSecureConnectBundle and addContactPoint(s). They are mutually exclusive.");
   }
 }

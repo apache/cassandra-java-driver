@@ -516,7 +516,13 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
           cloudConfigInputStream = () -> getURL(configUrlString).openStream();
         }
       }
+      List<String> configContactPoints =
+          defaultConfig.getStringList(DefaultDriverOption.CONTACT_POINTS, Collections.emptyList());
       if (cloudConfigInputStream != null) {
+        if (!programmaticContactPoints.isEmpty() || !configContactPoints.isEmpty()) {
+          throw new IllegalStateException(
+              "Can't use withCloudSecureConnectBundle and addContactPoint(s). They are mutually exclusive.");
+        }
         CloudConfig cloudConfig =
             new CloudConfigFactory().createCloudConfig(cloudConfigInputStream.call());
         addContactEndPoints(cloudConfig.getEndPoints());
@@ -528,8 +534,6 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
         }
       }
 
-      List<String> configContactPoints =
-          defaultConfig.getStringList(DefaultDriverOption.CONTACT_POINTS, Collections.emptyList());
       boolean resolveAddresses =
           defaultConfig.getBoolean(DefaultDriverOption.RESOLVE_CONTACT_POINTS, true);
 
