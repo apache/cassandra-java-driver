@@ -218,6 +218,19 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
    */
   @NonNull
   protected Optional<String> discoverLocalDatacenter() {
+    return localDatacenterFromConfig();
+  }
+
+  /**
+   * Fetches the local datacenter from the programmatic configuration API, or else, from the driver
+   * configuration. If no user-supplied datacenter can be retrieved, returns {@link Optional#empty
+   * empty}.
+   *
+   * @return The local datacenter from the configuration, or {@link Optional#empty empty} if none
+   *     found.
+   */
+  @NonNull
+  protected final Optional<String> localDatacenterFromConfig() {
     String localDc = context.getLocalDatacenter(profile.getName());
     if (localDc != null) {
       LOG.debug("[{}] Local DC set programmatically: {}", logPrefix, localDc);

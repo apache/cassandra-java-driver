@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.HashSet;
 import java.util.Map;
@@ -99,8 +100,20 @@ public class DcInferringLoadBalancingPolicy extends BasicLoadBalancingPolicy {
     if (optionalLocalDc.isPresent()) {
       return optionalLocalDc;
     }
+    return inferDataCenter(this);
+  }
+
+  /**
+   * DC inference logic, exposed as a static utility method for convenience, to allow for easier
+   * subclassing.
+   *
+   * @return The local datacenter; always present.
+   * @throws IllegalStateException if the local datacenter could not be inferred.
+   */
+  @NonNull
+  public static Optional<String> inferDataCenter(BasicLoadBalancingPolicy policy) {
     Set<String> datacenters = new HashSet<>();
-    Set<? extends Node> contactPoints = context.getMetadataManager().getContactPoints();
+    Set<DefaultNode> contactPoints = policy.context.getMetadataManager().getContactPoints();
     for (Node node : contactPoints) {
       String datacenter = node.getDatacenter();
       if (datacenter != null) {
@@ -109,7 +122,7 @@ public class DcInferringLoadBalancingPolicy extends BasicLoadBalancingPolicy {
     }
     if (datacenters.size() == 1) {
       String localDc = datacenters.iterator().next();
-      LOG.info("[{}] Inferred local DC from contact points: {}", logPrefix, localDc);
+      LOG.info("[{}] Inferred local DC from contact points: {}", policy.logPrefix, localDc);
       return Optional.of(localDc);
     }
     if (datacenters.isEmpty()) {
@@ -124,6 +137,6 @@ public class DcInferringLoadBalancingPolicy extends BasicLoadBalancingPolicy {
                 + "please set the local DC explicitly (see "
                 + DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER.getPath()
                 + " in the config, or set it programmatically with SessionBuilder.withLocalDatacenter)",
-            formatNodes(contactPoints)));
+            policy.formatNodes(contactPoints)));
   }
 }
