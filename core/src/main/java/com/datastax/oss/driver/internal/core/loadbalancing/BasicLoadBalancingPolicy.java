@@ -28,6 +28,8 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.loadbalancing.helper.BasicLocalDcHelper;
+import com.datastax.oss.driver.internal.core.loadbalancing.helper.LocalDcHelper;
 import com.datastax.oss.driver.internal.core.util.ArrayUtils;
 import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
@@ -35,12 +37,8 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
@@ -94,9 +92,9 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   protected static final Predicate<Node> INCLUDE_ALL_NODES = n -> true;
   protected static final IntUnaryOperator INCREMENT = i -> (i == Integer.MAX_VALUE) ? 0 : i + 1;
 
-  @NonNull protected final String logPrefix;
   @NonNull protected final InternalDriverContext context;
   @NonNull protected final DriverExecutionProfile profile;
+  @NonNull protected final String logPrefix;
 
   protected final AtomicInteger roundRobinAmount = new AtomicInteger();
   protected final CopyOnWriteArraySet<Node> liveNodes = new CopyOnWriteArraySet<>();
@@ -128,7 +126,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
     this.distanceReporter = distanceReporter;
     filter = createNodeFilter();
-    localDc = discoverLocalDatacenter().orElse(null);
+    localDc = createLocalDcHelper().discoverLocalDc().orElse(null);
     for (Node node : nodes.values()) {
       if (filter.test(node)) {
         distanceReporter.setDistance(node, NodeDistance.LOCAL);
@@ -198,93 +196,9 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
     };
   }
 
-  /**
-   * Discovers the local datacenter to use with this policy.
-   *
-   * <p>This method should be called upon {@linkplain #init(Map, DistanceReporter) initialization}.
-   *
-   * <p>This implementation fetches the user-supplied datacenter, if any, from the programmatic
-   * configuration API, or else, from the driver configuration. If no user-supplied datacenter can
-   * be retrieved, this implementation returns {@link Optional#empty empty}, effectively causing
-   * this load balancing policy to operate in a datacenter-agnostic fashion.
-   *
-   * <p>Subclasses may choose to throw {@link IllegalStateException} instead of returning {@link
-   * Optional#empty empty}, if they require a local datacenter to be defined in order to operate
-   * properly.
-   *
-   * @return The local datacenter, or {@link Optional#empty empty} if none found.
-   * @throws IllegalStateException if the local datacenter could not be discovered, and this policy
-   *     cannot operate without it.
-   */
-  @NonNull
-  protected Optional<String> discoverLocalDatacenter() {
-    return localDatacenterFromConfig();
-  }
-
-  /**
-   * Fetches the local datacenter from the programmatic configuration API, or else, from the driver
-   * configuration. If no user-supplied datacenter can be retrieved, returns {@link Optional#empty
-   * empty}.
-   *
-   * @return The local datacenter from the configuration, or {@link Optional#empty empty} if none
-   *     found.
-   */
-  @NonNull
-  protected final Optional<String> localDatacenterFromConfig() {
-    String localDc = context.getLocalDatacenter(profile.getName());
-    if (localDc != null) {
-      LOG.debug("[{}] Local DC set programmatically: {}", logPrefix, localDc);
-      checkLocalDatacenterCompatibility(localDc, context.getMetadataManager().getContactPoints());
-      return Optional.of(localDc);
-    } else if (profile.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)) {
-      localDc = profile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER);
-      LOG.debug("[{}] Local DC set from configuration: {}", logPrefix, localDc);
-      checkLocalDatacenterCompatibility(localDc, context.getMetadataManager().getContactPoints());
-      return Optional.of(localDc);
-    } else {
-      return Optional.empty();
-    }
-  }
-
-  /**
-   * Checks if the contact points are compatible with the local datacenter specified either through
-   * configuration, or programmatically.
-   *
-   * <p>The default implementation logs a warning when a contact point reports a datacenter
-   * different from the local one.
-   *
-   * @param localDc The local datacenter, as specified in the config, or programmatically.
-   * @param contactPoints The contact points provided when creating the session.
-   */
-  protected void checkLocalDatacenterCompatibility(
-      @NonNull String localDc, Set<? extends Node> contactPoints) {
-    Set<Node> badContactPoints = new LinkedHashSet<>();
-    for (Node node : contactPoints) {
-      if (!Objects.equals(localDc, node.getDatacenter())) {
-        badContactPoints.add(node);
-      }
-    }
-    if (!badContactPoints.isEmpty()) {
-      LOG.warn(
-          "[{}] You specified {} as the local DC, but some contact points are from a different DC: {}; "
-              + "please provide the correct local DC, or check your contact points",
-          logPrefix,
-          localDc,
-          formatNodes(badContactPoints));
-    }
-  }
-
-  /**
-   * Formats the given nodes as a string detailing each contact point and its datacenter, for
-   * informational purposes.
-   */
-  @NonNull
-  protected String formatNodes(Iterable<? extends Node> nodes) {
-    List<String> l = new ArrayList<>();
-    for (Node node : nodes) {
-      l.add(node + "=" + node.getDatacenter());
-    }
-    return String.join(", ", l);
+  /** @return The {@link LocalDcHelper} instance to use to perform local datacenter discovery. */
+  protected LocalDcHelper createLocalDcHelper() {
+    return new BasicLocalDcHelper(context, profile, logPrefix);
   }
 
   @NonNull
