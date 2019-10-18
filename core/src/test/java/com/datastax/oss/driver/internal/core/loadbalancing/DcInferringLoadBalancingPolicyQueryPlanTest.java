@@ -22,14 +22,15 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.UUID;
 
-public class DefaultLoadBalancingPolicyQueryPlanTest extends BasicLoadBalancingPolicyQueryPlanTest {
+public class DcInferringLoadBalancingPolicyQueryPlanTest
+    extends BasicLoadBalancingPolicyQueryPlanTest {
 
-  protected DefaultLoadBalancingPolicy createAndInitPolicy() {
+  protected DcInferringLoadBalancingPolicy createAndInitPolicy() {
     // Use a subclass to disable shuffling, we just spy to make sure that the shuffling method was
     // called (makes tests easier)
-    NonShufflingDefaultLoadBalancingPolicy policy =
+    NonShufflingDcInferringLoadBalancingPolicy policy =
         spy(
-            new NonShufflingDefaultLoadBalancingPolicy(
+            new NonShufflingDcInferringLoadBalancingPolicy(
                 context, DriverExecutionProfile.DEFAULT_NAME));
     policy.init(
         ImmutableMap.of(
@@ -42,8 +43,8 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends BasicLoadBalancingP
     return policy;
   }
 
-  static class NonShufflingDefaultLoadBalancingPolicy extends DefaultLoadBalancingPolicy {
-    NonShufflingDefaultLoadBalancingPolicy(DriverContext context, String profileName) {
+  static class NonShufflingDcInferringLoadBalancingPolicy extends DcInferringLoadBalancingPolicy {
+    NonShufflingDcInferringLoadBalancingPolicy(DriverContext context, String profileName) {
       super(context, profileName);
     }
 

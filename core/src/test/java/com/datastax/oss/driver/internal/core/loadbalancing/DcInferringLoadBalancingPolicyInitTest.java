@@ -34,14 +34,14 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.UUID;
 import org.junit.Test;
 
-public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPolicyTestBase {
+public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancingPolicyTestBase {
 
   @Test
   public void should_use_local_dc_if_provided_via_config() {
     // Given
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1));
     // the parent class sets the config option to "dc1"
-    DefaultLoadBalancingPolicy policy = createPolicy();
+    DcInferringLoadBalancingPolicy policy = createPolicy();
 
     // When
     policy.init(ImmutableMap.of(UUID.randomUUID(), node1), distanceReporter);
@@ -57,7 +57,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1));
     // note: programmatic takes priority, the config won't even be inspected so no need to stub the
     // option to null
-    DefaultLoadBalancingPolicy policy = createPolicy();
+    DcInferringLoadBalancingPolicy policy = createPolicy();
 
     // When
     policy.init(ImmutableMap.of(UUID.randomUUID(), node1), distanceReporter);
@@ -69,13 +69,13 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   }
 
   @Test
-  public void should_infer_local_dc_if_no_explicit_contact_points() {
+  public void should_infer_local_dc_from_contact_points() {
     // Given
     when(defaultProfile.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER))
         .thenReturn(false);
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1));
-    when(metadataManager.wasImplicitContactPoint()).thenReturn(true);
-    DefaultLoadBalancingPolicy policy = createPolicy();
+    DcInferringLoadBalancingPolicy policy =
+        new DcInferringLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME) {};
 
     // When
     policy.init(ImmutableMap.of(UUID.randomUUID(), node1), distanceReporter);
@@ -85,19 +85,42 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   }
 
   @Test
-  public void should_require_local_dc_if_explicit_contact_points() {
+  public void should_require_local_dc_if_contact_points_from_different_dcs() {
     // Given
     when(defaultProfile.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER))
         .thenReturn(false);
-    when(metadataManager.wasImplicitContactPoint()).thenReturn(false);
-    DefaultLoadBalancingPolicy policy = createPolicy();
+    when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2));
+    when(node2.getDatacenter()).thenReturn("dc2");
+    DcInferringLoadBalancingPolicy policy =
+        new DcInferringLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME) {};
 
     thrown.expect(IllegalStateException.class);
     thrown.expectMessage(
-        "You provided explicit contact points, the local DC must be explicitly set");
+        "No local DC was provided, but the contact points are from different DCs: node1=dc1, node2=dc2");
 
     // When
-    policy.init(ImmutableMap.of(UUID.randomUUID(), node2), distanceReporter);
+    policy.init(
+        ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2), distanceReporter);
+  }
+
+  @Test
+  public void should_require_local_dc_if_contact_points_have_null_dcs() {
+    // Given
+    when(defaultProfile.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER))
+        .thenReturn(false);
+    when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2));
+    when(node1.getDatacenter()).thenReturn(null);
+    when(node2.getDatacenter()).thenReturn(null);
+    DcInferringLoadBalancingPolicy policy =
+        new DcInferringLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME) {};
+
+    thrown.expect(IllegalStateException.class);
+    thrown.expectMessage(
+        "The local DC could not be inferred from contact points, please set it explicitly");
+
+    // When
+    policy.init(
+        ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2), distanceReporter);
   }
 
   @Test
@@ -106,7 +129,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     when(node2.getDatacenter()).thenReturn("dc2");
     when(node3.getDatacenter()).thenReturn("dc3");
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2, node3));
-    DefaultLoadBalancingPolicy policy = createPolicy();
+    DcInferringLoadBalancingPolicy policy = createPolicy();
 
     // When
     policy.init(
@@ -133,7 +156,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     when(node1.getState()).thenReturn(NodeState.UP);
     when(node2.getState()).thenReturn(NodeState.DOWN);
     when(node3.getState()).thenReturn(NodeState.UNKNOWN);
-    DefaultLoadBalancingPolicy policy = createPolicy();
+    DcInferringLoadBalancingPolicy policy = createPolicy();
 
     // When
     policy.init(
@@ -156,7 +179,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     when(node2.getDatacenter()).thenReturn("dc2");
     when(node3.getDatacenter()).thenReturn("dc3");
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2));
-    DefaultLoadBalancingPolicy policy = createPolicy();
+    DcInferringLoadBalancingPolicy policy = createPolicy();
 
     // When
     policy.init(
@@ -178,7 +201,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     when(context.getNodeFilter(DriverExecutionProfile.DEFAULT_NAME))
         .thenReturn(node -> node.equals(node1));
 
-    DefaultLoadBalancingPolicy policy = createPolicy();
+    DcInferringLoadBalancingPolicy policy = createPolicy();
 
     // When
     policy.init(
@@ -194,7 +217,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   }
 
   @NonNull
-  protected DefaultLoadBalancingPolicy createPolicy() {
-    return new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
+  protected DcInferringLoadBalancingPolicy createPolicy() {
+    return new DcInferringLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
   }
 }

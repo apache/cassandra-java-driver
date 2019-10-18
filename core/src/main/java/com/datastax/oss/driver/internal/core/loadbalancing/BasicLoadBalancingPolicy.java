@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.loadbalancing;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -36,7 +37,6 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -54,16 +54,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A basic implementation of {@link LoadBalancingPolicy} that can serve as a building block for
+ * A basic implementation of {@link LoadBalancingPolicy} that can serve as a building block for more
  * advanced use cases.
+ *
+ * <p><b>Local datacenter inference</b>: This implementation will only infer the local datacenter if
+ * it is explicitly set either through configuration or programmatically; if the local datacenter is
+ * unspecified, this implementation will effectively act as a datacenter-agnostic load balancing
+ * policy and will consider all nodes in the cluster when creating query plans, regardless of their
+ * datacenter.
  *
  * <p>This class is not recommended for normal users who should always prefer {@link
  * DefaultLoadBalancingPolicy}.
  */
 @ThreadSafe
-public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
+public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LoadBalancingPolicyBase.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BasicLoadBalancingPolicy.class);
 
   protected static final Predicate<Node> INCLUDE_ALL_NODES = n -> true;
   protected static final IntUnaryOperator INCREMENT = i -> (i == Integer.MAX_VALUE) ? 0 : i + 1;
@@ -74,33 +80,37 @@ public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
   @NonNull protected final DriverExecutionProfile profile;
 
   protected final AtomicInteger roundRobinAmount = new AtomicInteger();
-  protected final CopyOnWriteArraySet<Node> localDcLiveNodes = new CopyOnWriteArraySet<>();
+  protected final CopyOnWriteArraySet<Node> liveNodes = new CopyOnWriteArraySet<>();
 
   protected volatile DistanceReporter distanceReporter;
   protected volatile Predicate<Node> filter;
   protected volatile String localDc;
 
-  protected LoadBalancingPolicyBase(
-      @NonNull InternalDriverContext context, @NonNull String profileName) {
-    this.context = context;
+  public BasicLoadBalancingPolicy(@NonNull DriverContext context, @NonNull String profileName) {
+    this.context = (InternalDriverContext) context;
     this.profileName = profileName;
     profile = context.getConfig().getProfile(profileName);
     logPrefix = context.getSessionName() + "|" + profileName;
   }
 
-  public String getLocalDatacenter() {
-    return localDc;
+  /** @return The local datacenter, if known; empty otherwise. */
+  public Optional<String> getLocalDatacenter() {
+    return Optional.ofNullable(localDc);
   }
 
-  public Set<Node> getLocalDcLiveNodes() {
-    return ImmutableSet.copyOf(localDcLiveNodes);
+  /**
+   * @return An immutable copy of the nodes currently considered as live; if the local datacenter is
+   *     known, this set will contain only nodes belonging to that datacenter.
+   */
+  public Set<Node> getLiveNodes() {
+    return ImmutableSet.copyOf(liveNodes);
   }
 
   @Override
   public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
     this.distanceReporter = distanceReporter;
     filter = createNodeFilter();
-    localDc = computeLocalDatacenter();
+    localDc = inferLocalDatacenter().orElse(null);
     for (Node node : nodes.values()) {
       if (filter.test(node)) {
         distanceReporter.setDistance(node, NodeDistance.LOCAL);
@@ -108,7 +118,7 @@ public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
           // This includes state == UNKNOWN. If the node turns out to be unreachable, this will be
           // detected when we try to open a pool to it, it will get marked down and this will be
           // signaled back to this policy
-          localDcLiveNodes.add(node);
+          liveNodes.add(node);
         }
       } else {
         distanceReporter.setDistance(node, NodeDistance.IGNORED);
@@ -125,9 +135,9 @@ public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
    * configuration API, or else, from the driver configuration. If no user-supplied filter can be
    * retrieved, a dummy filter will be used which accepts all nodes unconditionally.
    *
-   * <p>Note that, regardless of the filter supplied by the end user, the filter returned by this
-   * implementation will always reject nodes that report a datacenter different from the local
-   * datacenter.
+   * <p>Note that, regardless of the filter supplied by the end user, if a local datacenter is
+   * defined the filter returned by this implementation will always reject nodes that report a
+   * datacenter different from the local one.
    *
    * @return the node filter to use.
    */
@@ -148,18 +158,7 @@ public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
       filter = filterFromConfig;
       LOG.debug("[{}] Node filter set from configuration", logPrefix);
     }
-    return wrapNodeFilter(filter);
-  }
-
-  /**
-   * Wraps the user-supplied filter within a filter that always rejects nodes belonging to non-local
-   * datacenters.
-   *
-   * @param userFilter The user-supplied filter.
-   * @return The wrapped filter.
-   */
-  @NonNull
-  protected Predicate<Node> wrapNodeFilter(@NonNull Predicate<Node> userFilter) {
+    Predicate<Node> userFilter = filter;
     return node -> {
       String localDc1 = localDc;
       if (localDc1 != null && !localDc1.equals(node.getDatacenter())) {
@@ -182,33 +181,32 @@ public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
   }
 
   /**
-   * Returns the local datacenter to use with this policy.
+   * Infers the local datacenter to use with this policy.
    *
    * <p>This method should be called upon {@linkplain #init(Map, DistanceReporter) initialization}.
    *
-   * <p>The default implementation fetches the user-supplied datacenter, if any, from the
-   * programmatic configuration API, or else, from the driver configuration. If no user-supplied
-   * datacenter can be retrieved, an attempt to infer the datacenter from the contact points will be
-   * made. If no datacenter can be inferred from the contact points, an {@link
-   * IllegalStateException} is thrown.
+   * <p>This implementation fetches the user-supplied datacenter, if any, from the programmatic
+   * configuration API, or else, from the driver configuration. If no user-supplied datacenter can
+   * be retrieved, this implementation returns empty, effectively causing this load balancing policy
+   * to operate in a datacenter-agnostic fashion.
    *
-   * @return The local datacenter.
-   * @throws IllegalStateException if the local datacenter cannot be inferred.
+   * @return The local datacenter, or empty if none found.
    */
   @NonNull
-  protected String computeLocalDatacenter() {
+  protected Optional<String> inferLocalDatacenter() {
     String localDc = context.getLocalDatacenter(profileName);
     if (localDc != null) {
       LOG.debug("[{}] Local DC set programmatically: {}", logPrefix, localDc);
-      checkLocalDatacenter(localDc);
+      checkLocalDatacenterCompatibility(localDc, context.getMetadataManager().getContactPoints());
+      return Optional.of(localDc);
     } else if (profile.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)) {
       localDc = profile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER);
       LOG.debug("[{}] Local DC set from configuration: {}", logPrefix, localDc);
-      checkLocalDatacenter(localDc);
+      checkLocalDatacenterCompatibility(localDc, context.getMetadataManager().getContactPoints());
+      return Optional.of(localDc);
     } else {
-      localDc = inferLocalDatacenter();
+      return Optional.empty();
     }
-    return localDc;
   }
 
   /**
@@ -219,9 +217,10 @@ public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
    * different from the local one.
    *
    * @param localDc The local datacenter, as specified in the config, or programmatically.
+   * @param contactPoints The contact points provided when creating the session.
    */
-  protected void checkLocalDatacenter(@NonNull String localDc) {
-    Set<? extends Node> contactPoints = context.getMetadataManager().getContactPoints();
+  protected void checkLocalDatacenterCompatibility(
+      @NonNull String localDc, Set<? extends Node> contactPoints) {
     Set<Node> badContactPoints = new LinkedHashSet<>();
     for (Node node : contactPoints) {
       if (!Objects.equals(localDc, node.getDatacenter())) {
@@ -238,48 +237,6 @@ public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
     }
   }
 
-  /**
-   * Infers the local datacenter when no local datacenter was specified neither through
-   * configuration nor programmatically.
-   *
-   * <p>The default implementation infers the local datacenter from the contact points: if all
-   * contact points share the same datacenter, that datacenter is returned. If the contact points
-   * are from different datacenters, or if no contact points reported any datacenter, an {@link
-   * IllegalStateException} is thrown.
-   *
-   * @return The inferred local datacenter.
-   * @throws IllegalStateException if the local datacenter cannot be inferred.
-   */
-  @NonNull
-  protected String inferLocalDatacenter() {
-    Set<String> datacenters = new HashSet<>();
-    Set<? extends Node> contactPoints = context.getMetadataManager().getContactPoints();
-    for (Node node : contactPoints) {
-      String datacenter = node.getDatacenter();
-      if (datacenter != null) {
-        datacenters.add(datacenter);
-      }
-    }
-    if (datacenters.size() == 1) {
-      String localDc = datacenters.iterator().next();
-      LOG.info("[{}] Inferred local DC from contact points: {}", logPrefix, localDc);
-      return localDc;
-    }
-    if (datacenters.isEmpty()) {
-      throw new IllegalStateException(
-          "The local DC could not be inferred from contact points, please set it explicitly (see "
-              + DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER.getPath()
-              + " in the config, or set it programmatically with SessionBuilder.withLocalDatacenter)");
-    }
-    throw new IllegalStateException(
-        String.format(
-            "No local DC was provided, but the contact points are from different DCs: %s; "
-                + "please set the local DC explicitly (see "
-                + DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER.getPath()
-                + " in the config, or set it programmatically with SessionBuilder.withLocalDatacenter)",
-            formatNodes(contactPoints)));
-  }
-
   @NonNull
   protected String formatNodes(Iterable<? extends Node> nodes) {
     List<String> l = new ArrayList<>();
@@ -293,7 +250,7 @@ public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
   @Override
   public Queue<Node> newQueryPlan(@Nullable Request request, @Nullable Session session) {
     // Take a snapshot since the set is concurrent:
-    Object[] currentNodes = localDcLiveNodes.toArray();
+    Object[] currentNodes = liveNodes.toArray();
 
     Set<Node> allReplicas = getReplicas(request, session);
     int replicaCount = 0; // in currentNodes
@@ -384,7 +341,7 @@ public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
       // Normally this is already the case, but the filter could be dynamic and have ignored the
       // node previously.
       distanceReporter.setDistance(node, NodeDistance.LOCAL);
-      if (localDcLiveNodes.add(node)) {
+      if (liveNodes.add(node)) {
         LOG.debug("[{}] {} came back UP, added to live set", logPrefix, node);
       }
     } else {
@@ -394,14 +351,14 @@ public abstract class LoadBalancingPolicyBase implements LoadBalancingPolicy {
 
   @Override
   public void onDown(@NonNull Node node) {
-    if (localDcLiveNodes.remove(node)) {
+    if (liveNodes.remove(node)) {
       LOG.debug("[{}] {} went DOWN, removed from live set", logPrefix, node);
     }
   }
 
   @Override
   public void onRemove(@NonNull Node node) {
-    if (localDcLiveNodes.remove(node)) {
+    if (liveNodes.remove(node)) {
       LOG.debug("[{}] {} was removed, removed from live set", logPrefix, node);
     }
   }
