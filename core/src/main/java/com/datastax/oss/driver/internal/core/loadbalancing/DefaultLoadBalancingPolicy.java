@@ -17,9 +17,12 @@ package com.datastax.oss.driver.internal.core.loadbalancing;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.internal.core.loadbalancing.helper.LocalDcHelper;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.loadbalancing.helper.MandatoryLocalDcHelper;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -64,8 +67,9 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy {
     super(context, profileName);
   }
 
+  @NonNull
   @Override
-  protected LocalDcHelper newLocalDcHelper() {
-    return new MandatoryLocalDcHelper(context, profile, logPrefix);
+  protected Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes) {
+    return new MandatoryLocalDcHelper(context, profile, logPrefix).discoverLocalDc(nodes);
   }
 }

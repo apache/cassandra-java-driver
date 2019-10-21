@@ -28,8 +28,6 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.loadbalancing.helper.DefaultNodeFilterHelper;
-import com.datastax.oss.driver.internal.core.loadbalancing.helper.LocalDcHelper;
-import com.datastax.oss.driver.internal.core.loadbalancing.helper.NodeFilterHelper;
 import com.datastax.oss.driver.internal.core.loadbalancing.helper.OptionalLocalDcHelper;
 import com.datastax.oss.driver.internal.core.util.ArrayUtils;
 import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
@@ -125,8 +123,8 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   @Override
   public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
     this.distanceReporter = distanceReporter;
-    localDc = newLocalDcHelper().discoverLocalDc(nodes).orElse(null);
-    filter = newNodeFilterHelper().createNodeFilter(localDc, nodes);
+    localDc = discoverLocalDc(nodes).orElse(null);
+    filter = createNodeFilter(nodes);
     for (Node node : nodes.values()) {
       if (filter.test(node)) {
         distanceReporter.setDistance(node, NodeDistance.LOCAL);
@@ -143,23 +141,44 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   }
 
   /**
-   * Returns a new {@link LocalDcHelper} instance to use to perform local datacenter discovery.
+   * Returns the local datacenter, if it can be discovered, or returns {@link Optional#empty empty}
+   * otherwise.
    *
-   * <p>This method should be called only once during {@linkplain #init(Map, DistanceReporter)
-   * initialization}.
+   * <p>This method is called only once, during {@linkplain LoadBalancingPolicy#init(Map,
+   * LoadBalancingPolicy.DistanceReporter) initialization}.
+   *
+   * <p>Implementors may choose to throw {@link IllegalStateException} instead of returning {@link
+   * Optional#empty empty}, if they require a local datacenter to be defined in order to operate
+   * properly.
+   *
+   * @param nodes All the nodes that were known to exist in the cluster (regardless of their state)
+   *     when the load balancing policy was initialized. This argument is provided in case
+   *     implementors need to inspect the cluster topology to discover the local datacenter.
+   * @return The local datacenter, or {@link Optional#empty empty} if none found.
+   * @throws IllegalStateException if the local datacenter could not be discovered, and this policy
+   *     cannot operate without it.
    */
-  protected LocalDcHelper newLocalDcHelper() {
-    return new OptionalLocalDcHelper(context, profile, logPrefix);
+  @NonNull
+  protected Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes) {
+    return new OptionalLocalDcHelper(context, profile, logPrefix).discoverLocalDc(nodes);
   }
 
   /**
-   * Returns a new {@link NodeFilterHelper} instance to use to create node filters.
+   * Creates a new node filter to use with this policy.
    *
-   * <p>This method should be called only once during {@linkplain #init(Map, DistanceReporter)
-   * initialization}.
+   * <p>This method is called only once, during {@linkplain LoadBalancingPolicy#init(Map,
+   * LoadBalancingPolicy.DistanceReporter) initialization}, and only after local datacenter
+   * discovery has been attempted.
+   *
+   * @param nodes All the nodes that were known to exist in the cluster (regardless of their state)
+   *     when the load balancing policy was initialized. This argument is provided in case
+   *     implementors need to inspect the cluster topology to create the node filter.
+   * @return the node filter to use.
    */
-  protected NodeFilterHelper newNodeFilterHelper() {
-    return new DefaultNodeFilterHelper(context, profile, logPrefix);
+  @NonNull
+  protected Predicate<Node> createNodeFilter(@NonNull Map<UUID, Node> nodes) {
+    return new DefaultNodeFilterHelper(context, profile, logPrefix)
+        .createNodeFilter(localDc, nodes);
   }
 
   @NonNull
