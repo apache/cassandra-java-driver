@@ -2,15 +2,12 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### DataStax Cloud (in progress)
-
-- [documentation] JAVA-2503: Migrate Cloud "getting started" page to driver manual
-- [improvement] JAVA-2490: Allow to read the secure bundle from an InputStream
-- [new feature] JAVA-2478: Allow to provide the secure bundle via URL
-- [improvement] JAVA-2484: Add errors for cloud misconfiguration
-
 ### 4.3.0 (in progress)
 
+- [documentation] JAVA-2503: Migrate Cloud "getting started" page to driver manual
+- [improvement] JAVA-2484: Add errors for cloud misconfiguration
+- [improvement] JAVA-2490: Allow to read the secure bundle from an InputStream
+- [new feature] JAVA-2478: Allow to provide the secure bundle via URL
 - [improvement] JAVA-2407: Improve handling of logback configuration files in IDEs
 - [improvement] JAVA-2434: Add support for custom cipher suites and host name validation to ProgrammaticSslEngineFactory
 - [improvement] JAVA-2480: Upgrade Jackson to 2.10.0
