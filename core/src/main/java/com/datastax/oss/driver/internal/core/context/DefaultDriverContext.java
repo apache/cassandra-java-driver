@@ -45,6 +45,7 @@ import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.DefaultWriteCoalescer;
 import com.datastax.oss.driver.internal.core.channel.WriteCoalescer;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
+import com.datastax.oss.driver.internal.core.metadata.CloudTopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.DefaultTopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
@@ -79,6 +80,7 @@ import com.datastax.oss.protocol.internal.FrameCodec;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.buffer.ByteBuf;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -196,6 +198,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final Map<String, String> localDatacentersFromBuilder;
   private final Map<String, Predicate<Node>> nodeFiltersFromBuilder;
   private final ClassLoader classLoader;
+  private final InetSocketAddress cloudProxyAddress;
   private final LazyReference<RequestLogFormatter> requestLogFormatterRef =
       new LazyReference<>("requestLogFormatter", this::buildRequestLogFormatter, cycleDetector);
 
@@ -241,6 +244,7 @@ public class DefaultDriverContext implements InternalDriverContext {
             cycleDetector);
     this.nodeFiltersFromBuilder = programmaticArguments.getNodeFilters();
     this.classLoader = programmaticArguments.getClassLoader();
+    this.cloudProxyAddress = programmaticArguments.getCloudProxyAddress();
   }
 
   /**
@@ -416,7 +420,10 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected TopologyMonitor buildTopologyMonitor() {
-    return new DefaultTopologyMonitor(this);
+    if (cloudProxyAddress == null) {
+      return new DefaultTopologyMonitor(this);
+    }
+    return new CloudTopologyMonitor(this, cloudProxyAddress);
   }
 
   protected MetadataManager buildMetadataManager() {

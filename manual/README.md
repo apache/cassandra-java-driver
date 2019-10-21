@@ -12,3 +12,4 @@ Common topics:
 * [API conventions](api_conventions/)
 * [Case sensitivity](case_sensitivity/)
 * [OSGi](osgi/)
+* [Cloud](cloud/)

@@ -129,7 +129,7 @@ public class DefaultNode implements Node {
     return cassandraVersion;
   }
 
-  @NonNull
+  @Nullable
   @Override
   public UUID getHostId() {
     return hostId;
@@ -180,7 +180,10 @@ public class DefaultNode implements Node {
 
   @Override
   public String toString() {
-    return String.join("@", getHostId().toString().trim(), getEndPoint().toString().trim());
+    // Include the hash code because this class uses reference equality
+    return String.format(
+        "Node(endPoint=%s, hostId=%s, hashCode=%s)",
+        getEndPoint(), getHostId(), Integer.toHexString(hashCode()));
   }
 
   /** Note: deliberately not exposed by the public interface. */

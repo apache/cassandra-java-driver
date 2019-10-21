@@ -41,6 +41,8 @@ public class ChannelFactoryClusterNameTest extends ChannelFactoryTestBase {
         factory.connect(
             SERVER_ADDRESS, DriverChannelOptions.DEFAULT, NoopNodeMetricUpdater.INSTANCE);
 
+    writeInboundFrame(
+        readOutboundFrame(), TestResponses.supportedResponse("mock_key", "mock_value"));
     writeInboundFrame(readOutboundFrame(), new Ready());
     writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("mockClusterName"));
 
@@ -61,6 +63,8 @@ public class ChannelFactoryClusterNameTest extends ChannelFactoryTestBase {
         factory.connect(
             SERVER_ADDRESS, DriverChannelOptions.DEFAULT, NoopNodeMetricUpdater.INSTANCE);
     // open a first connection that will define the cluster name
+    writeInboundFrame(
+        readOutboundFrame(), TestResponses.supportedResponse("mock_key", "mock_value"));
     writeInboundFrame(readOutboundFrame(), new Ready());
     writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("mockClusterName"));
     assertThatStage(channelFuture).isSuccess();

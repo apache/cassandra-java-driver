@@ -782,6 +782,8 @@ public enum DefaultDriverOption implements DriverOption {
    * <p>Value-type: boolean
    */
   NETTY_DAEMON("advanced.netty.daemon"),
+
+  CLOUD_SECURE_CONNECT_BUNDLE("basic.cloud.secure-connect-bundle"),
   ;
 
   private final String path;

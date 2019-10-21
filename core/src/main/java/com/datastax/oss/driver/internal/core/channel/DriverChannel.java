@@ -29,6 +29,7 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.Promise;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.jcip.annotations.ThreadSafe;
@@ -39,7 +40,10 @@ import net.jcip.annotations.ThreadSafe;
  */
 @ThreadSafe
 public class DriverChannel {
+
   static final AttributeKey<String> CLUSTER_NAME_KEY = AttributeKey.newInstance("cluster_name");
+  static final AttributeKey<Map<String, List<String>>> OPTIONS_KEY =
+      AttributeKey.newInstance("options");
 
   @SuppressWarnings("RedundantStringConstructorCall")
   static final Object GRACEFUL_CLOSE_MESSAGE = new String("GRACEFUL_CLOSE_MESSAGE");
@@ -118,6 +122,10 @@ public class DriverChannel {
    */
   public String getClusterName() {
     return channel.attr(CLUSTER_NAME_KEY).get();
+  }
+
+  public Map<String, List<String>> getOptions() {
+    return channel.attr(OPTIONS_KEY).get();
   }
 
   /**

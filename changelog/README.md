@@ -4,6 +4,17 @@
 
 ### 4.3.0 (in progress)
 
+- [documentation] JAVA-2503: Migrate Cloud "getting started" page to driver manual
+- [improvement] JAVA-2484: Add errors for cloud misconfiguration
+- [improvement] JAVA-2490: Allow to read the secure bundle from an InputStream
+- [new feature] JAVA-2478: Allow to provide the secure bundle via URL
+- [new feature] JAVA-2356: Support for DataStax Cloud API
+- [improvement] JAVA-2407: Improve handling of logback configuration files in IDEs
+- [improvement] JAVA-2434: Add support for custom cipher suites and host name validation to ProgrammaticSslEngineFactory
+- [improvement] JAVA-2480: Upgrade Jackson to 2.10.0
+- [documentation] JAVA-2505: Annotate Node.getHostId() as nullable
+- [improvement] JAVA-1708: Support DSE "everywhere" replication strategy
+- [improvement] JAVA-2471: Consider DSE version when parsing the schema
 - [improvement] JAVA-2444: Add method setRoutingKey(ByteBuffer...) to StatementBuilder
 - [improvement] JAVA-2398: Improve support for optional dependencies in OSGi
 - [improvement] JAVA-2452: Allow "none" as a compression option

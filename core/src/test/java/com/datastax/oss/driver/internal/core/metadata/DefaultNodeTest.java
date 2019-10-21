@@ -34,7 +34,10 @@ public class DefaultNodeTest {
     DefaultNode node = new DefaultNode(endPoint, MockedDriverContextFactory.defaultDriverContext());
     node.hostId = hostId;
 
-    String expected = uuidStr + "@" + "localhost/127.0.0.1:9042";
+    String expected =
+        String.format(
+            "Node(endPoint=localhost/127.0.0.1:9042, hostId=%s, hashCode=%s)",
+            uuidStr, Integer.toHexString(node.hashCode()));
     assertThat(node.toString()).isEqualTo(expected);
   }
 }

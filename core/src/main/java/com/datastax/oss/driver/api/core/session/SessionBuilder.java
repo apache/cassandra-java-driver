@@ -34,6 +34,8 @@ import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.ContactPoints;
 import com.datastax.oss.driver.internal.core.auth.ProgrammaticPlainTextAuthProvider;
+import com.datastax.oss.driver.internal.core.config.cloud.CloudConfig;
+import com.datastax.oss.driver.internal.core.config.cloud.CloudConfigFactory;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -43,13 +45,19 @@ import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -73,6 +81,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   protected DriverConfigLoader configLoader;
   protected Set<EndPoint> programmaticContactPoints = new HashSet<>();
   protected CqlIdentifier keyspace;
+  protected Callable<InputStream> cloudConfigInputStream;
 
   protected ProgrammaticArguments.Builder programmaticArgumentsBuilder =
       ProgrammaticArguments.builder();
@@ -261,6 +270,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *
    * <p>If the factory is provided programmatically with this method, it overrides the configuration
    * (that is, the {@code advanced.ssl-engine-factory} option will be ignored).
+   *
+   * @see ProgrammaticSslEngineFactory
    */
   @NonNull
   public SelfT withSslEngineFactory(@Nullable SslEngineFactory sslEngineFactory) {
@@ -276,9 +287,12 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * #withSslEngineFactory(SslEngineFactory)}.
    *
    * <p>If you use this method, there is no way to customize cipher suites, or turn on host name
-   * validation. Also, note that SSL engines will be created with advisory peer information ({@link
-   * SSLContext#createSSLEngine(String, int)}) whenever possible. If you need finer control, write
-   * your own factory.
+   * validation. If you need finer control, use {@link #withSslEngineFactory(SslEngineFactory)}
+   * directly and pass either your own implementation of {@link SslEngineFactory}, or a {@link
+   * ProgrammaticSslEngineFactory} created with custom cipher suites and/or host name validation.
+   *
+   * <p>Also, note that SSL engines will be created with advisory peer information ({@link
+   * SSLContext#createSSLEngine(String, int)}) whenever possible.
    */
   @NonNull
   public SelfT withSslContext(@Nullable SSLContext sslContext) {
@@ -373,6 +387,97 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
+   * Configures this SessionBuilder for Cloud deployments by retrieving connection information from
+   * the provided {@link Path}.
+   *
+   * <p>To connect to a Cloud database, you must first download the secure database bundle from the
+   * DataStax Constellation console that contains the connection information, then instruct the
+   * driver to read its contents using either this method or one if its variants.
+   *
+   * <p>For more information, please refer to the DataStax Constellation documentation.
+   *
+   * @param cloudConfigPath Path to the secure connect bundle zip file.
+   * @see #withCloudSecureConnectBundle(URL)
+   * @see #withCloudSecureConnectBundle(InputStream)
+   */
+  @NonNull
+  public SelfT withCloudSecureConnectBundle(@NonNull Path cloudConfigPath) {
+    try {
+      URL cloudConfigUrl = cloudConfigPath.toAbsolutePath().normalize().toUri().toURL();
+      this.cloudConfigInputStream = cloudConfigUrl::openStream;
+    } catch (MalformedURLException e) {
+      throw new IllegalArgumentException("Incorrect format of cloudConfigPath", e);
+    }
+    return self;
+  }
+
+  /**
+   * Configures this SessionBuilder for Cloud deployments by retrieving connection information from
+   * the provided {@link URL}.
+   *
+   * <p>To connect to a Cloud database, you must first download the secure database bundle from the
+   * DataStax Constellation console that contains the connection information, then instruct the
+   * driver to read its contents using either this method or one if its variants.
+   *
+   * <p>For more information, please refer to the DataStax Constellation documentation.
+   *
+   * @param cloudConfigUrl URL to the secure connect bundle zip file.
+   * @see #withCloudSecureConnectBundle(Path)
+   * @see #withCloudSecureConnectBundle(InputStream)
+   */
+  @NonNull
+  public SelfT withCloudSecureConnectBundle(@NonNull URL cloudConfigUrl) {
+    this.cloudConfigInputStream = cloudConfigUrl::openStream;
+    return self;
+  }
+
+  /**
+   * Configures this SessionBuilder for Cloud deployments by retrieving connection information from
+   * the provided {@link InputStream}.
+   *
+   * <p>To connect to a Cloud database, you must first download the secure database bundle from the
+   * DataStax Constellation console that contains the connection information, then instruct the
+   * driver to read its contents using either this method or one if its variants.
+   *
+   * <p>For more information, please refer to the DataStax Constellation documentation.
+   *
+   * <p>Note that the provided stream will be consumed <em>and closed</em> when either {@link
+   * #build()} or {@link #buildAsync()} are called; attempting to reuse it afterwards will result in
+   * an error being thrown.
+   *
+   * @param cloudConfigInputStream A stream containing the secure connect bundle zip file.
+   * @see #withCloudSecureConnectBundle(Path)
+   * @see #withCloudSecureConnectBundle(URL)
+   */
+  @NonNull
+  public SelfT withCloudSecureConnectBundle(@NonNull InputStream cloudConfigInputStream) {
+    this.cloudConfigInputStream = () -> cloudConfigInputStream;
+    return self;
+  }
+
+  /**
+   * Configures this SessionBuilder to use the provided Cloud proxy endpoint.
+   *
+   * <p>Normally, this method should not be called directly; the normal and easiest way to configure
+   * the driver for Cloud deployments is through a {@linkplain #withCloudSecureConnectBundle(URL)
+   * secure connect bundle}.
+   *
+   * <p>Setting this option to any non-null address will make the driver use a special topology
+   * monitor tailored for Cloud deployments. This topology monitor assumes that the target cluster
+   * should be contacted through the proxy specified here, using SNI routing.
+   *
+   * <p>For more information, please refer to the DataStax Constellation documentation.
+   *
+   * @param cloudProxyAddress The address of the Cloud proxy to use.
+   * @see <a href="https://en.wikipedia.org/wiki/Server_Name_Indication">Server Name Indication</a>
+   */
+  @NonNull
+  public SelfT withCloudProxyAddress(@Nullable InetSocketAddress cloudProxyAddress) {
+    this.programmaticArgumentsBuilder.withCloudProxyAddress(cloudProxyAddress);
+    return self;
+  }
+
+  /**
    * Creates the session with the options set by this builder.
    *
    * @return a completion stage that completes with the session when it is fully initialized.
@@ -385,7 +490,6 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
     CompletableFutures.propagateCancellation(wrapStage, buildStage);
     return wrapStage;
   }
-
   /**
    * Convenience method to call {@link #buildAsync()} and block on the result.
    *
@@ -405,8 +509,31 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       DriverConfigLoader configLoader = buildIfNull(this.configLoader, this::defaultConfigLoader);
 
       DriverExecutionProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
+      if (cloudConfigInputStream == null) {
+        String configUrlString =
+            defaultConfig.getString(DefaultDriverOption.CLOUD_SECURE_CONNECT_BUNDLE, null);
+        if (configUrlString != null) {
+          cloudConfigInputStream = () -> getURL(configUrlString).openStream();
+        }
+      }
       List<String> configContactPoints =
           defaultConfig.getStringList(DefaultDriverOption.CONTACT_POINTS, Collections.emptyList());
+      if (cloudConfigInputStream != null) {
+        if (!programmaticContactPoints.isEmpty() || !configContactPoints.isEmpty()) {
+          throw new IllegalStateException(
+              "Can't use withCloudSecureConnectBundle and addContactPoint(s). They are mutually exclusive.");
+        }
+        CloudConfig cloudConfig =
+            new CloudConfigFactory().createCloudConfig(cloudConfigInputStream.call());
+        addContactEndPoints(cloudConfig.getEndPoints());
+        withLocalDatacenter(cloudConfig.getLocalDatacenter());
+        withSslEngineFactory(cloudConfig.getSslEngineFactory());
+        withCloudProxyAddress(cloudConfig.getProxyAddress());
+        if (cloudConfig.getAuthProvider().isPresent()) {
+          withAuthProvider(cloudConfig.getAuthProvider().get());
+        }
+      }
+
       boolean resolveAddresses =
           defaultConfig.getBoolean(DefaultDriverOption.RESOLVE_CONTACT_POINTS, true);
 
@@ -427,6 +554,27 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       // We construct the session synchronously (until the init() call), but async clients expect a
       // failed future if anything goes wrong. So wrap any error from that synchronous part.
       return CompletableFutures.failedFuture(t);
+    }
+  }
+
+  /**
+   * Returns URL based on the configUrl setting. If the configUrl has no protocol provided, the
+   * method will fallback to file:// protocol and return URL that has file protocol specified.
+   *
+   * @param configUrl url to config secure bundle
+   * @return URL with file protocol if there was not explicit protocol provided in the configUrl
+   *     setting
+   */
+  private URL getURL(String configUrl) throws MalformedURLException {
+    try {
+      return new URL(configUrl);
+    } catch (MalformedURLException e1) {
+      try {
+        return Paths.get(configUrl).toAbsolutePath().normalize().toUri().toURL();
+      } catch (MalformedURLException e2) {
+        e2.addSuppressed(e1);
+        throw e2;
+      }
     }
   }
 
