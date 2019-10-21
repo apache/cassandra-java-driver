@@ -31,11 +31,13 @@ public interface NodeFilterHelper {
   Predicate<Node> INCLUDE_ALL_NODES = n -> true;
 
   /**
+   * Creates a new node filter.
+   *
    * @param localDc The local datacenter, or null if none defined.
    * @param nodes All the nodes that were known to exist in the cluster (regardless of their state)
    *     when the load balancing policy was {@linkplain LoadBalancingPolicy#init(Map,
    *     LoadBalancingPolicy.DistanceReporter) initialized}. This argument is provided in case
-   *     implementors need to inspect the cluster topology to discover the local datacenter.
+   *     implementors need to inspect the cluster topology to create the node filter.
    * @return the node filter to use.
    */
   @NonNull
