@@ -46,6 +46,9 @@
     <hdrhistogram.version>2.1.11</hdrhistogram.version>
     <metrics.version>4.0.5</metrics.version>
     <netty.version>4.1.45.Final</netty.version>
+    <esri.version>1.2.1</esri.version>
+    <tinkerpop.version>3.4.4-20190930-6c997860</tinkerpop.version> <!-- used in OSGi integration tests -->
+    <tinkerpop.osgi.version>3.4.4</tinkerpop.osgi.version>
     <slf4j.version>1.7.26</slf4j.version>
     <esri.version>1.2.1</esri.version>
     <tinkerpop.version>3.4.3-20190731-199be4b5</tinkerpop.version>

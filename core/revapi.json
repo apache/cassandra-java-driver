@@ -5013,6 +5013,24 @@
         "old": "method <E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, java.util.Map<java.lang.String, E2>> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::valueMap(java.lang.String[])",
         "new": "method <E2> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, java.util.Map<java.lang.Object, E2>> org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal<S, E>::valueMap(java.lang.String[])",
         "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"
+      },
+      {
+        "code": "java.class.externalClassExposedInAPI",
+        "new": "class org.apache.tinkerpop.gremlin.process.traversal.util.ImmutableExplanation",
+        "justification": "Upgrade to Tinkerpop 3.4.4"
+      },
+      {
+        "code": "java.class.nonFinalClassInheritsFromNewClass",
+        "old": "class org.apache.tinkerpop.gremlin.process.traversal.util.TraversalExplanation",
+        "new": "class org.apache.tinkerpop.gremlin.process.traversal.util.TraversalExplanation",
+        "superClass": "org.apache.tinkerpop.gremlin.process.traversal.util.AbstractExplanation",
+        "justification": "Upgrade to Tinkerpop 3.4.4"
+      },
+      {
+        "code": "java.class.defaultSerializationChanged",
+        "old": "class org.apache.tinkerpop.gremlin.process.traversal.util.TraversalExplanation",
+        "new": "class org.apache.tinkerpop.gremlin.process.traversal.util.TraversalExplanation",
+        "justification": "Upgrade to Tinkerpop 3.4.4"
       }
     ]
   }

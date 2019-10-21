@@ -15,6 +15,7 @@
  */
 package com.datastax.dse.driver.api.core.graph;
 
+import org.apache.tinkerpop.gremlin.process.remote.RemoteConnection;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.DefaultGraphTraversal;
@@ -33,6 +34,10 @@ public class SocialTraversalSourceDsl extends GraphTraversalSource {
 
   public SocialTraversalSourceDsl(final Graph graph) {
     super(graph);
+  }
+
+  public SocialTraversalSourceDsl(RemoteConnection connection) {
+    super(connection);
   }
 
   public GraphTraversal<Vertex, Vertex> persons(String... names) {
