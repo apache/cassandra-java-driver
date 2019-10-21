@@ -15,7 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core.loadbalancing.helper;
 
+import com.datastax.oss.driver.api.core.metadata.Node;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @FunctionalInterface
 public interface LocalDcHelper {
@@ -28,9 +32,16 @@ public interface LocalDcHelper {
    * Optional#empty empty}, if they require a local datacenter to be defined in order to operate
    * properly.
    *
+   * @param nodes All the nodes that were known to exist in the cluster (regardless of their state)
+   *     when the load balancing policy was {@linkplain
+   *     com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy#init(Map,
+   *     com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy.DistanceReporter)
+   *     initialized}. This argument is provided in case implementors need to inspect the cluster
+   *     topology to discover the local datacenter.
    * @return The local datacenter, or {@link Optional#empty empty} if none found.
    * @throws IllegalStateException if the local datacenter could not be discovered, and this policy
    *     cannot operate without it.
    */
-  Optional<String> discoverLocalDc();
+  @NonNull
+  Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes);
 }

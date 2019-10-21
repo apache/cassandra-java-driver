@@ -18,6 +18,8 @@ package com.datastax.oss.driver.internal.core.loadbalancing.helper;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 @FunctionalInterface
@@ -26,9 +28,15 @@ public interface NodeFilterHelper {
   Predicate<Node> INCLUDE_ALL_NODES = n -> true;
 
   /**
-   * @return the node filter to use.
    * @param localDc The local datacenter, or null if none defined.
+   * @param nodes All the nodes that were known to exist in the cluster (regardless of their state)
+   *     when the load balancing policy was {@linkplain
+   *     com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy#init(Map,
+   *     com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy.DistanceReporter)
+   *     initialized}. This argument is provided in case implementors need to inspect the cluster
+   *     topology to discover the local datacenter.
+   * @return the node filter to use.
    */
   @NonNull
-  Predicate<Node> createNodeFilter(@Nullable String localDc);
+  Predicate<Node> createNodeFilter(@Nullable String localDc, @NonNull Map<UUID, Node> nodes);
 }

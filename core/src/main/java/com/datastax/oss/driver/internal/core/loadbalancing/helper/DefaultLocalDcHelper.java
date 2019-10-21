@@ -21,8 +21,10 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,8 +56,8 @@ public class DefaultLocalDcHelper extends BasicLocalDcHelper {
    */
   @NonNull
   @Override
-  public Optional<String> discoverLocalDc() {
-    Optional<String> optionalLocalDc = super.discoverLocalDc();
+  public Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes) {
+    Optional<String> optionalLocalDc = super.discoverLocalDc(nodes);
     if (optionalLocalDc.isPresent()) {
       return optionalLocalDc;
     }
@@ -84,7 +86,9 @@ public class DefaultLocalDcHelper extends BasicLocalDcHelper {
               + DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER.getPath()
               + " in the config, or set it programmatically with SessionBuilder.withLocalDatacenter). "
               + "Current contact points are: "
-              + formatNodes(contactPoints));
+              + formatNodesAndDcs(contactPoints)
+              + ". Current DCs in this cluster are: "
+              + formatDcs(nodes.values()));
     }
   }
 }

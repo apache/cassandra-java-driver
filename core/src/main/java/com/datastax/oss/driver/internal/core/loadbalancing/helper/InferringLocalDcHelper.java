@@ -24,8 +24,10 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 public class InferringLocalDcHelper extends BasicLocalDcHelper {
 
@@ -49,8 +51,8 @@ public class InferringLocalDcHelper extends BasicLocalDcHelper {
    */
   @NonNull
   @Override
-  public Optional<String> discoverLocalDc() {
-    Optional<String> optionalLocalDc = super.discoverLocalDc();
+  public Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes) {
+    Optional<String> optionalLocalDc = super.discoverLocalDc(nodes);
     if (optionalLocalDc.isPresent()) {
       return optionalLocalDc;
     }
@@ -79,6 +81,6 @@ public class InferringLocalDcHelper extends BasicLocalDcHelper {
                 + "please set the local DC explicitly (see "
                 + DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER.getPath()
                 + " in the config, or set it programmatically with SessionBuilder.withLocalDatacenter)",
-            formatNodes(contactPoints)));
+            formatNodesAndDcs(contactPoints)));
   }
 }

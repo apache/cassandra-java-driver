@@ -23,9 +23,12 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,15 +51,15 @@ public class BasicLocalDcHelper implements LocalDcHelper {
 
   /**
    * This implementation fetches the local datacenter from the programmatic configuration API, or
-   * else, from the driver configuration. If no user-supplied datacenter can be retrieved, returns
-   * {@link Optional#empty empty}.
+   * else, from the driver configuration. If no user-supplied datacenter can be retrieved, it
+   * returns {@link Optional#empty empty}.
    *
-   * @return The local datacenter from the configuration, or {@link Optional#empty empty} if none
-   *     found.
+   * @return The local datacenter from the programmatic configuration API, or from the driver
+   *     configuration; {@link Optional#empty empty} if none found.
    */
   @Override
   @NonNull
-  public Optional<String> discoverLocalDc() {
+  public Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes) {
     String localDc = context.getLocalDatacenter(profile.getName());
     if (localDc != null) {
       LOG.debug("[{}] Local DC set programmatically: {}", logPrefix, localDc);
@@ -96,7 +99,7 @@ public class BasicLocalDcHelper implements LocalDcHelper {
               + "please provide the correct local DC, or check your contact points",
           logPrefix,
           localDc,
-          formatNodes(badContactPoints));
+          formatNodesAndDcs(badContactPoints));
     }
   }
 
@@ -105,11 +108,26 @@ public class BasicLocalDcHelper implements LocalDcHelper {
    * informational purposes.
    */
   @NonNull
-  protected String formatNodes(Iterable<? extends Node> nodes) {
+  protected String formatNodesAndDcs(Iterable<? extends Node> nodes) {
     List<String> l = new ArrayList<>();
     for (Node node : nodes) {
       l.add(node + "=" + node.getDatacenter());
     }
     return String.join(", ", l);
+  }
+
+  /**
+   * Formats the given nodes as a string detailing each distinct datacenter, for informational
+   * purposes.
+   */
+  @NonNull
+  protected String formatDcs(Iterable<? extends Node> nodes) {
+    List<String> l = new ArrayList<>();
+    for (Node node : nodes) {
+      if (node.getDatacenter() != null) {
+        l.add(node.getDatacenter());
+      }
+    }
+    return String.join(", ", new TreeSet<>(l));
   }
 }

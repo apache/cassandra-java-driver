@@ -125,8 +125,8 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   @Override
   public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
     this.distanceReporter = distanceReporter;
-    localDc = newLocalDcHelper().discoverLocalDc().orElse(null);
-    filter = newNodeFilterHelper().createNodeFilter(localDc);
+    localDc = newLocalDcHelper().discoverLocalDc(nodes).orElse(null);
+    filter = newNodeFilterHelper().createNodeFilter(localDc, nodes);
     for (Node node : nodes.values()) {
       if (filter.test(node)) {
         distanceReporter.setDistance(node, NodeDistance.LOCAL);

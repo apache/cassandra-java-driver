@@ -22,6 +22,8 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.Reflection;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +56,8 @@ public class BasicNodeFilterHelper implements NodeFilterHelper {
    */
   @NonNull
   @Override
-  public Predicate<Node> createNodeFilter(@Nullable String localDc) {
+  public Predicate<Node> createNodeFilter(@Nullable String localDc,
+      @NonNull Map<UUID, Node> nodes) {
     Predicate<Node> filterFromConfig = nodeFilterFromConfig();
     return node -> {
       if (localDc != null && !localDc.equals(node.getDatacenter())) {
@@ -77,7 +80,7 @@ public class BasicNodeFilterHelper implements NodeFilterHelper {
   }
 
   @NonNull
-  protected final Predicate<Node> nodeFilterFromConfig() {
+  protected Predicate<Node> nodeFilterFromConfig() {
     Predicate<Node> filter = context.getNodeFilter(profile.getName());
     if (filter != null) {
       LOG.debug("[{}] Node filter set programmatically", logPrefix);
