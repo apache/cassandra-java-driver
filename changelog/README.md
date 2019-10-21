@@ -1,13 +1,14 @@
 ## Changelog
 
 
-## DataStax Cloud (in progress)
+## 3.8.0 (in progress)
 
-- [new feature] JAVA-2355: CaaS Enablement
-- [improvement] JAVA-2483: Allow to provide secureBundle via URL
-- [improvement] JAVA-2499: Allow to read the secure bundle from an InputStream
-- [improvement] JAVA-2457: Detect CaaS and change default consistency
-- [improvement] JAVA-2485: Add errors for cloud misconfiguration
+- [new feature] JAVA-2356: Support for DataStax Cloud API.
+- [improvement] JAVA-2483: Allow to provide secure bundle via URL.
+- [improvement] JAVA-2499: Allow to read the secure bundle from an InputStream.
+- [improvement] JAVA-2457: Detect CaaS and change default consistency.
+- [improvement] JAVA-2485: Add errors for Cloud misconfiguration.
+- [documentation] JAVA-2504: Migrate Cloud "getting started" page to driver manual.
 
 
 ### 3.7.2
