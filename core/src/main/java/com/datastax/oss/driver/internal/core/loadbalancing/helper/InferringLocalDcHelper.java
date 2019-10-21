@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * An implementation of {@link LocalDcHelper} that fetches the user-supplied datacenter, if any,
@@ -37,6 +38,7 @@ import java.util.UUID;
  * the contact points are from different datacenters, or if no contact points reported any
  * datacenter, an {@link IllegalStateException} is thrown.
  */
+@ThreadSafe
 public class InferringLocalDcHelper extends OptionalLocalDcHelper {
 
   public InferringLocalDcHelper(

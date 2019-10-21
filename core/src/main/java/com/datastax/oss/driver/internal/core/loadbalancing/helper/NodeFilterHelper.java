@@ -22,8 +22,10 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Predicate;
+import net.jcip.annotations.ThreadSafe;
 
 @FunctionalInterface
+@ThreadSafe
 public interface NodeFilterHelper {
 
   Predicate<Node> INCLUDE_ALL_NODES = n -> true;

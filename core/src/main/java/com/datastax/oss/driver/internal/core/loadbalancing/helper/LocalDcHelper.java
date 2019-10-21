@@ -21,8 +21,10 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import net.jcip.annotations.ThreadSafe;
 
 @FunctionalInterface
+@ThreadSafe
 public interface LocalDcHelper {
 
   /**

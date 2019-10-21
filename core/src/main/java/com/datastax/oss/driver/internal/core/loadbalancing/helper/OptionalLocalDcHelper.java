@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
  * programmatic configuration API, or else, from the driver configuration. If no user-supplied
  * datacenter can be retrieved, it returns {@link Optional#empty empty}.
  */
+@ThreadSafe
 public class OptionalLocalDcHelper implements LocalDcHelper {
 
   private static final Logger LOG = LoggerFactory.getLogger(OptionalLocalDcHelper.class);

@@ -25,9 +25,20 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Predicate;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A {@link NodeFilterHelper} implementation that fetches the user-supplied filter, if any, from the
+ * programmatic configuration API, or else, from the driver configuration. If no user-supplied
+ * filter can be retrieved, a dummy filter will be used which accepts all nodes unconditionally.
+ *
+ * <p>Note that, regardless of the filter supplied by the end user, if a local datacenter is defined
+ * the filter returned by this implementation will always reject nodes that report a datacenter
+ * different from the local one.
+ */
+@ThreadSafe
 public class DefaultNodeFilterHelper implements NodeFilterHelper {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultNodeFilterHelper.class);
