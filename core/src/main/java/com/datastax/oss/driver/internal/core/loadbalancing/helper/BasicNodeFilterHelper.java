@@ -56,8 +56,8 @@ public class BasicNodeFilterHelper implements NodeFilterHelper {
    */
   @NonNull
   @Override
-  public Predicate<Node> createNodeFilter(@Nullable String localDc,
-      @NonNull Map<UUID, Node> nodes) {
+  public Predicate<Node> createNodeFilter(
+      @Nullable String localDc, @NonNull Map<UUID, Node> nodes) {
     Predicate<Node> filterFromConfig = nodeFilterFromConfig();
     return node -> {
       if (localDc != null && !localDc.equals(node.getDatacenter())) {
