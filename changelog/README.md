@@ -8,6 +8,7 @@
 - [improvement] JAVA-2484: Add errors for cloud misconfiguration
 - [improvement] JAVA-2490: Allow to read the secure bundle from an InputStream
 - [new feature] JAVA-2478: Allow to provide the secure bundle via URL
+- [new feature] JAVA-2356: Support for DataStax Cloud API
 - [improvement] JAVA-2407: Improve handling of logback configuration files in IDEs
 - [improvement] JAVA-2434: Add support for custom cipher suites and host name validation to ProgrammaticSslEngineFactory
 - [improvement] JAVA-2480: Upgrade Jackson to 2.10.0
