@@ -5,6 +5,7 @@
 ### 4.3.0 (in progress)
 
 - [improvement] JAVA-2434: Add support for custom cipher suites and host name validation to ProgrammaticSslEngineFactory
+- [improvement] JAVA-2480: Upgrade Jackson to 2.10.0
 - [documentation] JAVA-2505: Annotate Node.getHostId() as nullable
 - [improvement] JAVA-1708: Support DSE "everywhere" replication strategy
 - [improvement] JAVA-2471: Consider DSE version when parsing the schema
