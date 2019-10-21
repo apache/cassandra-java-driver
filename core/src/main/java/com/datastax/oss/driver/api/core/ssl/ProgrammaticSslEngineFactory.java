@@ -71,7 +71,8 @@ public class ProgrammaticSslEngineFactory implements SslEngineFactory {
    *
    * @param sslContext the {@link SSLContext} to use.
    * @param cipherSuites the cipher suites to use, or null to use the default ones.
-   * @param requireHostnameValidation whether to enable host name validation.
+   * @param requireHostnameValidation whether to enable host name validation. If enabled, host name
+   *     validation will be done using HTTPS algorithm.
    */
   public ProgrammaticSslEngineFactory(
       @NonNull SSLContext sslContext,
