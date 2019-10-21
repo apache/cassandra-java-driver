@@ -494,12 +494,23 @@ limitations under the License.]]>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <systemPropertyVariables>
+            <logback.configurationFile>${project.basedir}/src/test/resources/logback-test.xml</logback.configurationFile>
+          </systemPropertyVariables>
           <properties>
             <property>
               <name>usedefaultlisteners</name>
               <value>false</value>
             </property>
           </properties>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <logback.configurationFile>${project.basedir}/src/test/resources/logback-test.xml</logback.configurationFile>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
       <plugin>

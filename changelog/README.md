@@ -4,6 +4,7 @@
 
 ### 4.3.0 (in progress)
 
+- [improvement] JAVA-2407: Improve handling of logback configuration files in IDEs
 - [improvement] JAVA-2434: Add support for custom cipher suites and host name validation to ProgrammaticSslEngineFactory
 - [improvement] JAVA-2480: Upgrade Jackson to 2.10.0
 - [documentation] JAVA-2505: Annotate Node.getHostId() as nullable
