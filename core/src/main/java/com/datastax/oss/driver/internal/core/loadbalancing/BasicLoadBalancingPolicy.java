@@ -145,8 +145,8 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   /**
    * Returns a new {@link LocalDcHelper} instance to use to perform local datacenter discovery.
    *
-   * <p>This method should be called only once called during {@linkplain #init(Map,
-   * DistanceReporter) initialization}.
+   * <p>This method should be called only once during {@linkplain #init(Map, DistanceReporter)
+   * initialization}.
    */
   protected LocalDcHelper newLocalDcHelper() {
     return new BasicLocalDcHelper(context, profile, logPrefix);
@@ -155,8 +155,8 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   /**
    * Returns a new {@link NodeFilterHelper} instance to use to create node filters.
    *
-   * <p>This method should be called only once called during {@linkplain #init(Map,
-   * DistanceReporter) initialization}.
+   * <p>This method should be called only once during {@linkplain #init(Map, DistanceReporter)
+   * initialization}.
    */
   protected NodeFilterHelper newNodeFilterHelper() {
     return new BasicNodeFilterHelper(context, profile, logPrefix);
