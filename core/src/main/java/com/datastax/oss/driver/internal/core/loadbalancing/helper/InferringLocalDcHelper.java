@@ -29,7 +29,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-public class InferringLocalDcHelper extends BasicLocalDcHelper {
+/**
+ * An implementation of {@link LocalDcHelper} that fetches the user-supplied datacenter, if any,
+ * from the programmatic configuration API, or else, from the driver configuration. If no local
+ * datacenter is explicitly defined, this implementation infers the local datacenter from the
+ * contact points: if all contact points share the same datacenter, that datacenter is returned. If
+ * the contact points are from different datacenters, or if no contact points reported any
+ * datacenter, an {@link IllegalStateException} is thrown.
+ */
+public class InferringLocalDcHelper extends OptionalLocalDcHelper {
 
   public InferringLocalDcHelper(
       @NonNull InternalDriverContext context,
@@ -38,17 +46,7 @@ public class InferringLocalDcHelper extends BasicLocalDcHelper {
     super(context, profile, logPrefix);
   }
 
-  /**
-   * This implementation fetches the user-supplied datacenter, if any, from the programmatic
-   * configuration API, or else, from the driver configuration. If no local datacenter is explicitly
-   * defined, this implementation infers the local datacenter from the contact points: if all
-   * contact points share the same datacenter, that datacenter is returned. If the contact points
-   * are from different datacenters, or if no contact points reported any datacenter, an {@link
-   * IllegalStateException} is thrown.
-   *
-   * @return The local datacenter; always present.
-   * @throws IllegalStateException if the local datacenter could not be inferred.
-   */
+  /** @return The local datacenter; always present. */
   @NonNull
   @Override
   public Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes) {

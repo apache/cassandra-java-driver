@@ -28,32 +28,30 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DefaultLocalDcHelper extends BasicLocalDcHelper {
+/**
+ * An implementation of {@link LocalDcHelper} that fetches the user-supplied datacenter, if any,
+ * from the programmatic configuration API, or else, from the driver configuration. If no local
+ * datacenter is explicitly defined, this implementation will consider two distinct situations:
+ *
+ * <ol>
+ *   <li>If no explicit contact points were provided, this implementation will infer the local
+ *       datacenter from the implicit contact point (localhost).
+ *   <li>If explicit contact points were provided however, this implementation will throw {@link
+ *       IllegalStateException}.
+ * </ol>
+ */
+public class MandatoryLocalDcHelper extends OptionalLocalDcHelper {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultLocalDcHelper.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MandatoryLocalDcHelper.class);
 
-  public DefaultLocalDcHelper(
+  public MandatoryLocalDcHelper(
       @NonNull InternalDriverContext context,
       @NonNull DriverExecutionProfile profile,
       @NonNull String logPrefix) {
     super(context, profile, logPrefix);
   }
 
-  /**
-   * This implementation fetches the user-supplied datacenter, if any, from the programmatic
-   * configuration API, or else, from the driver configuration. If no local datacenter is explicitly
-   * defined, this implementation will consider two distinct situations:
-   *
-   * <ol>
-   *   <li>If no explicit contact points were provided, this implementation will infer the local
-   *       datacenter from the implicit contact point (localhost).
-   *   <li>If explicit contact points were provided however, this implementation will throw {@link
-   *       IllegalStateException}.
-   * </ol>
-   *
-   * @return The local datacenter; always present.
-   * @throws IllegalStateException if the local datacenter could not be inferred.
-   */
+  /** @return The local datacenter; always present. */
   @NonNull
   @Override
   public Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes) {

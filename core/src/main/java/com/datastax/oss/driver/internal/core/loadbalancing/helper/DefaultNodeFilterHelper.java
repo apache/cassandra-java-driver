@@ -28,15 +28,15 @@ import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BasicNodeFilterHelper implements NodeFilterHelper {
+public class DefaultNodeFilterHelper implements NodeFilterHelper {
 
-  private static final Logger LOG = LoggerFactory.getLogger(BasicLocalDcHelper.class);
+  private static final Logger LOG = LoggerFactory.getLogger(OptionalLocalDcHelper.class);
 
   @NonNull protected final InternalDriverContext context;
   @NonNull protected final DriverExecutionProfile profile;
   @NonNull protected final String logPrefix;
 
-  public BasicNodeFilterHelper(
+  public DefaultNodeFilterHelper(
       @NonNull InternalDriverContext context,
       @NonNull DriverExecutionProfile profile,
       @NonNull String logPrefix) {

@@ -32,15 +32,20 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BasicLocalDcHelper implements LocalDcHelper {
+/**
+ * An implementation of {@link LocalDcHelper} that fetches the local datacenter from the
+ * programmatic configuration API, or else, from the driver configuration. If no user-supplied
+ * datacenter can be retrieved, it returns {@link Optional#empty empty}.
+ */
+public class OptionalLocalDcHelper implements LocalDcHelper {
 
-  private static final Logger LOG = LoggerFactory.getLogger(BasicLocalDcHelper.class);
+  private static final Logger LOG = LoggerFactory.getLogger(OptionalLocalDcHelper.class);
 
   @NonNull protected final InternalDriverContext context;
   @NonNull protected final DriverExecutionProfile profile;
   @NonNull protected final String logPrefix;
 
-  public BasicLocalDcHelper(
+  public OptionalLocalDcHelper(
       @NonNull InternalDriverContext context,
       @NonNull DriverExecutionProfile profile,
       @NonNull String logPrefix) {
@@ -50,10 +55,6 @@ public class BasicLocalDcHelper implements LocalDcHelper {
   }
 
   /**
-   * This implementation fetches the local datacenter from the programmatic configuration API, or
-   * else, from the driver configuration. If no user-supplied datacenter can be retrieved, it
-   * returns {@link Optional#empty empty}.
-   *
    * @return The local datacenter from the programmatic configuration API, or from the driver
    *     configuration; {@link Optional#empty empty} if none found.
    */

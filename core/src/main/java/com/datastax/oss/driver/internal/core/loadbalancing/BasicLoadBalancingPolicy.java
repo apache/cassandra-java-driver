@@ -27,10 +27,10 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.loadbalancing.helper.BasicLocalDcHelper;
-import com.datastax.oss.driver.internal.core.loadbalancing.helper.BasicNodeFilterHelper;
+import com.datastax.oss.driver.internal.core.loadbalancing.helper.DefaultNodeFilterHelper;
 import com.datastax.oss.driver.internal.core.loadbalancing.helper.LocalDcHelper;
 import com.datastax.oss.driver.internal.core.loadbalancing.helper.NodeFilterHelper;
+import com.datastax.oss.driver.internal.core.loadbalancing.helper.OptionalLocalDcHelper;
 import com.datastax.oss.driver.internal.core.util.ArrayUtils;
 import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
@@ -149,7 +149,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
    * initialization}.
    */
   protected LocalDcHelper newLocalDcHelper() {
-    return new BasicLocalDcHelper(context, profile, logPrefix);
+    return new OptionalLocalDcHelper(context, profile, logPrefix);
   }
 
   /**
@@ -159,7 +159,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
    * initialization}.
    */
   protected NodeFilterHelper newNodeFilterHelper() {
-    return new BasicNodeFilterHelper(context, profile, logPrefix);
+    return new DefaultNodeFilterHelper(context, profile, logPrefix);
   }
 
   @NonNull
