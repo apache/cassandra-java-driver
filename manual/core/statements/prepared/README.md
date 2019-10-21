@@ -71,6 +71,8 @@ client                            driver                Cassandra
   |<--------------------------------|                     |
 ```
 
+### Advantages of prepared statements
+
 Beyond saving a bit of parsing overhead on the server, prepared statements have other advantages;
 the `PREPARED` response also contains useful metadata about the CQL query:
 

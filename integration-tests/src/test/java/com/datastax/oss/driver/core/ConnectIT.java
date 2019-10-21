@@ -107,9 +107,7 @@ public class ConnectIT {
     SIMULACRON_RULE.cluster().acceptConnections();
 
     // Then this doesn't throw
-    Session session = sessionFuture.get(2, TimeUnit.SECONDS);
-
-    session.close();
+    try (Session session = sessionFuture.get(30, TimeUnit.SECONDS)) {}
   }
 
   /**

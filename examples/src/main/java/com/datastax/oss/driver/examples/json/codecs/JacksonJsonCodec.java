@@ -24,7 +24,7 @@ import com.datastax.oss.driver.internal.core.util.Strings;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -52,28 +52,28 @@ import java.nio.ByteBuffer;
  */
 public class JacksonJsonCodec<T> implements TypeCodec<T> {
 
-  private final ObjectMapper objectMapper;
+  private final JsonMapper jsonMapper;
   private final GenericType<T> javaType;
 
   /**
    * Creates a new instance for the provided {@code javaClass}, using a default, newly-allocated
-   * {@link ObjectMapper}.
+   * {@link JsonMapper}.
    *
    * @param javaClass the Java class this codec maps to.
    */
   public JacksonJsonCodec(Class<T> javaClass) {
-    this(javaClass, new ObjectMapper());
+    this(javaClass, JsonMapper.builder().build());
   }
 
   /**
    * Creates a new instance for the provided {@code javaClass}, and using the provided {@link
-   * ObjectMapper}.
+   * JsonMapper}.
    *
    * @param javaClass the Java class this codec maps to.
    */
-  public JacksonJsonCodec(Class<T> javaClass, ObjectMapper objectMapper) {
+  public JacksonJsonCodec(Class<T> javaClass, JsonMapper jsonMapper) {
     this.javaType = GenericType.of(javaClass);
-    this.objectMapper = objectMapper;
+    this.jsonMapper = jsonMapper;
   }
 
   @NonNull
@@ -95,7 +95,7 @@ public class JacksonJsonCodec<T> implements TypeCodec<T> {
       return null;
     }
     try {
-      return ByteBuffer.wrap(objectMapper.writeValueAsBytes(value));
+      return ByteBuffer.wrap(jsonMapper.writeValueAsBytes(value));
     } catch (JsonProcessingException e) {
       throw new IllegalArgumentException(e.getMessage(), e);
     }
@@ -108,7 +108,7 @@ public class JacksonJsonCodec<T> implements TypeCodec<T> {
       return null;
     }
     try {
-      return objectMapper.readValue(Bytes.getArray(bytes), toJacksonJavaType());
+      return jsonMapper.readValue(Bytes.getArray(bytes), toJacksonJavaType());
     } catch (IOException e) {
       throw new IllegalArgumentException(e.getMessage(), e);
     }
@@ -122,7 +122,7 @@ public class JacksonJsonCodec<T> implements TypeCodec<T> {
     }
     String json;
     try {
-      json = objectMapper.writeValueAsString(value);
+      json = jsonMapper.writeValueAsString(value);
     } catch (IOException e) {
       throw new IllegalArgumentException(e.getMessage(), e);
     }
@@ -141,7 +141,7 @@ public class JacksonJsonCodec<T> implements TypeCodec<T> {
     }
     String json = Strings.unquote(value);
     try {
-      return (T) objectMapper.readValue(json, toJacksonJavaType());
+      return (T) jsonMapper.readValue(json, toJacksonJavaType());
     } catch (IOException e) {
       throw new IllegalArgumentException(e.getMessage(), e);
     }

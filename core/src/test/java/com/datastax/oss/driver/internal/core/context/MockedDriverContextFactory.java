@@ -29,7 +29,7 @@ import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import java.util.Optional;
 
-class MockedDriverContextFactory {
+public class MockedDriverContextFactory {
 
   public static DefaultDriverContext defaultDriverContext() {
     return defaultDriverContext(Optional.empty());
