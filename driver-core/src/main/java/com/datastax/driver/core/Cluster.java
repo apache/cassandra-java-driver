@@ -67,7 +67,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -719,11 +718,9 @@ public class Cluster implements Closeable {
   public static class Builder implements Initializer {
 
     private String clusterName;
-    private final List<InetSocketAddress> rowHostAndPortContactPoints =
+    private final List<InetSocketAddress> rawHostAndPortContactPoints =
         new ArrayList<InetSocketAddress>();
     private final List<InetAddress> rawHostContactPoints = new ArrayList<InetAddress>();
-    private final Map<String, List<String>> resolvedContactPoints =
-        new LinkedHashMap<String, List<String>>();
     private final List<EndPoint> contactPoints = new ArrayList<EndPoint>();
     private int port = ProtocolOptions.DEFAULT_PORT;
     private int maxSchemaAgreementWaitSeconds =
@@ -758,7 +755,7 @@ public class Cluster implements Closeable {
       for (InetAddress address : rawHostContactPoints) {
         allContactPoints.add(new TranslatedAddressEndPoint(new InetSocketAddress(address, port)));
       }
-      for (InetSocketAddress socketAddress : rowHostAndPortContactPoints) {
+      for (InetSocketAddress socketAddress : rawHostAndPortContactPoints) {
         allContactPoints.add(new TranslatedAddressEndPoint(socketAddress));
       }
       return new ArrayList<EndPoint>(allContactPoints);
@@ -1036,7 +1033,7 @@ public class Cluster implements Closeable {
      */
     public Builder addContactPointsWithPorts(InetSocketAddress... addresses) {
       failIfCloud();
-      Collections.addAll(this.rowHostAndPortContactPoints, addresses);
+      Collections.addAll(this.rawHostAndPortContactPoints, addresses);
       return this;
     }
 
@@ -1060,7 +1057,7 @@ public class Cluster implements Closeable {
      */
     public Builder addContactPointsWithPorts(Collection<InetSocketAddress> addresses) {
       failIfCloud();
-      this.rowHostAndPortContactPoints.addAll(addresses);
+      this.rawHostAndPortContactPoints.addAll(addresses);
       return this;
     }
 
@@ -1475,7 +1472,7 @@ public class Cluster implements Closeable {
         builder = builder.withAuthProvider(cloudConfig.getAuthProvider());
       }
       if (builder.rawHostContactPoints.size() > 0
-          || builder.rowHostAndPortContactPoints.size() > 0
+          || builder.rawHostAndPortContactPoints.size() > 0
           || builder.contactPoints.size() > 0) {
         throw new IllegalStateException(
             "Can't use withCloudSecureConnectBundle if you've already called addContactPoint(s)");
