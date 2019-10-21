@@ -129,7 +129,7 @@ public class DefaultNode implements Node {
     return cassandraVersion;
   }
 
-  @NonNull
+  @Nullable
   @Override
   public UUID getHostId() {
     return hostId;

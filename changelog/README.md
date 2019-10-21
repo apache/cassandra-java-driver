@@ -4,6 +4,7 @@
 
 ### 4.3.0 (in progress)
 
+- [documentation] JAVA-2505: Annotate Node.getHostId() as nullable
 - [improvement] JAVA-1708: Support DSE "everywhere" replication strategy
 - [improvement] JAVA-2471: Consider DSE version when parsing the schema
 - [improvement] JAVA-2444: Add method setRoutingKey(ByteBuffer...) to StatementBuilder
