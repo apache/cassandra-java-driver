@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 
 public class DefaultNodeFilterHelper implements NodeFilterHelper {
 
-  private static final Logger LOG = LoggerFactory.getLogger(OptionalLocalDcHelper.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultNodeFilterHelper.class);
 
   @NonNull protected final InternalDriverContext context;
   @NonNull protected final DriverExecutionProfile profile;
