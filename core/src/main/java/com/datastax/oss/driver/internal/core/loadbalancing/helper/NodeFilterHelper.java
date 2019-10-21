@@ -20,6 +20,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.function.Predicate;
 
+@FunctionalInterface
 public interface NodeFilterHelper {
 
   Predicate<Node> INCLUDE_ALL_NODES = n -> true;

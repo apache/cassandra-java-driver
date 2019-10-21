@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.loadbalancing.helper;
 
 import java.util.Optional;
 
+@FunctionalInterface
 public interface LocalDcHelper {
 
   /**
