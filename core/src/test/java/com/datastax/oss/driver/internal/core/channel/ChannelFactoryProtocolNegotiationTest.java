@@ -26,6 +26,7 @@ import com.datastax.oss.driver.internal.core.TestResponses;
 import com.datastax.oss.driver.internal.core.metrics.NoopNodeMetricUpdater;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import com.datastax.oss.protocol.internal.request.Options;
 import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.Ready;
 import com.tngtech.java.junit.dataprovider.DataProvider;
@@ -72,6 +73,10 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
             SERVER_ADDRESS, DriverChannelOptions.DEFAULT, NoopNodeMetricUpdater.INSTANCE);
 
     Frame requestFrame = readOutboundFrame();
+    assertThat(requestFrame.message).isInstanceOf(Options.class);
+    writeInboundFrame(requestFrame, TestResponses.supportedResponse("mock_key", "mock_value"));
+
+    requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(DefaultProtocolVersion.V4.getCode());
     // Server does not support v4
     writeInboundFrame(
@@ -102,6 +107,10 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
             SERVER_ADDRESS, DriverChannelOptions.DEFAULT, NoopNodeMetricUpdater.INSTANCE);
 
     Frame requestFrame = readOutboundFrame();
+    assertThat(requestFrame.message).isInstanceOf(Options.class);
+    writeInboundFrame(requestFrame, TestResponses.supportedResponse("mock_key", "mock_value"));
+
+    requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(DefaultProtocolVersion.V4.getCode());
     writeInboundFrame(requestFrame, new Ready());
 
@@ -130,6 +139,10 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
             SERVER_ADDRESS, DriverChannelOptions.DEFAULT, NoopNodeMetricUpdater.INSTANCE);
 
     Frame requestFrame = readOutboundFrame();
+    assertThat(requestFrame.message).isInstanceOf(Options.class);
+    writeInboundFrame(requestFrame, TestResponses.supportedResponse("mock_key", "mock_value"));
+
+    requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(DefaultProtocolVersion.V4.getCode());
     // Server does not support v4
     writeInboundFrame(
@@ -137,6 +150,10 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
 
     // Then
     // Factory should initialize a new connection, that retries with the lower version
+    requestFrame = readOutboundFrame();
+    assertThat(requestFrame.message).isInstanceOf(Options.class);
+    writeInboundFrame(requestFrame, TestResponses.supportedResponse("mock_key", "mock_value"));
+
     requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(DefaultProtocolVersion.V3.getCode());
     writeInboundFrame(requestFrame, new Ready());
@@ -165,12 +182,20 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
             SERVER_ADDRESS, DriverChannelOptions.DEFAULT, NoopNodeMetricUpdater.INSTANCE);
 
     Frame requestFrame = readOutboundFrame();
+    assertThat(requestFrame.message).isInstanceOf(Options.class);
+    writeInboundFrame(requestFrame, TestResponses.supportedResponse("mock_key", "mock_value"));
+
+    requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(DefaultProtocolVersion.V4.getCode());
     // Server does not support v4
     writeInboundFrame(
         requestFrame, new Error(errorCode, "Invalid or unsupported protocol version"));
 
     // Client retries with v3
+    requestFrame = readOutboundFrame();
+    assertThat(requestFrame.message).isInstanceOf(Options.class);
+    writeInboundFrame(requestFrame, TestResponses.supportedResponse("mock_key", "mock_value"));
+
     requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(DefaultProtocolVersion.V3.getCode());
     // Server does not support v3

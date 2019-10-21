@@ -26,6 +26,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -52,6 +53,7 @@ public class ProgrammaticArguments {
   private final ClassLoader classLoader;
   private final AuthProvider authProvider;
   private final SslEngineFactory sslEngineFactory;
+  private final InetSocketAddress cloudProxyAddress;
 
   private ProgrammaticArguments(
       @NonNull List<TypeCodec<?>> typeCodecs,
@@ -62,7 +64,8 @@ public class ProgrammaticArguments {
       @NonNull Map<String, Predicate<Node>> nodeFilters,
       @Nullable ClassLoader classLoader,
       @Nullable AuthProvider authProvider,
-      @Nullable SslEngineFactory sslEngineFactory) {
+      @Nullable SslEngineFactory sslEngineFactory,
+      @Nullable InetSocketAddress cloudProxyAddress) {
     this.typeCodecs = typeCodecs;
     this.nodeStateListener = nodeStateListener;
     this.schemaChangeListener = schemaChangeListener;
@@ -72,6 +75,7 @@ public class ProgrammaticArguments {
     this.classLoader = classLoader;
     this.authProvider = authProvider;
     this.sslEngineFactory = sslEngineFactory;
+    this.cloudProxyAddress = cloudProxyAddress;
   }
 
   @NonNull
@@ -119,6 +123,11 @@ public class ProgrammaticArguments {
     return sslEngineFactory;
   }
 
+  @Nullable
+  public InetSocketAddress getCloudProxyAddress() {
+    return cloudProxyAddress;
+  }
+
   public static class Builder {
 
     private ImmutableList.Builder<TypeCodec<?>> typeCodecsBuilder = ImmutableList.builder();
@@ -131,6 +140,7 @@ public class ProgrammaticArguments {
     private ClassLoader classLoader;
     private AuthProvider authProvider;
     private SslEngineFactory sslEngineFactory;
+    private InetSocketAddress cloudProxyAddress;
 
     @NonNull
     public Builder addTypeCodecs(@NonNull TypeCodec<?>... typeCodecs) {
@@ -193,6 +203,12 @@ public class ProgrammaticArguments {
     }
 
     @NonNull
+    public Builder withCloudProxyAddress(@Nullable InetSocketAddress cloudAddress) {
+      this.cloudProxyAddress = cloudAddress;
+      return this;
+    }
+
+    @NonNull
     public Builder withAuthProvider(@Nullable AuthProvider authProvider) {
       this.authProvider = authProvider;
       return this;
@@ -215,7 +231,8 @@ public class ProgrammaticArguments {
           nodeFiltersBuilder.build(),
           classLoader,
           authProvider,
-          sslEngineFactory);
+          sslEngineFactory,
+          cloudProxyAddress);
     }
   }
 }

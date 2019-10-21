@@ -295,22 +295,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
       @Nullable InetSocketAddress broadcastRpcAddress,
       @NonNull EndPoint localEndPoint) {
 
-    boolean peer = row.contains("peer");
-
-    EndPoint endPoint;
-    if (peer) {
-      // If this node is a peer, its broadcast RPC address must be present.
-      Objects.requireNonNull(
-          broadcastRpcAddress, "broadcastRpcAddress cannot be null for a peer row");
-      // Deployments that use a custom EndPoint implementation will need their own TopologyMonitor.
-      // One simple approach is to extend this class and override this method.
-      endPoint = new DefaultEndPoint(context.getAddressTranslator().translate(broadcastRpcAddress));
-    } else {
-      // Don't rely on system.local.rpc_address for the control node, because it mistakenly
-      // reports the normal RPC address instead of the broadcast one (CASSANDRA-11181). We
-      // already know the endpoint anyway since we've just used it to query.
-      endPoint = localEndPoint;
-    }
+    EndPoint endPoint = buildNodeEndPoint(row, broadcastRpcAddress, localEndPoint);
 
     // in system.local
     InetAddress broadcastInetAddress = row.getInetAddress("broadcast_address");
@@ -365,6 +350,42 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     return row.contains("dse_version")
         ? rv.withExtra(NodeProperties.DSE_VERSION, Version.parse(row.getString("dse_version")))
         : rv;
+  }
+
+  /**
+   * Builds the node's endpoint from the given row.
+   *
+   * @param broadcastRpcAddress this is a parameter only because we already have it when we come
+   *     from {@link #findInPeers(AdminResult, InetSocketAddress, EndPoint)}. Callers that don't
+   *     already have it can use {@link #getBroadcastRpcAddress}. For the control host, this can be
+   *     null; if this node is a peer however, this cannot be null, since we use that address to
+   *     create the node's endpoint. Callers can use {@link #isPeerValid(AdminRow)} to check that
+   *     before calling this method.
+   * @param localEndPoint the control node endpoint that was used to query the node's system tables.
+   *     This is a parameter because it would be racy to call {@code
+   *     controlConnection.channel().getEndPoint()} from within this method, as the control
+   *     connection may have changed its channel since. So this parameter must be provided by the
+   *     caller.
+   */
+  @NonNull
+  protected EndPoint buildNodeEndPoint(
+      @NonNull AdminRow row,
+      @Nullable InetSocketAddress broadcastRpcAddress,
+      @NonNull EndPoint localEndPoint) {
+    boolean peer = row.contains("peer");
+    if (peer) {
+      // If this node is a peer, its broadcast RPC address must be present.
+      Objects.requireNonNull(
+          broadcastRpcAddress, "broadcastRpcAddress cannot be null for a peer row");
+      // Deployments that use a custom EndPoint implementation will need their own TopologyMonitor.
+      // One simple approach is to extend this class and override this method.
+      return new DefaultEndPoint(context.getAddressTranslator().translate(broadcastRpcAddress));
+    } else {
+      // Don't rely on system.local.rpc_address for the control node, because it mistakenly
+      // reports the normal RPC address instead of the broadcast one (CASSANDRA-11181). We
+      // already know the endpoint anyway since we've just used it to query.
+      return localEndPoint;
+    }
   }
 
   // Called when a new node is being added; the peers table is keyed by broadcast_address,

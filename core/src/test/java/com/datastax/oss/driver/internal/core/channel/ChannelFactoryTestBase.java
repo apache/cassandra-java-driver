@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.when;
 
@@ -35,6 +36,8 @@ import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import com.datastax.oss.protocol.internal.Message;
+import com.datastax.oss.protocol.internal.request.Options;
+import com.datastax.oss.protocol.internal.request.Startup;
 import com.datastax.oss.protocol.internal.response.Ready;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import io.netty.bootstrap.ServerBootstrap;
@@ -200,6 +203,11 @@ public abstract class ChannelFactoryTestBase {
    */
   protected void completeSimpleChannelInit() {
     Frame requestFrame = readOutboundFrame();
+    assertThat(requestFrame.message).isInstanceOf(Options.class);
+    writeInboundFrame(requestFrame, TestResponses.supportedResponse("mock_key", "mock_value"));
+
+    requestFrame = readOutboundFrame();
+    assertThat(requestFrame.message).isInstanceOf(Startup.class);
     writeInboundFrame(requestFrame, new Ready());
 
     requestFrame = readOutboundFrame();
@@ -252,7 +260,13 @@ public abstract class ChannelFactoryTestBase {
             HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultProfile);
             ProtocolInitHandler initHandler =
                 new ProtocolInitHandler(
-                    context, protocolVersion, clusterName, endPoint, options, heartbeatHandler);
+                    context,
+                    protocolVersion,
+                    clusterName,
+                    endPoint,
+                    options,
+                    heartbeatHandler,
+                    productType == null);
             channel.pipeline().addLast("inflight", inFlightHandler).addLast("init", initHandler);
           } catch (Throwable t) {
             resultFuture.completeExceptionally(t);

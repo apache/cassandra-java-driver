@@ -128,6 +128,7 @@
                   -->
                   <include>com.datastax.oss:java-driver-core</include>
                   <include>io.netty:*</include>
+                  <include>com.fasterxml.jackson.core:*</include>
                 </includes>
               </artifactSet>
               <relocations>
@@ -135,7 +136,21 @@
                   <pattern>io.netty</pattern>
                   <shadedPattern>com.datastax.oss.driver.shaded.netty</shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>com.fasterxml.jackson</pattern>
+                  <shadedPattern>com.datastax.oss.driver.shaded.fasterxml.jackson</shadedPattern>
+                </relocation>
               </relocations>
+              <filters>
+                <!-- Note: most exclusions are done later on with the dependency plugin, but
+                 these one must be done here because its pattern is too wide -->
+                <filter>
+                  <artifact>com.fasterxml.jackson.core:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/**</exclude>
+                  </excludes>
+                </filter>
+              </filters>
             </configuration>
           </execution>
         </executions>
