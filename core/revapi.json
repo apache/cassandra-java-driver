@@ -4837,13 +4837,6 @@
         "new": "parameter void com.datastax.oss.driver.api.core.ssl.ProgrammaticSslEngineFactory::<init>(===javax.net.ssl.SSLContext===)",
         "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
         "justification": "JAVA-2434: added @NonNull to ProgrammaticSslEngineFactory(SSLContext) constructor"
-      },
-      {
-        "code": "java.method.exception.checkedAdded",
-        "old": "method void com.datastax.oss.driver.api.core.ssl.ProgrammaticSslEngineFactory::close()",
-        "new": "method void com.datastax.oss.driver.api.core.ssl.ProgrammaticSslEngineFactory::close() throws java.lang.Exception",
-        "exception": "java.lang.Exception",
-        "justification": "JAVA-2434: added throws clause to ProgrammaticSslEngineFactory.close() to allow subclasses to throw checked exceptions if needed"
       }
     ]
   }
