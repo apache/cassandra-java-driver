@@ -261,6 +261,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *
    * <p>If the factory is provided programmatically with this method, it overrides the configuration
    * (that is, the {@code advanced.ssl-engine-factory} option will be ignored).
+   *
+   * @see ProgrammaticSslEngineFactory
    */
   @NonNull
   public SelfT withSslEngineFactory(@Nullable SslEngineFactory sslEngineFactory) {
@@ -276,9 +278,12 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * #withSslEngineFactory(SslEngineFactory)}.
    *
    * <p>If you use this method, there is no way to customize cipher suites, or turn on host name
-   * validation. Also, note that SSL engines will be created with advisory peer information ({@link
-   * SSLContext#createSSLEngine(String, int)}) whenever possible. If you need finer control, write
-   * your own factory.
+   * validation. If you need finer control, use {@link #withSslEngineFactory(SslEngineFactory)}
+   * directly and pass either your own implementation of {@link SslEngineFactory}, or a {@link
+   * ProgrammaticSslEngineFactory} created with custom cipher suites and/or host name validation.
+   *
+   * <p>Also, note that SSL engines will be created with advisory peer information ({@link
+   * SSLContext#createSSLEngine(String, int)}) whenever possible.
    */
   @NonNull
   public SelfT withSslContext(@Nullable SSLContext sslContext) {
