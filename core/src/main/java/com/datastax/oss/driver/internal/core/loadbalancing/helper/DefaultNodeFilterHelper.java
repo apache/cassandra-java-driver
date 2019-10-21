@@ -56,15 +56,6 @@ public class DefaultNodeFilterHelper implements NodeFilterHelper {
     this.logPrefix = logPrefix;
   }
 
-  /**
-   * This implementation fetches the user-supplied filter, if any, from the programmatic
-   * configuration API, or else, from the driver configuration. If no user-supplied filter can be
-   * retrieved, a dummy filter will be used which accepts all nodes unconditionally.
-   *
-   * <p>Note that, regardless of the filter supplied by the end user, if a local datacenter is
-   * defined the filter returned by this implementation will always reject nodes that report a
-   * datacenter different from the local one.
-   */
   @NonNull
   @Override
   public Predicate<Node> createNodeFilter(
