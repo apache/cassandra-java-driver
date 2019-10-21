@@ -124,7 +124,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
     this.distanceReporter = distanceReporter;
     localDc = discoverLocalDc(nodes).orElse(null);
-    filter = createNodeFilter(nodes);
+    filter = createNodeFilter(localDc, nodes);
     for (Node node : nodes.values()) {
       if (filter.test(node)) {
         distanceReporter.setDistance(node, NodeDistance.LOCAL);
@@ -170,13 +170,15 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
    * LoadBalancingPolicy.DistanceReporter) initialization}, and only after local datacenter
    * discovery has been attempted.
    *
+   * @param localDc The local datacenter that was just discovered, or null if none found.
    * @param nodes All the nodes that were known to exist in the cluster (regardless of their state)
    *     when the load balancing policy was initialized. This argument is provided in case
    *     implementors need to inspect the cluster topology to create the node filter.
    * @return the node filter to use.
    */
   @NonNull
-  protected Predicate<Node> createNodeFilter(@NonNull Map<UUID, Node> nodes) {
+  protected Predicate<Node> createNodeFilter(
+      @Nullable String localDc, @NonNull Map<UUID, Node> nodes) {
     return new DefaultNodeFilterHelper(context, profile, logPrefix)
         .createNodeFilter(localDc, nodes);
   }
