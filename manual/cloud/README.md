@@ -177,4 +177,4 @@ database.
 [Download the secure connect bundle - GCP]: https://helpdocs.datastax.com/gcp/dscloud/apollo/dscloudObtainingCredentials.html
 [Download the secure connect bundle - AWS]: https://helpdocs.datastax.com/aws/dscloud/apollo/dscloudObtainingCredentials.html
 [Example pom.xml file]: ../core/integration/#minimal-project-structure
-[driver documentation]: https://docs.datastax.com/en/developer/java-driver/4.3/manual/core/configuration/
+[driver documentation]: ../core/configuration/
