@@ -358,6 +358,29 @@ If all of these metrics are disabled, you can remove the dependency:
 </dependency>
 ```
 
+#### Jackson
+
+[Jackson](https://github.com/FasterXML/jackson) is used to parse configuration files when connecting
+to DataStax Apache Cassandra® as a Service.
+
+If you don't use that feature (that is, if you neither call
+`SessionBuilder.withCloudSecureConnectBundle()` nor set the `basic.cloud.secure-connect-bundle`
+configuration option), you can safely exclude the dependency:
+
+```xml
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-core</artifactId>
+  <version>${driver.version}</version>
+  <exclusions>
+    <exclusion>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </exclusion>
+  </exclusions>
+</dependency>
+```
+
 #### Documenting annotations
 
 The driver team uses annotations to document certain aspects of the code:

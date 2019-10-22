@@ -5,11 +5,31 @@
 ### 4.3.0 (in progress)
 
 - [documentation] JAVA-2428: Add developer docs
+- [documentation] JAVA-2503: Migrate Cloud "getting started" page to driver manual
+- [improvement] JAVA-2484: Add errors for cloud misconfiguration
+- [improvement] JAVA-2490: Allow to read the secure bundle from an InputStream
+- [new feature] JAVA-2478: Allow to provide the secure bundle via URL
+- [new feature] JAVA-2356: Support for DataStax Cloud API
+- [improvement] JAVA-2407: Improve handling of logback configuration files in IDEs
+- [improvement] JAVA-2434: Add support for custom cipher suites and host name validation to ProgrammaticSslEngineFactory
+- [improvement] JAVA-2480: Upgrade Jackson to 2.10.0
+- [documentation] JAVA-2505: Annotate Node.getHostId() as nullable
+- [improvement] JAVA-1708: Support DSE "everywhere" replication strategy
+- [improvement] JAVA-2471: Consider DSE version when parsing the schema
+- [improvement] JAVA-2444: Add method setRoutingKey(ByteBuffer...) to StatementBuilder
+- [improvement] JAVA-2398: Improve support for optional dependencies in OSGi
+- [improvement] JAVA-2452: Allow "none" as a compression option
+- [improvement] JAVA-2419: Allow registration of user codecs at runtime
 - [documentation] JAVA-2384: Add quick overview section to each manual page
 - [documentation] JAVA-2412: Cover DDL query debouncing in FAQ and upgrade guide
 - [documentation] JAVA-2416: Update paging section in the manual
 - [improvement] JAVA-2402: Add setTracing(boolean) to StatementBuilder
 - [bug] JAVA-2466: Set idempotence to null in BatchStatement.newInstance
+
+### 4.2.2
+
+- [bug] JAVA-2475: Fix message size when query string contains Unicode surrogates
+- [bug] JAVA-2470: Fix Session.OSS_DRIVER_COORDINATES for shaded JAR
 
 ### 4.2.1
 

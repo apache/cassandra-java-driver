@@ -16,67 +16,34 @@
 package com.datastax.oss.driver.internal.core.context;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
-import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Session;
-import com.datastax.oss.driver.api.core.tracker.RequestTracker;
-import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
-import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
-import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import com.datastax.oss.protocol.internal.request.Startup;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Predicate;
-import org.junit.Before;
+import com.tngtech.java.junit.dataprovider.DataProvider;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
+import java.util.Optional;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.junit.runner.RunWith;
 
+@RunWith(DataProviderRunner.class)
 public class StartupOptionsBuilderTest {
 
-  private DefaultDriverContext defaultDriverContext;
+  private DefaultDriverContext buildMockedContext(String compression) {
 
-  // Mocks for instantiating the default driver context
-  @Mock private DriverConfigLoader configLoader;
-  private List<TypeCodec<?>> typeCodecs = Lists.newArrayList();
-  @Mock private NodeStateListener nodeStateListener;
-  @Mock private SchemaChangeListener schemaChangeListener;
-  @Mock private RequestTracker requestTracker;
-  private Map<String, String> localDatacenters = Maps.newHashMap();
-  private Map<String, Predicate<Node>> nodeFilters = Maps.newHashMap();
-  @Mock private ClassLoader classLoader;
-  @Mock private DriverConfig driverConfig;
-  @Mock private DriverExecutionProfile defaultProfile;
-
-  @Before
-  public void before() {
-    MockitoAnnotations.initMocks(this);
-    when(configLoader.getInitialConfig()).thenReturn(driverConfig);
-    when(driverConfig.getDefaultProfile()).thenReturn(defaultProfile);
-  }
-
-  private void buildDriverContext() {
-    defaultDriverContext =
-        new DefaultDriverContext(
-            configLoader,
-            typeCodecs,
-            nodeStateListener,
-            schemaChangeListener,
-            requestTracker,
-            localDatacenters,
-            nodeFilters,
-            classLoader);
+    DriverExecutionProfile defaultProfile = mock(DriverExecutionProfile.class);
+    when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none"))
+        .thenReturn(compression);
+    return MockedDriverContextFactory.defaultDriverContext(Optional.of(defaultProfile));
   }
 
   private void assertDefaultStartupOptions(Startup startup) {
+
     assertThat(startup.options).containsEntry(Startup.CQL_VERSION_KEY, "3.0.0");
     assertThat(startup.options)
         .containsEntry(
@@ -87,22 +54,42 @@ public class StartupOptionsBuilderTest {
   }
 
   @Test
-  public void should_build_minimal_startup_options() {
-    buildDriverContext();
-    Startup startup = new Startup(defaultDriverContext.getStartupOptions());
+  public void should_build_startup_options_with_no_compression_if_undefined() {
+
+    DefaultDriverContext ctx = MockedDriverContextFactory.defaultDriverContext();
+    Startup startup = new Startup(ctx.getStartupOptions());
     assertThat(startup.options).doesNotContainKey(Startup.COMPRESSION_KEY);
     assertDefaultStartupOptions(startup);
   }
 
   @Test
-  public void should_build_startup_options_with_compression() {
-    when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_COMPRESSION))
-        .thenReturn(Boolean.TRUE);
-    when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION)).thenReturn("lz4");
-    buildDriverContext();
-    Startup startup = new Startup(defaultDriverContext.getStartupOptions());
-    // assert the compression option is present
-    assertThat(startup.options).containsEntry(Startup.COMPRESSION_KEY, "lz4");
+  public void should_build_startup_options_with_no_compression_if_defined_as_none() {
+
+    DefaultDriverContext ctx = buildMockedContext("none");
+    Startup startup = new Startup(ctx.getStartupOptions());
+    assertThat(startup.options).doesNotContainKey(Startup.COMPRESSION_KEY);
     assertDefaultStartupOptions(startup);
+  }
+
+  @Test
+  @DataProvider({"lz4", "snappy"})
+  public void should_build_startup_options(String compression) {
+
+    DefaultDriverContext ctx = buildMockedContext(compression);
+    Startup startup = new Startup(ctx.getStartupOptions());
+    // assert the compression option is present
+    assertThat(startup.options).containsEntry(Startup.COMPRESSION_KEY, compression);
+    assertDefaultStartupOptions(startup);
+  }
+
+  @Test
+  public void should_fail_to_build_startup_options_with_invalid_compression() {
+
+    assertThatIllegalArgumentException()
+        .isThrownBy(
+            () -> {
+              DefaultDriverContext ctx = buildMockedContext("foobar");
+              new Startup(ctx.getStartupOptions());
+            });
   }
 }

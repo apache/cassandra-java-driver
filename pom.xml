@@ -51,7 +51,7 @@
     <guava.version>25.1-jre</guava.version>
     <hdrhistogram.version>2.1.11</hdrhistogram.version>
     <metrics.version>4.0.5</metrics.version>
-    <native-protocol.version>1.4.6</native-protocol.version>
+    <native-protocol.version>1.4.7</native-protocol.version>
     <netty.version>4.1.39.Final</netty.version>
     <slf4j.version>1.7.26</slf4j.version>
     <!-- optional dependencies -->
@@ -69,8 +69,8 @@
     <hk2.version>2.5.0</hk2.version>
     <jax-rs.version>2.0.1</jax-rs.version>
     <jsr353-ri.version>1.1.4</jsr353-ri.version>
-    <jackson.version>2.9.9</jackson.version>
-    <jackson-databind.version>2.9.9.3</jackson-databind.version>
+    <jackson.version>2.10.0</jackson.version>
+    <jackson-databind.version>2.10.0</jackson-databind.version>
   </properties>
 
   <dependencyManagement>
@@ -258,6 +258,11 @@
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
         <version>${jackson-databind.version}</version>
       </dependency>
@@ -265,6 +270,11 @@
         <groupId>com.google.testing.compile</groupId>
         <artifactId>compile-testing</artifactId>
         <version>0.18</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.tomakehurst</groupId>
+        <artifactId>wiremock</artifactId>
+        <version>2.25.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -494,12 +504,23 @@ limitations under the License.]]>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <systemPropertyVariables>
+            <logback.configurationFile>${project.basedir}/src/test/resources/logback-test.xml</logback.configurationFile>
+          </systemPropertyVariables>
           <properties>
             <property>
               <name>usedefaultlisteners</name>
               <value>false</value>
             </property>
           </properties>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <logback.configurationFile>${project.basedir}/src/test/resources/logback-test.xml</logback.configurationFile>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
       <plugin>
