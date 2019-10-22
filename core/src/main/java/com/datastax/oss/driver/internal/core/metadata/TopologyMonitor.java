@@ -44,7 +44,10 @@ public interface TopologyMonitor extends AsyncAutoCloseable {
    *
    * <p>The completion of the future returned by this method marks the point when the driver
    * considers itself "connected" to the cluster, and proceeds with the rest of the initialization:
-   * refreshing the list of nodes and the metadata, opening connection pools, etc.
+   * refreshing the list of nodes and the metadata, opening connection pools, etc. By then, the
+   * topology monitor should be ready to accept calls to its other methods; in particular, {@link
+   * #refreshNodeList()} will be called shortly after the completion of the future, to load the
+   * initial list of nodes to connect to.
    *
    * <p>If {@code advanced.reconnect-on-init = true} in the configuration, this method is
    * responsible for handling reconnection. That is, if the initial attempt to "connect" to the

@@ -4,8 +4,8 @@
 
 Secure the traffic between the driver and Cassandra.
 
-* `advanced.ssl-engine-factory` in the configuration; defaults to none, also available: JSSE, or
-  write your own.
+* `advanced.ssl-engine-factory` in the configuration; defaults to none, also available:
+  config-based, or write your own.
 * or programmatically:
   [CqlSession.builder().withSslEngineFactory()][SessionBuilder.withSslEngineFactory] or
   [CqlSession.builder().withSslContext()][SessionBuilder.withSslContext].
@@ -178,26 +178,12 @@ CqlSession session = CqlSession.builder()
     .build();
 ```
 
-#### Netty
+#### Netty-tcnative
 
-Netty provides a more efficient SSL implementation based on native OpenSSL support. It's possible to
-customize the driver to use it instead of JSSE.
+Netty supports native integration with OpenSSL / boringssl. The driver does not provide this out of
+the box, but with a bit of custom development it is fairly easy to add. See
+[SslHandlerFactory](../../developer/netty_pipeline/#ssl-handler-factory) in the developer docs.
 
-This is an advanced topic and beyond the scope of this document, but here is an overview:
-
-1. add a dependency to Netty-tcnative: follow
-   [these instructions](http://netty.io/wiki/forked-tomcat-native.html);
-2. write your own implementation of the driver's `SslHandlerFactory`. This is a higher-level
-   abstraction than `SslEngineFactory`, that returns a Netty `SslHandler`. You'll build this handler
-   with Netty's own `SslContext`;
-3. write a subclass of `DefaultDriverContext` that overrides `buildSslHandlerFactory()` to return
-   the custom `SslHandlerFactory` you wrote in step 2. This will cause the driver to completely
-   ignore the `ssl-engine-factory` options in the configuration;
-4. write a subclass of `SessionBuilder` that overrides `buildContext` to return the custom context
-   that you wrote in step 3.
-5. build your session with your custom builder.
-
-Note that this approach relies on the driver's [internal API](../../api_conventions).
 
 [dsClientToNode]: https://docs.datastax.com/en/cassandra/3.0/cassandra/configuration/secureSSLClientToNode.html
 [pickle]: http://thelastpickle.com/blog/2015/09/30/hardening-cassandra-step-by-step-part-1-server-to-server.html
