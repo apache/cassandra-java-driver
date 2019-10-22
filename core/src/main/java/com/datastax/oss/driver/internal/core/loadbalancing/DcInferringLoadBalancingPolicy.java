@@ -17,8 +17,9 @@ package com.datastax.oss.driver.internal.core.loadbalancing;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.internal.core.loadbalancing.helper.MandatoryLocalDcHelper;
+import com.datastax.oss.driver.internal.core.loadbalancing.helper.InferringLocalDcHelper;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Optional;
@@ -26,7 +27,8 @@ import java.util.UUID;
 import net.jcip.annotations.ThreadSafe;
 
 /**
- * The default load balancing policy implementation.
+ * An implementation of {@link LoadBalancingPolicy} that infers the local datacenter from the
+ * contact points, if no datacenter was provided neither through configuration nor programmatically.
  *
  * <p>To activate this policy, modify the {@code basic.load-balancing-policy} section in the driver
  * configuration, for example:
@@ -34,8 +36,8 @@ import net.jcip.annotations.ThreadSafe;
  * <pre>
  * datastax-java-driver {
  *   basic.load-balancing-policy {
- *     class = DefaultLoadBalancingPolicy
- *     local-datacenter = datacenter1
+ *     class = DcInferringLoadBalancingPolicy
+ *     local-datacenter = datacenter1 # optional
  *   }
  * }
  * </pre>
@@ -53,23 +55,27 @@ import net.jcip.annotations.ThreadSafe;
  *   <li>Through configuration, by defining the option {@link
  *       DefaultDriverOption#LOAD_BALANCING_LOCAL_DATACENTER
  *       basic.load-balancing-policy.local-datacenter};
- *   <li>Or implicitly, if and only if no explicit contact points were provided: in this case this
- *       implementation will infer the local datacenter from the implicit contact point (localhost).
+ *   <li>Or implicitly: in this case this implementation will infer the local datacenter from the
+ *       provided contact points, if and only if they are all located in the same datacenter.
  * </ol>
  *
  * <p><b>Query plan</b>: see {@link BasicLoadBalancingPolicy} for details on the computation of
  * query plans.
+ *
+ * <p><b>This class is not recommended for normal users who should always prefer {@link
+ * DefaultLoadBalancingPolicy}</b>.
  */
 @ThreadSafe
-public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy {
+public class DcInferringLoadBalancingPolicy extends BasicLoadBalancingPolicy {
 
-  public DefaultLoadBalancingPolicy(@NonNull DriverContext context, @NonNull String profileName) {
+  public DcInferringLoadBalancingPolicy(
+      @NonNull DriverContext context, @NonNull String profileName) {
     super(context, profileName);
   }
 
   @NonNull
   @Override
   protected Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes) {
-    return new MandatoryLocalDcHelper(context, profile, logPrefix).discoverLocalDc(nodes);
+    return new InferringLocalDcHelper(context, profile, logPrefix).discoverLocalDc(nodes);
   }
 }

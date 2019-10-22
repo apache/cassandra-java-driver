@@ -25,13 +25,13 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultLoadBalancingPolicyEventsTest extends BasicLoadBalancingPolicyEventsTest {
+public class DcInferringLoadBalancingPolicyEventsTest extends BasicLoadBalancingPolicyEventsTest {
 
   @NonNull
   @Override
-  protected DefaultLoadBalancingPolicy createAndInitPolicy() {
-    DefaultLoadBalancingPolicy policy =
-        new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
+  protected BasicLoadBalancingPolicy createAndInitPolicy() {
+    DcInferringLoadBalancingPolicy policy =
+        new DcInferringLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
     policy.init(
         ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2), distanceReporter);
     assertThat(policy.liveNodes).containsExactlyInAnyOrder(node1, node2);
