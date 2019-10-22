@@ -107,7 +107,7 @@ public class ConnectIT {
     SIMULACRON_RULE.cluster().acceptConnections();
 
     // Then this doesn't throw
-    try (Session session = sessionFuture.get(30, TimeUnit.SECONDS)) {}
+    try (Session ignored = sessionFuture.get(30, TimeUnit.SECONDS)) {}
   }
 
   /**
@@ -128,7 +128,7 @@ public class ConnectIT {
                     .build())
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining(
-            "You provided explicit contact points, the local DC must be specified");
+            "Since you provided explicit contact points, the local DC must be explicitly set");
     // One second should be plenty of time for connections to close server side
     checkThat(() -> SIMULACRON_RULE.cluster().getConnections().getConnections().isEmpty())
         .before(1, SECONDS)
