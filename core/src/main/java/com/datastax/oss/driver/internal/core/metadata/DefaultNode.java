@@ -182,8 +182,7 @@ public class DefaultNode implements Node {
   public String toString() {
     // Include the hash code because this class uses reference equality
     return String.format(
-        "Node(endPoint=%s, hostId=%s, hashCode=%s)",
-        getEndPoint(), getHostId(), Integer.toHexString(hashCode()));
+        "Node(endPoint=%s, hostId=%s, hashCode=%x)", getEndPoint(), getHostId(), hashCode());
   }
 
   /** Note: deliberately not exposed by the public interface. */
