@@ -4,6 +4,7 @@
 
 ### 4.3.0 (in progress)
 
+- [documentation] JAVA-2509: Mention file-based approach for Cloud configuration in the manual
 - [improvement] JAVA-2447: Mention programmatic local DC method in Default LBP error message
 - [improvement] JAVA-2459: Improve extensibility of existing load balancing policies
 - [documentation] JAVA-2428: Add developer docs
