@@ -329,9 +329,15 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
         // type.
         return cqlType == null ? JAVA_TYPE_FOR_EMPTY_LISTS : inferJavaTypeFromCqlType(cqlType);
       } else {
+        Object firstElement = list.get(0);
+        if (firstElement == null) {
+          throw new IllegalArgumentException(
+              "Can't infer list codec because the first element is null "
+                  + "(note that CQL does not allow null values in collections)");
+        }
         GenericType<?> elementType =
             inspectType(
-                list.get(0), cqlType == null ? null : ((ListType) cqlType).getElementType());
+                firstElement, cqlType == null ? null : ((ListType) cqlType).getElementType());
         return GenericType.listOf(elementType);
       }
     } else if (value instanceof Set) {
@@ -339,10 +345,15 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
       if (set.isEmpty()) {
         return cqlType == null ? JAVA_TYPE_FOR_EMPTY_SETS : inferJavaTypeFromCqlType(cqlType);
       } else {
+        Object firstElement = set.iterator().next();
+        if (firstElement == null) {
+          throw new IllegalArgumentException(
+              "Can't infer set codec because the first element is null "
+                  + "(note that CQL does not allow null values in collections)");
+        }
         GenericType<?> elementType =
             inspectType(
-                set.iterator().next(),
-                cqlType == null ? null : ((SetType) cqlType).getElementType());
+                firstElement, cqlType == null ? null : ((SetType) cqlType).getElementType());
         return GenericType.setOf(elementType);
       }
     } else if (value instanceof Map) {
@@ -350,12 +361,18 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
       if (map.isEmpty()) {
         return cqlType == null ? JAVA_TYPE_FOR_EMPTY_MAPS : inferJavaTypeFromCqlType(cqlType);
       } else {
-        Map.Entry<?, ?> entry = map.entrySet().iterator().next();
+        Map.Entry<?, ?> firstEntry = map.entrySet().iterator().next();
+        Object firstKey = firstEntry.getKey();
+        Object firstValue = firstEntry.getValue();
+        if (firstKey == null || firstValue == null) {
+          throw new IllegalArgumentException(
+              "Can't infer map codec because the first key and/or value is null "
+                  + "(note that CQL does not allow null values in collections)");
+        }
         GenericType<?> keyType =
-            inspectType(entry.getKey(), cqlType == null ? null : ((MapType) cqlType).getKeyType());
+            inspectType(firstKey, cqlType == null ? null : ((MapType) cqlType).getKeyType());
         GenericType<?> valueType =
-            inspectType(
-                entry.getValue(), cqlType == null ? null : ((MapType) cqlType).getValueType());
+            inspectType(firstValue, cqlType == null ? null : ((MapType) cqlType).getValueType());
         return GenericType.mapOf(keyType, valueType);
       }
     } else {

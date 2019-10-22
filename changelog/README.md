@@ -4,6 +4,8 @@
 
 ### 4.3.0 (in progress)
 
+- [improvement] JAVA-2476: Improve error message when codec registry inspects a collection with a
+  null element
 - [documentation] JAVA-2503: Migrate Cloud "getting started" page to driver manual
 - [improvement] JAVA-2484: Add errors for cloud misconfiguration
 - [improvement] JAVA-2490: Allow to read the secure bundle from an InputStream
