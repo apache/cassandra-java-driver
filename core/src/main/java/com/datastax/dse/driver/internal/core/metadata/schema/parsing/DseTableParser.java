@@ -35,6 +35,7 @@ import com.datastax.oss.driver.api.core.type.ListType;
 import com.datastax.oss.driver.api.core.type.MapType;
 import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.internal.core.CqlIdentifiers;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.DataTypeClassNameCompositeParser;
@@ -390,24 +391,12 @@ public class DseTableParser extends RelationParser {
         getLabel(row),
         fromTable,
         findVertexLabel(fromTable, keyspaceVertices, "incoming"),
-        wrapInternal(row.getListOfString("from_partition_key_columns")),
-        wrapInternal(row.getListOfString("from_clustering_columns")),
+        CqlIdentifiers.wrapInternal(row.getListOfString("from_partition_key_columns")),
+        CqlIdentifiers.wrapInternal(row.getListOfString("from_clustering_columns")),
         toTable,
         findVertexLabel(toTable, keyspaceVertices, "outgoing"),
-        wrapInternal(row.getListOfString("to_partition_key_columns")),
-        wrapInternal(row.getListOfString("to_clustering_columns")));
-  }
-
-  // TODO replace by CqlIdentifiers.wrapInternal() when this is rebased on OSS 4.3.0
-  @NonNull
-  private List<CqlIdentifier> wrapInternal(@NonNull Iterable<String> in) {
-
-    Objects.requireNonNull(in, "Input Iterable must not be null");
-    ImmutableList.Builder<CqlIdentifier> builder = ImmutableList.<CqlIdentifier>builder();
-    for (String name : in) {
-      builder.add(CqlIdentifier.fromInternal(name));
-    }
-    return builder.build();
+        CqlIdentifiers.wrapInternal(row.getListOfString("to_partition_key_columns")),
+        CqlIdentifiers.wrapInternal(row.getListOfString("to_clustering_columns")));
   }
 
   private CqlIdentifier getLabel(AdminRow row) {
