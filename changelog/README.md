@@ -6,6 +6,7 @@
 
 - [improvement] JAVA-2447: Mention programmatic local DC method in Default LBP error message
 - [improvement] JAVA-2459: Improve extensibility of existing load balancing policies
+- [documentation] JAVA-2428: Add developer docs
 - [documentation] JAVA-2503: Migrate Cloud "getting started" page to driver manual
 - [improvement] JAVA-2484: Add errors for cloud misconfiguration
 - [improvement] JAVA-2490: Allow to read the secure bundle from an InputStream
