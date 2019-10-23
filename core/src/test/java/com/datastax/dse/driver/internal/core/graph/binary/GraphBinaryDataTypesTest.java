@@ -26,7 +26,7 @@ import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
-import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
 import com.datastax.oss.driver.internal.core.type.UserDefinedTypeBuilder;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -62,9 +62,12 @@ public class GraphBinaryDataTypesTest {
 
   @Mock private DseDriverContext context;
 
-  private static final CodecRegistry CODEC_REGISTRY =
-      new DefaultCodecRegistry(
-          "testDseRegistry", DseTypeCodecs.POINT, DseTypeCodecs.LINE_STRING, DseTypeCodecs.POLYGON);
+  private static final MutableCodecRegistry CODEC_REGISTRY =
+      new DefaultCodecRegistry("testDseRegistry");
+
+  static {
+    CODEC_REGISTRY.register(DseTypeCodecs.POINT, DseTypeCodecs.LINE_STRING, DseTypeCodecs.POLYGON);
+  }
 
   @Before
   public void setup() {

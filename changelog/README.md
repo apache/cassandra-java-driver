@@ -4,6 +4,7 @@
 
 ### NGDG (in progress)
 
+- [bug] JAVA-2510: Fix GraphBinaryDataTypesTest Codec registry initialization
 - [bug] JAVA-2492: Parse edge metadata using internal identifiers
 - [improvement] JAVA-2282: Remove GraphSON3 support
 - [new feature] JAVA-2098: Add filter predicates for collections
