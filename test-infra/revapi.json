@@ -42,6 +42,34 @@
         "old": "method com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder com.datastax.oss.driver.api.testinfra.session.SessionUtils::configLoaderBuilder()",
         "new": "method com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder com.datastax.oss.driver.api.testinfra.session.SessionUtils::configLoaderBuilder()",
         "justification": "JAVA-2201: Expose a public API for programmatic config"
+      },
+      {
+        "code": "java.annotation.removed",
+        "old": "parameter java.util.Queue<com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::newQueryPlan(===com.datastax.oss.driver.api.core.session.Request===, com.datastax.oss.driver.api.core.session.Session)",
+        "new": "parameter java.util.Queue<com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::newQueryPlan(===com.datastax.oss.driver.api.core.session.Request===, com.datastax.oss.driver.api.core.session.Session)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "Method arguments were mistakenly annotated with @NonNull"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "parameter java.util.Queue<com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::newQueryPlan(===com.datastax.oss.driver.api.core.session.Request===, com.datastax.oss.driver.api.core.session.Session)",
+        "new": "parameter java.util.Queue<com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::newQueryPlan(===com.datastax.oss.driver.api.core.session.Request===, com.datastax.oss.driver.api.core.session.Session)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.Nullable",
+        "justification": "Method arguments were mistakenly annotated with @NonNull"
+      },
+      {
+        "code": "java.annotation.removed",
+        "old": "parameter java.util.Queue<com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::newQueryPlan(com.datastax.oss.driver.api.core.session.Request, ===com.datastax.oss.driver.api.core.session.Session===)",
+        "new": "parameter java.util.Queue<com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::newQueryPlan(com.datastax.oss.driver.api.core.session.Request, ===com.datastax.oss.driver.api.core.session.Session===)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "Method arguments were mistakenly annotated with @NonNull"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "parameter java.util.Queue<com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::newQueryPlan(com.datastax.oss.driver.api.core.session.Request, ===com.datastax.oss.driver.api.core.session.Session===)",
+        "new": "parameter java.util.Queue<com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::newQueryPlan(com.datastax.oss.driver.api.core.session.Request, ===com.datastax.oss.driver.api.core.session.Session===)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.Nullable",
+        "justification": "Method arguments were mistakenly annotated with @NonNull"
       }
     ]
   }

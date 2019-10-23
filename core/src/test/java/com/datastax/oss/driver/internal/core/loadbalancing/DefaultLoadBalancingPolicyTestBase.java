@@ -68,12 +68,16 @@ public abstract class DefaultLoadBalancingPolicyTestBase {
     when(context.getConfig()).thenReturn(config);
     when(config.getProfile(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(defaultProfile);
 
-    when(defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null))
+    when(defaultProfile.getName()).thenReturn(DriverExecutionProfile.DEFAULT_NAME);
+    when(defaultProfile.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER))
+        .thenReturn(true);
+    when(defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER))
         .thenReturn("dc1");
 
     when(context.getMetadataManager()).thenReturn(metadataManager);
 
-    logger = (Logger) LoggerFactory.getLogger(DefaultLoadBalancingPolicy.class);
+    logger =
+        (Logger) LoggerFactory.getLogger("com.datastax.oss.driver.internal.core.loadbalancing");
     logger.addAppender(appender);
 
     for (Node node : ImmutableList.of(node1, node2, node3, node4, node5)) {

@@ -22,8 +22,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.Queue;
@@ -33,45 +32,12 @@ import java.util.UUID;
 
 public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
 
+  private final Set<Node> nodes = new TreeSet<>(NodeComparator.INSTANCE);
+
   @SuppressWarnings("unused")
   public SortingLoadBalancingPolicy(DriverContext context, String profileName) {
     // constructor needed for loading via config.
   }
-
-  private byte[] empty = {};
-  private final Set<Node> nodes =
-      new TreeSet<>(
-          (node1, node2) -> {
-            // compare address bytes, byte by byte.
-            byte[] address1 =
-                node1
-                    .getBroadcastAddress()
-                    .map(InetSocketAddress::getAddress)
-                    .map(InetAddress::getAddress)
-                    .orElse(empty);
-            byte[] address2 =
-                node2
-                    .getBroadcastAddress()
-                    .map(InetSocketAddress::getAddress)
-                    .map(InetAddress::getAddress)
-                    .orElse(empty);
-
-            // ipv6 vs ipv4, favor ipv6.
-            if (address1.length != address2.length) {
-              return address1.length - address2.length;
-            }
-
-            for (int i = 0; i < address1.length; i++) {
-              int b1 = address1[i] & 0xFF;
-              int b2 = address2[i] & 0xFF;
-              if (b1 != b2) {
-                return b1 - b2;
-              }
-            }
-            int port1 = node1.getBroadcastAddress().map(InetSocketAddress::getPort).orElse(0);
-            int port2 = node2.getBroadcastAddress().map(InetSocketAddress::getPort).orElse(0);
-            return port1 - port2;
-          });
 
   public SortingLoadBalancingPolicy() {}
 
@@ -83,7 +49,7 @@ public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
 
   @NonNull
   @Override
-  public Queue<Node> newQueryPlan(@NonNull Request request, @NonNull Session session) {
+  public Queue<Node> newQueryPlan(@Nullable Request request, @Nullable Session session) {
     return new ArrayDeque<>(nodes);
   }
 
