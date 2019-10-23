@@ -233,20 +233,29 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
     // Note: we're on the hot path and the getXxx methods are potentially more than simple getters,
     // so we only call each method when strictly necessary (which is why the code below looks a bit
     // weird).
-    CqlIdentifier keyspace = request.getKeyspace();
-    if (keyspace == null) {
-      keyspace = request.getRoutingKeyspace();
-    }
-    if (keyspace == null && session.getKeyspace().isPresent()) {
-      keyspace = session.getKeyspace().get();
-    }
-    if (keyspace == null) {
-      return Collections.emptySet();
-    }
+    CqlIdentifier keyspace = null;
+    Token token = null;
+    ByteBuffer key = null;
+    try {
+      keyspace = request.getKeyspace();
+      if (keyspace == null) {
+        keyspace = request.getRoutingKeyspace();
+      }
+      if (keyspace == null && session.getKeyspace().isPresent()) {
+        keyspace = session.getKeyspace().get();
+      }
+      if (keyspace == null) {
+        return Collections.emptySet();
+      }
 
-    Token token = request.getRoutingToken();
-    ByteBuffer key = (token == null) ? request.getRoutingKey() : null;
-    if (token == null && key == null) {
+      token = request.getRoutingToken();
+      key = (token == null) ? request.getRoutingKey() : null;
+      if (token == null && key == null) {
+        return Collections.emptySet();
+      }
+    } catch (Exception e) {
+      // Protect against poorly-implemented Request instances
+      LOG.error("Unexpected error while trying to compute query plan", e);
       return Collections.emptySet();
     }
 

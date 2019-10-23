@@ -181,6 +181,18 @@ public class BasicLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingP
     then(tokenMap).should(atLeast(1)).getReplicas(KEYSPACE, routingToken);
   }
 
+  @Test
+  public void should_round_robin_and_log_error_when_request_throws() {
+    // Given
+    given(request.getKeyspace()).willThrow(new NullPointerException());
+    // When
+    policy.newQueryPlan(request, session);
+    // Then
+    verify(appender).doAppend(loggingEventCaptor.capture());
+    assertThat(loggingEventCaptor.getValue().getFormattedMessage())
+        .contains("Unexpected error while trying to compute query plan");
+  }
+
   private void assertRoundRobinQueryPlans() {
     for (int i = 0; i < 3; i++) {
       assertThat(policy.newQueryPlan(request, session))
