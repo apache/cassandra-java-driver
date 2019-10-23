@@ -4,6 +4,8 @@
 
 ### 4.3.0 (in progress)
 
+- [improvement] JAVA-2476: Improve error message when codec registry inspects a collection with a
+  null element
 - [documentation] JAVA-2509: Mention file-based approach for Cloud configuration in the manual
 - [improvement] JAVA-2447: Mention programmatic local DC method in Default LBP error message
 - [improvement] JAVA-2459: Improve extensibility of existing load balancing policies

@@ -60,7 +60,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.Period;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -355,6 +358,19 @@ public class CachingCodecRegistryTest {
   }
 
   @Test
+  public void should_throw_for_list_codec_containing_null_element() {
+    List<String> value = new ArrayList<>();
+    value.add(null);
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
+    assertThatThrownBy(() -> registry.codecFor(value))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Can't infer list codec because the first element is null "
+                + "(note that CQL does not allow null values in collections)");
+  }
+
+  @Test
   public void should_create_set_codec_for_cql_and_java_types() {
     SetType cqlType = DataTypes.setOf(DataTypes.setOf(DataTypes.INT));
     GenericType<Set<Set<Integer>>> javaType = new GenericType<Set<Set<Integer>>>() {};
@@ -492,6 +508,19 @@ public class CachingCodecRegistryTest {
     assertThat(codec.accepts(value)).isTrue();
 
     inOrder.verify(mockCache).lookup(null, GenericType.setOf(Inet4Address.class), true);
+  }
+
+  @Test
+  public void should_throw_for_set_codec_containing_null_element() {
+    Set<String> value = new HashSet<>();
+    value.add(null);
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
+    assertThatThrownBy(() -> registry.codecFor(value))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Can't infer set codec because the first element is null "
+                + "(note that CQL does not allow null values in collections)");
   }
 
   @Test
@@ -670,6 +699,26 @@ public class CachingCodecRegistryTest {
     inOrder
         .verify(mockCache)
         .lookup(null, GenericType.mapOf(Inet4Address.class, Inet4Address.class), true);
+  }
+
+  @Test
+  public void should_throw_for_map_codec_containing_null_element() {
+    should_throw_for_map_codec_containing_null_element("foo", null);
+    should_throw_for_map_codec_containing_null_element(null, "foo");
+    should_throw_for_map_codec_containing_null_element(null, null);
+  }
+
+  private void should_throw_for_map_codec_containing_null_element(
+      String firstKey, String firstValue) {
+    Map<String, String> value = new HashMap<>();
+    value.put(firstKey, firstValue);
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
+    assertThatThrownBy(() -> registry.codecFor(value))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Can't infer map codec because the first key and/or value is null "
+                + "(note that CQL does not allow null values in collections)");
   }
 
   @Test
