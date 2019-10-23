@@ -225,6 +225,11 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
       return Collections.emptySet();
     }
 
+    Optional<TokenMap> maybeTokenMap = context.getMetadataManager().getMetadata().getTokenMap();
+    if (!maybeTokenMap.isPresent()) {
+      return Collections.emptySet();
+    }
+
     // Note: we're on the hot path and the getXxx methods are potentially more than simple getters,
     // so we only call each method when strictly necessary (which is why the code below looks a bit
     // weird).
@@ -245,15 +250,10 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
       return Collections.emptySet();
     }
 
-    Optional<TokenMap> maybeTokenMap = context.getMetadataManager().getMetadata().getTokenMap();
-    if (maybeTokenMap.isPresent()) {
-      TokenMap tokenMap = maybeTokenMap.get();
-      return (token != null)
-          ? tokenMap.getReplicas(keyspace, token)
-          : tokenMap.getReplicas(keyspace, key);
-    } else {
-      return Collections.emptySet();
-    }
+    TokenMap tokenMap = maybeTokenMap.get();
+    return token != null
+        ? tokenMap.getReplicas(keyspace, token)
+        : tokenMap.getReplicas(keyspace, key);
   }
 
   /** Exposed as a protected method so that it can be accessed by tests */

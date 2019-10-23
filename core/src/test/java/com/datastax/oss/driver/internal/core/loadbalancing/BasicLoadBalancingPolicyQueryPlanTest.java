@@ -85,7 +85,8 @@ public class BasicLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingP
     assertRoundRobinQueryPlans();
 
     // Then
-    then(metadataManager).should(never()).getMetadata();
+    then(tokenMap).should(never()).getReplicas(any(CqlIdentifier.class), any(Token.class));
+    then(tokenMap).should(never()).getReplicas(any(CqlIdentifier.class), any(ByteBuffer.class));
   }
 
   @Test
@@ -99,7 +100,8 @@ public class BasicLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingP
     // Then
     then(request).should(never()).getRoutingKey();
     then(request).should(never()).getRoutingToken();
-    then(metadataManager).should(never()).getMetadata();
+    then(tokenMap).should(never()).getReplicas(any(CqlIdentifier.class), any(Token.class));
+    then(tokenMap).should(never()).getReplicas(any(CqlIdentifier.class), any(ByteBuffer.class));
   }
 
   @Test
@@ -110,9 +112,10 @@ public class BasicLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingP
 
     assertRoundRobinQueryPlans();
 
-    verify(request, never()).getRoutingKey();
-    verify(request, never()).getRoutingToken();
-    verify(metadataManager, never()).getMetadata();
+    then(request).should(never()).getRoutingKey();
+    then(request).should(never()).getRoutingToken();
+    then(tokenMap).should(never()).getReplicas(any(CqlIdentifier.class), any(Token.class));
+    then(tokenMap).should(never()).getReplicas(any(CqlIdentifier.class), any(ByteBuffer.class));
   }
 
   @Test
@@ -123,19 +126,18 @@ public class BasicLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingP
 
     assertRoundRobinQueryPlans();
 
-    verify(metadataManager, never()).getMetadata();
+    then(tokenMap).should(never()).getReplicas(any(CqlIdentifier.class), any(Token.class));
+    then(tokenMap).should(never()).getReplicas(any(CqlIdentifier.class), any(ByteBuffer.class));
   }
 
   @Test
   public void should_use_round_robin_when_token_map_absent() {
-    when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
-    when(request.getRoutingKey()).thenReturn(ROUTING_KEY);
-
     when(metadata.getTokenMap()).thenReturn(Optional.empty());
 
     assertRoundRobinQueryPlans();
 
-    verify(metadata, atLeast(1)).getTokenMap();
+    then(tokenMap).should(never()).getReplicas(any(CqlIdentifier.class), any(Token.class));
+    then(tokenMap).should(never()).getReplicas(any(CqlIdentifier.class), any(ByteBuffer.class));
   }
 
   @Test
@@ -147,7 +149,7 @@ public class BasicLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingP
 
     assertRoundRobinQueryPlans();
 
-    verify(tokenMap, atLeast(1)).getReplicas(KEYSPACE, ROUTING_KEY);
+    then(tokenMap).should(atLeast(1)).getReplicas(KEYSPACE, ROUTING_KEY);
   }
 
   @Test
