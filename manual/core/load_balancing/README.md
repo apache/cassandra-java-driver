@@ -58,7 +58,7 @@ experience, this has proven to be too complicated: it's not obvious which policy
 a given use case, and nested policies can sometimes affect each other's effects in subtle and hard
 to predict ways.  
 
-In driver 4+, we are taking a more opinionated approach: we provide a single load balancing policy,
+In driver 4+, we are taking a more opinionated approach: we provide a default load balancing policy,
 that we consider the best choice for most cases. You can still write a
 [custom implementation](#custom-implementation) if you have special requirements.
 
