@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 
 public class RequestHandlerTest {
 
-  @Test(groups = "long")
+  @Test(groups = "short")
   public void should_handle_race_between_response_and_cancellation() {
     final Scassandra scassandra = TestUtils.createScassandraServer();
     Cluster cluster = null;
@@ -38,6 +38,7 @@ public class RequestHandlerTest {
     try {
       // Use a mock server that takes a constant time to reply
       scassandra.start();
+      ScassandraCluster.primeSystemLocalRow(scassandra);
       List<Map<String, ?>> rows =
           Collections.<Map<String, ?>>singletonList(ImmutableMap.of("key", 1));
       scassandra
