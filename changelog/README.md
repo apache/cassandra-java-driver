@@ -4,6 +4,7 @@
 
 ### 4.3.0 (in progress)
 
+- [documentation]: JAVA-2460: Document how to determine the local DC
 - [improvement] JAVA-2476: Improve error message when codec registry inspects a collection with a
   null element
 - [documentation] JAVA-2509: Mention file-based approach for Cloud configuration in the manual
