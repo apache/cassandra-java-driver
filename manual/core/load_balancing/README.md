@@ -5,8 +5,7 @@
 Which nodes the driver talks to, and in which order they are tried.
 
 * `basic.load-balancing-policy` in the configuration.
-* defaults to `DefaultLoadBalancingPolicy` (opinionated best practices). No out-of-the-box
-  alternatives, but you can write your own.
+* defaults to `DefaultLoadBalancingPolicy` (opinionated best practices).
 * can have per-profile policies. 
 
 -----
