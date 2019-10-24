@@ -2735,9 +2735,18 @@ public class Cluster implements Closeable {
         case TOPOLOGY_CHANGE:
           ProtocolEvent.TopologyChange tpc = (ProtocolEvent.TopologyChange) event;
           Host.statesLogger.debug("[{}] received event {}", tpc.node, tpc.change);
-          // Always do a full refresh for topology changes. This is simpler than trying to infer a
-          // new EndPoint from the rpc_address only.
-          submitNodeListRefresh();
+          // Do NOT translate the address, it will be matched against Host.getBroadcastRpcAddress()
+          // to find the target host.
+          switch (tpc.change) {
+            case REMOVED_NODE:
+              submitNodeRefresh(tpc.node, HostEvent.REMOVED);
+              break;
+            default:
+              // If a node was added, we don't have enough information to create a new Host (we are
+              // missing it's ID) so trigger a full refresh
+              submitNodeListRefresh();
+              break;
+          }
           break;
         case STATUS_CHANGE:
           ProtocolEvent.StatusChange stc = (ProtocolEvent.StatusChange) event;
@@ -3070,6 +3079,8 @@ public class Cluster implements Closeable {
             case UP:
               Host upHost = metadata.getHost(address);
               if (upHost == null) {
+                // We don't have enough information to create a new Host (we are missing it's ID)
+                // so trigger a full node refresh
                 submitNodeListRefresh();
               } else {
                 futures.add(schedule(hostUp(upHost)));
@@ -3095,6 +3106,10 @@ public class Cluster implements Closeable {
                   futures.add(execute(hostDown(downHost)));
                 }
               }
+              break;
+            case REMOVED:
+              Host removedHost = metadata.getHost(address);
+              if (removedHost != null) futures.add(execute(hostRemoved(removedHost)));
               break;
           }
         }
@@ -3165,6 +3180,19 @@ public class Cluster implements Closeable {
           }
         };
       }
+
+      private ExceptionCatchingRunnable hostRemoved(final Host host) {
+        return new ExceptionCatchingRunnable() {
+          @Override
+          public void runMayThrow() throws Exception {
+            if (metadata.remove(host)) {
+              logger.info("Cassandra host {} removed", host);
+              onRemove(host);
+              submitNodeListRefresh();
+            }
+          }
+        };
+      }
     }
 
     private class NodeListRefreshRequest {
@@ -3195,7 +3223,6 @@ public class Cluster implements Closeable {
   private enum HostEvent {
     UP,
     DOWN,
-    ADDED,
     REMOVED
   }
 

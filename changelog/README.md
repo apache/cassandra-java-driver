@@ -10,6 +10,7 @@
 - [improvement] JAVA-2485: Add errors for Cloud misconfiguration.
 - [documentation] JAVA-2504: Migrate Cloud "getting started" page to driver manual.
 - [improvement] JAVA-2516: Enable hostname validation with Cloud
+- [bug] JAVA-2515: NEW_NODE and REMOVED_NODE events should trigger ADDED and REMOVED.
 
 
 ### 3.7.2

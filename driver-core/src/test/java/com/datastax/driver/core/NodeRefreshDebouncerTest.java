@@ -20,8 +20,8 @@ import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import org.mockito.ArgumentCaptor;
 import org.testng.annotations.Test;
@@ -31,8 +31,8 @@ public class NodeRefreshDebouncerTest extends CCMTestsSupport {
 
   /**
    * Ensures that when a new node is bootstrapped into the cluster, stopped, and then subsequently
-   * started within {@link QueryOptions#setRefreshNodeIntervalMillis(int)} that an 'onAdd' event
-   * event is the only one processed and that the {@link Host} is marked up.
+   * started within {@link QueryOptions#setRefreshNodeIntervalMillis(int)}, then an 'onAdd' event is
+   * emitted and the {@link Host} is marked up.
    *
    * <p>Since NEW_NODE_DELAY_SECONDS is typically configured with a high value (60 seconds default
    * in the maven profile) this test can take a very long time.
@@ -62,16 +62,23 @@ public class NodeRefreshDebouncerTest extends CCMTestsSupport {
 
     ArgumentCaptor<Host> captor = forClass(Host.class);
 
-    // Only register and onAdd should be called, since stop and start should be discarded.
     verify(listener).onRegister(cluster);
     long addDelay =
         refreshNodeInterval
             + TimeUnit.MILLISECONDS.convert(Cluster.NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
     verify(listener, timeout(addDelay)).onAdd(captor.capture());
-    verifyNoMoreInteractions(listener);
 
-    // The hosts state should be UP.
-    assertThat(captor.getValue().getState()).isEqualTo("UP");
+    // The host should eventually come UP
+    final Host host = captor.getValue();
+    ConditionChecker.check()
+        .that(
+            new Callable<Boolean>() {
+              @Override
+              public Boolean call() {
+                return host.getState().equals("UP");
+              }
+            })
+        .becomesTrue();
     assertThat(cluster).host(2).hasState(Host.State.UP);
   }
 }
