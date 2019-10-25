@@ -4,6 +4,7 @@
 
 ### 4.3.0 (in progress)
 
+- [improvement] JAVA-2516: Enable hostname validation with Cloud
 - [documentation]: JAVA-2460: Document how to determine the local DC
 - [improvement] JAVA-2476: Improve error message when codec registry inspects a collection with a
   null element
