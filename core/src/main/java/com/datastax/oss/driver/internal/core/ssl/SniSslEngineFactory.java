@@ -37,7 +37,6 @@ public class SniSslEngineFactory implements SslEngineFactory {
   private final SSLContext sslContext;
   private final CopyOnWriteArrayList<String> fakePorts = new CopyOnWriteArrayList<>();
 
-  /** Builds a new instance from the driver configuration. */
   public SniSslEngineFactory(SSLContext sslContext) {
     this.sslContext = sslContext;
   }
