@@ -9,6 +9,7 @@
 - [improvement] JAVA-2457: Detect CaaS and change default consistency.
 - [improvement] JAVA-2485: Add errors for Cloud misconfiguration.
 - [documentation] JAVA-2504: Migrate Cloud "getting started" page to driver manual.
+- [improvement] JAVA-2516: Enable hostname validation with Cloud
 
 
 ### 3.7.2

@@ -19,11 +19,23 @@ import com.google.common.collect.ImmutableList;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslHandler;
 import java.net.InetSocketAddress;
-import javax.net.ssl.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import javax.net.ssl.SNIHostName;
+import javax.net.ssl.SNIServerName;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
 
 @IgnoreJDK6Requirement
 @SuppressWarnings("deprecation")
 public class SniSSLOptions extends JdkSSLOptions implements ExtendedRemoteEndpointAwareSslOptions {
+
+  // An offset that gets added to our "fake" ports (see below). We pick this value because it is the
+  // start of the ephemeral port range.
+  private static final int FAKE_PORT_OFFSET = 49152;
+
+  private final CopyOnWriteArrayList<String> fakePorts = new CopyOnWriteArrayList<String>();
+
   /**
    * Creates a new instance.
    *
@@ -62,14 +74,37 @@ public class SniSSLOptions extends JdkSSLOptions implements ExtendedRemoteEndpoi
               this.getClass().getSimpleName()));
     }
     SniEndPoint sniEndPoint = (SniEndPoint) remoteEndpoint;
-    SSLEngine engine = context.createSSLEngine();
+    InetSocketAddress address = sniEndPoint.resolve();
+    String sniServerName = sniEndPoint.getServerName();
+
+    // When hostname verification is enabled (with setEndpointIdentificationAlgorithm), the SSL
+    // engine will try to match the server's certificate against the SNI host name; if that doesn't
+    // work, it will fall back to the "advisory peer host" passed to createSSLEngine.
+    //
+    // In our case, the first check will never succeed because our SNI host name is not the DNS name
+    // (we use the Cassandra host_id instead). So we *must* set the advisory peer information.
+    //
+    // However if we use the address as-is, this leads to another issue: the advisory peer
+    // information is also used to cache SSL sessions internally. All of our nodes share the same
+    // proxy address, so the JDK tries to reuse SSL sessions across nodes. But it doesn't update the
+    // SNI host name every time, so it ends up opening connections to the wrong node.
+    //
+    // To avoid that, we create a unique "fake" port for every node. We still get session reuse for
+    // a given node, but not across nodes. This is safe because the advisory port is only used for
+    // session caching.
+    SSLEngine engine = context.createSSLEngine(address.getHostName(), getFakePort(sniServerName));
     engine.setUseClientMode(true);
     SSLParameters parameters = engine.getSSLParameters();
-    parameters.setServerNames(
-        ImmutableList.<SNIServerName>of(new SNIHostName(sniEndPoint.getServerName())));
+    parameters.setServerNames(ImmutableList.<SNIServerName>of(new SNIHostName(sniServerName)));
+    parameters.setEndpointIdentificationAlgorithm("HTTPS");
     engine.setSSLParameters(parameters);
     if (cipherSuites != null) engine.setEnabledCipherSuites(cipherSuites);
     return engine;
+  }
+
+  private int getFakePort(String sniServerName) {
+    fakePorts.addIfAbsent(sniServerName);
+    return FAKE_PORT_OFFSET + fakePorts.indexOf(sniServerName);
   }
 
   public static Builder builder() {
