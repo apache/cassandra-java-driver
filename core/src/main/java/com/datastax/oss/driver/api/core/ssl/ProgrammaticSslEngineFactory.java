@@ -69,6 +69,24 @@ public class ProgrammaticSslEngineFactory implements SslEngineFactory {
   /**
    * Creates an instance with the given {@link SSLContext}, cipher suites and host name validation.
    *
+   * <p>Note: {@linkplain
+   * com.datastax.oss.driver.api.core.config.DefaultDriverOption#SSL_HOSTNAME_VALIDATION host name
+   * validation} is not compatible with unresolved addresses. If this feature is enabled, make sure
+   * that you only provide resolved contact points:
+   *
+   * <ul>
+   *   <li>If you provided your {@linkplain
+   *       com.datastax.oss.driver.api.core.config.DefaultDriverOption#CONTACT_POINTS contact
+   *       points} through configuration (see <code>basic.contact-points</code> in the
+   *       configuration), make sure that the option to {@linkplain
+   *       com.datastax.oss.driver.api.core.config.DefaultDriverOption#RESOLVE_CONTACT_POINTS
+   *       resolve contact points} (see <code>advanced.resolve-contact-points</code> in the
+   *       configuration) is set to <code>true</code>;
+   *   <li>If you provided your contact points {@linkplain
+   *       SessionBuilder#addContactPoint(InetSocketAddress) programmatically}, it's your
+   *       responsibility to provide resolved addresses only.
+   * </ul>
+   *
    * @param sslContext the {@link SSLContext} to use.
    * @param cipherSuites the cipher suites to use, or null to use the default ones.
    * @param requireHostnameValidation whether to enable host name validation. If enabled, host name

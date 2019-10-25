@@ -15,13 +15,19 @@
  */
 package com.datastax.oss.driver.core.ssl;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+
+import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.connection.ConnectionInitException;
 import com.datastax.oss.driver.api.core.ssl.ProgrammaticSslEngineFactory;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyStore;
@@ -47,6 +53,27 @@ public class ProgrammaticSslIT {
                 .build()) {
       session.execute("select * from system.local");
     }
+  }
+
+  @Test
+  public void should_not_connect_with_unresolved_addresses_and_host_name_validation() {
+    SslEngineFactory factory = new ProgrammaticSslEngineFactory(createSslContext(), null, true);
+    InetSocketAddress cp =
+        (InetSocketAddress) CCM_RULE.getContactPoints().iterator().next().resolve();
+    InetSocketAddress address =
+        InetSocketAddress.createUnresolved(cp.getHostString(), cp.getPort());
+    Throwable error =
+        catchThrowable(
+            () ->
+                CqlSession.builder()
+                    .addContactPoint(address)
+                    .withSslEngineFactory(factory)
+                    .build());
+    assertThat(error).isInstanceOf(AllNodesFailedException.class);
+    Throwable cause = ((AllNodesFailedException) error).getErrors().values().iterator().next();
+    assertThat(cause)
+        .isInstanceOf(ConnectionInitException.class)
+        .hasMessageContaining("error writing");
   }
 
   @Test

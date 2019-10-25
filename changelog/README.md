@@ -4,6 +4,8 @@
 
 ### 4.3.0 (in progress)
 
+- [documentation] JAVA-2517: Document incompatibility of unresolved addresses and SSL host name 
+  validation
 - [documentation]: JAVA-2460: Document how to determine the local DC
 - [improvement] JAVA-2476: Improve error message when codec registry inspects a collection with a
   null element

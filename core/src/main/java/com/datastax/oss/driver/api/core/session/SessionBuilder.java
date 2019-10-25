@@ -136,9 +136,13 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *
    * <p>Contrary to the configuration, DNS names with multiple A-records will not be handled here.
    * If you need that, extract them manually with {@link java.net.InetAddress#getAllByName(String)}
-   * before calling this method. Similarly, if you need connect addresses to stay unresolved, make
-   * sure you pass unresolved instances here (see {@code advanced.resolve-contact-points} in the
-   * configuration for more explanations).
+   * before calling this method.
+   *
+   * <p>Similarly, if you need connect addresses to stay unresolved, make sure you pass unresolved
+   * instances here (see {@code advanced.resolve-contact-points} in the configuration for more
+   * explanations). Note however that unresolved addresses are not compatible with SSL host name
+   * validation, which is enabled by default (see {@code
+   * advanced.ssl-engine-factory.hostname-validation} in the configuration for more explanations).
    */
   @NonNull
   public SelfT addContactPoints(@NonNull Collection<InetSocketAddress> contactPoints) {
