@@ -52,6 +52,7 @@ api_docs:
   4.2: http://docs.datastax.com/en/drivers/java/4.2
   4.1: http://docs.datastax.com/en/drivers/java/4.1
   4.0: http://docs.datastax.com/en/drivers/java/4.0
+  3.8: http://docs.datastax.com/en/drivers/java/3.8
   3.7: http://docs.datastax.com/en/drivers/java/3.7
   3.6: http://docs.datastax.com/en/drivers/java/3.6
   3.5: http://docs.datastax.com/en/drivers/java/3.5
@@ -69,6 +70,8 @@ versions:
     ref: 'cb19d372a'
   - name: '4.0'
     ref: '4.0.1'
+  - name: '3.8'
+    ref: '3.8.0'
   - name: '3.7'
     ref: '3.7.2'
   - name: '3.6'
