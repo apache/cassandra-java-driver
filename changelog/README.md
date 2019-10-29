@@ -1,7 +1,7 @@
 ## Changelog
 
 
-## 3.8.0 (in progress)
+## 3.8.0
 
 - [new feature] JAVA-2356: Support for DataStax Cloud API.
 - [improvement] JAVA-2483: Allow to provide secure bundle via URL.

@@ -149,9 +149,9 @@ User user = new User()
     .setName("John Doe");
 ```
 
-[table]:http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/annotations/Table.html
+[table]:http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/mapping/annotations/Table.html
 [case-sensitive]:http://docs.datastax.com/en/cql/3.3/cql/cql_reference/ucase-lcase_r.html
-[consistency level]:http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/ConsistencyLevel.html
+[consistency level]:http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/core/ConsistencyLevel.html
 [java-beans]:https://docs.oracle.com/javase/tutorial/javabeans/writing/properties.html
 [set-accessible]:https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/AccessibleObject.html#setAccessible-boolean-
 
@@ -189,7 +189,7 @@ CREATE TABLE users(id uuid PRIMARY KEY, "userName" text);
 private String userName;
 ```
 
-[column]:http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/annotations/Column.html
+[column]:http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/mapping/annotations/Column.html
 
 #### Primary key fields
 
@@ -213,8 +213,8 @@ private String areaCode;
 The order of the indices must match that of the columns in the table
 declaration.
 
-[pk]:http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/annotations/PartitionKey.html
-[cc]:http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/annotations/ClusteringColumn.html
+[pk]:http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/mapping/annotations/PartitionKey.html
+[cc]:http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/mapping/annotations/ClusteringColumn.html
 [pks]:http://thelastpickle.com/blog/2013/01/11/primary-keys-in-cql.html
 
 #### Computed fields
@@ -250,7 +250,7 @@ version (see
 [JAVA-832](https://datastax-oss.atlassian.net/browse/JAVA-832)).
 
 [User Defined Functions]:http://www.planetcassandra.org/blog/user-defined-functions-in-cassandra-3-0/
-[computed]:http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/annotations/Computed.html
+[computed]:http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/mapping/annotations/Computed.html
 
 #### Transient properties
 
@@ -259,7 +259,7 @@ to table columns. [@Transient][transient] can be used to prevent a field or
 a Java bean property from being mapped. Like other column-level annotations, 
 it should be placed on either the field declaration or the property getter method.
 
-[transient]:http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/annotations/Transient.html
+[transient]:http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/mapping/annotations/Transient.html
 
 ### Mapping User Types
 
@@ -322,8 +322,8 @@ This also works with UDTs inside collections or other UDTs, with any arbitrary
 nesting level.
 
 [User Defined Types]: ../../udts/
-[udt]:http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/annotations/UDT.html
-[field]:http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/annotations/Field.html
+[udt]:http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/mapping/annotations/UDT.html
+[field]:http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/mapping/annotations/Field.html
 
 ### Mapping collections
 
@@ -381,10 +381,10 @@ to figure out how to appropriately handle UDT conversion, i.e.:
 mappingManager.udtCodec(Address.class);
 ```
 
-[frozen]:http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/annotations/Frozen.html
-[frozenkey]:http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/annotations/FrozenKey.html
-[frozenvalue]:http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/annotations/FrozenValue.html
-[udtCodec]:https://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/mapping/MappingManager.html#udtCodec-java.lang.Class-
+[frozen]:http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/mapping/annotations/Frozen.html
+[frozenkey]:http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/mapping/annotations/FrozenKey.html
+[frozenvalue]:http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/mapping/annotations/FrozenValue.html
+[udtCodec]:https://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/mapping/MappingManager.html#udtCodec-java.lang.Class-
 
 #### Prefer Frozen Collections
 

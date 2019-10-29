@@ -176,8 +176,8 @@ if (nextPage != null) {
 }
 ```
 
-[result_set]:http://docs.datastax.com/en/drivers/java/3.7/com/datastax/driver/core/ResultSet.html
-[paging_state]:http://docs.datastax.com/en/drivers/java/3.7/com/datastax/driver/core/PagingState.html
+[result_set]:http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/core/ResultSet.html
+[paging_state]:http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/core/PagingState.html
 
 
 Due to internal implementation details, `PagingState` instances are not
@@ -239,8 +239,8 @@ There are two situations where you might want to use the unsafe API:
   implementing your own validation logic (for example, signing the raw
   state with a private key).
 
-[gpsu]: https://www.datastax.com/drivers/java/3.7/com/datastax/driver/core/ExecutionInfo.html#getPagingStateUnsafe--
-[spsu]: https://www.datastax.com/drivers/java/3.6/com/datastax/driver/core/Statement.html#setPagingStateUnsafe-byte:A-
+[gpsu]: https://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/core/ExecutionInfo.html#getPagingStateUnsafe--
+[spsu]: https://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/core/Statement.html#setPagingStateUnsafe-byte:A-
 
 ### Offset queries
 

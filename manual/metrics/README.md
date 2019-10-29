@@ -38,7 +38,7 @@ To do this in a maven project:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>3.7.2</version>
+  <version>3.8.0</version>
   <exclusions>
     <exclusion>
       <groupId>io.dropwizard.metrics</groupId>
@@ -146,8 +146,8 @@ reporter.start();
 [Reporters]: http://metrics.dropwizard.io/3.2.2/manual/core.html#reporters
 [MetricRegistry]: http://metrics.dropwizard.io/3.2.2/apidocs/com/codahale/metrics/MetricRegistry.html
 [MXBeans]: https://docs.oracle.com/javase/tutorial/jmx/mbeans/mxbeans.html
-[withClusterName]: https://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/Cluster.Builder.html#withClusterName-java.lang.String-
-[withoutMetrics]: https://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/Cluster.Builder.html#withoutMetrics--
-[withoutJMXReporting]: https://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/Cluster.Builder.html#withoutJMXReporting--
-[getMetrics]: https://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/Cluster.html#getMetrics--
-[Metrics]: http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/Metrics.html
+[withClusterName]: https://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/core/Cluster.Builder.html#withClusterName-java.lang.String-
+[withoutMetrics]: https://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/core/Cluster.Builder.html#withoutMetrics--
+[withoutJMXReporting]: https://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/core/Cluster.Builder.html#withoutJMXReporting--
+[getMetrics]: https://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/core/Cluster.html#getMetrics--
+[Metrics]: http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/core/Metrics.html

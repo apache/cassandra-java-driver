@@ -641,7 +641,7 @@
                         </execution>
                     </executions>
                     <configuration>
-                        <comparisonVersion>3.7.1</comparisonVersion>
+                        <comparisonVersion>3.7.2</comparisonVersion>
                         <ignoredDifferencesFile>../clirr-ignores.xml</ignoredDifferencesFile>
                         <excludes>
                             <exclude>com/datastax/shaded/**</exclude>
