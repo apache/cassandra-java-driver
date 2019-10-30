@@ -130,7 +130,7 @@ session.execute("INSERT INTO example (id, t) VALUES (1, ?)",
         DateTime.parse("2010-06-30T01:20:47.999+01:00"));
 ```
 
-[InstantCodec_joda]: http://docs.datastax.com/en/drivers/java/87/com/datastax/driver/extras/codecs/joda/InstantCodec.html
+[InstantCodec_joda]: http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/extras/codecs/joda/InstantCodec.html
 [LocalDateCodec_joda]: http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/extras/codecs/joda/LocalDateCodec.html
 [LocalTimeCodec_joda]: http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/extras/codecs/joda/LocalTimeCodec.html
 [DateTimeCodec]: http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/extras/codecs/joda/DateTimeCodec.html
@@ -190,7 +190,7 @@ Note that if you registered an `EnumNameCodec` and an `EnumOrdinalCodec` _for th
 In practice, this is unlikely to happen, because you'll probably stick to a single CQL type for a given enum type;
 however, if you ever run into that issue, the workaround is to use [prepared statements](../../statements/prepared/), for which the driver knows the CQL type and can pick the exact codec.
 
-[EnumNameCodec]: http://docs.datastax.com/en/drivers/java/8/com/datastax/driver/extras/codecs/enums/EnumNameCodec.html
+[EnumNameCodec]: http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/extras/codecs/enums/EnumNameCodec.html
 [EnumOrdinalCodec]: http://docs.datastax.com/en/drivers/java/3.8/com/datastax/driver/extras/codecs/enums/EnumOrdinalCodec.html
 [name]: https://docs.oracle.com/javase/8/docs/api/java/lang/Enum.html#name--
 [ordinal]: https://docs.oracle.com/javase/8/docs/api/java/lang/Enum.html#ordinal--
