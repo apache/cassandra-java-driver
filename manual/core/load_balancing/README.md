@@ -323,10 +323,10 @@ Then it uses the "closest" distance for any given node. For example:
 * policy1 changes its suggestion to IGNORED. node1 is set to REMOTE;
 * policy1 changes its suggestion to REMOTE. node1 stays at REMOTE.
 
-[DriverContext]:        https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/context/DriverContext.html
-[LoadBalancingPolicy]:  https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/loadbalancing/LoadBalancingPolicy.html
-[getRoutingKeyspace()]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKeyspace--
-[getRoutingToken()]:    https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/session/Request.html#getRoutingToken--
-[getRoutingKey()]:      https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKey--
+[DriverContext]:        https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/context/DriverContext.html
+[LoadBalancingPolicy]:  https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/loadbalancing/LoadBalancingPolicy.html
+[getRoutingKeyspace()]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKeyspace--
+[getRoutingToken()]:    https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/Request.html#getRoutingToken--
+[getRoutingKey()]:      https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKey--
 [`nodetool status`]: https://docs.datastax.com/en/dse/6.7/dse-dev/datastax_enterprise/tools/nodetool/toolsStatus.html 
 [cqlsh]: https://docs.datastax.com/en/dse/6.7/cql/cql/cql_using/startCqlshStandalone.html

@@ -76,8 +76,8 @@ acceptable for you, consider writing your own [AuthProvider] implementation
 
 [SASL]: https://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer
 
-[AuthProvider]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/auth/AuthProvider.html
-[DriverContext]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/context/DriverContext.html
-[PlainTextAuthProviderBase]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/auth/PlainTextAuthProviderBase.html
-[SessionBuilder.withAuthCredentials]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withAuthCredentials-java.lang.String-java.lang.String-
-[SessionBuilder.withAuthProvider]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withAuthProvider-com.datastax.oss.driver.api.core.auth.AuthProvider-
+[AuthProvider]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/auth/AuthProvider.html
+[DriverContext]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/context/DriverContext.html
+[PlainTextAuthProviderBase]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/auth/PlainTextAuthProviderBase.html
+[SessionBuilder.withAuthCredentials]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withAuthCredentials-java.lang.String-java.lang.String-
+[SessionBuilder.withAuthProvider]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withAuthProvider-com.datastax.oss.driver.api.core.auth.AuthProvider-

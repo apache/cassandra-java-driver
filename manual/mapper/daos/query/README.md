@@ -103,14 +103,14 @@ Then:
   query succeeds or not depends on whether the session that the mapper was built with has a [default
   keyspace].
 
-[default keyspace]:          https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
-[@Query]:                    https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/mapper/annotations/Query.html
-[AsyncResultSet]:            https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
-[ResultSet]:                 https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/ResultSet.html
-[ResultSet#wasApplied()]:    https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/ResultSet.html#wasApplied--
-[MappedAsyncPagingIterable]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/MappedAsyncPagingIterable.html
-[PagingIterable]:            https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/PagingIterable.html
-[Row]:                       https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/Row.html
+[default keyspace]:          https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
+[@Query]:                    https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/Query.html
+[AsyncResultSet]:            https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
+[ResultSet]:                 https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[ResultSet#wasApplied()]:    https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/ResultSet.html#wasApplied--
+[MappedAsyncPagingIterable]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/MappedAsyncPagingIterable.html
+[PagingIterable]:            https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/PagingIterable.html
+[Row]:                       https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/Row.html
 
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
 [CompletableFuture]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html

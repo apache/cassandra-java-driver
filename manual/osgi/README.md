@@ -77,5 +77,5 @@ starting the driver:
 [driver configuration]: ../core/configuration
 [OSGi]:https://www.osgi.org
 [JNR]: https://github.com/jnr/jnr-ffi
-[withClassLoader()]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
+[withClassLoader()]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
 [JAVA-1127]:https://datastax-oss.atlassian.net/browse/JAVA-1127

@@ -184,6 +184,6 @@ For a complete tour of the API, browse the child pages in this manual:
   * [Terms](term/)
   * [Idempotence](idempotence/)
   
-[QueryBuilder]:  https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html
-[SchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
-[CqlIdentifier]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/CqlIdentifier.html
+[QueryBuilder]:  https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html
+[SchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
+[CqlIdentifier]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/CqlIdentifier.html

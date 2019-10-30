@@ -66,7 +66,7 @@ is the exponential one with the default values, and the control connection is in
 * [t = 3] node2's pool tries to open the last missing connection, which succeeds. The pool is back
   to its expected size, node2's reconnection stops. 
 
-[ConstantReconnectionPolicy]:    https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/internal/core/connection/ConstantReconnectionPolicy.html
-[DriverContext]:                 https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/context/DriverContext.html
-[ExponentialReconnectionPolicy]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/internal/core/connection/ExponentialReconnectionPolicy.html
-[ReconnectionPolicy]:            https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/connection/ReconnectionPolicy.html
+[ConstantReconnectionPolicy]:    https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/internal/core/connection/ConstantReconnectionPolicy.html
+[DriverContext]:                 https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/context/DriverContext.html
+[ExponentialReconnectionPolicy]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/internal/core/connection/ExponentialReconnectionPolicy.html
+[ReconnectionPolicy]:            https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/connection/ReconnectionPolicy.html

@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.3.0 (in progress)
+### 4.3.0
 
 - [improvement] JAVA-2497: Ensure nodes and exceptions are serializable
 - [bug] JAVA-2464: Fix initial schema refresh when reconnect-on-init is enabled
