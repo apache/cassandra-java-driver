@@ -71,7 +71,7 @@ versions:
   - name: '4.0'
     ref: '4.0.1'
   - name: '3.8'
-    ref: '9d3f181'
+    ref: '760e4d1'
   - name: '3.7'
     ref: '3.7.2'
   - name: '3.6'
