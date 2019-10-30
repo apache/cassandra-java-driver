@@ -7,10 +7,6 @@ driver is configured in an application and that you will need to obtain a `secur
 The following is a Quick Start guide to writing a simple application that can connect to an Apollo
 database.
 
-   **Tip**: DataStax recommends using the DataStax Java Driver for Apache Cassandra. You can also
-   use the DataStax Enterprise (DSE) Java Driver, which exposes the same API for connecting to
-   Cassandra databases.
-
 ### Prerequisites
 
 1. [Download][Download Maven] and [install][Install Maven] Maven.
@@ -44,9 +40,7 @@ database.
 
       **Note:** With the `Cluster.builder()` object, make sure to set the path to the secure
       connect bundle for your Apollo database (**"/path/to/secure-connect-database_name.zip"**) in
-      the `withCloudSecureConnectBundle()` method as shown in the following example. If converting
-      from using the open source Cassandra Java Driver to the DSE Java Driver, ensure that you
-      change `Cluster` to `DseCluster`.    
+      the `withCloudSecureConnectBundle()` method as shown in the following example.  
       * DataStax Java Driver for Apache Cassandra 3.x
 
           ```java
@@ -63,42 +57,6 @@ database.
               Cluster cluster = null;
               try {
                 cluster = Cluster.builder()
-                  // make sure you change the path to the secure connect bundle below
-                  .withCloudSecureConnectBundle(new File("/path/to/secure-connect-database_name.zip"))
-                  .withCredentials("user_name", "password")
-                  .build();
-                Session session = cluster.connect();
-                // Select the release_version from the system.local table:
-                ResultSet rs = session.execute("select release_version from system.local");
-                Row row = rs.one();
-                //Print the results of the CQL query to the console:
-                if (row != null) {
-                  System.out.println(row.getString("release_version"));
-                } else {
-                  System.out.println("An error occurred.");
-                }
-              } finally {
-                if (cluster != null) cluster.close();
-              }
-            }
-          }
-          ```
-      * DataStax Java Driver for DataStax Enterprise (DSE) 1.x
-
-          ```java
-          import com.datastax.driver.core.ResultSet;
-          import com.datastax.driver.core.Row;
-          import com.datastax.driver.core.Session;
-          import com.datastax.driver.dse.DseCluster;
-          import java.io.File;
-
-          public class ConnectDatabase {
-
-            public static void main(String[] args) {
-              // Create the DseCluster object:
-              DseCluster cluster = null;
-              try {
-                cluster = DseCluster.builder()
                   // make sure you change the path to the secure connect bundle below
                   .withCloudSecureConnectBundle(new File("/path/to/secure-connect-database_name.zip"))
                   .withCredentials("user_name", "password")
