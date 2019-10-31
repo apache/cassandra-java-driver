@@ -2,6 +2,9 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.4.0 (in progress)
+
+
 ### 4.3.0
 
 - [improvement] JAVA-2497: Ensure nodes and exceptions are serializable
