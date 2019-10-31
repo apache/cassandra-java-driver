@@ -2,171 +2,126 @@
 
 Using the DataStax Java Driver to connect to a DataStax Apollo database is almost identical to using
 the driver to connect to any normal Apache Cassandra® database. The only differences are in how the
-driver is configured in an application and that you will need to obtain a `secure connect bundle`.
-
-The following is a Quick Start guide to writing a simple application that can connect to an Apollo
-database.
-
-   **Tip**: DataStax recommends using the DataStax Java Driver for Apache Cassandra. You can also
-   use the DataStax Enterprise (DSE) Java Driver, which exposes the same API for connecting to
-   Cassandra databases.
+driver is configured in an application and that you will need to obtain a *secure connect bundle*.
 
 ### Prerequisites
 
 1. [Download][Download Maven] and [install][Install Maven] Maven.
-1. Create an Apollo database on [GCP][Create an Apollo database - GCP] or 
+2. Create an Apollo database on [GCP][Create an Apollo database - GCP] or 
    [AWS][Create an Apollo database - AWS]; alternatively, have a team member provide access to their
    Apollo database (instructions for [GCP][Access an Apollo database - GCP] and 
    [AWS][Access an Apollo database - AWS]) to obtain database connection details.
-1. Download the secure connect bundle (instructions for 
+3. Download the secure connect bundle (instructions for 
    [GCP][Download the secure connect bundle - GCP] and 
-   [AWS][Download the secure connect bundle - AWS]) to obtain connection credentials for your 
-   database.
+   [AWS][Download the secure connect bundle - AWS]), that contains connection information such as
+   contact points and certificates.
 
 ### Procedure
 
-1. Edit the `pom.xml` file at the root of your and according to this [Example pom.xml file].
+Create a minimal project structure as explained [here][minimal project structure]. Then modify
+`Main.java` using one of the following approaches:
 
-1. Initialize the DataStax Java Driver.
+#### Programmatic configuration
 
-    a. Create a `ConnectDatabase.java` file in the `/src/main/java` directory for your Java project.
+You can pass the connection information directly to `CqlSession.builder()`:
 
-      ```sh
-      $ cd javaProject/src/main/java
-      ```
-      ```sh
-      $ touch ConnectDatabase.java
-      ```
+```java
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
+import java.nio.file.Paths;
 
-    b. **Programmatic configuration**. Copy the following code for your DataStax Driver into the 
-    `ConnectDatabase.java` file. The following example implements a `ConnectDatabase` class to 
-    connect to your Apollo database, runs a CQL query, and prints the output to the console.
+public class Main {
+  
+    public static void main(String[] args) {
+        try (CqlSession session = CqlSession.builder()
+            // make sure you change the path to the secure connect bundle below
+            .withCloudSecureConnectBundle(Paths.get("/path/to/secure-connect-database_name.zip"))
+            .withAuthCredentials("user_name","password")
+            .withKeyspace("keyspace_name")
+            .build()) {
 
-      **Note:** With the `CqlSession.builder()` object, make sure to set the path to the secure
-      connect bundle for your Apollo database in the `withCloudSecureConnectBundle()` method as 
-      shown in the following example. If converting from using the open source Cassandra Java Driver 
-      to the DSE Java Driver, ensure that you change `CqlSession` to `DseSession`.
-      
-      * DataStax Java Driver for Apache Cassandra 4.x (recommended)
-
-          ```java
-          import com.datastax.oss.driver.api.core.CqlSession;
-          import com.datastax.oss.driver.api.core.cql.ResultSet;
-          import com.datastax.oss.driver.api.core.cql.Row;
-          import java.nio.file.Paths;
-          
-          public class ConnectDatabase {
-          
-          public static void main(String[] args) {
-              // Create the CqlSession object:
-              try (CqlSession session = CqlSession.builder()
-                  // make sure you change the path to the secure connect bundle below
-                  .withCloudSecureConnectBundle(Paths.get("/path/to/secure-connect-database_name.zip"))
-                  .withAuthCredentials("user_name","password")
-                  .withKeyspace("keyspace_name")
-                  .build()) {
-                      // Select the release_version from the system.local table:
-                      ResultSet rs = session.execute("select release_version from system.local");
-                      Row row = rs.one();
-                      //Print the results of the CQL query to the console:
-                      if (row != null) {
-                          System.out.println(row.getString("release_version"));
-                      } else {
-                          System.out.println("An error occurred.");
-                      }
-                 }
-              }
-          }
-          ```
-      * DataStax Java Driver for DataStax Enterprise (DSE) 2.x
-
-          ```java
-          import com.datastax.dse.driver.api.core.DseSession;
-          import com.datastax.oss.driver.api.core.cql.ResultSet;
-          import com.datastax.oss.driver.api.core.cql.Row;
-          import java.nio.file.Paths;
-
-          public class ConnectDatabase {
-
-             public static void main(String[] args) {
-                 // Create the DseSession object:
-                 try (DseSession session = DseSession.builder()
-                     // make sure you change the path to the secure connect bundle below
-                     .withCloudSecureConnectBundle(Paths.get("/path/to/secure-connect-database_name.zip"))
-                     .withAuthCredentials("user_name","password")
-                     .withKeyspace("keyspace_name")
-                     .build()) {
-                     // Select the release_version from the system.local table:
-                     ResultSet rs = session.execute("select release_version from system.local");
-                     Row row = rs.one();
-                     //Print the results of the CQL query to the console:
-                     if (row != null) {
-                         System.out.println(row.getString("release_version"));
-                     } else {
-                         System.out.println("An error occurred.");
-                     }
-                 }
-             }
-          }
-          ```
-
-    c. **File-based configuration**. An alternative to the programmatic configuration method 
-    detailed above is to include the information required to connect in the driver's configuration 
-    file (`application.conf`). Merge the following options with any other options that you might 
-    want to include in the configuration file:
-    
-    ```hocon
-   basic {
-     # change this to match the target keyspace
-     session-keyspace = keyspace_name
-     cloud {
-       # change this to match bundle's location; can be either a path on the local filesystem
-       # or a valid URL, e.g. http://acme.com/path/to/secure-connect-database_name.zip
-       secure-connect-bundle = /path/to/secure-connect-database_name.zip
-     }
-   }
-   advanced {
-     auth-provider {
-       class = PlainTextAuthProvider
-       # change below to match the appropriate credentials
-       username = user_name 
-       password = password
-     }
-   }
-   ```
-    
-    For more information about the driver configuration mechanism, refer to the 
-    [driver documentation].
-    
-    With the above configuration, your ConnectDatabase.java file should be simplified as shown 
-    below:
-    
-    ```java
-    import com.datastax.oss.driver.api.core.CqlSession;
-    import com.datastax.oss.driver.api.core.cql.ResultSet;
-    import com.datastax.oss.driver.api.core.cql.Row;
-    
-    public class ConnectDatabase {
-    
-      public static void main(String[] args) {
-        // Create the CqlSession object; it will read the configuration file and pick the right
-        // values to connect to the Apollo database.
-        try (CqlSession session = CqlSession.builder().build()) {
-          // Select the release_version from the system.local table:
-          ResultSet rs = session.execute("select release_version from system.local");
-          Row row = rs.one();
-          //Print the results of the CQL query to the console:
-          if (row != null) {
-            System.out.println(row.getString("release_version"));
-          } else {
-            System.out.println("An error occurred.");
-          }
+                // For the sake of example, run a simple query and print the results
+                ResultSet rs = session.execute("select release_version from system.local");
+                Row row = rs.one();
+                if (row != null) {
+                    System.out.println(row.getString("release_version"));
+                } else {
+                    System.out.println("An error occurred.");
+                }
+           }
         }
+    }
+```
+
+The path to the secure connect bundle for your Apollo database is specified with
+`withCloudSecureConnectBundle()`. The authentication credentials must be specified separately with
+`withAuthCredentials()`, and match the username and password that were configured when creating the
+Apollo database.
+
+Note the following:
+
+* an SSL connection will be established automatically. Manual SSL configuration is not allowed, any
+  settings in the driver configuration (`advanced.ssl-engine-factory`) will be ignored;
+* the secure connect bundle contains all of the necessary contact information. Specifying contact
+  points manually is not allowed, and will result in an error;
+* if the driver configuration does not specify an explicit consistency level, it will default to
+  `LOCAL_QUORUM` (instead of `LOCAL_ONE` when connecting to a normal Cassandra database). 
+
+#### File-based configuration
+
+Alternatively, the connection information can be specified in the driver's configuration file
+(`application.conf`). Merge the following options with any content already present:
+      
+```properties
+datastax-java-driver {
+  basic {
+    # change this to match the target keyspace
+    session-keyspace = keyspace_name
+    cloud {
+      # change this to match bundle's location; can be either a path on the local filesystem
+      # or a valid URL, e.g. http://acme.com/path/to/secure-connect-database_name.zip
+      secure-connect-bundle = /path/to/secure-connect-database_name.zip
+    }
+  }
+  advanced {
+    auth-provider {
+      class = PlainTextAuthProvider
+      # change below to match the appropriate credentials
+      username = user_name 
+      password = password
+    }
+  }
+}
+```
+
+For more information about the driver configuration mechanism, refer to the [driver documentation].
+    
+With the above configuration, your main Java class can be simplified as shown below:
+    
+```java
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
+    
+public class Main {
+    
+  public static void main(String[] args) {
+    // Create the CqlSession object; it will read the configuration file and pick the right
+    // values to connect to the Apollo database.
+    try (CqlSession session = CqlSession.builder().build()) {
+
+      ResultSet rs = session.execute("select release_version from system.local");
+      Row row = rs.one();
+      if (row != null) {
+        System.out.println(row.getString("release_version"));
+      } else {
+        System.out.println("An error occurred.");
       }
     }
-      ```
-
-    d. Save and close the ConnectDatabase.java file.
+  }
+}
+```
 
 [Download Maven]: https://maven.apache.org/download.cgi
 [Install Maven]: https://maven.apache.org/install.html
@@ -176,5 +131,5 @@ database.
 [Access an Apollo database - AWS]: https://helpdocs.datastax.com/aws/dscloud/apollo/dscloudShareClusterDetails.html
 [Download the secure connect bundle - GCP]: https://helpdocs.datastax.com/gcp/dscloud/apollo/dscloudObtainingCredentials.html
 [Download the secure connect bundle - AWS]: https://helpdocs.datastax.com/aws/dscloud/apollo/dscloudObtainingCredentials.html
-[Example pom.xml file]: ../core/integration/#minimal-project-structure
+[minimal project structure]: ../core/integration/#minimal-project-structure
 [driver documentation]: ../core/configuration/
