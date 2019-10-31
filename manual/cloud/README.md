@@ -80,6 +80,22 @@ database.
 
     c. Save and close the ConnectDatabase.java file.
 
+### Apollo Differences
+
+In most circumstances, the client code for interacting with an Apollo cluster will be the same as
+interacting with any other Cassandra cluster. The exceptions being:
+
+  * An SSL connection will be established automatically. Manual SSL configuration is not allowed,
+  and setting SSLOptions will result in an exception (i.e. don't use `withSSL()` or
+  `withSSL(SSLOptions)` on the Builder)
+
+  * A Cluster’s contact points attribute should not be used. The cloud config contains all of the
+  necessary contact information (i.e. don't use any of the `addContactPoint()` or
+  `addContactPoints()` methods on the Builder)
+
+  * If a consistency level is not specified for an execution profile or query, then
+  `ConsistencyLevel.LOCAL_QUORUM` will be used as the default.
+
 [Download Maven]: https://maven.apache.org/download.cgi
 [Install Maven]: https://maven.apache.org/install.html
 [Create an Apollo database - GCP]: https://helpdocs.datastax.com/gcp/dscloud/apollo/dscloudGettingStarted.html#dscloudCreateCluster
