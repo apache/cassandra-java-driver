@@ -73,13 +73,13 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
           "[{}] Sending schema queries to {} with DSE version {}", logPrefix, node, dseVersion);
       // 4.8 is the oldest version supported, which uses C* 2.1 schema
       if (dseVersion.compareTo(Version.V5_0_0) < 0) {
-        return new Cassandra21SchemaQueries(channel, refreshFuture, config, logPrefix);
+        return new Cassandra21SchemaQueries(channel, node, refreshFuture, config, logPrefix);
       } else if (dseVersion.compareTo(Version.V6_7_0) < 0) {
         // 5.0 - 6.7 uses C* 3.0 schema
-        return new Cassandra3SchemaQueries(channel, refreshFuture, config, logPrefix);
+        return new Cassandra3SchemaQueries(channel, node, refreshFuture, config, logPrefix);
       } else {
         // 6.7+ uses C* 4.0 schema
-        return new Cassandra4SchemaQueries(channel, refreshFuture, config, logPrefix);
+        return new Cassandra4SchemaQueries(channel, node, refreshFuture, config, logPrefix);
       }
     } else {
       Version cassandraVersion = node.getCassandraVersion();
@@ -96,13 +96,13 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
       LOG.debug(
           "[{}] Sending schema queries to {} with version {}", logPrefix, node, cassandraVersion);
       if (cassandraVersion.compareTo(Version.V2_2_0) < 0) {
-        return new Cassandra21SchemaQueries(channel, refreshFuture, config, logPrefix);
+        return new Cassandra21SchemaQueries(channel, node, refreshFuture, config, logPrefix);
       } else if (cassandraVersion.compareTo(Version.V3_0_0) < 0) {
-        return new Cassandra22SchemaQueries(channel, refreshFuture, config, logPrefix);
+        return new Cassandra22SchemaQueries(channel, node, refreshFuture, config, logPrefix);
       } else if (cassandraVersion.compareTo(Version.V4_0_0) < 0) {
-        return new Cassandra3SchemaQueries(channel, refreshFuture, config, logPrefix);
+        return new Cassandra3SchemaQueries(channel, node, refreshFuture, config, logPrefix);
       } else {
-        return new Cassandra4SchemaQueries(channel, refreshFuture, config, logPrefix);
+        return new Cassandra4SchemaQueries(channel, node, refreshFuture, config, logPrefix);
       }
     }
   }

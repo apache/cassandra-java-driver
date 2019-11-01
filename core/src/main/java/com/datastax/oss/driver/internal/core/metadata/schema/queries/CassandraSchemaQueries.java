@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
@@ -44,7 +45,7 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
 
   private final DriverChannel channel;
   private final EventExecutor adminExecutor;
-  private final boolean isCassandraV3;
+  private final Node node;
   private final String logPrefix;
   private final Duration timeout;
   private final int pageSize;
@@ -62,13 +63,13 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
 
   protected CassandraSchemaQueries(
       DriverChannel channel,
-      boolean isCassandraV3,
+      Node node,
       CompletableFuture<Metadata> refreshFuture,
       DriverExecutionProfile config,
       String logPrefix) {
     this.channel = channel;
     this.adminExecutor = channel.eventLoop();
-    this.isCassandraV3 = isCassandraV3;
+    this.node = node;
     this.refreshFuture = refreshFuture;
     this.logPrefix = logPrefix;
     this.timeout = config.getDuration(DefaultDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT);
@@ -129,7 +130,7 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
   private void executeOnAdminExecutor() {
     assert adminExecutor.inEventLoop();
 
-    schemaRowsBuilder = new CassandraSchemaRows.Builder(isCassandraV3, refreshFuture, logPrefix);
+    schemaRowsBuilder = new CassandraSchemaRows.Builder(node, refreshFuture, logPrefix);
 
     query(selectKeyspacesQuery() + whereClause, schemaRowsBuilder::withKeyspaces);
     query(selectTypesQuery() + whereClause, schemaRowsBuilder::withTypes);

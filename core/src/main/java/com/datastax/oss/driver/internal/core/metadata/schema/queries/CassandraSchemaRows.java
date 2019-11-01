@@ -15,8 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
+import com.datastax.dse.driver.api.core.metadata.DseNodeProperties;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.DataTypeClassNameParser;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.DataTypeCqlNameParser;
@@ -26,6 +29,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableListMultimap
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.Multimap;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +41,7 @@ import org.slf4j.LoggerFactory;
 @Immutable
 public class CassandraSchemaRows implements SchemaRows {
 
+  private final Node node;
   private final DataTypeParser dataTypeParser;
   private final CompletableFuture<Metadata> refreshFuture;
   private final List<AdminRow> keyspaces;
@@ -52,8 +57,9 @@ public class CassandraSchemaRows implements SchemaRows {
   private final Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> indexes;
 
   private CassandraSchemaRows(
-      boolean isCassandraV3,
+      Node node,
       CompletableFuture<Metadata> refreshFuture,
+      DataTypeParser dataTypeParser,
       List<AdminRow> keyspaces,
       List<AdminRow> virtualKeyspaces,
       Multimap<CqlIdentifier, AdminRow> tables,
@@ -65,8 +71,8 @@ public class CassandraSchemaRows implements SchemaRows {
       Multimap<CqlIdentifier, AdminRow> types,
       Multimap<CqlIdentifier, AdminRow> functions,
       Multimap<CqlIdentifier, AdminRow> aggregates) {
-    this.dataTypeParser =
-        isCassandraV3 ? new DataTypeCqlNameParser() : new DataTypeClassNameParser();
+    this.node = node;
+    this.dataTypeParser = dataTypeParser;
     this.refreshFuture = refreshFuture;
     this.keyspaces = keyspaces;
     this.virtualKeyspaces = virtualKeyspaces;
@@ -79,6 +85,12 @@ public class CassandraSchemaRows implements SchemaRows {
     this.types = types;
     this.functions = functions;
     this.aggregates = aggregates;
+  }
+
+  @NonNull
+  @Override
+  public Node getNode() {
+    return node;
   }
 
   @Override
@@ -149,8 +161,9 @@ public class CassandraSchemaRows implements SchemaRows {
   public static class Builder {
     private static final Logger LOG = LoggerFactory.getLogger(Builder.class);
 
-    private final boolean isCassandraV3;
+    private final Node node;
     private final CompletableFuture<Metadata> refreshFuture;
+    private final DataTypeParser dataTypeParser;
     private final String tableNameColumn;
     private final String logPrefix;
     private final ImmutableList.Builder<AdminRow> keyspacesBuilder = ImmutableList.builder();
@@ -174,12 +187,37 @@ public class CassandraSchemaRows implements SchemaRows {
     private final Map<CqlIdentifier, ImmutableMultimap.Builder<CqlIdentifier, AdminRow>>
         indexesBuilders = new LinkedHashMap<>();
 
-    public Builder(
-        boolean isCassandraV3, CompletableFuture<Metadata> refreshFuture, String logPrefix) {
-      this.isCassandraV3 = isCassandraV3;
+    public Builder(Node node, CompletableFuture<Metadata> refreshFuture, String logPrefix) {
+      this.node = node;
       this.refreshFuture = refreshFuture;
       this.logPrefix = logPrefix;
-      this.tableNameColumn = isCassandraV3 ? "table_name" : "columnfamily_name";
+      if (isCassandraV3OrAbove(node)) {
+        this.tableNameColumn = "table_name";
+        this.dataTypeParser = new DataTypeCqlNameParser();
+      } else {
+        this.tableNameColumn = "columnfamily_name";
+        this.dataTypeParser = new DataTypeClassNameParser();
+      }
+    }
+
+    private static boolean isCassandraV3OrAbove(Node node) {
+      // We already did those checks in DefaultSchemaQueriesFactory.
+      // We could pass along booleans (isCassandraV3, isDse...), but passing the whole Node is
+      // better for maintainability, in case we need to do more checks in downstream components in
+      // the future.
+      Version dseVersion = (Version) node.getExtras().get(DseNodeProperties.DSE_VERSION);
+      if (dseVersion != null) {
+        dseVersion = dseVersion.nextStable();
+        return dseVersion.compareTo(Version.V5_0_0) >= 0;
+      } else {
+        Version cassandraVersion = node.getCassandraVersion();
+        if (cassandraVersion == null) {
+          cassandraVersion = Version.V3_0_0;
+        } else {
+          cassandraVersion = cassandraVersion.nextStable();
+        }
+        return cassandraVersion.compareTo(Version.V3_0_0) >= 0;
+      }
     }
 
     public Builder withKeyspaces(Iterable<AdminRow> rows) {
@@ -284,8 +322,9 @@ public class CassandraSchemaRows implements SchemaRows {
 
     public CassandraSchemaRows build() {
       return new CassandraSchemaRows(
-          isCassandraV3,
+          node,
           refreshFuture,
+          dataTypeParser,
           keyspacesBuilder.build(),
           virtualKeyspacesBuilder.build(),
           tablesBuilder.build(),

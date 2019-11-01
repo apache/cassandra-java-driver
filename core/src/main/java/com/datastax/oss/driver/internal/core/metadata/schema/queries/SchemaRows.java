@@ -17,9 +17,11 @@ package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.DataTypeParser;
 import com.datastax.oss.driver.shaded.guava.common.collect.Multimap;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -31,6 +33,10 @@ import java.util.concurrent.CompletableFuture;
  * <p>Implementations must be thread-safe.
  */
 public interface SchemaRows {
+
+  /** The node that was used to retrieve the schema information. */
+  @NonNull
+  Node getNode();
 
   List<AdminRow> keyspaces();
 

@@ -20,12 +20,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultMetadata;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.List;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -34,6 +37,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.Silent.class)
 public abstract class SchemaParserTestBase {
 
+  protected static final Node NODE_2_2 = mockNode(Version.V2_2_0);
+  protected static final Node NODE_3_0 = mockNode(Version.V3_0_0);
   protected static final CqlIdentifier KEYSPACE_ID = CqlIdentifier.fromInternal("ks");
   @Mock protected DefaultMetadata currentMetadata;
   @Mock protected InternalDriverContext context;
@@ -290,5 +295,12 @@ public abstract class SchemaParserTestBase {
     when(row.getString("strategy_options")).thenReturn("{\"replication_factor\":\"1\"}");
 
     return row;
+  }
+
+  private static Node mockNode(Version version) {
+    Node node = mock(Node.class);
+    when(node.getExtras()).thenReturn(Collections.emptyMap());
+    when(node.getCassandraVersion()).thenReturn(version);
+    return node;
   }
 }

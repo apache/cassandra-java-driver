@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -26,10 +27,11 @@ import net.jcip.annotations.ThreadSafe;
 public class Cassandra21SchemaQueries extends CassandraSchemaQueries {
   public Cassandra21SchemaQueries(
       DriverChannel channel,
+      Node node,
       CompletableFuture<Metadata> refreshFuture,
       DriverExecutionProfile config,
       String logPrefix) {
-    super(channel, false, refreshFuture, config, logPrefix);
+    super(channel, node, refreshFuture, config, logPrefix);
   }
 
   @Override

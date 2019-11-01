@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -62,7 +63,7 @@ public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
 
   private void should_query_with_where_clause(String whereClause) {
     SchemaQueriesWithMockedChannel queries =
-        new SchemaQueriesWithMockedChannel(driverChannel, null, config, "test");
+        new SchemaQueriesWithMockedChannel(driverChannel, node, null, config, "test");
     CompletionStage<SchemaRows> result = queries.execute();
 
     // Keyspace
@@ -113,6 +114,8 @@ public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
     assertThatStage(result)
         .isSuccess(
             rows -> {
+              assertThat(rows.getNode()).isEqualTo(node);
+
               // Keyspace
               assertThat(rows.keyspaces()).hasSize(2);
               assertThat(rows.keyspaces().get(0).getString("keyspace_name")).isEqualTo("ks1");
@@ -178,7 +181,7 @@ public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
   @Test
   public void should_query_with_paging() {
     SchemaQueriesWithMockedChannel queries =
-        new SchemaQueriesWithMockedChannel(driverChannel, null, config, "test");
+        new SchemaQueriesWithMockedChannel(driverChannel, node, null, config, "test");
     CompletionStage<SchemaRows> result = queries.execute();
 
     // Keyspace
@@ -242,7 +245,7 @@ public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
   @Test
   public void should_ignore_malformed_rows() {
     SchemaQueriesWithMockedChannel queries =
-        new SchemaQueriesWithMockedChannel(driverChannel, null, config, "test");
+        new SchemaQueriesWithMockedChannel(driverChannel, node, null, config, "test");
     CompletionStage<SchemaRows> result = queries.execute();
 
     // Keyspace
@@ -347,10 +350,11 @@ public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
 
     SchemaQueriesWithMockedChannel(
         DriverChannel channel,
+        Node node,
         CompletableFuture<Metadata> refreshFuture,
         DriverExecutionProfile config,
         String logPrefix) {
-      super(channel, refreshFuture, config, logPrefix);
+      super(channel, node, refreshFuture, config, logPrefix);
     }
 
     @Override

@@ -137,7 +137,7 @@ public class SchemaParserTest extends SchemaParserTestBase {
   }
 
   private MetadataRefresh parse(Consumer<CassandraSchemaRows.Builder> builderConfig) {
-    CassandraSchemaRows.Builder builder = new CassandraSchemaRows.Builder(true, null, "test");
+    CassandraSchemaRows.Builder builder = new CassandraSchemaRows.Builder(NODE_3_0, null, "test");
     builderConfig.accept(builder);
     SchemaRows rows = builder.build();
     return new CassandraSchemaParser(rows, context).parse();

@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import java.util.Collections;
@@ -42,7 +43,7 @@ public class Cassandra21SchemaQueriesTest extends SchemaQueriesTest {
         .thenReturn(Collections.emptyList());
 
     SchemaQueriesWithMockedChannel queries =
-        new SchemaQueriesWithMockedChannel(driverChannel, null, config, "test");
+        new SchemaQueriesWithMockedChannel(driverChannel, node, null, config, "test");
 
     CompletionStage<SchemaRows> result = queries.execute();
 
@@ -74,6 +75,8 @@ public class Cassandra21SchemaQueriesTest extends SchemaQueriesTest {
     assertThatStage(result)
         .isSuccess(
             rows -> {
+              assertThat(rows.getNode()).isEqualTo(node);
+
               // Keyspace
               assertThat(rows.keyspaces()).hasSize(2);
               assertThat(rows.keyspaces().get(0).getString("keyspace_name")).isEqualTo("ks1");
@@ -117,10 +120,11 @@ public class Cassandra21SchemaQueriesTest extends SchemaQueriesTest {
 
     SchemaQueriesWithMockedChannel(
         DriverChannel channel,
+        Node node,
         CompletableFuture<Metadata> refreshFuture,
         DriverExecutionProfile config,
         String logPrefix) {
-      super(channel, refreshFuture, config, logPrefix);
+      super(channel, node, refreshFuture, config, logPrefix);
     }
 
     @Override

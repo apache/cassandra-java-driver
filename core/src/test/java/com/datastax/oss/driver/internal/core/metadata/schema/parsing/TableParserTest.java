@@ -19,6 +19,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.IndexKind;
@@ -184,21 +185,18 @@ public class TableParserTest extends SchemaParserTestBase {
   }
 
   private SchemaRows legacyRows(AdminRow tableRow, Iterable<AdminRow> columnRows) {
-    return rows(tableRow, columnRows, null, false);
+    return rows(tableRow, columnRows, null, NODE_2_2);
   }
 
   private SchemaRows modernRows(
       AdminRow tableRow, Iterable<AdminRow> columnRows, Iterable<AdminRow> indexesRows) {
-    return rows(tableRow, columnRows, indexesRows, true);
+    return rows(tableRow, columnRows, indexesRows, NODE_3_0);
   }
 
   private SchemaRows rows(
-      AdminRow tableRow,
-      Iterable<AdminRow> columnRows,
-      Iterable<AdminRow> indexesRows,
-      boolean isCassandraV3) {
+      AdminRow tableRow, Iterable<AdminRow> columnRows, Iterable<AdminRow> indexesRows, Node node) {
     CassandraSchemaRows.Builder builder =
-        new CassandraSchemaRows.Builder(isCassandraV3, null, "test")
+        new CassandraSchemaRows.Builder(node, null, "test")
             .withTables(ImmutableList.of(tableRow))
             .withColumns(columnRows);
     if (indexesRows != null) {
