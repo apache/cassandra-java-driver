@@ -16,7 +16,6 @@
 package com.datastax.dse.driver.internal.core.context;
 
 import com.datastax.dse.driver.api.core.session.DseProgrammaticArguments;
-import com.datastax.dse.driver.internal.core.DseProtocolVersionRegistry;
 import com.datastax.dse.driver.internal.core.InsightsClientLifecycleListener;
 import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousCqlRequestAsyncProcessor;
 import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousCqlRequestSyncProcessor;
@@ -26,9 +25,6 @@ import com.datastax.dse.driver.internal.core.graph.GraphRequestAsyncProcessor;
 import com.datastax.dse.driver.internal.core.graph.GraphRequestSyncProcessor;
 import com.datastax.dse.driver.internal.core.metrics.DseDropwizardMetricsFactory;
 import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
-import com.datastax.dse.protocol.internal.DseProtocolV1ClientCodecs;
-import com.datastax.dse.protocol.internal.DseProtocolV2ClientCodecs;
-import com.datastax.dse.protocol.internal.ProtocolV4ClientCodecsForDse;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
@@ -36,7 +32,6 @@ import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.ProgrammaticArguments;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
-import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.context.LifecycleListener;
 import com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor;
@@ -44,15 +39,10 @@ import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestAsyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
-import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
 import com.datastax.oss.driver.internal.core.util.Loggers;
-import com.datastax.oss.protocol.internal.FrameCodec;
-import com.datastax.oss.protocol.internal.ProtocolV3ClientCodecs;
-import com.datastax.oss.protocol.internal.ProtocolV5ClientCodecs;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -124,23 +114,6 @@ public class DseDriverContext extends DefaultDriverContext {
             .withStartupApplicationName(applicationName)
             .withStartupApplicationVersion(applicationVersion)
             .build());
-  }
-
-  @Override
-  protected ProtocolVersionRegistry buildProtocolVersionRegistry() {
-    return new DseProtocolVersionRegistry(getSessionName());
-  }
-
-  @Override
-  protected FrameCodec<ByteBuf> buildFrameCodec() {
-    return new FrameCodec<>(
-        new ByteBufPrimitiveCodec(getNettyOptions().allocator()),
-        getCompressor(),
-        new ProtocolV3ClientCodecs(),
-        new ProtocolV4ClientCodecsForDse(),
-        new ProtocolV5ClientCodecs(),
-        new DseProtocolV1ClientCodecs(),
-        new DseProtocolV2ClientCodecs());
   }
 
   @Override

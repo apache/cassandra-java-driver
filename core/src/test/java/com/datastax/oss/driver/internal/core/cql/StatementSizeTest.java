@@ -32,7 +32,7 @@ import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
-import com.datastax.oss.driver.internal.core.CassandraProtocolVersionRegistry;
+import com.datastax.oss.driver.internal.core.DefaultProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -84,7 +84,7 @@ public class StatementSizeTest {
     when(driverContext.getProtocolVersion()).thenReturn(DefaultProtocolVersion.V5);
     when(driverContext.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
     when(driverContext.getProtocolVersionRegistry())
-        .thenReturn(new CassandraProtocolVersionRegistry(null));
+        .thenReturn(new DefaultProtocolVersionRegistry(null));
     when(config.getDefaultProfile()).thenReturn(defaultProfile);
     when(driverContext.getConfig()).thenReturn(config);
     when(driverContext.getTimestampGenerator()).thenReturn(timestampGenerator);

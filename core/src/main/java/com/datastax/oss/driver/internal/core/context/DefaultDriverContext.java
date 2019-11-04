@@ -16,6 +16,9 @@
 package com.datastax.oss.driver.internal.core.context;
 
 import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
+import com.datastax.dse.protocol.internal.DseProtocolV1ClientCodecs;
+import com.datastax.dse.protocol.internal.DseProtocolV2ClientCodecs;
+import com.datastax.dse.protocol.internal.ProtocolV4ClientCodecsForDse;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
@@ -38,9 +41,9 @@ import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
-import com.datastax.oss.driver.internal.core.CassandraProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.DefaultConsistencyLevelRegistry;
+import com.datastax.oss.driver.internal.core.DefaultProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.DefaultWriteCoalescer;
@@ -79,6 +82,8 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
+import com.datastax.oss.protocol.internal.ProtocolV3ClientCodecs;
+import com.datastax.oss.protocol.internal.ProtocolV5ClientCodecs;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.buffer.ByteBuf;
@@ -386,12 +391,18 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected FrameCodec<ByteBuf> buildFrameCodec() {
-    return FrameCodec.defaultClient(
-        new ByteBufPrimitiveCodec(getNettyOptions().allocator()), getCompressor());
+    return new FrameCodec<>(
+        new ByteBufPrimitiveCodec(getNettyOptions().allocator()),
+        getCompressor(),
+        new ProtocolV3ClientCodecs(),
+        new ProtocolV4ClientCodecsForDse(),
+        new ProtocolV5ClientCodecs(),
+        new DseProtocolV1ClientCodecs(),
+        new DseProtocolV2ClientCodecs());
   }
 
   protected ProtocolVersionRegistry buildProtocolVersionRegistry() {
-    return new CassandraProtocolVersionRegistry(getSessionName());
+    return new DefaultProtocolVersionRegistry(getSessionName());
   }
 
   protected ConsistencyLevelRegistry buildConsistencyLevelRegistry() {
