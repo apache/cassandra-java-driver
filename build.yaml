@@ -21,6 +21,16 @@ schedules:
   nightly:
     # Run full suite nightly on change for all primary branches if they have changes.
     schedule: nightly
+    matrix:
+      exclude:
+        # exclude builds for newer Cassandra versions and older JDKs
+        - java: openjdk6
+          cassandra: ['2.2', '3.0', '3.11']
+        - java: openjdk7
+          cassandra: ['2.1', '3.0', '3.11']
+        # exclude builds for older Cassandra versions and newer JDKs
+        - java: openjdk11
+          cassandra: ['2.1', '2.2']
     branches:
       # regex matches primary branch format (2.1, 3.x, 3.0.x, 3.1.x, etc).
       include: ["/\\d+(\\.[\\dx]+)+/"]
