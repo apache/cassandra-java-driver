@@ -29,7 +29,9 @@ import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.session.ProgrammaticArguments;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.oss.driver.internal.core.context.StartupOptionsBuilder;
 import com.datastax.oss.protocol.internal.request.Startup;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
@@ -72,12 +74,11 @@ public class DseStartupOptionsBuilderTest {
   private void assertDefaultStartupOptions(Startup startup) {
     assertThat(startup.options).containsEntry(Startup.CQL_VERSION_KEY, "3.0.0");
     assertThat(startup.options)
-        .containsEntry(DseStartupOptionsBuilder.DRIVER_NAME_KEY, DSE_DRIVER_COORDINATES.getName());
-    assertThat(startup.options).containsKey(DseStartupOptionsBuilder.DRIVER_VERSION_KEY);
-    Version version =
-        Version.parse(startup.options.get(DseStartupOptionsBuilder.DRIVER_VERSION_KEY));
-    assertThat(version).isEqualTo(DSE_DRIVER_COORDINATES.getVersion());
-    assertThat(startup.options).containsKey(DseStartupOptionsBuilder.CLIENT_ID_KEY);
+        .containsEntry(StartupOptionsBuilder.DRIVER_NAME_KEY, DSE_DRIVER_COORDINATES.getName());
+    assertThat(startup.options).containsKey(StartupOptionsBuilder.DRIVER_VERSION_KEY);
+    Version version = Version.parse(startup.options.get(StartupOptionsBuilder.DRIVER_VERSION_KEY));
+    assertThat(version).isEqualTo(Session.OSS_DRIVER_COORDINATES.getVersion());
+    assertThat(startup.options).containsKey(StartupOptionsBuilder.CLIENT_ID_KEY);
   }
 
   @Test
@@ -99,8 +100,8 @@ public class DseStartupOptionsBuilderTest {
     Startup startup = new Startup(driverContext.getStartupOptions());
     // assert the compression option is present
     assertThat(startup.options).containsEntry(Startup.COMPRESSION_KEY, compression);
-    assertThat(startup.options).doesNotContainKey(DseStartupOptionsBuilder.APPLICATION_NAME_KEY);
-    assertThat(startup.options).doesNotContainKey(DseStartupOptionsBuilder.APPLICATION_VERSION_KEY);
+    assertThat(startup.options).doesNotContainKey(StartupOptionsBuilder.APPLICATION_NAME_KEY);
+    assertThat(startup.options).doesNotContainKey(StartupOptionsBuilder.APPLICATION_VERSION_KEY);
     assertDefaultStartupOptions(startup);
   }
 
@@ -122,10 +123,10 @@ public class DseStartupOptionsBuilderTest {
     Startup startup = new Startup(driverContext.getStartupOptions());
     // assert the client id is present
     assertThat(startup.options)
-        .containsEntry(DseStartupOptionsBuilder.CLIENT_ID_KEY, customClientId.toString());
+        .containsEntry(StartupOptionsBuilder.CLIENT_ID_KEY, customClientId.toString());
     assertThat(startup.options).doesNotContainKey(Startup.COMPRESSION_KEY);
-    assertThat(startup.options).doesNotContainKey(DseStartupOptionsBuilder.APPLICATION_NAME_KEY);
-    assertThat(startup.options).doesNotContainKey(DseStartupOptionsBuilder.APPLICATION_VERSION_KEY);
+    assertThat(startup.options).doesNotContainKey(StartupOptionsBuilder.APPLICATION_NAME_KEY);
+    assertThat(startup.options).doesNotContainKey(StartupOptionsBuilder.APPLICATION_VERSION_KEY);
     assertDefaultStartupOptions(startup);
   }
 
@@ -137,9 +138,9 @@ public class DseStartupOptionsBuilderTest {
     Startup startup = new Startup(driverContext.getStartupOptions());
     // assert the app name and version are present
     assertThat(startup.options)
-        .containsEntry(DseStartupOptionsBuilder.APPLICATION_NAME_KEY, "Custom_App_Name");
+        .containsEntry(StartupOptionsBuilder.APPLICATION_NAME_KEY, "Custom_App_Name");
     assertThat(startup.options)
-        .containsEntry(DseStartupOptionsBuilder.APPLICATION_VERSION_KEY, "Custom_App_Version");
+        .containsEntry(StartupOptionsBuilder.APPLICATION_VERSION_KEY, "Custom_App_Version");
     assertThat(startup.options).doesNotContainKey(Startup.COMPRESSION_KEY);
     assertDefaultStartupOptions(startup);
   }
@@ -155,9 +156,9 @@ public class DseStartupOptionsBuilderTest {
     buildContext(customClientId, "Custom_App_Name", "Custom_App_Version");
     Startup startup = new Startup(driverContext.getStartupOptions());
     assertThat(startup.options)
-        .containsEntry(DseStartupOptionsBuilder.CLIENT_ID_KEY, customClientId.toString())
-        .containsEntry(DseStartupOptionsBuilder.APPLICATION_NAME_KEY, "Custom_App_Name")
-        .containsEntry(DseStartupOptionsBuilder.APPLICATION_VERSION_KEY, "Custom_App_Version");
+        .containsEntry(StartupOptionsBuilder.CLIENT_ID_KEY, customClientId.toString())
+        .containsEntry(StartupOptionsBuilder.APPLICATION_NAME_KEY, "Custom_App_Name")
+        .containsEntry(StartupOptionsBuilder.APPLICATION_VERSION_KEY, "Custom_App_Version");
     assertThat(startup.options).containsEntry(Startup.COMPRESSION_KEY, "snappy");
     assertDefaultStartupOptions(startup);
   }
@@ -175,8 +176,8 @@ public class DseStartupOptionsBuilderTest {
     Startup startup = new Startup(driverContext.getStartupOptions());
 
     assertThat(startup.options)
-        .containsEntry(DseStartupOptionsBuilder.APPLICATION_NAME_KEY, "Config_App_Name")
-        .containsEntry(DseStartupOptionsBuilder.APPLICATION_VERSION_KEY, "Config_App_Version");
+        .containsEntry(StartupOptionsBuilder.APPLICATION_NAME_KEY, "Config_App_Name")
+        .containsEntry(StartupOptionsBuilder.APPLICATION_VERSION_KEY, "Config_App_Version");
   }
 
   @Test
@@ -188,7 +189,7 @@ public class DseStartupOptionsBuilderTest {
     Startup startup = new Startup(driverContext.getStartupOptions());
 
     assertThat(startup.options)
-        .containsEntry(DseStartupOptionsBuilder.APPLICATION_NAME_KEY, "Custom_App_Name")
-        .containsEntry(DseStartupOptionsBuilder.APPLICATION_VERSION_KEY, "Custom_App_Version");
+        .containsEntry(StartupOptionsBuilder.APPLICATION_NAME_KEY, "Custom_App_Name")
+        .containsEntry(StartupOptionsBuilder.APPLICATION_VERSION_KEY, "Custom_App_Version");
   }
 }

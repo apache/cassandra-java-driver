@@ -30,13 +30,11 @@ import com.datastax.oss.driver.api.core.session.ProgrammaticArguments;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Predicate;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
@@ -64,53 +62,6 @@ public abstract class DseSessionBuilderBase<
       Loggers.warnWithException(
           LOG, "Could not register Geo codecs; ESRI API might be missing from classpath", error);
     }
-  }
-
-  /**
-   * A unique identifier for the created session.
-   *
-   * <p>It will be sent in the {@code STARTUP} protocol message for each new connection established
-   * by the driver, and may be used by future DSE versions for monitoring purposes.
-   *
-   * <p>If you don't call this method, the driver will generate an identifier with {@link
-   * Uuids#random()}.
-   */
-  @NonNull
-  public SelfT withClientId(@Nullable UUID clientId) {
-    this.dseProgrammaticArgumentsBuilder.withStartupClientId(clientId);
-    return self;
-  }
-
-  /**
-   * The name of the application using the created session.
-   *
-   * <p>It will be sent in the {@code STARTUP} protocol message for each new connection established
-   * by the driver, and may be used by future DSE versions for monitoring purposes.
-   *
-   * <p>This can also be defined in the driver configuration with the option {@code
-   * basic.application.name}; if you specify both, this method takes precedence and the
-   * configuration option will be ignored.
-   */
-  @NonNull
-  public SelfT withApplicationName(@Nullable String applicationName) {
-    this.dseProgrammaticArgumentsBuilder.withStartupApplicationName(applicationName);
-    return self;
-  }
-
-  /**
-   * The version of the application using the created session.
-   *
-   * <p>It will be sent in the {@code STARTUP} protocol message for each new connection established
-   * by the driver, and may be used by future DSE versions for monitoring purposes.
-   *
-   * <p>This can also be defined in the driver configuration with the option {@code
-   * basic.application.version}; if you specify both, this method takes precedence and the
-   * configuration option will be ignored.
-   */
-  @NonNull
-  public SelfT withApplicationVersion(@Nullable String applicationVersion) {
-    this.dseProgrammaticArgumentsBuilder.withStartupApplicationVersion(applicationVersion);
-    return self;
   }
 
   /**

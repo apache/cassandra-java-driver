@@ -15,9 +15,6 @@
  */
 package com.datastax.dse.driver.internal.core.insights;
 
-import static com.datastax.dse.driver.internal.core.context.DseStartupOptionsBuilder.APPLICATION_NAME_KEY;
-import static com.datastax.dse.driver.internal.core.context.DseStartupOptionsBuilder.APPLICATION_VERSION_KEY;
-import static com.datastax.dse.driver.internal.core.context.DseStartupOptionsBuilder.CLIENT_ID_KEY;
 import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.AUTH_PROVIDER_CLASS;
 import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE;
 import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.CONNECTION_POOL_REMOTE_SIZE;
@@ -25,8 +22,6 @@ import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.HEARTB
 import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.PROTOCOL_COMPRESSION;
 import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS;
 import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.SSL_HOSTNAME_VALIDATION;
-import static com.datastax.oss.driver.internal.core.context.StartupOptionsBuilder.DRIVER_NAME_KEY;
-import static com.datastax.oss.driver.internal.core.context.StartupOptionsBuilder.DRIVER_VERSION_KEY;
 
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.api.core.DseSessionBuilder;
@@ -49,6 +44,8 @@ import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.context.StartupOptionsBuilder;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -98,7 +95,7 @@ public class InsightsClient {
   private final InsightsConfiguration insightsConfiguration;
   private final AtomicInteger numberOfStatusEventErrors = new AtomicInteger();
 
-  private final DseDriverContext driverContext;
+  private final InternalDriverContext driverContext;
   private final Supplier<Long> timestampSupplier;
   private final PlatformInfoFinder platformInfoFinder;
   private final ReconnectionPolicyInfoFinder reconnectionPolicyInfoInfoFinder;
@@ -111,11 +108,11 @@ public class InsightsClient {
 
   public static InsightsClient createInsightsClient(
       InsightsConfiguration insightsConfiguration,
-      DseDriverContext dseDriverContext,
+      InternalDriverContext driverContext,
       StackTraceElement[] initCallStackTrace) {
     DataCentersFinder dataCentersFinder = new DataCentersFinder();
     return new InsightsClient(
-        dseDriverContext,
+        driverContext,
         () -> new Date().getTime(),
         insightsConfiguration,
         new PlatformInfoFinder(),
@@ -127,7 +124,7 @@ public class InsightsClient {
   }
 
   InsightsClient(
-      DseDriverContext driverContext,
+      InternalDriverContext driverContext,
       Supplier<Long> timestampSupplier,
       InsightsConfiguration insightsConfiguration,
       PlatformInfoFinder platformInfoFinder,
@@ -376,23 +373,23 @@ public class InsightsClient {
   }
 
   private String getDriverVersion(Map<String, String> startupOptions) {
-    return startupOptions.get(DRIVER_VERSION_KEY);
+    return startupOptions.get(StartupOptionsBuilder.DRIVER_VERSION_KEY);
   }
 
   private String getDriverName(Map<String, String> startupOptions) {
-    return startupOptions.get(DRIVER_NAME_KEY);
+    return startupOptions.get(StartupOptionsBuilder.DRIVER_NAME_KEY);
   }
 
   private String getClientId(Map<String, String> startupOptions) {
-    return startupOptions.get(CLIENT_ID_KEY);
+    return startupOptions.get(StartupOptionsBuilder.CLIENT_ID_KEY);
   }
 
   private boolean isApplicationNameGenerated(Map<String, String> startupOptions) {
-    return startupOptions.get(APPLICATION_NAME_KEY) == null;
+    return startupOptions.get(StartupOptionsBuilder.APPLICATION_NAME_KEY) == null;
   }
 
   private String getApplicationVersion(Map<String, String> startupOptions) {
-    String applicationVersion = startupOptions.get(APPLICATION_VERSION_KEY);
+    String applicationVersion = startupOptions.get(StartupOptionsBuilder.APPLICATION_VERSION_KEY);
     if (applicationVersion == null) {
       return "";
     }
@@ -400,7 +397,7 @@ public class InsightsClient {
   }
 
   private String getApplicationName(Map<String, String> startupOptions) {
-    String applicationName = startupOptions.get(APPLICATION_NAME_KEY);
+    String applicationName = startupOptions.get(StartupOptionsBuilder.APPLICATION_NAME_KEY);
     if (applicationName == null || applicationName.isEmpty()) {
       return getClusterCreateCaller(initCallStackTrace);
     }

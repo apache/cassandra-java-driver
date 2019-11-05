@@ -17,13 +17,13 @@ package com.datastax.dse.driver.internal.core.insights;
 
 import static com.datastax.dse.driver.api.core.config.DseDriverOption.GRAPH_TRAVERSAL_SOURCE;
 
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.dse.driver.internal.core.insights.PackageUtil.ClassSettingDetails;
 import com.datastax.dse.driver.internal.core.insights.schema.LoadBalancingInfo;
 import com.datastax.dse.driver.internal.core.insights.schema.SpecificExecutionProfile;
 import com.datastax.dse.driver.internal.core.insights.schema.SpeculativeExecutionInfo;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -31,7 +31,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class ExecutionProfilesInfoFinder {
-  Map<String, SpecificExecutionProfile> getExecutionProfilesInfo(DseDriverContext driverContext) {
+  Map<String, SpecificExecutionProfile> getExecutionProfilesInfo(
+      InternalDriverContext driverContext) {
 
     SpecificExecutionProfile defaultProfile =
         mapToSpecificProfile(driverContext.getConfig().getDefaultProfile());

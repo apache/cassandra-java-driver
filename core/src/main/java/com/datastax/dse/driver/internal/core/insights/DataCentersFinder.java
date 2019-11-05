@@ -17,10 +17,10 @@ package com.datastax.dse.driver.internal.core.insights;
 
 import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.CONNECTION_POOL_REMOTE_SIZE;
 
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import java.util.Collection;
 import java.util.HashSet;
@@ -28,7 +28,7 @@ import java.util.Set;
 
 class DataCentersFinder {
 
-  Set<String> getDataCenters(DseDriverContext driverContext) {
+  Set<String> getDataCenters(InternalDriverContext driverContext) {
     return getDataCenters(
         driverContext.getMetadataManager().getMetadata().getNodes().values(),
         driverContext.getConfig().getDefaultProfile());

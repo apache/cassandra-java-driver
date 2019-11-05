@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
+import com.datastax.dse.driver.api.core.config.DseDriverOption;
+import com.datastax.dse.driver.internal.core.InsightsClientLifecycleListener;
 import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.dse.protocol.internal.DseProtocolV1ClientCodecs;
 import com.datastax.dse.protocol.internal.DseProtocolV2ClientCodecs;
@@ -77,6 +79,7 @@ import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
 import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogFormatter;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
@@ -88,12 +91,16 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.buffer.ByteBuf;
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import net.jcip.annotations.ThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of the driver context.
@@ -115,6 +122,7 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class DefaultDriverContext implements InternalDriverContext {
 
+  private static final Logger LOG = LoggerFactory.getLogger(InternalDriverContext.class);
   private static final AtomicInteger SESSION_NAME_COUNTER = new AtomicInteger();
 
   protected final CycleDetector cycleDetector =
@@ -193,6 +201,8 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final LazyReference<SchemaChangeListener> schemaChangeListenerRef;
   private final LazyReference<RequestTracker> requestTrackerRef;
   private final LazyReference<Optional<AuthProvider>> authProviderRef;
+  private final LazyReference<List<LifecycleListener>> lifecycleListenersRef =
+      new LazyReference<>("lifecycleListeners", this::buildLifecycleListeners, cycleDetector);
 
   private final DriverConfig config;
   private final DriverConfigLoader configLoader;
@@ -208,6 +218,12 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final InetSocketAddress cloudProxyAddress;
   private final LazyReference<RequestLogFormatter> requestLogFormatterRef =
       new LazyReference<>("requestLogFormatter", this::buildRequestLogFormatter, cycleDetector);
+  private final UUID startupClientId;
+  private final String startupApplicationName;
+  private final String startupApplicationVersion;
+  // A stack trace captured in the constructor. Used to extract information about the client
+  // application.
+  private final StackTraceElement[] initStackTrace;
 
   public DefaultDriverContext(
       DriverConfigLoader configLoader, ProgrammaticArguments programmaticArguments) {
@@ -252,6 +268,17 @@ public class DefaultDriverContext implements InternalDriverContext {
     this.nodeFiltersFromBuilder = programmaticArguments.getNodeFilters();
     this.classLoader = programmaticArguments.getClassLoader();
     this.cloudProxyAddress = programmaticArguments.getCloudProxyAddress();
+    this.startupClientId = programmaticArguments.getStartupClientId();
+    this.startupApplicationName = programmaticArguments.getStartupApplicationName();
+    this.startupApplicationVersion = programmaticArguments.getStartupApplicationVersion();
+    StackTraceElement[] stackTrace;
+    try {
+      stackTrace = Thread.currentThread().getStackTrace();
+    } catch (Exception ex) {
+      // ignore and use empty
+      stackTrace = new StackTraceElement[] {};
+    }
+    this.initStackTrace = stackTrace;
   }
 
   /**
@@ -287,7 +314,11 @@ public class DefaultDriverContext implements InternalDriverContext {
    * @see #getStartupOptions()
    */
   protected Map<String, String> buildStartupOptions() {
-    return new StartupOptionsBuilder(this).build();
+    return new StartupOptionsBuilder(this)
+        .withClientId(startupClientId)
+        .withApplicationName(startupApplicationName)
+        .withApplicationVersion(startupApplicationVersion)
+        .build();
   }
 
   protected Map<String, LoadBalancingPolicy> buildLoadBalancingPolicies() {
@@ -573,6 +604,23 @@ public class DefaultDriverContext implements InternalDriverContext {
             "com.datastax.dse.driver.internal.core.auth");
   }
 
+  protected List<LifecycleListener> buildLifecycleListeners() {
+    try {
+      Class.forName("com.fasterxml.jackson.core.JsonParser");
+      Class.forName("com.fasterxml.jackson.databind.ObjectMapper");
+      return Collections.singletonList(new InsightsClientLifecycleListener(this, initStackTrace));
+    } catch (ClassNotFoundException | LinkageError error) {
+      if (config.getDefaultProfile().getBoolean(DseDriverOption.MONITOR_REPORTING_ENABLED)) {
+        Loggers.warnWithException(
+            LOG,
+            "Could not initialize Insights monitoring; "
+                + "Jackson libraries might be missing from classpath",
+            error);
+      }
+      return Collections.emptyList();
+    }
+  }
+
   @NonNull
   @Override
   public String getSessionName() {
@@ -839,5 +887,11 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public RequestLogFormatter getRequestLogFormatter() {
     return requestLogFormatterRef.get();
+  }
+
+  @NonNull
+  @Override
+  public List<LifecycleListener> getLifecycleListeners() {
+    return lifecycleListenersRef.get();
   }
 }

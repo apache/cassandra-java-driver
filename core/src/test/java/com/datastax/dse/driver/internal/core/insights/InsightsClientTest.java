@@ -16,16 +16,11 @@
 package com.datastax.dse.driver.internal.core.insights;
 
 import static com.datastax.dse.driver.api.core.DseProtocolVersion.DSE_V2;
-import static com.datastax.dse.driver.internal.core.context.DseStartupOptionsBuilder.APPLICATION_NAME_KEY;
-import static com.datastax.dse.driver.internal.core.context.DseStartupOptionsBuilder.APPLICATION_VERSION_KEY;
-import static com.datastax.dse.driver.internal.core.context.DseStartupOptionsBuilder.CLIENT_ID_KEY;
 import static com.datastax.dse.driver.internal.core.insights.ExecutionProfileMockUtil.mockDefaultExecutionProfile;
 import static com.datastax.dse.driver.internal.core.insights.ExecutionProfileMockUtil.mockNonDefaultRequestTimeoutExecutionProfile;
 import static com.datastax.dse.driver.internal.core.insights.PackageUtil.DEFAULT_AUTH_PROVIDER_PACKAGE;
 import static com.datastax.dse.driver.internal.core.insights.PackageUtil.DEFAULT_LOAD_BALANCING_PACKAGE;
 import static com.datastax.dse.driver.internal.core.insights.PackageUtil.DEFAULT_SPECULATIVE_EXECUTION_PACKAGE;
-import static com.datastax.oss.driver.internal.core.context.StartupOptionsBuilder.DRIVER_NAME_KEY;
-import static com.datastax.oss.driver.internal.core.context.StartupOptionsBuilder.DRIVER_VERSION_KEY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Duration.ONE_SECOND;
@@ -57,6 +52,7 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
+import com.datastax.oss.driver.internal.core.context.StartupOptionsBuilder;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
@@ -433,11 +429,11 @@ public class InsightsClientTest {
         mockNonDefaultRequestTimeoutExecutionProfile();
 
     Map<String, String> startupOptions = new HashMap<>();
-    startupOptions.put(CLIENT_ID_KEY, "client-id");
-    startupOptions.put(APPLICATION_VERSION_KEY, "1.0.0");
-    startupOptions.put(APPLICATION_NAME_KEY, "app-name");
-    startupOptions.put(DRIVER_VERSION_KEY, "2.x");
-    startupOptions.put(DRIVER_NAME_KEY, "DataStax Enterprise Java Driver");
+    startupOptions.put(StartupOptionsBuilder.CLIENT_ID_KEY, "client-id");
+    startupOptions.put(StartupOptionsBuilder.APPLICATION_VERSION_KEY, "1.0.0");
+    startupOptions.put(StartupOptionsBuilder.APPLICATION_NAME_KEY, "app-name");
+    startupOptions.put(StartupOptionsBuilder.DRIVER_VERSION_KEY, "2.x");
+    startupOptions.put(StartupOptionsBuilder.DRIVER_NAME_KEY, "DataStax Enterprise Java Driver");
 
     when(dseDriverContext.getStartupOptions()).thenReturn(startupOptions);
     when(dseDriverContext.getProtocolVersion()).thenReturn(DSE_V2);

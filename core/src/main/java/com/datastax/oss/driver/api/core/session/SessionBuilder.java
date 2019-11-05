@@ -32,6 +32,7 @@ import com.datastax.oss.driver.api.core.ssl.ProgrammaticSslEngineFactory;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.internal.core.ContactPoints;
 import com.datastax.oss.driver.internal.core.auth.ProgrammaticPlainTextAuthProvider;
 import com.datastax.oss.driver.internal.core.config.cloud.CloudConfig;
@@ -57,6 +58,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
@@ -476,6 +478,61 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   @NonNull
   public SelfT withCloudProxyAddress(@Nullable InetSocketAddress cloudProxyAddress) {
     this.programmaticArgumentsBuilder.withCloudProxyAddress(cloudProxyAddress);
+    return self;
+  }
+
+  /**
+   * A unique identifier for the created session.
+   *
+   * <p>It will be sent in the {@code STARTUP} protocol message, under the key {@code CLIENT_ID},
+   * for each new connection established by the driver. Currently, this information is used by
+   * Insights monitoring (if the target cluster does not support Insights, the entry will be ignored
+   * by the server).
+   *
+   * <p>If you don't call this method, the driver will generate an identifier with {@link
+   * Uuids#random()}.
+   */
+  @NonNull
+  public SelfT withClientId(@Nullable UUID clientId) {
+    this.programmaticArgumentsBuilder.withStartupClientId(clientId);
+    return self;
+  }
+
+  /**
+   * The name of the application using the created session.
+   *
+   * <p>It will be sent in the {@code STARTUP} protocol message, under the key {@code
+   * APPLICATION_NAME}, for each new connection established by the driver. Currently, this
+   * information is used by Insights monitoring (if the target cluster does not support Insights,
+   * the entry will be ignored by the server).
+   *
+   * <p>This can also be defined in the driver configuration with the option {@code
+   * basic.application.name}; if you specify both, this method takes precedence and the
+   * configuration option will be ignored. If neither is specified, the entry is not included in the
+   * message.
+   */
+  @NonNull
+  public SelfT withApplicationName(@Nullable String applicationName) {
+    this.programmaticArgumentsBuilder.withStartupApplicationName(applicationName);
+    return self;
+  }
+
+  /**
+   * The version of the application using the created session.
+   *
+   * <p>It will be sent in the {@code STARTUP} protocol message, under the key {@code
+   * APPLICATION_VERSION}, for each new connection established by the driver. Currently, this
+   * information is used by Insights monitoring (if the target cluster does not support Insights,
+   * the entry will be ignored by the server).
+   *
+   * <p>This can also be defined in the driver configuration with the option {@code
+   * basic.application.version}; if you specify both, this method takes precedence and the
+   * configuration option will be ignored. If neither is specified, the entry is not included in the
+   * message.
+   */
+  @NonNull
+  public SelfT withApplicationVersion(@Nullable String applicationVersion) {
+    this.programmaticArgumentsBuilder.withStartupApplicationVersion(applicationVersion);
     return self;
   }
 

@@ -152,8 +152,9 @@ public interface InternalDriverContext extends DriverContext {
   /**
    * A list of additional components to notify of session lifecycle events.
    *
-   * <p>The default implementation returns an empty list. Custom driver extensions might override
-   * this method to add their own components.
+   * <p>For historical reasons, this method has a default implementation that returns an empty list.
+   * The built-in {@link DefaultDriverContext} overrides it to plug in the Insights monitoring
+   * listener. Custom driver extensions might override this method to add their own components.
    *
    * <p>Note that the driver assumes that the returned list is constant; there is no way to add
    * listeners dynamically.

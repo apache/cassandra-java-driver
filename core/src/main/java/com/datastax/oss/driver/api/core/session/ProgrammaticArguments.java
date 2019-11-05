@@ -29,6 +29,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 /**
@@ -54,6 +55,9 @@ public class ProgrammaticArguments {
   private final AuthProvider authProvider;
   private final SslEngineFactory sslEngineFactory;
   private final InetSocketAddress cloudProxyAddress;
+  private final UUID startupClientId;
+  private final String startupApplicationName;
+  private final String startupApplicationVersion;
 
   private ProgrammaticArguments(
       @NonNull List<TypeCodec<?>> typeCodecs,
@@ -65,7 +69,11 @@ public class ProgrammaticArguments {
       @Nullable ClassLoader classLoader,
       @Nullable AuthProvider authProvider,
       @Nullable SslEngineFactory sslEngineFactory,
-      @Nullable InetSocketAddress cloudProxyAddress) {
+      @Nullable InetSocketAddress cloudProxyAddress,
+      @Nullable UUID startupClientId,
+      @Nullable String startupApplicationName,
+      @Nullable String startupApplicationVersion) {
+
     this.typeCodecs = typeCodecs;
     this.nodeStateListener = nodeStateListener;
     this.schemaChangeListener = schemaChangeListener;
@@ -76,6 +84,9 @@ public class ProgrammaticArguments {
     this.authProvider = authProvider;
     this.sslEngineFactory = sslEngineFactory;
     this.cloudProxyAddress = cloudProxyAddress;
+    this.startupClientId = startupClientId;
+    this.startupApplicationName = startupApplicationName;
+    this.startupApplicationVersion = startupApplicationVersion;
   }
 
   @NonNull
@@ -128,6 +139,21 @@ public class ProgrammaticArguments {
     return cloudProxyAddress;
   }
 
+  @Nullable
+  public UUID getStartupClientId() {
+    return startupClientId;
+  }
+
+  @Nullable
+  public String getStartupApplicationName() {
+    return startupApplicationName;
+  }
+
+  @Nullable
+  public String getStartupApplicationVersion() {
+    return startupApplicationVersion;
+  }
+
   public static class Builder {
 
     private ImmutableList.Builder<TypeCodec<?>> typeCodecsBuilder = ImmutableList.builder();
@@ -141,6 +167,9 @@ public class ProgrammaticArguments {
     private AuthProvider authProvider;
     private SslEngineFactory sslEngineFactory;
     private InetSocketAddress cloudProxyAddress;
+    private UUID startupClientId;
+    private String startupApplicationName;
+    private String startupApplicationVersion;
 
     @NonNull
     public Builder addTypeCodecs(@NonNull TypeCodec<?>... typeCodecs) {
@@ -221,6 +250,24 @@ public class ProgrammaticArguments {
     }
 
     @NonNull
+    public Builder withStartupClientId(@Nullable UUID startupClientId) {
+      this.startupClientId = startupClientId;
+      return this;
+    }
+
+    @NonNull
+    public Builder withStartupApplicationName(@Nullable String startupApplicationName) {
+      this.startupApplicationName = startupApplicationName;
+      return this;
+    }
+
+    @NonNull
+    public Builder withStartupApplicationVersion(@Nullable String startupApplicationVersion) {
+      this.startupApplicationVersion = startupApplicationVersion;
+      return this;
+    }
+
+    @NonNull
     public ProgrammaticArguments build() {
       return new ProgrammaticArguments(
           typeCodecsBuilder.build(),
@@ -232,7 +279,10 @@ public class ProgrammaticArguments {
           classLoader,
           authProvider,
           sslEngineFactory,
-          cloudProxyAddress);
+          cloudProxyAddress,
+          startupClientId,
+          startupApplicationName,
+          startupApplicationVersion);
     }
   }
 }

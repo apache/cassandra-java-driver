@@ -18,19 +18,19 @@ package com.datastax.dse.driver.internal.core.insights;
 import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS;
 import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.SSL_HOSTNAME_VALIDATION;
 
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import java.util.HashMap;
 import java.util.Map;
 
 class ConfigAntiPatternsFinder {
-  Map<String, String> findAntiPatterns(DseDriverContext driverContext) {
+  Map<String, String> findAntiPatterns(InternalDriverContext driverContext) {
     Map<String, String> antiPatterns = new HashMap<>();
     findSslAntiPattern(driverContext, antiPatterns);
     return antiPatterns;
   }
 
   private void findSslAntiPattern(
-      DseDriverContext driverContext, Map<String, String> antiPatterns) {
+      InternalDriverContext driverContext, Map<String, String> antiPatterns) {
     boolean isSslDefined =
         driverContext.getConfig().getDefaultProfile().isDefined(SSL_ENGINE_FACTORY_CLASS);
     boolean certValidation =

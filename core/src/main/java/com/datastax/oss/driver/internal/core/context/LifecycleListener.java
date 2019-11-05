@@ -17,11 +17,7 @@ package com.datastax.oss.driver.internal.core.context;
 
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 
-/**
- * A component that gets notified of certain events in the session's lifecycle.
- *
- * <p>This is intended for third-party extensions, no built-in components implement this.
- */
+/** A component that gets notified of certain events in the session's lifecycle. */
 public interface LifecycleListener extends AutoCloseable {
 
   /**
