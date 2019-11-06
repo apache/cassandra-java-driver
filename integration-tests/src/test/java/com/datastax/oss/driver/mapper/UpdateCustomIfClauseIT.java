@@ -20,6 +20,7 @@ import static com.datastax.oss.driver.assertions.Assertions.assertThat;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
@@ -91,6 +92,22 @@ public class UpdateCustomIfClauseIT extends InventoryITBase {
   }
 
   @Test
+  public void should_update_entity_if_condition_is_met_statement() {
+    dao.update(
+        new Product(FLAMETHROWER.getId(), "Description for length 10", new Dimensions(10, 1, 1)));
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNotNull();
+
+    Product otherProduct =
+        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
+    assertThat(
+            SESSION_RULE
+                .session()
+                .execute(dao.updateIfLengthStatement(otherProduct, 10))
+                .wasApplied())
+        .isEqualTo(true);
+  }
+
+  @Test
   public void should_not_update_entity_if_condition_is_not_met() {
     dao.update(
         new Product(FLAMETHROWER.getId(), "Description for length 10", new Dimensions(10, 1, 1)));
@@ -99,6 +116,22 @@ public class UpdateCustomIfClauseIT extends InventoryITBase {
     Product otherProduct =
         new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
     assertThat(dao.updateIfLength(otherProduct, 20).wasApplied()).isEqualTo(false);
+  }
+
+  @Test
+  public void should_not_update_entity_if_condition_is_not_met_statement() {
+    dao.update(
+        new Product(FLAMETHROWER.getId(), "Description for length 10", new Dimensions(10, 1, 1)));
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNotNull();
+
+    Product otherProduct =
+        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
+    assertThat(
+            SESSION_RULE
+                .session()
+                .execute(dao.updateIfLengthStatement(otherProduct, 20))
+                .wasApplied())
+        .isEqualTo(false);
   }
 
   @Test
@@ -143,6 +176,9 @@ public class UpdateCustomIfClauseIT extends InventoryITBase {
 
     @Update(customIfClause = "dimensions.length = :length")
     ResultSet updateIfLength(Product product, int length);
+
+    @Update(customIfClause = "dimensions.length = :length")
+    BoundStatement updateIfLengthStatement(Product product, int length);
 
     @Update(customIfClause = "dimensions.length = :\"Length\"")
     CompletableFuture<AsyncResultSet> updateIfLengthAsync(

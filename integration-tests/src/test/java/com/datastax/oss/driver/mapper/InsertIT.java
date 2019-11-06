@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -94,6 +95,15 @@ public class InsertIT extends InventoryITBase {
     assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
 
     ResultSet rs = dao.saveReturningResultSet(FLAMETHROWER);
+    assertThat(rs.getAvailableWithoutFetching()).isZero();
+    assertThat(dao.findById(FLAMETHROWER.getId())).isEqualTo(FLAMETHROWER);
+  }
+
+  @Test
+  public void should_return_bound_statement_to_execute() {
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+    BoundStatement bs = dao.saveReturningBoundStatement(FLAMETHROWER);
+    ResultSet rs = SESSION_RULE.session().execute(bs);
     assertThat(rs.getAvailableWithoutFetching()).isZero();
     assertThat(dao.findById(FLAMETHROWER.getId())).isEqualTo(FLAMETHROWER);
   }
@@ -288,6 +298,9 @@ public class InsertIT extends InventoryITBase {
 
     @Insert
     ResultSet saveReturningResultSet(Product product);
+
+    @Insert
+    BoundStatement saveReturningBoundStatement(Product product);
 
     @Insert(timestamp = ":timestamp")
     void saveWithBoundTimestamp(Product product, long timestamp);

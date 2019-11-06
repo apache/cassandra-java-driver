@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.session.Session;
@@ -83,6 +84,8 @@ import java.util.function.UnaryOperator;
  *   <li>an {@link Optional} of an entity class. The method will extract the first row and convert
  *       it, or return {@code Optional.empty()} if the result set is empty.
  *   <li>a {@link ResultSet}. The method will return the raw query result, without any conversion.
+ *   <li>a {@link BoundStatement}. This is intended for cases where you intend to execute this
+ *       statement later or in a batch:
  *   <li>a {@link PagingIterable}. The method will convert each row into an entity instance.
  *   <li>a {@link CompletionStage} or {@link CompletableFuture} of any of the above. The method will
  *       execute the query asynchronously. Note that for result sets and iterables, you need to

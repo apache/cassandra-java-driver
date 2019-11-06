@@ -68,6 +68,12 @@ The method can return:
     @Insert
     ResultSet save(Product product);
     ```
+* a [BoundStatement]. This is intended for cases where you intend to execute this statement later or in a batch:
+  
+    ```java
+    @Insert
+    BoundStatement save(Product product);
+    ```    
     
 * a [CompletionStage] or [CompletableFuture] of any of the above. The mapper will execute the query
   asynchronously.
@@ -98,7 +104,7 @@ entity class and the [naming strategy](../../entities/#naming-strategy)).
 [ResultSet]:                    https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/ResultSet.html
 [ResultSet#wasApplied()]:       https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/ResultSet.html#wasApplied--
 [ResultSet#getExecutionInfo()]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/ResultSet.html#getExecutionInfo--
-
+[BoundStatement]:               https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/BoundStatement.html
 
 
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
