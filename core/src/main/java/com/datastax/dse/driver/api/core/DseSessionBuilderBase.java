@@ -16,7 +16,6 @@
 package com.datastax.dse.driver.api.core;
 
 import com.datastax.dse.driver.api.core.session.DseProgrammaticArguments;
-import com.datastax.dse.driver.api.core.type.codec.DseTypeCodecs;
 import com.datastax.dse.driver.internal.core.auth.DseProgrammaticPlainTextAuthProvider;
 import com.datastax.dse.driver.internal.core.config.typesafe.DefaultDseDriverConfigLoader;
 import com.datastax.dse.driver.internal.core.context.DseDriverContext;
@@ -30,39 +29,20 @@ import com.datastax.oss.driver.api.core.session.ProgrammaticArguments;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
-import com.datastax.oss.driver.internal.core.util.Loggers;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import net.jcip.annotations.NotThreadSafe;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @NotThreadSafe
 public abstract class DseSessionBuilderBase<
         SelfT extends DseSessionBuilderBase<SelfT, SessionT>, SessionT>
     extends SessionBuilder<SelfT, SessionT> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DseSessionBuilderBase.class);
-
   protected DseProgrammaticArguments.Builder dseProgrammaticArgumentsBuilder =
       DseProgrammaticArguments.builder();
-
-  protected DseSessionBuilderBase() {
-    try {
-      Class.forName("com.esri.core.geometry.ogc.OGCGeometry");
-      programmaticArgumentsBuilder.addTypeCodecs(
-          DseTypeCodecs.LINE_STRING,
-          DseTypeCodecs.POINT,
-          DseTypeCodecs.POLYGON,
-          DseTypeCodecs.DATE_RANGE);
-    } catch (ClassNotFoundException | LinkageError error) {
-      Loggers.warnWithException(
-          LOG, "Could not register Geo codecs; ESRI API might be missing from classpath", error);
-    }
-  }
 
   /**
    * Sets the configuration loader to use.

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.context;
 
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
+import com.datastax.dse.driver.api.core.type.codec.DseTypeCodecs;
 import com.datastax.dse.driver.internal.core.InsightsClientLifecycleListener;
 import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.dse.protocol.internal.DseProtocolV1ClientCodecs;
@@ -490,6 +491,15 @@ public class DefaultDriverContext implements InternalDriverContext {
   protected CodecRegistry buildCodecRegistry(String logPrefix, List<TypeCodec<?>> codecs) {
     MutableCodecRegistry registry = new DefaultCodecRegistry(logPrefix);
     registry.register(codecs);
+
+    registry.register(DseTypeCodecs.DATE_RANGE);
+    try {
+      Class.forName("com.esri.core.geometry.ogc.OGCGeometry");
+      registry.register(DseTypeCodecs.LINE_STRING, DseTypeCodecs.POINT, DseTypeCodecs.POLYGON);
+    } catch (ClassNotFoundException | LinkageError error) {
+      Loggers.warnWithException(
+          LOG, "Could not register Geo codecs; ESRI API might be missing from classpath", error);
+    }
     return registry;
   }
 
