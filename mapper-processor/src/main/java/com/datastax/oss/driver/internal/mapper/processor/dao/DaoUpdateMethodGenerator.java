@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOOLEAN;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOUND_STATEMENT;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_ASYNC_RESULT_SET;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_BOOLEAN;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_VOID;
@@ -61,7 +62,13 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
 
   protected Set<DaoReturnTypeKind> getSupportedReturnTypes() {
     return ImmutableSet.of(
-        VOID, FUTURE_OF_VOID, RESULT_SET, FUTURE_OF_ASYNC_RESULT_SET, BOOLEAN, FUTURE_OF_BOOLEAN);
+        VOID,
+        FUTURE_OF_VOID,
+        RESULT_SET,
+        BOUND_STATEMENT,
+        FUTURE_OF_ASYNC_RESULT_SET,
+        BOOLEAN,
+        FUTURE_OF_BOOLEAN);
   }
 
   @Override

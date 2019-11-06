@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -244,12 +245,35 @@ public class UpdateIT extends InventoryITBase {
   }
 
   @Test
+  public void should_update_entity_if_exists_statement() {
+    dao.update(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNotNull();
+
+    Product otherProduct =
+        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
+    assertThat(
+            SESSION_RULE.session().execute(dao.updateIfExistsStatement(otherProduct)).wasApplied())
+        .isEqualTo(true);
+  }
+
+  @Test
   public void should_not_update_entity_if_not_exists() {
     assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
 
     Product otherProduct =
         new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
     assertThat(dao.updateIfExists(otherProduct).wasApplied()).isEqualTo(false);
+  }
+
+  @Test
+  public void should_not_update_entity_if_not_exists_statement() {
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+
+    Product otherProduct =
+        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
+    assertThat(
+            SESSION_RULE.session().execute(dao.updateIfExistsStatement(otherProduct)).wasApplied())
+        .isEqualTo(false);
   }
 
   @Test
@@ -425,6 +449,9 @@ public class UpdateIT extends InventoryITBase {
 
     @Update(ifExists = true)
     ResultSet updateIfExists(Product product);
+
+    @Update(ifExists = true)
+    BoundStatement updateIfExistsStatement(Product product);
 
     @Update
     CompletableFuture<Void> updateAsync(Product product);

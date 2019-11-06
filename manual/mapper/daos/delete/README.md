@@ -105,6 +105,14 @@ The method can return:
     ResultSet deleteIfDescriptionMatches(UUID productId, String expectedDescription);
     // if the condition fails, the result set will contain columns '[applied]' and 'description'
     ```
+  
+* a [BoundStatement]. This is intended for queries where you will execute this statement later
+  or in a batch.
+  
+    ```java
+    @Delete
+    BoundStatement delete(Product product);
+    ```
     
 * a [CompletionStage] or [CompletableFuture] of any of the above. The method will execute the query
   asynchronously. Note that for result sets, you need to switch to [AsyncResultSet].
@@ -141,6 +149,7 @@ entity class and the [naming strategy](../../entities/#naming-strategy)).
 [@PartitionKey]:          https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
 [ResultSet]:              https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/ResultSet.html
 [ResultSet#wasApplied()]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/ResultSet.html#wasApplied--
+[BoundStatement]:         https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/BoundStatement.html
 
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
 [CompletableFuture]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html

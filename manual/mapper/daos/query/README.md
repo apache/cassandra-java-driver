@@ -54,6 +54,9 @@ The method can return:
 
 * a [ResultSet]. The method will return the raw query result, without any conversion.
 
+* a [BoundStatement]. This is intended for queries where you will execute this statement later
+  or in a batch.
+
 * a [PagingIterable]. The method will convert each row into an entity instance.
 
 * a [CompletionStage] or [CompletableFuture] of any of the above. The method will execute the query
@@ -111,6 +114,7 @@ Then:
 [MappedAsyncPagingIterable]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/MappedAsyncPagingIterable.html
 [PagingIterable]:            https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/PagingIterable.html
 [Row]:                       https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/Row.html
+[BoundStatement]:            https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/BoundStatement.html
 
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
 [CompletableFuture]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html

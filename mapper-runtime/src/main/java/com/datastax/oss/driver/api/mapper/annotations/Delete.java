@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.mapper.annotations;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
@@ -90,6 +91,12 @@ import java.util.function.UnaryOperator;
  * &#64;Delete(entityClass = Product.class, customIfClause = "description = :expectedDescription")
  * ResultSet deleteIfDescriptionMatches(UUID productId, String expectedDescription);
  * // if the condition fails, the result set will contain columns '[applied]' and 'description'
+ *       </pre>
+ *   <li>a {@link BoundStatement}. This is intended for queries where you will execute this
+ *       statement later or in a batch.
+ *       <pre>
+ * &#64;Delete
+ * BoundStatement delete(Product product);
  *       </pre>
  *   <li>a {@link CompletionStage} or {@link CompletableFuture} of any of the above. The method will
  *       execute the query asynchronously. Note that for result sets, you need to switch to {@link

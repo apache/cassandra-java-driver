@@ -42,7 +42,7 @@ public class DaoQueryMethodGeneratorTest extends DaoMethodGeneratorTest {
     return new Object[][] {
       {
         "Invalid return type: Query methods must return one of [VOID, BOOLEAN, LONG, ROW, "
-            + "ENTITY, OPTIONAL_ENTITY, RESULT_SET, PAGING_ITERABLE, FUTURE_OF_VOID, "
+            + "ENTITY, OPTIONAL_ENTITY, RESULT_SET, BOUND_STATEMENT, PAGING_ITERABLE, FUTURE_OF_VOID, "
             + "FUTURE_OF_BOOLEAN, FUTURE_OF_LONG, FUTURE_OF_ROW, FUTURE_OF_ENTITY, "
             + "FUTURE_OF_OPTIONAL_ENTITY, FUTURE_OF_ASYNC_RESULT_SET, "
             + "FUTURE_OF_ASYNC_PAGING_ITERABLE]",
