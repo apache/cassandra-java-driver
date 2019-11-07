@@ -94,7 +94,7 @@ public class InsightsClientTest {
   @Test
   public void should_construct_json_event_startup_message() throws IOException {
     // given
-    DefaultDriverContext DefaultDriverContext = mockDefaultDriverContext();
+    DefaultDriverContext context = mockDefaultDriverContext();
     PlatformInfoFinder platformInfoFinder = mock(PlatformInfoFinder.class);
     OS os = new OS("linux", "1.2", "x64");
     CPUS cpus = new CPUS(8, "intel i7");
@@ -124,7 +124,7 @@ public class InsightsClientTest {
 
     InsightsClient insightsClient =
         new InsightsClient(
-            DefaultDriverContext,
+            context,
             MOCK_TIME_SUPPLIER,
             INSIGHTS_CONFIGURATION,
             platformInfoFinder,
@@ -317,7 +317,7 @@ public class InsightsClientTest {
               "com.datastax.oss.driver.internal.core.context.DefaultDriverContext",
               "<init>",
               "DefaultDriverContext.java",
-              94),
+              243),
         };
     StackTraceElement[] stackTraceWithOneInitCallAndCaller =
         new StackTraceElement[] {
@@ -326,7 +326,7 @@ public class InsightsClientTest {
               "com.datastax.oss.driver.internal.core.context.DefaultDriverContext",
               "<init>",
               "DefaultDriverContext.java",
-              94),
+              243),
           new StackTraceElement(
               "com.example.ActualCallerNameApp", "main", "ActualCallerNameApp.java", 1)
         };
@@ -338,7 +338,7 @@ public class InsightsClientTest {
               "com.datastax.oss.driver.internal.core.context.DefaultDriverContext",
               "<init>",
               "DefaultDriverContext.java",
-              94),
+              243),
           new StackTraceElement(
               "com.datastax.oss.driver.api.core.session.SessionBuilder",
               "buildDefaultSessionAsync",
@@ -353,12 +353,7 @@ public class InsightsClientTest {
               "com.datastax.oss.driver.internal.core.context.DefaultDriverContext",
               "<init>",
               "DefaultDriverContext.java",
-              94),
-          new StackTraceElement(
-              "com.datastax.dse.driver.api.core.DseSessionBuilder",
-              "buildContext",
-              "DseSessionBuilder.java",
-              100),
+              243),
           new StackTraceElement(
               "com.datastax.oss.driver.api.core.session.SessionBuilder",
               "buildDefaultSessionAsync",
@@ -382,12 +377,12 @@ public class InsightsClientTest {
               "com.datastax.oss.driver.internal.core.context.DefaultDriverContext",
               "<init>",
               "DefaultDriverContext.java",
-              94),
+              243),
           new StackTraceElement(
-              "com.datastax.dse.driver.api.core.DseSessionBuilder",
+              "com.datastax.oss.driver.api.core.session.SessionBuilder",
               "buildContext",
-              "DseSessionBuilder.java",
-              100),
+              "SessionBuilder.java",
+              687),
           new StackTraceElement(
               "com.datastax.oss.driver.api.core.session.SessionBuilder",
               "buildDefaultSessionAsync",
@@ -420,10 +415,10 @@ public class InsightsClientTest {
   }
 
   private DefaultDriverContext mockDefaultDriverContext() throws UnknownHostException {
-    DefaultDriverContext DefaultDriverContext = mock(DefaultDriverContext.class);
-    mockConnectionPools(DefaultDriverContext);
+    DefaultDriverContext context = mock(DefaultDriverContext.class);
+    mockConnectionPools(context);
     MetadataManager manager = mock(MetadataManager.class);
-    when(DefaultDriverContext.getMetadataManager()).thenReturn(manager);
+    when(context.getMetadataManager()).thenReturn(manager);
     DriverExecutionProfile defaultExecutionProfile = mockDefaultExecutionProfile();
     DriverExecutionProfile nonDefaultExecutionProfile =
         mockNonDefaultRequestTimeoutExecutionProfile();
@@ -435,8 +430,8 @@ public class InsightsClientTest {
     startupOptions.put(StartupOptionsBuilder.DRIVER_VERSION_KEY, "2.x");
     startupOptions.put(StartupOptionsBuilder.DRIVER_NAME_KEY, "DataStax Enterprise Java Driver");
 
-    when(DefaultDriverContext.getStartupOptions()).thenReturn(startupOptions);
-    when(DefaultDriverContext.getProtocolVersion()).thenReturn(DSE_V2);
+    when(context.getStartupOptions()).thenReturn(startupOptions);
+    when(context.getProtocolVersion()).thenReturn(DSE_V2);
     DefaultNode contactPoint = mock(DefaultNode.class);
     EndPoint contactEndPoint = mock(EndPoint.class);
     when(contactEndPoint.resolve()).thenReturn(new InetSocketAddress("127.0.0.1", 9999));
@@ -444,7 +439,7 @@ public class InsightsClientTest {
     when(manager.getContactPoints()).thenReturn(ImmutableSet.of(contactPoint));
 
     DriverConfig driverConfig = mock(DriverConfig.class);
-    when(DefaultDriverContext.getConfig()).thenReturn(driverConfig);
+    when(context.getConfig()).thenReturn(driverConfig);
     Map<String, DriverExecutionProfile> profiles =
         ImmutableMap.of(
             "default", defaultExecutionProfile, "non-default", nonDefaultExecutionProfile);
@@ -460,8 +455,8 @@ public class InsightsClientTest {
     when(channel.getEndPoint()).thenReturn(controlConnectionEndpoint);
     when(channel.localAddress()).thenReturn(new InetSocketAddress("127.0.0.1", 10));
     when(controlConnection.channel()).thenReturn(channel);
-    when(DefaultDriverContext.getControlConnection()).thenReturn(controlConnection);
-    return DefaultDriverContext;
+    when(context.getControlConnection()).thenReturn(controlConnection);
+    return context;
   }
 
   private void mockConnectionPools(DefaultDriverContext driverContext) {
