@@ -14,8 +14,8 @@ import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousRequestHandlerBase;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
-import com.datastax.oss.driver.api.core.session.throttling.Throttled;
-import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
+import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.shaded.guava.common.base.MoreObjects;
@@ -25,8 +25,6 @@ import com.datastax.oss.protocol.internal.response.Result;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Duration;
@@ -42,8 +40,8 @@ import net.jcip.annotations.ThreadSafe;
  */
 @ThreadSafe
 public class ContinuousGraphRequestHandler
-    extends ContinuousRequestHandlerBase<GraphStatement<?>, AsyncGraphResultSet, GraphExecutionInfo>
-    implements ResponseCallback, GenericFutureListener<Future<java.lang.Void>>, Throttled {
+    extends ContinuousRequestHandlerBase<
+        GraphStatement<?>, AsyncGraphResultSet, GraphExecutionInfo> {
 
   private final Message message;
   private final GraphProtocol subProtocol;
@@ -59,13 +57,12 @@ public class ContinuousGraphRequestHandler
       @NonNull String sessionLogPrefix,
       @NonNull GraphBinaryModule graphBinaryModule,
       @NonNull GraphSupportChecker graphSupportChecker) {
-    super(statement, session, context, sessionLogPrefix, AsyncGraphResultSet.class);
+    super(statement, session, context, sessionLogPrefix, true);
     this.graphBinaryModule = graphBinaryModule;
     subProtocol = graphSupportChecker.inferGraphProtocol(statement, executionProfile, context);
     message =
         GraphConversions.createContinuousMessageFromGraphStatement(
             statement, subProtocol, executionProfile, context, graphBinaryModule);
-    throttler.register(this);
     globalTimeout =
         MoreObjects.firstNonNull(
             statement.getTimeout(),
@@ -77,19 +74,19 @@ public class ContinuousGraphRequestHandler
 
   @NonNull
   @Override
-  protected Duration getGlobalTimeout() {
+  protected Duration getGlobalTimeoutDuration() {
     return globalTimeout;
   }
 
   @NonNull
   @Override
-  protected Duration getPageTimeout(int pageNumber) {
+  protected Duration getPageTimeoutDuration(int pageNumber) {
     return Duration.ZERO;
   }
 
   @NonNull
   @Override
-  protected Duration getReviseRequestTimeout() {
+  protected Duration getReviseRequestTimeoutDuration() {
     return Duration.ZERO;
   }
 
@@ -130,14 +127,26 @@ public class ContinuousGraphRequestHandler
   @NonNull
   @Override
   protected DefaultGraphExecutionInfo createExecutionInfo(
-      @NonNull Result result, @Nullable Frame response) {
-    return new DefaultGraphExecutionInfo(statement, node, 0, 0, errors, response);
+      @NonNull Node node,
+      @Nullable Result result,
+      @Nullable Frame response,
+      int successfulExecutionIndex) {
+    return new DefaultGraphExecutionInfo(
+        statement,
+        node,
+        startedSpeculativeExecutionsCount.get(),
+        successfulExecutionIndex,
+        errors,
+        response);
   }
 
   @NonNull
   @Override
   protected ContinuousAsyncGraphResultSet createResultSet(
-      @NonNull Rows rows, @NonNull GraphExecutionInfo executionInfo) throws IOException {
+      @NonNull Rows rows,
+      @NonNull GraphExecutionInfo executionInfo,
+      @NonNull final ColumnDefinitions columnDefinitions)
+      throws IOException {
 
     Queue<GraphNode> graphNodes = new ArrayDeque<>();
     for (List<ByteBuffer> row : rows.getData()) {

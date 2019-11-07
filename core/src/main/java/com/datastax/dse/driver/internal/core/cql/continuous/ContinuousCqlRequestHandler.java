@@ -19,11 +19,11 @@ import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.cql.continuous.ContinuousAsyncResultSet;
 import com.datastax.dse.driver.internal.core.cql.DseConversions;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
+import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.api.core.session.throttling.Throttled;
-import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.cql.DefaultExecutionInfo;
 import com.datastax.oss.driver.internal.core.cql.DefaultRow;
@@ -35,8 +35,6 @@ import com.datastax.oss.protocol.internal.response.Result;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
@@ -49,8 +47,7 @@ import net.jcip.annotations.ThreadSafe;
  */
 @ThreadSafe
 public class ContinuousCqlRequestHandler
-    extends ContinuousRequestHandlerBase<Statement, ContinuousAsyncResultSet, ExecutionInfo>
-    implements ResponseCallback, GenericFutureListener<Future<java.lang.Void>>, Throttled {
+    extends ContinuousRequestHandlerBase<Statement, ContinuousAsyncResultSet, ExecutionInfo> {
 
   private final Message message;
   private final Duration firstPageTimeout;
@@ -63,9 +60,8 @@ public class ContinuousCqlRequestHandler
       @NonNull DefaultSession session,
       @NonNull InternalDriverContext context,
       @NonNull String sessionLogPrefix) {
-    super(statement, session, context, sessionLogPrefix, ContinuousAsyncResultSet.class);
+    super(statement, session, context, sessionLogPrefix, false);
     message = DseConversions.toContinuousPagingMessage(statement, executionProfile, context);
-    throttler.register(this);
     firstPageTimeout =
         executionProfile.getDuration(DseDriverOption.CONTINUOUS_PAGING_TIMEOUT_FIRST_PAGE);
     otherPagesTimeout =
@@ -77,19 +73,19 @@ public class ContinuousCqlRequestHandler
 
   @NonNull
   @Override
-  protected Duration getGlobalTimeout() {
+  protected Duration getGlobalTimeoutDuration() {
     return Duration.ZERO;
   }
 
   @NonNull
   @Override
-  protected Duration getPageTimeout(int pageNumber) {
+  protected Duration getPageTimeoutDuration(int pageNumber) {
     return pageNumber == 1 ? firstPageTimeout : otherPagesTimeout;
   }
 
   @NonNull
   @Override
-  protected Duration getReviseRequestTimeout() {
+  protected Duration getReviseRequestTimeoutDuration() {
     return otherPagesTimeout;
   }
 
@@ -129,14 +125,17 @@ public class ContinuousCqlRequestHandler
   @NonNull
   @Override
   protected DefaultExecutionInfo createExecutionInfo(
-      @NonNull Result result, @Nullable Frame response) {
+      @NonNull Node node,
+      @Nullable Result result,
+      @Nullable Frame response,
+      int successfulExecutionIndex) {
     ByteBuffer pagingState =
         result instanceof Rows ? ((Rows) result).getMetadata().pagingState : null;
     return new DefaultExecutionInfo(
         statement,
         node,
-        0,
-        0,
+        startedSpeculativeExecutionsCount.get(),
+        successfulExecutionIndex,
         errors,
         pagingState,
         response,
@@ -149,7 +148,9 @@ public class ContinuousCqlRequestHandler
   @NonNull
   @Override
   protected DefaultContinuousAsyncResultSet createResultSet(
-      @NonNull Rows rows, @NonNull ExecutionInfo executionInfo) {
+      @NonNull Rows rows,
+      @NonNull ExecutionInfo executionInfo,
+      @NonNull ColumnDefinitions columnDefinitions) {
     Queue<List<ByteBuffer>> data = rows.getData();
     CountingIterator<Row> iterator =
         new CountingIterator<Row>(data.size()) {

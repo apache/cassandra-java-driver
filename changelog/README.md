@@ -4,6 +4,7 @@
 
 ### NGDG (in progress)
 
+- [improvement] JAVA-2472: Enable speculative executions for paged graph queries
 - [improvement] JAVA-1579: Change default result format to latest GraphSON format
 - [improvement] JAVA-2496: Revisit timeouts for paged graph queries
 - [bug] JAVA-2510: Fix GraphBinaryDataTypesTest Codec registry initialization
