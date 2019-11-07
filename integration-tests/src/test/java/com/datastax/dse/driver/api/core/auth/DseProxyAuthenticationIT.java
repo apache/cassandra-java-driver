@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.fail;
 import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.internal.core.auth.DseGssApiAuthProvider;
-import com.datastax.dse.driver.internal.core.auth.DsePlainTextAuthProvider;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -30,6 +29,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.UnauthorizedException;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
+import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -77,7 +77,7 @@ public class DseProxyAuthenticationIT {
   }
   /**
    * Validates that a connection may be successfully made as user 'alice' using the credentials of a
-   * user 'ben' using {@link DsePlainTextAuthProvider} assuming ben has PROXY.LOGIN authorization on
+   * user 'ben' using {@link PlainTextAuthProvider} assuming ben has PROXY.LOGIN authorization on
    * alice.
    */
   @Test
@@ -89,7 +89,7 @@ public class DseProxyAuthenticationIT {
                 .withString(DseDriverOption.AUTH_PROVIDER_AUTHORIZATION_ID, "alice")
                 .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, "ben")
                 .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "ben")
-                .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, DsePlainTextAuthProvider.class)
+                .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, PlainTextAuthProvider.class)
                 .build())) {
       SimpleStatement select = SimpleStatement.builder("select * from aliceks.alicetable").build();
       ResultSet set = session.execute(select);
@@ -137,7 +137,7 @@ public class DseProxyAuthenticationIT {
                 .withString(DseDriverOption.AUTH_PROVIDER_AUTHORIZATION_ID, "alice")
                 .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, "steve")
                 .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "steve")
-                .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, DsePlainTextAuthProvider.class)
+                .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, PlainTextAuthProvider.class)
                 .build())) {
       SimpleStatement select = SimpleStatement.builder("select * from aliceks.alicetable").build();
       session.execute(select);
@@ -167,7 +167,7 @@ public class DseProxyAuthenticationIT {
   }
   /**
    * Validates that a query may be successfully made as user 'alice' using a {@link DseSession} that
-   * is authenticated to user 'steve' using {@link DsePlainTextAuthProvider} assuming steve has
+   * is authenticated to user 'steve' using {@link PlainTextAuthProvider} assuming steve has
    * PROXY.EXECUTE authorization on alice.
    */
   @Test
@@ -178,7 +178,7 @@ public class DseProxyAuthenticationIT {
             SessionUtils.configLoaderBuilder()
                 .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, "steve")
                 .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "steve")
-                .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, DsePlainTextAuthProvider.class)
+                .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, PlainTextAuthProvider.class)
                 .build())) {
       SimpleStatement select = SimpleStatement.builder("select * from aliceks.alicetable").build();
       SimpleStatement statementAsAlice = ProxyAuthentication.executeAs("alice", select);
@@ -214,7 +214,7 @@ public class DseProxyAuthenticationIT {
             SessionUtils.configLoaderBuilder()
                 .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, "ben")
                 .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "ben")
-                .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, DsePlainTextAuthProvider.class)
+                .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, PlainTextAuthProvider.class)
                 .build())) {
       SimpleStatement select = SimpleStatement.builder("select * from aliceks.alicetable").build();
       SimpleStatement statementAsAlice = ProxyAuthentication.executeAs("alice", select);

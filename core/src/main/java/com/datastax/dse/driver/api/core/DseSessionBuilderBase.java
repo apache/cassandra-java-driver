@@ -16,10 +16,8 @@
 package com.datastax.dse.driver.api.core;
 
 import com.datastax.dse.driver.api.core.session.DseProgrammaticArguments;
-import com.datastax.dse.driver.internal.core.auth.DseProgrammaticPlainTextAuthProvider;
 import com.datastax.dse.driver.internal.core.config.typesafe.DefaultDseDriverConfigLoader;
 import com.datastax.dse.driver.internal.core.context.DseDriverContext;
-import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -81,49 +79,6 @@ public abstract class DseSessionBuilderBase<
   public SelfT withConfigLoader(@Nullable DriverConfigLoader configLoader) {
     // overridden only to customize the javadocs
     return super.withConfigLoader(configLoader);
-  }
-
-  /**
-   * Configures the session to use DSE plaintext authentication with the given username and
-   * password.
-   *
-   * <p>This methods calls {@link #withAuthProvider(AuthProvider)} to register a special provider
-   * implementation. Therefore calling it overrides the configuration (that is, the {@code
-   * advanced.auth-provider.class} option will be ignored).
-   *
-   * <p>Note that this approach holds the credentials in clear text in memory, which makes them
-   * vulnerable to an attacker who is able to perform memory dumps. If this is not acceptable for
-   * you, consider writing your own {@link AuthProvider} implementation (the internal class {@code
-   * PlainTextAuthProviderBase} is a good starting point), and providing it either with {@link
-   * #withAuthProvider(AuthProvider)} or via the configuration ({@code
-   * advanced.auth-provider.class}).
-   */
-  @NonNull
-  @Override
-  public SelfT withAuthCredentials(@NonNull String username, @NonNull String password) {
-    return withAuthCredentials(username, password, "");
-  }
-
-  /**
-   * Configures the session to use DSE plaintext authentication with the given username and
-   * password, and perform proxy authentication with the given authorization id.
-   *
-   * <p>This methods calls {@link #withAuthProvider(AuthProvider)} to register a special provider
-   * implementation. Therefore calling it overrides the configuration (that is, the {@code
-   * advanced.auth-provider.class} option will be ignored).
-   *
-   * <p>Note that this approach holds the credentials in clear text in memory, which makes them
-   * vulnerable to an attacker who is able to perform memory dumps. If this is not acceptable for
-   * you, consider writing your own {@link AuthProvider} implementation (the internal class {@code
-   * PlainTextAuthProviderBase} is a good starting point), and providing it either with {@link
-   * #withAuthProvider(AuthProvider)} or via the configuration ({@code
-   * advanced.auth-provider.class}).
-   */
-  @NonNull
-  public SelfT withAuthCredentials(
-      @NonNull String username, @NonNull String password, @NonNull String authorizationId) {
-    return withAuthProvider(
-        new DseProgrammaticPlainTextAuthProvider(username, password, authorizationId));
   }
 
   @Override

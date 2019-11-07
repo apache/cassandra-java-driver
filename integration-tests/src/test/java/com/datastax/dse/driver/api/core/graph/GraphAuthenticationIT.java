@@ -19,13 +19,13 @@ import static com.datastax.dse.driver.api.core.graph.TinkerGraphAssertions.asser
 
 import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
-import com.datastax.dse.driver.internal.core.auth.DsePlainTextAuthProvider;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
+import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import java.util.concurrent.TimeUnit;
 import org.junit.BeforeClass;
@@ -60,7 +60,7 @@ public class GraphAuthenticationIT {
                 .withString(DseDriverOption.AUTH_PROVIDER_AUTHORIZATION_ID, "")
                 .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, "cassandra")
                 .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "cassandra")
-                .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, DsePlainTextAuthProvider.class)
+                .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, PlainTextAuthProvider.class)
                 .build());
 
     GraphNode gn =

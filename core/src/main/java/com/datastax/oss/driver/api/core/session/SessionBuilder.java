@@ -269,6 +269,32 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
+   * Configures the session to use DSE plaintext authentication with the given username and
+   * password, and perform proxy authentication with the given authorization id.
+   *
+   * <p>This feature is only available in Datastax Enterprise. If connecting to Apache Cassandra,
+   * the authorization id will be ignored; it is recommended to use {@link
+   * #withAuthCredentials(String, String)} instead.
+   *
+   * <p>This methods calls {@link #withAuthProvider(AuthProvider)} to register a special provider
+   * implementation. Therefore calling it overrides the configuration (that is, the {@code
+   * advanced.auth-provider.class} option will be ignored).
+   *
+   * <p>Note that this approach holds the credentials in clear text in memory, which makes them
+   * vulnerable to an attacker who is able to perform memory dumps. If this is not acceptable for
+   * you, consider writing your own {@link AuthProvider} implementation (the internal class {@code
+   * PlainTextAuthProviderBase} is a good starting point), and providing it either with {@link
+   * #withAuthProvider(AuthProvider)} or via the configuration ({@code
+   * advanced.auth-provider.class}).
+   */
+  @NonNull
+  public SelfT withAuthCredentials(
+      @NonNull String username, @NonNull String password, @NonNull String authorizationId) {
+    return withAuthProvider(
+        new ProgrammaticPlainTextAuthProvider(username, password, authorizationId));
+  }
+
+  /**
    * Registers an SSL engine factory for the session.
    *
    * <p>If the factory is provided programmatically with this method, it overrides the configuration
