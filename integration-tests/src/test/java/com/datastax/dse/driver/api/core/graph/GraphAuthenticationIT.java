@@ -17,8 +17,8 @@ package com.datastax.dse.driver.api.core.graph;
 
 import static com.datastax.dse.driver.api.core.graph.TinkerGraphAssertions.assertThat;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
@@ -53,7 +53,7 @@ public class GraphAuthenticationIT {
 
   @Test
   public void should_execute_graph_query_on_authenticated_connection() {
-    DseSession dseSession =
+    CqlSession dseSession =
         SessionUtils.newSession(
             ccm,
             DriverConfigLoader.programmaticBuilder()

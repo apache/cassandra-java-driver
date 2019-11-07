@@ -20,8 +20,8 @@ import static com.datastax.dse.driver.api.core.auth.KerberosUtils.destroyTicket;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
@@ -40,7 +40,7 @@ public class DseGssApiAuthProviderIT {
    */
   @Test
   public void should_authenticate_using_kerberos_with_keytab() {
-    try (DseSession session = ads.newKeyTabSession()) {
+    try (CqlSession session = ads.newKeyTabSession()) {
       ResultSet set = session.execute("select * from system.local");
       assertThat(set).isNotNull();
     }
@@ -57,7 +57,7 @@ public class DseGssApiAuthProviderIT {
     boolean isUnix = osName.contains("mac") || osName.contains("darwin") || osName.contains("nux");
     Assume.assumeTrue(isUnix);
     acquireTicket(ads.getUserPrincipal(), ads.getUserKeytab(), ads.getAdsServer());
-    try (DseSession session = ads.newTicketSession()) {
+    try (CqlSession session = ads.newTicketSession()) {
       ResultSet set = session.execute("select * from system.local");
       assertThat(set).isNotNull();
     } finally {
@@ -75,7 +75,7 @@ public class DseGssApiAuthProviderIT {
   @SuppressWarnings("unused")
   @Test
   public void should_not_authenticate_if_no_ticket_in_cache() {
-    try (DseSession session = ads.newTicketSession()) {
+    try (CqlSession session = ads.newTicketSession()) {
       fail("Expected an AllNodesFailedException");
     } catch (AllNodesFailedException e) {
       assertThat(e.getErrors().size()).isEqualTo(1);
@@ -95,7 +95,7 @@ public class DseGssApiAuthProviderIT {
   @SuppressWarnings("unused")
   @Test
   public void should_not_authenticate_if_keytab_does_not_map_to_valid_principal() {
-    try (DseSession session =
+    try (CqlSession session =
         ads.newKeyTabSession(ads.getUnknownPrincipal(), ads.getUnknownKeytab().getAbsolutePath())) {
       fail("Expected an AllNodesFailedException");
     } catch (AllNodesFailedException e) {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.dse.driver.api.core.cql.reactive;
+package com.datastax.oss.driver.core.cql.reactive;
 
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.rows;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.unavailable;
@@ -25,9 +25,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 import com.codahale.metrics.Metric;
-import com.datastax.dse.driver.api.core.DseSession;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRule;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
+import com.datastax.dse.driver.api.core.cql.reactive.ReactiveRow;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
@@ -39,6 +38,7 @@ import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.loadbalancing.NodeComparator;
+import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -74,8 +74,8 @@ public class ReactiveRetryIT {
   private static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
-  private static final DseSessionRule SESSION_RULE =
-      new DseSessionRuleBuilder(SIMULACRON_RULE)
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(SIMULACRON_RULE)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE, true)
@@ -111,7 +111,7 @@ public class ReactiveRetryIT {
   @Test
   public void should_retry_at_application_level() {
     // Given
-    DseSession session = spy(SESSION_RULE.session());
+    CqlSession session = spy(SESSION_RULE.session());
     BoundCluster cluster = SIMULACRON_RULE.cluster();
     cluster.node(0).prime(when(QUERY_STRING).then(unavailable(ConsistencyLevel.ONE, 1, 0)));
     cluster.node(1).prime(when(QUERY_STRING).then(unavailable(ConsistencyLevel.ONE, 1, 0)));

@@ -17,9 +17,9 @@ package com.datastax.dse.driver.api.core.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.internal.core.auth.DseGssApiAuthProvider;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
@@ -48,7 +48,7 @@ public class DseGssApiAuthProviderAlternateIT {
       should_authenticate_using_kerberos_with_keytab_and_alternate_service_principal_using_system_property(
           String saslSystemProperty) {
     System.setProperty(saslSystemProperty, "alternate");
-    try (DseSession session =
+    try (CqlSession session =
         SessionUtils.newSession(
             ads.getCcm(),
             SessionUtils.configLoaderBuilder()
@@ -77,7 +77,7 @@ public class DseGssApiAuthProviderAlternateIT {
 
   @Test
   public void should_authenticate_using_kerberos_with_keytab_and_alternate_service_principal() {
-    try (DseSession session =
+    try (CqlSession session =
         SessionUtils.newSession(
             ads.getCcm(),
             SessionUtils.configLoaderBuilder()

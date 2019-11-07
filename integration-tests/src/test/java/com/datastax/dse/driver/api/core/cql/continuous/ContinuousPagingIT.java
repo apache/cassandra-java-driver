@@ -19,9 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
 import com.datastax.dse.driver.DseSessionMetric;
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -67,8 +66,8 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
 
   private static CcmRule ccmRule = CcmRule.getInstance();
 
-  private static SessionRule<DseSession> sessionRule =
-      new DseSessionRuleBuilder(ccmRule)
+  private static SessionRule<CqlSession> sessionRule =
+      SessionRule.builder(ccmRule)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withStringList(
@@ -98,7 +97,7 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
   @Test
   @UseDataProvider("pagingOptions")
   public void should_execute_synchronously(Options options) {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     SimpleStatement statement = SimpleStatement.newInstance("SELECT v from test where k=?", KEY);
     DriverExecutionProfile profile = options.asProfile(session);
     ContinuousResultSet result =
@@ -124,7 +123,7 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
   @Test
   @UseDataProvider("pagingOptions")
   public void should_execute_prepared_statement_synchronously(Options options) {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     DriverExecutionProfile profile = options.asProfile(session);
     ContinuousResultSet result =
         session.executeContinuously(prepared.bind(KEY).setExecutionProfile(profile));
@@ -149,7 +148,7 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
   @Test
   @UseDataProvider("pagingOptions")
   public void should_execute_asynchronously(Options options) {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     SimpleStatement statement = SimpleStatement.newInstance("SELECT v from test where k=?", KEY);
     DriverExecutionProfile profile = options.asProfile(session);
     PageStatistics stats =
@@ -175,7 +174,7 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
    */
   @Test
   public void simple_statement_paging_should_be_resilient_to_schema_change() {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     SimpleStatement simple = SimpleStatement.newInstance("select * from test_prepare");
     DriverExecutionProfile profile =
         session
@@ -192,7 +191,7 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
     assertThat(row0.getString("k")).isNotNull();
     assertThat(row0.isNull("v")).isFalse();
     // Make schema change to add b, its metadata should NOT be present in subsequent rows.
-    DseSession schemaChangeSession =
+    CqlSession schemaChangeSession =
         SessionUtils.newSession(
             ccmRule,
             session.getKeyspace().orElseThrow(IllegalStateException::new),
@@ -239,7 +238,7 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
    */
   @Test
   public void prepared_statement_paging_should_be_resilient_to_schema_change() {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     // Create table and prepare select * query against it.
     session.execute("CREATE TABLE test_prep (k text PRIMARY KEY, v int)");
     for (int i = 0; i < 100; i++) {
@@ -261,7 +260,7 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
     assertThat(row0.getString("k")).isNotNull();
     assertThat(row0.isNull("v")).isFalse();
     // Make schema change to drop v, its metadata should be present, values will be null.
-    DseSession schemaChangeSession =
+    CqlSession schemaChangeSession =
         SessionUtils.newSession(
             ccmRule,
             session.getKeyspace().orElseThrow(IllegalStateException::new),
@@ -310,7 +309,7 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
    */
   @Test
   public void should_cancel_with_synchronous_paging() {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     SimpleStatement statement = SimpleStatement.newInstance("SELECT v from test where k=?", KEY);
     // create options and throttle at a page per second so
     // cancel can go out before the next page is sent.
@@ -364,7 +363,7 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
    */
   @Test
   public void should_cancel_with_asynchronous_paging() {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     SimpleStatement statement = SimpleStatement.newInstance("SELECT v from test where k=?", KEY);
     // create options and throttle at a page per second so
     // cancel can go out before the next page is sent.
@@ -435,7 +434,7 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
    */
   @Test
   public void should_cancel_future_when_cancelling_previous_result() {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     SimpleStatement statement = SimpleStatement.newInstance("SELECT v from test where k=?", KEY);
     // create options and throttle at a page per second so
     // cancel can go out before the next page is sent.
@@ -507,7 +506,7 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
    */
   @Test
   public void should_cancel_when_future_is_cancelled() {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     SimpleStatement statement = SimpleStatement.newInstance("SELECT v from test where k=?", KEY);
     // create options and throttle at a page per second so
     // cancel can go out before the next page is sent.
@@ -572,7 +571,7 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
    */
   @Test
   public void should_time_out_when_server_does_not_produce_pages_fast_enough() throws Exception {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     SimpleStatement statement = SimpleStatement.newInstance("SELECT v from test where k=?", KEY);
     // Throttle server at a page per second and set client timeout much lower so that the client
     // will experience a timeout.
@@ -615,7 +614,7 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
    */
   @Test
   public void should_resume_reading_when_client_catches_up() {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     SimpleStatement statement =
         SimpleStatement.newInstance("SELECT * from test_autoread where k=?", KEY);
     DriverExecutionProfile profile =

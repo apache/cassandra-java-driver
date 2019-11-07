@@ -21,10 +21,10 @@ import static com.datastax.dse.driver.api.core.graph.TinkerGraphAssertions.asser
 
 import com.datastax.dse.driver.api.core.graph.DseGraph;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRule;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
@@ -40,8 +40,8 @@ public class GraphTraversalMetaPropertiesRemoteIT {
 
   private static CustomCcmRule ccmRule = CustomCcmRule.builder().withDseWorkloads("graph").build();
 
-  private static DseSessionRule sessionRule =
-      new DseSessionRuleBuilder(ccmRule).withCreateGraph().build();
+  private static SessionRule<CqlSession> sessionRule =
+      SessionRule.builder(ccmRule).withCreateGraph().build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 

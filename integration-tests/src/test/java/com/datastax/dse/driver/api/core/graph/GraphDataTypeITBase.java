@@ -17,10 +17,10 @@ package com.datastax.dse.driver.api.core.graph;
 
 import static com.datastax.dse.driver.api.core.graph.TinkerGraphAssertions.assertThat;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.data.geometry.LineString;
 import com.datastax.dse.driver.api.core.data.geometry.Point;
 import com.datastax.dse.driver.api.core.data.geometry.Polygon;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -170,5 +170,5 @@ public abstract class GraphDataTypeITBase {
    * Note that the {@link SessionRule} (and setupSchema method) must be redeclared in each subclass,
    * since it depends on the CCM rule that can't be shared across serial tests.
    */
-  public abstract DseSession session();
+  public abstract CqlSession session();
 }

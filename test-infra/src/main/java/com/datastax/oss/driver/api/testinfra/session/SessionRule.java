@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.testinfra.session;
 
+import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -60,6 +61,7 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
   private final SchemaChangeListener schemaChangeListener;
   private final CqlIdentifier keyspace;
   private final DriverConfigLoader configLoader;
+  private final String graphName;
 
   // the session that is auto created for this rule and is tied to the given keyspace.
   private SessionT session;
@@ -81,7 +83,8 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
       boolean createKeyspace,
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
-      DriverConfigLoader configLoader) {
+      DriverConfigLoader configLoader,
+      String graphName) {
     this.cassandraResource = cassandraResource;
     this.nodeStateListener = nodeStateListener;
     this.schemaChangeListener = schemaChangeListener;
@@ -90,6 +93,7 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
             ? null
             : SessionUtils.uniqueKeyspaceId();
     this.configLoader = configLoader;
+    this.graphName = graphName;
   }
 
   @Override
@@ -104,10 +108,26 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
           SimpleStatement.newInstance(String.format("USE %s", keyspace.asCql(false))),
           Statement.SYNC);
     }
+    if (graphName != null) {
+      session()
+          .execute(
+              ScriptGraphStatement.newInstance(
+                      String.format("system.graph('%s').ifNotExists().create()", this.graphName))
+                  .setSystemQuery(true),
+              ScriptGraphStatement.SYNC);
+    }
   }
 
   @Override
   protected void after() {
+    if (graphName != null) {
+      session()
+          .execute(
+              ScriptGraphStatement.newInstance(
+                      String.format("system.graph('%s').drop()", this.graphName))
+                  .setSystemQuery(true),
+              ScriptGraphStatement.SYNC);
+    }
     if (keyspace != null) {
       SessionUtils.dropKeyspace(session, keyspace, slowProfile);
     }
@@ -126,6 +146,10 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
    */
   public CqlIdentifier keyspace() {
     return keyspace;
+  }
+
+  public String getGraphName() {
+    return graphName;
   }
 
   /** @return a config profile where the request timeout is 30 seconds. * */

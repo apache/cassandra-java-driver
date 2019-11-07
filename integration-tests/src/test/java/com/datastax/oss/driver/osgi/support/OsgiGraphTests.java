@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.dse.driver.osgi.support;
+package com.datastax.oss.driver.osgi.support;
 
 import static com.datastax.dse.driver.api.core.graph.DseGraph.g;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphResultSet;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
-import com.datastax.dse.driver.api.testinfra.DseSessionBuilderInstantiator;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
 import java.util.List;
 import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
-public interface DseOsgiGraphTests extends DseOsgiSimpleTests {
+public interface OsgiGraphTests extends OsgiSimpleTests {
 
   String CREATE_GRAPH = "system.graph('%s').ifNotExists().create()";
 
@@ -44,7 +44,7 @@ public interface DseOsgiGraphTests extends DseOsgiSimpleTests {
 
   @Override
   default ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder() {
-    return DseSessionBuilderInstantiator.configLoaderBuilder()
+    return DriverConfigLoader.programmaticBuilder()
         .withString(DseDriverOption.GRAPH_NAME, "test_osgi_graph");
   }
 
@@ -54,7 +54,7 @@ public interface DseOsgiGraphTests extends DseOsgiSimpleTests {
    */
   default void connectAndQueryGraph() {
 
-    try (DseSession session = sessionBuilder().build()) {
+    try (CqlSession session = sessionBuilder().build()) {
 
       // Test that Graph + Tinkerpop is available
       session.execute(

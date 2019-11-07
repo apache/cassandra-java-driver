@@ -15,9 +15,9 @@
  */
 package com.datastax.dse.driver.api.core.auth;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.internal.core.auth.DseGssApiAuthProvider;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
@@ -201,7 +201,7 @@ public class EmbeddedAdsRule extends ExternalResource {
     ccm.getCcmBridge().stop();
   }
 
-  public DseSession newKeyTabSession(String userPrincipal, String keytabPath) {
+  public CqlSession newKeyTabSession(String userPrincipal, String keytabPath) {
     return SessionUtils.newSession(
         getCcm(),
         SessionUtils.configLoaderBuilder()
@@ -220,7 +220,7 @@ public class EmbeddedAdsRule extends ExternalResource {
             .build());
   }
 
-  public DseSession newKeyTabSession(String userPrincipal, String keytabPath, String authId) {
+  public CqlSession newKeyTabSession(String userPrincipal, String keytabPath, String authId) {
     return SessionUtils.newSession(
         getCcm(),
         SessionUtils.configLoaderBuilder()
@@ -240,11 +240,11 @@ public class EmbeddedAdsRule extends ExternalResource {
             .build());
   }
 
-  public DseSession newKeyTabSession() {
+  public CqlSession newKeyTabSession() {
     return newKeyTabSession(getUserPrincipal(), getUserKeytab().getAbsolutePath());
   }
 
-  public DseSession newTicketSession() {
+  public CqlSession newTicketSession() {
     return SessionUtils.newSession(
         getCcm(),
         SessionUtils.configLoaderBuilder()

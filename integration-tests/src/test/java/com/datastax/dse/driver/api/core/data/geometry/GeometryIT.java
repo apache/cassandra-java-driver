@@ -17,8 +17,8 @@ package com.datastax.dse.driver.api.core.data.geometry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
@@ -53,10 +53,10 @@ public abstract class GeometryIT<T extends Geometry> {
   private final Class<T> genericType;
   private final T baseSample;
   private final List<T> sampleData;
-  private final SessionRule<DseSession> sessionRule;
+  private final SessionRule<CqlSession> sessionRule;
 
   @SuppressWarnings("unchecked")
-  GeometryIT(List<T> sampleData, Class<T> genericType, SessionRule<DseSession> sessionRule) {
+  GeometryIT(List<T> sampleData, Class<T> genericType, SessionRule<CqlSession> sessionRule) {
     Preconditions.checkArgument(
         sampleData.size() >= 3, "Must be at least 3 samples, was given " + sampleData.size());
     this.baseSample = sampleData.get(0);
@@ -65,7 +65,7 @@ public abstract class GeometryIT<T extends Geometry> {
     this.sessionRule = sessionRule;
   }
 
-  static void onTestContextInitialized(String cqlTypeName, SessionRule<DseSession> sessionRule) {
+  static void onTestContextInitialized(String cqlTypeName, SessionRule<CqlSession> sessionRule) {
     sessionRule
         .session()
         .execute(

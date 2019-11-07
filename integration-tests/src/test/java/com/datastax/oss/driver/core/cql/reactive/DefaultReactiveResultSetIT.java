@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.dse.driver.api.core.cql.reactive;
+package com.datastax.oss.driver.core.cql.reactive;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.dse.driver.api.core.DseSession;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
+import com.datastax.dse.driver.api.core.cql.reactive.ReactiveResultSet;
+import com.datastax.dse.driver.api.core.cql.reactive.ReactiveRow;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
@@ -54,13 +55,13 @@ public class DefaultReactiveResultSetIT {
 
   private static CcmRule ccmRule = CcmRule.getInstance();
 
-  private static SessionRule<DseSession> sessionRule = new DseSessionRuleBuilder(ccmRule).build();
+  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   @BeforeClass
   public static void initialize() {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     session.execute("DROP TABLE IF EXISTS test_reactive_read");
     session.execute("DROP TABLE IF EXISTS test_reactive_write");
     session.checkSchemaAgreement();
@@ -87,7 +88,7 @@ public class DefaultReactiveResultSetIT {
 
   @Before
   public void truncateTables() throws Exception {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     session.execute(
         SimpleStatement.builder("TRUNCATE test_reactive_write")
             .setExecutionProfile(sessionRule.slowProfile())
@@ -227,7 +228,7 @@ public class DefaultReactiveResultSetIT {
   @Test
   public void should_write_batch_cas() {
     BatchStatement batch = createCASBatch();
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     // execute batch for the first time: all inserts should succeed and the server should return
     // only one acknowledgement row with just the [applied] column = true
     ReactiveResultSet rs = session.executeReactive(batch);
@@ -299,7 +300,7 @@ public class DefaultReactiveResultSetIT {
   }
 
   private static void partiallyDeleteInsertedRows() {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     session.execute(" DELETE FROM test_reactive_write WHERE pk = 0 and cc = 5");
     session.execute(" DELETE FROM test_reactive_write WHERE pk = 0 and cc = 6");
     session.execute(" DELETE FROM test_reactive_write WHERE pk = 0 and cc = 7");

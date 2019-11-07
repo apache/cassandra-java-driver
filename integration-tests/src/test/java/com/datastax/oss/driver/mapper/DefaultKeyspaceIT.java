@@ -124,8 +124,8 @@ public class DefaultKeyspaceIT {
                       .build();
               mapper.productDaoDefaultKsNotSet();
             })
-        .isInstanceOf(InvalidQueryException.class)
-        .hasMessageMatching("unconfigured (columnfamily|table) product_simple_default_ks_not_set");
+        .isInstanceOf(InvalidQueryException.class);
+    // don't check the error message, as it's not consistent across Cassandra/DSE versions
   }
 
   @Test

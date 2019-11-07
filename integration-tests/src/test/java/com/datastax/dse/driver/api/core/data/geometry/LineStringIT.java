@@ -17,8 +17,7 @@ package com.datastax.dse.driver.api.core.data.geometry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.dse.driver.api.core.DseSession;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -40,7 +39,7 @@ public class LineStringIT extends GeometryIT<LineString> {
 
   private static CcmRule ccm = CcmRule.getInstance();
 
-  private static SessionRule<DseSession> sessionRule = new DseSessionRuleBuilder(ccm).build();
+  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 

@@ -17,7 +17,7 @@ package com.datastax.dse.driver.api.core.metadata.schema;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.dse.driver.api.core.DseSession;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -66,5 +66,5 @@ public abstract class AbstractMetadataIT {
   }
 
   /* Concrete ITs should return their ClassRule SessionRule. */
-  protected abstract SessionRule<DseSession> getSessionRule();
+  protected abstract SessionRule<CqlSession> getSessionRule();
 }

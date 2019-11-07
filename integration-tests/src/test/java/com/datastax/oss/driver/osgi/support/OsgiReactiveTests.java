@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.dse.driver.osgi.support;
+package com.datastax.oss.driver.osgi.support;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 import static com.datastax.oss.driver.api.querybuilder.relation.Relation.column;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.querybuilder.DseSchemaBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import io.reactivex.Flowable;
 
-public interface DseOsgiReactiveTests extends DseOsgiSimpleTests {
+public interface OsgiReactiveTests extends OsgiSimpleTests {
 
   /**
    * Ensures a session can be established and a query using Reactive can be made when running in an
@@ -35,7 +35,7 @@ public interface DseOsgiReactiveTests extends DseOsgiSimpleTests {
    */
   default void connectAndQueryReactive() {
 
-    try (DseSession session = sessionBuilder().build()) {
+    try (CqlSession session = sessionBuilder().build()) {
 
       Flowable.fromPublisher(
               session.executeReactive(String.format(CREATE_KEYSPACE, "test_osgi_reactive")))

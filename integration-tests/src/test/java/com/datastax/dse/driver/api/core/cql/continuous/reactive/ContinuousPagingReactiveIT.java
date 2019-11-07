@@ -18,10 +18,9 @@ package com.datastax.dse.driver.api.core.cql.continuous.reactive;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.dse.driver.DseSessionMetric;
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.cql.continuous.ContinuousPagingITBase;
 import com.datastax.dse.driver.api.core.cql.reactive.ReactiveRow;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
@@ -57,8 +56,8 @@ public class ContinuousPagingReactiveIT extends ContinuousPagingITBase {
 
   private static CcmRule ccmRule = CcmRule.getInstance();
 
-  private static SessionRule<DseSession> sessionRule =
-      new DseSessionRuleBuilder(ccmRule)
+  private static SessionRule<CqlSession> sessionRule =
+      SessionRule.builder(ccmRule)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withStringList(
@@ -80,7 +79,7 @@ public class ContinuousPagingReactiveIT extends ContinuousPagingITBase {
   @Test
   @UseDataProvider("pagingOptions")
   public void should_execute_reactively(Options options) {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     SimpleStatement statement = SimpleStatement.newInstance("SELECT v from test where k=?", KEY);
     DriverExecutionProfile profile = options.asProfile(session);
     ContinuousReactiveResultSet rs =

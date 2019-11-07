@@ -17,8 +17,7 @@ package com.datastax.dse.driver.api.core.metadata.schema;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.dse.driver.api.core.DseSession;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
@@ -35,14 +34,13 @@ public class DseAggregateMetadataIT extends AbstractMetadataIT {
 
   private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static final SessionRule<DseSession> SESSION_RULE =
-      new DseSessionRuleBuilder(CCM_RULE).build();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Override
-  protected SessionRule<DseSession> getSessionRule() {
+  protected SessionRule<CqlSession> getSessionRule() {
     return DseAggregateMetadataIT.SESSION_RULE;
   }
 

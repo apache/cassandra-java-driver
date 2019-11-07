@@ -13,26 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.dse.driver.osgi;
+package com.datastax.oss.driver.osgi;
 
-import static com.datastax.dse.driver.osgi.support.DseBundleOptions.baseOptions;
-import static com.datastax.dse.driver.osgi.support.DseBundleOptions.driverCoreBundle;
-import static com.datastax.dse.driver.osgi.support.DseBundleOptions.driverDseBundle;
-import static com.datastax.dse.driver.osgi.support.DseBundleOptions.driverDseQueryBuilderBundle;
-import static com.datastax.dse.driver.osgi.support.DseBundleOptions.driverQueryBuilderBundle;
-import static com.datastax.dse.driver.osgi.support.DseBundleOptions.tinkerpopBundles;
-import static com.datastax.oss.driver.osgi.BundleOptions.jacksonBundles;
-import static org.ops4j.pax.exam.CoreOptions.options;
-
-import com.datastax.dse.driver.osgi.support.DseOsgiGraphTests;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.categories.IsolatedTests;
+import com.datastax.oss.driver.osgi.support.BundleOptions;
+import com.datastax.oss.driver.osgi.support.OsgiGraphTests;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.CoreOptions;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
@@ -42,7 +35,7 @@ import org.ops4j.pax.exam.spi.reactors.PerMethod;
 @ExamReactorStrategy(PerMethod.class)
 @Category(IsolatedTests.class)
 @DseRequirement(min = "5.0", description = "Requires Graph")
-public class DseOsgiGraphIT implements DseOsgiGraphTests {
+public class OsgiGraphIT implements OsgiGraphTests {
 
   @ClassRule
   public static final CustomCcmRule CCM_RULE =
@@ -50,14 +43,12 @@ public class DseOsgiGraphIT implements DseOsgiGraphTests {
 
   @Configuration
   public Option[] config() {
-    return options(
-        driverDseBundle(),
-        driverDseQueryBuilderBundle(),
-        driverCoreBundle(),
-        driverQueryBuilderBundle(),
-        baseOptions(),
-        jacksonBundles(),
-        tinkerpopBundles());
+    return CoreOptions.options(
+        BundleOptions.driverCoreBundle(),
+        BundleOptions.driverQueryBuilderBundle(),
+        BundleOptions.baseOptions(),
+        BundleOptions.jacksonBundles(),
+        BundleOptions.tinkerpopBundles());
   }
 
   @Test

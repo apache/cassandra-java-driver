@@ -18,8 +18,7 @@ package com.datastax.dse.driver.api.core.data.time;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.datastax.dse.driver.api.core.DseSession;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
@@ -50,8 +49,8 @@ public class DateRangeIT {
 
   private static CcmRule ccmRule = CcmRule.getInstance();
 
-  private static SessionRule<DseSession> sessionRule =
-      new DseSessionRuleBuilder(ccmRule)
+  private static SessionRule<CqlSession> sessionRule =
+      SessionRule.builder(ccmRule)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
@@ -68,7 +67,7 @@ public class DateRangeIT {
    */
   @Test
   public void should_use_date_range_as_primary_key() throws Exception {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     String tableName = testName.getMethodName();
 
     session.execute(
@@ -113,7 +112,7 @@ public class DateRangeIT {
    */
   @Test
   public void should_store_date_range() throws Exception {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     String tableName = testName.getMethodName();
 
     session.execute(
@@ -147,7 +146,7 @@ public class DateRangeIT {
    */
   @Test
   public void should_disallow_invalid_order() throws Exception {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     String tableName = testName.getMethodName();
 
     session.execute(
@@ -169,7 +168,7 @@ public class DateRangeIT {
   /** Validates that {@link DateRange} can be used in UDT and Tuple types. */
   @Test
   public void should_allow_date_range_in_udt_and_tuple() throws Exception {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     String tableName = testName.getMethodName();
 
     session.execute("CREATE TYPE IF NOT EXISTS test_udt (i int, range 'DateRangeType')");
@@ -217,7 +216,7 @@ public class DateRangeIT {
   /** Validates that {@link DateRange} can be used in Collection types (Map, Set, List). */
   @Test
   public void should_allow_date_range_in_collections() throws Exception {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     String tableName = testName.getMethodName();
 
     session.execute(
@@ -277,7 +276,7 @@ public class DateRangeIT {
    */
   @Test
   public void should_bind_date_range_in_prepared_statement() throws Exception {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     String tableName = testName.getMethodName();
 
     session.execute(
@@ -327,7 +326,7 @@ public class DateRangeIT {
    */
   @Test
   public void should_select_date_range_using_json() throws Exception {
-    DseSession session = sessionRule.session();
+    CqlSession session = sessionRule.session();
     String tableName = testName.getMethodName();
 
     session.execute(

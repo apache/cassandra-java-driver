@@ -15,10 +15,21 @@
  */
 package com.datastax.oss.driver.api.testinfra.session;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigValueFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 public class CqlSessionRuleBuilder extends SessionRuleBuilder<CqlSessionRuleBuilder, CqlSession> {
+
+  private static final AtomicInteger GRAPH_NAME_INDEX = new AtomicInteger();
 
   public CqlSessionRuleBuilder(CassandraResourceRule cassandraResource) {
     super(cassandraResource);
@@ -26,7 +37,42 @@ public class CqlSessionRuleBuilder extends SessionRuleBuilder<CqlSessionRuleBuil
 
   @Override
   public SessionRule<CqlSession> build() {
+
+    final String graphName;
+    final DriverConfigLoader actualLoader;
+    if (createGraph) {
+      graphName = "dsedrivertests_" + GRAPH_NAME_INDEX.getAndIncrement();
+
+      // Inject the generated graph name in the provided configuration, so that the test doesn't
+      // need to set it explicitly on every statement.
+      if (loader == null) {
+        // This would normally be handled in DseSessionBuilder, do it early because we need it now
+        loader = new DefaultDriverConfigLoader();
+      } else {
+        // To keep this relatively simple we assume that if the config loader was provided in a
+        // test, it is the Typesafe-config based one. This is always true in our integration tests.
+        assertThat(loader).isInstanceOf(DefaultDriverConfigLoader.class);
+      }
+      Supplier<Config> originalSupplier = ((DefaultDriverConfigLoader) loader).getConfigSupplier();
+      Supplier<Config> actualSupplier =
+          () ->
+              originalSupplier
+                  .get()
+                  .withValue(
+                      DseDriverOption.GRAPH_NAME.getPath(),
+                      ConfigValueFactory.fromAnyRef(graphName));
+      actualLoader = new DefaultDriverConfigLoader(actualSupplier);
+    } else {
+      graphName = null;
+      actualLoader = loader;
+    }
+
     return new SessionRule<>(
-        cassandraResource, createKeyspace, nodeStateListener, schemaChangeListener, loader);
+        cassandraResource,
+        createKeyspace,
+        nodeStateListener,
+        schemaChangeListener,
+        actualLoader,
+        graphName);
   }
 }

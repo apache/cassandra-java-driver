@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.osgi;
+package com.datastax.oss.driver.osgi.support;
 
 import static org.ops4j.pax.exam.CoreOptions.bundle;
 import static org.ops4j.pax.exam.CoreOptions.junitBundles;
@@ -21,9 +21,11 @@ import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.options;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
+import org.ops4j.pax.exam.CoreOptions;
 import org.ops4j.pax.exam.options.CompositeOption;
 import org.ops4j.pax.exam.options.MavenArtifactProvisionOption;
 import org.ops4j.pax.exam.options.UrlProvisionOption;
+import org.ops4j.pax.exam.options.WrappedUrlProvisionOption;
 import org.ops4j.pax.exam.util.PathUtils;
 
 public class BundleOptions {
@@ -157,5 +159,75 @@ public class BundleOptions {
       throw new IllegalArgumentException(propertyName + " system property is not set");
     }
     return value;
+  }
+
+  public static CompositeOption tinkerpopBundles() {
+    String version = System.getProperty("tinkerpop.version");
+    return () ->
+        options(
+            CoreOptions.wrappedBundle(mavenBundle("org.apache.tinkerpop", "gremlin-core", version))
+                .exports(
+                    // avoid exporting 'org.apache.tinkerpop.gremlin.*' as other Tinkerpop jars have
+                    // this root package as well
+                    "org.apache.tinkerpop.gremlin.jsr223.*",
+                    "org.apache.tinkerpop.gremlin.process.*",
+                    "org.apache.tinkerpop.gremlin.structure.*",
+                    "org.apache.tinkerpop.gremlin.util.*")
+                .bundleVersion(version)
+                .bundleSymbolicName("org.apache.tinkerpop.gremlin-core")
+                .overwriteManifest(WrappedUrlProvisionOption.OverwriteMode.FULL),
+            CoreOptions.wrappedBundle(
+                    mavenBundle("org.apache.tinkerpop", "gremlin-driver", version))
+                .exports("org.apache.tinkerpop.gremlin.driver.*")
+                .bundleVersion(version)
+                .bundleSymbolicName("org.apache.tinkerpop.gremlin-driver")
+                .overwriteManifest(WrappedUrlProvisionOption.OverwriteMode.FULL),
+            CoreOptions.wrappedBundle(
+                    mavenBundle("org.apache.tinkerpop", "tinkergraph-gremlin", version))
+                .exports("org.apache.tinkerpop.gremlin.tinkergraph.*")
+                .bundleVersion(version)
+                .bundleSymbolicName("org.apache.tinkerpop.tinkergraph-gremlin")
+                .overwriteManifest(WrappedUrlProvisionOption.OverwriteMode.FULL),
+            CoreOptions.wrappedBundle(
+                    mavenBundle("org.apache.tinkerpop", "gremlin-shaded", version))
+                .exports("org.apache.tinkerpop.shaded.*")
+                .bundleVersion(version)
+                .bundleSymbolicName("org.apache.tinkerpop.gremlin-shaded")
+                .overwriteManifest(WrappedUrlProvisionOption.OverwriteMode.FULL),
+            // Note: the versions below are hard-coded because they shouldn't change very often,
+            // but if the tests fail because of them, we should consider parameterizing them
+            mavenBundle("commons-configuration", "commons-configuration", "1.10"),
+            mavenBundle("commons-collections", "commons-collections", "3.2.2"),
+            mavenBundle("org.apache.commons", "commons-lang3", "3.8.1"),
+            mavenBundle("commons-lang", "commons-lang", "2.6"),
+            CoreOptions.wrappedBundle(mavenBundle("org.javatuples", "javatuples", "1.2"))
+                .exports("org.javatuples.*")
+                .bundleVersion("1.2")
+                .bundleSymbolicName("org.javatuples")
+                .overwriteManifest(WrappedUrlProvisionOption.OverwriteMode.FULL));
+  }
+
+  public static CompositeOption esriBundles() {
+    return () ->
+        options(
+            CoreOptions.wrappedBundle(
+                    mavenBundle(
+                        "com.esri.geometry", "esri-geometry-api", getVersion("esri.version")))
+                .exports("com.esri.core.geometry.*")
+                .imports("org.json", "org.codehaus.jackson")
+                .bundleVersion(getVersion("esri.version"))
+                .bundleSymbolicName("com.esri.core.geometry")
+                .overwriteManifest(WrappedUrlProvisionOption.OverwriteMode.FULL),
+            mavenBundle("org.json", "json", getVersion("json.version")),
+            mavenBundle(
+                "org.codehaus.jackson", "jackson-core-asl", getVersion("legacy-jackson.version")));
+  }
+
+  public static CompositeOption reactiveBundles() {
+    return () ->
+        options(
+            mavenBundle(
+                "org.reactivestreams", "reactive-streams", getVersion("reactive-streams.version")),
+            mavenBundle("io.reactivex.rxjava2", "rxjava", getVersion("rxjava.version")));
   }
 }

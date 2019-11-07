@@ -18,10 +18,10 @@ package com.datastax.dse.driver.api.core.auth;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.internal.core.auth.DseGssApiAuthProvider;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
@@ -50,7 +50,7 @@ public class DseProxyAuthenticationIT {
   @Before
   public void setupRoles() {
 
-    try (DseSession session = ads.newKeyTabSession()) {
+    try (CqlSession session = ads.newKeyTabSession()) {
       session.execute("CREATE ROLE IF NOT EXISTS alice WITH PASSWORD = 'alice' AND LOGIN = FALSE");
       session.execute("CREATE ROLE IF NOT EXISTS ben WITH PASSWORD = 'ben' AND LOGIN = TRUE");
       session.execute("CREATE ROLE IF NOT EXISTS 'bob@DATASTAX.COM' WITH LOGIN = TRUE");
@@ -82,7 +82,7 @@ public class DseProxyAuthenticationIT {
    */
   @Test
   public void should_allow_plain_text_authorized_user_to_login_as() {
-    try (DseSession session =
+    try (CqlSession session =
         SessionUtils.newSession(
             ads.ccm,
             SessionUtils.configLoaderBuilder()
@@ -99,8 +99,8 @@ public class DseProxyAuthenticationIT {
 
   @Test
   public void should_allow_plain_text_authorized_user_to_login_as_programmatically() {
-    try (DseSession session =
-        DseSession.builder()
+    try (CqlSession session =
+        CqlSession.builder()
             .addContactEndPoints(ads.ccm.getContactPoints())
             .withAuthCredentials("ben", "ben", "alice")
             .build()) {
@@ -115,7 +115,7 @@ public class DseProxyAuthenticationIT {
    */
   @Test
   public void should_allow_kerberos_authorized_user_to_login_as() {
-    try (DseSession session =
+    try (CqlSession session =
         ads.newKeyTabSession(
             bobPrincipal, ads.getKeytabForPrincipal(bobPrincipal).getAbsolutePath(), "alice")) {
       SimpleStatement select = SimpleStatement.builder("select * from aliceks.alicetable").build();
@@ -130,7 +130,7 @@ public class DseProxyAuthenticationIT {
    */
   @Test
   public void should_not_allow_plain_text_unauthorized_user_to_login_as() {
-    try (DseSession session =
+    try (CqlSession session =
         SessionUtils.newSession(
             ads.ccm,
             SessionUtils.configLoaderBuilder()
@@ -153,7 +153,7 @@ public class DseProxyAuthenticationIT {
    */
   @Test
   public void should_not_allow_kerberos_unauthorized_user_to_login_as() throws Exception {
-    try (DseSession session =
+    try (CqlSession session =
         ads.newKeyTabSession(
             charliePrincipal,
             ads.getKeytabForPrincipal(charliePrincipal).getAbsolutePath(),
@@ -166,13 +166,13 @@ public class DseProxyAuthenticationIT {
     }
   }
   /**
-   * Validates that a query may be successfully made as user 'alice' using a {@link DseSession} that
+   * Validates that a query may be successfully made as user 'alice' using a {@link CqlSession} that
    * is authenticated to user 'steve' using {@link PlainTextAuthProvider} assuming steve has
    * PROXY.EXECUTE authorization on alice.
    */
   @Test
   public void should_allow_plain_text_authorized_user_to_execute_as() {
-    try (DseSession session =
+    try (CqlSession session =
         SessionUtils.newSession(
             ads.ccm,
             SessionUtils.configLoaderBuilder()
@@ -187,13 +187,13 @@ public class DseProxyAuthenticationIT {
     }
   }
   /**
-   * Validates that a query may be successfully made as user 'alice' using a {@link DseSession} that
+   * Validates that a query may be successfully made as user 'alice' using a {@link CqlSession} that
    * is authenticated to principal 'charlie@DATASTAX.COM' using {@link DseGssApiAuthProvider}
    * assuming charlie@DATASTAX.COM has PROXY.EXECUTE authorization on alice.
    */
   @Test
   public void should_allow_kerberos_authorized_user_to_execute_as() {
-    try (DseSession session =
+    try (CqlSession session =
         ads.newKeyTabSession(
             charliePrincipal, ads.getKeytabForPrincipal(charliePrincipal).getAbsolutePath())) {
       SimpleStatement select = SimpleStatement.builder("select * from aliceks.alicetable").build();
@@ -203,12 +203,12 @@ public class DseProxyAuthenticationIT {
     }
   }
   /**
-   * Validates that a query may not be made as user 'alice' using a {@link DseSession} that is
+   * Validates that a query may not be made as user 'alice' using a {@link CqlSession} that is
    * authenticated to user 'ben' if ben does not have PROXY.EXECUTE authorization on alice.
    */
   @Test
   public void should_not_allow_plain_text_unauthorized_user_to_execute_as() {
-    try (DseSession session =
+    try (CqlSession session =
         SessionUtils.newSession(
             ads.ccm,
             SessionUtils.configLoaderBuilder()
@@ -225,13 +225,13 @@ public class DseProxyAuthenticationIT {
     }
   }
   /**
-   * Validates that a query may not be made as user 'alice' using a {@link DseSession} that is
+   * Validates that a query may not be made as user 'alice' using a {@link CqlSession} that is
    * authenticated to principal 'bob@DATASTAX.COM' using {@link DseGssApiAuthProvider} if
    * bob@DATASTAX.COM does not have PROXY.EXECUTE authorization on alice.
    */
   @Test
   public void should_not_allow_kerberos_unauthorized_user_to_execute_as() {
-    try (DseSession session =
+    try (CqlSession session =
         ads.newKeyTabSession(
             bobPrincipal, ads.getKeytabForPrincipal(bobPrincipal).getAbsolutePath())) {
       SimpleStatement select = SimpleStatement.builder("select * from aliceks.alicetable").build();

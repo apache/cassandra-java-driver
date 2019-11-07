@@ -15,10 +15,9 @@
  */
 package com.datastax.dse.driver.api.core.insights;
 
-import com.datastax.dse.driver.api.core.DseSession;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
 import com.datastax.dse.driver.internal.core.insights.InsightsClient;
 import com.datastax.dse.driver.internal.core.insights.configuration.InsightsConfiguration;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -44,7 +43,7 @@ public class InsightsClientIT {
               "-Dinsights.default_mode=ENABLED_WITH_LOCAL_STORAGE")
           .build();
 
-  private static SessionRule<DseSession> sessionRule = new DseSessionRuleBuilder(ccmRule).build();
+  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 

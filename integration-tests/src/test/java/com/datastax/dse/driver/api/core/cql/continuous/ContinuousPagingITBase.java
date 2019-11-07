@@ -19,8 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.codahale.metrics.Timer;
 import com.datastax.dse.driver.DseSessionMetric;
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
@@ -38,7 +38,7 @@ public abstract class ContinuousPagingITBase {
 
   static PreparedStatement prepared;
 
-  protected static void initialize(DseSession session, DriverExecutionProfile slowProfile) {
+  protected static void initialize(CqlSession session, DriverExecutionProfile slowProfile) {
     session.execute(
         SimpleStatement.newInstance("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))")
             .setExecutionProfile(slowProfile));
@@ -103,7 +103,7 @@ public abstract class ContinuousPagingITBase {
     };
   }
 
-  protected void validateMetrics(DseSession session) {
+  protected void validateMetrics(CqlSession session) {
     Node node = session.getMetadata().getNodes().values().iterator().next();
     assertThat(session.getMetrics()).isPresent();
     Metrics metrics = session.getMetrics().get();
@@ -141,7 +141,7 @@ public abstract class ContinuousPagingITBase {
       this.expectedPages = expectedPages;
     }
 
-    public DriverExecutionProfile asProfile(DseSession session) {
+    public DriverExecutionProfile asProfile(CqlSession session) {
       return session
           .getContext()
           .getConfig()

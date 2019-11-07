@@ -18,10 +18,10 @@ package com.datastax.dse.driver.api.core.graph;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.dse.driver.api.core.graph.predicates.Search;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRule;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import com.tngtech.java.junit.dataprovider.DataProvider;
@@ -46,8 +46,8 @@ public class GraphTextSearchIndexIT {
   private static CustomCcmRule ccmRule =
       CustomCcmRule.builder().withDseWorkloads("graph", "solr").build();
 
-  private static DseSessionRule sessionRule =
-      new DseSessionRuleBuilder(ccmRule).withCreateGraph().build();
+  private static SessionRule<CqlSession> sessionRule =
+      SessionRule.builder(ccmRule).withCreateGraph().build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 

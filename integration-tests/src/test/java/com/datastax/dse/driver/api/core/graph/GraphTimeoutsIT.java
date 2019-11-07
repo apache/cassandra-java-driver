@@ -19,9 +19,8 @@ import static com.datastax.dse.driver.api.core.graph.ScriptGraphStatement.newIns
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
@@ -39,8 +38,8 @@ public class GraphTimeoutsIT {
 
   public static CustomCcmRule ccmRule = CustomCcmRule.builder().withDseWorkloads("graph").build();
 
-  public static SessionRule<DseSession> sessionRule =
-      new DseSessionRuleBuilder(ccmRule).withCreateGraph().build();
+  public static SessionRule<CqlSession> sessionRule =
+      SessionRule.builder(ccmRule).withCreateGraph().build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 

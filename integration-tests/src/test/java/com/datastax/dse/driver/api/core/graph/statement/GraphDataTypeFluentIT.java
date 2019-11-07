@@ -15,13 +15,12 @@
  */
 package com.datastax.dse.driver.api.core.graph.statement;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.graph.DseGraph;
 import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
 import com.datastax.dse.driver.api.core.graph.GraphDataTypeITBase;
 import com.datastax.dse.driver.api.core.graph.SampleGraphScripts;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -41,8 +40,8 @@ public class GraphDataTypeFluentIT extends GraphDataTypeITBase {
               "graph.gremlin_server.scriptEngines.gremlin-groovy.config.sandbox_enabled", "false")
           .build();
 
-  private static SessionRule<DseSession> sessionRule =
-      new DseSessionRuleBuilder(ccmRule).withCreateGraph().build();
+  private static SessionRule<CqlSession> sessionRule =
+      SessionRule.builder(ccmRule).withCreateGraph().build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
@@ -53,7 +52,7 @@ public class GraphDataTypeFluentIT extends GraphDataTypeITBase {
   }
 
   @Override
-  public DseSession session() {
+  public CqlSession session() {
     return sessionRule.session();
   }
 

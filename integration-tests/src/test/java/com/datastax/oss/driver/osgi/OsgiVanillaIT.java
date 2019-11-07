@@ -13,24 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.dse.driver.osgi;
+package com.datastax.oss.driver.osgi;
 
-import static com.datastax.dse.driver.osgi.support.DseBundleOptions.baseOptions;
-import static com.datastax.dse.driver.osgi.support.DseBundleOptions.driverCoreBundle;
-import static com.datastax.dse.driver.osgi.support.DseBundleOptions.driverDseBundle;
-import static com.datastax.dse.driver.osgi.support.DseBundleOptions.driverDseQueryBuilderBundle;
-import static com.datastax.dse.driver.osgi.support.DseBundleOptions.driverQueryBuilderBundle;
-import static com.datastax.oss.driver.osgi.BundleOptions.jacksonBundles;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.ops4j.pax.exam.CoreOptions.options;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-import com.datastax.dse.driver.osgi.support.DseOsgiSimpleTests;
+import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.categories.IsolatedTests;
+import com.datastax.oss.driver.osgi.support.BundleOptions;
+import com.datastax.oss.driver.osgi.support.OsgiSimpleTests;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
@@ -41,6 +36,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.CoreOptions;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
@@ -50,7 +46,8 @@ import org.slf4j.LoggerFactory;
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerMethod.class)
 @Category(IsolatedTests.class)
-public class DseOsgiVanillaIT implements DseOsgiSimpleTests {
+@DseRequirement(min = "4.7")
+public class OsgiVanillaIT implements OsgiSimpleTests {
 
   @ClassRule
   public static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().withNodes(1).build();
@@ -60,18 +57,16 @@ public class DseOsgiVanillaIT implements DseOsgiSimpleTests {
     // this configuration purposely excludes bundles whose resolution is optional:
     // ESRI, Reactive Streams and Tinkerpop. This allows to validate that the driver can still
     // work properly in an OSGi container as long as the missing packages are not accessed.
-    return options(
-        driverDseBundle(),
-        driverDseQueryBuilderBundle(),
-        driverCoreBundle(),
-        driverQueryBuilderBundle(),
-        baseOptions(),
-        jacksonBundles());
+    return CoreOptions.options(
+        BundleOptions.driverCoreBundle(),
+        BundleOptions.driverQueryBuilderBundle(),
+        BundleOptions.baseOptions(),
+        BundleOptions.jacksonBundles());
   }
 
   @Before
   public void addTestAppender() {
-    Logger logger = (Logger) LoggerFactory.getLogger("com.datastax.dse.driver");
+    Logger logger = (Logger) LoggerFactory.getLogger("com.datastax.oss.driver");
     Level oldLevel = logger.getLevel();
     logger.getLoggerContext().putObject("oldLevel", oldLevel);
     logger.setLevel(Level.WARN);
@@ -82,7 +77,7 @@ public class DseOsgiVanillaIT implements DseOsgiSimpleTests {
 
   @After
   public void removeTestAppender() {
-    Logger logger = (Logger) LoggerFactory.getLogger("com.datastax.dse.driver");
+    Logger logger = (Logger) LoggerFactory.getLogger("com.datastax.oss.driver");
     logger.detachAppender("test");
     Level oldLevel = (Level) logger.getLoggerContext().getObject("oldLevel");
     logger.setLevel(oldLevel);
@@ -95,7 +90,7 @@ public class DseOsgiVanillaIT implements DseOsgiSimpleTests {
   }
 
   private void assertLogMessagesPresent() {
-    Logger logger = (Logger) LoggerFactory.getLogger("com.datastax.dse.driver");
+    Logger logger = (Logger) LoggerFactory.getLogger("com.datastax.oss.driver");
     TestAppender appender = (TestAppender) logger.getAppender("test");
     List<String> warnLogs =
         appender.events.stream()

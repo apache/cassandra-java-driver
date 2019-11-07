@@ -21,7 +21,6 @@ import static com.datastax.dse.driver.api.core.graph.TinkerGraphAssertions.asser
 import static com.datastax.dse.driver.api.core.graph.TinkerPathAssert.validatePathObjects;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
@@ -30,7 +29,7 @@ import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.api.core.graph.SampleGraphScripts;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.dse.driver.api.core.graph.SocialTraversalSource;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
@@ -63,8 +62,8 @@ public class GraphTraversalIT {
 
   private static CustomCcmRule ccmRule = CustomCcmRule.builder().withDseWorkloads("graph").build();
 
-  private static SessionRule<DseSession> sessionRule =
-      new DseSessionRuleBuilder(ccmRule).withCreateGraph().build();
+  private static SessionRule<CqlSession> sessionRule =
+      SessionRule.builder(ccmRule).withCreateGraph().build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 

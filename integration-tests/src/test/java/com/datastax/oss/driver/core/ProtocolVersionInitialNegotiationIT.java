@@ -18,12 +18,16 @@ package com.datastax.oss.driver.core;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import com.datastax.dse.driver.api.core.metadata.DseNodeProperties;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
+import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -74,11 +78,16 @@ public class ProtocolVersionInitialNegotiationIT {
     }
   }
 
+  /** Note that this test will need to be updated as new protocol versions are introduced. */
   @CassandraRequirement(min = "2.2", description = "required to meet default protocol version")
   @Test
   public void should_not_downgrade_if_server_supports_latest_version() {
     try (CqlSession session = SessionUtils.newSession(ccm)) {
-      assertThat(session.getContext().getProtocolVersion().getCode()).isEqualTo(4);
+      Metadata metadata = session.getMetadata();
+      Node node = metadata.getNodes().values().iterator().next();
+      boolean isDse = node.getExtras().containsKey(DseNodeProperties.DSE_VERSION);
+      assertThat(session.getContext().getProtocolVersion())
+          .isEqualTo(isDse ? ProtocolVersion.DSE_V2 : ProtocolVersion.V4);
       session.execute("select * from system.local");
     }
   }

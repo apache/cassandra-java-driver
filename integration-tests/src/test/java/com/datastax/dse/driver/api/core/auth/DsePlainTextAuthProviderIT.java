@@ -18,7 +18,6 @@ package com.datastax.dse.driver.api.core.auth;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -58,7 +57,7 @@ public class DsePlainTextAuthProviderIT {
 
   @Test
   public void should_connect_dse_plaintext_auth() {
-    try (DseSession session =
+    try (CqlSession session =
         SessionUtils.newSession(
             ccm,
             SessionUtils.configLoaderBuilder()
@@ -73,8 +72,8 @@ public class DsePlainTextAuthProviderIT {
 
   @Test
   public void should_connect_dse_plaintext_auth_programmatically() {
-    try (DseSession session =
-        DseSession.builder()
+    try (CqlSession session =
+        CqlSession.builder()
             .addContactEndPoints(ccm.getContactPoints())
             .withAuthCredentials("cassandra", "cassandra")
             .build()) {
@@ -106,7 +105,7 @@ public class DsePlainTextAuthProviderIT {
   @SuppressWarnings("unused")
   @Test
   public void should_not_connect_without_credentials() {
-    try (DseSession session =
+    try (CqlSession session =
         SessionUtils.newSession(
             ccm,
             SessionUtils.configLoaderBuilder()

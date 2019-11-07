@@ -23,10 +23,9 @@ import static com.datastax.dse.driver.api.core.graph.SampleGraphScripts.ALLOW_SC
 import static com.datastax.dse.driver.api.core.graph.SampleGraphScripts.MAKE_STRICT;
 import static com.datastax.dse.driver.api.core.graph.TinkerGraphAssertions.assertThat;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.graph.GraphResultSet;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -44,8 +43,8 @@ public class GraphTraversalMetaPropertiesIT {
 
   private static CustomCcmRule ccmRule = CustomCcmRule.builder().withDseWorkloads("graph").build();
 
-  private static SessionRule<DseSession> sessionRule =
-      new DseSessionRuleBuilder(ccmRule).withCreateGraph().build();
+  private static SessionRule<CqlSession> sessionRule =
+      SessionRule.builder(ccmRule).withCreateGraph().build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
