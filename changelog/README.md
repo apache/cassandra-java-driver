@@ -2,8 +2,9 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.4.0 (in progress)
+### 4.3.1 (in progress)
 
+- [bug] JAVA-2527: Allow AllNodesFailedException to accept more than one error per node
 
 ### 4.3.0
 
