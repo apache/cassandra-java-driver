@@ -69,8 +69,10 @@
     <jax-rs.version>2.0.1</jax-rs.version>
     <jsr353-ri.version>1.1.4</jsr353-ri.version>
     <rxjava.version>2.2.2</rxjava.version>
-    <json.version>20180130</json.version> <!-- esri dependency (used only in OSGi integration tests) -->
-    <legacy-jackson.version>1.9.12</legacy-jackson.version> <!-- esri dependency (used only in OSGi integration tests) -->
+    <json.version>20180130</json.version>
+    <!-- esri dependency (used only in OSGi integration tests) -->
+    <legacy-jackson.version>1.9.12</legacy-jackson.version>
+    <!-- esri dependency (used only in OSGi integration tests) -->
     <awaitility.version>3.1.6</awaitility.version>
     <apacheds.version>2.0.0-M19</apacheds.version>
     <surefire.version>2.19.1</surefire.version>
@@ -689,8 +691,7 @@ limitations under the License.]]></inlineHeader>
           <verbose>false</verbose>
           <quiet>true</quiet>
           <doclint>all,-missing</doclint>
-          <excludePackageNames>com.datastax.oss.driver.internal:com.datastax.dse.driver.internal
-          </excludePackageNames>
+          <excludePackageNames>com.datastax.oss.driver.internal:com.datastax.dse.driver.internal</excludePackageNames>
           <tags>
             <!--
               For custom `leaks-private-api` tag (apparently dash separators are not handled

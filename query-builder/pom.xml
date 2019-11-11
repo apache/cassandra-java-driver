@@ -68,7 +68,7 @@
           <instructions>
             <Bundle-SymbolicName>com.datastax.oss.driver.querybuilder</Bundle-SymbolicName>
             <Import-Package>!net.jcip.annotations.*, !edu.umd.cs.findbugs.annotations.*, *</Import-Package>
-            <Export-Package>com.datastax.oss.driver.*.querybuilder.*</Export-Package>
+            <Export-Package>com.datastax.oss.driver.*.querybuilder.*, com.datastax.dse.driver.*.querybuilder.*</Export-Package>
           </instructions>
         </configuration>
       </plugin>

@@ -82,6 +82,18 @@
       <artifactId>HdrHistogram</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.tinkerpop</groupId>
+      <artifactId>gremlin-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.tinkerpop</groupId>
+      <artifactId>tinkergraph-gremlin</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.reactivestreams</groupId>
+      <artifactId>reactive-streams</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.github.stephenc.jcip</groupId>
       <artifactId>jcip-annotations</artifactId>
     </dependency>
@@ -116,11 +128,13 @@
                   <!--
                   Include:
                   - The core driver itself; it is not relocated but needs to be included.
-                  - All the dependencies we want to shade & relocate: currently
-                    - all the Netty artifacts.
+                  - All the dependencies we want to shade & relocate.
                   -->
                   <include>com.datastax.oss:java-driver-core</include>
                   <include>io.netty:*</include>
+                  <include>com.esri.geometry:*</include>
+                  <include>org.json:*</include>
+                  <include>org.codehaus.jackson:*</include>
                   <include>com.fasterxml.jackson.core:*</include>
                 </includes>
               </artifactSet>
@@ -130,13 +144,31 @@
                   <shadedPattern>com.datastax.oss.driver.shaded.netty</shadedPattern>
                 </relocation>
                 <relocation>
+                  <pattern>com.esri</pattern>
+                  <shadedPattern>com.datastax.oss.driver.shaded.esri</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.json</pattern>
+                  <shadedPattern>com.datastax.oss.driver.shaded.json</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.codehaus.jackson</pattern>
+                  <shadedPattern>com.datastax.oss.driver.shaded.codehaus.jackson</shadedPattern>
+                </relocation>
+                <relocation>
                   <pattern>com.fasterxml.jackson</pattern>
                   <shadedPattern>com.datastax.oss.driver.shaded.fasterxml.jackson</shadedPattern>
                 </relocation>
               </relocations>
               <filters>
                 <!-- Note: most exclusions are done later on with the dependency plugin, but
-                 this one must be done here because its pattern is too wide -->
+                 these one must be done here because their pattern is too wide -->
+                <filter>
+                  <artifact>org.codehaus.jackson:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/**</exclude>
+                  </excludes>
+                </filter>
                 <filter>
                   <artifact>com.fasterxml.jackson.core:*</artifact>
                   <excludes>
@@ -170,7 +202,7 @@
               Exclude leftovers from the shading phase (this could also be done with a
               resource transformer by the shade plugin itself, but this way is more flexible).
               -->
-              <excludes>META-INF/maven/com.datastax.oss/java-driver-core/**, META-INF/maven/io.netty/**,</excludes>
+              <excludes>META-INF/maven/com.datastax.oss/java-driver-core/**, META-INF/maven/io.netty/**, META-INF/maven/com.esri.geometry/**, META-INF/maven/org.json/**</excludes>
             </configuration>
           </execution>
           <!-- Unpack shaded sources in order to run javadoc on them: -->
@@ -204,7 +236,7 @@
             </goals>
             <configuration>
               <sourcepath>${project.build.directory}/shaded-sources</sourcepath>
-              <excludePackageNames>com.datastax.oss.driver.internal:com.datastax.oss.driver.shaded</excludePackageNames>
+              <excludePackageNames>com.datastax.oss.driver.internal, com.datastax.dse.driver.internal, com.datastax.oss.driver.shaded</excludePackageNames>
               <!--
                 javadoc processes the shaded Netty sources (even though they're not included in the
                 report), and will complain if it doesn't find JCTools classes.
@@ -242,9 +274,9 @@
                 <DynamicImport-Package>*</DynamicImport-Package>
                 <Import-Package>
                   <!--
-                  1) Don't import packages shaded in the OSS driver, such as Netty (this excludes
-                  Guava, which resides in a separate bundle);
-                  -->!com.datastax.oss.driver.shaded.netty.*,
+                  1) Don't import packages shaded in the driver bundle. Note that shaded-guava lives
+                  in its own bundle, so we must explicitly *not* mention it here.
+                  -->!com.datastax.oss.driver.shaded.netty.*, !com.datastax.oss.driver.shaded.esri.*, !com.datastax.oss.driver.shaded.json.*, !com.datastax.oss.driver.shaded.codehaus.jackson.*, !com.datastax.oss.driver.shaded.fasterxml.jackson.*,
                   <!--
                   2) Don't include the packages below because they contain annotations only and are
                   not required at runtime.
@@ -256,7 +288,7 @@
                   Note: dependencies marked as optional are by default included with optional
                   resolution in the manifest; we only need to manually set the resolution to
                   optional for dependencies declared as non-optional in the pom files.
-                  -->jnr.*;resolution:=optional,
+                  -->jnr.*;resolution:=optional, com.esri.core.geometry.*;resolution:=optional, org.reactivestreams.*;resolution:=optional, org.apache.tinkerpop.*;resolution:=optional,
                   <!--
                   4) Don't import packages imported by shaded classes, if they are not used by the
                   driver bundle.
@@ -267,7 +299,7 @@
                 1) The driver's packages (API and internal);
                 2) All shaded packages, except Guava which resides in a separate bundle.
                 -->
-                <Export-Package>com.datastax.oss.driver.api.core.*, com.datastax.oss.driver.internal.core.*, com.datastax.oss.driver.shaded.netty.*,</Export-Package>
+                <Export-Package>com.datastax.oss.driver.api.core.*, com.datastax.oss.driver.internal.core.*, com.datastax.dse.driver.api.core.*, com.datastax.dse.driver.internal.core.*, com.datastax.oss.driver.shaded.netty.*, com.datastax.oss.driver.shaded.esri.*, com.datastax.oss.driver.shaded.json.*, com.datastax.oss.driver.shaded.codehaus.jackson.*, com.datastax.oss.driver.shaded.fasterxml.jackson.*,</Export-Package>
               </instructions>
               <rebuildBundle>true</rebuildBundle>
             </configuration>

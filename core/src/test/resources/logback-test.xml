@@ -17,14 +17,14 @@
 
 -->
 <configuration>
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
-    <root level="ERROR">
-        <appender-ref ref="STDOUT"/>
-    </root>
-    <logger name="com.datastax.oss.driver" level= "${ossDriverLevel:-WARN}"/>
-    <logger name="com.datastax.dse.driver" level= "${dseDriverLevel:-WARN}"/>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+  <root level="ERROR">
+    <appender-ref ref="STDOUT"/>
+  </root>
+  <logger name="com.datastax.oss.driver" level="${ossDriverLevel:-WARN}"/>
+  <logger name="com.datastax.dse.driver" level="${dseDriverLevel:-WARN}"/>
 </configuration>
