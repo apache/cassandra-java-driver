@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
@@ -155,14 +157,32 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
     private static final ByteBuffer SERVER_INITIAL_CHALLENGE =
         ByteBuffer.wrap("PLAIN-START".getBytes(StandardCharsets.UTF_8)).asReadOnlyBuffer();
 
+    private static final EndPoint DUMMY_END_POINT =
+        new EndPoint() {
+          @NonNull
+          @Override
+          public SocketAddress resolve() {
+            return new InetSocketAddress("127.0.0.1", 9042);
+          }
+
+          @NonNull
+          @Override
+          public String asMetricPrefix() {
+            return ""; // will never be used
+          }
+        };
+
     private final ByteBuffer encodedCredentials;
     private final EndPoint endPoint;
 
     protected PlainTextAuthenticator(
-        Credentials credentials, EndPoint endPoint, String serverAuthenticator) {
+        @NonNull Credentials credentials,
+        @NonNull EndPoint endPoint,
+        @NonNull String serverAuthenticator) {
       super(serverAuthenticator);
 
       Objects.requireNonNull(credentials);
+      Objects.requireNonNull(endPoint);
 
       ByteBuffer authorizationId = toUtf8Bytes(credentials.getAuthorizationId());
       ByteBuffer username = toUtf8Bytes(credentials.getUsername());
@@ -183,6 +203,23 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
       clear(password);
 
       this.endPoint = endPoint;
+    }
+
+    /**
+     * @deprecated Preserved for backward compatibility, implementors should use {@link
+     *     #PlainTextAuthenticator(Credentials, EndPoint, String)} instead.
+     */
+    @Deprecated
+    protected PlainTextAuthenticator(@NonNull Credentials credentials) {
+      this(
+          credentials,
+          // It's unlikely that this class was ever extended by third parties, but if it was, assume
+          // that it was not written for DSE:
+          // - dummy end point because we should never need to build an auth exception
+          DUMMY_END_POINT,
+          // - default OSS authenticator name (the only thing that matters is how this string
+          //   compares to "DseAuthenticator")
+          "org.apache.cassandra.auth.PasswordAuthenticator");
     }
 
     private static ByteBuffer toUtf8Bytes(char[] charArray) {

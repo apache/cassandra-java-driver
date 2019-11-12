@@ -7,8 +7,8 @@
         "packages": {
           "regex": true,
           "exclude": [
-            "com\\.datastax\\.oss\\.protocol\\.internal(\\..+)?",
-            "com\\.datastax\\.oss\\.driver\\.internal(\\..+)?",
+            "com\\.datastax\\.(oss|dse)\\.protocol\\.internal(\\..+)?",
+            "com\\.datastax\\.(oss|dse)\\.driver\\.internal(\\..+)?",
             "com\\.datastax\\.oss\\.driver\\.shaded(\\..+)?",
             "org\\.assertj(\\..+)?"
           ]
@@ -4837,6 +4837,20 @@
         "new": "parameter void com.datastax.oss.driver.api.core.ssl.ProgrammaticSslEngineFactory::<init>(===javax.net.ssl.SSLContext===)",
         "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
         "justification": "JAVA-2434: added @NonNull to ProgrammaticSslEngineFactory(SSLContext) constructor"
+      },
+      {
+        "code": "java.class.nonFinalClassInheritsFromNewClass",
+        "old": "class com.datastax.oss.driver.api.core.auth.PlainTextAuthProviderBase.PlainTextAuthenticator",
+        "new": "class com.datastax.oss.driver.api.core.auth.PlainTextAuthProviderBase.PlainTextAuthenticator",
+        "superClass": "com.datastax.dse.driver.api.core.auth.BaseDseAuthenticator",
+        "justification": "New parent doesn't add constraints for implementors"
+      },
+      {
+        "code": "java.method.exception.runtimeAdded",
+        "old": "method com.datastax.oss.driver.api.core.auth.Authenticator com.datastax.oss.driver.api.core.auth.PlainTextAuthProviderBase::newAuthenticator(com.datastax.oss.driver.api.core.metadata.EndPoint, java.lang.String)",
+        "new": "method com.datastax.oss.driver.api.core.auth.Authenticator com.datastax.oss.driver.api.core.auth.PlainTextAuthProviderBase::newAuthenticator(com.datastax.oss.driver.api.core.metadata.EndPoint, java.lang.String) throws com.datastax.oss.driver.api.core.auth.AuthenticationException",
+        "exception": "com.datastax.oss.driver.api.core.auth.AuthenticationException",
+        "justification": "New exception is unchecked"
       }
     ]
   }

@@ -96,6 +96,21 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
     this.graphName = graphName;
   }
 
+  public SessionRule(
+      CassandraResourceRule cassandraResource,
+      boolean createKeyspace,
+      NodeStateListener nodeStateListener,
+      SchemaChangeListener schemaChangeListener,
+      DriverConfigLoader configLoader) {
+    this(
+        cassandraResource,
+        createKeyspace,
+        nodeStateListener,
+        schemaChangeListener,
+        configLoader,
+        null);
+  }
+
   @Override
   protected void before() {
     session =
