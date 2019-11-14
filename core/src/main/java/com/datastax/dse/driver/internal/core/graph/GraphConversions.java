@@ -18,9 +18,14 @@ package com.datastax.dse.driver.internal.core.graph;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
-import com.datastax.dse.driver.api.core.graph.*;
+import com.datastax.dse.driver.api.core.graph.BatchGraphStatement;
+import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
+import com.datastax.dse.driver.api.core.graph.GraphNode;
+import com.datastax.dse.driver.api.core.graph.GraphStatement;
+import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
+import com.datastax.dse.driver.internal.core.graph.binary.buffer.DseNettyBufferFactory;
 import com.datastax.dse.protocol.internal.request.RawBytesQuery;
 import com.datastax.dse.protocol.internal.request.query.ContinuousPagingOptions;
 import com.datastax.dse.protocol.internal.request.query.DseQueryOptions;
@@ -45,9 +50,13 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.time.Duration;
-import java.util.*;
-import org.apache.tinkerpop.gremlin.driver.ser.SerializationException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
+import org.apache.tinkerpop.gremlin.structure.io.Buffer;
+import org.apache.tinkerpop.gremlin.structure.io.BufferFactory;
 
 /**
  * Utility class to move boilerplate out of {@link GraphRequestHandler}.
@@ -69,6 +78,8 @@ public class GraphConversions extends Conversions {
 
   static final String LANGUAGE_GROOVY = "gremlin-groovy";
   static final String LANGUAGE_BYTECODE = "bytecode-json";
+
+  private static final BufferFactory<ByteBuf> FACTORY = new DseNettyBufferFactory();
 
   @VisibleForTesting static final byte[] EMPTY_STRING_QUERY = "".getBytes(UTF_8);
 
@@ -105,9 +116,8 @@ public class GraphConversions extends Conversions {
       try {
         Map<String, Object> queryParams = ((ScriptGraphStatement) statement).getQueryParams();
         if (subProtocol.isGraphBinary()) {
-          ByteBuf graphBinaryParams = graphBinaryModule.serialize(queryParams);
-          encodedQueryParams =
-              Collections.singletonList(ByteBufUtil.toByteBuffer(graphBinaryParams));
+          Buffer graphBinaryParams = graphBinaryModule.serialize(queryParams);
+          encodedQueryParams = Collections.singletonList(graphBinaryParams.nioBuffer());
           graphBinaryParams.release();
         } else {
           encodedQueryParams =
@@ -173,9 +183,8 @@ public class GraphConversions extends Conversions {
       try {
         Map<String, Object> queryParams = ((ScriptGraphStatement) statement).getQueryParams();
         if (subProtocol.isGraphBinary()) {
-          ByteBuf graphBinaryParams = graphBinaryModule.serialize(queryParams);
-          encodedQueryParams =
-              Collections.singletonList(ByteBufUtil.toByteBuffer(graphBinaryParams));
+          Buffer graphBinaryParams = graphBinaryModule.serialize(queryParams);
+          encodedQueryParams = Collections.singletonList(graphBinaryParams.nioBuffer());
           graphBinaryParams.release();
         } else {
           encodedQueryParams =
@@ -323,10 +332,10 @@ public class GraphConversions extends Conversions {
     if (subProtocol.isGraphBinary() && graphLanguage.equals(LANGUAGE_BYTECODE)) {
       Object bytecodeQuery = bytecodeToSerialize(statement);
       try {
-        ByteBuf bytecodeByteBuf = graphBinaryModule.serialize(bytecodeQuery);
-        payload.put(GRAPH_BINARY_QUERY_OPTION_KEY, ByteBufUtil.toByteBuffer(bytecodeByteBuf));
+        Buffer bytecodeByteBuf = graphBinaryModule.serialize(bytecodeQuery);
+        payload.put(GRAPH_BINARY_QUERY_OPTION_KEY, bytecodeByteBuf.nioBuffer());
         bytecodeByteBuf.release();
-      } catch (SerializationException e) {
+      } catch (IOException e) {
         throw new UncheckedIOException(e);
       }
     }
@@ -386,10 +395,7 @@ public class GraphConversions extends Conversions {
     // there should be only one column in the given row
     Preconditions.checkArgument(data.size() == 1, "Invalid row given to deserialize");
 
-    // TODO: avoid the conversion to ByteBuffer and use Netty ByteBuf directly from the driver since
-    // GraphBinary accepts ByteBufs.
-    // This would require fiddling with the DseFrameCodecs and the GraphRequestHandler
-    ByteBuf toDeserialize = ByteBufUtil.toByteBuf(data.get(0));
+    Buffer toDeserialize = FACTORY.wrap(data.get(0));
     Object deserializedObject = graphBinaryModule.deserialize(toDeserialize);
     toDeserialize.release();
     assert deserializedObject instanceof Traverser

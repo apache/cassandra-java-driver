@@ -7,11 +7,18 @@
 package com.datastax.dse.driver.internal.core.graph.binary;
 
 import com.datastax.dse.driver.internal.core.context.DseDriverContext;
-import com.datastax.dse.driver.internal.core.graph.ByteBufUtil;
+import com.datastax.dse.driver.internal.core.graph.TinkerpopBufferUtil;
+import com.datastax.dse.driver.internal.core.graph.binary.buffer.DseNettyBufferFactory;
+import com.datastax.dse.driver.internal.core.protocol.TinkerpopBufferPrimitiveCodec;
 import com.datastax.oss.driver.api.core.data.GettableByIndex;
 import com.datastax.oss.driver.api.core.data.SettableByIndex;
-import com.datastax.oss.driver.api.core.type.*;
-import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
+import com.datastax.oss.driver.api.core.type.CustomType;
+import com.datastax.oss.driver.api.core.type.DataType;
+import com.datastax.oss.driver.api.core.type.ListType;
+import com.datastax.oss.driver.api.core.type.MapType;
+import com.datastax.oss.driver.api.core.type.SetType;
+import com.datastax.oss.driver.api.core.type.TupleType;
+import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.core.type.DataTypeHelper;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -19,30 +26,29 @@ import com.datastax.oss.protocol.internal.PrimitiveCodec;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.result.RawType;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.netty.buffer.ByteBuf;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import org.apache.tinkerpop.gremlin.structure.io.Buffer;
 
 class ComplexTypeSerializerUtil {
 
-  private static final PrimitiveCodec<ByteBuf> protocolCodec =
-      new ByteBufPrimitiveCodec(GraphBinaryModule.ALLOCATOR);
+  private static final PrimitiveCodec<Buffer> codec =
+      new TinkerpopBufferPrimitiveCodec(new DseNettyBufferFactory());
 
-  static void encodeTypeDefinition(DataType type, ByteBuf buffer, DseDriverContext driverContext) {
+  static void encodeTypeDefinition(DataType type, Buffer buffer, DseDriverContext driverContext) {
     RawType protocolType = toProtocolSpec(type);
-    protocolType.encode(buffer, protocolCodec, driverContext.getProtocolVersion().getCode());
+    protocolType.encode(buffer, codec, driverContext.getProtocolVersion().getCode());
   }
 
-  static DataType decodeTypeDefinition(ByteBuf buffer, DseDriverContext driverContext) {
-    RawType type =
-        RawType.decode(buffer, protocolCodec, driverContext.getProtocolVersion().getCode());
+  static DataType decodeTypeDefinition(Buffer buffer, DseDriverContext driverContext) {
+    RawType type = RawType.decode(buffer, codec, driverContext.getProtocolVersion().getCode());
     return DataTypeHelper.fromProtocolSpec(type, driverContext);
   }
 
-  /* Netty-based encoding of UDT values, based on the UdtCoded.encode() method, but using Netty buffers directly to avoid
+  /* Tinkerpop-based encoding of UDT values, based on the UdtCoded.encode() method, but using Tinkerpop buffers directly to avoid
   unnecessary NIO ByteBuffer copies. */
-  static void encodeValue(@Nullable GettableByIndex value, ByteBuf nettyBuf) {
+  static void encodeValue(@Nullable GettableByIndex value, Buffer tinkerBuff) {
     if (value == null) {
       return;
     }
@@ -50,24 +56,24 @@ class ComplexTypeSerializerUtil {
     for (int i = 0; i < value.size(); i++) {
       ByteBuffer fieldBuffer = value.getBytesUnsafe(i);
       if (fieldBuffer == null) {
-        nettyBuf.writeInt(-1);
+        tinkerBuff.writeInt(-1);
       } else {
-        nettyBuf.writeInt(fieldBuffer.remaining());
-        nettyBuf.writeBytes(fieldBuffer.duplicate());
+        tinkerBuff.writeInt(fieldBuffer.remaining());
+        tinkerBuff.writeBytes(fieldBuffer.duplicate());
       }
     }
   }
 
-  /* This method will move forward the netty buffer given in parameter based on the UDT value read.
-  Content of the method is roughly equivalent to UdtCodec.decode(), but using Netty buffers directly to avoid
+  /* This method will move forward the Tinkerpop buffer given in parameter based on the UDT value read.
+  Content of the method is roughly equivalent to UdtCodec.decode(), but using Tinkerpop buffers directly to avoid
   unnecessary NIO ByteBuffer copies. */
-  static <T extends SettableByIndex<T>> T decodeValue(ByteBuf nettyBuf, T val, int size) {
+  static <T extends SettableByIndex<T>> T decodeValue(Buffer tinkerBuff, T val, int size) {
     try {
       for (int i = 0; i < size; i++) {
-        int fieldSize = nettyBuf.readInt();
+        int fieldSize = tinkerBuff.readInt();
         if (fieldSize >= 0) {
           // the reassignment is to shut down the error-prone warning about ignoring return values.
-          val = val.setBytesUnsafe(i, ByteBufUtil.readBytes(nettyBuf, fieldSize));
+          val = val.setBytesUnsafe(i, TinkerpopBufferUtil.readBytes(tinkerBuff, fieldSize));
         }
       }
       return val;

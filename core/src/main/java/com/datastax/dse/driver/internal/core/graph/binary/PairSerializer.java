@@ -6,10 +6,10 @@
  */
 package com.datastax.dse.driver.internal.core.graph.binary;
 
-import io.netty.buffer.ByteBuf;
-import org.apache.tinkerpop.gremlin.driver.ser.SerializationException;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryReader;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryWriter;
+import java.io.IOException;
+import org.apache.tinkerpop.gremlin.structure.io.Buffer;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryReader;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryWriter;
 import org.javatuples.Pair;
 
 public class PairSerializer extends AbstractDynamicGraphBinaryCustomSerializer<Pair> {
@@ -20,14 +20,14 @@ public class PairSerializer extends AbstractDynamicGraphBinaryCustomSerializer<P
   }
 
   @Override
-  protected Pair readDynamicCustomValue(ByteBuf buffer, GraphBinaryReader context)
-      throws SerializationException {
+  protected Pair readDynamicCustomValue(Buffer buffer, GraphBinaryReader context)
+      throws IOException {
     return new Pair<>(context.read(buffer), context.read(buffer));
   }
 
   @Override
-  protected void writeDynamicCustomValue(Pair value, ByteBuf buffer, GraphBinaryWriter context)
-      throws SerializationException {
+  protected void writeDynamicCustomValue(Pair value, Buffer buffer, GraphBinaryWriter context)
+      throws IOException {
     context.write(value.getValue0(), buffer);
     context.write(value.getValue1(), buffer);
   }

@@ -35,7 +35,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
-import io.netty.buffer.ByteBuf;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -45,10 +45,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
-import org.apache.tinkerpop.gremlin.driver.ser.SerializationException;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryReader;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryWriter;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.TypeSerializerRegistry;
+import org.apache.tinkerpop.gremlin.structure.io.Buffer;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryReader;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryWriter;
+import org.apache.tinkerpop.gremlin.structure.io.binary.TypeSerializerRegistry;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -160,12 +160,12 @@ public class GraphBinaryDataTypesTest {
 
   @Test
   @UseDataProvider("datatypes")
-  public void datatypesTest(Object value) throws SerializationException {
+  public void datatypesTest(Object value) throws IOException {
     verifySerDe(value);
   }
 
   @Test
-  public void complexUdtTests() throws SerializationException {
+  public void complexUdtTests() throws IOException {
     UserDefinedType type1 =
         new UserDefinedTypeBuilder("ks", "udt1").withField("a", INT).withField("b", TEXT).build();
     verifySerDe(type1.newValue(1, "2"));
@@ -211,7 +211,7 @@ public class GraphBinaryDataTypesTest {
   }
 
   @Test
-  public void complexTypesAndGeoTests() throws SerializationException {
+  public void complexTypesAndGeoTests() throws IOException {
 
     TupleType tuple = tupleOf(DseDataTypes.POINT, DseDataTypes.LINE_STRING, DseDataTypes.POLYGON);
     tuple.attach(context);
@@ -250,8 +250,8 @@ public class GraphBinaryDataTypesTest {
   }
   // TODO add predicate tests
 
-  private void verifySerDe(Object input) throws SerializationException {
-    ByteBuf result = graphBinaryModule.serialize(input);
+  private void verifySerDe(Object input) throws IOException {
+    Buffer result = graphBinaryModule.serialize(input);
     Object deserialized = graphBinaryModule.deserialize(result);
     result.release();
     assertThat(deserialized).isEqualTo(input);

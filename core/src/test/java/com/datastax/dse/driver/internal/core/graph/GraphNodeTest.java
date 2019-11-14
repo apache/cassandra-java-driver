@@ -34,18 +34,18 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
-import io.netty.buffer.ByteBuf;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryReader;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryWriter;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.TypeSerializerRegistry;
 import org.apache.tinkerpop.gremlin.process.remote.traversal.DefaultRemoteTraverser;
 import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.EmptyPath;
+import org.apache.tinkerpop.gremlin.structure.io.Buffer;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryReader;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryWriter;
+import org.apache.tinkerpop.gremlin.structure.io.binary.TypeSerializerRegistry;
 import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedEdge;
 import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedProperty;
 import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedVertex;
@@ -265,9 +265,9 @@ public class GraphNodeTest {
   private GraphNode serdeAndCreateGraphNode(Object inputValue, GraphProtocol graphProtocol)
       throws IOException {
     if (graphProtocol.isGraphBinary()) {
-      ByteBuf nettyBuf = graphBinaryModule.serialize(new DefaultRemoteTraverser<>(inputValue, 0L));
-      ByteBuffer nioBuffer = ByteBufUtil.toByteBuffer(nettyBuf);
-      nettyBuf.release();
+      Buffer tinkerBuf = graphBinaryModule.serialize(new DefaultRemoteTraverser<>(inputValue, 0L));
+      ByteBuffer nioBuffer = tinkerBuf.nioBuffer();
+      tinkerBuf.release();
       return new ObjectGraphNode(
           GraphConversions.createGraphBinaryGraphNode(
                   ImmutableList.of(nioBuffer), graphBinaryModule)

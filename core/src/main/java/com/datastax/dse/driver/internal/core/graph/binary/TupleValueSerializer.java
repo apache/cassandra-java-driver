@@ -10,10 +10,10 @@ import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.TupleType;
-import io.netty.buffer.ByteBuf;
-import org.apache.tinkerpop.gremlin.driver.ser.SerializationException;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryReader;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryWriter;
+import java.io.IOException;
+import org.apache.tinkerpop.gremlin.structure.io.Buffer;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryReader;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryWriter;
 
 public class TupleValueSerializer extends AbstractDynamicGraphBinaryCustomSerializer<TupleValue> {
 
@@ -29,7 +29,8 @@ public class TupleValueSerializer extends AbstractDynamicGraphBinaryCustomSerial
   }
 
   @Override
-  public TupleValue readDynamicCustomValue(ByteBuf buffer, GraphBinaryReader context) {
+  public TupleValue readDynamicCustomValue(Buffer buffer, GraphBinaryReader context)
+      throws IOException {
     // read the type first
     DataType type = ComplexTypeSerializerUtil.decodeTypeDefinition(buffer, driverContext);
 
@@ -45,8 +46,8 @@ public class TupleValueSerializer extends AbstractDynamicGraphBinaryCustomSerial
   }
 
   @Override
-  public void writeDynamicCustomValue(TupleValue value, ByteBuf buffer, GraphBinaryWriter context)
-      throws SerializationException {
+  public void writeDynamicCustomValue(TupleValue value, Buffer buffer, GraphBinaryWriter context)
+      throws IOException {
     // write type first in native protocol
     ComplexTypeSerializerUtil.encodeTypeDefinition(value.getType(), buffer, driverContext);
 

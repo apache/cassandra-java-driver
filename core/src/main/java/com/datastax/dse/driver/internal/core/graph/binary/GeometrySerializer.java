@@ -7,26 +7,26 @@
 package com.datastax.dse.driver.internal.core.graph.binary;
 
 import com.datastax.dse.driver.api.core.data.geometry.Geometry;
-import com.datastax.dse.driver.internal.core.graph.ByteBufUtil;
-import io.netty.buffer.ByteBuf;
+import com.datastax.dse.driver.internal.core.graph.TinkerpopBufferUtil;
+import java.io.IOException;
 import java.nio.ByteBuffer;
-import org.apache.tinkerpop.gremlin.driver.ser.SerializationException;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryReader;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryWriter;
+import org.apache.tinkerpop.gremlin.structure.io.Buffer;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryReader;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryWriter;
 
 public abstract class GeometrySerializer<T extends Geometry>
     extends AbstractSimpleGraphBinaryCustomSerializer<T> {
   public abstract T fromWellKnownBinary(ByteBuffer buffer);
 
   @Override
-  protected T readCustomValue(int valueLength, ByteBuf buffer, GraphBinaryReader context)
-      throws SerializationException {
-    return fromWellKnownBinary(ByteBufUtil.readBytes(buffer, valueLength));
+  protected T readCustomValue(int valueLength, Buffer buffer, GraphBinaryReader context)
+      throws IOException {
+    return fromWellKnownBinary(TinkerpopBufferUtil.readBytes(buffer, valueLength));
   }
 
   @Override
-  protected void writeCustomValue(T value, ByteBuf buffer, GraphBinaryWriter context)
-      throws SerializationException {
+  protected void writeCustomValue(T value, Buffer buffer, GraphBinaryWriter context)
+      throws IOException {
     ByteBuffer bb = value.asWellKnownBinary();
 
     // writing the {value_length}

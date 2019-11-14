@@ -47,8 +47,8 @@
     <metrics.version>4.0.5</metrics.version>
     <netty.version>4.1.45.Final</netty.version>
     <esri.version>1.2.1</esri.version>
-    <tinkerpop.version>3.4.4-20190930-6c997860</tinkerpop.version> <!-- used in OSGi integration tests -->
-    <tinkerpop.osgi.version>3.4.4</tinkerpop.osgi.version>
+    <tinkerpop.version>3.4.5-SNAPSHOT</tinkerpop.version>
+    <tinkerpop.osgi.version>3.4.5</tinkerpop.osgi.version>
     <slf4j.version>1.7.26</slf4j.version>
     <esri.version>1.2.1</esri.version>
     <tinkerpop.version>3.4.3-20190731-199be4b5</tinkerpop.version>
@@ -596,6 +596,8 @@ limitations under the License.]]></inlineHeader>
           </includes>
           <excludes>
             <exclude>**/src/main/config/ide/**</exclude>
+            <exclude>src/main/java/com/datastax/dse/driver/internal/core/graph/binary/buffer/DseNettyBuffer.java</exclude>
+            <exclude>src/main/java/com/datastax/dse/driver/internal/core/graph/binary/buffer/DseNettyBufferFactory.java</exclude>
           </excludes>
           <mapping>
             <java>SLASHSTAR_STYLE</java>

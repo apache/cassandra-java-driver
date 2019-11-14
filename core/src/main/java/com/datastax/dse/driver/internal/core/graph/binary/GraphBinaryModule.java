@@ -12,20 +12,23 @@ import com.datastax.dse.driver.api.core.data.geometry.Polygon;
 import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.dse.driver.internal.core.data.geometry.Distance;
 import com.datastax.dse.driver.internal.core.graph.EditDistance;
+import com.datastax.dse.driver.internal.core.graph.binary.buffer.DseNettyBufferFactory;
 import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.UnpooledByteBufAllocator;
-import org.apache.tinkerpop.gremlin.driver.ser.SerializationException;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryReader;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryWriter;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.TypeSerializerRegistry;
+import java.io.IOException;
+import org.apache.tinkerpop.gremlin.structure.io.Buffer;
+import org.apache.tinkerpop.gremlin.structure.io.BufferFactory;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryReader;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryWriter;
+import org.apache.tinkerpop.gremlin.structure.io.binary.TypeSerializerRegistry;
 import org.javatuples.Pair;
 
 public class GraphBinaryModule {
   public static final UnpooledByteBufAllocator ALLOCATOR = new UnpooledByteBufAllocator(false);
+  private static final BufferFactory<ByteBuf> FACTORY = new DseNettyBufferFactory();
 
   static final String GRAPH_BINARY_POINT_TYPE_NAME = "driver.dse.geometry.Point";
   static final String GRAPH_BINARY_LINESTRING_TYPE_NAME = "driver.dse.geometry.LineString";
@@ -61,20 +64,15 @@ public class GraphBinaryModule {
   }
 
   @SuppressWarnings("TypeParameterUnusedInFormals")
-  public <T> T deserialize(final ByteBuf buffer) throws SerializationException {
+  public <T> T deserialize(final Buffer buffer) throws IOException {
     return reader.read(buffer);
   }
 
-  public <T> ByteBuf serialize(final T value) throws SerializationException {
-    return serialize(value, ALLOCATOR);
+  public <T> Buffer serialize(final T value) throws IOException {
+    return serialize(value, FACTORY.create(ALLOCATOR.heapBuffer()));
   }
 
-  public <T> ByteBuf serialize(final T value, final ByteBufAllocator allocator)
-      throws SerializationException {
-    return serialize(value, allocator.heapBuffer());
-  }
-
-  public <T> ByteBuf serialize(final T value, final ByteBuf buffer) throws SerializationException {
+  public <T> Buffer serialize(final T value, final Buffer buffer) throws IOException {
     try {
       writer.write(value, buffer);
       return buffer;

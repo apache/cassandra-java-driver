@@ -28,9 +28,9 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.concurrent.CompletionStage;
 import net.jcip.annotations.ThreadSafe;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryReader;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryWriter;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.TypeSerializerRegistry;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryReader;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryWriter;
+import org.apache.tinkerpop.gremlin.structure.io.binary.TypeSerializerRegistry;
 
 @ThreadSafe
 public class GraphRequestAsyncProcessor

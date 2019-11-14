@@ -7,10 +7,10 @@
 package com.datastax.dse.driver.internal.core.graph.binary;
 
 import com.datastax.oss.driver.api.core.data.CqlDuration;
-import io.netty.buffer.ByteBuf;
-import org.apache.tinkerpop.gremlin.driver.ser.SerializationException;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryReader;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryWriter;
+import java.io.IOException;
+import org.apache.tinkerpop.gremlin.structure.io.Buffer;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryReader;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryWriter;
 
 public class CqlDurationSerializer extends AbstractSimpleGraphBinaryCustomSerializer<CqlDuration> {
 
@@ -21,8 +21,8 @@ public class CqlDurationSerializer extends AbstractSimpleGraphBinaryCustomSerial
 
   @Override
   protected CqlDuration readCustomValue(
-      final int valueLength, final ByteBuf buffer, final GraphBinaryReader context)
-      throws SerializationException {
+      final int valueLength, final Buffer buffer, final GraphBinaryReader context)
+      throws IOException {
     checkValueSize(GraphBinaryUtils.sizeOfDuration(), valueLength);
     return CqlDuration.newInstance(
         context.readValue(buffer, Integer.class, false),
@@ -31,8 +31,8 @@ public class CqlDurationSerializer extends AbstractSimpleGraphBinaryCustomSerial
   }
 
   @Override
-  protected void writeCustomValue(CqlDuration value, ByteBuf buffer, GraphBinaryWriter context)
-      throws SerializationException {
+  protected void writeCustomValue(CqlDuration value, Buffer buffer, GraphBinaryWriter context)
+      throws IOException {
     context.writeValue(GraphBinaryUtils.sizeOfDuration(), buffer, false);
     context.writeValue(value.getMonths(), buffer, false);
     context.writeValue(value.getDays(), buffer, false);

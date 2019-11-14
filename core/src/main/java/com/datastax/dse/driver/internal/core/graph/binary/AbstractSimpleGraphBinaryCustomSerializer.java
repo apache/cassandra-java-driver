@@ -7,12 +7,13 @@
 package com.datastax.dse.driver.internal.core.graph.binary;
 
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import io.netty.buffer.ByteBuf;
+import java.io.IOException;
 import org.apache.tinkerpop.gremlin.driver.ser.SerializationException;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.DataType;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryReader;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryWriter;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.types.CustomTypeSerializer;
+import org.apache.tinkerpop.gremlin.structure.io.Buffer;
+import org.apache.tinkerpop.gremlin.structure.io.binary.DataType;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryReader;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryWriter;
+import org.apache.tinkerpop.gremlin.structure.io.binary.types.CustomTypeSerializer;
 
 /**
  * A base custom type serializer for DSE types that handles most of the boiler plate code associated
@@ -27,7 +28,7 @@ import org.apache.tinkerpop.gremlin.driver.ser.binary.types.CustomTypeSerializer
  * DSE types.
  *
  * <p>Implementing classes are still in charge of encoding {value_length}{value_bytes} in the {@link
- * #readCustomValue(int, ByteBuf, GraphBinaryReader)} implementations.
+ * #readCustomValue(int, Buffer, GraphBinaryReader)} implementations.
  *
  * <p>Implementing classes must override {@link CustomTypeSerializer#getTypeName()} with their own
  * type name.
@@ -42,11 +43,11 @@ abstract class AbstractSimpleGraphBinaryCustomSerializer<T> implements CustomTyp
   protected static final String INCORRECT_VALUE_LENGTH_ERROR_MESSAGE =
       "{value_length} read for this value does not correspond to the size of a '%s' value. [%s] bytes required but got [%s]";
 
-  protected abstract T readCustomValue(int valueLength, ByteBuf buffer, GraphBinaryReader context)
-      throws SerializationException;
+  protected abstract T readCustomValue(int valueLength, Buffer buffer, GraphBinaryReader context)
+      throws IOException;
 
-  protected abstract void writeCustomValue(T value, ByteBuf buffer, GraphBinaryWriter context)
-      throws SerializationException;
+  protected abstract void writeCustomValue(T value, Buffer buffer, GraphBinaryWriter context)
+      throws IOException;
 
   protected void checkValueSize(int lengthRequired, int lengthFound) {
     Preconditions.checkArgument(
@@ -63,7 +64,7 @@ abstract class AbstractSimpleGraphBinaryCustomSerializer<T> implements CustomTyp
   }
 
   @Override
-  public T read(ByteBuf buffer, GraphBinaryReader context) throws SerializationException {
+  public T read(Buffer buffer, GraphBinaryReader context) throws IOException {
     // the type serializer registry will take care of deserializing {custom_type_name}
     // read {custom_type_info_length} and verify it is 0.
     // See #write(T, ByteBuf, GraphBinaryWriter) for why it is set to 0
@@ -76,8 +77,8 @@ abstract class AbstractSimpleGraphBinaryCustomSerializer<T> implements CustomTyp
   }
 
   @Override
-  public T readValue(ByteBuf buffer, GraphBinaryReader context, boolean nullable)
-      throws SerializationException {
+  public T readValue(Buffer buffer, GraphBinaryReader context, boolean nullable)
+      throws IOException {
     if (nullable) {
       // read {value_flag}
       final byte valueFlag = buffer.readByte();
@@ -110,8 +111,8 @@ abstract class AbstractSimpleGraphBinaryCustomSerializer<T> implements CustomTyp
   }
 
   @Override
-  public void write(final T value, final ByteBuf buffer, final GraphBinaryWriter context)
-      throws SerializationException {
+  public void write(final T value, final Buffer buffer, final GraphBinaryWriter context)
+      throws IOException {
     // the type serializer registry will take care of serializing {custom_type_name}
     // write "{custom_type_info_length}" to 0 because we don't need it for the DSE types
     context.writeValue(0, buffer, false);
@@ -120,8 +121,8 @@ abstract class AbstractSimpleGraphBinaryCustomSerializer<T> implements CustomTyp
 
   @Override
   public void writeValue(
-      final T value, final ByteBuf buffer, final GraphBinaryWriter context, final boolean nullable)
-      throws SerializationException {
+      final T value, final Buffer buffer, final GraphBinaryWriter context, final boolean nullable)
+      throws IOException {
     if (value == null) {
       if (!nullable) {
         throw new SerializationException("Unexpected null value when nullable is false");

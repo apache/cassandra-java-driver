@@ -7,10 +7,10 @@
 package com.datastax.dse.driver.internal.core.graph.binary;
 
 import com.datastax.dse.driver.internal.core.graph.EditDistance;
-import io.netty.buffer.ByteBuf;
-import org.apache.tinkerpop.gremlin.driver.ser.SerializationException;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryReader;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryWriter;
+import java.io.IOException;
+import org.apache.tinkerpop.gremlin.structure.io.Buffer;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryReader;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryWriter;
 
 public class EditDistanceSerializer
     extends AbstractSimpleGraphBinaryCustomSerializer<EditDistance> {
@@ -20,8 +20,8 @@ public class EditDistanceSerializer
   }
 
   @Override
-  protected EditDistance readCustomValue(int valueLength, ByteBuf buffer, GraphBinaryReader context)
-      throws SerializationException {
+  protected EditDistance readCustomValue(int valueLength, Buffer buffer, GraphBinaryReader context)
+      throws IOException {
     int distance = context.readValue(buffer, Integer.class, false);
     String query = context.readValue(buffer, String.class, false);
     checkValueSize(GraphBinaryUtils.sizeOfEditDistance(query), valueLength);
@@ -30,8 +30,8 @@ public class EditDistanceSerializer
   }
 
   @Override
-  protected void writeCustomValue(EditDistance value, ByteBuf buffer, GraphBinaryWriter context)
-      throws SerializationException {
+  protected void writeCustomValue(EditDistance value, Buffer buffer, GraphBinaryWriter context)
+      throws IOException {
     context.writeValue(GraphBinaryUtils.sizeOfEditDistance(value.query), buffer, false);
     context.writeValue(value.distance, buffer, false);
     context.writeValue(value.query, buffer, false);

@@ -17,9 +17,9 @@ package com.datastax.dse.driver.internal.core.graph;
 
 import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_2_0;
 import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPH_BINARY_1_0;
-import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.api.core.type.codec.TypeCodecs.BIGINT;
 import static com.datastax.oss.driver.api.core.type.codec.TypeCodecs.TEXT;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -65,7 +65,6 @@ import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
-import io.netty.buffer.ByteBuf;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -78,12 +77,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.regex.Pattern;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryReader;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.GraphBinaryWriter;
-import org.apache.tinkerpop.gremlin.driver.ser.binary.TypeSerializerRegistry;
 import org.apache.tinkerpop.gremlin.process.remote.traversal.DefaultRemoteTraverser;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.io.Buffer;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryReader;
+import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryWriter;
+import org.apache.tinkerpop.gremlin.structure.io.binary.TypeSerializerRegistry;
 import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedVertex;
 import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedVertexProperty;
 import org.junit.Before;
@@ -226,9 +226,9 @@ public class GraphRequestHandlerTest {
       Object value, GraphProtocol graphProtocol, GraphBinaryModule graphBinaryModule)
       throws IOException {
 
-    ByteBuf nettyBuf = graphBinaryModule.serialize(value);
-    ByteBuffer nioBuffer = ByteBufUtil.toByteBuffer(nettyBuf);
-    nettyBuf.release();
+    Buffer tinkerBuf = graphBinaryModule.serialize(value);
+    ByteBuffer nioBuffer = tinkerBuf.nioBuffer();
+    tinkerBuf.release();
     return graphProtocol.isGraphBinary()
         ? nioBuffer
         : GraphSONUtils.serializeToByteBuffer(value, graphProtocol);
