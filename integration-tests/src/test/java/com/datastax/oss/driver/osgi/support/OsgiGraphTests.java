@@ -23,30 +23,29 @@ import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphResultSet;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
+import com.datastax.dse.driver.api.testinfra.DseSessionBuilderInstantiator;
+import com.datastax.dse.driver.internal.core.graph.GraphProtocol;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
 import java.util.List;
-import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 public interface OsgiGraphTests extends OsgiSimpleTests {
 
-  String CREATE_GRAPH = "system.graph('%s').ifNotExists().create()";
-
-  String GRAPH_SCHEMA =
-      "schema.propertyKey('name').Text().ifNotExists().create();"
-          + "schema.vertexLabel('person').properties('name').ifNotExists().create();";
-
-  String GRAPH_DATA = "g.addV('person').property('name', 'alice').next();";
-
-  String ALLOW_SCANS = "schema.config().option('graph.allow_scan').set('true');";
-
   @Override
   default ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder() {
-    return DriverConfigLoader.programmaticBuilder()
-        .withString(DseDriverOption.GRAPH_NAME, "test_osgi_graph");
+    return DseSessionBuilderInstantiator.configLoaderBuilder()
+        .withString(DseDriverOption.GRAPH_NAME, "test_osgi_graph")
+        .withString(
+            DseDriverOption.GRAPH_SUB_PROTOCOL,
+            getDseVersion().compareTo(Version.parse("6.8.0")) >= 0
+                ? GraphProtocol.GRAPH_BINARY_1_0.toInternalCode()
+                : GraphProtocol.GRAPHSON_2_0.toInternalCode());
   }
+
+  Version getDseVersion();
 
   /**
    * Ensures a session can be established and a query using DSE Graph can be made when running in an
@@ -58,22 +57,43 @@ public interface OsgiGraphTests extends OsgiSimpleTests {
 
       // Test that Graph + Tinkerpop is available
       session.execute(
-          ScriptGraphStatement.newInstance(String.format(CREATE_GRAPH, "test_osgi_graph"))
+          ScriptGraphStatement.newInstance("system.graph('test_osgi_graph').ifNotExists().create()")
               .setSystemQuery(true));
-      session.execute(ScriptGraphStatement.newInstance(GRAPH_SCHEMA));
-      session.execute(ScriptGraphStatement.newInstance(GRAPH_DATA));
-      session.execute(ScriptGraphStatement.newInstance(ALLOW_SCANS));
+
+      if (getDseVersion().compareTo(Version.parse("6.8.0")) >= 0) {
+        setUpCoreEngineGraph(session);
+      } else {
+        setUpClassicEngineGraph(session);
+      }
 
       GraphResultSet resultSet =
-          session.execute(
-              FluentGraphStatement.newInstance(g.V().hasLabel("person").has("name", "alice")));
+          session.execute(FluentGraphStatement.newInstance(g.V().hasLabel("person")));
       List<GraphNode> results = resultSet.all();
       assertThat(results.size()).isEqualTo(1);
       Vertex actual = results.get(0).asVertex();
-      assertThat(actual.properties("name"))
-          .toIterable()
-          .extracting(Property::value)
-          .contains("alice");
+      assertThat(actual.label()).isEqualTo("person");
     }
+  }
+
+  default void setUpCoreEngineGraph(DseSession session) {
+    session.execute(
+        ScriptGraphStatement.newInstance(
+            "schema.vertexLabel('person').ifNotExists().partitionBy('pk', Int)"
+                + ".clusterBy('cc', Int).property('name', Text).create();"));
+    session.execute(
+        ScriptGraphStatement.newInstance(
+            "g.addV('person').property('pk',0).property('cc',0).property('name', 'alice');"));
+  }
+
+  default void setUpClassicEngineGraph(DseSession session) {
+    session.execute(
+        ScriptGraphStatement.newInstance(
+            "schema.propertyKey('name').Text().ifNotExists().create();"
+                + "schema.vertexLabel('person').properties('name').ifNotExists().create();"));
+    session.execute(
+        ScriptGraphStatement.newInstance("g.addV('person').property('name', 'alice').next();"));
+    session.execute(
+        ScriptGraphStatement.newInstance(
+            "schema.config().option('graph.allow_scan').set('true');"));
   }
 }

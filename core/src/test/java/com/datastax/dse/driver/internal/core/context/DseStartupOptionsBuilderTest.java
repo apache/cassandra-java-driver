@@ -46,7 +46,7 @@ public class DseStartupOptionsBuilderTest {
 
   private DefaultDriverContext driverContext;
 
-  // Mocks for instantiating the default driver context
+  // Mocks for instantiating the DSE driver context
   @Mock private DriverConfigLoader configLoader;
   @Mock private DriverConfig driverConfig;
   @Mock private DriverExecutionProfile defaultProfile;
@@ -82,7 +82,9 @@ public class DseStartupOptionsBuilderTest {
   }
 
   @Test
-  public void should_build_minimal_startup_options() {
+  public void should_build_startup_options_with_no_compression_if_undefined() {
+    when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none"))
+        .thenReturn("none");
     buildContext(null, null, null);
     Startup startup = new Startup(driverContext.getStartupOptions());
     assertThat(startup.options).doesNotContainKey(Startup.COMPRESSION_KEY);
@@ -104,7 +106,18 @@ public class DseStartupOptionsBuilderTest {
   }
 
   @Test
+  public void should_fail_to_build_startup_options_with_invalid_compression() {
+    when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none"))
+        .thenReturn("foobar");
+    buildContext(null, null, null);
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> new Startup(driverContext.getStartupOptions()));
+  }
+
+  @Test
   public void should_build_startup_options_with_client_id() {
+    when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none"))
+        .thenReturn("none");
     UUID customClientId = Uuids.random();
     buildContext(customClientId, null, null);
     Startup startup = new Startup(driverContext.getStartupOptions());
@@ -119,6 +132,8 @@ public class DseStartupOptionsBuilderTest {
 
   @Test
   public void should_build_startup_options_with_application_version_and_name() {
+    when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none"))
+        .thenReturn("none");
     buildContext(null, "Custom_App_Name", "Custom_App_Version");
     Startup startup = new Startup(driverContext.getStartupOptions());
     // assert the app name and version are present
@@ -133,9 +148,7 @@ public class DseStartupOptionsBuilderTest {
   @Test
   public void should_build_startup_options_with_all_options() {
     // mock config to specify "snappy" compression
-    Mockito.when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_COMPRESSION))
-        .thenReturn(Boolean.TRUE);
-    Mockito.when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION))
+    when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none"))
         .thenReturn("snappy");
 
     UUID customClientId = Uuids.random();
@@ -152,10 +165,12 @@ public class DseStartupOptionsBuilderTest {
 
   @Test
   public void should_use_configuration_when_no_programmatic_values_provided() {
-    Mockito.when(defaultProfile.getString(DseDriverOption.APPLICATION_NAME, null))
+    when(defaultProfile.getString(DseDriverOption.APPLICATION_NAME, null))
         .thenReturn("Config_App_Name");
-    Mockito.when(defaultProfile.getString(DseDriverOption.APPLICATION_VERSION, null))
+    when(defaultProfile.getString(DseDriverOption.APPLICATION_VERSION, null))
         .thenReturn("Config_App_Version");
+    when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none"))
+        .thenReturn("none");
 
     buildContext(null, null, null);
     Startup startup = new Startup(driverContext.getStartupOptions());

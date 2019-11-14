@@ -174,6 +174,11 @@ public enum DseDriverOption implements DriverOption {
    */
   MONITOR_REPORTING_ENABLED("advanced.monitor-reporting.enabled"),
 
+  /**
+   * Whether to enable paging for Graph queries.
+   *
+   * <p>Value type: boolean
+   */
   GRAPH_PAGING_ENABLED("advanced.graph.paging-enabled"),
   ;
 

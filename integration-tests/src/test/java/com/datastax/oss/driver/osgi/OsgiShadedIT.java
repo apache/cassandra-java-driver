@@ -55,6 +55,11 @@ public class OsgiShadedIT implements OsgiReactiveTests, OsgiGraphTests, OsgiGeoT
         BundleOptions.tinkerpopBundles());
   }
 
+  @Override
+  public Version getDseVersion() {
+    return CCM_RULE.getDseVersion().orElseThrow(IllegalStateException::new);
+  }
+
   @Test
   public void should_connect_and_query_shaded_simple() {
     connectAndQuerySimple();

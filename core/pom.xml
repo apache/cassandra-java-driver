@@ -70,6 +70,10 @@
       <artifactId>jnr-posix</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.javatuples</groupId>
+      <artifactId>javatuples</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.xerial.snappy</groupId>
       <artifactId>snappy-java</artifactId>
       <optional>true</optional>
@@ -290,7 +294,12 @@
                   Note: dependencies marked as optional are by default included with optional
                   resolution in the manifest; we only need to manually set the resolution to
                   optional for dependencies declared as non-optional in the pom files.
-                  -->jnr.*;resolution:=optional, com.esri.core.geometry.*;resolution:=optional, org.reactivestreams.*;resolution:=optional, org.apache.tinkerpop.*;resolution:=optional, *
+                  -->
+                  com.esri.core.geometry.*;resolution:=optional,
+                  org.reactivestreams.*;resolution:=optional,
+                  org.apache.tinkerpop.*;resolution:=optional,
+                  org.javatuples.*;resolution:=optional,
+                  *
                 </Import-Package>
                 <Export-Package>com.datastax.oss.driver.*.core.*, com.datastax.dse.driver.*.core.*</Export-Package>
               </instructions>

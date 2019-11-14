@@ -105,6 +105,10 @@
       <artifactId>tinkergraph-gremlin</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.javatuples</groupId>
+      <artifactId>javatuples</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.reactivestreams</groupId>
       <artifactId>reactive-streams</artifactId>
     </dependency>
@@ -303,11 +307,11 @@
                   Note: dependencies marked as optional are by default included with optional
                   resolution in the manifest; we only need to manually set the resolution to
                   optional for dependencies declared as non-optional in the pom files.
-                  -->jnr.*;resolution:=optional, com.esri.core.geometry.*;resolution:=optional, org.reactivestreams.*;resolution:=optional, org.apache.tinkerpop.*;resolution:=optional,
-                  <!--
-                  4) Don't import packages imported by shaded classes, if they are not used by the
-                  driver bundle.
-                  -->!com.google.protobuf.*, !com.jcraft.jzlib.*, !com.ning.compress.*, !lzma.sdk.*, !net.jpountz.xxhash.*, !org.bouncycastle.*, !org.conscrypt.*, !org.apache.commons.logging.*, !org.apache.log4j.*, !org.apache.logging.log4j.*, !org.eclipse.jetty.*, !org.jboss.marshalling.*, !sun.misc.*, !sun.security.*, !com.oracle.svm.core.annotate.*, *
+                  -->
+                  org.reactivestreams.*;resolution:=optional,
+                  org.apache.tinkerpop.*;resolution:=optional,
+                  org.javatuples.*;resolution:=optional,
+                  *
                 </Import-Package>
                 <!--
                 Export:

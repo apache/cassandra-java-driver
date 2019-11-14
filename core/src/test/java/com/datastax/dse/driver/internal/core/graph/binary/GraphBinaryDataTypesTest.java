@@ -6,7 +6,16 @@
  */
 package com.datastax.dse.driver.internal.core.graph.binary;
 
-import static com.datastax.oss.driver.api.core.type.DataTypes.*;
+import static com.datastax.oss.driver.api.core.type.DataTypes.BIGINT;
+import static com.datastax.oss.driver.api.core.type.DataTypes.DOUBLE;
+import static com.datastax.oss.driver.api.core.type.DataTypes.DURATION;
+import static com.datastax.oss.driver.api.core.type.DataTypes.FLOAT;
+import static com.datastax.oss.driver.api.core.type.DataTypes.INT;
+import static com.datastax.oss.driver.api.core.type.DataTypes.TEXT;
+import static com.datastax.oss.driver.api.core.type.DataTypes.listOf;
+import static com.datastax.oss.driver.api.core.type.DataTypes.mapOf;
+import static com.datastax.oss.driver.api.core.type.DataTypes.setOf;
+import static com.datastax.oss.driver.api.core.type.DataTypes.tupleOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
