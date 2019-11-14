@@ -1,5 +1,68 @@
 ## Upgrade guide
 
+### 4.4.0
+
+Datastax Enteprise support is now available directly in the main driver. There is no longer a
+separate DSE driver.
+
+#### For Apache Cassandra® users
+
+The great news is that [reactive execution](../manual/core/reactive/) is now available for everyone.
+See the `CqlSession.executeReactive` methods.
+
+Apart from that, the only visible change is that DSE-specific features are now exposed in the API: 
+
+* new execution methods: `CqlSession.executeGraph`, `CqlSession.executeContinuously*`. They all
+  have default implementations so this doesn't break binary compatibility. You can just ignore them.
+* new driver dependencies: Tinkerpop, ESRI. You can exclude them manually if you want to keep your
+  classpath lean, the rest of the driver will still work. See the
+  [Integration](../manual/core/integration/#driver-dependencies) page.
+
+#### For Datastax Enterprise users
+
+Adjust your Maven coordinates to use the unified artifact:
+
+```xml
+<!-- Replace: -->
+<dependency>
+  <groupId>com.datastax.dse</groupId>
+  <artifactId>dse-java-driver-core</artifactId>
+  <version>2.3.0</version>
+</dependency>
+
+<!-- By: -->
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-core</artifactId>
+  <version>4.4.0</version>
+</dependency>
+
+<!-- Do the same for the other modules: query builder, mapper... -->
+```
+
+The new driver is a drop-in replacement for the DSE driver. Note however that we've deprecated a few
+DSE-specific types in favor of their OSS equivalents. They still work, so you don't need to make the
+changes right away; but you will get deprecation warnings:
+
+* `DseSession`: use `CqlSession` instead, it can now do everything that a DSE session does. This
+  also applies to the builder:
+  
+    ```java
+    // Replace:
+    DseSession session = DseSession.builder().build()  
+  
+    // By:
+    CqlSession session = CqlSession.builder().build()
+    ```
+* `DseDriverConfigLoader`: the driver no longer needs DSE-specific config loaders. All the factory
+  methods in this class now redirect to `DriverConfigLoader`. On that note, `dse-reference.conf`
+  does not exist anymore, all the driver defaults are now in
+  [reference.conf](../manual/core/configuration/reference/).
+* plain-text authentication: there is now a single implementation that works with both Cassandra and
+  DSE. If you used `DseProgrammaticPlainTextAuthProvider`, replace it by
+  `PlainTextProgrammaticAuthProvider`. Similarly, if you wrote a custom implementation by
+  subclassing `DsePlainTextAuthProviderBase`, extend `PlainTextAuthProviderBase` instead.
+
 ### 4.1.0
 
 #### Object mapper
