@@ -41,6 +41,8 @@
                 moduleSet targets core only
               -->
               <exclude>com.datastax.oss:java-driver-query-builder</exclude>
+              <exclude>com.datastax.oss:java-driver-mapper-runtime</exclude>
+              <exclude>com.datastax.oss:java-driver-mapper-processor</exclude>
             </excludes>
             <useTransitiveFiltering>true</useTransitiveFiltering>
           </dependencySet>
@@ -60,10 +62,64 @@
           <dependencySet>
             <excludes>
               <exclude>com.datastax.oss:java-driver-core</exclude>
+              <exclude>com.datastax.oss:java-driver-mapper-runtime</exclude>
+              <exclude>com.datastax.oss:java-driver-mapper-processor</exclude>
               <!-- Don't reinclude dependencies that core also has -->
               <exclude>com.datastax.oss:java-driver-shaded-guava</exclude>
               <exclude>com.github.stephenc.jcip:jcip-annotations</exclude>
-              <!-- TODO exclude modules other than core when they get added -->
+              <exclude>com.github.spotbugs:spotbugs-annotations</exclude>
+            </excludes>
+            <useTransitiveFiltering>true</useTransitiveFiltering>
+          </dependencySet>
+        </dependencySets>
+      </binaries>
+    </moduleSet>
+
+    <!-- Module java-driver-mapper-runtime and its dependencies -->
+    <moduleSet>
+      <useAllReactorProjects>true</useAllReactorProjects>
+      <includes>
+        <include>com.datastax.oss:java-driver-mapper-runtime</include>
+      </includes>
+      <binaries>
+        <outputDirectory>lib/mapper-runtime</outputDirectory>
+        <unpack>false</unpack>
+        <dependencySets>
+          <dependencySet>
+            <excludes>
+              <exclude>com.datastax.oss:java-driver-core</exclude>
+              <exclude>com.datastax.oss:java-driver-query-builder</exclude>
+              <exclude>com.datastax.oss:java-driver-mapper-processor</exclude>
+              <!-- Don't reinclude dependencies that core also has -->
+              <exclude>com.datastax.oss:java-driver-shaded-guava</exclude>
+              <exclude>com.github.stephenc.jcip:jcip-annotations</exclude>
+              <exclude>com.github.spotbugs:spotbugs-annotations</exclude>
+            </excludes>
+            <useTransitiveFiltering>true</useTransitiveFiltering>
+          </dependencySet>
+        </dependencySets>
+      </binaries>
+    </moduleSet>
+
+    <!-- Module java-driver-mapper-processor and its dependencies -->
+    <moduleSet>
+      <useAllReactorProjects>true</useAllReactorProjects>
+      <includes>
+        <include>com.datastax.oss:java-driver-mapper-processor</include>
+      </includes>
+      <binaries>
+        <outputDirectory>lib/mapper-processor</outputDirectory>
+        <unpack>false</unpack>
+        <dependencySets>
+          <dependencySet>
+            <excludes>
+              <exclude>com.datastax.oss:java-driver-core</exclude>
+              <exclude>com.datastax.oss:java-driver-query-builder</exclude>
+              <exclude>com.datastax.oss:java-driver-mapper-runtime</exclude>
+              <!-- Don't reinclude dependencies that core also has -->
+              <exclude>com.datastax.oss:java-driver-shaded-guava</exclude>
+              <exclude>com.github.stephenc.jcip:jcip-annotations</exclude>
+              <exclude>com.github.spotbugs:spotbugs-annotations</exclude>
             </excludes>
             <useTransitiveFiltering>true</useTransitiveFiltering>
           </dependencySet>
@@ -76,6 +132,8 @@
       <includes>
         <include>com.datastax.oss:java-driver-core</include>
         <include>com.datastax.oss:java-driver-query-builder</include>
+        <include>com.datastax.oss:java-driver-mapper-runtime</include>
+        <include>com.datastax.oss:java-driver-mapper-processor</include>
       </includes>
       <binaries>
         <unpack>false</unpack>
