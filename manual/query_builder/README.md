@@ -38,11 +38,15 @@ try (CqlSession session = CqlSession.builder().build()) {
 
 #### Fluent API
 
-All the starting methods are centralized in the [QueryBuilder] class. To get started, add the
-following import:
+All the starting methods are centralized in the [QueryBuilder] and [SchemaBuilder] classes. To get
+started, add one of the following imports:
 
 ```java
+// For DML queries, such as SELECT 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
+
+// For DDL queries, such as CREATE TABLE
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 ```
 
 Choose the method matching your desired statement, for example `selectFrom`. Then use your IDE's
@@ -64,6 +68,30 @@ When your query is complete, you can either extract a raw query string, or turn 
 String cql = select.asCql();
 SimpleStatement statement = select.build();
 SimpleStatementBuilder builder = select.builder();
+```
+
+#### Datastax Enterprise
+
+The driver provides two additional entry points for DSE-specific queries: [DseQueryBuilder] and
+[DseSchemaBuilder]. They extend their respective non-DSE counterparts, so anything that is available
+on the default query builder can also be done with the DSE query builder.
+
+We recommend that you use those classes if you are targeting Datastax Enterprise; they will be
+enriched in the future if DSE adds custom CQL syntax.
+
+Currently, the only difference is the support for the `DETERMINISTIC` and `MONOTONIC` keywords when
+generating `CREATE FUNCTION` or `CREATE AGGREGATE` statements:
+
+```java
+import static com.datastax.dse.driver.api.querybuilder.DseSchemaBuilder.createDseFunction;
+
+createDseFunction("func1")
+    .withParameter("param1", DataTypes.INT)
+    .returnsNullOnNull()
+    .returnsType(DataTypes.INT)
+    .deterministic()
+    .monotonic();
+// CREATE FUNCTION func1 (param1 int) RETURNS NULL ON NULL INPUT RETURNS int DETERMINISTIC MONOTONIC
 ```
 
 #### Immutability
@@ -187,3 +215,5 @@ For a complete tour of the API, browse the child pages in this manual:
 [QueryBuilder]:  https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html
 [SchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
 [CqlIdentifier]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/CqlIdentifier.html
+[DseQueryBuilder]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/dse/driver/api/querybuilder/DseQueryBuilder.html
+[DseSchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/dse/driver/api/querybuilder/DseSchemaBuilder.html

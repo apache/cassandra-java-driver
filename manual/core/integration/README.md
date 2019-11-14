@@ -360,12 +360,12 @@ If all of these metrics are disabled, you can remove the dependency:
 
 #### Jackson
 
-[Jackson](https://github.com/FasterXML/jackson) is used to parse configuration files when connecting
-to DataStax Apache Cassandra® as a Service.
+[Jackson](https://github.com/FasterXML/jackson) is used:
 
-If you don't use that feature (that is, if you neither call
-`SessionBuilder.withCloudSecureConnectBundle()` nor set the `basic.cloud.secure-connect-bundle`
-configuration option), you can safely exclude the dependency:
+* when connecting to [Datastax Apollo](../../cloud/);
+* when Insights monitoring is enabled.
+ 
+If you don't use either of those features, you can safely exclude the dependency:
 
 ```xml
 <dependency>
@@ -375,7 +375,56 @@ configuration option), you can safely exclude the dependency:
   <exclusions>
     <exclusion>
       <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+    </exclusion>
+    <exclusion>
+      <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
+    </exclusion>
+  </exclusions>
+</dependency>
+```
+
+#### Esri
+
+Our [geospatial types](../dse/geotypes/) implementation is based on the [Esri Geometry
+API](https://github.com/Esri/geometry-api-java).
+
+If you don't use geospatial types anywhere in your application, you can exclude the dependency:
+
+```xml
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-core</artifactId>
+  <version>${driver.version}</version>
+  <exclusions>
+   <exclusion>
+     <groupId>com.esri.geometry</groupId>
+     <artifactId>esri-geometry-api</artifactId>
+   </exclusion>
+  </exclusions>
+</dependency>
+```
+
+#### TinkerPop
+
+[Apache TinkerPop™](http://tinkerpop.apache.org/) is used in our [graph API](../dse/graph/).
+
+If you don't use DSE graph at all, you can exclude the dependencies:
+
+```xml
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-core</artifactId>
+  <version>${driver.version}</version>
+  <exclusions>
+    <exclusion>
+      <groupId>org.apache.tinkerpop</groupId>
+      <artifactId>gremlin-core</artifactId>
+    </exclusion>
+    <exclusion>
+      <groupId>org.apache.tinkerpop</groupId>
+      <artifactId>tinkergraph-gremlin</artifactId>
     </exclusion>
   </exclusions>
 </dependency>

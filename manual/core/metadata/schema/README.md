@@ -35,6 +35,38 @@ immutable; if you need to get the latest schema, be sure to call
 reference).
 
 
+### DSE
+
+All schema metadata interfaces accessible through `Metadata.getKeyspaces()` have a DSE-specific
+subtype in the package [com.datastax.dse.driver.api.core.metadata.schema]. The objects returned by
+the DSE driver implement those types, so you can safely cast:
+
+```java
+for (KeyspaceMetadata keyspace : session.getMetadata().getKeyspaces().values()) {
+  DseKeyspaceMetadata dseKeyspace = (DseKeyspaceMetadata) keyspace;
+}
+```
+
+If you're calling a method that returns an optional and want to keep the result wrapped, use this
+pattern:
+
+```java
+Optional<DseFunctionMetadata> f =
+    session
+        .getMetadata()
+        .getKeyspace("ks")
+        .flatMap(ks -> ks.getFunction("f"))
+        .map(DseFunctionMetadata.class::cast);
+```
+
+For future extensibility, there is a `DseXxxMetadata` subtype for every OSS type. But currently (DSE
+6.7), the only types that really add extra information are:
+
+* [DseFunctionMetadata]: add support for the `DETERMINISTIC` and `MONOTONIC` keywords; 
+* [DseAggregateMetadata]: add support for the `MONOTONIC` keyword.
+
+All other types (keyspaces, tables, etc.) are identical to their OSS counterparts.
+
 ### Notifications
 
 If you need to follow schema changes, you don't need to poll the metadata manually; instead,
@@ -235,5 +267,8 @@ take a look at the [Performance](../../performance/#schema-updates) page for a f
 [Session#checkSchemaAgreementAsync]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/Session.html#checkSchemaAgreementAsync--
 [SessionBuilder#withSchemaChangeListener]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withSchemaChangeListener-com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener-
 [ExecutionInfo#isSchemaInAgreement]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#isSchemaInAgreement--
+[com.datastax.dse.driver.api.core.metadata.schema]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/dse/driver/api/core/metadata/schema/package-frame.html
+[DseFunctionMetadata]:  https://docs.datastax.com/en/drivers/java/4.3/com/datastax/dse/driver/api/core/metadata/schema/DseFunctionMetadata.html
+[DseAggregateMetadata]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/dse/driver/api/core/metadata/schema/DseAggregateMetadata.html
 
 [JAVA-750]: https://datastax-oss.atlassian.net/browse/JAVA-750

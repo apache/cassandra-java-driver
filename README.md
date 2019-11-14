@@ -55,10 +55,6 @@ higher.
 
 It requires Java 8 or higher.
 
-If using DataStax Enterprise, the [DataStax Enterprise Java
-driver](http://docs.datastax.com/en/developer/java-driver-dse/latest) provides more features and
-better compatibility.
-
 Disclaimer: Some DataStax/DataStax Enterprise products might partially work on big-endian systems,
 but DataStax does not officially support these systems.
 
