@@ -54,7 +54,7 @@ public class AllNodesFailedExceptionTest {
     assertThat(e)
         .hasMessage(
             "All 2 node(s) tried for the query failed "
-                + "(showing first 2, use getAllErrors() for more): "
+                + "(showing first 2 nodes, use getAllErrors() for more): "
                 + "node1: [%s], node2: [%s]",
             e1, e2);
     assertThat(e.getAllErrors())
@@ -80,7 +80,7 @@ public class AllNodesFailedExceptionTest {
     assertThat(e)
         .hasMessage(
             "All 2 node(s) tried for the query failed "
-                + "(showing first 2, use getAllErrors() for more): "
+                + "(showing first 2 nodes, use getAllErrors() for more): "
                 + "node1: [%s, %s], node2: [%s]",
             e1a, e1b, e2a);
     assertThat(e.getAllErrors())
