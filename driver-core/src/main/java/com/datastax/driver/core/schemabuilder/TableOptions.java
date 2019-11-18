@@ -362,7 +362,9 @@ public abstract class TableOptions<T extends TableOptions> extends SchemaStateme
     /**
      * Define whether or not change data capture is enabled on this table.
      * <p/>
-     * Note that using this option with a version of Apache Cassandra less than 3.8 will raise a syntax error.
+     * Note that Apache Cassandra officially introduced CDC via CASSANDRA-12041 in Cassandra 3.8.0.
+     * Setting this option with a version of Apache Cassandra less than 3.8.0 will raise a syntax error
+     * unless running a custom variant which fully back-ports CDC.
      * <p/>
      * If no call is made to this method, the default value set by Cassandra is {@code false}.
      *

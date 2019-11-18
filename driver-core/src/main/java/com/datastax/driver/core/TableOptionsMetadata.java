@@ -87,7 +87,6 @@ public class TableOptionsMetadata {
         boolean is200 = version.getMajor() == 2 && version.getMinor() == 0;
         boolean is210 = version.getMajor() == 2 && version.getMinor() >= 1;
         boolean is400OrHigher = version.getMajor() > 3;
-        boolean is380OrHigher = is400OrHigher || version.getMajor() == 3 && version.getMinor() >= 8;
         boolean is300OrHigher = version.getMajor() > 2;
         boolean is210OrHigher = is210 || is300OrHigher;
 
@@ -160,12 +159,7 @@ public class TableOptionsMetadata {
         else
             this.extensions = ImmutableMap.of();
 
-        if (is380OrHigher)
-            this.cdc = isNullOrAbsent(row, CDC)
-                    ? DEFAULT_CDC
-                    : row.getBool(CDC);
-        else
-            this.cdc = DEFAULT_CDC;
+        this.cdc = isNullOrAbsent(row, CDC) ? DEFAULT_CDC : row.getBool(CDC);
     }
 
     private static boolean isNullOrAbsent(Row row, String name) {
@@ -379,11 +373,12 @@ public class TableOptionsMetadata {
     }
 
     /**
-     * Returns whether or not change data capture is enabled for this table.
+     * Returns whether or not change data capture (CDC) is enabled for this table.
      * <p/>
-     * For Cassandra versions prior to 3.8.0, this method always returns false.
+     * Note that Apache Cassandra officially introduced CDC via CASSANDRA-12041 in Cassandra 3.8.0.
+     * So older versions of Cassandra will always return false unless running a custom variant which back-ports CDC.
      *
-     * @return whether or not change data capture is enabled for this table.
+     * @return whether or not change data capture (CDC) is enabled for this table.
      */
     public boolean isCDC() {
         return cdc;
