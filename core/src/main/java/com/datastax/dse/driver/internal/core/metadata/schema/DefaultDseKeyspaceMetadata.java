@@ -15,7 +15,7 @@
  */
 package com.datastax.dse.driver.internal.core.metadata.schema;
 
-import com.datastax.dse.driver.api.core.metadata.schema.DseKeyspaceMetadata;
+import com.datastax.dse.driver.api.core.metadata.schema.DseGraphKeyspaceMetadata;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata;
@@ -31,7 +31,7 @@ import java.util.Optional;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultDseKeyspaceMetadata implements DseKeyspaceMetadata {
+public class DefaultDseKeyspaceMetadata implements DseGraphKeyspaceMetadata {
 
   @NonNull private final CqlIdentifier name;
   private final boolean durableWrites;
@@ -129,8 +129,8 @@ public class DefaultDseKeyspaceMetadata implements DseKeyspaceMetadata {
   public boolean equals(Object other) {
     if (other == this) {
       return true;
-    } else if (other instanceof DseKeyspaceMetadata) {
-      DseKeyspaceMetadata that = (DseKeyspaceMetadata) other;
+    } else if (other instanceof DseGraphKeyspaceMetadata) {
+      DseGraphKeyspaceMetadata that = (DseGraphKeyspaceMetadata) other;
       return Objects.equals(this.name, that.getName())
           && this.durableWrites == that.isDurableWrites()
           && this.virtual == that.isVirtual()
@@ -165,8 +165,8 @@ public class DefaultDseKeyspaceMetadata implements DseKeyspaceMetadata {
   public boolean shallowEquals(Object other) {
     if (other == this) {
       return true;
-    } else if (other instanceof DseKeyspaceMetadata) {
-      DseKeyspaceMetadata that = (DseKeyspaceMetadata) other;
+    } else if (other instanceof DseGraphKeyspaceMetadata) {
+      DseGraphKeyspaceMetadata that = (DseGraphKeyspaceMetadata) other;
       return Objects.equals(this.name, that.getName())
           && this.durableWrites == that.isDurableWrites()
           && Objects.equals(this.graphEngine, that.getGraphEngine().orElse(null))

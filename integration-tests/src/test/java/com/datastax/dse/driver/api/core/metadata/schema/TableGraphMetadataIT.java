@@ -63,7 +63,7 @@ public class TableGraphMetadataIT {
               assertThat(keyspaceMetadata.getTable("person"))
                   .hasValueSatisfying(
                       person -> {
-                        DseTableMetadata dsePerson = (DseTableMetadata) person;
+                        DseGraphTableMetadata dsePerson = (DseGraphTableMetadata) person;
                         assertThat(dsePerson.getVertex())
                             .hasValueSatisfying(
                                 vertex ->
@@ -75,7 +75,7 @@ public class TableGraphMetadataIT {
               assertThat(keyspaceMetadata.getTable("software"))
                   .hasValueSatisfying(
                       software -> {
-                        DseTableMetadata dseSoftware = (DseTableMetadata) software;
+                        DseGraphTableMetadata dseSoftware = (DseGraphTableMetadata) software;
                         assertThat(dseSoftware.getVertex())
                             .hasValueSatisfying(
                                 vertex ->
@@ -87,7 +87,8 @@ public class TableGraphMetadataIT {
               assertThat(keyspaceMetadata.getTable("contributors"))
                   .hasValueSatisfying(
                       contributors -> {
-                        DseTableMetadata dseContributors = (DseTableMetadata) contributors;
+                        DseGraphTableMetadata dseContributors =
+                            (DseGraphTableMetadata) contributors;
                         assertThat(dseContributors.getVertex()).isEmpty();
                         assertThat(dseContributors.getEdge())
                             .hasValueSatisfying(

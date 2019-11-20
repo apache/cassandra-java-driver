@@ -4861,46 +4861,6 @@
         "justification": "JAVA-2411: Type parameters were wrong but it is unlikely that implementors would notice that in subclasses"
       },
       {
-        "code": "java.method.addedToInterface",
-        "new": "method java.util.Map<com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature, com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata> com.datastax.dse.driver.api.core.metadata.schema.DseKeyspaceMetadata::getAggregates()",
-        "justification": "JAVA-1898: Expose new table-level graph metadata"
-      },
-      {
-        "code": "java.method.addedToInterface",
-        "new": "method java.util.Map<com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature, com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata> com.datastax.dse.driver.api.core.metadata.schema.DseKeyspaceMetadata::getFunctions()",
-        "justification": "JAVA-1898: Expose new table-level graph metadata"
-      },
-      {
-        "code": "java.method.addedToInterface",
-        "new": "method java.util.Optional<java.lang.String> com.datastax.dse.driver.api.core.metadata.schema.DseKeyspaceMetadata::getGraphEngine()",
-        "justification": "JAVA-1898: Expose new table-level graph metadata"
-      },
-      {
-        "code": "java.method.addedToInterface",
-        "new": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.metadata.schema.TableMetadata> com.datastax.dse.driver.api.core.metadata.schema.DseKeyspaceMetadata::getTables()",
-        "justification": "JAVA-1898: Expose new table-level graph metadata"
-      },
-      {
-        "code": "java.method.addedToInterface",
-        "new": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata> com.datastax.dse.driver.api.core.metadata.schema.DseKeyspaceMetadata::getViews()",
-        "justification": "JAVA-1898: Expose new table-level graph metadata"
-      },
-      {
-        "code": "java.method.addedToInterface",
-        "new": "method java.util.Optional<? extends com.datastax.dse.driver.api.core.metadata.schema.DseEdgeMetadata> com.datastax.dse.driver.api.core.metadata.schema.DseTableMetadata::getEdge()",
-        "justification": "JAVA-1898: Expose new table-level graph metadata"
-      },
-      {
-        "code": "java.method.addedToInterface",
-        "new": "method java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata> com.datastax.dse.driver.api.core.metadata.schema.DseTableMetadata::getIndexes()",
-        "justification": "JAVA-1898: Expose new table-level graph metadata"
-      },
-      {
-        "code": "java.method.addedToInterface",
-        "new": "method java.util.Optional<? extends com.datastax.dse.driver.api.core.metadata.schema.DseVertexMetadata> com.datastax.dse.driver.api.core.metadata.schema.DseTableMetadata::getVertex()",
-        "justification": "JAVA-1898: Expose new table-level graph metadata"
-      },
-      {
         "code": "java.method.removed",
         "old": "method <E> org.apache.tinkerpop.gremlin.process.remote.traversal.RemoteTraversal<?, E> org.apache.tinkerpop.gremlin.process.remote.RemoteConnection::submit(org.apache.tinkerpop.gremlin.process.traversal.Bytecode) throws org.apache.tinkerpop.gremlin.process.remote.RemoteConnectionException",
         "justification": "JAVA-2235: GraphBinary support - TinkerPop upgrade from 3.3 to 3.4"

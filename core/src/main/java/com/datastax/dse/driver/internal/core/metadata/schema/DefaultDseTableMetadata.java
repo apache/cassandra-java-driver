@@ -16,7 +16,7 @@
 package com.datastax.dse.driver.internal.core.metadata.schema;
 
 import com.datastax.dse.driver.api.core.metadata.schema.DseEdgeMetadata;
-import com.datastax.dse.driver.api.core.metadata.schema.DseTableMetadata;
+import com.datastax.dse.driver.api.core.metadata.schema.DseGraphTableMetadata;
 import com.datastax.dse.driver.api.core.metadata.schema.DseVertexMetadata;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
@@ -32,7 +32,7 @@ import java.util.UUID;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultDseTableMetadata implements DseTableMetadata {
+public class DefaultDseTableMetadata implements DseGraphTableMetadata {
 
   @NonNull private final CqlIdentifier keyspace;
   @NonNull private final CqlIdentifier name;
@@ -149,8 +149,8 @@ public class DefaultDseTableMetadata implements DseTableMetadata {
   public boolean equals(Object other) {
     if (other == this) {
       return true;
-    } else if (other instanceof DseTableMetadata) {
-      DseTableMetadata that = (DseTableMetadata) other;
+    } else if (other instanceof DseGraphTableMetadata) {
+      DseGraphTableMetadata that = (DseGraphTableMetadata) other;
       return Objects.equals(this.keyspace, that.getKeyspace())
           && Objects.equals(this.name, that.getName())
           && Objects.equals(this.id, that.getId().orElse(null))

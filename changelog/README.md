@@ -4,6 +4,7 @@
 
 ### NGDG (in progress)
 
+- [bug] JAVA-2508: Preserve backward compatibility in schema metadata types
 - [bug] JAVA-2465: Avoid requesting 0 page when executing continuous paging queries
 - [improvement] JAVA-2472: Enable speculative executions for paged graph queries
 - [improvement] JAVA-1579: Change default result format to latest GraphSON format

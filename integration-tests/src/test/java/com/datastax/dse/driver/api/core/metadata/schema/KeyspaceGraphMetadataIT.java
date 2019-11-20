@@ -45,7 +45,7 @@ public class KeyspaceGraphMetadataIT {
     assertThat(metadata.getKeyspace("keyspace_metadata_it_graph_engine"))
         .hasValueSatisfying(
             keyspaceMetadata ->
-                assertThat(((DseKeyspaceMetadata) keyspaceMetadata).getGraphEngine())
+                assertThat(((DseGraphKeyspaceMetadata) keyspaceMetadata).getGraphEngine())
                     .hasValue("Core"));
   }
 
@@ -58,14 +58,15 @@ public class KeyspaceGraphMetadataIT {
     assertThat(session.getMetadata().getKeyspace("keyspace_metadata_it_graph_engine_alter"))
         .hasValueSatisfying(
             keyspaceMetadata ->
-                assertThat(((DseKeyspaceMetadata) keyspaceMetadata).getGraphEngine()).isEmpty());
+                assertThat(((DseGraphKeyspaceMetadata) keyspaceMetadata).getGraphEngine())
+                    .isEmpty());
 
     session.execute(
         "ALTER KEYSPACE keyspace_metadata_it_graph_engine_alter WITH graph_engine = 'Core'");
     assertThat(session.getMetadata().getKeyspace("keyspace_metadata_it_graph_engine_alter"))
         .hasValueSatisfying(
             keyspaceMetadata ->
-                assertThat(((DseKeyspaceMetadata) keyspaceMetadata).getGraphEngine())
+                assertThat(((DseGraphKeyspaceMetadata) keyspaceMetadata).getGraphEngine())
                     .hasValue("Core"));
   }
 
@@ -92,7 +93,7 @@ public class KeyspaceGraphMetadataIT {
     assertThat(metadata.getKeyspace("keyspace_metadata_it_graph_engine_core"))
         .hasValueSatisfying(
             keyspaceMetadata ->
-                assertThat(((DseKeyspaceMetadata) keyspaceMetadata).getGraphEngine())
+                assertThat(((DseGraphKeyspaceMetadata) keyspaceMetadata).getGraphEngine())
                     .hasValue("Core"));
   }
 
@@ -103,6 +104,7 @@ public class KeyspaceGraphMetadataIT {
     assertThat(metadata.getKeyspace(SESSION_RULE.keyspace()))
         .hasValueSatisfying(
             keyspaceMetadata ->
-                assertThat(((DseKeyspaceMetadata) keyspaceMetadata).getGraphEngine()).isEmpty());
+                assertThat(((DseGraphKeyspaceMetadata) keyspaceMetadata).getGraphEngine())
+                    .isEmpty());
   }
 }

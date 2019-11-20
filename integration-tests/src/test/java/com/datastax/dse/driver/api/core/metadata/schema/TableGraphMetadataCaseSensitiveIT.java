@@ -66,7 +66,7 @@ public class TableGraphMetadataCaseSensitiveIT {
                 assertThat(keyspaceMetadata.getTable(CqlIdentifier.fromInternal("Created")))
                     .hasValueSatisfying(
                         created -> {
-                          DseTableMetadata dseCreated = (DseTableMetadata) created;
+                          DseGraphTableMetadata dseCreated = (DseGraphTableMetadata) created;
                           assertThat(dseCreated.getEdge())
                               .hasValueSatisfying(
                                   edge -> {

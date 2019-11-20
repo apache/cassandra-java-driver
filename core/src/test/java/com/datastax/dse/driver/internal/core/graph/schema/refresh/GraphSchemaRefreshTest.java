@@ -9,7 +9,7 @@ package com.datastax.dse.driver.internal.core.graph.schema.refresh;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.dse.driver.api.core.metadata.schema.DseEdgeMetadata;
-import com.datastax.dse.driver.api.core.metadata.schema.DseTableMetadata;
+import com.datastax.dse.driver.api.core.metadata.schema.DseGraphTableMetadata;
 import com.datastax.dse.driver.api.core.metadata.schema.DseVertexMetadata;
 import com.datastax.dse.driver.internal.core.metadata.schema.DefaultDseEdgeMetadata;
 import com.datastax.dse.driver.internal.core.metadata.schema.DefaultDseKeyspaceMetadata;
@@ -133,7 +133,7 @@ public class GraphSchemaRefreshTest {
     assertThat(result.events).containsExactly(TableChangeEvent.updated(OLD_TABLE, newTable));
     assertThat(result.newMetadata.getKeyspaces().get(KS_WITH_ENGINE.getName())).isNotNull();
     assertThat(
-            ((DseTableMetadata)
+            ((DseGraphTableMetadata)
                     result
                         .newMetadata
                         .getKeyspaces()
@@ -143,7 +143,7 @@ public class GraphSchemaRefreshTest {
                 .getVertex())
         .isNotNull();
     assertThat(
-            ((DseTableMetadata)
+            ((DseGraphTableMetadata)
                     result
                         .newMetadata
                         .getKeyspaces()
@@ -175,7 +175,7 @@ public class GraphSchemaRefreshTest {
     assertThat(result.newMetadata.getKeyspaces()).hasSize(2);
     assertThat(result.events).containsExactly(TableChangeEvent.updated(OLD_TABLE, newTable));
     assertThat(
-            ((DseTableMetadata)
+            ((DseGraphTableMetadata)
                     result
                         .newMetadata
                         .getKeyspaces()
@@ -205,7 +205,7 @@ public class GraphSchemaRefreshTest {
     assertThat(result.events)
         .containsExactly(TableChangeEvent.updated(newTable, tableWithRemovedLabel));
     assertThat(
-            ((DseTableMetadata)
+            ((DseGraphTableMetadata)
                     result
                         .newMetadata
                         .getKeyspaces()
@@ -241,7 +241,7 @@ public class GraphSchemaRefreshTest {
     assertThat(result.events).containsExactly(TableChangeEvent.updated(OLD_TABLE, newTable));
     assertThat(result.newMetadata.getKeyspaces().get(KS_WITH_ENGINE.getName())).isNotNull();
     assertThat(
-            ((DseTableMetadata)
+            ((DseGraphTableMetadata)
                     result
                         .newMetadata
                         .getKeyspaces()
@@ -251,7 +251,7 @@ public class GraphSchemaRefreshTest {
                 .getVertex())
         .isNotNull();
     assertThat(
-            ((DseTableMetadata)
+            ((DseGraphTableMetadata)
                     result
                         .newMetadata
                         .getKeyspaces()
@@ -286,7 +286,7 @@ public class GraphSchemaRefreshTest {
     assertThat(result.newMetadata.getKeyspaces()).hasSize(2);
     assertThat(result.events).containsExactly(TableChangeEvent.updated(OLD_TABLE, newTable));
     assertThat(
-            ((DseTableMetadata)
+            ((DseGraphTableMetadata)
                     result
                         .newMetadata
                         .getKeyspaces()
@@ -316,7 +316,7 @@ public class GraphSchemaRefreshTest {
     assertThat(result.events)
         .containsExactly(TableChangeEvent.updated(newTable, tableWithRemovedLabel));
     assertThat(
-            ((DseTableMetadata)
+            ((DseGraphTableMetadata)
                     result
                         .newMetadata
                         .getKeyspaces()
