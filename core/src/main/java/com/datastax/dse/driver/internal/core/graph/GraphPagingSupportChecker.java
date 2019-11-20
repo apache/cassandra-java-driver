@@ -24,7 +24,8 @@ import org.slf4j.LoggerFactory;
 
 public class GraphPagingSupportChecker {
   private static final Logger LOG = LoggerFactory.getLogger(GraphPagingSupportChecker.class);
-  static final Version GRAPH_PAGING_MIN_DSE_VERSION = Version.parse("6.8.0");
+  static final Version GRAPH_PAGING_MIN_DSE_VERSION =
+      Objects.requireNonNull(Version.parse("6.8.0"));
 
   private volatile Boolean contextGraphPagingEnabled;
 
@@ -68,8 +69,7 @@ public class GraphPagingSupportChecker {
 
       for (Node node : nodes) {
         Version dseVersion = (Version) node.getExtras().get(DseNodeProperties.DSE_VERSION);
-        if (dseVersion == null
-            || dseVersion.compareTo(Objects.requireNonNull(GRAPH_PAGING_MIN_DSE_VERSION)) < 0) {
+        if (dseVersion == null || dseVersion.compareTo(GRAPH_PAGING_MIN_DSE_VERSION) < 0) {
           contextGraphPagingEnabled = false;
           return contextGraphPagingEnabled;
         }
