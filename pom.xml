@@ -82,6 +82,28 @@
     <skipTests>false</skipTests>
     <skipUnitTests>${skipTests}</skipUnitTests>
   </properties>
+
+  <!--
+  TODO: Remove the following repositories section once Tinkerpop 3.4.5 is officially released
+  -->
+  <repositories>
+    <repository>
+      <id>Apache</id>
+      <name>Apache Artifactory for Tinkerpop snapshot releases</name>
+      <url>https://repository.apache.org/content/groups/snapshots</url>
+      <releases>
+        <checksumPolicy>warn</checksumPolicy>
+        <enabled>false</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <checksumPolicy>warn</checksumPolicy>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+      </snapshots>
+    </repository>
+  </repositories>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
