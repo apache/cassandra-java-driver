@@ -143,7 +143,7 @@
               </relocations>
               <filters>
                 <!-- Note: most exclusions are done later on with the dependency plugin, but
-                 these one must be done here because its pattern is too wide -->
+                 this one must be done here because its pattern is too wide -->
                 <filter>
                   <artifact>com.fasterxml.jackson.core:*</artifact>
                   <excludes>
