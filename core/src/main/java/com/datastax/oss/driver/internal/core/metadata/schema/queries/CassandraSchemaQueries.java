@@ -132,40 +132,35 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
 
     schemaRowsBuilder = new CassandraSchemaRows.Builder(isCassandraV3, refreshFuture, logPrefix);
 
-    query(selectKeyspacesQuery() + whereClause, schemaRowsBuilder::withKeyspaces, true);
-    query(selectTypesQuery() + whereClause, schemaRowsBuilder::withTypes, true);
-    query(selectTablesQuery() + whereClause, schemaRowsBuilder::withTables, true);
-    query(selectColumnsQuery() + whereClause, schemaRowsBuilder::withColumns, true);
+    query(selectKeyspacesQuery() + whereClause, schemaRowsBuilder::withKeyspaces);
+    query(selectTypesQuery() + whereClause, schemaRowsBuilder::withTypes);
+    query(selectTablesQuery() + whereClause, schemaRowsBuilder::withTables);
+    query(selectColumnsQuery() + whereClause, schemaRowsBuilder::withColumns);
     selectIndexesQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withIndexes, true));
+        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withIndexes));
     selectViewsQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withViews, true));
+        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withViews));
     selectFunctionsQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withFunctions, true));
+        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withFunctions));
     selectAggregatesQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withAggregates, true));
+        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withAggregates));
     selectVirtualKeyspacesQuery()
-        .ifPresent(
-            select -> query(select + whereClause, schemaRowsBuilder::withVirtualKeyspaces, false));
+        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withVirtualKeyspaces));
     selectVirtualTablesQuery()
-        .ifPresent(
-            select -> query(select + whereClause, schemaRowsBuilder::withVirtualTables, false));
+        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withVirtualTables));
     selectVirtualColumnsQuery()
-        .ifPresent(
-            select -> query(select + whereClause, schemaRowsBuilder::withVirtualColumns, false));
+        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withVirtualColumns));
   }
 
   private void query(
       String queryString,
-      Function<Iterable<AdminRow>, CassandraSchemaRows.Builder> builderUpdater,
-      boolean warnIfMissing) {
+      Function<Iterable<AdminRow>, CassandraSchemaRows.Builder> builderUpdater) {
     assert adminExecutor.inEventLoop();
 
     pendingQueries += 1;
     query(queryString)
         .whenCompleteAsync(
-            (result, error) -> handleResult(result, error, builderUpdater, warnIfMissing),
-            adminExecutor);
+            (result, error) -> handleResult(result, error, builderUpdater), adminExecutor);
   }
 
   @VisibleForTesting
@@ -173,24 +168,16 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
     return AdminRequestHandler.query(channel, query, timeout, pageSize, logPrefix).start();
   }
 
-  /**
-   * @param warnIfMissing whether to log a warning if the queried table does not exist: some DDAC
-   *     versions report release_version > 4, but don't have a system_virtual_schema keyspace, so we
-   *     want to ignore those errors silently.
-   */
   private void handleResult(
       AdminResult result,
       Throwable error,
-      Function<Iterable<AdminRow>, CassandraSchemaRows.Builder> builderUpdater,
-      boolean warnIfMissing) {
+      Function<Iterable<AdminRow>, CassandraSchemaRows.Builder> builderUpdater) {
     if (error != null) {
-      if (warnIfMissing || !error.getMessage().contains("does not exist")) {
-        Loggers.warnWithException(
-            LOG,
-            "[{}] Error during schema refresh, new metadata might be incomplete",
-            logPrefix,
-            error);
-      }
+      Loggers.warnWithException(
+          LOG,
+          "[{}] Error during schema refresh, new metadata might be incomplete",
+          logPrefix,
+          error);
       // Proceed without the results of this query, the rest of the schema refresh will run on a
       // "best effort" basis
       markQueryComplete();
@@ -201,8 +188,7 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
         result
             .nextPage()
             .whenCompleteAsync(
-                (nextResult, nextError) ->
-                    handleResult(nextResult, nextError, builderUpdater, warnIfMissing),
+                (nextResult, nextError) -> handleResult(nextResult, nextError, builderUpdater),
                 adminExecutor);
       } else {
         markQueryComplete();
