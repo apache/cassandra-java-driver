@@ -24,7 +24,6 @@ import com.datastax.dse.driver.internal.core.cql.DseConversions;
 import com.datastax.dse.protocol.internal.request.Revise;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
-import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
@@ -37,8 +36,6 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.metadata.TokenMap;
-import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
@@ -90,11 +87,9 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.ArrayDeque;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -121,7 +116,6 @@ public class ContinuousCqlRequestHandler
   private final InternalDriverContext context;
   private final DriverExecutionProfile executionProfile;
   private final Queue<Node> queryPlan;
-  private final Set<Node> replicas;
   private final RetryPolicy retryPolicy;
   private final RequestThrottler throttler;
   private final int maxEnqueuedPages;
@@ -238,7 +232,6 @@ public class ContinuousCqlRequestHandler
         protocolVersion.getCode() >= DseProtocolVersion.DSE_V2.getCode();
     this.numPagesRequested = protocolBackpressureAvailable ? maxEnqueuedPages : 0;
     this.message = DseConversions.toContinuousPagingMessage(statement, executionProfile, context);
-    this.replicas = getReplicas();
     this.throttler = context.getRequestThrottler();
     this.throttler.register(this);
     this.sessionMetricUpdater = session.getMetricUpdater();
@@ -309,19 +302,6 @@ public class ContinuousCqlRequestHandler
         lock.unlock();
       }
     } else {
-      if (replicas.isEmpty()) {
-        LOG.warn(
-            "[{}] Could not determine if the node is a replica, "
-                + "continuous paging may not be available: {}",
-            logPrefix,
-            node);
-      } else if (!replicas.contains(node)) {
-        LOG.warn(
-            "[{}] Contacting a node that is likely not a replica, "
-                + "continuous paging may not be available: {}",
-            logPrefix,
-            node);
-      }
       this.node = node;
       streamId = -1;
       messageStartTimeNanos = System.nanoTime();
@@ -1161,32 +1141,6 @@ public class ContinuousCqlRequestHandler
   }
 
   // UTILITY METHODS
-
-  @NonNull
-  private Set<Node> getReplicas() {
-    if (session.getMetadata().getTokenMap().isPresent()) {
-      CqlIdentifier keyspace = statement.getKeyspace();
-      if (keyspace == null) {
-        keyspace = statement.getRoutingKeyspace();
-        if (keyspace == null) {
-          keyspace = session.getKeyspace().orElse(null);
-        }
-      }
-      if (keyspace != null) {
-        TokenMap tokenMap = session.getMetadata().getTokenMap().get();
-        Token routingToken = statement.getRoutingToken();
-        if (routingToken != null) {
-          return tokenMap.getReplicas(keyspace, routingToken);
-        } else {
-          ByteBuffer routingKey = statement.getRoutingKey();
-          if (routingKey != null) {
-            return tokenMap.getReplicas(keyspace, routingKey);
-          }
-        }
-      }
-    }
-    return Collections.emptySet();
-  }
 
   @NonNull
   private DefaultExecutionInfo createExecutionInfo(

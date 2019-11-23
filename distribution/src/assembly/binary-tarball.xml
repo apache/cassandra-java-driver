@@ -74,7 +74,6 @@
         </dependencySets>
       </binaries>
     </moduleSet>
-
     <!-- Module java-driver-mapper-runtime and its dependencies -->
     <moduleSet>
       <useAllReactorProjects>true</useAllReactorProjects>
@@ -100,7 +99,6 @@
         </dependencySets>
       </binaries>
     </moduleSet>
-
     <!-- Module java-driver-mapper-processor and its dependencies -->
     <moduleSet>
       <useAllReactorProjects>true</useAllReactorProjects>

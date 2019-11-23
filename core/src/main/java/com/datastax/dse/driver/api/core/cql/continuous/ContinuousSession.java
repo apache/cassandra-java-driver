@@ -37,7 +37,8 @@ import java.util.concurrent.CompletionStage;
  * Analytics</a> and Apache Spark™, or by any similar analytics tool that needs to read large
  * portions of a table in one single operation, as quick and reliably as possible.
  *
- * <p>Continuous paging requires the following three conditions to be met on the client side:
+ * <p>Continuous paging provides the best performance improvement against regular paging when the
+ * following conditions are met:
  *
  * <ol>
  *   <li>The statement must target a single partition or a token range owned by one single replica;
@@ -51,19 +52,14 @@ import java.util.concurrent.CompletionStage;
  *       DefaultConsistencyLevel#LOCAL_ONE LOCAL_ONE}).
  * </ol>
  *
- * <p>It's the caller's responsibility to make sure that the above conditions are met. If this is
- * not the case, <em>continuous paging will silently degrade into a normal read operation, and the
- * coordinator will retrieve pages one by one from replicas</em>.
+ * <p>If the above conditions are met, the coordinator will be able to optimize the read path and
+ * serve results from local data, thus significantly improving response times; if however these
+ * conditions cannot be met, continuous paging would still work, but response times wouldn't be
+ * significantly better than those of regular paging anymore.
  *
- * <p>Note that when the continuous paging optimization kicks in (range read at {@code ONE}
- * performed directly on a replica), the snitch is bypassed and the coordinator will always chose
- * itself as a replica. Therefore, other functionality such as probabilistic read repair and
- * speculative retry is also not available when contacting a replica at {@code ONE}.
- *
- * <p>Continuous paging is disabled by default and needs to be activated server-side. See <a
- * href="https://docs.datastax.com/en/dse/5.1/dse-dev/datastax_enterprise/spark/sparkConfiguration.html#sparkConfiguration__enablePag">Enabling
- * continuous paging</a> in the DSE docs to learn how to enable it.
- *
+ * @see <a
+ *     href="https://docs.datastax.com/en/dse/6.7/dse-dev/datastax_enterprise/config/configCassandra_yaml.html#configCassandra_yaml__continous-paging">Continuous
+ *     paging options in cassandra.yaml configuration file</a>
  * @see <a
  *     href="https://www.datastax.com/dev/blog/dse-continuous-paging-tuning-and-support-guide">DSE
  *     Continuous Paging Tuning and Support Guide</a>

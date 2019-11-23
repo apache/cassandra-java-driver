@@ -4,6 +4,8 @@
 
 ### 4.4.0 (in progress)
 
+- [documentation] JAVA-2446: Revisit continuous paging javadocs
+- [improvement] JAVA-2550: Remove warnings in ContinuousCqlRequestHandler when coordinator is not replica
 - [improvement] JAVA-2569: Make driver compatible with Netty < 4.1.34 again
 - [improvement] JAVA-2541: Improve error messages during connection initialization
 - [improvement] JAVA-2530: Expose shortcuts for name-based UUIDs
