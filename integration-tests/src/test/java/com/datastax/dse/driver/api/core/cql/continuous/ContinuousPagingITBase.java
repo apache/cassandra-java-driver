@@ -18,8 +18,8 @@ package com.datastax.dse.driver.api.core.cql.continuous;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.codahale.metrics.Timer;
-import com.datastax.dse.driver.DseSessionMetric;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
+import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
