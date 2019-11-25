@@ -52,6 +52,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.oss.driver.internal.core.cql.Conversions;
 import com.datastax.oss.driver.internal.core.cql.RequestHandlerTestHarness;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
@@ -112,7 +113,7 @@ public class GraphRequestHandlerTest {
 
     // when
     DriverExecutionProfile executionProfile =
-        GraphConversions.resolveExecutionProfile(graphStatement, harness.getContext());
+        Conversions.resolveExecutionProfile(graphStatement, harness.getContext());
 
     Message m =
         GraphConversions.createMessageFromGraphStatement(
@@ -141,7 +142,7 @@ public class GraphRequestHandlerTest {
 
     // when
     DriverExecutionProfile executionProfile =
-        GraphConversions.resolveExecutionProfile(graphStatement, harness.getContext());
+        Conversions.resolveExecutionProfile(graphStatement, harness.getContext());
 
     Message m =
         GraphConversions.createMessageFromGraphStatement(
@@ -186,7 +187,7 @@ public class GraphRequestHandlerTest {
 
     // when
     DriverExecutionProfile executionProfile =
-        GraphConversions.resolveExecutionProfile(graphStatement, harness.getContext());
+        Conversions.resolveExecutionProfile(graphStatement, harness.getContext());
 
     Message m =
         GraphConversions.createMessageFromGraphStatement(
@@ -237,7 +238,7 @@ public class GraphRequestHandlerTest {
 
     // when
     DriverExecutionProfile executionProfile =
-        GraphConversions.resolveExecutionProfile(graphStatement, harness.getContext());
+        Conversions.resolveExecutionProfile(graphStatement, harness.getContext());
     Message m =
         GraphConversions.createMessageFromGraphStatement(
             graphStatement, subProtocol, executionProfile, harness.getContext(), module);
@@ -282,7 +283,7 @@ public class GraphRequestHandlerTest {
 
     // when
     DriverExecutionProfile executionProfile =
-        GraphConversions.resolveExecutionProfile(graphStatement, harness.getContext());
+        Conversions.resolveExecutionProfile(graphStatement, harness.getContext());
 
     Map<String, ByteBuffer> requestPayload =
         GraphConversions.createCustomPayload(
@@ -332,7 +333,7 @@ public class GraphRequestHandlerTest {
 
     // when
     DriverExecutionProfile executionProfile =
-        GraphConversions.resolveExecutionProfile(graphStatement, harness.getContext());
+        Conversions.resolveExecutionProfile(graphStatement, harness.getContext());
 
     Map<String, ByteBuffer> requestPayload =
         GraphConversions.createCustomPayload(
@@ -380,7 +381,7 @@ public class GraphRequestHandlerTest {
 
     // when
     DriverExecutionProfile executionProfile =
-        GraphConversions.resolveExecutionProfile(graphStatement, harness.getContext());
+        Conversions.resolveExecutionProfile(graphStatement, harness.getContext());
 
     Map<String, ByteBuffer> requestPayload =
         GraphConversions.createCustomPayload(
