@@ -46,7 +46,7 @@ public class GraphTraversalMultiPropertiesIT {
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   /** Builds a simple schema that provides for a vertex with a multi-cardinality property. */
-  public static final String multiProps =
+  private static final String MULTI_PROPS =
       MAKE_STRICT
           + ALLOW_SCANS
           + "schema.propertyKey('multi_prop').Text().multiple().create()\n"
@@ -62,7 +62,7 @@ public class GraphTraversalMultiPropertiesIT {
   @Test
   public void should_parse_multiple_cardinality_properties() {
     // given a schema that defines multiple cardinality properties.
-    sessionRule.session().execute(ScriptGraphStatement.newInstance(multiProps));
+    sessionRule.session().execute(ScriptGraphStatement.newInstance(MULTI_PROPS));
 
     // when adding a vertex with a multiple cardinality property
     GraphResultSet result =

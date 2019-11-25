@@ -49,7 +49,7 @@ public class GraphTraversalMetaPropertiesIT {
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   /** Builds a simple schema that provides for a vertex with a property with sub properties. */
-  public static String metaProps =
+  private static final String META_PROPS =
       MAKE_STRICT
           + ALLOW_SCANS
           + "schema.propertyKey('sub_prop').Text().create()\n"
@@ -65,7 +65,7 @@ public class GraphTraversalMetaPropertiesIT {
    */
   @Test
   public void should_parse_meta_properties() {
-    sessionRule.session().execute(ScriptGraphStatement.newInstance(metaProps));
+    sessionRule.session().execute(ScriptGraphStatement.newInstance(META_PROPS));
 
     GraphResultSet result =
         sessionRule
