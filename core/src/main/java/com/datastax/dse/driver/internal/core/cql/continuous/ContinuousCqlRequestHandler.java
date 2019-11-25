@@ -15,8 +15,8 @@
  */
 package com.datastax.dse.driver.internal.core.cql.continuous;
 
+import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.cql.continuous.ContinuousAsyncResultSet;
-import com.datastax.dse.driver.internal.core.ContinuousRequestHandlerBase;
 import com.datastax.dse.driver.internal.core.cql.DseConversions;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
@@ -38,6 +38,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -52,6 +53,10 @@ public class ContinuousCqlRequestHandler
     implements ResponseCallback, GenericFutureListener<Future<java.lang.Void>>, Throttled {
 
   private final Message message;
+  private final Duration firstPageTimeout;
+  private final Duration otherPagesTimeout;
+  private final int maxEnqueuedPages;
+  private final int maxPages;
 
   ContinuousCqlRequestHandler(
       @NonNull Statement<?> statement,
@@ -59,8 +64,43 @@ public class ContinuousCqlRequestHandler
       @NonNull InternalDriverContext context,
       @NonNull String sessionLogPrefix) {
     super(statement, session, context, sessionLogPrefix, ContinuousAsyncResultSet.class);
-    this.message = DseConversions.toContinuousPagingMessage(statement, executionProfile, context);
+    message = DseConversions.toContinuousPagingMessage(statement, executionProfile, context);
     throttler.register(this);
+    firstPageTimeout =
+        executionProfile.getDuration(DseDriverOption.CONTINUOUS_PAGING_TIMEOUT_FIRST_PAGE);
+    otherPagesTimeout =
+        executionProfile.getDuration(DseDriverOption.CONTINUOUS_PAGING_TIMEOUT_OTHER_PAGES);
+    maxEnqueuedPages =
+        executionProfile.getInt(DseDriverOption.CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES);
+    maxPages = executionProfile.getInt(DseDriverOption.CONTINUOUS_PAGING_MAX_PAGES);
+  }
+
+  @NonNull
+  @Override
+  protected Duration getGlobalTimeout() {
+    return Duration.ZERO;
+  }
+
+  @NonNull
+  @Override
+  protected Duration getPageTimeout(int pageNumber) {
+    return pageNumber == 1 ? firstPageTimeout : otherPagesTimeout;
+  }
+
+  @NonNull
+  @Override
+  protected Duration getReviseRequestTimeout() {
+    return otherPagesTimeout;
+  }
+
+  @Override
+  protected int getMaxEnqueuedPages() {
+    return maxEnqueuedPages;
+  }
+
+  @Override
+  protected int getMaxPages() {
+    return maxPages;
   }
 
   @NonNull

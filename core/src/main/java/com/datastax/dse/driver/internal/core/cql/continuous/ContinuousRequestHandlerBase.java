@@ -4,14 +4,13 @@
  * This software can be used solely with DataStax Enterprise. Please consult the license at
  * http://www.datastax.com/terms/datastax-dse-driver-license-terms
  */
-package com.datastax.dse.driver.internal.core;
+package com.datastax.dse.driver.internal.core.cql.continuous;
 
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
-import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.cql.continuous.ContinuousAsyncResultSet;
 import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
+import com.datastax.dse.driver.internal.core.DseProtocolFeature;
 import com.datastax.dse.driver.internal.core.cql.DseConversions;
-import com.datastax.dse.driver.internal.core.cql.continuous.DefaultContinuousAsyncResultSet;
 import com.datastax.dse.protocol.internal.request.Revise;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
@@ -98,7 +97,7 @@ public abstract class ContinuousRequestHandlerBase<
 
   private static final Logger LOG = LoggerFactory.getLogger(ContinuousRequestHandlerBase.class);
 
-  private final String logPrefix;
+  protected final String logPrefix;
   protected final StatementT statement;
   protected final DefaultSession session;
   protected final InternalDriverContext context;
@@ -106,12 +105,8 @@ public abstract class ContinuousRequestHandlerBase<
   private final Queue<Node> queryPlan;
   private final RetryPolicy retryPolicy;
   protected final RequestThrottler throttler;
-  private final int maxEnqueuedPages;
-  private final int maxPages;
   private final boolean protocolBackpressureAvailable;
   private final boolean isIdempotent;
-  private final Duration timeoutFirstPage;
-  private final Duration timeoutOtherPages;
   private final Timer timer;
   private final SessionMetricUpdater sessionMetricUpdater;
 
@@ -125,7 +120,7 @@ public abstract class ContinuousRequestHandlerBase<
   // The page queue, storing responses that we have received and have not been consumed by the
   // client yet.
   @GuardedBy("lock")
-  private final Queue<Object> queue;
+  private Queue<Object> queue;
 
   // If the client requests a page and we can't serve it immediately (empty queue), then we create
   // this future and have the client wait on it. Otherwise this field is null.
@@ -150,7 +145,7 @@ public abstract class ContinuousRequestHandlerBase<
   private volatile long startTimeNanos;
 
   // These are set when the first page arrives, and are never modified after.
-  protected volatile ColumnDefinitions columnDefinitions;
+  volatile ColumnDefinitions columnDefinitions;
 
   // These change over time as different nodes are tried;
   // they can only be null before the first request is sent.
@@ -159,7 +154,8 @@ public abstract class ContinuousRequestHandlerBase<
   private volatile int streamId;
   // Set each time a new request/response cycle starts.
   private volatile long messageStartTimeNanos;
-  private volatile Timeout timeout;
+  private volatile Timeout pageTimeout;
+  private volatile Timeout globalTimeout;
 
   // How many times we've invoked the retry policy and it has returned a "retry" decision (0 for
   // the first attempt, 1 for the first retry, etc.).
@@ -199,22 +195,27 @@ public abstract class ContinuousRequestHandlerBase<
         idempotent == null
             ? executionProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
             : idempotent;
-    this.timeoutFirstPage =
-        executionProfile.getDuration(DseDriverOption.CONTINUOUS_PAGING_TIMEOUT_FIRST_PAGE);
-    this.timeoutOtherPages =
-        executionProfile.getDuration(DseDriverOption.CONTINUOUS_PAGING_TIMEOUT_OTHER_PAGES);
     this.timer = context.getNettyOptions().getTimer();
-    this.maxEnqueuedPages =
-        executionProfile.getInt(DseDriverOption.CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES);
-    this.queue = new ArrayDeque<>(maxEnqueuedPages);
-    this.maxPages = executionProfile.getInt(DseDriverOption.CONTINUOUS_PAGING_MAX_PAGES);
+
     this.protocolBackpressureAvailable =
         protocolVersion.getCode() >= DseProtocolVersion.DSE_V2.getCode();
-    this.numPagesRequested = protocolBackpressureAvailable ? maxEnqueuedPages : 0;
     this.throttler = context.getRequestThrottler();
     this.sessionMetricUpdater = session.getMetricUpdater();
     this.startTimeNanos = System.nanoTime();
   }
+
+  @NonNull
+  protected abstract Duration getGlobalTimeout();
+
+  @NonNull
+  protected abstract Duration getPageTimeout(int pageNumber);
+
+  @NonNull
+  protected abstract Duration getReviseRequestTimeout();
+
+  protected abstract int getMaxEnqueuedPages();
+
+  protected abstract int getMaxPages();
 
   @NonNull
   protected abstract Message getMessage();
@@ -267,6 +268,13 @@ public abstract class ContinuousRequestHandlerBase<
               executionProfile.getName(),
               System.nanoTime() - startTimeNanos,
               TimeUnit.NANOSECONDS);
+    }
+    lock.lock();
+    try {
+      this.queue = new ArrayDeque<>(getMaxEnqueuedPages());
+      this.numPagesRequested = protocolBackpressureAvailable ? getMaxEnqueuedPages() : 0;
+    } finally {
+      lock.unlock();
     }
     sendRequest(null);
   }
@@ -340,7 +348,8 @@ public abstract class ContinuousRequestHandlerBase<
       }
     } else {
       LOG.trace("[{}] Request sent on {}", logPrefix, channel);
-      timeout = scheduleTimeout(1);
+      pageTimeout = schedulePageTimeout(1);
+      globalTimeout = scheduleGlobalTimeout();
     }
   }
 
@@ -355,7 +364,7 @@ public abstract class ContinuousRequestHandlerBase<
   @Override
   public void onResponse(@NonNull Frame response) {
     stopNodeMessageTimer();
-    cancelTimeout();
+    cancelTimeout(pageTimeout);
     lock.lock();
     try {
       if (state < 0) {
@@ -395,7 +404,7 @@ public abstract class ContinuousRequestHandlerBase<
    */
   @Override
   public void onFailure(@NonNull Throwable error) {
-    cancelTimeout();
+    cancelTimeout(pageTimeout);
     LOG.trace(String.format("[%s] Request failure", logPrefix), error);
     RetryDecision decision;
     if (!isIdempotent || error instanceof FrameTooLongException) {
@@ -469,6 +478,7 @@ public abstract class ContinuousRequestHandlerBase<
             reenableAutoReadIfNeeded();
             enqueueOrCompletePending(resultSet);
             stopGlobalRequestTimer();
+            cancelTimeout(globalTimeout);
           } else {
             LOG.trace("[{}] Received page {} ({} rows)", logPrefix, pageNumber, pageSize);
             if (currentPage > 0) {
@@ -488,6 +498,7 @@ public abstract class ContinuousRequestHandlerBase<
         reenableAutoReadIfNeeded();
         enqueueOrCompletePending(resultSet);
         stopGlobalRequestTimer();
+        cancelTimeout(globalTimeout);
       }
     } catch (Throwable error) {
       abort(error, false);
@@ -776,7 +787,7 @@ public abstract class ContinuousRequestHandlerBase<
       // Backpressure without protocol support: if the queue grows too large,
       // disable auto-read so that the channel eventually becomes
       // non-writable on the server side (causing it to back off for a while)
-      if (!protocolBackpressureAvailable && queue.size() == maxEnqueuedPages && state > 0) {
+      if (!protocolBackpressureAvailable && queue.size() == getMaxEnqueuedPages() && state > 0) {
         LOG.trace(
             "[{}] Exceeded {} queued response pages, disabling auto-read", logPrefix, queue.size());
         channel.config().setAutoRead(false);
@@ -802,7 +813,9 @@ public abstract class ContinuousRequestHandlerBase<
       assert pendingResult == null;
 
       Object head = queue.poll();
-      if (!protocolBackpressureAvailable && head != null && queue.size() == maxEnqueuedPages - 1) {
+      if (!protocolBackpressureAvailable
+          && head != null
+          && queue.size() == getMaxEnqueuedPages() - 1) {
         LOG.trace(
             "[{}] Back to {} queued response pages, re-enabling auto-read",
             logPrefix,
@@ -838,7 +851,7 @@ public abstract class ContinuousRequestHandlerBase<
           // Only schedule a timeout if we're past the first page (the first page's timeout is
           // handled in sendRequest).
           if (state > 1) {
-            timeout = scheduleTimeout(state);
+            pageTimeout = schedulePageTimeout(state);
             // Note: each new timeout is cancelled when the next response arrives, see
             // onResponse(Frame).
           }
@@ -863,17 +876,17 @@ public abstract class ContinuousRequestHandlerBase<
       return;
     }
     // if we have already requested more than the client needs, then no need to request some more
-    if (maxPages > 0 && numPagesRequested >= maxPages) {
+    if (getMaxPages() > 0 && numPagesRequested >= getMaxPages()) {
       return;
     }
     // the pages received so far, which is the state minus one
     int received = state - 1;
     int requested = numPagesRequested;
     // the pages that fit in the queue, which is the queue free space minus the requests in flight
-    int freeSpace = maxEnqueuedPages - queue.size();
+    int freeSpace = getMaxEnqueuedPages() - queue.size();
     int inFlight = requested - received;
     int numPagesFittingInQueue = freeSpace - inFlight;
-    if (numPagesFittingInQueue >= maxEnqueuedPages / 2) {
+    if (numPagesFittingInQueue >= getMaxEnqueuedPages() / 2) {
       LOG.trace("[{}] Requesting more {} pages", logPrefix, numPagesFittingInQueue);
       numPagesRequested = requested + numPagesFittingInQueue;
       sendMorePagesRequest(numPagesFittingInQueue);
@@ -898,7 +911,7 @@ public abstract class ContinuousRequestHandlerBase<
             true,
             Revise.requestMoreContinuousPages(streamId, nextPages),
             statement.getCustomPayload(),
-            timeoutOtherPages,
+            getReviseRequestTimeout(),
             throttler,
             session.getMetricUpdater(),
             logPrefix,
@@ -924,11 +937,11 @@ public abstract class ContinuousRequestHandlerBase<
 
   // TIMEOUT HANDLING
 
-  private Timeout scheduleTimeout(int expectedPage) {
+  private Timeout schedulePageTimeout(int expectedPage) {
     if (expectedPage < 0) {
       return null;
     }
-    Duration timeout = expectedPage == 1 ? timeoutFirstPage : timeoutOtherPages;
+    Duration timeout = getPageTimeout(expectedPage);
     if (timeout.toNanos() <= 0) {
       return null;
     }
@@ -958,9 +971,27 @@ public abstract class ContinuousRequestHandlerBase<
         TimeUnit.NANOSECONDS);
   }
 
-  /** Cancels the current timeout, if non null. */
-  private void cancelTimeout() {
-    Timeout timeout = this.timeout;
+  private Timeout scheduleGlobalTimeout() {
+    Duration globalTimeout = getGlobalTimeout();
+    if (globalTimeout.toNanos() <= 0) {
+      return null;
+    }
+    LOG.trace("[{}] Scheduling global timeout for pages in {}", logPrefix, globalTimeout);
+    return timer.newTimeout(
+        timeout1 -> {
+          lock.lock();
+          try {
+            abort(new DriverTimeoutException("Query timed out after " + globalTimeout), false);
+          } finally {
+            lock.unlock();
+          }
+        },
+        globalTimeout.toNanos(),
+        TimeUnit.NANOSECONDS);
+  }
+
+  /** Cancels the given timeout, if non null. */
+  private void cancelTimeout(Timeout timeout) {
     if (timeout != null) {
       LOG.trace("[{}] Cancelling timeout", logPrefix);
       timeout.cancel();
@@ -1011,7 +1042,7 @@ public abstract class ContinuousRequestHandlerBase<
             true,
             Revise.cancelContinuousPaging(streamId),
             statement.getCustomPayload(),
-            timeoutOtherPages,
+            getReviseRequestTimeout(),
             throttler,
             session.getMetricUpdater(),
             logPrefix,
@@ -1092,6 +1123,7 @@ public abstract class ContinuousRequestHandlerBase<
       }
     }
     stopGlobalRequestTimer();
+    cancelTimeout(globalTimeout);
   }
 
   // METRICS
@@ -1210,7 +1242,7 @@ public abstract class ContinuousRequestHandlerBase<
   }
 
   @VisibleForTesting
-  public int getState() {
+  int getState() {
     lock.lock();
     try {
       return state;
@@ -1220,7 +1252,7 @@ public abstract class ContinuousRequestHandlerBase<
   }
 
   @VisibleForTesting
-  public CompletableFuture<ResultSetT> getPendingResult() {
+  CompletableFuture<ResultSetT> getPendingResult() {
     lock.lock();
     try {
       return pendingResult;

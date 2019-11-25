@@ -4,6 +4,7 @@
 
 ### NGDG (in progress)
 
+- [improvement] JAVA-2496: Revisit timeouts for paged graph queries
 - [bug] JAVA-2510: Fix GraphBinaryDataTypesTest Codec registry initialization
 - [bug] JAVA-2492: Parse edge metadata using internal identifiers
 - [improvement] JAVA-2282: Remove GraphSON3 support

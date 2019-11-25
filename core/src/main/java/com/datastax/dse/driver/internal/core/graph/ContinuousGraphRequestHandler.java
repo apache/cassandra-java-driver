@@ -6,17 +6,19 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
+import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphExecutionInfo;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
-import com.datastax.dse.driver.internal.core.ContinuousRequestHandlerBase;
+import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousRequestHandlerBase;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
+import com.datastax.oss.driver.shaded.guava.common.base.MoreObjects;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.response.Result;
@@ -27,6 +29,7 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Map;
@@ -34,15 +37,20 @@ import java.util.Queue;
 import net.jcip.annotations.ThreadSafe;
 
 /**
- * Handles a request that supports multiple response messages (a.k.a. continuous paging request).
+ * Handles a Graph request that supports multiple response messages (a.k.a. continuous paging
+ * request).
  */
 @ThreadSafe
 public class ContinuousGraphRequestHandler
     extends ContinuousRequestHandlerBase<GraphStatement<?>, AsyncGraphResultSet, GraphExecutionInfo>
     implements ResponseCallback, GenericFutureListener<Future<java.lang.Void>>, Throttled {
+
   private final Message message;
   private final GraphProtocol subProtocol;
   private final GraphBinaryModule graphBinaryModule;
+  private final Duration globalTimeout;
+  private final int maxEnqueuedPages;
+  private final int maxPages;
 
   ContinuousGraphRequestHandler(
       @NonNull GraphStatement<?> statement,
@@ -52,14 +60,47 @@ public class ContinuousGraphRequestHandler
       @NonNull GraphBinaryModule graphBinaryModule) {
     super(statement, session, context, sessionLogPrefix, AsyncGraphResultSet.class);
     this.graphBinaryModule = graphBinaryModule;
-    this.subProtocol = GraphConversions.inferSubProtocol(statement, executionProfile);
-    this.message =
+    subProtocol = GraphConversions.inferSubProtocol(statement, executionProfile);
+    message =
         GraphConversions.createContinuousMessageFromGraphStatement(
-            statement, subProtocol, executionProfile, this.context, graphBinaryModule);
+            statement, subProtocol, executionProfile, context, graphBinaryModule);
     throttler.register(this);
+    globalTimeout =
+        MoreObjects.firstNonNull(
+            statement.getTimeout(),
+            executionProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, Duration.ZERO));
+    maxEnqueuedPages =
+        executionProfile.getInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES);
+    maxPages = executionProfile.getInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_PAGES);
   }
 
-  // MAIN LIFECYCLE
+  @NonNull
+  @Override
+  protected Duration getGlobalTimeout() {
+    return globalTimeout;
+  }
+
+  @NonNull
+  @Override
+  protected Duration getPageTimeout(int pageNumber) {
+    return Duration.ZERO;
+  }
+
+  @NonNull
+  @Override
+  protected Duration getReviseRequestTimeout() {
+    return Duration.ZERO;
+  }
+
+  @Override
+  protected int getMaxEnqueuedPages() {
+    return maxEnqueuedPages;
+  }
+
+  @Override
+  protected int getMaxPages() {
+    return maxPages;
+  }
 
   @NonNull
   @Override
@@ -69,7 +110,7 @@ public class ContinuousGraphRequestHandler
 
   @Override
   protected boolean isTracingEnabled() {
-    return this.statement.isTracing();
+    return statement.isTracing();
   }
 
   @NonNull
@@ -118,10 +159,6 @@ public class ContinuousGraphRequestHandler
 
   @Override
   protected int pageNumber(@NonNull AsyncGraphResultSet resultSet) {
-    if (resultSet instanceof ContinuousAsyncGraphResultSet) {
-      return ((ContinuousAsyncGraphResultSet) resultSet).pageNumber();
-    } else { // otherwise the AsyncGraphResultSet is not a Continuous Paging Query
-      return 1;
-    }
+    return ((ContinuousAsyncGraphResultSet) resultSet).pageNumber();
   }
 }

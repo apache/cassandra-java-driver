@@ -139,11 +139,12 @@ public class GraphConversions extends Conversions {
       timestamp = context.getTimestampGenerator().next();
     }
 
-    int pageSize = config.getInt(DseDriverOption.CONTINUOUS_PAGING_PAGE_SIZE);
-    boolean pageSizeInBytes = config.getBoolean(DseDriverOption.CONTINUOUS_PAGING_PAGE_SIZE_BYTES);
-    int maxPages = config.getInt(DseDriverOption.CONTINUOUS_PAGING_MAX_PAGES);
-    int maxPagesPerSecond = config.getInt(DseDriverOption.CONTINUOUS_PAGING_MAX_PAGES_PER_SECOND);
-    int maxEnqueuedPages = config.getInt(DseDriverOption.CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES);
+    int pageSize = config.getInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_PAGE_SIZE);
+    int maxPages = config.getInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_PAGES);
+    int maxPagesPerSecond =
+        config.getInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_PAGES_PER_SECOND);
+    int maxEnqueuedPages =
+        config.getInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES);
     ContinuousPagingOptions options =
         new ContinuousPagingOptions(maxPages, maxPagesPerSecond, maxEnqueuedPages);
 
@@ -158,7 +159,7 @@ public class GraphConversions extends Conversions {
             ProtocolConstants.ConsistencyLevel.LOCAL_SERIAL, // also ignored
             timestamp,
             null, // also ignored
-            pageSizeInBytes,
+            false, // graph CP does not support sizeInBytes
             options);
 
     if (statement instanceof ScriptGraphStatement) {
@@ -369,7 +370,7 @@ public class GraphConversions extends Conversions {
     if (!statementOptions.containsKey(GRAPH_TIMEOUT_OPTION_KEY)) {
       Duration timeout = statement.getTimeout();
       if (timeout == null) {
-        timeout = config.getDuration(DseDriverOption.GRAPH_TIMEOUT, null);
+        timeout = config.getDuration(DseDriverOption.GRAPH_TIMEOUT, Duration.ZERO);
       }
       if (timeout != null && !timeout.isZero()) {
         payload.put(

@@ -4,26 +4,19 @@
  * This software can be used solely with DataStax Enterprise. Please consult the license at
  * http://www.datastax.com/terms/datastax-dse-driver-license-terms
  */
-package com.datastax.dse.driver.api.core.graph.statement;
+package com.datastax.dse.driver.api.core.graph;
 
-import static com.datastax.dse.driver.api.core.config.DseDriverOption.CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES;
-import static com.datastax.dse.driver.api.core.config.DseDriverOption.CONTINUOUS_PAGING_PAGE_SIZE;
 import static com.datastax.dse.driver.api.core.cql.continuous.ContinuousPagingITBase.Options;
-import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPH_BINARY_1_0;
+import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.cql.continuous.ContinuousPagingITBase;
-import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
-import com.datastax.dse.driver.api.core.graph.GraphExecutionInfo;
-import com.datastax.dse.driver.api.core.graph.GraphNode;
-import com.datastax.dse.driver.api.core.graph.GraphResultSet;
-import com.datastax.dse.driver.api.core.graph.GraphStatement;
-import com.datastax.dse.driver.api.core.graph.PagingEnabledOptions;
-import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.dse.driver.api.testinfra.session.DseSessionRule;
 import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
+import com.datastax.dse.driver.internal.core.graph.GraphProtocol;
 import com.datastax.dse.driver.internal.core.graph.MultiPageGraphResultSet;
+import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
@@ -31,6 +24,7 @@ import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.net.SocketAddress;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -52,7 +46,7 @@ public class GraphPagingIT {
       new DseSessionRuleBuilder(ccmRule)
           .withCreateGraph()
           .withCoreEngine()
-          .withGraphProtocol(GRAPH_BINARY_1_0.toInternalCode())
+          .withGraphProtocol(GraphProtocol.GRAPH_BINARY_1_0.toInternalCode())
           .build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
@@ -64,8 +58,6 @@ public class GraphPagingIT {
         .execute(
             ScriptGraphStatement.newInstance(
                     "schema.vertexLabel('person')"
-                        + ".ifNotExists()" // required otherwise we get a weird table already exists
-                        // error
                         + ".partitionBy('pk', Int)"
                         + ".clusterBy('cc', Int)"
                         + ".property('name', Text)"
@@ -87,7 +79,7 @@ public class GraphPagingIT {
   @Test
   public void synchronous_paging_with_options(Options options) {
     // given
-    DriverExecutionProfile profile = enablePaging(options, PagingEnabledOptions.ENABLED);
+    DriverExecutionProfile profile = enableGraphPaging(options, PagingEnabledOptions.ENABLED);
 
     if (options.sizeInBytes) {
       // Page sizes in bytes are not supported with graph queries
@@ -123,7 +115,7 @@ public class GraphPagingIT {
   @Test
   public void synchronous_paging_with_options_when_auto(Options options) {
     // given
-    DriverExecutionProfile profile = enablePaging(options, PagingEnabledOptions.AUTO);
+    DriverExecutionProfile profile = enableGraphPaging(options, PagingEnabledOptions.AUTO);
 
     if (options.sizeInBytes) {
       // Page sizes in bytes are not supported with graph queries
@@ -169,7 +161,7 @@ public class GraphPagingIT {
   public void synchronous_options_with_paging_disabled_should_fallback_to_single_page(
       Options options) {
     // given
-    DriverExecutionProfile profile = enablePaging(options, PagingEnabledOptions.DISABLED);
+    DriverExecutionProfile profile = enableGraphPaging(options, PagingEnabledOptions.DISABLED);
 
     if (options.sizeInBytes) {
       // Page sizes in bytes are not supported with graph queries
@@ -205,7 +197,7 @@ public class GraphPagingIT {
   public void asynchronous_paging_with_options(Options options)
       throws ExecutionException, InterruptedException {
     // given
-    DriverExecutionProfile profile = enablePaging(options, PagingEnabledOptions.ENABLED);
+    DriverExecutionProfile profile = enableGraphPaging(options, PagingEnabledOptions.ENABLED);
 
     if (options.sizeInBytes) {
       // Page sizes in bytes are not supported with graph queries
@@ -231,7 +223,7 @@ public class GraphPagingIT {
   public void asynchronous_paging_with_options_when_auto(Options options)
       throws ExecutionException, InterruptedException {
     // given
-    DriverExecutionProfile profile = enablePaging(options, PagingEnabledOptions.AUTO);
+    DriverExecutionProfile profile = enableGraphPaging(options, PagingEnabledOptions.AUTO);
 
     if (options.sizeInBytes) {
       // Page sizes in bytes are not supported with graph queries
@@ -257,7 +249,7 @@ public class GraphPagingIT {
   public void asynchronous_options_with_paging_disabled_should_fallback_to_single_page(
       Options options) throws ExecutionException, InterruptedException {
     // given
-    DriverExecutionProfile profile = enablePaging(options, PagingEnabledOptions.DISABLED);
+    DriverExecutionProfile profile = enableGraphPaging(options, PagingEnabledOptions.DISABLED);
 
     if (options.sizeInBytes) {
       // Page sizes in bytes are not supported with graph queries
@@ -281,13 +273,6 @@ public class GraphPagingIT {
       assertThat(node.asString()).isEqualTo("user" + i);
     }
     assertThat(asyncGraphResultSet.remaining()).isEqualTo(0);
-  }
-
-  private DriverExecutionProfile enablePaging(
-      Options options, PagingEnabledOptions pagingEnabledOptions) {
-    DriverExecutionProfile profile = options.asProfile(sessionRule.session());
-    profile = profile.withString(DseDriverOption.GRAPH_PAGING_ENABLED, pagingEnabledOptions.name());
-    return profile;
   }
 
   private void checkAsyncResult(
@@ -340,9 +325,10 @@ public class GraphPagingIT {
   @Test
   public void should_cancel_result_set() {
     // given
-    DriverExecutionProfile profile = enablePaging();
-    profile = profile.withInt(CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES, 1);
-    profile = profile.withInt(CONTINUOUS_PAGING_PAGE_SIZE, 10);
+    DriverExecutionProfile profile =
+        enableGraphPaging()
+            .withInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES, 1)
+            .withInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_PAGE_SIZE, 10);
 
     // when
     GraphStatement statement =
@@ -364,13 +350,138 @@ public class GraphPagingIT {
     }
   }
 
-  private DriverExecutionProfile enablePaging() {
+  @Test
+  public void should_trigger_global_timeout_sync_from_config() {
+    // given
+    Duration timeout = Duration.ofMillis(100);
     DriverExecutionProfile profile =
-        sessionRule.session().getContext().getConfig().getDefaultProfile();
-    profile =
-        profile.withString(
-            DseDriverOption.GRAPH_PAGING_ENABLED, PagingEnabledOptions.ENABLED.name());
-    return profile;
+        enableGraphPaging().withDuration(DseDriverOption.GRAPH_TIMEOUT, timeout);
+
+    // when
+    try {
+      ccmRule.getCcmBridge().pause(1);
+      try {
+        sessionRule
+            .session()
+            .execute(
+                ScriptGraphStatement.newInstance("g.V().hasLabel('person').values('name')")
+                    .setGraphName(sessionRule.getGraphName())
+                    .setTraversalSource("g")
+                    .setExecutionProfile(profile));
+        fail("Expecting DriverTimeoutException");
+      } catch (DriverTimeoutException e) {
+        assertThat(e).hasMessage("Query timed out after " + timeout);
+      }
+    } finally {
+      ccmRule.getCcmBridge().resume(1);
+    }
+  }
+
+  @Test
+  public void should_trigger_global_timeout_sync_from_statement() {
+    // given
+    Duration timeout = Duration.ofMillis(100);
+
+    // when
+    try {
+      ccmRule.getCcmBridge().pause(1);
+      try {
+        sessionRule
+            .session()
+            .execute(
+                ScriptGraphStatement.newInstance("g.V().hasLabel('person').values('name')")
+                    .setGraphName(sessionRule.getGraphName())
+                    .setTraversalSource("g")
+                    .setTimeout(timeout));
+        fail("Expecting DriverTimeoutException");
+      } catch (DriverTimeoutException e) {
+        assertThat(e).hasMessage("Query timed out after " + timeout);
+      }
+    } finally {
+      ccmRule.getCcmBridge().resume(1);
+    }
+  }
+
+  @Test
+  public void should_trigger_global_timeout_async() throws InterruptedException {
+    // given
+    Duration timeout = Duration.ofMillis(100);
+    DriverExecutionProfile profile =
+        enableGraphPaging().withDuration(DseDriverOption.GRAPH_TIMEOUT, timeout);
+
+    // when
+    try {
+      ccmRule.getCcmBridge().pause(1);
+      CompletionStage<AsyncGraphResultSet> result =
+          sessionRule
+              .session()
+              .executeAsync(
+                  ScriptGraphStatement.newInstance("g.V().hasLabel('person').values('name')")
+                      .setGraphName(sessionRule.getGraphName())
+                      .setTraversalSource("g")
+                      .setExecutionProfile(profile));
+      result.toCompletableFuture().get();
+      fail("Expecting DriverTimeoutException");
+    } catch (ExecutionException e) {
+      assertThat(e.getCause()).hasMessage("Query timed out after " + timeout);
+    } finally {
+      ccmRule.getCcmBridge().resume(1);
+    }
+  }
+
+  @Test
+  public void should_trigger_global_timeout_async_after_first_page() throws InterruptedException {
+    // given
+    Duration timeout = Duration.ofSeconds(1);
+    DriverExecutionProfile profile =
+        enableGraphPaging()
+            .withDuration(DseDriverOption.GRAPH_TIMEOUT, timeout)
+            .withInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES, 1)
+            .withInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_PAGE_SIZE, 10);
+
+    // when
+    try {
+      CompletionStage<AsyncGraphResultSet> firstPageFuture =
+          sessionRule
+              .session()
+              .executeAsync(
+                  ScriptGraphStatement.newInstance("g.V().hasLabel('person').values('name')")
+                      .setGraphName(sessionRule.getGraphName())
+                      .setTraversalSource("g")
+                      .setExecutionProfile(profile));
+      AsyncGraphResultSet firstPage = firstPageFuture.toCompletableFuture().get();
+      ccmRule.getCcmBridge().pause(1);
+      CompletionStage<AsyncGraphResultSet> secondPageFuture = firstPage.fetchNextPage();
+      secondPageFuture.toCompletableFuture().get();
+      fail("Expecting DriverTimeoutException");
+    } catch (ExecutionException e) {
+      assertThat(e.getCause()).hasMessage("Query timed out after " + timeout);
+    } finally {
+      ccmRule.getCcmBridge().resume(1);
+    }
+  }
+
+  private DriverExecutionProfile enableGraphPaging() {
+    return sessionRule
+        .session()
+        .getContext()
+        .getConfig()
+        .getDefaultProfile()
+        .withString(DseDriverOption.GRAPH_PAGING_ENABLED, PagingEnabledOptions.ENABLED.name());
+  }
+
+  private DriverExecutionProfile enableGraphPaging(
+      Options options, PagingEnabledOptions pagingEnabledOptions) {
+    return sessionRule
+        .session()
+        .getContext()
+        .getConfig()
+        .getDefaultProfile()
+        .withInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_PAGE_SIZE, options.pageSize)
+        .withInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_PAGES, options.maxPages)
+        .withInt(
+            DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_PAGES_PER_SECOND, options.maxPagesPerSecond)
+        .withString(DseDriverOption.GRAPH_PAGING_ENABLED, pagingEnabledOptions.name());
   }
 
   private SocketAddress firstCcmNode() {

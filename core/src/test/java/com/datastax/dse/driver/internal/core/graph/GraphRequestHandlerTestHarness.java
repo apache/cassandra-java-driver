@@ -33,7 +33,8 @@ import io.netty.channel.EventLoop;
 import java.time.Duration;
 import java.util.Optional;
 import javax.annotation.Nullable;
-import org.mockito.*;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mock;
 
 /**
  * Provides the environment to test a request handler, where a query plan can be defined, and the
@@ -50,11 +51,11 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
   @Mock EventLoop eventLoop;
 
   protected GraphRequestHandlerTestHarness(
-      Builder builder, @Nullable String graphProtocolForTestConfig) {
+      Builder builder, @Nullable String graphProtocolForTestConfig, Duration graphTimeout) {
     super(builder);
 
     // not mocked by RequestHandlerTestHarness, will be used when DseDriverOptions.GRAPH_TIMEOUT
-    // is not null in the config
+    // is not zero in the config
     when(eventLoopGroup.next()).thenReturn(eventLoop);
 
     // default graph options as in the reference.conf file
@@ -63,9 +64,11 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
         .thenReturn("graphson-2.0");
     when(defaultProfile.getBoolean(DseDriverOption.GRAPH_IS_SYSTEM_QUERY, false)).thenReturn(false);
     when(defaultProfile.getString(DseDriverOption.GRAPH_NAME, null)).thenReturn("mockGraph");
+    when(defaultProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, Duration.ZERO))
+        .thenReturn(graphTimeout);
 
     when(testProfile.getName()).thenReturn("test-graph");
-    when(testProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, null))
+    when(testProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, Duration.ZERO))
         .thenReturn(Duration.ofMillis(2L));
     when(testProfile.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
         .thenReturn(DefaultConsistencyLevel.LOCAL_ONE.name());
@@ -87,8 +90,8 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
     when(config.getProfile("test-graph")).thenReturn(testProfile);
 
     when(systemQueryExecutionProfile.getName()).thenReturn("graph-system-query");
-    when(systemQueryExecutionProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, null))
-        .thenReturn(Duration.ofMillis(500L));
+    when(systemQueryExecutionProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, Duration.ZERO))
+        .thenReturn(Duration.ZERO);
     when(systemQueryExecutionProfile.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
         .thenReturn(DefaultConsistencyLevel.LOCAL_ONE.name());
     when(systemQueryExecutionProfile.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE))
@@ -100,7 +103,7 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
     when(systemQueryExecutionProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES))
         .thenReturn(true);
     when(systemQueryExecutionProfile.getName()).thenReturn("graph-system-query");
-    when(systemQueryExecutionProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, null))
+    when(systemQueryExecutionProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, Duration.ZERO))
         .thenReturn(Duration.ofMillis(2));
     when(systemQueryExecutionProfile.getBoolean(DseDriverOption.GRAPH_IS_SYSTEM_QUERY, false))
         .thenReturn(true);
@@ -125,6 +128,7 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
     when(dseDriverContext.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
     when(dseDriverContext.getTimestampGenerator()).thenReturn(timestampGenerator);
     when(dseDriverContext.getProtocolVersion()).thenReturn(DseProtocolVersion.DSE_V2);
+    when(dseDriverContext.getProtocolVersionRegistry()).thenReturn(protocolVersionRegistry);
     when(dseDriverContext.getConsistencyLevelRegistry())
         .thenReturn(new DefaultConsistencyLevelRegistry());
     when(dseDriverContext.getWriteTypeRegistry()).thenReturn(new DefaultWriteTypeRegistry());
@@ -144,7 +148,8 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
 
   public static class Builder extends RequestHandlerTestHarness.Builder {
 
-    String graphProtocolForTestConfig;
+    private String graphProtocolForTestConfig;
+    private Duration graphTimeout = Duration.ZERO;
 
     public Builder withGraphProtocolForTestConfig(String protocol) {
       this.graphProtocolForTestConfig = protocol;
@@ -153,7 +158,12 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
 
     @Override
     public GraphRequestHandlerTestHarness build() {
-      return new GraphRequestHandlerTestHarness(this, graphProtocolForTestConfig);
+      return new GraphRequestHandlerTestHarness(this, graphProtocolForTestConfig, graphTimeout);
+    }
+
+    public RequestHandlerTestHarness.Builder withGraphTimeout(Duration globalTimeout) {
+      this.graphTimeout = globalTimeout;
+      return this;
     }
   }
 }

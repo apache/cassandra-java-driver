@@ -181,7 +181,7 @@ public class GraphRequestHandler implements Throttled {
 
     Duration timeout = graphStatement.getTimeout();
     if (timeout == null) {
-      timeout = executionProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, null);
+      timeout = executionProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, Duration.ZERO);
     }
     this.timeoutFuture = scheduleTimeout(timeout);
 

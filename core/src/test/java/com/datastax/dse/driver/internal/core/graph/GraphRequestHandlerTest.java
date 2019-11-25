@@ -17,6 +17,10 @@ package com.datastax.dse.driver.internal.core.graph;
 
 import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_2_0;
 import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPH_BINARY_1_0;
+import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.createGraphBinaryModule;
+import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.defaultDseFrameOf;
+import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.serialize;
+import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.singleGraphRow;
 import static com.datastax.oss.driver.api.core.type.codec.TypeCodecs.BIGINT;
 import static com.datastax.oss.driver.api.core.type.codec.TypeCodecs.TEXT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,7 +34,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.data.geometry.Point;
 import com.datastax.dse.driver.api.core.graph.BatchGraphStatement;
@@ -54,14 +57,8 @@ import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
-import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Query;
-import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
-import com.datastax.oss.protocol.internal.response.result.DefaultRows;
-import com.datastax.oss.protocol.internal.response.result.RawType;
-import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
@@ -71,19 +68,11 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayDeque;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.regex.Pattern;
-import org.apache.tinkerpop.gremlin.process.remote.traversal.DefaultRemoteTraverser;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.structure.io.Buffer;
-import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryReader;
-import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryWriter;
-import org.apache.tinkerpop.gremlin.structure.io.binary.TypeSerializerRegistry;
 import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedVertex;
 import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedVertexProperty;
 import org.junit.Before;
@@ -106,11 +95,6 @@ public class GraphRequestHandlerTest {
   public void setup() {
     MockitoAnnotations.initMocks(this);
     when(node.getMetricUpdater()).thenReturn(nodeMetricUpdater1);
-  }
-
-  GraphBinaryModule createGraphBinaryModule(DseDriverContext context) {
-    TypeSerializerRegistry registry = GraphBinaryModule.createDseTypeSerializerRegistry(context);
-    return new GraphBinaryModule(new GraphBinaryReader(registry), new GraphBinaryWriter(registry));
   }
 
   @Test
@@ -222,18 +206,6 @@ public class GraphRequestHandlerTest {
         module);
   }
 
-  private static ByteBuffer serialize(
-      Object value, GraphProtocol graphProtocol, GraphBinaryModule graphBinaryModule)
-      throws IOException {
-
-    Buffer tinkerBuf = graphBinaryModule.serialize(value);
-    ByteBuffer nioBuffer = tinkerBuf.nioBuffer();
-    tinkerBuf.release();
-    return graphProtocol.isGraphBinary()
-        ? nioBuffer
-        : GraphSONUtils.serializeToByteBuffer(value, graphProtocol);
-  }
-
   private void testQueryRequestAndPayloadContents(
       RawBytesQuery q,
       Map<String, ByteBuffer> customPayload,
@@ -320,7 +292,7 @@ public class GraphRequestHandlerTest {
     Mockito.verify(executionProfile).getString(DseDriverOption.GRAPH_TRAVERSAL_SOURCE, null);
     Mockito.verify(executionProfile).getString(DseDriverOption.GRAPH_NAME, null);
     Mockito.verify(executionProfile).getBoolean(DseDriverOption.GRAPH_IS_SYSTEM_QUERY, false);
-    Mockito.verify(executionProfile).getDuration(DseDriverOption.GRAPH_TIMEOUT, null);
+    Mockito.verify(executionProfile).getDuration(DseDriverOption.GRAPH_TIMEOUT, Duration.ZERO);
     Mockito.verify(executionProfile).getString(DseDriverOption.GRAPH_READ_CONSISTENCY_LEVEL, null);
     Mockito.verify(executionProfile).getString(DseDriverOption.GRAPH_WRITE_CONSISTENCY_LEVEL, null);
 
@@ -372,7 +344,8 @@ public class GraphRequestHandlerTest {
     Mockito.verify(executionProfile, never()).getString(DseDriverOption.GRAPH_NAME, null);
     Mockito.verify(executionProfile, never())
         .getBoolean(DseDriverOption.GRAPH_IS_SYSTEM_QUERY, false);
-    Mockito.verify(executionProfile, never()).getDuration(DseDriverOption.GRAPH_TIMEOUT, null);
+    Mockito.verify(executionProfile, never())
+        .getDuration(DseDriverOption.GRAPH_TIMEOUT, Duration.ZERO);
     Mockito.verify(executionProfile, never())
         .getString(DseDriverOption.GRAPH_READ_CONSISTENCY_LEVEL, null);
     Mockito.verify(executionProfile, never())
@@ -473,8 +446,8 @@ public class GraphRequestHandlerTest {
     if (!graphProtocol.isGraphBinary()) {
       // GraphBinary does not encode properties regardless of whether they are present in the
       // parent element or not :/
-      assertThat(v.property("name").id()).isEqualTo(11);
-      assertThat(v.property("name").value()).isEqualTo("marko");
+      assertThat(vRead.property("name").id()).isEqualTo(11);
+      assertThat(vRead.property("name").value()).isEqualTo("marko");
     }
   }
 
@@ -542,47 +515,5 @@ public class GraphRequestHandlerTest {
             eq(node),
             matches(LOG_PREFIX_PER_REQUEST));
     verifyNoMoreInteractions(requestTracker);
-  }
-
-  private static Frame defaultDseFrameOf(Message responseMessage) {
-    return Frame.forResponse(
-        DseProtocolVersion.DSE_V2.getCode(),
-        0,
-        null,
-        Frame.NO_PAYLOAD,
-        Collections.emptyList(),
-        responseMessage);
-  }
-
-  // Returns a single row, with a single "message" column containing the value
-  // given in parameter serialized according to the protocol
-  private static Message singleGraphRow(
-      GraphProtocol graphProtocol, Object value, GraphBinaryModule module) throws IOException {
-    RowsMetadata metadata =
-        new RowsMetadata(
-            ImmutableList.of(
-                new ColumnSpec(
-                    "ks",
-                    "table",
-                    "gremlin",
-                    0,
-                    graphProtocol.isGraphBinary()
-                        ? RawType.PRIMITIVES.get(ProtocolConstants.DataType.BLOB)
-                        : RawType.PRIMITIVES.get(ProtocolConstants.DataType.VARCHAR))),
-            null,
-            new int[] {},
-            null);
-    Queue<List<ByteBuffer>> data = new ArrayDeque<>();
-
-    data.add(
-        ImmutableList.of(
-            serialize(
-                graphProtocol.isGraphBinary()
-                    // GraphBinary returns results directly inside a Traverser
-                    ? new DefaultRemoteTraverser<>(value, 1)
-                    : ImmutableMap.of("result", value),
-                graphProtocol,
-                module)));
-    return new DefaultRows(metadata, data);
   }
 }

@@ -180,6 +180,33 @@ public enum DseDriverOption implements DriverOption {
    * <p>Value type: boolean
    */
   GRAPH_PAGING_ENABLED("advanced.graph.paging-enabled"),
+
+  /**
+   * The page size for Graph continuous paging.
+   *
+   * <p>Value type: int
+   */
+  GRAPH_CONTINUOUS_PAGING_PAGE_SIZE("advanced.graph.paging-options.page-size"),
+
+  /**
+   * The maximum number of Graph continuous pages to return.
+   *
+   * <p>Value type: int
+   */
+  GRAPH_CONTINUOUS_PAGING_MAX_PAGES("advanced.graph.paging-options.max-pages"),
+  /**
+   * The maximum number of Graph continuous pages per second.
+   *
+   * <p>Value type: int
+   */
+  GRAPH_CONTINUOUS_PAGING_MAX_PAGES_PER_SECOND(
+      "advanced.graph.paging-options.max-pages-per-second"),
+  /**
+   * The maximum number of Graph continuous pages that can be stored in the local queue.
+   *
+   * <p>Value type: int
+   */
+  GRAPH_CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES("advanced.graph.paging-options.max-enqueued-pages"),
   ;
 
   private final String path;
