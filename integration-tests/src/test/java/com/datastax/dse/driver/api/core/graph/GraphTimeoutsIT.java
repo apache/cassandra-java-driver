@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.fail;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
-import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
@@ -46,7 +45,7 @@ public class GraphTimeoutsIT {
 
   @Test
   public void should_have_driver_wait_indefinitely_by_default_and_server_return_timeout_response() {
-    long desiredTimeout = 2500L;
+    Duration serverTimeout = Duration.ofSeconds(1);
 
     DriverExecutionProfile drivertest1 =
         sessionRule
@@ -57,14 +56,13 @@ public class GraphTimeoutsIT {
             .withString(DseDriverOption.GRAPH_TRAVERSAL_SOURCE, "drivertest1");
 
     // We could have done with the server's default but it's 30 secs so the test would have taken at
-    // least
-    // that time. So we simulate a server timeout change.
+    // least that time. So we simulate a server timeout change.
     sessionRule
         .session()
         .execute(
             newInstance(
                     "graph.schema().config().option(\"graph.traversal_sources.drivertest1.evaluation_timeout\").set('"
-                        + desiredTimeout
+                        + serverTimeout.toMillis()
                         + " ms')")
                 .setExecutionProfile(drivertest1));
 
@@ -77,20 +75,19 @@ public class GraphTimeoutsIT {
                   .setExecutionProfile(drivertest1));
       fail("The request should have timed out");
     } catch (InvalidQueryException e) {
-      if (ccmRule.getCcmBridge().getDseVersion().get().compareTo(Version.parse("6.8.0")) >= 0) {
-        assertThat(e.toString())
-            .contains("evaluation exceeded", "threshold of ", desiredTimeout + "ms");
-      } else {
-        assertThat(e.toString())
-            .contains("evaluation exceeded", "threshold of ", desiredTimeout + " ms");
-      }
+      assertThat(e)
+          .hasMessageContainingAll(
+              "evaluation exceeded",
+              "threshold of ",
+              Long.toString(serverTimeout.toMillis()),
+              "ms");
     }
   }
 
   @Test
   public void should_not_take_into_account_request_timeout_if_more_than_server_timeout() {
-    long desiredTimeout = 1000L;
-    int clientTimeout = 32000;
+    Duration serverTimeout = Duration.ofSeconds(1);
+    Duration clientTimeout = Duration.ofSeconds(10);
 
     DriverExecutionProfile drivertest2 =
         sessionRule
@@ -99,14 +96,14 @@ public class GraphTimeoutsIT {
             .getConfig()
             .getDefaultProfile()
             .withString(DseDriverOption.GRAPH_TRAVERSAL_SOURCE, "drivertest2")
-            .withDuration(DseDriverOption.GRAPH_TIMEOUT, Duration.ofMillis(clientTimeout));
+            .withDuration(DseDriverOption.GRAPH_TIMEOUT, clientTimeout);
 
     sessionRule
         .session()
         .execute(
             newInstance(
                     "graph.schema().config().option(\"graph.traversal_sources.drivertest2.evaluation_timeout\").set('"
-                        + desiredTimeout
+                        + serverTimeout.toMillis()
                         + " ms')")
                 .setExecutionProfile(drivertest2));
 
@@ -119,15 +116,19 @@ public class GraphTimeoutsIT {
                   .setExecutionProfile(drivertest2));
       fail("The request should have timed out");
     } catch (InvalidQueryException e) {
-      assertThat(e.toString())
-          .contains("evaluation exceeded", "threshold of ", Long.toString(desiredTimeout), "ms");
+      assertThat(e)
+          .hasMessageContainingAll(
+              "evaluation exceeded",
+              "threshold of ",
+              Long.toString(serverTimeout.toMillis()),
+              "ms");
     }
   }
 
   @Test
   public void should_take_into_account_request_timeout_if_less_than_server_timeout() {
-    long serverTimeout = 10000L;
-    int desiredTimeout = 1000;
+    Duration serverTimeout = Duration.ofSeconds(10);
+    Duration clientTimeout = Duration.ofSeconds(1);
 
     DriverExecutionProfile drivertest3 =
         sessionRule
@@ -146,7 +147,7 @@ public class GraphTimeoutsIT {
         .execute(
             ScriptGraphStatement.newInstance(
                     "graph.schema().config().option(\"graph.traversal_sources.drivertest3.evaluation_timeout\").set('"
-                        + serverTimeout
+                        + serverTimeout.toMillis()
                         + " ms')")
                 .setExecutionProfile(drivertest3));
 
@@ -159,19 +160,10 @@ public class GraphTimeoutsIT {
               ScriptGraphStatement.newInstance(
                       "java.util.concurrent.TimeUnit.MILLISECONDS.sleep(35000L);1+1")
                   .setExecutionProfile(
-                      drivertest3.withDuration(
-                          DseDriverOption.GRAPH_TIMEOUT, Duration.ofMillis(desiredTimeout))));
+                      drivertest3.withDuration(DseDriverOption.GRAPH_TIMEOUT, clientTimeout)));
       fail("The request should have timed out");
-    } catch (Exception e) {
-      // Since server timeout == client timeout, locally concurrency is likely to happen.
-      // We cannot know for sure if it will be a Client timeout error, or a Server timeout, and
-      // during tests, both happened and not deterministically.
-      if (e instanceof InvalidQueryException) {
-        assertThat(e.toString())
-            .contains("evaluation exceeded", "threshold of ", desiredTimeout + " ms");
-      } else {
-        assertThat(e).isInstanceOf(DriverTimeoutException.class);
-      }
+    } catch (DriverTimeoutException e) {
+      assertThat(e).hasMessage("Query timed out after " + clientTimeout);
     }
   }
 }
