@@ -22,7 +22,6 @@ import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
-import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
@@ -172,15 +171,14 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
       AdminResult result,
       Throwable error,
       Function<Iterable<AdminRow>, CassandraSchemaRows.Builder> builderUpdater) {
+
+    // If another query already failed, we've already propagated the failure so just ignore this one
+    if (schemaRowsFuture.isCompletedExceptionally()) {
+      return;
+    }
+
     if (error != null) {
-      Loggers.warnWithException(
-          LOG,
-          "[{}] Error during schema refresh, new metadata might be incomplete",
-          logPrefix,
-          error);
-      // Proceed without the results of this query, the rest of the schema refresh will run on a
-      // "best effort" basis
-      markQueryComplete();
+      schemaRowsFuture.completeExceptionally(error);
     } else {
       // Store the rows of the current page in the builder
       schemaRowsBuilder = builderUpdater.apply(result);
@@ -191,16 +189,13 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
                 (nextResult, nextError) -> handleResult(nextResult, nextError, builderUpdater),
                 adminExecutor);
       } else {
-        markQueryComplete();
+        pendingQueries -= 1;
+        if (pendingQueries == 0) {
+          LOG.debug(
+              "[{}] Schema queries took {}", logPrefix, NanoTime.formatTimeSince(startTimeNs));
+          schemaRowsFuture.complete(schemaRowsBuilder.build());
+        }
       }
-    }
-  }
-
-  private void markQueryComplete() {
-    pendingQueries -= 1;
-    if (pendingQueries == 0) {
-      LOG.debug("[{}] Schema queries took {}", logPrefix, NanoTime.formatTimeSince(startTimeNs));
-      schemaRowsFuture.complete(schemaRowsBuilder.build());
     }
   }
 }
