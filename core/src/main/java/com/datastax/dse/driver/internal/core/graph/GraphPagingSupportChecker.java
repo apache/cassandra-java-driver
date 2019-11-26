@@ -35,16 +35,15 @@ public class GraphPagingSupportChecker {
   // The computation below will be done only once when the session is initialized; if other hosts
   // join the cluster later and are not running DSE 6.8, the user has to manually disable graph
   // paging.
-  boolean isPagingEnabled(GraphStatement<?> graphStatement, InternalDriverContext context) {
+  public boolean isPagingEnabled(GraphStatement<?> graphStatement, InternalDriverContext context) {
     DriverExecutionProfile driverExecutionProfile =
         Conversions.resolveExecutionProfile(graphStatement, context);
-    LOG.trace(
-        "GRAPH_PAGING_ENABLED: {}",
-        driverExecutionProfile.getString(DseDriverOption.GRAPH_PAGING_ENABLED));
-
     PagingEnabledOptions pagingEnabledOptions =
         PagingEnabledOptions.valueOf(
             driverExecutionProfile.getString(DseDriverOption.GRAPH_PAGING_ENABLED));
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("GRAPH_PAGING_ENABLED: {}", pagingEnabledOptions);
+    }
     if (pagingEnabledOptions == PagingEnabledOptions.DISABLED) {
       return false;
     } else if (pagingEnabledOptions == PagingEnabledOptions.ENABLED) {
