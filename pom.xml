@@ -621,8 +621,6 @@ limitations under the License.]]></inlineHeader>
           </includes>
           <excludes>
             <exclude>**/src/main/config/ide/**</exclude>
-            <exclude>src/main/java/com/datastax/dse/driver/internal/core/graph/binary/buffer/DseNettyBuffer.java</exclude>
-            <exclude>src/main/java/com/datastax/dse/driver/internal/core/graph/binary/buffer/DseNettyBufferFactory.java</exclude>
           </excludes>
           <mapping>
             <java>SLASHSTAR_STYLE</java>
