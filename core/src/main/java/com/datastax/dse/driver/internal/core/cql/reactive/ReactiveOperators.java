@@ -18,7 +18,7 @@ package com.datastax.dse.driver.internal.core.cql.reactive;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.concurrent.atomic.AtomicLong;
 
-final class ReactiveOperators {
+public final class ReactiveOperators {
 
   /**
    * Atomically adds the given value to the given AtomicLong, bound to Long.MAX_VALUE.
@@ -26,7 +26,7 @@ final class ReactiveOperators {
    * @param current the current value.
    * @param toAdd the delta to add.
    */
-  static void addCap(@NonNull AtomicLong current, long toAdd) {
+  public static void addCap(@NonNull AtomicLong current, long toAdd) {
     long r, u;
     do {
       r = current.get();
@@ -46,7 +46,7 @@ final class ReactiveOperators {
    * @param current the current value.
    * @param toSub the delta to subtract.
    */
-  static void subCap(@NonNull AtomicLong current, long toSub) {
+  public static void subCap(@NonNull AtomicLong current, long toSub) {
     long r, u;
     do {
       r = current.get();

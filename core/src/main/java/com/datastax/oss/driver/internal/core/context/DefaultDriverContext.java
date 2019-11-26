@@ -25,6 +25,7 @@ import com.datastax.dse.driver.internal.core.cql.reactive.CqlRequestReactiveProc
 import com.datastax.dse.driver.internal.core.graph.GraphRequestAsyncProcessor;
 import com.datastax.dse.driver.internal.core.graph.GraphRequestSyncProcessor;
 import com.datastax.dse.driver.internal.core.graph.GraphSupportChecker;
+import com.datastax.dse.driver.internal.core.graph.reactive.ReactiveGraphRequestProcessor;
 import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.dse.protocol.internal.DseProtocolV1ClientCodecs;
 import com.datastax.dse.protocol.internal.DseProtocolV2ClientCodecs;
@@ -525,9 +526,9 @@ public class DefaultDriverContext implements InternalDriverContext {
     processors.add(continuousCqlRequestSyncProcessor);
 
     // graph requests (sync and async)
+    GraphRequestAsyncProcessor graphRequestAsyncProcessor = null;
     if (DependencyCheck.TINKERPOP.isPresent()) {
-      GraphRequestAsyncProcessor graphRequestAsyncProcessor =
-          new GraphRequestAsyncProcessor(this, new GraphSupportChecker());
+      graphRequestAsyncProcessor = new GraphRequestAsyncProcessor(this, new GraphSupportChecker());
       GraphRequestSyncProcessor graphRequestSyncProcessor =
           new GraphRequestSyncProcessor(graphRequestAsyncProcessor);
       processors.add(graphRequestAsyncProcessor);
@@ -538,7 +539,7 @@ public class DefaultDriverContext implements InternalDriverContext {
               + "this is normal if Tinkerpop was explicitly excluded from classpath");
     }
 
-    // reactive requests (regular and continuous)
+    // reactive requests (regular, continuous and graph)
     if (DependencyCheck.REACTIVE_STREAMS.isPresent()) {
       CqlRequestReactiveProcessor cqlRequestReactiveProcessor =
           new CqlRequestReactiveProcessor(cqlRequestAsyncProcessor);
@@ -546,6 +547,11 @@ public class DefaultDriverContext implements InternalDriverContext {
           new ContinuousCqlRequestReactiveProcessor(continuousCqlRequestAsyncProcessor);
       processors.add(cqlRequestReactiveProcessor);
       processors.add(continuousCqlRequestReactiveProcessor);
+      if (graphRequestAsyncProcessor != null) {
+        ReactiveGraphRequestProcessor reactiveGraphRequestProcessor =
+            new ReactiveGraphRequestProcessor(graphRequestAsyncProcessor);
+        processors.add(reactiveGraphRequestProcessor);
+      }
     } else {
       LOG.info(
           "Could not register Reactive extensions; "

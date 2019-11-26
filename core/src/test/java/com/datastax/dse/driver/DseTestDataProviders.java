@@ -21,6 +21,7 @@ import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPH_BI
 
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
+import com.datastax.oss.driver.TestDataProviders;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -80,6 +81,11 @@ public class DseTestDataProviders {
       new Object[] {true, NON_IDEMPOTENT_STATEMENT},
       new Object[] {false, NON_IDEMPOTENT_STATEMENT},
     };
+  }
+
+  @DataProvider
+  public static Object[][] allDseProtocolVersionsAndSupportedGraphProtocols() {
+    return TestDataProviders.combine(allDseProtocolVersions(), supportedGraphProtocols());
   }
 
   @NonNull

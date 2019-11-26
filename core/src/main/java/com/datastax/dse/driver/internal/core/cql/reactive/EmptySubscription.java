@@ -17,9 +17,9 @@ package com.datastax.dse.driver.internal.core.cql.reactive;
 
 import org.reactivestreams.Subscription;
 
-class EmptySubscription implements Subscription {
+public class EmptySubscription implements Subscription {
 
-  static final EmptySubscription INSTANCE = new EmptySubscription();
+  public static final EmptySubscription INSTANCE = new EmptySubscription();
 
   private EmptySubscription() {}
 
