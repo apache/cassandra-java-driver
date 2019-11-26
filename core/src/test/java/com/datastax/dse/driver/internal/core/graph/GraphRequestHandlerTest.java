@@ -74,8 +74,6 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedVertex;
-import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedVertexProperty;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -405,18 +403,6 @@ public class GraphRequestHandlerTest {
         Mockito.spy(new GraphRequestAsyncProcessor(mockContext, graphPagingSupportChecker));
     when(p.getGraphBinaryModule()).thenReturn(module);
 
-    Vertex v =
-        DetachedVertex.build()
-            .setId(1)
-            .setLabel("person")
-            .addProperty(
-                DetachedVertexProperty.build()
-                    .setId(11)
-                    .setLabel("name")
-                    .setValue("marko")
-                    .create())
-            .create();
-
     RequestHandlerTestHarness harness =
         GraphRequestHandlerTestHarness.builder()
             .withGraphProtocolForTestConfig(graphProtocol.toInternalCode())
@@ -426,7 +412,7 @@ public class GraphRequestHandlerTest {
             // Since that's not possible in the RequestHandlerTestHarness API at the moment, we
             // have to use another DseDriverContext and GraphBinaryModule here,
             // instead of reusing the one in the harness' DriverContext
-            .withResponse(node, defaultDseFrameOf(singleGraphRow(graphProtocol, v, module)))
+            .withResponse(node, defaultDseFrameOf(singleGraphRow(graphProtocol, module)))
             .build();
 
     GraphStatement graphStatement =
@@ -466,22 +452,10 @@ public class GraphRequestHandlerTest {
         Mockito.spy(new GraphRequestAsyncProcessor(mockContext, new GraphPagingSupportChecker()));
     when(p.getGraphBinaryModule()).thenReturn(module);
 
-    Vertex v =
-        DetachedVertex.build()
-            .setId(1)
-            .setLabel("person")
-            .addProperty(
-                DetachedVertexProperty.build()
-                    .setId(11)
-                    .setLabel("name")
-                    .setValue("marko")
-                    .create())
-            .create();
-
     RequestHandlerTestHarness harness =
         GraphRequestHandlerTestHarness.builder()
             .withResponse(
-                node, defaultDseFrameOf(singleGraphRow(GraphProtocol.GRAPHSON_2_0, v, module)))
+                node, defaultDseFrameOf(singleGraphRow(GraphProtocol.GRAPHSON_2_0, module)))
             .build();
 
     RequestTracker requestTracker = mock(RequestTracker.class);

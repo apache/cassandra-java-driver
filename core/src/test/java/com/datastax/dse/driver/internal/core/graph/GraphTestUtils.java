@@ -57,16 +57,19 @@ public class GraphTestUtils {
         responseMessage);
   }
 
-  public static Message singleGraphRow(
-      GraphProtocol graphProtocol, Object value, GraphBinaryModule module) throws IOException {
-    return singleGraphRow(graphProtocol, value, module, 1, true);
-  }
-
-  // Returns a single row, with a single "message" column containing the value
-  // given in parameter serialized according to the protocol
-  public static Message singleGraphRow(
-      GraphProtocol graphProtocol, Object value, GraphBinaryModule module, int page, boolean isLast)
+  public static Message singleGraphRow(GraphProtocol graphProtocol, GraphBinaryModule module)
       throws IOException {
+    Vertex value =
+        DetachedVertex.build()
+            .setId(1)
+            .setLabel("person")
+            .addProperty(
+                DetachedVertexProperty.build()
+                    .setId(11)
+                    .setLabel("name")
+                    .setValue("marko")
+                    .create())
+            .create();
     DseRowsMetadata metadata =
         new DseRowsMetadata(
             ImmutableList.of(
@@ -81,10 +84,9 @@ public class GraphTestUtils {
             null,
             new int[] {},
             null,
-            page,
-            isLast);
+            1,
+            true);
     Queue<List<ByteBuffer>> data = new ArrayDeque<>();
-
     data.add(
         ImmutableList.of(
             serialize(
