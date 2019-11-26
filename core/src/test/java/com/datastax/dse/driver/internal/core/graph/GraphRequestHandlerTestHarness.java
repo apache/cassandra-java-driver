@@ -21,14 +21,17 @@ import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
+import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.DefaultConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.cql.RequestHandlerTestHarness;
 import com.datastax.oss.driver.internal.core.servererrors.DefaultWriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.session.throttling.PassThroughRequestThrottler;
 import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
+import com.datastax.oss.protocol.internal.Frame;
 import io.netty.channel.EventLoop;
 import java.time.Duration;
 import java.util.Optional;
@@ -153,6 +156,44 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
 
     public Builder withGraphProtocolForTestConfig(String protocol) {
       this.graphProtocolForTestConfig = protocol;
+      return this;
+    }
+
+    @Override
+    public GraphRequestHandlerTestHarness.Builder withEmptyPool(Node node) {
+      super.withEmptyPool(node);
+      return this;
+    }
+
+    @Override
+    public GraphRequestHandlerTestHarness.Builder withWriteFailure(Node node, Throwable cause) {
+      super.withWriteFailure(node, cause);
+      return this;
+    }
+
+    @Override
+    public GraphRequestHandlerTestHarness.Builder withResponseFailure(Node node, Throwable cause) {
+      super.withResponseFailure(node, cause);
+      return this;
+    }
+
+    @Override
+    public GraphRequestHandlerTestHarness.Builder withResponse(Node node, Frame response) {
+      super.withResponse(node, response);
+      return this;
+    }
+
+    @Override
+    public GraphRequestHandlerTestHarness.Builder withDefaultIdempotence(
+        boolean defaultIdempotence) {
+      super.withDefaultIdempotence(defaultIdempotence);
+      return this;
+    }
+
+    @Override
+    public GraphRequestHandlerTestHarness.Builder withProtocolVersion(
+        ProtocolVersion protocolVersion) {
+      super.withProtocolVersion(protocolVersion);
       return this;
     }
 
