@@ -139,9 +139,8 @@ public class GraphTimeoutsIT {
             .withString(DseDriverOption.GRAPH_TRAVERSAL_SOURCE, "drivertest3");
 
     // We could have done with the server's default but it's 30 secs so the test would have taken at
-    // least
-    // that time. Also, we don't want to rely on server's default. So we simulate a server timeout
-    // change.
+    // least that time. Also, we don't want to rely on server's default. So we simulate a server
+    // timeout change.
     sessionRule
         .session()
         .execute(
@@ -162,8 +161,18 @@ public class GraphTimeoutsIT {
                   .setExecutionProfile(
                       drivertest3.withDuration(DseDriverOption.GRAPH_TIMEOUT, clientTimeout)));
       fail("The request should have timed out");
+      // Since the driver sends its timeout in the request payload, server timeout will be equal to
+      // client timeout for this request. We cannot know for sure if it will be a client timeout
+      // error, or a server timeout, and during tests, both happened and not deterministically.
     } catch (DriverTimeoutException e) {
       assertThat(e).hasMessage("Query timed out after " + clientTimeout);
+    } catch (InvalidQueryException e) {
+      assertThat(e)
+          .hasMessageContainingAll(
+              "evaluation exceeded",
+              "threshold of ",
+              Long.toString(clientTimeout.toMillis()),
+              " ms");
     }
   }
 }
