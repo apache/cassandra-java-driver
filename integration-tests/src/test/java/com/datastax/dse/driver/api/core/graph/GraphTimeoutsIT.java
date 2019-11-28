@@ -172,7 +172,7 @@ public class GraphTimeoutsIT {
               "evaluation exceeded",
               "threshold of ",
               Long.toString(clientTimeout.toMillis()),
-              " ms");
+              "ms");
     }
   }
 }
