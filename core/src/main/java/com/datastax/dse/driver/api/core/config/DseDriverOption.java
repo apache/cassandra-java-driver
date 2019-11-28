@@ -177,7 +177,7 @@ public enum DseDriverOption implements DriverOption {
   /**
    * Whether to enable paging for Graph queries.
    *
-   * <p>Value type: boolean
+   * <p>Value type: {@link String}
    */
   GRAPH_PAGING_ENABLED("advanced.graph.paging-enabled"),
 
