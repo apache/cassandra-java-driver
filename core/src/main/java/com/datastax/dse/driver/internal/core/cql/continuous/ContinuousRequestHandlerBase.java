@@ -1324,7 +1324,7 @@ public abstract class ContinuousRequestHandlerBase<
     int freeSpace = getMaxEnqueuedPages() - queue.size();
     int inFlight = requested - received;
     int numPagesFittingInQueue = freeSpace - inFlight;
-    if (numPagesFittingInQueue >= getMaxEnqueuedPages() / 2) {
+    if (numPagesFittingInQueue > 0 && numPagesFittingInQueue >= getMaxEnqueuedPages() / 2) {
       LOG.trace("[{}] Requesting more {} pages", logPrefix, numPagesFittingInQueue);
       numPagesRequested = requested + numPagesFittingInQueue;
       chosenExecution.sendMorePagesRequest(numPagesFittingInQueue);
