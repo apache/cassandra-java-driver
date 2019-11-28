@@ -323,7 +323,7 @@ public class Conversions {
       InternalDriverContext context) {
     if (result instanceof Rows) {
       Rows rows = (Rows) result;
-      Statement<?> statement = executionInfo.getStatement();
+      Statement<?> statement = (Statement<?>) executionInfo.getRequest();
       ColumnDefinitions columnDefinitions = getResultDefinitions(rows, statement, context);
       return new DefaultAsyncResultSet(
           columnDefinitions, executionInfo, rows.getData(), session, context);

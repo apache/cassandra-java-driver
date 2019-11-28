@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.QueryTrace;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -37,7 +38,7 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class DefaultExecutionInfo implements ExecutionInfo {
 
-  private final Statement<?> statement;
+  private final Request request;
   private final Node coordinator;
   private final int speculativeExecutionCount;
   private final int successfulExecutionIndex;
@@ -53,6 +54,8 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   private final InternalDriverContext context;
   private final DriverExecutionProfile executionProfile;
 
+  /** Deprecated, use the constructor that takes a {@link Request} object instead. */
+  @Deprecated
   public DefaultExecutionInfo(
       Statement<?> statement,
       Node coordinator,
@@ -65,7 +68,34 @@ public class DefaultExecutionInfo implements ExecutionInfo {
       DefaultSession session,
       InternalDriverContext context,
       DriverExecutionProfile executionProfile) {
-    this.statement = statement;
+    this(
+        (Request) statement,
+        coordinator,
+        speculativeExecutionCount,
+        successfulExecutionIndex,
+        errors,
+        pagingState,
+        frame,
+        schemaInAgreement,
+        session,
+        context,
+        executionProfile);
+  }
+
+  public DefaultExecutionInfo(
+      Request request,
+      Node coordinator,
+      int speculativeExecutionCount,
+      int successfulExecutionIndex,
+      List<Map.Entry<Node, Throwable>> errors,
+      ByteBuffer pagingState,
+      Frame frame,
+      boolean schemaInAgreement,
+      DefaultSession session,
+      InternalDriverContext context,
+      DriverExecutionProfile executionProfile) {
+
+    this.request = request;
     this.coordinator = coordinator;
     this.speculativeExecutionCount = speculativeExecutionCount;
     this.successfulExecutionIndex = successfulExecutionIndex;
@@ -86,8 +116,15 @@ public class DefaultExecutionInfo implements ExecutionInfo {
 
   @NonNull
   @Override
+  @Deprecated
   public Statement<?> getStatement() {
-    return statement;
+    return (Statement<?>) request;
+  }
+
+  @NonNull
+  @Override
+  public Request getRequest() {
+    return request;
   }
 
   @Nullable

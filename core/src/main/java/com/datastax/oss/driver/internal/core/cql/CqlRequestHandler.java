@@ -39,6 +39,7 @@ import com.datastax.oss.driver.api.core.servererrors.QueryValidationException;
 import com.datastax.oss.driver.api.core.servererrors.ReadTimeoutException;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
+import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
@@ -403,7 +404,7 @@ public class CqlRequestHandler implements Throttled {
     ByteBuffer pagingState =
         (resultMessage instanceof Rows) ? ((Rows) resultMessage).getMetadata().pagingState : null;
     return new DefaultExecutionInfo(
-        statement,
+        (Request) statement,
         callback.node,
         startedSpeculativeExecutionsCount.get(),
         callback.execution,
@@ -428,7 +429,7 @@ public class CqlRequestHandler implements Throttled {
       ((DriverException) error)
           .setExecutionInfo(
               new DefaultExecutionInfo(
-                  statement,
+                  (Request) statement,
                   node,
                   startedSpeculativeExecutionsCount.get(),
                   execution,
@@ -851,7 +852,7 @@ public class CqlRequestHandler implements Throttled {
       if (result.isDone()) {
         return;
       }
-      LOG.trace("[{}] Request failure, processing: {}", logPrefix, error);
+      LOG.trace("[{}] Request failure, processing: {}", logPrefix, error.toString());
       RetryDecision decision;
       if (!isIdempotent || error instanceof FrameTooLongException) {
         decision = RetryDecision.RETHROW;
