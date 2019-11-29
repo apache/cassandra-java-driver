@@ -10,7 +10,6 @@ import static com.datastax.dse.driver.DseTestFixtures.mockNodesInMetadataWithVer
 import static com.datastax.dse.driver.api.core.graph.PagingEnabledOptions.AUTO;
 import static com.datastax.dse.driver.api.core.graph.PagingEnabledOptions.DISABLED;
 import static com.datastax.dse.driver.api.core.graph.PagingEnabledOptions.ENABLED;
-import static com.datastax.dse.driver.internal.core.graph.GraphSupportChecker.MIN_DSE_VERSION_GRAPH_BINARY_AND_PAGING;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -87,8 +86,7 @@ public class GraphSupportCheckerTest {
     GraphStatement graphStatement = mock(GraphStatement.class);
     InternalDriverContext context = protocolWithPagingSupport(true);
     contextGraphPagingEnabled(context, DISABLED);
-    addNodeWithDseVersion(
-        context, Collections.singletonList(MIN_DSE_VERSION_GRAPH_BINARY_AND_PAGING));
+    addNodeWithDseVersion(context, Collections.singletonList(Version.parse("6.8.0")));
 
     // when
     boolean pagingEnabled = new GraphSupportChecker().isPagingEnabled(graphStatement, context);
@@ -104,8 +102,7 @@ public class GraphSupportCheckerTest {
     GraphStatement graphStatement = mock(GraphStatement.class);
     InternalDriverContext context = protocolWithPagingSupport(true);
     contextGraphPagingEnabled(context, ENABLED);
-    addNodeWithDseVersion(
-        context, Collections.singletonList(MIN_DSE_VERSION_GRAPH_BINARY_AND_PAGING));
+    addNodeWithDseVersion(context, Collections.singletonList(Version.parse("6.8.0")));
 
     // when
     boolean pagingEnabled = new GraphSupportChecker().isPagingEnabled(graphStatement, context);
@@ -116,12 +113,11 @@ public class GraphSupportCheckerTest {
 
   @DataProvider()
   public static Object[][] graphPagingEnabledAndDseVersions() {
-    List<Version> listWithGraphPagingNode =
-        Collections.singletonList(MIN_DSE_VERSION_GRAPH_BINARY_AND_PAGING);
+    List<Version> listWithGraphPagingNode = Collections.singletonList(Version.parse("6.8.0"));
     List<Version> listWithoutGraphPagingNode = Collections.singletonList(Version.parse("6.7.0"));
     List<Version> listWithNull = Collections.singletonList(null);
     List<Version> listWithTwoNodesOneNotSupporting =
-        Arrays.asList(Version.parse("6.7.0"), MIN_DSE_VERSION_GRAPH_BINARY_AND_PAGING);
+        Arrays.asList(Version.parse("6.7.0"), Version.parse("6.8.0"));
 
     return new Object[][] {
       {false, ENABLED, ENABLED, listWithGraphPagingNode, true},
