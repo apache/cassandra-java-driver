@@ -26,6 +26,7 @@ import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
+import com.datastax.dse.driver.api.core.graph.GraphTestSupport;
 import com.datastax.dse.driver.api.core.graph.SampleGraphScripts;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.dse.driver.api.core.graph.SocialTraversalSource;
@@ -58,20 +59,25 @@ import org.junit.rules.TestRule;
 @DseRequirement(min = "6.0", description = "DSE 6 required for MODERN_GRAPH script (?)")
 public class GraphTraversalIT {
 
-  private static CustomCcmRule ccmRule = CustomCcmRule.builder().withDseWorkloads("graph").build();
+  private static final CustomCcmRule CCM_RULE = GraphTestSupport.GRAPH_CCM_RULE_BUILDER.build();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule).withCreateGraph().build();
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      GraphTestSupport.getClassicGraphSessionBuilder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @BeforeClass
   public static void setupSchema() {
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(ScriptGraphStatement.newInstance(SampleGraphScripts.MODERN_GRAPH));
-    sessionRule.session().execute(ScriptGraphStatement.newInstance(SampleGraphScripts.MAKE_STRICT));
-    sessionRule.session().execute(ScriptGraphStatement.newInstance(SampleGraphScripts.ALLOW_SCANS));
+    SESSION_RULE
+        .session()
+        .execute(ScriptGraphStatement.newInstance(SampleGraphScripts.MAKE_STRICT));
+    SESSION_RULE
+        .session()
+        .execute(ScriptGraphStatement.newInstance(SampleGraphScripts.ALLOW_SCANS));
   }
 
   /**
@@ -85,7 +91,7 @@ public class GraphTraversalIT {
   @Test
   public void should_use_vertex_id_as_parameter() {
     GraphResultSet resultSet =
-        sessionRule.session().execute(newInstance(g.V().hasLabel("person").has("name", "marko")));
+        SESSION_RULE.session().execute(newInstance(g.V().hasLabel("person").has("name", "marko")));
 
     List<GraphNode> results = resultSet.all();
 
@@ -93,7 +99,7 @@ public class GraphTraversalIT {
     Vertex marko = results.get(0).asVertex();
     assertThat(marko).hasProperty("name", "marko");
 
-    resultSet = sessionRule.session().execute(newInstance(g.V(marko.id())));
+    resultSet = SESSION_RULE.session().execute(newInstance(g.V(marko.id())));
 
     results = resultSet.all();
     assertThat(results.size()).isEqualTo(1);
@@ -113,7 +119,7 @@ public class GraphTraversalIT {
   @Test
   public void should_use_edge_id_as_parameter() {
     GraphResultSet resultSet =
-        sessionRule.session().execute(newInstance(g.E().has("weight", 0.2f)));
+        SESSION_RULE.session().execute(newInstance(g.E().has("weight", 0.2f)));
 
     List<GraphNode> results = resultSet.all();
     assertThat(results.size()).isEqualTo(1);
@@ -121,7 +127,7 @@ public class GraphTraversalIT {
     Edge created = results.get(0).asEdge();
     assertThat(created).hasProperty("weight", 0.2f).hasInVLabel("software").hasOutVLabel("person");
 
-    resultSet = sessionRule.session().execute(newInstance(g.E(created.id()).inV()));
+    resultSet = SESSION_RULE.session().execute(newInstance(g.E(created.id()).inV()));
     results = resultSet.all();
     assertThat(results.size()).isEqualTo(1);
     Vertex lop = results.get(0).asVertex();
@@ -140,7 +146,7 @@ public class GraphTraversalIT {
   @Test
   public void should_deserialize_vertex_id_as_map() {
     GraphResultSet resultSet =
-        sessionRule.session().execute(newInstance(g.V().hasLabel("person").has("name", "marko")));
+        SESSION_RULE.session().execute(newInstance(g.V().hasLabel("person").has("name", "marko")));
 
     List<GraphNode> results = resultSet.all();
     assertThat(results.size()).isEqualTo(1);
@@ -173,7 +179,7 @@ public class GraphTraversalIT {
     // find all software vertices and select name, language, and find all vertices that created such
     // software.
     GraphResultSet rs =
-        sessionRule
+        SESSION_RULE
             .session()
             .execute(
                 newInstance(
@@ -230,7 +236,7 @@ public class GraphTraversalIT {
    */
   @Test
   public void should_return_zero_results() {
-    GraphResultSet rs = sessionRule.session().execute(newInstance(g.V().hasLabel("notALabel")));
+    GraphResultSet rs = SESSION_RULE.session().execute(newInstance(g.V().hasLabel("notALabel")));
     assertThat(rs.all().size()).isZero();
   }
 
@@ -245,7 +251,7 @@ public class GraphTraversalIT {
     GraphStatement simpleGraphStatement =
         ScriptGraphStatement.newInstance("g.V().hasLabel('notALabel')");
 
-    GraphResultSet rs = sessionRule.session().execute(simpleGraphStatement);
+    GraphResultSet rs = SESSION_RULE.session().execute(simpleGraphStatement);
     assertThat(rs.one()).isNull();
   }
 
@@ -266,7 +272,7 @@ public class GraphTraversalIT {
   public void should_handle_lambdas() {
     // Find all people marko knows and the software they created.
     GraphResultSet result =
-        sessionRule
+        SESSION_RULE
             .session()
             .execute(
                 newInstance(
@@ -292,7 +298,7 @@ public class GraphTraversalIT {
   @Test
   public void should_resolve_path_with_some_labels() {
     GraphResultSet rs =
-        sessionRule
+        SESSION_RULE
             .session()
             .execute(
                 newInstance(
@@ -332,7 +338,7 @@ public class GraphTraversalIT {
   @Test
   public void should_resolve_path_with_labels() {
     GraphResultSet rs =
-        sessionRule
+        SESSION_RULE
             .session()
             .execute(
                 newInstance(
@@ -373,7 +379,7 @@ public class GraphTraversalIT {
   @Test
   public void should_resolve_path_without_labels() {
     GraphResultSet rs =
-        sessionRule
+        SESSION_RULE
             .session()
             .execute(
                 newInstance(
@@ -408,7 +414,7 @@ public class GraphTraversalIT {
     // Get a tree structure showing the paths from mark to people he knows to software they've
     // created.
     GraphResultSet rs =
-        sessionRule
+        SESSION_RULE
             .session()
             .execute(
                 newInstance(
@@ -437,7 +443,7 @@ public class GraphTraversalIT {
   @Test
   public void should_handle_subgraph() {
     GraphResultSet rs =
-        sessionRule
+        SESSION_RULE
             .session()
             .execute(newInstance(g.E().hasLabel("knows").subgraph("subGraph").cap("subGraph")));
 
@@ -462,7 +468,7 @@ public class GraphTraversalIT {
 
     GraphStatement gs = newInstance(gSocial.persons("marko").knows("vadas"));
 
-    GraphResultSet rs = sessionRule.session().execute(gs);
+    GraphResultSet rs = SESSION_RULE.session().execute(gs);
     List<GraphNode> results = rs.all();
 
     assertThat(results.size()).isEqualTo(1);
@@ -480,7 +486,7 @@ public class GraphTraversalIT {
    */
   @Test
   public void should_return_correct_results_when_bulked() {
-    GraphResultSet rs = sessionRule.session().execute(newInstance(g.E().label().barrier()));
+    GraphResultSet rs = SESSION_RULE.session().execute(newInstance(g.E().label().barrier()));
 
     List<String> results =
         rs.all().stream().map(GraphNode::asString).sorted().collect(Collectors.toList());
@@ -496,7 +502,7 @@ public class GraphTraversalIT {
     StringBuilder names = new StringBuilder();
 
     CompletionStage<AsyncGraphResultSet> future =
-        sessionRule
+        SESSION_RULE
             .session()
             .executeAsync(FluentGraphStatement.newInstance(g.V().hasLabel("person")));
 

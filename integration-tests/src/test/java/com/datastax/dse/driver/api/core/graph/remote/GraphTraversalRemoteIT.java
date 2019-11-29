@@ -19,6 +19,7 @@ import static com.datastax.dse.driver.api.core.graph.TinkerGraphAssertions.asser
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.dse.driver.api.core.graph.DseGraph;
+import com.datastax.dse.driver.api.core.graph.GraphTestSupport;
 import com.datastax.dse.driver.api.core.graph.SampleGraphScripts;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.dse.driver.api.core.graph.SocialTraversalSource;
@@ -56,24 +57,29 @@ import org.junit.rules.TestRule;
 @DseRequirement(min = "6.0", description = "DSE 6 required for MODERN_GRAPH script (?)")
 public class GraphTraversalRemoteIT {
 
-  private static CustomCcmRule ccmRule = CustomCcmRule.builder().withDseWorkloads("graph").build();
+  private static final CustomCcmRule CCM_RULE = GraphTestSupport.GRAPH_CCM_RULE_BUILDER.build();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule).withCreateGraph().build();
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      GraphTestSupport.getClassicGraphSessionBuilder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @BeforeClass
   public static void setupSchema() {
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(ScriptGraphStatement.newInstance(SampleGraphScripts.MODERN_GRAPH));
-    sessionRule.session().execute(ScriptGraphStatement.newInstance(SampleGraphScripts.MAKE_STRICT));
-    sessionRule.session().execute(ScriptGraphStatement.newInstance(SampleGraphScripts.ALLOW_SCANS));
+    SESSION_RULE
+        .session()
+        .execute(ScriptGraphStatement.newInstance(SampleGraphScripts.MAKE_STRICT));
+    SESSION_RULE
+        .session()
+        .execute(ScriptGraphStatement.newInstance(SampleGraphScripts.ALLOW_SCANS));
   }
 
   private final GraphTraversalSource g =
-      DseGraph.g.withRemote(DseGraph.remoteConnectionBuilder(sessionRule.session()).build());
+      DseGraph.g.withRemote(DseGraph.remoteConnectionBuilder(SESSION_RULE.session()).build());
 
   /**
    * Ensures that a previously returned {@link Vertex}'s {@link Vertex#id()} can be used as an input
@@ -472,7 +478,7 @@ public class GraphTraversalRemoteIT {
     SocialTraversalSource gSocial =
         EmptyGraph.instance()
             .traversal(SocialTraversalSource.class)
-            .withRemote(DseGraph.remoteConnectionBuilder(sessionRule.session()).build());
+            .withRemote(DseGraph.remoteConnectionBuilder(SESSION_RULE.session()).build());
     List<Vertex> vertices = gSocial.persons("marko").knows("vadas").toList();
     assertThat(vertices.size()).isEqualTo(1);
     assertThat(vertices.get(0))

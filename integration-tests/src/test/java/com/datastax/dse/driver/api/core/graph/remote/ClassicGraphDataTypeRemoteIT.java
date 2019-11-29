@@ -17,6 +17,7 @@ package com.datastax.dse.driver.api.core.graph.remote;
 
 import com.datastax.dse.driver.api.core.graph.ClassicGraphDataTypeITBase;
 import com.datastax.dse.driver.api.core.graph.DseGraph;
+import com.datastax.dse.driver.api.core.graph.GraphTestSupport;
 import com.datastax.dse.driver.api.core.graph.SampleGraphScripts;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -33,22 +34,22 @@ import org.junit.rules.TestRule;
 @DseRequirement(min = "5.0.3", description = "DSE 5.0.3 required for remote TinkerPop support")
 public class ClassicGraphDataTypeRemoteIT extends ClassicGraphDataTypeITBase {
 
-  private static CustomCcmRule ccmRule =
-      CustomCcmRule.builder()
-          .withDseWorkloads("graph")
-          .withDseConfiguration(
-              "graph.gremlin_server.scriptEngines.gremlin-groovy.config.sandbox_enabled", "false")
-          .build();
+  private static final CustomCcmRule CCM_RULE = GraphTestSupport.GRAPH_CCM_RULE_BUILDER.build();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule).withCreateGraph().build();
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      GraphTestSupport.getClassicGraphSessionBuilder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @BeforeClass
   public static void setupSchema() {
-    sessionRule.session().execute(ScriptGraphStatement.newInstance(SampleGraphScripts.ALLOW_SCANS));
-    sessionRule.session().execute(ScriptGraphStatement.newInstance(SampleGraphScripts.MAKE_STRICT));
+    SESSION_RULE
+        .session()
+        .execute(ScriptGraphStatement.newInstance(SampleGraphScripts.ALLOW_SCANS));
+    SESSION_RULE
+        .session()
+        .execute(ScriptGraphStatement.newInstance(SampleGraphScripts.MAKE_STRICT));
   }
 
   @Override
@@ -57,7 +58,7 @@ public class ClassicGraphDataTypeRemoteIT extends ClassicGraphDataTypeITBase {
   }
 
   private final GraphTraversalSource g =
-      DseGraph.g.withRemote(DseGraph.remoteConnectionBuilder(sessionRule.session()).build());
+      DseGraph.g.withRemote(DseGraph.remoteConnectionBuilder(SESSION_RULE.session()).build());
 
   @Override
   public Vertex insertVertexAndReturn(String vertexLabel, String propertyName, Object value) {

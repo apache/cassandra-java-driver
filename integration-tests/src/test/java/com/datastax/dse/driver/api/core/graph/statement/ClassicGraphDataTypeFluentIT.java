@@ -18,6 +18,7 @@ package com.datastax.dse.driver.api.core.graph.statement;
 import com.datastax.dse.driver.api.core.graph.ClassicGraphDataTypeITBase;
 import com.datastax.dse.driver.api.core.graph.DseGraph;
 import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
+import com.datastax.dse.driver.api.core.graph.GraphTestSupport;
 import com.datastax.dse.driver.api.core.graph.SampleGraphScripts;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -33,22 +34,22 @@ import org.junit.rules.TestRule;
 @DseRequirement(min = "5.0.3", description = "DSE 5.0.3 required for fluent API support")
 public class ClassicGraphDataTypeFluentIT extends ClassicGraphDataTypeITBase {
 
-  private static CustomCcmRule ccmRule =
-      CustomCcmRule.builder()
-          .withDseWorkloads("graph")
-          .withDseConfiguration(
-              "graph.gremlin_server.scriptEngines.gremlin-groovy.config.sandbox_enabled", "false")
-          .build();
+  private static final CustomCcmRule CCM_RULE = GraphTestSupport.CCM_BUILDER_WITH_GRAPH.build();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule).withCreateGraph().build();
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      GraphTestSupport.getClassicGraphSessionBuilder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @BeforeClass
   public static void setupSchema() {
-    sessionRule.session().execute(ScriptGraphStatement.newInstance(SampleGraphScripts.ALLOW_SCANS));
-    sessionRule.session().execute(ScriptGraphStatement.newInstance(SampleGraphScripts.MAKE_STRICT));
+    SESSION_RULE
+        .session()
+        .execute(ScriptGraphStatement.newInstance(SampleGraphScripts.ALLOW_SCANS));
+    SESSION_RULE
+        .session()
+        .execute(ScriptGraphStatement.newInstance(SampleGraphScripts.MAKE_STRICT));
   }
 
   @Override
@@ -58,7 +59,7 @@ public class ClassicGraphDataTypeFluentIT extends ClassicGraphDataTypeITBase {
 
   @Override
   public Vertex insertVertexAndReturn(String vertexLabel, String propertyName, Object value) {
-    return sessionRule
+    return SESSION_RULE
         .session()
         .execute(
             FluentGraphStatement.newInstance(

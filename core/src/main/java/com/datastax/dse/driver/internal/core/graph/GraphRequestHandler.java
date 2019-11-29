@@ -140,7 +140,8 @@ public class GraphRequestHandler implements Throttled {
       @NonNull DefaultSession dseSession,
       @NonNull InternalDriverContext context,
       @NonNull String sessionLogPrefix,
-      @NonNull GraphBinaryModule graphBinaryModule) {
+      @NonNull GraphBinaryModule graphBinaryModule,
+      @NonNull GraphSupportChecker graphSupportChecker) {
     this.startTimeNanos = System.nanoTime();
     this.logPrefix = sessionLogPrefix + "|" + this.hashCode();
     Preconditions.checkArgument(
@@ -195,7 +196,8 @@ public class GraphRequestHandler implements Throttled {
     this.inFlightCallbacks = new CopyOnWriteArrayList<>();
     this.graphBinaryModule = graphBinaryModule;
 
-    this.subProtocol = GraphConversions.inferSubProtocol(this.graphStatement, executionProfile);
+    this.subProtocol =
+        graphSupportChecker.inferGraphProtocol(this.graphStatement, executionProfile, this.context);
     LOG.debug("[{}], Graph protocol used for query: {}", logPrefix, subProtocol);
 
     this.message =

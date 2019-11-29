@@ -151,3 +151,10 @@ result.one().asVertex();
 
 If you run into that situation, force the sub-protocol to `graphson-1.0` for script statements
 (that's not necessary for fluent statements).
+
+Currently, if the Graph sub-protocol version is not specified on a given GraphStatement, and it's
+not explicitly set through `advanced.graph.sub-protocol` in configuration, the version of DSE to
+which the driver is connected will determine the default sub-protocol version used by the driver.
+For DSE 6.8.0 and later, the driver will pick "graph-binary-1.0" as the default sub-protocol
+version. For DSE 6.7.x and older (or in cases where the driver can't determine the DSE version), the
+driver will pick "graphson-2.0" as the default sub-protocol version.

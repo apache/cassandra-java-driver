@@ -15,15 +15,11 @@ import com.datastax.dse.driver.api.core.data.geometry.Point;
 import com.datastax.dse.driver.api.core.data.geometry.Polygon;
 import com.datastax.dse.driver.api.core.graph.predicates.Geo;
 import com.datastax.dse.driver.api.core.type.DseDataTypes;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRule;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
-import com.datastax.dse.driver.internal.core.graph.GraphProtocol;
 import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -36,37 +32,13 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.Map;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
 
 public abstract class CoreGraphDataTypeITBase {
 
-  private static CustomCcmRule ccmRule =
-      CustomCcmRule.builder()
-          .withDseWorkloads("graph")
-          .withDseConfiguration(
-              "graph.gremlin_server.scriptEngines.gremlin-groovy.config.sandbox_enabled", "false")
-          .withDseConfiguration("graph.max_query_params", 32)
-          .build();
+  protected abstract DseSession session();
 
-  private static DseSessionRule sessionRule =
-      new DseSessionRuleBuilder(ccmRule)
-          .withCreateGraph()
-          .withGraphProtocol(GraphProtocol.GRAPH_BINARY_1_0.toInternalCode())
-          .withCoreEngine()
-          .build();
-
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
-
-  protected DseSession session() {
-    return sessionRule.session();
-  }
-
-  protected String graphName() {
-    return sessionRule.getGraphName();
-  }
+  protected abstract String graphName();
 
   @Test
   public void should_create_and_retrieve_correct_data_with_types() {

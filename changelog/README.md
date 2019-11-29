@@ -4,6 +4,7 @@
 
 ### NGDG (in progress)
 
+- [improvement] JAVA-1579: Change default result format to latest GraphSON format
 - [improvement] JAVA-2496: Revisit timeouts for paged graph queries
 - [bug] JAVA-2510: Fix GraphBinaryDataTypesTest Codec registry initialization
 - [bug] JAVA-2492: Parse edge metadata using internal identifiers

@@ -13,6 +13,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.Mockito.when;
 
+import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphExecutionInfo;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
@@ -22,6 +23,7 @@ import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.dse.driver.internal.core.graph.GraphRequestHandlerTestHarness.Builder;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.internal.core.cql.PoolBehavior;
 import com.datastax.oss.driver.internal.core.cql.RequestHandlerTestHarness;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
@@ -54,9 +56,7 @@ public class ContinuousGraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider(
-      location = GraphRequestHandlerTest.class,
-      value = "bytecodeEnabledGraphProtocols")
+  @UseDataProvider(location = GraphRequestHandlerTest.class, value = "supportedGraphProtocols")
   public void should_return_paged_results(GraphProtocol graphProtocol) throws IOException {
 
     GraphBinaryModule module = createGraphBinaryModule(mockContext);
@@ -73,7 +73,12 @@ public class ContinuousGraphRequestHandlerTest {
 
       ContinuousGraphRequestHandler handler =
           new ContinuousGraphRequestHandler(
-              graphStatement, harness.getSession(), harness.getContext(), "test", module);
+              graphStatement,
+              harness.getSession(),
+              harness.getContext(),
+              "test",
+              module,
+              new GraphSupportChecker());
 
       // send the initial request
       CompletionStage<AsyncGraphResultSet> page1Future = handler.handle();
@@ -129,12 +134,22 @@ public class ContinuousGraphRequestHandlerTest {
 
     try (RequestHandlerTestHarness harness = builder.build()) {
 
+      DriverExecutionProfile profile = harness.getContext().getConfig().getDefaultProfile();
+      when(profile.isDefined(DseDriverOption.GRAPH_SUB_PROTOCOL)).thenReturn(true);
+      when(profile.getString(DseDriverOption.GRAPH_SUB_PROTOCOL))
+          .thenReturn(GraphProtocol.GRAPH_BINARY_1_0.toInternalCode());
+
       GraphStatement graphStatement = ScriptGraphStatement.newInstance("mockQuery");
 
       // when
       ContinuousGraphRequestHandler handler =
           new ContinuousGraphRequestHandler(
-              graphStatement, harness.getSession(), harness.getContext(), "test", binaryModule);
+              graphStatement,
+              harness.getSession(),
+              harness.getContext(),
+              "test",
+              binaryModule,
+              new GraphSupportChecker());
 
       // send the initial request
       CompletionStage<AsyncGraphResultSet> page1Future = handler.handle();
@@ -168,13 +183,23 @@ public class ContinuousGraphRequestHandlerTest {
 
     try (RequestHandlerTestHarness harness = builder.build()) {
 
+      DriverExecutionProfile profile = harness.getContext().getConfig().getDefaultProfile();
+      when(profile.isDefined(DseDriverOption.GRAPH_SUB_PROTOCOL)).thenReturn(true);
+      when(profile.getString(DseDriverOption.GRAPH_SUB_PROTOCOL))
+          .thenReturn(GraphProtocol.GRAPH_BINARY_1_0.toInternalCode());
+
       GraphStatement graphStatement =
           ScriptGraphStatement.newInstance("mockQuery").setTimeout(statementTimeout);
 
       // when
       ContinuousGraphRequestHandler handler =
           new ContinuousGraphRequestHandler(
-              graphStatement, harness.getSession(), harness.getContext(), "test", binaryModule);
+              graphStatement,
+              harness.getSession(),
+              harness.getContext(),
+              "test",
+              binaryModule,
+              new GraphSupportChecker());
 
       // send the initial request
       CompletionStage<AsyncGraphResultSet> page1Future = handler.handle();

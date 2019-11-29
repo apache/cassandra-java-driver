@@ -20,6 +20,7 @@ import static com.datastax.dse.driver.api.core.graph.SampleGraphScripts.MAKE_STR
 import static com.datastax.dse.driver.api.core.graph.TinkerGraphAssertions.assertThat;
 
 import com.datastax.dse.driver.api.core.graph.DseGraph;
+import com.datastax.dse.driver.api.core.graph.GraphTestSupport;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
@@ -38,18 +39,19 @@ import org.junit.rules.TestRule;
 @DseRequirement(min = "5.0.3", description = "DSE 5.0.3 required for remote TinkerPop support")
 public class GraphTraversalMetaPropertiesRemoteIT {
 
-  private static CustomCcmRule ccmRule = CustomCcmRule.builder().withDseWorkloads("graph").build();
+  private static final CustomCcmRule CCM_RULE = GraphTestSupport.GRAPH_CCM_RULE_BUILDER.build();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule).withCreateGraph().build();
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      GraphTestSupport.getClassicGraphSessionBuilder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private final GraphTraversalSource g =
-      DseGraph.g.withRemote(DseGraph.remoteConnectionBuilder(sessionRule.session()).build());
+      DseGraph.g.withRemote(DseGraph.remoteConnectionBuilder(SESSION_RULE.session()).build());
 
   /** Builds a simple schema that provides for a vertex with a property with sub properties. */
-  public static String metaProps =
+  public static final String META_PROPS =
       MAKE_STRICT
           + ALLOW_SCANS
           + "schema.propertyKey('sub_prop').Text().create()\n"
@@ -66,7 +68,7 @@ public class GraphTraversalMetaPropertiesRemoteIT {
   @Test
   public void should_parse_meta_properties() {
     // given a schema that defines meta properties.
-    sessionRule.session().execute(ScriptGraphStatement.newInstance(metaProps));
+    SESSION_RULE.session().execute(ScriptGraphStatement.newInstance(META_PROPS));
 
     // when adding a vertex with that meta property
     Vertex v =

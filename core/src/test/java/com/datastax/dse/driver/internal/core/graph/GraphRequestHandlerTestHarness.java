@@ -22,6 +22,7 @@ import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -34,7 +35,6 @@ import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
 import com.datastax.oss.protocol.internal.Frame;
 import io.netty.channel.EventLoop;
 import java.time.Duration;
-import java.util.Optional;
 import javax.annotation.Nullable;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
@@ -54,7 +54,10 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
   @Mock EventLoop eventLoop;
 
   protected GraphRequestHandlerTestHarness(
-      Builder builder, @Nullable String graphProtocolForTestConfig, Duration graphTimeout) {
+      Builder builder,
+      @Nullable String graphProtocolForTestConfig,
+      Duration graphTimeout,
+      @Nullable Version dseVersionForTestMetadata) {
     super(builder);
 
     // not mocked by RequestHandlerTestHarness, will be used when DseDriverOptions.GRAPH_TIMEOUT
@@ -63,8 +66,7 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
 
     // default graph options as in the reference.conf file
     when(defaultProfile.getString(DseDriverOption.GRAPH_TRAVERSAL_SOURCE, null)).thenReturn("g");
-    when(defaultProfile.getString(DseDriverOption.GRAPH_SUB_PROTOCOL, "graphson-2.0"))
-        .thenReturn("graphson-2.0");
+    when(defaultProfile.isDefined(DseDriverOption.GRAPH_SUB_PROTOCOL)).thenReturn(Boolean.FALSE);
     when(defaultProfile.getBoolean(DseDriverOption.GRAPH_IS_SYSTEM_QUERY, false)).thenReturn(false);
     when(defaultProfile.getString(DseDriverOption.GRAPH_NAME, null)).thenReturn("mockGraph");
     when(defaultProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, Duration.ZERO))
@@ -81,9 +83,13 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
     when(testProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)).thenReturn(false);
     when(testProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(true);
     when(testProfile.getString(DseDriverOption.GRAPH_TRAVERSAL_SOURCE, null)).thenReturn("a");
-    when(testProfile.getString(
-            ArgumentMatchers.eq(DseDriverOption.GRAPH_SUB_PROTOCOL), ArgumentMatchers.anyString()))
-        .thenReturn(Optional.ofNullable(graphProtocolForTestConfig).orElse("graphson-2.0"));
+    when(testProfile.isDefined(DseDriverOption.GRAPH_SUB_PROTOCOL))
+        .thenReturn(graphProtocolForTestConfig != null);
+    // only mock the config if graphProtocolForTestConfig is not null
+    if (graphProtocolForTestConfig != null) {
+      when(testProfile.getString(DseDriverOption.GRAPH_SUB_PROTOCOL))
+          .thenReturn(graphProtocolForTestConfig);
+    }
     when(testProfile.getBoolean(DseDriverOption.GRAPH_IS_SYSTEM_QUERY, false)).thenReturn(false);
     when(testProfile.getString(DseDriverOption.GRAPH_NAME, null)).thenReturn("mockGraph");
     when(testProfile.getString(DseDriverOption.GRAPH_READ_CONSISTENCY_LEVEL, null))
@@ -138,6 +144,10 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
     when(dseDriverContext.getRequestThrottler())
         .thenReturn(new PassThroughRequestThrottler(dseDriverContext));
     when(dseDriverContext.getRequestTracker()).thenReturn(new NoopRequestTracker(dseDriverContext));
+    // if DSE Version is specified for test metadata, then we need to mock that up on the context
+    if (dseVersionForTestMetadata != null) {
+      GraphTestUtil.mockContext(dseDriverContext, true, dseVersionForTestMetadata);
+    }
   }
 
   @Override
@@ -153,6 +163,7 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
 
     private String graphProtocolForTestConfig;
     private Duration graphTimeout = Duration.ZERO;
+    private Version dseVersionForTestMetadata;
 
     public Builder withGraphProtocolForTestConfig(String protocol) {
       this.graphProtocolForTestConfig = protocol;
@@ -197,14 +208,20 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
       return this;
     }
 
-    @Override
-    public GraphRequestHandlerTestHarness build() {
-      return new GraphRequestHandlerTestHarness(this, graphProtocolForTestConfig, graphTimeout);
+    public Builder withDseVersionInMetadata(Version dseVersion) {
+      this.dseVersionForTestMetadata = dseVersion;
+      return this;
     }
 
-    public RequestHandlerTestHarness.Builder withGraphTimeout(Duration globalTimeout) {
+    public Builder withGraphTimeout(Duration globalTimeout) {
       this.graphTimeout = globalTimeout;
       return this;
+    }
+
+    @Override
+    public GraphRequestHandlerTestHarness build() {
+      return new GraphRequestHandlerTestHarness(
+          this, graphProtocolForTestConfig, graphTimeout, dseVersionForTestMetadata);
     }
   }
 }

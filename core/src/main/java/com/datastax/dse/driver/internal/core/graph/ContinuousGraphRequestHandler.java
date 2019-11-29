@@ -57,10 +57,11 @@ public class ContinuousGraphRequestHandler
       @NonNull DefaultSession session,
       @NonNull InternalDriverContext context,
       @NonNull String sessionLogPrefix,
-      @NonNull GraphBinaryModule graphBinaryModule) {
+      @NonNull GraphBinaryModule graphBinaryModule,
+      @NonNull GraphSupportChecker graphSupportChecker) {
     super(statement, session, context, sessionLogPrefix, AsyncGraphResultSet.class);
     this.graphBinaryModule = graphBinaryModule;
-    subProtocol = GraphConversions.inferSubProtocol(statement, executionProfile);
+    subProtocol = graphSupportChecker.inferGraphProtocol(statement, executionProfile, context);
     message =
         GraphConversions.createContinuousMessageFromGraphStatement(
             statement, subProtocol, executionProfile, context, graphBinaryModule);

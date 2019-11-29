@@ -53,7 +53,6 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
 import org.apache.tinkerpop.gremlin.structure.io.Buffer;
 import org.apache.tinkerpop.gremlin.structure.io.BufferFactory;
@@ -82,24 +81,6 @@ public class GraphConversions extends Conversions {
   private static final BufferFactory<ByteBuf> FACTORY = new DseNettyBufferFactory();
 
   @VisibleForTesting static final byte[] EMPTY_STRING_QUERY = "".getBytes(UTF_8);
-
-  public static GraphProtocol inferSubProtocol(
-      GraphStatement<?> statement, DriverExecutionProfile config) {
-    String graphProtocol = statement.getSubProtocol();
-    if (graphProtocol == null) {
-      graphProtocol =
-          config.getString(
-              DseDriverOption.GRAPH_SUB_PROTOCOL,
-              // TODO pick graphson-3.0 if the target graph uses the core engine
-              "graphson-2.0");
-    }
-    // should not be null because we call config.getString() with a default value
-    Objects.requireNonNull(
-        graphProtocol,
-        "Could not determine the graph protocol for the query. This is a bug, please report.");
-
-    return GraphProtocol.fromString(graphProtocol);
-  }
 
   public static Message createContinuousMessageFromGraphStatement(
       GraphStatement<?> statement,

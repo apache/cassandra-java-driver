@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.dse.driver.api.core.graph.BatchGraphStatement;
 import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
+import com.datastax.dse.driver.api.core.graph.GraphTestSupport;
 import com.datastax.dse.driver.api.core.graph.SampleGraphScripts;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -42,17 +43,20 @@ import org.junit.rules.TestRule;
 @DseRequirement(min = "6.0")
 public class GraphTraversalBatchIT {
 
-  private static CustomCcmRule ccmRule = CustomCcmRule.builder().withDseWorkloads("graph").build();
+  private static final CustomCcmRule CCM_RULE = GraphTestSupport.GRAPH_CCM_RULE_BUILDER.build();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule).withCreateGraph().build();
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      GraphTestSupport.getClassicGraphSessionBuilder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @BeforeClass
   public static void setupSchema() {
-    sessionRule.session().execute(ScriptGraphStatement.newInstance(SampleGraphScripts.ALLOW_SCANS));
-    sessionRule
+    SESSION_RULE
+        .session()
+        .execute(ScriptGraphStatement.newInstance(SampleGraphScripts.ALLOW_SCANS));
+    SESSION_RULE
         .session()
         .execute(ScriptGraphStatement.newInstance(SampleGraphScripts.MAKE_NOT_STRICT));
   }
@@ -80,10 +84,10 @@ public class GraphTraversalBatchIT {
     assertThat(batch.size()).isEqualTo(2);
     assertThat(batch2.size()).isEqualTo(3);
 
-    sessionRule.session().execute(batch2);
+    SESSION_RULE.session().execute(batch2);
 
     assertThat(
-            sessionRule
+            SESSION_RULE
                 .session()
                 .execute(FluentGraphStatement.newInstance(g.V().has("name", "batch1")))
                 .one()
@@ -91,7 +95,7 @@ public class GraphTraversalBatchIT {
         .hasProperty("age", 1);
 
     assertThat(
-            sessionRule
+            SESSION_RULE
                 .session()
                 .execute(FluentGraphStatement.newInstance(g.V().has("name", "batch2")))
                 .one()
@@ -99,7 +103,7 @@ public class GraphTraversalBatchIT {
         .hasProperty("age", 2);
 
     assertThat(
-            sessionRule
+            SESSION_RULE
                 .session()
                 .execute(FluentGraphStatement.newInstance(g.V().has("name", "batch1").bothE()))
                 .one()
@@ -115,7 +119,7 @@ public class GraphTraversalBatchIT {
         BatchGraphStatement.builder().addTraversals(ImmutableList.of()).build();
     assertThat(batch.size()).isEqualTo(0);
     try {
-      sessionRule.session().execute(batch);
+      SESSION_RULE.session().execute(batch);
       fail(
           "Should have thrown InvalidQueryException because batch does not contain any traversals.");
     } catch (InvalidQueryException e) {

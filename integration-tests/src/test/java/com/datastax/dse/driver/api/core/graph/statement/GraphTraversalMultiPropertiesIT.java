@@ -22,6 +22,7 @@ import static com.datastax.dse.driver.api.core.graph.SampleGraphScripts.MAKE_STR
 import static com.datastax.dse.driver.api.core.graph.TinkerGraphAssertions.assertThat;
 
 import com.datastax.dse.driver.api.core.graph.GraphResultSet;
+import com.datastax.dse.driver.api.core.graph.GraphTestSupport;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
@@ -38,12 +39,13 @@ import org.junit.rules.TestRule;
 @DseRequirement(min = "5.0.3", description = "DSE 5.0.3 required for remote TinkerPop support")
 public class GraphTraversalMultiPropertiesIT {
 
-  private static CustomCcmRule ccmRule = CustomCcmRule.builder().withDseWorkloads("graph").build();
+  private static final CustomCcmRule CCM_RULE = GraphTestSupport.GRAPH_CCM_RULE_BUILDER.build();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule).withCreateGraph().build();
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      GraphTestSupport.getClassicGraphSessionBuilder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   /** Builds a simple schema that provides for a vertex with a multi-cardinality property. */
   private static final String MULTI_PROPS =
@@ -62,11 +64,11 @@ public class GraphTraversalMultiPropertiesIT {
   @Test
   public void should_parse_multiple_cardinality_properties() {
     // given a schema that defines multiple cardinality properties.
-    sessionRule.session().execute(ScriptGraphStatement.newInstance(MULTI_PROPS));
+    SESSION_RULE.session().execute(ScriptGraphStatement.newInstance(MULTI_PROPS));
 
     // when adding a vertex with a multiple cardinality property
     GraphResultSet result =
-        sessionRule
+        SESSION_RULE
             .session()
             .execute(
                 newInstance(

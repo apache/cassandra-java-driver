@@ -13,8 +13,6 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.cql.continuous.ContinuousPagingITBase;
 import com.datastax.dse.driver.api.testinfra.session.DseSessionRule;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
-import com.datastax.dse.driver.internal.core.graph.GraphProtocol;
 import com.datastax.dse.driver.internal.core.graph.MultiPageGraphResultSet;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -40,20 +38,17 @@ import org.junit.runner.RunWith;
 @RunWith(DataProviderRunner.class)
 public class GraphPagingIT {
 
-  private static CustomCcmRule ccmRule = CustomCcmRule.builder().withDseWorkloads("graph").build();
+  private static final CustomCcmRule CCM_RULE = GraphTestSupport.GRAPH_CCM_RULE_BUILDER.build();
 
-  private static DseSessionRule sessionRule =
-      new DseSessionRuleBuilder(ccmRule)
-          .withCreateGraph()
-          .withCoreEngine()
-          .withGraphProtocol(GraphProtocol.GRAPH_BINARY_1_0.toInternalCode())
-          .build();
+  private static final DseSessionRule SESSION_RULE =
+      GraphTestSupport.getCoreGraphSessionBuilder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @BeforeClass
   public static void setupSchema() {
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(
             ScriptGraphStatement.newInstance(
@@ -62,16 +57,16 @@ public class GraphPagingIT {
                         + ".clusterBy('cc', Int)"
                         + ".property('name', Text)"
                         + ".create();")
-                .setGraphName(sessionRule.getGraphName()));
+                .setGraphName(SESSION_RULE.getGraphName()));
     for (int i = 1; i <= 100; i++) {
-      sessionRule
+      SESSION_RULE
           .session()
           .execute(
               ScriptGraphStatement.newInstance(
                       String.format(
                           "g.addV('person').property('pk',0).property('cc',%d).property('name', '%s');",
                           i, "user" + i))
-                  .setGraphName(sessionRule.getGraphName()));
+                  .setGraphName(SESSION_RULE.getGraphName()));
     }
   }
 
@@ -88,11 +83,11 @@ public class GraphPagingIT {
 
     // when
     GraphResultSet result =
-        sessionRule
+        SESSION_RULE
             .session()
             .execute(
                 ScriptGraphStatement.newInstance("g.V().hasLabel('person').values('name')")
-                    .setGraphName(sessionRule.getGraphName())
+                    .setGraphName(SESSION_RULE.getGraphName())
                     .setTraversalSource("g")
                     .setExecutionProfile(profile));
 
@@ -124,11 +119,11 @@ public class GraphPagingIT {
 
     // when
     GraphResultSet result =
-        sessionRule
+        SESSION_RULE
             .session()
             .execute(
                 ScriptGraphStatement.newInstance("g.V().hasLabel('person').values('name')")
-                    .setGraphName(sessionRule.getGraphName())
+                    .setGraphName(SESSION_RULE.getGraphName())
                     .setTraversalSource("g")
                     .setExecutionProfile(profile));
 
@@ -170,11 +165,11 @@ public class GraphPagingIT {
 
     // when
     GraphResultSet result =
-        sessionRule
+        SESSION_RULE
             .session()
             .execute(
                 ScriptGraphStatement.newInstance("g.V().hasLabel('person').values('name')")
-                    .setGraphName(sessionRule.getGraphName())
+                    .setGraphName(SESSION_RULE.getGraphName())
                     .setTraversalSource("g")
                     .setExecutionProfile(profile));
 
@@ -206,11 +201,11 @@ public class GraphPagingIT {
 
     // when
     CompletionStage<AsyncGraphResultSet> result =
-        sessionRule
+        SESSION_RULE
             .session()
             .executeAsync(
                 ScriptGraphStatement.newInstance("g.V().hasLabel('person').values('name')")
-                    .setGraphName(sessionRule.getGraphName())
+                    .setGraphName(SESSION_RULE.getGraphName())
                     .setTraversalSource("g")
                     .setExecutionProfile(profile));
 
@@ -232,11 +227,11 @@ public class GraphPagingIT {
 
     // when
     CompletionStage<AsyncGraphResultSet> result =
-        sessionRule
+        SESSION_RULE
             .session()
             .executeAsync(
                 ScriptGraphStatement.newInstance("g.V().hasLabel('person').values('name')")
-                    .setGraphName(sessionRule.getGraphName())
+                    .setGraphName(SESSION_RULE.getGraphName())
                     .setTraversalSource("g")
                     .setExecutionProfile(profile));
 
@@ -258,11 +253,11 @@ public class GraphPagingIT {
 
     // when
     CompletionStage<AsyncGraphResultSet> result =
-        sessionRule
+        SESSION_RULE
             .session()
             .executeAsync(
                 ScriptGraphStatement.newInstance("g.V().hasLabel('person').values('name')")
-                    .setGraphName(sessionRule.getGraphName())
+                    .setGraphName(SESSION_RULE.getGraphName())
                     .setTraversalSource("g")
                     .setExecutionProfile(profile));
 
@@ -333,11 +328,11 @@ public class GraphPagingIT {
     // when
     GraphStatement statement =
         ScriptGraphStatement.newInstance("g.V().hasLabel('person').values('name')")
-            .setGraphName(sessionRule.getGraphName())
+            .setGraphName(SESSION_RULE.getGraphName())
             .setTraversalSource("g")
             .setExecutionProfile(profile);
     MultiPageGraphResultSet results =
-        (MultiPageGraphResultSet) sessionRule.session().execute(statement);
+        (MultiPageGraphResultSet) SESSION_RULE.session().execute(statement);
 
     assertThat(((MultiPageGraphResultSet.RowIterator) results.iterator()).isCancelled()).isFalse();
     assertThat(((CountingIterator) results.iterator()).remaining()).isEqualTo(10);
@@ -359,13 +354,13 @@ public class GraphPagingIT {
 
     // when
     try {
-      ccmRule.getCcmBridge().pause(1);
+      CCM_RULE.getCcmBridge().pause(1);
       try {
-        sessionRule
+        SESSION_RULE
             .session()
             .execute(
                 ScriptGraphStatement.newInstance("g.V().hasLabel('person').values('name')")
-                    .setGraphName(sessionRule.getGraphName())
+                    .setGraphName(SESSION_RULE.getGraphName())
                     .setTraversalSource("g")
                     .setExecutionProfile(profile));
         fail("Expecting DriverTimeoutException");
@@ -373,7 +368,7 @@ public class GraphPagingIT {
         assertThat(e).hasMessage("Query timed out after " + timeout);
       }
     } finally {
-      ccmRule.getCcmBridge().resume(1);
+      CCM_RULE.getCcmBridge().resume(1);
     }
   }
 
@@ -384,13 +379,13 @@ public class GraphPagingIT {
 
     // when
     try {
-      ccmRule.getCcmBridge().pause(1);
+      CCM_RULE.getCcmBridge().pause(1);
       try {
-        sessionRule
+        SESSION_RULE
             .session()
             .execute(
                 ScriptGraphStatement.newInstance("g.V().hasLabel('person').values('name')")
-                    .setGraphName(sessionRule.getGraphName())
+                    .setGraphName(SESSION_RULE.getGraphName())
                     .setTraversalSource("g")
                     .setTimeout(timeout));
         fail("Expecting DriverTimeoutException");
@@ -398,7 +393,7 @@ public class GraphPagingIT {
         assertThat(e).hasMessage("Query timed out after " + timeout);
       }
     } finally {
-      ccmRule.getCcmBridge().resume(1);
+      CCM_RULE.getCcmBridge().resume(1);
     }
   }
 
@@ -411,13 +406,13 @@ public class GraphPagingIT {
 
     // when
     try {
-      ccmRule.getCcmBridge().pause(1);
+      CCM_RULE.getCcmBridge().pause(1);
       CompletionStage<AsyncGraphResultSet> result =
-          sessionRule
+          SESSION_RULE
               .session()
               .executeAsync(
                   ScriptGraphStatement.newInstance("g.V().hasLabel('person').values('name')")
-                      .setGraphName(sessionRule.getGraphName())
+                      .setGraphName(SESSION_RULE.getGraphName())
                       .setTraversalSource("g")
                       .setExecutionProfile(profile));
       result.toCompletableFuture().get();
@@ -425,7 +420,7 @@ public class GraphPagingIT {
     } catch (ExecutionException e) {
       assertThat(e.getCause()).hasMessage("Query timed out after " + timeout);
     } finally {
-      ccmRule.getCcmBridge().resume(1);
+      CCM_RULE.getCcmBridge().resume(1);
     }
   }
 
@@ -442,27 +437,27 @@ public class GraphPagingIT {
     // when
     try {
       CompletionStage<AsyncGraphResultSet> firstPageFuture =
-          sessionRule
+          SESSION_RULE
               .session()
               .executeAsync(
                   ScriptGraphStatement.newInstance("g.V().hasLabel('person').values('name')")
-                      .setGraphName(sessionRule.getGraphName())
+                      .setGraphName(SESSION_RULE.getGraphName())
                       .setTraversalSource("g")
                       .setExecutionProfile(profile));
       AsyncGraphResultSet firstPage = firstPageFuture.toCompletableFuture().get();
-      ccmRule.getCcmBridge().pause(1);
+      CCM_RULE.getCcmBridge().pause(1);
       CompletionStage<AsyncGraphResultSet> secondPageFuture = firstPage.fetchNextPage();
       secondPageFuture.toCompletableFuture().get();
       fail("Expecting DriverTimeoutException");
     } catch (ExecutionException e) {
       assertThat(e.getCause()).hasMessage("Query timed out after " + timeout);
     } finally {
-      ccmRule.getCcmBridge().resume(1);
+      CCM_RULE.getCcmBridge().resume(1);
     }
   }
 
   private DriverExecutionProfile enableGraphPaging() {
-    return sessionRule
+    return SESSION_RULE
         .session()
         .getContext()
         .getConfig()
@@ -472,7 +467,7 @@ public class GraphPagingIT {
 
   private DriverExecutionProfile enableGraphPaging(
       Options options, PagingEnabledOptions pagingEnabledOptions) {
-    return sessionRule
+    return SESSION_RULE
         .session()
         .getContext()
         .getConfig()
@@ -485,6 +480,6 @@ public class GraphPagingIT {
   }
 
   private SocketAddress firstCcmNode() {
-    return ccmRule.getContactPoints().iterator().next().resolve();
+    return CCM_RULE.getContactPoints().iterator().next().resolve();
   }
 }

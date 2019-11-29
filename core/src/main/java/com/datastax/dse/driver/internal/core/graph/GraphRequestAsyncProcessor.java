@@ -37,7 +37,7 @@ public class GraphRequestAsyncProcessor
     implements RequestProcessor<GraphStatement<?>, CompletionStage<AsyncGraphResultSet>> {
 
   private final GraphBinaryModule graphBinaryModule;
-  private final GraphPagingSupportChecker graphPagingSupportChecker;
+  private final GraphSupportChecker graphSupportChecker;
 
   public GraphRequestAsyncProcessor(
       DefaultDriverContext context, GraphPagingSupportChecker graphPagingSupportChecker) {
@@ -47,7 +47,7 @@ public class GraphRequestAsyncProcessor
         new GraphBinaryModule(
             new GraphBinaryReader(typeSerializerRegistry),
             new GraphBinaryWriter(typeSerializerRegistry));
-    this.graphPagingSupportChecker = graphPagingSupportChecker;
+    this.graphSupportChecker = graphSupportChecker;
   }
 
   @NonNull
@@ -67,13 +67,23 @@ public class GraphRequestAsyncProcessor
       InternalDriverContext context,
       String sessionLogPrefix) {
 
-    if (graphPagingSupportChecker.isPagingEnabled(request, context)) {
+    if (graphSupportChecker.isPagingEnabled(request, context)) {
       return new ContinuousGraphRequestHandler(
-              request, session, context, sessionLogPrefix, getGraphBinaryModule())
+              request,
+              session,
+              context,
+              sessionLogPrefix,
+              getGraphBinaryModule(),
+              graphSupportChecker)
           .handle();
     } else {
       return new GraphRequestHandler(
-              request, session, context, sessionLogPrefix, getGraphBinaryModule())
+              request,
+              session,
+              context,
+              sessionLogPrefix,
+              getGraphBinaryModule(),
+              graphSupportChecker)
           .handle();
     }
   }

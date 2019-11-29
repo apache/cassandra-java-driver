@@ -15,6 +15,7 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
+import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_1_0;
 import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_2_0;
 import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPH_BINARY_1_0;
 import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.createGraphBinaryModule;
@@ -48,6 +49,7 @@ import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.dse.protocol.internal.request.RawBytesQuery;
 import com.datastax.dse.protocol.internal.request.query.DseQueryOptions;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
@@ -97,7 +99,7 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider("bytecodeEnabledGraphProtocols")
+  @UseDataProvider("supportedGraphProtocols")
   public void should_create_query_message_from_script_statement(GraphProtocol graphProtocol)
       throws IOException {
     // initialization
@@ -127,7 +129,7 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider("bytecodeEnabledGraphProtocols")
+  @UseDataProvider("supportedGraphProtocols")
   public void should_create_query_message_from_fluent_statement(GraphProtocol graphProtocol)
       throws IOException {
     // initialization
@@ -161,7 +163,7 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider("bytecodeEnabledGraphProtocols")
+  @UseDataProvider("supportedGraphProtocols")
   public void should_create_query_message_from_batch_statement(GraphProtocol graphProtocol)
       throws IOException {
     // initialization
@@ -225,12 +227,13 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  public void should_set_correct_query_options_from_graph_statement() throws IOException {
+  @UseDataProvider("supportedGraphProtocols")
+  public void should_set_correct_query_options_from_graph_statement(GraphProtocol subProtocol)
+      throws IOException {
     // initialization
     GraphRequestHandlerTestHarness harness = GraphRequestHandlerTestHarness.builder().build();
     GraphStatement<?> graphStatement =
         ScriptGraphStatement.newInstance("mockQuery").setQueryParam("name", "value");
-    GraphProtocol subProtocol = GraphProtocol.GRAPHSON_2_0;
 
     GraphBinaryModule module = createGraphBinaryModule(harness.getContext());
 
@@ -253,9 +256,7 @@ public class GraphRequestHandlerTest {
     assertThat(options.defaultTimestamp).isEqualTo(-9223372036854775808L);
     assertThat(options.positionalValues)
         .isEqualTo(
-            ImmutableList.of(
-                GraphSONUtils.serializeToByteBuffer(
-                    ImmutableMap.of("name", "value"), subProtocol)));
+            ImmutableList.of(serialize(ImmutableMap.of("name", "value"), subProtocol, module)));
 
     m =
         GraphConversions.createMessageFromGraphStatement(
@@ -270,12 +271,12 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  public void should_create_payload_from_config_options() {
+  @UseDataProvider("supportedGraphProtocols")
+  public void should_create_payload_from_config_options(GraphProtocol subProtocol) {
     // initialization
     GraphRequestHandlerTestHarness harness = GraphRequestHandlerTestHarness.builder().build();
     GraphStatement<?> graphStatement =
         ScriptGraphStatement.newInstance("mockQuery").setExecutionProfileName("test-graph");
-    GraphProtocol subProtocol = GraphProtocol.GRAPHSON_2_0;
 
     GraphBinaryModule module = createGraphBinaryModule(harness.getContext());
 
@@ -313,7 +314,8 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  public void should_create_payload_from_statement_options() {
+  @UseDataProvider("supportedGraphProtocols")
+  public void should_create_payload_from_statement_options(GraphProtocol subProtocol) {
     // initialization
     GraphRequestHandlerTestHarness harness = GraphRequestHandlerTestHarness.builder().build();
     GraphStatement<?> graphStatement =
@@ -325,7 +327,6 @@ public class GraphRequestHandlerTest {
             .setWriteConsistencyLevel(DefaultConsistencyLevel.THREE)
             .setSystemQuery(false)
             .build();
-    GraphProtocol subProtocol = GraphProtocol.GRAPHSON_2_0;
 
     GraphBinaryModule module = createGraphBinaryModule(harness.getContext());
 
@@ -368,12 +369,12 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  public void should_not_set_graph_name_on_system_queries() {
+  @UseDataProvider("supportedGraphProtocols")
+  public void should_not_set_graph_name_on_system_queries(GraphProtocol subProtocol) {
     // initialization
     GraphRequestHandlerTestHarness harness = GraphRequestHandlerTestHarness.builder().build();
     GraphStatement<?> graphStatement =
         ScriptGraphStatement.newInstance("mockQuery").setSystemQuery(true);
-    GraphProtocol subProtocol = GraphProtocol.GRAPHSON_2_0;
 
     GraphBinaryModule module = createGraphBinaryModule(harness.getContext());
 
@@ -391,21 +392,24 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider("bytecodeEnabledGraphProtocols")
-  public void should_return_results_for_statements(GraphProtocol graphProtocol) throws IOException {
-    DseDriverContext mockContext = Mockito.mock(DseDriverContext.class);
+  @UseDataProvider("supportedGraphProtocolsWithDseVersions")
+  public void should_return_results_for_statements(GraphProtocol graphProtocol, Version dseVersion)
+      throws IOException {
+    DseDriverContext mockContext = GraphTestUtil.mockContext(true, dseVersion);
     GraphBinaryModule module = createGraphBinaryModule(mockContext);
 
-    GraphPagingSupportChecker graphPagingSupportChecker = mock(GraphPagingSupportChecker.class);
-    when(graphPagingSupportChecker.isPagingEnabled(any(), any())).thenReturn(false);
+    GraphSupportChecker graphSupportChecker = mock(GraphSupportChecker.class);
+    when(graphSupportChecker.isPagingEnabled(any(), any())).thenReturn(false);
+    when(graphSupportChecker.inferGraphProtocol(any(), any(), any())).thenReturn(graphProtocol);
 
     GraphRequestAsyncProcessor p =
-        Mockito.spy(new GraphRequestAsyncProcessor(mockContext, graphPagingSupportChecker));
+        Mockito.spy(new GraphRequestAsyncProcessor(mockContext, graphSupportChecker));
     when(p.getGraphBinaryModule()).thenReturn(module);
 
     RequestHandlerTestHarness harness =
         GraphRequestHandlerTestHarness.builder()
             .withGraphProtocolForTestConfig(graphProtocol.toInternalCode())
+            .withDseVersionInMetadata(dseVersion)
             // ideally we would be able to provide a function here to
             // produce results instead of a static predefined response.
             // Function to which we would pass the harness instance or a (mocked)DriverContext.
@@ -424,10 +428,10 @@ public class GraphRequestHandlerTest {
     List<GraphNode> nodes = grs.all();
     assertThat(nodes.size()).isEqualTo(1);
 
-    GraphNode node = nodes.get(0);
-    assertThat(node.isVertex()).isTrue();
+    GraphNode graphNode = nodes.get(0);
+    assertThat(graphNode.isVertex()).isTrue();
 
-    Vertex vRead = node.asVertex();
+    Vertex vRead = graphNode.asVertex();
     assertThat(vRead.label()).isEqualTo("person");
     assertThat(vRead.id()).isEqualTo(1);
     if (!graphProtocol.isGraphBinary()) {
@@ -439,35 +443,60 @@ public class GraphRequestHandlerTest {
   }
 
   @DataProvider
-  public static Object[][] bytecodeEnabledGraphProtocols() {
-    return new Object[][] {{GRAPHSON_2_0}, {GRAPH_BINARY_1_0}};
+  public static Object[][] supportedGraphProtocols() {
+    return new Object[][] {{GRAPHSON_2_0}, {GRAPH_BINARY_1_0}, {GRAPHSON_1_0}};
+  }
+
+  @DataProvider
+  public static Object[][] supportedGraphProtocolsWithDseVersions() {
+    return new Object[][] {
+      {GRAPHSON_1_0, GraphTestUtil.DSE_6_7_0},
+      {GRAPHSON_1_0, GraphTestUtil.DSE_6_8_0},
+      {GRAPHSON_2_0, GraphTestUtil.DSE_6_7_0},
+      {GRAPHSON_2_0, GraphTestUtil.DSE_6_8_0},
+      {GRAPH_BINARY_1_0, GraphTestUtil.DSE_6_7_0},
+      {GRAPH_BINARY_1_0, GraphTestUtil.DSE_6_8_0},
+    };
+  }
+
+  @DataProvider
+  public static Object[][] dseVersionsWithDefaultGraphProtocol() {
+    return new Object[][] {
+      {GRAPHSON_2_0, GraphTestUtil.DSE_6_7_0},
+      {GRAPH_BINARY_1_0, GraphTestUtil.DSE_6_8_0},
+    };
   }
 
   @Test
-  public void should_invoke_request_tracker() throws IOException {
-    DseDriverContext mockContext = Mockito.mock(DseDriverContext.class);
+  @UseDataProvider("dseVersionsWithDefaultGraphProtocol")
+  public void should_invoke_request_tracker(GraphProtocol defaultProtocol, Version dseVersion)
+      throws IOException {
+    DseDriverContext mockContext = GraphTestUtil.mockContext(true, dseVersion);
     GraphBinaryModule module = createGraphBinaryModule(mockContext);
 
+    GraphSupportChecker graphSupportChecker = mock(GraphSupportChecker.class);
+    when(graphSupportChecker.isPagingEnabled(any(), any())).thenReturn(false);
+    when(graphSupportChecker.inferGraphProtocol(any(), any(), any())).thenReturn(defaultProtocol);
+
     GraphRequestAsyncProcessor p =
-        Mockito.spy(new GraphRequestAsyncProcessor(mockContext, new GraphPagingSupportChecker()));
+        Mockito.spy(new GraphRequestAsyncProcessor(mockContext, graphSupportChecker));
     when(p.getGraphBinaryModule()).thenReturn(module);
 
     RequestHandlerTestHarness harness =
         GraphRequestHandlerTestHarness.builder()
-            .withResponse(
-                node, defaultDseFrameOf(singleGraphRow(GraphProtocol.GRAPHSON_2_0, module)))
+            .withDseVersionInMetadata(dseVersion)
+            .withResponse(node, defaultDseFrameOf(singleGraphRow(defaultProtocol, module)))
             .build();
 
     RequestTracker requestTracker = mock(RequestTracker.class);
     when(harness.getContext().getRequestTracker()).thenReturn(requestTracker);
 
     GraphStatement graphStatement = ScriptGraphStatement.newInstance("mockQuery");
-    GraphPagingSupportChecker graphPagingSupportChecker = mock(GraphPagingSupportChecker.class);
-    when(graphPagingSupportChecker.isPagingEnabled(any(), any())).thenReturn(false);
+
     GraphResultSet grs =
         new GraphRequestSyncProcessor(
                 new GraphRequestAsyncProcessor(
-                    (DseDriverContext) harness.getContext(), graphPagingSupportChecker))
+                    (DseDriverContext) harness.getContext(), graphSupportChecker))
             .process(graphStatement, harness.getSession(), harness.getContext(), "test-graph");
 
     List<GraphNode> nodes = grs.all();
@@ -479,8 +508,12 @@ public class GraphRequestHandlerTest {
     Vertex actual = graphNode.asVertex();
     assertThat(actual.label()).isEqualTo("person");
     assertThat(actual.id()).isEqualTo(1);
-    assertThat(actual.property("name").id()).isEqualTo(11);
-    assertThat(actual.property("name").value()).isEqualTo("marko");
+    if (!defaultProtocol.isGraphBinary()) {
+      // GraphBinary does not encode properties regardless of whether they are present in the
+      // parent element or not :/
+      assertThat(actual.property("name").id()).isEqualTo(11);
+      assertThat(actual.property("name").value()).isEqualTo("marko");
+    }
 
     verify(requestTracker)
         .onSuccess(
