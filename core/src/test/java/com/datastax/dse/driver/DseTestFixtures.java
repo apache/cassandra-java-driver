@@ -15,7 +15,16 @@
  */
 package com.datastax.dse.driver;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import com.datastax.dse.driver.api.core.metadata.DseNodeProperties;
+import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
+import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
@@ -25,8 +34,11 @@ import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
+import java.util.UUID;
 
 public class DseTestFixtures {
 
@@ -72,5 +84,40 @@ public class DseTestFixtures {
       data.add(ImmutableList.of(Bytes.fromHexString("0x68656C6C6F2C20776F726C64")));
     }
     return new DefaultRows(metadata, data);
+  }
+
+  public static DseDriverContext mockNodesInMetadataWithVersions(
+      DseDriverContext mockContext, boolean treatNullAsMissing, Version... dseVersions) {
+
+    // mock bits of the context
+    MetadataManager metadataManager = mock(MetadataManager.class);
+    Metadata metadata = mock(Metadata.class);
+    Map<UUID, Node> nodeMap = new HashMap<>((dseVersions != null) ? dseVersions.length : 1);
+    if (dseVersions == null) {
+      Node node = mock(Node.class);
+      Map<String, Object> nodeExtras = new HashMap<>(1);
+      if (!treatNullAsMissing) {
+        // put an explicit null in for DSE_VERSION
+        nodeExtras.put(DseNodeProperties.DSE_VERSION, null);
+      }
+      nodeMap.put(UUID.randomUUID(), node);
+      when(node.getExtras()).thenReturn(nodeExtras);
+    } else {
+      for (Version dseVersion : dseVersions) {
+        // create a node with DSE version in its extra data
+        Node node = mock(Node.class);
+        Map<String, Object> nodeExtras = new HashMap<>(1);
+        if (dseVersion != null || !treatNullAsMissing) {
+          nodeExtras.put(DseNodeProperties.DSE_VERSION, dseVersion);
+        }
+        nodeMap.put(UUID.randomUUID(), node);
+        when(node.getExtras()).thenReturn(nodeExtras);
+      }
+    }
+    // return mocked data when requested
+    when(metadata.getNodes()).thenReturn(nodeMap);
+    when(metadataManager.getMetadata()).thenReturn(metadata);
+    when(mockContext.getMetadataManager()).thenReturn(metadataManager);
+    return mockContext;
   }
 }

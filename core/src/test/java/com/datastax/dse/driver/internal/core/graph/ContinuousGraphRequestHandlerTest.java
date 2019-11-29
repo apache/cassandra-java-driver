@@ -13,6 +13,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.Mockito.when;
 
+import com.datastax.dse.driver.DseTestDataProviders;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphExecutionInfo;
@@ -56,7 +57,7 @@ public class ContinuousGraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider(location = GraphTestUtils.class, value = "supportedGraphProtocols")
+  @UseDataProvider(location = DseTestDataProviders.class, value = "supportedGraphProtocols")
   public void should_return_paged_results(GraphProtocol graphProtocol) throws IOException {
 
     GraphBinaryModule module = createGraphBinaryModule(mockContext);

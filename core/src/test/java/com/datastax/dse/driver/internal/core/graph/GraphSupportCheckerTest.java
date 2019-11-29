@@ -6,6 +6,7 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
+import static com.datastax.dse.driver.DseTestFixtures.mockNodesInMetadataWithVersions;
 import static com.datastax.dse.driver.api.core.graph.PagingEnabledOptions.AUTO;
 import static com.datastax.dse.driver.api.core.graph.PagingEnabledOptions.DISABLED;
 import static com.datastax.dse.driver.api.core.graph.PagingEnabledOptions.ENABLED;
@@ -13,17 +14,18 @@ import static com.datastax.dse.driver.internal.core.graph.GraphSupportChecker.MI
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import com.datastax.dse.driver.DseTestDataProviders;
+import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.api.core.graph.PagingEnabledOptions;
 import com.datastax.dse.driver.api.core.metadata.DseNodeProperties;
 import com.datastax.dse.driver.internal.core.DseProtocolFeature;
 import com.datastax.dse.driver.internal.core.context.DseDriverContext;
-import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -57,7 +59,7 @@ public class GraphSupportCheckerTest {
 
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
 
-  @UseDataProvider("pagingEnabled")
+  @UseDataProvider("graphPagingEnabledAndDseVersions")
   @Test
   public void should_check_if_paging_is_supported(
       boolean protocolWithPagingSupport,
@@ -113,7 +115,7 @@ public class GraphSupportCheckerTest {
   }
 
   @DataProvider()
-  public static Object[][] pagingEnabled() {
+  public static Object[][] graphPagingEnabledAndDseVersions() {
     List<Version> listWithGraphPagingNode =
         Collections.singletonList(MIN_DSE_VERSION_GRAPH_BINARY_AND_PAGING);
     List<Version> listWithoutGraphPagingNode = Collections.singletonList(Version.parse("6.7.0"));
@@ -167,10 +169,10 @@ public class GraphSupportCheckerTest {
 
   private InternalDriverContext protocolWithPagingSupport(boolean pagingSupport) {
     InternalDriverContext context = mock(InternalDriverContext.class);
-    when(context.getProtocolVersion()).thenReturn(DefaultProtocolVersion.V4);
+    when(context.getProtocolVersion()).thenReturn(DseProtocolVersion.DSE_V2);
     ProtocolVersionRegistry protocolVersionRegistry = mock(ProtocolVersionRegistry.class);
     when(protocolVersionRegistry.supports(
-            DefaultProtocolVersion.V4, DseProtocolFeature.CONTINUOUS_PAGING))
+            DseProtocolVersion.DSE_V2, DseProtocolFeature.CONTINUOUS_PAGING))
         .thenReturn(pagingSupport);
     when(context.getProtocolVersionRegistry()).thenReturn(protocolVersionRegistry);
     return context;
@@ -185,29 +187,31 @@ public class GraphSupportCheckerTest {
   }
 
   @Test
-  @UseDataProvider("dseVersions")
+  @UseDataProvider("dseVersionsAndGraphProtocols")
   public void should_determine_default_graph_protocol_from_dse_version(
       Version[] dseVersions, GraphProtocol expectedProtocol) {
     // mock up the metadata for the context
     // using 'true' here will treat null test Versions as no DSE_VERSION info in the metadata
-    DseDriverContext mockContext = GraphTestUtil.mockContext(true, dseVersions);
-    GraphProtocol graphProtocol = new GraphSupportChecker().getDefaultGraphProtocol(mockContext);
+    DseDriverContext context =
+        mockNodesInMetadataWithVersions(mock(DseDriverContext.class), true, dseVersions);
+    GraphProtocol graphProtocol = new GraphSupportChecker().getDefaultGraphProtocol(context);
     assertThat(graphProtocol).isEqualTo(expectedProtocol);
   }
 
   @Test
-  @UseDataProvider("dseVersions")
+  @UseDataProvider("dseVersionsAndGraphProtocols")
   public void should_determine_default_graph_protocol_from_dse_version_with_null_versions(
       Version[] dseVersions, GraphProtocol expectedProtocol) {
     // mock up the metadata for the context
     // using 'false' here will treat null test Versions as explicit NULL info for DSE_VERSION
-    DseDriverContext mockContext = GraphTestUtil.mockContext(false, dseVersions);
-    GraphProtocol graphProtocol = new GraphSupportChecker().getDefaultGraphProtocol(mockContext);
+    DseDriverContext context =
+        mockNodesInMetadataWithVersions(mock(DseDriverContext.class), false, dseVersions);
+    GraphProtocol graphProtocol = new GraphSupportChecker().getDefaultGraphProtocol(context);
     assertThat(graphProtocol).isEqualTo(expectedProtocol);
   }
 
   @DataProvider
-  public static Object[][] dseVersions() {
+  public static Object[][] dseVersionsAndGraphProtocols() {
     return new Object[][] {
       {new Version[] {Version.parse("5.0.3")}, GraphProtocol.GRAPHSON_2_0},
       {new Version[] {Version.parse("6.0.1")}, GraphProtocol.GRAPHSON_2_0},
@@ -237,7 +241,7 @@ public class GraphSupportCheckerTest {
   }
 
   @Test
-  @UseDataProvider("protocolObjects")
+  @UseDataProvider(location = DseTestDataProviders.class, value = "supportedGraphProtocols")
   public void should_pickup_graph_protocol_from_statement(GraphProtocol graphProtocol) {
     when(graphStatement.getSubProtocol()).thenReturn(graphProtocol.toInternalCode());
 
@@ -251,34 +255,53 @@ public class GraphSupportCheckerTest {
   }
 
   @Test
-  @UseDataProvider("protocolStrings")
+  @UseDataProvider("graphProtocolStringsAndDseVersions")
   public void should_pickup_graph_protocol_and_parse_from_string_config(
       String stringConfig, Version dseVersion) {
     when(executionProfile.isDefined(DseDriverOption.GRAPH_SUB_PROTOCOL)).thenReturn(Boolean.TRUE);
     when(executionProfile.getString(eq(DseDriverOption.GRAPH_SUB_PROTOCOL)))
         .thenReturn(stringConfig);
 
+    DseDriverContext context =
+        mockNodesInMetadataWithVersions(mock(DseDriverContext.class), true, dseVersion);
     GraphProtocol inferredProtocol =
-        new GraphSupportChecker()
-            .inferGraphProtocol(
-                graphStatement, executionProfile, GraphTestUtil.mockContext(true, dseVersion));
+        new GraphSupportChecker().inferGraphProtocol(graphStatement, executionProfile, context);
     assertThat(inferredProtocol.toInternalCode()).isEqualTo(stringConfig);
+  }
+
+  @DataProvider
+  public static Object[][] graphProtocolStringsAndDseVersions() {
+    // putting manual strings here to be sure to be notified if a value in
+    // GraphProtocol ever changes
+    return new Object[][] {
+      {"graphson-1.0", Version.parse("6.7.0")},
+      {"graphson-1.0", Version.parse("6.8.0")},
+      {"graphson-2.0", Version.parse("6.7.0")},
+      {"graphson-2.0", Version.parse("6.8.0")},
+      {"graph-binary-1.0", Version.parse("6.7.0")},
+      {"graph-binary-1.0", Version.parse("6.8.0")},
+    };
   }
 
   @Test
   @UseDataProvider("dseVersions6")
   public void should_use_correct_default_protocol_when_parsing(Version dseVersion) {
+    DseDriverContext context =
+        mockNodesInMetadataWithVersions(mock(DseDriverContext.class), true, dseVersion);
     GraphProtocol inferredProtocol =
-        new GraphSupportChecker()
-            .inferGraphProtocol(
-                graphStatement, executionProfile, GraphTestUtil.mockContext(true, dseVersion));
+        new GraphSupportChecker().inferGraphProtocol(graphStatement, executionProfile, context);
     // For DSE 6.8 and newer, the default should be GraphSON binary
     // for DSE older than 6.8, the default should be GraphSON2
     assertThat(inferredProtocol)
         .isEqualTo(
-            (dseVersion.compareTo(GraphTestUtil.DSE_6_8_0) < 0)
+            (dseVersion.compareTo(Version.parse("6.8.0")) < 0)
                 ? GraphProtocol.GRAPHSON_2_0
                 : GraphProtocol.GRAPH_BINARY_1_0);
+  }
+
+  @DataProvider
+  public static Object[][] dseVersions6() {
+    return new Object[][] {{Version.parse("6.7.0")}, {Version.parse("6.8.0")}};
   }
 
   @Test
@@ -295,31 +318,5 @@ public class GraphSupportCheckerTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage(
             "Graph protocol used [\"graphson-3.0\"] unknown. Possible values are: [ \"graphson-1.0\", \"graphson-2.0\", \"graph-binary-1.0\"]");
-  }
-
-  @DataProvider
-  public static Object[][] protocolObjects() {
-    return new Object[][] {
-      {GraphProtocol.GRAPHSON_1_0}, {GraphProtocol.GRAPHSON_2_0}, {GraphProtocol.GRAPH_BINARY_1_0}
-    };
-  }
-
-  @DataProvider
-  public static Object[][] protocolStrings() {
-    // putting manual strings here to be sure to be notified if a value in
-    // GraphProtocol ever changes
-    return new Object[][] {
-      {"graphson-1.0", GraphTestUtil.DSE_6_7_0},
-      {"graphson-1.0", GraphTestUtil.DSE_6_8_0},
-      {"graphson-2.0", GraphTestUtil.DSE_6_7_0},
-      {"graphson-2.0", GraphTestUtil.DSE_6_8_0},
-      {"graph-binary-1.0", GraphTestUtil.DSE_6_7_0},
-      {"graph-binary-1.0", GraphTestUtil.DSE_6_8_0},
-    };
-  }
-
-  @DataProvider
-  public static Object[][] dseVersions6() {
-    return new Object[][] {{GraphTestUtil.DSE_6_7_0}, {GraphTestUtil.DSE_6_8_0}};
   }
 }

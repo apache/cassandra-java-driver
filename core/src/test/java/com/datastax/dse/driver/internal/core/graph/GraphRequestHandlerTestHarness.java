@@ -17,6 +17,7 @@ package com.datastax.dse.driver.internal.core.graph;
 
 import static org.mockito.Mockito.when;
 
+import com.datastax.dse.driver.DseTestFixtures;
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.internal.core.context.DseDriverContext;
@@ -146,7 +147,8 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
     when(dseDriverContext.getRequestTracker()).thenReturn(new NoopRequestTracker(dseDriverContext));
     // if DSE Version is specified for test metadata, then we need to mock that up on the context
     if (dseVersionForTestMetadata != null) {
-      GraphTestUtil.mockContext(dseDriverContext, true, dseVersionForTestMetadata);
+      DseTestFixtures.mockNodesInMetadataWithVersions(
+          dseDriverContext, true, dseVersionForTestMetadata);
     }
   }
 

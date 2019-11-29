@@ -15,6 +15,9 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
+import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_1_0;
+import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_2_0;
+import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPH_BINARY_1_0;
 import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.createGraphBinaryModule;
 import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.defaultDseFrameOf;
 import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.serialize;
@@ -32,6 +35,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import com.datastax.dse.driver.DseTestDataProviders;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.data.geometry.Point;
 import com.datastax.dse.driver.api.core.graph.BatchGraphStatement;
@@ -41,7 +45,7 @@ import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
+import com.datastax.dse.driver.internal.core.graph.GraphRequestHandlerTestHarness.Builder;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.dse.protocol.internal.request.RawBytesQuery;
 import com.datastax.dse.protocol.internal.request.query.DseQueryOptions;
@@ -52,13 +56,14 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.internal.core.cql.Conversions;
-import com.datastax.oss.driver.internal.core.cql.RequestHandlerTestHarness;
+import com.datastax.oss.driver.internal.core.cql.PoolBehavior;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Query;
+import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.io.IOException;
@@ -95,7 +100,7 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider(location = GraphTestUtils.class, value = "supportedGraphProtocols")
+  @UseDataProvider(location = DseTestDataProviders.class, value = "supportedGraphProtocols")
   public void should_create_query_message_from_script_statement(GraphProtocol graphProtocol)
       throws IOException {
     // initialization
@@ -125,7 +130,7 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider(location = GraphTestUtils.class, value = "supportedGraphProtocols")
+  @UseDataProvider(location = DseTestDataProviders.class, value = "supportedGraphProtocols")
   public void should_create_query_message_from_fluent_statement(GraphProtocol graphProtocol)
       throws IOException {
     // initialization
@@ -159,7 +164,7 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider(location = GraphTestUtils.class, value = "supportedGraphProtocols")
+  @UseDataProvider(location = DseTestDataProviders.class, value = "supportedGraphProtocols")
   public void should_create_query_message_from_batch_statement(GraphProtocol graphProtocol)
       throws IOException {
     // initialization
@@ -223,7 +228,7 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider(location = GraphTestUtils.class, value = "supportedGraphProtocols")
+  @UseDataProvider(location = DseTestDataProviders.class, value = "supportedGraphProtocols")
   public void should_set_correct_query_options_from_graph_statement(GraphProtocol subProtocol)
       throws IOException {
     // initialization
@@ -267,7 +272,7 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider(location = GraphTestUtils.class, value = "supportedGraphProtocols")
+  @UseDataProvider(location = DseTestDataProviders.class, value = "supportedGraphProtocols")
   public void should_create_payload_from_config_options(GraphProtocol subProtocol) {
     // initialization
     GraphRequestHandlerTestHarness harness = GraphRequestHandlerTestHarness.builder().build();
@@ -310,7 +315,7 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider(location = GraphTestUtils.class, value = "supportedGraphProtocols")
+  @UseDataProvider(location = DseTestDataProviders.class, value = "supportedGraphProtocols")
   public void should_create_payload_from_statement_options(GraphProtocol subProtocol) {
     // initialization
     GraphRequestHandlerTestHarness harness = GraphRequestHandlerTestHarness.builder().build();
@@ -365,7 +370,7 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider(location = GraphTestUtils.class, value = "supportedGraphProtocols")
+  @UseDataProvider(location = DseTestDataProviders.class, value = "supportedGraphProtocols")
   public void should_not_set_graph_name_on_system_queries(GraphProtocol subProtocol) {
     // initialization
     GraphRequestHandlerTestHarness harness = GraphRequestHandlerTestHarness.builder().build();
@@ -388,34 +393,34 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider(
-      location = GraphTestUtils.class,
-      value = "supportedGraphProtocolsWithDseVersions")
+  @UseDataProvider("supportedGraphProtocolsWithDseVersions")
   public void should_return_results_for_statements(GraphProtocol graphProtocol, Version dseVersion)
       throws IOException {
-    DseDriverContext mockContext = GraphTestUtil.mockContext(true, dseVersion);
-    GraphBinaryModule module = createGraphBinaryModule(mockContext);
+
+    Builder builder =
+        GraphRequestHandlerTestHarness.builder()
+            .withGraphProtocolForTestConfig(graphProtocol)
+            .withDseVersionInMetadata(dseVersion);
+    PoolBehavior node1Behavior = builder.customBehavior(node);
+    GraphRequestHandlerTestHarness harness = builder.build();
+
+    GraphBinaryModule module = createGraphBinaryModule(harness.getContext());
+
+    // ideally we would be able to provide a function here to
+    // produce results instead of a static predefined response.
+    // Function to which we would pass the harness instance or a (mocked)DriverContext.
+    // Since that's not possible in the RequestHandlerTestHarness API at the moment, we
+    // have to use another DseDriverContext and GraphBinaryModule here,
+    // instead of reusing the one in the harness' DriverContext
+    node1Behavior.setResponseSuccess(defaultDseFrameOf(singleGraphRow(graphProtocol, module)));
 
     GraphSupportChecker graphSupportChecker = mock(GraphSupportChecker.class);
     when(graphSupportChecker.isPagingEnabled(any(), any())).thenReturn(false);
     when(graphSupportChecker.inferGraphProtocol(any(), any(), any())).thenReturn(graphProtocol);
 
     GraphRequestAsyncProcessor p =
-        Mockito.spy(new GraphRequestAsyncProcessor(mockContext, graphSupportChecker));
+        Mockito.spy(new GraphRequestAsyncProcessor(harness.getContext(), graphSupportChecker));
     when(p.getGraphBinaryModule()).thenReturn(module);
-
-    RequestHandlerTestHarness harness =
-        GraphRequestHandlerTestHarness.builder()
-            .withGraphProtocolForTestConfig(graphProtocol)
-            .withDseVersionInMetadata(dseVersion)
-            // ideally we would be able to provide a function here to
-            // produce results instead of a static predefined response.
-            // Function to which we would pass the harness instance or a (mocked)DriverContext.
-            // Since that's not possible in the RequestHandlerTestHarness API at the moment, we
-            // have to use another DseDriverContext and GraphBinaryModule here,
-            // instead of reusing the one in the harness' DriverContext
-            .withResponse(node, defaultDseFrameOf(singleGraphRow(graphProtocol, module)))
-            .build();
 
     GraphStatement graphStatement =
         ScriptGraphStatement.newInstance("mockQuery").setExecutionProfileName("test-graph");
@@ -440,36 +445,49 @@ public class GraphRequestHandlerTest {
     }
   }
 
+  @DataProvider
+  public static Object[][] supportedGraphProtocolsWithDseVersions() {
+    return new Object[][] {
+      {GRAPHSON_1_0, Version.parse("6.7.0")},
+      {GRAPHSON_1_0, Version.parse("6.8.0")},
+      {GRAPHSON_2_0, Version.parse("6.7.0")},
+      {GRAPHSON_2_0, Version.parse("6.8.0")},
+      {GRAPH_BINARY_1_0, Version.parse("6.7.0")},
+      {GRAPH_BINARY_1_0, Version.parse("6.8.0")},
+    };
+  }
+
   @Test
-  @UseDataProvider(location = GraphTestUtils.class, value = "dseVersionsWithDefaultGraphProtocol")
-  public void should_invoke_request_tracker(GraphProtocol defaultProtocol, Version dseVersion)
+  @UseDataProvider("dseVersionsWithDefaultGraphProtocol")
+  public void should_invoke_request_tracker(GraphProtocol graphProtocol, Version dseVersion)
       throws IOException {
-    DseDriverContext mockContext = GraphTestUtil.mockContext(true, dseVersion);
-    GraphBinaryModule module = createGraphBinaryModule(mockContext);
+    Builder builder =
+        GraphRequestHandlerTestHarness.builder()
+            .withGraphProtocolForTestConfig(graphProtocol)
+            .withDseVersionInMetadata(dseVersion);
+    PoolBehavior node1Behavior = builder.customBehavior(node);
+    GraphRequestHandlerTestHarness harness = builder.build();
+
+    GraphBinaryModule module = createGraphBinaryModule(harness.getContext());
 
     GraphSupportChecker graphSupportChecker = mock(GraphSupportChecker.class);
     when(graphSupportChecker.isPagingEnabled(any(), any())).thenReturn(false);
-    when(graphSupportChecker.inferGraphProtocol(any(), any(), any())).thenReturn(defaultProtocol);
+    when(graphSupportChecker.inferGraphProtocol(any(), any(), any())).thenReturn(graphProtocol);
 
     GraphRequestAsyncProcessor p =
-        Mockito.spy(new GraphRequestAsyncProcessor(mockContext, graphSupportChecker));
+        Mockito.spy(new GraphRequestAsyncProcessor(harness.getContext(), graphSupportChecker));
     when(p.getGraphBinaryModule()).thenReturn(module);
-
-    RequestHandlerTestHarness harness =
-        GraphRequestHandlerTestHarness.builder()
-            .withDseVersionInMetadata(dseVersion)
-            .withResponse(node, defaultDseFrameOf(singleGraphRow(defaultProtocol, module)))
-            .build();
 
     RequestTracker requestTracker = mock(RequestTracker.class);
     when(harness.getContext().getRequestTracker()).thenReturn(requestTracker);
 
     GraphStatement graphStatement = ScriptGraphStatement.newInstance("mockQuery");
 
+    node1Behavior.setResponseSuccess(defaultDseFrameOf(singleGraphRow(graphProtocol, module)));
+
     GraphResultSet grs =
         new GraphRequestSyncProcessor(
-                new GraphRequestAsyncProcessor(
-                    (DseDriverContext) harness.getContext(), graphSupportChecker))
+                new GraphRequestAsyncProcessor(harness.getContext(), graphSupportChecker))
             .process(graphStatement, harness.getSession(), harness.getContext(), "test-graph");
 
     List<GraphNode> nodes = grs.all();
@@ -481,7 +499,7 @@ public class GraphRequestHandlerTest {
     Vertex actual = graphNode.asVertex();
     assertThat(actual.label()).isEqualTo("person");
     assertThat(actual.id()).isEqualTo(1);
-    if (!defaultProtocol.isGraphBinary()) {
+    if (!graphProtocol.isGraphBinary()) {
       // GraphBinary does not encode properties regardless of whether they are present in the
       // parent element or not :/
       assertThat(actual.property("name").id()).isEqualTo(11);
@@ -496,5 +514,15 @@ public class GraphRequestHandlerTest {
             eq(node),
             matches(LOG_PREFIX_PER_REQUEST));
     verifyNoMoreInteractions(requestTracker);
+  }
+
+  @DataProvider
+  public static Object[][] dseVersionsWithDefaultGraphProtocol() {
+    // Default GraphSON sub protocol version differs based on DSE version, so test with a version
+    // less than DSE 6.8 as well as DSE 6.8.
+    return new Object[][] {
+      {GRAPHSON_2_0, Version.parse("6.7.0")},
+      {GRAPH_BINARY_1_0, Version.parse("6.8.0")},
+    };
   }
 }
