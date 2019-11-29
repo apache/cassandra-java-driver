@@ -62,8 +62,7 @@ public class ContinuousGraphRequestHandlerTest {
     GraphBinaryModule module = createGraphBinaryModule(mockContext);
 
     Builder builder =
-        GraphRequestHandlerTestHarness.builder()
-            .withGraphProtocolForTestConfig(graphProtocol.toInternalCode());
+        GraphRequestHandlerTestHarness.builder().withGraphProtocolForTestConfig(graphProtocol);
     PoolBehavior node1Behavior = builder.customBehavior(node);
 
     try (RequestHandlerTestHarness harness = builder.build()) {

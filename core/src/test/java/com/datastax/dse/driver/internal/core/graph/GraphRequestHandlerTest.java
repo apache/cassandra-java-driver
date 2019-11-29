@@ -406,7 +406,7 @@ public class GraphRequestHandlerTest {
 
     RequestHandlerTestHarness harness =
         GraphRequestHandlerTestHarness.builder()
-            .withGraphProtocolForTestConfig(graphProtocol.toInternalCode())
+            .withGraphProtocolForTestConfig(graphProtocol)
             .withDseVersionInMetadata(dseVersion)
             // ideally we would be able to provide a function here to
             // produce results instead of a static predefined response.

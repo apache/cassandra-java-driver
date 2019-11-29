@@ -55,7 +55,7 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
 
   protected GraphRequestHandlerTestHarness(
       Builder builder,
-      @Nullable String graphProtocolForTestConfig,
+      @Nullable GraphProtocol graphProtocolForTestConfig,
       Duration graphTimeout,
       @Nullable Version dseVersionForTestMetadata) {
     super(builder);
@@ -88,7 +88,7 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
     // only mock the config if graphProtocolForTestConfig is not null
     if (graphProtocolForTestConfig != null) {
       when(testProfile.getString(DseDriverOption.GRAPH_SUB_PROTOCOL))
-          .thenReturn(graphProtocolForTestConfig);
+          .thenReturn(graphProtocolForTestConfig.toInternalCode());
     }
     when(testProfile.getBoolean(DseDriverOption.GRAPH_IS_SYSTEM_QUERY, false)).thenReturn(false);
     when(testProfile.getString(DseDriverOption.GRAPH_NAME, null)).thenReturn("mockGraph");
@@ -161,11 +161,12 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
 
   public static class Builder extends RequestHandlerTestHarness.Builder {
 
-    private String graphProtocolForTestConfig;
+    private GraphProtocol graphProtocolForTestConfig;
     private Duration graphTimeout = Duration.ZERO;
     private Version dseVersionForTestMetadata;
 
-    public GraphRequestHandlerTestHarness.Builder withGraphProtocolForTestConfig(String protocol) {
+    public GraphRequestHandlerTestHarness.Builder withGraphProtocolForTestConfig(
+        GraphProtocol protocol) {
       this.graphProtocolForTestConfig = protocol;
       return this;
     }
