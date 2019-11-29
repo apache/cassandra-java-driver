@@ -165,8 +165,18 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
     private Duration graphTimeout = Duration.ZERO;
     private Version dseVersionForTestMetadata;
 
-    public Builder withGraphProtocolForTestConfig(String protocol) {
+    public GraphRequestHandlerTestHarness.Builder withGraphProtocolForTestConfig(String protocol) {
       this.graphProtocolForTestConfig = protocol;
+      return this;
+    }
+
+    public GraphRequestHandlerTestHarness.Builder withDseVersionInMetadata(Version dseVersion) {
+      this.dseVersionForTestMetadata = dseVersion;
+      return this;
+    }
+
+    public GraphRequestHandlerTestHarness.Builder withGraphTimeout(Duration globalTimeout) {
+      this.graphTimeout = globalTimeout;
       return this;
     }
 
@@ -205,16 +215,6 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
     public GraphRequestHandlerTestHarness.Builder withProtocolVersion(
         ProtocolVersion protocolVersion) {
       super.withProtocolVersion(protocolVersion);
-      return this;
-    }
-
-    public Builder withDseVersionInMetadata(Version dseVersion) {
-      this.dseVersionForTestMetadata = dseVersion;
-      return this;
-    }
-
-    public Builder withGraphTimeout(Duration globalTimeout) {
-      this.graphTimeout = globalTimeout;
       return this;
     }
 
