@@ -56,7 +56,7 @@ public class ContinuousGraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider(location = GraphRequestHandlerTest.class, value = "supportedGraphProtocols")
+  @UseDataProvider(location = GraphTestUtils.class, value = "supportedGraphProtocols")
   public void should_return_paged_results(GraphProtocol graphProtocol) throws IOException {
 
     GraphBinaryModule module = createGraphBinaryModule(mockContext);

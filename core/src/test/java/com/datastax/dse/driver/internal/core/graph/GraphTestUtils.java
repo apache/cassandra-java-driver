@@ -6,6 +6,10 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
+import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_1_0;
+import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_2_0;
+import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPH_BINARY_1_0;
+
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
@@ -19,6 +23,7 @@ import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
 import com.datastax.oss.protocol.internal.response.result.DefaultRows;
 import com.datastax.oss.protocol.internal.response.result.RawType;
 import com.datastax.oss.protocol.internal.response.result.Rows;
+import com.tngtech.java.junit.dataprovider.DataProvider;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
@@ -149,5 +154,30 @@ public class GraphTestUtils {
   public static GraphBinaryModule createGraphBinaryModule(DseDriverContext context) {
     TypeSerializerRegistry registry = GraphBinaryModule.createDseTypeSerializerRegistry(context);
     return new GraphBinaryModule(new GraphBinaryReader(registry), new GraphBinaryWriter(registry));
+  }
+
+  @DataProvider
+  public static Object[][] supportedGraphProtocols() {
+    return new Object[][] {{GRAPHSON_2_0}, {GRAPH_BINARY_1_0}, {GRAPHSON_1_0}};
+  }
+
+  @DataProvider
+  public static Object[][] supportedGraphProtocolsWithDseVersions() {
+    return new Object[][] {
+      {GRAPHSON_1_0, GraphTestUtil.DSE_6_7_0},
+      {GRAPHSON_1_0, GraphTestUtil.DSE_6_8_0},
+      {GRAPHSON_2_0, GraphTestUtil.DSE_6_7_0},
+      {GRAPHSON_2_0, GraphTestUtil.DSE_6_8_0},
+      {GRAPH_BINARY_1_0, GraphTestUtil.DSE_6_7_0},
+      {GRAPH_BINARY_1_0, GraphTestUtil.DSE_6_8_0},
+    };
+  }
+
+  @DataProvider
+  public static Object[][] dseVersionsWithDefaultGraphProtocol() {
+    return new Object[][] {
+      {GRAPHSON_2_0, GraphTestUtil.DSE_6_7_0},
+      {GRAPH_BINARY_1_0, GraphTestUtil.DSE_6_8_0},
+    };
   }
 }

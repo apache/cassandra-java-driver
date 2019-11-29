@@ -15,9 +15,6 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
-import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_1_0;
-import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPHSON_2_0;
-import static com.datastax.dse.driver.internal.core.graph.GraphProtocol.GRAPH_BINARY_1_0;
 import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.createGraphBinaryModule;
 import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.defaultDseFrameOf;
 import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.serialize;
@@ -62,7 +59,6 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Query;
-import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.io.IOException;
@@ -99,7 +95,7 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider("supportedGraphProtocols")
+  @UseDataProvider(location = GraphTestUtils.class, value = "supportedGraphProtocols")
   public void should_create_query_message_from_script_statement(GraphProtocol graphProtocol)
       throws IOException {
     // initialization
@@ -129,7 +125,7 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider("supportedGraphProtocols")
+  @UseDataProvider(location = GraphTestUtils.class, value = "supportedGraphProtocols")
   public void should_create_query_message_from_fluent_statement(GraphProtocol graphProtocol)
       throws IOException {
     // initialization
@@ -163,7 +159,7 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider("supportedGraphProtocols")
+  @UseDataProvider(location = GraphTestUtils.class, value = "supportedGraphProtocols")
   public void should_create_query_message_from_batch_statement(GraphProtocol graphProtocol)
       throws IOException {
     // initialization
@@ -227,7 +223,7 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider("supportedGraphProtocols")
+  @UseDataProvider(location = GraphTestUtils.class, value = "supportedGraphProtocols")
   public void should_set_correct_query_options_from_graph_statement(GraphProtocol subProtocol)
       throws IOException {
     // initialization
@@ -271,7 +267,7 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider("supportedGraphProtocols")
+  @UseDataProvider(location = GraphTestUtils.class, value = "supportedGraphProtocols")
   public void should_create_payload_from_config_options(GraphProtocol subProtocol) {
     // initialization
     GraphRequestHandlerTestHarness harness = GraphRequestHandlerTestHarness.builder().build();
@@ -314,7 +310,7 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider("supportedGraphProtocols")
+  @UseDataProvider(location = GraphTestUtils.class, value = "supportedGraphProtocols")
   public void should_create_payload_from_statement_options(GraphProtocol subProtocol) {
     // initialization
     GraphRequestHandlerTestHarness harness = GraphRequestHandlerTestHarness.builder().build();
@@ -369,7 +365,7 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider("supportedGraphProtocols")
+  @UseDataProvider(location = GraphTestUtils.class, value = "supportedGraphProtocols")
   public void should_not_set_graph_name_on_system_queries(GraphProtocol subProtocol) {
     // initialization
     GraphRequestHandlerTestHarness harness = GraphRequestHandlerTestHarness.builder().build();
@@ -392,7 +388,9 @@ public class GraphRequestHandlerTest {
   }
 
   @Test
-  @UseDataProvider("supportedGraphProtocolsWithDseVersions")
+  @UseDataProvider(
+      location = GraphTestUtils.class,
+      value = "supportedGraphProtocolsWithDseVersions")
   public void should_return_results_for_statements(GraphProtocol graphProtocol, Version dseVersion)
       throws IOException {
     DseDriverContext mockContext = GraphTestUtil.mockContext(true, dseVersion);
@@ -442,33 +440,8 @@ public class GraphRequestHandlerTest {
     }
   }
 
-  @DataProvider
-  public static Object[][] supportedGraphProtocols() {
-    return new Object[][] {{GRAPHSON_2_0}, {GRAPH_BINARY_1_0}, {GRAPHSON_1_0}};
-  }
-
-  @DataProvider
-  public static Object[][] supportedGraphProtocolsWithDseVersions() {
-    return new Object[][] {
-      {GRAPHSON_1_0, GraphTestUtil.DSE_6_7_0},
-      {GRAPHSON_1_0, GraphTestUtil.DSE_6_8_0},
-      {GRAPHSON_2_0, GraphTestUtil.DSE_6_7_0},
-      {GRAPHSON_2_0, GraphTestUtil.DSE_6_8_0},
-      {GRAPH_BINARY_1_0, GraphTestUtil.DSE_6_7_0},
-      {GRAPH_BINARY_1_0, GraphTestUtil.DSE_6_8_0},
-    };
-  }
-
-  @DataProvider
-  public static Object[][] dseVersionsWithDefaultGraphProtocol() {
-    return new Object[][] {
-      {GRAPHSON_2_0, GraphTestUtil.DSE_6_7_0},
-      {GRAPH_BINARY_1_0, GraphTestUtil.DSE_6_8_0},
-    };
-  }
-
   @Test
-  @UseDataProvider("dseVersionsWithDefaultGraphProtocol")
+  @UseDataProvider(location = GraphTestUtils.class, value = "dseVersionsWithDefaultGraphProtocol")
   public void should_invoke_request_tracker(GraphProtocol defaultProtocol, Version dseVersion)
       throws IOException {
     DseDriverContext mockContext = GraphTestUtil.mockContext(true, dseVersion);
