@@ -59,7 +59,7 @@ If you force a version that is too high for the server, you'll get an error:
 
 ```
 Exception in thread "main" com.datastax.oss.driver.api.core.AllNodesFailedException:
-  All 1 node tried for the query failed (showing first 1, use getErrors() for more:
+  All 1 node tried for the query failed (showing first 1 nodes, use getAllErrors() for more:
     /127.0.0.1:9042: com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException:
                      [/127.0.0.1:9042] Host does not support protocol version V5)
 ```

@@ -48,9 +48,12 @@ import com.datastax.oss.protocol.internal.response.event.StatusChangeEvent;
 import com.datastax.oss.protocol.internal.response.event.TopologyChangeEvent;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
@@ -348,7 +351,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
     private void connect(
         Queue<Node> nodes,
-        Map<Node, Throwable> errors,
+        List<Entry<Node, Throwable>> errors,
         Runnable onSuccess,
         Consumer<Throwable> onFailure) {
       assert adminExecutor.inEventLoop();
@@ -390,9 +393,9 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                                 error);
                           }
                         }
-                        Map<Node, Throwable> newErrors =
-                            (errors == null) ? new LinkedHashMap<>() : errors;
-                        newErrors.put(node, error);
+                        List<Entry<Node, Throwable>> newErrors =
+                            (errors == null) ? new ArrayList<>() : errors;
+                        newErrors.add(new SimpleEntry<>(node, error));
                         context.getEventBus().fire(ChannelEvent.controlConnectionFailed(node));
                         connect(nodes, newErrors, onSuccess, onFailure);
                       }
@@ -573,20 +576,21 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
   }
 
   private boolean isAuthFailure(Throwable error) {
-    boolean authFailure = true;
     if (error instanceof AllNodesFailedException) {
-      Collection<Throwable> errors = ((AllNodesFailedException) error).getErrors().values();
+      Collection<List<Throwable>> errors =
+          ((AllNodesFailedException) error).getAllErrors().values();
       if (errors.size() == 0) {
         return false;
       }
-      for (Throwable nodeError : errors) {
-        if (!(nodeError instanceof AuthenticationException)) {
-          authFailure = false;
-          break;
+      for (List<Throwable> nodeErrors : errors) {
+        for (Throwable nodeError : nodeErrors) {
+          if (!(nodeError instanceof AuthenticationException)) {
+            return false;
+          }
         }
       }
     }
-    return authFailure;
+    return true;
   }
 
   private static ImmutableList<String> buildEventTypes(boolean listenClusterEvents) {

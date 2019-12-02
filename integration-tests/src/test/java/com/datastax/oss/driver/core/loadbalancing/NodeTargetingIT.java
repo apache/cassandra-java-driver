@@ -100,8 +100,8 @@ public class NodeTargetingIT {
       SESSION_RULE.session().execute(statement);
       fail("Should have thrown AllNodesFailedException");
     } catch (AllNodesFailedException e) {
-      assertThat(e.getErrors().size()).isEqualTo(1);
-      assertThat(e.getErrors().get(node3)).isInstanceOf(UnavailableException.class);
+      assertThat(e.getAllErrors().size()).isEqualTo(1);
+      assertThat(e.getAllErrors().get(node3).get(0)).isInstanceOf(UnavailableException.class);
     }
   }
 
@@ -116,13 +116,13 @@ public class NodeTargetingIT {
       SESSION_RULE.session().execute(statement);
       fail("Query should have failed");
     } catch (NoNodeAvailableException e) {
-      assertThat(e.getErrors()).isEmpty();
+      assertThat(e.getAllErrors()).isEmpty();
     } catch (AllNodesFailedException e) {
       // its also possible that the query is tried.  This can happen if the node was marked
       // down, but not all connections have been closed yet.  In this case, just verify that
       // the expected host failed.
-      assertThat(e.getErrors().size()).isEqualTo(1);
-      assertThat(e.getErrors()).containsOnlyKeys(node4);
+      assertThat(e.getAllErrors().size()).isEqualTo(1);
+      assertThat(e.getAllErrors()).containsOnlyKeys(node4);
     }
   }
 

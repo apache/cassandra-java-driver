@@ -65,7 +65,7 @@ public class ProtocolVersionInitialNegotiationIT {
       session.execute("select * from system.local");
       fail("Expected an AllNodesFailedException");
     } catch (AllNodesFailedException anfe) {
-      Throwable cause = anfe.getErrors().values().iterator().next();
+      Throwable cause = anfe.getAllErrors().values().iterator().next().get(0);
       assertThat(cause).isInstanceOf(UnsupportedProtocolVersionException.class);
       UnsupportedProtocolVersionException unsupportedException =
           (UnsupportedProtocolVersionException) cause;
