@@ -37,7 +37,6 @@
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-core</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <!--
     Repeat all dependencies of the core driver *except* the ones that are going to be shaded,
@@ -169,7 +168,6 @@
                 <artifactItem>
                   <groupId>com.datastax.oss</groupId>
                   <artifactId>java-driver-core-shaded</artifactId>
-                  <version>${project.version}</version>
                   <type>jar</type>
                   <outputDirectory>${project.build.outputDirectory}</outputDirectory>
                 </artifactItem>
@@ -196,7 +194,6 @@
                 <artifactItem>
                   <groupId>com.datastax.oss</groupId>
                   <artifactId>java-driver-core-shaded</artifactId>
-                  <version>${project.version}</version>
                   <type>jar</type>
                   <classifier>sources</classifier>
                   <outputDirectory>${project.build.directory}/shaded-sources</outputDirectory>

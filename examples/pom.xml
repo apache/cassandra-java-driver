@@ -38,17 +38,14 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>java-driver-core</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>java-driver-query-builder</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>java-driver-mapper-runtime</artifactId>
-      <version>${project.version}</version>
     </dependency>
 
     <!-- Jackson -->
