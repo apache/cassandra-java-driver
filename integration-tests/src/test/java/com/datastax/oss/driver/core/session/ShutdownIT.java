@@ -99,9 +99,9 @@ public class ShutdownIT {
                             AllNodesFailedException anfe = (AllNodesFailedException) error;
                             // if there were 0 errors, its a NoNodeAvailableException which is
                             // acceptable.
-                            if (anfe.getErrors().size() > 0) {
-                              assertThat(anfe.getErrors()).hasSize(1);
-                              error = anfe.getErrors().values().iterator().next();
+                            if (anfe.getAllErrors().size() > 0) {
+                              assertThat(anfe.getAllErrors()).hasSize(1);
+                              error = anfe.getAllErrors().values().iterator().next().get(0);
                               if (!(error instanceof IllegalStateException)
                                   && !error.getMessage().endsWith("is closing")) {
                                 unexpectedErrors.add(error.toString());

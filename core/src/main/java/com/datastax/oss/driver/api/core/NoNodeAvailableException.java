@@ -31,7 +31,7 @@ public class NoNodeAvailableException extends AllNodesFailedException {
   }
 
   private NoNodeAvailableException(ExecutionInfo executionInfo) {
-    super("No node was available to execute the query", executionInfo, Collections.emptyMap());
+    super("No node was available to execute the query", executionInfo, Collections.emptySet());
   }
 
   @NonNull

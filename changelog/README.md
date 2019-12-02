@@ -4,6 +4,8 @@
 
 ### 4.3.2 (in progress)
 
+- [bug] JAVA-2527: Allow AllNodesFailedException to accept more than one error per node
+
 ### 4.3.1
 
 - [bug] JAVA-2557: Accept any negative length when decoding elements of tuples and UDTs
