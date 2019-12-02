@@ -2,6 +2,8 @@
 
 ## Code formatting
 
+### Java
+
 We follow the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html). See
 https://github.com/google/google-java-format for IDE plugins. The rules are not configurable.
 
@@ -11,11 +13,20 @@ The build will fail if the code is not formatted. To format all files from the c
 mvn fmt:format
 ```
 
-Some aspects are not covered by the formatter:
+Some aspects are not covered by the formatter: braces must be used with `if`, `else`, `for`, `do`
+and `while` statements, even when the body is empty or contains only a single statement.
 
-* braces must be used with `if`, `else`, `for`, `do` and `while` statements, even when the body is
-  empty or contains only a single statement.
-* XML files: indent with two spaces and wrap to respect the column limit of 100 characters.
+### XML
+
+The build will fail if XML files are not formatted correctly. Run the following command before you
+commit:
+
+```java
+mvn xml-format:xml-format
+```
+
+The formatter does not enforce a maximum line length, but please try to keep it below 100 characters
+to keep files readable across all mediums (IDE, terminal, Github...).
 
 ## Coding style -- production code
 
