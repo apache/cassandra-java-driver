@@ -2,9 +2,10 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.3.1 (in progress)
+### 4.4.0 (in progress)
 
 - [bug] JAVA-2527: Allow AllNodesFailedException to accept more than one error per node
+- [improvement] JAVA-2546: Abort schema refresh if a query fails
 
 ### 4.3.0
 

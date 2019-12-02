@@ -851,7 +851,7 @@ public class CqlRequestHandler implements Throttled {
       if (result.isDone()) {
         return;
       }
-      LOG.trace("[{}] Request failure, processing: {}", logPrefix, error.toString());
+      LOG.trace("[{}] Request failure, processing: {}", logPrefix, error);
       RetryDecision decision;
       if (!isIdempotent || error instanceof FrameTooLongException) {
         decision = RetryDecision.RETHROW;

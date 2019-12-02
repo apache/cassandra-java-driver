@@ -323,6 +323,23 @@ public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
             });
   }
 
+  @Test
+  public void should_abort_if_query_fails() {
+    SchemaQueriesWithMockedChannel queries =
+        new SchemaQueriesWithMockedChannel(driverChannel, null, config, "test");
+    CompletionStage<SchemaRows> result = queries.execute();
+
+    Exception mockQueryError = new Exception("mock query error");
+
+    Call call = queries.calls.poll();
+    assertThat(call.query).isEqualTo("SELECT * FROM system_schema.keyspaces");
+    call.result.completeExceptionally(mockQueryError);
+
+    channel.runPendingTasks();
+
+    assertThatStage(result).isFailed(throwable -> assertThat(throwable).isEqualTo(mockQueryError));
+  }
+
   /** Extends the class under test to mock the query execution logic. */
   static class SchemaQueriesWithMockedChannel extends Cassandra3SchemaQueries {
 

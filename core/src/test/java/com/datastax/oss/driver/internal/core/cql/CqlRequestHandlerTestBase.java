@@ -38,7 +38,6 @@ import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Collections;
@@ -64,10 +63,6 @@ public abstract class CqlRequestHandlerTestBase {
       BatchStatement.newInstance(BatchType.LOGGED, IDEMPOTENT_STATEMENT).setIdempotent(true);
   protected static final BatchStatement NON_IDEMPOTENT_BATCH_STATEMENT =
       BatchStatement.newInstance(BatchType.LOGGED, NON_IDEMPOTENT_STATEMENT).setIdempotent(false);
-
-  protected static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
-  protected static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
-  protected static final InetSocketAddress ADDRESS3 = new InetSocketAddress("127.0.0.3", 9042);
 
   @Mock protected DefaultNode node1;
   @Mock protected DefaultNode node2;

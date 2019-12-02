@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
+import static com.datastax.oss.driver.internal.core.cql.CqlRequestHandlerTestBase.defaultFrameOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -24,7 +25,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
@@ -37,7 +37,6 @@ import com.datastax.oss.driver.api.core.servererrors.OverloadedException;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Prepare;
@@ -48,7 +47,6 @@ import com.datastax.oss.protocol.internal.response.result.RawType;
 import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import org.junit.Before;
@@ -318,16 +316,6 @@ public class CqlPrepareHandlerTest {
           .write(any(Prepare.class), anyBoolean(), eq(payload), any(ResponseCallback.class));
       assertThatStage(prepareFuture).isSuccess(CqlPrepareHandlerTest::assertMatchesSimplePrepared);
     }
-  }
-
-  private static Frame defaultFrameOf(Message responseMessage) {
-    return Frame.forResponse(
-        DefaultProtocolVersion.V4.getCode(),
-        0,
-        null,
-        Frame.NO_PAYLOAD,
-        Collections.emptyList(),
-        responseMessage);
   }
 
   private static Message simplePrepared() {
