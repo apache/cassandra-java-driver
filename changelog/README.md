@@ -4,6 +4,7 @@
 
 ### 4.4.0 (in progress)
 
+- [improvement] JAVA-2546: Abort schema refresh if a query fails
 
 ### 4.3.0
 
