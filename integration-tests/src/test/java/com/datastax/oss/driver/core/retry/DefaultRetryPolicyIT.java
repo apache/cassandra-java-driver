@@ -61,6 +61,7 @@ import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import org.junit.After;
 import org.junit.Before;
@@ -274,7 +275,7 @@ public class DefaultRetryPolicyIT {
     } catch (AllNodesFailedException ex) {
       // then an AllNodesFailedException should be raised indicating that all nodes failed the
       // request.
-      assertThat(ex.getErrors()).hasSize(3);
+      assertThat(ex.getAllErrors()).hasSize(3);
     }
 
     // should have been tried on all nodes.
@@ -496,9 +497,11 @@ public class DefaultRetryPolicyIT {
       fail("Expected an AllNodesFailedException");
     } catch (AllNodesFailedException e) {
       // then we should get an all nodes failed exception, indicating the query was tried each node.
-      assertThat(e.getErrors()).hasSize(3);
-      for (Throwable t : e.getErrors().values()) {
-        assertThat(t).isInstanceOf(ServerError.class);
+      assertThat(e.getAllErrors()).hasSize(3);
+      for (List<Throwable> nodeErrors : e.getAllErrors().values()) {
+        for (Throwable nodeError : nodeErrors) {
+          assertThat(nodeError).isInstanceOf(ServerError.class);
+        }
       }
     }
 
