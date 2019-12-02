@@ -54,34 +54,6 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   private final InternalDriverContext context;
   private final DriverExecutionProfile executionProfile;
 
-  /** Deprecated, use the constructor that takes a {@link Request} object instead. */
-  @Deprecated
-  public DefaultExecutionInfo(
-      Statement<?> statement,
-      Node coordinator,
-      int speculativeExecutionCount,
-      int successfulExecutionIndex,
-      List<Map.Entry<Node, Throwable>> errors,
-      ByteBuffer pagingState,
-      Frame frame,
-      boolean schemaInAgreement,
-      DefaultSession session,
-      InternalDriverContext context,
-      DriverExecutionProfile executionProfile) {
-    this(
-        (Request) statement,
-        coordinator,
-        speculativeExecutionCount,
-        successfulExecutionIndex,
-        errors,
-        pagingState,
-        frame,
-        schemaInAgreement,
-        session,
-        context,
-        executionProfile);
-  }
-
   public DefaultExecutionInfo(
       Request request,
       Node coordinator,
