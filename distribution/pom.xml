@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
     Copyright DataStax, Inc.
@@ -17,19 +18,15 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
     <version>4.4.0-SNAPSHOT</version>
   </parent>
-
   <artifactId>java-driver-distribution</artifactId>
   <!-- Should be pom but Javadoc generation requires a "classpath-capable" package -->
   <packaging>jar</packaging>
-
   <name>DataStax Java driver for Apache Cassandra(R) - binary distribution</name>
-
   <!--
     These dependencies are only here to ensure proper build order and proper inclusion of binaries
     in the final tarball
@@ -56,7 +53,6 @@
       <version>${project.version}</version>
     </dependency>
   </dependencies>
-
   <build>
     <finalName>datastax-java-driver-${project.version}</finalName>
     <plugins>
@@ -104,7 +100,6 @@
       </plugin>
     </plugins>
   </build>
-
   <profiles>
     <profile>
       <id>release</id>
@@ -125,10 +120,8 @@
                 </goals>
                 <configuration>
                   <includeDependencySources>true</includeDependencySources>
-                  <doctitle>DataStax Java driver for Apache Cassandra® ${project.version} API
-                  </doctitle>
-                  <windowtitle>DataStax Java driver for Apache Cassandra(R) ${project.version} API
-                  </windowtitle>
+                  <doctitle>DataStax Java driver for Apache Cassandra® ${project.version} API</doctitle>
+                  <windowtitle>DataStax Java driver for Apache Cassandra(R) ${project.version} API</windowtitle>
                 </configuration>
               </execution>
             </executions>

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
     Copyright DataStax, Inc.
@@ -15,17 +16,13 @@
     limitations under the License.
 
 -->
-<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
-          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
   <id>binary-tarball</id>
   <formats>
     <format>tar.gz</format>
   </formats>
   <includeBaseDirectory>true</includeBaseDirectory>
-
   <moduleSets>
-
     <!-- Module java-driver-core and its dependencies -->
     <moduleSet>
       <useAllReactorProjects>true</useAllReactorProjects>
@@ -50,7 +47,6 @@
         </dependencySets>
       </binaries>
     </moduleSet>
-
     <!-- Module java-driver-query-builder and its dependencies -->
     <moduleSet>
       <useAllReactorProjects>true</useAllReactorProjects>
@@ -74,7 +70,6 @@
         </dependencySets>
       </binaries>
     </moduleSet>
-
     <!--sources for all modules-->
     <moduleSet>
       <useAllReactorProjects>true</useAllReactorProjects>
@@ -85,24 +80,19 @@
       <binaries>
         <unpack>false</unpack>
         <attachmentClassifier>sources</attachmentClassifier>
-        <outputFileNameMapping>${module.artifactId}-${module.version}-src.zip
-        </outputFileNameMapping>
+        <outputFileNameMapping>${module.artifactId}-${module.version}-src.zip</outputFileNameMapping>
         <outputDirectory>src</outputDirectory>
         <excludes>
           <exclude>*</exclude>
         </excludes>
       </binaries>
     </moduleSet>
-
   </moduleSets>
-
   <fileSets>
-
     <fileSet>
       <directory>target/apidocs</directory>
       <outputDirectory>apidocs</outputDirectory>
     </fileSet>
-
     <fileSet>
       <directory>..</directory>
       <outputDirectory>.</outputDirectory>
@@ -111,23 +101,17 @@
         <include>LICENSE*</include>
       </includes>
     </fileSet>
-
     <fileSet>
       <directory>../changelog</directory>
     </fileSet>
-
     <fileSet>
       <directory>../faq</directory>
     </fileSet>
-
     <fileSet>
       <directory>../manual</directory>
     </fileSet>
-
     <fileSet>
       <directory>../upgrade_guide</directory>
     </fileSet>
-
   </fileSets>
-
 </assembly>

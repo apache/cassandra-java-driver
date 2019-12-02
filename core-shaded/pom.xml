@@ -18,17 +18,13 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
     <version>4.4.0-SNAPSHOT</version>
   </parent>
-
   <artifactId>java-driver-core-shaded</artifactId>
-
   <name>DataStax Java driver for Apache Cassandra(R) - core with shaded deps</name>
-
   <dependencies>
     <!--
     Declare a dependency to the core driver itself so that all its classes get included;
@@ -94,7 +90,6 @@
       <artifactId>spotbugs-annotations</artifactId>
     </dependency>
   </dependencies>
-
   <!--
   Generation of the shaded driver-core bundle during package phase:
   1) shade plugin shades the driver and creates a shaded jar + source jar
@@ -102,7 +97,6 @@
   3) bundle plugin analyzes shaded classes and generates the bundle manifest
   4) assembly plugin re-creates the shaded jar by packing target/classes + manifest + shaded pom
   -->
-
   <build>
     <plugins>
       <plugin>
@@ -176,10 +170,7 @@
               Exclude leftovers from the shading phase (this could also be done with a
               resource transformer by the shade plugin itself, but this way is more flexible).
               -->
-              <excludes>
-                META-INF/maven/com.datastax.oss/java-driver-core/**,
-                META-INF/maven/io.netty/**,
-              </excludes>
+              <excludes>META-INF/maven/com.datastax.oss/java-driver-core/**, META-INF/maven/io.netty/**,</excludes>
             </configuration>
           </execution>
           <!-- Unpack shaded sources in order to run javadoc on them: -->
@@ -213,9 +204,7 @@
             </goals>
             <configuration>
               <sourcepath>${project.build.directory}/shaded-sources</sourcepath>
-              <excludePackageNames>
-                com.datastax.oss.driver.internal:com.datastax.oss.driver.shaded
-              </excludePackageNames>
+              <excludePackageNames>com.datastax.oss.driver.internal:com.datastax.oss.driver.shaded</excludePackageNames>
               <!--
                 javadoc processes the shaded Netty sources (even though they're not included in the
                 report), and will complain if it doesn't find JCTools classes.
@@ -255,14 +244,11 @@
                   <!--
                   1) Don't import packages shaded in the OSS driver, such as Netty (this excludes
                   Guava, which resides in a separate bundle);
-                  -->
-                  !com.datastax.oss.driver.shaded.netty.*,
+                  -->!com.datastax.oss.driver.shaded.netty.*,
                   <!--
                   2) Don't include the packages below because they contain annotations only and are
                   not required at runtime.
-                  -->
-                  !net.jcip.annotations.*,
-                  !edu.umd.cs.findbugs.annotations.*,
+                  -->!net.jcip.annotations.*, !edu.umd.cs.findbugs.annotations.*,
                   <!--
                   3) Use resolution:=optional whenever possible in order to make it possible to use
                   the OSS driver without such dependencies in an OSGi environment, as long as the
@@ -270,39 +256,18 @@
                   Note: dependencies marked as optional are by default included with optional
                   resolution in the manifest; we only need to manually set the resolution to
                   optional for dependencies declared as non-optional in the pom files.
-                  -->
-                  jnr.*;resolution:=optional,
+                  -->jnr.*;resolution:=optional,
                   <!--
                   4) Don't import packages imported by shaded classes, if they are not used by the
                   driver bundle.
-                  -->
-                  !com.google.protobuf.*,
-                  !com.jcraft.jzlib.*,
-                  !com.ning.compress.*,
-                  !lzma.sdk.*,
-                  !net.jpountz.xxhash.*,
-                  !org.bouncycastle.*,
-                  !org.conscrypt.*,
-                  !org.apache.commons.logging.*,
-                  !org.apache.log4j.*,
-                  !org.apache.logging.log4j.*,
-                  !org.eclipse.jetty.*,
-                  !org.jboss.marshalling.*,
-                  !sun.misc.*,
-                  !sun.security.*,
-                  !com.oracle.svm.core.annotate.*,
-                  *
+                  -->!com.google.protobuf.*, !com.jcraft.jzlib.*, !com.ning.compress.*, !lzma.sdk.*, !net.jpountz.xxhash.*, !org.bouncycastle.*, !org.conscrypt.*, !org.apache.commons.logging.*, !org.apache.log4j.*, !org.apache.logging.log4j.*, !org.eclipse.jetty.*, !org.jboss.marshalling.*, !sun.misc.*, !sun.security.*, !com.oracle.svm.core.annotate.*, *
                 </Import-Package>
                 <!--
                 Export:
                 1) The driver's packages (API and internal);
                 2) All shaded packages, except Guava which resides in a separate bundle.
                 -->
-                <Export-Package>
-                  com.datastax.oss.driver.api.core.*,
-                  com.datastax.oss.driver.internal.core.*,
-                  com.datastax.oss.driver.shaded.netty.*,
-                </Export-Package>
+                <Export-Package>com.datastax.oss.driver.api.core.*, com.datastax.oss.driver.internal.core.*, com.datastax.oss.driver.shaded.netty.*,</Export-Package>
               </instructions>
               <rebuildBundle>true</rebuildBundle>
             </configuration>

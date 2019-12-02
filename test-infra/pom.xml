@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
     Copyright DataStax, Inc.
@@ -17,18 +18,14 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
     <version>4.4.0-SNAPSHOT</version>
   </parent>
-
   <artifactId>java-driver-test-infra</artifactId>
   <packaging>bundle</packaging>
-
   <name>DataStax Java driver for Apache Cassandra(R) - test infrastructure tools</name>
-
   <dependencies>
     <dependency>
       <groupId>com.datastax.oss</groupId>
@@ -57,7 +54,6 @@
       <artifactId>commons-exec</artifactId>
     </dependency>
   </dependencies>
-
   <build>
     <plugins>
       <plugin>
@@ -68,11 +64,7 @@
             <Bundle-SymbolicName>com.datastax.oss.driver.testinfra</Bundle-SymbolicName>
             <!-- allow SessionUtils to instantiate sessions by reflection -->
             <DynamicImport-Package>*</DynamicImport-Package>
-            <Export-Package>
-              com.datastax.oss.driver.*.testinfra.*,
-              com.datastax.oss.driver.assertions,
-              com.datastax.oss.driver.categories
-            </Export-Package>
+            <Export-Package>com.datastax.oss.driver.*.testinfra.*, com.datastax.oss.driver.assertions, com.datastax.oss.driver.categories</Export-Package>
           </instructions>
         </configuration>
       </plugin>

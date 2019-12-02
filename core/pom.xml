@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
     Copyright DataStax, Inc.
@@ -17,18 +18,14 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
     <version>4.4.0-SNAPSHOT</version>
   </parent>
-
   <artifactId>java-driver-core</artifactId>
   <packaging>bundle</packaging>
-
   <name>DataStax Java driver for Apache Cassandra(R) - core</name>
-
   <dependencies>
     <dependency>
       <groupId>com.datastax.oss</groupId>
@@ -130,7 +127,6 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
   <build>
     <resources>
       <resource>
@@ -197,9 +193,7 @@
                   <!--
                   1) Don't include the packages below because they contain annotations only and are
                   not required at runtime.
-                  -->
-                  !net.jcip.annotations.*,
-                  !edu.umd.cs.findbugs.annotations.*,
+                  -->!net.jcip.annotations.*, !edu.umd.cs.findbugs.annotations.*,
                   <!--
                   2) Use resolution:=optional for optional dependencies in order to make it possible
                   to use the OSS driver without such dependencies in an OSGi environment, as long as
@@ -207,13 +201,9 @@
                   Note: dependencies marked as optional are by default included with optional
                   resolution in the manifest; we only need to manually set the resolution to
                   optional for dependencies declared as non-optional in the pom files.
-                  -->
-                  jnr.*;resolution:=optional,
-                  *
+                  -->jnr.*;resolution:=optional, *
                 </Import-Package>
-                <Export-Package>
-                  com.datastax.oss.driver.*.core.*
-                </Export-Package>
+                <Export-Package>com.datastax.oss.driver.*.core.*</Export-Package>
               </instructions>
             </configuration>
           </execution>
