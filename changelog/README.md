@@ -4,6 +4,7 @@
 
 ### 4.3.2 (in progress)
 
+- [bug] JAVA-2556: Make ExecutionInfo compatible with any Request type
 - [bug] JAVA-2527: Allow AllNodesFailedException to accept more than one error per node
 
 ### 4.3.1

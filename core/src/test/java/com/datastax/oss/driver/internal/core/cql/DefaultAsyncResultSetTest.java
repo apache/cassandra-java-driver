@@ -58,7 +58,7 @@ public class DefaultAsyncResultSetTest {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    when(executionInfo.getStatement()).thenAnswer(invocation -> statement);
+    when(executionInfo.getRequest()).thenAnswer(invocation -> statement);
     when(context.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
     when(context.getProtocolVersion()).thenReturn(DefaultProtocolVersion.DEFAULT);
   }
