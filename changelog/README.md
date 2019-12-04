@@ -9,6 +9,10 @@
 - [bug] JAVA-2527: Allow AllNodesFailedException to accept more than one error per node
 - [improvement] JAVA-2546: Abort schema refresh if a query fails
 
+### 4.3.1
+
+- [bug] JAVA-2557: Accept any negative length when decoding elements of tuples and UDTs
+
 ### 4.3.0
 
 - [improvement] JAVA-2497: Ensure nodes and exceptions are serializable
