@@ -112,7 +112,7 @@ public class UdtCodec implements TypeCodec<UdtValue> {
         }
         int elementSize = input.getInt();
         ByteBuffer element;
-        if (elementSize == -1) {
+        if (elementSize < 0) {
           element = null;
         } else {
           element = input.slice();

@@ -122,6 +122,26 @@ public class TupleCodecTest extends CodecTestBase<TupleValue> {
     verify(textCodec).decode(Bytes.fromHexString("0x61"), ProtocolVersion.DEFAULT);
   }
 
+  /** Test for JAVA-2557. Ensures that the codec can decode null fields with any negative length. */
+  @Test
+  public void should_decode_negative_element_length_as_null_field() {
+    TupleValue tuple =
+        decode(
+            "0x"
+                + "ffffffff" // field1 has length -1
+                + "fffffffe" // field2 has length -2
+                + "80000000" // field3 has length Integer.MIN_VALUE (-2147483648)
+            );
+
+    assertThat(tuple.isNull(0)).isTrue();
+    assertThat(tuple.isNull(1)).isTrue();
+    assertThat(tuple.isNull(2)).isTrue();
+
+    verifyZeroInteractions(intCodec);
+    verifyZeroInteractions(doubleCodec);
+    verifyZeroInteractions(textCodec);
+  }
+
   @Test
   public void should_format_null_tuple() {
     assertThat(format(null)).isEqualTo("NULL");
