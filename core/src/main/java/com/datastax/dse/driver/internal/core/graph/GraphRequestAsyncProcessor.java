@@ -16,7 +16,10 @@
 package com.datastax.dse.driver.internal.core.graph;
 
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
+import com.datastax.dse.driver.api.core.graph.BatchGraphStatement;
+import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
+import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
@@ -57,7 +60,11 @@ public class GraphRequestAsyncProcessor
 
   @Override
   public boolean canProcess(Request request, GenericType<?> resultType) {
-    return request instanceof GraphStatement && resultType.equals(GraphStatement.ASYNC);
+    return (request instanceof ScriptGraphStatement
+            || request instanceof FluentGraphStatement
+            || request instanceof BatchGraphStatement
+            || request instanceof BytecodeGraphStatement)
+        && resultType.equals(GraphStatement.ASYNC);
   }
 
   @Override

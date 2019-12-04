@@ -23,7 +23,6 @@ import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.dse.driver.internal.core.graph.binary.buffer.DseNettyBufferFactory;
 import com.datastax.dse.protocol.internal.request.RawBytesQuery;
@@ -154,7 +153,7 @@ public class GraphConversions extends Conversions {
       GraphStatement<?> statement,
       GraphProtocol subProtocol,
       DriverExecutionProfile config,
-      DseDriverContext context,
+      InternalDriverContext context,
       GraphBinaryModule graphBinaryModule) {
 
     final List<ByteBuffer> encodedQueryParams;

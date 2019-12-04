@@ -35,6 +35,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import com.datastax.dse.driver.DseSessionMetric;
 import com.datastax.dse.driver.DseTestDataProviders;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.data.geometry.Point;
@@ -53,6 +54,7 @@ import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.internal.core.cql.Conversions;
@@ -74,6 +76,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -87,7 +90,7 @@ import org.mockito.MockitoAnnotations;
 @RunWith(DataProviderRunner.class)
 public class GraphRequestHandlerTest {
 
-  private static final Pattern LOG_PREFIX_PER_REQUEST = Pattern.compile("test-graph\\|\\d*\\|\\d*");
+  private static final Pattern LOG_PREFIX_PER_REQUEST = Pattern.compile("test-graph\\|\\d+");
 
   @Mock DefaultNode node;
 
@@ -459,8 +462,12 @@ public class GraphRequestHandlerTest {
 
   @Test
   @UseDataProvider("dseVersionsWithDefaultGraphProtocol")
-  public void should_invoke_request_tracker(GraphProtocol graphProtocol, Version dseVersion)
-      throws IOException {
+  public void should_invoke_request_tracker_and_update_metrics(
+      GraphProtocol graphProtocol, Version dseVersion) throws IOException {
+    when(nodeMetricUpdater1.isEnabled(
+            DefaultNodeMetric.CQL_MESSAGES, DriverExecutionProfile.DEFAULT_NAME))
+        .thenReturn(true);
+
     Builder builder =
         GraphRequestHandlerTestHarness.builder()
             .withGraphProtocolForTestConfig(graphProtocol)
@@ -513,7 +520,34 @@ public class GraphRequestHandlerTest {
             any(DriverExecutionProfile.class),
             eq(node),
             matches(LOG_PREFIX_PER_REQUEST));
+    verify(requestTracker)
+        .onNodeSuccess(
+            eq(graphStatement),
+            anyLong(),
+            any(DriverExecutionProfile.class),
+            eq(node),
+            matches(LOG_PREFIX_PER_REQUEST));
     verifyNoMoreInteractions(requestTracker);
+
+    verify(nodeMetricUpdater1)
+        .isEnabled(DefaultNodeMetric.CQL_MESSAGES, DriverExecutionProfile.DEFAULT_NAME);
+    verify(nodeMetricUpdater1)
+        .updateTimer(
+            eq(DefaultNodeMetric.CQL_MESSAGES),
+            eq(DriverExecutionProfile.DEFAULT_NAME),
+            anyLong(),
+            eq(TimeUnit.NANOSECONDS));
+    verifyNoMoreInteractions(nodeMetricUpdater1);
+
+    verify(harness.getSession().getMetricUpdater())
+        .isEnabled(DseSessionMetric.CONTINUOUS_CQL_REQUESTS, DriverExecutionProfile.DEFAULT_NAME);
+    verify(harness.getSession().getMetricUpdater())
+        .updateTimer(
+            eq(DseSessionMetric.CONTINUOUS_CQL_REQUESTS),
+            eq(DriverExecutionProfile.DEFAULT_NAME),
+            anyLong(),
+            eq(TimeUnit.NANOSECONDS));
+    verifyNoMoreInteractions(harness.getSession().getMetricUpdater());
   }
 
   @DataProvider
