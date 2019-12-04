@@ -4,6 +4,7 @@
 
 ### 4.4.0 (in progress)
 
+- [improvement] JAVA-2473: Don't reconnect control connection if protocol is downgraded
 - [new feature] JAVA-2532: Add BoundStatement ReturnType for insert, update, and delete DAO methods
 - [improvement] JAVA-2107: Add XML formatting plugin
 - [bug] JAVA-2527: Allow AllNodesFailedException to accept more than one error per node
