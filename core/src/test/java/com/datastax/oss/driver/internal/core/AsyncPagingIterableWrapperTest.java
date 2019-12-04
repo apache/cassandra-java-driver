@@ -127,7 +127,7 @@ public class AsyncPagingIterableWrapperTest {
 
   private ExecutionInfo mockExecutionInfo() {
     ExecutionInfo executionInfo = mock(ExecutionInfo.class);
-    when(executionInfo.getStatement()).thenAnswer(invocation -> statement);
+    when(executionInfo.getRequest()).thenAnswer(invocation -> statement);
     return executionInfo;
   }
 
