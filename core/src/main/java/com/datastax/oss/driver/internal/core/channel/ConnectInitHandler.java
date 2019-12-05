@@ -19,7 +19,6 @@ import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.ImmediateEventExecutor;
 import io.netty.util.concurrent.PromiseCombiner;
 import java.net.SocketAddress;
 import net.jcip.annotations.NotThreadSafe;
@@ -59,8 +58,10 @@ public abstract class ConnectInitHandler extends ChannelDuplexHandler {
     realConnectPromise.addListener(future -> onRealConnect(ctx));
 
     // Make the caller's promise wait on the other two:
-    PromiseCombiner combiner = new PromiseCombiner(ImmediateEventExecutor.INSTANCE);
-    combiner.addAll(new Future[] {realConnectPromise, initPromise});
+    // JAVA-2569: preserve binary compatibility with Netty < 4.1.34
+    @SuppressWarnings("deprecation")
+    PromiseCombiner combiner = new PromiseCombiner();
+    combiner.addAll((Future) realConnectPromise, initPromise);
     combiner.finish(callerPromise);
   }
 

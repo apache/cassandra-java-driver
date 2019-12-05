@@ -174,7 +174,9 @@ public class DefaultNettyOptions implements NettyOptions {
     DefaultPromise<Void> closeFuture = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
     GlobalEventExecutor.INSTANCE.execute(
         () -> {
-          PromiseCombiner combiner = new PromiseCombiner(GlobalEventExecutor.INSTANCE);
+          @SuppressWarnings("deprecation")
+          // JAVA-2569: preserve binary compatibility with Netty < 4.1.34
+          PromiseCombiner combiner = new PromiseCombiner();
           combiner.add(
               adminEventLoopGroup.shutdownGracefully(
                   adminShutdownQuietPeriod, adminShutdownTimeout, adminShutdownUnit));
