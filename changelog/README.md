@@ -4,6 +4,7 @@
 
 ### 4.4.0 (in progress)
 
+- [improvement] JAVA-2442: Don't check for schema agreement twice when completing a DDL query
 - [bug] JAVA-2556: Make ExecutionInfo compatible with any Request type
 - [new feature] JAVA-2532: Add BoundStatement ReturnType for insert, update, and delete DAO methods
 - [improvement] JAVA-2107: Add XML formatting plugin

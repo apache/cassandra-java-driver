@@ -34,6 +34,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.LifecycleListener;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
+import com.datastax.oss.driver.internal.core.metadata.MetadataManager.RefreshSchemaResult;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateManager;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
@@ -153,7 +154,9 @@ public class DefaultSession implements CqlSession {
   @NonNull
   @Override
   public CompletionStage<Metadata> refreshSchemaAsync() {
-    return metadataManager.refreshSchema(null, true, true);
+    return metadataManager
+        .refreshSchema(null, true, true)
+        .thenApply(RefreshSchemaResult::getMetadata);
   }
 
   @NonNull
