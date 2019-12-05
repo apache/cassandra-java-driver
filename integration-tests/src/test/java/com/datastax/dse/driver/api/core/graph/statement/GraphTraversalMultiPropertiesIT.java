@@ -36,6 +36,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
+// INFO: multi props are not supported in Core
 @DseRequirement(min = "5.0.3", description = "DSE 5.0.3 required for remote TinkerPop support")
 public class GraphTraversalMultiPropertiesIT {
 

@@ -6,6 +6,8 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
@@ -24,8 +26,11 @@ import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import org.apache.tinkerpop.gremlin.process.remote.traversal.DefaultRemoteTraverser;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.io.Buffer;
 import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryReader;
@@ -33,6 +38,7 @@ import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryWriter;
 import org.apache.tinkerpop.gremlin.structure.io.binary.TypeSerializerRegistry;
 import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedVertex;
 import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedVertexProperty;
+import org.assertj.core.api.InstanceOfAssertFactories;
 
 public class GraphTestUtils {
 
@@ -150,5 +156,23 @@ public class GraphTestUtils {
   public static GraphBinaryModule createGraphBinaryModule(DseDriverContext context) {
     TypeSerializerRegistry registry = GraphBinaryModule.createDseTypeSerializerRegistry(context);
     return new GraphBinaryModule(new GraphBinaryReader(registry), new GraphBinaryWriter(registry));
+  }
+
+  public static void assertThatContainsProperties(
+      Map<Object, Object> properties, Object... propsToMatch) {
+    for (int i = 0; i < propsToMatch.length; i += 2) {
+      assertThat(properties).containsEntry(propsToMatch[i], propsToMatch[i + 1]);
+    }
+  }
+
+  public static void assertThatContainsLabel(
+      Map<Object, Object> properties, Direction direction, String label) {
+    assertThat(properties)
+        .hasEntrySatisfying(
+            direction,
+            value ->
+                assertThat(value)
+                    .asInstanceOf(InstanceOfAssertFactories.MAP)
+                    .containsEntry(T.label, label));
   }
 }
