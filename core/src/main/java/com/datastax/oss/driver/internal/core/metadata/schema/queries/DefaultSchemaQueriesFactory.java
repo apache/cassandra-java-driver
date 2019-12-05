@@ -74,9 +74,12 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
       } else if (dseVersion.compareTo(Version.V6_7_0) < 0) {
         // 5.0 - 6.7 uses C* 3.0 schema
         return new Cassandra3SchemaQueries(channel, node, config, logPrefix);
-      } else {
-        // 6.7+ uses C* 4.0 schema
+      } else if (dseVersion.compareTo(Version.V6_8_0) < 0) {
+        // 6.7 uses C* 4.0 schema
         return new Cassandra4SchemaQueries(channel, node, config, logPrefix);
+      } else {
+        // 6.8+ uses DSE 6.8 schema (C* 4.0 schema with graph metadata) (JAVA-1898)
+        return new Dse68SchemaQueries(channel, node, config, logPrefix);
       }
     } else {
       Version cassandraVersion = node.getCassandraVersion();

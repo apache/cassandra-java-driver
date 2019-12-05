@@ -112,6 +112,10 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
 
   protected abstract Optional<String> selectAggregatesQuery();
 
+  protected abstract Optional<String> selectEdgesQuery();
+
+  protected abstract Optional<String> selectVerticiesQuery();
+
   @Override
   public CompletionStage<SchemaRows> execute() {
     RunOrSchedule.on(adminExecutor, this::executeOnAdminExecutor);
@@ -141,6 +145,10 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
         .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withVirtualTables));
     selectVirtualColumnsQuery()
         .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withVirtualColumns));
+    selectEdgesQuery()
+        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withEdges));
+    selectVerticiesQuery()
+        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withVertices));
   }
 
   private void query(

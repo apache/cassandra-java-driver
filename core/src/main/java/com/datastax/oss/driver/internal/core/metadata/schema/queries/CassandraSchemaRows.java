@@ -52,6 +52,8 @@ public class CassandraSchemaRows implements SchemaRows {
   private final Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> columns;
   private final Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> virtualColumns;
   private final Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> indexes;
+  private final Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> vertices;
+  private final Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> edges;
 
   private CassandraSchemaRows(
       Node node,
@@ -66,7 +68,9 @@ public class CassandraSchemaRows implements SchemaRows {
       Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> indexes,
       Multimap<CqlIdentifier, AdminRow> types,
       Multimap<CqlIdentifier, AdminRow> functions,
-      Multimap<CqlIdentifier, AdminRow> aggregates) {
+      Multimap<CqlIdentifier, AdminRow> aggregates,
+      Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> vertices,
+      Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> edges) {
     this.node = node;
     this.dataTypeParser = dataTypeParser;
     this.keyspaces = keyspaces;
@@ -80,6 +84,8 @@ public class CassandraSchemaRows implements SchemaRows {
     this.types = types;
     this.functions = functions;
     this.aggregates = aggregates;
+    this.vertices = vertices;
+    this.edges = edges;
   }
 
   @NonNull
@@ -148,6 +154,16 @@ public class CassandraSchemaRows implements SchemaRows {
     return indexes;
   }
 
+  @Override
+  public Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> vertices() {
+    return vertices;
+  }
+
+  @Override
+  public Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> edges() {
+    return edges;
+  }
+
   public static class Builder {
     private static final Logger LOG = LoggerFactory.getLogger(Builder.class);
 
@@ -175,6 +191,10 @@ public class CassandraSchemaRows implements SchemaRows {
         virtualColumnsBuilders = new LinkedHashMap<>();
     private final Map<CqlIdentifier, ImmutableMultimap.Builder<CqlIdentifier, AdminRow>>
         indexesBuilders = new LinkedHashMap<>();
+    private final Map<CqlIdentifier, ImmutableMultimap.Builder<CqlIdentifier, AdminRow>>
+        verticesBuilders = new LinkedHashMap<>();
+    private final Map<CqlIdentifier, ImmutableMultimap.Builder<CqlIdentifier, AdminRow>>
+        edgesBuilders = new LinkedHashMap<>();
 
     public Builder(Node node, String logPrefix) {
       this.node = node;
@@ -281,6 +301,20 @@ public class CassandraSchemaRows implements SchemaRows {
       return this;
     }
 
+    public Builder withVertices(Iterable<AdminRow> rows) {
+      for (AdminRow row : rows) {
+        putByKeyspaceAndTable(row, verticesBuilders);
+      }
+      return this;
+    }
+
+    public Builder withEdges(Iterable<AdminRow> rows) {
+      for (AdminRow row : rows) {
+        putByKeyspaceAndTable(row, edgesBuilders);
+      }
+      return this;
+    }
+
     private void putByKeyspace(
         AdminRow row, ImmutableMultimap.Builder<CqlIdentifier, AdminRow> builder) {
       String keyspace = row.getString("keyspace_name");
@@ -322,15 +356,20 @@ public class CassandraSchemaRows implements SchemaRows {
           build(indexesBuilders),
           typesBuilder.build(),
           functionsBuilder.build(),
-          aggregatesBuilder.build());
+          aggregatesBuilder.build(),
+          build(verticesBuilders),
+          build(edgesBuilders));
     }
 
     private static <K1, K2, V> Map<K1, Multimap<K2, V>> build(
         Map<K1, ImmutableMultimap.Builder<K2, V>> builders) {
       ImmutableMap.Builder<K1, Multimap<K2, V>> builder = ImmutableMap.builder();
-      for (Map.Entry<K1, ImmutableMultimap.Builder<K2, V>> entry : builders.entrySet()) {
-        builder.put(entry.getKey(), entry.getValue().build());
-      }
+      builders
+          .entrySet()
+          .forEach(
+              (entry) -> {
+                builder.put(entry.getKey(), entry.getValue().build());
+              });
       return builder.build();
     }
   }

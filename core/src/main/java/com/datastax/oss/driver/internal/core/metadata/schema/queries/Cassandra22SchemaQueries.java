@@ -82,4 +82,14 @@ public class Cassandra22SchemaQueries extends CassandraSchemaQueries {
   protected Optional<String> selectVirtualColumnsQuery() {
     return Optional.empty();
   }
+
+  @Override
+  protected Optional<String> selectEdgesQuery() {
+    return Optional.empty();
+  }
+
+  @Override
+  protected Optional<String> selectVerticiesQuery() {
+    return Optional.empty();
+  }
 }

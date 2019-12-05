@@ -21,7 +21,6 @@ import com.datastax.dse.driver.api.core.metadata.schema.DseKeyspaceMetadata;
 import com.datastax.dse.driver.api.core.metadata.schema.DseTableMetadata;
 import com.datastax.dse.driver.api.core.metadata.schema.DseViewMetadata;
 import com.datastax.dse.driver.internal.core.metadata.schema.DefaultDseKeyspaceMetadata;
-import com.datastax.dse.driver.internal.core.metadata.schema.queries.Dse68SchemaRows;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata;
@@ -41,7 +40,6 @@ import com.datastax.oss.driver.internal.core.metadata.schema.refresh.SchemaRefre
 import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.datastax.oss.driver.shaded.guava.common.base.MoreObjects;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.Multimap;
 import java.util.Collections;
 import java.util.Map;
@@ -155,14 +153,8 @@ public class DseSchemaParser implements SchemaParser {
   private Map<CqlIdentifier, TableMetadata> parseTables(
       CqlIdentifier keyspaceId, Map<CqlIdentifier, UserDefinedType> types) {
     ImmutableMap.Builder<CqlIdentifier, TableMetadata> tablesBuilder = ImmutableMap.builder();
-    Multimap<CqlIdentifier, AdminRow> vertices;
-    Multimap<CqlIdentifier, AdminRow> edges;
-    if (rows instanceof Dse68SchemaRows) {
-      vertices = ((Dse68SchemaRows) rows).vertices().get(keyspaceId);
-      edges = ((Dse68SchemaRows) rows).edges().get(keyspaceId);
-    } else {
-      vertices = edges = ImmutableMultimap.of();
-    }
+    Multimap<CqlIdentifier, AdminRow> vertices = rows.vertices().get(keyspaceId);
+    Multimap<CqlIdentifier, AdminRow> edges = rows.edges().get(keyspaceId);
     for (AdminRow tableRow : rows.tables().get(keyspaceId)) {
       DseTableMetadata table = tableParser.parseTable(tableRow, keyspaceId, types, vertices, edges);
       if (table != null) {

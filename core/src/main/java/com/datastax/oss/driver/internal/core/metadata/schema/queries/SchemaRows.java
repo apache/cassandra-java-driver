@@ -21,6 +21,7 @@ import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.DataTypeParser;
 import com.datastax.oss.driver.shaded.guava.common.collect.Multimap;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -59,4 +60,12 @@ public interface SchemaRows {
   Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> indexes();
 
   DataTypeParser dataTypeParser();
+
+  default Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> vertices() {
+    return new LinkedHashMap<>();
+  }
+
+  default Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> edges() {
+    return new LinkedHashMap<>();
+  }
 }

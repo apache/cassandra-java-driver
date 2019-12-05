@@ -42,7 +42,8 @@ public class DefaultSchemaQueriesFactoryTest {
     CASS_21(Cassandra21SchemaQueries.class),
     CASS_22(Cassandra22SchemaQueries.class),
     CASS_3(Cassandra3SchemaQueries.class),
-    CASS_4(Cassandra4SchemaQueries.class);
+    CASS_4(Cassandra4SchemaQueries.class),
+    DSE_6_8(Dse68SchemaQueries.class);
 
     final Class<? extends SchemaQueries> clz;
 
@@ -82,7 +83,7 @@ public class DefaultSchemaQueriesFactoryTest {
           // DSE 6.7.0 continued with the same idea
           .add(ImmutableList.of("4.0.0.670", Optional.of("6.7.0"), Expected.CASS_4))
           // DSE 6.8.0 does the same
-          .add(ImmutableList.of("4.0.0.680", Optional.of("6.8.0"), Expected.CASS_4))
+          .add(ImmutableList.of("4.0.0.680", Optional.of("6.8.0"), Expected.DSE_6_8))
           .build();
 
   private static ImmutableList<ImmutableList<Object>> allVersions =
