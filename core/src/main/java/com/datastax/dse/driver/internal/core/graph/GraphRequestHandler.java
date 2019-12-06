@@ -45,8 +45,6 @@ import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
-import com.datastax.oss.driver.internal.core.adminrequest.ThrottledAdminRequestHandler;
-import com.datastax.oss.driver.internal.core.adminrequest.UnexpectedResponseException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -56,21 +54,16 @@ import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
-import com.datastax.oss.driver.internal.core.session.RepreparePayload;
 import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogger;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
-import com.datastax.oss.protocol.internal.ProtocolConstants;
-import com.datastax.oss.protocol.internal.request.Prepare;
 import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.Result;
-import com.datastax.oss.protocol.internal.response.error.Unprepared;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.datastax.oss.protocol.internal.response.result.Void;
-import com.datastax.oss.protocol.internal.util.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.Timeout;
@@ -637,81 +630,6 @@ public class GraphRequestHandler implements Throttled {
     }
 
     private void processErrorResponse(Error errorMessage) {
-      if (errorMessage.code == ProtocolConstants.ErrorCode.UNPREPARED) {
-        ByteBuffer idToReprepare = ByteBuffer.wrap(((Unprepared) errorMessage).id);
-        LOG.trace(
-            "[{}] Statement {} is not prepared on {}, repreparing",
-            logPrefix,
-            Bytes.toHexString(idToReprepare),
-            node);
-        RepreparePayload repreparePayload = session.getRepreparePayloads().get(idToReprepare);
-        if (repreparePayload == null) {
-          throw new IllegalStateException(
-              String.format(
-                  "Tried to execute unprepared query %s but we don't have the data to reprepare it",
-                  Bytes.toHexString(idToReprepare)));
-        }
-        Prepare reprepareMessage = repreparePayload.toMessage();
-        ThrottledAdminRequestHandler<ByteBuffer> reprepareHandler =
-            ThrottledAdminRequestHandler.prepare(
-                channel,
-                reprepareMessage,
-                repreparePayload.customPayload,
-                timeout,
-                throttler,
-                sessionMetricUpdater,
-                logPrefix);
-        reprepareHandler
-            .start()
-            .handle(
-                (repreparedId, exception) -> {
-                  if (exception != null) {
-                    // If the error is not recoverable, surface it to the client instead of retrying
-                    if (exception instanceof UnexpectedResponseException) {
-                      Message prepareErrorMessage =
-                          ((UnexpectedResponseException) exception).message;
-                      if (prepareErrorMessage instanceof Error) {
-                        CoordinatorException prepareError =
-                            Conversions.toThrowable(node, (Error) prepareErrorMessage, context);
-                        if (prepareError instanceof QueryValidationException
-                            || prepareError instanceof FunctionFailureException
-                            || prepareError instanceof ProtocolError) {
-                          LOG.trace("[{}] Unrecoverable error on reprepare, rethrowing", logPrefix);
-                          trackNodeError(node, prepareError, NANOTIME_NOT_MEASURED_YET);
-                          setFinalError(prepareError, node, execution);
-                          return null;
-                        }
-                      }
-                    } else if (exception instanceof RequestThrottlingException) {
-                      trackNodeError(node, exception, NANOTIME_NOT_MEASURED_YET);
-                      setFinalError(exception, node, execution);
-                      return null;
-                    }
-                    recordError(node, exception);
-                    trackNodeError(node, exception, NANOTIME_NOT_MEASURED_YET);
-                    LOG.trace("[{}] Reprepare failed, trying next node", logPrefix);
-                    sendRequest(null, queryPlan, execution, retryCount, false);
-                  } else {
-                    if (!repreparedId.equals(idToReprepare)) {
-                      IllegalStateException illegalStateException =
-                          new IllegalStateException(
-                              String.format(
-                                  "ID mismatch while trying to reprepare (expected %s, got %s). "
-                                      + "This prepared statement won't work anymore. "
-                                      + "This usually happens when you run a 'USE...' query after "
-                                      + "the statement was prepared.",
-                                  Bytes.toHexString(idToReprepare),
-                                  Bytes.toHexString(repreparedId)));
-                      trackNodeError(node, illegalStateException, NANOTIME_NOT_MEASURED_YET);
-                      setFinalError(illegalStateException, node, execution);
-                    }
-                    LOG.trace("[{}] Reprepare sucessful, retrying", logPrefix);
-                    sendRequest(node, queryPlan, execution, retryCount, false);
-                  }
-                  return null;
-                });
-        return;
-      }
       CoordinatorException error = Conversions.toThrowable(node, errorMessage, context);
       NodeMetricUpdater metricUpdater = ((DefaultNode) node).getMetricUpdater();
       if (error instanceof BootstrappingException) {

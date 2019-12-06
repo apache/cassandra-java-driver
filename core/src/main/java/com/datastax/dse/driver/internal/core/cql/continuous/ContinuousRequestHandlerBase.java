@@ -717,6 +717,7 @@ public abstract class ContinuousRequestHandlerBase<
      * @param errorMessage the error message received.
      */
     private void processErrorResponse(@NonNull Error errorMessage) {
+      // graph does not use prepared statements
       if (errorMessage instanceof Unprepared) {
         processUnprepared((Unprepared) errorMessage);
       } else {
