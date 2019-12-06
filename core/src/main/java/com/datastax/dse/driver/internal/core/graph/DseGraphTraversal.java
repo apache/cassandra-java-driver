@@ -22,7 +22,6 @@ import java.util.NoSuchElementException;
 import net.jcip.annotations.NotThreadSafe;
 import org.apache.tinkerpop.gremlin.process.remote.traversal.AbstractRemoteTraversal;
 import org.apache.tinkerpop.gremlin.process.remote.traversal.DefaultRemoteTraverser;
-import org.apache.tinkerpop.gremlin.process.remote.traversal.RemoteTraversalSideEffects;
 import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
 
 @NotThreadSafe
@@ -35,7 +34,11 @@ class DseGraphTraversal<S, E> extends AbstractRemoteTraversal<S, E> {
   }
 
   @Override
-  public RemoteTraversalSideEffects getSideEffects() {
+  @SuppressWarnings("deprecation")
+  public org.apache.tinkerpop.gremlin.process.remote.traversal.RemoteTraversalSideEffects
+      getSideEffects() {
+    // This was deprecated as part of TINKERPOP-2265
+    // and is no longer being promoted as a feature.
     // return null but do not throw "NotSupportedException"
     return null;
   }
