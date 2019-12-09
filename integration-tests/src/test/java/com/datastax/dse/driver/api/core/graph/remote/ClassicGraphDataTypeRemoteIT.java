@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.BeforeClass;
@@ -58,7 +59,8 @@ public class ClassicGraphDataTypeRemoteIT extends ClassicGraphDataTypeITBase {
   }
 
   private final GraphTraversalSource g =
-      DseGraph.g.withRemote(DseGraph.remoteConnectionBuilder(SESSION_RULE.session()).build());
+      AnonymousTraversalSource.traversal()
+          .withRemote(DseGraph.remoteConnectionBuilder(SESSION_RULE.session()).build());
 
   @Override
   public Vertex insertVertexAndReturn(String vertexLabel, String propertyName, Object value) {

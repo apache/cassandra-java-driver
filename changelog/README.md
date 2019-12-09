@@ -4,6 +4,7 @@
 
 ### NGDG (in progress)
 
+- [improvement] JAVA-2571: Revisit usages of DseGraph.g
 - [improvement] JAVA-2558: Revisit GraphRequestHandler
 - [bug] JAVA-2508: Preserve backward compatibility in schema metadata types
 - [bug] JAVA-2465: Avoid requesting 0 page when executing continuous paging queries

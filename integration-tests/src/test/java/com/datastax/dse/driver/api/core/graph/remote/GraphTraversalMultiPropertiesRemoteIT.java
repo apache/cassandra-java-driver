@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import java.util.Iterator;
+import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
@@ -48,7 +49,8 @@ public class GraphTraversalMultiPropertiesRemoteIT {
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private final GraphTraversalSource g =
-      DseGraph.g.withRemote(DseGraph.remoteConnectionBuilder(SESSION_RULE.session()).build());
+      AnonymousTraversalSource.traversal()
+          .withRemote(DseGraph.remoteConnectionBuilder(SESSION_RULE.session()).build());
 
   /** Builds a simple schema that provides for a vertex with a multi-cardinality property. */
   public static final String MULTI_PROPS =

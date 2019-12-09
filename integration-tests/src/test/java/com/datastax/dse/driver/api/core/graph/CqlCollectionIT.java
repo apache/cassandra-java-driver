@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -47,7 +48,8 @@ public class CqlCollectionIT {
   @ClassRule public static TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private final GraphTraversalSource g =
-      DseGraph.g.withRemote(DseGraph.remoteConnectionBuilder(SESSION_RULE.session()).build());
+      AnonymousTraversalSource.traversal()
+          .withRemote(DseGraph.remoteConnectionBuilder(SESSION_RULE.session()).build());
 
   @BeforeClass
   public static void setup() {

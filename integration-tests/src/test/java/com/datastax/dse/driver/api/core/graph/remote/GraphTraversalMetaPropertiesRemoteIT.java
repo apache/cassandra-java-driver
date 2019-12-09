@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
@@ -48,7 +49,8 @@ public class GraphTraversalMetaPropertiesRemoteIT {
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private final GraphTraversalSource g =
-      DseGraph.g.withRemote(DseGraph.remoteConnectionBuilder(SESSION_RULE.session()).build());
+      AnonymousTraversalSource.traversal()
+          .withRemote(DseGraph.remoteConnectionBuilder(SESSION_RULE.session()).build());
 
   /** Builds a simple schema that provides for a vertex with a property with sub properties. */
   public static final String META_PROPS =

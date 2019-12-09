@@ -28,7 +28,7 @@ import org.apache.tinkerpop.gremlin.process.remote.RemoteConnection;
  *
  * <pre>{@code
  * DseSession dseSession = DseSession.builder().build();
- * GraphTraversalSource g = DseGraph.g.withRemote(DseGraph.remoteConnectionBuilder(dseSession).build());
+ * GraphTraversalSource g = AnonymousTraversalSource.traversal().withRemote(DseGraph.remoteConnectionBuilder(dseSession).build());
  * List<Vertex> vertices = g.V().hasLabel("person").toList();
  * }</pre>
  *

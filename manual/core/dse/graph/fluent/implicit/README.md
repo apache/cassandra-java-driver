@@ -7,7 +7,7 @@ the DSE cluster:
 CqlSession session = CqlSession.builder().build();
 
 GraphTraversalSource g =
-    DseGraph.g.withRemote(DseGraph.remoteConnectionBuilder(session).build());
+    AnonymousTraversalSource.traversal().withRemote(DseGraph.remoteConnectionBuilder(session).build());
 ```
 
 Then build traversals from that source. Whenever you reach a [terminal step] \(such as `next()`,
@@ -39,7 +39,7 @@ datastax-java-driver {
 Pass the profile name to the remote connection builder:
 
 ```java
-GraphTraversalSource a = DseGraph.g.withRemote(
+GraphTraversalSource a = AnonymousTraversalSource.traversal().withRemote(
     DseGraph.remoteConnectionBuilder(session)
         .withExecutionProfileName("graph-oltp")
         .build());

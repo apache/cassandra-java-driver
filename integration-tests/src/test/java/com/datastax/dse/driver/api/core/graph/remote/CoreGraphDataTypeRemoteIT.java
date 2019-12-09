@@ -17,6 +17,7 @@ import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import java.util.Map;
+import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -48,7 +49,8 @@ public class CoreGraphDataTypeRemoteIT extends CoreGraphDataTypeITBase {
   }
 
   private final GraphTraversalSource g =
-      DseGraph.g.withRemote(DseGraph.remoteConnectionBuilder(session()).build());
+      AnonymousTraversalSource.traversal()
+          .withRemote(DseGraph.remoteConnectionBuilder(session()).build());
 
   @Override
   public Map<Object, Object> insertVertexThenReadProperties(

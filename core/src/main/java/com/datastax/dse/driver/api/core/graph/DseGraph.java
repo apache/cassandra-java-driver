@@ -17,6 +17,7 @@ package com.datastax.dse.driver.api.core.graph;
 
 import com.datastax.dse.driver.internal.core.graph.DefaultDseRemoteConnectionBuilder;
 import com.datastax.oss.driver.api.core.CqlSession;
+import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
 
@@ -27,15 +28,31 @@ import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
 public class DseGraph {
 
   /**
+   * <b>IMPORTANT</b>: As of Tinkerpop 3.3.5, you should no longer use this shortcut if you intend
+   * to connect the traversal to DSE Graph using a {@linkplain
+   * org.apache.tinkerpop.gremlin.process.remote.RemoteConnection remote connection}, for example
+   * via the {@link #remoteConnectionBuilder} method declared below. Instead of:
+   *
+   * <pre>{@code
+   * DseSession session = ...;
+   * RemoteConnection remoteConnection = DseGraph.remoteConnectionBuilder(session).build();
+   * GraphTraversalSource g = DseGraph.g.withRemote(remoteConnection);
+   * }</pre>
+   *
+   * You should now use {@link AnonymousTraversalSource#traversal()}, and adopt the following idiom:
+   *
+   * <pre>{@code
+   * DseSession session = ...;
+   * RemoteConnection remoteConnection = DseGraph.remoteConnectionBuilder(session).build();
+   * GraphTraversalSource g = AnonymousTraversalSource.traversal().withRemote(remoteConnection);
+   * }</pre>
+   *
    * A general-purpose shortcut for a <b>non-connected</b> TinkerPop {@link GraphTraversalSource}
    * based on an immutable empty graph. This is really just a shortcut to {@code
    * EmptyGraph.instance().traversal();}.
    *
-   * <p>Can be used to create {@link FluentGraphStatement} instances (recommended), or can be
-   * configured to be remotely connected to DSE Graph using the {@link #remoteConnectionBuilder}
-   * method.
-   *
-   * <p>For ease of use you may statically import this variable.
+   * <p>It can be used to create {@link FluentGraphStatement} instances (recommended); for ease of
+   * use you may statically import this variable.
    *
    * <p>Calling {@code g.getGraph()} will return a local immutable empty graph which is in no way
    * connected to the DSE Graph server, it will not allow to modify a DSE Graph directly. To act on
