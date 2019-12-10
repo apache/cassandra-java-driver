@@ -56,7 +56,7 @@ import java.lang.annotation.Target;
  * </ul>
  */
 @Target(ElementType.TYPE)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Dao {
 
   /**
