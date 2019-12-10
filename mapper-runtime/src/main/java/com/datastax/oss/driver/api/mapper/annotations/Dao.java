@@ -57,13 +57,4 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Dao {
-
-  /**
-   * When the new instance of a class annotated with {@code @Dao} is created an automatic check for
-   * schema validation is performed. It verifies if all {@code @Dao} entity fields are present in
-   * CQL table. If not the exception is thrown. This check has startup overhead so once your app is
-   * stable you may want to disable it. The schema Validation check is enabled by default.
-   */
-  boolean enableEntitySchemaValidation() default true;
-}
+public @interface Dao {}

@@ -55,6 +55,7 @@ public class SchemaValidationIT extends InventoryITBase {
   private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
 
   private static InventoryMapper mapper;
+  private static InventoryMapper mapperDisabledValidation;
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
@@ -75,7 +76,14 @@ public class SchemaValidationIT extends InventoryITBase {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
     }
-    mapper = new SchemaValidationIT_InventoryMapperBuilder(session).build();
+    mapper =
+        new SchemaValidationIT_InventoryMapperBuilder(session)
+            .withSchemaValidationEnabled(true)
+            .build();
+    mapperDisabledValidation =
+        new SchemaValidationIT_InventoryMapperBuilder(session)
+            .withSchemaValidationEnabled(false)
+            .build();
   }
 
   @Before
@@ -128,7 +136,8 @@ public class SchemaValidationIT extends InventoryITBase {
 
   @Test
   public void should_throw_general_driver_exception_when_schema_validation_check_is_disabled() {
-    assertThatThrownBy(() -> mapper.productDaoValidationDisabled(sessionRule.keyspace()))
+    assertThatThrownBy(
+            () -> mapperDisabledValidation.productDaoValidationDisabled(sessionRule.keyspace()))
         .isInstanceOf(InvalidQueryException.class)
         .hasMessageContaining("Undefined column name description_with_incorrect_name");
   }
@@ -188,7 +197,7 @@ public class SchemaValidationIT extends InventoryITBase {
     ProductSimple findById(UUID productId);
   }
 
-  @Dao(enableEntitySchemaValidation = false)
+  @Dao()
   public interface ProductSimpleDaoValidationDisabledDao {
 
     @Select

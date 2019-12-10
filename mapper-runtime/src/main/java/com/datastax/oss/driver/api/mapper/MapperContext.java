@@ -62,4 +62,6 @@ public interface MapperContext {
    */
   @NonNull
   Map<Object, Object> getCustomState();
+
+  boolean isSchemaValidationEnabled();
 }

@@ -437,9 +437,7 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
       // - create an instance
       initAsyncBuilder.addStatement("$1T $2L = new $1T(context)", fieldTypeName, fieldName);
       // - validate entity schema
-      if (interfaceElement.getAnnotation(Dao.class).enableEntitySchemaValidation()) {
-        initAsyncBuilder.addStatement("$1L.validateEntityFields()", fieldName);
-      }
+      generateValidationCheck(initAsyncBuilder, fieldName);
       // - add it as a parameter to the constructor call
       newDaoStatement.add(",\n$L", fieldName);
     }
@@ -501,6 +499,12 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
         .addStatement("return $T.failedFuture(t)", CompletableFutures.class)
         .endControlFlow();
     return initAsyncBuilder;
+  }
+
+  private void generateValidationCheck(MethodSpec.Builder initAsyncBuilder, String fieldName) {
+    initAsyncBuilder.beginControlFlow("if (context.isSchemaValidationEnabled())");
+    initAsyncBuilder.addStatement("$1L.validateEntityFields()", fieldName);
+    initAsyncBuilder.endControlFlow();
   }
 
   private void generateProtocolVersionCheck(MethodSpec.Builder builder) {

@@ -36,6 +36,7 @@ public abstract class MapperBuilder<MapperT> {
   protected final CqlSession session;
   protected CqlIdentifier defaultKeyspaceId;
   protected Map<Object, Object> customState;
+  protected boolean schemaValidationEnabled = true;
 
   protected MapperBuilder(CqlSession session) {
     this.session = session;
@@ -89,6 +90,17 @@ public abstract class MapperBuilder<MapperT> {
   @NonNull
   public MapperBuilder<MapperT> withDefaultKeyspace(@Nullable String keyspaceName) {
     return withDefaultKeyspace(keyspaceName == null ? null : CqlIdentifier.fromCql(keyspaceName));
+  }
+
+  /**
+   * When the new instance of a class annotated with {@code @Dao} is created an automatic check for
+   * schema validation is performed. It verifies if all {@code @Dao} entity fields are present in
+   * CQL table. If not the exception is thrown. This check has startup overhead so once your app is
+   * stable you may want to disable it. The schema Validation check is enabled by default.
+   */
+  public MapperBuilder<MapperT> withSchemaValidationEnabled(boolean enableSchemaValidation) {
+    this.schemaValidationEnabled = enableSchemaValidation;
+    return this;
   }
 
   /**

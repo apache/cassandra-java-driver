@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.data.SettableByName;
 import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.driver.api.mapper.MapperBuilder;
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
@@ -262,7 +263,7 @@ public interface EntityHelper<EntityT> {
    * table. If not the {@link IllegalArgumentException} exception with detailed message is thrown.
    * This check has startup overhead so once your app is stable you may want to disable it. The
    * schema validation check is enabled by default. It can be disabled using the {@link
-   * Dao#enableEntitySchemaValidation()} method.
+   * MapperBuilder#withSchemaValidationEnabled(boolean)} method.
    */
   void validateEntityFields();
 }
