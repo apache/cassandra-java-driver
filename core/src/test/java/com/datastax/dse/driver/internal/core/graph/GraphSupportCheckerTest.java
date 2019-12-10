@@ -42,21 +42,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 
 @RunWith(DataProviderRunner.class)
 public class GraphSupportCheckerTest {
-
-  @Mock DriverExecutionProfile executionProfile;
-
-  @Mock GraphStatement graphStatement;
-
-  @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @UseDataProvider("graphPagingEnabledAndDseVersions")
   @Test
@@ -239,6 +229,8 @@ public class GraphSupportCheckerTest {
   @Test
   @UseDataProvider(location = DseTestDataProviders.class, value = "supportedGraphProtocols")
   public void should_pickup_graph_protocol_from_statement(GraphProtocol graphProtocol) {
+    GraphStatement graphStatement = mock(GraphStatement.class);
+    DriverExecutionProfile executionProfile = mock(DriverExecutionProfile.class);
     when(graphStatement.getSubProtocol()).thenReturn(graphProtocol.toInternalCode());
 
     GraphProtocol inferredProtocol =
@@ -254,6 +246,8 @@ public class GraphSupportCheckerTest {
   @UseDataProvider("graphProtocolStringsAndDseVersions")
   public void should_pickup_graph_protocol_and_parse_from_string_config(
       String stringConfig, Version dseVersion) {
+    GraphStatement graphStatement = mock(GraphStatement.class);
+    DriverExecutionProfile executionProfile = mock(DriverExecutionProfile.class);
     when(executionProfile.isDefined(DseDriverOption.GRAPH_SUB_PROTOCOL)).thenReturn(Boolean.TRUE);
     when(executionProfile.getString(eq(DseDriverOption.GRAPH_SUB_PROTOCOL)))
         .thenReturn(stringConfig);
@@ -282,6 +276,8 @@ public class GraphSupportCheckerTest {
   @Test
   @UseDataProvider("dseVersions6")
   public void should_use_correct_default_protocol_when_parsing(Version dseVersion) {
+    GraphStatement graphStatement = mock(GraphStatement.class);
+    DriverExecutionProfile executionProfile = mock(DriverExecutionProfile.class);
     DseDriverContext context =
         mockNodesInMetadataWithVersions(mock(DseDriverContext.class), true, dseVersion);
     GraphProtocol inferredProtocol =
