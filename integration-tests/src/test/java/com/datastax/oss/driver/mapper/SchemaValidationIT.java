@@ -98,8 +98,8 @@ public class SchemaValidationIT extends InventoryITBase {
   @Test
   public void should_throw_when_use_not_properly_mapped_entity() {
     assertThatThrownBy(() -> mapper.productSimpleDao(sessionRule.keyspace()))
-        .hasRootCauseInstanceOf(IllegalArgumentException.class)
-        .hasStackTraceContaining(
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(
             String.format(
                 "The CQL ks.table: %s.product_simple has missing columns: [description_with_incorrect_name, some_other_not_mapped_field] that are defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductSimple",
                 sessionRule.keyspace()));
@@ -108,8 +108,8 @@ public class SchemaValidationIT extends InventoryITBase {
   @Test
   public void should_throw_when_entity_has_no_corresponding_cql_table() {
     assertThatThrownBy(() -> mapper.productCqlTableMissingDao(sessionRule.keyspace()))
-        .hasRootCauseInstanceOf(IllegalArgumentException.class)
-        .hasStackTraceContaining(
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(
             String.format(
                 "There is no ks.table: %s.product_cql_table_missing for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductCqlTableMissing",
                 sessionRule.keyspace()));
@@ -119,7 +119,7 @@ public class SchemaValidationIT extends InventoryITBase {
   public void should_throw_general_driver_exception_when_schema_validation_check_is_disabled() {
     assertThatThrownBy(() -> mapper.productDaoValidationDisabled(sessionRule.keyspace()))
         .isInstanceOf(InvalidQueryException.class)
-        .hasStackTraceContaining("Undefined column name description_with_incorrect_name");
+        .hasMessageContaining("Undefined column name description_with_incorrect_name");
   }
 
   @Test
@@ -130,7 +130,7 @@ public class SchemaValidationIT extends InventoryITBase {
   @Test
   public void should_throw_when_use_not_properly_mapped_entity_with_udt() {
     assertThatThrownBy(() -> mapper.productWithIncorrectUdtDao(sessionRule.keyspace()))
-        .hasRootCauseInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(IllegalArgumentException.class)
         .hasStackTraceContaining(
             String.format(
                 "The CQL ks.udt: %s.dimensions_with_incorrect_name has missing columns: [length_not_present] that are defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.DimensionsWithIncorrectName",
