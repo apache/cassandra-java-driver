@@ -56,10 +56,7 @@
         "new": "@interface com.datastax.oss.driver.api.mapper.annotations.TransientProperties",
         "annotation": "@java.lang.annotation.Target({java.lang.annotation.ElementType.TYPE})",
         "justification": "Oversight, should have been annotated this way from the start"
-      }
-    ]
-    },
-    "ignore": [
+      },
       {
         "code": "java.method.addedToInterface",
         "new": "method void com.datastax.oss.driver.api.mapper.entity.EntityHelper<EntityT>::validateEntityFields()",
