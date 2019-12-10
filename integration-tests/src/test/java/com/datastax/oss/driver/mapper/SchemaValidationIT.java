@@ -36,7 +36,6 @@ import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -266,21 +265,6 @@ public class SchemaValidationIT extends InventoryITBase {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      ProductSimple that = (ProductSimple) o;
-      return Objects.equals(id, that.id)
-          && Objects.equals(descriptionWithIncorrectName, that.descriptionWithIncorrectName)
-          && Objects.equals(someOtherNotMappedField, that.someOtherNotMappedField);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(id, descriptionWithIncorrectName, someOtherNotMappedField);
-    }
-
-    @Override
     public String toString() {
       return "ProductSimple{"
           + "id="
@@ -332,25 +316,6 @@ public class SchemaValidationIT extends InventoryITBase {
 
     public void setDimensions(DimensionsWithIncorrectName dimensions) {
       this.dimensions = dimensions;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      ProductWithIncorrectUdt product = (ProductWithIncorrectUdt) o;
-      return Objects.equals(id, product.id)
-          && Objects.equals(description, product.description)
-          && Objects.equals(dimensions, product.dimensions);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(id, description, dimensions);
     }
 
     @Override
@@ -414,23 +379,6 @@ public class SchemaValidationIT extends InventoryITBase {
       return lengthNotPresent == that.lengthNotPresent
           && width == that.width
           && height == that.height;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(lengthNotPresent, width, height);
-    }
-
-    @Override
-    public String toString() {
-      return "DimensionsWithIncorrectName{"
-          + "lengthNotPresent="
-          + lengthNotPresent
-          + ", width="
-          + width
-          + ", height="
-          + height
-          + '}';
     }
   }
 }
