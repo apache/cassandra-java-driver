@@ -23,6 +23,9 @@ import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.protocol.internal.Message;
+import com.datastax.oss.protocol.internal.response.Result;
+import com.datastax.oss.protocol.internal.response.result.Prepared;
+import com.datastax.oss.protocol.internal.response.result.Rows;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.time.Duration;
@@ -32,13 +35,10 @@ import java.util.concurrent.TimeUnit;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
-public class ThrottledAdminRequestHandler extends AdminRequestHandler implements Throttled {
+public class ThrottledAdminRequestHandler<ResultT> extends AdminRequestHandler<ResultT>
+    implements Throttled {
 
-  private final long startTimeNanos;
-  private final RequestThrottler throttler;
-  private final SessionMetricUpdater metricUpdater;
-
-  public ThrottledAdminRequestHandler(
+  public static ThrottledAdminRequestHandler<AdminResult> query(
       DriverChannel channel,
       Message message,
       Map<String, ByteBuffer> customPayload,
@@ -47,14 +47,60 @@ public class ThrottledAdminRequestHandler extends AdminRequestHandler implements
       SessionMetricUpdater metricUpdater,
       String logPrefix,
       String debugString) {
-    super(channel, message, customPayload, timeout, logPrefix, debugString);
+    return new ThrottledAdminRequestHandler<>(
+        channel,
+        message,
+        customPayload,
+        timeout,
+        throttler,
+        metricUpdater,
+        logPrefix,
+        debugString,
+        Rows.class);
+  }
+
+  public static ThrottledAdminRequestHandler<ByteBuffer> prepare(
+      DriverChannel channel,
+      Message message,
+      Map<String, ByteBuffer> customPayload,
+      Duration timeout,
+      RequestThrottler throttler,
+      SessionMetricUpdater metricUpdater,
+      String logPrefix) {
+    return new ThrottledAdminRequestHandler<>(
+        channel,
+        message,
+        customPayload,
+        timeout,
+        throttler,
+        metricUpdater,
+        logPrefix,
+        message.toString(),
+        Prepared.class);
+  }
+
+  private final long startTimeNanos;
+  private final RequestThrottler throttler;
+  private final SessionMetricUpdater metricUpdater;
+
+  protected ThrottledAdminRequestHandler(
+      DriverChannel channel,
+      Message message,
+      Map<String, ByteBuffer> customPayload,
+      Duration timeout,
+      RequestThrottler throttler,
+      SessionMetricUpdater metricUpdater,
+      String logPrefix,
+      String debugString,
+      Class<? extends Result> expectedResponseType) {
+    super(channel, message, customPayload, timeout, logPrefix, debugString, expectedResponseType);
     this.startTimeNanos = System.nanoTime();
     this.throttler = throttler;
     this.metricUpdater = metricUpdater;
   }
 
   @Override
-  public CompletionStage<AdminResult> start() {
+  public CompletionStage<ResultT> start() {
     // Don't write request yet, wait for green light from throttler
     throttler.register(this);
     return result;
@@ -79,7 +125,7 @@ public class ThrottledAdminRequestHandler extends AdminRequestHandler implements
   }
 
   @Override
-  protected boolean setFinalResult(AdminResult result) {
+  protected boolean setFinalResult(ResultT result) {
     boolean wasSet = super.setFinalResult(result);
     if (wasSet) {
       throttler.signalSuccess(this);

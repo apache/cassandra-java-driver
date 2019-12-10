@@ -1,5 +1,15 @@
 ## Asynchronous programming
 
+### Quick overview
+
+Async driver methods return Java 8's [CompletionStage].
+
+* don't call synchronous methods from asynchronous callbacks (the driver detects that and throws).
+* callbacks execute on I/O threads: consider providing your own executor for expensive computations.
+* be careful not to accidentally ignore errors thrown from callbacks.
+
+-----
+
 The driver exposes an asynchronous API that allows you to write fully non-blocking programs.
 Asynchronous methods return instances of the JDK's [CompletionStage], that can be conveniently
 chained and composed.
@@ -193,4 +203,4 @@ documentation for more details and an example.
 
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
 
-[AsyncResultSet]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
+[AsyncResultSet]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html

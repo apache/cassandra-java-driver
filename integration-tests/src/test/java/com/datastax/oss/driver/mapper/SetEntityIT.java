@@ -45,11 +45,11 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class SetEntityIT extends InventoryITBase {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
-
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private static ProductDao dao;
 
@@ -57,20 +57,20 @@ public class SetEntityIT extends InventoryITBase {
 
   @BeforeClass
   public static void setup() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
-    for (String query : createStatements(ccm)) {
+    for (String query : createStatements(CCM_RULE)) {
       session.execute(
-          SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
+          SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
     }
 
     inventoryMapper = new SetEntityIT_InventoryMapperBuilder(session).build();
-    dao = inventoryMapper.productDao(sessionRule.keyspace());
+    dao = inventoryMapper.productDao(SESSION_RULE.keyspace());
   }
 
   @Test
   public void should_set_entity_on_bound_statement() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     PreparedStatement preparedStatement =
         session.prepare("INSERT INTO product (id, description, dimensions) VALUES (?, ?, ?)");
     BoundStatement boundStatement = preparedStatement.bind();
@@ -82,7 +82,7 @@ public class SetEntityIT extends InventoryITBase {
 
   @Test
   public void should_set_entity_on_bound_statement_builder() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     PreparedStatement preparedStatement =
         session.prepare("INSERT INTO product (id, description, dimensions) VALUES (?, ?, ?)");
     BoundStatementBuilder builder = preparedStatement.boundStatementBuilder();
@@ -95,7 +95,7 @@ public class SetEntityIT extends InventoryITBase {
 
   @Test
   public void should_set_entity_on_bound_statement_setting_null() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     PreparedStatement preparedStatement =
         session.prepare("INSERT INTO product (id, description, dimensions) VALUES (?, ?, ?)");
     BoundStatementBuilder builder = preparedStatement.boundStatementBuilder();
@@ -110,7 +110,7 @@ public class SetEntityIT extends InventoryITBase {
 
   @Test
   public void should_set_entity_on_bound_statement_without_setting_null() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     PreparedStatement preparedStatement =
         session.prepare("INSERT INTO product (id, description, dimensions) VALUES (?, ?, ?)");
     BoundStatementBuilder builder = preparedStatement.boundStatementBuilder();
@@ -126,11 +126,11 @@ public class SetEntityIT extends InventoryITBase {
 
   @Test
   public void should_set_entity_on_udt_value() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     UserDefinedType udtType =
         session
             .getMetadata()
-            .getKeyspace(sessionRule.keyspace())
+            .getKeyspace(SESSION_RULE.keyspace())
             .orElseThrow(AssertionError::new)
             .getUserDefinedType("dimensions")
             .orElseThrow(AssertionError::new);

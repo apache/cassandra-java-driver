@@ -1,5 +1,17 @@
 ## Speculative query execution
 
+### Quick overview
+
+Pre-emptively query another node if the current one takes too long to respond.
+
+* `advanced.speculative-execution-policy` in the configuration.
+* disabled by default. Also available: constant delay, or write your own policy. 
+* can have per-profile policies. 
+* only kicks in if the query is idempotent.
+* creates more traffic: tune your pool and provision your cluster accordingly.
+
+-----
+
 Sometimes a Cassandra node might be experiencing difficulties (ex: long GC pause) and take longer
 than usual to reply. Queries sent to that node will experience bad latency.
 
@@ -238,4 +250,4 @@ profiles have the same configuration).
 Each request uses its declared profile's policy. If it doesn't declare any profile, or if the
 profile doesn't have a dedicated policy, then the default profile's policy is used.
 
-[SpeculativeExecutionPolicy]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/specex/SpeculativeExecutionPolicy.html
+[SpeculativeExecutionPolicy]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/specex/SpeculativeExecutionPolicy.html

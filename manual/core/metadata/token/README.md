@@ -1,5 +1,15 @@
 ## Token metadata
 
+### Quick overview
+
+[session.getMetadata().getTokenMap()][Metadata#getTokenMap]
+
+* used for token-aware routing or analytics clients.
+* immutable (must invoke again to observe changes).
+* `advanced.metadata.token-map.enabled` in the configuration (defaults to true).
+
+-----
+
 [Metadata#getTokenMap] returns information about the tokens used for data replication. It is used
 internally by the driver to send requests to the optimal coordinator when token-aware routing is
 enabled. Another typical use case is data analytics clients, for example fetching a large range of
@@ -159,5 +169,5 @@ on [schema metadata](../schema/). If schema metadata is disabled or filtered, to
 also be unavailable for the excluded keyspaces.
 
 
-[Metadata#getTokenMap]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/metadata/Metadata.html#getTokenMap--
-[TokenMap]:             https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/metadata/TokenMap.html
+[Metadata#getTokenMap]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/metadata/Metadata.html#getTokenMap--
+[TokenMap]:             https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/metadata/TokenMap.html

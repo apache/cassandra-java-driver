@@ -7,6 +7,12 @@ valid OSGi bundles:
 - `java-driver-query-builder`
 - `java-driver-core-shaded`
 
+Note: some of the driver dependencies are not valid OSGi bundles. Most of them are optional, and the
+driver can work properly without them; in such cases, the corresponding packages are declared with
+optional resolution in `Import-Package` directives. However, if you need to access such packages in 
+an OSGi container you MUST wrap the corresponding jar in a valid OSGi bundle and make it available 
+for provisioning to the OSGi runtime.
+
 ## Using the shaded jar
 
 `java-driver-core-shaded` shares the same bundle name as `java-driver-core`
@@ -71,5 +77,5 @@ starting the driver:
 [driver configuration]: ../core/configuration
 [OSGi]:https://www.osgi.org
 [JNR]: https://github.com/jnr/jnr-ffi
-[withClassLoader()]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
+[withClassLoader()]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
 [JAVA-1127]:https://datastax-oss.atlassian.net/browse/JAVA-1127

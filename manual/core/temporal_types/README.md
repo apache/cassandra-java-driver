@@ -1,7 +1,18 @@
 ## Temporal types
 
+### Quick overview
+
 This page provides more details about the various CQL time types, and the Java types they are mapped
 to in the driver.
+
+| CQL | Java | |
+|---|---|---|
+|`date` | `java.time.LocalDate` ||
+|`time` | `java.time.LocalTime` ||
+|`timestamp` | `java.time.Instant` | No time zone. Use `Instant.atZone` or register [TypeCodecs.ZONED_TIMESTAMP_SYSTEM], [TypeCodecs.ZONED_TIMESTAMP_UTC] or [TypeCodecs.zonedTimestampAt()] |
+|`duration` | [CqlDuration] | Custom driver type; can't be accurately represented by any of the `java.time` types. |
+
+-----
 
 ### Date and time
 
@@ -135,7 +146,7 @@ System.out.println(dateTime.minus(CqlDuration.from("1h15s15ns")));
 // prints "2018-10-03T22:59:44.999999985-07:00[America/Los_Angeles]"
 ```
 
-[CqlDuration]:                       https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/data/CqlDuration.html
-[TypeCodecs.ZONED_TIMESTAMP_SYSTEM]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#ZONED_TIMESTAMP_SYSTEM
-[TypeCodecs.ZONED_TIMESTAMP_UTC]:    https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#ZONED_TIMESTAMP_UTC
-[TypeCodecs.zonedTimestampAt()]:     https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#zonedTimestampAt-java.time.ZoneId-
+[CqlDuration]:                       https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/data/CqlDuration.html
+[TypeCodecs.ZONED_TIMESTAMP_SYSTEM]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#ZONED_TIMESTAMP_SYSTEM
+[TypeCodecs.ZONED_TIMESTAMP_UTC]:    https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#ZONED_TIMESTAMP_UTC
+[TypeCodecs.zonedTimestampAt()]:     https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#zonedTimestampAt-java.time.ZoneId-

@@ -39,7 +39,8 @@ class StreamIdGenerator {
     this.availableIds = this.maxAvailableIds;
   }
 
-  @SuppressWarnings("NonAtomicVolatileUpdate") // see explanation in class Javadoc
+  // safe because a given instance is always called from the same I/O thread
+  @SuppressWarnings({"NonAtomicVolatileUpdate", "NonAtomicOperationOnVolatileField"})
   int acquire() {
     int id = ids.nextClearBit(0);
     if (id >= maxAvailableIds) {
@@ -50,7 +51,7 @@ class StreamIdGenerator {
     return id;
   }
 
-  @SuppressWarnings("NonAtomicVolatileUpdate")
+  @SuppressWarnings({"NonAtomicVolatileUpdate", "NonAtomicOperationOnVolatileField"})
   void release(int id) {
     if (ids.get(id)) {
       availableIds++;

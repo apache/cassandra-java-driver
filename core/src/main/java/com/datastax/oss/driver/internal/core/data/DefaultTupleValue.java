@@ -107,7 +107,8 @@ public class DefaultTupleValue implements TupleValue, Serializable {
     return new SerializationProxy(this);
   }
 
-  private void readObject(ObjectInputStream stream) throws InvalidObjectException {
+  private void readObject(@SuppressWarnings("unused") ObjectInputStream stream)
+      throws InvalidObjectException {
     // Should never be called since we serialized a proxy
     throw new InvalidObjectException("Proxy required");
   }
@@ -165,11 +166,6 @@ public class DefaultTupleValue implements TupleValue, Serializable {
     }
 
     return result;
-  }
-
-  @Override
-  public String toString() {
-    return codecRegistry().codecFor(type).format(this);
   }
 
   private static class SerializationProxy implements Serializable {

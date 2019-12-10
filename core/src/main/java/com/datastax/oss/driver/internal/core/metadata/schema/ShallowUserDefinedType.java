@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.internal.core.metadata.schema.parsing.UserDefinedTypeParser;
 import com.datastax.oss.driver.internal.core.type.DefaultUserDefinedType;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -33,11 +34,16 @@ import net.jcip.annotations.Immutable;
 /**
  * A temporary UDT implementation that only contains the keyspace and name.
  *
- * <p>When we process a schema refresh that spans multiple UDTs, we can't fully materialize them
- * right away, because they might depend on each other and the system table query does not return
- * them in topological order. So we do a first pass where UDT field that are also UDTs are resolved
- * as instances of this class, then a topological sort, then a second pass to replace all shallow
- * definitions by the actual instance (which will be a {@link DefaultUserDefinedType}).
+ * <p>When we refresh a keyspace's UDTs, we can't fully materialize them right away, because they
+ * might depend on each other and the system table query does not return them in topological order.
+ * So we do a first pass where UDTs that are nested into other UDTsare resolved as instances of this
+ * class, then a topological sort, then a second pass to replace all shallow definitions by the
+ * actual instance (which will be a {@link DefaultUserDefinedType}).
+ *
+ * <p>This type is also used in the schema builder's internal representation: the keyspace, name and
+ * frozen-ness are the only things we need to generate a query string.
+ *
+ * @see UserDefinedTypeParser
  */
 @Immutable
 public class ShallowUserDefinedType implements UserDefinedType, Serializable {
@@ -137,12 +143,12 @@ public class ShallowUserDefinedType implements UserDefinedType, Serializable {
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
-  private void readObject(ObjectInputStream s) throws IOException {
+  private void readObject(@SuppressWarnings("unused") ObjectInputStream s) throws IOException {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
-  private void writeObject(ObjectOutputStream s) throws IOException {
+  private void writeObject(@SuppressWarnings("unused") ObjectOutputStream s) throws IOException {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }

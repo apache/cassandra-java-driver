@@ -1,5 +1,15 @@
 ## Load balancing
 
+### Quick overview
+
+Which nodes the driver talks to, and in which order they are tried.
+
+* `basic.load-balancing-policy` in the configuration.
+* defaults to `DefaultLoadBalancingPolicy` (opinionated best practices).
+* can have per-profile policies. 
+
+-----
+
 A Cassandra cluster is typically composed of multiple nodes; the *load balancing policy* (sometimes
 abbreviated LBP) is a central component that determines:
 
@@ -48,7 +58,7 @@ experience, this has proven to be too complicated: it's not obvious which policy
 a given use case, and nested policies can sometimes affect each other's effects in subtle and hard
 to predict ways.  
 
-In driver 4+, we are taking a more opinionated approach: we provide a single load balancing policy,
+In driver 4+, we are taking a more opinionated approach: we provide a default load balancing policy,
 that we consider the best choice for most cases. You can still write a
 [custom implementation](#custom-implementation) if you have special requirements.
 
@@ -115,6 +125,45 @@ For convenience, the local datacenter name may be omitted if no contact points w
 that case, the driver will connect to 127.0.0.1:9042, and use that node's datacenter. This is just
 for a better out-of-the-box experience for users who have just downloaded the driver; beyond that
 initial development phase, you should provide explicit contact points and a local datacenter.
+
+#### Finding the local datacenter
+
+To check which datacenters are defined in a given cluster, you can run [`nodetool status`]. It will 
+print information about each node in the cluster, grouped by datacenters. Here is an example: 
+
+```
+$ nodetool status
+Datacenter: DC1
+===============
+Status=Up/Down
+|/ State=Normal/Leaving/Joining/Moving
+--  Address    Load       Tokens  Owns  Host ID  Rack
+UN  <IP1>      1.5 TB     256     ?     <ID1>    rack1
+UN  <IP2>      1.5 TB     256     ?     <ID2>    rack2
+UN  <IP3>      1.5 TB     256     ?     <ID3>    rack3
+
+Datacenter: DC2
+===============
+Status=Up/Down
+|/ State=Normal/Leaving/Joining/Moving
+--  Address    Load       Tokens  Owns  Host ID  Rack
+UN  <IP4>      1.5 TB     256     ?     <ID4>    rack1
+UN  <IP5>      1.5 TB     256     ?     <ID5>    rack2
+UN  <IP6>      1.5 TB     256     ?     <ID6>    rack3
+```
+
+To find out which datacenter should be considered local, you need to first determine which nodes the 
+driver is going to be co-located with, then choose their datacenter as local. In case of doubt, you
+can also use [cqlsh]; if cqlsh is co-located too in the same datacenter, simply run the command 
+below:
+
+```
+cqlsh> select data_center from system.local;
+
+data_center
+-------------
+DC1 
+```
 
 #### Token-aware
 
@@ -274,8 +323,10 @@ Then it uses the "closest" distance for any given node. For example:
 * policy1 changes its suggestion to IGNORED. node1 is set to REMOTE;
 * policy1 changes its suggestion to REMOTE. node1 stays at REMOTE.
 
-[DriverContext]:        https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/context/DriverContext.html
-[LoadBalancingPolicy]:  https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/loadbalancing/LoadBalancingPolicy.html
-[getRoutingKeyspace()]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKeyspace--
-[getRoutingToken()]:    https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/Request.html#getRoutingToken--
-[getRoutingKey()]:      https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKey-- 
+[DriverContext]:        https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/context/DriverContext.html
+[LoadBalancingPolicy]:  https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/loadbalancing/LoadBalancingPolicy.html
+[getRoutingKeyspace()]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKeyspace--
+[getRoutingToken()]:    https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/Request.html#getRoutingToken--
+[getRoutingKey()]:      https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKey--
+[`nodetool status`]: https://docs.datastax.com/en/dse/6.7/dse-dev/datastax_enterprise/tools/nodetool/toolsStatus.html 
+[cqlsh]: https://docs.datastax.com/en/dse/6.7/cql/cql/cql_using/startCqlshStandalone.html

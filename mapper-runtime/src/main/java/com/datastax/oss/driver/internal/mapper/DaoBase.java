@@ -163,7 +163,7 @@ public class DaoBase {
   }
 
   private ConsistencyLevel getConsistencyLevelFromName(String name) {
-    InternalDriverContext idContext = (InternalDriverContext) (context.getSession().getContext());
+    InternalDriverContext idContext = (InternalDriverContext) context.getSession().getContext();
     ConsistencyLevelRegistry registry = idContext.getConsistencyLevelRegistry();
     return registry.codeToLevel(registry.nameToCode(name));
   }

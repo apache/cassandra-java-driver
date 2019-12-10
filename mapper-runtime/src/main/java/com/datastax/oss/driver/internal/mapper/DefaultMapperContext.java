@@ -38,13 +38,20 @@ public class DefaultMapperContext implements MapperContext {
   private final Map<Object, Object> customState;
 
   public DefaultMapperContext(
-      @NonNull CqlSession session, @NonNull Map<Object, Object> customState) {
+      @NonNull CqlSession session,
+      @Nullable CqlIdentifier keyspaceId,
+      @NonNull Map<Object, Object> customState) {
     this(
         session,
-        null,
+        keyspaceId,
         null,
         new ConcurrentHashMap<>(),
         NullAllowingImmutableMap.copyOf(customState));
+  }
+
+  public DefaultMapperContext(
+      @NonNull CqlSession session, @NonNull Map<Object, Object> customState) {
+    this(session, null, customState);
   }
 
   private DefaultMapperContext(

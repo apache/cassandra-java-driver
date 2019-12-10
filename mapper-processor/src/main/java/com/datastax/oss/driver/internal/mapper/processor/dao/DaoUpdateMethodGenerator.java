@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOOLEAN;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOUND_STATEMENT;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_ASYNC_RESULT_SET;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_BOOLEAN;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_VOID;
@@ -52,15 +53,22 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
   public DaoUpdateMethodGenerator(
       ExecutableElement methodElement,
       Map<Name, TypeElement> typeParameters,
+      TypeElement processedType,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    super(methodElement, typeParameters, enclosingClass, context);
+    super(methodElement, typeParameters, processedType, enclosingClass, context);
     nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
   }
 
   protected Set<DaoReturnTypeKind> getSupportedReturnTypes() {
     return ImmutableSet.of(
-        VOID, FUTURE_OF_VOID, RESULT_SET, FUTURE_OF_ASYNC_RESULT_SET, BOOLEAN, FUTURE_OF_BOOLEAN);
+        VOID,
+        FUTURE_OF_VOID,
+        RESULT_SET,
+        BOUND_STATEMENT,
+        FUTURE_OF_ASYNC_RESULT_SET,
+        BOOLEAN,
+        FUTURE_OF_BOOLEAN);
   }
 
   @Override
@@ -84,6 +92,7 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
+              processedType,
               "%s methods must take the entity to update as the first parameter",
               Update.class.getSimpleName());
       return Optional.empty();
@@ -220,6 +229,7 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
+              processedType,
               "Invalid annotation parameters: %s cannot have both ifExists and customIfClause",
               Update.class.getSimpleName());
     }

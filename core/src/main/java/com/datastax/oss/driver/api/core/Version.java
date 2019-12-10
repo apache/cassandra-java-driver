@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -36,16 +37,21 @@ import net.jcip.annotations.Immutable;
  * are ignored for sorting versions.
  */
 @Immutable
-public class Version implements Comparable<Version> {
+public class Version implements Comparable<Version>, Serializable {
+
+  private static final long serialVersionUID = 1;
 
   private static final String VERSION_REGEXP =
-      "(\\d+)\\.(\\d+)(\\.\\d+)?(\\.\\d+)?([~\\-]\\w[.\\w]*(?:\\-\\w[.\\w]*)*)?(\\+[.\\w]+)?";
+      "(\\d+)\\.(\\d+)(\\.\\d+)?(\\.\\d+)?([~\\-]\\w[.\\w]*(?:-\\w[.\\w]*)*)?(\\+[.\\w]+)?";
+
   private static final Pattern pattern = Pattern.compile(VERSION_REGEXP);
 
-  public static final Version V2_1_0 = parse("2.1.0");
-  public static final Version V2_2_0 = parse("2.2.0");
-  public static final Version V3_0_0 = parse("3.0.0");
-  public static final Version V4_0_0 = parse("4.0.0");
+  @NonNull public static final Version V2_1_0 = Objects.requireNonNull(parse("2.1.0"));
+  @NonNull public static final Version V2_2_0 = Objects.requireNonNull(parse("2.2.0"));
+  @NonNull public static final Version V3_0_0 = Objects.requireNonNull(parse("3.0.0"));
+  @NonNull public static final Version V4_0_0 = Objects.requireNonNull(parse("4.0.0"));
+
+  @NonNull public static final Version V6_7_0 = Objects.requireNonNull(parse("6.7.0"));
 
   private final int major;
   private final int minor;
@@ -111,7 +117,7 @@ public class Version implements Comparable<Version> {
           pr == null || pr.isEmpty()
               ? null
               : pr.substring(1)
-                  .split("\\-"); // drop initial '-' or '~' then split on the remaining ones
+                  .split("-"); // drop initial '-' or '~' then split on the remaining ones
 
       String bl = matcher.group(6);
       String build = bl == null || bl.isEmpty() ? null : bl.substring(1); // drop the initial '+'
@@ -251,9 +257,7 @@ public class Version implements Comparable<Version> {
       }
     }
 
-    return preReleases.length == other.preReleases.length
-        ? 0
-        : (preReleases.length < other.preReleases.length ? -1 : 1);
+    return Integer.compare(preReleases.length, other.preReleases.length);
   }
 
   @Override

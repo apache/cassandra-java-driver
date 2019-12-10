@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
     Copyright DataStax, Inc.
@@ -17,28 +18,22 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.1.1-SNAPSHOT</version>
+    <version>4.4.0-SNAPSHOT</version>
   </parent>
-
   <artifactId>java-driver-mapper-runtime</artifactId>
   <packaging>bundle</packaging>
-
   <name>DataStax Java driver for Apache Cassandra(R) - object mapper runtime</name>
-
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>java-driver-core</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>java-driver-query-builder</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>com.github.stephenc.jcip</groupId>
@@ -49,7 +44,6 @@
       <artifactId>spotbugs-annotations</artifactId>
     </dependency>
   </dependencies>
-
   <build>
     <plugins>
       <plugin>
@@ -73,14 +67,8 @@
                 Don't include the packages below because they aren't OSGi bundles,
                 and the driver can live without them.
                 -->
-                <Import-Package>
-                  !net.jcip.annotations.*,
-                  !edu.umd.cs.findbugs.annotations.*,
-                  *
-                </Import-Package>
-                <Export-Package>
-                  com.datastax.oss.driver.*.mapper.*
-                </Export-Package>
+                <Import-Package>!net.jcip.annotations.*, !edu.umd.cs.findbugs.annotations.*, *</Import-Package>
+                <Export-Package>com.datastax.oss.driver.*.mapper.*</Export-Package>
               </instructions>
             </configuration>
           </execution>

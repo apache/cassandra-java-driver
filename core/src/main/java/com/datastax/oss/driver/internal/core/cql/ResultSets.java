@@ -20,7 +20,7 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 
 public class ResultSets {
   public static ResultSet newInstance(AsyncResultSet firstPage) {
-    return (firstPage.hasMorePages())
+    return firstPage.hasMorePages()
         ? new MultiPageResultSet(firstPage)
         : new SinglePageResultSet(firstPage);
   }

@@ -280,6 +280,9 @@ BoundStatement bs2 = ps2.bind();
 assert bs2.getConsistencyLevel() == DefaultConsistencyLevel.TWO;
 ```
 
+DDL statements are now debounced; see [Why do DDL queries have a higher latency than driver
+3?](../faq/#why-do-ddl-queries-have-a-higher-latency-than-driver-3) in the FAQ.
+
 #### Dual result set APIs
 
 In 3.x, both synchronous and asynchronous execution models shared a common result set

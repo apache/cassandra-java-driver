@@ -255,7 +255,7 @@ public class RandomPagingRestUi {
 
       URI previous =
           (page == 1) ? null : uri.getAbsolutePathBuilder().queryParam("page", page - 1).build();
-      URI next = (empty) ? null : uri.getAbsolutePathBuilder().queryParam("page", page + 1).build();
+      URI next = empty ? null : uri.getAbsolutePathBuilder().queryParam("page", page + 1).build();
       return new UserVideosResponse(videos, previous, next);
     }
   }

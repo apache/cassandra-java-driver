@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOOLEAN;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOUND_STATEMENT;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.ENTITY;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_ASYNC_RESULT_SET;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_BOOLEAN;
@@ -53,9 +54,10 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
   public DaoInsertMethodGenerator(
       ExecutableElement methodElement,
       Map<Name, TypeElement> typeParameters,
+      TypeElement processedType,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    super(methodElement, typeParameters, enclosingClass, context);
+    super(methodElement, typeParameters, processedType, enclosingClass, context);
     nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
   }
 
@@ -70,6 +72,7 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
         BOOLEAN,
         FUTURE_OF_BOOLEAN,
         RESULT_SET,
+        BOUND_STATEMENT,
         FUTURE_OF_ASYNC_RESULT_SET);
   }
 
@@ -94,6 +97,7 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
+              processedType,
               "%s methods must take the entity to insert as the first parameter",
               Insert.class.getSimpleName());
       return Optional.empty();
@@ -111,6 +115,7 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
+              processedType,
               "Invalid return type: %s methods must return the same entity as their argument ",
               Insert.class.getSimpleName());
       return Optional.empty();

@@ -101,7 +101,7 @@ public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry
     } else {
       ProtocolVersion previousVersion = previousEntry.getValue();
       // Beta versions are skipped during negotiation
-      return (previousVersion.isBeta()) ? downgrade(previousVersion) : Optional.of(previousVersion);
+      return previousVersion.isBeta() ? downgrade(previousVersion) : Optional.of(previousVersion);
     }
   }
 

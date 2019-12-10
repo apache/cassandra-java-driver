@@ -29,12 +29,14 @@ import org.ops4j.pax.exam.util.PathUtils;
 public class BundleOptions {
 
   public static CompositeOption baseOptions() {
-    // Note: the bundles below include Netty; these bundles are not required by
-    // the shaded core driver bundle, but they need to be present in all cases because
-    // the test-infra bundle requires the (non-shaded) Netty bundle.
+    // In theory, the options declared here should only include bundles that must be present
+    // in order for both the non-shaded and shaded driver versions to work properly.
+    // Bundles that should be present only for the non-shaded driver version should be declared
+    // elsewhere.
+    // However we have two exceptions: Netty and FasterXML Jackson; both need to be present in all
+    // cases because the test bundles requires their presence (see #testBundles method).
     return () ->
         options(
-            nettyBundles(),
             mavenBundle(
                 "com.datastax.oss", "java-driver-shaded-guava", getVersion("guava.version")),
             mavenBundle("io.dropwizard.metrics", "metrics-core", getVersion("metrics.version")),
@@ -90,7 +92,8 @@ public class BundleOptions {
         options(
             driverTestInfraBundle(),
             simulacronBundles(),
-            jacksonBundles(),
+            nettyBundles(), // required by the test infra bundle, even for the shaded jar
+            jacksonBundles(), // required by the Simulacron bundle, even for the shaded jar
             mavenBundle(
                 "org.apache.commons", "commons-exec", System.getProperty("commons-exec.version")),
             mavenBundle("org.assertj", "assertj-core", System.getProperty("assertj.version")),
@@ -119,9 +122,10 @@ public class BundleOptions {
 
   public static CompositeOption jacksonBundles() {
     String jacksonVersion = getVersion("jackson.version");
+    String jacksonDatabindVersion = getVersion("jackson-databind.version");
     return () ->
         options(
-            mavenBundle("com.fasterxml.jackson.core", "jackson-databind", jacksonVersion),
+            mavenBundle("com.fasterxml.jackson.core", "jackson-databind", jacksonDatabindVersion),
             mavenBundle("com.fasterxml.jackson.core", "jackson-core", jacksonVersion),
             mavenBundle("com.fasterxml.jackson.core", "jackson-annotations", jacksonVersion));
   }

@@ -20,7 +20,6 @@ import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.update.UpdateStart;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
-import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.querybuilder.update.DefaultUpdate;
 import com.squareup.javapoet.MethodSpec;
 import java.util.Optional;
@@ -30,10 +29,7 @@ public class EntityHelperUpdateStartMethodGenerator implements MethodGenerator {
 
   private final EntityDefinition entityDefinition;
 
-  EntityHelperUpdateStartMethodGenerator(
-      EntityDefinition entityDefinition,
-      EntityHelperGenerator enclosingClass,
-      ProcessorContext context) {
+  EntityHelperUpdateStartMethodGenerator(EntityDefinition entityDefinition) {
     this.entityDefinition = entityDefinition;
   }
 

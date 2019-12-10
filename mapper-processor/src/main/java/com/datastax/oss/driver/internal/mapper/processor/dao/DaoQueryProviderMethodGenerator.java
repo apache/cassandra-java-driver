@@ -40,9 +40,10 @@ public class DaoQueryProviderMethodGenerator extends DaoMethodGenerator {
   public DaoQueryProviderMethodGenerator(
       ExecutableElement methodElement,
       Map<Name, TypeElement> typeParameters,
+      TypeElement processedType,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    super(methodElement, typeParameters, enclosingClass, context);
+    super(methodElement, typeParameters, processedType, enclosingClass, context);
   }
 
   @Override
@@ -98,6 +99,7 @@ public class DaoQueryProviderMethodGenerator extends DaoMethodGenerator {
     return context.getTypeUtils().getPrimitiveType(TypeKind.INT);
   }
 
+  @SuppressWarnings("MixedMutabilityReturnType")
   private List<ClassName> getEntityHelperTypes() {
     AnnotationMirror annotationMirror = getQueryProviderAnnotationMirror();
     for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry :
@@ -114,6 +116,7 @@ public class DaoQueryProviderMethodGenerator extends DaoMethodGenerator {
                 .getMessager()
                 .error(
                     methodElement,
+                    processedType,
                     "Invalid annotation configuration: the elements in %s.entityHelpers "
                         + "must be %s-annotated classes (offending element: %s)",
                     QueryProvider.class.getSimpleName(),

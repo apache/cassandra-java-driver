@@ -64,6 +64,12 @@ public enum DefaultDaoReturnTypeKind implements DaoReturnTypeKind {
       methodBuilder.addStatement("return execute(boundStatement)");
     }
   },
+  BOUND_STATEMENT(false) {
+    @Override
+    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+      methodBuilder.addStatement("return boundStatement");
+    }
+  },
   PAGING_ITERABLE(false) {
     @Override
     public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {

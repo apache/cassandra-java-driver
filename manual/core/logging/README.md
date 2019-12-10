@@ -1,5 +1,12 @@
 ## Logging
 
+### Quick overview
+
+* based on SLF4J.
+* config file examples for Logback and Log4J. 
+
+-----
+
 The driver uses [SLF4J] as a logging facade. This allows you to plug in your preferred logging
 framework (java.util.logging, logback, log4j...) at deployment time.  
 

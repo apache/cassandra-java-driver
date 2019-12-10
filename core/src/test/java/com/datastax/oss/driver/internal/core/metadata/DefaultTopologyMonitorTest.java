@@ -18,7 +18,9 @@ package com.datastax.oss.driver.internal.core.metadata;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.filter;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -26,6 +28,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
@@ -62,16 +68,19 @@ import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.slf4j.LoggerFactory;
 
 @RunWith(DataProviderRunner.class)
 public class DefaultTopologyMonitorTest {
 
-  private static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
   private static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
 
   @Mock private InternalDriverContext context;
@@ -81,10 +90,16 @@ public class DefaultTopologyMonitorTest {
   @Mock private DriverChannel channel;
   @Mock protected MetricsFactory metricsFactory;
 
+  @Mock private Appender<ILoggingEvent> appender;
+  @Captor private ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
+
   private DefaultNode node1;
   private DefaultNode node2;
 
   private TestTopologyMonitor topologyMonitor;
+
+  private Logger logger;
+  private Level initialLogLevel;
 
   @Before
   public void setup() {
@@ -107,6 +122,17 @@ public class DefaultTopologyMonitorTest {
     when(context.getControlConnection()).thenReturn(controlConnection);
 
     topologyMonitor = new TestTopologyMonitor(context);
+
+    logger = (Logger) LoggerFactory.getLogger(DefaultTopologyMonitor.class);
+    initialLogLevel = logger.getLevel();
+    logger.setLevel(Level.INFO);
+    logger.addAppender(appender);
+  }
+
+  @After
+  public void teardown() {
+    logger.detachAppender(appender);
+    logger.setLevel(initialLogLevel);
   }
 
   @Test
@@ -239,15 +265,15 @@ public class DefaultTopologyMonitorTest {
   @Test
   public void should_get_new_node_from_peers() {
     // Given
-    AdminRow peer3 = mockPeersRow(3, UUID.randomUUID());
-    AdminRow peer2 = mockPeersRow(2, node2.getHostId());
-    AdminRow peer1 = mockPeersRow(1, node1.getHostId());
+    AdminRow peer3 = mockPeersRow(4, UUID.randomUUID());
+    AdminRow peer2 = mockPeersRow(3, node2.getHostId());
+    AdminRow peer1 = mockPeersRow(2, node1.getHostId());
     topologyMonitor.isSchemaV2 = false;
     topologyMonitor.stubQueries(
         new StubbedQuery("SELECT * FROM system.peers", mockResult(peer3, peer2, peer1)));
 
     // When
-    CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.getNewNodeInfo(ADDRESS1);
+    CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.getNewNodeInfo(ADDRESS2);
 
     // Then
     assertThatStage(futureInfo)
@@ -255,7 +281,7 @@ public class DefaultTopologyMonitorTest {
             maybeInfo -> {
               assertThat(maybeInfo.isPresent()).isTrue();
               NodeInfo info = maybeInfo.get();
-              assertThat(info.getDatacenter()).isEqualTo("dc1");
+              assertThat(info.getDatacenter()).isEqualTo("dc2");
             });
     // The rpc_address in each row should have been tried, only the last row should have been
     // converted
@@ -272,15 +298,15 @@ public class DefaultTopologyMonitorTest {
   @Test
   public void should_get_new_node_from_peers_v2() {
     // Given
-    AdminRow peer3 = mockPeersV2Row(3, UUID.randomUUID());
-    AdminRow peer2 = mockPeersV2Row(2, node2.getHostId());
-    AdminRow peer1 = mockPeersV2Row(1, node1.getHostId());
+    AdminRow peer3 = mockPeersV2Row(4, UUID.randomUUID());
+    AdminRow peer2 = mockPeersV2Row(3, node2.getHostId());
+    AdminRow peer1 = mockPeersV2Row(2, node1.getHostId());
     topologyMonitor.isSchemaV2 = true;
     topologyMonitor.stubQueries(
         new StubbedQuery("SELECT * FROM system.peers_v2", mockResult(peer3, peer2, peer1)));
 
     // When
-    CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.getNewNodeInfo(ADDRESS1);
+    CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.getNewNodeInfo(ADDRESS2);
 
     // Then
     assertThatStage(futureInfo)
@@ -288,7 +314,7 @@ public class DefaultTopologyMonitorTest {
             maybeInfo -> {
               assertThat(maybeInfo.isPresent()).isTrue();
               NodeInfo info = maybeInfo.get();
-              assertThat(info.getDatacenter()).isEqualTo("dc1");
+              assertThat(info.getDatacenter()).isEqualTo("dc2");
             });
     // The natove in each row should have been tried, only the last row should have been
     // converted
@@ -358,6 +384,10 @@ public class DefaultTopologyMonitorTest {
     // Then
     assertThatStage(futureInfo).isSuccess(maybeInfo -> assertThat(maybeInfo).isEmpty());
     assertThat(node2.broadcastAddress).isNotNull().isEqualTo(ADDRESS2);
+    assertLog(
+        Level.WARN,
+        "[null] Found invalid row in system.peers for peer: /127.0.0.2. "
+            + "This is likely a gossip or snitch issue, this node will be ignored.");
   }
 
   @Test
@@ -390,6 +420,10 @@ public class DefaultTopologyMonitorTest {
     // Then
     assertThatStage(futureInfo).isSuccess(maybeInfo -> assertThat(maybeInfo).isEmpty());
     assertThat(node2.broadcastAddress).isNotNull().isEqualTo(ADDRESS2);
+    assertLog(
+        Level.WARN,
+        "[null] Found invalid row in system.peers_v2 for peer: /127.0.0.2. "
+            + "This is likely a gossip or snitch issue, this node will be ignored.");
   }
 
   @DataProvider
@@ -413,6 +447,67 @@ public class DefaultTopologyMonitorTest {
     // Then
     assertThatStage(futureInfos)
         .isFailed(error -> assertThat(error).isInstanceOf(IllegalStateException.class));
+  }
+
+  @Test
+  public void should_warn_when_control_host_found_in_system_peers() {
+    // Given
+    AdminRow local = mockLocalRow(1, node1.getHostId());
+    AdminRow peer3 = mockPeersRow(3, UUID.randomUUID());
+    AdminRow peer2 = mockPeersRow(2, node2.getHostId());
+    AdminRow peer1 = mockPeersRow(1, node2.getHostId()); // invalid
+    topologyMonitor.stubQueries(
+        new StubbedQuery("SELECT * FROM system.local", mockResult(local)),
+        new StubbedQuery("SELECT * FROM system.peers_v2", Collections.emptyMap(), null, true),
+        new StubbedQuery("SELECT * FROM system.peers", mockResult(peer3, peer2, peer1)));
+
+    // When
+    CompletionStage<Iterable<NodeInfo>> futureInfos = topologyMonitor.refreshNodeList();
+
+    // Then
+    assertThatStage(futureInfos)
+        .isSuccess(
+            infos ->
+                assertThat(infos)
+                    .hasSize(3)
+                    .extractingResultOf("getEndPoint")
+                    .containsOnlyOnce(node1.getEndPoint()));
+    assertLog(
+        Level.WARN,
+        "[null] Control node /127.0.0.1:9042 has an entry for itself in system.peers: "
+            + "this entry will be ignored. This is likely due to a misconfiguration; "
+            + "please verify your rpc_address configuration in cassandra.yaml on "
+            + "all nodes in your cluster.");
+  }
+
+  @Test
+  public void should_warn_when_control_host_found_in_system_peers_v2() {
+    // Given
+    AdminRow local = mockLocalRow(1, node1.getHostId());
+    AdminRow peer3 = mockPeersRow(3, UUID.randomUUID());
+    AdminRow peer2 = mockPeersRow(2, node2.getHostId());
+    AdminRow peer1 = mockPeersRow(1, node2.getHostId()); // invalid
+    topologyMonitor.stubQueries(
+        new StubbedQuery("SELECT * FROM system.local", mockResult(local)),
+        new StubbedQuery("SELECT * FROM system.peers_v2", mockResult(peer3, peer2, peer1)));
+
+    // When
+    CompletionStage<Iterable<NodeInfo>> futureInfos = topologyMonitor.refreshNodeList();
+
+    // Then
+    assertThatStage(futureInfos)
+        .isSuccess(
+            infos ->
+                assertThat(infos)
+                    .hasSize(3)
+                    .extractingResultOf("getEndPoint")
+                    .containsOnlyOnce(node1.getEndPoint()));
+    assertLog(
+        Level.WARN,
+        "[null] Control node /127.0.0.1:9042 has an entry for itself in system.peers_v2: "
+            + "this entry will be ignored. This is likely due to a misconfiguration; "
+            + "please verify your rpc_address configuration in cassandra.yaml on "
+            + "all nodes in your cluster.");
   }
 
   /** Mocks the query execution logic. */
@@ -538,5 +633,13 @@ public class DefaultTopologyMonitorTest {
     AdminResult result = mock(AdminResult.class);
     when(result.iterator()).thenReturn(Iterators.forArray(rows));
     return result;
+  }
+
+  private void assertLog(Level level, String message) {
+    verify(appender, atLeast(1)).doAppend(loggingEventCaptor.capture());
+    Iterable<ILoggingEvent> logs =
+        filter(loggingEventCaptor.getAllValues()).with("level", level).get();
+    assertThat(logs).hasSize(1);
+    assertThat(logs.iterator().next().getFormattedMessage()).contains(message);
   }
 }

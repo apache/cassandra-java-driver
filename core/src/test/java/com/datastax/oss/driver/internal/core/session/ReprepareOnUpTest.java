@@ -334,15 +334,24 @@ public class ReprepareOnUpTest {
       queries.add(new MockAdminQuery(message, resultFuture));
       return resultFuture;
     }
+
+    @Override
+    protected CompletionStage<ByteBuffer> prepareAsync(
+        Message message, Map<String, ByteBuffer> customPayload) {
+      CompletableFuture<ByteBuffer> resultFuture = new CompletableFuture<>();
+      queries.add(new MockAdminQuery(message, resultFuture));
+      return resultFuture;
+    }
   }
 
   private static class MockAdminQuery {
     private final Message request;
-    private final CompletableFuture<AdminResult> resultFuture;
+    private final CompletableFuture<Object> resultFuture;
 
-    public MockAdminQuery(Message request, CompletableFuture<AdminResult> resultFuture) {
+    @SuppressWarnings("unchecked")
+    public MockAdminQuery(Message request, CompletableFuture<?> resultFuture) {
       this.request = request;
-      this.resultFuture = resultFuture;
+      this.resultFuture = (CompletableFuture<Object>) resultFuture;
     }
   }
 

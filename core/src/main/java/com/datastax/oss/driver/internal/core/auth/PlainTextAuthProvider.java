@@ -15,9 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core.auth;
 
+import com.datastax.oss.driver.api.core.auth.PlainTextAuthProviderBase;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.ThreadSafe;
 
@@ -52,7 +54,8 @@ public class PlainTextAuthProvider extends PlainTextAuthProviderBase {
 
   @NonNull
   @Override
-  protected Credentials getCredentials() {
+  protected Credentials getCredentials(
+      @NonNull EndPoint endPoint, @NonNull String serverAuthenticator) {
     return new Credentials(
         config.getString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME).toCharArray(),
         config.getString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD).toCharArray());

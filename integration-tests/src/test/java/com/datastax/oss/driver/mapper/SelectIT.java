@@ -17,13 +17,11 @@ package com.datastax.oss.driver.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
-import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Delete;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
@@ -48,11 +46,11 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class SelectIT extends InventoryITBase {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
-
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private static ProductDao dao;
 
@@ -60,16 +58,19 @@ public class SelectIT extends InventoryITBase {
 
   @BeforeClass
   public static void setup() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
-    for (String query : createStatements(ccm)) {
+    for (String query : createStatements(CCM_RULE)) {
       session.execute(
-          SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
+          SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
     }
 
-    InventoryMapper inventoryMapper = new SelectIT_InventoryMapperBuilder(session).build();
-    dao = inventoryMapper.productDao(sessionRule.keyspace());
-    saleDao = inventoryMapper.productSaleDao(sessionRule.keyspace());
+    InventoryMapper inventoryMapper =
+        new SelectIT_InventoryMapperBuilder(session)
+            .withDefaultKeyspace(SESSION_RULE.keyspace())
+            .build();
+    dao = inventoryMapper.productDao();
+    saleDao = inventoryMapper.productSaleDao();
   }
 
   @Before
@@ -164,10 +165,10 @@ public class SelectIT extends InventoryITBase {
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
-    ProductDao productDao(@DaoKeyspace CqlIdentifier keyspace);
+    ProductDao productDao();
 
     @DaoFactory
-    ProductSaleDao productSaleDao(@DaoKeyspace CqlIdentifier keyspace);
+    ProductSaleDao productSaleDao();
   }
 
   @Dao

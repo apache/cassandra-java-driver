@@ -57,7 +57,7 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
         null,
         null,
         Collections.emptyMap(),
-        false,
+        null,
         false,
         Long.MIN_VALUE,
         null,
@@ -87,7 +87,7 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
         null,
         null,
         Collections.emptyMap(),
-        false,
+        null,
         false,
         Long.MIN_VALUE,
         null,
@@ -117,7 +117,7 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
         null,
         null,
         Collections.emptyMap(),
-        false,
+        null,
         false,
         Long.MIN_VALUE,
         null,
@@ -128,7 +128,11 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
         null);
   }
 
-  /** Returns a builder to create an instance of the default implementation. */
+  /**
+   * Returns a builder to create an instance of the default implementation.
+   *
+   * <p>Note that this builder is mutable and not thread-safe.
+   */
   @NonNull
   static BatchStatementBuilder builder(@NonNull BatchType batchType) {
     return new BatchStatementBuilder(batchType);
@@ -137,6 +141,8 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
   /**
    * Returns a builder to create an instance of the default implementation, copying the fields of
    * the given statement.
+   *
+   * <p>Note that this builder is mutable and not thread-safe.
    */
   @NonNull
   static BatchStatementBuilder builder(@NonNull BatchStatement template) {

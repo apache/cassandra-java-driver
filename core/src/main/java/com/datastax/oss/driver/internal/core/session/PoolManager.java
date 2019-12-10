@@ -314,10 +314,14 @@ public class PoolManager implements AsyncAutoCloseable {
       NodeState newState = event.newState;
       if (pending.containsKey(node)) {
         pendingStateEvents.put(node, event);
-      } else if (newState == NodeState.FORCED_DOWN) {
+      } else if (newState == null || newState == NodeState.FORCED_DOWN) {
         ChannelPool pool = pools.remove(node);
         if (pool != null) {
-          LOG.debug("[{}] {} was FORCED_DOWN, destroying pool", logPrefix, node);
+          LOG.debug(
+              "[{}] {} was {}, destroying pool",
+              logPrefix,
+              node,
+              newState == null ? "removed" : newState.name());
           pool.closeAsync()
               .exceptionally(
                   error -> {

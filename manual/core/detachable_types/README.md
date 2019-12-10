@@ -1,5 +1,12 @@
 ## Detachable types
 
+### Quick overview
+
+Advanced topic, only needed if you use Java serialization with driver rows or data types, or create
+tuple or UDT types manually.
+
+-----
+
 Some driver components need to keep an internal reference to their originating [Session]. Under
 specific circumstances, they can lose that reference, and you might need to reattach them.
 
@@ -130,13 +137,13 @@ Even then, the defaults used by detached objects might be good enough for you:
 Otherwise, just make sure you reattach objects any time you deserialize them or create them from
 scratch.
 
-[CodecRegistry]:         https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html
-[CodecRegistry#DEFAULT]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html#DEFAULT
-[DataType]:              https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/type/DataType.html
-[Detachable]:            https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/detach/Detachable.html
-[Session]:               https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/Session.html
-[ColumnDefinition]:      https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/ColumnDefinition.html
-[Row]:                   https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/Row.html
+[CodecRegistry]:         https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html
+[CodecRegistry#DEFAULT]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html#DEFAULT
+[DataType]:              https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/type/DataType.html
+[Detachable]:            https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/detach/Detachable.html
+[Session]:               https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/Session.html
+[ColumnDefinition]:      https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/ColumnDefinition.html
+[Row]:                   https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/Row.html
 
 [Java serialization]: https://docs.oracle.com/javase/tutorial/jndi/objects/serial.html
 [protocol specifications]: https://github.com/datastax/native-protocol/tree/1.x/src/main/resources

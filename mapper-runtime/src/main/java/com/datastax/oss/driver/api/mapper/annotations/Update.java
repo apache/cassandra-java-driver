@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.mapper.annotations;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
@@ -46,8 +47,8 @@ import java.util.function.UnaryOperator;
  *
  * <h3>Parameters</h3>
  *
- * The first parameter must be an entity instance. All of its non-PK properties will be interpreted
- * as values to update.
+ * <p>The first parameter must be an entity instance. All of its non-PK properties will be
+ * interpreted as values to update.
  *
  * <ul>
  *   <li>If {@link #customWhereClause()} is empty, the mapper defaults to an update by primary key
@@ -85,7 +86,7 @@ import java.util.function.UnaryOperator;
  *
  * <h3>Return type</h3>
  *
- * The method can return:
+ * <p>The method can return:
  *
  * <ul>
  *   <li>{@code void}.
@@ -103,6 +104,12 @@ import java.util.function.UnaryOperator;
  * ResultSet updateIfDescriptionMatches(Product product, String expectedDescription);
  * // if the condition fails, the result set will contain columns '[applied]' and 'description'
  *       </pre>
+ *   <li>a {@link BoundStatement}. This is intended for queries where you will execute this
+ *       statement later or in a batch:
+ *       <pre>
+ * &#64;Update
+ * BoundStatement update(Product product);
+ *      </pre>
  *   <li>a {@link CompletionStage} or {@link CompletableFuture} of any of the above. The mapper will
  *       execute the query asynchronously. Note that for result sets, you need to switch to the
  *       asynchronous equivalent {@link AsyncResultSet}.
@@ -120,7 +127,7 @@ import java.util.function.UnaryOperator;
  *
  * <h3>Target keyspace and table</h3>
  *
- * If a keyspace was specified when creating the DAO (see {@link DaoFactory}), then the generated
+ * <p>If a keyspace was specified when creating the DAO (see {@link DaoFactory}), then the generated
  * query targets that keyspace. Otherwise, it doesn't specify a keyspace, and will only work if the
  * mapper was built from a {@link Session} that has a {@linkplain
  * SessionBuilder#withKeyspace(CqlIdentifier) default keyspace} set.
@@ -130,7 +137,7 @@ import java.util.function.UnaryOperator;
  * entity class and the naming convention).
  */
 @Target(ElementType.METHOD)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Update {
 
   /**

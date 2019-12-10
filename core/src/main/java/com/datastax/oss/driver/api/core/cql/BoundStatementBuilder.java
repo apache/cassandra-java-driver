@@ -30,6 +30,11 @@ import java.time.Duration;
 import java.util.Map;
 import net.jcip.annotations.NotThreadSafe;
 
+/**
+ * A builder to create a bound statement.
+ *
+ * <p>This class is mutable and not thread-safe.
+ */
 @NotThreadSafe
 public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilder, BoundStatement>
     implements Bindable<BoundStatementBuilder> {

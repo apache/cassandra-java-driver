@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
+import com.datastax.oss.driver.internal.core.util.RoutingKey;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -123,6 +124,12 @@ public abstract class StatementBuilder<
     return self;
   }
 
+  /** @see Statement#setRoutingKey(ByteBuffer...) */
+  @NonNull
+  public SelfT setRoutingKey(@NonNull ByteBuffer... newRoutingKeyComponents) {
+    return setRoutingKey(RoutingKey.compose(newRoutingKeyComponents));
+  }
+
   /** @see Statement#setRoutingToken(Token) */
   @NonNull
   public SelfT setRoutingToken(@Nullable Token routingToken) {
@@ -154,10 +161,21 @@ public abstract class StatementBuilder<
     return self;
   }
 
-  /** @see Statement#setTracing(boolean) */
+  /**
+   * This method is a shortcut to {@link #setTracing(boolean)} with an argument of true. It is
+   * preserved to maintain API compatibility.
+   *
+   * @see Statement#setTracing(boolean)
+   */
   @NonNull
   public SelfT setTracing() {
-    this.tracing = true;
+    return setTracing(true);
+  }
+
+  /** @see Statement#setTracing(boolean) */
+  @NonNull
+  public SelfT setTracing(boolean tracing) {
+    this.tracing = tracing;
     return self;
   }
 

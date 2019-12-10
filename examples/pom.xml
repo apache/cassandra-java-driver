@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
     Copyright DataStax, Inc.
@@ -17,137 +18,129 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <parent>
     <artifactId>java-driver-parent</artifactId>
     <groupId>com.datastax.oss</groupId>
-    <version>4.1.1-SNAPSHOT</version>
+    <version>4.4.0-SNAPSHOT</version>
   </parent>
-
   <artifactId>java-driver-examples</artifactId>
   <name>DataStax Java driver for Apache Cassandra(R) - examples.</name>
-  <description>A collection of examples to demonstrate DataStax Java Driver for Apache
-    Cassandra(R).
-  </description>
-
-
+  <description>A collection of examples to demonstrate DataStax Java Driver for Apache Cassandra(R).</description>
   <dependencies>
-
     <!-- driver dependencies -->
-
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>java-driver-core</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>java-driver-query-builder</artifactId>
-      <version>${project.version}</version>
     </dependency>
-
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>java-driver-mapper-runtime</artifactId>
+    </dependency>
     <!-- Jackson -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </dependency>
-
     <dependency>
       <groupId>com.fasterxml.jackson.jaxrs</groupId>
       <artifactId>jackson-jaxrs-base</artifactId>
       <version>${jackson.version}</version>
       <optional>true</optional>
     </dependency>
-
     <dependency>
       <groupId>com.fasterxml.jackson.jaxrs</groupId>
       <artifactId>jackson-jaxrs-json-provider</artifactId>
       <version>${jackson.version}</version>
       <optional>true</optional>
     </dependency>
-
     <!--JSR-353 (Java JSON API)-->
-
     <dependency>
       <groupId>javax.json</groupId>
       <artifactId>javax.json-api</artifactId>
       <optional>true</optional>
     </dependency>
-
     <dependency>
       <groupId>org.glassfish</groupId>
       <artifactId>javax.json</artifactId>
       <optional>true</optional>
       <scope>runtime</scope>
     </dependency>
-
     <!--JAX-RS-->
-
     <dependency>
       <groupId>javax.ws.rs</groupId>
       <artifactId>javax.ws.rs-api</artifactId>
       <optional>true</optional>
     </dependency>
-
     <!--Jersey-->
-
     <dependency>
       <groupId>org.glassfish.jersey.core</groupId>
       <artifactId>jersey-server</artifactId>
       <optional>true</optional>
     </dependency>
-
     <dependency>
       <groupId>org.glassfish.jersey.media</groupId>
       <artifactId>jersey-media-json-jackson</artifactId>
       <optional>true</optional>
     </dependency>
-
     <dependency>
       <groupId>org.glassfish.jersey.containers</groupId>
       <artifactId>jersey-container-jdk-http</artifactId>
       <optional>true</optional>
     </dependency>
-
     <!--CDI frameworks (HK2)-->
-
     <dependency>
       <groupId>org.glassfish.hk2</groupId>
       <artifactId>hk2-api</artifactId>
       <optional>true</optional>
     </dependency>
-
     <dependency>
       <groupId>org.glassfish.jersey.inject</groupId>
       <artifactId>jersey-hk2</artifactId>
       <optional>true</optional>
     </dependency>
-
     <!-- Standard annotations -->
-
     <dependency>
       <groupId>javax.inject</groupId>
       <artifactId>javax.inject</artifactId>
       <optional>true</optional>
     </dependency>
-
     <dependency>
       <groupId>javax.annotation</groupId>
       <artifactId>javax.annotation-api</artifactId>
       <optional>true</optional>
     </dependency>
-
     <!-- Logging -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <scope>runtime</scope>
     </dependency>
+    <dependency>
+      <groupId>at.favre.lib</groupId>
+      <artifactId>bcrypt</artifactId>
+      <version>0.8.0</version>
+    </dependency>
   </dependencies>
-
-
   <build>
     <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>com.datastax.oss</groupId>
+              <artifactId>java-driver-mapper-processor</artifactId>
+              <version>${project.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.revapi</groupId>
         <artifactId>revapi-maven-plugin</artifactId>
@@ -188,5 +181,4 @@
       </plugin>
     </plugins>
   </build>
-
 </project>

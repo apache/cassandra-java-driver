@@ -21,6 +21,8 @@ import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.TestDataProviders;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
+import com.datastax.oss.driver.api.core.cql.BatchStatement;
+import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
@@ -36,7 +38,6 @@ import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Collections;
@@ -56,9 +57,12 @@ public abstract class CqlRequestHandlerTestBase {
       SimpleStatement.builder("mock query").setIdempotence(true).build();
   protected static final SimpleStatement NON_IDEMPOTENT_STATEMENT =
       SimpleStatement.builder("mock query").setIdempotence(false).build();
-  protected static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
-  protected static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
-  protected static final InetSocketAddress ADDRESS3 = new InetSocketAddress("127.0.0.3", 9042);
+  protected static final BatchStatement UNDEFINED_IDEMPOTENCE_BATCH_STATEMENT =
+      BatchStatement.newInstance(BatchType.LOGGED, UNDEFINED_IDEMPOTENCE_STATEMENT);
+  protected static final BatchStatement IDEMPOTENT_BATCH_STATEMENT =
+      BatchStatement.newInstance(BatchType.LOGGED, IDEMPOTENT_STATEMENT).setIdempotent(true);
+  protected static final BatchStatement NON_IDEMPOTENT_BATCH_STATEMENT =
+      BatchStatement.newInstance(BatchType.LOGGED, NON_IDEMPOTENT_STATEMENT).setIdempotent(false);
 
   @Mock protected DefaultNode node1;
   @Mock protected DefaultNode node2;
@@ -118,6 +122,9 @@ public abstract class CqlRequestHandlerTestBase {
       new Object[] {true, UNDEFINED_IDEMPOTENCE_STATEMENT},
       new Object[] {false, IDEMPOTENT_STATEMENT},
       new Object[] {true, IDEMPOTENT_STATEMENT},
+      new Object[] {true, UNDEFINED_IDEMPOTENCE_BATCH_STATEMENT},
+      new Object[] {false, IDEMPOTENT_BATCH_STATEMENT},
+      new Object[] {true, IDEMPOTENT_BATCH_STATEMENT},
     };
   }
 
@@ -131,6 +138,9 @@ public abstract class CqlRequestHandlerTestBase {
       new Object[] {false, UNDEFINED_IDEMPOTENCE_STATEMENT},
       new Object[] {true, NON_IDEMPOTENT_STATEMENT},
       new Object[] {false, NON_IDEMPOTENT_STATEMENT},
+      new Object[] {false, UNDEFINED_IDEMPOTENCE_BATCH_STATEMENT},
+      new Object[] {true, NON_IDEMPOTENT_BATCH_STATEMENT},
+      new Object[] {false, NON_IDEMPOTENT_BATCH_STATEMENT},
     };
   }
 

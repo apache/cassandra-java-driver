@@ -1,5 +1,19 @@
 ## Native protocol
 
+### Quick overview
+
+Low-level binary format. Mostly irrelevant for everyday use, only governs whether certain features
+are available.
+
+* setting the version:
+  * automatically negotiated during the connection (improved algorithm in driver 4, no longer an
+    issue in mixed clusters).
+  * or force with `advanced.protocol.version` in the configuration.
+* reading the version:
+  [session.getContext().getProtocolVersion()][AttachmentPoint.getProtocolVersion].
+
+-----
+
 The native protocol defines the format of the binary messages exchanged between the driver and
 Cassandra over TCP. As a driver user, you don't need to know the fine details (although the
 [protocol spec] is available if you're curious); the most visible aspect is that some features are
@@ -45,7 +59,7 @@ If you force a version that is too high for the server, you'll get an error:
 
 ```
 Exception in thread "main" com.datastax.oss.driver.api.core.AllNodesFailedException:
-  All 1 node tried for the query failed (showing first 1, use getErrors() for more:
+  All 1 node tried for the query failed (showing first 1 nodes, use getAllErrors() for more:
     /127.0.0.1:9042: com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException:
                      [/127.0.0.1:9042] Host does not support protocol version V5)
 ```
@@ -106,5 +120,6 @@ If you want to see the details of mixed cluster negotiation, enable `DEBUG` leve
 [protocol spec]: https://github.com/datastax/native-protocol/tree/1.x/src/main/resources
 [driver3]: https://docs.datastax.com/en/developer/java-driver/3.5/manual/native_protocol/
 
-[ExecutionInfo.getWarnings]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getWarnings--
-[Request.getCustomPayload]:  https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/Request.html#getCustomPayload--
+[ExecutionInfo.getWarnings]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getWarnings--
+[Request.getCustomPayload]:  https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/Request.html#getCustomPayload--
+[AttachmentPoint.getProtocolVersion]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/detach/AttachmentPoint.html#getProtocolVersion--

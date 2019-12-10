@@ -171,11 +171,6 @@ public class DefaultUdtValue implements UdtValue, Serializable {
     return result;
   }
 
-  @Override
-  public String toString() {
-    return codecRegistry().codecFor(type).format(this);
-  }
-
   /**
    * @serialData The type of the tuple, followed by an array of byte arrays representing the values
    *     (null values are represented by {@code null}).
@@ -184,7 +179,8 @@ public class DefaultUdtValue implements UdtValue, Serializable {
     return new SerializationProxy(this);
   }
 
-  private void readObject(ObjectInputStream stream) throws InvalidObjectException {
+  private void readObject(@SuppressWarnings("unused") ObjectInputStream stream)
+      throws InvalidObjectException {
     // Should never be called since we serialized a proxy
     throw new InvalidObjectException("Proxy required");
   }

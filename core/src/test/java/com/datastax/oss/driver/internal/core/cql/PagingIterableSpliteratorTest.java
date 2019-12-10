@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import com.datastax.oss.driver.internal.core.cql.PagingIterableSpliterator.Builder;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import com.tngtech.java.junit.dataprovider.DataProvider;
@@ -46,7 +45,7 @@ public class PagingIterableSpliteratorTest {
   public void should_split_with_estimated_size(
       int size, int chunkSize, List<Integer> expectedLeft, List<Integer> expectedRight) {
     // given
-    Builder<Integer> builder =
+    PagingIterableSpliterator.Builder<Integer> builder =
         PagingIterableSpliterator.builder(iterableOfSize(size))
             .withEstimatedSize(size)
             .withChunkSize(chunkSize);
@@ -87,6 +86,7 @@ public class PagingIterableSpliteratorTest {
   @DataProvider
   public static Iterable<?> splitsWithEstimatedSize() {
     List<List<Object>> arguments = new ArrayList<>();
+    arguments.add(Lists.newArrayList(0, 1, ImmutableList.of(), ImmutableList.of()));
     arguments.add(Lists.newArrayList(1, 1, ImmutableList.of(), ImmutableList.of(0)));
     arguments.add(Lists.newArrayList(1, 2, ImmutableList.of(), ImmutableList.of(0)));
     arguments.add(Lists.newArrayList(2, 1, ImmutableList.of(0), ImmutableList.of(1)));
@@ -110,7 +110,7 @@ public class PagingIterableSpliteratorTest {
   public void should_split_with_unknown_size(
       int size, int chunkSize, List<Integer> expectedLeft, List<Integer> expectedRight) {
     // given
-    Builder<Integer> builder =
+    PagingIterableSpliterator.Builder<Integer> builder =
         PagingIterableSpliterator.builder(iterableOfSize(size)).withChunkSize(chunkSize);
     // when
     PagingIterableSpliterator<Integer> right = builder.build();
@@ -145,6 +145,7 @@ public class PagingIterableSpliteratorTest {
   @DataProvider
   public static Iterable<?> splitsWithUnknownSize() {
     List<List<Object>> arguments = new ArrayList<>();
+    arguments.add(Lists.newArrayList(0, 1, ImmutableList.of(), ImmutableList.of()));
     arguments.add(Lists.newArrayList(1, 1, ImmutableList.of(0), ImmutableList.of()));
     arguments.add(Lists.newArrayList(1, 2, ImmutableList.of(0), ImmutableList.of()));
     arguments.add(Lists.newArrayList(2, 1, ImmutableList.of(0), ImmutableList.of(1)));

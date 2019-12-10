@@ -57,7 +57,8 @@ public class DaoInsertMethodGeneratorTest extends DaoMethodGeneratorTest {
       },
       {
         "Insert methods must return one of [VOID, FUTURE_OF_VOID, ENTITY, FUTURE_OF_ENTITY, "
-            + "OPTIONAL_ENTITY, FUTURE_OF_OPTIONAL_ENTITY, BOOLEAN, FUTURE_OF_BOOLEAN, RESULT_SET, FUTURE_OF_ASYNC_RESULT_SET]",
+            + "OPTIONAL_ENTITY, FUTURE_OF_OPTIONAL_ENTITY, BOOLEAN, FUTURE_OF_BOOLEAN, RESULT_SET, BOUND_STATEMENT, "
+            + "FUTURE_OF_ASYNC_RESULT_SET]",
         MethodSpec.methodBuilder("insert")
             .addAnnotation(Insert.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -90,7 +91,7 @@ public class DaoInsertMethodGeneratorTest extends DaoMethodGeneratorTest {
       },
       {
         "Invalid ttl value: "
-            + "'foo' is not a bind marker name and can't be parsed as a literal integer either, "
+            + "'foo' is not a bind marker name and can't be parsed as a number literal either, "
             + "the generated query will probably fail",
         MethodSpec.methodBuilder("insert")
             .addAnnotation(
@@ -113,7 +114,7 @@ public class DaoInsertMethodGeneratorTest extends DaoMethodGeneratorTest {
       },
       {
         "Invalid timestamp value: "
-            + "'foo' is not a bind marker name and can't be parsed as a literal long either, "
+            + "'foo' is not a bind marker name and can't be parsed as a number literal either, "
             + "the generated query will probably fail",
         MethodSpec.methodBuilder("insert")
             .addAnnotation(

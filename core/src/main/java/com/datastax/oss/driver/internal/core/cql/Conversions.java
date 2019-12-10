@@ -35,6 +35,8 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
+import com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.servererrors.AlreadyExistsException;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
@@ -63,6 +65,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
 import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
 import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.primitives.Ints;
 import com.datastax.oss.protocol.internal.Message;
@@ -320,7 +323,7 @@ public class Conversions {
       InternalDriverContext context) {
     if (result instanceof Rows) {
       Rows rows = (Rows) result;
-      Statement<?> statement = executionInfo.getStatement();
+      Statement<?> statement = (Statement<?>) executionInfo.getRequest();
       ColumnDefinitions columnDefinitions = getResultDefinitions(rows, statement, context);
       return new DefaultAsyncResultSet(
           columnDefinitions, executionInfo, rows.getData(), session, context);
@@ -358,11 +361,21 @@ public class Conversions {
 
   public static DefaultPreparedStatement toPreparedStatement(
       Prepared response, PrepareRequest request, InternalDriverContext context) {
+    ColumnDefinitions variableDefinitions =
+        toColumnDefinitions(response.variablesMetadata, context);
+
+    int[] pkIndicesInResponse = response.variablesMetadata.pkIndices;
+    // null means a legacy protocol version that doesn't provide the info, try to compute it
+    List<Integer> pkIndices =
+        (pkIndicesInResponse == null)
+            ? computePkIndices(variableDefinitions, context)
+            : Ints.asList(pkIndicesInResponse);
+
     return new DefaultPreparedStatement(
         ByteBuffer.wrap(response.preparedQueryId).asReadOnlyBuffer(),
         request.getQuery(),
-        toColumnDefinitions(response.variablesMetadata, context),
-        asList(response.variablesMetadata.pkIndices),
+        variableDefinitions,
+        pkIndices,
         (response.resultMetadataId == null)
             ? null
             : ByteBuffer.wrap(response.resultMetadataId).asReadOnlyBuffer(),
@@ -396,12 +409,39 @@ public class Conversions {
     return DefaultColumnDefinitions.valueOf(ImmutableList.copyOf(values));
   }
 
-  public static List<Integer> asList(int[] pkIndices) {
-    if (pkIndices == null || pkIndices.length == 0) {
+  public static List<Integer> computePkIndices(
+      ColumnDefinitions variables, InternalDriverContext context) {
+    if (variables.size() == 0) {
       return Collections.emptyList();
-    } else {
-      return Ints.asList(pkIndices);
     }
+    // The rest of the computation relies on the fact that CQL does not have joins: all variables
+    // belong to the same keyspace and table.
+    ColumnDefinition firstVariable = variables.get(0);
+    return context
+        .getMetadataManager()
+        .getMetadata()
+        .getKeyspace(firstVariable.getKeyspace())
+        .flatMap(ks -> ks.getTable(firstVariable.getTable()))
+        .map(RelationMetadata::getPartitionKey)
+        .map(pk -> findIndices(pk, variables))
+        .orElse(Collections.emptyList());
+  }
+
+  // Find at which position in `variables` each element of `partitionKey` appears
+  @VisibleForTesting
+  static List<Integer> findIndices(List<ColumnMetadata> partitionKey, ColumnDefinitions variables) {
+    ImmutableList.Builder<Integer> result =
+        ImmutableList.builderWithExpectedSize(partitionKey.size());
+    for (ColumnMetadata pkColumn : partitionKey) {
+      int firstIndex = variables.firstIndexOf(pkColumn.getName());
+      if (firstIndex < 0) {
+        // If a single column is missing, we can abort right away
+        return Collections.emptyList();
+      } else {
+        result.add(firstIndex);
+      }
+    }
+    return result.build();
   }
 
   public static CoordinatorException toThrowable(

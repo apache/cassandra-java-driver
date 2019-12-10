@@ -34,6 +34,7 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
+import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.DefaultConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolFeature;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
@@ -48,12 +49,10 @@ import com.datastax.oss.driver.internal.core.servererrors.DefaultWriteTypeRegist
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.throttling.PassThroughRequestThrottler;
 import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
-import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
 import com.datastax.oss.driver.internal.core.util.concurrent.CapturingTimer;
 import com.datastax.oss.driver.internal.core.util.concurrent.CapturingTimer.CapturedTimeout;
 import com.datastax.oss.protocol.internal.Frame;
 import io.netty.channel.EventLoopGroup;
-import io.netty.util.TimerTask;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -129,7 +128,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
         .thenReturn(-1L);
     when(context.getSpeculativeExecutionPolicy(anyString())).thenReturn(speculativeExecutionPolicy);
 
-    when(context.getCodecRegistry()).thenReturn(new DefaultCodecRegistry("test"));
+    when(context.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
 
     when(timestampGenerator.next()).thenReturn(Long.MIN_VALUE);
     when(context.getTimestampGenerator()).thenReturn(timestampGenerator);
@@ -187,10 +186,6 @@ public class RequestHandlerTestHarness implements AutoCloseable {
    */
   public CapturedTimeout nextScheduledTimeout() {
     return timer.getNextTimeout();
-  }
-
-  public void runNextTask() {
-    TimerTask task = timer.getNextTimeout().task();
   }
 
   @Override

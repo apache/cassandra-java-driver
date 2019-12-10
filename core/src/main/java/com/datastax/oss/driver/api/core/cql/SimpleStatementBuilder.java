@@ -26,6 +26,11 @@ import java.util.List;
 import java.util.Map;
 import net.jcip.annotations.NotThreadSafe;
 
+/**
+ * A builder to create a simple statement.
+ *
+ * <p>This class is mutable and not thread-safe.
+ */
 @NotThreadSafe
 public class SimpleStatementBuilder
     extends StatementBuilder<SimpleStatementBuilder, SimpleStatement> {

@@ -1,6 +1,18 @@
 ## SSL
 
-You can secure traffic between the driver and Cassandra with SSL. There are two aspects to that:
+### Quick overview
+
+Secure the traffic between the driver and Cassandra.
+
+* `advanced.ssl-engine-factory` in the configuration; defaults to none, also available:
+  config-based, or write your own.
+* or programmatically:
+  [CqlSession.builder().withSslEngineFactory()][SessionBuilder.withSslEngineFactory] or
+  [CqlSession.builder().withSslContext()][SessionBuilder.withSslContext].
+
+-----
+
+There are two aspects to SSL:
 
 * **client-to-node encryption**, where the traffic is encrypted, and the client verifies the
   identity of the Cassandra nodes it connects to;
@@ -110,7 +122,7 @@ use [JSSE system properties]:
 -Djavax.net.ssl.keyStorePassword=password123
 ```
 
-#### JSSE, programmatic
+#### JSSE, custom factory
 
 If you need more control than what system properties allow, you need to write your own engine
 factory. If you just need specific configuration on the `SSLEngine`, you can extend the default
@@ -145,27 +157,36 @@ datastax-java-driver {
 }
 ```
 
-#### Netty
+#### JSSE, programmatic
 
-Netty provides a more efficient SSL implementation based on native OpenSSL support. It's possible to
-customize the driver to use it instead of JSSE.
+You can also provide a factory instance programmatically. This will take precedence over the
+configuration:
 
-This is an advanced topic and beyond the scope of this document, but here is an overview:
+```java
+SslEngineFactory yourFactory = ...
+CqlSession session = CqlSession.builder()
+    .withSslEngineFactory(yourFactory)
+    .build();
+```
 
-1. add a dependency to Netty-tcnative: follow
-   [these instructions](http://netty.io/wiki/forked-tomcat-native.html);
-2. write your own implementation of the driver's `SslHandlerFactory`. This is a higher-level
-   abstraction than `SslEngineFactory`, that returns a Netty `SslHandler`. You'll build this handler
-   with Netty's own `SslContext`;
-3. write a subclass of `DefaultDriverContext` that overrides `buildSslHandlerFactory()` to return
-   the custom `SslHandlerFactory` you wrote in step 2. This will cause the driver to completely
-   ignore the `ssl-engine-factory` options in the configuration;
-4. write a subclass of `SessionBuilder` that overrides `buildContext` to return the custom context
-   that you wrote in step 3.
-5. build your session with your custom builder.
+There is also a convenience shortcut if you just want to use an existing `javax.net.ssl.SSLContext`:
 
-Note that this approach relies on the driver's [internal API](../../api_conventions).
+```java
+SSLContext sslContext = ...
+CqlSession session = CqlSession.builder()
+    .withSslContext(sslContext)
+    .build();
+```
+
+#### Netty-tcnative
+
+Netty supports native integration with OpenSSL / boringssl. The driver does not provide this out of
+the box, but with a bit of custom development it is fairly easy to add. See
+[SslHandlerFactory](../../developer/netty_pipeline/#ssl-handler-factory) in the developer docs.
+
 
 [dsClientToNode]: https://docs.datastax.com/en/cassandra/3.0/cassandra/configuration/secureSSLClientToNode.html
 [pickle]: http://thelastpickle.com/blog/2015/09/30/hardening-cassandra-step-by-step-part-1-server-to-server.html
 [JSSE system properties]: http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html#Customization
+[SessionBuilder.withSslEngineFactory]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withSslEngineFactory-com.datastax.oss.driver.api.core.ssl.SslEngineFactory-
+[SessionBuilder.withSslContext]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withSslContext-javax.net.ssl.SSLContext-

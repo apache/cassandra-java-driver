@@ -36,6 +36,7 @@ import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
 import com.datastax.oss.driver.internal.core.CassandraProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.DefaultConsistencyLevelRegistry;
@@ -44,6 +45,7 @@ import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.DefaultWriteCoalescer;
 import com.datastax.oss.driver.internal.core.channel.WriteCoalescer;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
+import com.datastax.oss.driver.internal.core.metadata.CloudTopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.DefaultTopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
@@ -78,6 +80,7 @@ import com.datastax.oss.protocol.internal.FrameCodec;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.buffer.ByteBuf;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -126,10 +129,7 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("timestampGenerator", this::buildTimestampGenerator, cycleDetector);
   private final LazyReference<AddressTranslator> addressTranslatorRef =
       new LazyReference<>("addressTranslator", this::buildAddressTranslator, cycleDetector);
-  private final LazyReference<Optional<AuthProvider>> authProviderRef =
-      new LazyReference<>("authProvider", this::buildAuthProvider, cycleDetector);
-  private final LazyReference<Optional<SslEngineFactory>> sslEngineFactoryRef =
-      new LazyReference<>("sslEngineFactory", this::buildSslEngineFactory, cycleDetector);
+  private final LazyReference<Optional<SslEngineFactory>> sslEngineFactoryRef;
 
   private final LazyReference<EventBus> eventBusRef =
       new LazyReference<>("eventBus", this::buildEventBus, cycleDetector);
@@ -185,6 +185,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final LazyReference<NodeStateListener> nodeStateListenerRef;
   private final LazyReference<SchemaChangeListener> schemaChangeListenerRef;
   private final LazyReference<RequestTracker> requestTrackerRef;
+  private final LazyReference<Optional<AuthProvider>> authProviderRef;
 
   private final DriverConfig config;
   private final DriverConfigLoader configLoader;
@@ -197,6 +198,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final Map<String, String> localDatacentersFromBuilder;
   private final Map<String, Predicate<Node>> nodeFiltersFromBuilder;
   private final ClassLoader classLoader;
+  private final InetSocketAddress cloudProxyAddress;
   private final LazyReference<RequestLogFormatter> requestLogFormatterRef =
       new LazyReference<>("requestLogFormatter", this::buildRequestLogFormatter, cycleDetector);
 
@@ -226,11 +228,23 @@ public class DefaultDriverContext implements InternalDriverContext {
             () -> buildSchemaChangeListener(schemaChangeListenerFromBuilder),
             cycleDetector);
     this.requestTrackerFromBuilder = programmaticArguments.getRequestTracker();
+
+    this.authProviderRef =
+        new LazyReference<>(
+            "authProvider",
+            () -> buildAuthProvider(programmaticArguments.getAuthProvider()),
+            cycleDetector);
     this.requestTrackerRef =
         new LazyReference<>(
             "requestTracker", () -> buildRequestTracker(requestTrackerFromBuilder), cycleDetector);
+    this.sslEngineFactoryRef =
+        new LazyReference<>(
+            "sslEngineFactory",
+            () -> buildSslEngineFactory(programmaticArguments.getSslEngineFactory()),
+            cycleDetector);
     this.nodeFiltersFromBuilder = programmaticArguments.getNodeFilters();
     this.classLoader = programmaticArguments.getClassLoader();
+    this.cloudProxyAddress = programmaticArguments.getCloudProxyAddress();
   }
 
   /**
@@ -335,43 +349,36 @@ public class DefaultDriverContext implements InternalDriverContext {
                         DefaultDriverOption.ADDRESS_TRANSLATOR_CLASS)));
   }
 
-  protected Optional<AuthProvider> buildAuthProvider() {
-    return Reflection.buildFromConfig(
-        this,
-        DefaultDriverOption.AUTH_PROVIDER_CLASS,
-        AuthProvider.class,
-        "com.datastax.oss.driver.internal.core.auth");
-  }
-
-  protected Optional<SslEngineFactory> buildSslEngineFactory() {
-    return Reflection.buildFromConfig(
-        this,
-        DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS,
-        SslEngineFactory.class,
-        "com.datastax.oss.driver.internal.core.ssl");
+  protected Optional<SslEngineFactory> buildSslEngineFactory(SslEngineFactory factoryFromBuilder) {
+    return (factoryFromBuilder != null)
+        ? Optional.of(factoryFromBuilder)
+        : Reflection.buildFromConfig(
+            this,
+            DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS,
+            SslEngineFactory.class,
+            "com.datastax.oss.driver.internal.core.ssl");
   }
 
   protected EventBus buildEventBus() {
     return new EventBus(getSessionName());
   }
 
-  @SuppressWarnings("unchecked")
   protected Compressor<ByteBuf> buildCompressor() {
     DriverExecutionProfile defaultProfile = getConfig().getDefaultProfile();
-    if (defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_COMPRESSION)) {
-      String name = defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION);
-      if (name.equalsIgnoreCase("lz4")) {
+    String name = defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none");
+    assert name != null : "should use default value";
+    switch (name.toLowerCase()) {
+      case "lz4":
         return new Lz4Compressor(this);
-      } else if (name.equalsIgnoreCase("snappy")) {
+      case "snappy":
         return new SnappyCompressor(this);
-      } else {
+      case "none":
+        return Compressor.none();
+      default:
         throw new IllegalArgumentException(
             String.format(
                 "Unsupported compression algorithm '%s' (from configuration option %s)",
                 name, DefaultDriverOption.PROTOCOL_COMPRESSION.getPath()));
-      }
-    } else {
-      return Compressor.none();
     }
   }
 
@@ -397,8 +404,8 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected Optional<SslHandlerFactory> buildSslHandlerFactory() {
-    // If a JDK-based factory was provided through the public API, syncWrapper it
-    return buildSslEngineFactory().map(JdkSslHandlerFactory::new);
+    // If a JDK-based factory was provided through the public API, wrap it
+    return getSslEngineFactory().map(JdkSslHandlerFactory::new);
 
     // For more advanced options (like using Netty's native OpenSSL support instead of the JDK),
     // extend DefaultDriverContext and override this method
@@ -413,7 +420,10 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected TopologyMonitor buildTopologyMonitor() {
-    return new DefaultTopologyMonitor(this);
+    if (cloudProxyAddress == null) {
+      return new DefaultTopologyMonitor(this);
+    }
+    return new CloudTopologyMonitor(this, cloudProxyAddress);
   }
 
   protected MetadataManager buildMetadataManager() {
@@ -433,8 +443,9 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected CodecRegistry buildCodecRegistry(String logPrefix, List<TypeCodec<?>> codecs) {
-    TypeCodec<?>[] array = new TypeCodec<?>[codecs.size()];
-    return new DefaultCodecRegistry(logPrefix, codecs.toArray(array));
+    MutableCodecRegistry registry = new DefaultCodecRegistry(logPrefix);
+    registry.register(codecs);
+    return registry;
   }
 
   protected SchemaQueriesFactory buildSchemaQueriesFactory() {
@@ -523,6 +534,16 @@ public class DefaultDriverContext implements InternalDriverContext {
                         String.format(
                             "Missing request tracker, check your configuration (%s)",
                             DefaultDriverOption.REQUEST_TRACKER_CLASS)));
+  }
+
+  protected Optional<AuthProvider> buildAuthProvider(AuthProvider authProviderFromBuilder) {
+    return (authProviderFromBuilder != null)
+        ? Optional.of(authProviderFromBuilder)
+        : Reflection.buildFromConfig(
+            this,
+            DefaultDriverOption.AUTH_PROVIDER_CLASS,
+            AuthProvider.class,
+            "com.datastax.oss.driver.internal.core.auth");
   }
 
   @NonNull

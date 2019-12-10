@@ -44,7 +44,7 @@ public class AsyncPagingIterableWrapper<SourceT, TargetT>
         new AbstractIterator<TargetT>() {
           @Override
           protected TargetT computeNext() {
-            return (sourceIterator.hasNext())
+            return sourceIterator.hasNext()
                 ? elementMapper.apply(sourceIterator.next())
                 : endOfData();
           }

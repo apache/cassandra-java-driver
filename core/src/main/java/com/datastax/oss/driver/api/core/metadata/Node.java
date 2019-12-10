@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.metadata;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.api.core.session.Session;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
@@ -30,6 +31,11 @@ import java.util.UUID;
  *
  * <p>This object is mutable, all of its properties may be updated at runtime to reflect the latest
  * state of the node.
+ *
+ * <p>Note that the default implementation returned by the driver uses <b>reference equality</b>. A
+ * {@link Session} will always return the same instance for a given {@link #getHostId() host id}.
+ * However, instances coming from different sessions will not be equal, even if they refer to the
+ * same host id.
  */
 public interface Node {
 
@@ -178,9 +184,26 @@ public interface Node {
    * The host ID that is assigned to this node by Cassandra. This value can be used to uniquely
    * identify a node even when the underling IP address changes.
    *
-   * <p>This information is always present.
+   * <p>This information is always present once the session has initialized. However, there is a
+   * narrow corner case where a driver client can observe a null value: if a {@link
+   * NodeStateListener} is registered, the <b>very first</b> {@code onUp} call will reference a node
+   * that has a null id (that node is the initial contact point, and the driver hasn't read host ids
+   * from {@code system.local} and {@code system.peers} yet). Beyond that point &mdash; including
+   * any other {@code onUp} call &mdash; the host id will always be present.
+   *
+   * <pre>
+   * CqlSession session = CqlSession.builder()
+   *     .withNodeStateListener(
+   *         new NodeStateListenerBase() {
+   *           &#64;Override
+   *           public void onUp(@NonNull Node node) {
+   *             // node.getHostId() == null for the first invocation only
+   *           }
+   *         })
+   *     .build();
+   * </pre>
    */
-  @NonNull
+  @Nullable
   UUID getHostId();
 
   /**

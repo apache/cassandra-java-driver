@@ -1,5 +1,25 @@
 ## Custom codecs
 
+### Quick overview
+
+Define custom Java to CQL mappings.
+
+* implement the [TypeCodec] interface.
+* registering a codec:
+  * at init time: [CqlSession.builder().addTypeCodecs()][SessionBuilder.addTypeCodecs]
+  * at runtime:
+  
+    ```java
+    MutableCodecRegistry registry =
+        (MutableCodecRegistry) session.getContext().getCodecRegistry();    
+    registry.register(myCodec);
+    ```
+* using a codec:
+  * if already registered: `row.get("columnName", MyCustomType.class)`
+  * otherwise: `row.get("columnName", myCodec)`
+
+-----
+
 Out of the box, the driver comes with [default CQL to Java mappings](../#cql-to-java-type-mapping).
 For example, if you read a CQL `text` column, it is mapped to its natural counterpart
 `java.lang.String`:
@@ -85,6 +105,18 @@ Once you have your codec, register it when building your session:
 CqlSession session = CqlSession.builder()
     .addTypeCodecs(new CqlIntToStringCodec())
     .build();
+```
+
+You may also add codecs to an existing session at runtime:
+
+```java
+// The cast is required for backward compatibility reasons (registry mutability was introduced in
+// 4.3.0). It is safe as long as you didn't hack the driver internals to plug a custom registry
+// implementation.
+MutableCodecRegistry registry =
+    (MutableCodecRegistry) session.getContext().getCodecRegistry();
+
+registry.register(new CqlIntToStringCodec());
 ```
 
 You can now use the new mapping in your code:
@@ -223,6 +255,7 @@ private static String formatRow(Row row) {
 }
 ```
 
-[CodecRegistry]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html
-[GenericType]:   https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
-[TypeCodec]:     https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html
+[CodecRegistry]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html
+[GenericType]:   https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
+[TypeCodec]:     https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html
+[SessionBuilder.addTypeCodecs]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addTypeCodecs-com.datastax.oss.driver.api.core.type.codec.TypeCodec...-

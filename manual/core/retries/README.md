@@ -1,5 +1,16 @@
 ## Retries
 
+### Quick overview
+
+What to do when a request failed on a node: retry (same or other node), rethrow, or ignore.
+
+* `advanced.retry-policy` in the configuration. Default policy retries at most once, in cases that
+  have a high chance of success; you can also write your own.
+* can have per-profile policies. 
+* only kicks in if the query is idempotent.
+
+-----
+
 When a query fails, it sometimes makes sense to retry it: the error might be temporary, or the query
 might work on a different node. The driver uses a *retry policy* to determine when and how to retry.
 It is defined in the [configuration](../configuration/):
@@ -163,20 +174,20 @@ configuration).
 Each request uses its declared profile's policy. If it doesn't declare any profile, or if the
 profile doesn't have a dedicated policy, then the default profile's policy is used.
 
-[AllNodesFailedException]:   https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/AllNodesFailedException.html
-[ClosedConnectionException]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/connection/ClosedConnectionException.html
-[DriverTimeoutException]:    https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/DriverTimeoutException.html
-[FunctionFailureException]:  https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/servererrors/FunctionFailureException.html
-[HeartbeatException]:        https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/connection/HeartbeatException.html
-[ProtocolError]:             https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/servererrors/ProtocolError.html
-[OverloadedException]:       https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/servererrors/OverloadedException.html
-[QueryValidationException]:  https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/servererrors/QueryValidationException.html
-[ReadFailureException]:      https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/servererrors/ReadFailureException.html
-[ReadTimeoutException]:      https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/servererrors/ReadTimeoutException.html
-[RetryDecision]:             https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/retry/RetryDecision.html
-[RetryPolicy]:               https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/retry/RetryPolicy.html
-[ServerError]:               https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/servererrors/ServerError.html
-[TruncateException]:         https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/servererrors/TruncateException.html
-[UnavailableException]:      https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/servererrors/UnavailableException.html
-[WriteFailureException]:     https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/servererrors/WriteFailureException.html
-[WriteTimeoutException]:     https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/servererrors/WriteTimeoutException.html
+[AllNodesFailedException]:   https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/AllNodesFailedException.html
+[ClosedConnectionException]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/connection/ClosedConnectionException.html
+[DriverTimeoutException]:    https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/DriverTimeoutException.html
+[FunctionFailureException]:  https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/servererrors/FunctionFailureException.html
+[HeartbeatException]:        https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/connection/HeartbeatException.html
+[ProtocolError]:             https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/servererrors/ProtocolError.html
+[OverloadedException]:       https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/servererrors/OverloadedException.html
+[QueryValidationException]:  https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/servererrors/QueryValidationException.html
+[ReadFailureException]:      https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/servererrors/ReadFailureException.html
+[ReadTimeoutException]:      https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/servererrors/ReadTimeoutException.html
+[RetryDecision]:             https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/retry/RetryDecision.html
+[RetryPolicy]:               https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/retry/RetryPolicy.html
+[ServerError]:               https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/servererrors/ServerError.html
+[TruncateException]:         https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/servererrors/TruncateException.html
+[UnavailableException]:      https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/servererrors/UnavailableException.html
+[WriteFailureException]:     https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/servererrors/WriteFailureException.html
+[WriteTimeoutException]:     https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/servererrors/WriteTimeoutException.html

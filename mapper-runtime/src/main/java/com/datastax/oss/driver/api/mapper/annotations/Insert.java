@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.mapper.annotations;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
@@ -91,6 +92,12 @@ import java.util.function.UnaryOperator;
  * &#64;Insert
  * ResultSet save(Product product);
  *       </pre>
+ *   <li>a {@link BoundStatement} This is intended for cases where you intend to execute this
+ *       statement later or in a batch:
+ *       <pre>
+ * &#64;Insert
+ * BoundStatement save(Product product);
+ *      </pre>
  *   <li>a {@link CompletionStage} or {@link CompletableFuture} of any of the above. The mapper will
  *       execute the query asynchronously.
  *       <pre>
@@ -117,7 +124,7 @@ import java.util.function.UnaryOperator;
  * entity class and the naming convention).
  */
 @Target(ElementType.METHOD)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Insert {
   /** Whether to append an IF NOT EXISTS clause at the end of the generated INSERT query. */
   boolean ifNotExists() default false;

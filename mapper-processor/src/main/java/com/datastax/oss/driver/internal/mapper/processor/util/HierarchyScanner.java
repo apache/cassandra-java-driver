@@ -140,8 +140,8 @@ public class HierarchyScanner {
       }
     }
 
-    boolean atHighest(TypeMirror mirror) {
-      return highestAncestor != null && highestAncestor.equals(mirror);
+    boolean atHighest(TypeMirror mirror, ProcessorContext context) {
+      return highestAncestor != null && context.getTypeUtils().isSameType(mirror, highestAncestor);
     }
   }
 
@@ -171,14 +171,14 @@ public class HierarchyScanner {
     }
 
     Set<TypeMirror> interfacesToScan = Collections.emptySet();
-    boolean atHighestClass = hierarchyScanStrategy.atHighest(classElement.asType());
+    boolean atHighestClass = hierarchyScanStrategy.atHighest(classElement.asType(), context);
     while (!atHighestClass) {
       // add super class
       TypeMirror superClass = classElement.getSuperclass();
       TypeElement superClassElement = null;
       if (superClass.getKind() == TypeKind.DECLARED) {
         superClassElement = (TypeElement) context.getTypeUtils().asElement(superClass);
-        atHighestClass = hierarchyScanStrategy.atHighest(superClass);
+        atHighestClass = hierarchyScanStrategy.atHighest(superClass, context);
         if (!atHighestClass || hierarchyScanStrategy.includeHighestAncestor) {
           if (!typeConsumer.apply(superClass)) {
             return;
@@ -228,7 +228,7 @@ public class HierarchyScanner {
         TypeElement interfaceElement =
             (TypeElement) context.getTypeUtils().asElement(interfaceType);
         // skip if at highest ancestor.
-        boolean atHighest = hierarchyScanStrategy.atHighest(interfaceType);
+        boolean atHighest = hierarchyScanStrategy.atHighest(interfaceType, context);
         if (!atHighest || hierarchyScanStrategy.includeHighestAncestor) {
           if (!typeConsumer.apply(interfaceType)) {
             return;

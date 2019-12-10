@@ -1,5 +1,16 @@
 ## Address resolution
 
+### Quick overview
+
+The driver uses `system.peers.rpc-address` to connect to newly discovered nodes. For special network
+topologies, an address translation component can be plugged in.
+
+* `advanced.address-translator` in the configuration.
+* none by default. Also available: EC2-specific (for deployments that span multiple regions), or
+  write your own.
+
+-----
+
 Each node in the Cassandra cluster is uniquely identified by an IP address that the driver will use
 to establish connections.
 
@@ -96,7 +107,7 @@ to configure your Cassandra nodes to broadcast public RPC addresses.
 However, this is not always the most cost-effective: if a client and a node are in the same region, it would be cheaper
 to connect over the private IP. Ideally, you'd want to pick the best address in each case.
 
-The driver provides [Ec2MultiRegionAddressTranslator] which does exactly that.  To use it, specify the following in
+The driver provides `Ec2MultiRegionAddressTranslator` which does exactly that.  To use it, specify the following in
 the [configuration](../configuration/):
 
 ```
@@ -113,8 +124,7 @@ Cassandra node:
 domain name of the target instance. Then it performs a forward DNS lookup of the domain name; the EC2 DNS does the
 private/public switch automatically based on location).
 
-[AddressTranslator]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/addresstranslation/AddressTranslator.html
-[Ec2MultiRegionAddressTranslator]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/internal/core/addresstranslation/Ec2MultiRegionAddressTranslator.html
+[AddressTranslator]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/addresstranslation/AddressTranslator.html
 
 [cassandra.yaml]:        https://docs.datastax.com/en/cassandra/3.x/cassandra/configuration/configCassandra_yaml.html
 [rpc_address]:           https://docs.datastax.com/en/cassandra/3.x/cassandra/configuration/configCassandra_yaml.html?scroll=configCassandra_yaml__rpc_address

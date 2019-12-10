@@ -94,6 +94,12 @@ public class SetCodecTest extends CodecTestBase<Set<Integer>> {
   }
 
   @Test
+  public void should_decode_set_with_null_elements() {
+    when(elementCodec.decode(Bytes.fromHexString("0x01"), ProtocolVersion.DEFAULT)).thenReturn(1);
+    assertThat(decode("0x" + "00000002" + "0000000101" + "FFFFFFFF")).containsExactly(1, null);
+  }
+
+  @Test
   public void should_format_null_set() {
     assertThat(format(null)).isEqualTo("NULL");
   }

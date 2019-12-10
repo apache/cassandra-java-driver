@@ -1,5 +1,16 @@
 ## Request tracker
 
+### Quick overview
+
+Callback that gets invoked for every request: success or error, globally and for every tried node.
+
+* `advanced.request-tracker` in the configuration; defaults to none, also available: request logger,
+  or write your own.
+* or programmatically:
+  [CqlSession.builder().withRequestTracker()][SessionBuilder.withRequestTracker].
+
+-----
+
 The request tracker is a session-wide component that gets notified of the latency and outcome of
 every application request. The driver comes with an optional implementation that logs requests.
 
@@ -106,4 +117,5 @@ all FROM users WHERE user_id=? [v0=42]
 com.datastax.oss.driver.api.core.servererrors.InvalidQueryException: Undefined column name all
 ```
 
-[RequestTracker]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/tracker/RequestTracker.html
+[RequestTracker]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/tracker/RequestTracker.html
+[SessionBuilder.withRequestTracker]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withRequestTracker-com.datastax.oss.driver.api.core.tracker.RequestTracker-

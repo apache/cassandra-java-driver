@@ -45,6 +45,7 @@ public class SimpleJsonParser {
     this.input = input;
   }
 
+  @SuppressWarnings("MixedMutabilityReturnType")
   public static List<String> parseStringList(String input) {
     if (input == null || input.isEmpty()) {
       return Collections.emptyList();
@@ -73,6 +74,7 @@ public class SimpleJsonParser {
     }
   }
 
+  @SuppressWarnings("MixedMutabilityReturnType")
   public static Map<String, String> parseStringMap(String input) {
     if (input == null || input.isEmpty()) {
       return Collections.emptyMap();

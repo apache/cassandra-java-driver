@@ -48,7 +48,24 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
   private final LoadingCache<CacheKey, TypeCodec<?>> cache;
 
   /**
-   * Creates a new instance, with some amount of control over the cache behavior.
+   * Creates a new instance that accepts user codecs, with the default built-in codecs and the
+   * default cache behavior.
+   */
+  public DefaultCodecRegistry(@NonNull String logPrefix) {
+    this(logPrefix, CodecRegistryConstants.PRIMITIVE_CODECS);
+  }
+
+  /**
+   * Creates a new instance that accepts user codecs, with the given built-in codecs and the default
+   * cache behavior.
+   */
+  public DefaultCodecRegistry(@NonNull String logPrefix, @NonNull TypeCodec<?>... primitiveCodecs) {
+    this(logPrefix, 0, null, 0, null, primitiveCodecs);
+  }
+
+  /**
+   * Same as {@link #DefaultCodecRegistry(String, TypeCodec[])}, but with some amount of control
+   * over cache behavior.
    *
    * <p>Giving full access to the Guava cache API would be too much work, since it is shaded and we
    * have to wrap everything. If you need something that's not available here, it's easy enough to
@@ -61,10 +78,9 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
       @Nullable BiFunction<CacheKey, TypeCodec<?>, Integer> cacheWeigher,
       int maximumCacheWeight,
       @Nullable BiConsumer<CacheKey, TypeCodec<?>> cacheRemovalListener,
-      @NonNull TypeCodec<?>[] primitiveCodecs,
-      @NonNull TypeCodec<?>[] userCodecs) {
+      @NonNull TypeCodec<?>... primitiveCodecs) {
 
-    super(logPrefix, primitiveCodecs, userCodecs);
+    super(logPrefix, primitiveCodecs);
     CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder();
     if (initialCacheCapacity > 0) {
       cacheBuilder.initialCapacity(initialCacheCapacity);
@@ -91,17 +107,6 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
     } else {
       this.cache = cacheBuilder.build(cacheLoader);
     }
-  }
-
-  public DefaultCodecRegistry(@NonNull String logPrefix, @NonNull TypeCodec<?>... userCodecs) {
-    this(logPrefix, CodecRegistryConstants.PRIMITIVE_CODECS, userCodecs);
-  }
-
-  public DefaultCodecRegistry(
-      @NonNull String logPrefix,
-      @NonNull TypeCodec<?>[] primitiveCodecs,
-      @NonNull TypeCodec<?>... userCodecs) {
-    this(logPrefix, 0, null, 0, null, primitiveCodecs, userCodecs);
   }
 
   @Override

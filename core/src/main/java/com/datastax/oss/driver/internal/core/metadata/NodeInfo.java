@@ -35,7 +35,12 @@ import java.util.UUID;
  */
 public interface NodeInfo {
 
-  /** The endpoint that the driver will use to connect to the node. */
+  /**
+   * The endpoint that the driver will use to connect to the node.
+   *
+   * <p>This information is required; the driver will not function properly if this method returns
+   * {@code null}.
+   */
   @NonNull
   EndPoint getEndPoint();
 
@@ -124,6 +129,9 @@ public interface NodeInfo {
   /**
    * An additional map of free-form properties, that can be used by custom implementations. They
    * will be copied as-is into {@link Node#getExtras()}.
+   *
+   * <p>This is not required; if you don't have anything specific to report here, it can be null or
+   * empty.
    */
   @Nullable
   Map<String, Object> getExtras();
@@ -138,7 +146,14 @@ public interface NodeInfo {
   @NonNull
   UUID getHostId();
 
-  /** The current version that is associated with the nodes schema. */
+  /**
+   * The current version that is associated with the node's schema.
+   *
+   * <p>This is not required; the driver reports it in {@link Node#getSchemaVersion()}, but for
+   * informational purposes only. It is not used anywhere internally (schema agreement is checked
+   * with {@link TopologyMonitor#checkSchemaAgreement()}, which by default queries system tables
+   * directly, not this field).
+   */
   @Nullable
   UUID getSchemaVersion();
 }

@@ -41,5 +41,5 @@ import java.lang.annotation.Target;
  * @see DaoFactory
  */
 @Target(ElementType.PARAMETER)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface DaoTable {}

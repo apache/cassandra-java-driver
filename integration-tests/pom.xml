@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
     Copyright DataStax, Inc.
@@ -17,54 +18,61 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.1.1-SNAPSHOT</version>
+    <version>4.4.0-SNAPSHOT</version>
   </parent>
-
   <artifactId>java-driver-integration-tests</artifactId>
   <packaging>jar</packaging>
-
   <name>DataStax Java driver for Apache Cassandra(R) - integration tests</name>
-
   <properties>
     <skipITs>false</skipITs>
     <skipParallelizableITs>${skipITs}</skipParallelizableITs>
     <skipSerialITs>${skipITs}</skipSerialITs>
     <skipIsolatedITs>${skipITs}</skipIsolatedITs>
   </properties>
-
   <dependencies>
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-test-infra</artifactId>
-      <version>${project.parent.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-query-builder</artifactId>
-      <version>${project.parent.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-mapper-processor</artifactId>
-      <version>${project.parent.version}</version>
       <scope>test</scope>
       <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-mapper-runtime</artifactId>
-      <version>${project.parent.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datastax.oss</groupId>
+      <artifactId>java-driver-core</artifactId>
+      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.github.spotbugs</groupId>
       <artifactId>spotbugs-annotations</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -117,8 +125,12 @@
       <artifactId>org.apache.felix.framework</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.github.tomakehurst</groupId>
+      <artifactId>wiremock</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
-
   <build>
     <plugins>
       <plugin>
@@ -150,6 +162,7 @@
             <guava.version>${guava.version}</guava.version>
             <hdrhistogram.version>${hdrhistogram.version}</hdrhistogram.version>
             <jackson.version>${jackson.version}</jackson.version>
+            <jackson-databind.version>${jackson-databind.version}</jackson-databind.version>
             <logback.version>${logback.version}</logback.version>
             <lz4.version>${lz4.version}</lz4.version>
             <metrics.version>${metrics.version}</metrics.version>
@@ -174,6 +187,7 @@
             <guava.version>${guava.version}</guava.version>
             <hdrhistogram.version>${hdrhistogram.version}</hdrhistogram.version>
             <jackson.version>${jackson.version}</jackson.version>
+            <jackson-databind.version>${jackson-databind.version}</jackson-databind.version>
             <logback.version>${logback.version}</logback.version>
             <lz4.version>${lz4.version}</lz4.version>
             <metrics.version>${metrics.version}</metrics.version>
@@ -208,10 +222,7 @@
               <goal>verify</goal>
             </goals>
             <configuration>
-              <excludedGroups>
-                com.datastax.oss.driver.categories.ParallelizableTests,
-                com.datastax.oss.driver.categories.IsolatedTests
-              </excludedGroups>
+              <excludedGroups>com.datastax.oss.driver.categories.ParallelizableTests, com.datastax.oss.driver.categories.IsolatedTests</excludedGroups>
               <testFailureIgnore>true</testFailureIgnore>
               <reportNameSuffix>serial</reportNameSuffix>
               <skipITs>${skipSerialITs}</skipITs>

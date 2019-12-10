@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
+import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
@@ -45,8 +46,20 @@ import java.util.concurrent.CompletionStage;
  */
 public interface ExecutionInfo {
 
-  /** The statement that was executed. */
+  /** @return The {@link Request} that was executed. */
   @NonNull
+  default Request getRequest() {
+    return getStatement();
+  }
+
+  /**
+   * @return The {@link Request} that was executed, if it can be cast to {@link Statement}.
+   * @deprecated Use {@link #getRequest()} instead.
+   * @throws ClassCastException If the request that was executed cannot be cast to {@link
+   *     Statement}.
+   */
+  @NonNull
+  @Deprecated
   Statement<?> getStatement();
 
   /**

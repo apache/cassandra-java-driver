@@ -2,8 +2,90 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.2.0 (in progress)
+### 4.4.0 (in progress)
 
+- [bug] JAVA-2556: Make ExecutionInfo compatible with any Request type
+- [new feature] JAVA-2532: Add BoundStatement ReturnType for insert, update, and delete DAO methods
+- [improvement] JAVA-2107: Add XML formatting plugin
+- [bug] JAVA-2527: Allow AllNodesFailedException to accept more than one error per node
+- [improvement] JAVA-2546: Abort schema refresh if a query fails
+
+### 4.3.1
+
+- [bug] JAVA-2557: Accept any negative length when decoding elements of tuples and UDTs
+
+### 4.3.0
+
+- [improvement] JAVA-2497: Ensure nodes and exceptions are serializable
+- [bug] JAVA-2464: Fix initial schema refresh when reconnect-on-init is enabled
+- [improvement] JAVA-2516: Enable hostname validation with Cloud
+- [documentation]: JAVA-2460: Document how to determine the local DC
+- [improvement] JAVA-2476: Improve error message when codec registry inspects a collection with a
+  null element
+- [documentation] JAVA-2509: Mention file-based approach for Cloud configuration in the manual
+- [improvement] JAVA-2447: Mention programmatic local DC method in Default LBP error message
+- [improvement] JAVA-2459: Improve extensibility of existing load balancing policies
+- [documentation] JAVA-2428: Add developer docs
+- [documentation] JAVA-2503: Migrate Cloud "getting started" page to driver manual
+- [improvement] JAVA-2484: Add errors for cloud misconfiguration
+- [improvement] JAVA-2490: Allow to read the secure bundle from an InputStream
+- [new feature] JAVA-2478: Allow to provide the secure bundle via URL
+- [new feature] JAVA-2356: Support for DataStax Cloud API
+- [improvement] JAVA-2407: Improve handling of logback configuration files in IDEs
+- [improvement] JAVA-2434: Add support for custom cipher suites and host name validation to ProgrammaticSslEngineFactory
+- [improvement] JAVA-2480: Upgrade Jackson to 2.10.0
+- [documentation] JAVA-2505: Annotate Node.getHostId() as nullable
+- [improvement] JAVA-1708: Support DSE "everywhere" replication strategy
+- [improvement] JAVA-2471: Consider DSE version when parsing the schema
+- [improvement] JAVA-2444: Add method setRoutingKey(ByteBuffer...) to StatementBuilder
+- [improvement] JAVA-2398: Improve support for optional dependencies in OSGi
+- [improvement] JAVA-2452: Allow "none" as a compression option
+- [improvement] JAVA-2419: Allow registration of user codecs at runtime
+- [documentation] JAVA-2384: Add quick overview section to each manual page
+- [documentation] JAVA-2412: Cover DDL query debouncing in FAQ and upgrade guide
+- [documentation] JAVA-2416: Update paging section in the manual
+- [improvement] JAVA-2402: Add setTracing(boolean) to StatementBuilder
+- [bug] JAVA-2466: Set idempotence to null in BatchStatement.newInstance
+
+### 4.2.2
+
+- [bug] JAVA-2475: Fix message size when query string contains Unicode surrogates
+- [bug] JAVA-2470: Fix Session.OSS_DRIVER_COORDINATES for shaded JAR
+
+### 4.2.1
+
+- [bug] JAVA-2454: Handle "empty" CQL type while parsing schema
+- [improvement] JAVA-2455: Improve logging of schema refresh errors
+- [documentation] JAVA-2429: Document expected types on DefaultDriverOption
+- [documentation] JAVA-2426: Fix month pattern in CqlDuration documentation
+- [bug] JAVA-2451: Make zero a valid estimated size for PagingIterableSpliterator
+- [bug] JAVA-2443: Compute prepared statement PK indices for protocol v3
+- [bug] JAVA-2430: Use variable metadata to infer the routing keyspace on bound statements
+
+### 4.2.0
+
+- [improvement] JAVA-2390: Add methods to set the SSL engine factory programmatically
+- [improvement] JAVA-2379: Fail fast if prepared id doesn't match when repreparing on the fly
+- [bug] JAVA-2375: Use per-request keyspace when repreparing on the fly
+- [improvement] JAVA-2370: Remove auto-service plugin from mapper processor
+- [improvement] JAVA-2377: Add a config option to make driver threads daemon
+- [improvement] JAVA-2371: Handle null elements in collections on the decode path
+- [improvement] JAVA-2351: Add a driver example for the object mapper
+- [bug] JAVA-2323: Handle restart of a node with same host_id but a different address
+- [improvement] JAVA-2303: Ignore peer rows matching the control host's RPC address
+- [improvement] JAVA-2236: Add methods to set the auth provider programmatically
+- [improvement] JAVA-2369: Change mapper annotations retention to runtime
+- [improvement] JAVA-2365: Redeclare default constants when an enum is abstracted behind an
+  interface
+- [improvement] JAVA-2302: Better target mapper errors and warnings for inherited methods
+- [improvement] JAVA-2336: Expose byte utility methods in the public API 
+- [improvement] JAVA-2338: Revisit toString() for data container types
+- [bug] JAVA-2367: Fix column names in EntityHelper.updateByPrimaryKey
+- [bug] JAVA-2358: Fix list of reserved CQL keywords
+- [improvement] JAVA-2359: Allow default keyspace at the mapper level
+- [improvement] JAVA-2306: Clear security tokens from memory immediately after use
+- [improvement] JAVA-2320: Expose more attributes on mapper Select for individual query clauses
+- [bug] JAVA-2332: Destroy connection pool when a node gets removed
 - [bug] JAVA-2324: Add support for primitive shorts in mapper
 - [bug] JAVA-2325: Allow "is" prefix for boolean getters in mapped entities
 - [improvement] JAVA-2308: Add customWhereClause to `@Delete`
@@ -11,6 +93,7 @@
 - [bug] JAVA-2312: Handle UDTs with names that clash with collection types
 - [improvement] JAVA-2307: Improve `@Select` and `@Delete` by not requiring full primary key
 - [improvement] JAVA-2315: Improve extensibility of session builder
+- [bug] JAVA-2394: BaseCcmRule DseRequirement max should use DseVersion, not Cassandra version
 
 ### 4.1.0
 

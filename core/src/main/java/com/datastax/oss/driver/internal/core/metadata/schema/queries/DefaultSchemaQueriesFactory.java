@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.NodeProperties;
 import java.util.concurrent.CompletableFuture;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -81,6 +82,19 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
     } else if (version.compareTo(Version.V4_0_0) < 0) {
       return new Cassandra3SchemaQueries(channel, refreshFuture, config, logPrefix);
     } else {
+
+      // A bit of custom logic for DSE 6.0.x.  These versions report a Cassandra version of 4.0.0
+      // but don't have support for system_virtual_schema tables supported by that version.  To
+      // compensate we return the Cassandra 3 schema queries here for those versions
+      if (node.getExtras().containsKey(NodeProperties.DSE_VERSION)) {
+
+        Object dseVersionObj = node.getExtras().get(NodeProperties.DSE_VERSION);
+        assert (dseVersionObj instanceof Version);
+        if (((Version) dseVersionObj).compareTo(Version.V6_7_0) < 0) {
+
+          return new Cassandra3SchemaQueries(channel, refreshFuture, config, logPrefix);
+        }
+      }
       return new Cassandra4SchemaQueries(channel, refreshFuture, config, logPrefix);
     }
   }

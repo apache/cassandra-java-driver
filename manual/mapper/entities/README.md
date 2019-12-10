@@ -1,5 +1,23 @@
 ## Entities
 
+### Quick overview
+
+POJO annotated with [@Entity], must expose a no-arg constructor.
+
+* class-level annotations:
+  * [@NamingStrategy]
+  * [@CqlName]
+  * [@HierarchyScanStrategy]
+* field/method-level annotations:
+  * [@PartitionKey], [@ClusteringColumn]
+  * [@Computed]
+  * [@Transient]
+  * [@CqlName]
+* can inherit annotated fields/methods and [@NamingStrategy]. Only use [@Entity] on concrete
+  classes.
+
+-----
+
 An entity is a Java class that will be mapped to a Cassandra table or [UDT](../../core/udts).
 Entities are used as arguments or return types of [DAO](../daos/) methods; they can also be nested
 inside other entities (to map UDT columns).
@@ -251,6 +269,11 @@ i.e.:
 private transient int notAColumn;
 ```
 
+#### Custom column name
+
+Override the CQL name manually with [@CqlName], see [User-provided names](#user-provided-names)
+above.
+
 ### Default keyspace
 
 You can specify a default keyspace to use when doing operations on a given entity:
@@ -445,21 +468,21 @@ the same level.
 
 To control how the class hierarchy is scanned, annotate classes with [@HierarchyScanStrategy].
 
-[@ClusteringColumn]:    https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
-[@CqlName]:             https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/CqlName.html
-[@Dao]:                 https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/Dao.html
-[@Entity]:              https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/Entity.html
-[NameConverter]:        https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/entity/naming/NameConverter.html
-[NamingConvention]:     https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/entity/naming/NamingConvention.html
-[@NamingStrategy]:      https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/NamingStrategy.html
-[@PartitionKey]:        https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
-[@Computed]:            https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/Computed.html
-[@Select]:              https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/Select.html
-[@Insert]:              https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/Insert.html
-[@Update]:              https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/Update.html
-[@GetEntity]:           https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/GetEntity.html
-[@Query]:               https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/Query.html
+[@ClusteringColumn]:    https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
+[@CqlName]:             https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/CqlName.html
+[@Dao]:                 https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/Dao.html
+[@Entity]:              https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/Entity.html
+[NameConverter]:        https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/entity/naming/NameConverter.html
+[NamingConvention]:     https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/entity/naming/NamingConvention.html
+[@NamingStrategy]:      https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/NamingStrategy.html
+[@PartitionKey]:        https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
+[@Computed]:            https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/Computed.html
+[@Select]:              https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/Select.html
+[@Insert]:              https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/Insert.html
+[@Update]:              https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/Update.html
+[@GetEntity]:           https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/GetEntity.html
+[@Query]:               https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/Query.html
 [aliases]:              http://cassandra.apache.org/doc/latest/cql/dml.html?#aliases
-[@Transient]:           https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/Transient.html
-[@TransientProperties]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/TransientProperties.html
-[@HierarchyScanStrategy]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/HierarchyScanStrategy.html
+[@Transient]:           https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/Transient.html
+[@TransientProperties]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/TransientProperties.html
+[@HierarchyScanStrategy]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/HierarchyScanStrategy.html

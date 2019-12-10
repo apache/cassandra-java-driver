@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.insert.InsertInto;
 import com.datastax.oss.driver.api.querybuilder.insert.RegularInsert;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
-import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.squareup.javapoet.MethodSpec;
 import java.util.Optional;
 import javax.lang.model.element.Modifier;
@@ -28,10 +27,7 @@ public class EntityHelperInsertMethodGenerator implements MethodGenerator {
 
   private final EntityDefinition entityDefinition;
 
-  public EntityHelperInsertMethodGenerator(
-      EntityDefinition entityDefinition,
-      EntityHelperGenerator enclosingClass,
-      ProcessorContext context) {
+  public EntityHelperInsertMethodGenerator(EntityDefinition entityDefinition) {
     this.entityDefinition = entityDefinition;
   }
 

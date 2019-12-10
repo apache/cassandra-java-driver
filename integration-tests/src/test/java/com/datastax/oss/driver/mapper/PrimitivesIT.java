@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
+import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -43,13 +44,15 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
+@CassandraRequirement(min = "2.2", description = "smallint is a reserved keyword in 2.1")
 public class PrimitivesIT {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
@@ -57,7 +60,7 @@ public class PrimitivesIT {
 
   @BeforeClass
   public static void setup() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     session.execute(
         SimpleStatement.builder(
                 "CREATE TABLE primitives_entity("
@@ -68,14 +71,14 @@ public class PrimitivesIT {
                     + "long_col bigint, "
                     + "float_col float,"
                     + "double_col double)")
-            .setExecutionProfile(sessionRule.slowProfile())
+            .setExecutionProfile(SESSION_RULE.slowProfile())
             .build());
     mapper = new PrimitivesIT_TestMapperBuilder(session).build();
   }
 
   @Test
   public void should_not_include_computed_values_in_insert() {
-    PrimitivesDao primitivesDao = mapper.primitivesDao(sessionRule.keyspace());
+    PrimitivesDao primitivesDao = mapper.primitivesDao(SESSION_RULE.keyspace());
 
     PrimitivesEntity expected = new PrimitivesEntity(0, true, (byte) 2, (short) 3, 4L, 5.0f, 6.0d);
     primitivesDao.save(expected);

@@ -1,7 +1,15 @@
 ## Query idempotence
 
+### Quick overview
+
 A request is *idempotent* if executing it multiple times leaves the database in the same state as
 executing it only once.
+
+* `basic.request.default-idempotence` in the configuration (defaults to false).
+* can be overridden per statement [Statement.setIdempotent] or [StatementBuilder.setIdempotence].
+* retries and speculative executions only happen for idempotent statements.
+
+-----
 
 For example:
 
@@ -37,7 +45,7 @@ SimpleStatement statement =
 ```
 
 If you don't, they default to the value defined in the [configuration](../configuration/) by the
-`request.default-idempotence` option; out of the box, it is set to `false`.
+`basic.request.default-idempotence` option; out of the box, it is set to `false`.
 
 When you prepare a statement, its idempotence carries over to bound statements:
 
@@ -51,3 +59,6 @@ assert bs.isIdempotent();
 
 The query builder tries to infer idempotence automatically; refer to
 [its manual](../../query_builder/idempotence/) for more details.
+
+[Statement.setIdempotent]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/Statement.html#setIdempotent-java.lang.Boolean-
+[StatementBuilder.setIdempotence]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/StatementBuilder.html#setIdempotence-java.lang.Boolean-

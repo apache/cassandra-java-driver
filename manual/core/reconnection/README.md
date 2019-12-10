@@ -1,5 +1,15 @@
 ## Reconnection
 
+### Quick overview
+
+When a connection is lost, try to reestablish it at configured intervals.
+
+* `advanced.reconnection-policy` in the configuration; defaults to exponential backoff, also
+  available: constant delay, write your own.
+* applies to connection pools and the control connection.
+
+-----
+
 If the driver loses a connection to a node, it tries to re-establish it according to a configurable
 policy. This is used in two places:
 
@@ -56,7 +66,7 @@ is the exponential one with the default values, and the control connection is in
 * [t = 3] node2's pool tries to open the last missing connection, which succeeds. The pool is back
   to its expected size, node2's reconnection stops. 
 
-[ConstantReconnectionPolicy]:    https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/internal/core/connection/ConstantReconnectionPolicy.html
-[DriverContext]:                 https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/context/DriverContext.html
-[ExponentialReconnectionPolicy]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/internal/core/connection/ExponentialReconnectionPolicy.html
-[ReconnectionPolicy]:            https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/connection/ReconnectionPolicy.html
+[ConstantReconnectionPolicy]:    https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/internal/core/connection/ConstantReconnectionPolicy.html
+[DriverContext]:                 https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/context/DriverContext.html
+[ExponentialReconnectionPolicy]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/internal/core/connection/ExponentialReconnectionPolicy.html
+[ReconnectionPolicy]:            https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/connection/ReconnectionPolicy.html

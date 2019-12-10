@@ -26,6 +26,8 @@ public class DaoReturnType {
   public static final DaoReturnType ROW = new DaoReturnType(DefaultDaoReturnTypeKind.ROW);
   public static final DaoReturnType RESULT_SET =
       new DaoReturnType(DefaultDaoReturnTypeKind.RESULT_SET);
+  public static final DaoReturnType BOUND_STATEMENT =
+      new DaoReturnType(DefaultDaoReturnTypeKind.BOUND_STATEMENT);
   public static final DaoReturnType FUTURE_OF_VOID =
       new DaoReturnType(DefaultDaoReturnTypeKind.FUTURE_OF_VOID);
   public static final DaoReturnType FUTURE_OF_BOOLEAN =

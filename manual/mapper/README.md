@@ -12,7 +12,7 @@ It is published as two artifacts:
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-mapper-processor</artifactId>
-      <version>4.1.0</version>
+      <version>${driver.version}</version>
     </dependency>
     ```
     
@@ -25,7 +25,7 @@ It is published as two artifacts:
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-mapper-runtime</artifactId>
-      <version>4.1.0</version>
+      <version>${driver.version}</version>
     </dependency>
     ```
 

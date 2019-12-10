@@ -1,5 +1,15 @@
 ## Mapper interface
 
+### Quick overview
+
+Interface annotated with [@Mapper], entry point to mapper features.
+
+* a corresponding builder gets generated (default: `[YourInterfacesName]Builder`).
+* defines [@DaoFactory] methods that provide DAO instances. They can be parameterized by keyspace
+  and/or table. 
+
+-----
+
 The mapper interface is the top-level entry point to mapping features. It wraps a core driver
 session, and acts as a factory of [DAO](../daos/) objects that will be used to execute requests.
 
@@ -81,6 +91,15 @@ ProductDao productDao(@DaoKeyspace String keyspace);
 ProductDao productDao(@DaoTable CqlIdentifier table);
 ```
 
+You can also specify a default keyspace when building the mapper, it will be used for all methods
+that don't have a `@DaoKeyspace` parameter:
+
+```java
+InventoryMapper inventoryMapper = new InventoryMapperBuilder(session)
+    .withDefaultKeyspace("keyspace1")
+    .build();
+```
+
 The mapper maintains an interface cache. Calling a factory method with the same arguments will yield
 the same DAO instance:
 
@@ -140,8 +159,8 @@ ProductDao dao3 = inventoryMapper.productDao("keyspace3", "table3");
 The DAO's keyspace and table can also be injected into custom query strings; see [Query
 methods](../daos/query/).
 
-[CqlIdentifier]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/CqlIdentifier.html
-[@DaoFactory]:   https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/DaoFactory.html
-[@DaoKeyspace]:  https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/DaoKeyspace.html
-[@DaoTable]:     https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/DaoTable.html
-[@Mapper]:       https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/Mapper.html
+[CqlIdentifier]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/CqlIdentifier.html
+[@DaoFactory]:   https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/DaoFactory.html
+[@DaoKeyspace]:  https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/DaoKeyspace.html
+[@DaoTable]:     https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/DaoTable.html
+[@Mapper]:       https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/Mapper.html

@@ -5,7 +5,7 @@
 *If you're reading this on github.com, please note that this is the readme for the development 
 version and that some features described here might not yet have been released. You can find the
 documentation for latest version through [DataStax Docs] or via the release tags, e.g. 
-[4.1.0](https://github.com/datastax/java-driver/tree/4.1.0).*
+[4.4.0](https://github.com/datastax/java-driver/tree/4.4.0).*
 
 A modern, feature-rich and highly tunable Java client library for [Apache Cassandra®] \(2.1+) and 
 [DataStax Enterprise] \(4.7+), using exclusively Cassandra's binary protocol and Cassandra Query
@@ -24,13 +24,19 @@ are multiple modules, all prefixed with `java-driver-`.
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core</artifactId>
-  <version>4.1.0</version>
+  <version>${driver.version}</version>
 </dependency>
 
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-query-builder</artifactId>
-  <version>4.1.0</version>
+  <version>${driver.version}</version>
+</dependency>
+
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-mapper-runtime</artifactId>
+  <version>${driver.version}</version>
 </dependency>
 ```
 
@@ -38,9 +44,23 @@ Note that the query builder is now published as a separate artifact, you'll need
 dependency if you plan to use it.
 
 Refer to each module's manual for more details ([core](manual/core/), [query
-builder](manual/query_builder/)).
+builder](manual/query_builder/), [mapper](manual/mapper)).
 
 [com.datastax.oss]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.datastax.oss%22
+
+## Compatibility
+
+The driver is compatible with Apache Cassandra® 2.1 and higher, and DataStax Enterprise 4.7 and
+higher.
+
+It requires Java 8 or higher.
+
+If using DataStax Enterprise, the [DataStax Enterprise Java
+driver](http://docs.datastax.com/en/developer/java-driver-dse/latest) provides more features and
+better compatibility.
+
+Disclaimer: Some DataStax/DataStax Enterprise products might partially work on big-endian systems,
+but DataStax does not officially support these systems.
 
 ## Migrating from previous versions
 
@@ -60,7 +80,7 @@ See the [upgrade guide](upgrade_guide/) for details.
 * [Changelog]
 * [FAQ]
 
-[API docs]: http://www.datastax.com/drivers/java/4.0
+[API docs]: https://docs.datastax.com/en/drivers/java/4.3
 [JIRA]: https://datastax-oss.atlassian.net/browse/JAVA
 [Mailing list]: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
 [@dsJavaDriver]: https://twitter.com/dsJavaDriver

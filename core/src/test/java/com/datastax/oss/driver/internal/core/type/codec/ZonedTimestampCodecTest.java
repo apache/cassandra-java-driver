@@ -183,7 +183,7 @@ public class ZonedTimestampCodecTest extends CodecTestBase<ZonedDateTime> {
   @Test
   public void should_accept_object() {
     codec = new ZonedTimestampCodec();
-    assertThat(codec.accepts(ZonedDateTime.now())).isTrue();
+    assertThat(codec.accepts(ZonedDateTime.now(ZoneOffset.systemDefault()))).isTrue();
     assertThat(codec.accepts(Integer.MIN_VALUE)).isFalse();
   }
 }

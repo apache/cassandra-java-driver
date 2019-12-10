@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -50,35 +51,35 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class UpdateIT extends InventoryITBase {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
-
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private static ProductDao dao;
   private static InventoryMapper inventoryMapper;
 
   @BeforeClass
   public static void setup() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
-    for (String query : createStatements(ccm)) {
+    for (String query : createStatements(CCM_RULE)) {
       session.execute(
-          SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
+          SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
     }
     session.execute("CREATE TABLE only_p_k(id uuid PRIMARY KEY)");
 
     inventoryMapper = new UpdateIT_InventoryMapperBuilder(session).build();
-    dao = inventoryMapper.productDao(sessionRule.keyspace());
+    dao = inventoryMapper.productDao(SESSION_RULE.keyspace());
   }
 
   @Before
   public void clearProductData() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     session.execute(
         SimpleStatement.builder("TRUNCATE product")
-            .setExecutionProfile(sessionRule.slowProfile())
+            .setExecutionProfile(SESSION_RULE.slowProfile())
             .build());
   }
 
@@ -149,7 +150,7 @@ public class UpdateIT extends InventoryITBase {
     long timestamp = 1234;
     dao.updateWithBoundTimestamp(FLAMETHROWER, timestamp);
 
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     Row row =
         session
             .execute(
@@ -167,7 +168,7 @@ public class UpdateIT extends InventoryITBase {
 
     dao.updateWithTimestampLiteral(FLAMETHROWER);
 
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     Row row =
         session
             .execute(
@@ -186,7 +187,7 @@ public class UpdateIT extends InventoryITBase {
     int ttl = 100_000;
     dao.updateWithBoundTtl(FLAMETHROWER, ttl);
 
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     Row row =
         session
             .execute(
@@ -203,7 +204,7 @@ public class UpdateIT extends InventoryITBase {
 
     dao.updateWithTtlLiteral(FLAMETHROWER);
 
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     Row row =
         session
             .execute(
@@ -222,7 +223,7 @@ public class UpdateIT extends InventoryITBase {
     CompletableFutures.getUninterruptibly(
         dao.updateAsyncWithBoundTimestamp(FLAMETHROWER, timestamp));
 
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     Row row =
         session
             .execute(
@@ -245,12 +246,35 @@ public class UpdateIT extends InventoryITBase {
   }
 
   @Test
+  public void should_update_entity_if_exists_statement() {
+    dao.update(FLAMETHROWER);
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNotNull();
+
+    Product otherProduct =
+        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
+    assertThat(
+            SESSION_RULE.session().execute(dao.updateIfExistsStatement(otherProduct)).wasApplied())
+        .isEqualTo(true);
+  }
+
+  @Test
   public void should_not_update_entity_if_not_exists() {
     assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
 
     Product otherProduct =
         new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
     assertThat(dao.updateIfExists(otherProduct).wasApplied()).isEqualTo(false);
+  }
+
+  @Test
+  public void should_not_update_entity_if_not_exists_statement() {
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNull();
+
+    Product otherProduct =
+        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
+    assertThat(
+            SESSION_RULE.session().execute(dao.updateIfExistsStatement(otherProduct)).wasApplied())
+        .isEqualTo(false);
   }
 
   @Test
@@ -280,7 +304,7 @@ public class UpdateIT extends InventoryITBase {
 
   @Test
   public void should_throw_when_try_to_use_dao_with_update_only_pk() {
-    assertThatThrownBy(() -> inventoryMapper.onlyPkDao(sessionRule.keyspace()))
+    assertThatThrownBy(() -> inventoryMapper.onlyPkDao(SESSION_RULE.keyspace()))
         .isInstanceOf(MapperException.class)
         .hasMessageContaining("Entity OnlyPK does not have any non PK columns.");
   }
@@ -324,10 +348,10 @@ public class UpdateIT extends InventoryITBase {
   @Test
   public void should_update_entity_without_pk_placeholders_matching_custom_where_in_clause() {
     // given
-    ProductWithoutIdDao dao = inventoryMapper.productWithoutIdDao(sessionRule.keyspace());
+    ProductWithoutIdDao dao = inventoryMapper.productWithoutIdDao(SESSION_RULE.keyspace());
     UUID idOne = UUID.randomUUID();
     UUID idTwo = UUID.randomUUID();
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(
             SimpleStatement.newInstance(
@@ -335,7 +359,7 @@ public class UpdateIT extends InventoryITBase {
                 idOne,
                 1,
                 "a"));
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(
             SimpleStatement.newInstance(
@@ -426,6 +450,9 @@ public class UpdateIT extends InventoryITBase {
 
     @Update(ifExists = true)
     ResultSet updateIfExists(Product product);
+
+    @Update(ifExists = true)
+    BoundStatement updateIfExistsStatement(Product product);
 
     @Update
     CompletableFuture<Void> updateAsync(Product product);

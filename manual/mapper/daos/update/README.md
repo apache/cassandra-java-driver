@@ -101,6 +101,13 @@ The method can return:
     ResultSet updateIfExists(Product product);
     // if the condition fails, the result set will contain columns '[applied]' and 'description'
     ```
+  
+* a [BoundStatement]. This is intended for queries where you will execute this statement later or in a batch:
+  
+    ```java
+    @Update
+    BoundStatement update(Product product);
+    ```
 
 * a [CompletionStage] or [CompletableFuture] of any of the above. The mapper will execute the query
   asynchronously. 
@@ -127,11 +134,12 @@ If a table was specified when creating the DAO, then the generated query targets
 Otherwise, it uses the default table name for the entity (which is determined by the name of the
 entity class and the naming convention).
 
-[default keyspace]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
-[@Update]:          https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/mapper/annotations/Update.html
+[default keyspace]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
+[@Update]:          https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/Update.html
 
-[AsyncResultSet]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
-[Boolean]: https://docs.oracle.com/javase/8/docs/api/index.html?java/lang/Boolean.html
-[CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
-[CompletableFuture]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html
-[ResultSet]:            https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[AsyncResultSet]:       https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
+[Boolean]:              https://docs.oracle.com/javase/8/docs/api/index.html?java/lang/Boolean.html
+[CompletionStage]:      https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
+[CompletableFuture]:    https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html
+[ResultSet]:            https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[BoundStatement]:       https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/BoundStatement.html

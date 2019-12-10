@@ -1,13 +1,19 @@
 ## Configuration
 
+### Quick overview
+
 The driver's configuration is composed of options, organized in a hierarchical manner. Optionally,
 it can define *profiles* that customize a set of options for a particular kind of request.
 
-The default implementation is based on the Typesafe Config framework. It can be completely
-overridden if needed.
+* the default implementation is based on the Typesafe Config framework:
+  * the driver JAR comes with a [reference.conf] file that defines the defaults.
+  * you can add an `application.conf` file in the classpath (or an absolute path, or an URL). It
+    only needs to contain the options that you override.
+  * hot reloading is supported out of the box.
+* the config mechanism can be completely overridden by implementing a set of driver interfaces
+  ([DriverConfig], [DriverExecutionProfile] and [DriverConfigLoader])
 
-For a complete list of built-in options, see the [reference configuration][reference.conf].
-
+-----
 
 ### Concepts
 
@@ -495,16 +501,16 @@ config.getDefaultProfile().getString(MyCustomOption.ADMIN_EMAIL);
 config.getDefaultProfile().getInt(MyCustomOption.AWESOMENESS_FACTOR);
 ```
 
-[DriverConfig]:                           https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DriverConfig.html
-[DriverExecutionProfile]:                 https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DriverExecutionProfile.html
-[DriverContext]:                          https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/context/DriverContext.html
-[DriverOption]:                           https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DriverOption.html
-[DefaultDriverOption]:                    https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DefaultDriverOption.html
-[DriverConfigLoader]:                     https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html
-[DriverConfigLoader.fromClasspath]:       https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromClasspath-java.lang.String-
-[DriverConfigLoader.fromFile]:            https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromFile-java.io.File-
-[DriverConfigLoader.fromUrl]:             https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromUrl-java.net.URL-
-[DriverConfigLoader.programmaticBuilder]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#programmaticBuilder--
+[DriverConfig]:                           https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/config/DriverConfig.html
+[DriverExecutionProfile]:                 https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/config/DriverExecutionProfile.html
+[DriverContext]:                          https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/context/DriverContext.html
+[DriverOption]:                           https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/config/DriverOption.html
+[DefaultDriverOption]:                    https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/config/DefaultDriverOption.html
+[DriverConfigLoader]:                     https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html
+[DriverConfigLoader.fromClasspath]:       https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromClasspath-java.lang.String-
+[DriverConfigLoader.fromFile]:            https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromFile-java.io.File-
+[DriverConfigLoader.fromUrl]:             https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromUrl-java.net.URL-
+[DriverConfigLoader.programmaticBuilder]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#programmaticBuilder--
 
 [Typesafe Config]: https://github.com/typesafehub/config
 [config standard behavior]: https://github.com/typesafehub/config#standard-behavior

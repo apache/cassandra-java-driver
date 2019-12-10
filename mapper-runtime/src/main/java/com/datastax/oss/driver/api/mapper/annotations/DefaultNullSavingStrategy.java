@@ -53,7 +53,7 @@ import java.lang.annotation.Target;
  * Query} and {@link SetEntity} methods.
  */
 @Target(ElementType.TYPE)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface DefaultNullSavingStrategy {
   NullSavingStrategy value();
 }

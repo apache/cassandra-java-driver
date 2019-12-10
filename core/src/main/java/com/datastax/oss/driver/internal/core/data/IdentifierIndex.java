@@ -58,7 +58,7 @@ public class IdentifierIndex {
    */
   public int firstIndexOf(String name) {
     Integer index =
-        (Strings.isDoubleQuoted(name))
+        Strings.isDoubleQuoted(name)
             ? byCaseSensitiveName.get(Strings.unDoubleQuote(name))
             : byCaseInsensitiveName.get(name.toLowerCase());
     return (index == null) ? -1 : index;

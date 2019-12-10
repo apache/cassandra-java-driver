@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -35,6 +36,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
+import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -51,13 +53,17 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
+@CassandraRequirement(
+    min = "3.0",
+    description = ">= in WHERE clause not supported in legacy versions")
 public class DeleteIT extends InventoryITBase {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private static ProductDao dao;
 
@@ -65,16 +71,16 @@ public class DeleteIT extends InventoryITBase {
 
   @BeforeClass
   public static void setup() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
-    for (String query : createStatements(ccm)) {
+    for (String query : createStatements(CCM_RULE)) {
       session.execute(
-          SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
+          SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
     }
 
     InventoryMapper inventoryMapper = new DeleteIT_InventoryMapperBuilder(session).build();
-    dao = inventoryMapper.productDao(sessionRule.keyspace());
-    saleDao = inventoryMapper.productSaleDao(sessionRule.keyspace());
+    dao = inventoryMapper.productDao(SESSION_RULE.keyspace());
+    saleDao = inventoryMapper.productSaleDao(SESSION_RULE.keyspace());
   }
 
   @Before
@@ -170,6 +176,21 @@ public class DeleteIT extends InventoryITBase {
   }
 
   @Test
+  public void should_delete_with_condition_statement() {
+    UUID id = FLAMETHROWER.getId();
+    assertThat(dao.findById(id)).isNotNull();
+
+    BoundStatement bs = dao.deleteIfDescriptionMatchesStatement(id, "foo");
+    ResultSet rs = SESSION_RULE.session().execute(bs);
+    assertThat(rs.wasApplied()).isFalse();
+    assertThat(rs.one().getString("description")).isEqualTo(FLAMETHROWER.getDescription());
+
+    rs = dao.deleteIfDescriptionMatches(id, FLAMETHROWER.getDescription());
+    assertThat(rs.wasApplied()).isTrue();
+    assertThat(dao.findById(id)).isNull();
+  }
+
+  @Test
   public void should_delete_with_condition_asynchronously() {
     UUID id = FLAMETHROWER.getId();
     assertThat(dao.findById(id)).isNotNull();
@@ -194,9 +215,26 @@ public class DeleteIT extends InventoryITBase {
   }
 
   @Test
+  public void should_delete_by_partition_key_statement() {
+    // should delete FLAMETHROWER_SALE_[1-4]
+    SESSION_RULE.session().execute(saleDao.deleteByIdForDayStatement(FLAMETHROWER.getId(), DATE_1));
+    assertThat(saleDao.all().all()).containsOnly(FLAMETHROWER_SALE_5, MP3_DOWNLOAD_SALE_1);
+  }
+
+  @Test
   public void should_delete_by_partition_key_and_partial_clustering() {
     // should delete FLAMETHROWER_SALE_{1,3,4]
     saleDao.deleteByIdForCustomer(FLAMETHROWER.getId(), DATE_1, 1);
+    assertThat(saleDao.all().all())
+        .containsOnly(FLAMETHROWER_SALE_2, FLAMETHROWER_SALE_5, MP3_DOWNLOAD_SALE_1);
+  }
+
+  @Test
+  public void should_delete_by_partition_key_and_partial_clustering_statement() {
+    // should delete FLAMETHROWER_SALE_{1,3,4]
+    SESSION_RULE
+        .session()
+        .execute(saleDao.deleteByIdForCustomerStatement(FLAMETHROWER.getId(), DATE_1, 1));
     assertThat(saleDao.all().all())
         .containsOnly(FLAMETHROWER_SALE_2, FLAMETHROWER_SALE_5, MP3_DOWNLOAD_SALE_1);
   }
@@ -206,6 +244,23 @@ public class DeleteIT extends InventoryITBase {
     // should delete FLAMETHROWER_SALE_2
     saleDao.deleteByIdForCustomerAtTime(
         FLAMETHROWER.getId(), DATE_1, 2, FLAMETHROWER_SALE_2.getTs());
+    assertThat(saleDao.all().all())
+        .containsOnly(
+            FLAMETHROWER_SALE_1,
+            FLAMETHROWER_SALE_3,
+            FLAMETHROWER_SALE_4,
+            FLAMETHROWER_SALE_5,
+            MP3_DOWNLOAD_SALE_1);
+  }
+
+  @Test
+  public void should_delete_by_primary_key_sales_statement() {
+    // should delete FLAMETHROWER_SALE_2
+    SESSION_RULE
+        .session()
+        .execute(
+            saleDao.deleteByIdForCustomerAtTimeStatement(
+                FLAMETHROWER.getId(), DATE_1, 2, FLAMETHROWER_SALE_2.getTs()));
     assertThat(saleDao.all().all())
         .containsOnly(
             FLAMETHROWER_SALE_1,
@@ -229,6 +284,26 @@ public class DeleteIT extends InventoryITBase {
     result =
         saleDao.deleteIfPriceMatches(
             FLAMETHROWER.getId(), DATE_1, 2, FLAMETHROWER_SALE_2.getTs(), 500.0);
+
+    assertThat(result.wasApplied()).isTrue();
+  }
+
+  @Test
+  public void should_delete_if_price_matchesStatement() {
+    BoundStatement bs =
+        saleDao.deleteIfPriceMatchesStatement(
+            FLAMETHROWER.getId(), DATE_1, 2, FLAMETHROWER_SALE_2.getTs(), 250.0);
+    ResultSet result = SESSION_RULE.session().execute(bs);
+
+    assertThat(result.wasApplied()).isFalse();
+    Row row = result.one();
+    assertThat(row).isNotNull();
+    assertThat(row.getDouble("price")).isEqualTo(500.0);
+
+    bs =
+        saleDao.deleteIfPriceMatchesStatement(
+            FLAMETHROWER.getId(), DATE_1, 2, FLAMETHROWER_SALE_2.getTs(), 500.0);
+    result = SESSION_RULE.session().execute(bs);
 
     assertThat(result.wasApplied()).isTrue();
   }
@@ -258,6 +333,24 @@ public class DeleteIT extends InventoryITBase {
   }
 
   @Test
+  public void should_delete_within_time_range_statement() {
+    // should delete FLAMETHROWER_SALE_{1,3}, but not 4 because range ends before
+    SESSION_RULE
+        .session()
+        .execute(
+            saleDao.deleteInTimeRangeStatement(
+                FLAMETHROWER.getId(),
+                DATE_1,
+                1,
+                FLAMETHROWER_SALE_1.getTs(),
+                Uuids.startOf(Uuids.unixTimestamp(FLAMETHROWER_SALE_4.getTs()) - 1000)));
+
+    assertThat(saleDao.all().all())
+        .containsOnly(
+            FLAMETHROWER_SALE_2, FLAMETHROWER_SALE_4, FLAMETHROWER_SALE_5, MP3_DOWNLOAD_SALE_1);
+  }
+
+  @Test
   public void should_delete_if_price_matches_custom_where() {
     ResultSet result =
         saleDao.deleteCustomWhereCustomIf(
@@ -271,6 +364,26 @@ public class DeleteIT extends InventoryITBase {
     result =
         saleDao.deleteCustomWhereCustomIf(
             2, FLAMETHROWER.getId(), DATE_1, FLAMETHROWER_SALE_2.getTs(), 500.0);
+
+    assertThat(result.wasApplied()).isTrue();
+  }
+
+  @Test
+  public void should_delete_if_price_matches_custom_where_statement() {
+    BoundStatement bs =
+        saleDao.deleteCustomWhereCustomIfStatement(
+            2, FLAMETHROWER.getId(), DATE_1, FLAMETHROWER_SALE_2.getTs(), 250.0);
+    ResultSet result = SESSION_RULE.session().execute(bs);
+
+    assertThat(result.wasApplied()).isFalse();
+    Row row = result.one();
+    assertThat(row).isNotNull();
+    assertThat(row.getDouble("price")).isEqualTo(500.0);
+
+    bs =
+        saleDao.deleteCustomWhereCustomIfStatement(
+            2, FLAMETHROWER.getId(), DATE_1, FLAMETHROWER_SALE_2.getTs(), 500.0);
+    result = SESSION_RULE.session().execute(bs);
 
     assertThat(result.wasApplied()).isTrue();
   }
@@ -299,6 +412,9 @@ public class DeleteIT extends InventoryITBase {
 
     @Delete(entityClass = Product.class, customIfClause = "description = :expectedDescription")
     ResultSet deleteIfDescriptionMatches(UUID productId, String expectedDescription);
+
+    @Delete(entityClass = Product.class, customIfClause = "description = :expectedDescription")
+    BoundStatement deleteIfDescriptionMatchesStatement(UUID productId, String expectedDescription);
 
     @Delete
     CompletionStage<Void> deleteAsync(Product product);
@@ -330,16 +446,33 @@ public class DeleteIT extends InventoryITBase {
     @Delete(entityClass = ProductSale.class)
     ResultSet deleteByIdForDay(UUID id, String day);
 
+    // delete all rows in partition
+    @Delete(entityClass = ProductSale.class)
+    BoundStatement deleteByIdForDayStatement(UUID id, String day);
+
     // delete by partition key and partial clustering key
     @Delete(entityClass = ProductSale.class)
     ResultSet deleteByIdForCustomer(UUID id, String day, int customerId);
+
+    // delete by partition key and partial clustering key
+    @Delete(entityClass = ProductSale.class)
+    BoundStatement deleteByIdForCustomerStatement(UUID id, String day, int customerId);
 
     // delete row (full primary key)
     @Delete(entityClass = ProductSale.class)
     ResultSet deleteByIdForCustomerAtTime(UUID id, String day, int customerId, UUID ts);
 
+    // delete row (full primary key)
+    @Delete(entityClass = ProductSale.class)
+    BoundStatement deleteByIdForCustomerAtTimeStatement(
+        UUID id, String day, int customerId, UUID ts);
+
     @Delete(entityClass = ProductSale.class, customIfClause = "price = :expectedPrice")
     ResultSet deleteIfPriceMatches(
+        UUID id, String day, int customerId, UUID ts, double expectedPrice);
+
+    @Delete(entityClass = ProductSale.class, customIfClause = "price = :expectedPrice")
+    BoundStatement deleteIfPriceMatchesStatement(
         UUID id, String day, int customerId, UUID ts, double expectedPrice);
 
     @Delete(
@@ -349,12 +482,28 @@ public class DeleteIT extends InventoryITBase {
                 + ":endTs")
     ResultSet deleteInTimeRange(UUID id, String day, int customerId, UUID startTs, UUID endTs);
 
+    @Delete(
+        entityClass = ProductSale.class,
+        customWhereClause =
+            "id = :id and day = :day and customer_id = :customerId and ts >= :startTs and ts < "
+                + ":endTs")
+    BoundStatement deleteInTimeRangeStatement(
+        UUID id, String day, int customerId, UUID startTs, UUID endTs);
+
     // transpose order of parameters so doesn't match primary key to ensure that works.
     @Delete(
         entityClass = ProductSale.class,
         customWhereClause = "id = :id and day = :day and customer_id = :customerId and ts = :ts",
         customIfClause = "price = :expectedPrice")
     ResultSet deleteCustomWhereCustomIf(
+        int customerId, UUID id, String day, UUID ts, double expectedPrice);
+
+    // transpose order of parameters so doesn't match primary key to ensure that works.
+    @Delete(
+        entityClass = ProductSale.class,
+        customWhereClause = "id = :id and day = :day and customer_id = :customerId and ts = :ts",
+        customIfClause = "price = :expectedPrice")
+    BoundStatement deleteCustomWhereCustomIfStatement(
         int customerId, UUID id, String day, UUID ts, double expectedPrice);
 
     @Delete(entityClass = ProductSale.class, ifExists = true)

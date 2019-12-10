@@ -51,7 +51,7 @@ public class DefaultMavenCoordinates implements MavenCoordinates {
       String artifactId = props.getProperty("driver.artifactId");
       String version = props.getProperty("driver.version");
       if (ByteBuf.class.getPackage().getName().contains("com.datastax.oss.driver.shaded")) {
-        version += "-shaded";
+        artifactId += "-shaded";
       }
       return new DefaultMavenCoordinates(name, groupId, artifactId, Version.parse(version));
     } catch (IOException e) {

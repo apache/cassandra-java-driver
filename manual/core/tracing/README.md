@@ -1,5 +1,18 @@
 ## Query tracing
 
+### Quick overview
+
+Detailed information about the server-side internals for a given query.
+
+* disabled by default, must enable per statement with [Statement.setTracing()] or
+  [StatementBuilder.setTracing()].
+* retrieve with [ResultSet.getExecutionInfo().getTracingId()][ExecutionInfo.getTracingId()] and
+  [getQueryTrace()][ExecutionInfo.getQueryTrace()].
+* `advanced.request.trace` in the configuration: fine-grained control over how the driver fetches
+  the trace data.
+
+-----
+
 To help troubleshooting performance, Cassandra offers the ability to *trace* a query, in other words
 capture detailed information about the the internal operations performed by all nodes in the cluster
 in order to build the response.
@@ -100,5 +113,9 @@ for (TraceEvent event : trace.getEvents()) {
 If you call `getQueryTrace()` for a statement that didn't have tracing enabled, an exception is
 thrown.
 
-[ExecutionInfo]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html
-[QueryTrace]:    https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/QueryTrace.html
+[ExecutionInfo]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html
+[QueryTrace]:    https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/QueryTrace.html
+[Statement.setTracing()]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/Statement.html#setTracing-boolean-
+[StatementBuilder.setTracing()]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/StatementBuilder.html#setTracing--
+[ExecutionInfo.getTracingId()]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getTracingId--
+[ExecutionInfo.getQueryTrace()]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getQueryTrace--

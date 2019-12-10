@@ -1,5 +1,14 @@
 ## Per-query keyspace
 
+### Quick overview
+
+Specify the keyspace separately instead of hardcoding it in the query string.
+
+* Cassandra 4+ / DSE 6+.
+* only works with simple statements.
+
+-----
+
 Sometimes it is convenient to send the keyspace separately from the query string, and without
 switching the whole session to that keyspace either. For example, you might have a multi-tenant
 setup where identical requests are executed against different keyspaces.
@@ -115,6 +124,6 @@ SimpleStatement statement =
 At some point in the future, when Cassandra 4 becomes prevalent and using a per-query keyspace is
 the norm, we'll probably deprecate `setRoutingKeyspace()`.
 
-[token-aware routing]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKey--
+[token-aware routing]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKey--
 
 [CASSANDRA-10145]: https://issues.apache.org/jira/browse/CASSANDRA-10145

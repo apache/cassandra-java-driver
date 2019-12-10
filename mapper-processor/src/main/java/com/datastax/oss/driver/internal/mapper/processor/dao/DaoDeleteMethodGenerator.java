@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOOLEAN;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOUND_STATEMENT;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_ASYNC_RESULT_SET;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_BOOLEAN;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_VOID;
@@ -54,14 +55,21 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
   public DaoDeleteMethodGenerator(
       ExecutableElement methodElement,
       Map<Name, TypeElement> typeParameters,
+      TypeElement processedType,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    super(methodElement, typeParameters, enclosingClass, context);
+    super(methodElement, typeParameters, processedType, enclosingClass, context);
   }
 
   protected Set<DaoReturnTypeKind> getSupportedReturnTypes() {
     return ImmutableSet.of(
-        VOID, FUTURE_OF_VOID, BOOLEAN, FUTURE_OF_BOOLEAN, RESULT_SET, FUTURE_OF_ASYNC_RESULT_SET);
+        VOID,
+        FUTURE_OF_VOID,
+        BOOLEAN,
+        FUTURE_OF_BOOLEAN,
+        RESULT_SET,
+        BOUND_STATEMENT,
+        FUTURE_OF_ASYNC_RESULT_SET);
   }
 
   @Override
@@ -74,6 +82,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
+              processedType,
               "Invalid annotation parameters: %s cannot have both ifExists and customIfClause",
               Delete.class.getSimpleName());
       return Optional.empty();
@@ -97,8 +106,9 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
+              processedType,
               "Wrong number of parameters: %s methods with no custom clause "
-                  + "must take either an entity instance, or the partition key components",
+                  + "must take either an entity instance, or the primary key components",
               Delete.class.getSimpleName());
       return Optional.empty();
     }
@@ -117,6 +127,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
             .getMessager()
             .error(
                 methodElement,
+                processedType,
                 "Invalid parameter list: %s methods that have a custom where clause "
                     + "must not take an Entity (%s) as a parameter",
                 Delete.class.getSimpleName(),
@@ -131,6 +142,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
             .getMessager()
             .error(
                 methodElement,
+                processedType,
                 "Missing entity class: %s methods that do not operate on an entity "
                     + "instance must have an 'entityClass' argument",
                 Delete.class.getSimpleName());
@@ -154,6 +166,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
                 .getMessager()
                 .error(
                     methodElement,
+                    processedType,
                     "Invalid parameter list: %s methods that have a custom if clause"
                         + "must specify the entire primary key (expected primary keys of %s: %s)",
                     Delete.class.getSimpleName(),
@@ -169,12 +182,13 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
 
         primaryKeyParameterCount = primaryKeyParameters.size();
         if (!EntityUtils.areParametersValid(
-            context,
-            methodElement,
             entityElement,
             entityDefinition,
             primaryKeyParameters,
             Delete.class,
+            context,
+            methodElement,
+            processedType,
             "do not operate on an entity instance and lack a custom where clause")) {
           return Optional.empty();
         }
@@ -243,6 +257,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
             .getMessager()
             .error(
                 methodElement,
+                processedType,
                 "Wrong number of parameters: %s methods can only have additional "
                     + "parameters if they specify a custom WHERE or IF clause",
                 Delete.class.getSimpleName());
@@ -297,6 +312,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
               .getMessager()
               .warn(
                   methodElement,
+                  processedType,
                   "Too many entity classes: %s must have at most one 'entityClass' argument "
                       + "(will use the first one: %s)",
                   Delete.class.getSimpleName(),

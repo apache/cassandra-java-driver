@@ -115,11 +115,19 @@ public class ListCodec<ElementT> implements TypeCodec<List<ElementT>> {
       int size = input.getInt();
       List<ElementT> result = new ArrayList<>(size);
       for (int i = 0; i < size; i++) {
+        ElementT element;
         int elementSize = input.getInt();
-        ByteBuffer encodedElement = input.slice();
-        encodedElement.limit(elementSize);
-        input.position(input.position() + elementSize);
-        result.add(elementCodec.decode(encodedElement, protocolVersion));
+        // Allow null elements on the decode path, because Cassandra might return such collections
+        // for some computed values in the future -- e.g. SELECT ttl(some_collection)
+        if (elementSize < 0) {
+          element = null;
+        } else {
+          ByteBuffer encodedElement = input.slice();
+          encodedElement.limit(elementSize);
+          element = elementCodec.decode(encodedElement, protocolVersion);
+          input.position(input.position() + elementSize);
+        }
+        result.add(element);
       }
       return result;
     }

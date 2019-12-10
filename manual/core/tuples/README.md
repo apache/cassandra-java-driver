@@ -1,5 +1,17 @@
 ## Tuples
 
+### Quick overview
+
+Ordered set of anonymous, typed fields, e.g. `tuple<int, text, float>`, `(1, 'a', 1.0)`. 
+
+* `row.getTupleValue()` / `boundStatement.setTupleValue()`.
+* positional getters and setters: `tupleValue.getInt(0)`, `tupleValue.setString(1, "a")`...
+* getting hold of the [TupleType]: statement or session metadata, `tupleValue.getType()`, or
+  `DataTypes.tupleOf()`.
+* creating a value from a type: `tupleType.newValue()`.
+
+-----
+
 [CQL tuples][cql_doc] are ordered sets of anonymous, typed fields. They can be used as a column type
 in tables, or a field type in [user-defined types](../udts/):
 
@@ -127,5 +139,5 @@ BoundStatement bs =
 
 [cql_doc]: https://docs.datastax.com/en/cql/3.3/cql/cql_reference/tupleType.html
 
-[TupleType]:  https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/type/TupleType.html
-[TupleValue]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/data/TupleValue.html
+[TupleType]:  https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/type/TupleType.html
+[TupleValue]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/data/TupleValue.html

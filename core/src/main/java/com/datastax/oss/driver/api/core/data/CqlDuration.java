@@ -81,7 +81,7 @@ public final class CqlDuration implements TemporalAmount {
   private CqlDuration(int months, int days, long nanoseconds) {
     // Makes sure that all the values are negative if one of them is
     if ((months < 0 || days < 0 || nanoseconds < 0)
-        && ((months > 0 || days > 0 || nanoseconds > 0))) {
+        && (months > 0 || days > 0 || nanoseconds > 0)) {
       throw new IllegalArgumentException(
           String.format(
               "All values must be either negative or positive, got %d months, %d days, %d nanoseconds",
@@ -115,7 +115,7 @@ public final class CqlDuration implements TemporalAmount {
    *   <li>multiple digits followed by a time unit like: 12h30m where the time unit can be:
    *       <ul>
    *         <li>{@code y}: years
-   *         <li>{@code m}: months
+   *         <li>{@code mo}: months
    *         <li>{@code w}: weeks
    *         <li>{@code d}: days
    *         <li>{@code h}: hours

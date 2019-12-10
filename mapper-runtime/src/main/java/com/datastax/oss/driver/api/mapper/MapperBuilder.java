@@ -15,7 +15,9 @@
  */
 package com.datastax.oss.driver.api.mapper;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -32,11 +34,61 @@ import java.util.Map;
 public abstract class MapperBuilder<MapperT> {
 
   protected final CqlSession session;
+  protected CqlIdentifier defaultKeyspaceId;
   protected Map<Object, Object> customState;
 
   protected MapperBuilder(CqlSession session) {
     this.session = session;
     this.customState = new HashMap<>();
+  }
+
+  /**
+   * Specifies a default keyspace that will be used for all DAOs built with this mapper (unless they
+   * specify their own keyspace).
+   *
+   * <p>In other words, given the following definitions:
+   *
+   * <pre>
+   * &#64;Mapper
+   * public interface InventoryMapper {
+   *   &#64;DaoFactory
+   *   ProductDao productDao();
+   *
+   *   &#64;DaoFactory
+   *   ProductDao productDao(@DaoKeyspace CqlIdentifier keyspace);
+   * }
+   *
+   * InventoryMapper mapper1 = new InventoryMapperBuilder(session)
+   *     .withDefaultKeyspace(CqlIdentifier.fromCql("ks1"))
+   *     .build();
+   * InventoryMapper mapper2 = new InventoryMapperBuilder(session)
+   *     .withDefaultKeyspace(CqlIdentifier.fromCql("ks2"))
+   *     .build();
+   * </pre>
+   *
+   * Then:
+   *
+   * <ul>
+   *   <li>{@code mapper1.productDao()} will use keyspace {@code ks1};
+   *   <li>{@code mapper2.productDao()} will use keyspace {@code ks2};
+   *   <li>{@code mapper1.productDao(CqlIdentifier.fromCql("ks3"))} will use keyspace {@code ks3}.
+   * </ul>
+   *
+   * @see DaoFactory
+   */
+  @NonNull
+  public MapperBuilder<MapperT> withDefaultKeyspace(@Nullable CqlIdentifier keyspaceId) {
+    this.defaultKeyspaceId = keyspaceId;
+    return this;
+  }
+
+  /**
+   * Shortcut for {@link #withDefaultKeyspace(CqlIdentifier)
+   * withDefaultKeyspace(CqlIdentifier.fromCql(keyspaceName))}.
+   */
+  @NonNull
+  public MapperBuilder<MapperT> withDefaultKeyspace(@Nullable String keyspaceName) {
+    return withDefaultKeyspace(keyspaceName == null ? null : CqlIdentifier.fromCql(keyspaceName));
   }
 
   /**

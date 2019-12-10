@@ -17,21 +17,11 @@ package com.datastax.oss.driver.internal.mapper.processor.entity;
 
 import com.datastax.oss.driver.api.querybuilder.delete.Delete;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
-import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.squareup.javapoet.MethodSpec;
 import java.util.Optional;
 import javax.lang.model.element.Modifier;
 
 public class EntityHelperDeleteByPrimaryKeyMethodGenerator implements MethodGenerator {
-
-  private final EntityDefinition entityDefinition;
-
-  public EntityHelperDeleteByPrimaryKeyMethodGenerator(
-      EntityDefinition entityDefinition,
-      EntityHelperGenerator enclosingClass,
-      ProcessorContext context) {
-    this.entityDefinition = entityDefinition;
-  }
 
   @Override
   public Optional<MethodSpec> generate() {

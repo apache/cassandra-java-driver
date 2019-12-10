@@ -57,7 +57,7 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
       },
       {
         "Wrong number of parameters: Delete methods with no custom clause "
-            + "must take either an entity instance, or the partition key components",
+            + "must take either an entity instance, or the primary key components",
         MethodSpec.methodBuilder("delete")
             .addAnnotation(Delete.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -105,7 +105,7 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
       },
       {
         "Delete methods must return one of [VOID, FUTURE_OF_VOID, BOOLEAN, FUTURE_OF_BOOLEAN, "
-            + "RESULT_SET, FUTURE_OF_ASYNC_RESULT_SET]",
+            + "RESULT_SET, BOUND_STATEMENT, FUTURE_OF_ASYNC_RESULT_SET]",
         MethodSpec.methodBuilder("delete")
             .addAnnotation(Delete.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -145,8 +145,7 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
   @Test
   public void should_warn_when_non_bind_marker_has_cql_name() {
     should_succeed_with_expected_warning(
-        "delete(java.util.UUID,java.lang.String): parameter id does not refer "
-            + "to a bind marker, @CqlName annotation will be ignored",
+        "Parameter id does not refer to a bind marker, @CqlName annotation will be ignored",
         MethodSpec.methodBuilder("delete")
             .addAnnotation(
                 AnnotationSpec.builder(Delete.class)

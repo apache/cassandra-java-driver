@@ -1,5 +1,16 @@
 ## Node metadata
 
+### Quick overview
+
+[session.getMetadata().getNodes()][Metadata#getNodes]: all nodes known to the driver (even if not
+actively connected).
+
+* [Node] instances are mutable, the fields will update in real time.
+* getting notifications:
+  [CqlSession.builder().withNodeStateListener][SessionBuilder.withNodeStateListener].
+
+-----
+
 [Metadata#getNodes] returns all the nodes known to the driver when the metadata was retrieved; this
 includes down and ignored nodes (see below), so the fact that a node is in this list does not
 necessarily mean that the driver is connected to it.
@@ -37,7 +48,26 @@ client.
 [Node#getDistance()] is set by the load balancing policy. The driver does not connect to `IGNORED`
 nodes. The exact definition of `LOCAL` and `REMOTE` is left to the interpretation of each policy,
 but in general it represents the proximity to the client, and `LOCAL` nodes will be prioritized as
-coordinators. They also influence pooling options. 
+coordinators. They also influence pooling options.
+
+If you need to follow node state changes, you don't need to poll the metadata manually; instead,
+you can register a listener to get notified when changes occur:
+
+```java
+NodeStateListener listener =
+    new NodeStateListenerBase() {
+      @Override
+      public void onUp(@NonNull Node node) {
+        System.out.printf("%s went UP%n", node);
+      }
+    };
+CqlSession session = CqlSession.builder()
+    .withNodeStateListener(listener)
+    .build();
+``` 
+
+See [NodeStateListener] for the list of available methods. [NodeStateListenerBase] is a
+convenience implementation with empty methods, for when you only need to override a few of them.
 
 ### Advanced topics
 
@@ -73,12 +103,15 @@ beyond the scope of this document; if you're interested, study the `TopologyMoni
 the source code.
 
 
-[Metadata#getNodes]:         https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/metadata/Metadata.html#getNodes--
-[Node]:                      https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/metadata/Node.html
-[Node#getState()]:           https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/metadata/Node.html#getState--
-[Node#getDatacenter()]:      https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/metadata/Node.html#getDatacenter--
-[Node#getRack()]:            https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/metadata/Node.html#getRack--
-[Node#getDistance()]:        https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/metadata/Node.html#getDistance--
-[Node#getOpenConnections()]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/metadata/Node.html#getOpenConnections--
-[Node#isReconnecting()]:     https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/metadata/Node.html#isReconnecting--
-[NodeState]:                 https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/metadata/NodeState.html
+[Metadata#getNodes]:         https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/metadata/Metadata.html#getNodes--
+[Node]:                      https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/metadata/Node.html
+[Node#getState()]:           https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/metadata/Node.html#getState--
+[Node#getDatacenter()]:      https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/metadata/Node.html#getDatacenter--
+[Node#getRack()]:            https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/metadata/Node.html#getRack--
+[Node#getDistance()]:        https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/metadata/Node.html#getDistance--
+[Node#getOpenConnections()]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/metadata/Node.html#getOpenConnections--
+[Node#isReconnecting()]:     https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/metadata/Node.html#isReconnecting--
+[NodeState]:                 https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/metadata/NodeState.html
+[NodeStateListener]:         https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/metadata/NodeStateListener.html
+[NodeStateListenerBase]:     https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/metadata/NodeStateListenerBase.html
+[SessionBuilder.withNodeStateListener]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withNodeStateListener-com.datastax.oss.driver.api.core.metadata.NodeStateListener-

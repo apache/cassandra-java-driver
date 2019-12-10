@@ -53,9 +53,11 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class QueryProviderIT {
 
-  private static CcmRule ccm = CcmRule.getInstance();
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
+
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   // Dummy counter to exercize the "custom state" feature: it gets incremented each time the query
   // provider is called.
@@ -65,21 +67,21 @@ public class QueryProviderIT {
 
   @BeforeClass
   public static void setup() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
     session.execute(
         SimpleStatement.builder(
                 "CREATE TABLE sensor_reading(id int, month int, day int, value double, "
                     + "PRIMARY KEY (id, month, day)) "
                     + "WITH CLUSTERING ORDER BY (month DESC, day DESC)")
-            .setExecutionProfile(sessionRule.slowProfile())
+            .setExecutionProfile(SESSION_RULE.slowProfile())
             .build());
 
     SensorMapper mapper =
         new QueryProviderIT_SensorMapperBuilder(session)
             .withCustomState("executionCount", executionCount)
             .build();
-    dao = mapper.sensorDao(sessionRule.keyspace());
+    dao = mapper.sensorDao(SESSION_RULE.keyspace());
   }
 
   @Test

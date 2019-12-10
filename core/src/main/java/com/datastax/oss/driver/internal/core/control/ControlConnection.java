@@ -48,9 +48,12 @@ import com.datastax.oss.protocol.internal.response.event.StatusChangeEvent;
 import com.datastax.oss.protocol.internal.response.event.TopologyChangeEvent;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
@@ -102,9 +105,8 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
    * @param listenToClusterEvents whether to register for TOPOLOGY_CHANGE and STATUS_CHANGE events.
    *     If the control connection has already initialized with another value, this is ignored.
    *     SCHEMA_CHANGE events are always registered.
-   * @param reconnectOnFailure whether to schedule a reconnection if the initial attempt fails (this
-   *     does not affect the returned future, which always represent the outcome of the initial
-   *     attempt only).
+   * @param reconnectOnFailure whether to schedule a reconnection if the initial attempt fails (if
+   *     true, the returned future will only complete once the reconnection has succeeded).
    * @param useInitialReconnectionSchedule if no node can be reached, the type of reconnection
    *     schedule to use. In other words, the value that will be passed to {@link
    *     ReconnectionPolicy#newControlConnectionSchedule(boolean)}. Note that this parameter is only
@@ -128,10 +130,6 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
   public boolean isInit() {
     return singleThreaded.initFuture.isDone();
-  }
-
-  public CompletionStage<Void> firstConnectionAttemptFuture() {
-    return singleThreaded.firstConnectionAttemptFuture;
   }
 
   /**
@@ -226,14 +224,26 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
   private void processSchemaChange(Event event) {
     SchemaChangeEvent sce = (SchemaChangeEvent) event;
-    context.getMetadataManager().refreshSchema(sce.keyspace, false, false);
+    context
+        .getMetadataManager()
+        .refreshSchema(sce.keyspace, false, false)
+        .whenComplete(
+            (metadata, error) -> {
+              if (error != null) {
+                Loggers.warnWithException(
+                    LOG,
+                    "[{}] Unexpected error while refreshing schema for a SCHEMA_CHANGE event, "
+                        + "keeping previous version",
+                    logPrefix,
+                    error);
+              }
+            });
   }
 
   private class SingleThreaded {
     private final InternalDriverContext context;
     private final DriverConfig config;
     private final CompletableFuture<Void> initFuture = new CompletableFuture<>();
-    private final CompletableFuture<Void> firstConnectionAttemptFuture = new CompletableFuture<>();
     private boolean initWasCalled;
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
     private boolean closeWasCalled;
@@ -295,7 +305,6 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
             null,
             () -> {
               initFuture.complete(null);
-              firstConnectionAttemptFuture.complete(null);
             },
             error -> {
               if (isAuthFailure(error)) {
@@ -319,7 +328,6 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                 }
                 initFuture.completeExceptionally(error);
               }
-              firstConnectionAttemptFuture.completeExceptionally(error);
             });
       } catch (Throwable t) {
         initFuture.completeExceptionally(t);
@@ -343,7 +351,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
     private void connect(
         Queue<Node> nodes,
-        Map<Node, Throwable> errors,
+        List<Entry<Node, Throwable>> errors,
         Runnable onSuccess,
         Consumer<Throwable> onFailure) {
       assert adminExecutor.inEventLoop();
@@ -385,9 +393,9 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                                 error);
                           }
                         }
-                        Map<Node, Throwable> newErrors =
-                            (errors == null) ? new LinkedHashMap<>() : errors;
-                        newErrors.put(node, error);
+                        List<Entry<Node, Throwable>> newErrors =
+                            (errors == null) ? new ArrayList<>() : errors;
+                        newErrors.add(new SimpleEntry<>(node, error));
                         context.getEventBus().fire(ChannelEvent.controlConnectionFailed(node));
                         connect(nodes, newErrors, onSuccess, onFailure);
                       }
@@ -449,31 +457,49 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     }
 
     private void onSuccessfulReconnect() {
-      // If reconnectOnFailure was true and we've never connected before, complete the future now,
-      // otherwise it's already complete and this is a no-op.
-      initFuture.complete(null);
+      // If reconnectOnFailure was true and we've never connected before, complete the future now to
+      // signal that the initialization is complete.
+      boolean isFirstConnection = initFuture.complete(null);
 
-      // Always perform a full refresh (we don't know how long we were disconnected)
-      context
-          .getMetadataManager()
-          .refreshNodes()
-          .whenComplete(
-              (result, error) -> {
-                if (error != null) {
-                  LOG.debug("[{}] Error while refreshing node list", logPrefix, error);
-                } else {
-                  try {
-                    // A failed node list refresh at startup is not fatal, so this might be the
-                    // first successful refresh; make sure the LBP gets initialized (this is a no-op
-                    // if it was initialized already).
-                    context.getLoadBalancingPolicyWrapper().init();
-                    context.getMetadataManager().refreshSchema(null, false, true);
-                  } catch (Throwable t) {
-                    Loggers.warnWithException(
-                        LOG, "[{}] Unexpected error on control connection reconnect", logPrefix, t);
+      // Otherwise, perform a full refresh (we don't know how long we were disconnected)
+      if (!isFirstConnection) {
+        context
+            .getMetadataManager()
+            .refreshNodes()
+            .whenComplete(
+                (result, error) -> {
+                  if (error != null) {
+                    LOG.debug("[{}] Error while refreshing node list", logPrefix, error);
+                  } else {
+                    try {
+                      // A failed node list refresh at startup is not fatal, so this might be the
+                      // first successful refresh; make sure the LBP gets initialized (this is a
+                      // no-op if it was initialized already).
+                      context.getLoadBalancingPolicyWrapper().init();
+                      context
+                          .getMetadataManager()
+                          .refreshSchema(null, false, true)
+                          .whenComplete(
+                              (metadata, schemaError) -> {
+                                if (schemaError != null) {
+                                  Loggers.warnWithException(
+                                      LOG,
+                                      "[{}] Unexpected error while refreshing schema after a "
+                                          + "successful reconnection, keeping previous version",
+                                      logPrefix,
+                                      schemaError);
+                                }
+                              });
+                    } catch (Throwable t) {
+                      Loggers.warnWithException(
+                          LOG,
+                          "[{}] Unexpected error on control connection reconnect",
+                          logPrefix,
+                          t);
+                    }
                   }
-                }
-              });
+                });
+      }
     }
 
     private void onChannelClosed(DriverChannel channel, Node node) {
@@ -550,20 +576,21 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
   }
 
   private boolean isAuthFailure(Throwable error) {
-    boolean authFailure = true;
     if (error instanceof AllNodesFailedException) {
-      Collection<Throwable> errors = ((AllNodesFailedException) error).getErrors().values();
+      Collection<List<Throwable>> errors =
+          ((AllNodesFailedException) error).getAllErrors().values();
       if (errors.size() == 0) {
         return false;
       }
-      for (Throwable nodeError : errors) {
-        if (!(nodeError instanceof AuthenticationException)) {
-          authFailure = false;
-          break;
+      for (List<Throwable> nodeErrors : errors) {
+        for (Throwable nodeError : nodeErrors) {
+          if (!(nodeError instanceof AuthenticationException)) {
+            return false;
+          }
         }
       }
     }
-    return authFailure;
+    return true;
   }
 
   private static ImmutableList<String> buildEventTypes(boolean listenClusterEvents) {

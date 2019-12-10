@@ -220,11 +220,10 @@ class ReprepareOnUp {
       }
     } else {
       RepreparePayload payload = toReprepare.poll();
-      queryAsync(
+      prepareAsync(
               new Prepare(
                   payload.query, (payload.keyspace == null ? null : payload.keyspace.asInternal())),
-              payload.customPayload,
-              String.format("Reprepare '%s'", payload.query))
+              payload.customPayload)
           .handle(
               (result, error) -> {
                 // Don't log, AdminRequestHandler does already
@@ -237,8 +236,8 @@ class ReprepareOnUp {
   @VisibleForTesting
   protected CompletionStage<AdminResult> queryAsync(
       Message message, Map<String, ByteBuffer> customPayload, String debugString) {
-    ThrottledAdminRequestHandler reprepareHandler =
-        new ThrottledAdminRequestHandler(
+    ThrottledAdminRequestHandler<AdminResult> reprepareHandler =
+        ThrottledAdminRequestHandler.query(
             channel,
             message,
             customPayload,
@@ -247,6 +246,15 @@ class ReprepareOnUp {
             metricUpdater,
             logPrefix,
             debugString);
+    return reprepareHandler.start();
+  }
+
+  @VisibleForTesting
+  protected CompletionStage<ByteBuffer> prepareAsync(
+      Message message, Map<String, ByteBuffer> customPayload) {
+    ThrottledAdminRequestHandler<ByteBuffer> reprepareHandler =
+        ThrottledAdminRequestHandler.prepare(
+            channel, message, customPayload, timeout, throttler, metricUpdater, logPrefix);
     return reprepareHandler.start();
   }
 }

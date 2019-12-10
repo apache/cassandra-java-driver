@@ -132,6 +132,8 @@ public class DefaultSessionPoolsTest {
     when(metadataManager.refreshNodes()).thenReturn(CompletableFuture.completedFuture(null));
     when(metadataManager.firstSchemaRefreshFuture())
         .thenReturn(CompletableFuture.completedFuture(null));
+    when(metadataManager.refreshSchema(null, false, true))
+        .thenReturn(CompletableFuture.completedFuture(null));
     when(context.getMetadataManager()).thenReturn(metadataManager);
 
     when(topologyMonitor.init()).thenReturn(CompletableFuture.completedFuture(null));
@@ -577,7 +579,6 @@ public class DefaultSessionPoolsTest {
     when(node2.getDistance()).thenReturn(NodeDistance.IGNORED);
 
     ChannelPool pool1 = mockPool(node1);
-    ChannelPool pool2 = mockPool(node2);
     ChannelPool pool3 = mockPool(node3);
     MockChannelPoolFactoryHelper factoryHelper =
         MockChannelPoolFactoryHelper.builder(channelPoolFactory)

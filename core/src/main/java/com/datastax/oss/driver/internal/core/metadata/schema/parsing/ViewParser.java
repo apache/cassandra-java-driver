@@ -87,9 +87,7 @@ public class ViewParser extends RelationParser {
 
     List<RawColumn> rawColumns =
         RawColumn.toRawColumns(
-            rows.columns().getOrDefault(keyspaceId, ImmutableMultimap.of()).get(viewId),
-            keyspaceId,
-            userTypes);
+            rows.columns().getOrDefault(keyspaceId, ImmutableMultimap.of()).get(viewId));
     if (rawColumns.isEmpty()) {
       LOG.warn(
           "[{}] Processing VIEW refresh for {}.{} but found no matching rows, skipping",

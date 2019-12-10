@@ -74,7 +74,7 @@ import java.lang.annotation.Target;
  * inside other entities (to map UDT columns).
  */
 @Target(ElementType.TYPE)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Entity {
   /**
    * Specifies a default keyspace to use when doing operations on this entity.

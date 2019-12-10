@@ -25,7 +25,7 @@ class SettableNanoClock implements NanoClock {
   }
 
   // This is racy, but in our tests it's never read concurrently
-  @SuppressWarnings("NonAtomicVolatileUpdate")
+  @SuppressWarnings({"NonAtomicVolatileUpdate", "NonAtomicOperationOnVolatileField"})
   void add(long increment) {
     nanoTime += increment;
   }

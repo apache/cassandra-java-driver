@@ -121,13 +121,11 @@ public class TableParser extends RelationParser {
             tableRow.getString(
                 tableRow.contains("table_name") ? "table_name" : "columnfamily_name"));
 
-    UUID uuid = (tableRow.contains("id")) ? tableRow.getUuid("id") : tableRow.getUuid("cf_id");
+    UUID uuid = tableRow.contains("id") ? tableRow.getUuid("id") : tableRow.getUuid("cf_id");
 
     List<RawColumn> rawColumns =
         RawColumn.toRawColumns(
-            rows.columns().getOrDefault(keyspaceId, ImmutableMultimap.of()).get(tableId),
-            keyspaceId,
-            userTypes);
+            rows.columns().getOrDefault(keyspaceId, ImmutableMultimap.of()).get(tableId));
     if (rawColumns.isEmpty()) {
       LOG.warn(
           "[{}] Processing TABLE refresh for {}.{} but found no matching rows, skipping",
@@ -234,9 +232,7 @@ public class TableParser extends RelationParser {
 
     List<RawColumn> rawColumns =
         RawColumn.toRawColumns(
-            rows.virtualColumns().getOrDefault(keyspaceId, ImmutableMultimap.of()).get(tableId),
-            keyspaceId,
-            userTypes);
+            rows.virtualColumns().getOrDefault(keyspaceId, ImmutableMultimap.of()).get(tableId));
     if (rawColumns.isEmpty()) {
       LOG.warn(
           "[{}] Processing TABLE refresh for {}.{} but found no matching rows, skipping",

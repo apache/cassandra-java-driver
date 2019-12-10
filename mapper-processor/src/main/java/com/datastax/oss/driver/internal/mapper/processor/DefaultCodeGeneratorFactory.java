@@ -75,10 +75,13 @@ public class DefaultCodeGeneratorFactory implements CodeGeneratorFactory {
 
   @Override
   public Optional<MethodGenerator> newMapperImplementationMethod(
-      ExecutableElement methodElement, MapperImplementationSharedCode enclosingClass) {
+      ExecutableElement methodElement,
+      TypeElement processedType,
+      MapperImplementationSharedCode enclosingClass) {
     if (methodElement.getAnnotation(DaoFactory.class) != null) {
       return Optional.of(
-          new MapperDaoFactoryMethodGenerator(methodElement, enclosingClass, context));
+          new MapperDaoFactoryMethodGenerator(
+              methodElement, processedType, enclosingClass, context));
     } else {
       return Optional.empty();
     }
@@ -98,32 +101,40 @@ public class DefaultCodeGeneratorFactory implements CodeGeneratorFactory {
   public Optional<MethodGenerator> newDaoImplementationMethod(
       ExecutableElement methodElement,
       Map<Name, TypeElement> typeParameters,
+      TypeElement processedType,
       DaoImplementationSharedCode enclosingClass) {
     if (methodElement.getAnnotation(SetEntity.class) != null) {
       return Optional.of(
-          new DaoSetEntityMethodGenerator(methodElement, typeParameters, enclosingClass, context));
+          new DaoSetEntityMethodGenerator(
+              methodElement, typeParameters, processedType, enclosingClass, context));
     } else if (methodElement.getAnnotation(Insert.class) != null) {
       return Optional.of(
-          new DaoInsertMethodGenerator(methodElement, typeParameters, enclosingClass, context));
+          new DaoInsertMethodGenerator(
+              methodElement, typeParameters, processedType, enclosingClass, context));
     } else if (methodElement.getAnnotation(GetEntity.class) != null) {
       return Optional.of(
-          new DaoGetEntityMethodGenerator(methodElement, typeParameters, enclosingClass, context));
+          new DaoGetEntityMethodGenerator(
+              methodElement, typeParameters, processedType, enclosingClass, context));
     } else if (methodElement.getAnnotation(Select.class) != null) {
       return Optional.of(
-          new DaoSelectMethodGenerator(methodElement, typeParameters, enclosingClass, context));
+          new DaoSelectMethodGenerator(
+              methodElement, typeParameters, processedType, enclosingClass, context));
     } else if (methodElement.getAnnotation(Delete.class) != null) {
       return Optional.of(
-          new DaoDeleteMethodGenerator(methodElement, typeParameters, enclosingClass, context));
+          new DaoDeleteMethodGenerator(
+              methodElement, typeParameters, processedType, enclosingClass, context));
     } else if (methodElement.getAnnotation(Query.class) != null) {
       return Optional.of(
-          new DaoQueryMethodGenerator(methodElement, typeParameters, enclosingClass, context));
+          new DaoQueryMethodGenerator(
+              methodElement, typeParameters, processedType, enclosingClass, context));
     } else if (methodElement.getAnnotation(Update.class) != null) {
       return Optional.of(
-          new DaoUpdateMethodGenerator(methodElement, typeParameters, enclosingClass, context));
+          new DaoUpdateMethodGenerator(
+              methodElement, typeParameters, processedType, enclosingClass, context));
     } else if (methodElement.getAnnotation(QueryProvider.class) != null) {
       return Optional.of(
           new DaoQueryProviderMethodGenerator(
-              methodElement, typeParameters, enclosingClass, context));
+              methodElement, typeParameters, processedType, enclosingClass, context));
     } else {
       return Optional.empty();
     }

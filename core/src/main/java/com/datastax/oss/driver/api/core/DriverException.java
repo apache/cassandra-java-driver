@@ -39,7 +39,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  */
 public abstract class DriverException extends RuntimeException {
 
-  private volatile ExecutionInfo executionInfo;
+  private transient volatile ExecutionInfo executionInfo;
 
   protected DriverException(
       @Nullable String message,
@@ -74,8 +74,10 @@ public abstract class DriverException extends RuntimeException {
    *
    * <p>Note that this is only set for exceptions that are rethrown directly to the client from a
    * session call. For example, individual node errors stored in {@link
-   * AllNodesFailedException#getErrors()} or {@link ExecutionInfo#getErrors()} do not contain their
-   * own execution info, and therefore return null from this method.
+   * AllNodesFailedException#getAllErrors()} or {@link ExecutionInfo#getErrors()} do not contain
+   * their own execution info, and therefore return null from this method.
+   *
+   * <p>It will also be null if you serialize and deserialize an exception.
    */
   public ExecutionInfo getExecutionInfo() {
     return executionInfo;

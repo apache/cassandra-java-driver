@@ -47,11 +47,11 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class TransientIT {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
-
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private static TestMapper mapper;
 
@@ -59,11 +59,11 @@ public class TransientIT {
 
   @BeforeClass
   public static void setup() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
     session.execute(
         SimpleStatement.builder("CREATE TABLE entity(id int primary key, v int)")
-            .setExecutionProfile(sessionRule.slowProfile())
+            .setExecutionProfile(SESSION_RULE.slowProfile())
             .build());
 
     mapper = new TransientIT_TestMapperBuilder(session).build();
@@ -73,7 +73,7 @@ public class TransientIT {
   public void should_ignore_field_with_transient_annotated_field() {
     EntityWithTransientAnnotatedFieldDao dao =
         mapper.entityWithTransientAnnotatedFieldDao(
-            sessionRule.keyspace(), CqlIdentifier.fromCql("entity"));
+            SESSION_RULE.keyspace(), CqlIdentifier.fromCql("entity"));
 
     int key = keyProvider.incrementAndGet();
     EntityWithTransientAnnotatedField entity = new EntityWithTransientAnnotatedField(key, 1, 7);
@@ -90,7 +90,7 @@ public class TransientIT {
   public void should_ignore_field_with_transient_annotated_getter() {
     EntityWithTransientAnnotatedGetterDao dao =
         mapper.entityWithTransientAnnotatedGetterDao(
-            sessionRule.keyspace(), CqlIdentifier.fromCql("entity"));
+            SESSION_RULE.keyspace(), CqlIdentifier.fromCql("entity"));
 
     int key = keyProvider.incrementAndGet();
     EntityWithTransientAnnotatedGetter entity = new EntityWithTransientAnnotatedGetter(key, 1, 7);
@@ -107,7 +107,7 @@ public class TransientIT {
   public void should_ignore_field_with_transient_keyword() {
     EntityWithTransientKeywordDao dao =
         mapper.entityWithTransientKeywordDao(
-            sessionRule.keyspace(), CqlIdentifier.fromCql("entity"));
+            SESSION_RULE.keyspace(), CqlIdentifier.fromCql("entity"));
 
     int key = keyProvider.incrementAndGet();
     EntityWithTransientKeyword entity = new EntityWithTransientKeyword(key, 1, 7);
@@ -124,7 +124,7 @@ public class TransientIT {
   public void should_ignore_properties_included_in_transient_properties_keyword() {
     EntityWithTransientPropertiesAnnotationDao dao =
         mapper.entityWithTransientPropertiesAnnotation(
-            sessionRule.keyspace(), CqlIdentifier.fromCql("entity"));
+            SESSION_RULE.keyspace(), CqlIdentifier.fromCql("entity"));
 
     int key = keyProvider.incrementAndGet();
     EntityWithTransientPropertiesAnnotation entity =

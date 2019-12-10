@@ -15,15 +15,18 @@
  */
 package com.datastax.oss.driver.api.core.session;
 
+import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
+import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -48,6 +51,9 @@ public class ProgrammaticArguments {
   private final Map<String, String> localDatacenters;
   private final Map<String, Predicate<Node>> nodeFilters;
   private final ClassLoader classLoader;
+  private final AuthProvider authProvider;
+  private final SslEngineFactory sslEngineFactory;
+  private final InetSocketAddress cloudProxyAddress;
 
   private ProgrammaticArguments(
       @NonNull List<TypeCodec<?>> typeCodecs,
@@ -56,7 +62,10 @@ public class ProgrammaticArguments {
       @Nullable RequestTracker requestTracker,
       @NonNull Map<String, String> localDatacenters,
       @NonNull Map<String, Predicate<Node>> nodeFilters,
-      @Nullable ClassLoader classLoader) {
+      @Nullable ClassLoader classLoader,
+      @Nullable AuthProvider authProvider,
+      @Nullable SslEngineFactory sslEngineFactory,
+      @Nullable InetSocketAddress cloudProxyAddress) {
     this.typeCodecs = typeCodecs;
     this.nodeStateListener = nodeStateListener;
     this.schemaChangeListener = schemaChangeListener;
@@ -64,6 +73,9 @@ public class ProgrammaticArguments {
     this.localDatacenters = localDatacenters;
     this.nodeFilters = nodeFilters;
     this.classLoader = classLoader;
+    this.authProvider = authProvider;
+    this.sslEngineFactory = sslEngineFactory;
+    this.cloudProxyAddress = cloudProxyAddress;
   }
 
   @NonNull
@@ -101,6 +113,21 @@ public class ProgrammaticArguments {
     return classLoader;
   }
 
+  @Nullable
+  public AuthProvider getAuthProvider() {
+    return authProvider;
+  }
+
+  @Nullable
+  public SslEngineFactory getSslEngineFactory() {
+    return sslEngineFactory;
+  }
+
+  @Nullable
+  public InetSocketAddress getCloudProxyAddress() {
+    return cloudProxyAddress;
+  }
+
   public static class Builder {
 
     private ImmutableList.Builder<TypeCodec<?>> typeCodecsBuilder = ImmutableList.builder();
@@ -111,6 +138,9 @@ public class ProgrammaticArguments {
     private ImmutableMap.Builder<String, Predicate<Node>> nodeFiltersBuilder =
         ImmutableMap.builder();
     private ClassLoader classLoader;
+    private AuthProvider authProvider;
+    private SslEngineFactory sslEngineFactory;
+    private InetSocketAddress cloudProxyAddress;
 
     @NonNull
     public Builder addTypeCodecs(@NonNull TypeCodec<?>... typeCodecs) {
@@ -173,6 +203,24 @@ public class ProgrammaticArguments {
     }
 
     @NonNull
+    public Builder withCloudProxyAddress(@Nullable InetSocketAddress cloudAddress) {
+      this.cloudProxyAddress = cloudAddress;
+      return this;
+    }
+
+    @NonNull
+    public Builder withAuthProvider(@Nullable AuthProvider authProvider) {
+      this.authProvider = authProvider;
+      return this;
+    }
+
+    @NonNull
+    public Builder withSslEngineFactory(@Nullable SslEngineFactory sslEngineFactory) {
+      this.sslEngineFactory = sslEngineFactory;
+      return this;
+    }
+
+    @NonNull
     public ProgrammaticArguments build() {
       return new ProgrammaticArguments(
           typeCodecsBuilder.build(),
@@ -181,7 +229,10 @@ public class ProgrammaticArguments {
           requestTracker,
           localDatacentersBuilder.build(),
           nodeFiltersBuilder.build(),
-          classLoader);
+          classLoader,
+          authProvider,
+          sslEngineFactory,
+          cloudProxyAddress);
     }
   }
 }

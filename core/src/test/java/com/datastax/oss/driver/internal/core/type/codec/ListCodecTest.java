@@ -94,6 +94,20 @@ public class ListCodecTest extends CodecTestBase<List<Integer>> {
   }
 
   @Test
+  public void should_decode_list_with_null_elements() {
+    when(elementCodec.decode(Bytes.fromHexString("0x0002"), ProtocolVersion.DEFAULT)).thenReturn(2);
+    assertThat(
+            decode(
+                "0x"
+                    + "00000002" // number of elements
+                    + "FFFFFFFF" // size of element 1 (-1 for null)
+                    + "00000002" // size of element 2
+                    + "0002" // contents of element 2
+                ))
+        .containsExactly(null, 2);
+  }
+
+  @Test
   public void should_format_null_list() {
     assertThat(format(null)).isEqualTo("NULL");
   }

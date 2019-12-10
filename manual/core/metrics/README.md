@@ -1,5 +1,13 @@
 ## Metrics
 
+### Quick overview
+
+* `advanced.metrics` in the configuration. All disabled by default, can be selected individually.
+* some metrics are per node, others global to the session, or both.
+* unlike driver 3, JMX is not provided out of the box. You need to add the dependency manually.
+
+-----
+
 The driver exposes measurements of its internal behavior through the popular [Dropwizard Metrics]
 library. Application developers can select which metrics are enabled, and export them to a
 monitoring tool. 

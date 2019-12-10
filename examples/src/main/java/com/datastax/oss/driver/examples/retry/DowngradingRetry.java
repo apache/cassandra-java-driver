@@ -34,6 +34,7 @@ import com.datastax.oss.driver.api.core.servererrors.QueryConsistencyException;
 import com.datastax.oss.driver.api.core.servererrors.ReadTimeoutException;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
+import java.util.List;
 
 /**
  * This example illustrates how to implement a downgrading retry strategy from application code.
@@ -418,9 +419,11 @@ public class DowngradingRetry {
   private static DriverException unwrapAllNodesFailedException(DriverException e) {
     if (e instanceof AllNodesFailedException) {
       AllNodesFailedException noHostAvailable = (AllNodesFailedException) e;
-      for (Throwable error : noHostAvailable.getErrors().values()) {
-        if (error instanceof QueryConsistencyException || error instanceof UnavailableException) {
-          return (DriverException) error;
+      for (List<Throwable> errors : noHostAvailable.getAllErrors().values()) {
+        for (Throwable error : errors) {
+          if (error instanceof QueryConsistencyException || error instanceof UnavailableException) {
+            return (DriverException) error;
+          }
         }
       }
       // Couldn't find an exploitable error to unwrap: abort.

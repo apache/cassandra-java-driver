@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
@@ -40,6 +41,7 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.UserDefinedTypeBuilder;
 import com.datastax.oss.driver.internal.core.type.codec.CqlIntToStringCodec;
+import com.datastax.oss.driver.internal.core.type.codec.IntCodec;
 import com.datastax.oss.driver.internal.core.type.codec.ListCodec;
 import com.datastax.oss.driver.internal.core.type.codec.registry.CachingCodecRegistryTest.TestCachingCodecRegistry.MockCache;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -58,7 +60,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.Period;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -173,8 +178,9 @@ public class CachingCodecRegistryTest {
     CqlIntToStringCodec intToStringCodec1 = new CqlIntToStringCodec();
     // register a second codec to also check that the first one is preferred
     CqlIntToStringCodec intToStringCodec2 = new CqlIntToStringCodec();
-    TestCachingCodecRegistry registry =
-        new TestCachingCodecRegistry(mockCache, intToStringCodec1, intToStringCodec2);
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
+    registry.register(intToStringCodec1, intToStringCodec2);
+    verify(mockCache).lookup(DataTypes.INT, GenericType.STRING, false);
 
     // When the mapping is not ambiguous, the user type should be returned
     assertThat(registry.codecFor(DataTypes.INT, GenericType.STRING)).isSameAs(intToStringCodec1);
@@ -192,8 +198,9 @@ public class CachingCodecRegistryTest {
   public void should_find_user_codec_for_custom_java_type() {
     TextToPeriodCodec textToPeriodCodec1 = new TextToPeriodCodec();
     TextToPeriodCodec textToPeriodCodec2 = new TextToPeriodCodec();
-    TestCachingCodecRegistry registry =
-        new TestCachingCodecRegistry(mockCache, textToPeriodCodec1, textToPeriodCodec2);
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
+    registry.register(textToPeriodCodec1, textToPeriodCodec2);
+    verify(mockCache).lookup(DataTypes.TEXT, GenericType.of(Period.class), false);
 
     assertThat(registry.codecFor(DataTypes.TEXT, GenericType.of(Period.class)))
         .isSameAs(textToPeriodCodec1);
@@ -351,6 +358,19 @@ public class CachingCodecRegistryTest {
   }
 
   @Test
+  public void should_throw_for_list_codec_containing_null_element() {
+    List<String> value = new ArrayList<>();
+    value.add(null);
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
+    assertThatThrownBy(() -> registry.codecFor(value))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Can't infer list codec because the first element is null "
+                + "(note that CQL does not allow null values in collections)");
+  }
+
+  @Test
   public void should_create_set_codec_for_cql_and_java_types() {
     SetType cqlType = DataTypes.setOf(DataTypes.setOf(DataTypes.INT));
     GenericType<Set<Set<Integer>>> javaType = new GenericType<Set<Set<Integer>>>() {};
@@ -488,6 +508,19 @@ public class CachingCodecRegistryTest {
     assertThat(codec.accepts(value)).isTrue();
 
     inOrder.verify(mockCache).lookup(null, GenericType.setOf(Inet4Address.class), true);
+  }
+
+  @Test
+  public void should_throw_for_set_codec_containing_null_element() {
+    Set<String> value = new HashSet<>();
+    value.add(null);
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
+    assertThatThrownBy(() -> registry.codecFor(value))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Can't infer set codec because the first element is null "
+                + "(note that CQL does not allow null values in collections)");
   }
 
   @Test
@@ -666,6 +699,26 @@ public class CachingCodecRegistryTest {
     inOrder
         .verify(mockCache)
         .lookup(null, GenericType.mapOf(Inet4Address.class, Inet4Address.class), true);
+  }
+
+  @Test
+  public void should_throw_for_map_codec_containing_null_element() {
+    should_throw_for_map_codec_containing_null_element("foo", null);
+    should_throw_for_map_codec_containing_null_element(null, "foo");
+    should_throw_for_map_codec_containing_null_element(null, null);
+  }
+
+  private void should_throw_for_map_codec_containing_null_element(
+      String firstKey, String firstValue) {
+    Map<String, String> value = new HashMap<>();
+    value.put(firstKey, firstValue);
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
+    assertThatThrownBy(() -> registry.codecFor(value))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Can't infer map codec because the first key and/or value is null "
+                + "(note that CQL does not allow null values in collections)");
   }
 
   @Test
@@ -865,7 +918,8 @@ public class CachingCodecRegistryTest {
   @Test
   public void should_not_allow_covariance_for_lookups_by_java_type() {
 
-    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache, new ACodec());
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
+    registry.register(new ACodec());
     InOrder inOrder = inOrder(mockCache);
 
     // covariance not allowed
@@ -887,8 +941,10 @@ public class CachingCodecRegistryTest {
   @Test
   public void should_allow_covariance_for_lookups_by_cql_type_and_value() {
 
-    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache, new ACodec());
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
+    registry.register(new ACodec());
     InOrder inOrder = inOrder(mockCache);
+    inOrder.verify(mockCache).lookup(DataTypes.INT, GenericType.of(A.class), false);
 
     // covariance allowed
 
@@ -914,8 +970,10 @@ public class CachingCodecRegistryTest {
   @Test
   public void should_allow_covariance_for_lookups_by_value() {
 
-    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache, new ACodec());
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
+    registry.register(new ACodec());
     InOrder inOrder = inOrder(mockCache);
+    inOrder.verify(mockCache).lookup(DataTypes.INT, GenericType.of(A.class), false);
 
     // covariance allowed
 
@@ -937,13 +995,66 @@ public class CachingCodecRegistryTest {
     inOrder.verifyNoMoreInteractions();
   }
 
+  @Test
+  public void should_register_user_codec_at_runtime() {
+    CqlIntToStringCodec intToStringCodec = new CqlIntToStringCodec();
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
+    registry.register(intToStringCodec);
+    // register checks the cache for collisions
+    verify(mockCache).lookup(DataTypes.INT, GenericType.STRING, false);
+
+    // When the mapping is not ambiguous, the user type should be returned
+    assertThat(registry.codecFor(DataTypes.INT, GenericType.STRING)).isSameAs(intToStringCodec);
+    assertThat(registry.codecFor(DataTypes.INT, String.class)).isSameAs(intToStringCodec);
+    assertThat(registry.codecFor(DataTypes.INT, "")).isSameAs(intToStringCodec);
+
+    // When there is an ambiguity with a built-in codec, the built-in codec should have priority
+    assertThat(registry.codecFor(DataTypes.INT)).isSameAs(TypeCodecs.INT);
+    assertThat(registry.codecFor("")).isSameAs(TypeCodecs.TEXT);
+
+    verifyZeroInteractions(mockCache);
+  }
+
+  @Test
+  public void should_ignore_user_codec_if_collides_with_builtin_codec() {
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
+
+    IntCodec userIntCodec = new IntCodec();
+    registry.register(userIntCodec);
+
+    assertThat(registry.codecFor(DataTypes.INT, Integer.class)).isNotSameAs(userIntCodec);
+  }
+
+  @Test
+  public void should_ignore_user_codec_if_collides_with_other_user_codec() {
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
+    CqlIntToStringCodec intToStringCodec1 = new CqlIntToStringCodec();
+    CqlIntToStringCodec intToStringCodec2 = new CqlIntToStringCodec();
+
+    registry.register(intToStringCodec1, intToStringCodec2);
+
+    assertThat(registry.codecFor(DataTypes.INT, GenericType.STRING)).isSameAs(intToStringCodec1);
+  }
+
+  @Test
+  public void should_ignore_user_codec_if_collides_with_generated_codec() {
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
+
+    TypeCodec<List<Integer>> userListOfIntCodec = TypeCodecs.listOf(TypeCodecs.INT);
+    registry.register(userListOfIntCodec);
+
+    assertThat(
+            registry.codecFor(DataTypes.listOf(DataTypes.INT), GenericType.listOf(Integer.class)))
+        .isNotSameAs(userListOfIntCodec);
+  }
+
   // Our intent is not to test Guava cache, so we don't need an actual cache here.
   // The only thing we want to check in our tests is if getCachedCodec was called.
   public static class TestCachingCodecRegistry extends CachingCodecRegistry {
     private final MockCache cache;
 
-    public TestCachingCodecRegistry(MockCache cache, TypeCodec<?>... userCodecs) {
-      super("test", CodecRegistryConstants.PRIMITIVE_CODECS, userCodecs);
+    public TestCachingCodecRegistry(MockCache cache) {
+      super("test", CodecRegistryConstants.PRIMITIVE_CODECS);
       this.cache = cache;
     }
 

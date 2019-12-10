@@ -22,8 +22,10 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
+import com.datastax.oss.driver.internal.core.metrics.NoopNodeMetricUpdater;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
@@ -37,10 +39,13 @@ import net.jcip.annotations.ThreadSafe;
  * from {@link MetadataManager}'s admin thread.
  */
 @ThreadSafe
-public class DefaultNode implements Node {
+public class DefaultNode implements Node, Serializable {
 
-  private final EndPoint endPoint;
-  private final NodeMetricUpdater metricUpdater;
+  private static final long serialVersionUID = 1;
+
+  private volatile EndPoint endPoint;
+  // A deserialized node is not attached to a session anymore, so we don't need to retain this
+  private transient volatile NodeMetricUpdater metricUpdater;
 
   volatile InetSocketAddress broadcastRpcAddress;
   volatile InetSocketAddress broadcastAddress;
@@ -80,6 +85,18 @@ public class DefaultNode implements Node {
     return endPoint;
   }
 
+  public void setEndPoint(@NonNull EndPoint newEndPoint, @NonNull InternalDriverContext context) {
+    if (!newEndPoint.equals(endPoint)) {
+      endPoint = newEndPoint;
+
+      // The endpoint is also used to build metric names, so make sure they get updated
+      NodeMetricUpdater previousMetricUpdater = metricUpdater;
+      if (!(previousMetricUpdater instanceof NoopNodeMetricUpdater)) {
+        metricUpdater = context.getMetricsFactory().newNodeUpdater(this);
+      }
+    }
+  }
+
   @NonNull
   @Override
   public Optional<InetSocketAddress> getBroadcastRpcAddress() {
@@ -116,7 +133,7 @@ public class DefaultNode implements Node {
     return cassandraVersion;
   }
 
-  @NonNull
+  @Nullable
   @Override
   public UUID getHostId() {
     return hostId;
@@ -166,27 +183,10 @@ public class DefaultNode implements Node {
   }
 
   @Override
-  public boolean equals(Object other) {
-    if (other == this) {
-      return true;
-    } else if (other instanceof Node) {
-      Node that = (Node) other;
-      // hostId is the natural identifier, but unfortunately we don't know it for contact points
-      // until the driver has opened the first connection.
-      return this.endPoint.equals(that.getEndPoint());
-    } else {
-      return false;
-    }
-  }
-
-  @Override
-  public int hashCode() {
-    return endPoint.hashCode();
-  }
-
-  @Override
   public String toString() {
-    return endPoint.toString();
+    // Include the hash code because this class uses reference equality
+    return String.format(
+        "Node(endPoint=%s, hostId=%s, hashCode=%x)", getEndPoint(), getHostId(), hashCode());
   }
 
   /** Note: deliberately not exposed by the public interface. */

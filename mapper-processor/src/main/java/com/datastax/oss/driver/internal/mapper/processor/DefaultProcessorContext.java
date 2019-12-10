@@ -41,7 +41,6 @@ public class DefaultProcessorContext implements ProcessorContext {
   private final DecoratedMessager messager;
   private final Types typeUtils;
   private final Elements elementUtils;
-  private boolean logsEnabled;
   private final Classes classUtils;
   private final JavaPoetFiler filer;
   private final LoggingGenerator loggingGenerator;

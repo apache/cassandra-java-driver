@@ -1,0 +1,1 @@
+{"region":"local","contact_info":{"type":"sni_proxy","local_dc":"dc1","contact_points":["4ac06655-f861-49f9-881e-3fee22e69b94","2af7c253-3394-4a0d-bfac-f1ad81b5154d","b17b6e2a-3f48-4d6a-81c1-20a0a1f3192a"],"sni_proxy_address":"localhost:30002"}}

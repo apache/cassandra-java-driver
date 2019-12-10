@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
@@ -120,7 +121,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
             query(
                 channel,
                 "SELECT * FROM "
-                    + retrievePeerTableName()
+                    + getPeerTableName()
                     + " WHERE peer = :address and peer_port = :port",
                 ImmutableMap.of(
                     "address",
@@ -131,12 +132,12 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
         query =
             query(
                 channel,
-                "SELECT * FROM " + retrievePeerTableName() + " WHERE peer = :address",
+                "SELECT * FROM " + getPeerTableName() + " WHERE peer = :address",
                 ImmutableMap.of("address", node.getBroadcastAddress().get().getAddress()));
       }
       return query.thenApply(result -> firstPeerRowAsNodeInfo(result, localEndPoint));
     } else {
-      return query(channel, "SELECT * FROM " + retrievePeerTableName())
+      return query(channel, "SELECT * FROM " + getPeerTableName())
           .thenApply(result -> findInPeers(result, node.getHostId(), localEndPoint));
     }
   }
@@ -149,7 +150,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     LOG.debug("[{}] Fetching info for new node {}", logPrefix, broadcastRpcAddress);
     DriverChannel channel = controlConnection.channel();
     EndPoint localEndPoint = channel.getEndPoint();
-    return query(channel, "SELECT * FROM " + retrievePeerTableName())
+    return query(channel, "SELECT * FROM " + getPeerTableName())
         .thenApply(result -> findInPeers(result, broadcastRpcAddress, localEndPoint));
   }
 
@@ -197,14 +198,18 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
         (controlNodeResult, peersResult) -> {
           List<NodeInfo> nodeInfos = new ArrayList<>();
           AdminRow localRow = controlNodeResult.iterator().next();
-          InetSocketAddress localBroadcastRpcAddress = getBroadcastRpcAddress(localRow);
+          InetSocketAddress localBroadcastRpcAddress =
+              getBroadcastRpcAddress(localRow, localEndPoint);
           nodeInfos.add(nodeInfoBuilder(localRow, localBroadcastRpcAddress, localEndPoint).build());
           for (AdminRow peerRow : peersResult) {
             if (isPeerValid(peerRow)) {
-              InetSocketAddress peerBroadcastRpcAddress = getBroadcastRpcAddress(peerRow);
-              NodeInfo nodeInfo =
-                  nodeInfoBuilder(peerRow, peerBroadcastRpcAddress, localEndPoint).build();
-              nodeInfos.add(nodeInfo);
+              InetSocketAddress peerBroadcastRpcAddress =
+                  getBroadcastRpcAddress(peerRow, localEndPoint);
+              if (peerBroadcastRpcAddress != null) {
+                NodeInfo nodeInfo =
+                    nodeInfoBuilder(peerRow, peerBroadcastRpcAddress, localEndPoint).build();
+                nodeInfos.add(nodeInfo);
+              }
             }
           }
           return nodeInfos;
@@ -251,11 +256,8 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     return query(channel, queryString, Collections.emptyMap());
   }
 
-  private String retrievePeerTableName() {
-    if (isSchemaV2) {
-      return "system.peers_v2";
-    }
-    return "system.peers";
+  private String getPeerTableName() {
+    return isSchemaV2 ? "system.peers_v2" : "system.peers";
   }
 
   private Optional<NodeInfo> firstPeerRowAsNodeInfo(AdminResult result, EndPoint localEndPoint) {
@@ -263,8 +265,10 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     if (iterator.hasNext()) {
       AdminRow row = iterator.next();
       if (isPeerValid(row)) {
-        InetSocketAddress peerBroadcastRpcAddress = getBroadcastRpcAddress(row);
-        return Optional.of(nodeInfoBuilder(row, peerBroadcastRpcAddress, localEndPoint).build());
+        return Optional.ofNullable(getBroadcastRpcAddress(row, localEndPoint))
+            .map(
+                broadcastRpcAddress ->
+                    nodeInfoBuilder(row, broadcastRpcAddress, localEndPoint).build());
       }
     }
     return Optional.empty();
@@ -291,22 +295,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
       @Nullable InetSocketAddress broadcastRpcAddress,
       @NonNull EndPoint localEndPoint) {
 
-    boolean peer = row.contains("peer");
-
-    EndPoint endPoint;
-    if (peer) {
-      // If this node is a peer, its broadcast RPC address must be present.
-      Objects.requireNonNull(
-          broadcastRpcAddress, "broadcastRpcAddress cannot be null for a peer row");
-      // Deployments that use a custom EndPoint implementation will need their own TopologyMonitor.
-      // One simple approach is to extend this class and override this method.
-      endPoint = new DefaultEndPoint(context.getAddressTranslator().translate(broadcastRpcAddress));
-    } else {
-      // Don't rely on system.local.rpc_address for the control node, because it mistakenly
-      // reports the normal RPC address instead of the broadcast one (CASSANDRA-11181). We
-      // already know the endpoint anyway since we've just used it to query.
-      endPoint = localEndPoint;
-    }
+    EndPoint endPoint = buildNodeEndPoint(row, broadcastRpcAddress, localEndPoint);
 
     // in system.local
     InetAddress broadcastInetAddress = row.getInetAddress("broadcast_address");
@@ -344,18 +333,59 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
       listenAddress = new InetSocketAddress(listenInetAddress, listenPort);
     }
 
-    return DefaultNodeInfo.builder()
-        .withEndPoint(endPoint)
-        .withBroadcastRpcAddress(broadcastRpcAddress)
-        .withBroadcastAddress(broadcastAddress)
-        .withListenAddress(listenAddress)
-        .withDatacenter(row.getString("data_center"))
-        .withRack(row.getString("rack"))
-        .withCassandraVersion(row.getString("release_version"))
-        .withTokens(row.getSetOfString("tokens"))
-        .withPartitioner(row.getString("partitioner"))
-        .withHostId(Objects.requireNonNull(row.getUuid("host_id")))
-        .withSchemaVersion(row.getUuid("schema_version"));
+    DefaultNodeInfo.Builder rv =
+        DefaultNodeInfo.builder()
+            .withEndPoint(endPoint)
+            .withBroadcastRpcAddress(broadcastRpcAddress)
+            .withBroadcastAddress(broadcastAddress)
+            .withListenAddress(listenAddress)
+            .withDatacenter(row.getString("data_center"))
+            .withRack(row.getString("rack"))
+            .withCassandraVersion(row.getString("release_version"))
+            .withTokens(row.getSetOfString("tokens"))
+            .withPartitioner(row.getString("partitioner"))
+            .withHostId(Objects.requireNonNull(row.getUuid("host_id")))
+            .withSchemaVersion(row.getUuid("schema_version"));
+
+    return row.contains("dse_version")
+        ? rv.withExtra(NodeProperties.DSE_VERSION, Version.parse(row.getString("dse_version")))
+        : rv;
+  }
+
+  /**
+   * Builds the node's endpoint from the given row.
+   *
+   * @param broadcastRpcAddress this is a parameter only because we already have it when we come
+   *     from {@link #findInPeers(AdminResult, InetSocketAddress, EndPoint)}. Callers that don't
+   *     already have it can use {@link #getBroadcastRpcAddress}. For the control host, this can be
+   *     null; if this node is a peer however, this cannot be null, since we use that address to
+   *     create the node's endpoint. Callers can use {@link #isPeerValid(AdminRow)} to check that
+   *     before calling this method.
+   * @param localEndPoint the control node endpoint that was used to query the node's system tables.
+   *     This is a parameter because it would be racy to call {@code
+   *     controlConnection.channel().getEndPoint()} from within this method, as the control
+   *     connection may have changed its channel since. So this parameter must be provided by the
+   *     caller.
+   */
+  @NonNull
+  protected EndPoint buildNodeEndPoint(
+      @NonNull AdminRow row,
+      @Nullable InetSocketAddress broadcastRpcAddress,
+      @NonNull EndPoint localEndPoint) {
+    boolean peer = row.contains("peer");
+    if (peer) {
+      // If this node is a peer, its broadcast RPC address must be present.
+      Objects.requireNonNull(
+          broadcastRpcAddress, "broadcastRpcAddress cannot be null for a peer row");
+      // Deployments that use a custom EndPoint implementation will need their own TopologyMonitor.
+      // One simple approach is to extend this class and override this method.
+      return new DefaultEndPoint(context.getAddressTranslator().translate(broadcastRpcAddress));
+    } else {
+      // Don't rely on system.local.rpc_address for the control node, because it mistakenly
+      // reports the normal RPC address instead of the broadcast one (CASSANDRA-11181). We
+      // already know the endpoint anyway since we've just used it to query.
+      return localEndPoint;
+    }
   }
 
   // Called when a new node is being added; the peers table is keyed by broadcast_address,
@@ -364,7 +394,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   private Optional<NodeInfo> findInPeers(
       AdminResult result, InetSocketAddress broadcastRpcAddressToFind, EndPoint localEndPoint) {
     for (AdminRow row : result) {
-      InetSocketAddress broadcastRpcAddress = getBroadcastRpcAddress(row);
+      InetSocketAddress broadcastRpcAddress = getBroadcastRpcAddress(row, localEndPoint);
       if (broadcastRpcAddress != null
           && broadcastRpcAddress.equals(broadcastRpcAddressToFind)
           && isPeerValid(row)) {
@@ -383,8 +413,10 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     for (AdminRow row : result) {
       UUID hostId = row.getUuid("host_id");
       if (hostId != null && hostId.equals(hostIdToFind) && isPeerValid(row)) {
-        InetSocketAddress broadcastRpcAddress = getBroadcastRpcAddress(row);
-        return Optional.of(nodeInfoBuilder(row, broadcastRpcAddress, localEndPoint).build());
+        return Optional.ofNullable(getBroadcastRpcAddress(row, localEndPoint))
+            .map(
+                broadcastRpcAddress ->
+                    nodeInfoBuilder(row, broadcastRpcAddress, localEndPoint).build());
       }
     }
     LOG.debug("[{}] Could not find any peer row matching {}", logPrefix, hostIdToFind);
@@ -407,11 +439,17 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
    * Determines the broadcast RPC address of the node represented by the given row.
    *
    * @param row The row to inspect; can represent either a local (control) node or a peer node.
+   * @param localEndPoint the control node endpoint that was used to query the node's system tables.
+   *     This is a parameter because it would be racy to call {@code
+   *     controlConnection.channel().getEndPoint()} from within this method, as the control
+   *     connection may have changed its channel since. So this parameter must be provided by the
+   *     caller.
    * @return the broadcast RPC address of the node, if it could be determined; or {@code null}
    *     otherwise.
    */
   @Nullable
-  protected InetSocketAddress getBroadcastRpcAddress(@NonNull AdminRow row) {
+  protected InetSocketAddress getBroadcastRpcAddress(
+      @NonNull AdminRow row, @NonNull EndPoint localEndPoint) {
     // in system.peers or system.local
     InetAddress broadcastRpcInetAddress = row.getInetAddress("rpc_address");
     if (broadcastRpcInetAddress == null) {
@@ -434,7 +472,22 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
         broadcastRpcPort = port == -1 ? 0 : port;
       }
     }
-    return new InetSocketAddress(broadcastRpcInetAddress, broadcastRpcPort);
+    InetSocketAddress broadcastRpcAddress =
+        new InetSocketAddress(broadcastRpcInetAddress, broadcastRpcPort);
+    if (row.contains("peer") && broadcastRpcAddress.equals(localEndPoint.resolve())) {
+      // JAVA-2303: if the peer is actually the control node, ignore that peer as it is likely
+      // a misconfiguration problem.
+      LOG.warn(
+          "[{}] Control node {} has an entry for itself in {}: this entry will be ignored. "
+              + "This is likely due to a misconfiguration; please verify your rpc_address "
+              + "configuration in cassandra.yaml on all nodes in your cluster.",
+          logPrefix,
+          localEndPoint,
+          getPeerTableName());
+      return null;
+    }
+
+    return broadcastRpcAddress;
   }
 
   /**
@@ -456,7 +509,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
           "[{}] Found invalid row in {} for peer: {}. "
               + "This is likely a gossip or snitch issue, this node will be ignored.",
           logPrefix,
-          retrievePeerTableName(),
+          getPeerTableName(),
           peerRow.getInetAddress("peer"));
     }
     return valid;

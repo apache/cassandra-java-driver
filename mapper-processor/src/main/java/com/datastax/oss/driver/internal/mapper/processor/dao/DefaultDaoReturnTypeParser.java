@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
@@ -55,6 +56,7 @@ public class DefaultDaoReturnTypeParser implements DaoReturnTypeParser {
           .put(Long.class, DaoReturnType.LONG)
           .put(Row.class, DaoReturnType.ROW)
           .put(ResultSet.class, DaoReturnType.RESULT_SET)
+          .put(BoundStatement.class, DaoReturnType.BOUND_STATEMENT)
           .build();
 
   /**

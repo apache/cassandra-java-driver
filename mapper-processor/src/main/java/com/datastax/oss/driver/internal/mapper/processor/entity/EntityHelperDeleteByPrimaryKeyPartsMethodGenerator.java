@@ -20,7 +20,6 @@ import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.delete.Delete;
 import com.datastax.oss.driver.api.querybuilder.delete.DeleteSelection;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
-import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import java.util.Optional;
@@ -30,10 +29,7 @@ public class EntityHelperDeleteByPrimaryKeyPartsMethodGenerator implements Metho
 
   private final EntityDefinition entityDefinition;
 
-  public EntityHelperDeleteByPrimaryKeyPartsMethodGenerator(
-      EntityDefinition entityDefinition,
-      EntityHelperGenerator enclosingClass,
-      ProcessorContext context) {
+  public EntityHelperDeleteByPrimaryKeyPartsMethodGenerator(EntityDefinition entityDefinition) {
     this.entityDefinition = entityDefinition;
   }
 

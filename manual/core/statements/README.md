@@ -1,5 +1,15 @@
 ## Statements
 
+### Quick overview
+
+What you pass to `session.execute()`.
+
+* three types: simple (textual query), bound (prepared) and batch.
+* built-in implementations are **immutable**. Setters always return a new object, don't ignore the
+  result.
+
+-----
+
 To execute a CQL query, you  create a [Statement] instance and pass it to
 [Session#execute][execute] or [Session#executeAsync][executeAsync]. The driver provides various
 implementations:
@@ -49,7 +59,7 @@ the [configuration](../configuration/). Namely, these are: idempotent flag, quer
 consistency levels and page size. We recommended the configuration approach whenever possible (you
 can create execution profiles to capture common combinations of those options).
 
-[Statement]:        https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/Statement.html
-[StatementBuilder]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/cql/StatementBuilder.html
-[execute]:          https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/Session.html#execute-com.datastax.oss.driver.api.core.cql.Statement-
-[executeAsync]:     https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/session/Session.html#executeAsync-com.datastax.oss.driver.api.core.cql.Statement-
+[Statement]:        https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/Statement.html
+[StatementBuilder]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/StatementBuilder.html
+[execute]:          https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/Session.html#execute-com.datastax.oss.driver.api.core.cql.Statement-
+[executeAsync]:     https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/Session.html#executeAsync-com.datastax.oss.driver.api.core.cql.Statement-

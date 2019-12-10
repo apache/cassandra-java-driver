@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.mapper;
 
 import static com.datastax.oss.driver.assertions.Assertions.assertThat;
+import static org.assertj.core.data.Offset.offset;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -59,11 +60,12 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class ComputedIT {
 
-  private static CcmRule ccm = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
@@ -73,13 +75,13 @@ public class ComputedIT {
 
   @BeforeClass
   public static void setup() {
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
     for (String query :
         ImmutableList.of(
             "CREATE TABLE computed_entity(id int, c_id int, v int, primary key (id, c_id))")) {
       session.execute(
-          SimpleStatement.builder(query).setExecutionProfile(sessionRule.slowProfile()).build());
+          SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
     }
 
     mapper = new ComputedIT_TestMapperBuilder(session).build();
@@ -87,7 +89,7 @@ public class ComputedIT {
 
   @Test
   public void should_not_include_computed_values_in_insert() {
-    ComputedDao computedDao = mapper.computedDao(sessionRule.keyspace());
+    ComputedDao computedDao = mapper.computedDao(SESSION_RULE.keyspace());
     int key = keyProvider.incrementAndGet();
 
     ComputedEntity entity = new ComputedEntity(key, 1, 2);
@@ -101,7 +103,7 @@ public class ComputedIT {
 
   @Test
   public void should_return_computed_values_in_select() {
-    ComputedDao computedDao = mapper.computedDao(sessionRule.keyspace());
+    ComputedDao computedDao = mapper.computedDao(SESSION_RULE.keyspace());
     int key = keyProvider.incrementAndGet();
 
     long time = System.currentTimeMillis() - 1000;
@@ -112,14 +114,14 @@ public class ComputedIT {
     assertThat(retrievedValue.getId()).isEqualTo(key);
     assertThat(retrievedValue.getcId()).isEqualTo(1);
     assertThat(retrievedValue.getV()).isEqualTo(2);
-    assertThat(retrievedValue.getTtl()).isEqualTo(3600);
+    assertThat(retrievedValue.getTtl()).isCloseTo(3600, offset(10));
     assertThat(retrievedValue.getWritetime()).isEqualTo(time);
   }
 
   @Test
   public void should_not_include_computed_values_in_delete() {
     // should not be the case since delete operates on primary key..
-    ComputedDao computedDao = mapper.computedDao(sessionRule.keyspace());
+    ComputedDao computedDao = mapper.computedDao(SESSION_RULE.keyspace());
     int key = keyProvider.incrementAndGet();
 
     ComputedEntity entity = new ComputedEntity(key, 1, 2);
@@ -135,10 +137,10 @@ public class ComputedIT {
 
   @Test
   public void should_not_include_computed_values_in_SetEntity() {
-    ComputedDao computedDao = mapper.computedDao(sessionRule.keyspace());
+    ComputedDao computedDao = mapper.computedDao(SESSION_RULE.keyspace());
     int key = keyProvider.incrementAndGet();
 
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
     PreparedStatement preparedStatement =
         session.prepare("INSERT INTO computed_entity (id, c_id, v) VALUES (?, ?, ?)");
     BoundStatementBuilder builder = preparedStatement.boundStatementBuilder();
@@ -156,14 +158,14 @@ public class ComputedIT {
 
   @Test
   public void should_return_computed_values_in_GetEntity() {
-    ComputedDao computedDao = mapper.computedDao(sessionRule.keyspace());
+    ComputedDao computedDao = mapper.computedDao(SESSION_RULE.keyspace());
     int key = keyProvider.incrementAndGet();
 
     long time = System.currentTimeMillis() - 1000;
     ComputedEntity entity = new ComputedEntity(key, 1, 2);
     computedDao.saveWithTime(entity, 3600, time);
 
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
     /*
      * Query with the computed values included.
@@ -191,20 +193,20 @@ public class ComputedIT {
     assertThat(retrievedValue.getV()).isEqualTo(2);
 
     // these should be set
-    assertThat(retrievedValue.getTtl()).isEqualTo(3600);
+    assertThat(retrievedValue.getTtl()).isCloseTo(3600, offset(10));
     assertThat(retrievedValue.getWritetime()).isEqualTo(time);
   }
 
   @Test
   public void should_fail_if_alias_does_not_match_cqlName() {
-    ComputedDao computedDao = mapper.computedDao(sessionRule.keyspace());
+    ComputedDao computedDao = mapper.computedDao(SESSION_RULE.keyspace());
     int key = keyProvider.incrementAndGet();
 
     long time = System.currentTimeMillis() - 1000;
     ComputedEntity entity = new ComputedEntity(key, 1, 2);
     computedDao.saveWithTime(entity, 3600, time);
 
-    CqlSession session = sessionRule.session();
+    CqlSession session = SESSION_RULE.session();
 
     /*
      * Query with the computed values included.
@@ -230,7 +232,7 @@ public class ComputedIT {
 
   @Test
   public void should_return_computed_values_in_query() {
-    ComputedDao computedDao = mapper.computedDao(sessionRule.keyspace());
+    ComputedDao computedDao = mapper.computedDao(SESSION_RULE.keyspace());
     int key = keyProvider.incrementAndGet();
 
     long time = System.currentTimeMillis() - 1000;
@@ -243,7 +245,7 @@ public class ComputedIT {
     assertThat(retrievedValue.getV()).isEqualTo(2);
 
     // these should be set
-    assertThat(retrievedValue.getTtl()).isEqualTo(3600);
+    assertThat(retrievedValue.getTtl()).isCloseTo(3600, offset(10));
     assertThat(retrievedValue.getWritetime()).isEqualTo(time);
   }
 

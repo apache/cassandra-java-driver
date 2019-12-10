@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.cql.DefaultPreparedStatement;
+import com.datastax.oss.protocol.internal.request.Prepare;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import net.jcip.annotations.Immutable;
@@ -44,5 +45,9 @@ public class RepreparePayload {
     this.query = query;
     this.keyspace = keyspace;
     this.customPayload = customPayload;
+  }
+
+  public Prepare toMessage() {
+    return new Prepare(query, keyspace == null ? null : keyspace.asInternal());
   }
 }

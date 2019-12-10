@@ -102,6 +102,7 @@ public interface PagingIterable<ElementT> extends Iterable<ElementT> {
    * reasonable number of results.
    */
   @NonNull
+  @SuppressWarnings("MixedMutabilityReturnType")
   default List<ElementT> all() {
     if (!iterator().hasNext()) {
       return Collections.emptyList();

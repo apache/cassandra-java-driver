@@ -46,9 +46,10 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
   public DaoQueryMethodGenerator(
       ExecutableElement methodElement,
       Map<Name, TypeElement> typeParameters,
+      TypeElement processedType,
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
-    super(methodElement, typeParameters, enclosingClass, context);
+    super(methodElement, typeParameters, processedType, enclosingClass, context);
     this.queryString = methodElement.getAnnotation(Query.class).value();
     nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
   }

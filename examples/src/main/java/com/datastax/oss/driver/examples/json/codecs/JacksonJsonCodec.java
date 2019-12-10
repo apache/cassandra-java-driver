@@ -71,9 +71,9 @@ public class JacksonJsonCodec<T> implements TypeCodec<T> {
    *
    * @param javaClass the Java class this codec maps to.
    */
-  public JacksonJsonCodec(Class<T> javaClass, ObjectMapper objectMapper) {
+  public JacksonJsonCodec(Class<T> javaClass, ObjectMapper jsonMapper) {
     this.javaType = GenericType.of(javaClass);
-    this.objectMapper = objectMapper;
+    this.objectMapper = jsonMapper;
   }
 
   @NonNull

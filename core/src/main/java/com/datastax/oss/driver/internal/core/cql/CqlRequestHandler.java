@@ -231,7 +231,7 @@ public class CqlRequestHandler implements Throttled {
         // If we raced with session shutdown the timer might be closed already, rethrow with a more
         // explicit message
         result.completeExceptionally(
-            ("cannot be started once stopped".equals(e.getMessage()))
+            "cannot be started once stopped".equals(e.getMessage())
                 ? new IllegalStateException("Session is closed")
                 : e);
       }
@@ -608,16 +608,16 @@ public class CqlRequestHandler implements Throttled {
                           error -> {
                             Loggers.warnWithException(
                                 LOG,
-                                "[{}] Error while refreshing schema after DDL query, "
-                                    + "new metadata might be incomplete",
+                                "[{}] Unexpected error while refreshing schema after DDL query, "
+                                    + "keeping previous version",
                                 logPrefix,
                                 error);
                             return null;
                           }),
                   (schemaInAgreement, metadata) -> schemaInAgreement)
               .whenComplete(
-                  ((schemaInAgreement, error) ->
-                      setFinalResult(schemaChange, responseFrame, schemaInAgreement, this)));
+                  (schemaInAgreement, error) ->
+                      setFinalResult(schemaChange, responseFrame, schemaInAgreement, this));
         } else if (responseMessage instanceof SetKeyspace) {
           SetKeyspace setKeyspace = (SetKeyspace) responseMessage;
           session
@@ -645,30 +645,33 @@ public class CqlRequestHandler implements Throttled {
 
     private void processErrorResponse(Error errorMessage) {
       if (errorMessage.code == ProtocolConstants.ErrorCode.UNPREPARED) {
-        LOG.trace("[{}] Statement is not prepared on {}, repreparing", logPrefix, node);
-        ByteBuffer id = ByteBuffer.wrap(((Unprepared) errorMessage).id);
-        RepreparePayload repreparePayload = session.getRepreparePayloads().get(id);
+        ByteBuffer idToReprepare = ByteBuffer.wrap(((Unprepared) errorMessage).id);
+        LOG.trace(
+            "[{}] Statement {} is not prepared on {}, repreparing",
+            logPrefix,
+            Bytes.toHexString(idToReprepare),
+            node);
+        RepreparePayload repreparePayload = session.getRepreparePayloads().get(idToReprepare);
         if (repreparePayload == null) {
           throw new IllegalStateException(
               String.format(
                   "Tried to execute unprepared query %s but we don't have the data to reprepare it",
-                  Bytes.toHexString(id)));
+                  Bytes.toHexString(idToReprepare)));
         }
-        Prepare reprepareMessage = new Prepare(repreparePayload.query);
-        ThrottledAdminRequestHandler reprepareHandler =
-            new ThrottledAdminRequestHandler(
+        Prepare reprepareMessage = repreparePayload.toMessage();
+        ThrottledAdminRequestHandler<ByteBuffer> reprepareHandler =
+            ThrottledAdminRequestHandler.prepare(
                 channel,
                 reprepareMessage,
                 repreparePayload.customPayload,
                 timeout,
                 throttler,
                 sessionMetricUpdater,
-                logPrefix,
-                "Reprepare " + reprepareMessage.toString());
+                logPrefix);
         reprepareHandler
             .start()
             .handle(
-                (result, exception) -> {
+                (repreparedId, exception) -> {
                   if (exception != null) {
                     // If the error is not recoverable, surface it to the client instead of retrying
                     if (exception instanceof UnexpectedResponseException) {
@@ -687,6 +690,7 @@ public class CqlRequestHandler implements Throttled {
                         }
                       }
                     } else if (exception instanceof RequestThrottlingException) {
+                      trackNodeError(node, exception, NANOTIME_NOT_MEASURED_YET);
                       setFinalError(exception, node, execution);
                       return null;
                     }
@@ -695,6 +699,19 @@ public class CqlRequestHandler implements Throttled {
                     LOG.trace("[{}] Reprepare failed, trying next node", logPrefix);
                     sendRequest(null, queryPlan, execution, retryCount, false);
                   } else {
+                    if (!repreparedId.equals(idToReprepare)) {
+                      IllegalStateException illegalStateException =
+                          new IllegalStateException(
+                              String.format(
+                                  "ID mismatch while trying to reprepare (expected %s, got %s). "
+                                      + "This prepared statement won't work anymore. "
+                                      + "This usually happens when you run a 'USE...' query after "
+                                      + "the statement was prepared.",
+                                  Bytes.toHexString(idToReprepare),
+                                  Bytes.toHexString(repreparedId)));
+                      trackNodeError(node, illegalStateException, NANOTIME_NOT_MEASURED_YET);
+                      setFinalError(illegalStateException, node, execution);
+                    }
                     LOG.trace("[{}] Reprepare sucessful, retrying", logPrefix);
                     sendRequest(node, queryPlan, execution, retryCount, false);
                   }
@@ -834,7 +851,7 @@ public class CqlRequestHandler implements Throttled {
       if (result.isDone()) {
         return;
       }
-      LOG.trace("[{}] Request failure, processing: {}", logPrefix, error.toString());
+      LOG.trace("[{}] Request failure, processing: {}", logPrefix, error);
       RetryDecision decision;
       if (!isIdempotent || error instanceof FrameTooLongException) {
         decision = RetryDecision.RETHROW;

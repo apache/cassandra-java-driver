@@ -1,5 +1,19 @@
 ## Connection pooling
 
+### Quick overview
+
+One connection pool per node. **Many concurrent requests** per connection (don't tune like a JDBC
+pool).
+
+* `advanced.connection` in the configuration: `max-requests-per-connection`, `pool.local.size`,
+  `pool.remote.size`.
+* metrics (per node): `pool.open-connections`, `pool.in-flight`, `pool.available-streams`,
+  `pool.orphaned-streams`.
+* heartbeat: driver-level keepalive, prevents idle connections from being dropped;
+  `advanced.heartbeat` in the configuration. 
+
+-----
+
 ### Basics
 
 The driver communicates with Cassandra over TCP, using the Cassandra binary protocol. This protocol
@@ -144,5 +158,5 @@ you experience the issue, here's what to look out for:
 Try adding more connections per node. Thanks to the driver's hot-reload mechanism, you can do that
 at runtime and see the effects immediately. 
 
-[CqlSession]: https://docs.datastax.com/en/drivers/java/4.1/com/datastax/oss/driver/api/core/CqlSession.html
+[CqlSession]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/CqlSession.html
 [CASSANDRA-8086]: https://issues.apache.org/jira/browse/CASSANDRA-8086
