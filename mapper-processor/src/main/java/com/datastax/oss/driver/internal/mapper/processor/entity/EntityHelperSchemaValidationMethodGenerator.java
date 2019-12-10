@@ -21,7 +21,6 @@ import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultTableMetadata;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
-import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
@@ -36,10 +35,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
 
   private final EntityDefinition entityDefinition;
 
-  public EntityHelperSchemaValidationMethodGenerator(
-      EntityDefinition entityDefinition,
-      EntityHelperGenerator entityHelperGenerator,
-      ProcessorContext context) {
+  public EntityHelperSchemaValidationMethodGenerator(EntityDefinition entityDefinition) {
     this.entityDefinition = entityDefinition;
   }
 
@@ -51,10 +47,16 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
             .addModifiers(Modifier.PUBLIC)
             .returns(TypeName.VOID);
 
-    // Handle case where keyspace = null. In such case we cannot infer and validate schema for table
+    // get keyspaceId from context, and if not present fallback to keyspace set on session
+    methodBuilder.addStatement(
+        "$1T keyspaceId = context.getKeyspaceId() != null ? context.getKeyspaceId() : context.getSession().getKeyspace().orElse(null)",
+        CqlIdentifier.class);
+
+    // Handle case where keyspaceId = null. In such case we cannot infer and validate schema for
+    // table
     // or udt
     methodBuilder.beginControlFlow(
-        "if (!context.getSession().getMetadata().getKeyspace(context.getKeyspaceId()).isPresent())");
+        "if (!context.getSession().getMetadata().getKeyspace(keyspaceId).isPresent())");
     methodBuilder.addStatement(
         "return"); // todo maybe we should do log.warn("we cannot validate schema because keyspace
     // is null")?
@@ -76,13 +78,13 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     }
 
     methodBuilder.addStatement(
-        "$1T<$2T> tableMetadata = context.getSession().getMetadata().getKeyspace(context.getKeyspaceId()).flatMap(v -> v.getTable(tableId))",
+        "$1T<$2T> tableMetadata = context.getSession().getMetadata().getKeyspace(keyspaceId).flatMap(v -> v.getTable(tableId))",
         Optional.class,
         TableMetadata.class);
 
     // Generated UserDefineTypes metadata
     methodBuilder.addStatement(
-        "$1T<$2T> userDefinedType = context.getSession().getMetadata().getKeyspace(context.getKeyspaceId()).flatMap(v -> v.getUserDefinedType(tableId))",
+        "$1T<$2T> userDefinedType = context.getSession().getMetadata().getKeyspace(keyspaceId).flatMap(v -> v.getUserDefinedType(tableId))",
         Optional.class,
         UserDefinedType.class);
 
@@ -94,7 +96,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     // Throw if there is not keyspace.table for defined entity
     CodeBlock missingKeyspaceTableExceptionMessage =
         CodeBlock.of(
-            "String.format(\"There is no ks.table: %s.%s for the entity class: %s\", context.getKeyspaceId(), tableId, entityClassName)");
+            "String.format(\"There is no ks.table: %s.%s for the entity class: %s\", keyspaceId, tableId, entityClassName)");
     methodBuilder.beginControlFlow("else");
     methodBuilder.addStatement(
         "throw new $1T($2L)", IllegalArgumentException.class, missingKeyspaceTableExceptionMessage);
@@ -130,7 +132,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     CodeBlock missingCqlColumnExceptionMessage =
         CodeBlock.of(
             "String.format(\"The CQL ks.table: %s.%s has missing columns: %s that are defined in the entity class: %s\", "
-                + "context.getKeyspaceId(), tableId, missingTableCqlNames, entityClassName)");
+                + "keyspaceId, tableId, missingTableCqlNames, entityClassName)");
     methodBuilder.beginControlFlow("if (!missingTableCqlNames.isEmpty())");
     methodBuilder.addStatement(
         "throw new $1T($2L)", IllegalArgumentException.class, missingCqlColumnExceptionMessage);
@@ -164,7 +166,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     CodeBlock missingCqlUdtExceptionMessage =
         CodeBlock.of(
             "String.format(\"The CQL ks.udt: %s.%s has missing columns: %s that are defined in the entity class: %s\", "
-                + "context.getKeyspaceId(), tableId, missingTableCqlNames, entityClassName)");
+                + "keyspaceId, tableId, missingTableCqlNames, entityClassName)");
     methodBuilder.beginControlFlow("if (!missingTableCqlNames.isEmpty())");
     methodBuilder.addStatement(
         "throw new $1T($2L)", IllegalArgumentException.class, missingCqlUdtExceptionMessage);

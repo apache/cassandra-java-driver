@@ -106,6 +106,17 @@ public class SchemaValidationIT extends InventoryITBase {
   }
 
   @Test
+  public void
+      should_throw_when_use_not_properly_mapped_entity_when_ks_is_passed_as_null_extracting_ks_from_session() {
+    assertThatThrownBy(() -> mapper.productSimpleDao(null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(
+            String.format(
+                "The CQL ks.table: %s.product_simple has missing columns: [description_with_incorrect_name, some_other_not_mapped_field] that are defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductSimple",
+                sessionRule.keyspace()));
+  }
+
+  @Test
   public void should_throw_when_entity_has_no_corresponding_cql_table() {
     assertThatThrownBy(() -> mapper.productCqlTableMissingDao(sessionRule.keyspace()))
         .isInstanceOf(IllegalArgumentException.class)
