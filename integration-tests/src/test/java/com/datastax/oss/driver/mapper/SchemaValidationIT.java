@@ -36,6 +36,7 @@ import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -265,6 +266,26 @@ public class SchemaValidationIT extends InventoryITBase {
     }
 
     @Override
+    public boolean equals(Object o) {
+
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof ProductSimple)) {
+        return false;
+      }
+      ProductSimple that = (ProductSimple) o;
+      return this.id.equals(that.id)
+          && this.someOtherNotMappedField.equals(that.someOtherNotMappedField)
+          && this.descriptionWithIncorrectName.equals(that.descriptionWithIncorrectName);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(id, descriptionWithIncorrectName, someOtherNotMappedField);
+    }
+
+    @Override
     public String toString() {
       return "ProductSimple{"
           + "id="
@@ -316,6 +337,25 @@ public class SchemaValidationIT extends InventoryITBase {
 
     public void setDimensions(DimensionsWithIncorrectName dimensions) {
       this.dimensions = dimensions;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof ProductWithIncorrectUdt)) {
+        return false;
+      }
+      ProductWithIncorrectUdt that = (ProductWithIncorrectUdt) o;
+      return this.id.equals(that.id)
+          && this.description.equals(that.description)
+          && this.dimensions.equals(that.dimensions);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(id, description, dimensions);
     }
 
     @Override
@@ -373,12 +413,33 @@ public class SchemaValidationIT extends InventoryITBase {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof DimensionsWithIncorrectName)) {
+        return false;
+      }
       DimensionsWithIncorrectName that = (DimensionsWithIncorrectName) o;
-      return lengthNotPresent == that.lengthNotPresent
-          && width == that.width
-          && height == that.height;
+      return this.lengthNotPresent == that.lengthNotPresent
+          && this.height == that.height
+          && this.width == that.width;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(lengthNotPresent, width, height);
+    }
+
+    @Override
+    public String toString() {
+      return "DimensionsWithIncorrectName{"
+          + "lengthNotPresent="
+          + lengthNotPresent
+          + ", width="
+          + width
+          + ", height="
+          + height
+          + '}';
     }
   }
 }
