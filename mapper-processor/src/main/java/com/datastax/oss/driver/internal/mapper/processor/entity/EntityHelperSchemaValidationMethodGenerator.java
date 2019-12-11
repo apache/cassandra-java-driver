@@ -135,6 +135,10 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
   // CQL table
   private void findMissingColumnsInTable(MethodSpec.Builder methodBuilder) {
     methodBuilder.beginControlFlow("if (tableMetadata.isPresent())");
+
+    // handle missing Clustering Columns
+    generateMissingClusteringColumnsCheck(methodBuilder);
+
     // handle missing PKs
     generateMissingPKsCheck(methodBuilder);
 
@@ -198,6 +202,40 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
             "String.format(\"The CQL ks.table: %s.%s has missing Primary Key columns: %s that are defined in the entity class: %s\", "
                 + "keyspaceId, tableId, missingTablePksNames, entityClassName)");
     methodBuilder.beginControlFlow("if (!missingTablePksNames.isEmpty())");
+    methodBuilder.addStatement(
+        "throw new $1T($2L)", IllegalArgumentException.class, missingCqlColumnExceptionMessage);
+    methodBuilder.endControlFlow();
+  }
+
+  private void generateMissingClusteringColumnsCheck(MethodSpec.Builder methodBuilder) {
+    List<CodeBlock> expectedCqlClusteringColumns =
+        entityDefinition.getClusteringColumns().stream()
+            .map(PropertyDefinition::getCqlName)
+            .collect(Collectors.toList());
+
+    methodBuilder.addStatement(
+        "$1T<$2T> expectedCqlClusteringColumns = new $3T<>()",
+        List.class,
+        CqlIdentifier.class,
+        ArrayList.class);
+    for (CodeBlock expectedCqlName : expectedCqlClusteringColumns) {
+      methodBuilder.addStatement(
+          "expectedCqlClusteringColumns.add($1T.fromCql($2L))",
+          CqlIdentifier.class,
+          expectedCqlName);
+    }
+
+    methodBuilder.addStatement(
+        "$1T<$2T> missingTableClusteringColumnNames = findMissingColumns(expectedCqlClusteringColumns, tableMetadata.get().getClusteringColumns().keySet())",
+        List.class,
+        CqlIdentifier.class);
+
+    // throw if there are any missing Clustering Columns columns
+    CodeBlock missingCqlColumnExceptionMessage =
+        CodeBlock.of(
+            "String.format(\"The CQL ks.table: %s.%s has missing Clustering columns: %s that are defined in the entity class: %s\", "
+                + "keyspaceId, tableId, missingTableClusteringColumnNames, entityClassName)");
+    methodBuilder.beginControlFlow("if (!missingTableClusteringColumnNames.isEmpty())");
     methodBuilder.addStatement(
         "throw new $1T($2L)", IllegalArgumentException.class, missingCqlColumnExceptionMessage);
     methodBuilder.endControlFlow();

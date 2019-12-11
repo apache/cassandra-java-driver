@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
+import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
@@ -68,6 +69,7 @@ public class SchemaValidationIT extends InventoryITBase {
         Arrays.asList(
             "CREATE TABLE product_simple(id uuid PRIMARY KEY, description text, unmapped text)",
             "CREATE TABLE product_simple_missing_p_k(id uuid PRIMARY KEY, description text, unmapped text)",
+            "CREATE TABLE product_simple_missing_clustering_column(id uuid PRIMARY KEY, description text, unmapped text)",
             "CREATE TYPE dimensions_with_incorrect_name(length int, width int, height int)",
             "CREATE TYPE dimensions_with_incorrect_name_schema_hint_udt(length int, width int, height int)",
             "CREATE TYPE dimensions_with_incorrect_name_schema_hint_table(length int, width int, height int)",
@@ -203,6 +205,16 @@ public class SchemaValidationIT extends InventoryITBase {
                 sessionRule.keyspace()));
   }
 
+  @Test
+  public void should_throw_when_table_is_missing_clustering_column() {
+    assertThatThrownBy(() -> mapper.productSimpleMissingClusteringColumn(sessionRule.keyspace()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(
+            String.format(
+                "The CQL ks.table: %s.product_simple_missing_clustering_column has missing Clustering columns: [not_existing_clustering_column] that are defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductSimpleMissingClusteringColumn",
+                sessionRule.keyspace()));
+  }
+
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
@@ -231,6 +243,10 @@ public class SchemaValidationIT extends InventoryITBase {
 
     @DaoFactory
     ProductSimpleMissingPKDao productSimpleMissingPKDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    ProductSimpleMissingClusteringColumnDao productSimpleMissingClusteringColumn(
+        @DaoKeyspace CqlIdentifier keyspace);
   }
 
   @Dao
@@ -268,7 +284,7 @@ public class SchemaValidationIT extends InventoryITBase {
     ProductSimple findById(UUID productId);
   }
 
-  @Dao()
+  @Dao
   public interface ProductSimpleDaoValidationDisabledDao {
 
     @Select
@@ -286,6 +302,12 @@ public class SchemaValidationIT extends InventoryITBase {
   public interface ProductSimpleMissingPKDao {
     @Select
     ProductSimpleMissingPK findById(UUID productId);
+  }
+
+  @Dao
+  public interface ProductSimpleMissingClusteringColumnDao {
+    @Select
+    ProductSimpleMissingClusteringColumn findById(UUID productId);
   }
 
   @Entity
@@ -315,6 +337,30 @@ public class SchemaValidationIT extends InventoryITBase {
 
     public void setIdNotPresent(UUID idNotPresent) {
       this.idNotPresent = idNotPresent;
+    }
+  }
+
+  @Entity
+  public static class ProductSimpleMissingClusteringColumn {
+    @PartitionKey private UUID id;
+    @ClusteringColumn private Integer notExistingClusteringColumn;
+
+    public ProductSimpleMissingClusteringColumn() {}
+
+    public UUID getId() {
+      return id;
+    }
+
+    public void setId(UUID id) {
+      this.id = id;
+    }
+
+    public Integer getNotExistingClusteringColumn() {
+      return notExistingClusteringColumn;
+    }
+
+    public void setNotExistingClusteringColumn(Integer notExistingClusteringColumn) {
+      this.notExistingClusteringColumn = notExistingClusteringColumn;
     }
   }
 

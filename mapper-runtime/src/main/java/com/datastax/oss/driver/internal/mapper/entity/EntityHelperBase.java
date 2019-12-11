@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -81,7 +82,7 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
   }
 
   public List<CqlIdentifier> findMissingColumns(
-      List<CqlIdentifier> expected, List<ColumnMetadata> actual) {
+      List<CqlIdentifier> expected, Collection<ColumnMetadata> actual) {
     List<CqlIdentifier> missingColumns = new ArrayList<>();
     List<CqlIdentifier> actualCql =
         actual.stream().map(ColumnMetadata::getName).collect(Collectors.toList());
