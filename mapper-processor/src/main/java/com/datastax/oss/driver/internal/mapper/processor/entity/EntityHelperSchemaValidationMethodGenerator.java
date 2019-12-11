@@ -15,10 +15,13 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
+import static com.datastax.oss.driver.api.mapper.annotations.SchemaHint.*;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.api.mapper.annotations.SchemaHint;
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultTableMetadata;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.squareup.javapoet.CodeBlock;
@@ -30,13 +33,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
 
 public class EntityHelperSchemaValidationMethodGenerator implements MethodGenerator {
 
   private final EntityDefinition entityDefinition;
+  private TypeElement entityTypeElement;
 
-  public EntityHelperSchemaValidationMethodGenerator(EntityDefinition entityDefinition) {
+  public EntityHelperSchemaValidationMethodGenerator(
+      EntityDefinition entityDefinition, TypeElement entityTypeElement) {
     this.entityDefinition = entityDefinition;
+    this.entityTypeElement = entityTypeElement;
   }
 
   @Override
@@ -90,8 +97,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
 
     methodBuilder.addStatement("String entityClassName = $S", entityDefinition.getClassName());
 
-    findMissingColumnsInTable(methodBuilder);
-    findMissingColumnsInUdt(methodBuilder);
+    generateFindMissingChecks(methodBuilder);
 
     // Throw if there is not keyspace.table for defined entity
     CodeBlock missingKeyspaceTableExceptionMessage =
@@ -103,6 +109,26 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     methodBuilder.endControlFlow();
 
     return Optional.of(methodBuilder.build());
+  }
+
+  private void generateFindMissingChecks(MethodSpec.Builder methodBuilder) {
+    Optional<TargetElement> targetElement =
+        Optional.ofNullable(entityTypeElement.getAnnotation(SchemaHint.class))
+            .map(SchemaHint::targetElement);
+
+    // if SchemaHint was not provided explicitly try to match TABLE, then fallback to UDT
+    if (!targetElement.isPresent()) {
+      findMissingColumnsInTable(methodBuilder);
+      findMissingColumnsInUdt(methodBuilder, true);
+    }
+    // if explicitly provided SchemaHint is TABLE, then generate only TABLE check
+    else if (targetElement.get().equals(TargetElement.TABLE)) {
+      findMissingColumnsInTable(methodBuilder);
+    }
+    // if explicitly provided SchemaHint is UDT, then generate only UDT check
+    else if (targetElement.get().equals(TargetElement.UDT)) {
+      findMissingColumnsInUdt(methodBuilder, false);
+    }
   }
 
   // Finds out missingTableCqlNames - columns that are present in Entity Mapping but NOT present in
@@ -142,8 +168,12 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
 
   // Finds out missingTableCqlNames - columns that are present in Entity Mapping but NOT present in
   // UDT table
-  private void findMissingColumnsInUdt(MethodSpec.Builder methodBuilder) {
-    methodBuilder.beginControlFlow("else if (userDefinedType.isPresent())");
+  private void findMissingColumnsInUdt(MethodSpec.Builder methodBuilder, boolean generateElse) {
+    if (generateElse) {
+      methodBuilder.beginControlFlow("else if (userDefinedType.isPresent())");
+    } else {
+      methodBuilder.beginControlFlow("if (userDefinedType.isPresent())");
+    }
 
     methodBuilder.addStatement(
         "$1T<$2T> columns = userDefinedType.get().getFieldNames()",

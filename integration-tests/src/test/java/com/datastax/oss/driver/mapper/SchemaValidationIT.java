@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.mapper;
 
+import static com.datastax.oss.driver.api.mapper.annotations.SchemaHint.*;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -28,6 +29,7 @@ import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.mapper.annotations.SchemaHint;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
@@ -66,7 +68,11 @@ public class SchemaValidationIT extends InventoryITBase {
         Arrays.asList(
             "CREATE TABLE product_simple(id uuid PRIMARY KEY, description text, unmapped text)",
             "CREATE TYPE dimensions_with_incorrect_name(length int, width int, height int)",
-            "CREATE TABLE product_with_incorrect_udt(id uuid PRIMARY KEY, description text, dimensions dimensions_with_incorrect_name)");
+            "CREATE TYPE dimensions_with_incorrect_name_schema_hint_udt(length int, width int, height int)",
+            "CREATE TYPE dimensions_with_incorrect_name_schema_hint_table(length int, width int, height int)",
+            "CREATE TABLE product_with_incorrect_udt(id uuid PRIMARY KEY, description text, dimensions dimensions_with_incorrect_name)",
+            "CREATE TABLE product_with_incorrect_udt_schema_hint_udt(id uuid PRIMARY KEY, description text, dimensions dimensions_with_incorrect_name_schema_hint_udt)",
+            "CREATE TABLE product_with_incorrect_udt_schema_hint_table(id uuid PRIMARY KEY, description text, dimensions dimensions_with_incorrect_name_schema_hint_table)");
 
     for (String query : statements) {
       session.execute(
@@ -99,6 +105,14 @@ public class SchemaValidationIT extends InventoryITBase {
             .build());
     session.execute(
         SimpleStatement.builder("TRUNCATE product_with_incorrect_udt")
+            .setExecutionProfile(sessionRule.slowProfile())
+            .build());
+    session.execute(
+        SimpleStatement.builder("TRUNCATE product_with_incorrect_udt_schema_hint_udt")
+            .setExecutionProfile(sessionRule.slowProfile())
+            .build());
+    session.execute(
+        SimpleStatement.builder("TRUNCATE product_with_incorrect_udt_schema_hint_table")
             .setExecutionProfile(sessionRule.slowProfile())
             .build());
   }
@@ -157,6 +171,27 @@ public class SchemaValidationIT extends InventoryITBase {
                 sessionRule.keyspace()));
   }
 
+  @Test
+  public void should_throw_when_use_not_properly_mapped_entity_with_udt_with_udt_schema_hint() {
+    assertThatThrownBy(() -> mapper.productWithIncorrectUdtSchemaHintUdt(sessionRule.keyspace()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasStackTraceContaining(
+            String.format(
+                "The CQL ks.udt: %s.dimensions_with_incorrect_name_schema_hint_udt has missing columns: [length_not_present] that are defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.DimensionsWithIncorrectNameSchemaHintUdt",
+                sessionRule.keyspace()));
+  }
+
+  @Test
+  public void
+      should_throw_missing_table_when_use_not_properly_mapped_entity_with_udt_with_table_schema_hint() {
+    assertThatThrownBy(() -> mapper.productWithIncorrectUdtSchemaHintTable(sessionRule.keyspace()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(
+            String.format(
+                "There is no ks.table: %s.dimensions_with_incorrect_name_schema_hint_table for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.DimensionsWithIncorrectNameSchemaHintTable",
+                sessionRule.keyspace()));
+  }
+
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
@@ -174,6 +209,14 @@ public class SchemaValidationIT extends InventoryITBase {
 
     @DaoFactory
     ProductWithIncorrectUdtDao productWithIncorrectUdtDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    ProductWithIncorrectUdtSchemaHintUdtDao productWithIncorrectUdtSchemaHintUdt(
+        @DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    ProductWithIncorrectUdtSchemaHintTableDao productWithIncorrectUdtSchemaHintTable(
+        @DaoKeyspace CqlIdentifier keyspace);
   }
 
   @Dao
@@ -181,6 +224,20 @@ public class SchemaValidationIT extends InventoryITBase {
 
     @Update(customWhereClause = "id = :id")
     void updateWhereId(ProductWithIncorrectUdt product, UUID id);
+  }
+
+  @Dao
+  public interface ProductWithIncorrectUdtSchemaHintUdtDao {
+
+    @Update(customWhereClause = "id = :id")
+    void updateWhereId(ProductWithIncorrectUdtSchemaHintUdt product, UUID id);
+  }
+
+  @Dao
+  public interface ProductWithIncorrectUdtSchemaHintTableDao {
+
+    @Update(customWhereClause = "id = :id")
+    void updateWhereId(ProductWithIncorrectUdtSchemaHintTable product, UUID id);
   }
 
   @Dao
@@ -373,6 +430,152 @@ public class SchemaValidationIT extends InventoryITBase {
   }
 
   @Entity
+  public static class ProductWithIncorrectUdtSchemaHintUdt {
+
+    @PartitionKey private UUID id;
+    private String description;
+    private DimensionsWithIncorrectNameSchemaHintUdt dimensions;
+
+    public ProductWithIncorrectUdtSchemaHintUdt() {}
+
+    public ProductWithIncorrectUdtSchemaHintUdt(
+        UUID id, String description, DimensionsWithIncorrectNameSchemaHintUdt dimensions) {
+      this.id = id;
+      this.description = description;
+      this.dimensions = dimensions;
+    }
+
+    public UUID getId() {
+      return id;
+    }
+
+    public void setId(UUID id) {
+      this.id = id;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+
+    public void setDescription(String description) {
+      this.description = description;
+    }
+
+    public DimensionsWithIncorrectNameSchemaHintUdt getDimensions() {
+      return dimensions;
+    }
+
+    public void setDimensions(DimensionsWithIncorrectNameSchemaHintUdt dimensions) {
+      this.dimensions = dimensions;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof ProductWithIncorrectUdtSchemaHintUdt)) {
+        return false;
+      }
+      ProductWithIncorrectUdtSchemaHintUdt that = (ProductWithIncorrectUdtSchemaHintUdt) o;
+      return this.id.equals(that.id)
+          && this.description.equals(that.description)
+          && this.dimensions.equals(that.dimensions);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(id, description, dimensions);
+    }
+
+    @Override
+    public String toString() {
+      return "ProductWithIncorrectUdtSchemaHint{"
+          + "id="
+          + id
+          + ", description='"
+          + description
+          + '\''
+          + ", dimensions="
+          + dimensions
+          + '}';
+    }
+  }
+
+  @Entity
+  public static class ProductWithIncorrectUdtSchemaHintTable {
+
+    @PartitionKey private UUID id;
+    private String description;
+    private DimensionsWithIncorrectNameSchemaHintTable dimensions;
+
+    public ProductWithIncorrectUdtSchemaHintTable() {}
+
+    public ProductWithIncorrectUdtSchemaHintTable(
+        UUID id, String description, DimensionsWithIncorrectNameSchemaHintTable dimensions) {
+      this.id = id;
+      this.description = description;
+      this.dimensions = dimensions;
+    }
+
+    public UUID getId() {
+      return id;
+    }
+
+    public void setId(UUID id) {
+      this.id = id;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+
+    public void setDescription(String description) {
+      this.description = description;
+    }
+
+    public DimensionsWithIncorrectNameSchemaHintTable getDimensions() {
+      return dimensions;
+    }
+
+    public void setDimensions(DimensionsWithIncorrectNameSchemaHintTable dimensions) {
+      this.dimensions = dimensions;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof ProductWithIncorrectUdtSchemaHintTable)) {
+        return false;
+      }
+      ProductWithIncorrectUdtSchemaHintTable that = (ProductWithIncorrectUdtSchemaHintTable) o;
+      return this.id.equals(that.id)
+          && this.description.equals(that.description)
+          && this.dimensions.equals(that.dimensions);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(id, description, dimensions);
+    }
+
+    @Override
+    public String toString() {
+      return "ProductWithIncorrectUdtSchemaHintTable{"
+          + "id="
+          + id
+          + ", description='"
+          + description
+          + '\''
+          + ", dimensions="
+          + dimensions
+          + '}';
+    }
+  }
+
+  @Entity
   public static class DimensionsWithIncorrectName {
 
     private int lengthNotPresent;
@@ -433,6 +636,151 @@ public class SchemaValidationIT extends InventoryITBase {
     @Override
     public String toString() {
       return "DimensionsWithIncorrectName{"
+          + "lengthNotPresent="
+          + lengthNotPresent
+          + ", width="
+          + width
+          + ", height="
+          + height
+          + '}';
+    }
+  }
+
+  @Entity
+  @SchemaHint(targetElement = TargetElement.UDT)
+  public static class DimensionsWithIncorrectNameSchemaHintUdt {
+
+    private int lengthNotPresent;
+    private int width;
+    private int height;
+
+    public DimensionsWithIncorrectNameSchemaHintUdt() {}
+
+    public DimensionsWithIncorrectNameSchemaHintUdt(int lengthNotPresent, int width, int height) {
+      this.lengthNotPresent = lengthNotPresent;
+      this.width = width;
+      this.height = height;
+    }
+
+    public int getLengthNotPresent() {
+      return lengthNotPresent;
+    }
+
+    public void setLengthNotPresent(int lengthNotPresent) {
+      this.lengthNotPresent = lengthNotPresent;
+    }
+
+    public int getWidth() {
+      return width;
+    }
+
+    public void setWidth(int width) {
+      this.width = width;
+    }
+
+    public int getHeight() {
+      return height;
+    }
+
+    public void setHeight(int height) {
+      this.height = height;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof DimensionsWithIncorrectNameSchemaHintUdt)) {
+        return false;
+      }
+      DimensionsWithIncorrectNameSchemaHintUdt that = (DimensionsWithIncorrectNameSchemaHintUdt) o;
+      return this.lengthNotPresent == that.lengthNotPresent
+          && this.height == that.height
+          && this.width == that.width;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(lengthNotPresent, width, height);
+    }
+
+    @Override
+    public String toString() {
+      return "DimensionsWithIncorrectNameSchemaHintUdt{"
+          + "lengthNotPresent="
+          + lengthNotPresent
+          + ", width="
+          + width
+          + ", height="
+          + height
+          + '}';
+    }
+  }
+
+  @Entity
+  @SchemaHint(targetElement = TargetElement.TABLE)
+  public static class DimensionsWithIncorrectNameSchemaHintTable {
+
+    private int lengthNotPresent;
+    private int width;
+    private int height;
+
+    public DimensionsWithIncorrectNameSchemaHintTable() {}
+
+    public DimensionsWithIncorrectNameSchemaHintTable(int lengthNotPresent, int width, int height) {
+      this.lengthNotPresent = lengthNotPresent;
+      this.width = width;
+      this.height = height;
+    }
+
+    public int getLengthNotPresent() {
+      return lengthNotPresent;
+    }
+
+    public void setLengthNotPresent(int lengthNotPresent) {
+      this.lengthNotPresent = lengthNotPresent;
+    }
+
+    public int getWidth() {
+      return width;
+    }
+
+    public void setWidth(int width) {
+      this.width = width;
+    }
+
+    public int getHeight() {
+      return height;
+    }
+
+    public void setHeight(int height) {
+      this.height = height;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof DimensionsWithIncorrectNameSchemaHintTable)) {
+        return false;
+      }
+      DimensionsWithIncorrectNameSchemaHintTable that =
+          (DimensionsWithIncorrectNameSchemaHintTable) o;
+      return this.lengthNotPresent == that.lengthNotPresent
+          && this.height == that.height
+          && this.width == that.width;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(lengthNotPresent, width, height);
+    }
+
+    @Override
+    public String toString() {
+      return "DimensionsWithIncorrectNameSchemaHintTable{"
           + "lengthNotPresent="
           + lengthNotPresent
           + ", width="
