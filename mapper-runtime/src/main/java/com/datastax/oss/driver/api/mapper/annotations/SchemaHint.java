@@ -46,8 +46,8 @@ import java.lang.annotation.Target;
  *       corresponding CQL definition and error is generated.
  * </ol>
  *
- * <p>If you want the mapper to generate code only to check the path for UDT or Table you can provide
- * the &#64;SchemaHint on the Entity:
+ * <p>If you want the mapper to generate code only to check the path for UDT or Table you can
+ * provide the &#64;SchemaHint on the Entity:
  *
  * <ol>
  *   <li>If you will set the {@code targetElement = TABLE}, then only the code path for checking CQL
