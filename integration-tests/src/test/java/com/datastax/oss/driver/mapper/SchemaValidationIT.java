@@ -67,6 +67,7 @@ public class SchemaValidationIT extends InventoryITBase {
     List<String> statements =
         Arrays.asList(
             "CREATE TABLE product_simple(id uuid PRIMARY KEY, description text, unmapped text)",
+            "CREATE TABLE product_simple_missing_p_k(id uuid PRIMARY KEY, description text, unmapped text)",
             "CREATE TYPE dimensions_with_incorrect_name(length int, width int, height int)",
             "CREATE TYPE dimensions_with_incorrect_name_schema_hint_udt(length int, width int, height int)",
             "CREATE TYPE dimensions_with_incorrect_name_schema_hint_table(length int, width int, height int)",
@@ -192,6 +193,16 @@ public class SchemaValidationIT extends InventoryITBase {
                 sessionRule.keyspace()));
   }
 
+  @Test
+  public void should_throw_when_table_is_missing_PKs() {
+    assertThatThrownBy(() -> mapper.productSimpleMissingPKDao(sessionRule.keyspace()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(
+            String.format(
+                "The CQL ks.table: %s.product_simple_missing_p_k has missing Primary Key columns: [id_not_present] that are defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductSimpleMissingPK",
+                sessionRule.keyspace()));
+  }
+
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
@@ -217,6 +228,9 @@ public class SchemaValidationIT extends InventoryITBase {
     @DaoFactory
     ProductWithIncorrectUdtSchemaHintTableDao productWithIncorrectUdtSchemaHintTable(
         @DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    ProductSimpleMissingPKDao productSimpleMissingPKDao(@DaoKeyspace CqlIdentifier keyspace);
   }
 
   @Dao
@@ -268,6 +282,12 @@ public class SchemaValidationIT extends InventoryITBase {
     ProductCqlTableMissing findById(UUID productId);
   }
 
+  @Dao
+  public interface ProductSimpleMissingPKDao {
+    @Select
+    ProductSimpleMissingPK findById(UUID productId);
+  }
+
   @Entity
   public static class ProductCqlTableMissing {
     @PartitionKey private UUID id;
@@ -280,6 +300,21 @@ public class SchemaValidationIT extends InventoryITBase {
 
     public void setId(UUID id) {
       this.id = id;
+    }
+  }
+
+  @Entity
+  public static class ProductSimpleMissingPK {
+    @PartitionKey private UUID idNotPresent;
+
+    public ProductSimpleMissingPK() {}
+
+    public UUID getIdNotPresent() {
+      return idNotPresent;
+    }
+
+    public void setIdNotPresent(UUID idNotPresent) {
+      this.idNotPresent = idNotPresent;
     }
   }
 

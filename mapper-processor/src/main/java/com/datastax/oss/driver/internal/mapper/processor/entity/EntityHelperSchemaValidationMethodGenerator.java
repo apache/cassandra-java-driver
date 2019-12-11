@@ -135,6 +135,16 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
   // CQL table
   private void findMissingColumnsInTable(MethodSpec.Builder methodBuilder) {
     methodBuilder.beginControlFlow("if (tableMetadata.isPresent())");
+    // handle missing PKs
+    generateMissingPKsCheck(methodBuilder);
+
+    // handle all columns
+    generateMissingColumnsCheck(methodBuilder);
+
+    methodBuilder.endControlFlow();
+  }
+
+  private void generateMissingColumnsCheck(MethodSpec.Builder methodBuilder) {
     methodBuilder.addStatement(
         "$1T<$2T, $3T> columns = (($4T) tableMetadata.get()).getColumns()",
         Map.class,
@@ -163,6 +173,33 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     methodBuilder.addStatement(
         "throw new $1T($2L)", IllegalArgumentException.class, missingCqlColumnExceptionMessage);
     methodBuilder.endControlFlow();
+  }
+
+  private void generateMissingPKsCheck(MethodSpec.Builder methodBuilder) {
+    List<CodeBlock> expectedCqlPKs =
+        entityDefinition.getPrimaryKey().stream()
+            .map(PropertyDefinition::getCqlName)
+            .collect(Collectors.toList());
+
+    methodBuilder.addStatement(
+        "$1T<$2T> expectedCqlPKs = new $3T<>()", List.class, CqlIdentifier.class, ArrayList.class);
+    for (CodeBlock expectedCqlName : expectedCqlPKs) {
+      methodBuilder.addStatement(
+          "expectedCqlPKs.add($1T.fromCql($2L))", CqlIdentifier.class, expectedCqlName);
+    }
+    methodBuilder.addStatement(
+        "$1T<$2T> missingTablePksNames = findMissingColumns(expectedCqlPKs, tableMetadata.get().getPartitionKey())",
+        List.class,
+        CqlIdentifier.class);
+
+    // throw if there are any missing PK columns
+    CodeBlock missingCqlColumnExceptionMessage =
+        CodeBlock.of(
+            "String.format(\"The CQL ks.table: %s.%s has missing Primary Key columns: %s that are defined in the entity class: %s\", "
+                + "keyspaceId, tableId, missingTablePksNames, entityClassName)");
+    methodBuilder.beginControlFlow("if (!missingTablePksNames.isEmpty())");
+    methodBuilder.addStatement(
+        "throw new $1T($2L)", IllegalArgumentException.class, missingCqlColumnExceptionMessage);
     methodBuilder.endControlFlow();
   }
 

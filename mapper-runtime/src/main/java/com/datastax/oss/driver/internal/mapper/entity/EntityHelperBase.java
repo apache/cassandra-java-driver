@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.mapper.entity;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
@@ -24,6 +25,9 @@ import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT> {
 
@@ -74,5 +78,18 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
               DaoFactory.class.getSimpleName(),
               DaoKeyspace.class.getSimpleName()));
     }
+  }
+
+  public List<CqlIdentifier> findMissingColumns(
+      List<CqlIdentifier> expected, List<ColumnMetadata> actual) {
+    List<CqlIdentifier> missingColumns = new ArrayList<>();
+    List<CqlIdentifier> actualCql =
+        actual.stream().map(ColumnMetadata::getName).collect(Collectors.toList());
+    for (CqlIdentifier cqlIdentifier : expected) {
+      if (!actualCql.contains(cqlIdentifier)) {
+        missingColumns.add(cqlIdentifier);
+      }
+    }
+    return missingColumns;
   }
 }
