@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.mapper.processor.entity;
 import static com.datastax.oss.driver.api.mapper.annotations.SchemaHint.*;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.mapper.annotations.SchemaHint;
@@ -29,7 +28,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.lang.model.element.Modifier;
@@ -149,24 +147,12 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
   }
 
   private void generateMissingColumnsCheck(MethodSpec.Builder methodBuilder) {
-    methodBuilder.addStatement(
-        "$1T<$2T, $3T> columns = (($4T) tableMetadata.get()).getColumns()",
-        Map.class,
-        CqlIdentifier.class,
-        ColumnMetadata.class,
-        DefaultTableMetadata.class);
 
     methodBuilder.addStatement(
-        "$1T<$2T> missingTableCqlNames = new $3T<>();",
+        "$1T<$2T> missingTableCqlNames = findMissingColumnsCql(expectedCqlNames, (($3T) tableMetadata.get()).getColumns().keySet())",
         List.class,
         CqlIdentifier.class,
-        ArrayList.class);
-    methodBuilder.beginControlFlow(
-        "for ($1T cqlIdentifier : expectedCqlNames)", CqlIdentifier.class);
-    methodBuilder.beginControlFlow("if (columns.get(cqlIdentifier) == null)");
-    methodBuilder.addStatement("missingTableCqlNames.add(cqlIdentifier)");
-    methodBuilder.endControlFlow();
-    methodBuilder.endControlFlow();
+        DefaultTableMetadata.class);
 
     // Throw if there are any missingTableCqlNames
     CodeBlock missingCqlColumnExceptionMessage =
@@ -256,16 +242,9 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
         CqlIdentifier.class);
 
     methodBuilder.addStatement(
-        "$1T<$2T> missingTableCqlNames = new $3T<>();",
+        "$1T<$2T> missingTableCqlNames = findMissingColumnsCql(expectedCqlNames, columns)",
         List.class,
-        CqlIdentifier.class,
-        ArrayList.class);
-    methodBuilder.beginControlFlow(
-        "for ($1T cqlIdentifier : expectedCqlNames)", CqlIdentifier.class);
-    methodBuilder.beginControlFlow("if (!columns.contains(cqlIdentifier))");
-    methodBuilder.addStatement("missingTableCqlNames.add(cqlIdentifier)");
-    methodBuilder.endControlFlow();
-    methodBuilder.endControlFlow();
+        CqlIdentifier.class);
 
     // Throw if there are any missingTableCqlNames
     CodeBlock missingCqlUdtExceptionMessage =

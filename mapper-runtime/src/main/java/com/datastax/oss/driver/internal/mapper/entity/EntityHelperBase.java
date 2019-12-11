@@ -83,11 +83,16 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
 
   public List<CqlIdentifier> findMissingColumns(
       List<CqlIdentifier> expected, Collection<ColumnMetadata> actual) {
-    List<CqlIdentifier> missingColumns = new ArrayList<>();
     List<CqlIdentifier> actualCql =
         actual.stream().map(ColumnMetadata::getName).collect(Collectors.toList());
+    return findMissingColumnsCql(expected, actualCql);
+  }
+
+  public List<CqlIdentifier> findMissingColumnsCql(
+      List<CqlIdentifier> expected, Collection<CqlIdentifier> actual) {
+    List<CqlIdentifier> missingColumns = new ArrayList<>();
     for (CqlIdentifier cqlIdentifier : expected) {
-      if (!actualCql.contains(cqlIdentifier)) {
+      if (!actual.contains(cqlIdentifier)) {
         missingColumns.add(cqlIdentifier);
       }
     }
