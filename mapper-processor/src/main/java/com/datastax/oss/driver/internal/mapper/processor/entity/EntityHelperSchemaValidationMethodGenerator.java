@@ -57,9 +57,8 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
         "$1T keyspaceId = context.getKeyspaceId() != null ? context.getKeyspaceId() : context.getSession().getKeyspace().orElse(null)",
         CqlIdentifier.class);
 
-    // Handle case where keyspaceId = null. In such case we cannot infer and validate schema for
-    // table
-    // or udt
+    // Handle case where keyspaceId = null.
+    // In such case we cannot infer and validate schema for table or udt
     methodBuilder.beginControlFlow(
         "if (!context.getSession().getMetadata().getKeyspace(keyspaceId).isPresent())");
     methodBuilder.addStatement(
