@@ -20,6 +20,8 @@ import static com.datastax.oss.driver.api.mapper.annotations.SchemaHint.*;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.mapper.annotations.SchemaHint;
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultTableMetadata;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
@@ -27,7 +29,9 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.lang.model.element.Modifier;
@@ -143,7 +147,41 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     // handle all columns
     generateMissingColumnsCheck(methodBuilder);
 
+    // handle types check
+    generateColumnsTypeCheck(methodBuilder);
+
     methodBuilder.endControlFlow();
+  }
+
+  private void generateColumnsTypeCheck(MethodSpec.Builder methodBuilder) {
+    methodBuilder.addStatement(
+        "$1T<$2T, $3T<?>> expectedTypesPerColumn = new $4T<>()",
+        Map.class,
+        CqlIdentifier.class,
+        TypeCodec.class,
+        LinkedHashMap.class);
+
+    Map<CodeBlock, String> expectedTypesPerColumn =
+        entityDefinition.getAllColumns().stream()
+            .collect(
+                Collectors.toMap(
+                    PropertyDefinition::getCqlName, v -> v.getType().asTypeName().toString()));
+
+    for (Map.Entry<CodeBlock, String> expected : expectedTypesPerColumn.entrySet()) {
+      methodBuilder.addStatement(
+          "expectedTypesPerColumn.put($1T.fromCql($2L), $3T.DEFAULT.codecFor($4L.class))",
+          CqlIdentifier.class,
+          expected.getKey(),
+          CodecRegistry.class,
+          expected.getValue());
+    }
+
+    methodBuilder.addStatement(
+        "$1T<$2T, $3T<?>> missingTableCqlTypes = findIncorrectTypes(expectedTypesPerColumn, (($4T) tableMetadata.get()).getColumns())",
+        Map.class,
+        CqlIdentifier.class,
+        TypeCodec.class,
+        DefaultTableMetadata.class);
   }
 
   private void generateMissingColumnsCheck(MethodSpec.Builder methodBuilder) {

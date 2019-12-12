@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper.entity;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
@@ -27,7 +28,9 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT> {
@@ -97,5 +100,10 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
       }
     }
     return missingColumns;
+  }
+
+  public Map<CqlIdentifier, TypeCodec<?>> findIncorrectTypes(
+      Map<CqlIdentifier, TypeCodec<?>> expected, Map<CqlIdentifier, ColumnMetadata> actual) {
+    return Collections.emptyMap();
   }
 }
