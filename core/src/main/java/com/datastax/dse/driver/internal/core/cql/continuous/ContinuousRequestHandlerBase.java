@@ -67,6 +67,7 @@ import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
+import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Prepare;
 import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.Result;
@@ -504,6 +505,13 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     @GuardedBy("lock")
     private int state = 1;
 
+    // Whether isLastResponse has returned true already
+    @GuardedBy("lock")
+    private boolean sawLastResponse;
+
+    @GuardedBy("lock")
+    private boolean sentCancelRequest;
+
     private static final int STATE_FINISHED = -1;
     private static final int STATE_FAILED = -2;
 
@@ -549,10 +557,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
         if (state < 0) {
           // This happens if we were cancelled before getting the stream id, we have a request in
           // flight that needs to be cancelled
-          if (!channel.closeFuture().isDone()) {
-            channel.cancel(this);
-            sendCancelRequest();
-          }
+          releaseStreamId();
         }
       } finally {
         lock.unlock();
@@ -561,13 +566,40 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
 
     @Override
     public boolean isLastResponse(@NonNull Frame responseFrame) {
-      Message message = responseFrame.message;
-      if (message instanceof Rows) {
-        Rows rows = (Rows) message;
-        DseRowsMetadata metadata = (DseRowsMetadata) rows.getMetadata();
-        return metadata.isLastContinuousPage;
-      } else {
-        return message instanceof Error;
+      lock.lock();
+      try {
+        Message message = responseFrame.message;
+        boolean isLastResponse;
+
+        if (sentCancelRequest) {
+          // The only response we accept is the SERVER_ERROR triggered by a successful cancellation.
+          // Otherwise we risk releasing and reusing the stream id while the cancel request is still
+          // in flight, and it might end up cancelling an unrelated request.
+          // Note that there is a chance that the request ends normally right after we send the
+          // cancel request. In that case this method never returns true and the stream id will
+          // remain orphaned forever. This should be very rare so this is acceptable.
+          if (message instanceof Error) {
+            Error error = (Error) message;
+            isLastResponse =
+                (error.code == ProtocolConstants.ErrorCode.SERVER_ERROR)
+                    && error.message.contains("Session cancelled by the user");
+          } else {
+            isLastResponse = false;
+          }
+        } else if (message instanceof Rows) {
+          Rows rows = (Rows) message;
+          DseRowsMetadata metadata = (DseRowsMetadata) rows.getMetadata();
+          isLastResponse = metadata.isLastContinuousPage;
+        } else {
+          isLastResponse = message instanceof Error;
+        }
+
+        if (isLastResponse) {
+          sawLastResponse = true;
+        }
+        return isLastResponse;
+      } finally {
+        lock.unlock();
       }
     }
 
@@ -1311,10 +1343,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
           if (pendingResult != null) {
             pendingResult.cancel(true);
           }
-          if (streamId >= 0 && !channel.closeFuture().isDone()) {
-            channel.cancel(this);
-            sendCancelRequest();
-          }
+          releaseStreamId();
         }
       } finally {
         lock.unlock();
@@ -1323,7 +1352,21 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     }
 
     @SuppressWarnings("GuardedBy")
+    private void releaseStreamId() {
+      assert lock.isHeldByCurrentThread();
+      // If we saw the last response already, InFlightHandler will release the id so no need to
+      // cancel explicitly
+      if (streamId >= 0 && !sawLastResponse && !channel.closeFuture().isDone()) {
+        // This orphans the stream id, but it will still be held until we see the last response:
+        channel.cancel(this);
+        // This tells the server to stop streaming, and send a terminal response:
+        sendCancelRequest();
+      }
+    }
+
+    @SuppressWarnings("GuardedBy")
     private void sendCancelRequest() {
+      assert lock.isHeldByCurrentThread();
       LOG.trace("[{}] Sending cancel request", logPrefix);
       ThrottledAdminRequestHandler.query(
               channel,
@@ -1350,6 +1393,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
                 }
                 return null;
               });
+      sentCancelRequest = true;
     }
 
     // TERMINATION
