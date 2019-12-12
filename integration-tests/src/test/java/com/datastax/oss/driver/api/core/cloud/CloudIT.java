@@ -22,6 +22,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
@@ -36,6 +37,8 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.NoSuchAlgorithmException;
+import javax.net.ssl.SSLContext;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -218,5 +221,24 @@ public class CloudIT {
         .isInstanceOf(IllegalStateException.class)
         .hasMessage(
             "Can't use withCloudSecureConnectBundle and addContactPoint(s). They are mutually exclusive.");
+  }
+
+  @Test
+  public void should_error_when_ssl_context_and_secure_bundle_used() {
+    // given
+    try {
+      Path bundle = proxyRule.getProxy().getBundleWithoutCredentialsPath();
+      CqlSessionBuilder builder =
+          CqlSession.builder()
+              .withCloudSecureConnectBundle(bundle)
+              .withAuthCredentials("cassandra", "cassandra")
+              .withSslContext(SSLContext.getInstance("SSL"));
+      assertThatThrownBy(() -> builder.build())
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessage(
+              "Can't use withCloudSecureConnectBundle and addContactPoint(s). They are mutually exclusive.");
+    } catch (NoSuchAlgorithmException e) {
+      fail("Unexpected exception thrown", e);
+    }
   }
 }

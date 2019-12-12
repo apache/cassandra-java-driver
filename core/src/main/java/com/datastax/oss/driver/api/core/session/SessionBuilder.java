@@ -85,6 +85,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
 
   protected ProgrammaticArguments.Builder programmaticArgumentsBuilder =
       ProgrammaticArguments.builder();
+  private boolean sslConfigured = false;
 
   /**
    * Sets the configuration loader to use.
@@ -275,6 +276,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    */
   @NonNull
   public SelfT withSslEngineFactory(@Nullable SslEngineFactory sslEngineFactory) {
+    this.sslConfigured = true;
     this.programmaticArgumentsBuilder.withSslEngineFactory(sslEngineFactory);
     return self;
   }
@@ -522,6 +524,10 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
         if (!programmaticContactPoints.isEmpty() || !configContactPoints.isEmpty()) {
           throw new IllegalStateException(
               "Can't use withCloudSecureConnectBundle and addContactPoint(s). They are mutually exclusive.");
+        }
+        if (sslConfigured) {
+          throw new IllegalStateException(
+              "Can't use withCloudSecureConnectBundle and explicitly specify ssl configuration. They are mutually exclusive.");
         }
         CloudConfig cloudConfig =
             new CloudConfigFactory().createCloudConfig(cloudConfigInputStream.call());
