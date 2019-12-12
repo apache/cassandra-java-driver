@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import static com.datastax.oss.driver.api.mapper.MapperBuilder.SCHEMA_VALIDATION_ENABLED_SETTING;
+
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
@@ -502,7 +504,10 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
   }
 
   private void generateValidationCheck(MethodSpec.Builder initAsyncBuilder, String fieldName) {
-    initAsyncBuilder.beginControlFlow("if (context.isSchemaValidationEnabled())");
+    initAsyncBuilder.beginControlFlow(
+        "if (($1T)context.getCustomState().get($2S))",
+        Boolean.class,
+        SCHEMA_VALIDATION_ENABLED_SETTING);
     initAsyncBuilder.addStatement("$1L.validateEntityFields()", fieldName);
     initAsyncBuilder.endControlFlow();
   }

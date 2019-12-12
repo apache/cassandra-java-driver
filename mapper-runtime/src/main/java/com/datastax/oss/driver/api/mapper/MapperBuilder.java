@@ -33,14 +33,17 @@ import java.util.Map;
  */
 public abstract class MapperBuilder<MapperT> {
 
+  public static final String SCHEMA_VALIDATION_ENABLED_SETTING =
+      "datastax.mapper.schemaValidationEnabled";
   protected final CqlSession session;
   protected CqlIdentifier defaultKeyspaceId;
   protected Map<Object, Object> customState;
-  protected boolean schemaValidationEnabled = true;
 
   protected MapperBuilder(CqlSession session) {
     this.session = session;
     this.customState = new HashMap<>();
+    // schema validation is enabled by default
+    customState.put(SCHEMA_VALIDATION_ENABLED_SETTING, true);
   }
 
   /**
@@ -99,7 +102,7 @@ public abstract class MapperBuilder<MapperT> {
    * stable you may want to disable it. The schema Validation check is enabled by default.
    */
   public MapperBuilder<MapperT> withSchemaValidationEnabled(boolean enableSchemaValidation) {
-    this.schemaValidationEnabled = enableSchemaValidation;
+    customState.put(SCHEMA_VALIDATION_ENABLED_SETTING, enableSchemaValidation);
     return this;
   }
 

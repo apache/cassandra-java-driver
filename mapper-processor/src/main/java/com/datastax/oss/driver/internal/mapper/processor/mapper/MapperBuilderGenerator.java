@@ -75,7 +75,7 @@ public class MapperBuilderGenerator extends SingleFileCodeGenerator {
                     .addAnnotation(Override.class)
                     .returns(ClassName.get(interfaceElement))
                     .addStatement(
-                        "$1T context = new $1T(session, defaultKeyspaceId, customState, schemaValidationEnabled)",
+                        "$1T context = new $1T(session, defaultKeyspaceId, customState)",
                         DefaultMapperContext.class)
                     .addStatement(
                         "return new $T(context)",

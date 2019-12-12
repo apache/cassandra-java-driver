@@ -61,11 +61,6 @@
         "code": "java.method.addedToInterface",
         "new": "method void com.datastax.oss.driver.api.mapper.entity.EntityHelper<EntityT>::validateEntityFields()",
         "justification": "JAVA-2263: Add optional schema validation"
-      },
-      {
-        "code": "java.method.addedToInterface",
-        "new": "method boolean com.datastax.oss.driver.api.mapper.MapperContext::isSchemaValidationEnabled()",
-        "justification": "JAVA-2263: Add optional schema validation"
       }
     ]
   }

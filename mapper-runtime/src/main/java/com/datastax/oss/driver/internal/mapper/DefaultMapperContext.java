@@ -36,21 +36,6 @@ public class DefaultMapperContext implements MapperContext {
   private final CqlIdentifier tableId;
   private final ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache;
   private final Map<Object, Object> customState;
-  private boolean schemaValidationEnabled;
-
-  public DefaultMapperContext(
-      @NonNull CqlSession session,
-      @Nullable CqlIdentifier keyspaceId,
-      @NonNull Map<Object, Object> customState,
-      boolean schemaValidationEnabled) {
-    this(
-        session,
-        keyspaceId,
-        null,
-        new ConcurrentHashMap<>(),
-        NullAllowingImmutableMap.copyOf(customState),
-        schemaValidationEnabled);
-  }
 
   public DefaultMapperContext(
       @NonNull CqlSession session,
@@ -61,8 +46,7 @@ public class DefaultMapperContext implements MapperContext {
         keyspaceId,
         null,
         new ConcurrentHashMap<>(),
-        NullAllowingImmutableMap.copyOf(customState),
-        true);
+        NullAllowingImmutableMap.copyOf(customState));
   }
 
   public DefaultMapperContext(
@@ -75,14 +59,12 @@ public class DefaultMapperContext implements MapperContext {
       CqlIdentifier keyspaceId,
       CqlIdentifier tableId,
       ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache,
-      Map<Object, Object> customState,
-      boolean schemaValidationEnabled) {
+      Map<Object, Object> customState) {
     this.session = session;
     this.keyspaceId = keyspaceId;
     this.tableId = tableId;
     this.nameConverterCache = nameConverterCache;
     this.customState = customState;
-    this.schemaValidationEnabled = schemaValidationEnabled;
   }
 
   public DefaultMapperContext withKeyspaceAndTable(
@@ -91,12 +73,7 @@ public class DefaultMapperContext implements MapperContext {
             && Objects.equals(newTableId, this.tableId))
         ? this
         : new DefaultMapperContext(
-            session,
-            newKeyspaceId,
-            newTableId,
-            nameConverterCache,
-            customState,
-            schemaValidationEnabled);
+            session, newKeyspaceId, newTableId, nameConverterCache, customState);
   }
 
   @NonNull
@@ -128,11 +105,6 @@ public class DefaultMapperContext implements MapperContext {
   @Override
   public Map<Object, Object> getCustomState() {
     return customState;
-  }
-
-  @Override
-  public boolean isSchemaValidationEnabled() {
-    return schemaValidationEnabled;
   }
 
   private static NameConverter buildNameConverter(Class<? extends NameConverter> converterClass) {
