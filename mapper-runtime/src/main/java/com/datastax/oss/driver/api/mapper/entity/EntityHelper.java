@@ -22,10 +22,8 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.data.SettableByName;
 import com.datastax.oss.driver.api.core.data.UdtValue;
-import com.datastax.oss.driver.api.mapper.MapperBuilder;
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
-import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.DaoTable;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
@@ -256,14 +254,4 @@ public interface EntityHelper<EntityT> {
   /** The class of the mapped entity. */
   @NonNull
   Class<EntityT> getEntityClass();
-
-  /**
-   * When the new instance of a class annotated with {@link Dao} is created an automatic check for
-   * schema validation is performed. It verifies if all {@link Dao} entity fields are present in CQL
-   * table. If not the {@link IllegalArgumentException} exception with detailed message is thrown.
-   * This check has startup overhead so once your app is stable you may want to disable it. The
-   * schema validation check is enabled by default. It can be disabled using the {@link
-   * MapperBuilder#withSchemaValidationEnabled(boolean)} method.
-   */
-  void validateEntityFields();
 }
