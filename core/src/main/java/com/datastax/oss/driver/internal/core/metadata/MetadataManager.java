@@ -457,7 +457,7 @@ public class MetadataManager implements AsyncAutoCloseable {
                               firstSchemaRefreshFuture.complete(null);
 
                               currentSchemaRefresh = null;
-                              // If another refresh was enqueue during this one, run it now
+                              // If another refresh was enqueued during this one, run it now
                               if (queuedSchemaRefresh != null) {
                                 CompletableFuture<RefreshSchemaResult> tmp =
                                     this.queuedSchemaRefresh;
