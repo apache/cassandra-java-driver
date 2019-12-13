@@ -17,6 +17,9 @@ package com.datastax.oss.driver.internal.mapper.entity;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
+import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
+import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.mapper.MapperBuilder;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.MapperException;
@@ -30,6 +33,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT> {
@@ -110,4 +114,37 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
    * MapperBuilder#withSchemaValidationEnabled(boolean)} method.
    */
   public abstract void validateEntityFields();
+
+  public List<String> findMissingTypes(
+      Map<CqlIdentifier, GenericType<?>> expected,
+      Map<CqlIdentifier, ColumnMetadata> actual,
+      CodecRegistry codecRegistry) {
+    List<String> missingCodecs = new ArrayList<>();
+
+    for (Map.Entry<CqlIdentifier, GenericType<?>> expectedEntry : expected.entrySet()) {
+      ColumnMetadata columnMetadata = actual.get(expectedEntry.getKey());
+      try {
+        codecRegistry.codecFor(columnMetadata.getType(), expectedEntry.getValue());
+      } catch (CodecNotFoundException exception) {
+        missingCodecs.add(
+            String.format(
+                "Field: %s, Entity Type: %s, CQL table type: %s",
+                expectedEntry.getKey(), exception.getJavaType(), exception.getCqlType()));
+      }
+    }
+    return missingCodecs;
+  }
+
+  public void throwMissingTypesIfNotEmpty(
+      List<String> missingTypes,
+      CqlIdentifier keyspaceId,
+      CqlIdentifier tableId,
+      String entityClassName) {
+    if (!missingTypes.isEmpty()) {
+      throw new IllegalArgumentException(
+          String.format(
+              "The CQL ks.table: %s.%s defined in the entity class: %s has wrong types:\n%s",
+              keyspaceId, tableId, entityClassName, String.join("\n", missingTypes)));
+    }
+  }
 }

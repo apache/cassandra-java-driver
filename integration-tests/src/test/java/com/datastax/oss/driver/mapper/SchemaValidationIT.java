@@ -70,6 +70,7 @@ public class SchemaValidationIT extends InventoryITBase {
             "CREATE TABLE product_simple(id uuid PRIMARY KEY, description text, unmapped text)",
             "CREATE TABLE product_simple_missing_p_k(id uuid PRIMARY KEY, description text, unmapped text)",
             "CREATE TABLE product_simple_missing_clustering_column(id uuid PRIMARY KEY, description text, unmapped text)",
+            "CREATE TABLE product_wrong_type(id uuid PRIMARY KEY, wrong_type_column text)",
             "CREATE TYPE dimensions_with_incorrect_name(length int, width int, height int)",
             "CREATE TYPE dimensions_with_incorrect_name_schema_hint_udt(length int, width int, height int)",
             "CREATE TYPE dimensions_with_incorrect_name_schema_hint_table(length int, width int, height int)",
@@ -116,6 +117,10 @@ public class SchemaValidationIT extends InventoryITBase {
             .build());
     session.execute(
         SimpleStatement.builder("TRUNCATE product_with_incorrect_udt_schema_hint_table")
+            .setExecutionProfile(sessionRule.slowProfile())
+            .build());
+    session.execute(
+        SimpleStatement.builder("TRUNCATE product_wrong_type")
             .setExecutionProfile(sessionRule.slowProfile())
             .build());
   }
@@ -215,6 +220,17 @@ public class SchemaValidationIT extends InventoryITBase {
                 sessionRule.keyspace()));
   }
 
+  @Test
+  public void should_throw_when_type_defined_in_table_does_not_match_type_from_entity() {
+    assertThatThrownBy(() -> mapper.productDaoWrongType(sessionRule.keyspace()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(
+            String.format(
+                "The CQL ks.table: %s.product_wrong_type defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductWrongType has wrong types:\n"
+                    + "Field: wrong_type_column, Entity Type: java.lang.Integer, CQL table type: TEXT",
+                sessionRule.keyspace()));
+  }
+
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
@@ -247,6 +263,9 @@ public class SchemaValidationIT extends InventoryITBase {
     @DaoFactory
     ProductSimpleMissingClusteringColumnDao productSimpleMissingClusteringColumn(
         @DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    ProductDaoWrongType productDaoWrongType(@DaoKeyspace CqlIdentifier keyspace);
   }
 
   @Dao
@@ -310,6 +329,13 @@ public class SchemaValidationIT extends InventoryITBase {
     ProductSimpleMissingClusteringColumn findById(UUID productId);
   }
 
+  @Dao
+  public interface ProductDaoWrongType {
+
+    @Select
+    ProductWrongType findById(UUID productId);
+  }
+
   @Entity
   public static class ProductCqlTableMissing {
     @PartitionKey private UUID id;
@@ -337,6 +363,30 @@ public class SchemaValidationIT extends InventoryITBase {
 
     public void setIdNotPresent(UUID idNotPresent) {
       this.idNotPresent = idNotPresent;
+    }
+  }
+
+  @Entity
+  public static class ProductWrongType {
+    @PartitionKey private UUID id;
+    private Integer wrongTypeColumn;
+
+    public ProductWrongType() {}
+
+    public UUID getId() {
+      return id;
+    }
+
+    public void setId(UUID id) {
+      this.id = id;
+    }
+
+    public Integer getWrongTypeColumn() {
+      return wrongTypeColumn;
+    }
+
+    public void setWrongTypeColumn(Integer wrongTypeColumn) {
+      this.wrongTypeColumn = wrongTypeColumn;
     }
   }
 

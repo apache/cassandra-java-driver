@@ -20,6 +20,7 @@ import static com.datastax.oss.driver.api.mapper.annotations.SchemaHint.*;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.mapper.annotations.SchemaHint;
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultTableMetadata;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
@@ -28,7 +29,9 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.lang.model.element.Modifier;
@@ -39,14 +42,17 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
   private final EntityDefinition entityDefinition;
   private TypeElement entityTypeElement;
   private LoggingGenerator loggingGenerator;
+  private EntityHelperGenerator entityHelperGenerator;
 
   public EntityHelperSchemaValidationMethodGenerator(
       EntityDefinition entityDefinition,
       TypeElement entityTypeElement,
-      LoggingGenerator loggingGenerator) {
+      LoggingGenerator loggingGenerator,
+      EntityHelperGenerator entityHelperGenerator) {
     this.entityDefinition = entityDefinition;
     this.entityTypeElement = entityTypeElement;
     this.loggingGenerator = loggingGenerator;
+    this.entityHelperGenerator = entityHelperGenerator;
   }
 
   @Override
@@ -143,16 +149,49 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
   private void findMissingColumnsInTable(MethodSpec.Builder methodBuilder) {
     methodBuilder.beginControlFlow("if (tableMetadata.isPresent())");
 
-    // handle missing Clustering Columns
+    methodBuilder.addComment("validation of missing Clustering Columns");
     generateMissingClusteringColumnsCheck(methodBuilder);
 
-    // handle missing PKs
+    methodBuilder.addComment("validation of missing PKs");
     generateMissingPKsCheck(methodBuilder);
 
-    // handle all columns
+    methodBuilder.addComment("validation of all columns");
     generateMissingColumnsCheck(methodBuilder);
 
+    methodBuilder.addComment("validation of types");
+    generateColumnsTypeCheck(methodBuilder);
+
     methodBuilder.endControlFlow();
+  }
+
+  private void generateColumnsTypeCheck(MethodSpec.Builder methodBuilder) {
+    methodBuilder.addStatement(
+        "$1T<$2T, $3T<?>> expectedTypesPerColumn = new $4T<>()",
+        Map.class,
+        CqlIdentifier.class,
+        GenericType.class,
+        LinkedHashMap.class);
+
+    Map<CodeBlock, TypeName> expectedTypesPerColumn =
+        entityDefinition.getAllColumns().stream()
+            .collect(
+                Collectors.toMap(PropertyDefinition::getCqlName, v -> v.getType().asRawTypeName()));
+
+    for (Map.Entry<CodeBlock, TypeName> expected : expectedTypesPerColumn.entrySet()) {
+      methodBuilder.addStatement(
+          "expectedTypesPerColumn.put($1T.fromCql($2L), $3L)",
+          CqlIdentifier.class,
+          expected.getKey(),
+          entityHelperGenerator.addGenericTypeConstant(expected.getValue().box()));
+    }
+
+    methodBuilder.addStatement(
+        "$1T<$2T> missingTableTypes = findMissingTypes(expectedTypesPerColumn, (($3T) tableMetadata.get()).getColumns(), context.getSession().getContext().getCodecRegistry())",
+        List.class,
+        String.class,
+        DefaultTableMetadata.class);
+    methodBuilder.addStatement(
+        "throwMissingTypesIfNotEmpty(missingTableTypes, keyspaceId, tableId, entityClassName)");
   }
 
   private void generateMissingColumnsCheck(MethodSpec.Builder methodBuilder) {
