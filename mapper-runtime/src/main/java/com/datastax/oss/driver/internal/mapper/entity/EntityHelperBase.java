@@ -115,7 +115,7 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
    */
   public abstract void validateEntityFields();
 
-  public List<String> findMissingTypes(
+  public static List<String> findMissingTypes(
       Map<CqlIdentifier, GenericType<?>> entityColumns,
       Map<CqlIdentifier, ColumnMetadata> cqlColumns,
       CodecRegistry codecRegistry) {
@@ -123,6 +123,11 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
 
     for (Map.Entry<CqlIdentifier, GenericType<?>> entityEntry : entityColumns.entrySet()) {
       ColumnMetadata columnMetadata = cqlColumns.get(entityEntry.getKey());
+      if (columnMetadata == null) {
+        // this will not happen because it will be catch by the generateMissingColumnsCheck() method
+        throw new IllegalArgumentException(
+            "There is no cql column for entity column: " + entityEntry.getKey());
+      }
       try {
         codecRegistry.codecFor(columnMetadata.getType(), entityEntry.getValue());
       } catch (CodecNotFoundException exception) {
