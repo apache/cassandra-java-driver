@@ -70,8 +70,31 @@ public class LoggingGenerator {
    * @param arguments the arguments ({@code key} and {@code value}).
    */
   public void debug(MethodSpec.Builder builder, String template, CodeBlock... arguments) {
+    log("debug", builder, template, arguments);
+  }
+
+  /**
+   * Generates a warn log statement, such as:
+   *
+   * <pre>
+   *   LOG.warn("setting {} = {}", key, value);
+   * </pre>
+   *
+   * <p>This assumes that {@link #addLoggerField(TypeSpec.Builder, ClassName)} has already been
+   * called for the class where this is generated.
+   *
+   * @param builder where to generate.
+   * @param template the message ({@code "setting {} = {}"}).
+   * @param arguments the arguments ({@code key} and {@code value}).
+   */
+  public void warn(MethodSpec.Builder builder, String template, CodeBlock... arguments) {
+    log("warn", builder, template, arguments);
+  }
+
+  public void log(
+      String logLevel, MethodSpec.Builder builder, String template, CodeBlock... arguments) {
     if (logsEnabled) {
-      builder.addCode("$[LOG.debug($S", template);
+      builder.addCode("$[LOG.$L($S", logLevel, template);
       for (CodeBlock argument : arguments) {
         builder.addCode(",\n$L", argument);
       }

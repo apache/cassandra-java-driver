@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.mapper.annotations.SchemaHint;
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultTableMetadata;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.dao.LoggingGenerator;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
@@ -37,11 +38,15 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
 
   private final EntityDefinition entityDefinition;
   private TypeElement entityTypeElement;
+  private LoggingGenerator loggingGenerator;
 
   public EntityHelperSchemaValidationMethodGenerator(
-      EntityDefinition entityDefinition, TypeElement entityTypeElement) {
+      EntityDefinition entityDefinition,
+      TypeElement entityTypeElement,
+      LoggingGenerator loggingGenerator) {
     this.entityDefinition = entityDefinition;
     this.entityTypeElement = entityTypeElement;
+    this.loggingGenerator = loggingGenerator;
   }
 
   @Override
@@ -57,13 +62,20 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
         "$1T keyspaceId = context.getKeyspaceId() != null ? context.getKeyspaceId() : context.getSession().getKeyspace().orElse(null)",
         CqlIdentifier.class);
 
+    methodBuilder.addStatement("String entityClassName = $S", entityDefinition.getClassName());
+
     // Handle case where keyspaceId = null.
     // In such case we cannot infer and validate schema for table or udt
     methodBuilder.beginControlFlow(
         "if (!context.getSession().getMetadata().getKeyspace(keyspaceId).isPresent())");
-    methodBuilder.addStatement(
-        "return"); // todo maybe we should do log.warn("we cannot validate schema because keyspace
-    // is null")?
+    loggingGenerator.warn(
+        methodBuilder,
+        "[{}] Unable to validate table: {} for the entity class: {} because keyspace: {} is not present",
+        CodeBlock.of("context.getSession().getName()"),
+        CodeBlock.of("tableId"),
+        CodeBlock.of("entityClassName"),
+        CodeBlock.of("keyspaceId"));
+    methodBuilder.addStatement("return");
     methodBuilder.endControlFlow();
 
     // Generates expected names to be present in cql (table or udt)
@@ -91,8 +103,6 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
         "$1T<$2T> userDefinedType = context.getSession().getMetadata().getKeyspace(keyspaceId).flatMap(v -> v.getUserDefinedType(tableId))",
         Optional.class,
         UserDefinedType.class);
-
-    methodBuilder.addStatement("String entityClassName = $S", entityDefinition.getClassName());
 
     generateFindMissingChecks(methodBuilder);
 
