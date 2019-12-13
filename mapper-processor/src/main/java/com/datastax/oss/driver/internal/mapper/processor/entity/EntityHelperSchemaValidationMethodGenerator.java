@@ -215,7 +215,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
 
   private void generateMissingPKsCheck(MethodSpec.Builder methodBuilder) {
     List<CodeBlock> expectedCqlPKs =
-        entityDefinition.getPrimaryKey().stream()
+        entityDefinition.getPartitionKey().stream()
             .map(PropertyDefinition::getCqlName)
             .collect(Collectors.toList());
 

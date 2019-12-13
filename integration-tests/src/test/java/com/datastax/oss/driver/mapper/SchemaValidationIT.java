@@ -70,6 +70,7 @@ public class SchemaValidationIT extends InventoryITBase {
             "CREATE TABLE product_simple(id uuid PRIMARY KEY, description text, unmapped text)",
             "CREATE TABLE product_simple_missing_p_k(id uuid PRIMARY KEY, description text, unmapped text)",
             "CREATE TABLE product_simple_missing_clustering_column(id uuid PRIMARY KEY, description text, unmapped text)",
+            "CREATE TABLE product_pk_and_clustering(id uuid, c_id uuid, PRIMARY KEY (id, c_id))",
             "CREATE TABLE product_wrong_type(id uuid PRIMARY KEY, wrong_type_column text)",
             "CREATE TYPE dimensions_with_incorrect_name(length int, width int, height int)",
             "CREATE TYPE dimensions_with_incorrect_name_schema_hint_udt(length int, width int, height int)",
@@ -121,6 +122,10 @@ public class SchemaValidationIT extends InventoryITBase {
             .build());
     session.execute(
         SimpleStatement.builder("TRUNCATE product_wrong_type")
+            .setExecutionProfile(sessionRule.slowProfile())
+            .build());
+    session.execute(
+        SimpleStatement.builder("TRUNCATE product_pk_and_clustering")
             .setExecutionProfile(sessionRule.slowProfile())
             .build());
   }
@@ -231,6 +236,12 @@ public class SchemaValidationIT extends InventoryITBase {
                 sessionRule.keyspace()));
   }
 
+  @Test
+  public void should_not_throw_when_have_correct_pk_and_clustering() {
+    assertThatCode(() -> mapper.productPkAndClusteringDao(sessionRule.keyspace()))
+        .doesNotThrowAnyException();
+  }
+
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
@@ -265,7 +276,10 @@ public class SchemaValidationIT extends InventoryITBase {
         @DaoKeyspace CqlIdentifier keyspace);
 
     @DaoFactory
-    ProductDaoWrongType productDaoWrongType(@DaoKeyspace CqlIdentifier keyspace);
+    ProductDaoWrongTypeDao productDaoWrongType(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    ProductPkAndClusteringDao productPkAndClusteringDao(@DaoKeyspace CqlIdentifier keyspace);
   }
 
   @Dao
@@ -330,10 +344,17 @@ public class SchemaValidationIT extends InventoryITBase {
   }
 
   @Dao
-  public interface ProductDaoWrongType {
+  public interface ProductDaoWrongTypeDao {
 
     @Select
     ProductWrongType findById(UUID productId);
+  }
+
+  @Dao
+  public interface ProductPkAndClusteringDao {
+
+    @Select
+    ProductPkAndClustering findById(UUID productId);
   }
 
   @Entity
@@ -411,6 +432,30 @@ public class SchemaValidationIT extends InventoryITBase {
 
     public void setNotExistingClusteringColumn(Integer notExistingClusteringColumn) {
       this.notExistingClusteringColumn = notExistingClusteringColumn;
+    }
+  }
+
+  @Entity
+  public static class ProductPkAndClustering {
+    @PartitionKey private UUID id;
+    @ClusteringColumn private UUID cId;
+
+    public ProductPkAndClustering() {}
+
+    public UUID getId() {
+      return id;
+    }
+
+    public void setId(UUID id) {
+      this.id = id;
+    }
+
+    public UUID getcId() {
+      return cId;
+    }
+
+    public void setcId(UUID cId) {
+      this.cId = cId;
     }
   }
 

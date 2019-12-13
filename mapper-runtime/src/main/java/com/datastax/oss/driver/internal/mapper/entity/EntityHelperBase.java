@@ -88,18 +88,18 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
   }
 
   public List<CqlIdentifier> findMissingColumns(
-      List<CqlIdentifier> expected, Collection<ColumnMetadata> actual) {
-    List<CqlIdentifier> actualCql =
-        actual.stream().map(ColumnMetadata::getName).collect(Collectors.toList());
-    return findMissingColumnsCql(expected, actualCql);
+      List<CqlIdentifier> entityColumns, Collection<ColumnMetadata> cqlColumns) {
+    return findMissingColumnsCql(
+        entityColumns,
+        cqlColumns.stream().map(ColumnMetadata::getName).collect(Collectors.toList()));
   }
 
   public List<CqlIdentifier> findMissingColumnsCql(
-      List<CqlIdentifier> expected, Collection<CqlIdentifier> actual) {
+      List<CqlIdentifier> entityColumns, Collection<CqlIdentifier> cqlColumns) {
     List<CqlIdentifier> missingColumns = new ArrayList<>();
-    for (CqlIdentifier cqlIdentifier : expected) {
-      if (!actual.contains(cqlIdentifier)) {
-        missingColumns.add(cqlIdentifier);
+    for (CqlIdentifier entityCqlIdentifier : entityColumns) {
+      if (!cqlColumns.contains(entityCqlIdentifier)) {
+        missingColumns.add(entityCqlIdentifier);
       }
     }
     return missingColumns;
@@ -116,20 +116,20 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
   public abstract void validateEntityFields();
 
   public List<String> findMissingTypes(
-      Map<CqlIdentifier, GenericType<?>> expected,
-      Map<CqlIdentifier, ColumnMetadata> actual,
+      Map<CqlIdentifier, GenericType<?>> entityColumns,
+      Map<CqlIdentifier, ColumnMetadata> cqlColumns,
       CodecRegistry codecRegistry) {
     List<String> missingCodecs = new ArrayList<>();
 
-    for (Map.Entry<CqlIdentifier, GenericType<?>> expectedEntry : expected.entrySet()) {
-      ColumnMetadata columnMetadata = actual.get(expectedEntry.getKey());
+    for (Map.Entry<CqlIdentifier, GenericType<?>> entityEntry : entityColumns.entrySet()) {
+      ColumnMetadata columnMetadata = cqlColumns.get(entityEntry.getKey());
       try {
-        codecRegistry.codecFor(columnMetadata.getType(), expectedEntry.getValue());
+        codecRegistry.codecFor(columnMetadata.getType(), entityEntry.getValue());
       } catch (CodecNotFoundException exception) {
         missingCodecs.add(
             String.format(
                 "Field: %s, Entity Type: %s, CQL table type: %s",
-                expectedEntry.getKey(), exception.getJavaType(), exception.getCqlType()));
+                entityEntry.getKey(), exception.getJavaType(), exception.getCqlType()));
       }
     }
     return missingCodecs;
