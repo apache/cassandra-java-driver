@@ -115,7 +115,7 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
    */
   public abstract void validateEntityFields();
 
-  public static List<String> findMissingTypes(
+  public static List<String> findTypeMismatches(
       Map<CqlIdentifier, GenericType<?>> entityColumns,
       Map<CqlIdentifier, ColumnMetadata> cqlColumns,
       CodecRegistry codecRegistry) {
@@ -125,7 +125,7 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
       ColumnMetadata columnMetadata = cqlColumns.get(entityEntry.getKey());
       if (columnMetadata == null) {
         // this will not happen because it will be catch by the generateMissingColumnsCheck() method
-        throw new IllegalArgumentException(
+        throw new AssertionError(
             "There is no cql column for entity column: " + entityEntry.getKey());
       }
       try {
@@ -148,7 +148,7 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
     if (!missingTypes.isEmpty()) {
       throw new IllegalArgumentException(
           String.format(
-              "The CQL ks.table: %s.%s defined in the entity class: %s has wrong types:\n%s",
+              "The CQL ks.table: %s.%s defined in the entity class: %s declares type mappings that are not supported by the codec registry:\n%s",
               keyspaceId, tableId, entityClassName, String.join("\n", missingTypes)));
     }
   }

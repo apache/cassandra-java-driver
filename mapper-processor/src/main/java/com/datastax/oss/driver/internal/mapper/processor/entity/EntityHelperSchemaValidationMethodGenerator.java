@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.mapper.processor.entity;
 import static com.datastax.oss.driver.api.mapper.annotations.SchemaHint.*;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
@@ -70,10 +71,14 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
 
     methodBuilder.addStatement("String entityClassName = $S", entityDefinition.getClassName());
 
+    methodBuilder.addStatement(
+        "$1T<$2T> keyspace = context.getSession().getMetadata().getKeyspace(keyspaceId)",
+        Optional.class,
+        KeyspaceMetadata.class);
+
     // Handle case where keyspaceId = null.
     // In such case we cannot infer and validate schema for table or udt
-    methodBuilder.beginControlFlow(
-        "if (!context.getSession().getMetadata().getKeyspace(keyspaceId).isPresent())");
+    methodBuilder.beginControlFlow("if (!keyspace.isPresent())");
     loggingGenerator.warn(
         methodBuilder,
         "[{}] Unable to validate table: {} for the entity class: {} because keyspace: {} is not present",
@@ -100,13 +105,13 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     }
 
     methodBuilder.addStatement(
-        "$1T<$2T> tableMetadata = context.getSession().getMetadata().getKeyspace(keyspaceId).flatMap(v -> v.getTable(tableId))",
+        "$1T<$2T> tableMetadata = keyspace.flatMap(v -> v.getTable(tableId))",
         Optional.class,
         TableMetadata.class);
 
     // Generated UserDefineTypes metadata
     methodBuilder.addStatement(
-        "$1T<$2T> userDefinedType = context.getSession().getMetadata().getKeyspace(keyspaceId).flatMap(v -> v.getUserDefinedType(tableId))",
+        "$1T<$2T> userDefinedType = keyspace.flatMap(v -> v.getUserDefinedType(tableId))",
         Optional.class,
         UserDefinedType.class);
 
@@ -131,40 +136,35 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
 
     // if SchemaHint was not provided explicitly try to match TABLE, then fallback to UDT
     if (!targetElement.isPresent()) {
-      findMissingColumnsInTable(methodBuilder);
-      findMissingColumnsInUdt(methodBuilder, true);
+      validateColumnsInTable(methodBuilder);
+      validateColumnsInUdt(methodBuilder, true);
     }
     // if explicitly provided SchemaHint is TABLE, then generate only TABLE check
     else if (targetElement.get().equals(TargetElement.TABLE)) {
-      findMissingColumnsInTable(methodBuilder);
+      validateColumnsInTable(methodBuilder);
     }
     // if explicitly provided SchemaHint is UDT, then generate only UDT check
     else if (targetElement.get().equals(TargetElement.UDT)) {
-      findMissingColumnsInUdt(methodBuilder, false);
+      validateColumnsInUdt(methodBuilder, false);
     }
   }
 
-  // Finds out missingTableCqlNames - columns that are present in Entity Mapping but NOT present in
-  // CQL table
-  private void findMissingColumnsInTable(MethodSpec.Builder methodBuilder) {
+  private void validateColumnsInTable(MethodSpec.Builder methodBuilder) {
     methodBuilder.beginControlFlow("if (tableMetadata.isPresent())");
 
-    methodBuilder.addComment("validation of missing Clustering Columns");
     generateMissingClusteringColumnsCheck(methodBuilder);
 
-    methodBuilder.addComment("validation of missing PKs");
     generateMissingPKsCheck(methodBuilder);
 
-    methodBuilder.addComment("validation of all columns");
     generateMissingColumnsCheck(methodBuilder);
 
-    methodBuilder.addComment("validation of types");
     generateColumnsTypeCheck(methodBuilder);
 
     methodBuilder.endControlFlow();
   }
 
   private void generateColumnsTypeCheck(MethodSpec.Builder methodBuilder) {
+    methodBuilder.addComment("validation of types");
     methodBuilder.addStatement(
         "$1T<$2T, $3T<?>> expectedTypesPerColumn = new $4T<>()",
         Map.class,
@@ -186,7 +186,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     }
 
     methodBuilder.addStatement(
-        "$1T<$2T> missingTableTypes = findMissingTypes(expectedTypesPerColumn, (($3T) tableMetadata.get()).getColumns(), context.getSession().getContext().getCodecRegistry())",
+        "$1T<$2T> missingTableTypes = findTypeMismatches(expectedTypesPerColumn, (($3T) tableMetadata.get()).getColumns(), context.getSession().getContext().getCodecRegistry())",
         List.class,
         String.class,
         DefaultTableMetadata.class);
@@ -195,6 +195,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
   }
 
   private void generateMissingColumnsCheck(MethodSpec.Builder methodBuilder) {
+    methodBuilder.addComment("validation of all columns");
 
     methodBuilder.addStatement(
         "$1T<$2T> missingTableCqlNames = findMissingColumnsCql(expectedCqlNames, (($3T) tableMetadata.get()).getColumns().keySet())",
@@ -214,6 +215,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
   }
 
   private void generateMissingPKsCheck(MethodSpec.Builder methodBuilder) {
+    methodBuilder.addComment("validation of missing PKs");
     List<CodeBlock> expectedCqlPKs =
         entityDefinition.getPartitionKey().stream()
             .map(PropertyDefinition::getCqlName)
@@ -247,37 +249,40 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
             .map(PropertyDefinition::getCqlName)
             .collect(Collectors.toList());
 
-    methodBuilder.addStatement(
-        "$1T<$2T> expectedCqlClusteringColumns = new $3T<>()",
-        List.class,
-        CqlIdentifier.class,
-        ArrayList.class);
-    for (CodeBlock expectedCqlName : expectedCqlClusteringColumns) {
+    if (!expectedCqlClusteringColumns.isEmpty()) {
+      methodBuilder.addComment("validation of missing Clustering Columns");
       methodBuilder.addStatement(
-          "expectedCqlClusteringColumns.add($1T.fromCql($2L))",
+          "$1T<$2T> expectedCqlClusteringColumns = new $3T<>()",
+          List.class,
           CqlIdentifier.class,
-          expectedCqlName);
+          ArrayList.class);
+      for (CodeBlock expectedCqlName : expectedCqlClusteringColumns) {
+        methodBuilder.addStatement(
+            "expectedCqlClusteringColumns.add($1T.fromCql($2L))",
+            CqlIdentifier.class,
+            expectedCqlName);
+      }
+
+      methodBuilder.addStatement(
+          "$1T<$2T> missingTableClusteringColumnNames = findMissingColumns(expectedCqlClusteringColumns, tableMetadata.get().getClusteringColumns().keySet())",
+          List.class,
+          CqlIdentifier.class);
+
+      // throw if there are any missing Clustering Columns columns
+      CodeBlock missingCqlColumnExceptionMessage =
+          CodeBlock.of(
+              "String.format(\"The CQL ks.table: %s.%s has missing Clustering columns: %s that are defined in the entity class: %s\", "
+                  + "keyspaceId, tableId, missingTableClusteringColumnNames, entityClassName)");
+      methodBuilder.beginControlFlow("if (!missingTableClusteringColumnNames.isEmpty())");
+      methodBuilder.addStatement(
+          "throw new $1T($2L)", IllegalArgumentException.class, missingCqlColumnExceptionMessage);
+      methodBuilder.endControlFlow();
     }
-
-    methodBuilder.addStatement(
-        "$1T<$2T> missingTableClusteringColumnNames = findMissingColumns(expectedCqlClusteringColumns, tableMetadata.get().getClusteringColumns().keySet())",
-        List.class,
-        CqlIdentifier.class);
-
-    // throw if there are any missing Clustering Columns columns
-    CodeBlock missingCqlColumnExceptionMessage =
-        CodeBlock.of(
-            "String.format(\"The CQL ks.table: %s.%s has missing Clustering columns: %s that are defined in the entity class: %s\", "
-                + "keyspaceId, tableId, missingTableClusteringColumnNames, entityClassName)");
-    methodBuilder.beginControlFlow("if (!missingTableClusteringColumnNames.isEmpty())");
-    methodBuilder.addStatement(
-        "throw new $1T($2L)", IllegalArgumentException.class, missingCqlColumnExceptionMessage);
-    methodBuilder.endControlFlow();
   }
 
   // Finds out missingTableCqlNames - columns that are present in Entity Mapping but NOT present in
   // UDT table
-  private void findMissingColumnsInUdt(MethodSpec.Builder methodBuilder, boolean generateElse) {
+  private void validateColumnsInUdt(MethodSpec.Builder methodBuilder, boolean generateElse) {
     if (generateElse) {
       methodBuilder.beginControlFlow("else if (userDefinedType.isPresent())");
     } else {

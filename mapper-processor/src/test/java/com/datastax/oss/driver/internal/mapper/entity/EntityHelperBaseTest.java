@@ -47,7 +47,7 @@ public class EntityHelperBaseTest {
       List<String> expected) {
     // when
     List<String> missingTypes =
-        EntityHelperBase.findMissingTypes(entityColumns, cqlColumns, CodecRegistry.DEFAULT);
+        EntityHelperBase.findTypeMismatches(entityColumns, cqlColumns, CodecRegistry.DEFAULT);
 
     // then
     assertThat(missingTypes).isEqualTo(expected);
@@ -64,8 +64,9 @@ public class EntityHelperBaseTest {
     // when, then
     assertThatThrownBy(
             () ->
-                EntityHelperBase.findMissingTypes(entityColumns, cqlColumns, CodecRegistry.DEFAULT))
-        .isInstanceOf(IllegalArgumentException.class)
+                EntityHelperBase.findTypeMismatches(
+                    entityColumns, cqlColumns, CodecRegistry.DEFAULT))
+        .isInstanceOf(AssertionError.class)
         .hasMessageContaining("There is no cql column for entity column: c1");
   }
 

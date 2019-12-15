@@ -231,7 +231,7 @@ public class SchemaValidationIT extends InventoryITBase {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining(
             String.format(
-                "The CQL ks.table: %s.product_wrong_type defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductWrongType has wrong types:\n"
+                "The CQL ks.table: %s.product_wrong_type defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductWrongType declares type mappings that are not supported by the codec registry:\n"
                     + "Field: wrong_type_column, Entity Type: java.lang.Integer, CQL table type: TEXT",
                 sessionRule.keyspace()));
   }
