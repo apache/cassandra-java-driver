@@ -16,17 +16,14 @@
 package com.datastax.oss.driver.mapper;
 
 import static com.datastax.oss.driver.api.mapper.annotations.SchemaHint.*;
+import static com.datastax.oss.driver.internal.core.util.LoggerTest.setupTestLogger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -45,11 +42,11 @@ import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.util.LoggerTest;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -57,8 +54,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
-import org.mockito.ArgumentCaptor;
-import org.slf4j.LoggerFactory;
 
 @Category(ParallelizableTests.class)
 @CassandraRequirement(min = "3.4", description = "Creates a SASI index")
@@ -70,15 +65,6 @@ public class SchemaValidationIT extends InventoryITBase {
 
   private static InventoryMapper mapper;
   private static InventoryMapper mapperDisabledValidation;
-
-  @SuppressWarnings("unchecked")
-  private Appender<ILoggingEvent> appender = (Appender<ILoggingEvent>) mock(Appender.class);
-
-  private ArgumentCaptor<ILoggingEvent> loggingEventCaptor =
-      ArgumentCaptor.forClass(ILoggingEvent.class);
-
-  private Logger logger;
-  private Level originalLoggerLevel;
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
@@ -156,22 +142,6 @@ public class SchemaValidationIT extends InventoryITBase {
             .build());
   }
 
-  @Before
-  public void setupLogger() {
-    logger =
-        (Logger)
-            LoggerFactory.getLogger(SchemaValidationIT_ProductSimpleHelper__MapperGenerated.class);
-    originalLoggerLevel = logger.getLevel();
-    logger.setLevel(Level.WARN);
-    logger.addAppender(appender);
-  }
-
-  @After
-  public void cleanupLogger() {
-    logger.detachAppender(appender);
-    logger.setLevel(originalLoggerLevel);
-  }
-
   @Test
   public void should_throw_when_use_not_properly_mapped_entity() {
     assertThatThrownBy(() -> mapper.productSimpleDao(sessionRule.keyspace()))
@@ -194,13 +164,26 @@ public class SchemaValidationIT extends InventoryITBase {
   }
 
   @Test
-  public void should_throw_when_entity_has_no_corresponding_cql_table() {
-    assertThatThrownBy(() -> mapper.productCqlTableMissingDao(sessionRule.keyspace()))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining(
-            String.format(
-                "There is no ks.table: %s.product_cql_table_missing for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductCqlTableMissing",
-                sessionRule.keyspace()));
+  public void should_log_warn_when_entity_has_no_corresponding_cql_table() {
+    LoggerTest.LoggerSetup logger =
+        setupTestLogger(
+            SchemaValidationIT_ProductCqlTableMissingHelper__MapperGenerated.class, Level.WARN);
+    try {
+      assertThatThrownBy(() -> mapper.productCqlTableMissingDao(sessionRule.keyspace()))
+          .isInstanceOf(InvalidQueryException.class)
+          .hasMessageContaining("unconfigured table product_cql_table_missing");
+
+      verify(logger.appender, timeout(500).times(1)).doAppend(logger.loggingEventCaptor.capture());
+      assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
+      assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
+          .contains(
+              String.format(
+                  "There is no ks.table: %s.product_cql_table_missing for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductCqlTableMissing or metadata is out of date.",
+                  sessionRule.keyspace()));
+
+    } finally {
+      logger.close();
+    }
   }
 
   @Test
@@ -238,13 +221,26 @@ public class SchemaValidationIT extends InventoryITBase {
 
   @Test
   public void
-      should_throw_missing_table_when_use_not_properly_mapped_entity_with_udt_with_table_schema_hint() {
-    assertThatThrownBy(() -> mapper.productWithIncorrectUdtSchemaHintTable(sessionRule.keyspace()))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining(
-            String.format(
-                "There is no ks.table: %s.dimensions_with_incorrect_name_schema_hint_table for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.DimensionsWithIncorrectNameSchemaHintTable",
-                sessionRule.keyspace()));
+      should_warn_about_missing_table_when_use_not_properly_mapped_entity_with_udt_with_table_schema_hint() {
+    LoggerTest.LoggerSetup logger =
+        setupTestLogger(
+            SchemaValidationIT_DimensionsWithIncorrectNameSchemaHintTableHelper__MapperGenerated
+                .class,
+            Level.WARN);
+    try {
+      // when
+      mapper.productWithIncorrectUdtSchemaHintTable(sessionRule.keyspace());
+
+      verify(logger.appender, timeout(500).times(1)).doAppend(logger.loggingEventCaptor.capture());
+      assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
+      assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
+          .contains(
+              String.format(
+                  "There is no ks.table: %s.dimensions_with_incorrect_name_schema_hint_table for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.DimensionsWithIncorrectNameSchemaHintTable or metadata is out of date.",
+                  sessionRule.keyspace()));
+    } finally {
+      logger.close();
+    }
   }
 
   @Test
@@ -297,18 +293,24 @@ public class SchemaValidationIT extends InventoryITBase {
 
   @Test
   public void should_log_warning_when_passing_not_existing_keyspace() {
-    // when
-    assertThatThrownBy(
-            () -> mapper.productSimpleDao(CqlIdentifier.fromCql("not_existing_keyspace")))
-        .isInstanceOf(InvalidQueryException.class)
-        .hasMessageContaining("Keyspace not_existing_keyspace does not exist");
+    LoggerTest.LoggerSetup logger =
+        setupTestLogger(SchemaValidationIT_ProductSimpleHelper__MapperGenerated.class, Level.WARN);
+    try {
+      // when
+      assertThatThrownBy(
+              () -> mapper.productSimpleDao(CqlIdentifier.fromCql("not_existing_keyspace")))
+          .isInstanceOf(InvalidQueryException.class)
+          .hasMessageContaining("Keyspace not_existing_keyspace does not exist");
 
-    // then
-    verify(appender, timeout(500).times(1)).doAppend(loggingEventCaptor.capture());
-    assertThat(loggingEventCaptor.getValue().getMessage()).isNotNull();
-    assertThat(loggingEventCaptor.getValue().getFormattedMessage())
-        .contains(
-            "Unable to validate table: product_simple for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductSimple because metadata has not information about the keyspace: not_existing_keyspace.");
+      // then
+      verify(logger.appender, timeout(500).times(1)).doAppend(logger.loggingEventCaptor.capture());
+      assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
+      assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
+          .contains(
+              "Unable to validate table: product_simple for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductSimple because metadata has not information about the keyspace: not_existing_keyspace.");
+    } finally {
+      logger.close();
+    }
   }
 
   @Mapper

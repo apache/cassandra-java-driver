@@ -109,16 +109,23 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
 
     generateValidationChecks(methodBuilder);
 
-    // Throw if there is not keyspace.table for defined entity
-    CodeBlock missingKeyspaceTableExceptionMessage =
-        CodeBlock.of(
-            "String.format(\"There is no ks.table: %s.%s for the entity class: %s\", keyspaceId, tableId, entityClassName)");
-    methodBuilder.beginControlFlow("else");
-    methodBuilder.addStatement(
-        "throw new $1T($2L)", IllegalArgumentException.class, missingKeyspaceTableExceptionMessage);
-    methodBuilder.endControlFlow();
+    logMissingMetadata(methodBuilder);
 
     return Optional.of(methodBuilder.build());
+  }
+
+  private void logMissingMetadata(MethodSpec.Builder methodBuilder) {
+    methodBuilder.addComment(
+        "warn if there is not keyspace.table for defined entity - it means that table is missing, or schema it out of date.");
+    methodBuilder.beginControlFlow("else");
+    loggingGenerator.warn(
+        methodBuilder,
+        "[{}] There is no ks.table: {}.{} for the entity class: {} or metadata is out of date.",
+        CodeBlock.of("context.getSession().getName()"),
+        CodeBlock.of("keyspaceId"),
+        CodeBlock.of("tableId"),
+        CodeBlock.of("entityClassName"));
+    methodBuilder.endControlFlow();
   }
 
   // handle case where keyspace name is not present in metadata keyspaces
