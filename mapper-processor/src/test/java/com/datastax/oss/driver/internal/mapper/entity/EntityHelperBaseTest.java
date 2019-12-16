@@ -90,7 +90,7 @@ public class EntityHelperBaseTest {
       {
         ImmutableMap.of(c1, GenericType.of(Integer.class)),
         ImmutableMap.of(c1, columnMetadataText),
-        ImmutableList.of("Field: c1, Entity Type: java.lang.Integer, CQL table type: TEXT")
+        ImmutableList.of("Field: c1, Entity Type: java.lang.Integer, CQL type: TEXT")
       },
       {
         ImmutableMap.of(c1, GenericType.of(String.class), c2, GenericType.of(Integer.class)),
@@ -101,8 +101,8 @@ public class EntityHelperBaseTest {
         ImmutableMap.of(c1, GenericType.of(String.class), c2, GenericType.of(Integer.class)),
         ImmutableMap.of(c1, columnMetadataInt, c2, columnMetadataText),
         ImmutableList.of(
-            "Field: c1, Entity Type: java.lang.String, CQL table type: INT",
-            "Field: c2, Entity Type: java.lang.Integer, CQL table type: TEXT")
+            "Field: c1, Entity Type: java.lang.String, CQL type: INT",
+            "Field: c2, Entity Type: java.lang.Integer, CQL type: TEXT")
       }
     };
   }
