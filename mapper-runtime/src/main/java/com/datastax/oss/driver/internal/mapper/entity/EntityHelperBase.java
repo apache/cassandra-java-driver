@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper.entity;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
+import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
@@ -196,5 +197,10 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
               "The CQL ks.%s: %s.%s defined in the entity class: %s declares type mappings that are not supported by the codec registry:\n%s",
               type, keyspaceId, tableId, entityClassName, String.join("\n", missingTypes)));
     }
+  }
+
+  public boolean keyspaceNamePresent(
+      Map<CqlIdentifier, KeyspaceMetadata> keyspaces, CqlIdentifier keyspaceId) {
+    return keyspaces.keySet().contains(keyspaceId);
   }
 }

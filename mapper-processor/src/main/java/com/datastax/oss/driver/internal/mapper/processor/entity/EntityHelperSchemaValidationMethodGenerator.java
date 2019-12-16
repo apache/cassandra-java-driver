@@ -72,23 +72,14 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
 
     methodBuilder.addStatement("String entityClassName = $S", entityDefinition.getClassName());
 
+    generateKeyspaceNameWrong(methodBuilder);
+
     methodBuilder.addStatement(
         "$1T<$2T> keyspace = context.getSession().getMetadata().getKeyspace(keyspaceId)",
         Optional.class,
         KeyspaceMetadata.class);
 
-    // Handle case where keyspaceId = null.
-    // In such case we cannot infer and validate schema for table or udt
-    methodBuilder.beginControlFlow("if (!keyspace.isPresent())");
-    loggingGenerator.warn(
-        methodBuilder,
-        "[{}] Unable to validate table: {} for the entity class: {} because keyspace: {} is not present",
-        CodeBlock.of("context.getSession().getName()"),
-        CodeBlock.of("tableId"),
-        CodeBlock.of("entityClassName"),
-        CodeBlock.of("keyspaceId"));
-    methodBuilder.addStatement("return");
-    methodBuilder.endControlFlow();
+    generateKeyspaceNull(methodBuilder);
 
     // Generates expected names to be present in cql (table or udt)
     List<CodeBlock> expectedCqlNames =
@@ -128,6 +119,36 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     methodBuilder.endControlFlow();
 
     return Optional.of(methodBuilder.build());
+  }
+
+  // handle case where keyspace name is not present in metadata keyspaces
+  private void generateKeyspaceNameWrong(MethodSpec.Builder methodBuilder) {
+    methodBuilder.beginControlFlow(
+        "if(!keyspaceNamePresent(context.getSession().getMetadata().getKeyspaces(), keyspaceId))");
+    loggingGenerator.warn(
+        methodBuilder,
+        "[{}] Unable to validate table: {} for the entity class: {} because metadata has not information about the keyspace: {}.",
+        CodeBlock.of("context.getSession().getName()"),
+        CodeBlock.of("tableId"),
+        CodeBlock.of("entityClassName"),
+        CodeBlock.of("keyspaceId"));
+    methodBuilder.addStatement("return");
+    methodBuilder.endControlFlow();
+  }
+
+  // Handle case where keyspaceId = null.
+  // In such case we cannot infer and validate schema for table or udt
+  private void generateKeyspaceNull(MethodSpec.Builder methodBuilder) {
+    methodBuilder.beginControlFlow("if (!keyspace.isPresent())");
+    loggingGenerator.warn(
+        methodBuilder,
+        "[{}] Unable to validate table: {} for the entity class: {} because keyspace: {} is not present.",
+        CodeBlock.of("context.getSession().getName()"),
+        CodeBlock.of("tableId"),
+        CodeBlock.of("entityClassName"),
+        CodeBlock.of("keyspaceId"));
+    methodBuilder.addStatement("return");
+    methodBuilder.endControlFlow();
   }
 
   private void generateValidationChecks(MethodSpec.Builder methodBuilder) {

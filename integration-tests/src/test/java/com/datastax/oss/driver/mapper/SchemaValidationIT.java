@@ -16,9 +16,17 @@
 package com.datastax.oss.driver.mapper;
 
 import static com.datastax.oss.driver.api.mapper.annotations.SchemaHint.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -41,6 +49,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -48,6 +57,8 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
+import org.mockito.ArgumentCaptor;
+import org.slf4j.LoggerFactory;
 
 @Category(ParallelizableTests.class)
 @CassandraRequirement(min = "3.4", description = "Creates a SASI index")
@@ -59,6 +70,15 @@ public class SchemaValidationIT extends InventoryITBase {
 
   private static InventoryMapper mapper;
   private static InventoryMapper mapperDisabledValidation;
+
+  @SuppressWarnings("unchecked")
+  private Appender<ILoggingEvent> appender = (Appender<ILoggingEvent>) mock(Appender.class);
+
+  private ArgumentCaptor<ILoggingEvent> loggingEventCaptor =
+      ArgumentCaptor.forClass(ILoggingEvent.class);
+
+  private Logger logger;
+  private Level originalLoggerLevel;
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
@@ -134,6 +154,22 @@ public class SchemaValidationIT extends InventoryITBase {
         SimpleStatement.builder("TRUNCATE product_with_udt_wrong_type")
             .setExecutionProfile(sessionRule.slowProfile())
             .build());
+  }
+
+  @Before
+  public void setupLogger() {
+    logger =
+        (Logger)
+            LoggerFactory.getLogger(SchemaValidationIT_ProductSimpleHelper__MapperGenerated.class);
+    originalLoggerLevel = logger.getLevel();
+    logger.setLevel(Level.WARN);
+    logger.addAppender(appender);
+  }
+
+  @After
+  public void cleanupLogger() {
+    logger.detachAppender(appender);
+    logger.setLevel(originalLoggerLevel);
   }
 
   @Test
@@ -257,6 +293,22 @@ public class SchemaValidationIT extends InventoryITBase {
   public void should_not_throw_when_have_correct_pk_and_clustering() {
     assertThatCode(() -> mapper.productPkAndClusteringDao(sessionRule.keyspace()))
         .doesNotThrowAnyException();
+  }
+
+  @Test
+  public void should_log_warning_when_passing_not_existing_keyspace() {
+    // when
+    assertThatThrownBy(
+            () -> mapper.productSimpleDao(CqlIdentifier.fromCql("not_existing_keyspace")))
+        .isInstanceOf(InvalidQueryException.class)
+        .hasMessageContaining("Keyspace not_existing_keyspace does not exist");
+
+    // then
+    verify(appender, timeout(500).times(1)).doAppend(loggingEventCaptor.capture());
+    assertThat(loggingEventCaptor.getValue().getMessage()).isNotNull();
+    assertThat(loggingEventCaptor.getValue().getFormattedMessage())
+        .contains(
+            "Unable to validate table: product_simple for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductSimple because metadata has not information about the keyspace: not_existing_keyspace.");
   }
 
   @Mapper
