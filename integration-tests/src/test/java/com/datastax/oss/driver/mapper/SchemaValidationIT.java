@@ -73,11 +73,13 @@ public class SchemaValidationIT extends InventoryITBase {
             "CREATE TABLE product_pk_and_clustering(id uuid, c_id uuid, PRIMARY KEY (id, c_id))",
             "CREATE TABLE product_wrong_type(id uuid PRIMARY KEY, wrong_type_column text)",
             "CREATE TYPE dimensions_with_incorrect_name(length int, width int, height int)",
+            "CREATE TYPE dimensions_with_wrong_type(length int, width int, height text)",
             "CREATE TYPE dimensions_with_incorrect_name_schema_hint_udt(length int, width int, height int)",
             "CREATE TYPE dimensions_with_incorrect_name_schema_hint_table(length int, width int, height int)",
             "CREATE TABLE product_with_incorrect_udt(id uuid PRIMARY KEY, description text, dimensions dimensions_with_incorrect_name)",
             "CREATE TABLE product_with_incorrect_udt_schema_hint_udt(id uuid PRIMARY KEY, description text, dimensions dimensions_with_incorrect_name_schema_hint_udt)",
-            "CREATE TABLE product_with_incorrect_udt_schema_hint_table(id uuid PRIMARY KEY, description text, dimensions dimensions_with_incorrect_name_schema_hint_table)");
+            "CREATE TABLE product_with_incorrect_udt_schema_hint_table(id uuid PRIMARY KEY, description text, dimensions dimensions_with_incorrect_name_schema_hint_table)",
+            "CREATE TABLE product_with_udt_wrong_type(id uuid PRIMARY KEY, description text, dimensions dimensions_with_wrong_type)");
 
     for (String query : statements) {
       session.execute(
@@ -126,6 +128,10 @@ public class SchemaValidationIT extends InventoryITBase {
             .build());
     session.execute(
         SimpleStatement.builder("TRUNCATE product_pk_and_clustering")
+            .setExecutionProfile(sessionRule.slowProfile())
+            .build());
+    session.execute(
+        SimpleStatement.builder("TRUNCATE product_with_udt_wrong_type")
             .setExecutionProfile(sessionRule.slowProfile())
             .build());
   }
@@ -232,7 +238,18 @@ public class SchemaValidationIT extends InventoryITBase {
         .hasMessageContaining(
             String.format(
                 "The CQL ks.table: %s.product_wrong_type defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductWrongType declares type mappings that are not supported by the codec registry:\n"
-                    + "Field: wrong_type_column, Entity Type: java.lang.Integer, CQL table type: TEXT",
+                    + "Field: wrong_type_column, Entity Type: java.lang.Integer, CQL type: TEXT",
+                sessionRule.keyspace()));
+  }
+
+  @Test
+  public void should_throw_when_type_defined_in_udt_does_not_match_type_from_entity() {
+    assertThatThrownBy(() -> mapper.productWithUdtWrongTypeDao(sessionRule.keyspace()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(
+            String.format(
+                "The CQL ks.udt: %s.dimensions_with_wrong_type defined in the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.DimensionsWithWrongType declares type mappings that are not supported by the codec registry:\n"
+                    + "Field: height, Entity Type: java.lang.Integer, CQL type: TEXT",
                 sessionRule.keyspace()));
   }
 
@@ -269,6 +286,9 @@ public class SchemaValidationIT extends InventoryITBase {
         @DaoKeyspace CqlIdentifier keyspace);
 
     @DaoFactory
+    ProductWithUdtWrongTypeDao productWithUdtWrongTypeDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
     ProductSimpleMissingPKDao productSimpleMissingPKDao(@DaoKeyspace CqlIdentifier keyspace);
 
     @DaoFactory
@@ -301,6 +321,13 @@ public class SchemaValidationIT extends InventoryITBase {
 
     @Update(customWhereClause = "id = :id")
     void updateWhereId(ProductWithIncorrectUdtSchemaHintTable product, UUID id);
+  }
+
+  @Dao
+  public interface ProductWithUdtWrongTypeDao {
+
+    @Update(customWhereClause = "id = :id")
+    void updateWhereId(ProductWithUdtWrongType product, UUID id);
   }
 
   @Dao
@@ -606,6 +633,79 @@ public class SchemaValidationIT extends InventoryITBase {
   }
 
   @Entity
+  public static class ProductWithUdtWrongType {
+
+    @PartitionKey private UUID id;
+    private String description;
+    private DimensionsWithWrongType dimensions;
+
+    public ProductWithUdtWrongType() {}
+
+    public ProductWithUdtWrongType(
+        UUID id, String description, DimensionsWithWrongType dimensions) {
+      this.id = id;
+      this.description = description;
+      this.dimensions = dimensions;
+    }
+
+    public UUID getId() {
+      return id;
+    }
+
+    public void setId(UUID id) {
+      this.id = id;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+
+    public void setDescription(String description) {
+      this.description = description;
+    }
+
+    public DimensionsWithWrongType getDimensions() {
+      return dimensions;
+    }
+
+    public void setDimensions(DimensionsWithWrongType dimensions) {
+      this.dimensions = dimensions;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof ProductWithUdtWrongType)) {
+        return false;
+      }
+      ProductWithUdtWrongType that = (ProductWithUdtWrongType) o;
+      return this.id.equals(that.id)
+          && this.description.equals(that.description)
+          && this.dimensions.equals(that.dimensions);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(id, description, dimensions);
+    }
+
+    @Override
+    public String toString() {
+      return "ProductWithUdtWrongType{"
+          + "id="
+          + id
+          + ", description='"
+          + description
+          + '\''
+          + ", dimensions="
+          + dimensions
+          + '}';
+    }
+  }
+
+  @Entity
   public static class ProductWithIncorrectUdtSchemaHintUdt {
 
     @PartitionKey private UUID id;
@@ -814,6 +914,75 @@ public class SchemaValidationIT extends InventoryITBase {
       return "DimensionsWithIncorrectName{"
           + "lengthNotPresent="
           + lengthNotPresent
+          + ", width="
+          + width
+          + ", height="
+          + height
+          + '}';
+    }
+  }
+
+  @Entity
+  public static class DimensionsWithWrongType {
+
+    private int length;
+    private int width;
+    private int height;
+
+    public DimensionsWithWrongType() {}
+
+    public DimensionsWithWrongType(int length, int width, int height) {
+      this.length = length;
+      this.width = width;
+      this.height = height;
+    }
+
+    public int getLength() {
+      return length;
+    }
+
+    public void setLength(int length) {
+      this.length = length;
+    }
+
+    public int getWidth() {
+      return width;
+    }
+
+    public void setWidth(int width) {
+      this.width = width;
+    }
+
+    public int getHeight() {
+      return height;
+    }
+
+    public void setHeight(int height) {
+      this.height = height;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof DimensionsWithWrongType)) {
+        return false;
+      }
+      DimensionsWithWrongType that = (DimensionsWithWrongType) o;
+      return this.length == that.length && this.height == that.height && this.width == that.width;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(length, width, height);
+    }
+
+    @Override
+    public String toString() {
+      return "DimensionsWithWrongType{"
+          + "length="
+          + length
           + ", width="
           + width
           + ", height="

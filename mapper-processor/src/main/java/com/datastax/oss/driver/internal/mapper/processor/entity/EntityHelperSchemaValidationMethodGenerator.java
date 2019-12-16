@@ -20,6 +20,7 @@ import static com.datastax.oss.driver.api.mapper.annotations.SchemaHint.*;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
+import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.mapper.annotations.SchemaHint;
@@ -115,7 +116,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
         Optional.class,
         UserDefinedType.class);
 
-    generateFindMissingChecks(methodBuilder);
+    generateValidationChecks(methodBuilder);
 
     // Throw if there is not keyspace.table for defined entity
     CodeBlock missingKeyspaceTableExceptionMessage =
@@ -129,7 +130,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     return Optional.of(methodBuilder.build());
   }
 
-  private void generateFindMissingChecks(MethodSpec.Builder methodBuilder) {
+  private void generateValidationChecks(MethodSpec.Builder methodBuilder) {
     Optional<TargetElement> targetElement =
         Optional.ofNullable(entityTypeElement.getAnnotation(SchemaHint.class))
             .map(SchemaHint::targetElement);
@@ -165,25 +166,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
 
   private void generateColumnsTypeCheck(MethodSpec.Builder methodBuilder) {
     methodBuilder.addComment("validation of types");
-    methodBuilder.addStatement(
-        "$1T<$2T, $3T<?>> expectedTypesPerColumn = new $4T<>()",
-        Map.class,
-        CqlIdentifier.class,
-        GenericType.class,
-        LinkedHashMap.class);
-
-    Map<CodeBlock, TypeName> expectedTypesPerColumn =
-        entityDefinition.getAllColumns().stream()
-            .collect(
-                Collectors.toMap(PropertyDefinition::getCqlName, v -> v.getType().asRawTypeName()));
-
-    for (Map.Entry<CodeBlock, TypeName> expected : expectedTypesPerColumn.entrySet()) {
-      methodBuilder.addStatement(
-          "expectedTypesPerColumn.put($1T.fromCql($2L), $3L)",
-          CqlIdentifier.class,
-          expected.getKey(),
-          entityHelperGenerator.addGenericTypeConstant(expected.getValue().box()));
-    }
+    generateExpectedTypesPerColumn(methodBuilder);
 
     methodBuilder.addStatement(
         "$1T<$2T> missingTableTypes = findTypeMismatches(expectedTypesPerColumn, (($3T) tableMetadata.get()).getColumns(), context.getSession().getContext().getCodecRegistry())",
@@ -191,7 +174,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
         String.class,
         DefaultTableMetadata.class);
     methodBuilder.addStatement(
-        "throwMissingTypesIfNotEmpty(missingTableTypes, keyspaceId, tableId, entityClassName)");
+        "throwMissingTableTypesIfNotEmpty(missingTableTypes, keyspaceId, tableId, entityClassName)");
   }
 
   private void generateMissingColumnsCheck(MethodSpec.Builder methodBuilder) {
@@ -289,6 +272,36 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
       methodBuilder.beginControlFlow("if (userDefinedType.isPresent())");
     }
 
+    generateUdtMissingColumnsCheck(methodBuilder);
+
+    generateUdtColumnsTypeCheck(methodBuilder);
+
+    methodBuilder.endControlFlow();
+  }
+
+  private void generateUdtColumnsTypeCheck(MethodSpec.Builder methodBuilder) {
+    methodBuilder.addComment("validation of UDT types");
+    generateExpectedTypesPerColumn(methodBuilder);
+
+    methodBuilder.addStatement(
+        "$1T<$2T> expectedColumns = userDefinedType.get().getFieldNames()",
+        List.class,
+        CqlIdentifier.class);
+    methodBuilder.addStatement(
+        "$1T<$2T> expectedTypes = userDefinedType.get().getFieldTypes()",
+        List.class,
+        DataType.class);
+
+    methodBuilder.addStatement(
+        "$1T<$2T> missingTableTypes = findTypeMismatches(expectedTypesPerColumn, expectedColumns, expectedTypes, context.getSession().getContext().getCodecRegistry())",
+        List.class,
+        String.class);
+    methodBuilder.addStatement(
+        "throwMissingUdtTypesIfNotEmpty(missingTableTypes, keyspaceId, tableId, entityClassName)");
+  }
+
+  private void generateUdtMissingColumnsCheck(MethodSpec.Builder methodBuilder) {
+    methodBuilder.addComment("validation of UDT columns");
     methodBuilder.addStatement(
         "$1T<$2T> columns = userDefinedType.get().getFieldNames()",
         List.class,
@@ -308,7 +321,27 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     methodBuilder.addStatement(
         "throw new $1T($2L)", IllegalArgumentException.class, missingCqlUdtExceptionMessage);
     methodBuilder.endControlFlow();
+  }
 
-    methodBuilder.endControlFlow();
+  private void generateExpectedTypesPerColumn(MethodSpec.Builder methodBuilder) {
+    methodBuilder.addStatement(
+        "$1T<$2T, $3T<?>> expectedTypesPerColumn = new $4T<>()",
+        Map.class,
+        CqlIdentifier.class,
+        GenericType.class,
+        LinkedHashMap.class);
+
+    Map<CodeBlock, TypeName> expectedTypesPerColumn =
+        entityDefinition.getAllColumns().stream()
+            .collect(
+                Collectors.toMap(PropertyDefinition::getCqlName, v -> v.getType().asRawTypeName()));
+
+    for (Map.Entry<CodeBlock, TypeName> expected : expectedTypesPerColumn.entrySet()) {
+      methodBuilder.addStatement(
+          "expectedTypesPerColumn.put($1T.fromCql($2L), $3L)",
+          CqlIdentifier.class,
+          expected.getKey(),
+          entityHelperGenerator.addGenericTypeConstant(expected.getValue().box()));
+    }
   }
 }

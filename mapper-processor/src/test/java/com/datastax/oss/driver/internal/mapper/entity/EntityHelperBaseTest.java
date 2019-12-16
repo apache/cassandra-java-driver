@@ -58,8 +58,10 @@ public class EntityHelperBaseTest {
     // given
     ImmutableMap<CqlIdentifier, GenericType<?>> entityColumns =
         ImmutableMap.of(CqlIdentifier.fromCql("c1"), GenericType.of(Integer.class));
+    ColumnMetadata columnMetadataInt = mock(ColumnMetadata.class);
+    when(columnMetadataInt.getType()).thenReturn(DataTypes.INT);
     ImmutableMap<CqlIdentifier, ColumnMetadata> cqlColumns =
-        ImmutableMap.of(CqlIdentifier.fromCql("c2"), mock(ColumnMetadata.class));
+        ImmutableMap.of(CqlIdentifier.fromCql("c2"), columnMetadataInt);
 
     // when, then
     assertThatThrownBy(

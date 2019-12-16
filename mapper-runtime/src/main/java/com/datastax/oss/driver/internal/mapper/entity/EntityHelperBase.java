@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper.entity;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
+import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
@@ -28,6 +29,7 @@ import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
+import com.datastax.oss.driver.internal.core.util.CollectionsUtils;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayList;
@@ -119,37 +121,80 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
       Map<CqlIdentifier, GenericType<?>> entityColumns,
       Map<CqlIdentifier, ColumnMetadata> cqlColumns,
       CodecRegistry codecRegistry) {
+    Map<CqlIdentifier, DataType> cqlColumnsDataTypes =
+        cqlColumns.entrySet().stream()
+            .collect(
+                Collectors.toMap(
+                    Map.Entry::getKey,
+                    cqlIdentifierColumnMetadataEntry ->
+                        cqlIdentifierColumnMetadataEntry.getValue().getType()));
+
+    return findDataTypeMismatches(entityColumns, cqlColumnsDataTypes, codecRegistry);
+  }
+
+  public static List<String> findTypeMismatches(
+      Map<CqlIdentifier, GenericType<?>> entityColumns,
+      List<CqlIdentifier> cqlColumns,
+      List<DataType> cqlTypes,
+      CodecRegistry codecRegistry) {
+    return findDataTypeMismatches(
+        entityColumns,
+        CollectionsUtils.combineListsIntoOrderedMap(cqlColumns, cqlTypes),
+        codecRegistry);
+  }
+
+  private static List<String> findDataTypeMismatches(
+      Map<CqlIdentifier, GenericType<?>> entityColumns,
+      Map<CqlIdentifier, DataType> cqlColumns,
+      CodecRegistry codecRegistry) {
     List<String> missingCodecs = new ArrayList<>();
 
     for (Map.Entry<CqlIdentifier, GenericType<?>> entityEntry : entityColumns.entrySet()) {
-      ColumnMetadata columnMetadata = cqlColumns.get(entityEntry.getKey());
-      if (columnMetadata == null) {
+      DataType datType = cqlColumns.get(entityEntry.getKey());
+      if (datType == null) {
         // this will not happen because it will be catch by the generateMissingColumnsCheck() method
         throw new AssertionError(
             "There is no cql column for entity column: " + entityEntry.getKey());
       }
       try {
-        codecRegistry.codecFor(columnMetadata.getType(), entityEntry.getValue());
+        codecRegistry.codecFor(datType, entityEntry.getValue());
       } catch (CodecNotFoundException exception) {
         missingCodecs.add(
             String.format(
-                "Field: %s, Entity Type: %s, CQL table type: %s",
+                "Field: %s, Entity Type: %s, CQL type: %s",
                 entityEntry.getKey(), exception.getJavaType(), exception.getCqlType()));
       }
     }
     return missingCodecs;
   }
 
-  public void throwMissingTypesIfNotEmpty(
+  public void throwMissingUdtTypesIfNotEmpty(
       List<String> missingTypes,
       CqlIdentifier keyspaceId,
       CqlIdentifier tableId,
       String entityClassName) {
+    throwMissingTypesIfNotEmpty(missingTypes, keyspaceId, tableId, entityClassName, "udt");
+  }
+
+  public void throwMissingTableTypesIfNotEmpty(
+      List<String> missingTypes,
+      CqlIdentifier keyspaceId,
+      CqlIdentifier tableId,
+      String entityClassName) {
+    throwMissingTypesIfNotEmpty(missingTypes, keyspaceId, tableId, entityClassName, "table");
+  }
+
+  public void throwMissingTypesIfNotEmpty(
+      List<String> missingTypes,
+      CqlIdentifier keyspaceId,
+      CqlIdentifier tableId,
+      String entityClassName,
+      String type) {
     if (!missingTypes.isEmpty()) {
       throw new IllegalArgumentException(
           String.format(
-              "The CQL ks.table: %s.%s defined in the entity class: %s declares type mappings that are not supported by the codec registry:\n%s",
-              keyspaceId, tableId, entityClassName, String.join("\n", missingTypes)));
+              "The CQL ks.%s: %s.%s defined in the entity class: %s declares type mappings that are not supported by the codec registry:\n%s",
+              type, keyspaceId, tableId, entityClassName, String.join("\n", missingTypes)));
     }
   }
 }
