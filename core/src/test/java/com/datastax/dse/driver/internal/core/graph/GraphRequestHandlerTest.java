@@ -35,6 +35,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import com.datastax.dse.driver.DseNodeMetrics;
 import com.datastax.dse.driver.DseSessionMetric;
 import com.datastax.dse.driver.DseTestDataProviders;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
@@ -54,7 +55,6 @@ import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.internal.core.cql.Conversions;
@@ -465,7 +465,7 @@ public class GraphRequestHandlerTest {
   public void should_invoke_request_tracker_and_update_metrics(
       GraphProtocol graphProtocol, Version dseVersion) throws IOException {
     when(nodeMetricUpdater1.isEnabled(
-            DefaultNodeMetric.CQL_MESSAGES, DriverExecutionProfile.DEFAULT_NAME))
+            DseNodeMetrics.GRAPH_MESSAGES, DriverExecutionProfile.DEFAULT_NAME))
         .thenReturn(true);
 
     Builder builder =
@@ -530,20 +530,20 @@ public class GraphRequestHandlerTest {
     verifyNoMoreInteractions(requestTracker);
 
     verify(nodeMetricUpdater1)
-        .isEnabled(DefaultNodeMetric.CQL_MESSAGES, DriverExecutionProfile.DEFAULT_NAME);
+        .isEnabled(DseNodeMetrics.GRAPH_MESSAGES, DriverExecutionProfile.DEFAULT_NAME);
     verify(nodeMetricUpdater1)
         .updateTimer(
-            eq(DefaultNodeMetric.CQL_MESSAGES),
+            eq(DseNodeMetrics.GRAPH_MESSAGES),
             eq(DriverExecutionProfile.DEFAULT_NAME),
             anyLong(),
             eq(TimeUnit.NANOSECONDS));
     verifyNoMoreInteractions(nodeMetricUpdater1);
 
     verify(harness.getSession().getMetricUpdater())
-        .isEnabled(DseSessionMetric.CONTINUOUS_CQL_REQUESTS, DriverExecutionProfile.DEFAULT_NAME);
+        .isEnabled(DseSessionMetric.GRAPH_REQUESTS, DriverExecutionProfile.DEFAULT_NAME);
     verify(harness.getSession().getMetricUpdater())
         .updateTimer(
-            eq(DseSessionMetric.CONTINUOUS_CQL_REQUESTS),
+            eq(DseSessionMetric.GRAPH_REQUESTS),
             eq(DriverExecutionProfile.DEFAULT_NAME),
             anyLong(),
             eq(TimeUnit.NANOSECONDS));

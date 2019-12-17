@@ -4,6 +4,7 @@
 
 ### NGDG (in progress)
 
+- [improvement] JAVA-2566: Introduce specific metrics for Graph queries
 - [improvement] JAVA-2556: Make ExecutionInfo compatible with any Request type
 - [improvement] JAVA-2571: Revisit usages of DseGraph.g
 - [improvement] JAVA-2558: Revisit GraphRequestHandler

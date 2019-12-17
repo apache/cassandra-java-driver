@@ -207,6 +207,46 @@ public enum DseDriverOption implements DriverOption {
    * <p>Value type: int
    */
   GRAPH_CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES("advanced.graph.paging-options.max-enqueued-pages"),
+  /**
+   * The largest latency that we expect to record for graph requests.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_GRAPH_REQUESTS_HIGHEST("advanced.metrics.session.graph-requests.highest-latency"),
+  /**
+   * The number of significant decimal digits to which internal structures will maintain for graph
+   * requests.
+   *
+   * <p>Value-type: int
+   */
+  METRICS_SESSION_GRAPH_REQUESTS_DIGITS(
+      "advanced.metrics.session.graph-requests.significant-digits"),
+  /**
+   * The interval at which percentile data is refreshed for graph requests.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_GRAPH_REQUESTS_INTERVAL(
+      "advanced.metrics.session.graph-requests.refresh-interval"),
+  /**
+   * The largest latency that we expect to record for graph requests.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_NODE_GRAPH_MESSAGES_HIGHEST("advanced.metrics.node.graph-messages.highest-latency"),
+  /**
+   * The number of significant decimal digits to which internal structures will maintain for graph
+   * requests.
+   *
+   * <p>Value-type: int
+   */
+  METRICS_NODE_GRAPH_MESSAGES_DIGITS("advanced.metrics.node.graph-messages.significant-digits"),
+  /**
+   * The interval at which percentile data is refreshed for graph requests.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_NODE_GRAPH_MESSAGES_INTERVAL("advanced.metrics.node.graph-messages.refresh-interval"),
   ;
 
   private final String path;

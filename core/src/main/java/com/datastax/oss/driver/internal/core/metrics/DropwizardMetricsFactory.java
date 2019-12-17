@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metrics;
 
 import com.codahale.metrics.MetricRegistry;
+import com.datastax.dse.driver.api.core.metrics.DseNodeMetrics;
 import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -28,7 +29,6 @@ import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -107,12 +107,16 @@ public class DropwizardMetricsFactory implements MetricsFactory {
   }
 
   protected Set<NodeMetric> parseNodeMetricPaths(List<String> paths) {
-    EnumSet<DefaultNodeMetric> result = EnumSet.noneOf(DefaultNodeMetric.class);
+    Set<NodeMetric> result = new HashSet<>();
     for (String path : paths) {
       try {
         result.add(DefaultNodeMetric.fromPath(path));
       } catch (IllegalArgumentException e) {
-        LOG.warn("[{}] Unknown node metric {}, skipping", logPrefix, path);
+        try {
+          result.add(DseNodeMetrics.fromPath(path));
+        } catch (IllegalArgumentException e1) {
+          LOG.warn("[{}] Unknown node metric {}, skipping", logPrefix, path);
+        }
       }
     }
     return Collections.unmodifiableSet(result);

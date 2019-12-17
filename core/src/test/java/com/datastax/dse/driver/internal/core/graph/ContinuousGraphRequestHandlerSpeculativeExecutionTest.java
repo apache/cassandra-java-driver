@@ -19,6 +19,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import com.datastax.dse.driver.DseNodeMetrics;
 import com.datastax.dse.driver.DseTestDataProviders;
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
@@ -242,10 +243,10 @@ public class ContinuousGraphRequestHandlerSpeculativeExecutionTest {
       node2Behavior.verifyNoWrite();
 
       verify(nodeMetricUpdater1)
-          .isEnabled(DefaultNodeMetric.CQL_MESSAGES, DriverExecutionProfile.DEFAULT_NAME);
+          .isEnabled(DseNodeMetrics.GRAPH_MESSAGES, DriverExecutionProfile.DEFAULT_NAME);
       verify(nodeMetricUpdater1)
           .updateTimer(
-              eq(DefaultNodeMetric.CQL_MESSAGES),
+              eq(DseNodeMetrics.GRAPH_MESSAGES),
               eq(DriverExecutionProfile.DEFAULT_NAME),
               anyLong(),
               eq(TimeUnit.NANOSECONDS));

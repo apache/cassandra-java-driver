@@ -6,6 +6,8 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
+import com.datastax.dse.driver.DseNodeMetrics;
+import com.datastax.dse.driver.DseSessionMetric;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
@@ -52,7 +54,15 @@ public class ContinuousGraphRequestHandler
       @NonNull String sessionLogPrefix,
       @NonNull GraphBinaryModule graphBinaryModule,
       @NonNull GraphSupportChecker graphSupportChecker) {
-    super(statement, session, context, sessionLogPrefix, true);
+    super(
+        statement,
+        session,
+        context,
+        sessionLogPrefix,
+        true,
+        DseSessionMetric.GRAPH_CLIENT_TIMEOUTS,
+        DseSessionMetric.GRAPH_REQUESTS,
+        DseNodeMetrics.GRAPH_MESSAGES);
     this.graphBinaryModule = graphBinaryModule;
     subProtocol = graphSupportChecker.inferGraphProtocol(statement, executionProfile, context);
     message =

@@ -15,6 +15,7 @@
  */
 package com.datastax.dse.driver.internal.core.cql.continuous;
 
+import com.datastax.dse.driver.DseSessionMetric;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.cql.continuous.ContinuousAsyncResultSet;
 import com.datastax.dse.driver.internal.core.cql.DseConversions;
@@ -23,6 +24,8 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
+import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.cql.DefaultRow;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
@@ -55,7 +58,15 @@ public class ContinuousCqlRequestHandler
       @NonNull DefaultSession session,
       @NonNull InternalDriverContext context,
       @NonNull String sessionLogPrefix) {
-    super(statement, session, context, sessionLogPrefix, false);
+    super(
+        statement,
+        session,
+        context,
+        sessionLogPrefix,
+        false,
+        DefaultSessionMetric.CQL_CLIENT_TIMEOUTS,
+        DseSessionMetric.CONTINUOUS_CQL_REQUESTS,
+        DefaultNodeMetric.CQL_MESSAGES);
     message = DseConversions.toContinuousPagingMessage(statement, executionProfile, context);
     firstPageTimeout =
         executionProfile.getDuration(DseDriverOption.CONTINUOUS_PAGING_TIMEOUT_FIRST_PAGE);

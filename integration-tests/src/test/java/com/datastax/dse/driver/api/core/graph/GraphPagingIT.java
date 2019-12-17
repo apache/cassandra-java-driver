@@ -10,21 +10,30 @@ import static com.datastax.dse.driver.api.core.cql.continuous.ContinuousPagingIT
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
+import com.codahale.metrics.Timer;
+import com.datastax.dse.driver.DseNodeMetrics;
+import com.datastax.dse.driver.DseSessionMetric;
+import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.cql.continuous.ContinuousPagingITBase;
 import com.datastax.dse.driver.api.testinfra.session.DseSessionRule;
 import com.datastax.dse.driver.internal.core.graph.MultiPageGraphResultSet;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
+import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -42,7 +51,17 @@ public class GraphPagingIT {
   private static final CustomCcmRule CCM_RULE = GraphTestSupport.GRAPH_CCM_RULE_BUILDER.build();
 
   private static final DseSessionRule SESSION_RULE =
-      GraphTestSupport.getCoreGraphSessionBuilder(CCM_RULE).build();
+      GraphTestSupport.getCoreGraphSessionBuilder(CCM_RULE)
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withStringList(
+                      DefaultDriverOption.METRICS_SESSION_ENABLED,
+                      Collections.singletonList(DseSessionMetric.GRAPH_REQUESTS.getPath()))
+                  .withStringList(
+                      DefaultDriverOption.METRICS_NODE_ENABLED,
+                      Collections.singletonList(DseNodeMetrics.GRAPH_MESSAGES.getPath()))
+                  .build())
+          .build();
 
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
@@ -105,6 +124,7 @@ public class GraphPagingIT {
     assertThat(result.getRequestExecutionInfo().getCoordinator().getEndPoint().resolve())
         .isEqualTo(firstCcmNode());
     assertIfMultiPage(result, options.expectedPages);
+    validateMetrics(SESSION_RULE.session());
   }
 
   @UseDataProvider(location = ContinuousPagingITBase.class, value = "pagingOptions")
@@ -142,6 +162,7 @@ public class GraphPagingIT {
         .isEqualTo(firstCcmNode());
 
     assertIfMultiPage(result, options.expectedPages);
+    validateMetrics(SESSION_RULE.session());
   }
 
   private void assertIfMultiPage(GraphResultSet result, int expectedPages) {
@@ -188,6 +209,7 @@ public class GraphPagingIT {
     assertThat(result.getRequestExecutionInfo()).isNotNull();
     assertThat(result.getRequestExecutionInfo().getCoordinator().getEndPoint().resolve())
         .isEqualTo(firstCcmNode());
+    validateMetrics(SESSION_RULE.session());
   }
 
   @UseDataProvider(location = ContinuousPagingITBase.class, value = "pagingOptions")
@@ -214,6 +236,7 @@ public class GraphPagingIT {
 
     // then
     checkAsyncResult(result, options, 0, 1, new ArrayList<>());
+    validateMetrics(SESSION_RULE.session());
   }
 
   @UseDataProvider(location = ContinuousPagingITBase.class, value = "pagingOptions")
@@ -240,6 +263,7 @@ public class GraphPagingIT {
 
     // then
     checkAsyncResult(result, options, 0, 1, new ArrayList<>());
+    validateMetrics(SESSION_RULE.session());
   }
 
   @UseDataProvider(location = ContinuousPagingITBase.class, value = "pagingOptions")
@@ -271,6 +295,7 @@ public class GraphPagingIT {
       assertThat(node.asString()).isEqualTo("user" + i);
     }
     assertThat(asyncGraphResultSet.remaining()).isEqualTo(0);
+    validateMetrics(SESSION_RULE.session());
   }
 
   private void checkAsyncResult(
@@ -484,5 +509,19 @@ public class GraphPagingIT {
 
   private SocketAddress firstCcmNode() {
     return CCM_RULE.getContactPoints().iterator().next().resolve();
+  }
+
+  private void validateMetrics(DseSession session) {
+    Node node = session.getMetadata().getNodes().values().iterator().next();
+    assertThat(session.getMetrics()).isPresent();
+    Metrics metrics = session.getMetrics().get();
+    assertThat(metrics.getNodeMetric(node, DseNodeMetrics.GRAPH_MESSAGES)).isPresent();
+    Timer messages = (Timer) metrics.getNodeMetric(node, DseNodeMetrics.GRAPH_MESSAGES).get();
+    assertThat(messages.getCount()).isGreaterThan(0);
+    assertThat(messages.getMeanRate()).isGreaterThan(0);
+    assertThat(metrics.getSessionMetric(DseSessionMetric.GRAPH_REQUESTS)).isPresent();
+    Timer requests = (Timer) metrics.getSessionMetric(DseSessionMetric.GRAPH_REQUESTS).get();
+    assertThat(requests.getCount()).isGreaterThan(0);
+    assertThat(requests.getMeanRate()).isGreaterThan(0);
   }
 }

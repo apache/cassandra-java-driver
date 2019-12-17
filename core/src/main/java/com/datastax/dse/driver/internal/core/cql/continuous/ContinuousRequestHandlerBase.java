@@ -27,6 +27,8 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
+import com.datastax.oss.driver.api.core.metrics.NodeMetric;
+import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
@@ -161,6 +163,9 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
    */
   private final ReentrantLock lock = new ReentrantLock();
 
+  private final SessionMetric clientTimeoutsMetric;
+  private final SessionMetric continuousRequestsMetric;
+  private final NodeMetric messagesMetric;
   /**
    * The page queue, storing pages that we have received and have not been consumed by the client
    * yet. It can also store errors, when the operation completed exceptionally.
@@ -199,7 +204,10 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       @NonNull DefaultSession session,
       @NonNull InternalDriverContext context,
       @NonNull String sessionLogPrefix,
-      boolean specExecEnabled) {
+      boolean specExecEnabled,
+      SessionMetric clientTimeoutsMetric,
+      SessionMetric continuousRequestsMetric,
+      NodeMetric messagesMetric) {
     ProtocolVersion protocolVersion = context.getProtocolVersion();
     if (!context
         .getProtocolVersionRegistry()
@@ -207,6 +215,9 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       throw new IllegalStateException(
           "Cannot execute continuous paging requests with protocol version " + protocolVersion);
     }
+    this.clientTimeoutsMetric = clientTimeoutsMetric;
+    this.continuousRequestsMetric = continuousRequestsMetric;
+    this.messagesMetric = messagesMetric;
     this.logPrefix = sessionLogPrefix + "|" + this.hashCode();
     LOG.trace("[{}] Creating new continuous handler for request {}", logPrefix, statement);
     this.statement = statement;
@@ -399,6 +410,12 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     private volatile Timeout pageTimeout;
 
     private ColumnDefinitions columnDefinitions;
+
+    // SpeculativeExecution node metrics should be executed only for the first page (first
+    // invocation)
+    private final AtomicBoolean stopNodeMessageTimerReported = new AtomicBoolean(false);
+    private final AtomicBoolean nodeErrorReported = new AtomicBoolean(false);
+    private final AtomicBoolean nodeSuccessReported = new AtomicBoolean(false);
 
     NodeResponseCallback(
         Node node,
@@ -963,9 +980,10 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
 
     private void stopNodeMessageTimer() {
       NodeMetricUpdater nodeMetricUpdater = ((DefaultNode) node).getMetricUpdater();
-      if (nodeMetricUpdater.isEnabled(DefaultNodeMetric.CQL_MESSAGES, executionProfile.getName())) {
+      if (nodeMetricUpdater.isEnabled(messagesMetric, executionProfile.getName())
+          && stopNodeMessageTimerReported.compareAndSet(false, true)) {
         nodeMetricUpdater.updateTimer(
-            DefaultNodeMetric.CQL_MESSAGES,
+            messagesMetric,
             executionProfile.getName(),
             System.nanoTime() - nodeStartTimeNanos,
             TimeUnit.NANOSECONDS);
@@ -1005,7 +1023,8 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
 
     private void trackNodeSuccess() {
       RequestTracker requestTracker = context.getRequestTracker();
-      if (!(requestTracker instanceof NoopRequestTracker)) {
+      if (!(requestTracker instanceof NoopRequestTracker)
+          && nodeSuccessReported.compareAndSet(false, true)) {
         long latencyNanos = System.nanoTime() - nodeStartTimeNanos;
         requestTracker.onNodeSuccess(statement, latencyNanos, executionProfile, node, logPrefix);
       }
@@ -1013,7 +1032,8 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
 
     private void trackNodeError(@NonNull Throwable error) {
       RequestTracker requestTracker = context.getRequestTracker();
-      if (!(requestTracker instanceof NoopRequestTracker)) {
+      if (!(requestTracker instanceof NoopRequestTracker)
+          && nodeErrorReported.compareAndSet(false, true)) {
         long latencyNanos = System.nanoTime() - nodeStartTimeNanos;
         requestTracker.onNodeError(
             statement, error, latencyNanos, executionProfile, node, logPrefix);
@@ -1460,8 +1480,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       RequestTracker requestTracker = context.getRequestTracker();
       boolean requestTrackerEnabled = !(requestTracker instanceof NoopRequestTracker);
       boolean metricEnabled =
-          sessionMetricUpdater.isEnabled(
-              DseSessionMetric.CONTINUOUS_CQL_REQUESTS, executionProfile.getName());
+          sessionMetricUpdater.isEnabled(continuousRequestsMetric, executionProfile.getName());
       if (requestTrackerEnabled || metricEnabled) {
         long now = System.nanoTime();
         long totalLatencyNanos = now - startTimeNanos;
@@ -1471,7 +1490,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
         }
         if (metricEnabled) {
           sessionMetricUpdater.updateTimer(
-              DseSessionMetric.CONTINUOUS_CQL_REQUESTS,
+              continuousRequestsMetric,
               executionProfile.getName(),
               totalLatencyNanos,
               TimeUnit.NANOSECONDS);
@@ -1520,10 +1539,8 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       }
       if (error instanceof DriverTimeoutException) {
         throttler.signalTimeout(this);
-        if (sessionMetricUpdater.isEnabled(
-            DefaultSessionMetric.CQL_CLIENT_TIMEOUTS, executionProfile.getName())) {
-          sessionMetricUpdater.incrementCounter(
-              DefaultSessionMetric.CQL_CLIENT_TIMEOUTS, executionProfile.getName());
+        if (sessionMetricUpdater.isEnabled(clientTimeoutsMetric, executionProfile.getName())) {
+          sessionMetricUpdater.incrementCounter(clientTimeoutsMetric, executionProfile.getName());
         }
       } else if (!(error instanceof RequestThrottlingException)) {
         throttler.signalError(this, error);

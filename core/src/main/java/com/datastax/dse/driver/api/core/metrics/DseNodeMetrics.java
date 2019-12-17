@@ -15,44 +15,41 @@
  */
 package com.datastax.dse.driver.api.core.metrics;
 
-import com.datastax.oss.driver.api.core.metrics.SessionMetric;
+import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 
 /** See {@code dse-reference.conf} for a description of each metric. */
-public enum DseSessionMetric implements SessionMetric {
-  CONTINUOUS_CQL_REQUESTS("continuous-cql-requests"),
-  GRAPH_REQUESTS("graph-requests"),
-  GRAPH_CLIENT_TIMEOUTS("graph-client-timeouts"),
-  ;
+public enum DseNodeMetrics implements NodeMetric {
+  GRAPH_MESSAGES("graph-messages");
 
-  private static final Map<String, DseSessionMetric> BY_PATH = sortByPath();
+  private static final Map<String, DseNodeMetrics> BY_PATH = sortByPath();
 
   private final String path;
 
-  DseSessionMetric(String path) {
+  DseNodeMetrics(String path) {
     this.path = path;
   }
 
-  @NonNull
   @Override
+  @NonNull
   public String getPath() {
     return path;
   }
 
   @NonNull
-  public static DseSessionMetric fromPath(@NonNull String path) {
-    DseSessionMetric metric = BY_PATH.get(path);
+  public static DseNodeMetrics fromPath(@NonNull String path) {
+    DseNodeMetrics metric = BY_PATH.get(path);
     if (metric == null) {
-      throw new IllegalArgumentException("Unknown DSE session metric path " + path);
+      throw new IllegalArgumentException("Unknown node metric path " + path);
     }
     return metric;
   }
 
-  private static Map<String, DseSessionMetric> sortByPath() {
-    ImmutableMap.Builder<String, DseSessionMetric> result = ImmutableMap.builder();
-    for (DseSessionMetric value : values()) {
+  private static Map<String, DseNodeMetrics> sortByPath() {
+    ImmutableMap.Builder<String, DseNodeMetrics> result = ImmutableMap.builder();
+    for (DseNodeMetrics value : values()) {
       result.put(value.getPath(), value);
     }
     return result.build();

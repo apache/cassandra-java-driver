@@ -11,8 +11,15 @@ import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.default
 import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.tenGraphRows;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import com.datastax.dse.driver.DseNodeMetrics;
+import com.datastax.dse.driver.DseSessionMetric;
 import com.datastax.dse.driver.DseTestDataProviders;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
@@ -59,6 +66,8 @@ public class ContinuousGraphRequestHandlerTest {
   @Test
   @UseDataProvider(location = DseTestDataProviders.class, value = "supportedGraphProtocols")
   public void should_return_paged_results(GraphProtocol graphProtocol) throws IOException {
+    String profileName = "test-graph";
+    when(nodeMetricUpdater1.isEnabled(DseNodeMetrics.GRAPH_MESSAGES, profileName)).thenReturn(true);
 
     GraphBinaryModule module = createGraphBinaryModule(mockContext);
 
@@ -69,7 +78,7 @@ public class ContinuousGraphRequestHandlerTest {
     try (RequestHandlerTestHarness harness = builder.build()) {
 
       GraphStatement graphStatement =
-          ScriptGraphStatement.newInstance("mockQuery").setExecutionProfileName("test-graph");
+          ScriptGraphStatement.newInstance("mockQuery").setExecutionProfileName(profileName);
 
       ContinuousGraphRequestHandler handler =
           new ContinuousGraphRequestHandler(
@@ -119,6 +128,8 @@ public class ContinuousGraphRequestHandlerTest {
                 assertThat(executionInfo.getSuccessfulExecutionIndex()).isEqualTo(0);
                 assertThat(executionInfo.getWarnings()).isEmpty();
               });
+
+      validateMetrics(profileName, harness);
     }
   }
 
@@ -219,5 +230,28 @@ public class ContinuousGraphRequestHandlerTest {
           .isInstanceOf(DriverTimeoutException.class)
           .hasMessageContaining("Query timed out after " + statementTimeout);
     }
+  }
+
+  private void validateMetrics(String profileName, RequestHandlerTestHarness harness) {
+    // GRAPH_MESSAGES metrics check call is invoked twice (once per page)
+    verify(nodeMetricUpdater1, times(2)).isEnabled(DseNodeMetrics.GRAPH_MESSAGES, profileName);
+    // GRAPH_MESSAGES metrics update is invoked only for the first page
+    verify(nodeMetricUpdater1, times(1))
+        .updateTimer(
+            eq(DseNodeMetrics.GRAPH_MESSAGES),
+            eq(profileName),
+            anyLong(),
+            eq(TimeUnit.NANOSECONDS));
+    verifyNoMoreInteractions(nodeMetricUpdater1);
+
+    verify(harness.getSession().getMetricUpdater())
+        .isEnabled(DseSessionMetric.GRAPH_REQUESTS, profileName);
+    verify(harness.getSession().getMetricUpdater())
+        .updateTimer(
+            eq(DseSessionMetric.GRAPH_REQUESTS),
+            eq(profileName),
+            anyLong(),
+            eq(TimeUnit.NANOSECONDS));
+    verifyNoMoreInteractions(harness.getSession().getMetricUpdater());
   }
 }

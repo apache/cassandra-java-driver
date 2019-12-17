@@ -109,6 +109,13 @@ public class DropwizardSessionMetricUpdater extends DropwizardMetricUpdater<Sess
         DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_HIGHEST,
         DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_DIGITS,
         DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_INTERVAL);
+    initializeDefaultCounter(DseSessionMetric.GRAPH_CLIENT_TIMEOUTS, null);
+    initializeHdrTimer(
+        DseSessionMetric.GRAPH_REQUESTS,
+        context.getConfig().getDefaultProfile(),
+        DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_HIGHEST,
+        DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_DIGITS,
+        DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_INTERVAL);
   }
 
   @Override

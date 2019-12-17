@@ -19,6 +19,7 @@ import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
+import com.datastax.dse.driver.api.core.metrics.DseNodeMetrics;
 import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
@@ -365,13 +366,13 @@ public class GraphRequestHandler implements Throttled {
               statement, totalLatencyNanos, executionProfile, callback.node, logPrefix);
         }
         if (sessionMetricUpdater.isEnabled(
-            DseSessionMetric.CONTINUOUS_CQL_REQUESTS, executionProfile.getName())) {
+            DseSessionMetric.GRAPH_REQUESTS, executionProfile.getName())) {
           if (completionTimeNanos == NANOTIME_NOT_MEASURED_YET) {
             completionTimeNanos = System.nanoTime();
             totalLatencyNanos = completionTimeNanos - startTimeNanos;
           }
           sessionMetricUpdater.updateTimer(
-              DseSessionMetric.CONTINUOUS_CQL_REQUESTS,
+              DseSessionMetric.GRAPH_REQUESTS,
               executionProfile.getName(),
               totalLatencyNanos,
               TimeUnit.NANOSECONDS);
@@ -462,7 +463,7 @@ public class GraphRequestHandler implements Throttled {
       if (error instanceof DriverTimeoutException) {
         throttler.signalTimeout(this);
         sessionMetricUpdater.incrementCounter(
-            DefaultSessionMetric.CQL_CLIENT_TIMEOUTS, executionProfile.getName());
+            DseSessionMetric.GRAPH_CLIENT_TIMEOUTS, executionProfile.getName());
       } else if (!(error instanceof RequestThrottlingException)) {
         throttler.signalError(this, error);
       }
@@ -593,11 +594,11 @@ public class GraphRequestHandler implements Throttled {
     public void onResponse(Frame responseFrame) {
       long nodeResponseTimeNanos = NANOTIME_NOT_MEASURED_YET;
       NodeMetricUpdater nodeMetricUpdater = ((DefaultNode) node).getMetricUpdater();
-      if (nodeMetricUpdater.isEnabled(DefaultNodeMetric.CQL_MESSAGES, executionProfile.getName())) {
+      if (nodeMetricUpdater.isEnabled(DseNodeMetrics.GRAPH_MESSAGES, executionProfile.getName())) {
         nodeResponseTimeNanos = System.nanoTime();
         long nodeLatency = System.nanoTime() - nodeStartTimeNanos;
         nodeMetricUpdater.updateTimer(
-            DefaultNodeMetric.CQL_MESSAGES,
+            DseNodeMetrics.GRAPH_MESSAGES,
             executionProfile.getName(),
             nodeLatency,
             TimeUnit.NANOSECONDS);
