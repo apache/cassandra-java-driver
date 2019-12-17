@@ -133,7 +133,7 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
                 assertThat(executionInfo.getCoordinator()).isEqualTo(node1);
                 assertThat(executionInfo.getErrors()).isEmpty();
                 assertThat(executionInfo.getIncomingPayload()).isEmpty();
-                assertThat(executionInfo.getPagingState()).isNotNull();
+                assertThat(executionInfo.getPagingState()).isNull();
                 assertThat(executionInfo.getSpeculativeExecutionCount()).isEqualTo(0);
                 assertThat(executionInfo.getSuccessfulExecutionIndex()).isEqualTo(0);
                 assertThat(executionInfo.getWarnings()).isEmpty();

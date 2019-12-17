@@ -22,6 +22,7 @@ import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -121,7 +122,6 @@ public class GraphRequestHandler implements Throttled {
    */
   private final AtomicInteger startedSpeculativeExecutionsCount;
 
-  private final Duration timeout;
   private final Timeout scheduledTimeout;
   private final List<Timeout> scheduledExecutions;
   private final List<NodeResponseCallback> inFlightCallbacks;
@@ -179,7 +179,7 @@ public class GraphRequestHandler implements Throttled {
         GraphConversions.createMessageFromGraphStatement(
             this.statement, subProtocol, executionProfile, this.context, this.graphBinaryModule);
     this.timer = context.getNettyOptions().getTimer();
-    this.timeout =
+    Duration timeout =
         statement.getTimeout() != null
             ? statement.getTimeout()
             : executionProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, null);
@@ -437,23 +437,22 @@ public class GraphRequestHandler implements Throttled {
   }
 
   private void setFinalError(Throwable error, Node node, int execution) {
-    // FIXME JAVA-2556
-    //    if (error instanceof DriverException) {
-    //      ((DriverException) error)
-    //          .setExecutionInfo(
-    //              new DefaultExecutionInfo(
-    //                  graphStatement,
-    //                  node,
-    //                  startedSpeculativeExecutionsCount.get(),
-    //                  execution,
-    //                  errors,
-    //                  null,
-    //                  null,
-    //                  true,
-    //                  session,
-    //                  context,
-    //                  executionProfile));
-    //    }
+    if (error instanceof DriverException) {
+      ((DriverException) error)
+          .setExecutionInfo(
+              new DefaultExecutionInfo(
+                  statement,
+                  node,
+                  startedSpeculativeExecutionsCount.get(),
+                  execution,
+                  errors,
+                  null,
+                  null,
+                  true,
+                  session,
+                  context,
+                  executionProfile));
+    }
     if (result.completeExceptionally(error)) {
       cancelScheduledTasks();
       if (!(requestTracker instanceof NoopRequestTracker)) {

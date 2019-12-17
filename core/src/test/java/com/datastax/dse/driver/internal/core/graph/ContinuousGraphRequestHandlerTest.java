@@ -16,7 +16,6 @@ import static org.mockito.Mockito.when;
 import com.datastax.dse.driver.DseTestDataProviders;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
-import com.datastax.dse.driver.api.core.graph.GraphExecutionInfo;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
@@ -25,6 +24,7 @@ import com.datastax.dse.driver.internal.core.graph.GraphRequestHandlerTestHarnes
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.internal.core.cql.PoolBehavior;
 import com.datastax.oss.driver.internal.core.cql.RequestHandlerTestHarness;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
@@ -91,7 +91,7 @@ public class ContinuousGraphRequestHandlerTest {
               page1 -> {
                 assertThat(page1.hasMorePages()).isTrue();
                 assertThat(page1.currentPage()).hasSize(10).allMatch(GraphNode::isVertex);
-                GraphExecutionInfo executionInfo = page1.getExecutionInfo();
+                ExecutionInfo executionInfo = page1.getRequestExecutionInfo();
                 assertThat(executionInfo.getCoordinator()).isEqualTo(node);
                 assertThat(executionInfo.getErrors()).isEmpty();
                 assertThat(executionInfo.getIncomingPayload()).isEmpty();
@@ -111,7 +111,7 @@ public class ContinuousGraphRequestHandlerTest {
               page2 -> {
                 assertThat(page2.hasMorePages()).isFalse();
                 assertThat(page2.currentPage()).hasSize(10).allMatch(GraphNode::isVertex);
-                GraphExecutionInfo executionInfo = page2.getExecutionInfo();
+                ExecutionInfo executionInfo = page2.getRequestExecutionInfo();
                 assertThat(executionInfo.getCoordinator()).isEqualTo(node);
                 assertThat(executionInfo.getErrors()).isEmpty();
                 assertThat(executionInfo.getIncomingPayload()).isEmpty();

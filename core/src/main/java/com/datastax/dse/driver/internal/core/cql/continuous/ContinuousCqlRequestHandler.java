@@ -23,18 +23,13 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.cql.DefaultExecutionInfo;
 import com.datastax.oss.driver.internal.core.cql.DefaultRow;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
-import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
-import com.datastax.oss.protocol.internal.response.Result;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
@@ -47,7 +42,7 @@ import net.jcip.annotations.ThreadSafe;
  */
 @ThreadSafe
 public class ContinuousCqlRequestHandler
-    extends ContinuousRequestHandlerBase<Statement, ContinuousAsyncResultSet, ExecutionInfo> {
+    extends ContinuousRequestHandlerBase<Statement, ContinuousAsyncResultSet> {
 
   private final Message message;
   private final Duration firstPageTimeout;
@@ -120,29 +115,6 @@ public class ContinuousCqlRequestHandler
   @Override
   protected ContinuousAsyncResultSet createEmptyResultSet(@NonNull ExecutionInfo executionInfo) {
     return DefaultContinuousAsyncResultSet.empty(executionInfo);
-  }
-
-  @NonNull
-  @Override
-  protected DefaultExecutionInfo createExecutionInfo(
-      @NonNull Node node,
-      @Nullable Result result,
-      @Nullable Frame response,
-      int successfulExecutionIndex) {
-    ByteBuffer pagingState =
-        result instanceof Rows ? ((Rows) result).getMetadata().pagingState : null;
-    return new DefaultExecutionInfo(
-        statement,
-        node,
-        startedSpeculativeExecutionsCount.get(),
-        successfulExecutionIndex,
-        errors,
-        pagingState,
-        response,
-        true,
-        session,
-        context,
-        executionProfile);
   }
 
   @NonNull

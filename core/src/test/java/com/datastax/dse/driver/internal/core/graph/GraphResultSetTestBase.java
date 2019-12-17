@@ -12,8 +12,8 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
-import com.datastax.dse.driver.api.core.graph.GraphExecutionInfo;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import java.util.Arrays;
@@ -28,8 +28,8 @@ public abstract class GraphResultSetTestBase {
   protected AsyncGraphResultSet mockPage(boolean nextPage, Integer... data) {
     AsyncGraphResultSet page = mock(AsyncGraphResultSet.class);
 
-    GraphExecutionInfo executionInfo = mock(GraphExecutionInfo.class);
-    when(page.getExecutionInfo()).thenReturn(executionInfo);
+    ExecutionInfo executionInfo = mock(ExecutionInfo.class);
+    when(page.getRequestExecutionInfo()).thenReturn(executionInfo);
 
     if (nextPage) {
       when(page.hasMorePages()).thenReturn(true);

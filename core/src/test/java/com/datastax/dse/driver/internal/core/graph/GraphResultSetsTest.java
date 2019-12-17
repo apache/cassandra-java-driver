@@ -25,7 +25,7 @@ public class GraphResultSetsTest extends GraphResultSetTestBase {
     GraphResultSet resultSet = GraphResultSets.toSync(page1);
 
     // Then
-    assertThat(resultSet.getExecutionInfo()).isSameAs(page1.getExecutionInfo());
+    assertThat(resultSet.getRequestExecutionInfo()).isSameAs(page1.getRequestExecutionInfo());
 
     Iterator<GraphNode> iterator = resultSet.iterator();
 
@@ -52,9 +52,9 @@ public class GraphResultSetsTest extends GraphResultSetTestBase {
     // Then
     assertThat(resultSet.iterator().hasNext()).isTrue();
 
-    assertThat(resultSet.getExecutionInfo()).isSameAs(page1.getExecutionInfo());
-    assertThat(((MultiPageGraphResultSet) resultSet).getExecutionInfos())
-        .containsExactly(page1.getExecutionInfo());
+    assertThat(resultSet.getRequestExecutionInfo()).isSameAs(page1.getRequestExecutionInfo());
+    assertThat(((MultiPageGraphResultSet) resultSet).getRequestExecutionInfos())
+        .containsExactly(page1.getRequestExecutionInfo());
 
     Iterator<GraphNode> iterator = resultSet.iterator();
 
@@ -64,9 +64,9 @@ public class GraphResultSetsTest extends GraphResultSetTestBase {
 
     assertThat(iterator.hasNext()).isTrue();
     // This should have triggered the fetch of page2
-    assertThat(resultSet.getExecutionInfo()).isEqualTo(page2.getExecutionInfo());
-    assertThat(((MultiPageGraphResultSet) resultSet).getExecutionInfos())
-        .containsExactly(page1.getExecutionInfo(), page2.getExecutionInfo());
+    assertThat(resultSet.getRequestExecutionInfo()).isEqualTo(page2.getRequestExecutionInfo());
+    assertThat(((MultiPageGraphResultSet) resultSet).getRequestExecutionInfos())
+        .containsExactly(page1.getRequestExecutionInfo(), page2.getRequestExecutionInfo());
 
     assertNextRow(iterator, 3);
     assertNextRow(iterator, 4);
@@ -74,10 +74,12 @@ public class GraphResultSetsTest extends GraphResultSetTestBase {
 
     assertThat(iterator.hasNext()).isTrue();
     // This should have triggered the fetch of page3
-    assertThat(resultSet.getExecutionInfo()).isEqualTo(page3.getExecutionInfo());
-    assertThat(((MultiPageGraphResultSet) resultSet).getExecutionInfos())
+    assertThat(resultSet.getRequestExecutionInfo()).isEqualTo(page3.getRequestExecutionInfo());
+    assertThat(((MultiPageGraphResultSet) resultSet).getRequestExecutionInfos())
         .containsExactly(
-            page1.getExecutionInfo(), page2.getExecutionInfo(), page3.getExecutionInfo());
+            page1.getRequestExecutionInfo(),
+            page2.getRequestExecutionInfo(),
+            page3.getRequestExecutionInfo());
 
     assertNextRow(iterator, 6);
     assertNextRow(iterator, 7);

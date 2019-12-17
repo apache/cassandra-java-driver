@@ -16,6 +16,7 @@ import com.datastax.dse.driver.api.testinfra.session.DseSessionRule;
 import com.datastax.dse.driver.internal.core.graph.MultiPageGraphResultSet;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
@@ -100,8 +101,8 @@ public class GraphPagingIT {
       GraphNode node = nodes.get(i - 1);
       assertThat(node.asString()).isEqualTo("user" + i);
     }
-    assertThat(result.getExecutionInfo()).isNotNull();
-    assertThat(result.getExecutionInfo().getCoordinator().getEndPoint().resolve())
+    assertThat(result.getRequestExecutionInfo()).isNotNull();
+    assertThat(result.getRequestExecutionInfo().getCoordinator().getEndPoint().resolve())
         .isEqualTo(firstCcmNode());
     assertIfMultiPage(result, options.expectedPages);
   }
@@ -136,8 +137,8 @@ public class GraphPagingIT {
       GraphNode node = nodes.get(i - 1);
       assertThat(node.asString()).isEqualTo("user" + i);
     }
-    assertThat(result.getExecutionInfo()).isNotNull();
-    assertThat(result.getExecutionInfo().getCoordinator().getEndPoint().resolve())
+    assertThat(result.getRequestExecutionInfo()).isNotNull();
+    assertThat(result.getRequestExecutionInfo().getCoordinator().getEndPoint().resolve())
         .isEqualTo(firstCcmNode());
 
     assertIfMultiPage(result, options.expectedPages);
@@ -145,9 +146,11 @@ public class GraphPagingIT {
 
   private void assertIfMultiPage(GraphResultSet result, int expectedPages) {
     if (result instanceof MultiPageGraphResultSet) {
-      assertThat(((MultiPageGraphResultSet) result).getExecutionInfos()).hasSize(expectedPages);
-      assertThat(result.getExecutionInfo())
-          .isSameAs(((MultiPageGraphResultSet) result).getExecutionInfos().get(expectedPages - 1));
+      assertThat(((MultiPageGraphResultSet) result).getRequestExecutionInfos())
+          .hasSize(expectedPages);
+      assertThat(result.getRequestExecutionInfo())
+          .isSameAs(
+              ((MultiPageGraphResultSet) result).getRequestExecutionInfos().get(expectedPages - 1));
     }
   }
 
@@ -182,8 +185,8 @@ public class GraphPagingIT {
       GraphNode node = nodes.get(i - 1);
       assertThat(node.asString()).isEqualTo("user" + i);
     }
-    assertThat(result.getExecutionInfo()).isNotNull();
-    assertThat(result.getExecutionInfo().getCoordinator().getEndPoint().resolve())
+    assertThat(result.getRequestExecutionInfo()).isNotNull();
+    assertThat(result.getRequestExecutionInfo().getCoordinator().getEndPoint().resolve())
         .isEqualTo(firstCcmNode());
   }
 
@@ -275,7 +278,7 @@ public class GraphPagingIT {
       Options options,
       int rowsFetched,
       int pageNumber,
-      List<GraphExecutionInfo> graphExecutionInfos)
+      List<ExecutionInfo> graphExecutionInfos)
       throws ExecutionException, InterruptedException {
     AsyncGraphResultSet result = future.toCompletableFuture().get();
     int remaining = result.remaining();
@@ -298,14 +301,14 @@ public class GraphPagingIT {
     }
 
     assertThat(result.remaining()).isZero();
-    assertThat(result.getExecutionInfo()).isNotNull();
-    assertThat(result.getExecutionInfo().getCoordinator().getEndPoint().resolve())
+    assertThat(result.getRequestExecutionInfo()).isNotNull();
+    assertThat(result.getRequestExecutionInfo().getCoordinator().getEndPoint().resolve())
         .isEqualTo(firstCcmNode());
 
-    graphExecutionInfos.add(result.getExecutionInfo());
+    graphExecutionInfos.add(result.getRequestExecutionInfo());
 
     assertThat(graphExecutionInfos).hasSize(pageNumber);
-    assertThat(result.getExecutionInfo()).isSameAs(graphExecutionInfos.get(pageNumber - 1));
+    assertThat(result.getRequestExecutionInfo()).isSameAs(graphExecutionInfos.get(pageNumber - 1));
     if (pageNumber == options.expectedPages) {
       assertThat(result.hasMorePages()).isFalse();
       assertThat(options.expectedRows).isEqualTo(rowsFetched);

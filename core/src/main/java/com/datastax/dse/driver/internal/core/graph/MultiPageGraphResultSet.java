@@ -7,12 +7,13 @@
 package com.datastax.dse.driver.internal.core.graph;
 
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
-import com.datastax.dse.driver.api.core.graph.GraphExecutionInfo;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphResultSet;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -20,11 +21,11 @@ import java.util.List;
 
 public class MultiPageGraphResultSet implements GraphResultSet {
   private final RowIterator iterator;
-  private final List<GraphExecutionInfo> executionInfos = new ArrayList<>();
+  private final List<ExecutionInfo> executionInfos = new ArrayList<>();
 
   public MultiPageGraphResultSet(AsyncGraphResultSet firstPage) {
     iterator = new RowIterator(firstPage);
-    executionInfos.add(firstPage.getExecutionInfo());
+    executionInfos.add(firstPage.getRequestExecutionInfo());
   }
 
   @Override
@@ -34,8 +35,15 @@ public class MultiPageGraphResultSet implements GraphResultSet {
 
   @NonNull
   @Override
-  public GraphExecutionInfo getExecutionInfo() {
+  public ExecutionInfo getRequestExecutionInfo() {
     return executionInfos.get(executionInfos.size() - 1);
+  }
+
+  @NonNull
+  @Override
+  @Deprecated
+  public com.datastax.dse.driver.api.core.graph.GraphExecutionInfo getExecutionInfo() {
+    return GraphExecutionInfoConverter.convert(getRequestExecutionInfo());
   }
 
   /**
@@ -46,8 +54,15 @@ public class MultiPageGraphResultSet implements GraphResultSet {
    * background queries to fetch additional pages transparently as the result set is being iterated.
    */
   @NonNull
-  public List<GraphExecutionInfo> getExecutionInfos() {
+  public List<ExecutionInfo> getRequestExecutionInfos() {
     return executionInfos;
+  }
+
+  /** @deprecated use {@link #getRequestExecutionInfos()} instead. */
+  @NonNull
+  @Deprecated
+  public List<com.datastax.dse.driver.api.core.graph.GraphExecutionInfo> getExecutionInfos() {
+    return Lists.transform(executionInfos, GraphExecutionInfoConverter::convert);
   }
 
   @NonNull
@@ -81,7 +96,7 @@ public class MultiPageGraphResultSet implements GraphResultSet {
         currentPage = nextPage;
         remaining += currentPage.remaining();
         currentRows = nextPage.currentPage().iterator();
-        executionInfos.add(nextPage.getExecutionInfo());
+        executionInfos.add(nextPage.getRequestExecutionInfo());
       }
     }
 

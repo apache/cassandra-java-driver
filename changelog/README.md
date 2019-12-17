@@ -4,6 +4,7 @@
 
 ### NGDG (in progress)
 
+- [improvement] JAVA-2556: Make ExecutionInfo compatible with any Request type
 - [improvement] JAVA-2571: Revisit usages of DseGraph.g
 - [improvement] JAVA-2558: Revisit GraphRequestHandler
 - [bug] JAVA-2508: Preserve backward compatibility in schema metadata types

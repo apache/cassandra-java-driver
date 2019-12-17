@@ -48,6 +48,7 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.cql.Conversions;
+import com.datastax.oss.driver.internal.core.cql.DefaultExecutionInfo;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
@@ -99,8 +100,7 @@ import org.slf4j.LoggerFactory;
  * Handles a request that supports multiple response messages (a.k.a. continuous paging request).
  */
 @ThreadSafe
-public abstract class ContinuousRequestHandlerBase<
-        StatementT extends Request, ResultSetT, ExecutionInfoT>
+public abstract class ContinuousRequestHandlerBase<StatementT extends Request, ResultSetT>
     implements Throttled {
 
   private static final Logger LOG = LoggerFactory.getLogger(ContinuousRequestHandlerBase.class);
@@ -271,20 +271,13 @@ public abstract class ContinuousRequestHandlerBase<
   @NonNull
   protected abstract ResultSetT createResultSet(
       @NonNull Rows rows,
-      @NonNull ExecutionInfoT executionInfo,
+      @NonNull ExecutionInfo executionInfo,
       @NonNull ColumnDefinitions columnDefinitions)
       throws IOException;
 
   /** @return An empty result set; used only when the retry policy decides to ignore the error. */
   @NonNull
-  protected abstract ResultSetT createEmptyResultSet(@NonNull ExecutionInfoT executionInfo);
-
-  @NonNull
-  protected abstract ExecutionInfoT createExecutionInfo(
-      @NonNull Node node,
-      @Nullable Result result,
-      @Nullable Frame response,
-      int successfulExecutionIndex);
+  protected abstract ResultSetT createEmptyResultSet(@NonNull ExecutionInfo executionInfo);
 
   protected abstract int pageNumber(@NonNull ResultSetT resultSet);
 
@@ -641,7 +634,7 @@ public abstract class ContinuousRequestHandlerBase<
     private void processResultResponse(@NonNull Result result, @Nullable Frame frame) {
       try {
         if (setChosenExecution(this)) {
-          ExecutionInfoT executionInfo = createExecutionInfo(node, result, frame, executionIndex);
+          ExecutionInfo executionInfo = createExecutionInfo(node, frame, executionIndex);
           if (result instanceof Rows) {
             DseRowsMetadata rowsMetadata = (DseRowsMetadata) ((Rows) result).getMetadata();
             int pageNumber = rowsMetadata.continuousPageNumber;
@@ -1438,6 +1431,23 @@ public abstract class ContinuousRequestHandlerBase<
     }
   }
 
+  @NonNull
+  private ExecutionInfo createExecutionInfo(
+      @NonNull Node node, @Nullable Frame response, int successfulExecutionIndex) {
+    return new DefaultExecutionInfo(
+        statement,
+        node,
+        startedSpeculativeExecutionsCount.get(),
+        successfulExecutionIndex,
+        errors,
+        null,
+        response,
+        true,
+        session,
+        context,
+        executionProfile);
+  }
+
   /**
    * Called from the chosen execution when it completes successfully.
    *
@@ -1491,12 +1501,9 @@ public abstract class ContinuousRequestHandlerBase<
       // Must be called here in case we are failing because the global timeout fired
       cancelScheduledTasks(null);
       if (callback != null && error instanceof DriverException) {
-        ExecutionInfoT executionInfo =
-            createExecutionInfo(callback.node, null, null, callback.executionIndex);
-        // FIXME cannot set ExecutionInfo for Graph here
-        if (executionInfo instanceof ExecutionInfo) {
-          ((DriverException) error).setExecutionInfo((ExecutionInfo) executionInfo);
-        }
+        ExecutionInfo executionInfo =
+            createExecutionInfo(callback.node, null, callback.executionIndex);
+        ((DriverException) error).setExecutionInfo(executionInfo);
       }
       enqueueOrCompletePending(error);
       RequestTracker requestTracker = context.getRequestTracker();

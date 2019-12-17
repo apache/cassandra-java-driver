@@ -56,13 +56,14 @@ public class GraphSpeculativeExecutionIT {
                     .build())
             .build()) {
 
-      GraphStatement statement =
+      ScriptGraphStatement statement =
           ScriptGraphStatement.newInstance(
                   "java.util.concurrent.TimeUnit.MILLISECONDS.sleep(1000L);")
               .setIdempotent(statementIdempotence);
 
       GraphResultSet result = session.execute(statement);
-      int speculativeExecutionCount = result.getExecutionInfo().getSpeculativeExecutionCount();
+      int speculativeExecutionCount =
+          result.getRequestExecutionInfo().getSpeculativeExecutionCount();
       if (expectSpeculativeExecutions) {
         assertThat(speculativeExecutionCount).isGreaterThan(0);
       } else {

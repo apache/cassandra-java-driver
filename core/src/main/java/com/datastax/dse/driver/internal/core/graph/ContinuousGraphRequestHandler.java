@@ -8,23 +8,19 @@ package com.datastax.dse.driver.internal.core.graph;
 
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
-import com.datastax.dse.driver.api.core.graph.GraphExecutionInfo;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousRequestHandlerBase;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
-import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.shaded.guava.common.base.MoreObjects;
-import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
-import com.datastax.oss.protocol.internal.response.Result;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Duration;
@@ -40,8 +36,7 @@ import net.jcip.annotations.ThreadSafe;
  */
 @ThreadSafe
 public class ContinuousGraphRequestHandler
-    extends ContinuousRequestHandlerBase<
-        GraphStatement<?>, AsyncGraphResultSet, GraphExecutionInfo> {
+    extends ContinuousRequestHandlerBase<GraphStatement<?>, AsyncGraphResultSet> {
 
   private final Message message;
   private final GraphProtocol subProtocol;
@@ -120,31 +115,15 @@ public class ContinuousGraphRequestHandler
 
   @NonNull
   @Override
-  protected AsyncGraphResultSet createEmptyResultSet(@NonNull GraphExecutionInfo executionInfo) {
+  protected AsyncGraphResultSet createEmptyResultSet(@NonNull ExecutionInfo executionInfo) {
     return ContinuousAsyncGraphResultSet.empty(executionInfo);
-  }
-
-  @NonNull
-  @Override
-  protected DefaultGraphExecutionInfo createExecutionInfo(
-      @NonNull Node node,
-      @Nullable Result result,
-      @Nullable Frame response,
-      int successfulExecutionIndex) {
-    return new DefaultGraphExecutionInfo(
-        statement,
-        node,
-        startedSpeculativeExecutionsCount.get(),
-        successfulExecutionIndex,
-        errors,
-        response);
   }
 
   @NonNull
   @Override
   protected ContinuousAsyncGraphResultSet createResultSet(
       @NonNull Rows rows,
-      @NonNull GraphExecutionInfo executionInfo,
+      @NonNull ExecutionInfo executionInfo,
       @NonNull final ColumnDefinitions columnDefinitions)
       throws IOException {
 

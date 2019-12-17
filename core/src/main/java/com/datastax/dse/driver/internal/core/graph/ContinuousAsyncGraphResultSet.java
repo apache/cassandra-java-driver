@@ -7,8 +7,8 @@
 package com.datastax.dse.driver.internal.core.graph;
 
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
-import com.datastax.dse.driver.api.core.graph.GraphExecutionInfo;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
@@ -22,12 +22,12 @@ public class ContinuousAsyncGraphResultSet implements AsyncGraphResultSet {
   private final CountingIterator<GraphNode> iterator;
   private final int pageNumber;
   private final boolean hasMorePages;
-  private final GraphExecutionInfo executionInfo;
+  private final ExecutionInfo executionInfo;
   private final ContinuousGraphRequestHandler continuousGraphRequestHandler;
   private final Iterable<GraphNode> currentPage;
 
   public ContinuousAsyncGraphResultSet(
-      GraphExecutionInfo executionInfo,
+      ExecutionInfo executionInfo,
       Queue<GraphNode> data,
       int pageNumber,
       boolean hasMorePages,
@@ -44,8 +44,15 @@ public class ContinuousAsyncGraphResultSet implements AsyncGraphResultSet {
 
   @NonNull
   @Override
-  public GraphExecutionInfo getExecutionInfo() {
+  public ExecutionInfo getRequestExecutionInfo() {
     return executionInfo;
+  }
+
+  @NonNull
+  @Override
+  @Deprecated
+  public com.datastax.dse.driver.api.core.graph.GraphExecutionInfo getExecutionInfo() {
+    return GraphExecutionInfoConverter.convert(executionInfo);
   }
 
   @Override
@@ -84,14 +91,20 @@ public class ContinuousAsyncGraphResultSet implements AsyncGraphResultSet {
     return pageNumber;
   }
 
-  static AsyncGraphResultSet empty(GraphExecutionInfo executionInfo) {
+  static AsyncGraphResultSet empty(ExecutionInfo executionInfo) {
 
     return new AsyncGraphResultSet() {
+      @NonNull
+      @Override
+      public ExecutionInfo getRequestExecutionInfo() {
+        return executionInfo;
+      }
 
       @NonNull
       @Override
-      public GraphExecutionInfo getExecutionInfo() {
-        return executionInfo;
+      @Deprecated
+      public com.datastax.dse.driver.api.core.graph.GraphExecutionInfo getExecutionInfo() {
+        return GraphExecutionInfoConverter.convert(executionInfo);
       }
 
       @NonNull
