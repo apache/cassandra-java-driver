@@ -525,7 +525,9 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
           throw new IllegalStateException(
               "Can't use withCloudSecureConnectBundle and addContactPoint(s). They are mutually exclusive.");
         }
-        if (sslConfigured) {
+        String configuredSSLFactory =
+            defaultConfig.getString(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS, null);
+        if (sslConfigured || configuredSSLFactory != null) {
           throw new IllegalStateException(
               "Can't use withCloudSecureConnectBundle and explicitly specify ssl configuration. They are mutually exclusive.");
         }

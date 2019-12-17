@@ -22,14 +22,15 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
+import com.datastax.oss.driver.internal.core.ssl.DefaultSslEngineFactory;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import java.io.IOException;
 import java.io.InputStream;
@@ -224,21 +225,44 @@ public class CloudIT {
   }
 
   @Test
-  public void should_error_when_ssl_context_and_secure_bundle_used() {
+  public void should_error_when_ssl_context_and_secure_bundle_used_programatic()
+      throws NoSuchAlgorithmException {
     // given
-    try {
-      Path bundle = proxyRule.getProxy().getBundleWithoutCredentialsPath();
-      CqlSessionBuilder builder =
-          CqlSession.builder()
-              .withCloudSecureConnectBundle(bundle)
-              .withAuthCredentials("cassandra", "cassandra")
-              .withSslContext(SSLContext.getInstance("SSL"));
-      assertThatThrownBy(() -> builder.build())
-          .isInstanceOf(IllegalStateException.class)
-          .hasMessage(
-              "Can't use withCloudSecureConnectBundle and addContactPoint(s). They are mutually exclusive.");
-    } catch (NoSuchAlgorithmException e) {
-      fail("Unexpected exception thrown", e);
-    }
+    Path bundle = proxyRule.getProxy().getBundleWithoutCredentialsPath();
+    CqlSessionBuilder builder =
+        CqlSession.builder()
+            .withCloudSecureConnectBundle(bundle)
+            .withAuthCredentials("cassandra", "cassandra")
+            .withSslContext(SSLContext.getInstance("SSL"));
+    // then
+    assertThatThrownBy(() -> builder.build())
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage(
+            "Can't use withCloudSecureConnectBundle and explicitly specify ssl configuration. They are mutually exclusive.");
+  }
+
+  @Test
+  public void should_error_when_ssl_context_and_secure_bundle_used_config()
+      throws NoSuchAlgorithmException {
+    // given
+
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withBoolean(DefaultDriverOption.RECONNECT_ON_INIT, true)
+            .withClass(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS, DefaultSslEngineFactory.class)
+            .build();
+
+    Path bundle = proxyRule.getProxy().getBundleWithoutCredentialsPath();
+    CqlSessionBuilder builder =
+        CqlSession.builder()
+            .withConfigLoader(loader)
+            .withCloudSecureConnectBundle(bundle)
+            .withAuthCredentials("cassandra", "cassandra");
+
+    // then
+    assertThatThrownBy(() -> builder.build())
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage(
+            "Can't use withCloudSecureConnectBundle and explicitly specify ssl configuration. They are mutually exclusive.");
   }
 }
