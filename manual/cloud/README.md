@@ -10,15 +10,15 @@ database.
 ### Prerequisites
 
 1. [Download][Download Maven] and [install][Install Maven] Maven.
-2. Create an Apollo database on [GCP][Create an Apollo database - GCP] or
+1. Create an Apollo database on [GCP][Create an Apollo database - GCP] or
    [AWS][Create an Apollo database - AWS]; alternatively, have a team member provide access to their
    Apollo database (instructions for [GCP][Access an Apollo database - GCP] and 
    [AWS][Access an Apollo database - AWS]) to obtain database connection details.
-3. Download the secure connect bundle (instructions for
+1. Download the secure connect bundle (instructions for
    [GCP][Download the secure connect bundle - GCP] and 
    [AWS][Download the secure connect bundle - AWS]) to obtain connection credentials for your 
    database.
-4. Ensure you are using Java 8 or higher. The cloud connect api does not support java 6 or 7.
+1. Ensure you are using Java 8 or higher. The cloud connect api does not support java 6 or 7.
 
 ### Procedure
 
