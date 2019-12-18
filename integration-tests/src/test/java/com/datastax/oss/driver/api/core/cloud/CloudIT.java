@@ -28,7 +28,9 @@ import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
+import com.datastax.oss.driver.internal.core.ssl.DefaultSslEngineFactory;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,6 +38,8 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.NoSuchAlgorithmException;
+import javax.net.ssl.SSLContext;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -218,5 +222,47 @@ public class CloudIT {
         .isInstanceOf(IllegalStateException.class)
         .hasMessage(
             "Can't use withCloudSecureConnectBundle and addContactPoint(s). They are mutually exclusive.");
+  }
+
+  @Test
+  public void should_error_when_ssl_context_and_secure_bundle_used_programatic()
+      throws NoSuchAlgorithmException {
+    // given
+    Path bundle = proxyRule.getProxy().getBundleWithoutCredentialsPath();
+    CqlSessionBuilder builder =
+        CqlSession.builder()
+            .withCloudSecureConnectBundle(bundle)
+            .withAuthCredentials("cassandra", "cassandra")
+            .withSslContext(SSLContext.getInstance("SSL"));
+    // then
+    assertThatThrownBy(() -> builder.build())
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage(
+            "Can't use withCloudSecureConnectBundle and explicitly specify ssl configuration. They are mutually exclusive.");
+  }
+
+  @Test
+  public void should_error_when_ssl_context_and_secure_bundle_used_config()
+      throws NoSuchAlgorithmException {
+    // given
+
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withBoolean(DefaultDriverOption.RECONNECT_ON_INIT, true)
+            .withClass(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS, DefaultSslEngineFactory.class)
+            .build();
+
+    Path bundle = proxyRule.getProxy().getBundleWithoutCredentialsPath();
+    CqlSessionBuilder builder =
+        CqlSession.builder()
+            .withConfigLoader(loader)
+            .withCloudSecureConnectBundle(bundle)
+            .withAuthCredentials("cassandra", "cassandra");
+
+    // then
+    assertThatThrownBy(() -> builder.build())
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage(
+            "Can't use withCloudSecureConnectBundle and explicitly specify ssl configuration. They are mutually exclusive.");
   }
 }
