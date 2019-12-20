@@ -15,15 +15,15 @@
  */
 package com.datastax.dse.driver.api.core.graph.remote;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.graph.DseGraph;
 import com.datastax.dse.driver.api.core.graph.GraphTestSupport;
 import com.datastax.dse.driver.api.core.graph.SampleGraphScripts;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.dse.driver.api.core.graph.SocialTraversalSource;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRule;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
@@ -37,7 +37,7 @@ public class CoreGraphTraversalRemoteIT extends GraphTraversalRemoteITBase {
 
   private static final CustomCcmRule CCM_RULE = GraphTestSupport.GRAPH_CCM_RULE_BUILDER.build();
 
-  private static final DseSessionRule SESSION_RULE =
+  private static final SessionRule<CqlSession> SESSION_RULE =
       GraphTestSupport.getCoreGraphSessionBuilder(CCM_RULE).build();
 
   @ClassRule
@@ -49,7 +49,7 @@ public class CoreGraphTraversalRemoteIT extends GraphTraversalRemoteITBase {
   }
 
   @Override
-  protected DseSession session() {
+  protected CqlSession session() {
     return SESSION_RULE.session();
   }
 

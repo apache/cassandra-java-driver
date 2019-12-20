@@ -35,8 +35,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import com.datastax.dse.driver.DseNodeMetrics;
-import com.datastax.dse.driver.DseSessionMetric;
 import com.datastax.dse.driver.DseTestDataProviders;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.data.geometry.Point;
@@ -47,6 +45,8 @@ import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
+import com.datastax.dse.driver.api.core.metrics.DseNodeMetrics;
+import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.dse.driver.internal.core.graph.GraphRequestHandlerTestHarness.Builder;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.dse.protocol.internal.request.RawBytesQuery;

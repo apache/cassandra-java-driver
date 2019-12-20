@@ -20,13 +20,12 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 import com.codahale.metrics.Timer;
-import com.datastax.dse.driver.DseNodeMetrics;
-import com.datastax.dse.driver.DseSessionMetric;
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.cql.continuous.ContinuousPagingITBase;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRule;
+import com.datastax.dse.driver.api.core.metrics.DseNodeMetrics;
+import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.dse.driver.internal.core.graph.MultiPageGraphResultSet;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -35,6 +34,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
@@ -59,7 +59,7 @@ public class GraphPagingIT {
 
   private static final CustomCcmRule CCM_RULE = GraphTestSupport.GRAPH_CCM_RULE_BUILDER.build();
 
-  private static final DseSessionRule SESSION_RULE =
+  private static final SessionRule<CqlSession> SESSION_RULE =
       GraphTestSupport.getCoreGraphSessionBuilder(CCM_RULE)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
@@ -520,7 +520,7 @@ public class GraphPagingIT {
     return CCM_RULE.getContactPoints().iterator().next().resolve();
   }
 
-  private void validateMetrics(DseSession session) {
+  private void validateMetrics(CqlSession session) {
     Node node = session.getMetadata().getNodes().values().iterator().next();
     assertThat(session.getMetrics()).isPresent();
     Metrics metrics = session.getMetrics().get();

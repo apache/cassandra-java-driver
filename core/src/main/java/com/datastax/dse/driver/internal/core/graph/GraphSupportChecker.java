@@ -118,7 +118,7 @@ public class GraphSupportChecker {
     if (graphProtocol == null) {
       // use the protocol specified in configuration, otherwise get the default from the context
       graphProtocol =
-          (config.isDefined(DseDriverOption.GRAPH_SUB_PROTOCOL))
+          config.isDefined(DseDriverOption.GRAPH_SUB_PROTOCOL)
               ? config.getString(DseDriverOption.GRAPH_SUB_PROTOCOL)
               : getDefaultGraphProtocol(context).toInternalCode();
     }

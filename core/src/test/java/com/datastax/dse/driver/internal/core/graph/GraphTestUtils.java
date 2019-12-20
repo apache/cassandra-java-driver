@@ -18,9 +18,9 @@ package com.datastax.dse.driver.internal.core.graph;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.Frame;
@@ -162,7 +162,7 @@ public class GraphTestUtils {
     return new DefaultRows(metadata, data);
   }
 
-  public static GraphBinaryModule createGraphBinaryModule(DseDriverContext context) {
+  public static GraphBinaryModule createGraphBinaryModule(DefaultDriverContext context) {
     TypeSerializerRegistry registry = GraphBinaryModule.createDseTypeSerializerRegistry(context);
     return new GraphBinaryModule(new GraphBinaryReader(registry), new GraphBinaryWriter(registry));
   }

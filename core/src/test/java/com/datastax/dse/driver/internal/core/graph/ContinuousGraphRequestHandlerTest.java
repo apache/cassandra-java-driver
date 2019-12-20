@@ -27,20 +27,20 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import com.datastax.dse.driver.DseNodeMetrics;
-import com.datastax.dse.driver.DseSessionMetric;
 import com.datastax.dse.driver.DseTestDataProviders;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
+import com.datastax.dse.driver.api.core.metrics.DseNodeMetrics;
+import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.dse.driver.internal.core.graph.GraphRequestHandlerTestHarness.Builder;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.cql.PoolBehavior;
 import com.datastax.oss.driver.internal.core.cql.RequestHandlerTestHarness;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
@@ -62,7 +62,7 @@ import org.mockito.MockitoAnnotations;
 @RunWith(DataProviderRunner.class)
 public class ContinuousGraphRequestHandlerTest {
 
-  @Mock DseDriverContext mockContext;
+  @Mock DefaultDriverContext mockContext;
   @Mock DefaultNode node;
   @Mock NodeMetricUpdater nodeMetricUpdater1;
 

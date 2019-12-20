@@ -17,12 +17,12 @@ package com.datastax.dse.driver.api.core.metadata.schema;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.dse.driver.api.core.DseSession;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.session.CqlSessionRuleBuilder;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -43,15 +43,15 @@ public class TableGraphMetadataCaseSensitiveIT {
 
   private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static final SessionRule<DseSession> SESSION_RULE =
-      new DseSessionRuleBuilder(CCM_RULE).build();
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      new CqlSessionRuleBuilder(CCM_RULE).build();
 
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @BeforeClass
   public static void createTables() {
-    DseSession session = SESSION_RULE.session();
+    CqlSession session = SESSION_RULE.session();
 
     session.execute(
         "CREATE TABLE \"Person\" (\"Name\" varchar, \"Age\" int, PRIMARY KEY ((\"Name\"), \"Age\")) WITH VERTEX LABEL");
@@ -67,7 +67,7 @@ public class TableGraphMetadataCaseSensitiveIT {
 
   @Test
   public void should_expose_case_sensitive_edge_metadata() {
-    DseSession session = SESSION_RULE.session();
+    CqlSession session = SESSION_RULE.session();
     Metadata metadata = session.getMetadata();
     assertThat(metadata.getKeyspace(SESSION_RULE.keyspace()))
         .hasValueSatisfying(

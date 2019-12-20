@@ -22,9 +22,9 @@ import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousCqlRequest
 import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousCqlRequestSyncProcessor;
 import com.datastax.dse.driver.internal.core.cql.continuous.reactive.ContinuousCqlRequestReactiveProcessor;
 import com.datastax.dse.driver.internal.core.cql.reactive.CqlRequestReactiveProcessor;
-import com.datastax.dse.driver.internal.core.graph.GraphPagingSupportChecker;
 import com.datastax.dse.driver.internal.core.graph.GraphRequestAsyncProcessor;
 import com.datastax.dse.driver.internal.core.graph.GraphRequestSyncProcessor;
+import com.datastax.dse.driver.internal.core.graph.GraphSupportChecker;
 import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.dse.protocol.internal.DseProtocolV1ClientCodecs;
 import com.datastax.dse.protocol.internal.DseProtocolV2ClientCodecs;
@@ -527,7 +527,7 @@ public class DefaultDriverContext implements InternalDriverContext {
     // graph requests (sync and async)
     if (DependencyCheck.TINKERPOP.isPresent()) {
       GraphRequestAsyncProcessor graphRequestAsyncProcessor =
-          new GraphRequestAsyncProcessor(this, new GraphPagingSupportChecker());
+          new GraphRequestAsyncProcessor(this, new GraphSupportChecker());
       GraphRequestSyncProcessor graphRequestSyncProcessor =
           new GraphRequestSyncProcessor(graphRequestAsyncProcessor);
       processors.add(graphRequestAsyncProcessor);

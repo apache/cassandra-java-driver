@@ -38,25 +38,7 @@ public class DseGraphRemoteConnection implements RemoteConnection {
   }
 
   @Override
-  @SuppressWarnings("deprecation")
-  public <E> Iterator<Traverser.Admin<E>> submit(Traversal<?, E> traversal)
-      throws RemoteConnectionException {
-    return submit(traversal.asAdmin().getBytecode());
-  }
-
-  @Override
-  @SuppressWarnings({"deprecation", "unchecked"})
-  public <E> RemoteTraversal<?, E> submit(Bytecode bytecode) throws RemoteConnectionException {
-    try {
-      return (RemoteTraversal<?, E>) submitAsync(bytecode).get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RemoteConnectionException(e);
-    }
-  }
-
-  @Override
-  public <E> CompletableFuture<RemoteTraversal<?, E>> submitAsync(Bytecode bytecode)
-      throws RemoteConnectionException {
+  public <E> CompletableFuture<RemoteTraversal<?, E>> submitAsync(Bytecode bytecode) {
     return session
         .executeAsync(new BytecodeGraphStatement(bytecode, executionProfile, executionProfileName))
         .toCompletableFuture()

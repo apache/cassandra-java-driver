@@ -15,19 +15,19 @@
  */
 package com.datastax.dse.driver.internal.core.graph.binary;
 
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import java.io.IOException;
 import org.apache.tinkerpop.gremlin.structure.io.Buffer;
 import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryReader;
 import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryWriter;
 
 public class UdtValueSerializer extends AbstractDynamicGraphBinaryCustomSerializer<UdtValue> {
-  private final DseDriverContext driverContext;
+  private final DefaultDriverContext driverContext;
 
-  public UdtValueSerializer(DseDriverContext driverContext) {
+  public UdtValueSerializer(DefaultDriverContext driverContext) {
     this.driverContext = driverContext;
   }
 

@@ -55,7 +55,7 @@ public class ClassicGraphDataTypeRemoteIT extends ClassicGraphDataTypeITBase {
 
   @Override
   public CqlSession session() {
-    return sessionRule.session();
+    return SESSION_RULE.session();
   }
 
   private final GraphTraversalSource g =

@@ -176,10 +176,12 @@ public class BundleOptions {
   }
 
   public static CompositeOption tinkerpopBundles() {
-    String version = getVersionFromSystemProperty("tinkerpop.version");
+    String mavenVersion = getVersionFromSystemProperty("tinkerpop.version");
+    String osgiVersion = getVersionFromSystemProperty("tinkerpop.osgi.version");
     return () ->
         options(
-            CoreOptions.wrappedBundle(mavenBundle("org.apache.tinkerpop", "gremlin-core", version))
+            CoreOptions.wrappedBundle(
+                    mavenBundle("org.apache.tinkerpop", "gremlin-core", mavenVersion))
                 .exports(
                     // avoid exporting 'org.apache.tinkerpop.gremlin.*' as other Tinkerpop jars have
                     // this root package as well
@@ -187,25 +189,25 @@ public class BundleOptions {
                     "org.apache.tinkerpop.gremlin.process.*",
                     "org.apache.tinkerpop.gremlin.structure.*",
                     "org.apache.tinkerpop.gremlin.util.*")
-                .bundleVersion(version)
+                .bundleVersion(osgiVersion)
                 .bundleSymbolicName("org.apache.tinkerpop.gremlin-core")
                 .overwriteManifest(WrappedUrlProvisionOption.OverwriteMode.FULL),
             CoreOptions.wrappedBundle(
-                    mavenBundle("org.apache.tinkerpop", "gremlin-driver", version))
+                    mavenBundle("org.apache.tinkerpop", "gremlin-driver", mavenVersion))
                 .exports("org.apache.tinkerpop.gremlin.driver.*")
-                .bundleVersion(version)
+                .bundleVersion(osgiVersion)
                 .bundleSymbolicName("org.apache.tinkerpop.gremlin-driver")
                 .overwriteManifest(WrappedUrlProvisionOption.OverwriteMode.FULL),
             CoreOptions.wrappedBundle(
-                    mavenBundle("org.apache.tinkerpop", "tinkergraph-gremlin", version))
+                    mavenBundle("org.apache.tinkerpop", "tinkergraph-gremlin", mavenVersion))
                 .exports("org.apache.tinkerpop.gremlin.tinkergraph.*")
-                .bundleVersion(version)
+                .bundleVersion(osgiVersion)
                 .bundleSymbolicName("org.apache.tinkerpop.tinkergraph-gremlin")
                 .overwriteManifest(WrappedUrlProvisionOption.OverwriteMode.FULL),
             CoreOptions.wrappedBundle(
-                    mavenBundle("org.apache.tinkerpop", "gremlin-shaded", version))
+                    mavenBundle("org.apache.tinkerpop", "gremlin-shaded", mavenVersion))
                 .exports("org.apache.tinkerpop.shaded.*")
-                .bundleVersion(version)
+                .bundleVersion(osgiVersion)
                 .bundleSymbolicName("org.apache.tinkerpop.gremlin-shaded")
                 .overwriteManifest(WrappedUrlProvisionOption.OverwriteMode.FULL),
             // Note: the versions below are hard-coded because they shouldn't change very often,

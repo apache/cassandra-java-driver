@@ -22,9 +22,9 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addE;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addV;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.graph.BatchGraphStatement;
 import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -37,7 +37,7 @@ import org.junit.Test;
 
 public abstract class GraphTraversalBatchITBase {
 
-  protected abstract DseSession session();
+  protected abstract CqlSession session();
 
   protected abstract boolean isGraphBinary();
 

@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.osgi;
 
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.categories.IsolatedTests;
@@ -59,5 +60,10 @@ public class OsgiGraphIT implements OsgiGraphTests {
   @Test
   public void should_connect_and_query_with_graph() {
     connectAndQueryGraph();
+  }
+
+  @Override
+  public Version getDseVersion() {
+    return CCM_RULE.getDseVersion().orElseThrow(IllegalStateException::new);
   }
 }

@@ -36,7 +36,6 @@ import com.datastax.dse.driver.api.core.graph.BatchGraphStatement;
 import com.datastax.dse.driver.api.core.graph.DseGraph;
 import com.datastax.dse.driver.api.core.type.DseDataTypes;
 import com.datastax.dse.driver.api.core.type.codec.DseTypeCodecs;
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.dse.driver.internal.core.data.geometry.Distance;
 import com.datastax.dse.driver.internal.core.graph.EditDistance;
 import com.datastax.dse.driver.internal.core.graph.GraphConversions;
@@ -45,6 +44,7 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.type.UserDefinedTypeBuilder;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -78,7 +78,7 @@ public class GraphBinaryDataTypesTest {
 
   private GraphBinaryModule graphBinaryModule;
 
-  @Mock private DseDriverContext context;
+  @Mock private DefaultDriverContext context;
 
   private static final MutableCodecRegistry CODEC_REGISTRY =
       new DefaultCodecRegistry("testDseRegistry");

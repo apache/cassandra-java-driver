@@ -20,7 +20,6 @@ import static org.mockito.Mockito.when;
 import com.datastax.dse.driver.DseTestFixtures;
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.Version;
@@ -29,6 +28,7 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.DefaultConsistencyLevelRegistry;
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.cql.RequestHandlerTestHarness;
 import com.datastax.oss.driver.internal.core.servererrors.DefaultWriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.session.throttling.PassThroughRequestThrottler;
@@ -50,7 +50,7 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
 
   @Mock DriverExecutionProfile systemQueryExecutionProfile;
 
-  @Mock DseDriverContext dseDriverContext;
+  @Mock DefaultDriverContext dseDriverContext;
 
   @Mock EventLoop eventLoop;
 
@@ -153,7 +153,7 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
   }
 
   @Override
-  public DseDriverContext getContext() {
+  public DefaultDriverContext getContext() {
     return dseDriverContext;
   }
 

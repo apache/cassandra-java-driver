@@ -15,7 +15,6 @@
  */
 package com.datastax.dse.driver.internal.core.graph.binary;
 
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.dse.driver.internal.core.graph.TinkerpopBufferUtil;
 import com.datastax.dse.driver.internal.core.graph.binary.buffer.DseNettyBufferFactory;
 import com.datastax.dse.driver.internal.core.protocol.TinkerpopBufferPrimitiveCodec;
@@ -28,6 +27,7 @@ import com.datastax.oss.driver.api.core.type.MapType;
 import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.type.DataTypeHelper;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -45,12 +45,13 @@ class ComplexTypeSerializerUtil {
   private static final PrimitiveCodec<Buffer> codec =
       new TinkerpopBufferPrimitiveCodec(new DseNettyBufferFactory());
 
-  static void encodeTypeDefinition(DataType type, Buffer buffer, DseDriverContext driverContext) {
+  static void encodeTypeDefinition(
+      DataType type, Buffer buffer, DefaultDriverContext driverContext) {
     RawType protocolType = toProtocolSpec(type);
     protocolType.encode(buffer, codec, driverContext.getProtocolVersion().getCode());
   }
 
-  static DataType decodeTypeDefinition(Buffer buffer, DseDriverContext driverContext) {
+  static DataType decodeTypeDefinition(Buffer buffer, DefaultDriverContext driverContext) {
     RawType type = RawType.decode(buffer, codec, driverContext.getProtocolVersion().getCode());
     return DataTypeHelper.fromProtocolSpec(type, driverContext);
   }

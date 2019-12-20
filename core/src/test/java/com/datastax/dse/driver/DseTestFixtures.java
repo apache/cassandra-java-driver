@@ -19,11 +19,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.datastax.dse.driver.api.core.metadata.DseNodeProperties;
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -86,8 +86,8 @@ public class DseTestFixtures {
     return new DefaultRows(metadata, data);
   }
 
-  public static DseDriverContext mockNodesInMetadataWithVersions(
-      DseDriverContext mockContext, boolean treatNullAsMissing, Version... dseVersions) {
+  public static DefaultDriverContext mockNodesInMetadataWithVersions(
+      DefaultDriverContext mockContext, boolean treatNullAsMissing, Version... dseVersions) {
 
     // mock bits of the context
     MetadataManager metadataManager = mock(MetadataManager.class);

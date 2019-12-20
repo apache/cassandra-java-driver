@@ -15,12 +15,12 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
-import com.datastax.dse.driver.DseNodeMetrics;
-import com.datastax.dse.driver.DseSessionMetric;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
+import com.datastax.dse.driver.api.core.metrics.DseNodeMetrics;
+import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousRequestHandlerBase;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;

@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.testinfra.session;
 
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -25,7 +26,10 @@ import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
+import java.util.Objects;
+import java.util.Optional;
 import org.junit.rules.ExternalResource;
 
 /**
@@ -55,6 +59,8 @@ import org.junit.rules.ExternalResource;
  */
 public class SessionRule<SessionT extends Session> extends ExternalResource {
 
+  private static final Version V6_8_0 = Objects.requireNonNull(Version.parse("6.8.0"));
+
   // the CCM or Simulacron rule to depend on
   private final CassandraResourceRule cassandraResource;
   private final NodeStateListener nodeStateListener;
@@ -62,6 +68,7 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
   private final CqlIdentifier keyspace;
   private final DriverConfigLoader configLoader;
   private final String graphName;
+  private final boolean isCoreGraph;
 
   // the session that is auto created for this rule and is tied to the given keyspace.
   private SessionT session;
@@ -84,7 +91,8 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
       DriverConfigLoader configLoader,
-      String graphName) {
+      String graphName,
+      boolean isCoreGraph) {
     this.cassandraResource = cassandraResource;
     this.nodeStateListener = nodeStateListener;
     this.schemaChangeListener = schemaChangeListener;
@@ -94,6 +102,7 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
             : SessionUtils.uniqueKeyspaceId();
     this.configLoader = configLoader;
     this.graphName = graphName;
+    this.isCoreGraph = isCoreGraph;
   }
 
   public SessionRule(
@@ -108,7 +117,8 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
         nodeStateListener,
         schemaChangeListener,
         configLoader,
-        null);
+        null,
+        false);
   }
 
   @Override
@@ -124,12 +134,34 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
           Statement.SYNC);
     }
     if (graphName != null) {
-      session()
-          .execute(
-              ScriptGraphStatement.newInstance(
-                      String.format("system.graph('%s').ifNotExists().create()", this.graphName))
-                  .setSystemQuery(true),
-              ScriptGraphStatement.SYNC);
+      Optional<Version> dseVersion =
+          (cassandraResource instanceof BaseCcmRule)
+              ? ((BaseCcmRule) cassandraResource).getDseVersion()
+              : Optional.empty();
+      if (!dseVersion.isPresent()) {
+        throw new IllegalArgumentException("DseSessionRule should work with DSE.");
+      }
+      if (dseVersion.get().compareTo(V6_8_0) >= 0) {
+        session()
+            .execute(
+                ScriptGraphStatement.newInstance(
+                        String.format(
+                            "system.graph('%s').ifNotExists()%s.create()",
+                            this.graphName, isCoreGraph ? ".coreEngine()" : ".classicEngine()"))
+                    .setSystemQuery(true),
+                ScriptGraphStatement.SYNC);
+      } else {
+        if (isCoreGraph) {
+          throw new IllegalArgumentException(
+              "Core graph is not supported for DSE version < " + V6_8_0);
+        }
+        session()
+            .execute(
+                ScriptGraphStatement.newInstance(
+                        String.format("system.graph('%s').ifNotExists().create()", this.graphName))
+                    .setSystemQuery(true),
+                ScriptGraphStatement.SYNC);
+      }
     }
   }
 

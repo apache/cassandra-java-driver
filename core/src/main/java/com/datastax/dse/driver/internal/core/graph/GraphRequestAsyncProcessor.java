@@ -43,7 +43,7 @@ public class GraphRequestAsyncProcessor
   private final GraphSupportChecker graphSupportChecker;
 
   public GraphRequestAsyncProcessor(
-      DefaultDriverContext context, GraphPagingSupportChecker graphPagingSupportChecker) {
+      DefaultDriverContext context, GraphSupportChecker graphSupportChecker) {
     TypeSerializerRegistry typeSerializerRegistry =
         GraphBinaryModule.createDseTypeSerializerRegistry(context);
     this.graphBinaryModule =

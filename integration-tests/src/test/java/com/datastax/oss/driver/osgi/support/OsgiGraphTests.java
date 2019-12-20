@@ -23,10 +23,10 @@ import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphResultSet;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
-import com.datastax.dse.driver.api.testinfra.DseSessionBuilderInstantiator;
 import com.datastax.dse.driver.internal.core.graph.GraphProtocol;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
 import java.util.List;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -35,7 +35,7 @@ public interface OsgiGraphTests extends OsgiSimpleTests {
 
   @Override
   default ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder() {
-    return DseSessionBuilderInstantiator.configLoaderBuilder()
+    return DriverConfigLoader.programmaticBuilder()
         .withString(DseDriverOption.GRAPH_NAME, "test_osgi_graph")
         .withString(
             DseDriverOption.GRAPH_SUB_PROTOCOL,
@@ -74,7 +74,7 @@ public interface OsgiGraphTests extends OsgiSimpleTests {
     }
   }
 
-  default void setUpCoreEngineGraph(DseSession session) {
+  default void setUpCoreEngineGraph(CqlSession session) {
     session.execute(
         ScriptGraphStatement.newInstance(
             "schema.vertexLabel('person').ifNotExists().partitionBy('pk', Int)"
@@ -84,7 +84,7 @@ public interface OsgiGraphTests extends OsgiSimpleTests {
             "g.addV('person').property('pk',0).property('cc',0).property('name', 'alice');"));
   }
 
-  default void setUpClassicEngineGraph(DseSession session) {
+  default void setUpClassicEngineGraph(CqlSession session) {
     session.execute(
         ScriptGraphStatement.newInstance(
             "schema.propertyKey('name').Text().ifNotExists().create();"

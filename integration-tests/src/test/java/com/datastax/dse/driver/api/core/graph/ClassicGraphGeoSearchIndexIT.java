@@ -15,10 +15,10 @@
  */
 package com.datastax.dse.driver.api.core.graph;
 
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRule;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import java.util.ArrayList;
@@ -32,11 +32,11 @@ import org.junit.rules.TestRule;
 
 @DseRequirement(min = "5.1", description = "DSE 5.1 required for graph geo indexing")
 public class ClassicGraphGeoSearchIndexIT extends GraphGeoSearchIndexITBase {
-  private static CustomCcmRule CCM_RULE =
+  private static final CustomCcmRule CCM_RULE =
       CustomCcmRule.builder().withDseWorkloads("graph", "solr").build();
 
-  private static DseSessionRule SESSION_RULE =
-      new DseSessionRuleBuilder(CCM_RULE).withCreateGraph().build();
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      GraphTestSupport.getClassicGraphSessionBuilder(CCM_RULE).build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 

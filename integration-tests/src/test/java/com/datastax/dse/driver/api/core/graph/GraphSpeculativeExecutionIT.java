@@ -17,8 +17,8 @@ package com.datastax.dse.driver.api.core.graph;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
@@ -48,8 +48,8 @@ public class GraphSpeculativeExecutionIT {
       Class<?> speculativeExecutionClass,
       boolean expectSpeculativeExecutions) {
 
-    try (DseSession session =
-        DseSession.builder()
+    try (CqlSession session =
+        CqlSession.builder()
             .addContactEndPoints(ccmRule.getContactPoints())
             .withConfigLoader(
                 SessionUtils.configLoaderBuilder()

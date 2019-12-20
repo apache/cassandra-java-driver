@@ -17,13 +17,13 @@ package com.datastax.dse.driver.api.core.graph.remote;
 
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.graph.CoreGraphDataTypeITBase;
 import com.datastax.dse.driver.api.core.graph.DseGraph;
 import com.datastax.dse.driver.api.core.graph.GraphTestSupport;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRule;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import java.util.Map;
 import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
@@ -41,14 +41,14 @@ public class CoreGraphDataTypeRemoteIT extends CoreGraphDataTypeITBase {
 
   private static final CustomCcmRule CCM_RULE = GraphTestSupport.CCM_BUILDER_WITH_GRAPH.build();
 
-  private static final DseSessionRule SESSION_RULE =
+  private static final SessionRule<CqlSession> SESSION_RULE =
       GraphTestSupport.getCoreGraphSessionBuilder(CCM_RULE).build();
 
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Override
-  protected DseSession session() {
+  protected CqlSession session() {
     return SESSION_RULE.session();
   }
 

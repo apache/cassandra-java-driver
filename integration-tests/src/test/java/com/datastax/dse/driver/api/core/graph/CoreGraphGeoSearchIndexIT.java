@@ -15,9 +15,10 @@
  */
 package com.datastax.dse.driver.api.core.graph;
 
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRule;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import java.util.Collection;
 import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
@@ -30,10 +31,10 @@ import org.junit.rules.TestRule;
 @DseRequirement(min = "6.8.0", description = "DSE 6.8.0 required for Core graph support")
 public class CoreGraphGeoSearchIndexIT extends GraphGeoSearchIndexITBase {
 
-  private static CustomCcmRule CCM_RULE =
+  private static final CustomCcmRule CCM_RULE =
       CustomCcmRule.builder().withDseWorkloads("graph", "solr").build();
 
-  private static DseSessionRule SESSION_RULE =
+  private static final SessionRule<CqlSession> SESSION_RULE =
       GraphTestSupport.getCoreGraphSessionBuilder(CCM_RULE).build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);

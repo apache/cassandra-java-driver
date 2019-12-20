@@ -15,9 +15,9 @@
  */
 package com.datastax.dse.driver.internal.core.cql.continuous;
 
-import com.datastax.dse.driver.DseSessionMetric;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.cql.continuous.ContinuousAsyncResultSet;
+import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.dse.driver.internal.core.cql.DseConversions;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;

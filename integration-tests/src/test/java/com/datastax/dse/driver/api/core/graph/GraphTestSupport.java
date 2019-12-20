@@ -15,9 +15,9 @@
  */
 package com.datastax.dse.driver.api.core.graph;
 
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
 import com.datastax.dse.driver.internal.core.graph.GraphProtocol;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.session.CqlSessionRuleBuilder;
 
 /** Utility for creating commonly used Rule builders for tests. */
 public class GraphTestSupport {
@@ -41,8 +41,8 @@ public class GraphTestSupport {
    * @param ccmRule CustomCcmRule configured for Graph workloads
    * @return A Session rule builder configured for Classic Graph workloads
    */
-  public static DseSessionRuleBuilder getClassicGraphSessionBuilder(CustomCcmRule ccmRule) {
-    return new DseSessionRuleBuilder(ccmRule)
+  public static CqlSessionRuleBuilder getClassicGraphSessionBuilder(CustomCcmRule ccmRule) {
+    return new CqlSessionRuleBuilder(ccmRule)
         .withCreateGraph()
         .withGraphProtocol(GraphProtocol.GRAPHSON_2_0.toInternalCode());
   }
@@ -54,8 +54,8 @@ public class GraphTestSupport {
    * @param ccmRule CustomCcmRule configured for Graph workloads
    * @return A Session rule builder configured for Core Graph workloads
    */
-  public static DseSessionRuleBuilder getCoreGraphSessionBuilder(CustomCcmRule ccmRule) {
-    return new DseSessionRuleBuilder(ccmRule)
+  public static CqlSessionRuleBuilder getCoreGraphSessionBuilder(CustomCcmRule ccmRule) {
+    return new CqlSessionRuleBuilder(ccmRule)
         .withCreateGraph()
         .withCoreEngine()
         .withGraphProtocol(GraphProtocol.GRAPH_BINARY_1_0.toInternalCode());

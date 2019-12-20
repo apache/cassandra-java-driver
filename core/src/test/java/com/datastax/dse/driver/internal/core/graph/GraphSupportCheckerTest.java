@@ -33,13 +33,13 @@ import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.api.core.graph.PagingEnabledOptions;
 import com.datastax.dse.driver.api.core.metadata.DseNodeProperties;
 import com.datastax.dse.driver.internal.core.DseProtocolFeature;
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.tngtech.java.junit.dataprovider.DataProvider;
@@ -187,8 +187,8 @@ public class GraphSupportCheckerTest {
       Version[] dseVersions, GraphProtocol expectedProtocol) {
     // mock up the metadata for the context
     // using 'true' here will treat null test Versions as no DSE_VERSION info in the metadata
-    DseDriverContext context =
-        mockNodesInMetadataWithVersions(mock(DseDriverContext.class), true, dseVersions);
+    DefaultDriverContext context =
+        mockNodesInMetadataWithVersions(mock(DefaultDriverContext.class), true, dseVersions);
     GraphProtocol graphProtocol = new GraphSupportChecker().getDefaultGraphProtocol(context);
     assertThat(graphProtocol).isEqualTo(expectedProtocol);
   }
@@ -199,8 +199,8 @@ public class GraphSupportCheckerTest {
       Version[] dseVersions, GraphProtocol expectedProtocol) {
     // mock up the metadata for the context
     // using 'false' here will treat null test Versions as explicit NULL info for DSE_VERSION
-    DseDriverContext context =
-        mockNodesInMetadataWithVersions(mock(DseDriverContext.class), false, dseVersions);
+    DefaultDriverContext context =
+        mockNodesInMetadataWithVersions(mock(DefaultDriverContext.class), false, dseVersions);
     GraphProtocol graphProtocol = new GraphSupportChecker().getDefaultGraphProtocol(context);
     assertThat(graphProtocol).isEqualTo(expectedProtocol);
   }
@@ -261,8 +261,8 @@ public class GraphSupportCheckerTest {
     when(executionProfile.getString(eq(DseDriverOption.GRAPH_SUB_PROTOCOL)))
         .thenReturn(stringConfig);
 
-    DseDriverContext context =
-        mockNodesInMetadataWithVersions(mock(DseDriverContext.class), true, dseVersion);
+    DefaultDriverContext context =
+        mockNodesInMetadataWithVersions(mock(DefaultDriverContext.class), true, dseVersion);
     GraphProtocol inferredProtocol =
         new GraphSupportChecker().inferGraphProtocol(graphStatement, executionProfile, context);
     assertThat(inferredProtocol.toInternalCode()).isEqualTo(stringConfig);
@@ -287,8 +287,8 @@ public class GraphSupportCheckerTest {
   public void should_use_correct_default_protocol_when_parsing(Version dseVersion) {
     GraphStatement graphStatement = mock(GraphStatement.class);
     DriverExecutionProfile executionProfile = mock(DriverExecutionProfile.class);
-    DseDriverContext context =
-        mockNodesInMetadataWithVersions(mock(DseDriverContext.class), true, dseVersion);
+    DefaultDriverContext context =
+        mockNodesInMetadataWithVersions(mock(DefaultDriverContext.class), true, dseVersion);
     GraphProtocol inferredProtocol =
         new GraphSupportChecker().inferGraphProtocol(graphStatement, executionProfile, context);
     // For DSE 6.8 and newer, the default should be GraphSON binary

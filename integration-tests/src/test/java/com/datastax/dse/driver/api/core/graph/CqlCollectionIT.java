@@ -20,12 +20,12 @@ import static com.datastax.dse.driver.api.core.graph.predicates.CqlCollection.co
 import static com.datastax.dse.driver.api.core.graph.predicates.CqlCollection.entryEq;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.graph.predicates.CqlCollection;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRule;
-import com.datastax.dse.driver.api.testinfra.session.DseSessionRuleBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.session.CqlSessionRuleBuilder;
+import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -47,8 +47,8 @@ public class CqlCollectionIT {
   private static final CustomCcmRule CCM_RULE =
       CustomCcmRule.builder().withDseWorkloads("graph").build();
 
-  private static DseSessionRule SESSION_RULE =
-      new DseSessionRuleBuilder(CCM_RULE)
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      new CqlSessionRuleBuilder(CCM_RULE)
           .withCreateGraph()
           .withCoreEngine()
           .withGraphProtocol("graph-binary-1.0")
@@ -67,7 +67,7 @@ public class CqlCollectionIT {
     }
   }
 
-  private static final Collection<String> createSchema() {
+  private static Collection<String> createSchema() {
     return ImmutableList.of(
         "schema.vertexLabel('software').ifNotExists().partitionBy('name', Varchar)"
             + ".property('myList', listOf(Varchar))"
@@ -91,7 +91,7 @@ public class CqlCollectionIT {
 
   @Test
   public void should_apply_contains_predicate_to_non_frozen_list() {
-    DseSession session = SESSION_RULE.session();
+    CqlSession session = SESSION_RULE.session();
 
     List<String> myList1 = com.google.common.collect.ImmutableList.of("apple", "banana");
     List<String> myList2 = com.google.common.collect.ImmutableList.of("cranberry", "orange");
@@ -118,7 +118,7 @@ public class CqlCollectionIT {
 
   @Test
   public void should_apply_contains_predicate_to_non_frozen_set() {
-    DseSession session = SESSION_RULE.session();
+    CqlSession session = SESSION_RULE.session();
 
     Set<String> mySet1 = ImmutableSet.of("apple", "banana");
     Set<String> mySet2 = ImmutableSet.of("cranberry", "orange");
@@ -139,7 +139,7 @@ public class CqlCollectionIT {
 
   @Test
   public void should_apply_containsKey_predicate_to_non_frozen_map() {
-    DseSession session = SESSION_RULE.session();
+    CqlSession session = SESSION_RULE.session();
 
     Map<String, Integer> myMap1 = ImmutableMap.<String, Integer>builder().put("id1", 1).build();
     Map<String, Integer> myMap2 = ImmutableMap.<String, Integer>builder().put("id2", 2).build();
@@ -166,7 +166,7 @@ public class CqlCollectionIT {
 
   @Test
   public void should_apply_containsValue_predicate_to_non_frozen_map() {
-    DseSession session = SESSION_RULE.session();
+    CqlSession session = SESSION_RULE.session();
 
     Map<Integer, String> myMap1 = ImmutableMap.<Integer, String>builder().put(11, "abc").build();
     Map<Integer, String> myMap2 = ImmutableMap.<Integer, String>builder().put(22, "def").build();
@@ -197,7 +197,7 @@ public class CqlCollectionIT {
 
   @Test
   public void should_apply_entryEq_predicate_to_non_frozen_map() {
-    DseSession session = SESSION_RULE.session();
+    CqlSession session = SESSION_RULE.session();
 
     Map<Integer, String> myMap1 = ImmutableMap.<Integer, String>builder().put(11, "abc").build();
     Map<Integer, String> myMap2 = ImmutableMap.<Integer, String>builder().put(22, "def").build();

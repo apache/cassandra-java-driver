@@ -25,9 +25,9 @@ import static org.mockito.Mockito.when;
 
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
@@ -61,7 +61,7 @@ public class GraphNodeTest {
 
   @Before
   public void setup() {
-    DseDriverContext dseDriverContext = mock(DseDriverContext.class);
+    DefaultDriverContext dseDriverContext = mock(DefaultDriverContext.class);
     when(dseDriverContext.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
     when(dseDriverContext.getProtocolVersion()).thenReturn(DseProtocolVersion.DSE_V2);
 

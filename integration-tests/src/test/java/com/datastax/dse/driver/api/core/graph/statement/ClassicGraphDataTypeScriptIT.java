@@ -52,7 +52,7 @@ public class ClassicGraphDataTypeScriptIT extends ClassicGraphDataTypeITBase {
 
   @Override
   public CqlSession session() {
-    return sessionRule.session();
+    return SESSION_RULE.session();
   }
 
   @Override

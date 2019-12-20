@@ -18,13 +18,13 @@ package com.datastax.dse.driver.internal.core.graph.binary;
 import com.datastax.dse.driver.api.core.data.geometry.LineString;
 import com.datastax.dse.driver.api.core.data.geometry.Point;
 import com.datastax.dse.driver.api.core.data.geometry.Polygon;
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.dse.driver.internal.core.data.geometry.Distance;
 import com.datastax.dse.driver.internal.core.graph.EditDistance;
 import com.datastax.dse.driver.internal.core.graph.binary.buffer.DseNettyBufferFactory;
 import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.UnpooledByteBufAllocator;
 import java.io.IOException;
@@ -58,7 +58,7 @@ public class GraphBinaryModule {
   }
 
   public static TypeSerializerRegistry createDseTypeSerializerRegistry(
-      DseDriverContext driverContext) {
+      DefaultDriverContext driverContext) {
     return TypeSerializerRegistry.build()
         .addCustomType(CqlDuration.class, new CqlDurationSerializer())
         .addCustomType(Point.class, new PointSerializer())

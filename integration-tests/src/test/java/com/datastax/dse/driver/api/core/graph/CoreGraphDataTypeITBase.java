@@ -18,12 +18,12 @@ package com.datastax.dse.driver.api.core.graph;
 import static com.datastax.oss.driver.api.core.type.DataTypes.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.data.geometry.LineString;
 import com.datastax.dse.driver.api.core.data.geometry.Point;
 import com.datastax.dse.driver.api.core.data.geometry.Polygon;
 import com.datastax.dse.driver.api.core.graph.predicates.Geo;
 import com.datastax.dse.driver.api.core.type.DseDataTypes;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.type.TupleType;
@@ -45,13 +45,13 @@ import org.junit.Test;
 
 public abstract class CoreGraphDataTypeITBase {
 
-  protected abstract DseSession session();
+  protected abstract CqlSession session();
 
   protected abstract String graphName();
 
   @Test
   public void should_create_and_retrieve_correct_data_with_types() {
-    DseSession session = session();
+    CqlSession session = session();
 
     // use CQL to create type for now because DSP-17567 is not in yet, so this is more stable
     session.execute(
@@ -144,7 +144,7 @@ public abstract class CoreGraphDataTypeITBase {
 
   @Test
   public void should_insert_and_retrieve_nested_UDTS_and_tuples() {
-    DseSession session = session();
+    CqlSession session = session();
 
     // use CQL to create type for now because DSP-17567 is not in yet, so this is more stable
     session.execute(

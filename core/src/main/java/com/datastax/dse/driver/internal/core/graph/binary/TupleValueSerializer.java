@@ -15,10 +15,10 @@
  */
 package com.datastax.dse.driver.internal.core.graph.binary;
 
-import com.datastax.dse.driver.internal.core.context.DseDriverContext;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.TupleType;
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import java.io.IOException;
 import org.apache.tinkerpop.gremlin.structure.io.Buffer;
 import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryReader;
@@ -26,9 +26,9 @@ import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryWriter;
 
 public class TupleValueSerializer extends AbstractDynamicGraphBinaryCustomSerializer<TupleValue> {
 
-  private final DseDriverContext driverContext;
+  private final DefaultDriverContext driverContext;
 
-  public TupleValueSerializer(DseDriverContext driverContext) {
+  public TupleValueSerializer(DefaultDriverContext driverContext) {
     this.driverContext = driverContext;
   }
 

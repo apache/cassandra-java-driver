@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.osgi;
 
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.categories.IsolatedTests;
