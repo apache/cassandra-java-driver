@@ -72,7 +72,7 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
   protected final String logPrefix;
   private final TypeCodec<?>[] primitiveCodecs;
   private final CopyOnWriteArrayList<TypeCodec<?>> userCodecs = new CopyOnWriteArrayList<>();
-  private final IntMap<TypeCodec> primitiveCodecsByCode;
+  private final IntMap<TypeCodec<?>> primitiveCodecsByCode;
   private final Lock registerLock = new ReentrantLock();
 
   protected CachingCodecRegistry(
@@ -322,7 +322,7 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
   @NonNull
   protected GenericType<?> inspectType(@NonNull Object value, @Nullable DataType cqlType) {
     if (value instanceof List) {
-      List<?> list = (List) value;
+      List<?> list = (List<?>) value;
       if (list.isEmpty()) {
         // Empty collections are always encoded the same way, so any element type will do
         // in the absence of a CQL type. When the CQL type is known, we try to infer the best Java
@@ -341,7 +341,7 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
         return GenericType.listOf(elementType);
       }
     } else if (value instanceof Set) {
-      Set<?> set = (Set) value;
+      Set<?> set = (Set<?>) value;
       if (set.isEmpty()) {
         return cqlType == null ? JAVA_TYPE_FOR_EMPTY_SETS : inferJavaTypeFromCqlType(cqlType);
       } else {
@@ -357,7 +357,7 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
         return GenericType.setOf(elementType);
       }
     } else if (value instanceof Map) {
-      Map<?, ?> map = (Map) value;
+      Map<?, ?> map = (Map<?, ?>) value;
       if (map.isEmpty()) {
         return cqlType == null ? JAVA_TYPE_FOR_EMPTY_MAPS : inferJavaTypeFromCqlType(cqlType);
       } else {
@@ -375,6 +375,10 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
             inspectType(firstValue, cqlType == null ? null : ((MapType) cqlType).getValueType());
         return GenericType.mapOf(keyType, valueType);
       }
+    } else if (value instanceof UdtValue) {
+      return GenericType.UDT_VALUE;
+    } else if (value instanceof TupleValue) {
+      return GenericType.TUPLE_VALUE;
     } else {
       // There's not much more we can do
       return GenericType.of(value.getClass());
@@ -565,8 +569,8 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
     throw new CodecNotFoundException(cqlType, null);
   }
 
-  private static IntMap<TypeCodec> sortByProtocolCode(TypeCodec<?>[] codecs) {
-    IntMap.Builder<TypeCodec> builder = IntMap.builder();
+  private static IntMap<TypeCodec<?>> sortByProtocolCode(TypeCodec<?>[] codecs) {
+    IntMap.Builder<TypeCodec<?>> builder = IntMap.builder();
     for (TypeCodec<?> codec : codecs) {
       builder.put(codec.getCqlType().getProtocolCode(), codec);
     }
