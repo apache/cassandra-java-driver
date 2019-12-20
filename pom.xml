@@ -51,7 +51,6 @@
     <tinkerpop.osgi.version>3.4.5</tinkerpop.osgi.version>
     <slf4j.version>1.7.26</slf4j.version>
     <esri.version>1.2.1</esri.version>
-    <tinkerpop.version>3.4.3-20190731-199be4b5</tinkerpop.version>
     <reactive-streams.version>1.0.2</reactive-streams.version>
     <jackson.version>2.10.0</jackson.version>
     <jackson-databind.version>2.10.0</jackson-databind.version>
@@ -82,7 +81,6 @@
     <skipTests>false</skipTests>
     <skipUnitTests>${skipTests}</skipUnitTests>
   </properties>
-
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -186,6 +184,8 @@
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-annotations</artifactId>
         <version>3.1.12</version>
+      </dependency>
+      <dependency>
         <groupId>org.javatuples</groupId>
         <artifactId>javatuples</artifactId>
         <version>1.2</version>

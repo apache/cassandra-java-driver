@@ -307,11 +307,7 @@
                   Note: dependencies marked as optional are by default included with optional
                   resolution in the manifest; we only need to manually set the resolution to
                   optional for dependencies declared as non-optional in the pom files.
-                  -->
-                  org.reactivestreams.*;resolution:=optional,
-                  org.apache.tinkerpop.*;resolution:=optional,
-                  org.javatuples.*;resolution:=optional,
-                  *
+                  -->org.reactivestreams.*;resolution:=optional, org.apache.tinkerpop.*;resolution:=optional, org.javatuples.*;resolution:=optional, *
                 </Import-Package>
                 <!--
                 Export:
