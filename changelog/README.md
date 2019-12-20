@@ -9,6 +9,7 @@
 - [improvement] JAVA-2107: Add XML formatting plugin
 - [bug] JAVA-2527: Allow AllNodesFailedException to accept more than one error per node
 - [improvement] JAVA-2546: Abort schema refresh if a query fails
+- [bug] JAVA-2583: IS NOT NULL clause should be idempotent
 
 ### 4.3.1
 
