@@ -47,7 +47,6 @@ import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.dse.driver.api.core.metrics.DseNodeMetrics;
 import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
-import com.datastax.dse.driver.internal.core.graph.GraphRequestHandlerTestHarness.Builder;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.dse.protocol.internal.request.RawBytesQuery;
 import com.datastax.dse.protocol.internal.request.query.DseQueryOptions;
@@ -400,7 +399,7 @@ public class GraphRequestHandlerTest {
   public void should_return_results_for_statements(GraphProtocol graphProtocol, Version dseVersion)
       throws IOException {
 
-    Builder builder =
+    GraphRequestHandlerTestHarness.Builder builder =
         GraphRequestHandlerTestHarness.builder()
             .withGraphProtocolForTestConfig(graphProtocol)
             .withDseVersionInMetadata(dseVersion);
@@ -468,7 +467,7 @@ public class GraphRequestHandlerTest {
             DseNodeMetrics.GRAPH_MESSAGES, DriverExecutionProfile.DEFAULT_NAME))
         .thenReturn(true);
 
-    Builder builder =
+    GraphRequestHandlerTestHarness.Builder builder =
         GraphRequestHandlerTestHarness.builder()
             .withGraphProtocolForTestConfig(graphProtocol)
             .withDseVersionInMetadata(dseVersion);

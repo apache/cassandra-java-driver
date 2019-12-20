@@ -210,7 +210,7 @@ public abstract class GraphTraversalRemoteITBase {
       if (result.get("a").equals("lop")) {
         if (isGraphBinary()) {
           // should contain three vertices
-          assertThat((vertices).size()).isEqualTo(3);
+          assertThat(vertices.size()).isEqualTo(3);
         } else {
           // lop, 'c' should contain marko, josh, peter.
           assertThat(vertices)
@@ -220,7 +220,7 @@ public abstract class GraphTraversalRemoteITBase {
       } else {
         if (isGraphBinary()) {
           // has only one label
-          assertThat((vertices).size()).isEqualTo(1);
+          assertThat(vertices.size()).isEqualTo(1);
         } else {
           assertThat(vertices)
               .extracting(vertex -> vertex.property("name").value())

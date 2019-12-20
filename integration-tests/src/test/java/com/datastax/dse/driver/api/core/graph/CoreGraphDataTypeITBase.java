@@ -39,6 +39,7 @@ import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Map;
 import org.junit.Test;
@@ -76,7 +77,7 @@ public abstract class CoreGraphDataTypeITBase {
             .put("Int", 45)
             .put("Smallint", (short) 1)
             .put("Text", "test")
-            .put("Time", LocalTime.now())
+            .put("Time", LocalTime.now(ZoneId.systemDefault()))
             .put("Timeuuid", Uuids.timeBased())
             .put("Timestamp", Instant.now())
             .put("Uuid", java.util.UUID.randomUUID())

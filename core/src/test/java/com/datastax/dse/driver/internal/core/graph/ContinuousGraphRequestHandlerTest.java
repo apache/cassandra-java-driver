@@ -35,7 +35,6 @@ import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.dse.driver.api.core.metrics.DseNodeMetrics;
 import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
-import com.datastax.dse.driver.internal.core.graph.GraphRequestHandlerTestHarness.Builder;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -80,7 +79,7 @@ public class ContinuousGraphRequestHandlerTest {
 
     GraphBinaryModule module = createGraphBinaryModule(mockContext);
 
-    Builder builder =
+    GraphRequestHandlerTestHarness.Builder builder =
         GraphRequestHandlerTestHarness.builder().withGraphProtocolForTestConfig(graphProtocol);
     PoolBehavior node1Behavior = builder.customBehavior(node);
 
