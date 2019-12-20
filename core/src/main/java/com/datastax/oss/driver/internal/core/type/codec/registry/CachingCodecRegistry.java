@@ -15,10 +15,12 @@
  */
 package com.datastax.oss.driver.internal.core.type.codec.registry;
 
+import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.type.CustomType;
 import com.datastax.oss.driver.api.core.type.DataType;
+import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.ListType;
 import com.datastax.oss.driver.api.core.type.MapType;
 import com.datastax.oss.driver.api.core.type.SetType;
@@ -37,10 +39,18 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -243,12 +253,6 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
       }
     }
 
-    if (value instanceof TupleValue) {
-      return uncheckedCast(codecFor(cqlType, TupleValue.class));
-    } else if (value instanceof UdtValue) {
-      return uncheckedCast(codecFor(cqlType, UdtValue.class));
-    }
-
     GenericType<?> javaType = inspectType(value, cqlType);
     LOG.trace("[{}] Continuing based on inferred type {}", logPrefix, javaType);
     return uncheckedCast(getCachedCodec(cqlType, javaType, true));
@@ -273,15 +277,10 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
       }
     }
 
-    if (value instanceof TupleValue) {
-      return uncheckedCast(codecFor(((TupleValue) value).getType(), TupleValue.class));
-    } else if (value instanceof UdtValue) {
-      return uncheckedCast(codecFor(((UdtValue) value).getType(), UdtValue.class));
-    }
-
-    GenericType<?> javaType = inspectType(value, null);
+    DataType cqlType = inferCqlTypeFromValue(value);
+    GenericType<?> javaType = inspectType(value, cqlType);
     LOG.trace("[{}] Continuing based on inferred type {}", logPrefix, javaType);
-    return uncheckedCast(getCachedCodec(null, javaType, true));
+    return uncheckedCast(getCachedCodec(cqlType, javaType, true));
   }
 
   @NonNull
@@ -375,10 +374,6 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
             inspectType(firstValue, cqlType == null ? null : ((MapType) cqlType).getValueType());
         return GenericType.mapOf(keyType, valueType);
       }
-    } else if (value instanceof UdtValue) {
-      return GenericType.UDT_VALUE;
-    } else if (value instanceof TupleValue) {
-      return GenericType.TUPLE_VALUE;
     } else {
       // There's not much more we can do
       return GenericType.of(value.getClass());
@@ -445,6 +440,105 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
       default:
         throw new CodecNotFoundException(cqlType, null);
     }
+  }
+
+  @Nullable
+  protected DataType inferCqlTypeFromValue(@NonNull Object value) {
+    if (value instanceof List) {
+      List<?> list = (List<?>) value;
+      if (list.isEmpty()) {
+        return CQL_TYPE_FOR_EMPTY_LISTS;
+      }
+      Object firstElement = list.get(0);
+      if (firstElement == null) {
+        throw new IllegalArgumentException(
+            "Can't infer list codec because the first element is null "
+                + "(note that CQL does not allow null values in collections)");
+      }
+      DataType elementType = inferCqlTypeFromValue(firstElement);
+      if (elementType == null) {
+        return null;
+      }
+      return DataTypes.listOf(elementType);
+    } else if (value instanceof Set) {
+      Set<?> set = (Set<?>) value;
+      if (set.isEmpty()) {
+        return CQL_TYPE_FOR_EMPTY_SETS;
+      }
+      Object firstElement = set.iterator().next();
+      if (firstElement == null) {
+        throw new IllegalArgumentException(
+            "Can't infer set codec because the first element is null "
+                + "(note that CQL does not allow null values in collections)");
+      }
+      DataType elementType = inferCqlTypeFromValue(firstElement);
+      if (elementType == null) {
+        return null;
+      }
+      return DataTypes.setOf(elementType);
+    } else if (value instanceof Map) {
+      Map<?, ?> map = (Map<?, ?>) value;
+      if (map.isEmpty()) {
+        return CQL_TYPE_FOR_EMPTY_MAPS;
+      }
+      Entry<?, ?> firstEntry = map.entrySet().iterator().next();
+      Object firstKey = firstEntry.getKey();
+      Object firstValue = firstEntry.getValue();
+      if (firstKey == null || firstValue == null) {
+        throw new IllegalArgumentException(
+            "Can't infer map codec because the first key and/or value is null "
+                + "(note that CQL does not allow null values in collections)");
+      }
+      DataType keyType = inferCqlTypeFromValue(firstKey);
+      DataType valueType = inferCqlTypeFromValue(firstValue);
+      if (keyType == null || valueType == null) {
+        return null;
+      }
+      return DataTypes.mapOf(keyType, valueType);
+    }
+    Class<?> javaClass = value.getClass();
+    if (ByteBuffer.class.isAssignableFrom(javaClass)) {
+      return DataTypes.BLOB;
+    } else if (String.class.equals(javaClass)) {
+      return DataTypes.TEXT;
+    } else if (Long.class.equals(javaClass)) {
+      return DataTypes.BIGINT;
+    } else if (Boolean.class.equals(javaClass)) {
+      return DataTypes.BOOLEAN;
+    } else if (BigDecimal.class.equals(javaClass)) {
+      return DataTypes.DECIMAL;
+    } else if (Double.class.equals(javaClass)) {
+      return DataTypes.DOUBLE;
+    } else if (Float.class.equals(javaClass)) {
+      return DataTypes.FLOAT;
+    } else if (Integer.class.equals(javaClass)) {
+      return DataTypes.INT;
+    } else if (Instant.class.equals(javaClass)) {
+      return DataTypes.TIMESTAMP;
+    } else if (UUID.class.equals(javaClass)) {
+      return DataTypes.UUID;
+    } else if (BigInteger.class.equals(javaClass)) {
+      return DataTypes.VARINT;
+    } else if (InetAddress.class.isAssignableFrom(javaClass)) {
+      return DataTypes.INET;
+    } else if (LocalDate.class.equals(javaClass)) {
+      return DataTypes.DATE;
+    } else if (LocalTime.class.equals(javaClass)) {
+      return DataTypes.TIME;
+    } else if (Short.class.equals(javaClass)) {
+      return DataTypes.SMALLINT;
+    } else if (Byte.class.equals(javaClass)) {
+      return DataTypes.TINYINT;
+    } else if (CqlDuration.class.equals(javaClass)) {
+      return DataTypes.DURATION;
+    } else if (UdtValue.class.isAssignableFrom(javaClass)) {
+      return ((UdtValue) value).getType();
+    } else if (TupleValue.class.isAssignableFrom(javaClass)) {
+      return ((TupleValue) value).getType();
+    }
+    // This might mean that the java type is a custom type with a custom codec,
+    // so don't throw CodecNotFoundException just yet.
+    return null;
   }
 
   // Try to create a codec when we haven't found it in the cache
@@ -594,4 +688,8 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
       GenericType.setOf(Boolean.class);
   private static final GenericType<Map<Boolean, Boolean>> JAVA_TYPE_FOR_EMPTY_MAPS =
       GenericType.mapOf(Boolean.class, Boolean.class);
+  private static final DataType CQL_TYPE_FOR_EMPTY_LISTS = DataTypes.listOf(DataTypes.BOOLEAN);
+  private static final DataType CQL_TYPE_FOR_EMPTY_SETS = DataTypes.setOf(DataTypes.BOOLEAN);
+  private static final DataType CQL_TYPE_FOR_EMPTY_MAPS =
+      DataTypes.mapOf(DataTypes.BOOLEAN, DataTypes.BOOLEAN);
 }
