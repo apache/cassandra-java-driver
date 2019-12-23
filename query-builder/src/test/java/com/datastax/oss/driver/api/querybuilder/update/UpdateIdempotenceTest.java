@@ -129,6 +129,29 @@ public class UpdateIdempotenceTest {
                 .isEqualTo(bindMarker()))
         .hasCql("UPDATE foo SET m=m+{1:'bar'} WHERE k=?")
         .isIdempotent();
+
+    // Also, removals are always safe:
+    assertThat(
+            update("foo")
+                .removeListElement("l", literal(1))
+                .whereColumn("k")
+                .isEqualTo(bindMarker()))
+        .hasCql("UPDATE foo SET l=l-[1] WHERE k=?")
+        .isIdempotent();
+    assertThat(
+            update("foo")
+                .removeSetElement("s", literal(1))
+                .whereColumn("k")
+                .isEqualTo(bindMarker()))
+        .hasCql("UPDATE foo SET s=s-{1} WHERE k=?")
+        .isIdempotent();
+    assertThat(
+            update("foo")
+                .removeMapEntry("m", literal(1), literal("bar"))
+                .whereColumn("k")
+                .isEqualTo(bindMarker()))
+        .hasCql("UPDATE foo SET m=m-{1:'bar'} WHERE k=?")
+        .isIdempotent();
   }
 
   @Test
@@ -147,5 +170,13 @@ public class UpdateIdempotenceTest {
                 .isEqualTo(bindMarker()))
         .hasCql("UPDATE foo SET l=[1,2,3]+l WHERE k=?")
         .isNotIdempotent();
+    // However, removals are always safe:
+    assertThat(
+            update("foo")
+                .remove("l", literal(Arrays.asList(1, 2, 3)))
+                .whereColumn("k")
+                .isEqualTo(bindMarker()))
+        .hasCql("UPDATE foo SET l=l-[1,2,3] WHERE k=?")
+        .isIdempotent();
   }
 }

@@ -64,8 +64,9 @@ public abstract class CollectionAssignment implements Assignment {
 
   @Override
   public boolean isIdempotent() {
-    // Not idempotent for lists, be pessimistic
-    return false;
+    // REMOVE is idempotent if the collection being removed is idempotent; APPEND and PREPEND are
+    // not idempotent for lists, so be pessimistic
+    return operator == Operator.REMOVE && value.isIdempotent();
   }
 
   @NonNull

@@ -26,9 +26,4 @@ public class RemoveListElementAssignment extends CollectionElementAssignment {
   public RemoveListElementAssignment(@NonNull CqlIdentifier columnId, @NonNull Term element) {
     super(columnId, Operator.REMOVE, null, element, '[', ']');
   }
-
-  @Override
-  public boolean isIdempotent() {
-    return false;
-  }
 }

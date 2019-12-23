@@ -116,6 +116,45 @@ Statement statement =
 assert !statement.isIdempotent();
 ```
 
+The generic `remove` method is however safe since collection removals are idempotent:
+
+```java
+Statement statement =
+    update("foo")
+        .remove("l", literal(Arrays.asList(1, 2, 3)))
+        .whereColumn("k").isEqualTo(bindMarker())
+        .build();
+// UPDATE foo SET l=l-[1,2,3] WHERE k=?
+assert !statement.isIdempotent();
+```
+
+When appending, prepending or removing a single element to/from a collection, it is possible to use 
+the dedicated methods listed below; their idempotence depends on the collection type (list, set or 
+map), the operation (append, prepend or removal) and on the idempotence of the element being 
+added/removed:
+
+1. `appendListElement` : not idempotent
+2. `prependListElement` : not idempotent
+3. `removeListElement` : idempotent if element is idempotent
+4. `appendSetElement` : idempotent if element is idempotent
+5. `prependSetElement` : idempotent if element is idempotent
+6. `removeSetElement` : idempotent if element is idempotent
+7. `appendMapElement` : idempotent if both key and value are idempotent
+8. `prependMapElement` : idempotent if both key and value are idempotent
+9. `removeMapElement` : idempotent if both key and value are idempotent
+
+For example, the following statement is idempotent:
+
+```java
+Statement statement =
+    update("foo")
+        .removeListElement("l", literal(1))
+        .whereColumn("k").isEqualTo(bindMarker())
+        .build();
+// UPDATE foo SET l=l-[1] WHERE k=?
+assert statement.isIdempotent();
+```
+
 ### Unsafe deletions
 
 Deleting from a list is not idempotent:
