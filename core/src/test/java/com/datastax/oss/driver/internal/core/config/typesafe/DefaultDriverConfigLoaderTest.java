@@ -208,4 +208,19 @@ public class DefaultDriverConfigLoaderTest {
     assertThat(config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
         .isEqualTo(DefaultConsistencyLevel.SERIAL.name());
   }
+
+  @Test
+  public void should_return_failed_future_if_reloading_not_supported() {
+    DefaultDriverConfigLoader loader =
+        new DefaultDriverConfigLoader(() -> ConfigFactory.parseString(configSource.get()), false);
+    assertThat(loader.supportsReloading()).isFalse();
+    CompletionStage<Boolean> stage = loader.reload();
+    assertThatStage(stage)
+        .isFailed(
+            t ->
+                assertThat(t)
+                    .isInstanceOf(UnsupportedOperationException.class)
+                    .hasMessage(
+                        "This instance of DefaultDriverConfigLoader does not support reloading"));
+  }
 }

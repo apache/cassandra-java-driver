@@ -25,6 +25,7 @@ import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.Loggers;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -40,7 +41,10 @@ import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** The default loader; it is based on Typesafe Config and reloads at a configurable interval. */
+/**
+ * The default loader; it is based on Typesafe Config and optionally reloads at a configurable
+ * interval.
+ */
 @ThreadSafe
 public class DefaultDriverConfigLoader implements DriverConfigLoader {
 
@@ -56,12 +60,14 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
 
   private final Supplier<Config> configSupplier;
   private final TypesafeDriverConfig driverConfig;
+  private final boolean supportsReloading;
 
   private volatile SingleThreaded singleThreaded;
 
   /**
    * Builds a new instance with the default Typesafe config loading rules (documented in {@link
-   * SessionBuilder#withConfigLoader(DriverConfigLoader)}) and the core driver options.
+   * SessionBuilder#withConfigLoader(DriverConfigLoader)}) and the core driver options. This
+   * constructor enables config reloading (that is, {@link #supportsReloading} will return true).
    */
   public DefaultDriverConfigLoader() {
     this(DEFAULT_CONFIG_SUPPLIER);
@@ -69,11 +75,28 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
 
   /**
    * Builds an instance with custom arguments, if you want to load the configuration from somewhere
-   * else.
+   * else. This constructor enables config reloading (that is, {@link #supportsReloading} will
+   * return true).
+   *
+   * @param configSupplier A supplier for the Typesafe {@link Config}; it will be invoked once when
+   *     this object is instantiated, and at each reload attempt, if reloading is enabled.
    */
   public DefaultDriverConfigLoader(Supplier<Config> configSupplier) {
+    this(configSupplier, true);
+  }
+
+  /**
+   * Builds an instance with custom arguments, if you want to load the configuration from somewhere
+   * else and/or modify config reload behavior.
+   *
+   * @param configSupplier A supplier for the Typesafe {@link Config}; it will be invoked once when
+   *     this object is instantiated, and at each reload attempt, if reloading is enabled.
+   * @param supportsReloading Whether config reloading should be enabled or not.
+   */
+  public DefaultDriverConfigLoader(Supplier<Config> configSupplier, boolean supportsReloading) {
     this.configSupplier = configSupplier;
     this.driverConfig = new TypesafeDriverConfig(configSupplier.get());
+    this.supportsReloading = supportsReloading;
   }
 
   @NonNull
@@ -89,15 +112,21 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
 
   @NonNull
   @Override
-  public CompletionStage<Boolean> reload() {
-    CompletableFuture<Boolean> result = new CompletableFuture<>();
-    RunOrSchedule.on(singleThreaded.adminExecutor, () -> singleThreaded.reload(result));
-    return result;
+  public final CompletionStage<Boolean> reload() {
+    if (supportsReloading) {
+      CompletableFuture<Boolean> result = new CompletableFuture<>();
+      RunOrSchedule.on(singleThreaded.adminExecutor, () -> singleThreaded.reload(result));
+      return result;
+    } else {
+      return CompletableFutures.failedFuture(
+          new UnsupportedOperationException(
+              "This instance of DefaultDriverConfigLoader does not support reloading"));
+    }
   }
 
   @Override
-  public boolean supportsReloading() {
-    return true;
+  public final boolean supportsReloading() {
+    return supportsReloading;
   }
 
   /** For internal use only, this leaks a Typesafe config type. */

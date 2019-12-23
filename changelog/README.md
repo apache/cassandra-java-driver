@@ -4,6 +4,7 @@
 
 ### 4.5.0 (in progress)
 
+- [improvement] JAVA-2592: Make reload support parameterizable for DefaultDriverConfigLoader
 - [new feature] JAVA-2263: Add optional schema validation to the mapper
 
 ### 4.4.0
