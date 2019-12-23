@@ -237,21 +237,27 @@ public interface DriverConfigLoader extends AutoCloseable {
   void onDriverInit(@NonNull DriverContext context);
 
   /**
-   * Triggers an immediate reload attempt.
+   * Triggers an immediate reload attempt and returns a stage that completes once the attempt is
+   * finished, with a boolean indicating whether the configuration changed as a result of this
+   * reload.
    *
-   * @return a stage that completes once the attempt is finished, with a boolean indicating whether
-   *     the configuration changed as a result of this reload. If so, it's also guaranteed that
-   *     internal driver components have been notified by that time; note however that some react to
-   *     the notification asynchronously, so they may not have completely applied all resulting
-   *     changes yet. If this loader does not support programmatic reloading &mdash; which you can
-   *     check by calling {@link #supportsReloading()} before this method &mdash; the returned
-   *     object will fail immediately with an {@link UnsupportedOperationException}.
+   * <p>If so, it's also guaranteed that internal driver components have been notified by that time;
+   * note however that some react to the notification asynchronously, so they may not have
+   * completely applied all resulting changes yet.
+   *
+   * <p>If this loader does not support programmatic reloading &mdash; which you can check by
+   * calling {@link #supportsReloading()} before this method &mdash; the returned stage should fail
+   * immediately with an {@link UnsupportedOperationException}. The default implementation of this
+   * interface does support programmatic reloading however, and never returns a failed stage.
    */
   @NonNull
   CompletionStage<Boolean> reload();
 
   /**
    * Whether this implementation supports programmatic reloading with the {@link #reload()} method.
+   *
+   * <p>The default implementation of this interface does support programmatic reloading and always
+   * returns <code>true</code>.
    */
   boolean supportsReloading();
 
