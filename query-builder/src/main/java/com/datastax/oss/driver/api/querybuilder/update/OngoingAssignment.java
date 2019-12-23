@@ -106,27 +106,53 @@ public interface OngoingAssignment {
   /**
    * Assigns a value to an entry in a map column, as in {@code SET map[?]=?}.
    *
-   * <p>This is a shortcut for {@link #set(Assignment) set(Assignment.setMapValue(columnId, index,
+   * <p>This is a shortcut for {@link #set(Assignment) set(Assignment.setMapValue(columnId, key,
    * value))}.
    *
    * @see Assignment#setMapValue(CqlIdentifier, Term, Term)
    */
   @NonNull
   default UpdateWithAssignments setMapValue(
-      @NonNull CqlIdentifier columnId, @NonNull Term index, @NonNull Term value) {
-    return set(Assignment.setMapValue(columnId, index, value));
+      @NonNull CqlIdentifier columnId, @NonNull Term key, @NonNull Term value) {
+    return set(Assignment.setMapValue(columnId, key, value));
   }
 
   /**
    * Shortcut for {@link #setMapValue(CqlIdentifier, Term, Term)
-   * setMapValue(CqlIdentifier.fromCql(columnName), index, value)}.
+   * setMapValue(CqlIdentifier.fromCql(columnName), key, value)}.
    *
    * @see Assignment#setMapValue(String, Term, Term)
    */
   @NonNull
   default UpdateWithAssignments setMapValue(
+      @NonNull String columnName, @NonNull Term key, @NonNull Term value) {
+    return setMapValue(CqlIdentifier.fromCql(columnName), key, value);
+  }
+
+  /**
+   * Assigns a value to an index in a list column, as in {@code SET list[?]=?}.
+   *
+   * <p>This is a shortcut for {@link #set(Assignment) set(Assignment.setListValue(columnId, index,
+   * value))}.
+   *
+   * @see Assignment#setListValue(CqlIdentifier, Term, Term)
+   */
+  @NonNull
+  default UpdateWithAssignments setListValue(
+      @NonNull CqlIdentifier columnId, @NonNull Term index, @NonNull Term value) {
+    return set(Assignment.setListValue(columnId, index, value));
+  }
+
+  /**
+   * Shortcut for {@link #setListValue(CqlIdentifier, Term, Term)
+   * setListValue(CqlIdentifier.fromCql(columnName), index, value)}.
+   *
+   * @see Assignment#setListValue(String, Term, Term)
+   */
+  @NonNull
+  default UpdateWithAssignments setListValue(
       @NonNull String columnName, @NonNull Term index, @NonNull Term value) {
-    return setMapValue(CqlIdentifier.fromCql(columnName), index, value);
+    return setListValue(CqlIdentifier.fromCql(columnName), index, value);
   }
 
   /**

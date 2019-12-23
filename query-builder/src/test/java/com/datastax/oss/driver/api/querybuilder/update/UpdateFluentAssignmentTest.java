@@ -61,6 +61,16 @@ public class UpdateFluentAssignmentTest {
   }
 
   @Test
+  public void should_generate_list_value_assignment() {
+    assertThat(
+            update("foo")
+                .setListValue("features", literal(1), bindMarker())
+                .whereColumn("k")
+                .isEqualTo(bindMarker()))
+        .hasCql("UPDATE foo SET features[1]=? WHERE k=?");
+  }
+
+  @Test
   public void should_generate_counter_operations() {
     assertThat(update("foo").increment("c").whereColumn("k").isEqualTo(bindMarker()))
         .hasCql("UPDATE foo SET c+=1 WHERE k=?");
