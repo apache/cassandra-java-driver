@@ -20,11 +20,10 @@ import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.api.querybuilder.update.Assignment;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public abstract class CollectionElementAssignment implements Assignment {
+public abstract class CollectionAssignment implements Assignment {
 
   public enum Operator {
     APPEND("%1$s=%1$s+%2$s"),
@@ -41,26 +40,15 @@ public abstract class CollectionElementAssignment implements Assignment {
 
   private final CqlIdentifier columnId;
   private final Operator operator;
-  private final Term key;
   private final Term value;
-  private final char opening;
-  private final char closing;
 
-  protected CollectionElementAssignment(
-      @NonNull CqlIdentifier columnId,
-      @NonNull Operator operator,
-      @Nullable Term key,
-      @NonNull Term value,
-      char opening,
-      char closing) {
+  protected CollectionAssignment(
+      @NonNull CqlIdentifier columnId, @NonNull Operator operator, @NonNull Term value) {
     Preconditions.checkNotNull(columnId);
     Preconditions.checkNotNull(value);
     this.columnId = columnId;
     this.operator = operator;
-    this.key = key;
     this.value = value;
-    this.opening = opening;
-    this.closing = closing;
   }
 
   @Override
@@ -70,18 +58,14 @@ public abstract class CollectionElementAssignment implements Assignment {
 
   private String buildRightOperand() {
     StringBuilder builder = new StringBuilder();
-    builder.append(opening);
-    if (key != null) {
-      key.appendTo(builder);
-      builder.append(':');
-    }
     value.appendTo(builder);
-    return builder.append(closing).toString();
+    return builder.toString();
   }
 
   @Override
   public boolean isIdempotent() {
-    return (key == null || key.isIdempotent()) && value.isIdempotent();
+    // Not idempotent for lists, be pessimistic
+    return false;
   }
 
   @NonNull
@@ -89,21 +73,8 @@ public abstract class CollectionElementAssignment implements Assignment {
     return columnId;
   }
 
-  @Nullable
-  public Term getKey() {
-    return key;
-  }
-
   @NonNull
   public Term getValue() {
     return value;
-  }
-
-  public char getOpening() {
-    return opening;
-  }
-
-  public char getClosing() {
-    return closing;
   }
 }

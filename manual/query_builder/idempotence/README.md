@@ -99,7 +99,7 @@ Statement statement =
         .appendListElement("l", literal(1))
         .whereColumn("k").isEqualTo(bindMarker())
         .build();
-// UPDATE foo SET l+=[1] WHERE k=?
+// UPDATE foo SET l=l+[1] WHERE k=?
 assert !statement.isIdempotent();
 ```
 

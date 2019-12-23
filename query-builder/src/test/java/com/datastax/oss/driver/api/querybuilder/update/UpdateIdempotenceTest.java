@@ -104,7 +104,7 @@ public class UpdateIdempotenceTest {
                 .appendListElement("l", literal(1))
                 .whereColumn("k")
                 .isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET l+=[1] WHERE k=?")
+        .hasCql("UPDATE foo SET l=l+[1] WHERE k=?")
         .isNotIdempotent();
     assertThat(
             update("foo")
@@ -120,14 +120,14 @@ public class UpdateIdempotenceTest {
                 .appendSetElement("s", literal(1))
                 .whereColumn("k")
                 .isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET s+={1} WHERE k=?")
+        .hasCql("UPDATE foo SET s=s+{1} WHERE k=?")
         .isIdempotent();
     assertThat(
             update("foo")
                 .appendMapEntry("m", literal(1), literal("bar"))
                 .whereColumn("k")
                 .isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET m+={1:'bar'} WHERE k=?")
+        .hasCql("UPDATE foo SET m=m+{1:'bar'} WHERE k=?")
         .isIdempotent();
   }
 
@@ -138,7 +138,7 @@ public class UpdateIdempotenceTest {
                 .append("l", literal(Arrays.asList(1, 2, 3)))
                 .whereColumn("k")
                 .isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET l+=[1,2,3] WHERE k=?")
+        .hasCql("UPDATE foo SET l=l+[1,2,3] WHERE k=?")
         .isNotIdempotent();
     assertThat(
             update("foo")

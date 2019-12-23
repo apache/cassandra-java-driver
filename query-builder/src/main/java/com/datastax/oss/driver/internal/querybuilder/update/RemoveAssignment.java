@@ -21,9 +21,9 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class PrependAssignment extends CollectionAssignment {
+public class RemoveAssignment extends CollectionAssignment {
 
-  public PrependAssignment(@NonNull CqlIdentifier columnId, @NonNull Term prefix) {
-    super(columnId, Operator.PREPEND, prefix);
+  public RemoveAssignment(@NonNull CqlIdentifier columnId, @NonNull Term value) {
+    super(columnId, Operator.REMOVE, value);
   }
 }

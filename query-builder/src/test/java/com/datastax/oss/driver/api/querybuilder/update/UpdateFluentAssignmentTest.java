@@ -82,15 +82,15 @@ public class UpdateFluentAssignmentTest {
     Literal listLiteral = literal(ImmutableList.of(1, 2, 3));
 
     assertThat(update("foo").append("l", bindMarker()).whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET l+=? WHERE k=?");
+        .hasCql("UPDATE foo SET l=l+? WHERE k=?");
     assertThat(update("foo").append("l", listLiteral).whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET l+=[1,2,3] WHERE k=?");
+        .hasCql("UPDATE foo SET l=l+[1,2,3] WHERE k=?");
     assertThat(
             update("foo")
                 .appendListElement("l", bindMarker())
                 .whereColumn("k")
                 .isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET l+=[?] WHERE k=?");
+        .hasCql("UPDATE foo SET l=l+[?] WHERE k=?");
 
     assertThat(update("foo").prepend("l", bindMarker()).whereColumn("k").isEqualTo(bindMarker()))
         .hasCql("UPDATE foo SET l=?+l WHERE k=?");
@@ -104,15 +104,15 @@ public class UpdateFluentAssignmentTest {
         .hasCql("UPDATE foo SET l=[?]+l WHERE k=?");
 
     assertThat(update("foo").remove("l", bindMarker()).whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET l-=? WHERE k=?");
+        .hasCql("UPDATE foo SET l=l-? WHERE k=?");
     assertThat(update("foo").remove("l", listLiteral).whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET l-=[1,2,3] WHERE k=?");
+        .hasCql("UPDATE foo SET l=l-[1,2,3] WHERE k=?");
     assertThat(
             update("foo")
                 .removeListElement("l", bindMarker())
                 .whereColumn("k")
                 .isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET l-=[?] WHERE k=?");
+        .hasCql("UPDATE foo SET l=l-[?] WHERE k=?");
   }
 
   @Test
@@ -120,15 +120,15 @@ public class UpdateFluentAssignmentTest {
     Literal setLiteral = literal(ImmutableSet.of(1, 2, 3));
 
     assertThat(update("foo").append("s", bindMarker()).whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET s+=? WHERE k=?");
+        .hasCql("UPDATE foo SET s=s+? WHERE k=?");
     assertThat(update("foo").append("s", setLiteral).whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET s+={1,2,3} WHERE k=?");
+        .hasCql("UPDATE foo SET s=s+{1,2,3} WHERE k=?");
     assertThat(
             update("foo")
                 .appendSetElement("s", bindMarker())
                 .whereColumn("k")
                 .isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET s+={?} WHERE k=?");
+        .hasCql("UPDATE foo SET s=s+{?} WHERE k=?");
 
     assertThat(update("foo").prepend("s", bindMarker()).whereColumn("k").isEqualTo(bindMarker()))
         .hasCql("UPDATE foo SET s=?+s WHERE k=?");
@@ -142,15 +142,15 @@ public class UpdateFluentAssignmentTest {
         .hasCql("UPDATE foo SET s={?}+s WHERE k=?");
 
     assertThat(update("foo").remove("s", bindMarker()).whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET s-=? WHERE k=?");
+        .hasCql("UPDATE foo SET s=s-? WHERE k=?");
     assertThat(update("foo").remove("s", setLiteral).whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET s-={1,2,3} WHERE k=?");
+        .hasCql("UPDATE foo SET s=s-{1,2,3} WHERE k=?");
     assertThat(
             update("foo")
                 .removeSetElement("s", bindMarker())
                 .whereColumn("k")
                 .isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET s-={?} WHERE k=?");
+        .hasCql("UPDATE foo SET s=s-{?} WHERE k=?");
   }
 
   @Test
@@ -158,15 +158,15 @@ public class UpdateFluentAssignmentTest {
     Literal mapLiteral = literal(ImmutableMap.of(1, "foo", 2, "bar"));
 
     assertThat(update("foo").append("m", bindMarker()).whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET m+=? WHERE k=?");
+        .hasCql("UPDATE foo SET m=m+? WHERE k=?");
     assertThat(update("foo").append("m", mapLiteral).whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET m+={1:'foo',2:'bar'} WHERE k=?");
+        .hasCql("UPDATE foo SET m=m+{1:'foo',2:'bar'} WHERE k=?");
     assertThat(
             update("foo")
                 .appendMapEntry("m", literal(1), literal("foo"))
                 .whereColumn("k")
                 .isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET m+={1:'foo'} WHERE k=?");
+        .hasCql("UPDATE foo SET m=m+{1:'foo'} WHERE k=?");
 
     assertThat(update("foo").prepend("m", bindMarker()).whereColumn("k").isEqualTo(bindMarker()))
         .hasCql("UPDATE foo SET m=?+m WHERE k=?");
@@ -180,14 +180,14 @@ public class UpdateFluentAssignmentTest {
         .hasCql("UPDATE foo SET m={1:'foo'}+m WHERE k=?");
 
     assertThat(update("foo").remove("m", bindMarker()).whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET m-=? WHERE k=?");
+        .hasCql("UPDATE foo SET m=m-? WHERE k=?");
     assertThat(update("foo").remove("m", mapLiteral).whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET m-={1:'foo',2:'bar'} WHERE k=?");
+        .hasCql("UPDATE foo SET m=m-{1:'foo',2:'bar'} WHERE k=?");
     assertThat(
             update("foo")
                 .removeMapEntry("m", literal(1), literal("foo"))
                 .whereColumn("k")
                 .isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET m-={1:'foo'} WHERE k=?");
+        .hasCql("UPDATE foo SET m=m-{1:'foo'} WHERE k=?");
   }
 }
