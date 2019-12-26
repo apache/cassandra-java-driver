@@ -31,7 +31,8 @@ import java.util.Map.Entry;
 
 /**
  * Thrown when a query failed on all the coordinators it was tried on. This exception may wrap
- * multiple errors, use {@link #getAllErrors()} to inspect individual problems on each node.
+ * multiple {@linkplain #getSuppressed() suppressed exceptions}, use {@link #getAllErrors()} to
+ * inspect individual problems on each node.
  */
 public class AllNodesFailedException extends DriverException {
 
@@ -65,6 +66,7 @@ public class AllNodesFailedException extends DriverException {
       @NonNull Map<Node, Throwable> errors) {
     super(message, executionInfo, null, true);
     this.errors = toDeepImmutableMap(groupByNode(errors));
+    addSuppressedErrors();
   }
 
   protected AllNodesFailedException(
@@ -73,6 +75,15 @@ public class AllNodesFailedException extends DriverException {
       @NonNull Iterable<Entry<Node, List<Throwable>>> errors) {
     super(message, executionInfo, null, true);
     this.errors = toDeepImmutableMap(errors);
+    addSuppressedErrors();
+  }
+
+  private void addSuppressedErrors() {
+    for (List<Throwable> errors : this.errors.values()) {
+      for (Throwable error : errors) {
+        addSuppressed(error);
+      }
+    }
   }
 
   private AllNodesFailedException(Map<Node, List<Throwable>> errors) {
