@@ -24,6 +24,7 @@ import com.typesafe.config.ConfigFactory;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.File;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -67,6 +68,31 @@ public interface DriverConfigLoader extends AutoCloseable {
                   .resolve();
           return config.getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
         });
+  }
+
+  /**
+   * Builds an instance using the driver's default implementation (based on Typesafe config), except
+   * that application-specific options are loaded from the given path.
+   *
+   * <p>More precisely, configuration properties are loaded and merged from the following
+   * (first-listed are higher priority):
+   *
+   * <ul>
+   *   <li>system properties
+   *   <li>the contents of {@code file}
+   *   <li>{@code reference.conf} (all resources on classpath with this name). In particular, this
+   *       will load the {@code reference.conf} included in the core driver JAR, that defines
+   *       default options for all mandatory options.
+   * </ul>
+   *
+   * The resulting configuration is expected to contain a {@code datastax-java-driver} section.
+   *
+   * <p>The returned loader will honor the reload interval defined by the option {@code
+   * basic.config-reload-interval}.
+   */
+  @NonNull
+  static DriverConfigLoader fromPath(@NonNull Path file) {
+    return fromFile(file.toFile());
   }
 
   /**
