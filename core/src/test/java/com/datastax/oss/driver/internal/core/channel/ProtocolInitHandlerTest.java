@@ -394,7 +394,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                     .isInstanceOf(AuthenticationException.class)
                     .hasMessage(
                         String.format(
-                            "Authentication error on node %s: server replied 'mock error'",
+                            "Authentication error on node %s: server replied with 'mock error' to AuthResponse request",
                             END_POINT)));
   }
 
