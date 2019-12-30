@@ -143,7 +143,9 @@ added/removed:
 8. `prependMapElement` : idempotent if both key and value are idempotent
 9. `removeMapElement` : idempotent if both key and value are idempotent
 
-For example, the following statement is idempotent:
+In practice, most invocations of the above methods will be idempotent because most collection 
+elements are. For example, the following statement is idempotent since `literal(1)` is also 
+idempotent:
 
 ```java
 Statement statement =
@@ -153,6 +155,19 @@ Statement statement =
         .build();
 // UPDATE foo SET l=l-[1] WHERE k=?
 assert statement.isIdempotent();
+```
+
+However, in rare cases the resulting statement won't be marked idempotent, e.g. if you use a 
+function to select a collection element:
+
+```java
+SimpleStatement statement =
+    update("foo")
+        .removeListElement("l", function("myfunc"))
+        .whereColumn("k").isEqualTo(bindMarker())
+        .build();
+// UPDATE foo SET l=l-[myfunc()] WHERE k=?
+assert !statement.isIdempotent();
 ```
 
 ### Unsafe deletions
