@@ -15,9 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
-import com.datastax.oss.driver.api.core.metadata.Metadata;
-import java.util.concurrent.CompletableFuture;
-
 public interface SchemaQueriesFactory {
-  SchemaQueries newInstance(CompletableFuture<Metadata> refreshFuture);
+  SchemaQueries newInstance();
 }

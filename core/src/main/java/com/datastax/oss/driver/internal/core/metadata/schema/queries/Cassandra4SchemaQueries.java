@@ -16,20 +16,15 @@
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class Cassandra4SchemaQueries extends Cassandra3SchemaQueries {
   public Cassandra4SchemaQueries(
-      DriverChannel channel,
-      CompletableFuture<Metadata> refreshFuture,
-      DriverExecutionProfile config,
-      String logPrefix) {
-    super(channel, refreshFuture, config, logPrefix);
+      DriverChannel channel, DriverExecutionProfile config, String logPrefix) {
+    super(channel, config, logPrefix);
   }
 
   @Override

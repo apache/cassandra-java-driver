@@ -408,7 +408,7 @@ public class MetadataManager implements AsyncAutoCloseable {
         initControlConnectionForSchema()
             .thenCompose(v -> context.getTopologyMonitor().checkSchemaAgreement())
             // 1. Query system tables
-            .thenCompose(b -> schemaQueriesFactory.newInstance(future).execute())
+            .thenCompose(b -> schemaQueriesFactory.newInstance().execute())
             // 2. Parse the rows into metadata objects, put them in a MetadataRefresh
             // 3. Apply the MetadataRefresh
             .thenApplyAsync(this::parseAndApplySchemaRows, adminExecutor)
@@ -442,7 +442,6 @@ public class MetadataManager implements AsyncAutoCloseable {
 
     private Void parseAndApplySchemaRows(SchemaRows schemaRows) {
       assert adminExecutor.inEventLoop();
-      assert schemaRows.refreshFuture() == currentSchemaRefresh;
       try {
         SchemaRefresh schemaRefresh = schemaParserFactory.newInstance(schemaRows).parse();
         long start = System.nanoTime();

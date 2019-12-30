@@ -21,12 +21,10 @@ import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import java.util.Collections;
 import java.util.Queue;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingDeque;
 import org.junit.Test;
@@ -42,7 +40,7 @@ public class Cassandra22SchemaQueriesTest extends SchemaQueriesTest {
         .thenReturn(Collections.emptyList());
 
     SchemaQueriesWithMockedChannel queries =
-        new SchemaQueriesWithMockedChannel(driverChannel, null, config, "test");
+        new SchemaQueriesWithMockedChannel(driverChannel, config, "test");
 
     CompletionStage<SchemaRows> result = queries.execute();
 
@@ -137,11 +135,8 @@ public class Cassandra22SchemaQueriesTest extends SchemaQueriesTest {
     final Queue<Call> calls = new LinkedBlockingDeque<>();
 
     SchemaQueriesWithMockedChannel(
-        DriverChannel channel,
-        CompletableFuture<Metadata> refreshFuture,
-        DriverExecutionProfile config,
-        String logPrefix) {
-      super(channel, refreshFuture, config, logPrefix);
+        DriverChannel channel, DriverExecutionProfile config, String logPrefix) {
+      super(channel, config, logPrefix);
     }
 
     @Override

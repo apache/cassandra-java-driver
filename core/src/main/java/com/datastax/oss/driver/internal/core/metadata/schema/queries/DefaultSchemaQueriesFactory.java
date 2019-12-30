@@ -17,12 +17,10 @@ package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.NodeProperties;
-import java.util.concurrent.CompletableFuture;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +39,7 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
   }
 
   @Override
-  public SchemaQueries newInstance(CompletableFuture<Metadata> refreshFuture) {
+  public SchemaQueries newInstance() {
     DriverChannel channel = context.getControlConnection().channel();
     if (channel == null || channel.closeFuture().isDone()) {
       throw new IllegalStateException("Control channel not available, aborting schema refresh");
@@ -57,11 +55,10 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
                         "Could not find control node metadata "
                             + channel.getEndPoint()
                             + ", aborting schema refresh"));
-    return newInstance(node, channel, refreshFuture);
+    return newInstance(node, channel);
   }
 
-  protected SchemaQueries newInstance(
-      Node node, DriverChannel channel, CompletableFuture<Metadata> refreshFuture) {
+  protected SchemaQueries newInstance(Node node, DriverChannel channel) {
     Version version = node.getCassandraVersion();
     if (version == null) {
       LOG.warn(
@@ -76,11 +73,11 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     LOG.debug("[{}] Sending schema queries to {} with version {}", logPrefix, node, version);
     if (version.compareTo(Version.V2_2_0) < 0) {
-      return new Cassandra21SchemaQueries(channel, refreshFuture, config, logPrefix);
+      return new Cassandra21SchemaQueries(channel, config, logPrefix);
     } else if (version.compareTo(Version.V3_0_0) < 0) {
-      return new Cassandra22SchemaQueries(channel, refreshFuture, config, logPrefix);
+      return new Cassandra22SchemaQueries(channel, config, logPrefix);
     } else if (version.compareTo(Version.V4_0_0) < 0) {
-      return new Cassandra3SchemaQueries(channel, refreshFuture, config, logPrefix);
+      return new Cassandra3SchemaQueries(channel, config, logPrefix);
     } else {
 
       // A bit of custom logic for DSE 6.0.x.  These versions report a Cassandra version of 4.0.0
@@ -92,10 +89,10 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
         assert (dseVersionObj instanceof Version);
         if (((Version) dseVersionObj).compareTo(Version.V6_7_0) < 0) {
 
-          return new Cassandra3SchemaQueries(channel, refreshFuture, config, logPrefix);
+          return new Cassandra3SchemaQueries(channel, config, logPrefix);
         }
       }
-      return new Cassandra4SchemaQueries(channel, refreshFuture, config, logPrefix);
+      return new Cassandra4SchemaQueries(channel, config, logPrefix);
     }
   }
 }

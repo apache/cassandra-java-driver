@@ -350,7 +350,7 @@ public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
         CompletableFuture<Metadata> refreshFuture,
         DriverExecutionProfile config,
         String logPrefix) {
-      super(channel, refreshFuture, config, logPrefix);
+      super(channel, config, logPrefix);
     }
 
     @Override
