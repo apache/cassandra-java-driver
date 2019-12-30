@@ -125,12 +125,12 @@ Statement statement =
         .whereColumn("k").isEqualTo(bindMarker())
         .build();
 // UPDATE foo SET l=l-[1,2,3] WHERE k=?
-assert !statement.isIdempotent();
+assert statement.isIdempotent();
 ```
 
 When appending, prepending or removing a single element to/from a collection, it is possible to use 
 the dedicated methods listed below; their idempotence depends on the collection type (list, set or 
-map), the operation (append, prepend or removal) and on the idempotence of the element being 
+map), the operation (append, prepend or removal) and the idempotence of the element being 
 added/removed:
 
 1. `appendListElement` : not idempotent
