@@ -58,7 +58,7 @@ public class OsgiSnappyIT implements OsgiSimpleTests {
   }
 
   @Test
-  public void should_connect_and_query_with_lz4_compression() {
+  public void should_connect_and_query_with_snappy_compression() {
     connectAndQuerySimple();
   }
 }
