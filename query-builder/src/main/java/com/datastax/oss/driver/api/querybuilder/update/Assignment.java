@@ -327,7 +327,7 @@ public interface Assignment extends CqlSnippet {
   }
 
   /**
-   * Removes a single element to a list column, as in {@code SET l=l-[?]}.
+   * Removes a single element from a list column, as in {@code SET l=l-[?]}.
    *
    * <p>The term must be of the same type as the column's elements.
    */
@@ -346,7 +346,7 @@ public interface Assignment extends CqlSnippet {
   }
 
   /**
-   * Removes a single element to a set column, as in {@code SET s=s-{?}}.
+   * Removes a single element from a set column, as in {@code SET s=s-{?}}.
    *
    * <p>The term must be of the same type as the column's elements.
    */
@@ -365,7 +365,7 @@ public interface Assignment extends CqlSnippet {
   }
 
   /**
-   * Removes a single entry to a map column, as in {@code SET m=m-{?:?}}.
+   * Removes a single entry from a map column, as in {@code SET m=m-{?:?}}.
    *
    * <p>The terms must be of the same type as the column's keys and values respectively.
    */
