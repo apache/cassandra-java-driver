@@ -31,8 +31,8 @@ import java.util.Map.Entry;
 
 /**
  * Thrown when a query failed on all the coordinators it was tried on. This exception may wrap
- * multiple {@linkplain #getSuppressed() suppressed exceptions}, use {@link #getAllErrors()} to
- * inspect individual problems on each node.
+ * multiple errors, that are available either as {@linkplain #getSuppressed() suppressed
+ * exceptions}, or via {@link #getAllErrors()} where they are grouped by node.
  */
 public class AllNodesFailedException extends DriverException {
 
