@@ -279,7 +279,11 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
 
     DataType cqlType = inferCqlTypeFromValue(value);
     GenericType<?> javaType = inspectType(value, cqlType);
-    LOG.trace("[{}] Continuing based on inferred type {}", logPrefix, javaType);
+    LOG.trace(
+        "[{}] Continuing based on inferred CQL type {} and Java type {}",
+        logPrefix,
+        cqlType,
+        javaType);
     return uncheckedCast(getCachedCodec(cqlType, javaType, true));
   }
 
