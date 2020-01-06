@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -103,6 +104,7 @@ public class GenericType<T> {
   public static final GenericType<CqlDuration> CQL_DURATION = of(CqlDuration.class);
   public static final GenericType<TupleValue> TUPLE_VALUE = of(TupleValue.class);
   public static final GenericType<UdtValue> UDT_VALUE = of(UdtValue.class);
+  public static final GenericType<Duration> DURATION = of(Duration.class);
 
   @NonNull
   public static <T> GenericType<T> of(@NonNull Class<T> type) {
