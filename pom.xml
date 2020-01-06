@@ -462,7 +462,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.0.1</version>
+          <version>3.1.1</version>
         </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
@@ -706,7 +706,7 @@ limitations under the License.]]></inlineHeader>
           <verbose>false</verbose>
           <quiet>true</quiet>
           <doclint>all,-missing</doclint>
-          <excludePackageNames>com.datastax.oss.driver.internal:com.datastax.dse.driver.internal</excludePackageNames>
+          <excludePackageNames>com.datastax.oss.driver.internal.*,com.datastax.dse.driver.internal.*</excludePackageNames>
           <tags>
             <!--
               For custom `leaks-private-api` tag (apparently dash separators are not handled
