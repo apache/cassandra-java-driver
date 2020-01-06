@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.config;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
+import com.datastax.oss.driver.internal.core.config.map.MapBasedDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultProgrammaticDriverConfigLoaderBuilder;
 import com.typesafe.config.Config;
@@ -166,6 +167,9 @@ public interface DriverConfigLoader extends AutoCloseable {
   /**
    * Starts a builder that allows configuration options to be overridden programmatically.
    *
+   * <p>Note that {@link #fromMap(OptionsMap)} provides an alternative approach for programmatic
+   * configuration, that might be more convenient if you wish to completely bypass Typesafe config.
+   *
    * <p>For example:
    *
    * <pre>{@code
@@ -215,10 +219,50 @@ public interface DriverConfigLoader extends AutoCloseable {
    * basic.config-reload-interval}.
    *
    * <p>Note that the returned builder is <b>not thread-safe</b>.
+   *
+   * @see #fromMap(OptionsMap)
    */
   @NonNull
   static ProgrammaticDriverConfigLoaderBuilder programmaticBuilder() {
     return new DefaultProgrammaticDriverConfigLoaderBuilder();
+  }
+
+  /**
+   * Builds an instance backed by an {@link OptionsMap}, which holds all options in memory.
+   *
+   * <p>This is the simplest implementation. It is intended for clients who wish to completely
+   * bypass Typesafe config, and instead manage the configuration programmatically. A typical
+   * example is a third-party tool that already has its own configuration file, and doesn't want to
+   * introduce a separate mechanism for driver options.
+   *
+   * <p>With this loader, the driver's built-in {@code reference.conf} file is ignored, the provided
+   * {@link OptionsMap} must explicitly provide all mandatory options. Note however that {@link
+   * OptionsMap#driverDefaults()} allows you to initialize an instance with the same default values
+   * as {@code reference.conf}.
+   *
+   * <pre>
+   * // This creates a configuration equivalent to the built-in reference.conf:
+   * OptionsMap map = OptionsMap.driverDefaults();
+   *
+   * // Customize an option:
+   * map.put(TypedDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(5));
+   *
+   * DriverConfigLoader loader = DriverConfigLoader.fromMap(map);
+   * CqlSession session = CqlSession.builder()
+   *     .withConfigLoader(loader)
+   *     .build();
+   * </pre>
+   *
+   * <p>If the {@link OptionsMap} is modified at runtime, this will be reflected immediately in the
+   * configuration, you don't need to call {@link #reload()}. Note however that, depending on the
+   * option, the driver might not react to a configuration change immediately, or ever (this is
+   * documented in {@code reference.conf}).
+   *
+   * @since 4.6.0
+   */
+  @NonNull
+  static DriverConfigLoader fromMap(@NonNull OptionsMap source) {
+    return new MapBasedDriverConfigLoader(source, source.asRawMap());
   }
 
   /**
