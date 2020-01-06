@@ -63,6 +63,7 @@ public class ReflectionTest {
     Map<String, SpeculativeExecutionPolicy> policies =
         Reflection.buildFromConfigProfiles(
             context,
+            DefaultDriverOption.SPECULATIVE_EXECUTION_POLICY_CLASS,
             DefaultDriverOption.SPECULATIVE_EXECUTION_POLICY,
             SpeculativeExecutionPolicy.class,
             "com.datastax.oss.driver.internal.core.specex");

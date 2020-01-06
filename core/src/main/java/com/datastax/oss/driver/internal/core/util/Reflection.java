@@ -114,8 +114,11 @@ public class Reflection {
    * the default profile.
    *
    * @param context the driver context.
-   * @param rootOption the root option for the policy (my-policy in the example above). The class
-   *     name is assumed to be in a 'class' child option.
+   * @param classNameOption the option that indicates the class (my-policy.class in the example
+   *     above).
+   * @param rootOption the root of the section containing the policy's configuration (my-policy in
+   *     the example above). Profiles that have the same contents under that section will share the
+   *     same policy instance.
    * @param expectedSuperType a super-type that the class is expected to implement/extend.
    * @param defaultPackages the default packages to prepend to the class name if it's not qualified.
    *     They will be tried in order, the first one that matches an existing class will be used.
@@ -124,6 +127,7 @@ public class Reflection {
    */
   public static <ComponentT> Map<String, ComponentT> buildFromConfigProfiles(
       InternalDriverContext context,
+      DriverOption classNameOption,
       DriverOption rootOption,
       Class<ComponentT> expectedSuperType,
       String... defaultPackages) {
@@ -141,8 +145,7 @@ public class Reflection {
       // Since all profiles use the same config, we can use any of them
       String profileName = profiles.iterator().next();
       ComponentT policy =
-          buildFromConfig(
-                  context, profileName, classOption(rootOption), expectedSuperType, defaultPackages)
+          buildFromConfig(context, profileName, classNameOption, expectedSuperType, defaultPackages)
               .orElseThrow(
                   () ->
                       new IllegalArgumentException(
@@ -238,9 +241,5 @@ public class Reflection {
               className, configPath, cause.getMessage()),
           cause);
     }
-  }
-
-  private static DriverOption classOption(DriverOption rootOption) {
-    return () -> rootOption.getPath() + ".class";
   }
 }

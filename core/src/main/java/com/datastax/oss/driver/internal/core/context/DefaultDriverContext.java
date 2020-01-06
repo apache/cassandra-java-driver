@@ -339,6 +339,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   protected Map<String, LoadBalancingPolicy> buildLoadBalancingPolicies() {
     return Reflection.buildFromConfigProfiles(
         this,
+        DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS,
         DefaultDriverOption.LOAD_BALANCING_POLICY,
         LoadBalancingPolicy.class,
         "com.datastax.oss.driver.internal.core.loadbalancing",
@@ -348,6 +349,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   protected Map<String, RetryPolicy> buildRetryPolicies() {
     return Reflection.buildFromConfigProfiles(
         this,
+        DefaultDriverOption.RETRY_POLICY_CLASS,
         DefaultDriverOption.RETRY_POLICY,
         RetryPolicy.class,
         "com.datastax.oss.driver.internal.core.retry");
@@ -356,6 +358,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   protected Map<String, SpeculativeExecutionPolicy> buildSpeculativeExecutionPolicies() {
     return Reflection.buildFromConfigProfiles(
         this,
+        DefaultDriverOption.SPECULATIVE_EXECUTION_POLICY_CLASS,
         DefaultDriverOption.SPECULATIVE_EXECUTION_POLICY,
         SpeculativeExecutionPolicy.class,
         "com.datastax.oss.driver.internal.core.specex");
