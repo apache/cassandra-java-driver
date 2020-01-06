@@ -37,6 +37,7 @@ import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.connection.ConstantReconnectionPolicy;
+import com.datastax.oss.driver.internal.core.loadbalancing.DefaultLoadBalancingPolicy;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.server.BoundCluster;
 import com.datastax.oss.simulacron.server.RejectScope;
@@ -131,6 +132,8 @@ public class ConnectIT {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
             .without(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)
+            .withClass(
+                DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS, DefaultLoadBalancingPolicy.class)
             .build();
     assertThatThrownBy(
             () ->
