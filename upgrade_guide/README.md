@@ -14,8 +14,8 @@ Apart from that, the only visible change is that DSE-specific features are now e
 
 * new execution methods: `CqlSession.executeGraph`, `CqlSession.executeContinuously*`. They all
   have default implementations so this doesn't break binary compatibility. You can just ignore them.
-* new driver dependencies: Tinkerpop, ESRI. You can exclude them manually if you want to keep your
-  classpath lean, the rest of the driver will still work. See the
+* new driver dependencies: Tinkerpop, ESRI, Reactive Streams. You can exclude them manually if you 
+  want to keep your classpath lean, the rest of the driver will still work. See the
   [Integration](../manual/core/integration/#driver-dependencies) page.
 
 #### For Datastax Enterprise users
