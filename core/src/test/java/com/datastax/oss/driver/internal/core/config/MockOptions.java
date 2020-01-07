@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.core.config.typesafe;
+package com.datastax.oss.driver.internal.core.config;
 
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
-enum MockOptions implements DriverOption {
+public enum MockOptions implements DriverOption {
   INT1("int1"),
   INT2("int2"),
   AUTH_PROVIDER("auth_provider"),
