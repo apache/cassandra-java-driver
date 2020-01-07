@@ -2,7 +2,7 @@
 
 ### 4.4.0
 
-Datastax Enteprise support is now available directly in the main driver. There is no longer a
+Datastax Enterprise support is now available directly in the main driver. There is no longer a
 separate DSE driver.
 
 #### For Apache Cassandra® users
