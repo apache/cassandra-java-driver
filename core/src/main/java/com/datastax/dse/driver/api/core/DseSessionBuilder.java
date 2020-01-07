@@ -15,7 +15,6 @@
  */
 package com.datastax.dse.driver.api.core;
 
-import com.datastax.dse.driver.internal.core.session.DefaultDseSession;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -33,6 +32,6 @@ public class DseSessionBuilder extends SessionBuilder<DseSessionBuilder, DseSess
   @NonNull
   @Override
   protected DseSession wrap(@NonNull CqlSession defaultSession) {
-    return new DefaultDseSession(defaultSession);
+    return new com.datastax.dse.driver.internal.core.session.DefaultDseSession(defaultSession);
   }
 }

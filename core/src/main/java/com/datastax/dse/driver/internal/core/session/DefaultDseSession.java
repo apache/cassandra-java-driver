@@ -15,7 +15,6 @@
  */
 package com.datastax.dse.driver.internal.core.session;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
@@ -28,7 +27,8 @@ import net.jcip.annotations.ThreadSafe;
  */
 @ThreadSafe
 @Deprecated
-public class DefaultDseSession extends SessionWrapper implements DseSession {
+public class DefaultDseSession extends SessionWrapper
+    implements com.datastax.dse.driver.api.core.DseSession {
 
   public DefaultDseSession(Session delegate) {
     super(delegate);
