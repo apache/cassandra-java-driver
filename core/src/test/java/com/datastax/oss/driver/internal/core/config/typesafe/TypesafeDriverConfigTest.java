@@ -19,6 +19,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.internal.core.config.MockOptions;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.util.HashMap;
