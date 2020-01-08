@@ -8,6 +8,7 @@ This version brings in all functionality that was formerly only in the DataStax 
 such as the built-in support for reactive programming. Going forward, all new features will be 
 implemented in this single driver.
 
+- [documentation] JAVA-2609: Add docs for proxy authentication to unified driver
 - [improvement] JAVA-2554: Improve efficiency of InsightsClient by improving supportsInsights check
 - [improvement] JAVA-2601: Inject Google Tag Manager scripts in generated API documentation
 - [improvement] JAVA-2551: Improve support for DETERMINISTIC and MONOTONIC functions

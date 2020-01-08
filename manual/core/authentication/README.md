@@ -130,7 +130,75 @@ acceptable for you, consider writing your own [AuthProvider] implementation;
 [PlainTextAuthProviderBase] is a good starting point.
 
 Similarly, the driver provides [DseGssApiAuthProviderBase] as a starting point to write your own
-GSSAPI auth provider. 
+GSSAPI auth provider.
+
+### Proxy authentication
+
+DSE allows a user to connect as another user or role:
+
+```
+-- Allow bob to connect as alice:
+GRANT PROXY.LOGIN ON ROLE 'alice' TO 'bob'
+```
+
+Once connected, all authorization checks will be performed against the proxy role (alice in this
+example).
+
+To use proxy authentication with the driver, you need to provide the **authorization-id**, in other
+words the name of the role you want to connect as.
+
+Example for plain text authentication:
+
+```
+dse-java-driver {
+  advanced.auth-provider {
+      class = PlainTextAuthProvider
+      username = bob
+      password = bob's password
+      authorization-id = alice
+   }
+ }
+```
+
+With the GSSAPI (Kerberos) provider:
+
+```
+dse-java-driver {
+  advanced.auth-provider {
+      class = DseGssApiAuthProvider
+      authorization-id = alice
+      login-configuration {
+          principal = "user principal here ex bob@DATASTAX.COM"
+          useKeyTab = "true"
+          refreshKrb5Config = "true"
+          keyTab = "Path to keytab file here"
+      }
+   }
+ }
+```
+
+### Proxy execution
+
+Proxy execution is similar to proxy authentication, but it applies to a single query, not the whole
+session.
+
+```
+-- Allow bob to execute queries as alice:
+GRANT PROXY.EXECUTE ON ROLE 'alice' TO 'bob'
+```
+
+For this scenario, you would **not** add the `authorization-id = alice` to your configuration.
+Instead, use [ProxyAuthentication.executeAs] to wrap your query with the correct authorization for
+the execution:
+
+```java
+import com.datastax.dse.driver.api.core.auth.ProxyAuthentication;
+
+SimpleStatement statement = SimpleStatement.newInstance("some query");
+// executeAs returns a new instance, you need to re-assign
+statement = ProxyAuthentication.executeAs("alice", statement);
+session.execute(statement);
+``` 
 
 [SASL]: https://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer
 
@@ -138,6 +206,7 @@ GSSAPI auth provider.
 [DriverContext]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/context/DriverContext.html
 [PlainTextAuthProviderBase]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/auth/PlainTextAuthProviderBase.html
 [DseGssApiAuthProviderBase]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/dse/driver/api/core/auth/DseGssApiAuthProviderBase.html
+[ProxyAuthentication.executeAs]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/dse/driver/api/core/auth/ProxyAuthentication.html#executeAs-java.lang.String-StatementT-
 [SessionBuilder.withAuthCredentials]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withAuthCredentials-java.lang.String-java.lang.String-
 [SessionBuilder.withAuthProvider]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withAuthProvider-com.datastax.oss.driver.api.core.auth.AuthProvider-
 [reference.conf]: ../configuration/reference/
