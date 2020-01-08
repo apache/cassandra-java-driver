@@ -4,6 +4,7 @@
 
 ### 4.4.0 (in progress)
 
+- [improvement] JAVA-2541: Improve error messages during connection initialization
 - [improvement] JAVA-2530: Expose shortcuts for name-based UUIDs
 - [improvement] JAVA-2547: Add method DriverConfigLoader.fromPath
 - [improvement] JAVA-2528: Store suppressed exceptions in AllNodesFailedException
