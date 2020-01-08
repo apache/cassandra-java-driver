@@ -8,6 +8,7 @@ This version brings in all functionality that was formerly only in the DataStax 
 such as the built-in support for reactive programming. Going forward, all new features will be 
 implemented in this single driver.
 
+- [improvement] JAVA-2551: Improve support for DETERMINISTIC and MONOTONIC functions
 - [documentation] JAVA-2446: Revisit continuous paging javadocs
 - [improvement] JAVA-2550: Remove warnings in ContinuousCqlRequestHandler when coordinator is not replica
 - [improvement] JAVA-2569: Make driver compatible with Netty < 4.1.34 again

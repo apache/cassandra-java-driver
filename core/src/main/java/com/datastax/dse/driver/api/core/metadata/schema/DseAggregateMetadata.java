@@ -24,20 +24,28 @@ import java.util.Optional;
 /**
  * Specialized aggregate metadata for DSE.
  *
- * <p>It adds support for the DSE-specific {@link #isDeterministic() DETERMINISTIC} keyword.
+ * <p>It adds support for the DSE-specific {@link #getDeterministic() DETERMINISTIC} keyword.
  */
 public interface DseAggregateMetadata extends AggregateMetadata {
+
+  /** @deprecated Use {@link #getDeterministic()} instead. */
+  @Deprecated
+  boolean isDeterministic();
 
   /**
    * Indicates if this aggregate is deterministic. A deterministic aggregate means that given a
    * particular input, the aggregate will always produce the same output.
    *
-   * <p>NOTE: For versions of DSE older than 6.0.0, this method will always return false, regardless
-   * of the actual function characteristics.
+   * <p>This method returns {@linkplain Optional#empty() empty} if this information was not found in
+   * the system tables, regardless of the actual aggregate characteristics; this is the case for all
+   * versions of DSE older than 6.0.0.
    *
-   * @return Whether or not this aggregate is deterministic.
+   * @return Whether or not this aggregate is deterministic; or {@linkplain Optional#empty() empty}
+   *     if such information is not available in the system tables.
    */
-  boolean isDeterministic();
+  default Optional<Boolean> getDeterministic() {
+    return Optional.of(isDeterministic());
+  }
 
   @NonNull
   @Override
@@ -79,7 +87,7 @@ public interface DseAggregateMetadata extends AggregateMetadata {
       builder.newLine().append("INITCOND ").append(formatInitCond.get());
     }
     // add DETERMINISTIC if present
-    if (isDeterministic()) {
+    if (getDeterministic().orElse(false)) {
       builder.newLine().append("DETERMINISTIC");
     }
     return builder.append(";").build();

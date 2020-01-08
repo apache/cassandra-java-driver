@@ -45,9 +45,9 @@ public class DseFunctionParser {
       Map<CqlIdentifier, UserDefinedType> userDefinedTypes) {
     FunctionMetadata function = functionParser.parseFunction(row, keyspaceId, userDefinedTypes);
     // parse the DSE extended columns
-    final boolean deterministic =
-        row.contains("deterministic") ? row.getBoolean("deterministic") : false;
-    final boolean monotonic = row.contains("monotonic") ? row.getBoolean("monotonic") : false;
+    final Boolean deterministic =
+        row.contains("deterministic") ? row.getBoolean("deterministic") : null;
+    final Boolean monotonic = row.contains("monotonic") ? row.getBoolean("monotonic") : null;
     // stream the list of strings into a list of CqlIdentifiers
     final List<CqlIdentifier> monotonicOn =
         row.contains("monotonic_on")

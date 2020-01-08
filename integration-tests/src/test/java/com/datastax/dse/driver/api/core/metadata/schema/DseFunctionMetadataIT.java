@@ -16,21 +16,25 @@
 package com.datastax.dse.driver.api.core.metadata.schema;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
+import com.datastax.dse.driver.api.core.metadata.schema.DseFunctionMetadata.Monotonicity;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import java.util.Objects;
 import java.util.Optional;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@DseRequirement(min = "6.0")
+@DseRequirement(min = "5.0", description = "DSE 5.0+ required function/aggregate support")
 public class DseFunctionMetadataIT extends AbstractMetadataIT {
 
   private static final CcmRule CCM_RULE = CcmRule.getInstance();
@@ -40,13 +44,15 @@ public class DseFunctionMetadataIT extends AbstractMetadataIT {
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
+  private static final Version DSE_6_0_0 = Objects.requireNonNull(Version.parse("6.0.0"));
+
   @Override
   public SessionRule<CqlSession> getSessionRule() {
     return DseFunctionMetadataIT.SESSION_RULE;
   }
 
   @Test
-  public void should_parse_function_without_deterministic_or_monotonic() throws Exception {
+  public void should_parse_function_without_deterministic_or_monotonic() {
     String cqlFunction =
         "CREATE FUNCTION nondetf(i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return new java.util.Random().nextInt(i);';";
     execute(cqlFunction);
@@ -55,8 +61,13 @@ public class DseFunctionMetadataIT extends AbstractMetadataIT {
     assertThat(functionOpt.map(DseFunctionMetadata.class::cast))
         .hasValueSatisfying(
             function -> {
-              assertThat(function.isDeterministic()).isFalse();
-              assertThat(function.isMonotonic()).isFalse();
+              if (isDse6OrHigher()) {
+                assertThat(function.getDeterministic()).contains(false);
+                assertThat(function.getMonotonicity()).contains(Monotonicity.NOT_MONOTONIC);
+              } else {
+                assertThat(function.getDeterministic()).isEmpty();
+                assertThat(function.getMonotonicity()).isEmpty();
+              }
               assertThat(function.getMonotonicArgumentNames()).isEmpty();
               assertThat(function.getLanguage()).isEqualTo("java");
               assertThat(function.getReturnType()).isEqualTo(DataTypes.INT);
@@ -70,7 +81,10 @@ public class DseFunctionMetadataIT extends AbstractMetadataIT {
   }
 
   @Test
-  public void should_parse_function_with_deterministic() throws Exception {
+  public void should_parse_function_with_deterministic() {
+    assumeThat(isDse6OrHigher())
+        .describedAs("DSE 6.0+ required for DETERMINISTIC / MONOTONIC")
+        .isTrue();
     String cqlFunction =
         "CREATE FUNCTION detf(i int, y int) RETURNS NULL ON NULL INPUT RETURNS int DETERMINISTIC LANGUAGE java AS 'return i+y;';";
     execute(cqlFunction);
@@ -80,8 +94,8 @@ public class DseFunctionMetadataIT extends AbstractMetadataIT {
     assertThat(functionOpt.map(DseFunctionMetadata.class::cast))
         .hasValueSatisfying(
             function -> {
-              assertThat(function.isDeterministic()).isTrue();
-              assertThat(function.isMonotonic()).isFalse();
+              assertThat(function.getDeterministic()).contains(true);
+              assertThat(function.getMonotonicity()).contains(Monotonicity.NOT_MONOTONIC);
               assertThat(function.getMonotonicArgumentNames()).isEmpty();
               assertThat(function.getLanguage()).isEqualTo("java");
               assertThat(function.getReturnType()).isEqualTo(DataTypes.INT);
@@ -95,7 +109,10 @@ public class DseFunctionMetadataIT extends AbstractMetadataIT {
   }
 
   @Test
-  public void should_parse_function_with_monotonic() throws Exception {
+  public void should_parse_function_with_monotonic() {
+    assumeThat(isDse6OrHigher())
+        .describedAs("DSE 6.0+ required for DETERMINISTIC / MONOTONIC")
+        .isTrue();
     String cqlFunction =
         "CREATE FUNCTION monotonic(dividend int, divisor int) CALLED ON NULL INPUT RETURNS int MONOTONIC LANGUAGE java AS 'return dividend / divisor;';";
     execute(cqlFunction);
@@ -105,8 +122,8 @@ public class DseFunctionMetadataIT extends AbstractMetadataIT {
     assertThat(functionOpt.map(DseFunctionMetadata.class::cast))
         .hasValueSatisfying(
             function -> {
-              assertThat(function.isDeterministic()).isFalse();
-              assertThat(function.isMonotonic()).isTrue();
+              assertThat(function.getDeterministic()).contains(false);
+              assertThat(function.getMonotonicity()).contains(Monotonicity.FULLY_MONOTONIC);
               assertThat(function.getMonotonicArgumentNames())
                   .containsExactly(
                       CqlIdentifier.fromCql("dividend"), CqlIdentifier.fromCql("divisor"));
@@ -122,7 +139,10 @@ public class DseFunctionMetadataIT extends AbstractMetadataIT {
   }
 
   @Test
-  public void should_parse_function_with_monotonic_on() throws Exception {
+  public void should_parse_function_with_monotonic_on() {
+    assumeThat(isDse6OrHigher())
+        .describedAs("DSE 6.0+ required for DETERMINISTIC / MONOTONIC")
+        .isTrue();
     String cqlFunction =
         "CREATE FUNCTION monotonic_on(dividend int, divisor int) CALLED ON NULL INPUT RETURNS int MONOTONIC ON \"dividend\" LANGUAGE java AS 'return dividend / divisor;';";
     execute(cqlFunction);
@@ -132,8 +152,8 @@ public class DseFunctionMetadataIT extends AbstractMetadataIT {
     assertThat(functionOpt.map(DseFunctionMetadata.class::cast))
         .hasValueSatisfying(
             function -> {
-              assertThat(function.isDeterministic()).isFalse();
-              assertThat(function.isMonotonic()).isFalse();
+              assertThat(function.getDeterministic()).contains(false);
+              assertThat(function.getMonotonicity()).contains(Monotonicity.PARTIALLY_MONOTONIC);
               assertThat(function.getMonotonicArgumentNames())
                   .containsExactly(CqlIdentifier.fromCql("dividend"));
               assertThat(function.getLanguage()).isEqualTo("java");
@@ -148,7 +168,10 @@ public class DseFunctionMetadataIT extends AbstractMetadataIT {
   }
 
   @Test
-  public void should_parse_function_with_deterministic_and_monotonic() throws Exception {
+  public void should_parse_function_with_deterministic_and_monotonic() {
+    assumeThat(isDse6OrHigher())
+        .describedAs("DSE 6.0+ required for DETERMINISTIC / MONOTONIC")
+        .isTrue();
     String cqlFunction =
         "CREATE FUNCTION det_and_monotonic(dividend int, divisor int) CALLED ON NULL INPUT RETURNS int DETERMINISTIC MONOTONIC LANGUAGE java AS 'return dividend / divisor;';";
     execute(cqlFunction);
@@ -158,8 +181,8 @@ public class DseFunctionMetadataIT extends AbstractMetadataIT {
     assertThat(functionOpt.map(DseFunctionMetadata.class::cast))
         .hasValueSatisfying(
             function -> {
-              assertThat(function.isDeterministic()).isTrue();
-              assertThat(function.isMonotonic()).isTrue();
+              assertThat(function.getDeterministic()).contains(true);
+              assertThat(function.getMonotonicity()).contains(Monotonicity.FULLY_MONOTONIC);
               assertThat(function.getMonotonicArgumentNames())
                   .containsExactly(
                       CqlIdentifier.fromCql("dividend"), CqlIdentifier.fromCql("divisor"));
@@ -175,7 +198,10 @@ public class DseFunctionMetadataIT extends AbstractMetadataIT {
   }
 
   @Test
-  public void should_parse_function_with_deterministic_and_monotonic_on() throws Exception {
+  public void should_parse_function_with_deterministic_and_monotonic_on() {
+    assumeThat(isDse6OrHigher())
+        .describedAs("DSE 6.0+ required for DETERMINISTIC / MONOTONIC")
+        .isTrue();
     String cqlFunction =
         "CREATE FUNCTION det_and_monotonic_on(dividend int, divisor int) CALLED ON NULL INPUT RETURNS int DETERMINISTIC MONOTONIC ON \"dividend\" LANGUAGE java AS 'return dividend / divisor;';";
     execute(cqlFunction);
@@ -185,8 +211,8 @@ public class DseFunctionMetadataIT extends AbstractMetadataIT {
     assertThat(functionOpt.map(DseFunctionMetadata.class::cast))
         .hasValueSatisfying(
             function -> {
-              assertThat(function.isDeterministic()).isTrue();
-              assertThat(function.isMonotonic()).isFalse();
+              assertThat(function.getDeterministic()).contains(true);
+              assertThat(function.getMonotonicity()).contains(Monotonicity.PARTIALLY_MONOTONIC);
               assertThat(function.getMonotonicArgumentNames())
                   .containsExactly(CqlIdentifier.fromCql("dividend"));
               assertThat(function.getLanguage()).isEqualTo("java");
@@ -198,5 +224,12 @@ public class DseFunctionMetadataIT extends AbstractMetadataIT {
                           "CREATE FUNCTION \"%s\".\"det_and_monotonic_on\"(\"dividend\" int,\"divisor\" int) CALLED ON NULL INPUT RETURNS int DETERMINISTIC MONOTONIC ON \"dividend\" LANGUAGE java AS 'return dividend / divisor;';",
                           keyspace.getName().asInternal()));
             });
+  }
+
+  private static boolean isDse6OrHigher() {
+    assumeThat(CCM_RULE.getDseVersion())
+        .describedAs("DSE required for DseFunctionMetadata tests")
+        .isPresent();
+    return CCM_RULE.getDseVersion().get().compareTo(DSE_6_0_0) >= 0;
   }
 }

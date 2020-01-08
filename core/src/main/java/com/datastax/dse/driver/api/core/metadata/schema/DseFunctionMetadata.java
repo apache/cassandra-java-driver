@@ -21,56 +21,99 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Specialized function metadata for DSE.
  *
- * <p>It adds support for the DSE-specific {@link #isDeterministic() DETERMINISTIC} and {@link
- * #isMonotonic() MONOTONIC} keywords.
+ * <p>It adds support for the DSE-specific {@link #getDeterministic() DETERMINISTIC} and {@link
+ * #getMonotonicity() MONOTONIC} keywords.
  */
 public interface DseFunctionMetadata extends FunctionMetadata {
+
+  /** The monotonicity of a function. */
+  enum Monotonicity {
+
+    /**
+     * Indicates that the function is fully monotonic on all of its arguments. This means that it is
+     * either entirely non-increasing or non-decreasing. Full monotonicity is required to use the
+     * function in a GROUP BY clause.
+     */
+    FULLY_MONOTONIC,
+
+    /**
+     * Indicates that the function is partially monotonic, meaning that partial application over
+     * some of the its arguments is monotonic. Currently (DSE 6.0.0), CQL only allows partial
+     * monotonicity on <em>exactly one argument</em>. This may change in a future CQL version.
+     */
+    PARTIALLY_MONOTONIC,
+
+    /** Indicates that the function is not monotonic. */
+    NOT_MONOTONIC,
+  }
+
+  /** @deprecated Use {@link #getDeterministic()} instead. */
+  @Deprecated
+  boolean isDeterministic();
 
   /**
    * Indicates if this function is deterministic. A deterministic function means that given a
    * particular input, the function will always produce the same output.
    *
-   * <p>NOTE: For versions of DSE older than 6.0.0, this method will always return false, regardless
-   * of the actual function characteristics.
+   * <p>This method returns {@linkplain Optional#empty() empty} if this information was not found in
+   * the system tables, regardless of the actual function characteristics; this is the case for all
+   * versions of DSE older than 6.0.0.
    *
-   * @return Whether or not this function is deterministic.
+   * @return Whether or not this function is deterministic; or {@linkplain Optional#empty() empty}
+   *     if such information is not available in the system tables.
    */
-  boolean isDeterministic();
+  default Optional<Boolean> getDeterministic() {
+    return Optional.of(isDeterministic());
+  }
+
+  /** @deprecated use {@link #getMonotonicity()} instead. */
+  @Deprecated
+  boolean isMonotonic();
 
   /**
-   * Indicates whether or not this function is monotonic on all of its arguments. This means that it
-   * is either entirely non-increasing or non-decreasing.
+   * Returns this function's {@link Monotonicity}.
    *
    * <p>A function can be either:
    *
    * <ul>
-   *   <li>monotonic on all of its arguments. In that case, this method returns {@code true}, and
-   *       {@link #getMonotonicArgumentNames()} returns all the arguments;
+   *   <li>fully monotonic. In that case, this method returns {@link Monotonicity#FULLY_MONOTONIC},
+   *       and {@link #getMonotonicArgumentNames()} returns all the arguments;
    *   <li>partially monotonic, meaning that partial application over some of the arguments is
    *       monotonic. Currently (DSE 6.0.0), CQL only allows partial monotonicity on <em>exactly one
    *       argument</em>. This may change in a future CQL version. In that case, this method returns
-   *       {@code false}, and {@link #getMonotonicArgumentNames()} returns a singleton list;
-   *   <li>not monotonic. In that case, this method return {@code false} and {@link
-   *       #getMonotonicArgumentNames()} returns an empty list.
+   *       {@link Monotonicity#PARTIALLY_MONOTONIC}, and {@link #getMonotonicArgumentNames()}
+   *       returns a singleton list;
+   *   <li>not monotonic. In that case, this method return {@link Monotonicity#NOT_MONOTONIC} and
+   *       {@link #getMonotonicArgumentNames()} returns an empty list.
    * </ul>
    *
-   * <p>Monotonicity is required to use the function in a GROUP BY clause.
+   * <p>Full monotonicity is required to use the function in a GROUP BY clause.
    *
-   * <p>NOTE: For versions of DSE older than 6.0.0, this method will always return false, regardless
-   * of the actual function characteristics.
+   * <p>This method returns {@linkplain Optional#empty() empty} if this information was not found in
+   * the system tables, regardless of the actual function characteristics; this is the case for all
+   * versions of DSE older than 6.0.0.
    *
-   * @return whether or not this function is monotonic on all of its arguments.
+   * @return this function's {@link Monotonicity}; or {@linkplain Optional#empty() empty} if such
+   *     information is not available in the system tables.
    */
-  boolean isMonotonic();
+  default Optional<Monotonicity> getMonotonicity() {
+    return Optional.of(
+        isMonotonic()
+            ? Monotonicity.FULLY_MONOTONIC
+            : getMonotonicArgumentNames().isEmpty()
+                ? Monotonicity.NOT_MONOTONIC
+                : Monotonicity.PARTIALLY_MONOTONIC);
+  }
 
   /**
    * Returns a list of argument names that are monotonic.
    *
-   * <p>See {@link #isMonotonic()} for explanations on monotonicity, and the possible values
+   * <p>See {@link #getMonotonicity()} for explanations on monotonicity, and the possible values
    * returned by this method.
    *
    * <p>NOTE: For versions of DSE older than 6.0.0, this method will always return an empty list,
@@ -112,13 +155,20 @@ public interface DseFunctionMetadata extends FunctionMetadata {
         .append(getReturnType().asCql(false, true))
         .newLine();
     // handle deterministic and monotonic
-    if (isDeterministic()) {
+    if (getDeterministic().orElse(false)) {
       builder.append("DETERMINISTIC").newLine();
     }
-    if (isMonotonic()) {
-      builder.append("MONOTONIC").newLine();
-    } else if (!getMonotonicArgumentNames().isEmpty()) {
-      builder.append("MONOTONIC ON ").append(getMonotonicArgumentNames().get(0)).newLine();
+    if (getMonotonicity().isPresent()) {
+      switch (getMonotonicity().get()) {
+        case FULLY_MONOTONIC:
+          builder.append("MONOTONIC").newLine();
+          break;
+        case PARTIALLY_MONOTONIC:
+          builder.append("MONOTONIC ON ").append(getMonotonicArgumentNames().get(0)).newLine();
+          break;
+        default:
+          break;
+      }
     }
     builder
         .append("LANGUAGE ")

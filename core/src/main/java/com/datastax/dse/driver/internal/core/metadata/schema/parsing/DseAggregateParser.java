@@ -44,8 +44,8 @@ public class DseAggregateParser {
       Map<CqlIdentifier, UserDefinedType> userDefinedTypes) {
     AggregateMetadata aggregate = aggregateParser.parseAggregate(row, keyspaceId, userDefinedTypes);
     // parse the DSE extended columns
-    final boolean deterministic =
-        row.contains("deterministic") ? row.getBoolean("deterministic") : false;
+    final Boolean deterministic =
+        row.contains("deterministic") ? row.getBoolean("deterministic") : null;
 
     return new DefaultDseAggregateMetadata(
         aggregate.getKeyspace(),

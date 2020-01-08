@@ -24,13 +24,14 @@ import com.datastax.oss.driver.internal.core.metadata.schema.DefaultAggregateMet
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
+import java.util.Optional;
 import net.jcip.annotations.Immutable;
 
 @Immutable
 public class DefaultDseAggregateMetadata extends DefaultAggregateMetadata
     implements DseAggregateMetadata {
 
-  private final boolean deterministic;
+  @Nullable private final Boolean deterministic;
 
   public DefaultDseAggregateMetadata(
       @NonNull CqlIdentifier keyspace,
@@ -41,7 +42,7 @@ public class DefaultDseAggregateMetadata extends DefaultAggregateMetadata
       @NonNull FunctionSignature stateFuncSignature,
       @NonNull DataType stateType,
       @NonNull TypeCodec<Object> stateTypeCodec,
-      boolean deterministic) {
+      @Nullable Boolean deterministic) {
     super(
         keyspace,
         signature,
@@ -55,8 +56,15 @@ public class DefaultDseAggregateMetadata extends DefaultAggregateMetadata
   }
 
   @Override
+  @Deprecated
   public boolean isDeterministic() {
-    return this.deterministic;
+    return deterministic != null && deterministic;
+  }
+
+  @Override
+  @Nullable
+  public Optional<Boolean> getDeterministic() {
+    return Optional.ofNullable(deterministic);
   }
 
   @Override
@@ -73,7 +81,7 @@ public class DefaultDseAggregateMetadata extends DefaultAggregateMetadata
           && Objects.equals(this.getReturnType(), that.getReturnType())
           && Objects.equals(this.getStateFuncSignature(), that.getStateFuncSignature())
           && Objects.equals(this.getStateType(), that.getStateType())
-          && this.deterministic == that.isDeterministic();
+          && Objects.equals(this.deterministic, that.getDeterministic().orElse(null));
     } else {
       return false;
     }
@@ -94,15 +102,13 @@ public class DefaultDseAggregateMetadata extends DefaultAggregateMetadata
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("Aggregate Name: ")
-        .append(getSignature().getName().asCql(false))
-        .append(", Keyspace: ")
-        .append(getKeyspace().asCql(false))
-        .append(", Return Type: ")
-        .append(getReturnType().asCql(false, false))
-        .append(", Deterministic: ")
-        .append(deterministic);
-    return sb.toString();
+    return "Aggregate Name: "
+        + getSignature().getName().asCql(false)
+        + ", Keyspace: "
+        + getKeyspace().asCql(false)
+        + ", Return Type: "
+        + getReturnType().asCql(false, false)
+        + ", Deterministic: "
+        + deterministic;
   }
 }

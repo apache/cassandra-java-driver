@@ -20,17 +20,20 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultFunctionMetadata;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import net.jcip.annotations.Immutable;
 
 @Immutable
 public class DefaultDseFunctionMetadata extends DefaultFunctionMetadata
     implements DseFunctionMetadata {
 
-  private final boolean deterministic;
-  private final boolean monotonic;
+  @Nullable private final Boolean deterministic;
+  @Nullable private final Monotonicity monotonicity;
   @NonNull private final List<CqlIdentifier> monotonicArgumentNames;
 
   public DefaultDseFunctionMetadata(
@@ -41,24 +44,43 @@ public class DefaultDseFunctionMetadata extends DefaultFunctionMetadata
       boolean calledOnNullInput,
       @NonNull String language,
       @NonNull DataType returnType,
-      boolean deterministic,
-      boolean monotonic,
+      @Nullable Boolean deterministic,
+      @Nullable Boolean monotonic,
       @NonNull List<CqlIdentifier> monotonicArgumentNames) {
     super(keyspace, signature, parameterNames, body, calledOnNullInput, language, returnType);
     // set DSE extension attributes
     this.deterministic = deterministic;
-    this.monotonic = monotonic;
-    this.monotonicArgumentNames = monotonicArgumentNames;
+    this.monotonicity =
+        monotonic == null
+            ? null
+            : monotonic
+                ? Monotonicity.FULLY_MONOTONIC
+                : monotonicArgumentNames.isEmpty()
+                    ? Monotonicity.NOT_MONOTONIC
+                    : Monotonicity.PARTIALLY_MONOTONIC;
+    this.monotonicArgumentNames = ImmutableList.copyOf(monotonicArgumentNames);
   }
 
   @Override
+  @Deprecated
   public boolean isDeterministic() {
-    return this.deterministic;
+    return deterministic != null && deterministic;
   }
 
   @Override
+  public Optional<Boolean> getDeterministic() {
+    return Optional.ofNullable(deterministic);
+  }
+
+  @Override
+  @Deprecated
   public boolean isMonotonic() {
-    return this.monotonic;
+    return monotonicity == Monotonicity.FULLY_MONOTONIC;
+  }
+
+  @Override
+  public Optional<Monotonicity> getMonotonicity() {
+    return Optional.ofNullable(monotonicity);
   }
 
   @NonNull
@@ -80,8 +102,8 @@ public class DefaultDseFunctionMetadata extends DefaultFunctionMetadata
           && this.isCalledOnNullInput() == that.isCalledOnNullInput()
           && Objects.equals(this.getLanguage(), that.getLanguage())
           && Objects.equals(this.getReturnType(), that.getReturnType())
-          && this.deterministic == that.isDeterministic()
-          && this.monotonic == that.isMonotonic()
+          && Objects.equals(this.deterministic, that.getDeterministic().orElse(null))
+          && this.monotonicity == that.getMonotonicity().orElse(null)
           && Objects.equals(this.monotonicArgumentNames, that.getMonotonicArgumentNames());
     } else {
       return false;
@@ -98,22 +120,26 @@ public class DefaultDseFunctionMetadata extends DefaultFunctionMetadata
         isCalledOnNullInput(),
         getLanguage(),
         getReturnType(),
-        isDeterministic(),
-        isMonotonic(),
-        getMonotonicArgumentNames());
+        deterministic,
+        monotonicity,
+        monotonicArgumentNames);
   }
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("Function Name: ").append(this.getSignature().getName().asCql(false));
-    sb.append(", Keyspace: ").append(this.getKeyspace());
-    sb.append(", Language: ").append(this.getLanguage());
-    sb.append(", Protocol Code: ").append(this.getReturnType().getProtocolCode());
-    sb.append(", Deterministic: ").append(this.isDeterministic());
-    sb.append(", Monotonic: ").append(this.isMonotonic());
-    sb.append(", Monotonic On: ")
-        .append(this.monotonicArgumentNames.isEmpty() ? "" : this.monotonicArgumentNames.get(0));
-    return sb.toString();
+    return "Function Name: "
+        + this.getSignature().getName().asCql(false)
+        + ", Keyspace: "
+        + this.getKeyspace().asCql(false)
+        + ", Language: "
+        + this.getLanguage()
+        + ", Return Type: "
+        + getReturnType().asCql(false, false)
+        + ", Deterministic: "
+        + this.deterministic
+        + ", Monotonicity: "
+        + this.monotonicity
+        + ", Monotonic On: "
+        + (this.monotonicArgumentNames.isEmpty() ? "" : this.monotonicArgumentNames.get(0));
   }
 }
