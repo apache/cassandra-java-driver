@@ -5,6 +5,8 @@
 ### 4.4.0 (in progress)
 
 - [bug] JAVA-2583: IS NOT NULL clause should be idempotent
+- [improvement] JAVA-2442: Don't check for schema agreement twice when completing a DDL query
+- [improvement] JAVA-2473: Don't reconnect control connection if protocol is downgraded
 - [bug] JAVA-2556: Make ExecutionInfo compatible with any Request type
 - [new feature] JAVA-2532: Add BoundStatement ReturnType for insert, update, and delete DAO methods
 - [improvement] JAVA-2107: Add XML formatting plugin
