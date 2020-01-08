@@ -63,6 +63,7 @@ public class AllNodesFailedExceptionTest {
         .hasEntrySatisfying(node2, list -> assertThat(list).containsExactly(e2));
     assertThat(e.getErrors()).containsEntry(node1, e1);
     assertThat(e.getErrors()).containsEntry(node2, e2);
+    assertThat(e).hasSuppressedException(e1).hasSuppressedException(e2);
   }
 
   @SuppressWarnings("deprecation")
@@ -89,5 +90,9 @@ public class AllNodesFailedExceptionTest {
         .hasEntrySatisfying(node2, list -> assertThat(list).containsExactly(e2a));
     assertThat(e.getErrors()).containsEntry(node1, e1a);
     assertThat(e.getErrors()).containsEntry(node2, e2a);
+    assertThat(e)
+        .hasSuppressedException(e1a)
+        .hasSuppressedException(e1b)
+        .hasSuppressedException(e2a);
   }
 }

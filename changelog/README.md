@@ -5,6 +5,14 @@
 ### 4.4.0 (in progress)
 
 - [improvement] JAVA-2547: Add method DriverConfigLoader.fromPath
+- [improvement] JAVA-2528: Store suppressed exceptions in AllNodesFailedException
+- [new feature] JAVA-2581: Add query builder support for indexed list assignments
+- [improvement] JAVA-2596: Consider collection removals as idempotent in query builder
+- [bug] JAVA-2555: Generate append/prepend constructs compatible with legacy C* versions
+- [bug] JAVA-2584: Ensure codec registry is able to create codecs for collections of UDTs and tuples
+- [bug] JAVA-2583: IS NOT NULL clause should be idempotent
+- [improvement] JAVA-2442: Don't check for schema agreement twice when completing a DDL query
+- [improvement] JAVA-2473: Don't reconnect control connection if protocol is downgraded
 - [bug] JAVA-2556: Make ExecutionInfo compatible with any Request type
 - [new feature] JAVA-2532: Add BoundStatement ReturnType for insert, update, and delete DAO methods
 - [improvement] JAVA-2107: Add XML formatting plugin
