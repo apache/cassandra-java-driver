@@ -106,27 +106,53 @@ public interface OngoingAssignment {
   /**
    * Assigns a value to an entry in a map column, as in {@code SET map[?]=?}.
    *
-   * <p>This is a shortcut for {@link #set(Assignment) set(Assignment.setMapValue(columnId, index,
+   * <p>This is a shortcut for {@link #set(Assignment) set(Assignment.setMapValue(columnId, key,
    * value))}.
    *
    * @see Assignment#setMapValue(CqlIdentifier, Term, Term)
    */
   @NonNull
   default UpdateWithAssignments setMapValue(
-      @NonNull CqlIdentifier columnId, @NonNull Term index, @NonNull Term value) {
-    return set(Assignment.setMapValue(columnId, index, value));
+      @NonNull CqlIdentifier columnId, @NonNull Term key, @NonNull Term value) {
+    return set(Assignment.setMapValue(columnId, key, value));
   }
 
   /**
    * Shortcut for {@link #setMapValue(CqlIdentifier, Term, Term)
-   * setMapValue(CqlIdentifier.fromCql(columnName), index, value)}.
+   * setMapValue(CqlIdentifier.fromCql(columnName), key, value)}.
    *
    * @see Assignment#setMapValue(String, Term, Term)
    */
   @NonNull
   default UpdateWithAssignments setMapValue(
+      @NonNull String columnName, @NonNull Term key, @NonNull Term value) {
+    return setMapValue(CqlIdentifier.fromCql(columnName), key, value);
+  }
+
+  /**
+   * Assigns a value to an index in a list column, as in {@code SET list[?]=?}.
+   *
+   * <p>This is a shortcut for {@link #set(Assignment) set(Assignment.setListValue(columnId, index,
+   * value))}.
+   *
+   * @see Assignment#setListValue(CqlIdentifier, Term, Term)
+   */
+  @NonNull
+  default UpdateWithAssignments setListValue(
+      @NonNull CqlIdentifier columnId, @NonNull Term index, @NonNull Term value) {
+    return set(Assignment.setListValue(columnId, index, value));
+  }
+
+  /**
+   * Shortcut for {@link #setListValue(CqlIdentifier, Term, Term)
+   * setListValue(CqlIdentifier.fromCql(columnName), index, value)}.
+   *
+   * @see Assignment#setListValue(String, Term, Term)
+   */
+  @NonNull
+  default UpdateWithAssignments setListValue(
       @NonNull String columnName, @NonNull Term index, @NonNull Term value) {
-    return setMapValue(CqlIdentifier.fromCql(columnName), index, value);
+    return setListValue(CqlIdentifier.fromCql(columnName), index, value);
   }
 
   /**
@@ -221,7 +247,7 @@ public interface OngoingAssignment {
   }
 
   /**
-   * Appends to a collection column, as in {@code SET l+=?}.
+   * Appends to a collection column, as in {@code SET l=l+?}.
    *
    * <p>The term must be a collection of the same type as the column.
    *
@@ -246,7 +272,7 @@ public interface OngoingAssignment {
   }
 
   /**
-   * Appends a single element to a list column, as in {@code SET l+=[?]}.
+   * Appends a single element to a list column, as in {@code SET l=l+[?]}.
    *
    * <p>The term must be of the same type as the column's elements.
    *
@@ -274,7 +300,7 @@ public interface OngoingAssignment {
   }
 
   /**
-   * Appends a single element to a set column, as in {@code SET s+={?}}.
+   * Appends a single element to a set column, as in {@code SET s=s+{?}}.
    *
    * <p>The term must be of the same type as the column's elements.
    *
@@ -299,7 +325,7 @@ public interface OngoingAssignment {
   }
 
   /**
-   * Appends a single entry to a map column, as in {@code SET m+={?:?}}.
+   * Appends a single entry to a map column, as in {@code SET m=m+{?:?}}.
    *
    * <p>The terms must be of the same type as the column's keys and values respectively.
    *
@@ -436,7 +462,7 @@ public interface OngoingAssignment {
   }
 
   /**
-   * Removes elements from a collection, as in {@code SET l-=[1,2,3]}.
+   * Removes elements from a collection, as in {@code SET l=l-[1,2,3]}.
    *
    * <p>The term must be a collection of the same type as the column.
    *
@@ -469,7 +495,7 @@ public interface OngoingAssignment {
   }
 
   /**
-   * Removes a single element to a list column, as in {@code SET l-=[?]}.
+   * Removes a single element to a list column, as in {@code SET l=l-[?]}.
    *
    * <p>The term must be of the same type as the column's elements.
    *
@@ -497,7 +523,7 @@ public interface OngoingAssignment {
   }
 
   /**
-   * Removes a single element to a set column, as in {@code SET s-={?}}.
+   * Removes a single element to a set column, as in {@code SET s=s-{?}}.
    *
    * <p>The term must be of the same type as the column's elements.
    *
@@ -522,7 +548,7 @@ public interface OngoingAssignment {
   }
 
   /**
-   * Removes a single entry to a map column, as in {@code SET m-={?:?}}.
+   * Removes a single entry to a map column, as in {@code SET m=m-{?:?}}.
    *
    * <p>The terms must be of the same type as the column's keys and values respectively.
    *

@@ -25,12 +25,14 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
@@ -74,6 +76,37 @@ public final class Uuids {
 
   /** The system property to use to force the value of the process ID ({@value}). */
   public static final String PID_SYSTEM_PROPERTY = "com.datastax.oss.driver.PID";
+
+  /**
+   * The namespace UUID for URLs, as defined in <a
+   * href="https://tools.ietf.org/html/rfc4122#appendix-C">Appendix C of RFC-4122</a>. When using
+   * this namespace to create a name-based UUID, it is expected that the name part be a valid {@link
+   * java.net.URL URL}.
+   */
+  public static final UUID NAMESPACE_URL = UUID.fromString("6ba7b811-9dad-11d1-80b4-00c04fd430c8");
+
+  /**
+   * The namespace UUID for fully-qualified domain names, as defined in <a
+   * href="https://tools.ietf.org/html/rfc4122#appendix-C">Appendix C of RFC-4122</a>. When using
+   * this namespace to create a name-based UUID, it is expected that the name part be a valid domain
+   * name.
+   */
+  public static final UUID NAMESPACE_DNS = UUID.fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+
+  /**
+   * The namespace UUID for OIDs, as defined in <a
+   * href="https://tools.ietf.org/html/rfc4122#appendix-C">Appendix C of RFC-4122</a>. When using
+   * this namespace to create a name-based UUID, it is expected that the name part be an ISO OID.
+   */
+  public static final UUID NAMESPACE_OID = UUID.fromString("6ba7b812-9dad-11d1-80b4-00c04fd430c8");
+
+  /**
+   * The namespace UUID for X.500 domain names, as defined in <a
+   * href="https://tools.ietf.org/html/rfc4122#appendix-C">Appendix C of RFC-4122</a>. When using
+   * this namespace to create a name-based UUID, it is expected that the name part be a valid X.500
+   * domain name, in DER or a text output format.
+   */
+  public static final UUID NAMESPACE_X500 = UUID.fromString("6ba7b814-9dad-11d1-80b4-00c04fd430c8");
 
   private static final Logger LOG = LoggerFactory.getLogger(Uuids.class);
 
@@ -202,11 +235,186 @@ public final class Uuids {
   /**
    * Creates a new random (version 4) UUID.
    *
-   * <p>This method is just a convenience for {@code UUID.randomUUID()}.
+   * <p>This method is just a convenience for {@link UUID#randomUUID()}.
    */
   @NonNull
   public static UUID random() {
     return UUID.randomUUID();
+  }
+
+  /**
+   * Creates a new name-based (version 3) {@link UUID} from the given namespace UUID and the given
+   * string representing the name part.
+   *
+   * <p>Note that the given string will be converted to bytes using {@link StandardCharsets#UTF_8}.
+   *
+   * @param namespace The namespace UUID to use; cannot be null.
+   * @param name The name part; cannot be null.
+   * @throws NullPointerException if <code>namespace</code> or <code>name</code> is null.
+   * @throws IllegalStateException if the {@link MessageDigest} algorithm for version 3 (MD5) is not
+   *     available on this platform.
+   */
+  @NonNull
+  public static UUID nameBased(@NonNull UUID namespace, @NonNull String name) {
+    Objects.requireNonNull(name, "name cannot be null");
+    return nameBased(namespace, name.getBytes(StandardCharsets.UTF_8));
+  }
+
+  /**
+   * Creates a new name-based (version 3) {@link UUID} from the given namespace UUID and the given
+   * byte array representing the name part.
+   *
+   * @param namespace The namespace UUID to use; cannot be null.
+   * @param name The name part; cannot be null.
+   * @throws NullPointerException if <code>namespace</code> or <code>name</code> is null.
+   * @throws IllegalStateException if the {@link MessageDigest} algorithm for version 3 (MD5) is not
+   *     available on this platform.
+   */
+  @NonNull
+  public static UUID nameBased(@NonNull UUID namespace, @NonNull byte[] name) {
+    return nameBased(namespace, name, 3);
+  }
+
+  /**
+   * Creates a new name-based (version 3 or version 5) {@link UUID} from the given namespace UUID
+   * and the given string representing the name part.
+   *
+   * <p>Note that the given string will be converted to bytes using {@link StandardCharsets#UTF_8}.
+   *
+   * @param namespace The namespace UUID to use; cannot be null.
+   * @param name The name part; cannot be null.
+   * @param version The version to use, must be either 3 or 5; version 3 uses MD5 as its {@link
+   *     MessageDigest} algorithm, while version 5 uses SHA-1.
+   * @throws NullPointerException if <code>namespace</code> or <code>name</code> is null.
+   * @throws IllegalArgumentException if <code>version</code> is not 3 nor 5.
+   * @throws IllegalStateException if the {@link MessageDigest} algorithm for the desired version is
+   *     not available on this platform.
+   */
+  @NonNull
+  public static UUID nameBased(@NonNull UUID namespace, @NonNull String name, int version) {
+    Objects.requireNonNull(name, "name cannot be null");
+    return nameBased(namespace, name.getBytes(StandardCharsets.UTF_8), version);
+  }
+
+  /**
+   * Creates a new name-based (version 3 or version 5) {@link UUID} from the given namespace UUID
+   * and the given byte array representing the name part.
+   *
+   * @param namespace The namespace UUID to use; cannot be null.
+   * @param name The name to use; cannot be null.
+   * @param version The version to use, must be either 3 or 5; version 3 uses MD5 as its {@link
+   *     MessageDigest} algorithm, while version 5 uses SHA-1.
+   * @throws NullPointerException if <code>namespace</code> or <code>name</code> is null.
+   * @throws IllegalArgumentException if <code>version</code> is not 3 nor 5.
+   * @throws IllegalStateException if the {@link MessageDigest} algorithm for the desired version is
+   *     not available on this platform.
+   */
+  @NonNull
+  public static UUID nameBased(@NonNull UUID namespace, @NonNull byte[] name, int version) {
+    Objects.requireNonNull(namespace, "namespace cannot be null");
+    Objects.requireNonNull(name, "name cannot be null");
+    MessageDigest md = newMessageDigest(version);
+    md.update(toBytes(namespace));
+    md.update(name);
+    return buildNamedUuid(md.digest(), version);
+  }
+
+  /**
+   * Creates a new name-based (version 3) {@link UUID} from the given byte array containing the
+   * namespace UUID and the name parts concatenated together.
+   *
+   * <p>The byte array is expected to be at least 16 bytes long.
+   *
+   * @param namespaceAndName A byte array containing the concatenated namespace UUID and name;
+   *     cannot be null.
+   * @throws NullPointerException if <code>namespaceAndName</code> is null.
+   * @throws IllegalArgumentException if <code>namespaceAndName</code> is not at least 16 bytes
+   *     long.
+   * @throws IllegalStateException if the {@link MessageDigest} algorithm for version 3 (MD5) is not
+   *     available on this platform.
+   */
+  @NonNull
+  public static UUID nameBased(@NonNull byte[] namespaceAndName) {
+    return nameBased(namespaceAndName, 3);
+  }
+
+  /**
+   * Creates a new name-based (version 3 or version 5) {@link UUID} from the given byte array
+   * containing the namespace UUID and the name parts concatenated together.
+   *
+   * <p>The byte array is expected to be at least 16 bytes long.
+   *
+   * @param namespaceAndName A byte array containing the concatenated namespace UUID and name;
+   *     cannot be null.
+   * @param version The version to use, must be either 3 or 5.
+   * @throws NullPointerException if <code>namespaceAndName</code> is null.
+   * @throws IllegalArgumentException if <code>namespaceAndName</code> is not at least 16 bytes
+   *     long.
+   * @throws IllegalArgumentException if <code>version</code> is not 3 nor 5.
+   * @throws IllegalStateException if the {@link MessageDigest} algorithm for the desired version is
+   *     not available on this platform.
+   */
+  @NonNull
+  public static UUID nameBased(@NonNull byte[] namespaceAndName, int version) {
+    Objects.requireNonNull(namespaceAndName, "namespaceAndName cannot be null");
+    if (namespaceAndName.length < 16) {
+      throw new IllegalArgumentException("namespaceAndName must be at least 16 bytes long");
+    }
+    MessageDigest md = newMessageDigest(version);
+    md.update(namespaceAndName);
+    return buildNamedUuid(md.digest(), version);
+  }
+
+  @NonNull
+  private static MessageDigest newMessageDigest(int version) {
+    if (version != 3 && version != 5) {
+      throw new IllegalArgumentException(
+          "Invalid name-based UUID version, expecting 3 or 5, got: " + version);
+    }
+    String algorithm = version == 3 ? "MD5" : "SHA-1";
+    try {
+      return MessageDigest.getInstance(algorithm);
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException(algorithm + " algorithm not available", e);
+    }
+  }
+
+  @NonNull
+  private static UUID buildNamedUuid(@NonNull byte[] data, int version) {
+    // clear and set version
+    data[6] &= (byte) 0x0f;
+    data[6] |= (byte) (version << 4);
+    // clear and set variant to IETF
+    data[8] &= (byte) 0x3f;
+    data[8] |= (byte) 0x80;
+    return fromBytes(data);
+  }
+
+  private static UUID fromBytes(byte[] data) {
+    // data longer than 16 bytes will be truncated as mandated by the specs
+    assert data.length >= 16;
+    long msb = 0;
+    for (int i = 0; i < 8; i++) {
+      msb = (msb << 8) | (data[i] & 0xff);
+    }
+    long lsb = 0;
+    for (int i = 8; i < 16; i++) {
+      lsb = (lsb << 8) | (data[i] & 0xff);
+    }
+    return new UUID(msb, lsb);
+  }
+
+  private static byte[] toBytes(UUID uuid) {
+    byte[] out = new byte[16];
+    long msb = uuid.getMostSignificantBits();
+    for (int i = 0; i < 8; i++) {
+      out[i] = (byte) (msb >> (7 - i) * 8);
+    }
+    long lsb = uuid.getLeastSignificantBits();
+    for (int i = 8; i < 16; i++) {
+      out[i] = (byte) (lsb >> (15 - i) * 8);
+    }
+    return out;
   }
 
   /**

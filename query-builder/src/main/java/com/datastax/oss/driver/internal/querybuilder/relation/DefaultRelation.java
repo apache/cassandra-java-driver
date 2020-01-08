@@ -50,7 +50,7 @@ public class DefaultRelation implements Relation {
 
   @Override
   public boolean isIdempotent() {
-    return rightOperand.isIdempotent();
+    return rightOperand == null || rightOperand.isIdempotent();
   }
 
   @NonNull
