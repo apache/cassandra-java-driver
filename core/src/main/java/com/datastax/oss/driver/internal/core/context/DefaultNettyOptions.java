@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.context;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
+import com.datastax.oss.driver.internal.core.util.concurrent.PromiseCombiner;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
@@ -34,7 +35,6 @@ import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GlobalEventExecutor;
-import io.netty.util.concurrent.PromiseCombiner;
 import io.netty.util.internal.PlatformDependent;
 import java.time.Duration;
 import java.util.concurrent.ThreadFactory;
@@ -173,16 +173,13 @@ public class DefaultNettyOptions implements NettyOptions {
   public Future<Void> onClose() {
     DefaultPromise<Void> closeFuture = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
     GlobalEventExecutor.INSTANCE.execute(
-        () -> {
-          PromiseCombiner combiner = new PromiseCombiner(GlobalEventExecutor.INSTANCE);
-          combiner.add(
-              adminEventLoopGroup.shutdownGracefully(
-                  adminShutdownQuietPeriod, adminShutdownTimeout, adminShutdownUnit));
-          combiner.add(
-              ioEventLoopGroup.shutdownGracefully(
-                  ioShutdownQuietPeriod, ioShutdownTimeout, ioShutdownUnit));
-          combiner.finish(closeFuture);
-        });
+        () ->
+            PromiseCombiner.combine(
+                closeFuture,
+                adminEventLoopGroup.shutdownGracefully(
+                    adminShutdownQuietPeriod, adminShutdownTimeout, adminShutdownUnit),
+                ioEventLoopGroup.shutdownGracefully(
+                    ioShutdownQuietPeriod, ioShutdownTimeout, ioShutdownUnit)));
     closeFuture.addListener(f -> timer.stop());
     return closeFuture;
   }
