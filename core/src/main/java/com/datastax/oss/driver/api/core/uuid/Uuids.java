@@ -408,11 +408,11 @@ public final class Uuids {
     byte[] out = new byte[16];
     long msb = uuid.getMostSignificantBits();
     for (int i = 0; i < 8; i++) {
-      out[i] = (byte) ((msb >> ((7 - i) * 8)) & 0xff);
+      out[i] = (byte) (msb >> (7 - i) * 8);
     }
     long lsb = uuid.getLeastSignificantBits();
     for (int i = 8; i < 16; i++) {
-      out[i] = (byte) ((lsb >> ((15 - i) * 8)) & 0xff);
+      out[i] = (byte) (lsb >> (15 - i) * 8);
     }
     return out;
   }
