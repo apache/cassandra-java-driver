@@ -4,6 +4,7 @@
 
 ### 4.4.0 (in progress)
 
+- [new feature] JAVA-2581: Add query builder support for indexed list assignments
 - [improvement] JAVA-2596: Consider collection removals as idempotent in query builder
 - [bug] JAVA-2555: Generate append/prepend constructs compatible with legacy C* versions
 - [bug] JAVA-2584: Ensure codec registry is able to create codecs for collections of UDTs and tuples

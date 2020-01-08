@@ -78,8 +78,8 @@ public interface Assignment extends CqlSnippet {
   /** Assigns a value to an entry in a map column, as in {@code SET map[?]=?}. */
   @NonNull
   static Assignment setMapValue(
-      @NonNull CqlIdentifier columnId, @NonNull Term index, @NonNull Term value) {
-    return new DefaultAssignment(new ColumnComponentLeftOperand(columnId, index), "=", value);
+      @NonNull CqlIdentifier columnId, @NonNull Term key, @NonNull Term value) {
+    return new DefaultAssignment(new ColumnComponentLeftOperand(columnId, key), "=", value);
   }
 
   /**
@@ -88,8 +88,25 @@ public interface Assignment extends CqlSnippet {
    */
   @NonNull
   static Assignment setMapValue(
+      @NonNull String columnName, @NonNull Term key, @NonNull Term value) {
+    return setMapValue(CqlIdentifier.fromCql(columnName), key, value);
+  }
+
+  /** Assigns a value to an index in a list column, as in {@code SET list[?]=?}. */
+  @NonNull
+  static Assignment setListValue(
+      @NonNull CqlIdentifier columnId, @NonNull Term index, @NonNull Term value) {
+    return new DefaultAssignment(new ColumnComponentLeftOperand(columnId, index), "=", value);
+  }
+
+  /**
+   * Shortcut for {@link #setListValue(CqlIdentifier, Term, Term)
+   * setMapValue(CqlIdentifier.fromCql(columnName), index, value)}.
+   */
+  @NonNull
+  static Assignment setListValue(
       @NonNull String columnName, @NonNull Term index, @NonNull Term value) {
-    return setMapValue(CqlIdentifier.fromCql(columnName), index, value);
+    return setListValue(CqlIdentifier.fromCql(columnName), index, value);
   }
 
   /** Increments a counter, as in {@code SET c+=?}. */
