@@ -271,14 +271,6 @@ public class MetadataManager implements AsyncAutoCloseable {
     }
   }
 
-  /**
-   * Returns a future that completes after the first schema refresh attempt, whether that attempt
-   * succeeded or not (we wait for that refresh at init, but if it fails it's not fatal).
-   */
-  public CompletionStage<Void> firstSchemaRefreshFuture() {
-    return singleThreaded.firstSchemaRefreshFuture;
-  }
-
   @NonNull
   @Override
   public CompletionStage<Void> closeFuture() {
