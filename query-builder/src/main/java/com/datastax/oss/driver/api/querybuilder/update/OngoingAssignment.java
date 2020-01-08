@@ -221,7 +221,7 @@ public interface OngoingAssignment {
   }
 
   /**
-   * Appends to a collection column, as in {@code SET l+=?}.
+   * Appends to a collection column, as in {@code SET l=l+?}.
    *
    * <p>The term must be a collection of the same type as the column.
    *
@@ -246,7 +246,7 @@ public interface OngoingAssignment {
   }
 
   /**
-   * Appends a single element to a list column, as in {@code SET l+=[?]}.
+   * Appends a single element to a list column, as in {@code SET l=l+[?]}.
    *
    * <p>The term must be of the same type as the column's elements.
    *
@@ -274,7 +274,7 @@ public interface OngoingAssignment {
   }
 
   /**
-   * Appends a single element to a set column, as in {@code SET s+={?}}.
+   * Appends a single element to a set column, as in {@code SET s=s+{?}}.
    *
    * <p>The term must be of the same type as the column's elements.
    *
@@ -299,7 +299,7 @@ public interface OngoingAssignment {
   }
 
   /**
-   * Appends a single entry to a map column, as in {@code SET m+={?:?}}.
+   * Appends a single entry to a map column, as in {@code SET m=m+{?:?}}.
    *
    * <p>The terms must be of the same type as the column's keys and values respectively.
    *
@@ -436,7 +436,7 @@ public interface OngoingAssignment {
   }
 
   /**
-   * Removes elements from a collection, as in {@code SET l-=[1,2,3]}.
+   * Removes elements from a collection, as in {@code SET l=l-[1,2,3]}.
    *
    * <p>The term must be a collection of the same type as the column.
    *
@@ -469,7 +469,7 @@ public interface OngoingAssignment {
   }
 
   /**
-   * Removes a single element to a list column, as in {@code SET l-=[?]}.
+   * Removes a single element to a list column, as in {@code SET l=l-[?]}.
    *
    * <p>The term must be of the same type as the column's elements.
    *
@@ -497,7 +497,7 @@ public interface OngoingAssignment {
   }
 
   /**
-   * Removes a single element to a set column, as in {@code SET s-={?}}.
+   * Removes a single element to a set column, as in {@code SET s=s-{?}}.
    *
    * <p>The term must be of the same type as the column's elements.
    *
@@ -522,7 +522,7 @@ public interface OngoingAssignment {
   }
 
   /**
-   * Removes a single entry to a map column, as in {@code SET m-={?:?}}.
+   * Removes a single entry to a map column, as in {@code SET m=m-{?:?}}.
    *
    * <p>The terms must be of the same type as the column's keys and values respectively.
    *

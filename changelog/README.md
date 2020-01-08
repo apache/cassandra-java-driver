@@ -4,6 +4,8 @@
 
 ### 4.4.0 (in progress)
 
+- [improvement] JAVA-2596: Consider collection removals as idempotent in query builder
+- [bug] JAVA-2555: Generate append/prepend constructs compatible with legacy C* versions
 - [bug] JAVA-2584: Ensure codec registry is able to create codecs for collections of UDTs and tuples
 - [bug] JAVA-2583: IS NOT NULL clause should be idempotent
 - [improvement] JAVA-2442: Don't check for schema agreement twice when completing a DDL query
