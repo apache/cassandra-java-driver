@@ -21,9 +21,9 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class RemoveListElementAssignment extends CollectionElementAssignment {
+public class RemoveAssignment extends CollectionAssignment {
 
-  public RemoveListElementAssignment(@NonNull CqlIdentifier columnId, @NonNull Term element) {
-    super(columnId, Operator.REMOVE, null, element, '[', ']');
+  public RemoveAssignment(@NonNull CqlIdentifier columnId, @NonNull Term value) {
+    super(columnId, Operator.REMOVE, value);
   }
 }
