@@ -4,6 +4,7 @@
 
 ### 4.4.0 (in progress)
 
+- [improvement] JAVA-2528: Store suppressed exceptions in AllNodesFailedException
 - [new feature] JAVA-2581: Add query builder support for indexed list assignments
 - [improvement] JAVA-2596: Consider collection removals as idempotent in query builder
 - [bug] JAVA-2555: Generate append/prepend constructs compatible with legacy C* versions
