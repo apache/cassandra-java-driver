@@ -96,8 +96,7 @@ public class ExceptionIT {
               assertThat(info).isNotNull();
               assertThat(info.getCoordinator().getEndPoint().resolve())
                   .isEqualTo(SIMULACRON_RULE.cluster().node(1).inetSocketAddress());
-              assertThat(((SimpleStatement) info.getStatement()).getQuery())
-                  .isEqualTo(QUERY_STRING);
+              assertThat(((SimpleStatement) info.getRequest()).getQuery()).isEqualTo(QUERY_STRING);
 
               // specex disabled => the initial execution completed the response
               assertThat(info.getSpeculativeExecutionCount()).isEqualTo(0);

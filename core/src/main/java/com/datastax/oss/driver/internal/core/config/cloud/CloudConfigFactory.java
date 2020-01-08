@@ -33,9 +33,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -228,12 +230,22 @@ public class CloudConfigFactory {
   @NonNull
   protected BufferedReader fetchProxyMetadata(
       @NonNull URL metadataServiceUrl, @NonNull SSLContext sslContext) throws IOException {
-    HttpsURLConnection connection = (HttpsURLConnection) metadataServiceUrl.openConnection();
-    connection.setSSLSocketFactory(sslContext.getSocketFactory());
-    connection.setRequestMethod("GET");
-    connection.setRequestProperty("host", "localhost");
-    return new BufferedReader(
-        new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
+    try {
+      HttpsURLConnection connection = (HttpsURLConnection) metadataServiceUrl.openConnection();
+      connection.setSSLSocketFactory(sslContext.getSocketFactory());
+      connection.setRequestMethod("GET");
+      connection.setRequestProperty("host", "localhost");
+      return new BufferedReader(
+          new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
+    } catch (ConnectException e) {
+      throw new IllegalStateException(
+          "Unable to connect to cloud metadata service. Please make sure your cluster is not parked or terminated",
+          e);
+    } catch (UnknownHostException e) {
+      throw new IllegalStateException(
+          "Unable to resolve host for cloud metadata service. Please make sure your cluster is not terminated",
+          e);
+    }
   }
 
   @NonNull

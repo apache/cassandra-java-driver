@@ -131,6 +131,39 @@ public class UdtCodecTest extends CodecTestBase<UdtValue> {
     verify(textCodec).decode(Bytes.fromHexString("0x61"), ProtocolVersion.DEFAULT);
   }
 
+  /** Test for JAVA-2557. Ensures that the codec can decode null fields with any negative length. */
+  @Test
+  public void should_decode_negative_element_length_as_null_field() {
+    UdtValue udt =
+        decode(
+            "0x"
+                + "ffffffff" // field1 has length -1
+                + "fffffffe" // field2 has length -2
+                + "80000000" // field3 has length Integer.MIN_VALUE (-2147483648)
+            );
+
+    assertThat(udt.isNull(0)).isTrue();
+    assertThat(udt.isNull(1)).isTrue();
+    assertThat(udt.isNull(2)).isTrue();
+
+    verifyZeroInteractions(intCodec);
+    verifyZeroInteractions(doubleCodec);
+    verifyZeroInteractions(textCodec);
+  }
+
+  @Test
+  public void should_decode_absent_element_as_null_field() {
+    UdtValue udt = decode("0x");
+
+    assertThat(udt.isNull(0)).isTrue();
+    assertThat(udt.isNull(1)).isTrue();
+    assertThat(udt.isNull(2)).isTrue();
+
+    verifyZeroInteractions(intCodec);
+    verifyZeroInteractions(doubleCodec);
+    verifyZeroInteractions(textCodec);
+  }
+
   @Test
   public void should_format_null_udt() {
     assertThat(format(null)).isEqualTo("NULL");
