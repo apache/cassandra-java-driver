@@ -17,42 +17,13 @@ package com.datastax.oss.driver.internal.querybuilder.update;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
-import com.datastax.oss.driver.api.querybuilder.update.Assignment;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class PrependAssignment implements Assignment {
-
-  private final CqlIdentifier columnId;
-  private final Term prefix;
+public class PrependAssignment extends CollectionAssignment {
 
   public PrependAssignment(@NonNull CqlIdentifier columnId, @NonNull Term prefix) {
-    this.columnId = columnId;
-    this.prefix = prefix;
-  }
-
-  @Override
-  public void appendTo(@NonNull StringBuilder builder) {
-    String column = columnId.asCql(true);
-    builder.append(column).append('=');
-    prefix.appendTo(builder);
-    builder.append('+').append(column);
-  }
-
-  @Override
-  public boolean isIdempotent() {
-    // Not idempotent for lists, be pessimistic
-    return false;
-  }
-
-  @NonNull
-  public CqlIdentifier getColumnId() {
-    return columnId;
-  }
-
-  @NonNull
-  public Term getPrefix() {
-    return prefix;
+    super(columnId, Operator.PREPEND, prefix);
   }
 }

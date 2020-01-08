@@ -32,8 +32,8 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.LifecycleListener;
-import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
+import com.datastax.oss.driver.internal.core.metadata.MetadataManager.RefreshSchemaResult;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateManager;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
@@ -153,7 +153,9 @@ public class DefaultSession implements CqlSession {
   @NonNull
   @Override
   public CompletionStage<Metadata> refreshSchemaAsync() {
-    return metadataManager.refreshSchema(null, true, true);
+    return metadataManager
+        .refreshSchema(null, true, true)
+        .thenApply(RefreshSchemaResult::getMetadata);
   }
 
   @NonNull
@@ -362,7 +364,6 @@ public class DefaultSession implements CqlSession {
       try {
         boolean protocolWasForced =
             context.getConfig().getDefaultProfile().isDefined(DefaultDriverOption.PROTOCOL_VERSION);
-        boolean needSchemaRefresh = true;
         if (!protocolWasForced) {
           ProtocolVersion currentVersion = context.getProtocolVersion();
           ProtocolVersion bestVersion =
@@ -378,36 +379,27 @@ public class DefaultSession implements CqlSession {
                 bestVersion);
             context.getChannelFactory().setProtocolVersion(bestVersion);
 
-            // If the control connection has already initialized, force a reconnect to use the new
-            // version.
-            // (note: it might not have initialized yet if there is a custom TopologyMonitor)
-            ControlConnection controlConnection = context.getControlConnection();
-            if (controlConnection.isInit()) {
-              controlConnection.reconnectNow();
-              // Reconnection already triggers a full schema refresh
-              needSchemaRefresh = false;
-            }
+            // Note that, with the default topology monitor, the control connection is already
+            // connected with currentVersion at this point. This doesn't really matter because none
+            // of the control queries use any protocol-dependent feature.
+            // Keep going as-is, the control connection might switch to the "correct" version later
+            // if it reconnects to another node.
           }
         }
-        if (needSchemaRefresh) {
-          metadataManager
-              .refreshSchema(null, false, true)
-              .whenComplete(
-                  (metadata, error) -> {
-                    if (error != null) {
-                      Loggers.warnWithException(
-                          LOG,
-                          "[{}] Unexpected error while refreshing schema during initialization, "
-                              + "keeping previous version",
-                          logPrefix,
-                          error);
-                    }
-                  });
-        }
         metadataManager
-            .firstSchemaRefreshFuture()
-            .thenAccept(v -> afterInitialSchemaRefresh(keyspace));
-
+            .refreshSchema(null, false, true)
+            .whenComplete(
+                (metadata, error) -> {
+                  if (error != null) {
+                    Loggers.warnWithException(
+                        LOG,
+                        "[{}] Unexpected error while refreshing schema during initialization, "
+                            + "keeping previous version",
+                        logPrefix,
+                        error);
+                  }
+                  afterInitialSchemaRefresh(keyspace);
+                });
       } catch (Throwable throwable) {
         initFuture.completeExceptionally(throwable);
       }

@@ -32,7 +32,7 @@ import io.netty.channel.ChannelConfig;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoop;
 import io.netty.channel.socket.DefaultSocketChannelConfig;
-import io.netty.util.concurrent.GlobalEventExecutor;
+import io.netty.util.concurrent.ImmediateEventExecutor;
 import io.netty.util.concurrent.Promise;
 import java.util.concurrent.CompletableFuture;
 
@@ -59,7 +59,7 @@ public class PoolBehavior {
       this.channel = mock(DriverChannel.class);
       EventLoop eventLoop = mock(EventLoop.class);
       ChannelConfig config = mock(DefaultSocketChannelConfig.class);
-      this.writePromise = GlobalEventExecutor.INSTANCE.newPromise();
+      this.writePromise = ImmediateEventExecutor.INSTANCE.newPromise();
       when(channel.write(any(Message.class), anyBoolean(), anyMap(), any(ResponseCallback.class)))
           .thenAnswer(
               invocation -> {
@@ -110,7 +110,7 @@ public class PoolBehavior {
 
   /** Mocks a follow-up request on the same channel. */
   public void mockFollowupRequest(Class<? extends Message> expectedMessage, Frame responseFrame) {
-    Promise<Void> writePromise2 = GlobalEventExecutor.INSTANCE.newPromise();
+    Promise<Void> writePromise2 = ImmediateEventExecutor.INSTANCE.newPromise();
     CompletableFuture<ResponseCallback> callbackFuture2 = new CompletableFuture<>();
     when(channel.write(any(expectedMessage), anyBoolean(), anyMap(), any(ResponseCallback.class)))
         .thenAnswer(

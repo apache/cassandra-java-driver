@@ -71,7 +71,9 @@ abstract class ChannelHandlerRequest implements ResponseCallback {
       timeoutFuture =
           channel.eventLoop().schedule(this::onTimeout, timeoutMillis, TimeUnit.MILLISECONDS);
     } else {
-      fail(describe() + ": error writing ", writeFuture.cause());
+      String message =
+          String.format("%s: failed to send request (%s)", describe(), writeFuture.cause());
+      fail(message, writeFuture.cause());
     }
   }
 
@@ -87,7 +89,8 @@ abstract class ChannelHandlerRequest implements ResponseCallback {
     if (timeoutFuture != null) {
       timeoutFuture.cancel(true);
     }
-    fail(describe() + ": unexpected failure", error);
+    String message = String.format("%s: unexpected failure (%s)", describe(), error);
+    fail(message, error);
   }
 
   private void onTimeout() {
@@ -104,13 +107,13 @@ abstract class ChannelHandlerRequest implements ResponseCallback {
       fail(
           new IllegalArgumentException(
               String.format(
-                  "%s: unexpected server error [%s] %s",
+                  "%s: server replied with unexpected error code [%s]: %s",
                   describe(), ProtocolUtils.errorCodeString(error.code), error.message)));
     } else {
       fail(
           new IllegalArgumentException(
               String.format(
-                  "%s: unexpected server response opcode=%s",
+                  "%s: server replied with unexpected response type (opcode=%s)",
                   describe(), ProtocolUtils.opcodeString(response.opcode))));
     }
   }

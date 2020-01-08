@@ -395,7 +395,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
 
     @Override
     String describe() {
-      return "[" + logPrefix + "] set keyspace " + keyspaceName;
+      return "[" + logPrefix + "] Set keyspace request (USE " + keyspaceName.asCql(true) + ")";
     }
 
     @Override

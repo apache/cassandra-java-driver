@@ -30,9 +30,13 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.Objects;
-import net.jcip.annotations.Immutable;
+import net.jcip.annotations.NotThreadSafe;
 
-@Immutable
+/**
+ * Implementation note: contrary to most GettableBy* and SettableBy* implementations, this class is
+ * mutable.
+ */
+@NotThreadSafe
 public class DefaultUdtValue implements UdtValue, Serializable {
 
   private static final long serialVersionUID = 1;
