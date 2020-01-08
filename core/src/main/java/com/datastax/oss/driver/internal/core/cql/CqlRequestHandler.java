@@ -598,26 +598,24 @@ public class CqlRequestHandler implements Throttled {
         if (responseMessage instanceof SchemaChange) {
           SchemaChange schemaChange = (SchemaChange) responseMessage;
           context
-              .getTopologyMonitor()
-              .checkSchemaAgreement()
-              .thenCombine(
-                  context
-                      .getMetadataManager()
-                      .refreshSchema(schemaChange.keyspace, false, false)
-                      .exceptionally(
-                          error -> {
-                            Loggers.warnWithException(
-                                LOG,
-                                "[{}] Unexpected error while refreshing schema after DDL query, "
-                                    + "keeping previous version",
-                                logPrefix,
-                                error);
-                            return null;
-                          }),
-                  (schemaInAgreement, metadata) -> schemaInAgreement)
+              .getMetadataManager()
+              .refreshSchema(schemaChange.keyspace, false, false)
               .whenComplete(
-                  (schemaInAgreement, error) ->
-                      setFinalResult(schemaChange, responseFrame, schemaInAgreement, this));
+                  (result, error) -> {
+                    boolean schemaInAgreement;
+                    if (error != null) {
+                      Loggers.warnWithException(
+                          LOG,
+                          "[{}] Unexpected error while refreshing schema after DDL query, "
+                              + "keeping previous version",
+                          logPrefix,
+                          error);
+                      schemaInAgreement = false;
+                    } else {
+                      schemaInAgreement = result.isSchemaInAgreement();
+                    }
+                    setFinalResult(schemaChange, responseFrame, schemaInAgreement, this);
+                  });
         } else if (responseMessage instanceof SetKeyspace) {
           SetKeyspace setKeyspace = (SetKeyspace) responseMessage;
           session

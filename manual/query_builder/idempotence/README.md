@@ -39,7 +39,7 @@ If you use the result of a user-defined function in an INSERT or UPDATE statemen
 of knowing if that function is idempotent:  
 
 ```java
-Statement statement = insertInto("foo").value("k", function("generate_id")).build();
+SimpleStatement statement = insertInto("foo").value("k", function("generate_id")).build();
 // INSERT INTO foo (k) VALUES (generate_id())
 assert !statement.isIdempotent();
 ```
@@ -47,7 +47,7 @@ assert !statement.isIdempotent();
 This extends to arithmetic operations using such terms:
 
 ```java
-Statement statement =
+SimpleStatement statement =
     insertInto("foo").value("k", add(function("generate_id"), literal(1))).build();
 // INSERT INTO foo (k) VALUES (generate_id()+1)
 assert !statement.isIdempotent();
@@ -56,7 +56,7 @@ assert !statement.isIdempotent();
 Raw terms could be anything, so they are also considered unsafe by default: 
 
 ```java
-Statement statement =
+SimpleStatement statement =
     insertInto("foo").value("k", raw("generate_id()+1")).build();
 // INSERT INTO foo (k) VALUES (generate_id()+1)
 assert !statement.isIdempotent();
@@ -68,7 +68,7 @@ If a WHERE clause in an UPDATE or DELETE statement uses a comparison with an uns
 potentially apply to different rows for each execution:
 
 ```java
-Statement statement =
+SimpleStatement statement =
     update("foo")
         .setColumn("v", bindMarker())
         .whereColumn("k").isEqualTo(function("non_idempotent_func"))
@@ -82,7 +82,7 @@ assert !statement.isIdempotent();
 Counter updates are never idempotent:
 
 ```java
-Statement statement =
+SimpleStatement statement =
     update("foo")
         .increment("c")
         .whereColumn("k").isEqualTo(bindMarker())
@@ -94,12 +94,12 @@ assert !statement.isIdempotent();
 Nor is appending or prepending an element to a list:
 
 ```java
-Statement statement =
+SimpleStatement statement =
     update("foo")
         .appendListElement("l", literal(1))
         .whereColumn("k").isEqualTo(bindMarker())
         .build();
-// UPDATE foo SET l+=[1] WHERE k=?
+// UPDATE foo SET l=l+[1] WHERE k=?
 assert !statement.isIdempotent();
 ```
 
@@ -107,7 +107,7 @@ The generic `append` and `prepend` methods apply to any kind of collection, so w
 them unsafe by default too:
 
 ```java
-Statement statement =
+SimpleStatement statement =
     update("foo")
         .prepend("l", literal(Arrays.asList(1, 2, 3)))
         .whereColumn("k").isEqualTo(bindMarker())
@@ -116,12 +116,66 @@ Statement statement =
 assert !statement.isIdempotent();
 ```
 
+The generic `remove` method is however safe since collection removals are idempotent:
+
+```java
+SimpleStatement statement =
+    update("foo")
+        .remove("l", literal(Arrays.asList(1, 2, 3)))
+        .whereColumn("k").isEqualTo(bindMarker())
+        .build();
+// UPDATE foo SET l=l-[1,2,3] WHERE k=?
+assert statement.isIdempotent();
+```
+
+When appending, prepending or removing a single element to/from a collection, it is possible to use 
+the dedicated methods listed below; their idempotence depends on the collection type (list, set or 
+map), the operation (append, prepend or removal) and the idempotence of the element being 
+added/removed:
+
+1. `appendListElement` : not idempotent
+2. `prependListElement` : not idempotent
+3. `removeListElement` : idempotent if element is idempotent
+4. `appendSetElement` : idempotent if element is idempotent
+5. `prependSetElement` : idempotent if element is idempotent
+6. `removeSetElement` : idempotent if element is idempotent
+7. `appendMapElement` : idempotent if both key and value are idempotent
+8. `prependMapElement` : idempotent if both key and value are idempotent
+9. `removeMapElement` : idempotent if both key and value are idempotent
+
+In practice, most invocations of the above methods will be idempotent because most collection 
+elements are. For example, the following statement is idempotent since `literal(1)` is also 
+idempotent:
+
+```java
+SimpleStatement statement =
+    update("foo")
+        .removeListElement("l", literal(1))
+        .whereColumn("k").isEqualTo(bindMarker())
+        .build();
+// UPDATE foo SET l=l-[1] WHERE k=?
+assert statement.isIdempotent();
+```
+
+However, in rare cases the resulting statement won't be marked idempotent, e.g. if you use a 
+function to select a collection element:
+
+```java
+SimpleStatement statement =
+    update("foo")
+        .removeListElement("l", function("myfunc"))
+        .whereColumn("k").isEqualTo(bindMarker())
+        .build();
+// UPDATE foo SET l=l-[myfunc()] WHERE k=?
+assert !statement.isIdempotent();
+```
+
 ### Unsafe deletions
 
 Deleting from a list is not idempotent:
 
 ```java
-Statement statement =
+SimpleStatement statement =
     deleteFrom("foo")
         .element("l", literal(0))
         .whereColumn("k").isEqualTo(bindMarker())

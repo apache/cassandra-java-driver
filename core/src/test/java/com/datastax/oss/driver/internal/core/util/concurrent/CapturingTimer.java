@@ -16,8 +16,6 @@
 
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
-import static org.assertj.core.api.Assertions.fail;
-
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.TimerTask;
@@ -51,12 +49,7 @@ public class CapturingTimer implements Timer {
    * tell from the returned Timeout itself.
    */
   public CapturedTimeout getNextTimeout() {
-    try {
-      return timeoutQueue.poll(100, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException ie) {
-      fail("Unexpected interruption", ie);
-      throw new AssertionError();
-    }
+    return timeoutQueue.poll();
   }
 
   @Override

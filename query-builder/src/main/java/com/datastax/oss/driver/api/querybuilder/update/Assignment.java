@@ -34,6 +34,7 @@ import com.datastax.oss.driver.internal.querybuilder.update.PrependAssignment;
 import com.datastax.oss.driver.internal.querybuilder.update.PrependListElementAssignment;
 import com.datastax.oss.driver.internal.querybuilder.update.PrependMapEntryAssignment;
 import com.datastax.oss.driver.internal.querybuilder.update.PrependSetElementAssignment;
+import com.datastax.oss.driver.internal.querybuilder.update.RemoveAssignment;
 import com.datastax.oss.driver.internal.querybuilder.update.RemoveListElementAssignment;
 import com.datastax.oss.driver.internal.querybuilder.update.RemoveMapEntryAssignment;
 import com.datastax.oss.driver.internal.querybuilder.update.RemoveSetElementAssignment;
@@ -77,8 +78,8 @@ public interface Assignment extends CqlSnippet {
   /** Assigns a value to an entry in a map column, as in {@code SET map[?]=?}. */
   @NonNull
   static Assignment setMapValue(
-      @NonNull CqlIdentifier columnId, @NonNull Term index, @NonNull Term value) {
-    return new DefaultAssignment(new ColumnComponentLeftOperand(columnId, index), "=", value);
+      @NonNull CqlIdentifier columnId, @NonNull Term key, @NonNull Term value) {
+    return new DefaultAssignment(new ColumnComponentLeftOperand(columnId, key), "=", value);
   }
 
   /**
@@ -87,8 +88,25 @@ public interface Assignment extends CqlSnippet {
    */
   @NonNull
   static Assignment setMapValue(
+      @NonNull String columnName, @NonNull Term key, @NonNull Term value) {
+    return setMapValue(CqlIdentifier.fromCql(columnName), key, value);
+  }
+
+  /** Assigns a value to an index in a list column, as in {@code SET list[?]=?}. */
+  @NonNull
+  static Assignment setListValue(
+      @NonNull CqlIdentifier columnId, @NonNull Term index, @NonNull Term value) {
+    return new DefaultAssignment(new ColumnComponentLeftOperand(columnId, index), "=", value);
+  }
+
+  /**
+   * Shortcut for {@link #setListValue(CqlIdentifier, Term, Term)
+   * setMapValue(CqlIdentifier.fromCql(columnName), index, value)}.
+   */
+  @NonNull
+  static Assignment setListValue(
       @NonNull String columnName, @NonNull Term index, @NonNull Term value) {
-    return setMapValue(CqlIdentifier.fromCql(columnName), index, value);
+    return setListValue(CqlIdentifier.fromCql(columnName), index, value);
   }
 
   /** Increments a counter, as in {@code SET c+=?}. */
@@ -146,13 +164,13 @@ public interface Assignment extends CqlSnippet {
   }
 
   /**
-   * Appends to a collection column, as in {@code SET l+=?}.
+   * Appends to a collection column, as in {@code SET l=l+?}.
    *
    * <p>The term must be a collection of the same type as the column.
    */
   @NonNull
   static Assignment append(@NonNull CqlIdentifier columnId, @NonNull Term suffix) {
-    return new AppendAssignment(new ColumnLeftOperand(columnId), suffix);
+    return new AppendAssignment(columnId, suffix);
   }
 
   /**
@@ -165,7 +183,7 @@ public interface Assignment extends CqlSnippet {
   }
 
   /**
-   * Appends a single element to a list column, as in {@code SET l+=[?]}.
+   * Appends a single element to a list column, as in {@code SET l=l+[?]}.
    *
    * <p>The term must be of the same type as the column's elements.
    */
@@ -184,7 +202,7 @@ public interface Assignment extends CqlSnippet {
   }
 
   /**
-   * Appends a single element to a set column, as in {@code SET s+={?}}.
+   * Appends a single element to a set column, as in {@code SET s=s+{?}}.
    *
    * <p>The term must be of the same type as the column's elements.
    */
@@ -203,7 +221,7 @@ public interface Assignment extends CqlSnippet {
   }
 
   /**
-   * Appends a single entry to a map column, as in {@code SET m+={?:?}}.
+   * Appends a single entry to a map column, as in {@code SET m=m+{?:?}}.
    *
    * <p>The terms must be of the same type as the column's keys and values respectively.
    */
@@ -302,7 +320,7 @@ public interface Assignment extends CqlSnippet {
   }
 
   /**
-   * Removes elements from a collection, as in {@code SET l-=[1,2,3]}.
+   * Removes elements from a collection, as in {@code SET l=l-[1,2,3]}.
    *
    * <p>The term must be a collection of the same type as the column.
    *
@@ -313,7 +331,7 @@ public interface Assignment extends CqlSnippet {
    */
   @NonNull
   static Assignment remove(@NonNull CqlIdentifier columnId, @NonNull Term collectionToRemove) {
-    return new DefaultAssignment(new ColumnLeftOperand(columnId), "-=", collectionToRemove);
+    return new RemoveAssignment(columnId, collectionToRemove);
   }
 
   /**
@@ -326,7 +344,7 @@ public interface Assignment extends CqlSnippet {
   }
 
   /**
-   * Removes a single element to a list column, as in {@code SET l-=[?]}.
+   * Removes a single element from a list column, as in {@code SET l=l-[?]}.
    *
    * <p>The term must be of the same type as the column's elements.
    */
@@ -345,7 +363,7 @@ public interface Assignment extends CqlSnippet {
   }
 
   /**
-   * Removes a single element to a set column, as in {@code SET s-={?}}.
+   * Removes a single element from a set column, as in {@code SET s=s-{?}}.
    *
    * <p>The term must be of the same type as the column's elements.
    */
@@ -364,7 +382,7 @@ public interface Assignment extends CqlSnippet {
   }
 
   /**
-   * Removes a single entry to a map column, as in {@code SET m-={?:?}}.
+   * Removes a single entry from a map column, as in {@code SET m=m-{?:?}}.
    *
    * <p>The terms must be of the same type as the column's keys and values respectively.
    */
