@@ -4,6 +4,7 @@
 
 ### 4.4.0 (in progress)
 
+- [bug] JAVA-2584: Ensure codec registry is able to create codecs for collections of UDTs and tuples
 - [bug] JAVA-2583: IS NOT NULL clause should be idempotent
 - [improvement] JAVA-2442: Don't check for schema agreement twice when completing a DDL query
 - [improvement] JAVA-2473: Don't reconnect control connection if protocol is downgraded
