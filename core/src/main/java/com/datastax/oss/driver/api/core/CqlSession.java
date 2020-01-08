@@ -56,6 +56,8 @@ public interface CqlSession
    * Returns a builder to create a new instance.
    *
    * <p>Note that this builder is mutable and not thread-safe.
+   *
+   * @return {@code CqlSessionBuilder} to create a new instance.
    */
   @NonNull
   static CqlSessionBuilder builder() {

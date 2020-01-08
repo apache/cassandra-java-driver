@@ -31,6 +31,9 @@ public interface AsyncCqlSession extends Session {
   /**
    * Executes a CQL statement asynchronously (the call returns as soon as the statement was sent,
    * generally before the result is available).
+   *
+   * @param statement the CQL query to execute (that can be any {@code Statement}).
+   * @return a {@code CompletionStage} that, once complete, will produce the async result set.
    */
   @NonNull
   default CompletionStage<AsyncResultSet> executeAsync(@NonNull Statement<?> statement) {
@@ -41,6 +44,9 @@ public interface AsyncCqlSession extends Session {
   /**
    * Executes a CQL statement asynchronously (the call returns as soon as the statement was sent,
    * generally before the result is available).
+   *
+   * @param query the CQL query to execute.
+   * @return a {@code CompletionStage} that, once complete, will produce the async result set.
    */
   @NonNull
   default CompletionStage<AsyncResultSet> executeAsync(@NonNull String query) {
@@ -57,6 +63,9 @@ public interface AsyncCqlSession extends Session {
    *
    * <p>The result of this method is cached (see {@link SyncCqlSession#prepare(SimpleStatement)} for
    * more explanations).
+   *
+   * @param statement the CQL query to prepare (that can be any {@code SimpleStatement}).
+   * @return a {@code CompletionStage} that, once complete, will produce the prepared statement.
    */
   @NonNull
   default CompletionStage<PreparedStatement> prepareAsync(@NonNull SimpleStatement statement) {
@@ -71,6 +80,9 @@ public interface AsyncCqlSession extends Session {
    *
    * <p>The result of this method is cached (see {@link SyncCqlSession#prepare(SimpleStatement)} for
    * more explanations).
+   *
+   * @param query the CQL query string to prepare.
+   * @return a {@code CompletionStage} that, once complete, will produce the prepared statement.
    */
   @NonNull
   default CompletionStage<PreparedStatement> prepareAsync(@NonNull String query) {
@@ -90,6 +102,9 @@ public interface AsyncCqlSession extends Session {
    *
    * <p>The result of this method is cached (see {@link SyncCqlSession#prepare(SimpleStatement)} for
    * more explanations).
+   *
+   * @param request the {@code PrepareRequest} to prepare.
+   * @return a {@code CompletionStage} that, once complete, will produce the prepared statement.
    */
   @NonNull
   default CompletionStage<PreparedStatement> prepareAsync(PrepareRequest request) {

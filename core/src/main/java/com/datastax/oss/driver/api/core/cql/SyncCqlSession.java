@@ -15,6 +15,10 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.servererrors.QueryExecutionException;
+import com.datastax.oss.driver.api.core.servererrors.QueryValidationException;
+import com.datastax.oss.driver.api.core.servererrors.SyntaxError;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.cql.DefaultPrepareRequest;
@@ -31,6 +35,17 @@ public interface SyncCqlSession extends Session {
   /**
    * Executes a CQL statement synchronously (the calling thread blocks until the result becomes
    * available).
+   *
+   * @param statement the CQL query to execute (that can be any {@link Statement}).
+   * @return the result of the query. That result will never be null but can be empty (and will be
+   *     for any non SELECT query).
+   * @throws AllNodesFailedException if no host in the cluster can be contacted successfully to
+   *     execute this query.
+   * @throws QueryExecutionException if the query triggered an execution exception, i.e. an
+   *     exception thrown by Cassandra when it cannot execute the query with the requested
+   *     consistency level successfully.
+   * @throws QueryValidationException if the query is invalid (syntax error, unauthorized or any
+   *     other validation problem).
    */
   @NonNull
   default ResultSet execute(@NonNull Statement<?> statement) {
@@ -41,6 +56,17 @@ public interface SyncCqlSession extends Session {
   /**
    * Executes a CQL statement synchronously (the calling thread blocks until the result becomes
    * available).
+   *
+   * @param query the CQL query to execute.
+   * @return the result of the query. That result will never be null but can be empty (and will be
+   *     for any non SELECT query).
+   * @throws AllNodesFailedException if no host in the cluster can be contacted successfully to
+   *     execute this query.
+   * @throws QueryExecutionException if the query triggered an execution exception, i.e. an
+   *     exception thrown by Cassandra when it cannot execute the query with the requested
+   *     consistency level successfully.
+   * @throws QueryValidationException if the query if invalid (syntax error, unauthorized or any
+   *     other validation problem).
    */
   @NonNull
   default ResultSet execute(@NonNull String query) {
@@ -110,6 +136,10 @@ public interface SyncCqlSession extends Session {
    *       query strings but different {@linkplain SimpleStatement#getConsistencyLevel() consistency
    *       levels} will yield distinct prepared statements.
    * </ul>
+   *
+   * @param statement the CQL query to execute (that can be any {@link SimpleStatement}).
+   * @return the prepared statement corresponding to {@code statement}.
+   * @throws SyntaxError if the syntax of the query to prepare is not correct.
    */
   @NonNull
   default PreparedStatement prepare(@NonNull SimpleStatement statement) {
@@ -124,6 +154,10 @@ public interface SyncCqlSession extends Session {
    *
    * <p>The result of this method is cached (see {@link #prepare(SimpleStatement)} for more
    * explanations).
+   *
+   * @param query the CQL string query to execute.
+   * @return the prepared statement corresponding to {@code query}.
+   * @throws SyntaxError if the syntax of the query to prepare is not correct.
    */
   @NonNull
   default PreparedStatement prepare(@NonNull String query) {
@@ -143,6 +177,10 @@ public interface SyncCqlSession extends Session {
    *
    * <p>The result of this method is cached (see {@link #prepare(SimpleStatement)} for more
    * explanations).
+   *
+   * @param request the {@code PrepareRequest} to execute.
+   * @return the prepared statement corresponding to {@code request}.
+   * @throws SyntaxError if the syntax of the query to prepare is not correct.
    */
   @NonNull
   default PreparedStatement prepare(@NonNull PrepareRequest request) {

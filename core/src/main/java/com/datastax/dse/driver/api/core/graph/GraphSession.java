@@ -53,6 +53,8 @@ public interface GraphSession extends Session {
    * Apache Cassandra&reg; cluster will result in a runtime error.
    *
    * @see GraphResultSet
+   * @param graphStatement the graph query to execute (that can be any {@code GraphStatement}).
+   * @return the result of the graph query. That result will never be null but can be empty.
    */
   @NonNull
   default GraphResultSet execute(@NonNull GraphStatement<?> graphStatement) {
@@ -70,6 +72,8 @@ public interface GraphSession extends Session {
    *
    * @see #execute(GraphStatement)
    * @see AsyncGraphResultSet
+   * @param graphStatement the graph query to execute (that can be any {@code GraphStatement}).
+   * @return the {@code CompletionStage} on the result of the graph query.
    */
   @NonNull
   default CompletionStage<AsyncGraphResultSet> executeAsync(
