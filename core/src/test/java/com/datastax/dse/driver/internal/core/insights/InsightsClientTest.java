@@ -26,8 +26,11 @@ import static org.awaitility.Awaitility.await;
 import static org.awaitility.Duration.ONE_SECOND;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.datastax.dse.driver.api.core.metadata.DseNodeProperties;
 import com.datastax.dse.driver.internal.core.insights.configuration.InsightsConfiguration;
 import com.datastax.dse.driver.internal.core.insights.schema.AuthProviderType;
 import com.datastax.dse.driver.internal.core.insights.schema.Insight;
@@ -46,9 +49,11 @@ import com.datastax.dse.driver.internal.core.insights.schema.SSL;
 import com.datastax.dse.driver.internal.core.insights.schema.SessionStateForNode;
 import com.datastax.dse.driver.internal.core.insights.schema.SpecificExecutionProfile;
 import com.datastax.dse.driver.internal.core.insights.schema.SpeculativeExecutionInfo;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
+import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
@@ -75,7 +80,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -290,6 +297,39 @@ public class InsightsClientTest {
     assertThat(result).isEqualTo(expected);
   }
 
+  @Test
+  @SuppressWarnings("ResultOfMethodCallIgnored")
+  public void should_execute_should_send_event_check_only_once()
+      throws UnknownHostException, InterruptedException {
+    // given
+    InsightsConfiguration insightsConfiguration = mock(InsightsConfiguration.class);
+    when(insightsConfiguration.isMonitorReportingEnabled()).thenReturn(true);
+    when(insightsConfiguration.getStatusEventDelayMillis()).thenReturn(10L);
+    when(insightsConfiguration.getExecutor()).thenReturn(new DefaultEventLoop());
+
+    InsightsClient insightsClient =
+        new InsightsClient(
+            mockDefaultDriverContext(),
+            MOCK_TIME_SUPPLIER,
+            insightsConfiguration,
+            null,
+            null,
+            null,
+            null,
+            null,
+            EMPTY_STACK_TRACE);
+
+    // when
+    insightsClient.scheduleStatusMessageSend();
+    // emulate periodic calls to sendStatusMessage
+    insightsClient.sendStatusMessage();
+    insightsClient.sendStatusMessage();
+    insightsClient.sendStatusMessage();
+
+    // then
+    verify(insightsConfiguration, times(1)).isMonitorReportingEnabled();
+  }
+
   @DataProvider
   public static Object[][] stackTraceProvider() {
     StackTraceElement[] onlyInitCall =
@@ -419,6 +459,14 @@ public class InsightsClientTest {
     mockConnectionPools(context);
     MetadataManager manager = mock(MetadataManager.class);
     when(context.getMetadataManager()).thenReturn(manager);
+    Metadata metadata = mock(Metadata.class);
+    when(manager.getMetadata()).thenReturn(metadata);
+    Node node = mock(Node.class);
+    when(node.getExtras())
+        .thenReturn(
+            ImmutableMap.of(
+                DseNodeProperties.DSE_VERSION, Objects.requireNonNull(Version.parse("6.0.5"))));
+    when(metadata.getNodes()).thenReturn(ImmutableMap.of(UUID.randomUUID(), node));
     DriverExecutionProfile defaultExecutionProfile = mockDefaultExecutionProfile();
     DriverExecutionProfile nonDefaultExecutionProfile =
         mockNonDefaultRequestTimeoutExecutionProfile();

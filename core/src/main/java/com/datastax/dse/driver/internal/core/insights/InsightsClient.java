@@ -191,9 +191,6 @@ public class InsightsClient {
   @VisibleForTesting
   public CompletionStage<Void> sendStatusMessage() {
     try {
-      if (!shouldSendEvent()) {
-        return CompletableFuture.completedFuture(null);
-      }
       String statusMessage = createStatusMessage();
       CompletionStage<Void> result = sendJsonMessage(statusMessage);
       return result.whenComplete(
