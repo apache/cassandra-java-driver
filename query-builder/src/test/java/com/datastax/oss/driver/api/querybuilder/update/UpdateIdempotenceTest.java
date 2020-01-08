@@ -179,4 +179,11 @@ public class UpdateIdempotenceTest {
         .hasCql("UPDATE foo SET l=l-[1,2,3] WHERE k=?")
         .isIdempotent();
   }
+
+  @Test
+  public void should_be_idempotent_if_relation_does_not_have_right_operand() {
+    assertThat(update("foo").setColumn("col1", literal(42)).whereColumn("col2").isNotNull())
+        .hasCql("UPDATE foo SET col1=42 WHERE col2 IS NOT NULL")
+        .isIdempotent();
+  }
 }
