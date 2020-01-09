@@ -68,7 +68,7 @@ Note that, for backward compatibility with previous driver versions, you can als
 `DseGssApiAuthProvider` supports GSSAPI authentication against a DSE cluster secured with Kerberos:
 
 ```
-dse-java-driver {
+datastax-java-driver {
   advanced.auth-provider {
       class = DseGssApiAuthProvider
       login-configuration {
@@ -150,7 +150,7 @@ words the name of the role you want to connect as.
 Example for plain text authentication:
 
 ```
-dse-java-driver {
+datastax-java-driver {
   advanced.auth-provider {
       class = PlainTextAuthProvider
       username = bob
@@ -163,7 +163,7 @@ dse-java-driver {
 With the GSSAPI (Kerberos) provider:
 
 ```
-dse-java-driver {
+datastax-java-driver {
   advanced.auth-provider {
       class = DseGssApiAuthProvider
       authorization-id = alice
