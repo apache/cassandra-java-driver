@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.DataTypeParser;
@@ -24,7 +23,6 @@ import com.datastax.oss.driver.shaded.guava.common.collect.Multimap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * The system rows returned by the queries for a schema refresh, categorized by keyspace/table where
@@ -61,10 +59,4 @@ public interface SchemaRows {
   Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> indexes();
 
   DataTypeParser dataTypeParser();
-
-  /**
-   * The future to complete when the schema refresh is complete (here just to be propagated further
-   * down the chain).
-   */
-  CompletableFuture<Metadata> refreshFuture();
 }

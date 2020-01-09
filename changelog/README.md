@@ -8,6 +8,8 @@ This version brings in all functionality that was formerly only in the DataStax 
 such as the built-in support for reactive programming. Going forward, all new features will be 
 implemented in this single driver.
 
+
+- [improvement] JAVA-2582: Don't propagate a future into SchemaQueriesFactory
 - [documentation] JAVA-2542: JAVA-2542: Improve the javadocs of methods in CqlSession
 - [documentation] JAVA-2609: Add docs for proxy authentication to unified driver
 - [improvement] JAVA-2554: Improve efficiency of InsightsClient by improving supportsInsights check

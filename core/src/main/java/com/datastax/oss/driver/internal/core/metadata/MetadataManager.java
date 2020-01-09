@@ -432,9 +432,7 @@ public class MetadataManager implements AsyncAutoCloseable {
                     refreshFuture.completeExceptionally(agreementError);
                   } else {
                     schemaQueriesFactory
-                        .newInstance(
-                            // TODO remove this unused parameter (see JAVA-2582)
-                            null)
+                        .newInstance()
                         .execute()
                         .thenApplyAsync(this::parseAndApplySchemaRows, adminExecutor)
                         .whenComplete(

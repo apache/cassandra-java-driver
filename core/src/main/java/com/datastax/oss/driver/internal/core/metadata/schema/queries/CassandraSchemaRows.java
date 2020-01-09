@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 import com.datastax.dse.driver.api.core.metadata.DseNodeProperties;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.Version;
-import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.DataTypeClassNameParser;
@@ -33,7 +32,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +41,6 @@ public class CassandraSchemaRows implements SchemaRows {
 
   private final Node node;
   private final DataTypeParser dataTypeParser;
-  private final CompletableFuture<Metadata> refreshFuture;
   private final List<AdminRow> keyspaces;
   private final List<AdminRow> virtualKeyspaces;
   private final Multimap<CqlIdentifier, AdminRow> tables;
@@ -58,7 +55,6 @@ public class CassandraSchemaRows implements SchemaRows {
 
   private CassandraSchemaRows(
       Node node,
-      CompletableFuture<Metadata> refreshFuture,
       DataTypeParser dataTypeParser,
       List<AdminRow> keyspaces,
       List<AdminRow> virtualKeyspaces,
@@ -73,7 +69,6 @@ public class CassandraSchemaRows implements SchemaRows {
       Multimap<CqlIdentifier, AdminRow> aggregates) {
     this.node = node;
     this.dataTypeParser = dataTypeParser;
-    this.refreshFuture = refreshFuture;
     this.keyspaces = keyspaces;
     this.virtualKeyspaces = virtualKeyspaces;
     this.tables = tables;
@@ -96,11 +91,6 @@ public class CassandraSchemaRows implements SchemaRows {
   @Override
   public DataTypeParser dataTypeParser() {
     return dataTypeParser;
-  }
-
-  @Override
-  public CompletableFuture<Metadata> refreshFuture() {
-    return refreshFuture;
   }
 
   @Override
@@ -162,7 +152,6 @@ public class CassandraSchemaRows implements SchemaRows {
     private static final Logger LOG = LoggerFactory.getLogger(Builder.class);
 
     private final Node node;
-    private final CompletableFuture<Metadata> refreshFuture;
     private final DataTypeParser dataTypeParser;
     private final String tableNameColumn;
     private final String logPrefix;
@@ -187,9 +176,8 @@ public class CassandraSchemaRows implements SchemaRows {
     private final Map<CqlIdentifier, ImmutableMultimap.Builder<CqlIdentifier, AdminRow>>
         indexesBuilders = new LinkedHashMap<>();
 
-    public Builder(Node node, CompletableFuture<Metadata> refreshFuture, String logPrefix) {
+    public Builder(Node node, String logPrefix) {
       this.node = node;
-      this.refreshFuture = refreshFuture;
       this.logPrefix = logPrefix;
       if (isCassandraV3OrAbove(node)) {
         this.tableNameColumn = "table_name";
@@ -323,7 +311,6 @@ public class CassandraSchemaRows implements SchemaRows {
     public CassandraSchemaRows build() {
       return new CassandraSchemaRows(
           node,
-          refreshFuture,
           dataTypeParser,
           keyspacesBuilder.build(),
           virtualKeyspacesBuilder.build(),

@@ -17,7 +17,6 @@ package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
@@ -52,9 +51,6 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
   private final String whereClause;
   // The future we return from execute, completes when all the queries are done.
   private final CompletableFuture<SchemaRows> schemaRowsFuture = new CompletableFuture<>();
-  // A future that completes later, when the whole refresh is done. We just store it here to pass it
-  // down to the next step.
-  public final CompletableFuture<Metadata> refreshFuture;
   private final long startTimeNs = System.nanoTime();
 
   // All non-final fields are accessed exclusively on adminExecutor
@@ -62,15 +58,10 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
   private int pendingQueries;
 
   protected CassandraSchemaQueries(
-      DriverChannel channel,
-      Node node,
-      CompletableFuture<Metadata> refreshFuture,
-      DriverExecutionProfile config,
-      String logPrefix) {
+      DriverChannel channel, Node node, DriverExecutionProfile config, String logPrefix) {
     this.channel = channel;
     this.adminExecutor = channel.eventLoop();
     this.node = node;
-    this.refreshFuture = refreshFuture;
     this.logPrefix = logPrefix;
     this.timeout = config.getDuration(DefaultDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT);
     this.pageSize = config.getInt(DefaultDriverOption.METADATA_SCHEMA_REQUEST_PAGE_SIZE);
@@ -130,7 +121,7 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
   private void executeOnAdminExecutor() {
     assert adminExecutor.inEventLoop();
 
-    schemaRowsBuilder = new CassandraSchemaRows.Builder(node, refreshFuture, logPrefix);
+    schemaRowsBuilder = new CassandraSchemaRows.Builder(node, logPrefix);
 
     query(selectKeyspacesQuery() + whereClause, schemaRowsBuilder::withKeyspaces);
     query(selectTypesQuery() + whereClause, schemaRowsBuilder::withTypes);

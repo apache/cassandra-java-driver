@@ -86,7 +86,7 @@ public class ViewParserTest extends SchemaParserTestBase {
   }
 
   private SchemaRows rows(AdminRow viewRow, Iterable<AdminRow> columnRows) {
-    return new CassandraSchemaRows.Builder(NODE_3_0, null, "test")
+    return new CassandraSchemaRows.Builder(NODE_3_0, "test")
         .withViews(ImmutableList.of(viewRow))
         .withColumns(columnRows)
         .build();

@@ -196,7 +196,7 @@ public class TableParserTest extends SchemaParserTestBase {
   private SchemaRows rows(
       AdminRow tableRow, Iterable<AdminRow> columnRows, Iterable<AdminRow> indexesRows, Node node) {
     CassandraSchemaRows.Builder builder =
-        new CassandraSchemaRows.Builder(node, null, "test")
+        new CassandraSchemaRows.Builder(node, "test")
             .withTables(ImmutableList.of(tableRow))
             .withColumns(columnRows);
     if (indexesRows != null) {

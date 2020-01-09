@@ -32,7 +32,6 @@ import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -116,8 +115,7 @@ public class DefaultSchemaQueriesFactoryTest {
     DefaultSchemaQueriesFactory factory = buildFactory();
 
     @SuppressWarnings("unchecked")
-    SchemaQueries queries =
-        factory.newInstance(mockNode, mock(DriverChannel.class), mock(CompletableFuture.class));
+    SchemaQueries queries = factory.newInstance(mockNode, mock(DriverChannel.class));
 
     assertThat(queries.getClass()).isEqualTo(expected.getClz());
   }

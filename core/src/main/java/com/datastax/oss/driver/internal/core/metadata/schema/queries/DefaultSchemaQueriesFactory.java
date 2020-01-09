@@ -18,11 +18,9 @@ package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 import com.datastax.dse.driver.api.core.metadata.DseNodeProperties;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import java.util.concurrent.CompletableFuture;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +39,7 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
   }
 
   @Override
-  public SchemaQueries newInstance(CompletableFuture<Metadata> refreshFuture) {
+  public SchemaQueries newInstance() {
     DriverChannel channel = context.getControlConnection().channel();
     if (channel == null || channel.closeFuture().isDone()) {
       throw new IllegalStateException("Control channel not available, aborting schema refresh");
@@ -57,11 +55,10 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
                         "Could not find control node metadata "
                             + channel.getEndPoint()
                             + ", aborting schema refresh"));
-    return newInstance(node, channel, refreshFuture);
+    return newInstance(node, channel);
   }
 
-  protected SchemaQueries newInstance(
-      Node node, DriverChannel channel, CompletableFuture<Metadata> refreshFuture) {
+  protected SchemaQueries newInstance(Node node, DriverChannel channel) {
 
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
 
@@ -73,13 +70,13 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
           "[{}] Sending schema queries to {} with DSE version {}", logPrefix, node, dseVersion);
       // 4.8 is the oldest version supported, which uses C* 2.1 schema
       if (dseVersion.compareTo(Version.V5_0_0) < 0) {
-        return new Cassandra21SchemaQueries(channel, node, refreshFuture, config, logPrefix);
+        return new Cassandra21SchemaQueries(channel, node, config, logPrefix);
       } else if (dseVersion.compareTo(Version.V6_7_0) < 0) {
         // 5.0 - 6.7 uses C* 3.0 schema
-        return new Cassandra3SchemaQueries(channel, node, refreshFuture, config, logPrefix);
+        return new Cassandra3SchemaQueries(channel, node, config, logPrefix);
       } else {
         // 6.7+ uses C* 4.0 schema
-        return new Cassandra4SchemaQueries(channel, node, refreshFuture, config, logPrefix);
+        return new Cassandra4SchemaQueries(channel, node, config, logPrefix);
       }
     } else {
       Version cassandraVersion = node.getCassandraVersion();
@@ -96,13 +93,13 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
       LOG.debug(
           "[{}] Sending schema queries to {} with version {}", logPrefix, node, cassandraVersion);
       if (cassandraVersion.compareTo(Version.V2_2_0) < 0) {
-        return new Cassandra21SchemaQueries(channel, node, refreshFuture, config, logPrefix);
+        return new Cassandra21SchemaQueries(channel, node, config, logPrefix);
       } else if (cassandraVersion.compareTo(Version.V3_0_0) < 0) {
-        return new Cassandra22SchemaQueries(channel, node, refreshFuture, config, logPrefix);
+        return new Cassandra22SchemaQueries(channel, node, config, logPrefix);
       } else if (cassandraVersion.compareTo(Version.V4_0_0) < 0) {
-        return new Cassandra3SchemaQueries(channel, node, refreshFuture, config, logPrefix);
+        return new Cassandra3SchemaQueries(channel, node, config, logPrefix);
       } else {
-        return new Cassandra4SchemaQueries(channel, node, refreshFuture, config, logPrefix);
+        return new Cassandra4SchemaQueries(channel, node, config, logPrefix);
       }
     }
   }

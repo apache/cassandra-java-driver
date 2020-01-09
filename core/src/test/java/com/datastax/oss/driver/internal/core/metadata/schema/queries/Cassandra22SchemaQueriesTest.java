@@ -147,7 +147,7 @@ public class Cassandra22SchemaQueriesTest extends SchemaQueriesTest {
         CompletableFuture<Metadata> refreshFuture,
         DriverExecutionProfile config,
         String logPrefix) {
-      super(channel, node, refreshFuture, config, logPrefix);
+      super(channel, node, config, logPrefix);
     }
 
     @Override
