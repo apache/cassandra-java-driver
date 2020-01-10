@@ -15,6 +15,8 @@
  */
 package com.datastax.dse.driver.api.core.graph;
 
+import com.datastax.dse.driver.internal.core.graph.GraphExecutionInfoConverter;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -78,5 +80,12 @@ public interface GraphResultSet extends Iterable<GraphNode> {
    * The execution information for the query that have been performed to assemble this result set.
    */
   @NonNull
-  GraphExecutionInfo getExecutionInfo();
+  default ExecutionInfo getRequestExecutionInfo() {
+    return GraphExecutionInfoConverter.convert(getExecutionInfo());
+  }
+
+  /** @deprecated Use {@link #getRequestExecutionInfo()} instead. */
+  @Deprecated
+  @NonNull
+  com.datastax.dse.driver.api.core.graph.GraphExecutionInfo getExecutionInfo();
 }

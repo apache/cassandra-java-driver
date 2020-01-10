@@ -19,7 +19,6 @@ import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.BatchGraphStatement;
 import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
-import com.datastax.dse.driver.api.core.graph.GraphExecutionInfo;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
@@ -29,6 +28,7 @@ import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.FrameTooLongException;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
@@ -48,6 +48,7 @@ import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.cql.DefaultExecutionInfo;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
@@ -114,7 +115,7 @@ public class GraphRequestHandler implements Throttled {
   /**
    * How many speculative executions have started (excluding the initial execution), whether they
    * have completed or not. We track this in order to fill {@link
-   * GraphExecutionInfo#getSpeculativeExecutionCount()}.
+   * ExecutionInfo#getSpeculativeExecutionCount()}.
    */
   private final AtomicInteger startedSpeculativeExecutionsCount;
 
@@ -490,7 +491,7 @@ public class GraphRequestHandler implements Throttled {
     private void setFinalResult(
         Result resultMessage, Frame responseFrame, PerRequestCallback callback) {
       try {
-        GraphExecutionInfo executionInfo = buildExecutionInfo(callback, responseFrame);
+        ExecutionInfo executionInfo = buildExecutionInfo(callback, responseFrame);
 
         Queue<GraphNode> graphNodes = new ArrayDeque<>();
         for (List<ByteBuffer> row : ((Rows) resultMessage).getData()) {
@@ -519,15 +520,19 @@ public class GraphRequestHandler implements Throttled {
       }
     }
 
-    private GraphExecutionInfo buildExecutionInfo(
-        PerRequestCallback callback, Frame responseFrame) {
-      return new DefaultGraphExecutionInfo(
+    private ExecutionInfo buildExecutionInfo(PerRequestCallback callback, Frame responseFrame) {
+      return new DefaultExecutionInfo(
           graphStatement,
           callback.node,
           startedSpeculativeExecutionsCount.get(),
           callback.execution,
           errors,
-          responseFrame);
+          null,
+          responseFrame,
+          true,
+          session,
+          context,
+          executionProfile);
     }
 
     private void processErrorResponse(Error errorMessage) {

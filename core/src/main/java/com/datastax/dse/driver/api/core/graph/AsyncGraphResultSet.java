@@ -15,6 +15,8 @@
  */
 package com.datastax.dse.driver.api.core.graph;
 
+import com.datastax.dse.driver.internal.core.graph.GraphExecutionInfoConverter;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Iterator;
@@ -35,7 +37,18 @@ public interface AsyncGraphResultSet {
 
   /** The execution information for this page of results. */
   @NonNull
-  GraphExecutionInfo getExecutionInfo();
+  default ExecutionInfo getRequestExecutionInfo() {
+    return GraphExecutionInfoConverter.convert(getExecutionInfo());
+  }
+
+  /**
+   * The execution information for this page of results.
+   *
+   * @deprecated Use {@link #getRequestExecutionInfo()} instead.
+   */
+  @Deprecated
+  @NonNull
+  com.datastax.dse.driver.api.core.graph.GraphExecutionInfo getExecutionInfo();
 
   /** How many rows are left before the current page is exhausted. */
   int remaining();

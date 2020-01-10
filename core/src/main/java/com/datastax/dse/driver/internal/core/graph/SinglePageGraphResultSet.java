@@ -16,9 +16,9 @@
 package com.datastax.dse.driver.internal.core.graph;
 
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
-import com.datastax.dse.driver.api.core.graph.GraphExecutionInfo;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphResultSet;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Iterator;
 import net.jcip.annotations.NotThreadSafe;
@@ -35,7 +35,14 @@ public class SinglePageGraphResultSet implements GraphResultSet {
 
   @NonNull
   @Override
-  public GraphExecutionInfo getExecutionInfo() {
+  public ExecutionInfo getRequestExecutionInfo() {
+    return onlyPage.getRequestExecutionInfo();
+  }
+
+  @NonNull
+  @Override
+  @Deprecated
+  public com.datastax.dse.driver.api.core.graph.GraphExecutionInfo getExecutionInfo() {
     return onlyPage.getExecutionInfo();
   }
 

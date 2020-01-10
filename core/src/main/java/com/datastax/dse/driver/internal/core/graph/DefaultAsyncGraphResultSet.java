@@ -16,8 +16,8 @@
 package com.datastax.dse.driver.internal.core.graph;
 
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
-import com.datastax.dse.driver.api.core.graph.GraphExecutionInfo;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Queue;
@@ -27,11 +27,11 @@ import net.jcip.annotations.NotThreadSafe;
 @NotThreadSafe // wraps a mutable queue
 public class DefaultAsyncGraphResultSet implements AsyncGraphResultSet {
 
-  private final GraphExecutionInfo executionInfo;
+  private final ExecutionInfo executionInfo;
   private final CountingIterator<GraphNode> iterator;
   private final Iterable<GraphNode> currentPage;
 
-  public DefaultAsyncGraphResultSet(GraphExecutionInfo executionInfo, Queue<GraphNode> data) {
+  public DefaultAsyncGraphResultSet(ExecutionInfo executionInfo, Queue<GraphNode> data) {
     this.executionInfo = executionInfo;
     this.iterator = new GraphResultIterator(data);
     this.currentPage = () -> iterator;
@@ -39,8 +39,15 @@ public class DefaultAsyncGraphResultSet implements AsyncGraphResultSet {
 
   @NonNull
   @Override
-  public GraphExecutionInfo getExecutionInfo() {
+  public ExecutionInfo getRequestExecutionInfo() {
     return executionInfo;
+  }
+
+  @NonNull
+  @Override
+  @Deprecated
+  public com.datastax.dse.driver.api.core.graph.GraphExecutionInfo getExecutionInfo() {
+    return GraphExecutionInfoConverter.convert(executionInfo);
   }
 
   @Override
