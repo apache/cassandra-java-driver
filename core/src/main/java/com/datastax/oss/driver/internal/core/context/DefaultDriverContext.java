@@ -91,7 +91,7 @@ import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
 import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogFormatter;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
-import com.datastax.oss.driver.internal.core.util.Loggers;
+import com.datastax.oss.driver.internal.core.util.DependencyCheck;
 import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
@@ -524,51 +524,44 @@ public class DefaultDriverContext implements InternalDriverContext {
     processors.add(continuousCqlRequestSyncProcessor);
 
     // graph requests (sync and async)
-    try {
-      Class.forName("org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal");
+    if (DependencyCheck.TINKERPOP.isPresent()) {
       GraphRequestAsyncProcessor graphRequestAsyncProcessor = new GraphRequestAsyncProcessor();
       GraphRequestSyncProcessor graphRequestSyncProcessor =
           new GraphRequestSyncProcessor(graphRequestAsyncProcessor);
       processors.add(graphRequestAsyncProcessor);
       processors.add(graphRequestSyncProcessor);
-    } catch (ClassNotFoundException | LinkageError error) {
-      Loggers.warnWithException(
-          LOG,
-          "Could not register Graph extensions; Tinkerpop API might be missing from classpath",
-          error);
+    } else {
+      LOG.info(
+          "Could not register Graph extensions; "
+              + "this is normal if Tinkerpop was explicitly excluded from classpath");
     }
 
     // reactive requests (regular and continuous)
-    try {
-      Class.forName("org.reactivestreams.Publisher");
+    if (DependencyCheck.REACTIVE_STREAMS.isPresent()) {
       CqlRequestReactiveProcessor cqlRequestReactiveProcessor =
           new CqlRequestReactiveProcessor(cqlRequestAsyncProcessor);
       ContinuousCqlRequestReactiveProcessor continuousCqlRequestReactiveProcessor =
           new ContinuousCqlRequestReactiveProcessor(continuousCqlRequestAsyncProcessor);
       processors.add(cqlRequestReactiveProcessor);
       processors.add(continuousCqlRequestReactiveProcessor);
-    } catch (ClassNotFoundException | LinkageError error) {
-      Loggers.warnWithException(
-          LOG,
+    } else {
+      LOG.info(
           "Could not register Reactive extensions; "
-              + "Reactive Streams API might be missing from classpath",
-          error);
+              + "this is normal if Reactive Streams was explicitly excluded from classpath");
     }
-
     return new RequestProcessorRegistry(logPrefix, processors.toArray(new RequestProcessor[0]));
   }
 
   protected CodecRegistry buildCodecRegistry(String logPrefix, List<TypeCodec<?>> codecs) {
     MutableCodecRegistry registry = new DefaultCodecRegistry(logPrefix);
     registry.register(codecs);
-
     registry.register(DseTypeCodecs.DATE_RANGE);
-    try {
-      Class.forName("com.esri.core.geometry.ogc.OGCGeometry");
+    if (DependencyCheck.ESRI.isPresent()) {
       registry.register(DseTypeCodecs.LINE_STRING, DseTypeCodecs.POINT, DseTypeCodecs.POLYGON);
-    } catch (ClassNotFoundException | LinkageError error) {
-      Loggers.warnWithException(
-          LOG, "Could not register Geo codecs; ESRI API might be missing from classpath", error);
+    } else {
+      LOG.info(
+          "Could not register Geo codecs; "
+              + "this is normal if ESRI was explicitly excluded from classpath");
     }
     return registry;
   }
@@ -685,17 +678,13 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected List<LifecycleListener> buildLifecycleListeners() {
-    try {
-      Class.forName("com.fasterxml.jackson.core.JsonParser");
-      Class.forName("com.fasterxml.jackson.databind.ObjectMapper");
+    if (DependencyCheck.JACKSON.isPresent()) {
       return Collections.singletonList(new InsightsClientLifecycleListener(this, initStackTrace));
-    } catch (ClassNotFoundException | LinkageError error) {
+    } else {
       if (config.getDefaultProfile().getBoolean(DseDriverOption.MONITOR_REPORTING_ENABLED)) {
-        Loggers.warnWithException(
-            LOG,
+        LOG.info(
             "Could not initialize Insights monitoring; "
-                + "Jackson libraries might be missing from classpath",
-            error);
+                + "this is normal if Jackson was explicitly excluded from classpath");
       }
       return Collections.emptyList();
     }

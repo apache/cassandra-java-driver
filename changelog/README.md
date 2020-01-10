@@ -8,6 +8,7 @@ This version brings in all functionality that was formerly only in the DataStax 
 such as the built-in support for reactive programming. Going forward, all new features will be 
 implemented in this single driver.
 
+- [improvement] JAVA-2529: Standardize optional/excludable dependency checks
 - [bug] JAVA-2598: Do not use context class loader when attempting to load classes
 - [improvement] JAVA-2582: Don't propagate a future into SchemaQueriesFactory
 - [documentation] JAVA-2542: Improve the javadocs of methods in CqlSession

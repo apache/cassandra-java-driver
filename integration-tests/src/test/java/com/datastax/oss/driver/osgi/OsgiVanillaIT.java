@@ -94,7 +94,7 @@ public class OsgiVanillaIT implements OsgiSimpleTests {
     TestAppender appender = (TestAppender) logger.getAppender("test");
     List<String> warnLogs =
         appender.events.stream()
-            .filter(event -> event.getLevel().toInt() >= Level.WARN.toInt())
+            .filter(event -> event.getLevel().toInt() == Level.INFO.toInt())
             .map(ILoggingEvent::getFormattedMessage)
             .collect(Collectors.toList());
     assertThat(warnLogs).hasSize(3);

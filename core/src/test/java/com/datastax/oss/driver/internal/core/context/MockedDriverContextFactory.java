@@ -61,7 +61,6 @@ public class MockedDriverContextFactory {
             .withRequestTracker(mock(RequestTracker.class))
             .withLocalDatacenters(Maps.newHashMap())
             .withNodeFilters(Maps.newHashMap())
-            .withClassLoader(mock(ClassLoader.class))
             .build();
     return new DefaultDriverContext(configLoader, args);
   }

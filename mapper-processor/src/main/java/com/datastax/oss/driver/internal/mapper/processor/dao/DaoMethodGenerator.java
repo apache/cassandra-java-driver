@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.StatementAttributes;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.squareup.javapoet.CodeBlock;
@@ -231,11 +232,6 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
 
   protected boolean isFromClassFile() {
     TypeElement enclosingElement = (TypeElement) methodElement.getEnclosingElement();
-    try {
-      Class.forName(enclosingElement.getQualifiedName().toString());
-      return true;
-    } catch (ClassNotFoundException e) {
-      return false;
-    }
+    return Reflection.loadClass(null, enclosingElement.getQualifiedName().toString()) != null;
   }
 }
