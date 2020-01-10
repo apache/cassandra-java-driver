@@ -68,7 +68,8 @@ public class ProtocolVersionMixedClusterIT {
       // General version should have been downgraded to V3
       assertThat(context.getProtocolVersion()).isEqualTo(DefaultProtocolVersion.V3);
       // But control connection should still be using protocol V4 since node0 supports V4
-      assertThat(context.getControlConnection().channel().protocolVersion()).isEqualTo(DefaultProtocolVersion.V4);
+      assertThat(context.getControlConnection().channel().protocolVersion())
+          .isEqualTo(DefaultProtocolVersion.V4);
 
       assertThat(queries(simulacron)).hasSize(4);
 
