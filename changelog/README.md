@@ -10,7 +10,7 @@ implemented in this single driver.
 
 - [bug] JAVA-2598: Do not use context class loader when attempting to load classes
 - [improvement] JAVA-2582: Don't propagate a future into SchemaQueriesFactory
-- [documentation] JAVA-2542: JAVA-2542: Improve the javadocs of methods in CqlSession
+- [documentation] JAVA-2542: Improve the javadocs of methods in CqlSession
 - [documentation] JAVA-2609: Add docs for proxy authentication to unified driver
 - [improvement] JAVA-2554: Improve efficiency of InsightsClient by improving supportsInsights check
 - [improvement] JAVA-2601: Inject Google Tag Manager scripts in generated API documentation
