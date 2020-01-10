@@ -63,6 +63,34 @@ changes right away; but you will get deprecation warnings:
   `PlainTextProgrammaticAuthProvider`. Similarly, if you wrote a custom implementation by
   subclassing `DsePlainTextAuthProviderBase`, extend `PlainTextAuthProviderBase` instead.
 
+#### Class Loader
+
+The default class loader used by the driver when instantiating classes by reflection changed. 
+Unless specified by the user, the driver will now use the same class loader that was used to load
+the driver classes themselves, in order to ensure that implemented interfaces and implementing 
+classes are fully compatible.
+
+This should ensure a more streamlined experience for OSGi users, who do not need anymore to define
+a specific class loader to use.
+
+However if you are developing a web application and your setup corresponds to the following 
+scenario, then you will now be required to explicitly define another class loader to use: if in your
+application the driver jar is loaded by the web server's system class loader (for example, 
+because the driver jar was placed in the "/lib" folder of the web server), then the default class
+loader will be the server's system class loader. Then if the application tries to load, say, a 
+custom load balancing policy declared in the web app's "WEB-INF/lib" folder, then the default class 
+loader will not be able to locate that class. Instead, you must use the web app's class loader, that 
+you can obtain in most web environments by calling `Thread.getContextClassLoader()`:
+ 
+    CqlSession.builder()
+        .addContactEndPoint(...)
+        .withClassLoader(Thread.currentThread().getContextClassLoader())
+        .build();
+ 
+See the javadocs of [SessionBuilder.withClassLoader] for more information.
+
+[SessionBuilder.withClassLoader]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
+
 ### 4.1.0
 
 #### Object mapper

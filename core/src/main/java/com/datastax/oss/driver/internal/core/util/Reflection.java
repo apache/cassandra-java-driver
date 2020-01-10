@@ -24,6 +24,8 @@ import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ListMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.MultimapBuilder;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
@@ -37,27 +39,28 @@ public class Reflection {
   private static final Logger LOG = LoggerFactory.getLogger(Reflection.class);
 
   /**
-   * Loads a class by name.
+   * Loads a class by name using the given {@link ClassLoader}.
    *
-   * <p>This methods tries first with the current thread's context class loader (the intent is that
-   * if the driver is in a low-level loader of an application server -- e.g. bootstrap or system --
-   * it can still find classes in the application's class loader). If it is null, it defaults to the
-   * class loader that loaded the class calling this method.
+   * <p>If the class loader is null, the class will be loaded using the class loader that loaded the
+   * driver.
    *
-   * @return null if the class does not exist.
+   * @return null if the class does not exist or could not be loaded.
    */
-  public static Class<?> loadClass(ClassLoader classLoader, String className) {
+  @Nullable
+  public static Class<?> loadClass(@Nullable ClassLoader classLoader, @NonNull String className) {
     try {
-      // If input classLoader is null, use current thread's ClassLoader, if that is null, use
-      // default (calling class') ClassLoader.
-      ClassLoader cl =
-          classLoader != null ? classLoader : Thread.currentThread().getContextClassLoader();
-      if (cl != null) {
-        return Class.forName(className, true, cl);
+      Class<?> clazz;
+      if (classLoader == null) {
+        LOG.trace("Attempting to load {} with driver's class loader", className);
+        clazz = Class.forName(className);
       } else {
-        return Class.forName(className);
+        LOG.trace("Attempting to load {} with {}", className, classLoader);
+        clazz = Class.forName(className, true, classLoader);
       }
-    } catch (ClassNotFoundException e) {
+      LOG.trace("Successfully loaded {}", className);
+      return clazz;
+    } catch (ClassNotFoundException | LinkageError | SecurityException e) {
+      LOG.debug(String.format("Could not load %s: %s", className, e), e);
       return null;
     }
   }

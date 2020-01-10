@@ -46,8 +46,6 @@ public interface OsgiSimpleTests {
   default CqlSessionBuilder sessionBuilder() {
     return CqlSession.builder()
         .addContactEndPoint(new DefaultEndPoint(new InetSocketAddress("127.0.0.1", 9042)))
-        // use the DSE driver's ClassLoader instead of the OSGI application thread's.
-        .withClassLoader(CqlSession.class.getClassLoader())
         .withConfigLoader(configLoaderBuilder().build());
   }
 

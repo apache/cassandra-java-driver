@@ -404,11 +404,37 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   /**
    * The {@link ClassLoader} to use to reflectively load class names defined in configuration.
    *
-   * <p>This is typically only needed when using OSGi or other in environments where there are
-   * complex class loading requirements.
+   * <p>If null, the driver attempts to use the same {@link ClassLoader} that loaded the core driver
+   * classes, which is generally the right thing to do.
    *
-   * <p>If null, the driver attempts to use {@link Thread#getContextClassLoader()} of the current
-   * thread or the same {@link ClassLoader} that loaded the core driver classes.
+   * <p>Defining a different class loader is typically only needed in web or OSGi environments where
+   * there are complex class loading requirements.
+   *
+   * <p>For example, if the driver jar is loaded by the web server's system class loader (that is,
+   * the driver jar was placed in the "/lib" folder of the web server), but the application tries to
+   * load a custom load balancing policy declared in the web app's "WEB-INF/lib" folder, the system
+   * class loader will not be able to load such class. Instead, you must use the web app's class
+   * loader, that you can obtain by calling {@link Thread#getContextClassLoader()}:
+   *
+   * <pre>{@code
+   * CqlSession.builder()
+   *   .addContactEndPoint(...)
+   *   .withClassLoader(Thread.currentThread().getContextClassLoader())
+   *   .build();
+   * }</pre>
+   *
+   * Indeed, in most web environments, {@code Thread.currentThread().getContextClassLoader()} will
+   * return the web app's class loader, which is a child of the web server's system class loader.
+   * This class loader is thus capable of loading both the implemented interface and the
+   * implementing class, in spite of them being declared in different places.
+   *
+   * <p>For OSGi deployments, it is usually not necessary to use this method. Even if the
+   * implemented interface and the implementing class are located in different bundles, the right
+   * class loader to use should be the default one (the driver bundle's class loader). In
+   * particular, it is not advised to rely on {@code Thread.currentThread().getContextClassLoader()}
+   * in OSGi environments, so you should never pass that class loader to this method. See <a
+   * href="https://docs.datastax.com/en/developer/java-driver/latest/manual/osgi/#using-a-custom-class-loader">Using
+   * a custom ClassLoader</a> in our OSGi online docs for more information.
    */
   @NonNull
   public SelfT withClassLoader(@Nullable ClassLoader classLoader) {

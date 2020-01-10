@@ -135,8 +135,8 @@ public interface InternalDriverContext extends DriverContext {
 
   /**
    * The {@link ClassLoader} to use to reflectively load class names defined in configuration. If
-   * null, the driver attempts to use {@link Thread#getContextClassLoader()} of the current thread
-   * or {@link com.datastax.oss.driver.internal.core.util.Reflection}'s {@link ClassLoader}.
+   * null, the driver attempts to use the same {@link ClassLoader} that loaded the core driver
+   * classes.
    */
   @Nullable
   ClassLoader getClassLoader();
