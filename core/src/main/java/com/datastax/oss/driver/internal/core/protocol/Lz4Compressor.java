@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.protocol;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.DependencyCheck;
 import io.netty.buffer.ByteBuf;
 import java.nio.ByteBuffer;
