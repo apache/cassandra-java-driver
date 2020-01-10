@@ -209,7 +209,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     methodBuilder.addComment("validation of all columns");
 
     methodBuilder.addStatement(
-        "$1T<$2T> missingTableCqlNames = findMissingColumnsCql(expectedCqlNames, (($3T) tableMetadata.get()).getColumns().keySet())",
+        "$1T<$2T> missingTableCqlNames = findMissingCqlIdentifiers(expectedCqlNames, (($3T) tableMetadata.get()).getColumns().keySet())",
         List.class,
         CqlIdentifier.class,
         DefaultTableMetadata.class);
@@ -336,7 +336,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
         CqlIdentifier.class);
 
     methodBuilder.addStatement(
-        "$1T<$2T> missingTableCqlNames = findMissingColumnsCql(expectedCqlNames, columns)",
+        "$1T<$2T> missingTableCqlNames = findMissingCqlIdentifiers(expectedCqlNames, columns)",
         List.class,
         CqlIdentifier.class);
 
