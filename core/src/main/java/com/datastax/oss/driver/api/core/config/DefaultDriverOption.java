@@ -783,6 +783,12 @@ public enum DefaultDriverOption implements DriverOption {
    */
   NETTY_DAEMON("advanced.netty.daemon"),
 
+  /**
+   * The location of the cloud secure bundle used to connect to Datastax Apache Cassandra as a
+   * service.
+   *
+   * <p>Value-type: {@link String}
+   */
   CLOUD_SECURE_CONNECT_BUNDLE("basic.cloud.secure-connect-bundle"),
 
   /**
