@@ -784,6 +784,13 @@ public enum DefaultDriverOption implements DriverOption {
   NETTY_DAEMON("advanced.netty.daemon"),
 
   CLOUD_SECURE_CONNECT_BUNDLE("basic.cloud.secure-connect-bundle"),
+
+  /**
+   * Whether the slow replica avoidance should be enabled in the default LBP.
+   *
+   * <p>Value-type: boolean
+   */
+  LOAD_BALANCING_POLICY_SLOW_AVOIDANCE("basic.load-balancing-policy.slow-replica-avoidance"),
   ;
 
   private final String path;

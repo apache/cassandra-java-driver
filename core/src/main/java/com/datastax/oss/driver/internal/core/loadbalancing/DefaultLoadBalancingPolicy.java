@@ -96,15 +96,20 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
 
   protected final Map<Node, AtomicLongArray> responseTimes = new ConcurrentHashMap<>();
   protected final Map<Node, Long> upTimes = new ConcurrentHashMap<>();
+  private final boolean avoidSlowReplicas;
 
   public DefaultLoadBalancingPolicy(@NonNull DriverContext context, @NonNull String profileName) {
     super(context, profileName);
+    this.avoidSlowReplicas =
+        profile.getBoolean(DefaultDriverOption.LOAD_BALANCING_POLICY_SLOW_AVOIDANCE, true);
   }
 
   @Override
   public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
     super.init(nodes, distanceReporter);
-    ((MultiplexingRequestTracker) context.getRequestTracker()).register(this);
+    if (avoidSlowReplicas) {
+      ((MultiplexingRequestTracker) context.getRequestTracker()).register(this);
+    }
   }
 
   @NonNull
@@ -116,6 +121,10 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
   @NonNull
   @Override
   public Queue<Node> newQueryPlan(@Nullable Request request, @Nullable Session session) {
+    if (!avoidSlowReplicas) {
+      return super.newQueryPlan(request, session);
+    }
+
     // Take a snapshot since the set is concurrent:
     Object[] currentNodes = liveNodes.toArray();
 
