@@ -30,6 +30,7 @@ import com.datastax.oss.driver.api.core.servererrors.UnauthorizedException;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
+import java.util.List;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -244,11 +245,15 @@ public class DseProxyAuthenticationIT {
   }
 
   private void verifyException(AllNodesFailedException anfe) {
-    Throwable firstError = anfe.getErrors().values().iterator().next();
-    assertThat(firstError).isInstanceOf(AuthenticationException.class);
-    assertThat(firstError.getMessage())
-        .contains(
-            "Authentication error on node /127.0.0.1:9042: server replied 'Failed to login. Please re-try.'");
+    assertThat(anfe.getAllErrors()).hasSize(1);
+    List<Throwable> errors = anfe.getAllErrors().values().iterator().next();
+    assertThat(errors).hasSize(1);
+    Throwable firstError = errors.get(0);
+    assertThat(firstError)
+        .isInstanceOf(AuthenticationException.class)
+        .hasMessageContaining(
+            "Authentication error on node /127.0.0.1:9042: "
+                + "server replied with 'Failed to login. Please re-try.' to AuthResponse request");
   }
 
   private void verifyException(UnauthorizedException ue, String user) {

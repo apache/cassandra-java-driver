@@ -29,21 +29,6 @@ import org.junit.experimental.categories.Category;
 @Category(ParallelizableTests.class)
 public abstract class AbstractMetadataIT {
 
-  /**
-   * Asserts the presence of a Keyspace and that it's name matches the keyspace associated with the
-   * Session Rule.
-   */
-  protected void assertKeyspace(Optional<KeyspaceMetadata> keyspaceOpt) {
-    // assert the keyspace
-    assertThat(keyspaceOpt)
-        .hasValueSatisfying(
-            keyspace -> {
-              assertThat(keyspace).isInstanceOf(DseKeyspaceMetadata.class);
-              assertThat(keyspace.getName().asInternal())
-                  .isEqualTo(getSessionRule().keyspace().asInternal());
-            });
-  }
-
   /* Convenience method for executing a CQL statement using the test's Session Rule. */
   public void execute(String cql) {
     getSessionRule()
@@ -61,7 +46,13 @@ public abstract class AbstractMetadataIT {
   public DseKeyspaceMetadata getKeyspace() {
     Optional<KeyspaceMetadata> keyspace =
         getSessionRule().session().getMetadata().getKeyspace(getSessionRule().keyspace());
-    assertKeyspace(keyspace);
+    assertThat(keyspace)
+        .isPresent()
+        .hasValueSatisfying(
+            ks -> {
+              assertThat(ks).isInstanceOf(DseKeyspaceMetadata.class);
+              assertThat(ks.getName()).isEqualTo(getSessionRule().keyspace());
+            });
     return ((DseKeyspaceMetadata) keyspace.get());
   }
 

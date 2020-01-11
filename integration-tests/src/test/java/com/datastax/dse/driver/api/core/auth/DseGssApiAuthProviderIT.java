@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
+import java.util.List;
 import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -78,10 +79,7 @@ public class DseGssApiAuthProviderIT {
     try (CqlSession session = ads.newTicketSession()) {
       fail("Expected an AllNodesFailedException");
     } catch (AllNodesFailedException e) {
-      assertThat(e.getErrors().size()).isEqualTo(1);
-      for (Throwable t : e.getErrors().values()) {
-        assertThat(t).isInstanceOf(AuthenticationException.class);
-      }
+      verifyException(e);
     }
   }
 
@@ -99,10 +97,17 @@ public class DseGssApiAuthProviderIT {
         ads.newKeyTabSession(ads.getUnknownPrincipal(), ads.getUnknownKeytab().getAbsolutePath())) {
       fail("Expected an AllNodesFailedException");
     } catch (AllNodesFailedException e) {
-      assertThat(e.getErrors().size()).isEqualTo(1);
-      for (Throwable t : e.getErrors().values()) {
-        assertThat(t).isInstanceOf(AuthenticationException.class);
-      }
+      verifyException(e);
     }
+  }
+
+  private void verifyException(AllNodesFailedException anfe) {
+    assertThat(anfe.getAllErrors()).hasSize(1);
+    List<Throwable> errors = anfe.getAllErrors().values().iterator().next();
+    assertThat(errors).hasSize(1);
+    Throwable firstError = errors.get(0);
+    assertThat(firstError)
+        .isInstanceOf(AuthenticationException.class)
+        .hasMessageContaining("Authentication error on node /127.0.0.1:9042");
   }
 }

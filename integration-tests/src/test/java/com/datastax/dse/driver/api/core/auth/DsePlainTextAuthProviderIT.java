@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -95,10 +96,7 @@ public class DsePlainTextAuthProviderIT {
                 .build())) {
       fail("Expected an AllNodesFailedException");
     } catch (AllNodesFailedException e) {
-      assertThat(e.getErrors().size()).isEqualTo(1);
-      for (Throwable t : e.getErrors().values()) {
-        assertThat(t).isInstanceOf(AuthenticationException.class);
-      }
+      verifyException(e);
     }
   }
 
@@ -114,10 +112,17 @@ public class DsePlainTextAuthProviderIT {
                 .build())) {
       fail("Expected AllNodesFailedException");
     } catch (AllNodesFailedException e) {
-      assertThat(e.getErrors().size()).isEqualTo(1);
-      for (Throwable t : e.getErrors().values()) {
-        assertThat(t).isInstanceOf(AuthenticationException.class);
-      }
+      verifyException(e);
     }
+  }
+
+  private void verifyException(AllNodesFailedException anfe) {
+    assertThat(anfe.getAllErrors()).hasSize(1);
+    List<Throwable> errors = anfe.getAllErrors().values().iterator().next();
+    assertThat(errors).hasSize(1);
+    Throwable firstError = errors.get(0);
+    assertThat(firstError)
+        .isInstanceOf(AuthenticationException.class)
+        .hasMessageContaining("Authentication error on node /127.0.0.1:9042");
   }
 }
