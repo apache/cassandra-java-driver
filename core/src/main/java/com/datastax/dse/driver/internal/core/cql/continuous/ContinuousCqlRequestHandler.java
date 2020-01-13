@@ -63,11 +63,13 @@ public class ContinuousCqlRequestHandler
         session,
         context,
         sessionLogPrefix,
+        ContinuousAsyncResultSet.class,
         false,
         DefaultSessionMetric.CQL_CLIENT_TIMEOUTS,
         DseSessionMetric.CONTINUOUS_CQL_REQUESTS,
         DefaultNodeMetric.CQL_MESSAGES);
     message = DseConversions.toContinuousPagingMessage(statement, executionProfile, context);
+    throttler.register(this);
     firstPageTimeout =
         executionProfile.getDuration(DseDriverOption.CONTINUOUS_PAGING_TIMEOUT_FIRST_PAGE);
     otherPagesTimeout =
@@ -79,19 +81,19 @@ public class ContinuousCqlRequestHandler
 
   @NonNull
   @Override
-  protected Duration getGlobalTimeoutDuration() {
+  protected Duration getGlobalTimeout() {
     return Duration.ZERO;
   }
 
   @NonNull
   @Override
-  protected Duration getPageTimeoutDuration(int pageNumber) {
+  protected Duration getPageTimeout(int pageNumber) {
     return pageNumber == 1 ? firstPageTimeout : otherPagesTimeout;
   }
 
   @NonNull
   @Override
-  protected Duration getReviseRequestTimeoutDuration() {
+  protected Duration getReviseRequestTimeout() {
     return otherPagesTimeout;
   }
 

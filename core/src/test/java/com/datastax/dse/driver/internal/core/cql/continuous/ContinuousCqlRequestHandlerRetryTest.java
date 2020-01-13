@@ -23,9 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.atMost;
 
 import com.datastax.dse.driver.DseTestFixtures;
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
@@ -92,7 +90,7 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
               statement, harness.getSession(), harness.getContext(), "test");
       CompletionStage<ContinuousAsyncResultSet> resultSetFuture = handler.handle();
 
-      assertThat(handler.getDoneFuture()).isCompleted();
+      assertThat(handler.getState()).isEqualTo(-1);
 
       assertThatStage(resultSetFuture)
           .isSuccess(
@@ -113,7 +111,7 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
                 assertThat(executionInfo.getSuccessfulExecutionIndex()).isEqualTo(0);
                 assertThat(executionInfo.getWarnings()).isEmpty();
 
-                verifyNoMoreInteractions(harness.getContext().getRetryPolicy(anyString()));
+                Mockito.verifyNoMoreInteractions(harness.getContext().getRetryPolicy(anyString()));
               });
     }
   }
@@ -141,7 +139,7 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
               statement, harness.getSession(), harness.getContext(), "test");
       CompletionStage<ContinuousAsyncResultSet> resultSetFuture = handler.handle();
 
-      assertThat(handler.getDoneFuture()).isCompletedExceptionally();
+      assertThat(handler.getState()).isEqualTo(-2);
 
       assertThatStage(resultSetFuture)
           .isFailed(
@@ -149,19 +147,17 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
                 assertThat(error)
                     .isInstanceOf(InvalidQueryException.class)
                     .hasMessage("mock message");
-                verifyNoMoreInteractions(harness.getContext().getRetryPolicy(anyString()));
+                Mockito.verifyNoMoreInteractions(harness.getContext().getRetryPolicy(anyString()));
 
-                verify(nodeMetricUpdater1)
+                Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(eq(DefaultNodeMetric.OTHER_ERRORS), anyString());
-                verify(nodeMetricUpdater1)
-                    .isEnabled(eq(DefaultNodeMetric.CQL_MESSAGES), anyString());
-                verify(nodeMetricUpdater1)
+                Mockito.verify(nodeMetricUpdater1)
                     .updateTimer(
                         eq(DefaultNodeMetric.CQL_MESSAGES),
                         anyString(),
                         anyLong(),
                         eq(TimeUnit.NANOSECONDS));
-                verifyNoMoreInteractions(nodeMetricUpdater1);
+                Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
   }
@@ -194,7 +190,7 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
               statement, harness.getSession(), harness.getContext(), "test");
       CompletionStage<ContinuousAsyncResultSet> resultSetFuture = handler.handle();
 
-      assertThat(handler.getDoneFuture()).isCompleted();
+      assertThat(handler.getState()).isEqualTo(-1);
 
       assertThatStage(resultSetFuture)
           .isSuccess(
@@ -208,23 +204,19 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
                 assertThat(executionInfo.getErrors()).hasSize(1);
                 assertThat(executionInfo.getErrors().get(0).getKey()).isEqualTo(node1);
 
-                verify(nodeMetricUpdater1)
+                Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(eq(failureScenario.errorMetric), anyString());
-                verify(nodeMetricUpdater1)
+                Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(eq(DefaultNodeMetric.RETRIES), anyString());
-                verify(nodeMetricUpdater1)
+                Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(eq(failureScenario.retryMetric), anyString());
-                if (!failureScenario.isResponseFailure()) {
-                  verify(nodeMetricUpdater1)
-                      .isEnabled(eq(DefaultNodeMetric.CQL_MESSAGES), anyString());
-                  verify(nodeMetricUpdater1)
-                      .updateTimer(
-                          eq(DefaultNodeMetric.CQL_MESSAGES),
-                          anyString(),
-                          anyLong(),
-                          eq(TimeUnit.NANOSECONDS));
-                }
-                verifyNoMoreInteractions(nodeMetricUpdater1);
+                Mockito.verify(nodeMetricUpdater1, atMost(1))
+                    .updateTimer(
+                        eq(DefaultNodeMetric.CQL_MESSAGES),
+                        anyString(),
+                        anyLong(),
+                        eq(TimeUnit.NANOSECONDS));
+                Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
   }
@@ -257,7 +249,7 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
               statement, harness.getSession(), harness.getContext(), "test");
       CompletionStage<ContinuousAsyncResultSet> resultSetFuture = handler.handle();
 
-      assertThat(handler.getDoneFuture()).isCompleted();
+      assertThat(handler.getState()).isEqualTo(-1);
 
       assertThatStage(resultSetFuture)
           .isSuccess(
@@ -271,32 +263,19 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
                 assertThat(executionInfo.getErrors()).hasSize(1);
                 assertThat(executionInfo.getErrors().get(0).getKey()).isEqualTo(node1);
 
-                verify(nodeMetricUpdater1)
+                Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(eq(failureScenario.errorMetric), anyString());
-                verify(nodeMetricUpdater1)
+                Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(eq(DefaultNodeMetric.RETRIES), anyString());
-                verify(nodeMetricUpdater1)
+                Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(eq(failureScenario.retryMetric), anyString());
-                if (failureScenario.isResponseFailure()) {
-                  verify(nodeMetricUpdater1)
-                      .isEnabled(eq(DefaultNodeMetric.CQL_MESSAGES), anyString());
-                  verify(nodeMetricUpdater1)
-                      .updateTimer(
-                          eq(DefaultNodeMetric.CQL_MESSAGES),
-                          anyString(),
-                          anyLong(),
-                          eq(TimeUnit.NANOSECONDS));
-                } else {
-                  verify(nodeMetricUpdater1, times(2))
-                      .isEnabled(eq(DefaultNodeMetric.CQL_MESSAGES), anyString());
-                  verify(nodeMetricUpdater1, times(2))
-                      .updateTimer(
-                          eq(DefaultNodeMetric.CQL_MESSAGES),
-                          anyString(),
-                          anyLong(),
-                          eq(TimeUnit.NANOSECONDS));
-                }
-                verifyNoMoreInteractions(nodeMetricUpdater1);
+                Mockito.verify(nodeMetricUpdater1, atMost(2))
+                    .updateTimer(
+                        eq(DefaultNodeMetric.CQL_MESSAGES),
+                        anyString(),
+                        anyLong(),
+                        eq(TimeUnit.NANOSECONDS));
+                Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
   }
@@ -328,7 +307,7 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
               statement, harness.getSession(), harness.getContext(), "test");
       CompletionStage<ContinuousAsyncResultSet> resultSetFuture = handler.handle();
 
-      assertThat(handler.getDoneFuture()).isCompleted();
+      assertThat(handler.getState()).isEqualTo(-1);
 
       assertThatStage(resultSetFuture)
           .isSuccess(
@@ -340,23 +319,19 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
                 assertThat(executionInfo.getCoordinator()).isEqualTo(node1);
                 assertThat(executionInfo.getErrors()).hasSize(0);
 
-                verify(nodeMetricUpdater1)
+                Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(eq(failureScenario.errorMetric), anyString());
-                verify(nodeMetricUpdater1)
+                Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(eq(DefaultNodeMetric.IGNORES), anyString());
-                verify(nodeMetricUpdater1)
+                Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(eq(failureScenario.ignoreMetric), anyString());
-                if (!failureScenario.isResponseFailure()) {
-                  verify(nodeMetricUpdater1)
-                      .isEnabled(eq(DefaultNodeMetric.CQL_MESSAGES), anyString());
-                  verify(nodeMetricUpdater1)
-                      .updateTimer(
-                          eq(DefaultNodeMetric.CQL_MESSAGES),
-                          anyString(),
-                          anyLong(),
-                          eq(TimeUnit.NANOSECONDS));
-                }
-                verifyNoMoreInteractions(nodeMetricUpdater1);
+                Mockito.verify(nodeMetricUpdater1, atMost(1))
+                    .updateTimer(
+                        eq(DefaultNodeMetric.CQL_MESSAGES),
+                        anyString(),
+                        anyLong(),
+                        eq(TimeUnit.NANOSECONDS));
+                Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
   }
@@ -389,26 +364,22 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
               statement, harness.getSession(), harness.getContext(), "test");
       CompletionStage<ContinuousAsyncResultSet> resultSetFuture = handler.handle();
 
-      assertThat(handler.getDoneFuture()).isCompletedExceptionally();
+      assertThat(handler.getState()).isEqualTo(-2);
 
       assertThatStage(resultSetFuture)
           .isFailed(
               error -> {
                 assertThat(error).isInstanceOf(failureScenario.expectedExceptionClass);
 
-                verify(nodeMetricUpdater1)
+                Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(eq(failureScenario.errorMetric), anyString());
-                if (!failureScenario.isResponseFailure()) {
-                  verify(nodeMetricUpdater1)
-                      .isEnabled(eq(DefaultNodeMetric.CQL_MESSAGES), anyString());
-                  verify(nodeMetricUpdater1)
-                      .updateTimer(
-                          eq(DefaultNodeMetric.CQL_MESSAGES),
-                          anyString(),
-                          anyLong(),
-                          eq(TimeUnit.NANOSECONDS));
-                }
-                verifyNoMoreInteractions(nodeMetricUpdater1);
+                Mockito.verify(nodeMetricUpdater1, atMost(1))
+                    .updateTimer(
+                        eq(DefaultNodeMetric.CQL_MESSAGES),
+                        anyString(),
+                        anyLong(),
+                        eq(TimeUnit.NANOSECONDS));
+                Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
   }
@@ -450,7 +421,7 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
               statement, harness.getSession(), harness.getContext(), "test");
       CompletionStage<ContinuousAsyncResultSet> resultSetFuture = handler.handle();
 
-      assertThat(handler.getDoneFuture()).isCompletedExceptionally();
+      assertThat(handler.getState()).isEqualTo(-2);
 
       assertThatStage(resultSetFuture)
           .isFailed(
@@ -458,22 +429,19 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
                 assertThat(error).isInstanceOf(failureScenario.expectedExceptionClass);
                 // When non idempotent, the policy is bypassed completely:
                 if (!shouldCallRetryPolicy) {
-                  verifyNoMoreInteractions(harness.getContext().getRetryPolicy(anyString()));
+                  Mockito.verifyNoMoreInteractions(
+                      harness.getContext().getRetryPolicy(anyString()));
                 }
 
-                verify(nodeMetricUpdater1)
+                Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(eq(failureScenario.errorMetric), anyString());
-                if (!failureScenario.isResponseFailure()) {
-                  verify(nodeMetricUpdater1)
-                      .isEnabled(eq(DefaultNodeMetric.CQL_MESSAGES), anyString());
-                  verify(nodeMetricUpdater1)
-                      .updateTimer(
-                          eq(DefaultNodeMetric.CQL_MESSAGES),
-                          anyString(),
-                          anyLong(),
-                          eq(TimeUnit.NANOSECONDS));
-                }
-                verifyNoMoreInteractions(nodeMetricUpdater1);
+                Mockito.verify(nodeMetricUpdater1, atMost(1))
+                    .updateTimer(
+                        eq(DefaultNodeMetric.CQL_MESSAGES),
+                        anyString(),
+                        anyLong(),
+                        eq(TimeUnit.NANOSECONDS));
+                Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
   }
@@ -502,22 +470,6 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
     abstract void mockRequestError(RequestHandlerTestHarness.Builder builder, Node node);
 
     abstract void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision);
-
-    abstract boolean isResponseFailure();
-
-    @Override
-    public String toString() {
-      return "FailureScenario{"
-          + "expectedExceptionClass="
-          + expectedExceptionClass
-          + ", errorMetric="
-          + errorMetric
-          + ", retryMetric="
-          + retryMetric
-          + ", ignoreMetric="
-          + ignoreMetric
-          + '}';
-    }
   }
 
   @DataProvider
@@ -548,11 +500,6 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
                         eq(true),
                         eq(0)))
                 .thenReturn(decision);
-          }
-
-          @Override
-          boolean isResponseFailure() {
-            return false;
           }
         },
         new FailureScenario(
@@ -585,11 +532,6 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
                         eq(0)))
                 .thenReturn(decision);
           }
-
-          @Override
-          boolean isResponseFailure() {
-            return false;
-          }
         },
         new FailureScenario(
             UnavailableException.class,
@@ -616,11 +558,6 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
                         eq(0)))
                 .thenReturn(decision);
           }
-
-          @Override
-          boolean isResponseFailure() {
-            return false;
-          }
         },
         new FailureScenario(
             ServerError.class,
@@ -642,11 +579,6 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
                         any(SimpleStatement.class), any(ServerError.class), eq(0)))
                 .thenReturn(decision);
           }
-
-          @Override
-          boolean isResponseFailure() {
-            return false;
-          }
         },
         new FailureScenario(
             HeartbeatException.class,
@@ -664,11 +596,6 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
                     policy.onRequestAborted(
                         any(SimpleStatement.class), any(HeartbeatException.class), eq(0)))
                 .thenReturn(decision);
-          }
-
-          @Override
-          boolean isResponseFailure() {
-            return true;
           }
         });
   }

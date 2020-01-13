@@ -134,7 +134,7 @@ public class ContinuousCqlRequestHandlerReprepareTest extends ContinuousCqlReque
       verify(harness.getChannel(node1)).write(any(Query.class), anyBoolean(), anyMap(), any());
       verify(harness.getChannel(node1)).write(any(Prepare.class), anyBoolean(), anyMap(), any());
 
-      assertThat(handler.getDoneFuture()).isCompletedExceptionally();
+      assertThat(handler.getState()).isEqualTo(-2);
       assertThat(page1Future)
           .hasFailedWithThrowableThat()
           .isInstanceOf(SyntaxError.class)
@@ -173,7 +173,7 @@ public class ContinuousCqlRequestHandlerReprepareTest extends ContinuousCqlReque
       // should have tried the next host
       verify(harness.getChannel(node2)).write(any(Query.class), anyBoolean(), anyMap(), any());
 
-      assertThat(handler.getDoneFuture()).isCompleted();
+      assertThat(handler.getState()).isEqualTo(-1);
       assertThatStage(page1Future)
           .isSuccess(
               rs -> {

@@ -17,14 +17,12 @@ package com.datastax.dse.driver.internal.core.cql.continuous;
 
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.api.core.cql.continuous.ContinuousAsyncResultSet;
-import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.dse.driver.internal.core.DseProtocolFeature;
 import com.datastax.dse.driver.internal.core.cql.DseConversions;
 import com.datastax.dse.protocol.internal.request.Revise;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
@@ -52,7 +50,6 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
-import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.internal.core.adminrequest.ThrottledAdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.UnexpectedResponseException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -65,8 +62,6 @@ import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
-import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
-import com.datastax.oss.driver.internal.core.tracker.RequestLogger;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
@@ -98,6 +93,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -116,7 +112,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
 
   private static final Logger LOG = LoggerFactory.getLogger(ContinuousRequestHandlerBase.class);
 
-  private final String logPrefix;
+  protected final String logPrefix;
   protected final StatementT statement;
   protected final DefaultSession session;
   private final CqlIdentifier keyspace;
@@ -124,26 +120,21 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
   protected final DriverExecutionProfile executionProfile;
   private final Queue<Node> queryPlan;
   private final RetryPolicy retryPolicy;
-  private final RequestThrottler throttler;
+  protected final RequestThrottler throttler;
   private final boolean protocolBackpressureAvailable;
   private final boolean isIdempotent;
   private final Timer timer;
   private final SessionMetricUpdater sessionMetricUpdater;
   private final boolean specExecEnabled;
+  private final SessionMetric clientTimeoutsMetric;
+  private final SessionMetric continuousRequestsMetric;
+  private final NodeMetric messagesMetric;
   private final SpeculativeExecutionPolicy speculativeExecutionPolicy;
   private final List<Timeout> scheduledExecutions;
 
-  /**
-   * The errors on the nodes that were already tried. We don't use a map because nodes can appear
-   * multiple times.
-   */
+  // The errors on the nodes that were already tried.
+  // We don't use a map because nodes can appear multiple times.
   protected final List<Map.Entry<Node, Throwable>> errors = new CopyOnWriteArrayList<>();
-
-  /**
-   * Represents the global state of the continuous paging request. This future is not exposed to
-   * clients, it is used internally to track completion and cancellation.
-   */
-  private final CompletableFuture<Void> doneFuture = new CompletableFuture<>();
 
   /**
    * The list of in-flight executions, one per node. Executions may be triggered by speculative
@@ -151,6 +142,9 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
    * It is removed from this list when the callback has done reading responses.
    */
   private final List<NodeResponseCallback> inFlightCallbacks = new CopyOnWriteArrayList<>();
+
+  /** The callback selected to stream results back to the client. */
+  private final CompletableFuture<NodeResponseCallback> chosenCallback = new CompletableFuture<>();
 
   /**
    * How many speculative executions are currently running (including the initial execution). We
@@ -166,57 +160,24 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
    */
   protected final AtomicInteger startedSpeculativeExecutionsCount = new AtomicInteger(0);
 
-  /**
-   * Coordinates concurrent accesses between the client and I/O threads that wish to enqueue and
-   * dequeue items from the page queue.
-   */
-  private final ReentrantLock lock = new ReentrantLock();
-
-  private final SessionMetric clientTimeoutsMetric;
-  private final SessionMetric continuousRequestsMetric;
-  private final NodeMetric messagesMetric;
-  /**
-   * The page queue, storing pages that we have received and have not been consumed by the client
-   * yet. It can also store errors, when the operation completed exceptionally.
-   */
-  @GuardedBy("lock")
-  private Queue<Object> queue;
-
-  /**
-   * If the client requests a page and we can't serve it immediately (empty queue), then we create
-   * this future and have the client wait on it. Otherwise this field is null.
-   */
-  @GuardedBy("lock")
-  private CompletableFuture<ResultSetT> pendingResult;
-
-  /**
-   * How many pages were requested. This is the total number of pages requested from the beginning.
-   * It will be zero if the protocol does not support numPagesRequested (DSE_V1)
-   */
-  @GuardedBy("lock")
-  private int numPagesRequested;
-
-  /**
-   * The node that has been chosen to deliver results. In case of speculative executions, this is
-   * the first node that replies with either a result or an error.
-   */
-  @GuardedBy("lock")
-  private NodeResponseCallback chosenExecution;
-
   // Set when the execution starts, and is never modified after.
   private volatile long startTimeNanos;
-
   private volatile Timeout globalTimeout;
+
+  private Class<ResultSetT> resultSetClass;
 
   public ContinuousRequestHandlerBase(
       @NonNull StatementT statement,
       @NonNull DefaultSession session,
       @NonNull InternalDriverContext context,
       @NonNull String sessionLogPrefix,
+      @NonNull Class<ResultSetT> resultSetClass,
       boolean specExecEnabled,
       SessionMetric clientTimeoutsMetric,
       SessionMetric continuousRequestsMetric,
       NodeMetric messagesMetric) {
+    this.resultSetClass = resultSetClass;
+
     ProtocolVersion protocolVersion = context.getProtocolVersion();
     if (!context
         .getProtocolVersionRegistry()
@@ -247,10 +208,12 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
             ? executionProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
             : idempotent;
     this.timer = context.getNettyOptions().getTimer();
+
     this.protocolBackpressureAvailable =
         protocolVersion.getCode() >= DseProtocolVersion.DSE_V2.getCode();
     this.throttler = context.getRequestThrottler();
     this.sessionMetricUpdater = session.getMetricUpdater();
+    this.startTimeNanos = System.nanoTime();
     this.specExecEnabled = specExecEnabled && isIdempotent;
     this.speculativeExecutionPolicy =
         this.specExecEnabled
@@ -259,22 +222,14 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     this.scheduledExecutions = this.specExecEnabled ? new CopyOnWriteArrayList<>() : null;
   }
 
-  /** @return The global timeout, or {@link Duration#ZERO} to disable it. */
   @NonNull
-  protected abstract Duration getGlobalTimeoutDuration();
+  protected abstract Duration getGlobalTimeout();
 
-  /**
-   * @return The timeout for page <code>pageNumber</code>, or {@link Duration#ZERO} to disable it.
-   */
   @NonNull
-  protected abstract Duration getPageTimeoutDuration(int pageNumber);
+  protected abstract Duration getPageTimeout(int pageNumber);
 
-  /**
-   * @return The timeout for REVISE requests (cancellation and backpressure), or {@link
-   *     Duration#ZERO} to disable it.
-   */
   @NonNull
-  protected abstract Duration getReviseRequestTimeoutDuration();
+  protected abstract Duration getReviseRequestTimeout();
 
   protected abstract int getMaxEnqueuedPages();
 
@@ -289,32 +244,18 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
   protected abstract Map<String, ByteBuffer> createPayload();
 
   @NonNull
+  protected abstract ResultSetT createEmptyResultSet(@NonNull ExecutionInfo executionInfo);
+
+  protected abstract int pageNumber(@NonNull ResultSetT resultSet);
+
+  @NonNull
   protected abstract ResultSetT createResultSet(
       @NonNull Rows rows,
       @NonNull ExecutionInfo executionInfo,
       @NonNull ColumnDefinitions columnDefinitions)
       throws IOException;
 
-  /** @return An empty result set; used only when the retry policy decides to ignore the error. */
-  @NonNull
-  protected abstract ResultSetT createEmptyResultSet(@NonNull ExecutionInfo executionInfo);
-
-  protected abstract int pageNumber(@NonNull ResultSetT resultSet);
-
-  public CompletionStage<ResultSetT> handle() {
-    startTimeNanos = System.nanoTime();
-    lock.lock();
-    try {
-      this.queue = new ArrayDeque<>(getMaxEnqueuedPages());
-      this.numPagesRequested = protocolBackpressureAvailable ? getMaxEnqueuedPages() : 0;
-    } finally {
-      lock.unlock();
-    }
-    scheduleGlobalTimeout();
-    // must be done last since it may trigger an immediate call to #onThrottleReady
-    throttler.register(this);
-    return dequeueOrCreatePending();
-  }
+  // MAIN LIFECYCLE
 
   @Override
   public void onThrottleReady(boolean wasDelayed) {
@@ -322,11 +263,13 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
         // avoid call to nanoTime() if metric is disabled:
         && sessionMetricUpdater.isEnabled(
             DefaultSessionMetric.THROTTLING_DELAY, executionProfile.getName())) {
-      sessionMetricUpdater.updateTimer(
-          DefaultSessionMetric.THROTTLING_DELAY,
-          executionProfile.getName(),
-          System.nanoTime() - startTimeNanos,
-          TimeUnit.NANOSECONDS);
+      session
+          .getMetricUpdater()
+          .updateTimer(
+              DefaultSessionMetric.THROTTLING_DELAY,
+              executionProfile.getName(),
+              System.nanoTime() - startTimeNanos,
+              TimeUnit.NANOSECONDS);
     }
     activeExecutionsCount.incrementAndGet();
     sendRequest(null, 0, 0, specExecEnabled);
@@ -334,13 +277,60 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
 
   @Override
   public void onThrottleFailure(@NonNull RequestThrottlingException error) {
-    if (sessionMetricUpdater.isEnabled(
-        DefaultSessionMetric.THROTTLING_ERRORS, executionProfile.getName())) {
-      session
-          .getMetricUpdater()
-          .incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS, executionProfile.getName());
+    session
+        .getMetricUpdater()
+        .incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS, executionProfile.getName());
+    abortGlobalRequestOrChosenCallback(error);
+  }
+
+  private void abortGlobalRequestOrChosenCallback(@NonNull Throwable error) {
+    if (!chosenCallback.completeExceptionally(error)) {
+      chosenCallback.thenAccept(callback -> callback.abort(error, false));
     }
-    setFailed(null, error);
+  }
+
+  public CompletionStage<ResultSetT> handle() {
+    globalTimeout = scheduleGlobalTimeout();
+    return fetchNextPage();
+  }
+
+  /**
+   * Builds the future that will get returned to the user from the initial execute call or a
+   * fetchNextPage() on the async API.
+   */
+  public CompletionStage<ResultSetT> fetchNextPage() {
+    CompletableFuture<ResultSetT> result = new CompletableFuture<>();
+
+    // This is equivalent to
+    // `chosenCallback.thenCompose(NodeResponseCallback::dequeueOrCreatePending)`, except
+    // that we need to cancel `result` if `resultSetError` is a CancellationException.
+    chosenCallback.whenComplete(
+        (callback, callbackError) -> {
+          if (callbackError != null) {
+            result.completeExceptionally(callbackError);
+          } else {
+            callback
+                .dequeueOrCreatePending()
+                .whenComplete(
+                    (resultSet, resultSetError) -> {
+                      if (resultSetError != null) {
+                        result.completeExceptionally(resultSetError);
+                      } else {
+                        result.complete(resultSet);
+                      }
+                    });
+          }
+        });
+
+    // If the user cancels the future, propagate to our internal components
+    result.whenComplete(
+        (rs, t) -> {
+          if (t instanceof CancellationException) {
+            cancel();
+          }
+        });
+
+    return result;
   }
 
   /**
@@ -372,10 +362,9 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       // We've reached the end of the query plan without finding any node to write to; abort the
       // continuous paging session.
       if (activeExecutionsCount.decrementAndGet() == 0) {
-        AllNodesFailedException error = AllNodesFailedException.fromErrors(errors);
-        setFailed(null, error);
+        abortGlobalRequestOrChosenCallback(AllNodesFailedException.fromErrors(errors));
       }
-    } else {
+    } else if (!chosenCallback.isDone()) {
       NodeResponseCallback nodeResponseCallback =
           new NodeResponseCallback(
               node,
@@ -384,21 +373,101 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
               retryCount,
               scheduleSpeculativeExecution,
               logPrefix);
+      inFlightCallbacks.add(nodeResponseCallback);
       channel
           .write(getMessage(), isTracingEnabled(), createPayload(), nodeResponseCallback)
           .addListener(nodeResponseCallback);
     }
   }
 
+  private Timeout scheduleGlobalTimeout() {
+    Duration globalTimeout = getGlobalTimeout();
+    if (globalTimeout.toNanos() <= 0) {
+      return null;
+    }
+    LOG.trace("[{}] Scheduling global timeout for pages in {}", logPrefix, globalTimeout);
+    return timer.newTimeout(
+        timeout ->
+            abortGlobalRequestOrChosenCallback(
+                new DriverTimeoutException("Query timed out after " + globalTimeout)),
+        globalTimeout.toNanos(),
+        TimeUnit.NANOSECONDS);
+  }
+
+  /**
+   * Cancels the continuous paging request.
+   *
+   * <p>Called from user code, see {@link DefaultContinuousAsyncResultSet#cancel()}, or from a
+   * driver I/O thread.
+   */
+  public void cancel() {
+    // If chosenCallback is already set, this is a no-op and the chosen callback will be handled by
+    // cancelScheduledTasks
+    chosenCallback.cancel(true);
+
+    cancelScheduledTasks(null);
+    cancelGlobalTimeout();
+  }
+
+  private void cancelGlobalTimeout() {
+    if (globalTimeout != null) {
+      globalTimeout.cancel();
+    }
+  }
+
+  /**
+   * Cancel all pending and scheduled executions, except the one passed as an argument to the
+   * method.
+   *
+   * @param toIgnore An optional execution to ignore (will not be cancelled).
+   */
+  private void cancelScheduledTasks(@Nullable NodeResponseCallback toIgnore) {
+    if (scheduledExecutions != null) {
+      for (Timeout scheduledExecution : scheduledExecutions) {
+        scheduledExecution.cancel();
+      }
+    }
+    for (NodeResponseCallback callback : inFlightCallbacks) {
+      if (toIgnore == null || toIgnore != callback) {
+        callback.cancel();
+      }
+    }
+  }
+
+  @VisibleForTesting
+  int getState() {
+    try {
+      return chosenCallback.get().getState();
+    } catch (CancellationException e) {
+      // Happens if the test cancels before the callback was chosen
+      return NodeResponseCallback.STATE_FAILED;
+    } catch (InterruptedException | ExecutionException e) {
+      // We never interrupt or fail chosenCallback (other than canceling)
+      throw new AssertionError("Unexpected error", e);
+    }
+  }
+
+  @VisibleForTesting
+  CompletableFuture<ResultSetT> getPendingResult() {
+    try {
+      return chosenCallback.get().getPendingResult();
+    } catch (Exception e) {
+      // chosenCallback should always be complete by the time tests call this
+      throw new AssertionError("Expected callback to be chosen at this point");
+    }
+  }
+
   /**
    * Handles the interaction with a single node in the query plan.
    *
-   * <p>An instance of this class is created each time we (re)try a node.
+   * <p>An instance of this class is created each time we (re)try a node. The first callback that
+   * has something ready to enqueue will be allowed to stream results back to the client; the others
+   * will be cancelled.
    */
   private class NodeResponseCallback
       implements ResponseCallback, GenericFutureListener<Future<java.lang.Void>> {
 
-    private final long nodeStartTimeNanos = System.nanoTime();
+    private final long messageStartTimeNanos = System.nanoTime();
     private final Node node;
     private final DriverChannel channel;
     // The identifier of the current execution (0 for the initial execution, 1 for the first
@@ -406,19 +475,49 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     private final int executionIndex;
     // How many times we've invoked the retry policy and it has returned a "retry" decision (0 for
     // the first attempt of each execution).
-    private final int retryCount;
-    private final boolean scheduleSpeculativeExecution;
     private final String logPrefix;
-    private final AtomicBoolean cancelled = new AtomicBoolean(false);
+    private final boolean scheduleSpeculativeExecution;
 
-    // These are volatile because they can be accessed outside the event loop, mostly inside
-    // dequeueOrCreatePending and maybeRequestMore, to check whether we need to set a new page
-    // timeout or to determine if we need to send a new backpressure request.
-    private volatile int streamId = -1;
-    private volatile int currentPage = 1;
+    // Coordinates concurrent accesses between the client and I/O threads
+    private final ReentrantLock lock = new ReentrantLock();
+
+    // The page queue, storing responses that we have received and have not been consumed by the
+    // client yet. We instantiate it lazily to avoid unnecessary allocation; this is also used to
+    // check if the callback ever tried to enqueue something.
+    @GuardedBy("lock")
+    private Queue<Object> queue;
+
+    // If the client requests a page and we can't serve it immediately (empty queue), then we create
+    // this future and have the client wait on it. Otherwise this field is null.
+    @GuardedBy("lock")
+    private CompletableFuture<ResultSetT> pendingResult;
+
+    // How many pages were requested. This is the total number of pages requested from the
+    // beginning.
+    // It will be zero if the protocol does not support numPagesRequested (DSE_V1)
+    @GuardedBy("lock")
+    private int numPagesRequested;
+
+    // An integer that represents the state of the continuous paging request:
+    // - if positive, it is the sequence number of the next expected page;
+    // - if negative, it is a terminal state, identified by the constants below.
+    @GuardedBy("lock")
+    private int state = 1;
+
+    private static final int STATE_FINISHED = -1;
+    private static final int STATE_FAILED = -2;
+
+    @GuardedBy("lock")
+    private int streamId = -1;
+
+    // These are set when the first page arrives, and are never modified after.
+    private volatile ColumnDefinitions columnDefinitions;
+
     private volatile Timeout pageTimeout;
 
-    private ColumnDefinitions columnDefinitions;
+    // How many times we've invoked the retry policy and it has returned a "retry" decision (0 for
+    // the first attempt, 1 for the first retry, etc.).
+    private final int retryCount;
 
     // SpeculativeExecution node metrics should be executed only for the first page (first
     // invocation)
@@ -426,7 +525,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     private final AtomicBoolean nodeErrorReported = new AtomicBoolean(false);
     private final AtomicBoolean nodeSuccessReported = new AtomicBoolean(false);
 
-    NodeResponseCallback(
+    public NodeResponseCallback(
         Node node,
         DriverChannel channel,
         int executionIndex,
@@ -444,7 +543,20 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     @Override
     public void onStreamIdAssigned(int streamId) {
       LOG.trace("[{}] Assigned streamId {} on node {}", logPrefix, streamId, node);
-      this.streamId = streamId;
+      lock.lock();
+      try {
+        this.streamId = streamId;
+        if (state < 0) {
+          // This happens if we were cancelled before getting the stream id, we have a request in
+          // flight that needs to be cancelled
+          if (!channel.closeFuture().isDone()) {
+            channel.cancel(this);
+            sendCancelRequest();
+          }
+        }
+      } finally {
+        lock.unlock();
+      }
     }
 
     @Override
@@ -460,7 +572,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     }
 
     /**
-     * Invoked when the write of a request completes.
+     * Invoked when the write from {@link #sendRequest} completes.
      *
      * @param future The future representing the outcome of the write operation.
      */
@@ -470,8 +582,13 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
         Throwable error = future.cause();
         if (error instanceof EncoderException
             && error.getCause() instanceof FrameTooLongException) {
-          trackNodeError(error.getCause());
-          handleNodeFailure(error.getCause());
+          trackNodeError(node, error.getCause());
+          lock.lock();
+          try {
+            abort(error.getCause(), false);
+          } finally {
+            lock.unlock();
+          }
         } else {
           LOG.trace(
               "[{}] Failed to send request on {}, trying next node (cause: {})",
@@ -482,32 +599,27 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
               .getMetricUpdater()
               .incrementCounter(DefaultNodeMetric.UNSENT_REQUESTS, executionProfile.getName());
           recordError(node, error);
-          trackNodeError(error);
+          trackNodeError(node, error.getCause());
           sendRequest(null, executionIndex, retryCount, scheduleSpeculativeExecution);
         }
       } else {
         LOG.trace("[{}] Request sent on {}", logPrefix, channel);
-        if (doneFuture.isDone()) {
-          cancelExecution();
-        } else {
-          inFlightCallbacks.add(this);
-          if (scheduleSpeculativeExecution && currentPage == 1) {
-            int nextExecution = executionIndex + 1;
-            // Note that `node` is the first node of the execution, it might not be the "slow" one
-            // if there were retries, but in practice retries are rare.
-            long nextDelay =
-                speculativeExecutionPolicy.nextExecution(node, keyspace, statement, nextExecution);
-            if (nextDelay >= 0) {
-              scheduleSpeculativeExecution(nextExecution, nextDelay);
-            } else {
-              LOG.trace(
-                  "[{}] Speculative execution policy returned {}, no next execution",
-                  logPrefix,
-                  nextDelay);
-            }
+        if (scheduleSpeculativeExecution) {
+          int nextExecution = executionIndex + 1;
+          // Note that `node` is the first node of the execution, it might not be the "slow" one
+          // if there were retries, but in practice retries are rare.
+          long nextDelay =
+              speculativeExecutionPolicy.nextExecution(node, keyspace, statement, nextExecution);
+          if (nextDelay >= 0) {
+            scheduleSpeculativeExecution(nextExecution, nextDelay);
+          } else {
+            LOG.trace(
+                "[{}] Speculative execution policy returned {}, no next execution",
+                logPrefix,
+                nextDelay);
           }
-          schedulePageTimeout();
         }
+        pageTimeout = schedulePageTimeout(1);
       }
     }
 
@@ -521,12 +633,17 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
         scheduledExecutions.add(
             timer.newTimeout(
                 (Timeout timeout) -> {
-                  if (!doneFuture.isDone()) {
+                  if (!chosenCallback.isDone()) {
                     LOG.trace(
                         "[{}] Starting speculative execution {}", logPrefix, nextExecutionIndex);
                     activeExecutionsCount.incrementAndGet();
                     startedSpeculativeExecutionsCount.incrementAndGet();
-                    incrementNodeSpecExecMetric();
+                    NodeMetricUpdater nodeMetricUpdater = ((DefaultNode) node).getMetricUpdater();
+                    if (nodeMetricUpdater.isEnabled(
+                        DefaultNodeMetric.SPECULATIVE_EXECUTIONS, executionProfile.getName())) {
+                      nodeMetricUpdater.incrementCounter(
+                          DefaultNodeMetric.SPECULATIVE_EXECUTIONS, executionProfile.getName());
+                    }
                     sendRequest(null, nextExecutionIndex, 0, true);
                   }
                 },
@@ -537,44 +654,38 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       }
     }
 
-    private void schedulePageTimeout() {
-      int expectedPage = currentPage;
+    private Timeout schedulePageTimeout(int expectedPage) {
       if (expectedPage < 0) {
-        pageTimeout = null;
-        return;
+        return null;
       }
-      Duration timeout = getPageTimeoutDuration(expectedPage);
+      Duration timeout = getPageTimeout(expectedPage);
       if (timeout.toNanos() <= 0) {
-        pageTimeout = null;
-        return;
+        return null;
       }
       LOG.trace("[{}] Scheduling timeout for page {} in {}", logPrefix, expectedPage, timeout);
-      try {
-        pageTimeout =
-            timer.newTimeout(
-                timeout1 -> {
-                  if (currentPage == expectedPage) {
-                    LOG.trace(
-                        "[{}] Timeout fired for page {}, cancelling execution",
-                        logPrefix,
-                        currentPage);
-                    handleNodeFailure(
-                        new DriverTimeoutException(
-                            String.format("Timed out waiting for page %d", expectedPage)));
-                  } else {
-                    // Ignore timeout if the request has moved on in the interim.
-                    LOG.trace(
-                        "[{}] Timeout fired for page {} but query already at state {}, skipping",
-                        logPrefix,
-                        expectedPage,
-                        currentPage);
-                  }
-                },
-                timeout.toNanos(),
-                TimeUnit.NANOSECONDS);
-      } catch (IllegalStateException e) {
-        logTimeoutSchedulingError(e);
-      }
+      return timer.newTimeout(
+          timeout1 -> {
+            lock.lock();
+            try {
+              if (state == expectedPage) {
+                abort(
+                    new DriverTimeoutException(
+                        String.format("Timed out waiting for page %d", expectedPage)),
+                    false);
+              } else {
+                // Ignore timeout if the request has moved on in the interim.
+                LOG.trace(
+                    "[{}] Timeout fired for page {} but query already at state {}, skipping",
+                    logPrefix,
+                    expectedPage,
+                    state);
+              }
+            } finally {
+              lock.unlock();
+            }
+          },
+          timeout.toNanos(),
+          TimeUnit.NANOSECONDS);
     }
 
     /**
@@ -588,33 +699,33 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     @Override
     public void onResponse(@NonNull Frame response) {
       stopNodeMessageTimer();
-      cancelPageTimeout();
-      if (doneFuture.isDone()) {
-        LOG.trace(
-            "[{}] Got result but the request has been cancelled or completed by another execution, ignoring",
-            logPrefix);
-        // cancel to make sure the server will stop sending pages
-        cancelExecution();
-        return;
-      }
+      cancelTimeout(pageTimeout);
+      lock.lock();
       try {
-        logServerWarnings(response.warnings);
-        Message responseMessage = response.message;
-        if (responseMessage instanceof Result) {
-          LOG.trace("[{}] Got result", logPrefix);
-          processResultResponse((Result) responseMessage, response);
-        } else if (responseMessage instanceof Error) {
-          LOG.trace("[{}] Got error response", logPrefix);
-          processErrorResponse((Error) responseMessage);
-        } else {
-          IllegalStateException error =
-              new IllegalStateException("Unexpected response " + responseMessage);
-          trackNodeError(error);
-          handleNodeFailure(error);
+        if (state < 0) {
+          LOG.trace("[{}] Got result but the request has been cancelled, ignoring", logPrefix);
+          return;
         }
-      } catch (Throwable t) {
-        trackNodeError(t);
-        handleNodeFailure(t);
+        try {
+          Message responseMessage = response.message;
+          if (responseMessage instanceof Result) {
+            LOG.trace("[{}] Got result", logPrefix);
+            processResultResponse((Result) responseMessage, response);
+          } else if (responseMessage instanceof Error) {
+            LOG.trace("[{}] Got error response", logPrefix);
+            processErrorResponse((Error) responseMessage);
+          } else {
+            IllegalStateException error =
+                new IllegalStateException("Unexpected response " + responseMessage);
+            trackNodeError(node, error);
+            abort(error, false);
+          }
+        } catch (Throwable t) {
+          trackNodeError(node, t);
+          abort(t, false);
+        }
+      } finally {
+        lock.unlock();
       }
     }
 
@@ -628,26 +739,29 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      */
     @Override
     public void onFailure(@NonNull Throwable error) {
-      // do not update node metrics
-      cancelPageTimeout();
-      if (doneFuture.isDone()) {
-        cancelExecution();
-        return;
-      }
-      LOG.trace("[{}] Request failure, processing: {}", logPrefix, error);
+      cancelTimeout(pageTimeout);
+      LOG.trace(String.format("[%s] Request failure", logPrefix), error);
       RetryDecision decision;
       if (!isIdempotent || error instanceof FrameTooLongException) {
         decision = RetryDecision.RETHROW;
       } else {
         decision = retryPolicy.onRequestAborted(statement, error, retryCount);
       }
-      updateNodeErrorMetrics(
+      updateErrorMetrics(
+          ((DefaultNode) node).getMetricUpdater(),
           decision,
           DefaultNodeMetric.ABORTED_REQUESTS,
           DefaultNodeMetric.RETRIES_ON_ABORTED,
           DefaultNodeMetric.IGNORES_ON_ABORTED);
-      processRetryDecision(decision, error);
+      lock.lock();
+      try {
+        processRetryDecision(decision, error);
+      } finally {
+        lock.unlock();
+      }
     }
+
+    // PROCESSING METHODS
 
     /**
      * Processes a new result response, creating the corresponding {@link ResultSetT} object and
@@ -657,65 +771,60 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      *     {@link Void} object if the retry policy decided to ignore an error.
      * @param frame the {@link Frame} (used to create the {@link ExecutionInfo} the first time).
      */
+    @SuppressWarnings("GuardedBy") // this method is only called with the lock held
     private void processResultResponse(@NonNull Result result, @Nullable Frame frame) {
+      assert lock.isHeldByCurrentThread();
       try {
-        if (setChosenExecution(this)) {
-          ExecutionInfo executionInfo = createExecutionInfo(node, frame, executionIndex);
-          if (result instanceof Rows) {
-            DseRowsMetadata rowsMetadata = (DseRowsMetadata) ((Rows) result).getMetadata();
-            int pageNumber = rowsMetadata.continuousPageNumber;
-            int currentPage = this.currentPage;
-            if (pageNumber != currentPage) {
-              IllegalStateException error =
-                  new IllegalStateException(
-                      String.format(
-                          "Received page %d but was expecting %d", pageNumber, currentPage));
-              handleNodeFailure(error);
+        ExecutionInfo executionInfo = createExecutionInfo(node, result, frame, executionIndex);
+        if (result instanceof Rows) {
+          DseRowsMetadata rowsMetadata = (DseRowsMetadata) ((Rows) result).getMetadata();
+          if (columnDefinitions == null) {
+            // Contrary to ROWS responses from regular queries,
+            // the first page always includes metadata so we use this
+            // regardless of whether or not the query was from a prepared statement.
+            columnDefinitions = Conversions.toColumnDefinitions(rowsMetadata, context);
+          }
+          int pageNumber = rowsMetadata.continuousPageNumber;
+          int currentPage = state;
+          if (pageNumber != currentPage) {
+            abort(
+                new IllegalStateException(
+                    String.format(
+                        "Received page %d but was expecting %d", pageNumber, currentPage)),
+                false);
+          } else {
+            int pageSize = ((Rows) result).getData().size();
+            ResultSetT resultSet = createResultSet((Rows) result, executionInfo, columnDefinitions);
+            if (rowsMetadata.isLastContinuousPage) {
+              LOG.trace("[{}] Received last page ({} - {} rows)", logPrefix, pageNumber, pageSize);
+              state = STATE_FINISHED;
+              reenableAutoReadIfNeeded();
+              enqueueOrCompletePending(resultSet);
+              stopGlobalRequestTimer();
+              cancelTimeout(globalTimeout);
             } else {
-              if (columnDefinitions == null) {
-                // Contrary to ROWS responses from regular queries,
-                // the first page always includes metadata so we use this
-                // regardless of whether or not the query was from a prepared statement.
-                columnDefinitions = Conversions.toColumnDefinitions(rowsMetadata, context);
-              }
-              ResultSetT resultSet =
-                  createResultSet((Rows) result, executionInfo, columnDefinitions);
-              if (rowsMetadata.isLastContinuousPage) {
-                int pageSize = ((Rows) result).getData().size();
-                LOG.trace(
-                    "[{}] Received last page ({} - {} rows)", logPrefix, pageNumber, pageSize);
-                stopExecution();
-                setCompleted(this);
-              } else {
-                int pageSize = ((Rows) result).getData().size();
-                LOG.trace("[{}] Received page {} ({} rows)", logPrefix, pageNumber, pageSize);
-                this.currentPage = currentPage + 1;
+              LOG.trace("[{}] Received page {} ({} rows)", logPrefix, pageNumber, pageSize);
+              if (currentPage > 0) {
+                state = currentPage + 1;
               }
               enqueueOrCompletePending(resultSet);
-              trackNodeSuccess();
             }
-          } else {
-            // Void responses happen only when the retry decision is ignore.
-            assert result instanceof Void;
-            LOG.trace(
-                "[{}] Continuous paging interrupted by retry policy decision to ignore error",
-                logPrefix);
-            ResultSetT resultSet = createEmptyResultSet(executionInfo);
-            stopExecution();
-            setCompleted(this);
-            enqueueOrCompletePending(resultSet);
-            trackNodeSuccess();
           }
         } else {
+          // Void responses happen only when the retry decision is ignore.
+          assert result instanceof Void;
+          ResultSetT resultSet = createEmptyResultSet(executionInfo);
           LOG.trace(
-              "[{}] Discarding response from execution {} because another execution was chosen",
-              logPrefix,
-              executionIndex);
-          cancelExecution();
+              "[{}] Continuous paging interrupted by retry policy decision to ignore error",
+              logPrefix);
+          state = STATE_FINISHED;
+          reenableAutoReadIfNeeded();
+          enqueueOrCompletePending(resultSet);
+          stopGlobalRequestTimer();
+          cancelTimeout(globalTimeout);
         }
       } catch (Throwable error) {
-        trackNodeError(error);
-        handleNodeFailure(error);
+        abort(error, false);
       }
     }
 
@@ -735,8 +844,9 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      *
      * @param errorMessage the error message received.
      */
+    @SuppressWarnings("GuardedBy") // this method is only called with the lock held
     private void processErrorResponse(@NonNull Error errorMessage) {
-      // graph does not use prepared statements
+      assert lock.isHeldByCurrentThread();
       if (errorMessage instanceof Unprepared) {
         processUnprepared((Unprepared) errorMessage);
       } else {
@@ -744,20 +854,20 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
         if (error instanceof BootstrappingException) {
           LOG.trace("[{}] {} is bootstrapping, trying next node", logPrefix, node);
           recordError(node, error);
-          trackNodeError(error);
+          trackNodeError(node, error);
           sendRequest(null, executionIndex, retryCount, false);
         } else if (error instanceof QueryValidationException
             || error instanceof FunctionFailureException
             || error instanceof ProtocolError
-            || currentPage > 1) {
+            || state > 1) {
           // we only process recoverable errors for the first page,
           // errors on subsequent pages will always trigger an immediate abortion
           LOG.trace("[{}] Unrecoverable error, rethrowing", logPrefix);
           NodeMetricUpdater metricUpdater = ((DefaultNode) node).getMetricUpdater();
           metricUpdater.incrementCounter(
               DefaultNodeMetric.OTHER_ERRORS, executionProfile.getName());
-          trackNodeError(error);
-          handleNodeFailure(error);
+          trackNodeError(node, error);
+          abort(error, true);
         } else {
           processRecoverableError(error);
         }
@@ -773,6 +883,8 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      * @param error the recoverable error.
      */
     private void processRecoverableError(@NonNull CoordinatorException error) {
+      assert lock.isHeldByCurrentThread();
+      NodeMetricUpdater metricUpdater = ((DefaultNode) node).getMetricUpdater();
       RetryDecision decision;
       if (error instanceof ReadTimeoutException) {
         ReadTimeoutException readTimeout = (ReadTimeoutException) error;
@@ -784,7 +896,8 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
                 readTimeout.getReceived(),
                 readTimeout.wasDataPresent(),
                 retryCount);
-        updateNodeErrorMetrics(
+        updateErrorMetrics(
+            metricUpdater,
             decision,
             DefaultNodeMetric.READ_TIMEOUTS,
             DefaultNodeMetric.RETRIES_ON_READ_TIMEOUT,
@@ -803,7 +916,8 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
         } else {
           decision = RetryDecision.RETHROW;
         }
-        updateNodeErrorMetrics(
+        updateErrorMetrics(
+            metricUpdater,
             decision,
             DefaultNodeMetric.WRITE_TIMEOUTS,
             DefaultNodeMetric.RETRIES_ON_WRITE_TIMEOUT,
@@ -817,7 +931,8 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
                 unavailable.getRequired(),
                 unavailable.getAlive(),
                 retryCount);
-        updateNodeErrorMetrics(
+        updateErrorMetrics(
+            metricUpdater,
             decision,
             DefaultNodeMetric.UNAVAILABLES,
             DefaultNodeMetric.RETRIES_ON_UNAVAILABLE,
@@ -827,7 +942,8 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
             isIdempotent
                 ? retryPolicy.onErrorResponse(statement, error, retryCount)
                 : RetryDecision.RETHROW;
-        updateNodeErrorMetrics(
+        updateErrorMetrics(
+            metricUpdater,
             decision,
             DefaultNodeMetric.OTHER_ERRORS,
             DefaultNodeMetric.RETRIES_ON_OTHER_ERROR,
@@ -841,7 +957,9 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      *
      * @param errorMessage the unprepared error message.
      */
+    @SuppressWarnings("GuardedBy") // this method is only called with the lock held
     private void processUnprepared(@NonNull Unprepared errorMessage) {
+      assert lock.isHeldByCurrentThread();
       ByteBuffer idToReprepare = ByteBuffer.wrap(errorMessage.id);
       LOG.trace(
           "[{}] Statement {} is not prepared on {}, re-preparing",
@@ -874,7 +992,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
                 Throwable fatalError = null;
                 if (exception == null) {
                   if (!repreparedId.equals(idToReprepare)) {
-                    fatalError =
+                    IllegalStateException illegalStateException =
                         new IllegalStateException(
                             String.format(
                                 "ID mismatch while trying to reprepare (expected %s, got %s). "
@@ -882,13 +1000,13 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
                                     + "This usually happens when you run a 'USE...' query after "
                                     + "the statement was prepared.",
                                 Bytes.toHexString(idToReprepare), Bytes.toHexString(repreparedId)));
-                    trackNodeError(fatalError);
+                    trackNodeError(node, illegalStateException);
+                    fatalError = illegalStateException;
                   } else {
                     LOG.trace(
                         "[{}] Re-prepare successful, retrying on the same node ({})",
                         logPrefix,
                         node);
-                    stopExecution();
                     sendRequest(node, executionIndex, retryCount, false);
                   }
                 } else {
@@ -901,22 +1019,27 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
                           || prepareError instanceof FunctionFailureException
                           || prepareError instanceof ProtocolError) {
                         LOG.trace("[{}] Unrecoverable error on re-prepare, rethrowing", logPrefix);
-                        trackNodeError(prepareError);
+                        trackNodeError(node, prepareError);
                         fatalError = prepareError;
                       }
                     }
                   } else if (exception instanceof RequestThrottlingException) {
-                    trackNodeError(exception);
+                    trackNodeError(node, exception);
                     fatalError = exception;
                   }
                   if (fatalError == null) {
                     LOG.trace("[{}] Re-prepare failed, trying next node", logPrefix);
                     recordError(node, exception);
-                    trackNodeError(exception);
-                    stopExecution();
+                    trackNodeError(node, exception);
                     sendRequest(null, executionIndex, retryCount, false);
-                  } else {
-                    handleNodeFailure(fatalError);
+                  }
+                }
+                if (fatalError != null) {
+                  lock.lock();
+                  try {
+                    abort(fatalError, true);
+                  } finally {
+                    lock.unlock();
                   }
                 }
               });
@@ -930,23 +1053,22 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      * @param error the original error.
      */
     private void processRetryDecision(@NonNull RetryDecision decision, @NonNull Throwable error) {
+      assert lock.isHeldByCurrentThread();
       LOG.trace("[{}] Processing retry decision {}", logPrefix, decision);
       switch (decision) {
         case RETRY_SAME:
           recordError(node, error);
-          trackNodeError(error);
-          stopExecution();
+          trackNodeError(node, error);
           sendRequest(node, executionIndex, retryCount + 1, false);
           break;
         case RETRY_NEXT:
           recordError(node, error);
-          trackNodeError(error);
-          stopExecution();
+          trackNodeError(node, error);
           sendRequest(null, executionIndex, retryCount + 1, false);
           break;
         case RETHROW:
-          trackNodeError(error);
-          handleNodeFailure(error);
+          trackNodeError(node, error);
+          abort(error, true);
           break;
         case IGNORE:
           processResultResponse(Void.INSTANCE, null);
@@ -954,276 +1076,40 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       }
     }
 
-    private void logServerWarnings(List<String> warnings) {
-      // log the warnings if they have NOT been disabled
-      if (warnings != null
-          && !warnings.isEmpty()
-          && executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOG_WARNINGS)
-          && LOG.isWarnEnabled()) {
-        // use the RequestLogFormatter to format the query
-        StringBuilder statementString = new StringBuilder();
-        context
-            .getRequestLogFormatter()
-            .appendRequest(
-                statement,
-                executionProfile.getInt(
-                    DefaultDriverOption.REQUEST_LOGGER_MAX_QUERY_LENGTH,
-                    RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_QUERY_LENGTH),
-                executionProfile.getBoolean(
-                    DefaultDriverOption.REQUEST_LOGGER_VALUES,
-                    RequestLogger.DEFAULT_REQUEST_LOGGER_SHOW_VALUES),
-                executionProfile.getInt(
-                    DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES,
-                    RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_VALUES),
-                executionProfile.getInt(
-                    DefaultDriverOption.REQUEST_LOGGER_MAX_VALUE_LENGTH,
-                    RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_VALUE_LENGTH),
-                statementString);
-        // log each warning separately
-        warnings.forEach(
-            (warning) ->
-                LOG.warn(
-                    "Query '{}' generated server side warning(s): {}", statementString, warning));
-      }
-    }
-
-    private void stopNodeMessageTimer() {
-      NodeMetricUpdater nodeMetricUpdater = ((DefaultNode) node).getMetricUpdater();
-      if (nodeMetricUpdater.isEnabled(messagesMetric, executionProfile.getName())
-          && stopNodeMessageTimerReported.compareAndSet(false, true)) {
-        nodeMetricUpdater.updateTimer(
-            messagesMetric,
-            executionProfile.getName(),
-            System.nanoTime() - nodeStartTimeNanos,
-            TimeUnit.NANOSECONDS);
-      }
-    }
-
-    private void incrementNodeSpecExecMetric() {
-      NodeMetricUpdater nodeMetricUpdater = ((DefaultNode) node).getMetricUpdater();
-      if (nodeMetricUpdater.isEnabled(
-          DefaultNodeMetric.SPECULATIVE_EXECUTIONS, executionProfile.getName())) {
-        nodeMetricUpdater.incrementCounter(
-            DefaultNodeMetric.SPECULATIVE_EXECUTIONS, executionProfile.getName());
-      }
-    }
-
-    private void updateNodeErrorMetrics(
-        @NonNull RetryDecision decision,
-        @NonNull DefaultNodeMetric error,
-        @NonNull DefaultNodeMetric retriesOnError,
-        @NonNull DefaultNodeMetric ignoresOnError) {
-      NodeMetricUpdater metricUpdater = ((DefaultNode) node).getMetricUpdater();
-      metricUpdater.incrementCounter(error, executionProfile.getName());
-      switch (decision) {
-        case RETRY_SAME:
-        case RETRY_NEXT:
-          metricUpdater.incrementCounter(DefaultNodeMetric.RETRIES, executionProfile.getName());
-          metricUpdater.incrementCounter(retriesOnError, executionProfile.getName());
-          break;
-        case IGNORE:
-          metricUpdater.incrementCounter(DefaultNodeMetric.IGNORES, executionProfile.getName());
-          metricUpdater.incrementCounter(ignoresOnError, executionProfile.getName());
-          break;
-        case RETHROW:
-          // nothing do do
-      }
-    }
-
-    private void trackNodeSuccess() {
-      RequestTracker requestTracker = context.getRequestTracker();
-      if (!(requestTracker instanceof NoopRequestTracker)
-          && nodeSuccessReported.compareAndSet(false, true)) {
-        long latencyNanos = System.nanoTime() - nodeStartTimeNanos;
-        requestTracker.onNodeSuccess(statement, latencyNanos, executionProfile, node, logPrefix);
-      }
-    }
-
-    private void trackNodeError(@NonNull Throwable error) {
-      RequestTracker requestTracker = context.getRequestTracker();
-      if (!(requestTracker instanceof NoopRequestTracker)
-          && nodeErrorReported.compareAndSet(false, true)) {
-        long latencyNanos = System.nanoTime() - nodeStartTimeNanos;
-        requestTracker.onNodeError(
-            statement, error, latencyNanos, executionProfile, node, logPrefix);
-      }
-    }
-
-    private void cancelPageTimeout() {
-      if (pageTimeout != null) {
-        LOG.trace("[{}] Cancelling page timeout", logPrefix);
-        pageTimeout.cancel();
-      }
-    }
+    // PAGE HANDLING
 
     /**
-     * Cancels this execution (see below) and tries to define itself as the chosen execution, in
-     * which case, it will also fail the entire operation.
-     */
-    private void handleNodeFailure(Throwable error) {
-      cancelExecution();
-      if (setChosenExecution(this)) {
-        setFailed(this, error);
-      } else {
-        LOG.trace(
-            "[{}] Discarding error from execution {} because another execution was chosen",
-            logPrefix,
-            executionIndex);
-      }
-    }
-
-    /**
-     * Cancels this execution. It will only actually cancel once, other invocations are no-ops. A
-     * cancellation consists of: cancelling this callback, sending a cancel request to the server,
-     * and stopping the execution (final cleanup).
+     * Enqueues a response or, if the client was already waiting for it, completes the pending
+     * future.
      *
-     * <p>Cancellation can happen when the execution fails, when the users cancels a future, or when
-     * a global timeout is fired.
+     * <p>Guarded by {@link #lock}.
+     *
+     * @param pageOrError the next page, or an error.
      */
-    private void cancelExecution() {
-      if (cancelled.compareAndSet(false, true)) {
-        try {
-          LOG.trace("[{}] Cancelling execution", logPrefix);
-          if (!channel.closeFuture().isDone()) {
-            channel.cancel(this);
+    @SuppressWarnings("GuardedBy") // this method is only called with the lock held
+    private void enqueueOrCompletePending(@NonNull Object pageOrError) {
+      assert lock.isHeldByCurrentThread();
+
+      if (queue == null) {
+        // This is the first time this callback tries to stream something back to the client, check
+        // if it can be selected
+        if (!chosenCallback.complete(this)) {
+          if (LOG.isTraceEnabled()) {
+            LOG.trace(
+                "[{}] Trying to enqueue {} but another callback was already chosen, aborting",
+                logPrefix,
+                asTraceString(pageOrError));
           }
-          sendCancelRequest();
-          stopExecution();
-        } catch (Throwable t) {
-          Loggers.warnWithException(
-              LOG, "[{}] Error cancelling execution {}", logPrefix, executionIndex, t);
+          // Discard the data, this callback will be canceled shortly since the chosen callback
+          // invoked cancelScheduledTasks
+          return;
         }
+
+        queue = new ArrayDeque<>(getMaxEnqueuedPages());
+        numPagesRequested = protocolBackpressureAvailable ? getMaxEnqueuedPages() : 0;
+        cancelScheduledTasks(this);
       }
-    }
 
-    /**
-     * Stops the execution, that is, removes this callback from the in-flight list and re-enables
-     * autoread. In general one should call {@link #cancelExecution()}, unless it is certain that
-     * the server has stopped sending responses and the channel is in autoread.
-     */
-    private void stopExecution() {
-      inFlightCallbacks.remove(this);
-      enableAutoReadIfNeeded();
-    }
-
-    private void enableAutoReadIfNeeded() {
-      // Make sure we don't leave the channel unreadable
-      if (!protocolBackpressureAvailable) {
-        LOG.trace("[{}] Re-enabling auto-read", logPrefix);
-        channel.config().setAutoRead(true);
-      }
-    }
-
-    private void disableAutoReadIfNeeded() {
-      if (!protocolBackpressureAvailable) {
-        LOG.trace("[{}] Disabling auto-read", logPrefix);
-        channel.config().setAutoRead(false);
-      }
-    }
-
-    private void sendCancelRequest() {
-      LOG.trace("[{}] Sending cancel request", logPrefix);
-      // Note: In DSE_V1, the cancellation message is called CANCEL, and in DSE_V2, it's
-      // called REVISE_REQUEST, but their structure is identical which is why we don't need to
-      // distinguish which protocol is being used.
-      ThrottledAdminRequestHandler.query(
-              channel,
-              true,
-              Revise.cancelContinuousPaging(streamId),
-              statement.getCustomPayload(),
-              getReviseRequestTimeoutDuration(),
-              throttler,
-              session.getMetricUpdater(),
-              logPrefix,
-              "cancel request")
-          .start()
-          .whenComplete(
-              (result, error) -> {
-                if (error != null) {
-                  LOG.debug(
-                      "[{}] Error sending cancel request: {}. "
-                          + "This is not critical (the request will eventually time out server-side).",
-                      logPrefix,
-                      error);
-                } else {
-                  LOG.trace("[{}] Cancel request sent successfully", logPrefix);
-                }
-              });
-    }
-
-    /**
-     * Sends a request for more pages (a.k.a. backpressure request). This method should only be
-     * invoked if protocol backpressure is available.
-     *
-     * @param nextPages the number of extra pages to request.
-     */
-    private void sendMorePagesRequest(int nextPages) {
-      assert protocolBackpressureAvailable
-          : "REVISE_REQUEST messages with revision type 2 require DSE_V2 or higher";
-      LOG.trace("[{}] Sending request for more pages", logPrefix);
-      ThrottledAdminRequestHandler.query(
-              channel,
-              true,
-              Revise.requestMoreContinuousPages(streamId, nextPages),
-              statement.getCustomPayload(),
-              getReviseRequestTimeoutDuration(),
-              throttler,
-              session.getMetricUpdater(),
-              logPrefix,
-              "request " + nextPages + " more pages for id " + streamId)
-          .start()
-          .whenComplete(
-              (result, error) -> {
-                if (error != null) {
-                  Loggers.warnWithException(
-                      LOG, "[{}] Error requesting more pages, aborting.", logPrefix, error);
-                  handleNodeFailure(error);
-                }
-              });
-    }
-  }
-
-  /**
-   * Sets the given node callback as the callback that has been chosen to deliver results.
-   *
-   * <p>Note that this method can be called many times, but only the first invocation will actually
-   * set the chosen callback. All subsequent invocations will return true if the given callback is
-   * the same as the previously chosen one. This means that once the chosen callback is set, it
-   * cannot change anymore.
-   *
-   * @param execution The node callback to set.
-   * @return true if the given node callback is now (or was already) the chosen one.
-   */
-  private boolean setChosenExecution(@NonNull NodeResponseCallback execution) {
-    boolean isChosen;
-    boolean wasSet = false;
-    lock.lock();
-    try {
-      if (chosenExecution == null) {
-        chosenExecution = execution;
-        wasSet = true;
-      }
-      isChosen = chosenExecution == execution;
-    } finally {
-      lock.unlock();
-    }
-    if (wasSet) {
-      // cancel all other pending executions, except the chosen one
-      cancelScheduledTasks(execution);
-    }
-    return isChosen;
-  }
-
-  /**
-   * Enqueues a response or, if the client was already waiting for it, completes the pending future.
-   *
-   * <p>Guarded by {@link #lock}.
-   *
-   * @param pageOrError the next page, or an error.
-   */
-  private void enqueueOrCompletePending(@NonNull Object pageOrError) {
-    lock.lock();
-    try {
       if (pendingResult != null) {
         if (LOG.isTraceEnabled()) {
           LOG.trace(
@@ -1245,359 +1131,443 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
         // Backpressure without protocol support: if the queue grows too large,
         // disable auto-read so that the channel eventually becomes
         // non-writable on the server side (causing it to back off for a while)
-        if (!protocolBackpressureAvailable
-            && chosenExecution != null
-            && queue.size() == getMaxEnqueuedPages()
-            && !doneFuture.isDone()) {
+        if (!protocolBackpressureAvailable && queue.size() == getMaxEnqueuedPages() && state > 0) {
           LOG.trace(
               "[{}] Exceeded {} queued response pages, disabling auto-read",
               logPrefix,
               queue.size());
-          chosenExecution.disableAutoReadIfNeeded();
+          channel.config().setAutoRead(false);
         }
       }
-    } finally {
-      lock.unlock();
     }
-  }
 
-  /**
-   * Dequeue a response or, if the queue is empty, create the future that will get notified of the
-   * next response, when it arrives.
-   *
-   * <p>Called from user code, see {@link ContinuousAsyncResultSet#fetchNextPage()}.
-   *
-   * @return the next page's future; never null.
-   */
-  @NonNull
-  public CompletableFuture<ResultSetT> dequeueOrCreatePending() {
-    lock.lock();
-    try {
-      // If the client was already waiting for a page, there's no way it can call this method again
-      // (this is guaranteed by our public API because in order to ask for the next page,
-      // you need the reference to the previous page).
-      assert pendingResult == null;
-      if (doneFuture.isCancelled()) {
-        LOG.trace(
-            "[{}] Client requested next page on cancelled operation, returning cancelled future",
-            logPrefix);
-        return newCancelledResultSetFuture();
-      }
-      Object head = queue.poll();
-      maybeRequestMore();
-      if (head == null) {
-        LOG.trace(
-            "[{}] Client requested next page but queue is empty, installing future", logPrefix);
-        pendingResult = newPendingResultSetFuture();
-        // Only schedule a timeout if we're past the first page (the first page's timeout is
-        // handled in NodeResponseCallback.operationComplete).
-        if (chosenExecution != null && chosenExecution.currentPage > 1) {
-          chosenExecution.schedulePageTimeout();
-          // Note: each new page timeout is cancelled when the next response arrives, see
-          // onResponse(Frame).
-        }
-        return pendingResult;
-      } else {
-        if (!protocolBackpressureAvailable
-            && chosenExecution != null
-            && queue.size() == getMaxEnqueuedPages() - 1) {
-          LOG.trace(
-              "[{}] Back to {} queued response pages, re-enabling auto-read",
-              logPrefix,
-              queue.size());
-          chosenExecution.enableAutoReadIfNeeded();
-        }
-        if (LOG.isTraceEnabled()) {
-          LOG.trace(
-              "[{}] Client requested next page on non-empty queue, returning immediate future of {}",
-              logPrefix,
-              asTraceString(head));
-        }
-        return newCompletedResultSetFuture(head);
-      }
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  /**
-   * If the total number of results in the queue and in-flight (requested - received) is less than
-   * half the queue size, then request more pages, unless the {@link #doneFuture} is failed, we're
-   * still waiting for the first page (so maybe still throttled or in the middle of a retry), or we
-   * don't support backpressure at the protocol level.
-   */
-  @SuppressWarnings("GuardedBy")
-  private void maybeRequestMore() {
-    assert lock.isHeldByCurrentThread();
-    if (doneFuture.isDone()
-        || chosenExecution == null
-        || chosenExecution.streamId == -1
-        || chosenExecution.currentPage == 1
-        || !protocolBackpressureAvailable) {
-      return;
-    }
-    // if we have already requested more than the client needs, then no need to request some more
-    if (getMaxPages() > 0 && numPagesRequested >= getMaxPages()) {
-      return;
-    }
-    // the pages received so far, which is the current page minus one
-    int received = chosenExecution.currentPage - 1;
-    int requested = numPagesRequested;
-    // the pages that fit in the queue, which is the queue free space minus the requests in flight
-    int freeSpace = getMaxEnqueuedPages() - queue.size();
-    int inFlight = requested - received;
-    int numPagesFittingInQueue = freeSpace - inFlight;
-    if (numPagesFittingInQueue > 0 && numPagesFittingInQueue >= getMaxEnqueuedPages() / 2) {
-      LOG.trace("[{}] Requesting more {} pages", logPrefix, numPagesFittingInQueue);
-      numPagesRequested = requested + numPagesFittingInQueue;
-      chosenExecution.sendMorePagesRequest(numPagesFittingInQueue);
-    }
-  }
-
-  private void scheduleGlobalTimeout() {
-    Duration globalTimeout = getGlobalTimeoutDuration();
-    if (globalTimeout.toNanos() <= 0) {
-      return;
-    }
-    LOG.trace("[{}] Scheduling global timeout for pages in {}", logPrefix, globalTimeout);
-    try {
-      this.globalTimeout =
-          timer.newTimeout(
-              timeout -> {
-                DriverTimeoutException error =
-                    new DriverTimeoutException("Query timed out after " + globalTimeout);
-                setFailed(null, error);
-              },
-              globalTimeout.toNanos(),
-              TimeUnit.NANOSECONDS);
-    } catch (IllegalStateException e) {
-      logTimeoutSchedulingError(e);
-    }
-  }
-
-  private void cancelGlobalTimeout() {
-    if (globalTimeout != null) {
-      globalTimeout.cancel();
-    }
-  }
-
-  /**
-   * Cancel all pending and scheduled executions, except the one passed as an argument to the
-   * method.
-   *
-   * @param toIgnore An optional execution to ignore (will not be cancelled).
-   */
-  private void cancelScheduledTasks(@Nullable NodeResponseCallback toIgnore) {
-    if (scheduledExecutions != null) {
-      for (Timeout scheduledExecution : scheduledExecutions) {
-        scheduledExecution.cancel();
-      }
-    }
-    for (NodeResponseCallback callback : inFlightCallbacks) {
-      if (toIgnore == null || toIgnore != callback) {
-        callback.cancelExecution();
-      }
-    }
-  }
-
-  /**
-   * Cancels the continuous paging request.
-   *
-   * <p>Called from user code, see {@link DefaultContinuousAsyncResultSet#cancel()}.
-   */
-  public void cancel() {
-    if (doneFuture.cancel(true)) {
+    /**
+     * Dequeue a response or, if the queue is empty, create the future that will get notified of the
+     * next response, when it arrives.
+     *
+     * <p>Called from user code, see {@link ContinuousAsyncResultSet#fetchNextPage()}.
+     *
+     * @return the next page's future; never null.
+     */
+    @NonNull
+    public CompletableFuture<ResultSetT> dequeueOrCreatePending() {
       lock.lock();
       try {
-        LOG.trace("[{}] Cancelling continuous paging session", logPrefix);
-        if (pendingResult != null) {
-          pendingResult.cancel(true);
+        // If the client was already waiting for a page, there's no way it can call this method
+        // again
+        // (this is guaranteed by our public API because in order to ask for the next page,
+        // you need the reference to the previous page).
+        assert pendingResult == null;
+
+        Object head = null;
+        if (queue != null) {
+          head = queue.poll();
+          if (!protocolBackpressureAvailable
+              && head != null
+              && queue.size() == getMaxEnqueuedPages() - 1) {
+            LOG.trace(
+                "[{}] Back to {} queued response pages, re-enabling auto-read",
+                logPrefix,
+                queue.size());
+            channel.config().setAutoRead(true);
+          }
+          maybeRequestMore();
+        }
+
+        if (head != null) {
+          if (state == STATE_FAILED && !(head instanceof Throwable)) {
+            LOG.trace(
+                "[{}] Client requested next page on cancelled queue, discarding page and returning cancelled future",
+                logPrefix);
+            return cancelledResultSetFuture();
+          } else {
+            if (LOG.isTraceEnabled()) {
+              LOG.trace(
+                  "[{}] Client requested next page on non-empty queue, returning immediate future of {}",
+                  logPrefix,
+                  asTraceString(head));
+            }
+            return immediateResultSetFuture(head);
+          }
+        } else {
+          if (state == STATE_FAILED) {
+            LOG.trace(
+                "[{}] Client requested next page on cancelled empty queue, returning cancelled future",
+                logPrefix);
+            return cancelledResultSetFuture();
+          } else {
+            LOG.trace(
+                "[{}] Client requested next page but queue is empty, installing future", logPrefix);
+            pendingResult = new CompletableFuture<>();
+            // Only schedule a timeout if we're past the first page (the first page's timeout is
+            // handled in sendRequest).
+            if (state > 1) {
+              pageTimeout = schedulePageTimeout(state);
+              // Note: each new timeout is cancelled when the next response arrives, see
+              // onResponse(Frame).
+            }
+            return pendingResult;
+          }
         }
       } finally {
         lock.unlock();
       }
-      cancelGlobalTimeout();
-      cancelScheduledTasks(null);
     }
-  }
 
-  @NonNull
-  private CompletableFuture<ResultSetT> newPendingResultSetFuture() {
-    CompletableFuture<ResultSetT> future = new CompletableFuture<>();
-    future.whenComplete(
-        (rs, t) -> {
-          if (t instanceof CancellationException) {
-            // if the future has been canceled by the user, propagate the cancellation
-            cancel();
+    /**
+     * If the total number of results in the queue and in-flight (requested - received) is less than
+     * half the queue size, then request more pages, unless the {@link #state} is failed, we're
+     * still waiting for the first page (so maybe still throttled or in the middle of a retry), or
+     * we don't support backpressure at the protocol level.
+     */
+    @SuppressWarnings("GuardedBy")
+    private void maybeRequestMore() {
+      assert lock.isHeldByCurrentThread();
+      if (state < 2 || streamId == -1 || !protocolBackpressureAvailable) {
+        return;
+      }
+      // if we have already requested more than the client needs, then no need to request some more
+      if (getMaxPages() > 0 && numPagesRequested >= getMaxPages()) {
+        return;
+      }
+      // the pages received so far, which is the state minus one
+      int received = state - 1;
+      int requested = numPagesRequested;
+      // the pages that fit in the queue, which is the queue free space minus the requests in flight
+      int freeSpace = getMaxEnqueuedPages() - queue.size();
+      int inFlight = requested - received;
+      int numPagesFittingInQueue = freeSpace - inFlight;
+      if (numPagesFittingInQueue > 0 && numPagesFittingInQueue >= getMaxEnqueuedPages() / 2) {
+        LOG.trace("[{}] Requesting more {} pages", logPrefix, numPagesFittingInQueue);
+        numPagesRequested = requested + numPagesFittingInQueue;
+        sendMorePagesRequest(numPagesFittingInQueue);
+      }
+    }
+
+    /**
+     * Sends a request for more pages (a.k.a. backpressure request).
+     *
+     * @param nextPages the number of extra pages to request.
+     */
+    @SuppressWarnings("GuardedBy")
+    private void sendMorePagesRequest(int nextPages) {
+      assert lock.isHeldByCurrentThread();
+      assert channel != null : "expected valid connection in order to request more pages";
+      assert protocolBackpressureAvailable;
+      assert streamId != -1;
+
+      LOG.trace("[{}] Sending request for more pages", logPrefix);
+      ThrottledAdminRequestHandler.query(
+              channel,
+              true,
+              Revise.requestMoreContinuousPages(streamId, nextPages),
+              statement.getCustomPayload(),
+              getReviseRequestTimeout(),
+              throttler,
+              session.getMetricUpdater(),
+              logPrefix,
+              "request " + nextPages + " more pages for id " + streamId)
+          .start()
+          .handle(
+              (result, error) -> {
+                if (error != null) {
+                  Loggers.warnWithException(
+                      LOG, "[{}] Error requesting more pages, aborting.", logPrefix, error);
+                  lock.lock();
+                  try {
+                    // Set fromServer to false because we want the callback to still cancel the
+                    // session if possible or else the server will wait on a timeout.
+                    abort(error, false);
+                  } finally {
+                    lock.unlock();
+                  }
+                }
+                return null;
+              });
+    }
+
+    /** Cancels the given timeout, if non null. */
+    private void cancelTimeout(Timeout timeout) {
+      if (timeout != null) {
+        LOG.trace("[{}] Cancelling timeout", logPrefix);
+        timeout.cancel();
+      }
+    }
+
+    // CANCELLATION
+
+    public void cancel() {
+      lock.lock();
+      try {
+        if (state < 0) {
+          return;
+        } else {
+          LOG.trace(
+              "[{}] Cancelling continuous paging session with state {} on node {}",
+              logPrefix,
+              state,
+              node);
+          state = STATE_FAILED;
+          if (pendingResult != null) {
+            pendingResult.cancel(true);
           }
-        });
-    return future;
-  }
-
-  @NonNull
-  private CompletableFuture<ResultSetT> newCompletedResultSetFuture(@NonNull Object pageOrError) {
-    CompletableFuture<ResultSetT> future = newPendingResultSetFuture();
-    completeResultSetFuture(future, pageOrError);
-    return future;
-  }
-
-  @NonNull
-  private CompletableFuture<ResultSetT> newCancelledResultSetFuture() {
-    return newCompletedResultSetFuture(
-        new CancellationException(
-            "Can't get more results because the continuous query has failed already. "
-                + "Most likely this is because the query was cancelled"));
-  }
-
-  @SuppressWarnings("unchecked")
-  private void completeResultSetFuture(
-      @NonNull CompletableFuture<ResultSetT> future, @NonNull Object pageOrError) {
-    if (pageOrError instanceof Throwable) {
-      Throwable error = (Throwable) pageOrError;
-      future.completeExceptionally(error);
-    } else {
-      future.complete((ResultSetT) pageOrError);
-    }
-  }
-
-  @NonNull
-  private ExecutionInfo createExecutionInfo(
-      @NonNull Node node, @Nullable Frame response, int successfulExecutionIndex) {
-    return new DefaultExecutionInfo(
-        statement,
-        node,
-        startedSpeculativeExecutionsCount.get(),
-        successfulExecutionIndex,
-        errors,
-        null,
-        response,
-        true,
-        session,
-        context,
-        executionProfile);
-  }
-
-  /**
-   * Called from the chosen execution when it completes successfully.
-   *
-   * @param callback The callback that completed the operation, that is, the chosen execution.
-   */
-  private void setCompleted(@NonNull NodeResponseCallback callback) {
-    if (doneFuture.complete(null)) {
-      cancelGlobalTimeout();
-      throttler.signalSuccess(this);
-      RequestTracker requestTracker = context.getRequestTracker();
-      boolean requestTrackerEnabled = !(requestTracker instanceof NoopRequestTracker);
-      boolean metricEnabled =
-          sessionMetricUpdater.isEnabled(continuousRequestsMetric, executionProfile.getName());
-      if (requestTrackerEnabled || metricEnabled) {
-        long now = System.nanoTime();
-        long totalLatencyNanos = now - startTimeNanos;
-        if (requestTrackerEnabled) {
-          requestTracker.onSuccess(
-              statement, totalLatencyNanos, executionProfile, callback.node, logPrefix);
+          if (streamId >= 0 && !channel.closeFuture().isDone()) {
+            channel.cancel(this);
+            sendCancelRequest();
+          }
         }
-        if (metricEnabled) {
-          sessionMetricUpdater.updateTimer(
+      } finally {
+        lock.unlock();
+      }
+      reenableAutoReadIfNeeded();
+    }
+
+    @SuppressWarnings("GuardedBy")
+    private void sendCancelRequest() {
+      LOG.trace("[{}] Sending cancel request", logPrefix);
+      ThrottledAdminRequestHandler.query(
+              channel,
+              true,
+              Revise.cancelContinuousPaging(streamId),
+              statement.getCustomPayload(),
+              getReviseRequestTimeout(),
+              throttler,
+              session.getMetricUpdater(),
+              logPrefix,
+              "cancel request")
+          .start()
+          .handle(
+              (result, error) -> {
+                if (error != null) {
+                  Loggers.warnWithException(
+                      LOG,
+                      "[{}] Error sending cancel request. "
+                          + "This is not critical (the request will eventually time out server-side).",
+                      logPrefix,
+                      error);
+                } else {
+                  LOG.trace("[{}] Continuous paging session cancelled successfully", logPrefix);
+                }
+                return null;
+              });
+    }
+
+    // TERMINATION
+
+    private void reenableAutoReadIfNeeded() {
+      // Make sure we don't leave the channel unreadable
+      LOG.trace("[{}] Re-enabling auto-read", logPrefix);
+      if (!protocolBackpressureAvailable) {
+        channel.config().setAutoRead(true);
+      }
+    }
+
+    // ERROR HANDLING
+
+    private void recordError(@NonNull Node node, @NonNull Throwable error) {
+      errors.add(new AbstractMap.SimpleEntry<>(node, error));
+    }
+
+    private void trackNodeError(@NonNull Node node, @NonNull Throwable error) {
+      if (nodeErrorReported.compareAndSet(false, true)) {
+        long latencyNanos = System.nanoTime() - this.messageStartTimeNanos;
+        context
+            .getRequestTracker()
+            .onNodeError(statement, error, latencyNanos, executionProfile, node, logPrefix);
+      }
+    }
+
+    /**
+     * Aborts the continuous paging session due to an error that can be either from the server or
+     * the client.
+     *
+     * @param error the error that causes the abortion.
+     * @param fromServer whether the error was triggered by the coordinator or by the driver.
+     */
+    @SuppressWarnings("GuardedBy") // this method is only called with the lock held
+    private void abort(@NonNull Throwable error, boolean fromServer) {
+      assert lock.isHeldByCurrentThread();
+      LOG.trace(
+          "[{}] Aborting due to {} ({})",
+          logPrefix,
+          error.getClass().getSimpleName(),
+          error.getMessage());
+      if (channel == null) {
+        // This only happens when sending the initial request, if no host was available
+        // or if the iterator returned by the LBP threw an exception.
+        // In either case the write was not even attempted, and
+        // we set the state right now.
+        enqueueOrCompletePending(error);
+        state = STATE_FAILED;
+      } else if (state > 0) {
+        enqueueOrCompletePending(error);
+        if (fromServer) {
+          // We can safely assume the server won't send any more responses,
+          // so set the state and call release() right now.
+          state = STATE_FAILED;
+          reenableAutoReadIfNeeded();
+        } else {
+          // attempt to cancel first, i.e. ask server to stop sending responses,
+          // and only then release.
+          cancel();
+        }
+      }
+      stopGlobalRequestTimer();
+      cancelTimeout(globalTimeout);
+    }
+
+    // METRICS
+
+    private void stopNodeMessageTimer() {
+      if (stopNodeMessageTimerReported.compareAndSet(false, true)) {
+        ((DefaultNode) node)
+            .getMetricUpdater()
+            .updateTimer(
+                messagesMetric,
+                executionProfile.getName(),
+                System.nanoTime() - messageStartTimeNanos,
+                TimeUnit.NANOSECONDS);
+      }
+    }
+
+    private void stopGlobalRequestTimer() {
+      session
+          .getMetricUpdater()
+          .updateTimer(
               continuousRequestsMetric,
               executionProfile.getName(),
-              totalLatencyNanos,
+              System.nanoTime() - startTimeNanos,
               TimeUnit.NANOSECONDS);
+    }
+
+    private void updateErrorMetrics(
+        @NonNull NodeMetricUpdater metricUpdater,
+        @NonNull RetryDecision decision,
+        @NonNull DefaultNodeMetric error,
+        @NonNull DefaultNodeMetric retriesOnError,
+        @NonNull DefaultNodeMetric ignoresOnError) {
+      metricUpdater.incrementCounter(error, executionProfile.getName());
+      switch (decision) {
+        case RETRY_SAME:
+        case RETRY_NEXT:
+          metricUpdater.incrementCounter(DefaultNodeMetric.RETRIES, executionProfile.getName());
+          metricUpdater.incrementCounter(retriesOnError, executionProfile.getName());
+          break;
+        case IGNORE:
+          metricUpdater.incrementCounter(DefaultNodeMetric.IGNORES, executionProfile.getName());
+          metricUpdater.incrementCounter(ignoresOnError, executionProfile.getName());
+          break;
+        case RETHROW:
+          // nothing do do
+      }
+    }
+
+    // UTILITY METHODS
+
+    @NonNull
+    private CompletableFuture<ResultSetT> immediateResultSetFuture(@NonNull Object pageOrError) {
+      CompletableFuture<ResultSetT> future = new CompletableFuture<>();
+      completeResultSetFuture(future, pageOrError);
+      return future;
+    }
+
+    @NonNull
+    private CompletableFuture<ResultSetT> cancelledResultSetFuture() {
+      return immediateResultSetFuture(
+          new CancellationException(
+              "Can't get more results because the continuous query has failed already. "
+                  + "Most likely this is because the query was cancelled"));
+    }
+
+    private void completeResultSetFuture(
+        @NonNull CompletableFuture<ResultSetT> future, @NonNull Object pageOrError) {
+      long now = System.nanoTime();
+      long totalLatencyNanos = now - startTimeNanos;
+      long nodeLatencyNanos = now - messageStartTimeNanos;
+      if (resultSetClass.isInstance(pageOrError)) {
+        if (future.complete(resultSetClass.cast(pageOrError))) {
+          throttler.signalSuccess(ContinuousRequestHandlerBase.this);
+          if (nodeSuccessReported.compareAndSet(false, true)) {
+            context
+                .getRequestTracker()
+                .onNodeSuccess(statement, nodeLatencyNanos, executionProfile, node, logPrefix);
+          }
+          context
+              .getRequestTracker()
+              .onSuccess(statement, totalLatencyNanos, executionProfile, node, logPrefix);
+        }
+      } else {
+        Throwable error = (Throwable) pageOrError;
+        if (future.completeExceptionally(error)) {
+          context
+              .getRequestTracker()
+              .onError(statement, error, totalLatencyNanos, executionProfile, node, logPrefix);
+          if (error instanceof DriverTimeoutException) {
+            throttler.signalTimeout(ContinuousRequestHandlerBase.this);
+            session
+                .getMetricUpdater()
+                .incrementCounter(clientTimeoutsMetric, executionProfile.getName());
+          } else if (!(error instanceof RequestThrottlingException)) {
+            throttler.signalError(ContinuousRequestHandlerBase.this, error);
+          }
         }
       }
     }
-  }
 
-  /**
-   * Called when the operation encounters an error and must abort. Can happen in the following
-   * cases:
-   *
-   * <ol>
-   *   <li>The throttler failed;
-   *   <li>All nodes tried failed;
-   *   <li>The global timeout was fired;
-   *   <li>The chosen node callback failed.
-   * </ol>
-   *
-   * @param callback The callback that signals the error, if present (in which case the method is
-   *     being called from the chosen execution), or null if none (in which case the method is being
-   *     called because of cancellation or timeout).
-   */
-  private void setFailed(@Nullable NodeResponseCallback callback, @NonNull Throwable error) {
-    if (doneFuture.completeExceptionally(error)) {
-      cancelGlobalTimeout();
-      // Must be called here in case we are failing because the global timeout fired
-      cancelScheduledTasks(null);
-      if (callback != null && error instanceof DriverException) {
-        ExecutionInfo executionInfo =
-            createExecutionInfo(callback.node, null, callback.executionIndex);
-        ((DriverException) error).setExecutionInfo(executionInfo);
-      }
-      enqueueOrCompletePending(error);
-      RequestTracker requestTracker = context.getRequestTracker();
-      if (!(requestTracker instanceof NoopRequestTracker)) {
-        long now = System.nanoTime();
-        long totalLatencyNanos = now - startTimeNanos;
-        requestTracker.onError(
-            statement,
-            error,
-            totalLatencyNanos,
-            executionProfile,
-            callback == null ? null : callback.node,
-            logPrefix);
-      }
-      if (error instanceof DriverTimeoutException) {
-        throttler.signalTimeout(this);
-        if (sessionMetricUpdater.isEnabled(clientTimeoutsMetric, executionProfile.getName())) {
-          sessionMetricUpdater.incrementCounter(clientTimeoutsMetric, executionProfile.getName());
-        }
-      } else if (!(error instanceof RequestThrottlingException)) {
-        throttler.signalError(this, error);
+    @NonNull
+    private ExecutionInfo createExecutionInfo(
+        @NonNull Node node,
+        @NonNull Result result,
+        @Nullable Frame response,
+        int successfulExecutionIndex) {
+      ByteBuffer pagingState =
+          result instanceof Rows ? ((Rows) result).getMetadata().pagingState : null;
+      return new DefaultExecutionInfo(
+          statement,
+          node,
+          startedSpeculativeExecutionsCount.get(),
+          successfulExecutionIndex,
+          errors,
+          pagingState,
+          response,
+          true,
+          session,
+          context,
+          executionProfile);
+    }
+
+    private void logTimeoutSchedulingError(IllegalStateException timeoutError) {
+      // If we're racing with session shutdown, the timer might be stopped already. We don't want
+      // to schedule more executions anyway, so swallow the error.
+      if (!"cannot be started once stopped".equals(timeoutError.getMessage())) {
+        Loggers.warnWithException(
+            LOG, "[{}] Error while scheduling timeout", logPrefix, timeoutError);
       }
     }
-  }
 
-  private void recordError(@NonNull Node node, @NonNull Throwable error) {
-    errors.add(new AbstractMap.SimpleEntry<>(node, error));
-  }
-
-  private void logTimeoutSchedulingError(IllegalStateException timeoutError) {
-    // If we're racing with session shutdown, the timer might be stopped already. We don't want
-    // to schedule more executions anyway, so swallow the error.
-    if (!"cannot be started once stopped".equals(timeoutError.getMessage())) {
-      Loggers.warnWithException(
-          LOG, "[{}] Error while scheduling timeout", logPrefix, timeoutError);
+    @NonNull
+    private String asTraceString(@NonNull Object pageOrError) {
+      return resultSetClass.isInstance(pageOrError)
+          ? "page " + pageNumber(resultSetClass.cast(pageOrError))
+          : ((Exception) pageOrError).getClass().getSimpleName();
     }
-  }
 
-  @SuppressWarnings("unchecked")
-  @NonNull
-  private String asTraceString(@NonNull Object pageOrError) {
-    return pageOrError instanceof Throwable
-        ? ((Exception) pageOrError).getClass().getSimpleName()
-        : "page " + pageNumber((ResultSetT) pageOrError);
-  }
-
-  @VisibleForTesting
-  @NonNull
-  CompletableFuture<Void> getDoneFuture() {
-    return doneFuture;
-  }
-
-  @VisibleForTesting
-  @Nullable
-  CompletableFuture<ResultSetT> getPendingResult() {
-    lock.lock();
-    try {
-      return pendingResult;
-    } finally {
-      lock.unlock();
+    private int getState() {
+      lock.lock();
+      try {
+        return state;
+      } finally {
+        lock.unlock();
+      }
     }
-  }
 
-  @VisibleForTesting
-  @Nullable
-  public Timeout getGlobalTimeout() {
-    return globalTimeout;
+    private CompletableFuture<ResultSetT> getPendingResult() {
+      lock.lock();
+      try {
+        return pendingResult;
+      } finally {
+        lock.unlock();
+      }
+    }
   }
 }

@@ -50,7 +50,6 @@ import com.datastax.oss.protocol.internal.response.Error;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -242,17 +241,12 @@ public class ContinuousGraphRequestHandlerSpeculativeExecutionTest {
       // invoked before operationComplete (this is very unlikely in practice, but happens in our
       // Travis CI build). When that happens, the speculative execution is not recorded yet when
       // cancelScheduledTasks runs.
-      // So check the timeout future instead, since it's cancelled in the same method.
-      assertThat(requestHandler.getGlobalTimeout()).isNotNull();
-      assertThat(requestHandler.getGlobalTimeout().isCancelled()).isTrue();
 
       // The fact that we missed the speculative execution is not a problem; even if it starts, it
       // will eventually find out that the result is already complete and cancel itself:
       speculativeExecution1.task().run(speculativeExecution1);
       node2Behavior.verifyNoWrite();
 
-      verify(nodeMetricUpdater1)
-          .isEnabled(DseNodeMetric.GRAPH_MESSAGES, DriverExecutionProfile.DEFAULT_NAME);
       verify(nodeMetricUpdater1)
           .updateTimer(
               eq(DseNodeMetric.GRAPH_MESSAGES),
@@ -346,11 +340,10 @@ public class ContinuousGraphRequestHandlerSpeculativeExecutionTest {
           .isFailed(
               error -> {
                 assertThat(error).isInstanceOf(AllNodesFailedException.class);
-                Map<Node, List<Throwable>> nodeErrors =
-                    ((AllNodesFailedException) error).getAllErrors();
+                Map<Node, Throwable> nodeErrors = ((AllNodesFailedException) error).getErrors();
                 assertThat(nodeErrors).containsOnlyKeys(node1, node2);
-                assertThat(nodeErrors.get(node1).get(0)).isInstanceOf(BootstrappingException.class);
-                assertThat(nodeErrors.get(node2).get(0)).isInstanceOf(BootstrappingException.class);
+                assertThat(nodeErrors.get(node1)).isInstanceOf(BootstrappingException.class);
+                assertThat(nodeErrors.get(node2)).isInstanceOf(BootstrappingException.class);
               });
     }
   }
@@ -408,11 +401,10 @@ public class ContinuousGraphRequestHandlerSpeculativeExecutionTest {
           .isFailed(
               error -> {
                 assertThat(error).isInstanceOf(AllNodesFailedException.class);
-                Map<Node, List<Throwable>> nodeErrors =
-                    ((AllNodesFailedException) error).getAllErrors();
+                Map<Node, Throwable> nodeErrors = ((AllNodesFailedException) error).getErrors();
                 assertThat(nodeErrors).containsOnlyKeys(node1, node2);
-                assertThat(nodeErrors.get(node1).get(0)).isInstanceOf(BootstrappingException.class);
-                assertThat(nodeErrors.get(node2).get(0)).isInstanceOf(BootstrappingException.class);
+                assertThat(nodeErrors.get(node1)).isInstanceOf(BootstrappingException.class);
+                assertThat(nodeErrors.get(node2)).isInstanceOf(BootstrappingException.class);
               });
     }
   }

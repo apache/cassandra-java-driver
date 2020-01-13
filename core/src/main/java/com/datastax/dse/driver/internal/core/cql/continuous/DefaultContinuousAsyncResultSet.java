@@ -99,7 +99,7 @@ public class DefaultContinuousAsyncResultSet implements ContinuousAsyncResultSet
       throw new IllegalStateException(
           "Can't call fetchNextPage() on the last page (use hasMorePages() to check)");
     }
-    return handler.dequeueOrCreatePending();
+    return handler.fetchNextPage();
   }
 
   @Override

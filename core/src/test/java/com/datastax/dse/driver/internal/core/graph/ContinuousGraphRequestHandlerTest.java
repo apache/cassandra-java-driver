@@ -241,16 +241,12 @@ public class ContinuousGraphRequestHandlerTest {
   }
 
   private void validateMetrics(String profileName, RequestHandlerTestHarness harness) {
-    // GRAPH_MESSAGES metrics check call is invoked twice (once per page)
-    verify(nodeMetricUpdater1, times(2)).isEnabled(DseNodeMetric.GRAPH_MESSAGES, profileName);
     // GRAPH_MESSAGES metrics update is invoked only for the first page
     verify(nodeMetricUpdater1, times(1))
         .updateTimer(
             eq(DseNodeMetric.GRAPH_MESSAGES), eq(profileName), anyLong(), eq(TimeUnit.NANOSECONDS));
     verifyNoMoreInteractions(nodeMetricUpdater1);
 
-    verify(harness.getSession().getMetricUpdater())
-        .isEnabled(DseSessionMetric.GRAPH_REQUESTS, profileName);
     verify(harness.getSession().getMetricUpdater())
         .updateTimer(
             eq(DseSessionMetric.GRAPH_REQUESTS),

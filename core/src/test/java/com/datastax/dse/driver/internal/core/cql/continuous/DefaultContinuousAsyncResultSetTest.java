@@ -68,7 +68,7 @@ public class DefaultContinuousAsyncResultSetTest {
   public void should_invoke_handler_to_fetch_next_page() {
     // Given
     CompletableFuture<ContinuousAsyncResultSet> mockResultFuture = new CompletableFuture<>();
-    given(handler.dequeueOrCreatePending()).willReturn(mockResultFuture);
+    given(handler.fetchNextPage()).willReturn(mockResultFuture);
     DefaultContinuousAsyncResultSet resultSet =
         new DefaultContinuousAsyncResultSet(
             rows, columnDefinitions, 1, true, executionInfo, handler);
@@ -79,7 +79,7 @@ public class DefaultContinuousAsyncResultSetTest {
 
     // Then
     assertThat(hasMorePages).isTrue();
-    verify(handler).dequeueOrCreatePending();
+    verify(handler).fetchNextPage();
     assertThat(nextPageFuture).isEqualTo(mockResultFuture);
   }
 

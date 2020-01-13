@@ -87,7 +87,7 @@ public class ContinuousAsyncGraphResultSet implements AsyncGraphResultSet {
       throw new IllegalStateException(
           "Can't call fetchNextPage() on the last page (use hasMorePages() to check)");
     }
-    return continuousGraphRequestHandler.dequeueOrCreatePending();
+    return continuousGraphRequestHandler.fetchNextPage();
   }
 
   @Override
@@ -103,6 +103,7 @@ public class ContinuousAsyncGraphResultSet implements AsyncGraphResultSet {
   static AsyncGraphResultSet empty(ExecutionInfo executionInfo) {
 
     return new AsyncGraphResultSet() {
+
       @NonNull
       @Override
       public ExecutionInfo getRequestExecutionInfo() {

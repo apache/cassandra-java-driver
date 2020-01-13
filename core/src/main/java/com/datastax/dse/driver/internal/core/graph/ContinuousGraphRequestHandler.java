@@ -68,6 +68,7 @@ public class ContinuousGraphRequestHandler
         session,
         context,
         sessionLogPrefix,
+        AsyncGraphResultSet.class,
         true,
         DseSessionMetric.GRAPH_CLIENT_TIMEOUTS,
         DseSessionMetric.GRAPH_REQUESTS,
@@ -77,6 +78,7 @@ public class ContinuousGraphRequestHandler
     message =
         GraphConversions.createContinuousMessageFromGraphStatement(
             statement, subProtocol, executionProfile, context, graphBinaryModule);
+    throttler.register(this);
     globalTimeout =
         MoreObjects.firstNonNull(
             statement.getTimeout(),
@@ -88,19 +90,19 @@ public class ContinuousGraphRequestHandler
 
   @NonNull
   @Override
-  protected Duration getGlobalTimeoutDuration() {
+  protected Duration getGlobalTimeout() {
     return globalTimeout;
   }
 
   @NonNull
   @Override
-  protected Duration getPageTimeoutDuration(int pageNumber) {
+  protected Duration getPageTimeout(int pageNumber) {
     return Duration.ZERO;
   }
 
   @NonNull
   @Override
-  protected Duration getReviseRequestTimeoutDuration() {
+  protected Duration getReviseRequestTimeout() {
     return Duration.ZERO;
   }
 
@@ -143,7 +145,7 @@ public class ContinuousGraphRequestHandler
   protected ContinuousAsyncGraphResultSet createResultSet(
       @NonNull Rows rows,
       @NonNull ExecutionInfo executionInfo,
-      @NonNull final ColumnDefinitions columnDefinitions)
+      @NonNull ColumnDefinitions columnDefinitions)
       throws IOException {
 
     Queue<GraphNode> graphNodes = new ArrayDeque<>();

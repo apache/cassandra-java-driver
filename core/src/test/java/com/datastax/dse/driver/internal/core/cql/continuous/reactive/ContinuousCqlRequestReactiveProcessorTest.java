@@ -139,7 +139,7 @@ public class ContinuousCqlRequestReactiveProcessorTest extends ContinuousCqlRequ
       assertThat(firstExecutionInfo.getCoordinator()).isEqualTo(node1);
       assertThat(firstExecutionInfo.getErrors()).isEmpty();
       assertThat(firstExecutionInfo.getIncomingPayload()).isEmpty();
-      assertThat(firstExecutionInfo.getPagingState()).isNull();
+      assertThat(firstExecutionInfo.getPagingState()).isNotNull();
       assertThat(firstExecutionInfo.getSpeculativeExecutionCount()).isEqualTo(0);
       assertThat(firstExecutionInfo.getSuccessfulExecutionIndex()).isEqualTo(0);
       assertThat(firstExecutionInfo.getWarnings()).isEmpty();

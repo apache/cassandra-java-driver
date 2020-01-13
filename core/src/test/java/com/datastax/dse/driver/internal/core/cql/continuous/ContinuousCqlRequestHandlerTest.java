@@ -22,7 +22,6 @@ import static com.datastax.dse.protocol.internal.DseProtocolConstants.RevisionTy
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -67,8 +66,7 @@ import org.mockito.Mockito;
 
 public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandlerTestBase {
 
-  private static final Pattern LOG_PREFIX_PER_QUERY = Pattern.compile("test\\|\\d+");
-  private static final Pattern LOG_PREFIX_PER_EXECUTION = Pattern.compile("test\\|\\d+\\|\\d+");
+  private static final Pattern LOG_PREFIX_PER_REQUEST = Pattern.compile("test\\|\\d*\\|\\d");
 
   @Test
   @UseDataProvider(value = "allDseProtocolVersions", location = DseTestDataProviders.class)
@@ -118,7 +116,6 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
               UNDEFINED_IDEMPOTENCE_STATEMENT, harness.getSession(), harness.getContext(), "test");
       CompletionStage<ContinuousAsyncResultSet> page1Future = handler.handle();
 
-      assertThat(handler.getPendingResult()).isNotNull();
       node1Behavior.setResponseSuccess(defaultFrameOf(DseTestFixtures.tenDseRows(1, false)));
 
       assertThatStage(page1Future)
@@ -133,7 +130,7 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
                 assertThat(executionInfo.getCoordinator()).isEqualTo(node1);
                 assertThat(executionInfo.getErrors()).isEmpty();
                 assertThat(executionInfo.getIncomingPayload()).isEmpty();
-                assertThat(executionInfo.getPagingState()).isNull();
+                assertThat(executionInfo.getPagingState()).isNotNull();
                 assertThat(executionInfo.getSpeculativeExecutionCount()).isEqualTo(0);
                 assertThat(executionInfo.getSuccessfulExecutionIndex()).isEqualTo(0);
                 assertThat(executionInfo.getWarnings()).isEmpty();
@@ -313,7 +310,7 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
       ContinuousAsyncResultSet page1 = CompletableFutures.getUninterruptibly(page1Future);
       page1.cancel();
 
-      assertThat(handler.getDoneFuture()).isCancelled();
+      assertThat(handler.getState()).isEqualTo(-2);
       assertThat(page1.fetchNextPage()).isCancelled();
     }
   }
@@ -334,7 +331,7 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
       page1Future.toCompletableFuture().cancel(true);
       // this should be ignored
       node1Behavior.setResponseSuccess(defaultFrameOf(DseTestFixtures.tenDseRows(1, false)));
-      assertThat(handler.getDoneFuture()).isCancelled();
+      assertThat(handler.getState()).isEqualTo(-2);
     }
   }
 
@@ -357,12 +354,12 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
 
       // to late
       page1Future.toCompletableFuture().cancel(true);
-      assertThat(handler.getDoneFuture()).isCompleted();
+      assertThat(handler.getState()).isEqualTo(-1);
     }
   }
 
   @Test
-  public void should_send_cancel_request_if_dse_v2() throws InterruptedException {
+  public void should_send_cancel_request_if_dse_v2() {
     RequestHandlerTestHarness.Builder builder =
         continuousHarnessBuilder().withProtocolVersion(DSE_V2);
     PoolBehavior node1Behavior = builder.customBehavior(node1);
@@ -373,15 +370,8 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
               UNDEFINED_IDEMPOTENCE_STATEMENT, harness.getSession(), harness.getContext(), "test");
       CompletionStage<ContinuousAsyncResultSet> page1Future = handler.handle();
 
-      // will trigger the population of inFlightCallbacks with node 1's execution
-      node1Behavior.setWriteSuccess();
-
-      // FIXME remove when JAVA-2552 is ready
-      // wait until the write is acknowledged and a page timeout is set
-      await().until(() -> harness.nextScheduledTimeout() != null);
-
       page1Future.toCompletableFuture().cancel(true);
-      assertThat(handler.getDoneFuture()).isCancelled();
+      assertThat(handler.getState()).isEqualTo(-2);
       verify(node1Behavior.getChannel())
           .write(argThat(this::isCancelRequest), anyBoolean(), anyMap(), any());
     }
@@ -506,21 +496,21 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node1),
-                        matches(LOG_PREFIX_PER_EXECUTION));
+                        matches(LOG_PREFIX_PER_REQUEST));
                 verify(requestTracker)
                     .onNodeSuccess(
                         eq(UNDEFINED_IDEMPOTENCE_STATEMENT),
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node2),
-                        matches(LOG_PREFIX_PER_EXECUTION));
+                        matches(LOG_PREFIX_PER_REQUEST));
                 verify(requestTracker)
                     .onSuccess(
                         eq(UNDEFINED_IDEMPOTENCE_STATEMENT),
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node2),
-                        matches(LOG_PREFIX_PER_QUERY));
+                        matches(LOG_PREFIX_PER_REQUEST));
                 verifyNoMoreInteractions(requestTracker);
               });
     }
