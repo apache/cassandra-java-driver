@@ -9,9 +9,11 @@ modeling, refer to the [DSE developer guide].*
 
 Note: graph capabilities require the [Apache TinkerPop™] library to be present on the classpath. The
 driver has a non-optional dependency on that library, but if your application does not use graph at
-all, it is possible to exclude it to minimize the number of runtime dependencies. If the library
-cannot be found at runtime, graph queries won't be available and a warning will be logged, but the
-driver will otherwise operate normally (this is also valid for OSGi deployments).
+all, it is possible to exclude it to minimize the number of runtime dependencies (see the
+[Integration>Driver dependencies](../../integration/#driver-dependencies) section for more
+details). If the library cannot be found at runtime, graph queries won't be available and a warning
+will be logged, but the driver will otherwise operate normally (this is also valid for OSGi
+deployments).
 
 If you do use graph, it is important to keep the precise TinkerPop version that the driver depends
 on: unlike the driver, TinkerPop does not follow semantic versioning, so even a patch version change

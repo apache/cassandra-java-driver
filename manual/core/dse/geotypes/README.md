@@ -3,11 +3,13 @@
 The driver comes with client-side representations of the DSE geospatial data types: [Point],
 [LineString] and [Polygon].
 
-Note: geospatial types require the [ESRI] library version 1.2 to be present on the classpath. The 
+Note: geospatial types require the [ESRI] library version 1.2 to be present on the classpath. The
 DSE driver has a non-optional dependency on that library, but if your application does not use
-geotypes at all, it is possible to exclude it to minimize the number of runtime dependencies. If the 
-library cannot be found at runtime, geospatial types won't be available and a warning will be 
-logged, but the driver will otherwise operate normally (this is also valid for OSGi deployments).
+geotypes at all, it is possible to exclude it to minimize the number of runtime dependencies (see
+the [Integration>Driver dependencies](../../integration/#driver-dependencies) section for
+more details). If the library cannot be found at runtime, geospatial types won't be available and a
+warning will be logged, but the driver will otherwise operate normally (this is also valid for OSGi
+deployments).
 
 ### Usage in requests
 
