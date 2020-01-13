@@ -45,7 +45,7 @@ import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
-import com.datastax.dse.driver.api.core.metrics.DseNodeMetrics;
+import com.datastax.dse.driver.api.core.metrics.DseNodeMetric;
 import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.dse.protocol.internal.request.RawBytesQuery;
@@ -464,7 +464,7 @@ public class GraphRequestHandlerTest {
   public void should_invoke_request_tracker_and_update_metrics(
       GraphProtocol graphProtocol, Version dseVersion) throws IOException {
     when(nodeMetricUpdater1.isEnabled(
-            DseNodeMetrics.GRAPH_MESSAGES, DriverExecutionProfile.DEFAULT_NAME))
+            DseNodeMetric.GRAPH_MESSAGES, DriverExecutionProfile.DEFAULT_NAME))
         .thenReturn(true);
 
     GraphRequestHandlerTestHarness.Builder builder =
@@ -529,10 +529,10 @@ public class GraphRequestHandlerTest {
     verifyNoMoreInteractions(requestTracker);
 
     verify(nodeMetricUpdater1)
-        .isEnabled(DseNodeMetrics.GRAPH_MESSAGES, DriverExecutionProfile.DEFAULT_NAME);
+        .isEnabled(DseNodeMetric.GRAPH_MESSAGES, DriverExecutionProfile.DEFAULT_NAME);
     verify(nodeMetricUpdater1)
         .updateTimer(
-            eq(DseNodeMetrics.GRAPH_MESSAGES),
+            eq(DseNodeMetric.GRAPH_MESSAGES),
             eq(DriverExecutionProfile.DEFAULT_NAME),
             anyLong(),
             eq(TimeUnit.NANOSECONDS));

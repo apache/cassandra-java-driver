@@ -19,7 +19,7 @@ import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
-import com.datastax.dse.driver.api.core.metrics.DseNodeMetrics;
+import com.datastax.dse.driver.api.core.metrics.DseNodeMetric;
 import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousRequestHandlerBase;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
@@ -71,7 +71,7 @@ public class ContinuousGraphRequestHandler
         true,
         DseSessionMetric.GRAPH_CLIENT_TIMEOUTS,
         DseSessionMetric.GRAPH_REQUESTS,
-        DseNodeMetrics.GRAPH_MESSAGES);
+        DseNodeMetric.GRAPH_MESSAGES);
     this.graphBinaryModule = graphBinaryModule;
     subProtocol = graphSupportChecker.inferGraphProtocol(statement, executionProfile, context);
     message =

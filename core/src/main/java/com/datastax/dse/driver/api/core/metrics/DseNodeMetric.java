@@ -21,14 +21,14 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 
 /** See {@code dse-reference.conf} for a description of each metric. */
-public enum DseNodeMetrics implements NodeMetric {
+public enum DseNodeMetric implements NodeMetric {
   GRAPH_MESSAGES("graph-messages");
 
-  private static final Map<String, DseNodeMetrics> BY_PATH = sortByPath();
+  private static final Map<String, DseNodeMetric> BY_PATH = sortByPath();
 
   private final String path;
 
-  DseNodeMetrics(String path) {
+  DseNodeMetric(String path) {
     this.path = path;
   }
 
@@ -39,17 +39,17 @@ public enum DseNodeMetrics implements NodeMetric {
   }
 
   @NonNull
-  public static DseNodeMetrics fromPath(@NonNull String path) {
-    DseNodeMetrics metric = BY_PATH.get(path);
+  public static DseNodeMetric fromPath(@NonNull String path) {
+    DseNodeMetric metric = BY_PATH.get(path);
     if (metric == null) {
       throw new IllegalArgumentException("Unknown node metric path " + path);
     }
     return metric;
   }
 
-  private static Map<String, DseNodeMetrics> sortByPath() {
-    ImmutableMap.Builder<String, DseNodeMetrics> result = ImmutableMap.builder();
-    for (DseNodeMetrics value : values()) {
+  private static Map<String, DseNodeMetric> sortByPath() {
+    ImmutableMap.Builder<String, DseNodeMetric> result = ImmutableMap.builder();
+    for (DseNodeMetric value : values()) {
       result.put(value.getPath(), value);
     }
     return result.build();

@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.metrics;
 
 import com.codahale.metrics.MetricRegistry;
-import com.datastax.dse.driver.api.core.metrics.DseNodeMetrics;
+import com.datastax.dse.driver.api.core.metrics.DseNodeMetric;
 import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -113,7 +113,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
         result.add(DefaultNodeMetric.fromPath(path));
       } catch (IllegalArgumentException e) {
         try {
-          result.add(DseNodeMetrics.fromPath(path));
+          result.add(DseNodeMetric.fromPath(path));
         } catch (IllegalArgumentException e1) {
           LOG.warn("[{}] Unknown node metric {}, skipping", logPrefix, path);
         }

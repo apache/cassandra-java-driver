@@ -19,7 +19,7 @@ import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
-import com.datastax.dse.driver.api.core.metrics.DseNodeMetrics;
+import com.datastax.dse.driver.api.core.metrics.DseNodeMetric;
 import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
@@ -594,11 +594,11 @@ public class GraphRequestHandler implements Throttled {
     public void onResponse(Frame responseFrame) {
       long nodeResponseTimeNanos = NANOTIME_NOT_MEASURED_YET;
       NodeMetricUpdater nodeMetricUpdater = ((DefaultNode) node).getMetricUpdater();
-      if (nodeMetricUpdater.isEnabled(DseNodeMetrics.GRAPH_MESSAGES, executionProfile.getName())) {
+      if (nodeMetricUpdater.isEnabled(DseNodeMetric.GRAPH_MESSAGES, executionProfile.getName())) {
         nodeResponseTimeNanos = System.nanoTime();
         long nodeLatency = System.nanoTime() - nodeStartTimeNanos;
         nodeMetricUpdater.updateTimer(
-            DseNodeMetrics.GRAPH_MESSAGES,
+            DseNodeMetric.GRAPH_MESSAGES,
             executionProfile.getName(),
             nodeLatency,
             TimeUnit.NANOSECONDS);

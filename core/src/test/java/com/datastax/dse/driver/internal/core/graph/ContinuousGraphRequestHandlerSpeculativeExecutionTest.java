@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 import com.datastax.dse.driver.DseTestDataProviders;
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
-import com.datastax.dse.driver.api.core.metrics.DseNodeMetrics;
+import com.datastax.dse.driver.api.core.metrics.DseNodeMetric;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.NoNodeAvailableException;
@@ -252,10 +252,10 @@ public class ContinuousGraphRequestHandlerSpeculativeExecutionTest {
       node2Behavior.verifyNoWrite();
 
       verify(nodeMetricUpdater1)
-          .isEnabled(DseNodeMetrics.GRAPH_MESSAGES, DriverExecutionProfile.DEFAULT_NAME);
+          .isEnabled(DseNodeMetric.GRAPH_MESSAGES, DriverExecutionProfile.DEFAULT_NAME);
       verify(nodeMetricUpdater1)
           .updateTimer(
-              eq(DseNodeMetrics.GRAPH_MESSAGES),
+              eq(DseNodeMetric.GRAPH_MESSAGES),
               eq(DriverExecutionProfile.DEFAULT_NAME),
               anyLong(),
               eq(TimeUnit.NANOSECONDS));

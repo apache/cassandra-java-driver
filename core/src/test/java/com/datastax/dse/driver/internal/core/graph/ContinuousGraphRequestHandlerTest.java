@@ -33,7 +33,7 @@ import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
-import com.datastax.dse.driver.api.core.metrics.DseNodeMetrics;
+import com.datastax.dse.driver.api.core.metrics.DseNodeMetric;
 import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
@@ -75,7 +75,7 @@ public class ContinuousGraphRequestHandlerTest {
   @UseDataProvider(location = DseTestDataProviders.class, value = "supportedGraphProtocols")
   public void should_return_paged_results(GraphProtocol graphProtocol) throws IOException {
     String profileName = "test-graph";
-    when(nodeMetricUpdater1.isEnabled(DseNodeMetrics.GRAPH_MESSAGES, profileName)).thenReturn(true);
+    when(nodeMetricUpdater1.isEnabled(DseNodeMetric.GRAPH_MESSAGES, profileName)).thenReturn(true);
 
     GraphBinaryModule module = createGraphBinaryModule(mockContext);
 
@@ -242,14 +242,11 @@ public class ContinuousGraphRequestHandlerTest {
 
   private void validateMetrics(String profileName, RequestHandlerTestHarness harness) {
     // GRAPH_MESSAGES metrics check call is invoked twice (once per page)
-    verify(nodeMetricUpdater1, times(2)).isEnabled(DseNodeMetrics.GRAPH_MESSAGES, profileName);
+    verify(nodeMetricUpdater1, times(2)).isEnabled(DseNodeMetric.GRAPH_MESSAGES, profileName);
     // GRAPH_MESSAGES metrics update is invoked only for the first page
     verify(nodeMetricUpdater1, times(1))
         .updateTimer(
-            eq(DseNodeMetrics.GRAPH_MESSAGES),
-            eq(profileName),
-            anyLong(),
-            eq(TimeUnit.NANOSECONDS));
+            eq(DseNodeMetric.GRAPH_MESSAGES), eq(profileName), anyLong(), eq(TimeUnit.NANOSECONDS));
     verifyNoMoreInteractions(nodeMetricUpdater1);
 
     verify(harness.getSession().getMetricUpdater())

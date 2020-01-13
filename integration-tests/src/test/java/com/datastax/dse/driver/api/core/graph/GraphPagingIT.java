@@ -22,7 +22,7 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import com.codahale.metrics.Timer;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.cql.continuous.ContinuousPagingITBase;
-import com.datastax.dse.driver.api.core.metrics.DseNodeMetrics;
+import com.datastax.dse.driver.api.core.metrics.DseNodeMetric;
 import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.dse.driver.internal.core.graph.MultiPageGraphResultSet;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -68,7 +68,7 @@ public class GraphPagingIT {
                       Collections.singletonList(DseSessionMetric.GRAPH_REQUESTS.getPath()))
                   .withStringList(
                       DefaultDriverOption.METRICS_NODE_ENABLED,
-                      Collections.singletonList(DseNodeMetrics.GRAPH_MESSAGES.getPath()))
+                      Collections.singletonList(DseNodeMetric.GRAPH_MESSAGES.getPath()))
                   .build())
           .build();
 
@@ -524,8 +524,8 @@ public class GraphPagingIT {
     Node node = session.getMetadata().getNodes().values().iterator().next();
     assertThat(session.getMetrics()).isPresent();
     Metrics metrics = session.getMetrics().get();
-    assertThat(metrics.getNodeMetric(node, DseNodeMetrics.GRAPH_MESSAGES)).isPresent();
-    Timer messages = (Timer) metrics.getNodeMetric(node, DseNodeMetrics.GRAPH_MESSAGES).get();
+    assertThat(metrics.getNodeMetric(node, DseNodeMetric.GRAPH_MESSAGES)).isPresent();
+    Timer messages = (Timer) metrics.getNodeMetric(node, DseNodeMetric.GRAPH_MESSAGES).get();
     assertThat(messages.getCount()).isGreaterThan(0);
     assertThat(messages.getMeanRate()).isGreaterThan(0);
     assertThat(metrics.getSessionMetric(DseSessionMetric.GRAPH_REQUESTS)).isPresent();
