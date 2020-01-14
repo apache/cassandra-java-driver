@@ -174,7 +174,7 @@ public class GraphRequestHandlerTest {
     List<GraphTraversal> traversalsTest =
         ImmutableList.of(
             // randomly testing some complex data types. Complete suite of data types test is in
-            // GraphBinaryDataTypesTest
+            // GraphDataTypesTest
             DseGraph.g
                 .addV("person")
                 .property("p1", 2.3f)

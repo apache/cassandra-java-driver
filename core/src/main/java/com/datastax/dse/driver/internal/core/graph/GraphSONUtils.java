@@ -98,7 +98,7 @@ public class GraphSONUtils {
                   .mapper(GraphSONMapper.build().version(GraphSONVersion.V1_0).create())
                   .create());
 
-  static ByteBuffer serializeToByteBuffer(Object object, GraphProtocol graphSubProtocol)
+  public static ByteBuffer serializeToByteBuffer(Object object, GraphProtocol graphSubProtocol)
       throws IOException {
     return ByteBuffer.wrap(serializeToBytes(object, graphSubProtocol));
   }
