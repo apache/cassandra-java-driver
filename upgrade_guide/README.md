@@ -62,6 +62,9 @@ changes right away; but you will get deprecation warnings:
   DSE. If you used `DseProgrammaticPlainTextAuthProvider`, replace it by
   `PlainTextProgrammaticAuthProvider`. Similarly, if you wrote a custom implementation by
   subclassing `DsePlainTextAuthProviderBase`, extend `PlainTextAuthProviderBase` instead.
+* `DseLoadBalancingPolicy`: DSE-specific features (the slow replica avoidance mechanism) have been
+  merged into `DefaultLoadBalancingPolicy`. `DseLoadBalancingPolicy` still exists for backward
+  compatibility, but it is now identical to the default policy.
 
 #### Class Loader
 
