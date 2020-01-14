@@ -6,7 +6,9 @@
 
 This version brings in all functionality that was formerly only in the DataStax Enterprise driver, 
 such as the built-in support for reactive programming. Going forward, all new features will be 
-implemented in this single driver.
+implemented in this single driver (for past DataStax Enterprise driver versions before the merge,
+refer to the [DSE driver
+changelog](https://docs.datastax.com/en/developer/java-driver-dse/latest/changelog/)).
 
 - [documentation] JAVA-2607: Improve visibility of driver dependencies section
 - [documentation] JAVA-1975: Document the importance of using specific TinkerPop version
