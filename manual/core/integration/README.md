@@ -430,6 +430,11 @@ If you don't use DSE graph at all, you can exclude the dependencies:
 </dependency>
 ```
 
+If you do use graph, it is important to keep the precise TinkerPop version that the driver depends
+on: unlike the driver, TinkerPop does not follow semantic versioning, so even a patch version change
+(e.g. 3.3.0 vs 3.3.3) could introduce incompatibilities. So do not declare an explicit dependency in
+your application, let the driver pull it transitively.
+
 #### Documenting annotations
 
 The driver team uses annotations to document certain aspects of the code:

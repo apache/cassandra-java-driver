@@ -13,6 +13,11 @@ all, it is possible to exclude it to minimize the number of runtime dependencies
 cannot be found at runtime, graph queries won't be available and a warning will be logged, but the
 driver will otherwise operate normally (this is also valid for OSGi deployments).
 
+If you do use graph, it is important to keep the precise TinkerPop version that the driver depends
+on: unlike the driver, TinkerPop does not follow semantic versioning, so even a patch version change
+(e.g. 3.3.0 vs 3.3.3) could introduce incompatibilities. So do not declare an explicit dependency in
+your application, let the driver pull it transitively.
+
 ### Overview
 
 There are 3 ways to execute graph requests:
