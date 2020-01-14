@@ -203,4 +203,4 @@ documentation for more details and an example.
 
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
 
-[AsyncResultSet]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
+[AsyncResultSet]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html

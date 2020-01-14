@@ -202,11 +202,11 @@ session.execute(statement);
 
 [SASL]: https://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer
 
-[AuthProvider]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/auth/AuthProvider.html
-[DriverContext]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/context/DriverContext.html
-[PlainTextAuthProviderBase]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/auth/PlainTextAuthProviderBase.html
-[DseGssApiAuthProviderBase]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/dse/driver/api/core/auth/DseGssApiAuthProviderBase.html
-[ProxyAuthentication.executeAs]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/dse/driver/api/core/auth/ProxyAuthentication.html#executeAs-java.lang.String-StatementT-
-[SessionBuilder.withAuthCredentials]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withAuthCredentials-java.lang.String-java.lang.String-
-[SessionBuilder.withAuthProvider]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withAuthProvider-com.datastax.oss.driver.api.core.auth.AuthProvider-
+[AuthProvider]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/auth/AuthProvider.html
+[DriverContext]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/context/DriverContext.html
+[PlainTextAuthProviderBase]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/auth/PlainTextAuthProviderBase.html
+[DseGssApiAuthProviderBase]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/dse/driver/api/core/auth/DseGssApiAuthProviderBase.html
+[ProxyAuthentication.executeAs]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/dse/driver/api/core/auth/ProxyAuthentication.html#executeAs-java.lang.String-StatementT-
+[SessionBuilder.withAuthCredentials]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withAuthCredentials-java.lang.String-java.lang.String-
+[SessionBuilder.withAuthProvider]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withAuthProvider-com.datastax.oss.driver.api.core.auth.AuthProvider-
 [reference.conf]: ../configuration/reference/

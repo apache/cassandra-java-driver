@@ -363,7 +363,7 @@ more fine-grained control of what should be retried, and how, is required.
 
 [reactive streams]: https://en.wikipedia.org/wiki/Reactive_Streams
 [Reactive Streams API]: https://github.com/reactive-streams/reactive-streams-jvm
-[CqlSession]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/CqlSession.html
+[CqlSession]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/CqlSession.html
 [ReactiveSession]: https://docs.datastax.com/en/drivers/java-dse/2.3/com/datastax/dse/driver/api/core/cql/reactive/ReactiveSession.html
 [ResultSet]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/ResultSet.html
 [ReactiveResultSet]: https://docs.datastax.com/en/drivers/java-dse/2.3/com/datastax/dse/driver/api/core/cql/reactive/ReactiveResultSet.html

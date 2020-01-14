@@ -105,9 +105,9 @@ added in a future version.
 
 See also the [parent page](../) for topics common to all fluent traversals. 
 
-[FluentGraphStatement]:             https://docs.datastax.com/en/drivers/java/4.3/com/datastax/dse/driver/api/core/graph/FluentGraphStatement.html
-[FluentGraphStatement.newInstance]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/dse/driver/api/core/graph/FluentGraphStatement.html#newInstance-org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal-
-[FluentGraphStatement.builder]:     https://docs.datastax.com/en/drivers/java/4.3/com/datastax/dse/driver/api/core/graph/FluentGraphStatement.html#builder-org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal-
-[BatchGraphStatement]:              https://docs.datastax.com/en/drivers/java/4.3/com/datastax/dse/driver/api/core/graph/BatchGraphStatement.html
-[BatchGraphStatement.newInstance]:  https://docs.datastax.com/en/drivers/java/4.3/com/datastax/dse/driver/api/core/graph/BatchGraphStatement.html#newInstance--
-[BatchGraphStatement.builder]:      https://docs.datastax.com/en/drivers/java/4.3/com/datastax/dse/driver/api/core/graph/BatchGraphStatement.html#builder--
+[FluentGraphStatement]:             https://docs.datastax.com/en/drivers/java/4.4/com/datastax/dse/driver/api/core/graph/FluentGraphStatement.html
+[FluentGraphStatement.newInstance]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/dse/driver/api/core/graph/FluentGraphStatement.html#newInstance-org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal-
+[FluentGraphStatement.builder]:     https://docs.datastax.com/en/drivers/java/4.4/com/datastax/dse/driver/api/core/graph/FluentGraphStatement.html#builder-org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal-
+[BatchGraphStatement]:              https://docs.datastax.com/en/drivers/java/4.4/com/datastax/dse/driver/api/core/graph/BatchGraphStatement.html
+[BatchGraphStatement.newInstance]:  https://docs.datastax.com/en/drivers/java/4.4/com/datastax/dse/driver/api/core/graph/BatchGraphStatement.html#newInstance--
+[BatchGraphStatement.builder]:      https://docs.datastax.com/en/drivers/java/4.4/com/datastax/dse/driver/api/core/graph/BatchGraphStatement.html#builder--

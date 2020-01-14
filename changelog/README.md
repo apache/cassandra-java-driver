@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.4.0 (in progress)
+### 4.4.0
 
 This version brings in all functionality that was formerly only in the DataStax Enterprise driver, 
 such as the built-in support for reactive programming. Going forward, all new features will be 
