@@ -1,5 +1,9 @@
 ## Changelog
 
+<!--
+  Note: the 4.x branch's changelog include a copy of this one, please copy over the changes if new
+  3.x versions get published.
+-->
 
 ## 3.8.0
 
