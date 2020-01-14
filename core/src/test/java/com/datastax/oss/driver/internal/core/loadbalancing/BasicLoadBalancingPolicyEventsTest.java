@@ -37,7 +37,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
+// TODO fix unnecessary stubbing of config option in parent class (and stop using "silent" runner)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BasicLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPolicyTestBase {
 
   @Mock private Predicate<Node> filter;
