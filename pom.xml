@@ -591,6 +591,7 @@
             <exclude>.idea/**</exclude>
             <exclude>**/target/**</exclude>
             <exclude>**/dependency-reduced-pom.xml</exclude>
+            <exclude>docs/**</exclude>
           </excludes>
         </configuration>
       </plugin>
