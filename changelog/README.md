@@ -2,6 +2,8 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.5.0 (in progress)
+
 ### 4.4.0
 
 This version brings in all functionality that was formerly only in the DataStax Enterprise driver, 
