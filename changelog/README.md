@@ -4,6 +4,7 @@
 
 ### NGDG (in progress)
 
+- [documentation] JAVA-2559: Fix GraphNode javadocs
 - [improvement] JAVA-2281: Extend GraphBinaryDataTypesTest to other graph protocols
 - [new feature] JAVA-2498: Add support for reactive graph queries
 - [bug] JAVA-2572: Prevent race conditions when cancelling a continuous paging query

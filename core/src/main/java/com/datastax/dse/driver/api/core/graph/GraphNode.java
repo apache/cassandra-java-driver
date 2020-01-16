@@ -108,43 +108,47 @@ public interface GraphNode {
   boolean isValue();
 
   /**
-   * This node as an integer, or {@code 0} if it can't be converted.
+   * Returns this node as an integer.
    *
-   * <p>This method never throws; even incompatible objects (including {@code null} and structured
-   * types like objects and arrays) are converted to the default value.
+   * <p>If the underlying object is not convertible to integer, implementors may choose to either
+   * throw {@link ClassCastException} or return [null | empty | some default value], whichever is
+   * deemed more appropriate.
    */
   int asInt();
 
   /**
-   * This node as a boolean, or {@code false} if it can't be converted.
+   * Returns this node as a boolean.
    *
-   * <p>This method never throws; even incompatible objects (including {@code null} and structured
-   * types like objects and arrays) are converted to the default value.
+   * <p>If the underlying object is not convertible to boolean, implementors may choose to either
+   * throw {@link ClassCastException} or return [null | empty | some default value], whichever is
+   * deemed more appropriate.
    */
   boolean asBoolean();
 
   /**
-   * Returns this node as a long integer, or {@code 0L} if it can't be converted.
+   * Returns this node as a long integer.
    *
-   * <p>This method never throws; even incompatible objects (including {@code null} and structured
-   * types like objects and arrays) are converted to the default value.
+   * <p>If the underlying object is not convertible to long, implementors may choose to either throw
+   * {@link ClassCastException} or return [null | empty | some default value], whichever is deemed
+   * more appropriate.
    */
   long asLong();
 
   /**
-   * Returns this node as a long integer, or {@code 0.0D} if it can't be converted.
+   * Returns this node as a long integer.
    *
-   * <p>This method never throws; even incompatible objects (including {@code null} and structured
-   * types like objects and arrays) are converted to the default value.
+   * <p>If the underlying object is not convertible to double, implementors may choose to either
+   * throw {@link ClassCastException} or return [null | empty | some default value], whichever is
+   * deemed more appropriate.
    */
   double asDouble();
 
   /**
-   * A valid string representation of this node, if the node is a simple node (i.e. it is not an
-   * object nor an array), otherwise an empty string.
+   * A valid string representation of this node.
    *
-   * <p>This method never throws; even incompatible objects (including {@code null} and structured
-   * types like objects and arrays) are converted to the default value.
+   * <p>If the underlying object is not convertible to a string, implementors may choose to either
+   * throw {@link ClassCastException} or return an empty string, whichever is deemed more
+   * appropriate.
    */
   String asString();
 
