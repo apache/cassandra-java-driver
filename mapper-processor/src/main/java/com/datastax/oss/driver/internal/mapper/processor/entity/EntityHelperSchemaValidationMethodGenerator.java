@@ -71,6 +71,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
         CqlIdentifier.class);
 
     methodBuilder.addStatement("String entityClassName = $S", entityDefinition.getClassName());
+    generateKeyspaceNull(methodBuilder);
 
     generateKeyspaceNameWrong(methodBuilder);
 
@@ -78,8 +79,6 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
         "$1T<$2T> keyspace = context.getSession().getMetadata().getKeyspace(keyspaceId)",
         Optional.class,
         KeyspaceMetadata.class);
-
-    generateKeyspaceNull(methodBuilder);
 
     // Generates expected names to be present in cql (table or udt)
     List<CodeBlock> expectedCqlNames =
@@ -146,10 +145,11 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
   // Handle case where keyspaceId = null.
   // In such case we cannot infer and validate schema for table or udt
   private void generateKeyspaceNull(MethodSpec.Builder methodBuilder) {
-    methodBuilder.beginControlFlow("if (!keyspace.isPresent())");
+    methodBuilder.beginControlFlow("if (keyspaceId == null)");
     loggingGenerator.warn(
         methodBuilder,
-        "[{}] Unable to validate table: {} for the entity class: {} because keyspace: {} is not present.",
+        "[{}] Unable to validate table: {} for the entity class: {} because keyspace: {} is null."
+            + "DAO will run unqualified requests on an unqualified session: probably a mapper configuration error, the requests will fail at runtime.",
         CodeBlock.of("context.getSession().getName()"),
         CodeBlock.of("tableId"),
         CodeBlock.of("entityClassName"),
