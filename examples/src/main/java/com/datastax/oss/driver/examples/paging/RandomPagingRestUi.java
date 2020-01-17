@@ -16,18 +16,17 @@
 package com.datastax.oss.driver.examples.paging;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
-import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.paging.OffsetPager;
+import com.datastax.oss.driver.api.core.paging.OffsetPager.Page;
 import com.datastax.oss.driver.internal.core.type.codec.DateCodec;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -206,12 +205,12 @@ public class RandomPagingRestUi {
     @Context private UriInfo uri;
 
     private PreparedStatement videosByUser;
-    private Pager pager;
+    private OffsetPager pager;
 
     @PostConstruct
     @SuppressWarnings("unused")
     public void init() {
-      this.pager = new Pager(session, ITEMS_PER_PAGE);
+      this.pager = new OffsetPager(ITEMS_PER_PAGE);
       this.videosByUser =
           session.prepare(
               "SELECT videoid, title, added FROM examples.random_paging_rest_ui WHERE userid = ?");
@@ -221,41 +220,37 @@ public class RandomPagingRestUi {
      * Returns a paginated list of all the videos created by the given user.
      *
      * @param userid the user ID.
-     * @param page the page to request, or {@code null} to get the first page.
+     * @param requestedPageNumber the page to request, or {@code null} to get the first page.
      */
     @GET
     @Path("/{userid}/videos")
     public UserVideosResponse getUserVideos(
-        @PathParam("userid") int userid, @QueryParam("page") Integer page) {
+        @PathParam("userid") int userid, @QueryParam("page") Integer requestedPageNumber) {
 
-      Statement statement = videosByUser.bind(userid).setPageSize(FETCH_SIZE);
+      BoundStatement statement = videosByUser.bind(userid).setPageSize(FETCH_SIZE);
 
-      if (page == null) {
-        page = 1;
+      if (requestedPageNumber == null) {
+        requestedPageNumber = 1;
       }
-      ResultSet rs = pager.skipTo(statement, page);
+      Page<Row> page = pager.getPage(session.execute(statement), requestedPageNumber);
 
-      List<UserVideo> videos;
-      boolean empty = !rs.iterator().hasNext();
-      if (empty) {
-        videos = Collections.emptyList();
-      } else {
-        int remaining = ITEMS_PER_PAGE;
-        videos = new ArrayList<>(remaining);
-        for (Row row : rs) {
-          UserVideo video =
-              new UserVideo(row.getInt("videoid"), row.getString("title"), row.getInstant("added"));
-          videos.add(video);
-
-          if (--remaining == 0) {
-            break;
-          }
-        }
+      List<UserVideo> videos = new ArrayList<>(page.getElements().size());
+      for (Row row : page.getElements()) {
+        UserVideo video =
+            new UserVideo(row.getInt("videoid"), row.getString("title"), row.getInstant("added"));
+        videos.add(video);
       }
 
+      // The actual number could be different if the requested one was past the end
+      int actualPageNumber = page.getPageNumber();
       URI previous =
-          (page == 1) ? null : uri.getAbsolutePathBuilder().queryParam("page", page - 1).build();
-      URI next = empty ? null : uri.getAbsolutePathBuilder().queryParam("page", page + 1).build();
+          (actualPageNumber == 1)
+              ? null
+              : uri.getAbsolutePathBuilder().queryParam("page", actualPageNumber - 1).build();
+      URI next =
+          page.isLast()
+              ? null
+              : uri.getAbsolutePathBuilder().queryParam("page", actualPageNumber + 1).build();
       return new UserVideosResponse(videos, previous, next);
     }
   }
@@ -313,61 +308,6 @@ public class RandomPagingRestUi {
 
     public Instant getAdded() {
       return added;
-    }
-  }
-
-  /**
-   * Helper class to emulate random paging.
-   *
-   * <p>Note that it MUST be stateless, because it is cached as a field in our HTTP handler.
-   */
-  static class Pager {
-    private final CqlSession session;
-    private final int pageSize;
-
-    Pager(CqlSession session, int pageSize) {
-      this.session = session;
-      this.pageSize = pageSize;
-    }
-
-    ResultSet skipTo(Statement statement, int displayPage) {
-      // Absolute index of the first row we want to display on the web page. Our goal is that
-      // rs.next() returns that row.
-      int targetRow = (displayPage - 1) * pageSize;
-
-      ResultSet rs = session.execute(statement);
-      // Absolute index of the next row returned by rs (if it is not exhausted)
-      int currentRow = 0;
-      int fetchedSize = rs.getAvailableWithoutFetching();
-      ByteBuffer nextState = rs.getExecutionInfo().getPagingState();
-
-      // Skip protocol pages until we reach the one that contains our target row.
-      // For example, if the first query returned 60 rows and our target is row number 90, we know
-      // we can skip those 60 rows directly without even iterating through them.
-      // This part is optional, we could simply iterate through the rows with the for loop below,
-      // but that's slightly less efficient because iterating each row involves a bit of internal
-      // decoding.
-      while (fetchedSize > 0 && nextState != null && currentRow + fetchedSize < targetRow) {
-        statement = statement.setPagingState(nextState);
-        rs = session.execute(statement);
-        currentRow += fetchedSize;
-        fetchedSize = rs.getAvailableWithoutFetching();
-        nextState = rs.getExecutionInfo().getPagingState();
-      }
-
-      if (currentRow < targetRow) {
-        for (@SuppressWarnings("unused") Row row : rs) {
-          if (++currentRow == targetRow) {
-            break;
-          }
-        }
-      }
-      // If targetRow is past the end, rs will be exhausted.
-      // This means you can request a page past the end in the web UI (e.g. request page 12 while
-      // there are only 10 pages), and it will show up as empty.
-      // One improvement would be to detect that and take a different action, for example redirect
-      // to page 10 or show an error message, this is left as an exercise for the reader.
-      return rs;
     }
   }
 }
