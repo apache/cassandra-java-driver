@@ -180,6 +180,7 @@ The DAO's keyspace and table can also be injected into custom query strings; see
 methods](../daos/query/).
 
 [CqlIdentifier]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/CqlIdentifier.html
+[@Dao]:          https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/Dao.html
 [@DaoFactory]:   https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/mapper/annotations/DaoFactory.html
 [@DaoKeyspace]:  https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/mapper/annotations/DaoKeyspace.html
 [@DaoTable]:     https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/mapper/annotations/DaoTable.html
