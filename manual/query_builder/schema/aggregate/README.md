@@ -76,4 +76,4 @@ dropAggregate("average").ifExists();
 // DROP AGGREGATE IF EXISTS average
 ```
 
-[SchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
+[SchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html

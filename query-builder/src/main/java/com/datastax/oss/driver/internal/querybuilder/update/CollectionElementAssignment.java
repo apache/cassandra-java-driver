@@ -27,9 +27,9 @@ import net.jcip.annotations.Immutable;
 public abstract class CollectionElementAssignment implements Assignment {
 
   public enum Operator {
-    APPEND("%s+=%s"),
+    APPEND("%1$s=%1$s+%2$s"),
     PREPEND("%1$s=%2$s+%1$s"),
-    REMOVE("%s-=%s"),
+    REMOVE("%1$s=%1$s-%2$s"),
     ;
 
     public final String pattern;

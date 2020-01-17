@@ -71,7 +71,7 @@ class HeartbeatHandler extends IdleStateHandler {
 
     @Override
     String describe() {
-      return "heartbeat";
+      return "Heartbeat request";
     }
 
     @Override

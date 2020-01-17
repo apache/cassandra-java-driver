@@ -8,12 +8,12 @@
           "regex": true,
           "exclude": [
             "com\\.datastax\\.oss\\.protocol\\.internal(\\..+)?",
-            "com\\.datastax\\.oss\\.driver\\.internal(\\..+)?",
+            "com\\.datastax\\.(oss|dse)\\.driver\\.internal(\\..+)?",
             "com\\.datastax\\.oss\\.driver\\.shaded(\\..+)?",
             "com\\.datastax\\.oss\\.simulacron(\\..+)?",
             // Don't re-check sibling modules that this module depends on
-            "com\\.datastax\\.oss\\.driver\\.api\\.core(\\..+)?",
-            "com\\.datastax\\.oss\\.driver\\.api\\.querybuilder(\\..+)?"
+            "com\\.datastax\\.(oss|dse)\\.driver\\.api\\.core(\\..+)?",
+            "com\\.datastax\\.(oss|dse)\\.driver\\.api\\.querybuilder(\\..+)?"
           ]
         }
       }

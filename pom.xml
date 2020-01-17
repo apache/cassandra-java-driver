@@ -20,7 +20,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-parent</artifactId>
-  <version>4.4.0-SNAPSHOT</version>
+  <version>4.5.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>DataStax Java driver for Apache Cassandra(R)</name>
   <description>A driver for Apache Cassandra(R) 2.1+ that works exclusively with the Cassandra Query Language version 3 (CQL3) and Cassandra's native protocol versions 3 and above.</description>
@@ -45,9 +45,14 @@
     <guava.version>25.1-jre</guava.version>
     <hdrhistogram.version>2.1.11</hdrhistogram.version>
     <metrics.version>4.0.5</metrics.version>
-    <native-protocol.version>1.4.7</native-protocol.version>
+    <native-protocol.version>1.4.8</native-protocol.version>
     <netty.version>4.1.39.Final</netty.version>
     <slf4j.version>1.7.26</slf4j.version>
+    <esri.version>1.2.1</esri.version>
+    <tinkerpop.version>3.3.3</tinkerpop.version>
+    <reactive-streams.version>1.0.2</reactive-streams.version>
+    <jackson.version>2.10.0</jackson.version>
+    <jackson-databind.version>2.10.0</jackson-databind.version>
     <!-- optional dependencies -->
     <snappy.version>1.1.7.3</snappy.version>
     <lz4.version>1.6.0</lz4.version>
@@ -63,8 +68,15 @@
     <hk2.version>2.5.0</hk2.version>
     <jax-rs.version>2.0.1</jax-rs.version>
     <jsr353-ri.version>1.1.4</jsr353-ri.version>
-    <jackson.version>2.10.0</jackson.version>
-    <jackson-databind.version>2.10.0</jackson-databind.version>
+    <rxjava.version>2.2.2</rxjava.version>
+    <json.version>20180130</json.version>
+    <!-- esri dependency (used only in OSGi integration tests) -->
+    <legacy-jackson.version>1.9.12</legacy-jackson.version>
+    <awaitility.version>3.1.6</awaitility.version>
+    <apacheds.version>2.0.0-M19</apacheds.version>
+    <surefire.version>2.22.2</surefire.version>
+    <skipTests>false</skipTests>
+    <skipUnitTests>${skipTests}</skipUnitTests>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -171,6 +183,31 @@
         <version>${hdrhistogram.version}</version>
       </dependency>
       <dependency>
+        <groupId>com.esri.geometry</groupId>
+        <artifactId>esri-geometry-api</artifactId>
+        <version>${esri.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.tinkerpop</groupId>
+        <artifactId>gremlin-core</artifactId>
+        <version>${tinkerpop.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.tinkerpop</groupId>
+        <artifactId>tinkergraph-gremlin</artifactId>
+        <version>${tinkerpop.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.reactivestreams</groupId>
+        <artifactId>reactive-streams</artifactId>
+        <version>${reactive-streams.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.reactivestreams</groupId>
+        <artifactId>reactive-streams-tck</artifactId>
+        <version>${reactive-streams.version}</version>
+      </dependency>
+      <dependency>
         <groupId>com.github.stephenc.jcip</groupId>
         <artifactId>jcip-annotations</artifactId>
         <version>1.0-1</version>
@@ -206,6 +243,11 @@
         <version>2.28.2</version>
       </dependency>
       <dependency>
+        <groupId>io.reactivex.rxjava2</groupId>
+        <artifactId>rxjava</artifactId>
+        <version>${rxjava.version}</version>
+      </dependency>
+      <dependency>
         <groupId>com.datastax.oss.simulacron</groupId>
         <artifactId>simulacron-native-server</artifactId>
         <version>${simulacron.version}</version>
@@ -229,6 +271,11 @@
         <groupId>org.ops4j.pax.exam</groupId>
         <artifactId>pax-exam-link-mvn</artifactId>
         <version>${pax-exam.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.ops4j.pax.url</groupId>
+        <artifactId>pax-url-wrap</artifactId>
+        <version>2.5.4</version>
       </dependency>
       <dependency>
         <groupId>org.apache.felix</groupId>
@@ -301,6 +348,57 @@
         <version>0.18</version>
       </dependency>
       <dependency>
+        <groupId>org.awaitility</groupId>
+        <artifactId>awaitility</artifactId>
+        <version>${awaitility.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.testng</groupId>
+        <artifactId>testng</artifactId>
+        <version>6.14.3</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.directory.server</groupId>
+        <artifactId>apacheds-core</artifactId>
+        <version>${apacheds.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.directory.server</groupId>
+        <artifactId>apacheds-protocol-kerberos</artifactId>
+        <version>${apacheds.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.directory.server</groupId>
+        <artifactId>apacheds-interceptor-kerberos</artifactId>
+        <version>${apacheds.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.directory.server</groupId>
+        <artifactId>apacheds-protocol-ldap</artifactId>
+        <version>${apacheds.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.directory.server</groupId>
+        <artifactId>apacheds-ldif-partition</artifactId>
+        <version>${apacheds.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.directory.server</groupId>
+        <artifactId>apacheds-jdbm-partition</artifactId>
+        <version>${apacheds.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.directory.api</groupId>
+        <artifactId>api-ldap-codec-standalone</artifactId>
+        <version>1.0.0-M26</version>
+      </dependency>
+      <dependency>
         <groupId>com.github.tomakehurst</groupId>
         <artifactId>wiremock</artifactId>
         <version>2.25.0</version>
@@ -331,11 +429,11 @@
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.19.1</version>
+          <version>${surefire.version}</version>
         </plugin>
         <plugin>
           <artifactId>maven-failsafe-plugin</artifactId>
-          <version>2.19.1</version>
+          <version>${surefire.version}</version>
         </plugin>
         <plugin>
           <artifactId>maven-shade-plugin</artifactId>
@@ -364,7 +462,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.0.1</version>
+          <version>3.1.1</version>
         </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
@@ -412,6 +510,14 @@
           <configuration>
             <outputNonIdentifyingDifferenceInfo>false</outputNonIdentifyingDifferenceInfo>
             <versionFormat>\d+\.\d+\.\d+</versionFormat>
+            <analysisConfiguration>
+              <revapi.ignore>
+                <item>
+                  <!-- We don't consider this a problem -->
+                  <code>java.class.externalClassExposedInAPI</code>
+                </item>
+              </revapi.ignore>
+            </analysisConfiguration>
           </configuration>
           <dependencies>
             <dependency>
@@ -485,6 +591,7 @@
             <exclude>.idea/**</exclude>
             <exclude>**/target/**</exclude>
             <exclude>**/dependency-reduced-pom.xml</exclude>
+            <exclude>docs/**</exclude>
           </excludes>
         </configuration>
       </plugin>
@@ -561,6 +668,7 @@ limitations under the License.]]></inlineHeader>
               <value>false</value>
             </property>
           </properties>
+          <skip>${skipUnitTests}</skip>
         </configuration>
       </plugin>
       <plugin>
@@ -599,7 +707,7 @@ limitations under the License.]]></inlineHeader>
           <verbose>false</verbose>
           <quiet>true</quiet>
           <doclint>all,-missing</doclint>
-          <excludePackageNames>com.datastax.oss.driver.internal</excludePackageNames>
+          <excludePackageNames>com.datastax.oss.driver.internal.*,com.datastax.dse.driver.internal.*</excludePackageNames>
           <tags>
             <!--
               For custom `leaks-private-api` tag (apparently dash separators are not handled
@@ -617,6 +725,22 @@ limitations under the License.]]></inlineHeader>
             <goals>
               <goal>jar</goal>
             </goals>
+            <configuration>
+              <header><![CDATA[<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-TWSQ28');</script>
+<!-- End Google Tag Manager -->
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TWSQ28"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->]]></header>
+              <additionalOptions>
+                <additionalOption>--allow-script-in-comments</additionalOption>
+              </additionalOptions>
+            </configuration>
           </execution>
           <execution>
             <!-- Check that our "official" API (api.* packages) does not leak unwanted types -->
@@ -636,6 +760,7 @@ limitations under the License.]]></inlineHeader>
                 <!-- API types do not leak internal types -->
                 <additionalparam>-preventleak</additionalparam>
                 <additionalparam>com.datastax.oss.driver.internal</additionalparam>
+                <additionalparam>com.datastax.dse.driver.internal</additionalparam>
                 <!-- Shaded dependencies (Guava, Netty, etc.) -->
                 <additionalparam>-preventleak</additionalparam>
                 <additionalparam>com.datastax.oss.driver.shaded</additionalparam>

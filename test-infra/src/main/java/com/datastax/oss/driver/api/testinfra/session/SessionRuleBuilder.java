@@ -31,6 +31,9 @@ public abstract class SessionRuleBuilder<
   protected NodeStateListener nodeStateListener;
   protected SchemaChangeListener schemaChangeListener;
   protected DriverConfigLoader loader;
+  protected boolean createGraph;
+  protected boolean isCoreGraph;
+  protected String graphProtocol;
 
   @SuppressWarnings("unchecked")
   protected final SelfT self = (SelfT) this;
@@ -71,6 +74,31 @@ public abstract class SessionRuleBuilder<
 
   public SelfT withSchemaChangeListener(SchemaChangeListener listener) {
     this.schemaChangeListener = listener;
+    return self;
+  }
+
+  /**
+   * Configures the rule to create a new graph instance.
+   *
+   * <p>This assumes that the associated {@link CassandraResourceRule} is a DSE instance with the
+   * graph workload enabled.
+   *
+   * <p>The name of the graph will be injected in the session's configuration, so that all graph
+   * statements are automatically routed to it. It's also exposed via {@link
+   * SessionRule#getGraphName()}.
+   */
+  public SelfT withCreateGraph() {
+    this.createGraph = true;
+    return self;
+  }
+
+  public SelfT withCoreEngine() {
+    this.isCoreGraph = true;
+    return self;
+  }
+
+  public SelfT withGraphProtocol(String graphProtocol) {
+    this.graphProtocol = graphProtocol;
     return self;
   }
 

@@ -32,6 +32,7 @@ import com.datastax.oss.driver.api.core.ssl.ProgrammaticSslEngineFactory;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.internal.core.ContactPoints;
 import com.datastax.oss.driver.internal.core.auth.ProgrammaticPlainTextAuthProvider;
 import com.datastax.oss.driver.internal.core.config.cloud.CloudConfig;
@@ -57,6 +58,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
@@ -267,6 +269,32 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
+   * Configures the session to use DSE plaintext authentication with the given username and
+   * password, and perform proxy authentication with the given authorization id.
+   *
+   * <p>This feature is only available in Datastax Enterprise. If connecting to Apache Cassandra,
+   * the authorization id will be ignored; it is recommended to use {@link
+   * #withAuthCredentials(String, String)} instead.
+   *
+   * <p>This methods calls {@link #withAuthProvider(AuthProvider)} to register a special provider
+   * implementation. Therefore calling it overrides the configuration (that is, the {@code
+   * advanced.auth-provider.class} option will be ignored).
+   *
+   * <p>Note that this approach holds the credentials in clear text in memory, which makes them
+   * vulnerable to an attacker who is able to perform memory dumps. If this is not acceptable for
+   * you, consider writing your own {@link AuthProvider} implementation (the internal class {@code
+   * PlainTextAuthProviderBase} is a good starting point), and providing it either with {@link
+   * #withAuthProvider(AuthProvider)} or via the configuration ({@code
+   * advanced.auth-provider.class}).
+   */
+  @NonNull
+  public SelfT withAuthCredentials(
+      @NonNull String username, @NonNull String password, @NonNull String authorizationId) {
+    return withAuthProvider(
+        new ProgrammaticPlainTextAuthProvider(username, password, authorizationId));
+  }
+
+  /**
    * Registers an SSL engine factory for the session.
    *
    * <p>If the factory is provided programmatically with this method, it overrides the configuration
@@ -376,11 +404,37 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   /**
    * The {@link ClassLoader} to use to reflectively load class names defined in configuration.
    *
-   * <p>This is typically only needed when using OSGi or other in environments where there are
-   * complex class loading requirements.
+   * <p>If null, the driver attempts to use the same {@link ClassLoader} that loaded the core driver
+   * classes, which is generally the right thing to do.
    *
-   * <p>If null, the driver attempts to use {@link Thread#getContextClassLoader()} of the current
-   * thread or the same {@link ClassLoader} that loaded the core driver classes.
+   * <p>Defining a different class loader is typically only needed in web or OSGi environments where
+   * there are complex class loading requirements.
+   *
+   * <p>For example, if the driver jar is loaded by the web server's system class loader (that is,
+   * the driver jar was placed in the "/lib" folder of the web server), but the application tries to
+   * load a custom load balancing policy declared in the web app's "WEB-INF/lib" folder, the system
+   * class loader will not be able to load such class. Instead, you must use the web app's class
+   * loader, that you can obtain by calling {@link Thread#getContextClassLoader()}:
+   *
+   * <pre>{@code
+   * CqlSession.builder()
+   *   .addContactEndPoint(...)
+   *   .withClassLoader(Thread.currentThread().getContextClassLoader())
+   *   .build();
+   * }</pre>
+   *
+   * Indeed, in most web environments, {@code Thread.currentThread().getContextClassLoader()} will
+   * return the web app's class loader, which is a child of the web server's system class loader.
+   * This class loader is thus capable of loading both the implemented interface and the
+   * implementing class, in spite of them being declared in different places.
+   *
+   * <p>For OSGi deployments, it is usually not necessary to use this method. Even if the
+   * implemented interface and the implementing class are located in different bundles, the right
+   * class loader to use should be the default one (the driver bundle's class loader). In
+   * particular, it is not advised to rely on {@code Thread.currentThread().getContextClassLoader()}
+   * in OSGi environments, so you should never pass that class loader to this method. See <a
+   * href="https://docs.datastax.com/en/developer/java-driver/latest/manual/osgi/#using-a-custom-class-loader">Using
+   * a custom ClassLoader</a> in our OSGi online docs for more information.
    */
   @NonNull
   public SelfT withClassLoader(@Nullable ClassLoader classLoader) {
@@ -476,6 +530,61 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   @NonNull
   public SelfT withCloudProxyAddress(@Nullable InetSocketAddress cloudProxyAddress) {
     this.programmaticArgumentsBuilder.withCloudProxyAddress(cloudProxyAddress);
+    return self;
+  }
+
+  /**
+   * A unique identifier for the created session.
+   *
+   * <p>It will be sent in the {@code STARTUP} protocol message, under the key {@code CLIENT_ID},
+   * for each new connection established by the driver. Currently, this information is used by
+   * Insights monitoring (if the target cluster does not support Insights, the entry will be ignored
+   * by the server).
+   *
+   * <p>If you don't call this method, the driver will generate an identifier with {@link
+   * Uuids#random()}.
+   */
+  @NonNull
+  public SelfT withClientId(@Nullable UUID clientId) {
+    this.programmaticArgumentsBuilder.withStartupClientId(clientId);
+    return self;
+  }
+
+  /**
+   * The name of the application using the created session.
+   *
+   * <p>It will be sent in the {@code STARTUP} protocol message, under the key {@code
+   * APPLICATION_NAME}, for each new connection established by the driver. Currently, this
+   * information is used by Insights monitoring (if the target cluster does not support Insights,
+   * the entry will be ignored by the server).
+   *
+   * <p>This can also be defined in the driver configuration with the option {@code
+   * basic.application.name}; if you specify both, this method takes precedence and the
+   * configuration option will be ignored. If neither is specified, the entry is not included in the
+   * message.
+   */
+  @NonNull
+  public SelfT withApplicationName(@Nullable String applicationName) {
+    this.programmaticArgumentsBuilder.withStartupApplicationName(applicationName);
+    return self;
+  }
+
+  /**
+   * The version of the application using the created session.
+   *
+   * <p>It will be sent in the {@code STARTUP} protocol message, under the key {@code
+   * APPLICATION_VERSION}, for each new connection established by the driver. Currently, this
+   * information is used by Insights monitoring (if the target cluster does not support Insights,
+   * the entry will be ignored by the server).
+   *
+   * <p>This can also be defined in the driver configuration with the option {@code
+   * basic.application.version}; if you specify both, this method takes precedence and the
+   * configuration option will be ignored. If neither is specified, the entry is not included in the
+   * message.
+   */
+  @NonNull
+  public SelfT withApplicationVersion(@Nullable String applicationVersion) {
+    this.programmaticArgumentsBuilder.withStartupApplicationVersion(applicationVersion);
     return self;
   }
 

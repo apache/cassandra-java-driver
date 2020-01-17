@@ -38,15 +38,13 @@ import java.util.concurrent.CompletionStage;
 /**
  * A nexus to send requests to a Cassandra cluster.
  *
- * <p>This is a high-level abstraction capable of handling arbitrary request and result types. For
- * CQL statements, {@link CqlSession} provides convenience methods with more familiar signatures (by
- * default, all the instances returned by the driver also implement {@link CqlSession}).
+ * <p>This is a high-level abstraction capable of handling arbitrary request and result types. The
+ * driver's built-in {@link CqlSession} is a more convenient subtype for most client applications.
  *
  * <p>The driver's request execution logic is pluggable (see {@code RequestProcessor} in the
- * internal API). This is intended for future extensions, for example a reactive API for CQL
- * statements, or graph requests in the Datastax Enterprise driver. Hence the generic {@link
- * #execute(Request, GenericType)} method in this interface, that makes no assumptions about the
- * request or result type.
+ * internal API) to allow custom extensions. Hence the generic {@link #execute(Request,
+ * GenericType)} method in this interface, that makes no assumptions about the request or result
+ * type.
  *
  * @see CqlSession#builder()
  */

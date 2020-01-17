@@ -1,5 +1,99 @@
 ## Upgrade guide
 
+### 4.4.0
+
+Datastax Enterprise support is now available directly in the main driver. There is no longer a
+separate DSE driver.
+
+#### For Apache Cassandra® users
+
+The great news is that [reactive execution](../manual/core/reactive/) is now available for everyone.
+See the `CqlSession.executeReactive` methods.
+
+Apart from that, the only visible change is that DSE-specific features are now exposed in the API: 
+
+* new execution methods: `CqlSession.executeGraph`, `CqlSession.executeContinuously*`. They all
+  have default implementations so this doesn't break binary compatibility. You can just ignore them.
+* new driver dependencies: Tinkerpop, ESRI, Reactive Streams. If you want to keep your classpath
+  lean, you can exclude some dependencies when you don't use the corresponding DSE features; see the 
+  [Integration>Driver dependencies](../manual/core/integration/#driver-dependencies) section.
+
+#### For Datastax Enterprise users
+
+Adjust your Maven coordinates to use the unified artifact:
+
+```xml
+<!-- Replace: -->
+<dependency>
+  <groupId>com.datastax.dse</groupId>
+  <artifactId>dse-java-driver-core</artifactId>
+  <version>2.3.0</version>
+</dependency>
+
+<!-- By: -->
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-core</artifactId>
+  <version>4.4.0</version>
+</dependency>
+
+<!-- Do the same for the other modules: query builder, mapper... -->
+```
+
+The new driver is a drop-in replacement for the DSE driver. Note however that we've deprecated a few
+DSE-specific types in favor of their OSS equivalents. They still work, so you don't need to make the
+changes right away; but you will get deprecation warnings:
+
+* `DseSession`: use `CqlSession` instead, it can now do everything that a DSE session does. This
+  also applies to the builder:
+  
+    ```java
+    // Replace:
+    DseSession session = DseSession.builder().build()  
+  
+    // By:
+    CqlSession session = CqlSession.builder().build()
+    ```
+* `DseDriverConfigLoader`: the driver no longer needs DSE-specific config loaders. All the factory
+  methods in this class now redirect to `DriverConfigLoader`. On that note, `dse-reference.conf`
+  does not exist anymore, all the driver defaults are now in
+  [reference.conf](../manual/core/configuration/reference/).
+* plain-text authentication: there is now a single implementation that works with both Cassandra and
+  DSE. If you used `DseProgrammaticPlainTextAuthProvider`, replace it by
+  `PlainTextProgrammaticAuthProvider`. Similarly, if you wrote a custom implementation by
+  subclassing `DsePlainTextAuthProviderBase`, extend `PlainTextAuthProviderBase` instead.
+* `DseLoadBalancingPolicy`: DSE-specific features (the slow replica avoidance mechanism) have been
+  merged into `DefaultLoadBalancingPolicy`. `DseLoadBalancingPolicy` still exists for backward
+  compatibility, but it is now identical to the default policy.
+
+#### Class Loader
+
+The default class loader used by the driver when instantiating classes by reflection changed. 
+Unless specified by the user, the driver will now use the same class loader that was used to load
+the driver classes themselves, in order to ensure that implemented interfaces and implementing 
+classes are fully compatible.
+
+This should ensure a more streamlined experience for OSGi users, who do not need anymore to define
+a specific class loader to use.
+
+However if you are developing a web application and your setup corresponds to the following 
+scenario, then you will now be required to explicitly define another class loader to use: if in your
+application the driver jar is loaded by the web server's system class loader (for example, 
+because the driver jar was placed in the "/lib" folder of the web server), then the default class
+loader will be the server's system class loader. Then if the application tries to load, say, a 
+custom load balancing policy declared in the web app's "WEB-INF/lib" folder, then the default class 
+loader will not be able to locate that class. Instead, you must use the web app's class loader, that 
+you can obtain in most web environments by calling `Thread.getContextClassLoader()`:
+ 
+    CqlSession.builder()
+        .addContactEndPoint(...)
+        .withClassLoader(Thread.currentThread().getContextClassLoader())
+        .build();
+ 
+See the javadocs of [SessionBuilder.withClassLoader] for more information.
+
+[SessionBuilder.withClassLoader]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
+
 ### 4.1.0
 
 #### Object mapper

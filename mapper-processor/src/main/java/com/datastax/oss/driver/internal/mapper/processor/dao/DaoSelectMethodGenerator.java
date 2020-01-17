@@ -19,6 +19,7 @@ import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoRe
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_ASYNC_PAGING_ITERABLE;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_ENTITY;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_OPTIONAL_ENTITY;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.MAPPED_REACTIVE_RESULT_SET;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.OPTIONAL_ENTITY;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.PAGING_ITERABLE;
 
@@ -66,7 +67,8 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
         FUTURE_OF_ENTITY,
         FUTURE_OF_OPTIONAL_ENTITY,
         PAGING_ITERABLE,
-        FUTURE_OF_ASYNC_PAGING_ITERABLE);
+        FUTURE_OF_ASYNC_PAGING_ITERABLE,
+        MAPPED_REACTIVE_RESULT_SET);
   }
 
   @Override

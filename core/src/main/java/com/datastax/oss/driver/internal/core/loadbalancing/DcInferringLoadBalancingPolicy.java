@@ -59,14 +59,14 @@ import net.jcip.annotations.ThreadSafe;
  *       provided contact points, if and only if they are all located in the same datacenter.
  * </ol>
  *
- * <p><b>Query plan</b>: see {@link BasicLoadBalancingPolicy} for details on the computation of
+ * <p><b>Query plan</b>: see {@link DefaultLoadBalancingPolicy} for details on the computation of
  * query plans.
  *
  * <p><b>This class is not recommended for normal users who should always prefer {@link
  * DefaultLoadBalancingPolicy}</b>.
  */
 @ThreadSafe
-public class DcInferringLoadBalancingPolicy extends BasicLoadBalancingPolicy {
+public class DcInferringLoadBalancingPolicy extends DefaultLoadBalancingPolicy {
 
   public DcInferringLoadBalancingPolicy(
       @NonNull DriverContext context, @NonNull String profileName) {

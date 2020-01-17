@@ -29,7 +29,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
-import com.datastax.oss.driver.internal.core.CassandraProtocolVersionRegistry;
+import com.datastax.oss.driver.internal.core.DefaultProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.TestResponses;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -73,7 +73,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
   @Mock private DriverExecutionProfile defaultProfile;
 
   private ProtocolVersionRegistry protocolVersionRegistry =
-      new CassandraProtocolVersionRegistry("test");
+      new DefaultProtocolVersionRegistry("test");
   private HeartbeatHandler heartbeatHandler;
 
   @Before
@@ -394,7 +394,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                     .isInstanceOf(AuthenticationException.class)
                     .hasMessage(
                         String.format(
-                            "Authentication error on node %s: server replied 'mock error'",
+                            "Authentication error on node %s: server replied with 'mock error' to AuthResponse request",
                             END_POINT)));
   }
 

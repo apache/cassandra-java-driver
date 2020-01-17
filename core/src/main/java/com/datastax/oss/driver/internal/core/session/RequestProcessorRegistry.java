@@ -17,10 +17,6 @@ package com.datastax.oss.driver.internal.core.session;
 
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor;
-import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
-import com.datastax.oss.driver.internal.core.cql.CqlRequestAsyncProcessor;
-import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -30,22 +26,6 @@ import org.slf4j.LoggerFactory;
 public class RequestProcessorRegistry {
 
   private static final Logger LOG = LoggerFactory.getLogger(RequestProcessorRegistry.class);
-
-  public static RequestProcessorRegistry defaultCqlProcessors(String logPrefix) {
-    CqlRequestAsyncProcessor requestAsyncProcessor = new CqlRequestAsyncProcessor();
-    CqlRequestSyncProcessor requestSyncProcessor =
-        new CqlRequestSyncProcessor(requestAsyncProcessor);
-    CqlPrepareAsyncProcessor prepareAsyncProcessor = new CqlPrepareAsyncProcessor();
-    CqlPrepareSyncProcessor prepareSyncProcessor =
-        new CqlPrepareSyncProcessor(prepareAsyncProcessor);
-
-    return new RequestProcessorRegistry(
-        logPrefix,
-        requestAsyncProcessor,
-        requestSyncProcessor,
-        prepareAsyncProcessor,
-        prepareSyncProcessor);
-  }
 
   private final String logPrefix;
   // Effectively immutable: the contents are never modified after construction

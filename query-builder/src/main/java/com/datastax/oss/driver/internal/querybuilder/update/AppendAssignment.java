@@ -15,21 +15,15 @@
  */
 package com.datastax.oss.driver.internal.querybuilder.update;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
-import com.datastax.oss.driver.internal.querybuilder.lhs.LeftOperand;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class AppendAssignment extends DefaultAssignment {
+public class AppendAssignment extends CollectionAssignment {
 
-  public AppendAssignment(@NonNull LeftOperand leftOperand, @NonNull Term rightOperand) {
-    super(leftOperand, "+=", rightOperand);
-  }
-
-  @Override
-  public boolean isIdempotent() {
-    // Not idempotent for lists, be pessimistic
-    return false;
+  public AppendAssignment(@NonNull CqlIdentifier columnId, @NonNull Term value) {
+    super(columnId, Operator.APPEND, value);
   }
 }

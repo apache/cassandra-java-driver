@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import com.datastax.dse.driver.api.core.cql.reactive.ReactiveResultSet;
+import com.datastax.dse.driver.api.mapper.reactive.MappedReactiveResultSet;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
@@ -57,6 +59,7 @@ public class DefaultDaoReturnTypeParser implements DaoReturnTypeParser {
           .put(Row.class, DaoReturnType.ROW)
           .put(ResultSet.class, DaoReturnType.RESULT_SET)
           .put(BoundStatement.class, DaoReturnType.BOUND_STATEMENT)
+          .put(ReactiveResultSet.class, DaoReturnType.REACTIVE_RESULT_SET)
           .build();
 
   /**
@@ -69,6 +72,7 @@ public class DefaultDaoReturnTypeParser implements DaoReturnTypeParser {
           .put(CompletionStage.class, DefaultDaoReturnTypeKind.FUTURE_OF_ENTITY)
           .put(CompletableFuture.class, DefaultDaoReturnTypeKind.FUTURE_OF_ENTITY)
           .put(PagingIterable.class, DefaultDaoReturnTypeKind.PAGING_ITERABLE)
+          .put(MappedReactiveResultSet.class, DefaultDaoReturnTypeKind.MAPPED_REACTIVE_RESULT_SET)
           .build();
 
   /** The return types that correspond to a future of a non-generic Java class. */

@@ -4,6 +4,11 @@
       "request": {
         "page-size": "2000"
       }
+    },
+    "advanced": {
+      "continuous-paging": {
+        "page-size": 2000
+      }
     }
   }
 }

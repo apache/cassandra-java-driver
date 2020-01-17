@@ -86,7 +86,6 @@ The validation process checks and throws `IllegalArgumentException` on the first
 3. If all columns defined in the entity are not present in the cql table.
 4. If the type of columns defined in the entity does not match the type of the column in cql table.
 
-
 ### DAO factory methods
 
 The mapper's main goal is to provide DAO instances. Your interface should provide one or more
@@ -180,9 +179,8 @@ ProductDao dao3 = inventoryMapper.productDao("keyspace3", "table3");
 The DAO's keyspace and table can also be injected into custom query strings; see [Query
 methods](../daos/query/).
 
-[CqlIdentifier]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/CqlIdentifier.html
-[@Dao]:          https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/Dao.html
-[@DaoFactory]:   https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/DaoFactory.html
-[@DaoKeyspace]:  https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/DaoKeyspace.html
-[@DaoTable]:     https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/DaoTable.html
-[@Mapper]:       https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/Mapper.html
+[CqlIdentifier]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/CqlIdentifier.html
+[@DaoFactory]:   https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/mapper/annotations/DaoFactory.html
+[@DaoKeyspace]:  https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/mapper/annotations/DaoKeyspace.html
+[@DaoTable]:     https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/mapper/annotations/DaoTable.html
+[@Mapper]:       https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/mapper/annotations/Mapper.html

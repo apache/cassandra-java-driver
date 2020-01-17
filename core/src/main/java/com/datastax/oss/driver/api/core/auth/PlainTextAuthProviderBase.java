@@ -15,13 +15,17 @@
  */
 package com.datastax.oss.driver.api.core.auth;
 
+import com.datastax.dse.driver.api.core.auth.BaseDseAuthenticator;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Objects;
 import net.jcip.annotations.ThreadSafe;
@@ -62,8 +66,10 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
   @NonNull
   @Override
   public Authenticator newAuthenticator(
-      @NonNull EndPoint endPoint, @NonNull String serverAuthenticator) {
-    return new PlainTextAuthenticator(getCredentials(endPoint, serverAuthenticator));
+      @NonNull EndPoint endPoint, @NonNull String serverAuthenticator)
+      throws AuthenticationException {
+    return new PlainTextAuthenticator(
+        getCredentials(endPoint, serverAuthenticator), endPoint, serverAuthenticator);
   }
 
   @Override
@@ -84,10 +90,25 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
 
     private final char[] username;
     private final char[] password;
+    private final char[] authorizationId;
 
-    public Credentials(@NonNull char[] username, @NonNull char[] password) {
+    /**
+     * Builds an instance for username/password authentication, and proxy authentication with the
+     * given authorizationId.
+     *
+     * <p>This feature is only available with Datastax Enterprise. If the target server is Apache
+     * Cassandra, the authorizationId will be ignored.
+     */
+    public Credentials(
+        @NonNull char[] username, @NonNull char[] password, @NonNull char[] authorizationId) {
       this.username = Objects.requireNonNull(username);
       this.password = Objects.requireNonNull(password);
+      this.authorizationId = Objects.requireNonNull(authorizationId);
+    }
+
+    /** Builds an instance for simple username/password authentication. */
+    public Credentials(@NonNull char[] username, @NonNull char[] password) {
+      this(username, password, new char[0]);
     }
 
     @NonNull
@@ -95,9 +116,24 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
       return username;
     }
 
+    /**
+     * @deprecated this method only exists for backward compatibility. It is a synonym for {@link
+     *     #getUsername()}, which should be used instead.
+     */
+    @Deprecated
+    @NonNull
+    public char[] getAuthenticationId() {
+      return username;
+    }
+
     @NonNull
     public char[] getPassword() {
       return password;
+    }
+
+    @NonNull
+    public char[] getAuthorizationId() {
+      return authorizationId;
     }
 
     /** Clears the credentials from memory when they're no longer needed. */
@@ -107,58 +143,116 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
       // retrieves the credentials from a different source.
       Arrays.fill(getUsername(), (char) 0);
       Arrays.fill(getPassword(), (char) 0);
+      Arrays.fill(getAuthorizationId(), (char) 0);
     }
   }
 
-  protected static class PlainTextAuthenticator implements SyncAuthenticator {
+  // Implementation note: BaseDseAuthenticator is backward compatible with Cassandra authenticators.
+  // This will work with both Cassandra (as long as no authorizationId is set) and DSE.
+  protected static class PlainTextAuthenticator extends BaseDseAuthenticator {
 
-    private final ByteBuffer initialToken;
+    private static final ByteBuffer MECHANISM =
+        ByteBuffer.wrap("PLAIN".getBytes(StandardCharsets.UTF_8)).asReadOnlyBuffer();
 
-    protected PlainTextAuthenticator(@NonNull Credentials credentials) {
+    private static final ByteBuffer SERVER_INITIAL_CHALLENGE =
+        ByteBuffer.wrap("PLAIN-START".getBytes(StandardCharsets.UTF_8)).asReadOnlyBuffer();
+
+    private static final EndPoint DUMMY_END_POINT =
+        new EndPoint() {
+          @NonNull
+          @Override
+          public SocketAddress resolve() {
+            return new InetSocketAddress("127.0.0.1", 9042);
+          }
+
+          @NonNull
+          @Override
+          public String asMetricPrefix() {
+            return ""; // will never be used
+          }
+        };
+
+    private final ByteBuffer encodedCredentials;
+    private final EndPoint endPoint;
+
+    protected PlainTextAuthenticator(
+        @NonNull Credentials credentials,
+        @NonNull EndPoint endPoint,
+        @NonNull String serverAuthenticator) {
+      super(serverAuthenticator);
+
       Objects.requireNonNull(credentials);
-      ByteBuffer usernameBytes = toUtf8Bytes(credentials.getUsername());
-      ByteBuffer passwordBytes = toUtf8Bytes(credentials.getPassword());
-      credentials.clear();
+      Objects.requireNonNull(endPoint);
 
-      this.initialToken =
-          ByteBuffer.allocate(usernameBytes.remaining() + passwordBytes.remaining() + 2);
-      initialToken.put((byte) 0);
-      initialToken.put(usernameBytes);
-      initialToken.put((byte) 0);
-      initialToken.put(passwordBytes);
-      initialToken.flip();
+      ByteBuffer authorizationId = toUtf8Bytes(credentials.getAuthorizationId());
+      ByteBuffer username = toUtf8Bytes(credentials.getUsername());
+      ByteBuffer password = toUtf8Bytes(credentials.getPassword());
 
-      // Clear temporary buffers
-      usernameBytes.rewind();
-      while (usernameBytes.remaining() > 0) {
-        usernameBytes.put((byte) 0);
-      }
-      passwordBytes.rewind();
-      while (passwordBytes.remaining() > 0) {
-        passwordBytes.put((byte) 0);
-      }
+      this.encodedCredentials =
+          ByteBuffer.allocate(
+              authorizationId.remaining() + username.remaining() + password.remaining() + 2);
+      encodedCredentials.put(authorizationId);
+      encodedCredentials.put((byte) 0);
+      encodedCredentials.put(username);
+      encodedCredentials.put((byte) 0);
+      encodedCredentials.put(password);
+      encodedCredentials.flip();
+
+      clear(authorizationId);
+      clear(username);
+      clear(password);
+
+      this.endPoint = endPoint;
     }
 
-    private ByteBuffer toUtf8Bytes(char[] charArray) {
+    /**
+     * @deprecated Preserved for backward compatibility, implementors should use {@link
+     *     #PlainTextAuthenticator(Credentials, EndPoint, String)} instead.
+     */
+    @Deprecated
+    protected PlainTextAuthenticator(@NonNull Credentials credentials) {
+      this(
+          credentials,
+          // It's unlikely that this class was ever extended by third parties, but if it was, assume
+          // that it was not written for DSE:
+          // - dummy end point because we should never need to build an auth exception
+          DUMMY_END_POINT,
+          // - default OSS authenticator name (the only thing that matters is how this string
+          //   compares to "DseAuthenticator")
+          "org.apache.cassandra.auth.PasswordAuthenticator");
+    }
+
+    private static ByteBuffer toUtf8Bytes(char[] charArray) {
       CharBuffer charBuffer = CharBuffer.wrap(charArray);
       return Charsets.UTF_8.encode(charBuffer);
     }
 
-    @Override
-    @Nullable
-    public ByteBuffer initialResponseSync() {
-      return initialToken;
+    private static void clear(ByteBuffer buffer) {
+      buffer.rewind();
+      while (buffer.remaining() > 0) {
+        buffer.put((byte) 0);
+      }
     }
 
+    @NonNull
     @Override
-    @Nullable
-    public ByteBuffer evaluateChallengeSync(@Nullable ByteBuffer token) {
-      return null;
+    public ByteBuffer getMechanism() {
+      return MECHANISM;
     }
 
+    @NonNull
     @Override
-    public void onAuthenticationSuccessSync(@Nullable ByteBuffer token) {
-      // no-op, the server should send nothing anyway
+    public ByteBuffer getInitialServerChallenge() {
+      return SERVER_INITIAL_CHALLENGE;
+    }
+
+    @Nullable
+    @Override
+    public ByteBuffer evaluateChallengeSync(@Nullable ByteBuffer challenge) {
+      if (SERVER_INITIAL_CHALLENGE.equals(challenge)) {
+        return encodedCredentials;
+      }
+      throw new AuthenticationException(endPoint, "Incorrect challenge from server");
     }
   }
 }

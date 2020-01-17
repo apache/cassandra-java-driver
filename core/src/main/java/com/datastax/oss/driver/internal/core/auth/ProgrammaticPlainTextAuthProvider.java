@@ -26,24 +26,41 @@ import net.jcip.annotations.ThreadSafe;
  * pulling them from the configuration.
  *
  * @see SessionBuilder#withAuthCredentials(String, String)
+ * @see SessionBuilder#withAuthCredentials(String, String, String)
  */
 @ThreadSafe
 public class ProgrammaticPlainTextAuthProvider extends PlainTextAuthProviderBase {
   private final String username;
   private final String password;
+  private final String authorizationId;
 
+  /** Builds an instance for simple username/password authentication. */
   public ProgrammaticPlainTextAuthProvider(String username, String password) {
+    this(username, password, "");
+  }
+
+  /**
+   * Builds an instance for username/password authentication, and proxy authentication with the
+   * given authorizationId.
+   *
+   * <p>This feature is only available with Datastax Enterprise. If the target server is Apache
+   * Cassandra, the authorizationId will be ignored.
+   */
+  public ProgrammaticPlainTextAuthProvider(
+      String username, String password, String authorizationId) {
     // This will typically be built before the session so we don't know the log prefix yet. Pass an
     // empty string, it's only used in one log message.
     super("");
     this.username = username;
     this.password = password;
+    this.authorizationId = authorizationId;
   }
 
   @NonNull
   @Override
   protected Credentials getCredentials(
       @NonNull EndPoint endPoint, @NonNull String serverAuthenticator) {
-    return new Credentials(username.toCharArray(), password.toCharArray());
+    return new Credentials(
+        username.toCharArray(), password.toCharArray(), authorizationId.toCharArray());
   }
 }

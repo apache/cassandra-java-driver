@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metrics;
 
 import com.codahale.metrics.MetricRegistry;
+import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -28,6 +29,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -89,12 +91,16 @@ public class DropwizardMetricsFactory implements MetricsFactory {
   }
 
   protected Set<SessionMetric> parseSessionMetricPaths(List<String> paths) {
-    EnumSet<DefaultSessionMetric> result = EnumSet.noneOf(DefaultSessionMetric.class);
+    Set<SessionMetric> result = new HashSet<>();
     for (String path : paths) {
       try {
         result.add(DefaultSessionMetric.fromPath(path));
       } catch (IllegalArgumentException e) {
-        LOG.warn("[{}] Unknown session metric {}, skipping", logPrefix, path);
+        try {
+          result.add(DseSessionMetric.fromPath(path));
+        } catch (IllegalArgumentException e1) {
+          LOG.warn("[{}] Unknown session metric {}, skipping", logPrefix, path);
+        }
       }
     }
     return Collections.unmodifiableSet(result);

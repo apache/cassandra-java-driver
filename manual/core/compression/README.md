@@ -36,7 +36,8 @@ better performance and compression ratios over Snappy.
 
 Both implementations rely on third-party libraries, declared by the driver as *optional*
 dependencies; if you enable compression, you need to explicitly depend on the corresponding library
-to pull it into your project. 
+to pull it into your project (see the [Integration>Driver
+dependencies](../integration/#driver-dependencies) section for more details).
 
 ### LZ4
 

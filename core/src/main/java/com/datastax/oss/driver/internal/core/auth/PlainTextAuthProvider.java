@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.auth;
 
+import com.datastax.dse.driver.api.core.config.DseDriverOption;
+import com.datastax.dse.driver.internal.core.auth.AuthUtils;
 import com.datastax.oss.driver.api.core.auth.PlainTextAuthProviderBase;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -36,6 +38,10 @@ import net.jcip.annotations.ThreadSafe;
  *     class = com.datastax.driver.api.core.auth.PlainTextAuthProvider
  *     username = cassandra
  *     password = cassandra
+ *
+ *     // If connecting to Datastax Enterprise, this additional option allows proxy authentication
+ *     // (login as another user or role)
+ *     authorization-id = userOrRole
  *   }
  * }
  * </pre>
@@ -56,8 +62,20 @@ public class PlainTextAuthProvider extends PlainTextAuthProviderBase {
   @Override
   protected Credentials getCredentials(
       @NonNull EndPoint endPoint, @NonNull String serverAuthenticator) {
+    // It's not valid to use the PlainTextAuthProvider without a username or password, error out
+    // early here
+    AuthUtils.validateConfigPresent(
+        config,
+        PlainTextAuthProvider.class.getName(),
+        endPoint,
+        DefaultDriverOption.AUTH_PROVIDER_USER_NAME,
+        DefaultDriverOption.AUTH_PROVIDER_PASSWORD);
+
+    String authorizationId = config.getString(DseDriverOption.AUTH_PROVIDER_AUTHORIZATION_ID, "");
+    assert authorizationId != null; // per the default above
     return new Credentials(
         config.getString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME).toCharArray(),
-        config.getString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD).toCharArray());
+        config.getString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD).toCharArray(),
+        authorizationId.toCharArray());
   }
 }

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.protocol;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.internal.core.util.DependencyCheck;
 import io.netty.buffer.ByteBuf;
 import java.nio.ByteBuffer;
 import net.jcip.annotations.ThreadSafe;
@@ -34,17 +35,16 @@ public class Lz4Compressor extends ByteBufCompressor {
   private final LZ4FastDecompressor decompressor;
 
   public Lz4Compressor(DriverContext context) {
-    try {
+    if (DependencyCheck.LZ4.isPresent()) {
       LZ4Factory lz4Factory = LZ4Factory.fastestInstance();
       LOG.info("[{}] Using {}", context.getSessionName(), lz4Factory.toString());
       this.compressor = lz4Factory.fastCompressor();
       this.decompressor = lz4Factory.fastDecompressor();
-    } catch (NoClassDefFoundError e) {
+    } else {
       throw new IllegalStateException(
-          "Error initializing compressor, make sure that the LZ4 library is in the classpath "
+          "Could not find the LZ4 library on the classpath "
               + "(the driver declares it as an optional dependency, "
-              + "so you need to declare it explicitly)",
-          e);
+              + "so you need to declare it explicitly)");
     }
   }
 

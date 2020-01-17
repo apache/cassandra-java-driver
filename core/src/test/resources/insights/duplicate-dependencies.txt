@@ -1,0 +1,2 @@
+io.netty:netty-handler:jar:4.0.56.Final:compile
+io.netty:netty-handler:jar:4.1.2.Final:compile

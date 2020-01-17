@@ -34,7 +34,6 @@ import com.datastax.oss.simulacron.common.cluster.QueryLog;
 import com.datastax.oss.simulacron.server.BoundCluster;
 import com.datastax.oss.simulacron.server.BoundNode;
 import com.datastax.oss.simulacron.server.BoundTopic;
-import java.net.InetSocketAddress;
 import java.util.stream.Stream;
 import org.junit.Rule;
 import org.junit.Test;
@@ -66,30 +65,17 @@ public class ProtocolVersionMixedClusterIT {
                     .build()) {
 
       InternalDriverContext context = (InternalDriverContext) session.getContext();
+      // General version should have been downgraded to V3
       assertThat(context.getProtocolVersion()).isEqualTo(DefaultProtocolVersion.V3);
+      // But control connection should still be using protocol V4 since node0 supports V4
+      assertThat(context.getControlConnection().channel().protocolVersion())
+          .isEqualTo(DefaultProtocolVersion.V4);
 
-      // Find out which node became the control node after the reconnection (not necessarily node 0)
-      InetSocketAddress controlAddress =
-          (InetSocketAddress) context.getControlConnection().channel().getEndPoint().resolve();
-      BoundNode currentControlNode = null;
-      for (BoundNode node : simulacron.getNodes()) {
-        if (node.inetSocketAddress().equals(controlAddress)) {
-          currentControlNode = node;
-        }
-      }
-      assertThat(currentControlNode).isNotNull();
-      assertThat(queries(simulacron)).hasSize(8);
+      assertThat(queries(simulacron)).hasSize(4);
 
       assertThat(protocolQueries(contactPoint, 4))
           .containsExactly(
               // Initial connection with protocol v4
-              "SELECT cluster_name FROM system.local",
-              "SELECT * FROM system.local",
-              "SELECT * FROM system.peers_v2",
-              "SELECT * FROM system.peers");
-      assertThat(protocolQueries(currentControlNode, 3))
-          .containsExactly(
-              // Reconnection with protocol v3
               "SELECT cluster_name FROM system.local",
               "SELECT * FROM system.local",
               "SELECT * FROM system.peers_v2",

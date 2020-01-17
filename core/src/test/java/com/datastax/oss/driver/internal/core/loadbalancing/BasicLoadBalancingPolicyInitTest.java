@@ -34,7 +34,11 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.UUID;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+// TODO fix unnecessary stubbing of config option in parent class (and stop using "silent" runner)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BasicLoadBalancingPolicyInitTest extends DefaultLoadBalancingPolicyTestBase {
 
   @Override

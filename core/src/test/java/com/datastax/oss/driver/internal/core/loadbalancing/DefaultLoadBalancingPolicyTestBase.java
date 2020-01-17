@@ -73,6 +73,8 @@ public abstract class DefaultLoadBalancingPolicyTestBase {
         .thenReturn(true);
     when(defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER))
         .thenReturn("dc1");
+    when(defaultProfile.getBoolean(DefaultDriverOption.LOAD_BALANCING_POLICY_SLOW_AVOIDANCE, true))
+        .thenReturn(true);
 
     when(context.getMetadataManager()).thenReturn(metadataManager);
 

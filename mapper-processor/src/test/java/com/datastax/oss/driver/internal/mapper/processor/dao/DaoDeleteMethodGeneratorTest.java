@@ -105,7 +105,7 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
       },
       {
         "Delete methods must return one of [VOID, FUTURE_OF_VOID, BOOLEAN, FUTURE_OF_BOOLEAN, "
-            + "RESULT_SET, BOUND_STATEMENT, FUTURE_OF_ASYNC_RESULT_SET]",
+            + "RESULT_SET, BOUND_STATEMENT, FUTURE_OF_ASYNC_RESULT_SET, REACTIVE_RESULT_SET]",
         MethodSpec.methodBuilder("delete")
             .addAnnotation(Delete.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)

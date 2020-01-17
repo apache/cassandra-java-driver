@@ -17,6 +17,8 @@ package com.datastax.oss.driver.internal.core.metrics;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
+import com.datastax.dse.driver.api.core.config.DseDriverOption;
+import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
@@ -101,6 +103,12 @@ public class DropwizardSessionMetricUpdater extends DropwizardMetricUpdater<Sess
         DefaultDriverOption.METRICS_SESSION_THROTTLING_DIGITS,
         DefaultDriverOption.METRICS_SESSION_THROTTLING_INTERVAL);
     initializeDefaultCounter(DefaultSessionMetric.THROTTLING_ERRORS, null);
+    initializeHdrTimer(
+        DseSessionMetric.CONTINUOUS_CQL_REQUESTS,
+        context.getConfig().getDefaultProfile(),
+        DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_HIGHEST,
+        DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_DIGITS,
+        DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_INTERVAL);
   }
 
   @Override

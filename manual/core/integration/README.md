@@ -3,7 +3,8 @@
 ### Quick overview
 
 * sample project structures for Maven and Gradle.
-* explanations about driver dependencies and when they can be manually excluded.
+* explanations about [driver dependencies](#driver-dependencies) and when they can be manually
+  excluded.
 
 -----
 
@@ -360,12 +361,12 @@ If all of these metrics are disabled, you can remove the dependency:
 
 #### Jackson
 
-[Jackson](https://github.com/FasterXML/jackson) is used to parse configuration files when connecting
-to DataStax Apache Cassandra® as a Service.
+[Jackson](https://github.com/FasterXML/jackson) is used:
 
-If you don't use that feature (that is, if you neither call
-`SessionBuilder.withCloudSecureConnectBundle()` nor set the `basic.cloud.secure-connect-bundle`
-configuration option), you can safely exclude the dependency:
+* when connecting to [Datastax Apollo](../../cloud/);
+* when Insights monitoring is enabled.
+ 
+If you don't use either of those features, you can safely exclude the dependency:
 
 ```xml
 <dependency>
@@ -375,11 +376,65 @@ configuration option), you can safely exclude the dependency:
   <exclusions>
     <exclusion>
       <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+    </exclusion>
+    <exclusion>
+      <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </exclusion>
   </exclusions>
 </dependency>
 ```
+
+#### Esri
+
+Our [geospatial types](../dse/geotypes/) implementation is based on the [Esri Geometry
+API](https://github.com/Esri/geometry-api-java).
+
+If you don't use geospatial types anywhere in your application, you can exclude the dependency:
+
+```xml
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-core</artifactId>
+  <version>${driver.version}</version>
+  <exclusions>
+   <exclusion>
+     <groupId>com.esri.geometry</groupId>
+     <artifactId>esri-geometry-api</artifactId>
+   </exclusion>
+  </exclusions>
+</dependency>
+```
+
+#### TinkerPop
+
+[Apache TinkerPop™](http://tinkerpop.apache.org/) is used in our [graph API](../dse/graph/).
+
+If you don't use DSE graph at all, you can exclude the dependencies:
+
+```xml
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-core</artifactId>
+  <version>${driver.version}</version>
+  <exclusions>
+    <exclusion>
+      <groupId>org.apache.tinkerpop</groupId>
+      <artifactId>gremlin-core</artifactId>
+    </exclusion>
+    <exclusion>
+      <groupId>org.apache.tinkerpop</groupId>
+      <artifactId>tinkergraph-gremlin</artifactId>
+    </exclusion>
+  </exclusions>
+</dependency>
+```
+
+If you do use graph, it is important to keep the precise TinkerPop version that the driver depends
+on: unlike the driver, TinkerPop does not follow semantic versioning, so even a patch version change
+(e.g. 3.3.0 vs 3.3.3) could introduce incompatibilities. So do not declare an explicit dependency in
+your application, let the driver pull it transitively.
 
 #### Documenting annotations
 
@@ -447,6 +502,6 @@ The remaining core driver dependencies are the only ones that are truly mandator
 [guava]: https://github.com/google/guava/issues/2721
 [annotation processing]: https://docs.oracle.com/javase/8/docs/technotes/tools/windows/javac.html#sthref65
 
-[Session.getMetrics]:             https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/Session.html#getMetrics--
-[SessionBuilder.addContactPoint]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoint-java.net.InetSocketAddress-
-[Uuids]:                          https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/uuid/Uuids.html
+[Session.getMetrics]:             https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/session/Session.html#getMetrics--
+[SessionBuilder.addContactPoint]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoint-java.net.InetSocketAddress-
+[Uuids]:                          https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/uuid/Uuids.html

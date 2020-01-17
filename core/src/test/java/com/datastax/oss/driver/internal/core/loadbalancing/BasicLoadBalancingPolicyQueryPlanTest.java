@@ -46,8 +46,12 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+// TODO fix unnecessary stubbing of config option in parent class (and stop using "silent" runner)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BasicLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingPolicyTestBase {
 
   protected static final CqlIdentifier KEYSPACE = CqlIdentifier.fromInternal("ks");

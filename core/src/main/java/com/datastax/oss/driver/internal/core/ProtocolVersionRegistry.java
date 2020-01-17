@@ -27,13 +27,6 @@ import java.util.Optional;
 public interface ProtocolVersionRegistry {
 
   /**
-   * Look up a version by its {@link ProtocolVersion#getCode()} code}.
-   *
-   * @throws IllegalArgumentException if there is no known version with this code.
-   */
-  ProtocolVersion fromCode(int code);
-
-  /**
    * Look up a version by its {@link ProtocolVersion#name() name}. This is used when a version was
    * forced in the configuration.
    *
@@ -69,7 +62,4 @@ public interface ProtocolVersionRegistry {
 
   /** Whether a given version supports a given feature. */
   boolean supports(ProtocolVersion version, ProtocolFeature feature);
-
-  /** @return all the values known to this driver instance. */
-  Iterable<ProtocolVersion> getValues();
 }

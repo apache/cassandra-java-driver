@@ -37,7 +37,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
+// TODO fix unnecessary stubbing of config option in parent class (and stop using "silent" runner)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BasicLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPolicyTestBase {
 
   @Mock private Predicate<Node> filter;
@@ -158,7 +159,7 @@ public class BasicLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPoli
   @NonNull
   protected BasicLoadBalancingPolicy createAndInitPolicy() {
     BasicLoadBalancingPolicy policy =
-        new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
+        new BasicLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
     policy.init(
         ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2), distanceReporter);
     assertThat(policy.liveNodes).containsExactlyInAnyOrder(node1, node2);

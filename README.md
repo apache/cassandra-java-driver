@@ -8,12 +8,13 @@ documentation for latest version through [DataStax Docs] or via the release tags
 [4.4.0](https://github.com/datastax/java-driver/tree/4.4.0).*
 
 A modern, feature-rich and highly tunable Java client library for [Apache Cassandra®] \(2.1+) and 
-[DataStax Enterprise] \(4.7+), using exclusively Cassandra's binary protocol and Cassandra Query
-Language v3.
+[DataStax Enterprise] \(4.7+), and [DataStax Apollo], using exclusively Cassandra's binary protocol 
+and Cassandra Query Language (CQL) v3.
 
 [DataStax Docs]: http://docs.datastax.com/en/developer/java-driver/
 [Apache Cassandra®]: http://cassandra.apache.org/
-[DataStax Enterprise]: http://www.datastax.com/products/datastax-enterprise
+[DataStax Enterprise]: https://www.datastax.com/products/datastax-enterprise
+[DataStax Apollo]: https://www.datastax.com/constellation/datastax-apollo
 
 ## Getting the driver
 
@@ -50,14 +51,10 @@ builder](manual/query_builder/), [mapper](manual/mapper)).
 
 ## Compatibility
 
-The driver is compatible with Apache Cassandra® 2.1 and higher, and DataStax Enterprise 4.7 and
-higher.
+The driver is compatible with Apache Cassandra® 2.1 and higher, DataStax Enterprise 4.7 and
+higher, and DataStax Apollo.
 
 It requires Java 8 or higher.
-
-If using DataStax Enterprise, the [DataStax Enterprise Java
-driver](http://docs.datastax.com/en/developer/java-driver-dse/latest) provides more features and
-better compatibility.
 
 Disclaimer: Some DataStax/DataStax Enterprise products might partially work on big-endian systems,
 but DataStax does not officially support these systems.

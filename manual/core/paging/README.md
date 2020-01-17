@@ -186,9 +186,9 @@ think you can get away with the performance hit. We recommend that you:
 The [driver examples] include two complete web service implementations demonstrating forward-only
 and random (offset-based) paging.
 
-[ResultSet]:         https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/ResultSet.html
-[AsyncResultSet]:    https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
-[AsyncPagingIterable.hasMorePages]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/AsyncPagingIterable.html#hasMorePages--
-[AsyncPagingIterable.fetchNextPage]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/AsyncPagingIterable.html#fetchNextPage--
+[ResultSet]:         https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[AsyncResultSet]:    https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
+[AsyncPagingIterable.hasMorePages]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/AsyncPagingIterable.html#hasMorePages--
+[AsyncPagingIterable.fetchNextPage]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/AsyncPagingIterable.html#fetchNextPage--
 
 [driver examples]: https://github.com/datastax/java-driver/tree/4.x/examples/src/main/java/com/datastax/oss/driver/examples/paging

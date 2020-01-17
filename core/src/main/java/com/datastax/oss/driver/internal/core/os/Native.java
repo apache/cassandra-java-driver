@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.os;
 
+import com.datastax.oss.driver.internal.core.util.Reflection;
 import java.lang.reflect.Method;
 import jnr.ffi.LibraryLoader;
 import jnr.ffi.Platform;
@@ -188,13 +189,14 @@ public class Native {
     private static final Platform PLATFORM;
 
     static {
-      Platform platform;
+      Platform platform = null;
       try {
-        Class<?> platformClass = Class.forName("jnr.ffi.Platform");
-        Method getNativePlatform = platformClass.getMethod("getNativePlatform");
-        platform = (Platform) getNativePlatform.invoke(null);
+        Class<?> platformClass = Reflection.loadClass(null, "jnr.ffi.Platform");
+        if (platformClass != null) {
+          Method getNativePlatform = platformClass.getMethod("getNativePlatform");
+          platform = (Platform) getNativePlatform.invoke(null);
+        }
       } catch (Throwable t) {
-        platform = null;
         LOG.debug("Error loading jnr.ffi.Platform class, this class will not be available.", t);
       }
       PLATFORM = platform;

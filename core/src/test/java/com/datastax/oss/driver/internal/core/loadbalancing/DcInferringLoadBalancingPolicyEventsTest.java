@@ -15,26 +15,35 @@
  */
 package com.datastax.oss.driver.internal.core.loadbalancing;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.api.core.config.DriverExecutionProfile.DEFAULT_NAME;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.reset;
 
-import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.UUID;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.Before;
 
-@RunWith(MockitoJUnitRunner.class)
 public class DcInferringLoadBalancingPolicyEventsTest extends BasicLoadBalancingPolicyEventsTest {
 
-  @NonNull
   @Override
+  @Before
+  public void setup() {
+    given(context.getRequestTracker()).willReturn(new MultiplexingRequestTracker());
+    super.setup();
+  }
+
+  @Override
+  @NonNull
   protected BasicLoadBalancingPolicy createAndInitPolicy() {
     DcInferringLoadBalancingPolicy policy =
-        new DcInferringLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
+        new DcInferringLoadBalancingPolicy(context, DEFAULT_NAME);
     policy.init(
         ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2), distanceReporter);
-    assertThat(policy.liveNodes).containsExactlyInAnyOrder(node1, node2);
+    assertThat(policy.getLiveNodes()).containsOnly(node1, node2);
+    reset(distanceReporter);
     return policy;
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.oss.driver.api.core.detach.Detachable;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
@@ -30,6 +31,8 @@ public interface ProtocolVersion {
   ProtocolVersion V3 = DefaultProtocolVersion.V3;
   ProtocolVersion V4 = DefaultProtocolVersion.V4;
   ProtocolVersion V5 = DefaultProtocolVersion.V5;
+  ProtocolVersion DSE_V1 = DseProtocolVersion.DSE_V1;
+  ProtocolVersion DSE_V2 = DseProtocolVersion.DSE_V2;
 
   /** The default version used for {@link Detachable detached} objects. */
   // Implementation note: we can't use the ProtocolVersionRegistry here, this has to be a

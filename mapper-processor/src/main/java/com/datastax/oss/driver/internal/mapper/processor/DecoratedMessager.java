@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor;
 
+import com.datastax.oss.driver.internal.core.util.Reflection;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
@@ -164,12 +165,7 @@ public class DecoratedMessager {
     }
 
     private boolean isSourceFile(TypeElement element) {
-      try {
-        Class.forName(element.getQualifiedName().toString());
-        return false;
-      } catch (ClassNotFoundException e) {
-        return true;
-      }
+      return Reflection.loadClass(null, element.getQualifiedName().toString()) == null;
     }
   }
 }

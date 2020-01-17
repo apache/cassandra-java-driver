@@ -48,6 +48,7 @@ import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import io.netty.channel.ChannelHandlerContext;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Objects;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -140,6 +141,8 @@ class ProtocolInitHandler extends ConnectInitHandler {
     // This class is a finite-state automaton, that sends a different query depending on the step
     // in the initialization sequence.
     private Step step;
+    private int stepNumber = 0;
+    private Message request;
     private Authenticator authenticator;
     private ByteBuffer authResponseToken;
 
@@ -150,27 +153,34 @@ class ProtocolInitHandler extends ConnectInitHandler {
 
     @Override
     String describe() {
-      return "[" + logPrefix + "] init query " + step;
+      return String.format(
+          "[%s] Protocol initialization request, step %d (%s)", logPrefix, stepNumber, request);
     }
 
     @Override
     Message getRequest() {
       switch (step) {
         case OPTIONS:
-          return Options.INSTANCE;
+          return request = Options.INSTANCE;
         case STARTUP:
-          return new Startup(context.getStartupOptions());
+          return request = new Startup(context.getStartupOptions());
         case GET_CLUSTER_NAME:
-          return CLUSTER_NAME_QUERY;
+          return request = CLUSTER_NAME_QUERY;
         case SET_KEYSPACE:
-          return new Query("USE " + options.keyspace.asCql(false));
+          return request = new Query("USE " + options.keyspace.asCql(false));
         case AUTH_RESPONSE:
-          return new AuthResponse(authResponseToken);
+          return request = new AuthResponse(authResponseToken);
         case REGISTER:
-          return new Register(options.eventTypes);
+          return request = new Register(options.eventTypes);
         default:
           throw new AssertionError("unhandled step: " + step);
       }
+    }
+
+    @Override
+    void send() {
+      stepNumber++;
+      super.send();
     }
 
     @Override
@@ -199,7 +209,11 @@ class ProtocolInitHandler extends ConnectInitHandler {
                     if (error != null) {
                       fail(
                           new AuthenticationException(
-                              endPoint, "authenticator threw an exception", error));
+                              endPoint,
+                              String.format(
+                                  "Authenticator.initialResponse(): stage completed exceptionally (%s)",
+                                  error),
+                              error));
                     } else {
                       step = Step.AUTH_RESPONSE;
                       authResponseToken = token;
@@ -217,7 +231,11 @@ class ProtocolInitHandler extends ConnectInitHandler {
                     if (error != null) {
                       fail(
                           new AuthenticationException(
-                              endPoint, "authenticator threw an exception", error));
+                              endPoint,
+                              String.format(
+                                  "Authenticator.evaluateChallenge(): stage completed exceptionally (%s)",
+                                  error),
+                              error));
                     } else {
                       step = Step.AUTH_RESPONSE;
                       authResponseToken = token;
@@ -235,7 +253,11 @@ class ProtocolInitHandler extends ConnectInitHandler {
                     if (error != null) {
                       fail(
                           new AuthenticationException(
-                              endPoint, "authenticator threw an exception", error));
+                              endPoint,
+                              String.format(
+                                  "Authenticator.onAuthenticationSuccess(): stage completed exceptionally (%s)",
+                                  error),
+                              error));
                     } else {
                       step = Step.GET_CLUSTER_NAME;
                       send();
@@ -248,10 +270,13 @@ class ProtocolInitHandler extends ConnectInitHandler {
             && ((Error) response).code == ProtocolConstants.ErrorCode.AUTH_ERROR) {
           fail(
               new AuthenticationException(
-                  endPoint, String.format("server replied '%s'", ((Error) response).message)));
+                  endPoint,
+                  String.format(
+                      "server replied with '%s' to AuthResponse request",
+                      ((Error) response).message)));
         } else if (step == Step.GET_CLUSTER_NAME && response instanceof Rows) {
           Rows rows = (Rows) response;
-          List<ByteBuffer> row = rows.getData().poll();
+          List<ByteBuffer> row = Objects.requireNonNull(rows.getData().poll());
           String actualClusterName = getString(row, 0);
           if (expectedClusterName != null && !expectedClusterName.equals(actualClusterName)) {
             fail(
@@ -307,7 +332,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
       } catch (AuthenticationException e) {
         fail(e);
       } catch (Throwable t) {
-        fail("Unexpected exception at step " + step, t);
+        fail(String.format("%s: unexpected exception (%s)", describe(), t), t);
       }
     }
 

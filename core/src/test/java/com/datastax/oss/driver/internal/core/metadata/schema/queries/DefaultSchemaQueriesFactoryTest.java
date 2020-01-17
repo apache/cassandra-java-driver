@@ -19,20 +19,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.datastax.dse.driver.api.core.metadata.DseNodeProperties;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.metadata.NodeProperties;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -110,14 +109,13 @@ public class DefaultSchemaQueriesFactoryTest {
           when(mockNode.getExtras())
               .thenReturn(
                   ImmutableMap.<String, Object>of(
-                      NodeProperties.DSE_VERSION, Version.parse(versionStr)));
+                      DseNodeProperties.DSE_VERSION, Version.parse(versionStr)));
         });
 
     DefaultSchemaQueriesFactory factory = buildFactory();
 
     @SuppressWarnings("unchecked")
-    SchemaQueries queries =
-        factory.newInstance(mockNode, mock(DriverChannel.class), mock(CompletableFuture.class));
+    SchemaQueries queries = factory.newInstance(mockNode, mock(DriverChannel.class));
 
     assertThat(queries.getClass()).isEqualTo(expected.getClz());
   }
