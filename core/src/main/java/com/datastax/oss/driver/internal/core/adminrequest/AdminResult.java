@@ -35,10 +35,11 @@ public class AdminResult implements Iterable<AdminRow> {
 
   private final Queue<List<ByteBuffer>> data;
   private final Map<String, ColumnSpec> columnSpecs;
-  private final AdminRequestHandler nextHandler;
+  private final AdminRequestHandler<AdminResult> nextHandler;
   private final ProtocolVersion protocolVersion;
 
-  public AdminResult(Rows rows, AdminRequestHandler nextHandler, ProtocolVersion protocolVersion) {
+  public AdminResult(
+      Rows rows, AdminRequestHandler<AdminResult> nextHandler, ProtocolVersion protocolVersion) {
     this.data = rows.getData();
 
     ImmutableMap.Builder<String, ColumnSpec> columnSpecsBuilder = ImmutableMap.builder();
