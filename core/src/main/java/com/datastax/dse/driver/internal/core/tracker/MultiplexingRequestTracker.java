@@ -23,8 +23,20 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * Combines multiple request trackers into a single one.
+ *
+ * <p>The default context always wraps any user-provided tracker into this, in case other internal
+ * components need to add their own trackers later (see InternalDriverContext.buildRequestTracker).
+ *
+ * <p>We also use it to catch and log any unexpected exception thrown by a tracker.
+ */
 public class MultiplexingRequestTracker implements RequestTracker {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MultiplexingRequestTracker.class);
 
   private final List<RequestTracker> trackers = new CopyOnWriteArrayList<>();
 
@@ -40,7 +52,11 @@ public class MultiplexingRequestTracker implements RequestTracker {
       @NonNull Node node,
       @NonNull String logPrefix) {
     for (RequestTracker tracker : trackers) {
-      tracker.onSuccess(request, latencyNanos, executionProfile, node, logPrefix);
+      try {
+        tracker.onSuccess(request, latencyNanos, executionProfile, node, logPrefix);
+      } catch (Throwable t) {
+        LOG.error("[{}] Unexpected error while invoking request tracker", logPrefix, t);
+      }
     }
   }
 
@@ -53,7 +69,11 @@ public class MultiplexingRequestTracker implements RequestTracker {
       @Nullable Node node,
       @NonNull String logPrefix) {
     for (RequestTracker tracker : trackers) {
-      tracker.onError(request, error, latencyNanos, executionProfile, node, logPrefix);
+      try {
+        tracker.onError(request, error, latencyNanos, executionProfile, node, logPrefix);
+      } catch (Throwable t) {
+        LOG.error("[{}] Unexpected error while invoking request tracker", logPrefix, t);
+      }
     }
   }
 
@@ -65,7 +85,11 @@ public class MultiplexingRequestTracker implements RequestTracker {
       @NonNull Node node,
       @NonNull String logPrefix) {
     for (RequestTracker tracker : trackers) {
-      tracker.onNodeSuccess(request, latencyNanos, executionProfile, node, logPrefix);
+      try {
+        tracker.onNodeSuccess(request, latencyNanos, executionProfile, node, logPrefix);
+      } catch (Throwable t) {
+        LOG.error("[{}] Unexpected error while invoking request tracker", logPrefix, t);
+      }
     }
   }
 
@@ -78,7 +102,11 @@ public class MultiplexingRequestTracker implements RequestTracker {
       @NonNull Node node,
       @NonNull String logPrefix) {
     for (RequestTracker tracker : trackers) {
-      tracker.onNodeError(request, error, latencyNanos, executionProfile, node, logPrefix);
+      try {
+        tracker.onNodeError(request, error, latencyNanos, executionProfile, node, logPrefix);
+      } catch (Throwable t) {
+        LOG.error("[{}] Unexpected error while invoking request tracker", logPrefix, t);
+      }
     }
   }
 
