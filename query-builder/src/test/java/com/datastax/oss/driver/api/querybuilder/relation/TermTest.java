@@ -116,7 +116,7 @@ public class TermTest {
 
   @Test
   public void should_fail_when_no_codec_for_literal() {
-    assertThatThrownBy(() -> literal(new Date(2018, 10, 10)))
+    assertThatThrownBy(() -> literal(new Date(1234)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage(
             "Could not inline literal of type java.util.Date. "
