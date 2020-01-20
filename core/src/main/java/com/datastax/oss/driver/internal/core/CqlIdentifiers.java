@@ -32,7 +32,7 @@ public class CqlIdentifiers {
 
     Objects.requireNonNull(in, "Input Iterable must not be null");
     Objects.requireNonNull(fn, "CqlIdentifier conversion function must not be null");
-    ImmutableList.Builder<CqlIdentifier> builder = ImmutableList.<CqlIdentifier>builder();
+    ImmutableList.Builder<CqlIdentifier> builder = ImmutableList.builder();
     for (String name : in) {
       builder.add(fn.apply(name));
     }
@@ -54,7 +54,7 @@ public class CqlIdentifiers {
       @NonNull Map<String, V> in, @NonNull Function<String, CqlIdentifier> fn) {
     Objects.requireNonNull(in, "Input Map must not be null");
     Objects.requireNonNull(fn, "CqlIdentifier conversion function must not be null");
-    ImmutableMap.Builder<CqlIdentifier, V> builder = ImmutableMap.<CqlIdentifier, V>builder();
+    ImmutableMap.Builder<CqlIdentifier, V> builder = ImmutableMap.builder();
     for (Map.Entry<String, V> entry : in.entrySet()) {
       builder.put(fn.apply(entry.getKey()), entry.getValue());
     }
