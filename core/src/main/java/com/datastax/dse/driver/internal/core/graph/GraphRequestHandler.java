@@ -377,7 +377,14 @@ public class GraphRequestHandler implements Throttled {
       if (!isIdempotent || error instanceof FrameTooLongException) {
         decision = RetryDecision.RETHROW;
       } else {
-        decision = retryPolicy.onRequestAborted(graphStatement, error, retryCount);
+        try {
+          decision = retryPolicy.onRequestAborted(graphStatement, error, retryCount);
+        } catch (Throwable cause) {
+          setFinalError(
+              new IllegalStateException("Unexpected error while invoking the retry policy", cause),
+              node);
+          return;
+        }
       }
       processRetryDecision(decision, error);
       updateErrorMetrics(
@@ -420,8 +427,20 @@ public class GraphRequestHandler implements Throttled {
             int nextExecution = execution + 1;
             // Note that `node` is the first node of the execution, it might not be the "slow" one
             // if there were retries, but in practice retries are rare.
-            long nextDelay =
-                speculativeExecutionPolicy.nextExecution(node, null, graphStatement, nextExecution);
+            long nextDelay;
+            try {
+              nextDelay =
+                  speculativeExecutionPolicy.nextExecution(
+                      node, null, graphStatement, nextExecution);
+            } catch (Throwable cause) {
+              // This is a bug in the policy, but not fatal since we have at least one other
+              // execution already running. Don't fail the whole request.
+              LOG.error(
+                  "[{}] Unexpected error while invoking the speculative execution policy",
+                  logPrefix,
+                  cause);
+              return;
+            }
             if (nextDelay >= 0) {
               LOG.trace(
                   "[{}] Scheduling speculative execution {} in {} ms",

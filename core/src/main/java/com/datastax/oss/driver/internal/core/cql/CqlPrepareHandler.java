@@ -441,7 +441,14 @@ public class CqlPrepareHandler implements Throttled {
         return;
       }
       LOG.trace("[{}] Request failure, processing: {}", logPrefix, error.toString());
-      RetryDecision decision = retryPolicy.onRequestAborted(request, error, retryCount);
+      RetryDecision decision;
+      try {
+        decision = retryPolicy.onRequestAborted(request, error, retryCount);
+      } catch (Throwable cause) {
+        setFinalError(
+            new IllegalStateException("Unexpected error while invoking the retry policy", cause));
+        return;
+      }
       processRetryDecision(decision, error);
     }
 

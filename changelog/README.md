@@ -4,6 +4,8 @@
 
 ### 4.5.0 (in progress)
 
+- [improvement] JAVA-2618: Improve error handling in request handlers
+
 ### 4.4.0
 
 This version brings in all functionality that was formerly only in the DataStax Enterprise driver, 

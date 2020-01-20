@@ -402,7 +402,14 @@ public class ContinuousCqlRequestHandler
     if (!isIdempotent || error instanceof FrameTooLongException) {
       decision = RetryDecision.RETHROW;
     } else {
-      decision = retryPolicy.onRequestAborted(statement, error, retryCount);
+      try {
+        decision = retryPolicy.onRequestAborted(statement, error, retryCount);
+      } catch (Throwable cause) {
+        abort(
+            new IllegalStateException("Unexpected error while invoking the retry policy", cause),
+            false);
+        return;
+      }
     }
     updateErrorMetrics(
         ((DefaultNode) node).getMetricUpdater(),
@@ -539,7 +546,11 @@ public class ContinuousCqlRequestHandler
         trackNodeError(node, error);
         abort(error, true);
       } else {
-        processRecoverableError(error);
+        try {
+          processRecoverableError(error);
+        } catch (Throwable cause) {
+          abort(cause, false);
+        }
       }
     }
   }
