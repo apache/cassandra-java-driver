@@ -111,7 +111,10 @@ public class TableParserTest extends SchemaParserTestBase {
 
     checkTable(table);
 
-    assertThat((Map<String, String>) table.getOptions().get(CqlIdentifier.fromInternal("caching")))
+    @SuppressWarnings("unchecked")
+    Map<String, String> caching =
+        (Map<String, String>) table.getOptions().get(CqlIdentifier.fromInternal("caching"));
+    assertThat(caching)
         .hasSize(2)
         .containsEntry("keys", "ALL")
         .containsEntry("rows_per_partition", "NONE");
@@ -177,8 +180,10 @@ public class TableParserTest extends SchemaParserTestBase {
     assertThat(index.getClassName()).isNotPresent();
     assertThat(index.getKind()).isEqualTo(IndexKind.COMPOSITES);
     assertThat(index.getTarget()).isEqualTo("v");
-    assertThat(
-            (Map<String, String>) table.getOptions().get(CqlIdentifier.fromInternal("compaction")))
+    @SuppressWarnings("unchecked")
+    Map<String, String> compaction =
+        (Map<String, String>) table.getOptions().get(CqlIdentifier.fromInternal("compaction"));
+    assertThat(compaction)
         .hasSize(2)
         .containsEntry("class", "org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy")
         .containsEntry("mock_option", "1");
