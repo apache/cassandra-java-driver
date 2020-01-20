@@ -170,12 +170,12 @@ public class ProtocolVersionMixedClusterIT {
     return SimulacronRule.server.register(clusterSpec);
   }
 
-  private Stream<QueryLog> queries(BoundTopic topic) {
+  private Stream<QueryLog> queries(BoundTopic<?, ?> topic) {
     return topic.getLogs().getQueryLogs().stream()
         .filter(q -> q.getFrame().message instanceof Query);
   }
 
-  private Stream<String> protocolQueries(BoundTopic topic, int protocolVersion) {
+  private Stream<String> protocolQueries(BoundTopic<?, ?> topic, int protocolVersion) {
     return queries(topic)
         .filter(q -> q.getFrame().protocolVersion == protocolVersion)
         .map(QueryLog::getQuery);
