@@ -110,6 +110,23 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
       boolean createKeyspace,
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
+      DriverConfigLoader configLoader,
+      String graphName) {
+    this(
+        cassandraResource,
+        createKeyspace,
+        nodeStateListener,
+        schemaChangeListener,
+        configLoader,
+        graphName,
+        false);
+  }
+
+  public SessionRule(
+      CassandraResourceRule cassandraResource,
+      boolean createKeyspace,
+      NodeStateListener nodeStateListener,
+      SchemaChangeListener schemaChangeListener,
       DriverConfigLoader configLoader) {
     this(
         cassandraResource,
