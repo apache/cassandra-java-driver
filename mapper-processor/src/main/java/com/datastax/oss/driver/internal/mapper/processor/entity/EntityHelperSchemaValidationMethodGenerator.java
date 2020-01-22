@@ -67,7 +67,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
 
     // get keyspaceId from context, and if not present fallback to keyspace set on session
     methodBuilder.addStatement(
-        "$1T keyspaceId = context.getKeyspaceId() != null ? context.getKeyspaceId() : context.getSession().getKeyspace().orElse(null)",
+        "$1T keyspaceId = this.keyspaceId != null ? this.keyspaceId : context.getSession().getKeyspace().orElse(null)",
         CqlIdentifier.class);
 
     methodBuilder.addStatement("String entityClassName = $S", entityDefinition.getClassName());
