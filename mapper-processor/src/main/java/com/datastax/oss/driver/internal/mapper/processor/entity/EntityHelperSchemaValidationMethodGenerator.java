@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
-import static com.datastax.oss.driver.api.mapper.annotations.SchemaHint.*;
+import static com.datastax.oss.driver.api.mapper.annotations.SchemaHint.TargetElement;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
@@ -119,7 +119,7 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     methodBuilder.beginControlFlow("else");
     loggingGenerator.warn(
         methodBuilder,
-        "[{}] There is no ks.table: {}.{} for the entity class: {} or metadata is out of date.",
+        "[{}] There is no ks.table or UDT: {}.{} for the entity class: {}, or metadata is out of date.",
         CodeBlock.of("context.getSession().getName()"),
         CodeBlock.of("keyspaceId"),
         CodeBlock.of("tableId"),
@@ -133,7 +133,8 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
         "if(!keyspaceNamePresent(context.getSession().getMetadata().getKeyspaces(), keyspaceId))");
     loggingGenerator.warn(
         methodBuilder,
-        "[{}] Unable to validate table: {} for the entity class: {} because metadata has not information about the keyspace: {}.",
+        "[{}] Unable to validate table: {} for the entity class: {} "
+            + "because the session metadata has no information about the keyspace: {}.",
         CodeBlock.of("context.getSession().getName()"),
         CodeBlock.of("tableId"),
         CodeBlock.of("entityClassName"),
@@ -148,12 +149,13 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     methodBuilder.beginControlFlow("if (keyspaceId == null)");
     loggingGenerator.warn(
         methodBuilder,
-        "[{}] Unable to validate table: {} for the entity class: {} because keyspace: {} is null."
-            + "DAO will run unqualified requests on an unqualified session: probably a mapper configuration error, the requests will fail at runtime.",
+        "[{}] Unable to validate table: {} for the entity class: {} because the keyspace "
+            + "is unknown (the entity does not declare a default keyspace, and neither the "
+            + "session nor the DAO were created with a keyspace). The DAO will only work if it "
+            + "uses fully-qualified queries with @Query or @QueryProvider.",
         CodeBlock.of("context.getSession().getName()"),
         CodeBlock.of("tableId"),
-        CodeBlock.of("entityClassName"),
-        CodeBlock.of("keyspaceId"));
+        CodeBlock.of("entityClassName"));
     methodBuilder.addStatement("return");
     methodBuilder.endControlFlow();
   }
