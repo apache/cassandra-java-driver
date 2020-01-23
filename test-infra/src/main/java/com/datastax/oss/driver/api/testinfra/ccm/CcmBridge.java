@@ -186,6 +186,24 @@ public class CcmBridge implements AutoCloseable {
     }
   }
 
+  private String getCcmVersionString(Version version) {
+    // for 4.0 pre-releases, the CCM version string needs to be "4.0-alpha1" or "4.0-alpha2"
+    // Version.toString() always adds a patch value, even if it's not specified when parsing.
+    if (version.getMajor() == 4
+        && version.getMinor() == 0
+        && version.getPatch() == 0
+        && version.getPreReleaseLabels() != null) {
+      // truncate the patch version from the Version string
+      StringBuilder sb = new StringBuilder();
+      sb.append(version.getMajor()).append('.').append(version.getMinor());
+      for (String preReleaseString : version.getPreReleaseLabels()) {
+        sb.append('-').append(preReleaseString);
+      }
+      return sb.toString();
+    }
+    return version.toString();
+  }
+
   public void create() {
     if (created.compareAndSet(false, true)) {
       if (INSTALL_DIRECTORY != null) {
@@ -194,7 +212,7 @@ public class CcmBridge implements AutoCloseable {
         createOptions.add("-v git:" + BRANCH.trim().replaceAll("\"", ""));
 
       } else {
-        createOptions.add("-v " + VERSION.toString());
+        createOptions.add("-v " + getCcmVersionString(VERSION));
       }
       if (DSE_ENABLEMENT) {
         createOptions.add("--dse");
