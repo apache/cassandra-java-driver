@@ -24,7 +24,6 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.mapper.annotations.SchemaHint;
-import com.datastax.oss.driver.internal.core.metadata.schema.DefaultTableMetadata;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.dao.LoggingGenerator;
 import com.squareup.javapoet.CodeBlock;
@@ -199,10 +198,9 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     generateExpectedTypesPerColumn(methodBuilder);
 
     methodBuilder.addStatement(
-        "$1T<$2T> missingTableTypes = findTypeMismatches(expectedTypesPerColumn, (($3T) tableMetadata.get()).getColumns(), context.getSession().getContext().getCodecRegistry())",
+        "$1T<$2T> missingTableTypes = findTypeMismatches(expectedTypesPerColumn, tableMetadata.get().getColumns(), context.getSession().getContext().getCodecRegistry())",
         List.class,
-        String.class,
-        DefaultTableMetadata.class);
+        String.class);
     methodBuilder.addStatement(
         "throwMissingTableTypesIfNotEmpty(missingTableTypes, keyspaceId, tableId, entityClassName)");
   }
@@ -211,10 +209,9 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     methodBuilder.addComment("validation of all columns");
 
     methodBuilder.addStatement(
-        "$1T<$2T> missingTableCqlNames = findMissingCqlIdentifiers(expectedCqlNames, (($3T) tableMetadata.get()).getColumns().keySet())",
+        "$1T<$2T> missingTableCqlNames = findMissingCqlIdentifiers(expectedCqlNames, tableMetadata.get().getColumns().keySet())",
         List.class,
-        CqlIdentifier.class,
-        DefaultTableMetadata.class);
+        CqlIdentifier.class);
 
     // Throw if there are any missingTableCqlNames
     CodeBlock missingCqlColumnExceptionMessage =
