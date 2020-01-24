@@ -178,7 +178,7 @@ public class SchemaValidationIT extends InventoryITBase {
       assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
           .contains(
               String.format(
-                  "There is no ks.table: %s.product_cql_table_missing for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductCqlTableMissing or metadata is out of date.",
+                  "There is no ks.table or UDT: %s.product_cql_table_missing for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductCqlTableMissing, or metadata is out of date.",
                   sessionRule.keyspace()));
 
     } finally {
@@ -236,7 +236,7 @@ public class SchemaValidationIT extends InventoryITBase {
       assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
           .contains(
               String.format(
-                  "There is no ks.table: %s.dimensions_with_incorrect_name_schema_hint_table for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.DimensionsWithIncorrectNameSchemaHintTable or metadata is out of date.",
+                  "There is no ks.table or UDT: %s.dimensions_with_incorrect_name_schema_hint_table for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.DimensionsWithIncorrectNameSchemaHintTable, or metadata is out of date.",
                   sessionRule.keyspace()));
     } finally {
       logger.close();
@@ -307,7 +307,7 @@ public class SchemaValidationIT extends InventoryITBase {
       assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
       assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
           .contains(
-              "Unable to validate table: product_simple for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductSimple because metadata has not information about the keyspace: not_existing_keyspace.");
+              "Unable to validate table: product_simple for the entity class: com.datastax.oss.driver.mapper.SchemaValidationIT.ProductSimple because the session metadata has no information about the keyspace: not_existing_keyspace.");
     } finally {
       logger.close();
     }
