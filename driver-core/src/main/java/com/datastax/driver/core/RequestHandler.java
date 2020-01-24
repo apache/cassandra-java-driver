@@ -427,7 +427,10 @@ class RequestHandler {
                 findNextHostAndQuery();
               } catch (RuntimeException e) {
                 if (connection != null) connection.release();
-                logger.error("Unexpected error while querying " + host.getEndPoint(), e);
+                logger.warn(
+                    "Unexpected error while querying {} - [{}]. Find next host to query.",
+                    host.getEndPoint(),
+                    e.toString());
                 logError(host.getEndPoint(), e);
                 findNextHostAndQuery();
               }
@@ -438,7 +441,10 @@ class RequestHandler {
               if (t instanceof BusyPoolException) {
                 logError(host.getEndPoint(), t);
               } else {
-                logger.error("Unexpected error while querying " + host.getEndPoint(), t);
+                logger.warn(
+                    "Unexpected error while querying {} - [{}]. Find next host to query.",
+                    host.getEndPoint(),
+                    t.toString());
                 logError(host.getEndPoint(), t);
               }
               findNextHostAndQuery();
