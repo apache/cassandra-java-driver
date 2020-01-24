@@ -66,26 +66,6 @@ Like the session, the mapper is a long-lived object: you should create it once a
 time, and reuse it for the entire lifetime of your application. It doesn't need to get closed. It is
 thread-safe.
 
-### Validation of Dao Entities using Mapper
-
-When creating new Mapper you can use `withSchemaValidationEnabled(boolean)` method to enable or disable
-schema validation:
-
-```java
-InventoryMapper.builder(session).withSchemaValidationEnabled(true).build();
-```
- 
-In a case when schema validation is enabled, when the new instance of a class annotated with [@Dao] is created
-an automatic check for schema validation is performed. It verifies if all [@Dao] entity fields are present in
-CQL table. If not the exception is thrown. This check has startup overhead so once your app is
-stable you may want to disable it. The schema Validation check is enabled by default.
- 
-The validation process checks and throws `IllegalArgumentException` on the first check that fails: 
-1. If clustering columns defined in the entity are not present in the cql table.
-2. If partition keys defined in the entity are not present in the cql table.
-3. If all columns defined in the entity are not present in the cql table.
-4. If the type of columns defined in the entity does not match the type of the column in cql table.
-
 ### DAO factory methods
 
 The mapper's main goal is to provide DAO instances. Your interface should provide one or more
@@ -179,8 +159,55 @@ ProductDao dao3 = inventoryMapper.productDao("keyspace3", "table3");
 The DAO's keyspace and table can also be injected into custom query strings; see [Query
 methods](../daos/query/).
 
+### Schema validation
+
+The mapper validates entity mappings against the database schema at runtime. This check is performed
+every time you initialize a new DAO:
+
+```java
+// Checks that entity 'Product' can be mapped to table or UDT 'keyspace1.product'
+ProductDao dao1 = inventoryMapper.productDao("keyspace1", "product");
+
+// Checks that entity 'Product' can be mapped to table or UDT 'keyspace2.product'
+ProductDao dao2 = inventoryMapper.productDao("keyspace2", "product");
+```
+
+For each entity referenced in the DAO, the mapper tries to find a schema element with the
+corresponding name (according to the [naming strategy](../entities/#naming-strategy)). It tries
+tables first, then falls back to UDTs if there is no match. You can speed up this process by
+providing a hint:
+
+```java
+import static com.datastax.oss.driver.api.mapper.annotations.SchemaHint.TargetElement.UDT;
+import com.datastax.oss.driver.api.mapper.annotations.SchemaHint;
+
+@Entity
+@SchemaHint(targetElement = UDT)
+public class Address { ... }
+```
+
+The following checks are then performed:
+
+* for each entity field, the database table or UDT must contain a column with the corresponding name
+  (according to the [naming strategy](../entities/#naming-strategy)).
+* the types must be compatible, either according to the [default type
+  mappings](../../core/#cql-to-java-type-mapping), or via a [custom
+  codec](../../core/custom_codecs/) registered with the session.
+* additionally, if the target element is a table, the primary key must be [properly
+  annotated](../entities/#primary-key-columns) in the entity.
+ 
+If any of those steps fails, an `IllegalArgumentException` is thrown.
+
+Schema validation adds a small startup overhead, so once your application is stable you may want to
+disable it:
+
+```java
+InventoryMapper inventoryMapper = new InventoryMapperBuilder(session)
+    .withSchemaValidationEnabled(false)
+    .build();
+```
+
 [CqlIdentifier]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/CqlIdentifier.html
-[@Dao]:          https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/mapper/annotations/Dao.html
 [@DaoFactory]:   https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/mapper/annotations/DaoFactory.html
 [@DaoKeyspace]:  https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/mapper/annotations/DaoKeyspace.html
 [@DaoTable]:     https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/mapper/annotations/DaoTable.html
