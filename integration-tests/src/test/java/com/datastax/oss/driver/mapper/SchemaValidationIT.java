@@ -300,7 +300,7 @@ public class SchemaValidationIT extends InventoryITBase {
       assertThatThrownBy(
               () -> mapper.productSimpleDao(CqlIdentifier.fromCql("not_existing_keyspace")))
           .isInstanceOf(InvalidQueryException.class)
-          .hasMessageContaining("Keyspace not_existing_keyspace does not exist");
+          .hasMessageContaining("not_existing_keyspace does not exist");
 
       // then
       verify(logger.appender, timeout(500).times(1)).doAppend(logger.loggingEventCaptor.capture());
