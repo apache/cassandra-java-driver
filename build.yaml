@@ -77,6 +77,5 @@ build:
     - "**/target/surefire-reports/TEST-*.xml"
     - "**/target/failsafe-reports/TEST-*.xml"
   - jacoco: true
-disable_commit_status: true
 notify:
   slack: java-driver-dev-bots
