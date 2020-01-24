@@ -57,14 +57,14 @@ cassandra:
   - 'dse-6.8'
 build:
   - script: |
-    # Jabba default should be a JDK8 for now
-    jabba use default
-    export MAVEN_HOME=/home/jenkins/.mvn/apache-maven-3.3.9
-    export PATH=$MAVEN_HOME/bin:$PATH
-    # Build with the default JDK
-    mvn -B -V install -DskipTests
-    # Use the matrix JDK for testing
-    jabba use $JABBA_JDK_NAME
+     # Jabba default should be a JDK8 for now
+     jabba use default
+     export MAVEN_HOME=/home/jenkins/.mvn/apache-maven-3.3.9
+     export PATH=$MAVEN_HOME/bin:$PATH
+     # Build with the default JDK
+     mvn -B -V install -DskipTests
+     # Use the matrix JDK for testing
+     jabba use $JABBA_JDK_NAME
   - type: maven
     version: 3.2.5
     goals: mvn -B -V verify --batch-mode --show-version
