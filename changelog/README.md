@@ -5,6 +5,11 @@
   3.x versions get published.
 -->
 
+## 3.9.0 (in progress)
+
+- [bug] JAVA-2627: Avoid logging error message including stack trace in request handler.
+
+
 ## 3.8.0
 
 - [new feature] JAVA-2356: Support for DataStax Cloud API.
