@@ -56,24 +56,23 @@ cassandra:
   - 'dse-6.7'
   - 'dse-6.8'
 build:
+  - script:
+    # Jabba default should be a JDK8 for now
+    jabba use default
+    export MAVEN_HOME=/home/jenkins/.mvn/apache-maven-3.3.9
+    export PATH=$MAVEN_HOME/bin:$PATH
+    # Build with the default JDK
+    mvn -B -V install -DskipTests
+    # Use the matrix JDK for testing
+    jabba use $JABBA_JDK_NAME
   - type: maven
     version: 3.2.5
+    goals: mvn -B -V verify --batch-mode --show-version
     properties: |
       ccm.version=$CCM_CASSANDRA_VERSION
       ccm.dse=$CCM_IS_DSE
       proxy.path=$HOME/proxy
       maven.javadoc.skip=true
-    script: |
-      # Jabba default should be a JDK8 for now
-      jabba use default
-      export MAVEN_HOME=/home/jenkins/.mvn/apache-maven-3.3.9
-      export PATH=$MAVEN_HOME/bin:$PATH
-      # Build with the default JDK
-      mvn -B -V install -DskipTests
-      # Use the matrix JDK for testing
-      jabba use $JABBA_JDK_NAME
-      # Run tests against matrix JDK
-      mvn -B -V verify --batch-mode --show-version
   - xunit:
     - "**/target/surefire-reports/TEST-*.xml"
     - "**/target/failsafe-reports/TEST-*.xml"
