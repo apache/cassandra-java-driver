@@ -170,8 +170,7 @@ public class SchemaValidationIT extends InventoryITBase {
             SchemaValidationIT_ProductCqlTableMissingHelper__MapperGenerated.class, Level.WARN);
     try {
       assertThatThrownBy(() -> mapper.productCqlTableMissingDao(sessionRule.keyspace()))
-          .isInstanceOf(InvalidQueryException.class)
-          .hasMessageContaining("unconfigured table product_cql_table_missing");
+          .isInstanceOf(InvalidQueryException.class);
 
       verify(logger.appender, timeout(500).times(1)).doAppend(logger.loggingEventCaptor.capture());
       assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
