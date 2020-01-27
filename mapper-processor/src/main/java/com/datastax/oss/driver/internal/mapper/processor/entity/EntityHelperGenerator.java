@@ -116,7 +116,9 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
             new EntityHelperDeleteByPrimaryKeyPartsMethodGenerator(entityDefinition),
             new EntityHelperDeleteByPrimaryKeyMethodGenerator(),
             new EntityHelperUpdateStartMethodGenerator(entityDefinition),
-            new EntityHelperUpdateByPrimaryKeyMethodGenerator(entityDefinition))) {
+            new EntityHelperUpdateByPrimaryKeyMethodGenerator(entityDefinition),
+            new EntityHelperSchemaValidationMethodGenerator(
+                entityDefinition, classElement, context.getLoggingGenerator(), this))) {
       methodGenerator.generate().ifPresent(classContents::addMethod);
     }
 

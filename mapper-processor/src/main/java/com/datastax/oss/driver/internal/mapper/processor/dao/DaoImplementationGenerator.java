@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import static com.datastax.oss.driver.api.mapper.MapperBuilder.SCHEMA_VALIDATION_ENABLED_SETTING;
+
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
@@ -436,6 +438,8 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
       String fieldName = entry.getValue();
       // - create an instance
       initAsyncBuilder.addStatement("$1T $2L = new $1T(context)", fieldTypeName, fieldName);
+      // - validate entity schema
+      generateValidationCheck(initAsyncBuilder, fieldName);
       // - add it as a parameter to the constructor call
       newDaoStatement.add(",\n$L", fieldName);
     }
@@ -497,6 +501,15 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
         .addStatement("return $T.failedFuture(t)", CompletableFutures.class)
         .endControlFlow();
     return initAsyncBuilder;
+  }
+
+  private void generateValidationCheck(MethodSpec.Builder initAsyncBuilder, String fieldName) {
+    initAsyncBuilder.beginControlFlow(
+        "if (($1T)context.getCustomState().get($2S))",
+        Boolean.class,
+        SCHEMA_VALIDATION_ENABLED_SETTING);
+    initAsyncBuilder.addStatement("$1L.validateEntityFields()", fieldName);
+    initAsyncBuilder.endControlFlow();
   }
 
   private void generateProtocolVersionCheck(MethodSpec.Builder builder) {

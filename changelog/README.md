@@ -4,6 +4,8 @@
 
 ### 4.5.0 (in progress)
 
+- [new feature] JAVA-2263: Add optional schema validation to the mapper
+
 ### 4.4.0
 
 This version brings in all functionality that was formerly only in the DataStax Enterprise driver, 

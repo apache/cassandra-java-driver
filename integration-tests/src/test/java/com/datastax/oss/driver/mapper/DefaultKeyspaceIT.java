@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.mapper;
 
+import static com.datastax.oss.driver.api.mapper.MapperBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -121,6 +122,7 @@ public class DefaultKeyspaceIT {
             () -> {
               InventoryMapperKsNotSet mapper =
                   new DefaultKeyspaceIT_InventoryMapperKsNotSetBuilder(SESSION_RULE.session())
+                      .withCustomState(SCHEMA_VALIDATION_ENABLED_SETTING, false)
                       .build();
               mapper.productDaoDefaultKsNotSet();
             })

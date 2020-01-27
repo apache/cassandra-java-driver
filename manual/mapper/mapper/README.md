@@ -159,6 +159,54 @@ ProductDao dao3 = inventoryMapper.productDao("keyspace3", "table3");
 The DAO's keyspace and table can also be injected into custom query strings; see [Query
 methods](../daos/query/).
 
+### Schema validation
+
+The mapper validates entity mappings against the database schema at runtime. This check is performed
+every time you initialize a new DAO:
+
+```java
+// Checks that entity 'Product' can be mapped to table or UDT 'keyspace1.product'
+ProductDao dao1 = inventoryMapper.productDao("keyspace1", "product");
+
+// Checks that entity 'Product' can be mapped to table or UDT 'keyspace2.product'
+ProductDao dao2 = inventoryMapper.productDao("keyspace2", "product");
+```
+
+For each entity referenced in the DAO, the mapper tries to find a schema element with the
+corresponding name (according to the [naming strategy](../entities/#naming-strategy)). It tries
+tables first, then falls back to UDTs if there is no match. You can speed up this process by
+providing a hint:
+
+```java
+import static com.datastax.oss.driver.api.mapper.annotations.SchemaHint.TargetElement.UDT;
+import com.datastax.oss.driver.api.mapper.annotations.SchemaHint;
+
+@Entity
+@SchemaHint(targetElement = UDT)
+public class Address { ... }
+```
+
+The following checks are then performed:
+
+* for each entity field, the database table or UDT must contain a column with the corresponding name
+  (according to the [naming strategy](../entities/#naming-strategy)).
+* the types must be compatible, either according to the [default type
+  mappings](../../core/#cql-to-java-type-mapping), or via a [custom
+  codec](../../core/custom_codecs/) registered with the session.
+* additionally, if the target element is a table, the primary key must be [properly
+  annotated](../entities/#primary-key-columns) in the entity.
+ 
+If any of those steps fails, an `IllegalArgumentException` is thrown.
+
+Schema validation adds a small startup overhead, so once your application is stable you may want to
+disable it:
+
+```java
+InventoryMapper inventoryMapper = new InventoryMapperBuilder(session)
+    .withSchemaValidationEnabled(false)
+    .build();
+```
+
 [CqlIdentifier]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/CqlIdentifier.html
 [@DaoFactory]:   https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/mapper/annotations/DaoFactory.html
 [@DaoKeyspace]:  https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/mapper/annotations/DaoKeyspace.html
