@@ -36,7 +36,7 @@ public abstract class ReactiveResultSetBase<ResultSetT extends AsyncPagingIterab
 
   private final Callable<CompletionStage<ResultSetT>> firstPage;
 
-  private final AtomicBoolean once = new AtomicBoolean(false);
+  private final AtomicBoolean alreadySubscribed = new AtomicBoolean(false);
 
   private final SimpleUnicastProcessor<ColumnDefinitions> columnDefinitionsPublisher =
       new SimpleUnicastProcessor<>();
@@ -56,7 +56,7 @@ public abstract class ReactiveResultSetBase<ResultSetT extends AsyncPagingIterab
     // As per rule 1.9, we need to throw an NPE if subscriber is null
     Objects.requireNonNull(subscriber, "Subscriber cannot be null");
     // As per rule 1.11, this publisher is allowed to support only one subscriber.
-    if (once.compareAndSet(false, true)) {
+    if (alreadySubscribed.compareAndSet(false, true)) {
       ReactiveResultSetSubscription<ResultSetT> subscription =
           new ReactiveResultSetSubscription<>(
               subscriber, columnDefinitionsPublisher, executionInfosPublisher, wasAppliedPublisher);
