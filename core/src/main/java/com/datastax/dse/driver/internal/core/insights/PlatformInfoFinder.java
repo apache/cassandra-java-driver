@@ -81,10 +81,23 @@ class PlatformInfoFinder {
             this.getClass()
                 .getResourceAsStream("/com/datastax/dse/driver/internal/querybuilder/deps.txt"));
 
+    Map<String, RuntimeAndCompileTimeVersions> mapperProcessorDeps =
+        fetchDependenciesFromFile(
+            this.getClass()
+                .getResourceAsStream(
+                    "/com/datastax/dse/driver/internal/mapper/processor/deps.txt"));
+
+    Map<String, RuntimeAndCompileTimeVersions> mapperRuntimeDeps =
+        fetchDependenciesFromFile(
+            this.getClass()
+                .getResourceAsStream("/com/datastax/dse/driver/internal/mapper/deps.txt"));
+
     Map<String, Map<String, RuntimeAndCompileTimeVersions>> runtimeDependencies =
         new LinkedHashMap<>();
     putIfNonEmpty(coreDeps, runtimeDependencies, "core");
     putIfNonEmpty(queryBuilderDeps, runtimeDependencies, "query-builder");
+    putIfNonEmpty(mapperProcessorDeps, runtimeDependencies, "mapper-processor");
+    putIfNonEmpty(mapperRuntimeDeps, runtimeDependencies, "mapper-runtime");
     addJavaVersion(runtimeDependencies);
     return runtimeDependencies;
   }
@@ -215,7 +228,7 @@ class PlatformInfoFinder {
     private final String groupId;
     private final String artifactId;
     private final String version;
-    private boolean optional;
+    private final boolean optional;
 
     DependencyFromFile(String groupId, String artifactId, String version, boolean optional) {
       this.groupId = groupId;
