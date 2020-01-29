@@ -68,8 +68,36 @@
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datastax.oss</groupId>
+      <artifactId>java-driver-core</artifactId>
+      <scope>test</scope>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+    </dependency>
   </dependencies>
   <build>
+    <testResources>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <includes>
+          <include>project.properties</include>
+        </includes>
+        <filtering>true</filtering>
+      </testResource>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <excludes>
+          <exclude>project.properties</exclude>
+        </excludes>
+        <filtering>false</filtering>
+      </testResource>
+    </testResources>
     <plugins>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -127,6 +155,24 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>generate-dependency-list</id>
+            <goals>
+              <goal>list</goal>
+            </goals>
+            <phase>generate-resources</phase>
+          </execution>
+        </executions>
+        <configuration>
+          <includeScope>runtime</includeScope>
+          <outputScope>true</outputScope>
+          <excludeGroupIds>com.datastax.cassandra,com.datastax.dse</excludeGroupIds>
+          <outputFile>${project.build.outputDirectory}/com/datastax/dse/driver/internal/mapper/deps.txt</outputFile>
+        </configuration>
       </plugin>
     </plugins>
   </build>

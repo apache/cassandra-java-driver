@@ -4,6 +4,7 @@
 
 ### 4.5.0 (in progress)
 
+- [bug] JAVA-2617: Reinstate generation of deps.txt for Insights
 - [new feature] JAVA-2625: Provide user-friendly programmatic configuration for kerberos
 - [improvement] JAVA-2624: Expose a config option for the connect timeout
 - [improvement] JAVA-2592: Make reload support parameterizable for DefaultDriverConfigLoader
