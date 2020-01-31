@@ -129,8 +129,21 @@ this means they are vulnerable to an attacker who is able to perform memory dump
 acceptable for you, consider writing your own [AuthProvider] implementation;
 [PlainTextAuthProviderBase] is a good starting point.
 
-Similarly, the driver provides [DseGssApiAuthProviderBase] as a starting point to write your own
-GSSAPI auth provider.
+Similarly, [ProgrammaticDseGssApiAuthProvider] lets you configure GSSAPI programmatically:
+
+```java
+import com.datastax.dse.driver.api.core.auth.DseGssApiAuthProviderBase.GssApiOptions;
+
+javax.security.auth.Subject subject = ...; // do your Kerberos configuration here
+
+GssApiOptions options = GssApiOptions.builder().withSubject(subject).build();
+CqlSession session = CqlSession.builder()
+    .withAuthProvider(new ProgrammaticDseGssApiAuthProvider(options))
+    .build();
+```
+
+For more complex needs (e.g. if building the options once and reusing them doesn't work for you),
+you can subclass [DseGssApiAuthProviderBase].
 
 ### Proxy authentication
 
@@ -206,6 +219,7 @@ session.execute(statement);
 [DriverContext]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/context/DriverContext.html
 [PlainTextAuthProviderBase]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/auth/PlainTextAuthProviderBase.html
 [DseGssApiAuthProviderBase]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/dse/driver/api/core/auth/DseGssApiAuthProviderBase.html
+[ProgrammaticDseGssApiAuthProvider]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/dse/driver/api/core/auth/ProgrammaticDseGssApiAuthProvider.html
 [ProxyAuthentication.executeAs]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/dse/driver/api/core/auth/ProxyAuthentication.html#executeAs-java.lang.String-StatementT-
 [SessionBuilder.withAuthCredentials]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withAuthCredentials-java.lang.String-java.lang.String-
 [SessionBuilder.withAuthProvider]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withAuthProvider-com.datastax.oss.driver.api.core.auth.AuthProvider-

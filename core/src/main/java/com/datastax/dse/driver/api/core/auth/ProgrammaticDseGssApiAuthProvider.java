@@ -13,37 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.dse.driver.internal.core.auth;
+package com.datastax.dse.driver.api.core.auth;
 
-import com.datastax.dse.driver.api.core.auth.DseGssApiAuthProviderBase;
-import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
-import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.util.Map;
-import net.jcip.annotations.ThreadSafe;
 
 /**
  * {@link AuthProvider} that provides GSSAPI authenticator instances for clients to connect to DSE
- * clusters secured with {@code DseAuthenticator}.
+ * clusters secured with {@code DseAuthenticator}, in a programmatic way.
  *
- * <p>To activate this provider an {@code auth-provider} section must be included in the driver
- * configuration, for example:
+ * <p>To use this provider the corresponding GssApiOptions must be passed into the provider
+ * directly, for example:
  *
  * <pre>
- * dse-java-driver {
- *  auth-provider {
- *      class = com.datastax.dse.driver.internal.core.auth.DseGssApiAuthProvider
- *      login-configuration {
- *          principal = "user principal here ex cassandra@DATASTAX.COM"
- *          useKeyTab = "true"
- *          refreshKrb5Config = "true"
- *          keyTab = "Path to keytab file here"
- *      }
- *   }
- * }
+ *     DseGssApiAuthProviderBase.GssApiOptions.Builder builder =
+ *         DseGssApiAuthProviderBase.GssApiOptions.builder();
+ *     Map&lt;String, String&gt; loginConfig =
+ *         ImmutableMap.of(
+ *             "principal",
+ *             "user principal here ex cassandra@DATASTAX.COM",
+ *             "useKeyTab",
+ *             "true",
+ *             "refreshKrb5Config",
+ *             "true",
+ *             "keyTab",
+ *             "Path to keytab file here");
+ *
+ *     builder.withLoginConfiguration(loginConfig);
+ *
+ *     CqlSession session =
+ *         CqlSession.builder()
+ *             .withAuthProvider(new ProgrammaticDseGssApiAuthProvider(builder.build()))
+ *             .build();
+ * </pre>
+ *
+ * or alternatively
+ *
+ * <pre>
+ *     DseGssApiAuthProviderBase.GssApiOptions.Builder builder =
+ *         DseGssApiAuthProviderBase.GssApiOptions.builder().withSubject(subject);
+ *     CqlSession session =
+ *         CqlSession.builder()
+ *             .withAuthProvider(new ProgrammaticDseGssApiAuthProvider(builder.build()))
+ *             .build();
  * </pre>
  *
  * <h2>Kerberos Authentication</h2>
@@ -51,8 +64,8 @@ import net.jcip.annotations.ThreadSafe;
  * Keytab and ticket cache settings are specified using a standard JAAS configuration file. The
  * location of the file can be set using the <code>java.security.auth.login.config</code> system
  * property or by adding a <code>login.config.url.n</code> entry in the <code>java.security</code>
- * properties file. Alternatively a login-configuration section can be included in the driver
- * configuration.
+ * properties file. Alternatively a login-configuration, or subject can be provided to the provider
+ * via the GssApiOptions (see above).
  *
  * <p>See the following documents for further details:
  *
@@ -118,83 +131,42 @@ import net.jcip.annotations.ThreadSafe;
  * The correct SASL protocol name to use when authenticating against this DSE server is "{@code
  * cassandra}".
  *
- * <p>Should you need to change the SASL protocol name, use one of the methods below:
- *
- * <ol>
- *   <li>Specify the service name in the driver config.
- *       <pre>
- * dse-java-driver {
- *   auth-provider {
- *     class = com.datastax.dse.driver.internal.core.auth.DseGssApiAuthProvider
- *     service = "alternate"
- *   }
- * }
- * </pre>
- *   <li>Specify the service name with the {@code dse.sasl.service} system property when starting
- *       your application, e.g. {@code -Ddse.sasl.service=cassandra}.
- * </ol>
- *
- * If a non-null SASL service name is provided to the aforementioned config, that name takes
- * precedence over the contents of the {@code dse.sasl.service} system property.
- *
- * <p>Should internal sasl properties need to be set such as qop. This can be accomplished by
- * including a sasl-properties in the driver config, for example:
+ * <p>Should you need to change the SASL protocol name specify it in the GssApiOptions, use the
+ * method below:
  *
  * <pre>
- * dse-java-driver {
- *   auth-provider {
- *     class = com.datastax.dse.driver.internal.core.auth.DseGssApiAuthProvider
- *     sasl-properties {
- *       javax.security.sasl.qop = "auth-conf"
- *     }
- *   }
- * }
+ *     DseGssApiAuthProviderBase.GssApiOptions.Builder builder =
+ *         DseGssApiAuthProviderBase.GssApiOptions.builder();
+ *     builder.withSaslProtocol("alternate");
+ *     DseGssApiAuthProviderBase.GssApiOptions options = builder.build();
+ * </pre>
+ *
+ * <p>Should internal sasl properties need to be set such as qop. This can also be accomplished by
+ * setting it in the GssApiOptions:
+ *
+ * <pre>
+ *   DseGssApiAuthProviderBase.GssApiOptions.Builder builder =
+ *         DseGssApiAuthProviderBase.GssApiOptions.builder();
+ *     builder.addSaslProperty("javax.security.sasl.qop", "auth-conf");
+ *     DseGssApiAuthProviderBase.GssApiOptions options = builder.build();
  * </pre>
  *
  * @see <a
  *     href="http://docs.datastax.com/en/dse/5.1/dse-admin/datastax_enterprise/security/securityTOC.html">Authenticating
  *     a DSE cluster with Kerberos</a>
  */
-@ThreadSafe
-public class DseGssApiAuthProvider extends DseGssApiAuthProviderBase {
+public class ProgrammaticDseGssApiAuthProvider extends DseGssApiAuthProviderBase {
+  private final GssApiOptions options;
 
-  private final DriverExecutionProfile config;
-
-  public DseGssApiAuthProvider(DriverContext context) {
-    super(context.getSessionName());
-
-    this.config = context.getConfig().getDefaultProfile();
+  public ProgrammaticDseGssApiAuthProvider(GssApiOptions options) {
+    super("Programmatic-Kerberos");
+    this.options = options;
   }
 
   @NonNull
   @Override
   protected GssApiOptions getOptions(
       @NonNull EndPoint endPoint, @NonNull String serverAuthenticator) {
-    // A login configuration is always necessary, throw an exception if that option is missing.
-    AuthUtils.validateConfigPresent(
-        config,
-        DseGssApiAuthProvider.class.getName(),
-        endPoint,
-        DseDriverOption.AUTH_PROVIDER_LOGIN_CONFIGURATION);
-
-    GssApiOptions.Builder optionsBuilder = GssApiOptions.builder();
-
-    if (config.isDefined(DseDriverOption.AUTH_PROVIDER_AUTHORIZATION_ID)) {
-      optionsBuilder.withAuthorizationId(
-          config.getString(DseDriverOption.AUTH_PROVIDER_AUTHORIZATION_ID));
-    }
-    if (config.isDefined(DseDriverOption.AUTH_PROVIDER_SERVICE)) {
-      optionsBuilder.withSaslProtocol(config.getString(DseDriverOption.AUTH_PROVIDER_SERVICE));
-    }
-    if (config.isDefined(DseDriverOption.AUTH_PROVIDER_SASL_PROPERTIES)) {
-      for (Map.Entry<String, String> entry :
-          config.getStringMap(DseDriverOption.AUTH_PROVIDER_SASL_PROPERTIES).entrySet()) {
-        optionsBuilder.addSaslProperty(entry.getKey(), entry.getValue());
-      }
-    }
-    Map<String, String> loginConfigurationMap =
-        config.getStringMap(DseDriverOption.AUTH_PROVIDER_LOGIN_CONFIGURATION);
-    optionsBuilder.withLoginConfiguration(loginConfigurationMap);
-    return optionsBuilder.build();
+    return options;
   }
 }
