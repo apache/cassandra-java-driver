@@ -43,6 +43,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -161,12 +162,20 @@ public class ChannelFactory {
       CompletableFuture<DriverChannel> resultFuture) {
 
     NettyOptions nettyOptions = context.getNettyOptions();
+    Duration connectTimeout =
+        context
+            .getConfig()
+            .getDefaultProfile()
+            .getDuration(DefaultDriverOption.CONNECTION_CONNECT_TIMEOUT);
 
     Bootstrap bootstrap =
         new Bootstrap()
             .group(nettyOptions.ioEventLoopGroup())
             .channel(nettyOptions.channelClass())
             .option(ChannelOption.ALLOCATOR, nettyOptions.allocator())
+            .option(
+                ChannelOption.CONNECT_TIMEOUT_MILLIS,
+                Long.valueOf(connectTimeout.toMillis()).intValue())
             .handler(
                 initializer(endPoint, currentVersion, options, nodeMetricUpdater, resultFuture));
 

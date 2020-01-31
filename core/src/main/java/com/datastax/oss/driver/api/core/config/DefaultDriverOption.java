@@ -797,6 +797,13 @@ public enum DefaultDriverOption implements DriverOption {
    * <p>Value-type: boolean
    */
   LOAD_BALANCING_POLICY_SLOW_AVOIDANCE("basic.load-balancing-policy.slow-replica-avoidance"),
+
+  /**
+   * The timeout to use when establishing driver connections.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  CONNECTION_CONNECT_TIMEOUT("advanced.connection.connect-timeout"),
   ;
 
   private final String path;

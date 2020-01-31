@@ -123,6 +123,8 @@ public abstract class ChannelFactoryTestBase {
     when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS)).thenReturn(1);
     when(defaultProfile.getDuration(DefaultDriverOption.HEARTBEAT_INTERVAL))
         .thenReturn(Duration.ofSeconds(30));
+    when(defaultProfile.getDuration(DefaultDriverOption.CONNECTION_CONNECT_TIMEOUT))
+        .thenReturn(Duration.ofSeconds(5));
 
     when(context.getProtocolVersionRegistry()).thenReturn(protocolVersionRegistry);
     when(context.getNettyOptions()).thenReturn(nettyOptions);
