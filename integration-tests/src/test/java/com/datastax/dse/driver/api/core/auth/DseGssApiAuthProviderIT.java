@@ -25,7 +25,9 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -98,6 +100,35 @@ public class DseGssApiAuthProviderIT {
       fail("Expected an AllNodesFailedException");
     } catch (AllNodesFailedException e) {
       verifyException(e);
+    }
+  }
+  /**
+   * Ensures that a Session can be established to a DSE server secured with Kerberos and that simple
+   * queries can be made using a client configuration that is provided via programatic interface
+   */
+  @Test
+  public void should_authenticate_using_kerberos_with_keytab_programmatically() {
+    DseGssApiAuthProviderBase.GssApiOptions.Builder builder =
+        DseGssApiAuthProviderBase.GssApiOptions.builder();
+    Map<String, String> loginConfig =
+        ImmutableMap.of(
+            "principal",
+            ads.getUserPrincipal(),
+            "useKeyTab",
+            "true",
+            "refreshKrb5Config",
+            "true",
+            "keyTab",
+            ads.getUserKeytab().getAbsolutePath());
+
+    builder.withLoginConfiguration(loginConfig);
+    try (CqlSession session =
+        CqlSession.builder()
+            .withAuthProvider(new ProgrammaticDseGssApiAuthProvider(builder.build()))
+            .build()) {
+
+      ResultSet set = session.execute("select * from system.local");
+      assertThat(set).isNotNull();
     }
   }
 

@@ -4,6 +4,7 @@
 
 ### 4.5.0 (in progress)
 
+- [new feature] JAVA-2625: Provide user-friendly programmatic configuration for kerberos
 - [improvement] JAVA-2624: Expose a config option for the connect timeout
 - [improvement] JAVA-2592: Make reload support parameterizable for DefaultDriverConfigLoader
 - [new feature] JAVA-2263: Add optional schema validation to the mapper
