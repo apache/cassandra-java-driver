@@ -21,6 +21,14 @@ import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.options;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
+import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
+import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
+import com.google.common.io.CharSource;
+import com.google.common.io.Files;
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.List;
 import org.ops4j.pax.exam.CoreOptions;
 import org.ops4j.pax.exam.options.CompositeOption;
 import org.ops4j.pax.exam.options.MavenArtifactProvisionOption;
@@ -40,13 +48,23 @@ public class BundleOptions {
     return () ->
         options(
             mavenBundle(
-                "com.datastax.oss", "java-driver-shaded-guava", getVersion("guava.version")),
-            mavenBundle("io.dropwizard.metrics", "metrics-core", getVersion("metrics.version")),
-            mavenBundle("org.slf4j", "slf4j-api", getVersion("slf4j.version")),
-            mavenBundle("org.hdrhistogram", "HdrHistogram", getVersion("hdrhistogram.version")),
-            mavenBundle("com.typesafe", "config", getVersion("config.version")),
+                "com.datastax.oss",
+                "java-driver-shaded-guava",
+                getVersionFromDepsTxt("com.datastax.oss:java-driver-shaded-guava")),
             mavenBundle(
-                "com.datastax.oss", "native-protocol", getVersion("native-protocol.version")),
+                "io.dropwizard.metrics",
+                "metrics-core",
+                getVersionFromSystemProperty("metrics.version")),
+            mavenBundle("org.slf4j", "slf4j-api", getVersionFromSystemProperty("slf4j.version")),
+            mavenBundle(
+                "org.hdrhistogram",
+                "HdrHistogram",
+                getVersionFromSystemProperty("hdrhistogram.version")),
+            mavenBundle("com.typesafe", "config", getVersionFromSystemProperty("config.version")),
+            mavenBundle(
+                "com.datastax.oss",
+                "native-protocol",
+                getVersionFromDepsTxt("com.datastax.oss:native-protocol")),
             logbackBundles(),
             systemProperty("logback.configurationFile")
                 .value("file:" + PathUtils.getBaseDir() + "/src/test/resources/logback-test.xml"),
@@ -58,7 +76,7 @@ public class BundleOptions {
         "reference:file:"
             + PathUtils.getBaseDir()
             + "/../core/target/java-driver-core-"
-            + getVersion("project.version")
+            + getVersionFromSystemProperty("project.version")
             + ".jar");
   }
 
@@ -67,7 +85,7 @@ public class BundleOptions {
         "reference:file:"
             + PathUtils.getBaseDir()
             + "/../core-shaded/target/java-driver-core-shaded-"
-            + getVersion("project.version")
+            + getVersionFromSystemProperty("project.version")
             + ".jar");
   }
 
@@ -76,7 +94,7 @@ public class BundleOptions {
         "reference:file:"
             + PathUtils.getBaseDir()
             + "/../query-builder/target/java-driver-query-builder-"
-            + getVersion("project.version")
+            + getVersionFromSystemProperty("project.version")
             + ".jar");
   }
 
@@ -85,7 +103,7 @@ public class BundleOptions {
         "reference:file:"
             + PathUtils.getBaseDir()
             + "/../test-infra/target/java-driver-test-infra-"
-            + getVersion("project.version")
+            + getVersionFromSystemProperty("project.version")
             + ".jar");
   }
 
@@ -97,13 +115,16 @@ public class BundleOptions {
             nettyBundles(), // required by the test infra bundle, even for the shaded jar
             jacksonBundles(), // required by the Simulacron bundle, even for the shaded jar
             mavenBundle(
-                "org.apache.commons", "commons-exec", System.getProperty("commons-exec.version")),
-            mavenBundle("org.assertj", "assertj-core", System.getProperty("assertj.version")),
+                "org.apache.commons",
+                "commons-exec",
+                getVersionFromSystemProperty("commons-exec.version")),
+            mavenBundle(
+                "org.assertj", "assertj-core", getVersionFromSystemProperty("assertj.version")),
             junitBundles());
   }
 
   public static CompositeOption nettyBundles() {
-    String nettyVersion = getVersion("netty.version");
+    String nettyVersion = getVersionFromSystemProperty("netty.version");
     return () ->
         options(
             mavenBundle("io.netty", "netty-handler", nettyVersion),
@@ -115,7 +136,7 @@ public class BundleOptions {
   }
 
   public static CompositeOption logbackBundles() {
-    String logbackVersion = getVersion("logback.version");
+    String logbackVersion = getVersionFromSystemProperty("logback.version");
     return () ->
         options(
             mavenBundle("ch.qos.logback", "logback-classic", logbackVersion),
@@ -123,8 +144,8 @@ public class BundleOptions {
   }
 
   public static CompositeOption jacksonBundles() {
-    String jacksonVersion = getVersion("jackson.version");
-    String jacksonDatabindVersion = getVersion("jackson-databind.version");
+    String jacksonVersion = getVersionFromSystemProperty("jackson.version");
+    String jacksonDatabindVersion = getVersionFromSystemProperty("jackson-databind.version");
     return () ->
         options(
             mavenBundle("com.fasterxml.jackson.core", "jackson-databind", jacksonDatabindVersion),
@@ -133,7 +154,7 @@ public class BundleOptions {
   }
 
   public static CompositeOption simulacronBundles() {
-    String simulacronVersion = getVersion("simulacron.version");
+    String simulacronVersion = getVersionFromSystemProperty("simulacron.version");
     return () ->
         options(
             mavenBundle(
@@ -146,23 +167,16 @@ public class BundleOptions {
   }
 
   public static MavenArtifactProvisionOption lz4Bundle() {
-    return mavenBundle("org.lz4", "lz4-java", getVersion("lz4.version"));
+    return mavenBundle("org.lz4", "lz4-java", getVersionFromSystemProperty("lz4.version"));
   }
 
   public static MavenArtifactProvisionOption snappyBundle() {
-    return mavenBundle("org.xerial.snappy", "snappy-java", getVersion("snappy.version"));
-  }
-
-  public static String getVersion(String propertyName) {
-    String value = System.getProperty(propertyName);
-    if (value == null) {
-      throw new IllegalArgumentException(propertyName + " system property is not set");
-    }
-    return value;
+    return mavenBundle(
+        "org.xerial.snappy", "snappy-java", getVersionFromSystemProperty("snappy.version"));
   }
 
   public static CompositeOption tinkerpopBundles() {
-    String version = System.getProperty("tinkerpop.version");
+    String version = getVersionFromSystemProperty("tinkerpop.version");
     return () ->
         options(
             CoreOptions.wrappedBundle(mavenBundle("org.apache.tinkerpop", "gremlin-core", version))
@@ -212,22 +226,73 @@ public class BundleOptions {
         options(
             CoreOptions.wrappedBundle(
                     mavenBundle(
-                        "com.esri.geometry", "esri-geometry-api", getVersion("esri.version")))
+                        "com.esri.geometry",
+                        "esri-geometry-api",
+                        getVersionFromSystemProperty("esri.version")))
                 .exports("com.esri.core.geometry.*")
                 .imports("org.json", "org.codehaus.jackson")
-                .bundleVersion(getVersion("esri.version"))
+                .bundleVersion(getVersionFromSystemProperty("esri.version"))
                 .bundleSymbolicName("com.esri.core.geometry")
                 .overwriteManifest(WrappedUrlProvisionOption.OverwriteMode.FULL),
-            mavenBundle("org.json", "json", getVersion("json.version")),
+            mavenBundle("org.json", "json", getVersionFromSystemProperty("json.version")),
             mavenBundle(
-                "org.codehaus.jackson", "jackson-core-asl", getVersion("legacy-jackson.version")));
+                "org.codehaus.jackson",
+                "jackson-core-asl",
+                getVersionFromSystemProperty("legacy-jackson.version")));
   }
 
   public static CompositeOption reactiveBundles() {
     return () ->
         options(
             mavenBundle(
-                "org.reactivestreams", "reactive-streams", getVersion("reactive-streams.version")),
-            mavenBundle("io.reactivex.rxjava2", "rxjava", getVersion("rxjava.version")));
+                "org.reactivestreams",
+                "reactive-streams",
+                getVersionFromSystemProperty("reactive-streams.version")),
+            mavenBundle(
+                "io.reactivex.rxjava2", "rxjava", getVersionFromSystemProperty("rxjava.version")));
+  }
+
+  private static String getVersionFromSystemProperty(String propertyName) {
+    String value = System.getProperty(propertyName);
+    if (value == null) {
+      throw new IllegalArgumentException(propertyName + " system property is not set");
+    }
+    return value;
+  }
+
+  /**
+   * Some versions are not available as system properties because they are hardcoded in the BOM.
+   *
+   * <p>Rely on the deps.txt file instead.
+   */
+  private static String getVersionFromDepsTxt(String searchString) {
+    for (String dependency : DepsTxtLoader.lines) {
+      if (dependency.contains(searchString)) {
+        List<String> components = Splitter.on(':').splitToList(dependency);
+        return components.get(components.size() - 2);
+      }
+    }
+    throw new IllegalStateException("Couldn't find version for " + searchString);
+  }
+
+  private static class DepsTxtLoader {
+
+    private static List<String> lines;
+
+    static {
+      String path =
+          PathUtils.getBaseDir()
+              + "/../core/target/classes/com/datastax/dse/driver/internal/deps.txt";
+      CharSource charSource = Files.asCharSource(new File(path), Charsets.UTF_8);
+
+      try {
+        lines = charSource.readLines();
+      } catch (IOException e) {
+        throw new UncheckedIOException(
+            "Couldn't load deps.txt for driver core, "
+                + "make sure you run `mvn generate-resources` before running this test",
+            e);
+      }
+    }
   }
 }

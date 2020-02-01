@@ -25,6 +25,17 @@
   </parent>
   <artifactId>java-driver-core-shaded</artifactId>
   <name>DataStax Java driver for Apache Cassandra(R) - core with shaded deps</name>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>java-driver-bom</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
     <!--
     Declare a dependency to the core driver itself so that all its classes get included;

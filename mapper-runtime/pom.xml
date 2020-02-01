@@ -26,6 +26,17 @@
   <artifactId>java-driver-mapper-runtime</artifactId>
   <packaging>bundle</packaging>
   <name>DataStax Java driver for Apache Cassandra(R) - object mapper runtime</name>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>java-driver-bom</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>

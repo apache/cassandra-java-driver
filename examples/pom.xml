@@ -26,6 +26,17 @@
   <artifactId>java-driver-examples</artifactId>
   <name>DataStax Java driver for Apache Cassandra(R) - examples.</name>
   <description>A collection of examples to demonstrate DataStax Java Driver for Apache Cassandra(R).</description>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>java-driver-bom</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
     <!-- driver dependencies -->
     <dependency>
