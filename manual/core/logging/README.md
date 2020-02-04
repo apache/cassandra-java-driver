@@ -5,6 +5,9 @@
 * based on SLF4J.
 * config file examples for Logback and Log4J. 
 
+**If you're looking for information about the request logger, see the [request
+tracker](../request_tracker/#request-logger) page.**
+
 -----
 
 The driver uses [SLF4J] as a logging facade. This allows you to plug in your preferred logging
@@ -106,11 +109,6 @@ investigate an issue.
 
 Keep in mind that they are quite verbose, in particular TRACE. It's a good idea to only enable them
 on a limited set of categories.
-
-### Logging request latencies
-
-The driver provides a built-in component to log the latency and outcome of every application
-request. See the [request tracker](../request_tracker/#request-logger) page for more details.
 
 ### Configuration examples
 
