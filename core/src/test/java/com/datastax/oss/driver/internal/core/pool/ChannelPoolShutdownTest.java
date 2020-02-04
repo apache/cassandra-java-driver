@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.core.pool;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -62,37 +61,33 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(node, 3);
-    waitForPendingAdminTasks();
-    inOrder.verify(eventBus, times(3)).fire(ChannelEvent.channelOpened(node));
+    inOrder.verify(eventBus, VERIFY_TIMEOUT.times(3)).fire(ChannelEvent.channelOpened(node));
 
     assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
 
     // Simulate graceful shutdown on channel3
     ((ChannelPromise) channel3.closeStartedFuture()).setSuccess();
-    waitForPendingAdminTasks();
-    inOrder.verify(eventBus, times(1)).fire(ChannelEvent.channelClosed(node));
+    inOrder.verify(eventBus, VERIFY_TIMEOUT.times(1)).fire(ChannelEvent.channelClosed(node));
 
     // Reconnection should have kicked in and started to open channel4, do not complete it yet
     verify(reconnectionSchedule).nextDelay();
     factoryHelper.waitForCalls(node, 1);
 
     CompletionStage<Void> closeFuture = pool.closeAsync();
-    waitForPendingAdminTasks();
 
     // The two original channels were closed normally
-    verify(channel1).close();
-    verify(channel2).close();
-    inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelClosed(node));
+    verify(channel1, VERIFY_TIMEOUT).close();
+    verify(channel2, VERIFY_TIMEOUT).close();
+    inOrder.verify(eventBus, VERIFY_TIMEOUT.times(2)).fire(ChannelEvent.channelClosed(node));
     // The closing channel was not closed again
     verify(channel3, never()).close();
 
     // Complete the reconnecting channel
     channel4Future.complete(channel4);
-    waitForPendingAdminTasks();
 
     // It should be force-closed once we find out the pool was closed
-    verify(channel4).forceClose();
+    verify(channel4, VERIFY_TIMEOUT).forceClose();
     // No events because the channel was never really associated to the pool
     inOrder.verify(eventBus, never()).fire(ChannelEvent.channelOpened(node));
     inOrder.verify(eventBus, never()).fire(ChannelEvent.channelClosed(node));
@@ -133,37 +128,33 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(node, 3);
-    waitForPendingAdminTasks();
 
     assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
-    inOrder.verify(eventBus, times(3)).fire(ChannelEvent.channelOpened(node));
+    inOrder.verify(eventBus, VERIFY_TIMEOUT.times(3)).fire(ChannelEvent.channelOpened(node));
 
     // Simulate graceful shutdown on channel3
     ((ChannelPromise) channel3.closeStartedFuture()).setSuccess();
-    waitForPendingAdminTasks();
-    inOrder.verify(eventBus, times(1)).fire(ChannelEvent.channelClosed(node));
+    inOrder.verify(eventBus, VERIFY_TIMEOUT.times(1)).fire(ChannelEvent.channelClosed(node));
 
     // Reconnection should have kicked in and started to open a channel, do not complete it yet
     verify(reconnectionSchedule).nextDelay();
     factoryHelper.waitForCalls(node, 1);
 
     CompletionStage<Void> closeFuture = pool.forceCloseAsync();
-    waitForPendingAdminTasks();
 
     // The three original channels were force-closed
-    verify(channel1).forceClose();
-    verify(channel2).forceClose();
-    verify(channel3).forceClose();
+    verify(channel1, VERIFY_TIMEOUT).forceClose();
+    verify(channel2, VERIFY_TIMEOUT).forceClose();
+    verify(channel3, VERIFY_TIMEOUT).forceClose();
     // Only two events because the one for channel3 was sent earlier
-    inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelClosed(node));
+    inOrder.verify(eventBus, VERIFY_TIMEOUT.times(2)).fire(ChannelEvent.channelClosed(node));
 
     // Complete the reconnecting channel
     channel4Future.complete(channel4);
-    waitForPendingAdminTasks();
 
     // It should be force-closed once we find out the pool was closed
-    verify(channel4).forceClose();
+    verify(channel4, VERIFY_TIMEOUT).forceClose();
     // No events because the channel was never really associated to the pool
     inOrder.verify(eventBus, never()).fire(ChannelEvent.channelOpened(node));
     inOrder.verify(eventBus, never()).fire(ChannelEvent.channelClosed(node));

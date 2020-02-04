@@ -17,9 +17,9 @@ package com.datastax.oss.driver.internal.core.pool;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -58,11 +58,10 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(node, 3);
-    waitForPendingAdminTasks();
 
     assertThatStage(poolFuture)
         .isSuccess(pool -> assertThat(pool.channels).containsOnly(channel1, channel2, channel3));
-    verify(eventBus, times(3)).fire(ChannelEvent.channelOpened(node));
+    verify(eventBus, VERIFY_TIMEOUT.times(3)).fire(ChannelEvent.channelOpened(node));
 
     factoryHelper.verifyNoMoreCalls();
   }
@@ -82,11 +81,10 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(node, 3);
-    waitForPendingAdminTasks();
 
     assertThatStage(poolFuture).isSuccess(pool -> assertThat(pool.channels).isEmpty());
     verify(eventBus, never()).fire(ChannelEvent.channelOpened(node));
-    verify(nodeMetricUpdater, times(3))
+    verify(nodeMetricUpdater, VERIFY_TIMEOUT.times(3))
         .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
 
     factoryHelper.verifyNoMoreCalls();
@@ -107,12 +105,11 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(node, 3);
-    waitForPendingAdminTasks();
     assertThatStage(poolFuture)
         .isSuccess(
             pool -> {
               assertThat(pool.isInvalidKeyspace()).isTrue();
-              verify(nodeMetricUpdater, times(3))
+              verify(nodeMetricUpdater, VERIFY_TIMEOUT.times(3))
                   .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
             });
   }
@@ -133,12 +130,12 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
     ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(node, 3);
-    waitForPendingAdminTasks();
 
-    verify(eventBus).fire(TopologyEvent.forceDown(node.getBroadcastRpcAddress().get()));
+    verify(eventBus, VERIFY_TIMEOUT)
+        .fire(TopologyEvent.forceDown(node.getBroadcastRpcAddress().get()));
     verify(eventBus, never()).fire(ChannelEvent.channelOpened(node));
 
-    verify(nodeMetricUpdater, times(3))
+    verify(nodeMetricUpdater, VERIFY_TIMEOUT.times(3))
         .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
     factoryHelper.verifyNoMoreCalls();
   }
@@ -167,26 +164,25 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(node, 2);
-    waitForPendingAdminTasks();
 
     assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
     assertThat(pool.channels).containsOnly(channel1);
-    inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(node));
+    inOrder.verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.channelOpened(node));
 
     // A reconnection should have been scheduled
-    verify(reconnectionSchedule).nextDelay();
-    inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
+    verify(reconnectionSchedule, VERIFY_TIMEOUT).nextDelay();
+    inOrder.verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.reconnectionStarted(node));
 
     channel2Future.complete(channel2);
     factoryHelper.waitForCalls(node, 1);
-    waitForPendingAdminTasks();
-    inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(node));
-    inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStopped(node));
+    inOrder.verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.channelOpened(node));
+    inOrder.verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.reconnectionStopped(node));
 
-    assertThat(pool.channels).containsOnly(channel1, channel2);
+    await().untilAsserted(() -> assertThat(pool.channels).containsOnly(channel1, channel2));
 
-    verify(nodeMetricUpdater).incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
+    verify(nodeMetricUpdater, VERIFY_TIMEOUT)
+        .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
     factoryHelper.verifyNoMoreCalls();
   }
 }

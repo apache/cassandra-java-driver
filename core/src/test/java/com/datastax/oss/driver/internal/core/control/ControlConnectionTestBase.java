@@ -15,12 +15,12 @@
  */
 package com.datastax.oss.driver.internal.core.control;
 
-import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -40,28 +40,28 @@ import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.TestNodeFactory;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
-import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import io.netty.channel.Channel;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoop;
-import io.netty.util.concurrent.Future;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Exchanger;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.verification.VerificationWithTimeout;
 
 abstract class ControlConnectionTestBase {
   protected static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
   protected static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
+
+  /** How long we wait when verifying mocks for async invocations */
+  protected static final VerificationWithTimeout VERIFY_TIMEOUT = timeout(500);
 
   @Mock protected InternalDriverContext context;
   @Mock protected DriverConfig config;
@@ -173,18 +173,5 @@ abstract class ControlConnectionTestBase {
     when(driverChannel.getEndPoint())
         .thenReturn(new DefaultEndPoint(new InetSocketAddress("127.0.0." + id, 9042)));
     return driverChannel;
-  }
-
-  // Wait for all the tasks on the admin executor to complete.
-  protected void waitForPendingAdminTasks() {
-    // This works because the event loop group is single-threaded
-    Future<?> f = adminEventLoopGroup.schedule(() -> null, 5, TimeUnit.NANOSECONDS);
-    try {
-      Uninterruptibles.getUninterruptibly(f, 100, TimeUnit.MILLISECONDS);
-    } catch (ExecutionException e) {
-      fail("unexpected error", e.getCause());
-    } catch (TimeoutException e) {
-      fail("timed out while waiting for admin tasks to complete", e);
-    }
   }
 }
