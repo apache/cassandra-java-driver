@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.control;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,16 +47,19 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
 
     // When
     controlConnection.init(true, false, false);
-    waitForPendingAdminTasks();
-    DriverChannelOptions channelOptions = optionsCaptor.getValue();
 
     // Then
-    assertThat(channelOptions.eventTypes)
-        .containsExactly(
-            ProtocolConstants.EventType.SCHEMA_CHANGE,
-            ProtocolConstants.EventType.STATUS_CHANGE,
-            ProtocolConstants.EventType.TOPOLOGY_CHANGE);
-    assertThat(channelOptions.eventCallback).isEqualTo(controlConnection);
+    await()
+        .untilAsserted(
+            () -> {
+              DriverChannelOptions channelOptions = optionsCaptor.getValue();
+              assertThat(channelOptions.eventTypes)
+                  .containsExactly(
+                      ProtocolConstants.EventType.SCHEMA_CHANGE,
+                      ProtocolConstants.EventType.STATUS_CHANGE,
+                      ProtocolConstants.EventType.TOPOLOGY_CHANGE);
+              assertThat(channelOptions.eventCallback).isEqualTo(controlConnection);
+            });
   }
 
   @Test
@@ -69,13 +73,16 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
 
     // When
     controlConnection.init(false, false, false);
-    waitForPendingAdminTasks();
-    DriverChannelOptions channelOptions = optionsCaptor.getValue();
 
     // Then
-    assertThat(channelOptions.eventTypes)
-        .containsExactly(ProtocolConstants.EventType.SCHEMA_CHANGE);
-    assertThat(channelOptions.eventCallback).isEqualTo(controlConnection);
+    await()
+        .untilAsserted(
+            () -> {
+              DriverChannelOptions channelOptions = optionsCaptor.getValue();
+              assertThat(channelOptions.eventTypes)
+                  .containsExactly(ProtocolConstants.EventType.SCHEMA_CHANGE);
+              assertThat(channelOptions.eventCallback).isEqualTo(controlConnection);
+            });
   }
 
   @Test
@@ -87,7 +94,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     when(channelFactory.connect(eq(node1), optionsCaptor.capture()))
         .thenReturn(CompletableFuture.completedFuture(channel1));
     controlConnection.init(true, false, false);
-    waitForPendingAdminTasks();
+    await().until(() -> optionsCaptor.getValue() != null);
     EventCallback callback = optionsCaptor.getValue().eventCallback;
     StatusChangeEvent event =
         new StatusChangeEvent(ProtocolConstants.StatusChangeType.UP, ADDRESS1);
@@ -108,7 +115,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     when(channelFactory.connect(eq(node1), optionsCaptor.capture()))
         .thenReturn(CompletableFuture.completedFuture(channel1));
     controlConnection.init(true, false, false);
-    waitForPendingAdminTasks();
+    await().until(() -> optionsCaptor.getValue() != null);
     EventCallback callback = optionsCaptor.getValue().eventCallback;
     TopologyChangeEvent event =
         new TopologyChangeEvent(ProtocolConstants.TopologyChangeType.NEW_NODE, ADDRESS1);
@@ -129,7 +136,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     when(channelFactory.connect(eq(node1), optionsCaptor.capture()))
         .thenReturn(CompletableFuture.completedFuture(channel1));
     controlConnection.init(false, false, false);
-    waitForPendingAdminTasks();
+    await().until(() -> optionsCaptor.getValue() != null);
     EventCallback callback = optionsCaptor.getValue().eventCallback;
     SchemaChangeEvent event =
         new SchemaChangeEvent(

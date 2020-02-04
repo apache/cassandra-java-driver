@@ -49,7 +49,6 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(node, 2);
-    waitForPendingAdminTasks();
 
     assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
@@ -57,10 +56,9 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
 
     CqlIdentifier newKeyspace = CqlIdentifier.fromCql("new_keyspace");
     CompletionStage<Void> setKeyspaceFuture = pool.setKeyspace(newKeyspace);
-    waitForPendingAdminTasks();
 
-    verify(channel1).setKeyspace(newKeyspace);
-    verify(channel2).setKeyspace(newKeyspace);
+    verify(channel1, VERIFY_TIMEOUT).setKeyspace(newKeyspace);
+    verify(channel2, VERIFY_TIMEOUT).setKeyspace(newKeyspace);
 
     assertThatStage(setKeyspaceFuture).isSuccess();
 
@@ -91,30 +89,27 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(node, 2);
-    waitForPendingAdminTasks();
 
     assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
 
     // Check that reconnection has kicked in, but do not complete it yet
-    verify(reconnectionSchedule).nextDelay();
-    verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
+    verify(reconnectionSchedule, VERIFY_TIMEOUT).nextDelay();
+    verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.reconnectionStarted(node));
     factoryHelper.waitForCalls(node, 2);
 
     // Switch keyspace, it succeeds immediately since there is no active channel
     CqlIdentifier newKeyspace = CqlIdentifier.fromCql("new_keyspace");
     CompletionStage<Void> setKeyspaceFuture = pool.setKeyspace(newKeyspace);
-    waitForPendingAdminTasks();
     assertThatStage(setKeyspaceFuture).isSuccess();
 
     // Now let the two channels succeed to complete the reconnection
     channel1Future.complete(channel1);
     channel2Future.complete(channel2);
-    waitForPendingAdminTasks();
 
-    verify(eventBus).fire(ChannelEvent.reconnectionStopped(node));
-    verify(channel1).setKeyspace(newKeyspace);
-    verify(channel2).setKeyspace(newKeyspace);
+    verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.reconnectionStopped(node));
+    verify(channel1, VERIFY_TIMEOUT).setKeyspace(newKeyspace);
+    verify(channel2, VERIFY_TIMEOUT).setKeyspace(newKeyspace);
 
     factoryHelper.verifyNoMoreCalls();
   }

@@ -21,9 +21,9 @@ import static com.datastax.dse.driver.internal.core.insights.ExecutionProfileMoc
 import static com.datastax.dse.driver.internal.core.insights.PackageUtil.DEFAULT_AUTH_PROVIDER_PACKAGE;
 import static com.datastax.dse.driver.internal.core.insights.PackageUtil.DEFAULT_LOAD_BALANCING_PACKAGE;
 import static com.datastax.dse.driver.internal.core.insights.PackageUtil.DEFAULT_SPECULATIVE_EXECUTION_PACKAGE;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.awaitility.Duration.ONE_SECOND;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -284,7 +284,7 @@ public class InsightsClientTest {
     InsightsClient.scheduleInsightsTask(100L, Executors.newScheduledThreadPool(1), runnable);
 
     // then
-    await().atMost(ONE_SECOND).until(() -> counter.get() >= 1);
+    await().atMost(1, SECONDS).until(() -> counter.get() >= 1);
   }
 
   @Test

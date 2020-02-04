@@ -15,10 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.pool;
 
-import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
@@ -35,22 +35,22 @@ import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.TestNodeFactory;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
-import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import io.netty.channel.Channel;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoop;
-import io.netty.util.concurrent.Future;
 import java.time.Duration;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.verification.VerificationWithTimeout;
 
 abstract class ChannelPoolTestBase {
+
+  /** How long we wait when verifying mocks for async invocations */
+  protected static final VerificationWithTimeout VERIFY_TIMEOUT = timeout(500);
 
   @Mock protected InternalDriverContext context;
   @Mock private DriverConfig config;
@@ -110,18 +110,5 @@ abstract class ChannelPoolTestBase {
         .thenReturn(adminExecutor.newSucceededFuture(null));
     when(driverChannel.toString()).thenReturn("channel" + id);
     return driverChannel;
-  }
-
-  // Wait for all the tasks on the pool's admin executor to complete.
-  void waitForPendingAdminTasks() {
-    // This works because the event loop group is single-threaded
-    Future<?> f = adminEventLoopGroup.schedule(() -> null, 5, TimeUnit.NANOSECONDS);
-    try {
-      Uninterruptibles.getUninterruptibly(f, 100, TimeUnit.MILLISECONDS);
-    } catch (ExecutionException e) {
-      fail("unexpected error", e.getCause());
-    } catch (TimeoutException e) {
-      fail("timed out while waiting for admin tasks to complete", e);
-    }
   }
 }
