@@ -139,43 +139,29 @@ line.
 When you add or review new code, take a moment to run the tests in `DEBUG` mode and check if the
 output looks good.
 
-### No stream API
+### Don't abuse the stream API
 
-Please don't use `java.util.stream` in the driver codebase. Streams were designed for *data 
-processing*, not to make your collection traversals "functional".
-
-Here's an example from the driver codebase (`ChannelSet`):
+The `java.util.stream` API is often used (abused?) as a "functional API for collections":
 
 ```java
-DriverChannel[] snapshot = this.channels;
-DriverChannel best = null;
-int bestScore = 0;
-for (DriverChannel channel : snapshot) {
-  int score = channel.availableIds();
-  if (score > bestScore) {
-    bestScore = score;
-    best = channel;
-  }
-}
-return best;
+List<Integer> sizes = words.stream().map(String::length).collect(Collectors.toList());
 ```
 
-And here's a terrible way to rewrite it using streams:
+The perceived advantages of this approach over traditional for-loops are debatable:
 
-```java
-// Don't do this:
-DriverChannel best =
-    Stream.of(snapshot)
-        .reduce((a, b) -> a.availableIds() > b.availableIds() ? a : b)
-        .get();
-```
+* readability: this is highly subjective. But consider the following:
+  * everyone can read for-loops, whether they are familiar with the Stream API or not. The opposite
+    is not true.
+  * the stream API does not spell out all the details: what kind of list does `Collectors.toList()`
+    return? Is it pre-sized? Mutable? Thread-safe?
+  * the stream API looks pretty on simple examples, but things can get ugly fast. Try rewriting
+    `NetworkTopologyReplicationStrategy` with streams.
+* concision: this is irrelevant. When we look at code we care about maintainability, not how many
+  keystrokes the author saved. The for-loop version of the above example is just 5 lines long, and
+  your brain doesn't take longer to parse it.
 
-The stream version is not easier to read, and will probably be slower (creating intermediary objects
-vs. an array iteration, compounded by the fact that this particular array typically has a low
-cardinality).
-
-The driver never does the kind of processing that the stream API is intended for; the only large
-collections we manipulate are result sets, and these get passed on to the client directly.
+The bottom line: don't try to "be functional" at all cost. Plain old for-loops are often just as
+simple.
 
 ### Never assume a specific format for `toString()`
 
