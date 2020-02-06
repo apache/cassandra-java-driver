@@ -162,6 +162,11 @@ public class DefaultNettyOptions implements NettyOptions {
       int sendBufferSize = config.getInt(DefaultDriverOption.SOCKET_SEND_BUFFER_SIZE);
       bootstrap.option(ChannelOption.SO_SNDBUF, sendBufferSize);
     }
+    if (config.isDefined(DefaultDriverOption.CONNECTION_CONNECT_TIMEOUT)) {
+      Duration connectTimeout = config.getDuration(DefaultDriverOption.CONNECTION_CONNECT_TIMEOUT);
+      bootstrap.option(
+          ChannelOption.CONNECT_TIMEOUT_MILLIS, Long.valueOf(connectTimeout.toMillis()).intValue());
+    }
   }
 
   @Override
