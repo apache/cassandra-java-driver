@@ -17,7 +17,13 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.connection.BusyConnectionException;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
+import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
+import com.datastax.oss.driver.internal.core.adminrequest.ThrottledAdminRequestHandler;
+import com.datastax.oss.driver.internal.core.pool.ChannelPool;
+import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.protocol.internal.Message;
 import io.netty.channel.Channel;
@@ -129,12 +135,45 @@ public class DriverChannel {
   }
 
   /**
-   * @return the number of available stream ids on the channel. This is used to weigh channels in
-   *     pools that have a size bigger than 1, in the load balancing policy, and for monitoring
-   *     purposes.
+   * @return the number of available stream ids on the channel; more precisely, this is the number
+   *     of {@link #preAcquireId()} calls for which the id has not been released yet. This is used
+   *     to weigh channels in pools that have a size bigger than 1, in the load balancing policy,
+   *     and for monitoring purposes.
    */
   public int getAvailableIds() {
     return inFlightHandler.getAvailableIds();
+  }
+
+  /**
+   * Indicates the intention to send a request using this channel.
+   *
+   * <p>There must be <b>exactly one</b> invocation of this method before each call to {@link
+   * #write(Message, boolean, Map, ResponseCallback)}. If this method returns true, the client
+   * <b>must</b> proceed with the write. If it returns false, it <b>must not</b> proceed.
+   *
+   * <p>This method is used together with {@link #getAvailableIds()} to track how many requests are
+   * currently executing on the channel, and avoid submitting a request that would result in a
+   * {@link BusyConnectionException}. The two methods follow atomic semantics: {@link
+   * #getAvailableIds()} returns the exact count of clients that have called {@link #preAcquireId()}
+   * and not yet released their stream id at this point in time.
+   *
+   * <p>Most of the time, the driver code calls this method automatically:
+   *
+   * <ul>
+   *   <li>if you obtained the channel from a pool ({@link ChannelPool#next()} or {@link
+   *       DefaultSession#getChannel(Node, String)}), <b>do not call</b> this method: it has already
+   *       been done as part of selecting the channel.
+   *   <li>if you use {@link ChannelHandlerRequest} or {@link AdminRequestHandler} for internal
+   *       queries, <b>do not call</b> this method, those classes already do it.
+   *   <li>however, if you use {@link ThrottledAdminRequestHandler}, you must specify a {@code
+   *       preAcquireId} argument to indicate whether to call this method or not. This is because
+   *       those requests are sometimes used with a channel that comes from a pool (requiring {@code
+   *       preAcquireId = false}), or sometimes with a standalone channel like in the control
+   *       connection (requiring {@code preAcquireId = true}).
+   * </ul>
+   */
+  public boolean preAcquireId() {
+    return inFlightHandler.preAcquireId();
   }
 
   /**

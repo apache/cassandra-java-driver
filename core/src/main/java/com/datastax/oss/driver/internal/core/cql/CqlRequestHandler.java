@@ -662,6 +662,7 @@ public class CqlRequestHandler implements Throttled {
         ThrottledAdminRequestHandler<ByteBuffer> reprepareHandler =
             ThrottledAdminRequestHandler.prepare(
                 channel,
+                true,
                 reprepareMessage,
                 repreparePayload.customPayload,
                 timeout,

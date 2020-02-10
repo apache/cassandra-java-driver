@@ -23,6 +23,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.concurrent.locks.ReentrantLock;
 import net.jcip.annotations.ThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Concurrent structure used to store the channels of a pool.
@@ -32,6 +34,15 @@ import net.jcip.annotations.ThreadSafe;
  */
 @ThreadSafe
 class ChannelSet implements Iterable<DriverChannel> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ChannelSet.class);
+  /**
+   * The maximum number of iterations in the busy wait loop in {@link #next()} when there are
+   * multiple channels. This is a backstop to protect against thread starvation, in practice we've
+   * never observed more than 3 iterations in tests.
+   */
+  private static final int MAX_ITERATIONS = 50;
+
   private volatile DriverChannel[] channels;
   private final ReentrantLock lock = new ReentrantLock(); // must be held when mutating the array
 
@@ -83,18 +94,27 @@ class ChannelSet implements Iterable<DriverChannel> {
       case 0:
         return null;
       case 1:
-        return snapshot[0];
+        DriverChannel onlyChannel = snapshot[0];
+        return onlyChannel.preAcquireId() ? onlyChannel : null;
       default:
-        DriverChannel best = null;
-        int bestScore = 0;
-        for (DriverChannel channel : snapshot) {
-          int score = channel.getAvailableIds();
-          if (score > bestScore) {
-            bestScore = score;
-            best = channel;
+        for (int i = 0; i < MAX_ITERATIONS; i++) {
+          DriverChannel best = null;
+          int bestScore = 0;
+          for (DriverChannel channel : snapshot) {
+            int score = channel.getAvailableIds();
+            if (score > bestScore) {
+              bestScore = score;
+              best = channel;
+            }
+          }
+          if (best == null) {
+            return null;
+          } else if (best.preAcquireId()) {
+            return best;
           }
         }
-        return best;
+        LOG.trace("Could not select a channel after {} iterations", MAX_ITERATIONS);
+        return null;
     }
   }
 

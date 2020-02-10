@@ -44,6 +44,9 @@ public class ChannelSetTest {
 
   @Test
   public void should_return_element_when_single() {
+    // Given
+    when(channel1.preAcquireId()).thenReturn(true);
+
     // When
     set.add(channel1);
 
@@ -51,6 +54,20 @@ public class ChannelSetTest {
     assertThat(set.size()).isEqualTo(1);
     assertThat(set.next()).isEqualTo(channel1);
     verify(channel1, never()).getAvailableIds();
+    verify(channel1).preAcquireId();
+  }
+
+  @Test
+  public void should_return_null_when_single_but_full() {
+    // Given
+    when(channel1.preAcquireId()).thenReturn(false);
+
+    // When
+    set.add(channel1);
+
+    // Then
+    assertThat(set.next()).isNull();
+    verify(channel1).preAcquireId();
   }
 
   @Test
@@ -59,6 +76,7 @@ public class ChannelSetTest {
     when(channel1.getAvailableIds()).thenReturn(2);
     when(channel2.getAvailableIds()).thenReturn(12);
     when(channel3.getAvailableIds()).thenReturn(8);
+    when(channel2.preAcquireId()).thenReturn(true);
 
     // When
     set.add(channel1);
@@ -71,12 +89,31 @@ public class ChannelSetTest {
     verify(channel1).getAvailableIds();
     verify(channel2).getAvailableIds();
     verify(channel3).getAvailableIds();
+    verify(channel2).preAcquireId();
 
     // When
     when(channel1.getAvailableIds()).thenReturn(15);
+    when(channel1.preAcquireId()).thenReturn(true);
 
     // Then
     assertThat(set.next()).isEqualTo(channel1);
+    verify(channel1).preAcquireId();
+  }
+
+  @Test
+  public void should_return_null_when_multiple_but_all_full() {
+    // Given
+    when(channel1.getAvailableIds()).thenReturn(0);
+    when(channel2.getAvailableIds()).thenReturn(0);
+    when(channel3.getAvailableIds()).thenReturn(0);
+
+    // When
+    set.add(channel1);
+    set.add(channel2);
+    set.add(channel3);
+
+    // Then
+    assertThat(set.next()).isNull();
   }
 
   @Test
@@ -85,6 +122,7 @@ public class ChannelSetTest {
     when(channel1.getAvailableIds()).thenReturn(2);
     when(channel2.getAvailableIds()).thenReturn(12);
     when(channel3.getAvailableIds()).thenReturn(8);
+    when(channel2.preAcquireId()).thenReturn(true);
 
     set.add(channel1);
     set.add(channel2);
@@ -93,6 +131,7 @@ public class ChannelSetTest {
 
     // When
     set.remove(channel2);
+    when(channel3.preAcquireId()).thenReturn(true);
 
     // Then
     assertThat(set.size()).isEqualTo(2);
@@ -100,6 +139,7 @@ public class ChannelSetTest {
 
     // When
     set.remove(channel3);
+    when(channel1.preAcquireId()).thenReturn(true);
 
     // Then
     assertThat(set.size()).isEqualTo(1);

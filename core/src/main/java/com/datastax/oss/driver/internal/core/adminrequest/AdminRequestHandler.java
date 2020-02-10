@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.adminrequest;
 
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.connection.BusyConnectionException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
@@ -54,6 +55,7 @@ public class AdminRequestHandler<ResultT> implements ResponseCallback {
       DriverChannel channel, Query query, Duration timeout, String logPrefix) {
     return new AdminRequestHandler<>(
         channel,
+        true,
         query,
         Frame.NO_PAYLOAD,
         timeout,
@@ -78,7 +80,7 @@ public class AdminRequestHandler<ResultT> implements ResponseCallback {
       debugString += " with parameters " + parameters;
     }
     return new AdminRequestHandler<>(
-        channel, message, Frame.NO_PAYLOAD, timeout, logPrefix, debugString, Rows.class);
+        channel, true, message, Frame.NO_PAYLOAD, timeout, logPrefix, debugString, Rows.class);
   }
 
   public static AdminRequestHandler<AdminResult> query(
@@ -87,6 +89,7 @@ public class AdminRequestHandler<ResultT> implements ResponseCallback {
   }
 
   private final DriverChannel channel;
+  private final boolean preAcquireId;
   private final Message message;
   private final Map<String, ByteBuffer> customPayload;
   private final Duration timeout;
@@ -100,6 +103,7 @@ public class AdminRequestHandler<ResultT> implements ResponseCallback {
 
   protected AdminRequestHandler(
       DriverChannel channel,
+      boolean preAcquireId,
       Message message,
       Map<String, ByteBuffer> customPayload,
       Duration timeout,
@@ -107,6 +111,7 @@ public class AdminRequestHandler<ResultT> implements ResponseCallback {
       String debugString,
       Class<? extends Result> expectedResponseType) {
     this.channel = channel;
+    this.preAcquireId = preAcquireId;
     this.message = message;
     this.customPayload = customPayload;
     this.timeout = timeout;
@@ -117,7 +122,14 @@ public class AdminRequestHandler<ResultT> implements ResponseCallback {
 
   public CompletionStage<ResultT> start() {
     LOG.debug("[{}] Executing {}", logPrefix, this);
-    channel.write(message, false, customPayload, this).addListener(this::onWriteComplete);
+    if (preAcquireId && !channel.preAcquireId()) {
+      setFinalError(
+          new BusyConnectionException(
+              String.format(
+                  "%s has reached its maximum number of simultaneous requests", channel)));
+    } else {
+      channel.write(message, false, customPayload, this).addListener(this::onWriteComplete);
+    }
     return result;
   }
 
@@ -199,6 +211,8 @@ public class AdminRequestHandler<ResultT> implements ResponseCallback {
         buildQueryOptions(currentOptions.pageSize, currentOptions.namedValues, pagingState);
     return new AdminRequestHandler<>(
         channel,
+        // This is called for next page queries, so we always need to reacquire an id:
+        true,
         new Query(current.query, newOptions),
         customPayload,
         timeout,

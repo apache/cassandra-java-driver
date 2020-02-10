@@ -117,17 +117,24 @@ public class InFlightHandler extends ChannelDuplexHandler {
   private void write(ChannelHandlerContext ctx, RequestMessage message, ChannelPromise promise) {
     if (closingGracefully) {
       promise.setFailure(new IllegalStateException("Channel is closing"));
+      streamIds.cancelPreAcquire();
       return;
     }
     int streamId = streamIds.acquire();
     if (streamId < 0) {
-      promise.setFailure(new BusyConnectionException(streamIds.getMaxAvailableIds()));
+      // Should not happen with the preAcquire mechanism, but handle gracefully
+      promise.setFailure(
+          new BusyConnectionException(
+              String.format(
+                  "Couldn't acquire a stream id from InFlightHandler on %s", ctx.channel())));
+      streamIds.cancelPreAcquire();
       return;
     }
 
     if (inFlight.containsKey(streamId)) {
       promise.setFailure(
           new IllegalStateException("Found pending callback for stream id " + streamId));
+      streamIds.cancelPreAcquire();
       return;
     }
 
@@ -372,6 +379,10 @@ public class InFlightHandler extends ChannelDuplexHandler {
 
   int getAvailableIds() {
     return streamIds.getAvailableIds();
+  }
+
+  boolean preAcquireId() {
+    return streamIds.preAcquire();
   }
 
   int getInFlight() {

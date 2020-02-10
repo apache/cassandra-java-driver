@@ -17,11 +17,15 @@ package com.datastax.oss.driver.internal.core.adminrequest;
 
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
+import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
+import com.datastax.oss.driver.internal.core.pool.ChannelPool;
+import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.response.Result;
 import com.datastax.oss.protocol.internal.response.result.Prepared;
@@ -38,8 +42,16 @@ import net.jcip.annotations.ThreadSafe;
 public class ThrottledAdminRequestHandler<ResultT> extends AdminRequestHandler<ResultT>
     implements Throttled {
 
+  /**
+   * @param preAcquireId whether to call {@link DriverChannel#preAcquireId()} before sending the
+   *     request. This <b>must be false</b> if you obtained the connection from a pool ({@link
+   *     ChannelPool#next()}, or {@link DefaultSession#getChannel(Node, String)}). It <b>must be
+   *     true</b> if you are using a standalone channel (e.g. in {@link ControlConnection} or one of
+   *     its auxiliary components).
+   */
   public static ThrottledAdminRequestHandler<AdminResult> query(
       DriverChannel channel,
+      boolean preAcquireId,
       Message message,
       Map<String, ByteBuffer> customPayload,
       Duration timeout,
@@ -49,6 +61,7 @@ public class ThrottledAdminRequestHandler<ResultT> extends AdminRequestHandler<R
       String debugString) {
     return new ThrottledAdminRequestHandler<>(
         channel,
+        preAcquireId,
         message,
         customPayload,
         timeout,
@@ -59,8 +72,14 @@ public class ThrottledAdminRequestHandler<ResultT> extends AdminRequestHandler<R
         Rows.class);
   }
 
+  /**
+   * @param preAcquireId whether to call {@link DriverChannel#preAcquireId()} before sending the
+   *     request. See {@link #query(DriverChannel, boolean, Message, Map, Duration,
+   *     RequestThrottler, SessionMetricUpdater, String, String)} for more explanations.
+   */
   public static ThrottledAdminRequestHandler<ByteBuffer> prepare(
       DriverChannel channel,
+      boolean preAcquireId,
       Message message,
       Map<String, ByteBuffer> customPayload,
       Duration timeout,
@@ -69,6 +88,7 @@ public class ThrottledAdminRequestHandler<ResultT> extends AdminRequestHandler<R
       String logPrefix) {
     return new ThrottledAdminRequestHandler<>(
         channel,
+        preAcquireId,
         message,
         customPayload,
         timeout,
@@ -85,6 +105,7 @@ public class ThrottledAdminRequestHandler<ResultT> extends AdminRequestHandler<R
 
   protected ThrottledAdminRequestHandler(
       DriverChannel channel,
+      boolean preAcquireId,
       Message message,
       Map<String, ByteBuffer> customPayload,
       Duration timeout,
@@ -93,7 +114,15 @@ public class ThrottledAdminRequestHandler<ResultT> extends AdminRequestHandler<R
       String logPrefix,
       String debugString,
       Class<? extends Result> expectedResponseType) {
-    super(channel, message, customPayload, timeout, logPrefix, debugString, expectedResponseType);
+    super(
+        channel,
+        preAcquireId,
+        message,
+        customPayload,
+        timeout,
+        logPrefix,
+        debugString,
+        expectedResponseType);
     this.startTimeNanos = System.nanoTime();
     this.throttler = throttler;
     this.metricUpdater = metricUpdater;
