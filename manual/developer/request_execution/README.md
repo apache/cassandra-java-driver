@@ -89,7 +89,7 @@ you need to provision for the max size anyway, so you might as well run with all
 the time. If on the other hand the fluctuations are rare and predictable (e.g. peak for holiday
 sales), then a manual configuration change is good enough.
 
-#### Wait-free
+#### No queuing
 
 To get a connection to a node, client code calls `ChannelPool.next()`. This returns the less busy
 connection, based on the the `getAvailableIds()` counter exposed by
@@ -101,12 +101,21 @@ introducing an additional wait for each node. If the user wants queuing when all
 it's better to do it at the session level with a [throttler](../../core/throttling/), which provides
 more intuitive configuration.
 
-Also, note that there is no preemptive acquisition of the stream id outside of the event loop: we
-select a channel based on a volatile counter, so a race condition is possible; if the channel gets
-full by the time we arrive in `InFlightHandler`, the client will simply get a
-`BusyConnectionException` and move on to the next node. We only acquire stream ids from the event
-loop, which makes it much easier to track the current load (in driver 3, "inflight count getting out
-of sync" bugs were very frequent).
+Before 4.5.0, there was also no preemptive acquisition of the stream id outside of the event loop:
+`getAvailableIds()` had volatile semantics, and a client could get a pooled connection that seemed
+not busy, but fail to acquire a stream id when it later tried the actual write. This turned out to
+not work well under high load, see [JAVA-2644](https://datastax-oss.atlassian.net/browse/JAVA-2644).
+
+Starting with 4.5.0, we've reintroduced a stronger guarantee (reminiscent of how things worked in
+3.x): clients **must call `DriverChannel.preAcquireId()` exactly once before each write**. If the
+call succeeds, `getAvailableIds()` is incremented immediately, and the client is guaranteed that
+there will be a stream id available for the write. `preAcquireId()` and `getAvailableIds()` have
+atomic semantics, so we can distribute the load more accurately.
+
+This comes at the cost of additional complexity: **we must ensure that every write is pre-acquired
+first**, so that `getAvailableIds()` doesn't get out of sync with the actual stream id usage inside
+`InFlightHandler`. This is explained in detail in the javadocs of `DriverChannel.preAcquireId()`,
+read them carefully. 
 
 The pool manages its channels with `ChannelSet`, a simple copy-on-write data structure.
 

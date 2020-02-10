@@ -30,6 +30,7 @@ public class StreamIdGeneratorTest {
   public void should_return_available_ids_in_sequence() {
     StreamIdGenerator generator = new StreamIdGenerator(8);
     for (int i = 0; i < 8; i++) {
+      assertThat(generator.preAcquire()).isTrue();
       assertThat(generator.acquire()).isEqualTo(i);
       assertThat(generator.getAvailableIds()).isEqualTo(7 - i);
     }
@@ -39,23 +40,28 @@ public class StreamIdGeneratorTest {
   public void should_return_minus_one_when_no_id_available() {
     StreamIdGenerator generator = new StreamIdGenerator(8);
     for (int i = 0; i < 8; i++) {
-      generator.acquire();
+      assertThat(generator.preAcquire()).isTrue();
+      // also validating that ids are held as soon as preAcquire() is called, even if acquire() has
+      // not been invoked yet
     }
     assertThat(generator.getAvailableIds()).isEqualTo(0);
-    assertThat(generator.acquire()).isEqualTo(-1);
+    assertThat(generator.preAcquire()).isFalse();
   }
 
   @Test
   public void should_return_previously_released_ids() {
     StreamIdGenerator generator = new StreamIdGenerator(8);
     for (int i = 0; i < 8; i++) {
-      generator.acquire();
+      assertThat(generator.preAcquire()).isTrue();
+      assertThat(generator.acquire()).isEqualTo(i);
     }
     generator.release(7);
     generator.release(2);
     assertThat(generator.getAvailableIds()).isEqualTo(2);
+    assertThat(generator.preAcquire()).isTrue();
     assertThat(generator.acquire()).isEqualTo(2);
+    assertThat(generator.preAcquire()).isTrue();
     assertThat(generator.acquire()).isEqualTo(7);
-    assertThat(generator.acquire()).isEqualTo(-1);
+    assertThat(generator.preAcquire()).isFalse();
   }
 }

@@ -69,6 +69,7 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
               assertThat(channel.getAvailableIds()).isEqualTo(128);
 
               // Write a request, should decrease the count
+              assertThat(channel.preAcquireId()).isTrue();
               Future<java.lang.Void> writeFuture =
                   channel.write(new Query("test"), false, Frame.NO_PAYLOAD, responseCallback);
               assertThat(writeFuture)

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
+import com.datastax.oss.driver.api.core.connection.BusyConnectionException;
 import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.protocol.internal.Frame;
@@ -35,6 +36,7 @@ abstract class ChannelHandlerRequest implements ResponseCallback {
 
   final Channel channel;
   final ChannelHandlerContext ctx;
+  final InFlightHandler inFlightHandler;
   private final long timeoutMillis;
 
   private ScheduledFuture<?> timeoutFuture;
@@ -42,6 +44,8 @@ abstract class ChannelHandlerRequest implements ResponseCallback {
   ChannelHandlerRequest(ChannelHandlerContext ctx, long timeoutMillis) {
     this.ctx = ctx;
     this.channel = ctx.channel();
+    this.inFlightHandler = ctx.pipeline().get(InFlightHandler.class);
+    assert inFlightHandler != null;
     this.timeoutMillis = timeoutMillis;
   }
 
@@ -60,10 +64,17 @@ abstract class ChannelHandlerRequest implements ResponseCallback {
 
   void send() {
     assert channel.eventLoop().inEventLoop();
-    DriverChannel.RequestMessage message =
-        new DriverChannel.RequestMessage(getRequest(), false, Frame.NO_PAYLOAD, this);
-    ChannelFuture writeFuture = channel.writeAndFlush(message);
-    writeFuture.addListener(this::writeListener);
+    if (!inFlightHandler.preAcquireId()) {
+      fail(
+          new BusyConnectionException(
+              String.format(
+                  "%s has reached its maximum number of simultaneous requests", channel)));
+    } else {
+      DriverChannel.RequestMessage message =
+          new DriverChannel.RequestMessage(getRequest(), false, Frame.NO_PAYLOAD, this);
+      ChannelFuture writeFuture = channel.writeAndFlush(message);
+      writeFuture.addListener(this::writeListener);
+    }
   }
 
   private void writeListener(Future<? super Void> writeFuture) {

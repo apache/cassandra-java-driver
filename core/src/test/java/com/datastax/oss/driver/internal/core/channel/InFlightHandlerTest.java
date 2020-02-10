@@ -57,6 +57,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   public void setup() {
     super.setup();
     MockitoAnnotations.initMocks(this);
+    when(streamIds.preAcquire()).thenReturn(true);
   }
 
   @Test
