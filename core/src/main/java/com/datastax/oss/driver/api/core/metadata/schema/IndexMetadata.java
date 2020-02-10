@@ -73,7 +73,7 @@ public interface IndexMetadata extends Describable {
           .append(getTable())
           .append(String.format(" (%s)", getTarget()))
           .newLine()
-          .append(String.format("USING '%s'", getClassName()));
+          .append(String.format("USING '%s'", getClassName().get()));
 
       // Some options already appear in the CREATE statement, ignore them
       Map<String, String> describedOptions =

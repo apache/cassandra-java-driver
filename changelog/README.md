@@ -4,6 +4,7 @@
 
 ### 4.5.0 (in progress)
 
+- [bug] JAVA-2630: Correctly handle custom classes in IndexMetadata.describe
 - [improvement] JAVA-1556: Publish Maven Bill Of Materials POM
 - [improvement] JAVA-2637: Bump Netty to 4.1.45
 - [bug] JAVA-2617: Reinstate generation of deps.txt for Insights
