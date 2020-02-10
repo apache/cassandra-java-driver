@@ -4,6 +4,7 @@
 
 ### 4.5.0 (in progress)
 
+- [bug] JAVA-2644: Revisit channel selection when pool size > 1
 - [bug] JAVA-2630: Correctly handle custom classes in IndexMetadata.describe
 - [improvement] JAVA-1556: Publish Maven Bill Of Materials POM
 - [improvement] JAVA-2637: Bump Netty to 4.1.45

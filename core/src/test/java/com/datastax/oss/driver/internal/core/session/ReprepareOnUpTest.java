@@ -43,7 +43,8 @@ import com.datastax.oss.protocol.internal.response.result.RawType;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import io.netty.channel.EventLoop;
+import io.netty.util.concurrent.EventExecutor;
+import io.netty.util.concurrent.ImmediateEventExecutor;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.ArrayDeque;
@@ -61,7 +62,6 @@ import org.mockito.MockitoAnnotations;
 public class ReprepareOnUpTest {
   @Mock private ChannelPool pool;
   @Mock private DriverChannel channel;
-  @Mock private EventLoop eventLoop;
   @Mock private InternalDriverContext context;
   @Mock private DriverConfig config;
   @Mock private DriverExecutionProfile defaultProfile;
@@ -76,8 +76,6 @@ public class ReprepareOnUpTest {
     MockitoAnnotations.initMocks(this);
 
     when(pool.next()).thenReturn(channel);
-    when(channel.eventLoop()).thenReturn(eventLoop);
-    when(eventLoop.inEventLoop()).thenReturn(true);
 
     when(config.getDefaultProfile()).thenReturn(defaultProfile);
     when(defaultProfile.getBoolean(DefaultDriverOption.REPREPARE_CHECK_SYSTEM_TABLE))
@@ -99,21 +97,13 @@ public class ReprepareOnUpTest {
   public void should_complete_immediately_if_no_prepared_statements() {
     // Given
     MockReprepareOnUp reprepareOnUp =
-        new MockReprepareOnUp("test", pool, getMockPayloads(/*none*/ ), context, whenPrepared);
-
-    // When
-    reprepareOnUp.start();
-
-    // Then
-    assertThatStage(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
-  }
-
-  @Test
-  public void should_complete_immediately_if_pool_empty() {
-    // Given
-    when(pool.next()).thenReturn(null);
-    MockReprepareOnUp reprepareOnUp =
-        new MockReprepareOnUp("test", pool, getMockPayloads('a'), context, whenPrepared);
+        new MockReprepareOnUp(
+            "test",
+            pool,
+            ImmediateEventExecutor.INSTANCE,
+            getMockPayloads(/*none*/ ),
+            context,
+            whenPrepared);
 
     // When
     reprepareOnUp.start();
@@ -126,11 +116,17 @@ public class ReprepareOnUpTest {
   public void should_reprepare_all_if_system_table_query_fails() {
     MockReprepareOnUp reprepareOnUp =
         new MockReprepareOnUp(
-            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), context, whenPrepared);
+            "test",
+            pool,
+            ImmediateEventExecutor.INSTANCE,
+            getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'),
+            context,
+            whenPrepared);
 
     reprepareOnUp.start();
 
     MockAdminQuery adminQuery = reprepareOnUp.queries.poll();
+    assertThat(adminQuery).isNotNull();
     assertThat(adminQuery.request).isInstanceOf(Query.class);
     assertThat(((Query) adminQuery.request).query)
         .isEqualTo("SELECT prepared_id FROM system.prepared_statements");
@@ -138,6 +134,7 @@ public class ReprepareOnUpTest {
 
     for (char c = 'a'; c <= 'f'; c++) {
       adminQuery = reprepareOnUp.queries.poll();
+      assertThat(adminQuery).isNotNull();
       assertThat(adminQuery.request).isInstanceOf(Prepare.class);
       assertThat(((Prepare) adminQuery.request).cqlQuery).isEqualTo("mock query " + c);
       adminQuery.resultFuture.complete(null);
@@ -150,11 +147,17 @@ public class ReprepareOnUpTest {
   public void should_reprepare_all_if_system_table_empty() {
     MockReprepareOnUp reprepareOnUp =
         new MockReprepareOnUp(
-            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), context, whenPrepared);
+            "test",
+            pool,
+            ImmediateEventExecutor.INSTANCE,
+            getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'),
+            context,
+            whenPrepared);
 
     reprepareOnUp.start();
 
     MockAdminQuery adminQuery = reprepareOnUp.queries.poll();
+    assertThat(adminQuery).isNotNull();
     assertThat(adminQuery.request).isInstanceOf(Query.class);
     assertThat(((Query) adminQuery.request).query)
         .isEqualTo("SELECT prepared_id FROM system.prepared_statements");
@@ -164,6 +167,7 @@ public class ReprepareOnUpTest {
 
     for (char c = 'a'; c <= 'f'; c++) {
       adminQuery = reprepareOnUp.queries.poll();
+      assertThat(adminQuery).isNotNull();
       assertThat(adminQuery.request).isInstanceOf(Prepare.class);
       assertThat(((Prepare) adminQuery.request).cqlQuery).isEqualTo("mock query " + c);
       adminQuery.resultFuture.complete(null);
@@ -179,13 +183,19 @@ public class ReprepareOnUpTest {
 
     MockReprepareOnUp reprepareOnUp =
         new MockReprepareOnUp(
-            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), context, whenPrepared);
+            "test",
+            pool,
+            ImmediateEventExecutor.INSTANCE,
+            getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'),
+            context,
+            whenPrepared);
 
     reprepareOnUp.start();
 
     MockAdminQuery adminQuery;
     for (char c = 'a'; c <= 'f'; c++) {
       adminQuery = reprepareOnUp.queries.poll();
+      assertThat(adminQuery).isNotNull();
       assertThat(adminQuery.request).isInstanceOf(Prepare.class);
       assertThat(((Prepare) adminQuery.request).cqlQuery).isEqualTo("mock query " + c);
       adminQuery.resultFuture.complete(null);
@@ -198,11 +208,17 @@ public class ReprepareOnUpTest {
   public void should_not_reprepare_already_known_statements() {
     MockReprepareOnUp reprepareOnUp =
         new MockReprepareOnUp(
-            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), context, whenPrepared);
+            "test",
+            pool,
+            ImmediateEventExecutor.INSTANCE,
+            getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'),
+            context,
+            whenPrepared);
 
     reprepareOnUp.start();
 
     MockAdminQuery adminQuery = reprepareOnUp.queries.poll();
+    assertThat(adminQuery).isNotNull();
     assertThat(adminQuery.request).isInstanceOf(Query.class);
     assertThat(((Query) adminQuery.request).query)
         .isEqualTo("SELECT prepared_id FROM system.prepared_statements");
@@ -212,6 +228,7 @@ public class ReprepareOnUpTest {
 
     for (char c = 'a'; c <= 'c'; c++) {
       adminQuery = reprepareOnUp.queries.poll();
+      assertThat(adminQuery).isNotNull();
       assertThat(adminQuery.request).isInstanceOf(Prepare.class);
       assertThat(((Prepare) adminQuery.request).cqlQuery).isEqualTo("mock query " + c);
       adminQuery.resultFuture.complete(null);
@@ -240,11 +257,17 @@ public class ReprepareOnUpTest {
 
     MockReprepareOnUp reprepareOnUp =
         new MockReprepareOnUp(
-            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), context, whenPrepared);
+            "test",
+            pool,
+            ImmediateEventExecutor.INSTANCE,
+            getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'),
+            context,
+            whenPrepared);
 
     reprepareOnUp.start();
 
     MockAdminQuery adminQuery = reprepareOnUp.queries.poll();
+    assertThat(adminQuery).isNotNull();
     assertThat(adminQuery.request).isInstanceOf(Query.class);
     assertThat(((Query) adminQuery.request).query)
         .isEqualTo("SELECT prepared_id FROM system.prepared_statements");
@@ -254,6 +277,7 @@ public class ReprepareOnUpTest {
 
     for (char c = 'a'; c <= 'c'; c++) {
       adminQuery = reprepareOnUp.queries.poll();
+      assertThat(adminQuery).isNotNull();
       assertThat(adminQuery.request).isInstanceOf(Prepare.class);
       assertThat(((Prepare) adminQuery.request).cqlQuery).isEqualTo("mock query " + c);
       adminQuery.resultFuture.complete(null);
@@ -268,11 +292,17 @@ public class ReprepareOnUpTest {
 
     MockReprepareOnUp reprepareOnUp =
         new MockReprepareOnUp(
-            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), context, whenPrepared);
+            "test",
+            pool,
+            ImmediateEventExecutor.INSTANCE,
+            getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'),
+            context,
+            whenPrepared);
 
     reprepareOnUp.start();
 
     MockAdminQuery adminQuery = reprepareOnUp.queries.poll();
+    assertThat(adminQuery).isNotNull();
     assertThat(adminQuery.request).isInstanceOf(Query.class);
     assertThat(((Query) adminQuery.request).query)
         .isEqualTo("SELECT prepared_id FROM system.prepared_statements");
@@ -286,6 +316,7 @@ public class ReprepareOnUpTest {
     // As we complete each statement, another one should enqueue:
     for (char c = 'a'; c <= 'c'; c++) {
       adminQuery = reprepareOnUp.queries.poll();
+      assertThat(adminQuery).isNotNull();
       assertThat(adminQuery.request).isInstanceOf(Prepare.class);
       assertThat(((Prepare) adminQuery.request).cqlQuery).isEqualTo("mock query " + c);
       adminQuery.resultFuture.complete(null);
@@ -295,6 +326,7 @@ public class ReprepareOnUpTest {
     // Complete the last 3:
     for (char c = 'd'; c <= 'f'; c++) {
       adminQuery = reprepareOnUp.queries.poll();
+      assertThat(adminQuery).isNotNull();
       assertThat(adminQuery.request).isInstanceOf(Prepare.class);
       assertThat(((Prepare) adminQuery.request).cqlQuery).isEqualTo("mock query " + c);
       adminQuery.resultFuture.complete(null);
@@ -321,10 +353,11 @@ public class ReprepareOnUpTest {
     MockReprepareOnUp(
         String logPrefix,
         ChannelPool pool,
+        EventExecutor adminExecutor,
         Map<ByteBuffer, RepreparePayload> repreparePayloads,
         InternalDriverContext context,
         Runnable whenPrepared) {
-      super(logPrefix, pool, repreparePayloads, context, whenPrepared);
+      super(logPrefix, pool, adminExecutor, repreparePayloads, context, whenPrepared);
     }
 
     @Override

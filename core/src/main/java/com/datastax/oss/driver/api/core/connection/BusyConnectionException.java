@@ -30,12 +30,19 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  */
 public class BusyConnectionException extends DriverException {
 
+  // Note: the driver doesn't use this constructor anymore, it is preserved only for backward
+  // compatibility.
+  @SuppressWarnings("unused")
   public BusyConnectionException(int maxAvailableIds) {
     this(
         String.format(
             "Connection has exceeded its maximum of %d simultaneous requests", maxAvailableIds),
         null,
         false);
+  }
+
+  public BusyConnectionException(String message) {
+    this(message, null, false);
   }
 
   private BusyConnectionException(

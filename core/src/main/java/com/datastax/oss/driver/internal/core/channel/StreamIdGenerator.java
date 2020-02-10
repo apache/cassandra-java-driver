@@ -16,14 +16,17 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import java.util.BitSet;
+import java.util.concurrent.atomic.AtomicInteger;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
  * Manages the set of identifiers used to distinguish multiplexed requests on a channel.
  *
- * <p>This class is not thread safe: calls to {@link #acquire()} and {@link #release(int)} must be
- * properly synchronized (in practice this is done by only calling them from the I/O thread).
- * However, {@link #getAvailableIds()} has volatile semantics.
+ * <p>{@link #preAcquire()} / {@link #getAvailableIds()} follow atomic semantics. See {@link
+ * DriverChannel#preAcquireId()} for more explanations.
+ *
+ * <p>Other methods are not synchronized, they are only called by {@link InFlightHandler} on the I/O
+ * thread.
  */
 @NotThreadSafe
 class StreamIdGenerator {
@@ -31,38 +34,52 @@ class StreamIdGenerator {
   private final int maxAvailableIds;
   // unset = available, set = borrowed (note that this is the opposite of the 3.x implementation)
   private final BitSet ids;
-  private volatile int availableIds;
+  private AtomicInteger availableIds;
 
   StreamIdGenerator(int maxAvailableIds) {
     this.maxAvailableIds = maxAvailableIds;
     this.ids = new BitSet(this.maxAvailableIds);
-    this.availableIds = this.maxAvailableIds;
+    this.availableIds = new AtomicInteger(this.maxAvailableIds);
   }
 
-  // safe because a given instance is always called from the same I/O thread
-  @SuppressWarnings({"NonAtomicVolatileUpdate", "NonAtomicOperationOnVolatileField"})
+  boolean preAcquire() {
+    while (true) {
+      int current = availableIds.get();
+      assert current >= 0;
+      if (current == 0) {
+        return false;
+      } else if (availableIds.compareAndSet(current, current - 1)) {
+        return true;
+      }
+    }
+  }
+
+  void cancelPreAcquire() {
+    int available = availableIds.incrementAndGet();
+    assert available <= maxAvailableIds;
+  }
+
   int acquire() {
+    assert availableIds.get() < maxAvailableIds;
     int id = ids.nextClearBit(0);
     if (id >= maxAvailableIds) {
       return -1;
     }
     ids.set(id);
-    availableIds--;
     return id;
   }
 
-  @SuppressWarnings({"NonAtomicVolatileUpdate", "NonAtomicOperationOnVolatileField"})
   void release(int id) {
-    if (ids.get(id)) {
-      availableIds++;
-    } else {
+    if (!ids.get(id)) {
       throw new IllegalStateException("Tried to release id that hadn't been borrowed: " + id);
     }
     ids.clear(id);
+    int available = availableIds.incrementAndGet();
+    assert available <= maxAvailableIds;
   }
 
   int getAvailableIds() {
-    return availableIds;
+    return availableIds.get();
   }
 
   int getMaxAvailableIds() {

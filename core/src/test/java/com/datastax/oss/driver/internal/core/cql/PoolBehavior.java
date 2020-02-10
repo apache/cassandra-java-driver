@@ -60,6 +60,7 @@ public class PoolBehavior {
       EventLoop eventLoop = mock(EventLoop.class);
       ChannelConfig config = mock(DefaultSocketChannelConfig.class);
       this.writePromise = ImmediateEventExecutor.INSTANCE.newPromise();
+      when(channel.preAcquireId()).thenReturn(true);
       when(channel.write(any(Message.class), anyBoolean(), anyMap(), any(ResponseCallback.class)))
           .thenAnswer(
               invocation -> {

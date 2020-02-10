@@ -408,6 +408,7 @@ public class PoolManager implements AsyncAutoCloseable {
         new ReprepareOnUp(
                 logPrefix + "|" + pool.getNode().getEndPoint(),
                 pool,
+                adminExecutor,
                 repreparePayloads,
                 context,
                 () -> RunOrSchedule.on(adminExecutor, () -> onPoolReady(pool)))

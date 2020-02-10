@@ -647,6 +647,7 @@ public class ContinuousCqlRequestHandler
     Duration timeout = executionProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
     ThrottledAdminRequestHandler.prepare(
             channel,
+            true,
             prepare,
             repreparePayload.customPayload,
             timeout,
@@ -899,6 +900,7 @@ public class ContinuousCqlRequestHandler
     LOG.trace("[{}] Sending request for more pages", logPrefix);
     ThrottledAdminRequestHandler.query(
             channel,
+            true,
             Revise.requestMoreContinuousPages(streamId, nextPages),
             statement.getCustomPayload(),
             timeoutOtherPages,
@@ -1011,6 +1013,7 @@ public class ContinuousCqlRequestHandler
     LOG.trace("[{}] Sending cancel request", logPrefix);
     ThrottledAdminRequestHandler.query(
             channel,
+            true,
             Revise.cancelContinuousPaging(streamId),
             statement.getCustomPayload(),
             timeoutOtherPages,
