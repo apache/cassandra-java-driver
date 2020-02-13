@@ -43,15 +43,15 @@ public class ThrottledAdminRequestHandler<ResultT> extends AdminRequestHandler<R
     implements Throttled {
 
   /**
-   * @param preAcquireId whether to call {@link DriverChannel#preAcquireId()} before sending the
-   *     request. This <b>must be false</b> if you obtained the connection from a pool ({@link
+   * @param shouldPreAcquireId whether to call {@link DriverChannel#preAcquireId()} before sending
+   *     the request. This <b>must be false</b> if you obtained the connection from a pool ({@link
    *     ChannelPool#next()}, or {@link DefaultSession#getChannel(Node, String)}). It <b>must be
    *     true</b> if you are using a standalone channel (e.g. in {@link ControlConnection} or one of
    *     its auxiliary components).
    */
   public static ThrottledAdminRequestHandler<AdminResult> query(
       DriverChannel channel,
-      boolean preAcquireId,
+      boolean shouldPreAcquireId,
       Message message,
       Map<String, ByteBuffer> customPayload,
       Duration timeout,
@@ -61,7 +61,7 @@ public class ThrottledAdminRequestHandler<ResultT> extends AdminRequestHandler<R
       String debugString) {
     return new ThrottledAdminRequestHandler<>(
         channel,
-        preAcquireId,
+        shouldPreAcquireId,
         message,
         customPayload,
         timeout,
@@ -73,13 +73,13 @@ public class ThrottledAdminRequestHandler<ResultT> extends AdminRequestHandler<R
   }
 
   /**
-   * @param preAcquireId whether to call {@link DriverChannel#preAcquireId()} before sending the
-   *     request. See {@link #query(DriverChannel, boolean, Message, Map, Duration,
+   * @param shouldPreAcquireId whether to call {@link DriverChannel#preAcquireId()} before sending
+   *     the request. See {@link #query(DriverChannel, boolean, Message, Map, Duration,
    *     RequestThrottler, SessionMetricUpdater, String, String)} for more explanations.
    */
   public static ThrottledAdminRequestHandler<ByteBuffer> prepare(
       DriverChannel channel,
-      boolean preAcquireId,
+      boolean shouldPreAcquireId,
       Message message,
       Map<String, ByteBuffer> customPayload,
       Duration timeout,
@@ -88,7 +88,7 @@ public class ThrottledAdminRequestHandler<ResultT> extends AdminRequestHandler<R
       String logPrefix) {
     return new ThrottledAdminRequestHandler<>(
         channel,
-        preAcquireId,
+        shouldPreAcquireId,
         message,
         customPayload,
         timeout,

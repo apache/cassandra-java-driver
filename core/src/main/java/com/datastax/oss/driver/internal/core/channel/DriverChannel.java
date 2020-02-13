@@ -166,10 +166,10 @@ public class DriverChannel {
    *   <li>if you use {@link ChannelHandlerRequest} or {@link AdminRequestHandler} for internal
    *       queries, <b>do not call</b> this method, those classes already do it.
    *   <li>however, if you use {@link ThrottledAdminRequestHandler}, you must specify a {@code
-   *       preAcquireId} argument to indicate whether to call this method or not. This is because
-   *       those requests are sometimes used with a channel that comes from a pool (requiring {@code
-   *       preAcquireId = false}), or sometimes with a standalone channel like in the control
-   *       connection (requiring {@code preAcquireId = true}).
+   *       shouldPreAcquireId} argument to indicate whether to call this method or not. This is
+   *       because those requests are sometimes used with a channel that comes from a pool
+   *       (requiring {@code shouldPreAcquireId = false}), or sometimes with a standalone channel
+   *       like in the control connection (requiring {@code shouldPreAcquireId = true}).
    * </ul>
    */
   public boolean preAcquireId() {

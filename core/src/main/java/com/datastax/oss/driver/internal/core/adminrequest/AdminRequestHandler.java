@@ -89,7 +89,7 @@ public class AdminRequestHandler<ResultT> implements ResponseCallback {
   }
 
   private final DriverChannel channel;
-  private final boolean preAcquireId;
+  private final boolean shouldPreAcquireId;
   private final Message message;
   private final Map<String, ByteBuffer> customPayload;
   private final Duration timeout;
@@ -103,7 +103,7 @@ public class AdminRequestHandler<ResultT> implements ResponseCallback {
 
   protected AdminRequestHandler(
       DriverChannel channel,
-      boolean preAcquireId,
+      boolean shouldPreAcquireId,
       Message message,
       Map<String, ByteBuffer> customPayload,
       Duration timeout,
@@ -111,7 +111,7 @@ public class AdminRequestHandler<ResultT> implements ResponseCallback {
       String debugString,
       Class<? extends Result> expectedResponseType) {
     this.channel = channel;
-    this.preAcquireId = preAcquireId;
+    this.shouldPreAcquireId = shouldPreAcquireId;
     this.message = message;
     this.customPayload = customPayload;
     this.timeout = timeout;
@@ -122,7 +122,7 @@ public class AdminRequestHandler<ResultT> implements ResponseCallback {
 
   public CompletionStage<ResultT> start() {
     LOG.debug("[{}] Executing {}", logPrefix, this);
-    if (preAcquireId && !channel.preAcquireId()) {
+    if (shouldPreAcquireId && !channel.preAcquireId()) {
       setFinalError(
           new BusyConnectionException(
               String.format(

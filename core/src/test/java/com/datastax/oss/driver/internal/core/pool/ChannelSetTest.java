@@ -152,4 +152,26 @@ public class ChannelSetTest {
     assertThat(set.size()).isEqualTo(0);
     assertThat(set.next()).isNull();
   }
+
+  /**
+   * Check that {@link ChannelSet#next()} doesn't spin forever if it keeps racing (see comments in
+   * the implementation).
+   */
+  @Test
+  public void should_not_loop_indefinitely_if_acquisition_keeps_failing() {
+    // Given
+    when(channel1.getAvailableIds()).thenReturn(2);
+    when(channel2.getAvailableIds()).thenReturn(12);
+    when(channel3.getAvailableIds()).thenReturn(8);
+    // channel2 is the most available but we keep failing to acquire (simulating the race condition)
+    when(channel2.preAcquireId()).thenReturn(false);
+
+    // When
+    set.add(channel1);
+    set.add(channel2);
+    set.add(channel3);
+
+    // Then
+    assertThat(set.next()).isNull();
+  }
 }
