@@ -245,14 +245,12 @@
             <assertj.version>${assertj.version}</assertj.version>
             <config.version>${config.version}</config.version>
             <commons-exec.version>${commons-exec.version}</commons-exec.version>
-            <guava.version>${guava.version}</guava.version>
             <hdrhistogram.version>${hdrhistogram.version}</hdrhistogram.version>
             <jackson.version>${jackson.version}</jackson.version>
             <jackson-databind.version>${jackson-databind.version}</jackson-databind.version>
             <logback.version>${logback.version}</logback.version>
             <lz4.version>${lz4.version}</lz4.version>
             <metrics.version>${metrics.version}</metrics.version>
-            <native-protocol.version>${native-protocol.version}</native-protocol.version>
             <netty.version>${netty.version}</netty.version>
             <simulacron.version>${simulacron.version}</simulacron.version>
             <slf4j.version>${slf4j.version}</slf4j.version>
