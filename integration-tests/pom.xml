@@ -232,7 +232,6 @@
             <reactive-streams.version>${reactive-streams.version}</reactive-streams.version>
             <rxjava.version>${rxjava.version}</rxjava.version>
             <tinkerpop.version>${tinkerpop.version}</tinkerpop.version>
-            <tinkerpop.osgi.version>${tinkerpop.osgi.version}</tinkerpop.osgi.version>
           </systemPropertyVariables>
         </configuration>
       </plugin>
@@ -262,7 +261,6 @@
             <reactive-streams.version>${reactive-streams.version}</reactive-streams.version>
             <rxjava.version>${rxjava.version}</rxjava.version>
             <tinkerpop.version>${tinkerpop.version}</tinkerpop.version>
-            <tinkerpop.osgi.version>${tinkerpop.osgi.version}</tinkerpop.osgi.version>
           </systemPropertyVariables>
         </configuration>
         <executions>

@@ -21,6 +21,7 @@ import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.options;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import com.google.common.io.CharSource;
@@ -177,7 +178,7 @@ public class BundleOptions {
 
   public static CompositeOption tinkerpopBundles() {
     String mavenVersion = getVersionFromSystemProperty("tinkerpop.version");
-    String osgiVersion = getVersionFromSystemProperty("tinkerpop.osgi.version");
+    String osgiVersion = toOsgiTinkerpopVersion(mavenVersion);
     return () ->
         options(
             CoreOptions.wrappedBundle(
@@ -296,5 +297,15 @@ public class BundleOptions {
             e);
       }
     }
+  }
+
+  private static String toOsgiTinkerpopVersion(String inVersion) {
+
+    Version inVersionObj = Version.parse(inVersion);
+    return String.join(
+        ".",
+        Integer.toString(inVersionObj.getMajor()),
+        Integer.toString(inVersionObj.getMinor()),
+        Integer.toString(inVersionObj.getPatch()));
   }
 }
