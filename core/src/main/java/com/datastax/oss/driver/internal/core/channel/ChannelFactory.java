@@ -49,6 +49,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +62,8 @@ public class ChannelFactory {
 
   /** A value for {@link #productType} that indicates that we are connected to Datastax Cloud. */
   private static final String DATASTAX_CLOUD_PRODUCT_TYPE = "DATASTAX_APOLLO";
+
+  private static final AtomicBoolean LOGGED_ORPHAN_WARNING = new AtomicBoolean();
 
   /**
    * A value for {@link #productType} that indicates that the server does not report any product
@@ -264,6 +267,19 @@ public class ChannelFactory {
               defaultConfig.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS);
           int maxOrphanRequests =
               defaultConfig.getInt(DefaultDriverOption.CONNECTION_MAX_ORPHAN_REQUESTS);
+          if (maxOrphanRequests >= maxRequestsPerConnection) {
+            if (LOGGED_ORPHAN_WARNING.compareAndSet(false, true)) {
+              LOG.warn(
+                  "[{}] Invalid value for {}: {}. It must be lower than {}. "
+                      + "Defaulting to {} (1/4 of max-requests) instead.",
+                  logPrefix,
+                  DefaultDriverOption.CONNECTION_MAX_ORPHAN_REQUESTS.getPath(),
+                  maxOrphanRequests,
+                  DefaultDriverOption.CONNECTION_MAX_REQUESTS.getPath(),
+                  maxRequestsPerConnection / 4);
+            }
+            maxOrphanRequests = maxRequestsPerConnection / 4;
+          }
 
           InFlightHandler inFlightHandler =
               new InFlightHandler(
