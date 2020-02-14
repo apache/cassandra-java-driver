@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### NGDG (in progress)
+### 4.5.0 (in progress)
 
 - [new feature] JAVA-2064: Add support for DSE 6.8 graph options in schema builder
 - [documentation] JAVA-2559: Fix GraphNode javadocs
@@ -25,9 +25,6 @@
 - [improvement] JAVA-2245: Rename graph engine Legacy to Classic and Modern to Core
 - [new feature] JAVA-2099: Enable Paging Through DSE Driver for Gremlin Traversals (2.x)
 - [new feature] JAVA-1898: Expose new table-level graph metadata
-
-### 4.5.0 (in progress)
-
 - [bug] JAVA-2642: Fix default value of max-orphan-requests
 - [bug] JAVA-2644: Revisit channel selection when pool size > 1
 - [bug] JAVA-2630: Correctly handle custom classes in IndexMetadata.describe
