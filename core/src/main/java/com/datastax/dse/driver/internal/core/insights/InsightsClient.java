@@ -242,9 +242,14 @@ public class InsightsClient {
   }
 
   private boolean shouldSendEvent() {
-    return insightsConfiguration.isMonitorReportingEnabled()
-        && InsightsSupportVerifier.supportsInsights(
-            driverContext.getMetadataManager().getMetadata().getNodes().values());
+    try {
+      return insightsConfiguration.isMonitorReportingEnabled()
+          && InsightsSupportVerifier.supportsInsights(
+              driverContext.getMetadataManager().getMetadata().getNodes().values());
+    } catch (Exception e) {
+      LOGGER.debug("Unexpected error while checking Insights support.", e);
+      return false;
+    }
   }
 
   @VisibleForTesting
