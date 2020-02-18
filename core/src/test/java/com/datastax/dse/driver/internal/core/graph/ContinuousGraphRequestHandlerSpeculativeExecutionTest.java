@@ -50,6 +50,7 @@ import com.datastax.oss.protocol.internal.response.Error;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -340,10 +341,11 @@ public class ContinuousGraphRequestHandlerSpeculativeExecutionTest {
           .isFailed(
               error -> {
                 assertThat(error).isInstanceOf(AllNodesFailedException.class);
-                Map<Node, Throwable> nodeErrors = ((AllNodesFailedException) error).getErrors();
+                Map<Node, List<Throwable>> nodeErrors =
+                    ((AllNodesFailedException) error).getAllErrors();
                 assertThat(nodeErrors).containsOnlyKeys(node1, node2);
-                assertThat(nodeErrors.get(node1)).isInstanceOf(BootstrappingException.class);
-                assertThat(nodeErrors.get(node2)).isInstanceOf(BootstrappingException.class);
+                assertThat(nodeErrors.get(node1).get(0)).isInstanceOf(BootstrappingException.class);
+                assertThat(nodeErrors.get(node2).get(0)).isInstanceOf(BootstrappingException.class);
               });
     }
   }
@@ -401,10 +403,11 @@ public class ContinuousGraphRequestHandlerSpeculativeExecutionTest {
           .isFailed(
               error -> {
                 assertThat(error).isInstanceOf(AllNodesFailedException.class);
-                Map<Node, Throwable> nodeErrors = ((AllNodesFailedException) error).getErrors();
+                Map<Node, List<Throwable>> nodeErrors =
+                    ((AllNodesFailedException) error).getAllErrors();
                 assertThat(nodeErrors).containsOnlyKeys(node1, node2);
-                assertThat(nodeErrors.get(node1)).isInstanceOf(BootstrappingException.class);
-                assertThat(nodeErrors.get(node2)).isInstanceOf(BootstrappingException.class);
+                assertThat(nodeErrors.get(node1).get(0)).isInstanceOf(BootstrappingException.class);
+                assertThat(nodeErrors.get(node2).get(0)).isInstanceOf(BootstrappingException.class);
               });
     }
   }
