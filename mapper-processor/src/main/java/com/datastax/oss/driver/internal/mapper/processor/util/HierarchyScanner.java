@@ -60,7 +60,7 @@ public class HierarchyScanner {
    *       later use (<code>newInterfacesToScan</code>)
    *   <li>Visit <code>interfacesToScan</code>, and append those interface's parents to <code>
    *       newInterfacesToScan</code> for later use)
-   *   <li>If <code>superClassElement != null</code> </code>Set <code>typeElement :=
+   *   <li>If <code>superClassElement != null</code> Set <code>typeElement :=
    *       superClassElement, interfacesToScan := newInterfacesToScan</code> and repeat starting at
    *       step 3
    *   <li>Visit <code>newInterfacesToScan</code> interfaces and their parents until we've reached
