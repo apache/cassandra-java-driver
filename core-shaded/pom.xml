@@ -273,7 +273,7 @@
             </goals>
             <configuration>
               <sourcepath>${project.build.directory}/shaded-sources</sourcepath>
-              <excludePackageNames>com.datastax.oss.driver.internal.*,com.datastax.dse.driver.internal.*,com.datastax.oss.driver.shaded.*</excludePackageNames>
+              <excludePackageNames>com.datastax.*.driver.internal*,com.datastax.oss.driver.shaded*</excludePackageNames>
               <!--
                 javadoc processes the shaded Netty sources (even though they're not included in the
                 report), and will complain if it doesn't find JCTools classes.
