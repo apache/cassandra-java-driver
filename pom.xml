@@ -163,6 +163,12 @@
         <groupId>org.apache.tinkerpop</groupId>
         <artifactId>gremlin-driver</artifactId>
         <version>${tinkerpop.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.reactivestreams</groupId>
