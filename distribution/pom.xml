@@ -120,12 +120,8 @@
             <artifactId>maven-javadoc-plugin</artifactId>
             <executions>
               <execution>
-                <id>dependencies-javadoc</id>
-                <!--
-                  For some reason this runs after the assembly plugin if bound to package, so bind
-                  to an earlier phase
-                -->
-                <phase>process-classes</phase>
+                <id>attach-javadocs</id>
+                <phase>package</phase>
                 <goals>
                   <goal>jar</goal>
                 </goals>

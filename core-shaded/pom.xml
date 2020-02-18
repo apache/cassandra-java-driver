@@ -267,7 +267,7 @@
         <artifactId>maven-javadoc-plugin</artifactId>
         <executions>
           <execution>
-            <id>attach-shaded-javadocs</id>
+            <id>attach-javadocs</id>
             <goals>
               <goal>jar</goal>
             </goals>
