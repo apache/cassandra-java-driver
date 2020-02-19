@@ -206,8 +206,8 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
     }
 
     /**
-     * @deprecated Preserved for backward compatibility, implementors should use {@link
-     *     #PlainTextAuthenticator(Credentials, EndPoint, String)} instead.
+     * @deprecated Preserved for backward compatibility, implementors should use the 3-arg
+     *     constructor {@code PlainTextAuthenticator(Credentials, EndPoint, String)} instead.
      */
     @Deprecated
     protected PlainTextAuthenticator(@NonNull Credentials credentials) {
