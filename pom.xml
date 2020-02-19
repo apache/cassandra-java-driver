@@ -49,10 +49,11 @@
     <esri.version>1.2.1</esri.version>
     <tinkerpop.version>3.4.5</tinkerpop.version>
     <slf4j.version>1.7.26</slf4j.version>
-    <esri.version>1.2.1</esri.version>
     <reactive-streams.version>1.0.2</reactive-streams.version>
+    <json.version>20190722</json.version>
     <jackson.version>2.10.0</jackson.version>
     <jackson-databind.version>2.10.0</jackson-databind.version>
+    <legacy-jackson.version>1.9.12</legacy-jackson.version>
     <!-- optional dependencies -->
     <snappy.version>1.1.7.3</snappy.version>
     <lz4.version>1.6.0</lz4.version>
@@ -69,13 +70,8 @@
     <jax-rs.version>2.0.1</jax-rs.version>
     <jsr353-ri.version>1.1.4</jsr353-ri.version>
     <rxjava.version>2.2.2</rxjava.version>
-    <json.version>20180130</json.version>
-    <!-- esri dependency (used only in OSGi integration tests) -->
-    <legacy-jackson.version>1.9.12</legacy-jackson.version>
     <awaitility.version>4.0.2</awaitility.version>
     <apacheds.version>2.0.0-M19</apacheds.version>
-    <!-- esri dependencies (used only in OSGi integration tests) -->
-    <json.version>20180130</json.version>
     <surefire.version>2.22.2</surefire.version>
     <skipTests>false</skipTests>
     <skipUnitTests>${skipTests}</skipUnitTests>
