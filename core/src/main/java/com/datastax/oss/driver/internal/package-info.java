@@ -18,6 +18,6 @@
  *
  * <p>The types present here (and in subpackages) should not be used from client applications. If
  * you decide to use them, do so at your own risk: binary compatibility is best-effort, and we
- * reserve the right to break things at any time. Documentation may be sparse
+ * reserve the right to break things at any time. Documentation may be sparse.
  */
 package com.datastax.oss.driver.internal;
