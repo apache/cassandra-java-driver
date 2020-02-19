@@ -180,8 +180,31 @@
                 </relocation>
               </relocations>
               <filters>
-                <!-- Note: most exclusions are done later on with the dependency plugin, but
-                 these one must be done here because their pattern is too wide -->
+                <!-- Exclude everything under META-INF -->
+                <filter>
+                  <artifact>com.datastax.oss:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/**</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>io.netty:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/**</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>com.esri.geometry:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/**</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>org.json:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/**</exclude>
+                  </excludes>
+                </filter>
                 <filter>
                   <artifact>org.codehaus.jackson:*</artifact>
                   <excludes>
@@ -217,11 +240,6 @@
                   <outputDirectory>${project.build.outputDirectory}</outputDirectory>
                 </artifactItem>
               </artifactItems>
-              <!--
-              Exclude leftovers from the shading phase (this could also be done with a
-              resource transformer by the shade plugin itself, but this way is more flexible).
-              -->
-              <excludes>META-INF/maven/com.datastax.oss/java-driver-core/**, META-INF/maven/io.netty/**, META-INF/maven/com.esri.geometry/**, META-INF/maven/org.json/**</excludes>
             </configuration>
           </execution>
           <!-- Unpack shaded sources in order to run javadoc on them: -->
