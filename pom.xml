@@ -146,6 +146,11 @@
         <version>${esri.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.json</groupId>
+        <artifactId>json</artifactId>
+        <version>${json.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.tinkerpop</groupId>
         <artifactId>gremlin-core</artifactId>
         <version>${tinkerpop.version}</version>
