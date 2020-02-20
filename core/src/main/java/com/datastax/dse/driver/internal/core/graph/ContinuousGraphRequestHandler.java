@@ -78,7 +78,6 @@ public class ContinuousGraphRequestHandler
     message =
         GraphConversions.createContinuousMessageFromGraphStatement(
             statement, subProtocol, executionProfile, context, graphBinaryModule);
-    throttler.register(this);
     globalTimeout =
         MoreObjects.firstNonNull(
             statement.getTimeout(),
@@ -86,6 +85,9 @@ public class ContinuousGraphRequestHandler
     maxEnqueuedPages =
         executionProfile.getInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES);
     maxPages = executionProfile.getInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_PAGES);
+    // NOTE that ordering of the following statement matters.
+    // We should register this request after all fields have been initialized.
+    throttler.register(this);
   }
 
   @NonNull
