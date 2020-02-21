@@ -333,8 +333,8 @@ public class NodeStateManager implements AsyncAutoCloseable {
                   (success, error) -> {
                     try {
                       if (error != null) {
-                        LOG.debug(
-                            "[{}] Error while refreshing info for {}", logPrefix, node, error);
+                        Loggers.warnWithException(
+                            LOG, "[{}] Error while refreshing info for {}", logPrefix, node, error);
                       }
                       // Fire the event whether the refresh succeeded or not
                       eventBus.fire(NodeStateEvent.changed(oldState, newState, node));

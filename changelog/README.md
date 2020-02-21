@@ -4,6 +4,7 @@
 
 ### 4.5.0 (in progress)
 
+- [bug] JAVA-2654: Make AdminRequestHandler handle integer serialization
 - [improvement] JAVA-2618: Improve error handling in request handlers
 - [new feature] JAVA-2064: Add support for DSE 6.8 graph options in schema builder
 - [documentation] JAVA-2559: Fix GraphNode javadocs

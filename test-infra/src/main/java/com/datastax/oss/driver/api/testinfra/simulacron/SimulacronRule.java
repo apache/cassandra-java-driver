@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 public class SimulacronRule extends CassandraResourceRule {
   // TODO perhaps share server some other way
   // TODO: Temporarily do not release addresses to ensure IPs are always ordered
+  // TODO: Add a way to configure the server for multiple nodes per ip
   public static final Server server =
       Server.builder()
           .withAddressResolver(

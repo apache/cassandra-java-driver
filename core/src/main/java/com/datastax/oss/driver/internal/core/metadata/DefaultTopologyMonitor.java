@@ -250,9 +250,15 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   @VisibleForTesting
   protected CompletionStage<AdminResult> query(
       DriverChannel channel, String queryString, Map<String, Object> parameters) {
-    return AdminRequestHandler.query(
-            channel, queryString, parameters, timeout, INFINITE_PAGE_SIZE, logPrefix)
-        .start();
+    AdminRequestHandler<AdminResult> handler;
+    try {
+      handler =
+          AdminRequestHandler.query(
+              channel, queryString, parameters, timeout, INFINITE_PAGE_SIZE, logPrefix);
+    } catch (Exception e) {
+      return CompletableFutures.failedFuture(e);
+    }
+    return handler.start();
   }
 
   private CompletionStage<AdminResult> query(DriverChannel channel, String queryString) {
