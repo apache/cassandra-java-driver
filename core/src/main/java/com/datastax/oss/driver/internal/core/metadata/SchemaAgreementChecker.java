@@ -30,7 +30,6 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -205,12 +204,7 @@ class SchemaAgreementChecker {
   @VisibleForTesting
   protected CompletionStage<AdminResult> query(String queryString) {
     return AdminRequestHandler.query(
-            channel,
-            queryString,
-            Collections.emptyMap(),
-            queryTimeout,
-            INFINITE_PAGE_SIZE,
-            logPrefix)
+            channel, queryString, queryTimeout, INFINITE_PAGE_SIZE, logPrefix)
         .start();
   }
 }
