@@ -71,7 +71,7 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
     inOrder.verify(eventBus, VERIFY_TIMEOUT.times(1)).fire(ChannelEvent.channelClosed(node));
 
     // Reconnection should have kicked in and started to open channel4, do not complete it yet
-    verify(reconnectionSchedule).nextDelay();
+    verify(reconnectionSchedule, VERIFY_TIMEOUT).nextDelay();
     factoryHelper.waitForCalls(node, 1);
 
     CompletionStage<Void> closeFuture = pool.closeAsync();
@@ -138,7 +138,7 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
     inOrder.verify(eventBus, VERIFY_TIMEOUT.times(1)).fire(ChannelEvent.channelClosed(node));
 
     // Reconnection should have kicked in and started to open a channel, do not complete it yet
-    verify(reconnectionSchedule).nextDelay();
+    verify(reconnectionSchedule, VERIFY_TIMEOUT).nextDelay();
     factoryHelper.waitForCalls(node, 1);
 
     CompletionStage<Void> closeFuture = pool.forceCloseAsync();
