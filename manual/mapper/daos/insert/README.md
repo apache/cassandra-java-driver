@@ -99,12 +99,12 @@ If a table was specified when creating the DAO, then the generated query targets
 Otherwise, it uses the default table name for the entity (which is determined by the name of the
 entity class and the [naming strategy](../../entities/#naming-strategy)).
 
-[default keyspace]:             https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
-[@Insert]:                      https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/mapper/annotations/Insert.html
-[ResultSet]:                    https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/cql/ResultSet.html
-[ResultSet#wasApplied()]:       https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/cql/ResultSet.html#wasApplied--
-[ResultSet#getExecutionInfo()]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/cql/ResultSet.html#getExecutionInfo--
-[BoundStatement]:               https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/cql/BoundStatement.html
+[default keyspace]:             https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
+[@Insert]:                      https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/mapper/annotations/Insert.html
+[ResultSet]:                    https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[ResultSet#wasApplied()]:       https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/cql/ResultSet.html#wasApplied--
+[ResultSet#getExecutionInfo()]: https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/cql/ResultSet.html#getExecutionInfo--
+[BoundStatement]:               https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/cql/BoundStatement.html
 
 
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html

@@ -145,6 +145,6 @@ datastax-java-driver {
 If you enable `throttling.delay`, make sure to also check the associated extra options to correctly
 size the underlying histograms (`metrics.session.throttling.delay.*`).
 
-[RequestThrottlingException]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/RequestThrottlingException.html
-[AllNodesFailedException]:    https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/AllNodesFailedException.html
-[BusyConnectionException]:    https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/core/connection/BusyConnectionException.html
+[RequestThrottlingException]: https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/RequestThrottlingException.html
+[AllNodesFailedException]:    https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/AllNodesFailedException.html
+[BusyConnectionException]:    https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/connection/BusyConnectionException.html

@@ -83,6 +83,6 @@ dropKeyspace("cycling").ifExists();
 // DROP KEYSPACE IF EXISTS cycling
 ```
 
-[SchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
+[SchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
 
 

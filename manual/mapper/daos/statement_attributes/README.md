@@ -60,4 +60,4 @@ Product product =
     dao.findById(1, builder -> builder.setConsistencyLevel(DefaultConsistencyLevel.QUORUM));
 ```
 
-[@StatementAttributes]: https://docs.datastax.com/en/drivers/java/4.4/com/datastax/oss/driver/api/mapper/annotations/StatementAttributes.html
+[@StatementAttributes]: https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/mapper/annotations/StatementAttributes.html
