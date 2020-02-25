@@ -239,9 +239,9 @@ public class SchemaChangesIT {
     should_handle_creation(
         "CREATE TABLE scores(user text, game text, score int, PRIMARY KEY (user, game))",
         "CREATE MATERIALIZED VIEW highscores "
-            + "AS SELECT user, score FROM scores "
+            + "AS SELECT game, user, score FROM scores "
             + "WHERE game IS NOT NULL AND score IS NOT NULL PRIMARY KEY (game, score, user) "
-            + "WITH CLUSTERING ORDER BY (score DESC)",
+            + "WITH CLUSTERING ORDER BY (score DESC, user DESC)",
         metadata ->
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
@@ -269,9 +269,9 @@ public class SchemaChangesIT {
         ImmutableList.of(
             "CREATE TABLE scores(user text, game text, score int, PRIMARY KEY (user, game))",
             "CREATE MATERIALIZED VIEW highscores "
-                + "AS SELECT user, score FROM scores "
+                + "AS SELECT game, user, score FROM scores "
                 + "WHERE game IS NOT NULL AND score IS NOT NULL PRIMARY KEY (game, score, user) "
-                + "WITH CLUSTERING ORDER BY (score DESC)"),
+                + "WITH CLUSTERING ORDER BY (score DESC, user DESC)"),
         "DROP MATERIALIZED VIEW highscores",
         metadata ->
             metadata
@@ -287,9 +287,9 @@ public class SchemaChangesIT {
         ImmutableList.of(
             "CREATE TABLE scores(user text, game text, score int, PRIMARY KEY (user, game))",
             "CREATE MATERIALIZED VIEW highscores "
-                + "AS SELECT user, score FROM scores "
+                + "AS SELECT game, user, score FROM scores "
                 + "WHERE game IS NOT NULL AND score IS NOT NULL PRIMARY KEY (game, score, user) "
-                + "WITH CLUSTERING ORDER BY (score DESC)"),
+                + "WITH CLUSTERING ORDER BY (score DESC, user DESC)"),
         "ALTER MATERIALIZED VIEW highscores WITH comment = 'The best score for each game'",
         metadata ->
             metadata
