@@ -15,7 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.schema.parsing;
 
+import com.datastax.dse.driver.api.core.metadata.DseNodeProperties;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.schema.Describable;
 import com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
@@ -72,7 +76,7 @@ public abstract class RelationParser {
               CqlIdentifier.fromInternal("compression"),
               ImmutableMap.copyOf(SimpleJsonParser.parseStringMap(row.getString(name))));
         }
-      } else {
+      } else if (!isDeprecatedInCassandra4(name)) {
         // Default case, read the value in a generic fashion
         Object value = row.get(name, codec);
         if (value != null) {
@@ -81,6 +85,26 @@ public abstract class RelationParser {
       }
     }
     return builder.build();
+  }
+
+  /**
+   * Handle a few oddities in Cassandra 4: some options still appear in system_schema.tables, but
+   * they are not valid in CREATE statements anymore. We need to exclude them from our metadata,
+   * otherwise {@link Describable#describe(boolean)} will generate invalid CQL.
+   */
+  private boolean isDeprecatedInCassandra4(String name) {
+    return isCassandra4OrAbove()
+        && (name.equals("read_repair_chance")
+            || name.equals("dclocal_read_repair_chance")
+            // default_time_to_live is not allowed in CREATE MATERIALIZED VIEW statements
+            || (name.equals("default_time_to_live") && (this instanceof ViewParser)));
+  }
+
+  private boolean isCassandra4OrAbove() {
+    Node node = rows.getNode();
+    return !node.getExtras().containsKey(DseNodeProperties.DSE_VERSION)
+        && node.getCassandraVersion() != null
+        && node.getCassandraVersion().nextStable().compareTo(Version.V4_0_0) >= 0;
   }
 
   public static void appendOptions(Map<CqlIdentifier, Object> options, ScriptBuilder builder) {
