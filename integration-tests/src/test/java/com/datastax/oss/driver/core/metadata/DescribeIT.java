@@ -18,7 +18,6 @@ package com.datastax.oss.driver.core.metadata;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -27,14 +26,16 @@ import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Closer;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
+import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
+import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
+import com.google.common.io.Files;
+import java.io.File;
+import java.net.URL;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -50,13 +51,12 @@ public class DescribeIT {
 
   private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  // disable debouncer to speed up test.
   private static final SessionRule<CqlSession> SESSION_RULE =
       SessionRule.builder(CCM_RULE)
-          .withKeyspace(false)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+                  // disable debouncer to speed up test.
                   .withDuration(DefaultDriverOption.METADATA_SCHEMA_WINDOW, Duration.ofSeconds(0))
                   .build())
           .build();
@@ -64,193 +64,98 @@ public class DescribeIT {
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
-  /**
-   * Creates a keyspace using a variety of features and ensures {@link
-   * com.datastax.oss.driver.api.core.metadata.schema.Describable#describe(boolean)} contains the
-   * expected data in the expected order. This is not exhaustive, but covers quite a bit of
-   * different scenarios (materialized views, aggregates, functions, nested UDTs, etc.).
-   *
-   * <p>The test also verifies that the generated schema is the same whether the keyspace and its
-   * schema was created during the lifecycle of the cluster or before connecting.
-   *
-   * <p>Note that this test might be fragile in the future if default option values change in
-   * cassandra. In order to deal with new features, we create a schema for each tested C* version,
-   * and if one is not present the test is failed.
-   */
-  @Test
-  public void create_schema_and_ensure_exported_cql_is_as_expected() {
-    CqlIdentifier keyspace = SessionUtils.uniqueKeyspaceId();
-    String keyspaceAsCql = keyspace.asCql(true);
-    String expectedCql = getExpectedCqlString(keyspaceAsCql);
+  private static final Splitter STATEMENT_SPLITTER =
+      // Use a regex to ignore semicolons in function scripts
+      Splitter.on(Pattern.compile(";\n")).omitEmptyStrings();
 
-    CqlSession session = SESSION_RULE.session();
+  private Version serverVersion;
+  private boolean isDse;
 
-    // create keyspace
-    session.execute(
-        String.format(
-            "CREATE KEYSPACE %s "
-                + "WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}",
-            keyspace));
-
-    // connect session to this keyspace.
-    session.execute(String.format("USE %s", keyspace.asCql(false)));
-
-    Optional<KeyspaceMetadata> originalKsMeta = session.getMetadata().getKeyspace(keyspace);
-
-    // Usertype 'ztype' with two columns.  Given name to ensure that even though it has an
-    // alphabetically later name, it shows up before other user types ('ctype') that depend on it.
-    session.execute("CREATE TYPE ztype(c text, a int)");
-
-    // Usertype 'xtype' with two columns.  At same level as 'ztype' since both are depended on by
-    // ctype, should show up before 'ztype' because it's alphabetically before, even though it was
-    // created after.
-    session.execute("CREATE TYPE xtype(d text)");
-
-    // Usertype 'ctype' which depends on both ztype and xtype, therefore ztype and xtype should show
-    // up earlier.
-    session.execute(
-        String.format(
-            "CREATE TYPE ctype(z frozen<%s.ztype>, x frozen<%s.xtype>)",
-            keyspaceAsCql, keyspaceAsCql));
-
-    // Usertype 'btype' which has no dependencies, should show up before 'xtype' and 'ztype' since
-    // it's alphabetically before.
-    session.execute("CREATE TYPE btype(a text)");
-
-    // Usertype 'atype' which depends on 'ctype', so should show up after 'ctype', 'xtype' and
-    // 'ztype'.
-    session.execute(String.format("CREATE TYPE atype(c frozen<%s.ctype>)", keyspaceAsCql));
-
-    // A simple table with a udt column and LCS compaction strategy.
-    session.execute(
-        String.format(
-            "CREATE TABLE ztable(zkey text, a frozen<%s.atype>, PRIMARY KEY(zkey)) "
-                + "WITH compaction = {'class' : 'LeveledCompactionStrategy', 'sstable_size_in_mb' : 95}",
-            keyspaceAsCql));
-
-    // date type requries 2.2+
-    if (CCM_RULE.getCassandraVersion().compareTo(Version.V2_2_0) >= 0) {
-      // A table that will have materialized views (copied from mv docs)
-      session.execute(
-          "CREATE TABLE cyclist_mv(cid uuid, name text, age int, birthday date, country text, "
-              + "PRIMARY KEY(cid))");
-
-      // index on table with view, index should be printed first.
-      session.execute("CREATE INDEX cyclist_by_country ON cyclist_mv(country)");
-
-      // materialized views require 3.0+
-      if (CCM_RULE.getCassandraVersion().compareTo(Version.V3_0_0) >= 0) {
-        // A materialized view for cyclist_mv, reverse clustering.  created first to ensure creation
-        // order does not matter, alphabetical does.
-        session.execute(
-            "CREATE MATERIALIZED VIEW cyclist_by_r_age "
-                + "AS SELECT age, birthday, name, country "
-                + "FROM cyclist_mv "
-                + "WHERE age IS NOT NULL AND cid IS NOT NULL "
-                + "PRIMARY KEY (age, cid) "
-                + "WITH CLUSTERING ORDER BY (cid DESC)");
-
-        // A materialized view for cyclist_mv, select *
-        session.execute(
-            "CREATE MATERIALIZED VIEW cyclist_by_a_age "
-                + "AS SELECT * "
-                + "FROM cyclist_mv "
-                + "WHERE age IS NOT NULL AND cid IS NOT NULL "
-                + "PRIMARY KEY (age, cid)");
-
-        // A materialized view for cyclist_mv, select columns
-        session.execute(
-            "CREATE MATERIALIZED VIEW cyclist_by_age "
-                + "AS SELECT age, birthday, name, country "
-                + "FROM cyclist_mv "
-                + "WHERE age IS NOT NULL AND cid IS NOT NULL "
-                + "PRIMARY KEY (age, cid) WITH comment = 'simple view'");
-      }
-    }
-
-    // A table with a secondary index, taken from documentation on secondary index.
-    session.execute(
-        "CREATE TABLE rank_by_year_and_name(race_year int, race_name text, rank int, cyclist_name text, "
-            + "PRIMARY KEY((race_year, race_name), rank))");
-
-    session.execute("CREATE INDEX ryear ON rank_by_year_and_name(race_year)");
-
-    session.execute("CREATE INDEX rrank ON rank_by_year_and_name(rank)");
-
-    // udfs and udas require 2.22+
-    if (CCM_RULE.getCassandraVersion().compareTo(Version.V2_2_0) >= 0) {
-      // UDFs
-      session.execute(
-          "CREATE OR REPLACE FUNCTION avgState ( state tuple<int,bigint>, val int ) CALLED ON NULL INPUT RETURNS tuple<int,bigint> LANGUAGE java AS \n"
-              + "  'if (val !=null) { state.setInt(0, state.getInt(0)+1); state.setLong(1, state.getLong(1)+val.intValue()); } return state;';");
-      session.execute(
-          "CREATE OR REPLACE FUNCTION avgFinal ( state tuple<int,bigint> ) CALLED ON NULL INPUT RETURNS double LANGUAGE java AS \n"
-              + "  'double r = 0; if (state.getInt(0) == 0) return null; r = state.getLong(1); r /= state.getInt(0); return Double.valueOf(r);';");
-
-      // UDAs
-      session.execute(
-          "CREATE AGGREGATE IF NOT EXISTS mean ( int ) \n"
-              + "SFUNC avgState STYPE tuple<int,bigint> FINALFUNC avgFinal INITCOND (0,0);");
-      session.execute(
-          "CREATE AGGREGATE IF NOT EXISTS average ( int ) \n"
-              + "SFUNC avgState STYPE tuple<int,bigint> FINALFUNC avgFinal INITCOND (0,0);");
-    }
-
-    // Since metadata is immutable, do not expect anything in the original keyspace meta.
-    assertThat(originalKsMeta).isPresent();
-
-    assertThat(originalKsMeta.get().getTables()).isEmpty();
-    assertThat(originalKsMeta.get().getViews()).isEmpty();
-    assertThat(originalKsMeta.get().getFunctions()).isEmpty();
-    assertThat(originalKsMeta.get().getAggregates()).isEmpty();
-    assertThat(originalKsMeta.get().getUserDefinedTypes()).isEmpty();
-
-    // validate that the exported schema matches what was expected exactly.
-    Optional<KeyspaceMetadata> ks = SESSION_RULE.session().getMetadata().getKeyspace(keyspace);
-    assertThat(ks.get().describeWithChildren(true).trim()).isEqualTo(expectedCql);
-
-    // Also validate that when you create a Session with schema already created that the exported
-    // string is the same.
-    try (CqlSession newSession = SessionUtils.newSession(CCM_RULE)) {
-      ks = newSession.getMetadata().getKeyspace(keyspace);
-      assertThat(ks.get().describeWithChildren(true).trim()).isEqualTo(expectedCql);
-    }
+  @Before
+  public void setup() {
+    Optional<Version> dseVersion = CCM_RULE.getDseVersion();
+    isDse = dseVersion.isPresent();
+    serverVersion =
+        isDse ? dseVersion.get().nextStable() : CCM_RULE.getCassandraVersion().nextStable();
   }
 
-  private String getExpectedCqlString(String keyspace) {
-    String majorMinor =
-        CCM_RULE.getCassandraVersion().getMajor() + "." + CCM_RULE.getCassandraVersion().getMinor();
-    String resourceName = "/describe_it_test_" + majorMinor + ".cql";
+  @Test
+  public void describe_output_should_match_creation_script() throws Exception {
+    CqlSession session = SESSION_RULE.session();
 
-    Closer closer = Closer.create();
-    try {
-      InputStream is = DescribeIT.class.getResourceAsStream(resourceName);
-      if (is == null) {
-        // If no schema file is defined for tested cassandra version, just try 3.11.
-        if (CCM_RULE.getCassandraVersion().compareTo(Version.V3_0_0) >= 0) {
-          LOG.warn("Could not find schema file for {}, assuming C* 3.11.x", majorMinor);
-          is = DescribeIT.class.getResourceAsStream("/describe_it_test_3.11.cql");
-          if (is == null) {
-            throw new IOException();
-          }
-        }
-      }
+    File scriptFile = getScriptFile();
+    String scriptContents =
+        Files.asCharSource(scriptFile, Charsets.UTF_8)
+            .read()
+            .trim()
+            .replaceAll("ks_0", SESSION_RULE.keyspace().asCql(true));
+    List<String> statements = STATEMENT_SPLITTER.splitToList(scriptContents);
 
-      closer.register(is);
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      PrintStream ps = new PrintStream(baos);
-      ByteStreams.copy(is, ps);
-      return baos.toString().replaceAll("ks_0", keyspace).trim();
-    } catch (IOException e) {
-      LOG.warn("Failure to read {}", resourceName, e);
-      fail("Unable to read " + resourceName + " is it defined?", e);
-    } finally {
+    // Skip the first statement (CREATE KEYSPACE), we already have a keyspace
+    for (int i = 1; i < statements.size(); i++) {
+      String statement = statements.get(i);
       try {
-        closer.close();
-      } catch (IOException e) { // no op
-        LOG.warn("Failure closing streams", e);
+        session.execute(statement);
+      } catch (Exception e) {
+        fail("Error executing statement %s (%s)", statement, e);
       }
     }
-    return "";
+
+    KeyspaceMetadata keyspaceMetadata =
+        session.getMetadata().getKeyspace(SESSION_RULE.keyspace()).orElseThrow(AssertionError::new);
+    String describeOutput = keyspaceMetadata.describeWithChildren(true).trim();
+
+    assertThat(describeOutput)
+        .as(
+            "Describe output doesn't match create statements, "
+                + "maybe you need to add a new script in integration-tests/src/test/resources. "
+                + "Server version = %s %s, used script = %s",
+            isDse ? "DSE" : "Cassandra", serverVersion, scriptFile)
+        .isEqualTo(scriptContents);
+  }
+
+  /**
+   * Find a creation script in our test resources that matches the current server version. If we
+   * don't have an exact match, use the closest version below it.
+   */
+  private File getScriptFile() {
+    URL logbackTestUrl = DescribeIT.class.getResource("/logback-test.xml");
+    if (logbackTestUrl == null || logbackTestUrl.getFile().isEmpty()) {
+      fail(
+          "Expected to use logback-test.xml to determine location of "
+              + "target/test-classes, but got URL %s",
+          logbackTestUrl);
+    }
+    File resourcesDir = new File(logbackTestUrl.getFile()).getParentFile();
+    File scriptsDir = new File(resourcesDir, isDse ? "DescribeIT/dse" : "DescribeIT/oss");
+    LOG.debug("Looking for a matching script in directory {}", scriptsDir);
+
+    File[] candidates = scriptsDir.listFiles();
+    assertThat(candidates).isNotNull();
+
+    File bestFile = null;
+    Version bestVersion = null;
+    for (File candidate : candidates) {
+      String fileName = candidate.getName();
+      String candidateVersionString = fileName.substring(0, fileName.lastIndexOf('.'));
+      Version candidateVersion = Version.parse(candidateVersionString);
+      LOG.debug("Considering {}, which resolves to version {}", fileName, candidateVersion);
+      if (candidateVersion.compareTo(serverVersion) > 0) {
+        LOG.debug("too high, discarding");
+      } else if (bestVersion != null && bestVersion.compareTo(candidateVersion) >= 0) {
+        LOG.debug("not higher than {}, discarding", bestVersion);
+      } else {
+        LOG.debug("best so far");
+        bestVersion = candidateVersion;
+        bestFile = candidate;
+      }
+    }
+    assertThat(bestFile)
+        .as("Could not find create script with version <= %s in %s", serverVersion, scriptsDir)
+        .isNotNull();
+
+    LOG.info(
+        "Using {} to test against {} {}", bestFile, isDse ? "DSE" : "Cassandra", serverVersion);
+    return bestFile;
   }
 }
