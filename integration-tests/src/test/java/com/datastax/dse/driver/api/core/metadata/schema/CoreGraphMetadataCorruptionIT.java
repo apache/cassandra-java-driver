@@ -15,7 +15,6 @@
  */
 package com.datastax.dse.driver.api.core.metadata.schema;
 
-
 import com.datastax.dse.driver.api.core.graph.GraphTestSupport;
 import com.datastax.dse.driver.api.core.graph.SampleGraphScripts;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
