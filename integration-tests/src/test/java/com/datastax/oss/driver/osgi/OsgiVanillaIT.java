@@ -69,7 +69,7 @@ public class OsgiVanillaIT implements OsgiSimpleTests {
     Logger logger = (Logger) LoggerFactory.getLogger("com.datastax.oss.driver");
     Level oldLevel = logger.getLevel();
     logger.getLoggerContext().putObject("oldLevel", oldLevel);
-    logger.setLevel(Level.WARN);
+    logger.setLevel(Level.INFO);
     TestAppender appender = new TestAppender();
     logger.addAppender(appender);
     appender.start();
@@ -92,28 +92,30 @@ public class OsgiVanillaIT implements OsgiSimpleTests {
   private void assertLogMessagesPresent() {
     Logger logger = (Logger) LoggerFactory.getLogger("com.datastax.oss.driver");
     TestAppender appender = (TestAppender) logger.getAppender("test");
-    List<String> warnLogs =
+    List<String> infoLogs =
         appender.events.stream()
             .filter(event -> event.getLevel().toInt() == Level.INFO.toInt())
             .map(ILoggingEvent::getFormattedMessage)
             .collect(Collectors.toList());
-    assertThat(warnLogs).hasSize(3);
-    assertThat(warnLogs)
+    assertThat(infoLogs)
         .anySatisfy(
             msg ->
                 assertThat(msg)
                     .contains(
-                        "Could not register Geo codecs; ESRI API might be missing from classpath"))
+                        "Could not register Geo codecs; this is normal if ESRI was explicitly "
+                            + "excluded from classpath"))
         .anySatisfy(
             msg ->
                 assertThat(msg)
                     .contains(
-                        "Could not register Reactive extensions; Reactive Streams API might be missing from classpath"))
+                        "Could not register Reactive extensions; this is normal if Reactive "
+                            + "Streams was explicitly excluded from classpath"))
         .anySatisfy(
             msg ->
                 assertThat(msg)
                     .contains(
-                        "Could not register Graph extensions; Tinkerpop API might be missing from classpath"));
+                        "Could not register Graph extensions; this is normal if Tinkerpop was "
+                            + "explicitly excluded from classpath"));
   }
 
   private static class TestAppender extends AppenderBase<ILoggingEvent> {
