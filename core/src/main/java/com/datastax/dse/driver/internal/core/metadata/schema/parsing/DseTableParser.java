@@ -411,10 +411,12 @@ public class DseTableParser extends RelationParser {
     Collection<AdminRow> tableVertices =
         (keyspaceVertices == null) ? null : keyspaceVertices.get(table);
     if (tableVertices == null || tableVertices.isEmpty()) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Missing vertex definition for %s table %s",
-              directionForErrorMessage, table.asCql(true)));
+      LOG.warn(
+          "[{}] Missing vertex definition for {} table {}",
+          logPrefix,
+          directionForErrorMessage,
+          table.asCql(true));
+      return CqlIdentifier.fromInternal("");
     }
 
     AdminRow row = tableVertices.iterator().next();

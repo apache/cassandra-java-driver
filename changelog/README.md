@@ -2,6 +2,10 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.6.0
+
+- [bug] JAVA-2634: Don't throw error on graph metadata corruption
+
 ### 4.5.0
 
 - [bug] JAVA-2654: Make AdminRequestHandler handle integer serialization
