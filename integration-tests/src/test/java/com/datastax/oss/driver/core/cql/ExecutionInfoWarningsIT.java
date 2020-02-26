@@ -196,6 +196,6 @@ public class ExecutionInfoWarningsIT {
                     .contains("for")
                     .contains(String.format("%s.test", sessionRule.keyspace().asCql(true)))
                     .contains("is of size")
-                    .contains("exceeding specified threshold"));
+                    .containsPattern("exceeding specified .*threshold"));
   }
 }
