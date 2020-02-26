@@ -240,7 +240,8 @@ public class SchemaChangesIT {
         "CREATE TABLE scores(user text, game text, score int, PRIMARY KEY (user, game))",
         "CREATE MATERIALIZED VIEW highscores "
             + "AS SELECT game, user, score FROM scores "
-            + "WHERE game IS NOT NULL AND score IS NOT NULL PRIMARY KEY (game, score, user) "
+            + "WHERE game IS NOT NULL AND score IS NOT NULL AND user IS NOT NULL "
+            + "PRIMARY KEY (game, score, user) "
             + "WITH CLUSTERING ORDER BY (score DESC, user DESC)",
         metadata ->
             metadata
@@ -252,7 +253,7 @@ public class SchemaChangesIT {
           Assertions.assertThat(view.getBaseTable().asInternal()).isEqualTo("scores");
           Assertions.assertThat(view.includesAllColumns()).isFalse();
           Assertions.assertThat(view.getWhereClause())
-              .hasValue("game IS NOT NULL AND score IS NOT NULL");
+              .hasValue("game IS NOT NULL AND score IS NOT NULL AND user IS NOT NULL");
           Assertions.assertThat(view.getColumns())
               .containsOnlyKeys(
                   CqlIdentifier.fromInternal("game"),
@@ -270,7 +271,8 @@ public class SchemaChangesIT {
             "CREATE TABLE scores(user text, game text, score int, PRIMARY KEY (user, game))",
             "CREATE MATERIALIZED VIEW highscores "
                 + "AS SELECT game, user, score FROM scores "
-                + "WHERE game IS NOT NULL AND score IS NOT NULL PRIMARY KEY (game, score, user) "
+                + "WHERE game IS NOT NULL AND score IS NOT NULL AND user IS NOT NULL "
+                + "PRIMARY KEY (game, score, user) "
                 + "WITH CLUSTERING ORDER BY (score DESC, user DESC)"),
         "DROP MATERIALIZED VIEW highscores",
         metadata ->
@@ -288,7 +290,8 @@ public class SchemaChangesIT {
             "CREATE TABLE scores(user text, game text, score int, PRIMARY KEY (user, game))",
             "CREATE MATERIALIZED VIEW highscores "
                 + "AS SELECT game, user, score FROM scores "
-                + "WHERE game IS NOT NULL AND score IS NOT NULL PRIMARY KEY (game, score, user) "
+                + "WHERE game IS NOT NULL AND score IS NOT NULL AND user IS NOT NULL "
+                + "PRIMARY KEY (game, score, user) "
                 + "WITH CLUSTERING ORDER BY (score DESC, user DESC)"),
         "ALTER MATERIALIZED VIEW highscores WITH comment = 'The best score for each game'",
         metadata ->
