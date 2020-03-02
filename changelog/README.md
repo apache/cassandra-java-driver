@@ -4,7 +4,8 @@
 
 ### 4.6.0 (in progress)
 
- - [bug] JAVA-1861: Add Metadata.getClusterName()
+- [improvement] JAVA-2667: Add ability to fail the build when integration tests fail
+- [bug] JAVA-1861: Add Metadata.getClusterName()
 
 ### 4.5.0
 
