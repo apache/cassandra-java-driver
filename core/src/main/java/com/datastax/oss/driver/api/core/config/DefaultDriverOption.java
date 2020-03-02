@@ -722,7 +722,7 @@ public enum DefaultDriverOption implements DriverOption {
    */
   NETTY_ADMIN_SHUTDOWN_QUIET_PERIOD("advanced.netty.admin-group.shutdown.quiet-period"),
   /**
-   * Units for admin group quiet period and timeout.
+   * Max time to wait for admin group shutdown.
    *
    * <p>Value-type: {@link String}
    */
