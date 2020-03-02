@@ -268,15 +268,12 @@
             <id>parallelizable-tests</id>
             <goals>
               <goal>integration-test</goal>
-              <goal>verify</goal>
             </goals>
             <configuration>
               <groups>com.datastax.oss.driver.categories.ParallelizableTests</groups>
               <parallel>classes</parallel>
               <threadCountClasses>8</threadCountClasses>
-              <!-- set so test can exit with rc 0 (ci will mark test failures accordingly) -->
-              <testFailureIgnore>true</testFailureIgnore>
-              <reportNameSuffix>parallelized</reportNameSuffix>
+              <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-parallelized.xml</summaryFile>
               <skipITs>${skipParallelizableITs}</skipITs>
             </configuration>
           </execution>
@@ -284,12 +281,10 @@
             <id>serial-tests</id>
             <goals>
               <goal>integration-test</goal>
-              <goal>verify</goal>
             </goals>
             <configuration>
               <excludedGroups>com.datastax.oss.driver.categories.ParallelizableTests, com.datastax.oss.driver.categories.IsolatedTests</excludedGroups>
-              <testFailureIgnore>true</testFailureIgnore>
-              <reportNameSuffix>serial</reportNameSuffix>
+              <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-serial.xml</summaryFile>
               <skipITs>${skipSerialITs}</skipITs>
             </configuration>
           </execution>
@@ -297,16 +292,27 @@
             <id>isolated-tests</id>
             <goals>
               <goal>integration-test</goal>
-              <goal>verify</goal>
             </goals>
             <configuration>
               <groups>com.datastax.oss.driver.categories.IsolatedTests</groups>
               <!-- run each test in its own jvm fork -->
               <forkCount>1</forkCount>
               <reuseForks>false</reuseForks>
-              <testFailureIgnore>true</testFailureIgnore>
-              <reportNameSuffix>isolated</reportNameSuffix>
+              <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-isolated.xml</summaryFile>
               <skipITs>${skipIsolatedITs}</skipITs>
+            </configuration>
+          </execution>
+          <execution>
+            <id>verify</id>
+            <goals>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <summaryFiles>
+                <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-parallelized.xml</summaryFile>
+                <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-serial.xml</summaryFile>
+                <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-isolated.xml</summaryFile>
+              </summaryFiles>
             </configuration>
           </execution>
         </executions>

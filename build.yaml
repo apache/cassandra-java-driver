@@ -77,7 +77,7 @@ build:
       # Use the matrix JDK for testing
       jabba use $JABBA_JDK_NAME
       # Run tests against matrix JDK
-      mvn -B -V verify --batch-mode --show-version -Dccm.version=$CCM_CASSANDRA_VERSION -Dccm.dse=$CCM_IS_DSE -Dproxy.path=$HOME/proxy -Dmaven.javadoc.skip=true
+      mvn -B -V verify --batch-mode --show-version -Dccm.version=$CCM_CASSANDRA_VERSION -Dccm.dse=$CCM_IS_DSE -Dproxy.path=$HOME/proxy -Dmaven.javadoc.skip=true -Dmaven.test.failure.ignore=true
   - xunit:
     - "**/target/surefire-reports/TEST-*.xml"
     - "**/target/failsafe-reports/TEST-*.xml"
