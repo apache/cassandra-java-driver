@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.metadata.schema;
 
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -71,4 +72,20 @@ public interface SchemaChangeListener extends AutoCloseable {
   void onViewDropped(@NonNull ViewMetadata view);
 
   void onViewUpdated(@NonNull ViewMetadata current, @NonNull ViewMetadata previous);
+
+  /**
+   * Invoked when the session is ready to process user requests.
+   *
+   * <p>This corresponds to the moment when {@link SessionBuilder#build()} returns, or the future
+   * returned by {@link SessionBuilder#buildAsync()} completes. If the session initialization fails,
+   * this method will not get called.
+   *
+   * <p>Listener methods are invoked from different threads; if you store the session in a field,
+   * make it at least volatile to guarantee proper publication.
+   *
+   * <p>This method is guaranteed to be the first one invoked on this object.
+   *
+   * <p>The default implementation is empty.
+   */
+  default void onSessionReady(@NonNull Session session) {}
 }

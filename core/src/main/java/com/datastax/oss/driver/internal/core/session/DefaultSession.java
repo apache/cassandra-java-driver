@@ -282,6 +282,7 @@ public class DefaultSession implements CqlSession {
     private final InternalDriverContext context;
     private final Set<EndPoint> initialContactPoints;
     private final NodeStateManager nodeStateManager;
+    private final SchemaListenerNotifier schemaListenerNotifier;
     private final CompletableFuture<CqlSession> initFuture = new CompletableFuture<>();
     private boolean initWasCalled;
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
@@ -292,8 +293,9 @@ public class DefaultSession implements CqlSession {
       this.context = context;
       this.nodeStateManager = new NodeStateManager(context);
       this.initialContactPoints = contactPoints;
-      new SchemaListenerNotifier(
-          context.getSchemaChangeListener(), context.getEventBus(), adminExecutor);
+      this.schemaListenerNotifier =
+          new SchemaListenerNotifier(
+              context.getSchemaChangeListener(), context.getEventBus(), adminExecutor);
       context
           .getEventBus()
           .register(
@@ -418,8 +420,8 @@ public class DefaultSession implements CqlSession {
                   if (error != null) {
                     initFuture.completeExceptionally(error);
                   } else {
+                    notifyListeners();
                     initFuture.complete(DefaultSession.this);
-                    notifyLifecycleListeners();
                   }
                 });
       } catch (Throwable throwable) {
@@ -431,7 +433,7 @@ public class DefaultSession implements CqlSession {
       }
     }
 
-    private void notifyLifecycleListeners() {
+    private void notifyListeners() {
       for (LifecycleListener lifecycleListener : context.getLifecycleListeners()) {
         try {
           lifecycleListener.onSessionReady();
@@ -444,6 +446,9 @@ public class DefaultSession implements CqlSession {
               t);
         }
       }
+      context.getNodeStateListener().onSessionReady(DefaultSession.this);
+      schemaListenerNotifier.onSessionReady(DefaultSession.this);
+      context.getRequestTracker().onSessionReady(DefaultSession.this);
     }
 
     private void onNodeStateChanged(NodeStateEvent event) {

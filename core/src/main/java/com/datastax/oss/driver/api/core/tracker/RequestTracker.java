@@ -159,4 +159,25 @@ public interface RequestTracker extends AutoCloseable {
     // method
     onNodeSuccess(request, latencyNanos, executionProfile, node);
   }
+
+  /**
+   * Invoked when the session is ready to process user requests.
+   *
+   * <p><b>WARNING: if you use {@code session.execute()} in your tracker implementation, keep in
+   * mind that those requests will in turn recurse back into {@code onSuccess} / {@code onError}
+   * methods.</b> Make sure you don't trigger an infinite loop; one way to do that is to use a
+   * custom execution profile for internal requests.
+   *
+   * <p>This corresponds to the moment when {@link SessionBuilder#build()} returns, or the future
+   * returned by {@link SessionBuilder#buildAsync()} completes. If the session initialization fails,
+   * this method will not get called.
+   *
+   * <p>Listener methods are invoked from different threads; if you store the session in a field,
+   * make it at least volatile to guarantee proper publication.
+   *
+   * <p>This method is guaranteed to be the first one invoked on this object.
+   *
+   * <p>The default implementation is empty.
+   */
+  default void onSessionReady(@NonNull Session session) {}
 }
