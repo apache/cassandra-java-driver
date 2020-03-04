@@ -46,17 +46,22 @@ import org.slf4j.LoggerFactory;
 public class DefaultMetadata implements Metadata {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadata.class);
   public static DefaultMetadata EMPTY =
-      new DefaultMetadata(Collections.emptyMap(), Collections.emptyMap(), null);
+      new DefaultMetadata(Collections.emptyMap(), Collections.emptyMap(), null, null);
 
   protected final Map<UUID, Node> nodes;
   protected final Map<CqlIdentifier, KeyspaceMetadata> keyspaces;
   protected final TokenMap tokenMap;
+  protected final String clusterName;
 
   protected DefaultMetadata(
-      Map<UUID, Node> nodes, Map<CqlIdentifier, KeyspaceMetadata> keyspaces, TokenMap tokenMap) {
+      Map<UUID, Node> nodes,
+      Map<CqlIdentifier, KeyspaceMetadata> keyspaces,
+      TokenMap tokenMap,
+      String clusterName) {
     this.nodes = nodes;
     this.keyspaces = keyspaces;
     this.tokenMap = tokenMap;
+    this.clusterName = clusterName;
   }
 
   @NonNull
@@ -75,6 +80,12 @@ public class DefaultMetadata implements Metadata {
   @Override
   public Optional<TokenMap> getTokenMap() {
     return Optional.ofNullable(tokenMap);
+  }
+
+  @NonNull
+  @Override
+  public Optional<String> getClusterName() {
+    return Optional.ofNullable(clusterName);
   }
 
   /**
@@ -102,7 +113,8 @@ public class DefaultMetadata implements Metadata {
         ImmutableMap.copyOf(newNodes),
         this.keyspaces,
         rebuildTokenMap(
-            newNodes, keyspaces, tokenMapEnabled, forceFullRebuild, tokenFactory, context));
+            newNodes, keyspaces, tokenMapEnabled, forceFullRebuild, tokenFactory, context),
+        context.getChannelFactory().getClusterName());
   }
 
   public DefaultMetadata withSchema(
@@ -112,7 +124,8 @@ public class DefaultMetadata implements Metadata {
     return new DefaultMetadata(
         this.nodes,
         ImmutableMap.copyOf(newKeyspaces),
-        rebuildTokenMap(nodes, newKeyspaces, tokenMapEnabled, false, null, context));
+        rebuildTokenMap(nodes, newKeyspaces, tokenMapEnabled, false, null, context),
+        context.getChannelFactory().getClusterName());
   }
 
   @Nullable

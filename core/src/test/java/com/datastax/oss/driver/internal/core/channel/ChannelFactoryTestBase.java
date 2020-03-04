@@ -264,7 +264,7 @@ public abstract class ChannelFactoryTestBase {
                 new ProtocolInitHandler(
                     context,
                     protocolVersion,
-                    clusterName,
+                    getClusterName(),
                     endPoint,
                     options,
                     heartbeatHandler,

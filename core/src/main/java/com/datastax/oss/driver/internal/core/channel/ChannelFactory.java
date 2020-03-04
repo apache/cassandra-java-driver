@@ -77,7 +77,7 @@ public class ChannelFactory {
   /** either set from the configuration, or null and will be negotiated */
   @VisibleForTesting volatile ProtocolVersion protocolVersion;
 
-  @VisibleForTesting volatile String clusterName;
+  private volatile String clusterName;
 
   /**
    * The value of the {@code PRODUCT_TYPE} option reported by the first channel we opened, in
@@ -115,6 +115,10 @@ public class ChannelFactory {
    */
   public void setProtocolVersion(ProtocolVersion newVersion) {
     this.protocolVersion = newVersion;
+  }
+
+  public String getClusterName() {
+    return clusterName;
   }
 
   public CompletionStage<DriverChannel> connect(Node node, DriverChannelOptions options) {

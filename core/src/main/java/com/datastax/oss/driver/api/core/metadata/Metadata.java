@@ -114,4 +114,16 @@ public interface Metadata {
    */
   @NonNull
   Optional<TokenMap> getTokenMap();
+
+  /**
+   * The cluster name to which this session is connected. The Optional returned should contain the
+   * value from the server for <b>system.local.cluster_name</b>.
+   *
+   * <p>Note that this method has a default implementation for backwards compatibility. It is
+   * expected that any implementing classes override this method.
+   */
+  @NonNull
+  default Optional<String> getClusterName() {
+    return Optional.empty();
+  }
 }

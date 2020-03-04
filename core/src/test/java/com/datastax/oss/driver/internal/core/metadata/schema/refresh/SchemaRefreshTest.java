@@ -16,10 +16,12 @@
 package com.datastax.oss.driver.internal.core.metadata.schema.refresh;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultMetadata;
 import com.datastax.oss.driver.internal.core.metadata.MetadataRefresh;
@@ -51,10 +53,12 @@ public class SchemaRefreshTest {
   private static final DefaultKeyspaceMetadata OLD_KS1 = newKeyspace("ks1", true, OLD_T1, OLD_T2);
 
   @Mock private InternalDriverContext context;
+  @Mock private ChannelFactory channelFactory;
   private DefaultMetadata oldMetadata;
 
   @Before
   public void setup() {
+    when(context.getChannelFactory()).thenReturn(channelFactory);
     oldMetadata =
         DefaultMetadata.EMPTY.withSchema(
             ImmutableMap.of(OLD_KS1.getName(), OLD_KS1), false, context);

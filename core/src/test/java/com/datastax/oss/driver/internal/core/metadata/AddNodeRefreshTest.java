@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -38,12 +39,14 @@ public class AddNodeRefreshTest {
 
   @Mock private InternalDriverContext context;
   @Mock protected MetricsFactory metricsFactory;
+  @Mock private ChannelFactory channelFactory;
 
   private DefaultNode node1;
 
   @Before
   public void setup() {
     when(context.getMetricsFactory()).thenReturn(metricsFactory);
+    when(context.getChannelFactory()).thenReturn(channelFactory);
     node1 = TestNodeFactory.newNode(1, context);
   }
 
@@ -52,7 +55,7 @@ public class AddNodeRefreshTest {
     // Given
     DefaultMetadata oldMetadata =
         new DefaultMetadata(
-            ImmutableMap.of(node1.getHostId(), node1), Collections.emptyMap(), null);
+            ImmutableMap.of(node1.getHostId(), node1), Collections.emptyMap(), null, null);
     UUID newHostId = Uuids.random();
     DefaultEndPoint newEndPoint = TestNodeFactory.newEndPoint(2);
     UUID newSchemaVersion = Uuids.random();
@@ -86,7 +89,7 @@ public class AddNodeRefreshTest {
     // Given
     DefaultMetadata oldMetadata =
         new DefaultMetadata(
-            ImmutableMap.of(node1.getHostId(), node1), Collections.emptyMap(), null);
+            ImmutableMap.of(node1.getHostId(), node1), Collections.emptyMap(), null, null);
     DefaultNodeInfo newNodeInfo =
         DefaultNodeInfo.builder()
             .withHostId(node1.getHostId())
@@ -112,7 +115,7 @@ public class AddNodeRefreshTest {
     // Given
     DefaultMetadata oldMetadata =
         new DefaultMetadata(
-            ImmutableMap.of(node1.getHostId(), node1), Collections.emptyMap(), null);
+            ImmutableMap.of(node1.getHostId(), node1), Collections.emptyMap(), null, null);
     DefaultEndPoint newEndPoint = TestNodeFactory.newEndPoint(2);
     InetSocketAddress newBroadcastRpcAddress = newEndPoint.resolve();
     UUID newSchemaVersion = Uuids.random();

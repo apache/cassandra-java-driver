@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -33,6 +34,7 @@ public class RemoveNodeRefreshTest {
 
   @Mock private InternalDriverContext context;
   @Mock protected MetricsFactory metricsFactory;
+  @Mock private ChannelFactory channelFactory;
 
   private DefaultNode node1;
   private DefaultNode node2;
@@ -40,6 +42,7 @@ public class RemoveNodeRefreshTest {
   @Before
   public void setup() {
     when(context.getMetricsFactory()).thenReturn(metricsFactory);
+    when(context.getChannelFactory()).thenReturn(channelFactory);
     node1 = TestNodeFactory.newNode(1, context);
     node2 = TestNodeFactory.newNode(2, context);
   }
@@ -51,6 +54,7 @@ public class RemoveNodeRefreshTest {
         new DefaultMetadata(
             ImmutableMap.of(node1.getHostId(), node1, node2.getHostId(), node2),
             Collections.emptyMap(),
+            null,
             null);
     RemoveNodeRefresh refresh = new RemoveNodeRefresh(node2.getBroadcastRpcAddress().get());
 
@@ -67,7 +71,7 @@ public class RemoveNodeRefreshTest {
     // Given
     DefaultMetadata oldMetadata =
         new DefaultMetadata(
-            ImmutableMap.of(node1.getHostId(), node1), Collections.emptyMap(), null);
+            ImmutableMap.of(node1.getHostId(), node1), Collections.emptyMap(), null, null);
     RemoveNodeRefresh refresh = new RemoveNodeRefresh(node2.getBroadcastRpcAddress().get());
 
     // When

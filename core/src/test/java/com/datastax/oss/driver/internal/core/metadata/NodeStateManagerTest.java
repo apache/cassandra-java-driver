@@ -94,7 +94,7 @@ public class NodeStateManagerTest {
             .put(node1.getHostId(), node1)
             .put(node2.getHostId(), node2)
             .build();
-    Metadata metadata = new DefaultMetadata(nodes, Collections.emptyMap(), null);
+    Metadata metadata = new DefaultMetadata(nodes, Collections.emptyMap(), null, null);
     when(metadataManager.getMetadata()).thenReturn(metadata);
     when(metadataManager.refreshNode(any(Node.class)))
         .thenReturn(CompletableFuture.completedFuture(null));
