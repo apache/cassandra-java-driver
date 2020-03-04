@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.session;
 
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.metadata.schema.events.AggregateChangeEvent;
 import com.datastax.oss.driver.internal.core.metadata.schema.events.FunctionChangeEvent;
@@ -32,6 +33,11 @@ class SchemaListenerNotifier {
 
   private final SchemaChangeListener listener;
   private final EventExecutor adminExecutor;
+
+  // It is technically possible that a schema change could happen in the middle of session
+  // initialization. Don't forward events in this case, it would likely do more harm than good if a
+  // listener implementation doesn't expect it.
+  private boolean sessionReady;
 
   SchemaListenerNotifier(
       SchemaChangeListener listener, EventBus eventBus, EventExecutor adminExecutor) {
@@ -53,93 +59,114 @@ class SchemaListenerNotifier {
         ViewChangeEvent.class, RunOrSchedule.on(adminExecutor, this::onViewChangeEvent));
   }
 
+  void onSessionReady(Session session) {
+    RunOrSchedule.on(
+        adminExecutor,
+        () -> {
+          sessionReady = true;
+          listener.onSessionReady(session);
+        });
+  }
+
   private void onAggregateChangeEvent(AggregateChangeEvent event) {
     assert adminExecutor.inEventLoop();
-    switch (event.changeType) {
-      case CREATED:
-        listener.onAggregateCreated(event.newAggregate);
-        break;
-      case UPDATED:
-        listener.onAggregateUpdated(event.newAggregate, event.oldAggregate);
-        break;
-      case DROPPED:
-        listener.onAggregateDropped(event.oldAggregate);
-        break;
+    if (sessionReady) {
+      switch (event.changeType) {
+        case CREATED:
+          listener.onAggregateCreated(event.newAggregate);
+          break;
+        case UPDATED:
+          listener.onAggregateUpdated(event.newAggregate, event.oldAggregate);
+          break;
+        case DROPPED:
+          listener.onAggregateDropped(event.oldAggregate);
+          break;
+      }
     }
   }
 
   private void onFunctionChangeEvent(FunctionChangeEvent event) {
     assert adminExecutor.inEventLoop();
-    switch (event.changeType) {
-      case CREATED:
-        listener.onFunctionCreated(event.newFunction);
-        break;
-      case UPDATED:
-        listener.onFunctionUpdated(event.newFunction, event.oldFunction);
-        break;
-      case DROPPED:
-        listener.onFunctionDropped(event.oldFunction);
-        break;
+    if (sessionReady) {
+      switch (event.changeType) {
+        case CREATED:
+          listener.onFunctionCreated(event.newFunction);
+          break;
+        case UPDATED:
+          listener.onFunctionUpdated(event.newFunction, event.oldFunction);
+          break;
+        case DROPPED:
+          listener.onFunctionDropped(event.oldFunction);
+          break;
+      }
     }
   }
 
   private void onKeyspaceChangeEvent(KeyspaceChangeEvent event) {
     assert adminExecutor.inEventLoop();
-    switch (event.changeType) {
-      case CREATED:
-        listener.onKeyspaceCreated(event.newKeyspace);
-        break;
-      case UPDATED:
-        listener.onKeyspaceUpdated(event.newKeyspace, event.oldKeyspace);
-        break;
-      case DROPPED:
-        listener.onKeyspaceDropped(event.oldKeyspace);
-        break;
+    if (sessionReady) {
+      switch (event.changeType) {
+        case CREATED:
+          listener.onKeyspaceCreated(event.newKeyspace);
+          break;
+        case UPDATED:
+          listener.onKeyspaceUpdated(event.newKeyspace, event.oldKeyspace);
+          break;
+        case DROPPED:
+          listener.onKeyspaceDropped(event.oldKeyspace);
+          break;
+      }
     }
   }
 
   private void onTableChangeEvent(TableChangeEvent event) {
     assert adminExecutor.inEventLoop();
-    switch (event.changeType) {
-      case CREATED:
-        listener.onTableCreated(event.newTable);
-        break;
-      case UPDATED:
-        listener.onTableUpdated(event.newTable, event.oldTable);
-        break;
-      case DROPPED:
-        listener.onTableDropped(event.oldTable);
-        break;
+    if (sessionReady) {
+      switch (event.changeType) {
+        case CREATED:
+          listener.onTableCreated(event.newTable);
+          break;
+        case UPDATED:
+          listener.onTableUpdated(event.newTable, event.oldTable);
+          break;
+        case DROPPED:
+          listener.onTableDropped(event.oldTable);
+          break;
+      }
     }
   }
 
   private void onTypeChangeEvent(TypeChangeEvent event) {
     assert adminExecutor.inEventLoop();
-    switch (event.changeType) {
-      case CREATED:
-        listener.onUserDefinedTypeCreated(event.newType);
-        break;
-      case UPDATED:
-        listener.onUserDefinedTypeUpdated(event.newType, event.oldType);
-        break;
-      case DROPPED:
-        listener.onUserDefinedTypeDropped(event.oldType);
-        break;
+    if (sessionReady) {
+      switch (event.changeType) {
+        case CREATED:
+          listener.onUserDefinedTypeCreated(event.newType);
+          break;
+        case UPDATED:
+          listener.onUserDefinedTypeUpdated(event.newType, event.oldType);
+          break;
+        case DROPPED:
+          listener.onUserDefinedTypeDropped(event.oldType);
+          break;
+      }
     }
   }
 
   private void onViewChangeEvent(ViewChangeEvent event) {
     assert adminExecutor.inEventLoop();
-    switch (event.changeType) {
-      case CREATED:
-        listener.onViewCreated(event.newView);
-        break;
-      case UPDATED:
-        listener.onViewUpdated(event.newView, event.oldView);
-        break;
-      case DROPPED:
-        listener.onViewDropped(event.oldView);
-        break;
+    if (sessionReady) {
+      switch (event.changeType) {
+        case CREATED:
+          listener.onViewCreated(event.newView);
+          break;
+        case UPDATED:
+          listener.onViewUpdated(event.newView, event.oldView);
+          break;
+        case DROPPED:
+          listener.onViewDropped(event.oldView);
+          break;
+      }
     }
   }
 }
