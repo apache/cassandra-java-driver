@@ -77,6 +77,8 @@ public class CcmBridge implements AutoCloseable {
 
   public static final Boolean DSE_ENABLEMENT = Boolean.getBoolean("ccm.dse");
 
+  public static final String CLUSTER_NAME = "ccm_1";
+
   public static final String DEFAULT_CLIENT_TRUSTSTORE_PASSWORD = "cassandra1sfun";
   public static final String DEFAULT_CLIENT_TRUSTSTORE_PATH = "/client.truststore";
 
@@ -219,7 +221,7 @@ public class CcmBridge implements AutoCloseable {
       }
       execute(
           "create",
-          "ccm_1",
+          CLUSTER_NAME,
           "-i",
           ipPrefix,
           "-n",

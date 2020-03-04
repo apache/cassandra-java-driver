@@ -48,7 +48,7 @@ public class ChannelFactoryClusterNameTest extends ChannelFactoryTestBase {
 
     // Then
     assertThatStage(channelFuture).isSuccess();
-    assertThat(factory.clusterName).isEqualTo("mockClusterName");
+    assertThat(factory.getClusterName()).isEqualTo("mockClusterName");
   }
 
   @Test

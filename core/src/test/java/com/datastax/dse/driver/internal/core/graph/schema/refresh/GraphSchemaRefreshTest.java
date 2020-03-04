@@ -16,6 +16,7 @@
 package com.datastax.dse.driver.internal.core.graph.schema.refresh;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import com.datastax.dse.driver.api.core.metadata.schema.DseEdgeMetadata;
 import com.datastax.dse.driver.api.core.metadata.schema.DseGraphTableMetadata;
@@ -28,6 +29,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultMetadata;
 import com.datastax.oss.driver.internal.core.metadata.MetadataRefresh;
@@ -64,10 +66,12 @@ public class GraphSchemaRefreshTest {
           ImmutableMap.of(CqlIdentifier.fromInternal("tbl"), OLD_TABLE));
 
   @Mock private InternalDriverContext context;
+  @Mock private ChannelFactory channelFactory;
   private DefaultMetadata oldMetadata;
 
   @Before
   public void setup() {
+    when(context.getChannelFactory()).thenReturn(channelFactory);
     oldMetadata =
         DefaultMetadata.EMPTY.withSchema(
             ImmutableMap.of(OLD_KS1.getName(), OLD_KS1, KS_WITH_ENGINE.getName(), KS_WITH_ENGINE),

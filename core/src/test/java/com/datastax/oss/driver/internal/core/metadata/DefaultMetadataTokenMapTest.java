@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
+import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.token.DefaultReplicationStrategyFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.Murmur3TokenFactory;
@@ -53,9 +54,11 @@ public class DefaultMetadataTokenMapTest {
               "class", "org.apache.cassandra.locator.SimpleStrategy", "replication_factor", "1"));
 
   @Mock private InternalDriverContext context;
+  @Mock private ChannelFactory channelFactory;
 
   @Before
   public void setup() {
+    when(context.getChannelFactory()).thenReturn(channelFactory);
     DefaultReplicationStrategyFactory replicationStrategyFactory =
         new DefaultReplicationStrategyFactory(context);
     when(context.getReplicationStrategyFactory()).thenReturn(replicationStrategyFactory);
@@ -65,7 +68,7 @@ public class DefaultMetadataTokenMapTest {
   public void should_not_build_token_map_when_initializing_with_contact_points() {
     DefaultMetadata contactPointsMetadata =
         new DefaultMetadata(
-            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null);
+            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null, null);
     assertThat(contactPointsMetadata.getTokenMap()).isNotPresent();
   }
 
@@ -73,7 +76,7 @@ public class DefaultMetadataTokenMapTest {
   public void should_build_minimal_token_map_on_first_refresh() {
     DefaultMetadata contactPointsMetadata =
         new DefaultMetadata(
-            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null);
+            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null, null);
     DefaultMetadata firstRefreshMetadata =
         contactPointsMetadata.withNodes(
             ImmutableMap.of(NODE1.getHostId(), NODE1),
@@ -88,7 +91,7 @@ public class DefaultMetadataTokenMapTest {
   public void should_not_build_token_map_when_disabled() {
     DefaultMetadata contactPointsMetadata =
         new DefaultMetadata(
-            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null);
+            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null, null);
     DefaultMetadata firstRefreshMetadata =
         contactPointsMetadata.withNodes(
             ImmutableMap.of(NODE1.getHostId(), NODE1),
@@ -103,7 +106,7 @@ public class DefaultMetadataTokenMapTest {
   public void should_stay_empty_on_first_refresh_if_partitioner_missing() {
     DefaultMetadata contactPointsMetadata =
         new DefaultMetadata(
-            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null);
+            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null, null);
     DefaultMetadata firstRefreshMetadata =
         contactPointsMetadata.withNodes(
             ImmutableMap.of(NODE1.getHostId(), NODE1), true, true, null, context);
@@ -114,7 +117,7 @@ public class DefaultMetadataTokenMapTest {
   public void should_update_minimal_token_map_if_new_node_and_still_no_schema() {
     DefaultMetadata contactPointsMetadata =
         new DefaultMetadata(
-            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null);
+            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null, null);
     DefaultMetadata firstRefreshMetadata =
         contactPointsMetadata.withNodes(
             ImmutableMap.of(NODE1.getHostId(), NODE1),
@@ -136,7 +139,7 @@ public class DefaultMetadataTokenMapTest {
   public void should_update_token_map_when_schema_changes() {
     DefaultMetadata contactPointsMetadata =
         new DefaultMetadata(
-            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null);
+            ImmutableMap.of(NODE1.getHostId(), NODE1), Collections.emptyMap(), null, null);
     DefaultMetadata firstRefreshMetadata =
         contactPointsMetadata.withNodes(
             ImmutableMap.of(NODE1.getHostId(), NODE1),

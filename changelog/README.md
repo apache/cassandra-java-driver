@@ -4,6 +4,8 @@
 
 ### 4.6.0 (in progress)
 
+ - [bug] JAVA-1861: Add Metadata.getClusterName()
+
 ### 4.5.0
 
 - [bug] JAVA-2654: Make AdminRequestHandler handle integer serialization
