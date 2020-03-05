@@ -24,9 +24,12 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
+import com.datastax.oss.driver.api.core.type.codec.MappingCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
@@ -37,13 +40,17 @@ import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.type.codec.IntCodec;
+import com.datastax.oss.driver.internal.core.type.codec.UdtCodec;
+import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 import org.assertj.core.util.Maps;
@@ -86,6 +93,20 @@ public class CodecRegistryIT {
         .execute(
             SimpleStatement.builder(
                     "CREATE TABLE IF NOT EXISTS test2 (k0 text, k1 int, v map<int,text>, primary key (k0, k1))")
+                .setExecutionProfile(SESSION_RULE.slowProfile())
+                .build());
+    // table with UDT
+    SESSION_RULE
+        .session()
+        .execute(
+            SimpleStatement.builder("CREATE TYPE IF NOT EXISTS coordinates (x int, y int)")
+                .setExecutionProfile(SESSION_RULE.slowProfile())
+                .build());
+    SESSION_RULE
+        .session()
+        .execute(
+            SimpleStatement.builder(
+                    "CREATE TABLE IF NOT EXISTS test3 (k0 text, k1 int, v map<text,frozen<coordinates>>, primary key (k0, k1))")
                 .setExecutionProfile(SESSION_RULE.slowProfile())
                 .build());
   }
@@ -243,58 +264,7 @@ public class CodecRegistryIT {
     }
   }
 
-  // TODO: consider moving this into source as it could be generally useful.
-  private abstract static class MappingCodec<O, I> implements TypeCodec<O> {
-
-    private final GenericType<O> javaType;
-    private final TypeCodec<I> innerCodec;
-
-    MappingCodec(TypeCodec<I> innerCodec, GenericType<O> javaType) {
-      this.innerCodec = innerCodec;
-      this.javaType = javaType;
-    }
-
-    @NonNull
-    @Override
-    public GenericType<O> getJavaType() {
-      return javaType;
-    }
-
-    @NonNull
-    @Override
-    public DataType getCqlType() {
-      return innerCodec.getCqlType();
-    }
-
-    @Override
-    public ByteBuffer encode(O value, @NonNull ProtocolVersion protocolVersion) {
-      return innerCodec.encode(encode(value), protocolVersion);
-    }
-
-    @Override
-    public O decode(ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
-      return decode(innerCodec.decode(bytes, protocolVersion));
-    }
-
-    @NonNull
-    @Override
-    public String format(O value) {
-      return value == null ? null : innerCodec.format(encode(value));
-    }
-
-    @Override
-    public O parse(String value) {
-      return value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")
-          ? null
-          : decode(innerCodec.parse(value));
-    }
-
-    protected abstract O decode(I value);
-
-    protected abstract I encode(O value);
-  }
-
-  private static class OptionalCodec<T> extends MappingCodec<Optional<T>, T> {
+  private static class OptionalCodec<T> extends MappingCodec<T, Optional<T>> {
 
     // in cassandra, empty collections are considered null and vise versa.
     Predicate<T> isAbsent =
@@ -311,12 +281,12 @@ public class CodecRegistryIT {
     }
 
     @Override
-    protected Optional<T> decode(T value) {
+    protected Optional<T> innerToOuter(T value) {
       return isAbsent.test(value) ? Optional.empty() : Optional.of(value);
     }
 
     @Override
-    protected T encode(Optional<T> value) {
+    protected T outerToInner(Optional<T> value) {
       return value.orElse(null);
     }
   }
@@ -461,6 +431,122 @@ public class CodecRegistryIT {
       Row row2 = rows.get(1);
       assertThat(row2.isNull(0)).isTrue();
       assertThat(row2.getMap(0, Integer.class, String.class)).isEmpty();
+    }
+  }
+
+  private static final class Coordinates {
+
+    public final int x;
+    public final int y;
+
+    public Coordinates(int x, int y) {
+      this.x = x;
+      this.y = y;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Coordinates that = (Coordinates) o;
+      return this.x == that.x && this.y == that.y;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(x, y);
+    }
+  }
+
+  private static class CoordinatesCodec extends MappingCodec<UdtValue, Coordinates> {
+
+    public CoordinatesCodec(@NonNull TypeCodec<UdtValue> innerCodec) {
+      super(innerCodec, GenericType.of(Coordinates.class));
+    }
+
+    @NonNull
+    @Override
+    public UserDefinedType getCqlType() {
+      return (UserDefinedType) super.getCqlType();
+    }
+
+    @Nullable
+    @Override
+    protected Coordinates innerToOuter(@Nullable UdtValue value) {
+      return value == null ? null : new Coordinates(value.getInt("x"), value.getInt("y"));
+    }
+
+    @Nullable
+    @Override
+    protected UdtValue outerToInner(@Nullable Coordinates value) {
+      return value == null
+          ? null
+          : getCqlType().newValue().setInt("x", value.x).setInt("y", value.y);
+    }
+  }
+
+  @Test
+  public void should_register_and_use_custom_codec_for_user_defined_type() {
+
+    Map<String, Coordinates> coordinatesMap = ImmutableMap.of("home", new Coordinates(12, 34));
+    GenericType<Map<String, Coordinates>> coordinatesMapType =
+        GenericType.mapOf(String.class, Coordinates.class);
+
+    // Still create a separate session because we don't want to interfere with other tests
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, SESSION_RULE.keyspace())) {
+
+      // register the mapping codec for UDT coordinates
+      UserDefinedType coordinatesUdt =
+          session
+              .getMetadata()
+              .getKeyspace(SESSION_RULE.keyspace())
+              .flatMap(ks -> ks.getUserDefinedType("coordinates"))
+              .orElseThrow(IllegalStateException::new);
+      MutableCodecRegistry codecRegistry =
+          (MutableCodecRegistry) session.getContext().getCodecRegistry();
+
+      // Retrieve the inner codec
+      TypeCodec<UdtValue> innerCodec = codecRegistry.codecFor(coordinatesUdt);
+      assertThat(innerCodec).isInstanceOf(UdtCodec.class);
+
+      // Create the "outer" codec and register it
+      CoordinatesCodec coordinatesCodec = new CoordinatesCodec(innerCodec);
+      codecRegistry.register(coordinatesCodec);
+
+      // Test that the codec will be used to create on-the-fly codecs
+      assertThat(codecRegistry.codecFor(Coordinates.class)).isSameAs(coordinatesCodec);
+      assertThat(codecRegistry.codecFor(coordinatesMapType).accepts(coordinatesMap)).isTrue();
+
+      // test insertion
+      PreparedStatement prepared =
+          session.prepare("INSERT INTO test3 (k0, k1, v) values (?, ?, ?)");
+      BoundStatement insert =
+          prepared
+              .boundStatementBuilder()
+              .setString(0, name.getMethodName())
+              .setInt(1, 0)
+              .set(
+                  2,
+                  coordinatesMap,
+                  coordinatesMapType) // use java type so has to be looked up in registry.
+              .build();
+      session.execute(insert);
+
+      // test retrieval
+      ResultSet result =
+          session.execute(
+              SimpleStatement.builder("SELECT v from test3 where k0 = ? AND k1 = ?")
+                  .addPositionalValues(name.getMethodName(), 0)
+                  .build());
+      List<Row> rows = result.all();
+      assertThat(rows).hasSize(1);
+      Row row = rows.get(0);
+      assertThat(row.get(0, coordinatesMapType)).isEqualTo(coordinatesMap);
+      assertThat(row.getMap(0, String.class, Coordinates.class)).isEqualTo(coordinatesMap);
     }
   }
 }

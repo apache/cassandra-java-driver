@@ -115,11 +115,11 @@ public class CachingCodecRegistryTest {
     // When the mapping is not ambiguous, the user type should be returned
     assertThat(registry.codecFor(DataTypes.INT, GenericType.STRING)).isSameAs(intToStringCodec1);
     assertThat(registry.codecFor(DataTypes.INT, String.class)).isSameAs(intToStringCodec1);
-    assertThat(registry.codecFor(DataTypes.INT, "")).isSameAs(intToStringCodec1);
+    assertThat(registry.codecFor(DataTypes.INT, "123")).isSameAs(intToStringCodec1);
 
     // When there is an ambiguity with a built-in codec, the built-in codec should have priority
     assertThat(registry.codecFor(DataTypes.INT)).isSameAs(TypeCodecs.INT);
-    assertThat(registry.codecFor("")).isSameAs(TypeCodecs.TEXT);
+    assertThat(registry.codecFor("123")).isSameAs(TypeCodecs.TEXT);
 
     verifyZeroInteractions(mockCache);
   }
@@ -513,11 +513,11 @@ public class CachingCodecRegistryTest {
     // When the mapping is not ambiguous, the user type should be returned
     assertThat(registry.codecFor(DataTypes.INT, GenericType.STRING)).isSameAs(intToStringCodec);
     assertThat(registry.codecFor(DataTypes.INT, String.class)).isSameAs(intToStringCodec);
-    assertThat(registry.codecFor(DataTypes.INT, "")).isSameAs(intToStringCodec);
+    assertThat(registry.codecFor(DataTypes.INT, "123")).isSameAs(intToStringCodec);
 
     // When there is an ambiguity with a built-in codec, the built-in codec should have priority
     assertThat(registry.codecFor(DataTypes.INT)).isSameAs(TypeCodecs.INT);
-    assertThat(registry.codecFor("")).isSameAs(TypeCodecs.TEXT);
+    assertThat(registry.codecFor("123")).isSameAs(TypeCodecs.TEXT);
 
     verifyZeroInteractions(mockCache);
   }

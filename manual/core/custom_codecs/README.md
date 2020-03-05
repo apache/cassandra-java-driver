@@ -191,6 +191,111 @@ String s1 = row.getString("anIntColumn");         // int -> String, will decode 
 String s2 = row.get("anIntColumn", specialCodec); // int -> String, will decode with specialCodec
 ``` 
 
+### Creating custom Java-to-CQL mappings with `MappingCodec`
+
+The above example, `CqlIntToStringCodec`, could be rewritten to leverage [MappingCodec], an abstract 
+class that ships with the driver. This class has been designed for situations where we want to 
+represent a CQL type with a different Java type than the Java type natively supported by the driver,
+and the conversion between the former and the latter is straightforward. 
+
+All you have to do is extend `MappingCodec` and implement two methods that perform the conversion 
+between the supported Java type -- or "inner" type -- and the target Java type -- or "outer" type:
+
+```java
+public class CqlIntToStringCodec extends MappingCodec<Integer, String> {
+
+  public CqlIntToStringCodec() {
+    super(TypeCodecs.INT, GenericType.STRING);
+  }
+
+  @Nullable
+  @Override
+  protected String innerToOuter(@Nullable Integer value) {
+    return value == null ? null : value.toString();
+  }
+
+  @Nullable
+  @Override
+  protected Integer outerToInner(@Nullable String value) {
+    return value == null ? null : Integer.parseInt(value);
+  }
+}
+```
+
+This technique is especially useful when mapping user-defined types to Java objects. For example, 
+let's assume the following user-defined type:
+
+```
+CREATE TYPE coordinates (x int, y int);
+ ```
+ 
+And let's suppose that we want to map it to the following Java class:
+ 
+```java
+public class Coordinates {
+  public final int x;
+  public final int y;
+  public Coordinates(int x, int y) { this.x = x; this.y = y; }
+}
+```
+
+All  you have to do is create a `MappingCodec` subclass that piggybacks on an existing 
+`TypeCodec<UdtValue>` for the above user-defined type:
+
+```java
+public class CoordinatesCodec extends MappingCodec<UdtValue, Coordinates> {
+
+  public CoordinatesCodec(@NonNull TypeCodec<UdtValue> innerCodec) {
+    super(innerCodec, GenericType.of(Coordinates.class));
+  }
+
+  @NonNull @Override public UserDefinedType getCqlType() {
+    return (UserDefinedType) super.getCqlType();
+  }
+
+  @Nullable @Override protected Coordinates innerToOuter(@Nullable UdtValue value) {
+    return value == null ? null : new Coordinates(value.getInt("x"), value.getInt("y"));
+  }
+
+  @Nullable @Override protected UdtValue outerToInner(@Nullable Coordinates value) {
+    return value == null ? null : getCqlType().newValue().setInt("x", value.x).setInt("y", value.y);
+  }
+}
+```
+
+Then the new mapping codec could be registered as follows:
+
+```java
+CqlSession session = ...
+CodecRegistry codecRegistry = session.getContext().getCodecRegistry();
+// The target user-defined type
+UserDefinedType coordinatesUdt =
+    session
+        .getMetadata()
+        .getKeyspace("...")
+        .flatMap(ks -> ks.getUserDefinedType("coordinates"))
+        .orElseThrow(IllegalStateException::new);
+// The "inner" codec that handles the conversions from CQL from/to UdtValue
+TypeCodec<UdtValue> innerCodec = codecRegistry.codecFor(coordinatesUdt);
+// The mapping codec that will handle the conversions from/to UdtValue and Coordinates
+CoordinatesCodec coordinatesCodec = new CoordinatesCodec(innerCodec);
+// Register the new codec
+((MutableCodecRegistry) codecRegistry).register(coordinatesCodec);
+```
+
+...and used just like explained above:
+
+```java
+BoundStatement stmt = ...;
+stmt.set("coordinates", new Coordinates(10,20), Coordinates.class);
+
+Row row = ...;
+Coordinates coordinates = row.get("coordinates", Coordinates.class);
+``` 
+
+Note: if you need even more advanced mapping capabilities, consider adopting
+the driver's [object mapping framework](../../mapper/).
+
 ### Subtype polymorphism
 
 Suppose the following class hierarchy:
@@ -258,4 +363,5 @@ private static String formatRow(Row row) {
 [CodecRegistry]: https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html
 [GenericType]:   https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
 [TypeCodec]:     https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html
+[MappingCodec]:     https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/type/codec/MappingCodec.html
 [SessionBuilder.addTypeCodecs]: https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addTypeCodecs-com.datastax.oss.driver.api.core.type.codec.TypeCodec...-
