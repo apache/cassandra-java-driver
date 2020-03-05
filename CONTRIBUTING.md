@@ -312,14 +312,11 @@ Do not mix `CcmRule` and `SimulacronRule` in the same test. It makes things hard
 can be inefficient (if the `SimulacronRule` is method-level, it will create a Simulacron cluster for
 every test method, even those that only need CCM).
 
-Try to use `@ClassRule` as much as possible: it's more efficient to reuse the same resource across
-all test methods. The only exceptions are:
-* CCM tests that use `@CassandraRequirement` restrictions at the method level (ex:
-  `BatchStatementIT`).
-* tests where you *really* need to restart from a clean state for every method.
+##### Class-level rules
 
-When you use `@ClassRule`, your rules need to be static; also make them final and use constant
-naming conventions, like `CCM_RULE`.
+Rules annotated with `@ClassRule` wrap the whole test class, and are reused across methods. Try to
+use this as much as possible, as it's more efficient. The fields need to be static; also make them
+final and use constant naming conventions, like `CCM_RULE`.
 
 When you use a server rule (`CcmRule` or `SimulacronRule`) and a `SessionRule` at the same level,
 wrap them into a rule chain to ensure proper initialization order:
@@ -332,7 +329,28 @@ private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(
 public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 ```
 
-This is not necessary if the server rule is a `@ClassRule` and the session rule is a `@Rule`.
+##### Method-level rules
+
+Rules annotated with `@Rule` wrap each test method. Use lower-camel case for field names:
+
+```java
+private CcmRule ccmRule = CcmRule.getInstance();
+private SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
+
+@ClassRule
+public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+```
+
+Only use this for:
+
+* CCM tests that use `@CassandraRequirement` or `@DseRequirement` restrictions at the method level
+  (ex: `BatchStatementIT`).
+* tests where you *really* need to restart from a clean state for every method.
+
+##### Mixed
+
+It's also possible to use a `@ClassRule` for CCM / Simulacron, and a `@Rule` for the session rule.
+In that case, you don't need to use a rule chain.
 
 ## Running the tests
 
