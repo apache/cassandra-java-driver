@@ -15,8 +15,13 @@
  */
 package com.datastax.oss.driver.internal.core;
 
+import static com.datastax.dse.driver.api.core.DseProtocolVersion.DSE_V1;
+import static com.datastax.dse.driver.api.core.DseProtocolVersion.DSE_V2;
 import static com.datastax.oss.driver.api.core.ProtocolVersion.V3;
 import static com.datastax.oss.driver.api.core.ProtocolVersion.V4;
+import static com.datastax.oss.driver.api.core.ProtocolVersion.V5;
+import static com.datastax.oss.driver.internal.core.DefaultProtocolFeature.DATE_TYPE;
+import static com.datastax.oss.driver.internal.core.DefaultProtocolFeature.SMALLINT_AND_TINYINT_TYPES;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
@@ -112,6 +117,24 @@ public class DefaultProtocolVersionRegistryTest {
                     mockCassandraNode("2.1") // oss v3
                     )))
         .isEqualTo(ProtocolVersion.V3);
+  }
+
+  @Test
+  public void should_support_date_type_on_oss_v4_and_later() {
+    assertThat(registry.supports(V3, DATE_TYPE)).isFalse();
+    assertThat(registry.supports(V4, DATE_TYPE)).isTrue();
+    assertThat(registry.supports(V5, DATE_TYPE)).isTrue();
+    assertThat(registry.supports(DSE_V1, DATE_TYPE)).isTrue();
+    assertThat(registry.supports(DSE_V2, DATE_TYPE)).isTrue();
+  }
+
+  @Test
+  public void should_support_smallint_and_tinyint_types_on_oss_v4_and_later() {
+    assertThat(registry.supports(V3, SMALLINT_AND_TINYINT_TYPES)).isFalse();
+    assertThat(registry.supports(V4, SMALLINT_AND_TINYINT_TYPES)).isTrue();
+    assertThat(registry.supports(V5, SMALLINT_AND_TINYINT_TYPES)).isTrue();
+    assertThat(registry.supports(DSE_V1, SMALLINT_AND_TINYINT_TYPES)).isTrue();
+    assertThat(registry.supports(DSE_V2, SMALLINT_AND_TINYINT_TYPES)).isTrue();
   }
 
   private Node mockCassandraNode(String rawVersion) {
