@@ -4,6 +4,7 @@
 
 ### 4.6.0 (in progress)
 
+- [improvement] JAVA-2631: Add getIndex() shortcuts to TableMetadata
 - [improvement] JAVA-2679: Add port information to QueryTrace and TraceEvent
 - [improvement] JAVA-2184: Refactor DescribeIT to improve maintainability
 - [new feature] JAVA-2600: Add map-backed config loader

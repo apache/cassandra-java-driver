@@ -180,6 +180,9 @@ public class TableParserTest extends SchemaParserTestBase {
     assertThat(index.getClassName()).isNotPresent();
     assertThat(index.getKind()).isEqualTo(IndexKind.COMPOSITES);
     assertThat(index.getTarget()).isEqualTo("v");
+
+    assertThat(table.getIndex("foo_v_idx")).hasValue(index);
+
     @SuppressWarnings("unchecked")
     Map<String, String> compaction =
         (Map<String, String>) table.getOptions().get(CqlIdentifier.fromInternal("compaction"));

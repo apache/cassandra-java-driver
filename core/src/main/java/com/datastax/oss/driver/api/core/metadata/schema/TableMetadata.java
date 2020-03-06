@@ -20,6 +20,7 @@ import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.RelationParser;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
+import java.util.Optional;
 
 /** A table in the schema metadata. */
 public interface TableMetadata extends RelationMetadata {
@@ -31,6 +32,17 @@ public interface TableMetadata extends RelationMetadata {
 
   @NonNull
   Map<CqlIdentifier, IndexMetadata> getIndexes();
+
+  @NonNull
+  default Optional<IndexMetadata> getIndex(@NonNull CqlIdentifier indexId) {
+    return Optional.ofNullable(getIndexes().get(indexId));
+  }
+
+  /** Shortcut for {@link #getIndex(CqlIdentifier) getIndex(CqlIdentifier.fromCql(indexName))}. */
+  @NonNull
+  default Optional<IndexMetadata> getIndex(@NonNull String indexName) {
+    return getIndex(CqlIdentifier.fromCql(indexName));
+  }
 
   @NonNull
   @Override
