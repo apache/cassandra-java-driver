@@ -4,6 +4,7 @@
 
 ### 4.5.1 (in progress)
 
+- [bug] JAVA-2673: Fix mapper generated code for UPDATE with TTL and IF condition
 
 ### 4.5.0
 
