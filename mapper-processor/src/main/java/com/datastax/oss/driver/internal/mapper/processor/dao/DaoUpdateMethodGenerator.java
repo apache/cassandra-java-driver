@@ -126,6 +126,7 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
 
     populateBuilderWithStatementAttributes(methodBodyBuilder, methodElement);
     populateBuilderWithFunction(methodBodyBuilder, boundStatementFunction);
+    populateBuilderWithProfile(methodBodyBuilder);
 
     String entityParameterName = parameters.get(0).getSimpleName().toString();
 

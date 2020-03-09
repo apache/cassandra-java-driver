@@ -16,9 +16,11 @@
 package com.datastax.oss.driver.internal.mapper.processor.mapper;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
+import com.datastax.oss.driver.api.mapper.annotations.DaoProfile;
 import com.datastax.oss.driver.api.mapper.annotations.DaoTable;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.internal.mapper.DaoCacheKey;
@@ -103,6 +105,7 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
     // Validate the arguments
     String keyspaceArgumentName = null;
     String tableArgumentName = null;
+    String executionProfileName = null;
     for (VariableElement parameterElement : methodElement.getParameters()) {
       if (parameterElement.getAnnotation(DaoKeyspace.class) != null) {
         keyspaceArgumentName =
@@ -118,6 +121,13 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
         if (tableArgumentName == null) {
           return Optional.empty();
         }
+      } else if (parameterElement.getAnnotation(DaoProfile.class) != null) {
+        executionProfileName =
+            validateExecutionProfile(
+                parameterElement, executionProfileName, DaoProfile.class, context);
+        if (executionProfileName == null) {
+          return Optional.empty();
+        }
       } else {
         context
             .getMessager()
@@ -125,15 +135,16 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
                 methodElement,
                 processedType,
                 "Invalid parameter annotations: "
-                    + "%s method parameters must be annotated with @%s or @%s",
+                    + "%s method parameters must be annotated with @%s, @%s, @%s",
                 DaoFactory.class.getSimpleName(),
                 DaoKeyspace.class.getSimpleName(),
-                DaoTable.class.getSimpleName());
+                DaoTable.class.getSimpleName(),
+                DaoProfile.class.getSimpleName());
         return Optional.empty();
       }
     }
     boolean isCachedByKeyspaceAndTable =
-        (keyspaceArgumentName != null || tableArgumentName != null);
+        (keyspaceArgumentName != null || tableArgumentName != null || executionProfileName != null);
 
     TypeName returnTypeName = ClassName.get(methodElement.getReturnType());
     String suggestedFieldName = methodElement.getSimpleName() + "Cache";
@@ -160,14 +171,24 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
       } else {
         overridingMethodBuilder.addCode("$L", tableArgumentName);
       }
-      overridingMethodBuilder
-          .addCode(");\n")
-          .addStatement(
-              "return $L.computeIfAbsent(key, "
-                  + "k -> $T.$L(context.withKeyspaceAndTable(k.getKeyspaceId(), k.getTableId())))",
-              fieldName,
-              daoImplementationName,
-              isAsync ? "initAsync" : "init");
+      overridingMethodBuilder.addCode(", ");
+      if (executionProfileName == null) {
+        overridingMethodBuilder.addCode("($T)null", String.class);
+      } else {
+        overridingMethodBuilder.addCode("$L", executionProfileName);
+      }
+      overridingMethodBuilder.addCode(");\n");
+
+      overridingMethodBuilder.addCode(
+          "return $L.computeIfAbsent(key, "
+              + "k -> $T.$L(context.withKeyspaceAndTable(k.getKeyspaceId(), k.getTableId())",
+          fieldName,
+          daoImplementationName,
+          isAsync ? "initAsync" : "init");
+      if (executionProfileName != null) {
+        overridingMethodBuilder.addCode(".withExecutionProfile($L)", executionProfileName);
+      }
+      overridingMethodBuilder.addCode("));\n");
     } else {
       overridingMethodBuilder.addStatement("return $L.get()", fieldName);
     }
@@ -176,16 +197,7 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
 
   private String validateKeyspaceOrTableParameter(
       VariableElement candidate, String previous, Class<?> annotation, ProcessorContext context) {
-    if (previous != null) {
-      context
-          .getMessager()
-          .error(
-              candidate,
-              processedType,
-              "Invalid parameter annotations: "
-                  + "only one %s method parameter can be annotated with @%s",
-              DaoFactory.class.getSimpleName(),
-              annotation.getSimpleName());
+    if (!isSingleAnnotation(candidate, previous, annotation, context)) {
       return null;
     }
     TypeMirror type = candidate.asType();
@@ -204,5 +216,45 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
       return null;
     }
     return candidate.getSimpleName().toString();
+  }
+
+  private String validateExecutionProfile(
+      VariableElement candidate, String previous, Class<?> annotation, ProcessorContext context) {
+    if (!isSingleAnnotation(candidate, previous, annotation, context)) {
+      return null;
+    }
+    TypeMirror type = candidate.asType();
+    if (!context.getClassUtils().isSame(type, String.class)
+        && !context.getClassUtils().isSame(type, DriverExecutionProfile.class)) {
+      context
+          .getMessager()
+          .error(
+              candidate,
+              processedType,
+              "Invalid parameter type: @%s-annotated parameter of %s methods must be of type %s or %s ",
+              annotation.getSimpleName(),
+              DaoFactory.class.getSimpleName(),
+              String.class.getSimpleName(),
+              DriverExecutionProfile.class.getSimpleName());
+      return null;
+    }
+    return candidate.getSimpleName().toString();
+  }
+
+  private boolean isSingleAnnotation(
+      VariableElement candidate, String previous, Class<?> annotation, ProcessorContext context) {
+    if (previous != null) {
+      context
+          .getMessager()
+          .error(
+              candidate,
+              processedType,
+              "Invalid parameter annotations: "
+                  + "only one %s method parameter can be annotated with @%s",
+              DaoFactory.class.getSimpleName(),
+              annotation.getSimpleName());
+      return false;
+    }
+    return true;
   }
 }

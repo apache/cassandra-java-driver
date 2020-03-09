@@ -46,6 +46,13 @@ public interface MapperContext {
   CqlIdentifier getTableId();
 
   /**
+   * If this context belongs to a DAO that was built with a execution-profile-parameterized mapper
+   * method, the value of that parameter. Otherwise null.
+   */
+  @Nullable
+  String getExecutionProfileName();
+
+  /**
    * Returns an instance of the given converter class.
    *
    * <p>The results of this method are cached at the mapper level. If no instance of this class

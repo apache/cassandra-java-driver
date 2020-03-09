@@ -22,22 +22,24 @@ public class DaoCacheKey {
 
   private final CqlIdentifier keyspaceId;
   private final CqlIdentifier tableId;
+  private final String profileName;
 
-  public DaoCacheKey(CqlIdentifier keyspaceId, CqlIdentifier tableId) {
+  public DaoCacheKey(CqlIdentifier keyspaceId, CqlIdentifier tableId, String profileName) {
     this.keyspaceId = keyspaceId;
     this.tableId = tableId;
+    this.profileName = profileName;
   }
 
-  public DaoCacheKey(CqlIdentifier keyspaceId, String tableName) {
-    this(keyspaceId, toId(tableName));
+  public DaoCacheKey(CqlIdentifier keyspaceId, String tableName, String profileName) {
+    this(keyspaceId, toId(tableName), profileName);
   }
 
-  public DaoCacheKey(String keyspaceName, CqlIdentifier tableId) {
-    this(toId(keyspaceName), tableId);
+  public DaoCacheKey(String keyspaceName, CqlIdentifier tableId, String profileName) {
+    this(toId(keyspaceName), tableId, profileName);
   }
 
-  public DaoCacheKey(String keyspaceName, String tableName) {
-    this(toId(keyspaceName), toId(tableName));
+  public DaoCacheKey(String keyspaceName, String tableName, String profileName) {
+    this(toId(keyspaceName), toId(tableName), profileName);
   }
 
   private static CqlIdentifier toId(String name) {
@@ -59,7 +61,8 @@ public class DaoCacheKey {
     } else if (other instanceof DaoCacheKey) {
       DaoCacheKey that = (DaoCacheKey) other;
       return Objects.equals(this.keyspaceId, that.keyspaceId)
-          && Objects.equals(this.tableId, that.tableId);
+          && Objects.equals(this.tableId, that.tableId)
+          && Objects.equals(this.profileName, that.profileName);
     } else {
       return false;
     }
@@ -67,6 +70,6 @@ public class DaoCacheKey {
 
   @Override
   public int hashCode() {
-    return Objects.hash(keyspaceId, tableId);
+    return Objects.hash(keyspaceId, tableId, profileName);
   }
 }

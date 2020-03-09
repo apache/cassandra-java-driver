@@ -109,6 +109,7 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
 
     populateBuilderWithStatementAttributes(methodBodyBuilder, methodElement);
     populateBuilderWithFunction(methodBodyBuilder, boundStatementFunction);
+    populateBuilderWithProfile(methodBodyBuilder);
 
     if (validateCqlNamesPresent(parameters)) {
       GeneratedCodePatterns.bindParameters(
