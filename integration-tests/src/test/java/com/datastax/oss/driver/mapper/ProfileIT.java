@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoProfile;
@@ -63,7 +64,9 @@ public class ProfileIT {
   public static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
-  private static ProfileIT.SimpleDao dao;
+  private static ProfileIT.SimpleDao daoString;
+  private static ProfileIT.SimpleDao daoClass;
+  private static CqlSession mapperSession;
 
   @BeforeClass
   public static void setupClass() {
@@ -78,11 +81,14 @@ public class ProfileIT {
             .startProfile("cl")
             .withString(DefaultDriverOption.REQUEST_CONSISTENCY, "ANY")
             .build();
-    CqlSession mapperSession = SessionUtils.newSession(SIMULACRON_RULE, loader);
+    mapperSession = SessionUtils.newSession(SIMULACRON_RULE, loader);
 
     ProfileIT.InventoryMapper inventoryMapper =
         new ProfileIT_InventoryMapperBuilder(mapperSession).build();
-    dao = inventoryMapper.simpleDao("cl");
+    daoString = inventoryMapper.simpleDao("cl");
+    DriverExecutionProfile clProfile = mapperSession.getContext().getConfig().getProfile("cl");
+    daoClass = inventoryMapper.simpleDao(clProfile);
+
   }
 
   @Before
@@ -94,35 +100,61 @@ public class ProfileIT {
 
   @Test
   public void should_honor_exec_profile_on_insert() {
-    dao.save(simple);
+    daoString.save(simple);
 
     ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
     validateQueryOptions(report.getQueryLogs().get(0));
+
+    SIMULACRON_RULE.cluster().clearLogs();
+
+    daoClass.save(simple);
+    report = SIMULACRON_RULE.cluster().getLogs();
+    validateQueryOptions(report.getQueryLogs().get(0));
+
   }
 
   @Test
   public void should_honor_exec_profile_on_delete() {
-    dao.delete(simple);
+    daoString.delete(simple);
 
     ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
+    validateQueryOptions(report.getQueryLogs().get(0));
+
+    SIMULACRON_RULE.cluster().clearLogs();
+
+    daoClass.delete(simple);
+    report = SIMULACRON_RULE.cluster().getLogs();
     validateQueryOptions(report.getQueryLogs().get(0));
   }
 
   @Test
   public void should_honor_exec_profile_on_update() {
-    dao.update(simple);
+    daoString.update(simple);
 
     ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
+    validateQueryOptions(report.getQueryLogs().get(0));
+
+    SIMULACRON_RULE.cluster().clearLogs();
+
+    daoClass.update(simple);
+    report = SIMULACRON_RULE.cluster().getLogs();
     validateQueryOptions(report.getQueryLogs().get(0));
   }
 
   @Test
   public void should_honor_exec_profile_on_query() {
-    dao.findByPk(simple.pk);
+    daoString.findByPk(simple.pk);
 
     ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
     validateQueryOptions(report.getQueryLogs().get(0));
+
+    SIMULACRON_RULE.cluster().clearLogs();
+
+    daoString.findByPk(simple.pk);
+    report = SIMULACRON_RULE.cluster().getLogs();
+    validateQueryOptions(report.getQueryLogs().get(0));
   }
+
 
   private void validateQueryOptions(QueryLog log) {
 
@@ -220,6 +252,9 @@ public class ProfileIT {
   public interface InventoryMapper {
     @DaoFactory
     ProfileIT.SimpleDao simpleDao(@DaoProfile String executionProfile);
+
+    @DaoFactory
+    ProfileIT.SimpleDao simpleDao(@DaoProfile DriverExecutionProfile executionProfile);
   }
 
   @Dao

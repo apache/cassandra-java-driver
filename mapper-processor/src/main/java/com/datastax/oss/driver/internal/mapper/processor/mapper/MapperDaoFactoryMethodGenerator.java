@@ -106,6 +106,8 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
     String keyspaceArgumentName = null;
     String tableArgumentName = null;
     String executionProfileName = null;
+    boolean executionProfileIsClass = false;
+
     for (VariableElement parameterElement : methodElement.getParameters()) {
       if (parameterElement.getAnnotation(DaoKeyspace.class) != null) {
         keyspaceArgumentName =
@@ -122,9 +124,15 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
           return Optional.empty();
         }
       } else if (parameterElement.getAnnotation(DaoProfile.class) != null) {
+
         executionProfileName =
             validateExecutionProfile(
                 parameterElement, executionProfileName, DaoProfile.class, context);
+        if (context
+            .getClassUtils()
+            .isSame(parameterElement.asType(), DriverExecutionProfile.class)) {
+          executionProfileIsClass = true;
+        }
         if (executionProfileName == null) {
           return Optional.empty();
         }
@@ -175,7 +183,12 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
       if (executionProfileName == null) {
         overridingMethodBuilder.addCode("($T)null", String.class);
       } else {
-        overridingMethodBuilder.addCode("$L", executionProfileName);
+
+        if (!executionProfileIsClass) {
+          overridingMethodBuilder.addCode("$L", executionProfileName);
+        } else {
+          overridingMethodBuilder.addCode("$L.getName()", executionProfileName);
+        }
       }
       overridingMethodBuilder.addCode(");\n");
 
