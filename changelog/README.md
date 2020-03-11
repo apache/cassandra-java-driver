@@ -2,6 +2,9 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.5.1 (in progress)
+
+
 ### 4.5.0
 
 - [bug] JAVA-2654: Make AdminRequestHandler handle integer serialization

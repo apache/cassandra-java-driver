@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.5.0</version>
+    <version>4.5.1-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-query-builder</artifactId>
   <packaging>bundle</packaging>
