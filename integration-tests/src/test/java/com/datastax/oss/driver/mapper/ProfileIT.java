@@ -88,7 +88,6 @@ public class ProfileIT {
     daoString = inventoryMapper.simpleDao("cl");
     DriverExecutionProfile clProfile = mapperSession.getContext().getConfig().getProfile("cl");
     daoClass = inventoryMapper.simpleDao(clProfile);
-
   }
 
   @Before
@@ -110,7 +109,6 @@ public class ProfileIT {
     daoClass.save(simple);
     report = SIMULACRON_RULE.cluster().getLogs();
     validateQueryOptions(report.getQueryLogs().get(0));
-
   }
 
   @Test
@@ -154,7 +152,6 @@ public class ProfileIT {
     report = SIMULACRON_RULE.cluster().getLogs();
     validateQueryOptions(report.getQueryLogs().get(0));
   }
-
 
   private void validateQueryOptions(QueryLog log) {
 
