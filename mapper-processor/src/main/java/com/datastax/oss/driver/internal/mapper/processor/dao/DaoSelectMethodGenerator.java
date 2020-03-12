@@ -161,6 +161,7 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
         statementName);
     populateBuilderWithStatementAttributes(methodBodyBuilder, methodElement);
     populateBuilderWithFunction(methodBodyBuilder, boundStatementFunction);
+    populateBuilderWithProfile(methodBodyBuilder);
 
     if (!primaryKeyParameters.isEmpty()) {
       List<CodeBlock> primaryKeyNames =

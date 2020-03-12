@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
@@ -34,6 +35,7 @@ public class DefaultMapperContext implements MapperContext {
   private final CqlSession session;
   private final CqlIdentifier keyspaceId;
   private final CqlIdentifier tableId;
+  private final String executionProfile;
   private final ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache;
   private final Map<Object, Object> customState;
 
@@ -45,6 +47,21 @@ public class DefaultMapperContext implements MapperContext {
         session,
         keyspaceId,
         null,
+        null,
+        new ConcurrentHashMap<>(),
+        NullAllowingImmutableMap.copyOf(customState));
+  }
+
+  public DefaultMapperContext(
+      @NonNull CqlSession session,
+      @Nullable CqlIdentifier keyspaceId,
+      @Nullable String executionProfile,
+      @NonNull Map<Object, Object> customState) {
+    this(
+        session,
+        keyspaceId,
+        null,
+        executionProfile,
         new ConcurrentHashMap<>(),
         NullAllowingImmutableMap.copyOf(customState));
   }
@@ -58,6 +75,7 @@ public class DefaultMapperContext implements MapperContext {
       CqlSession session,
       CqlIdentifier keyspaceId,
       CqlIdentifier tableId,
+      String executionProfile,
       ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache,
       Map<Object, Object> customState) {
     this.session = session;
@@ -65,6 +83,7 @@ public class DefaultMapperContext implements MapperContext {
     this.tableId = tableId;
     this.nameConverterCache = nameConverterCache;
     this.customState = customState;
+    this.executionProfile = executionProfile;
   }
 
   public DefaultMapperContext withKeyspaceAndTable(
@@ -73,7 +92,19 @@ public class DefaultMapperContext implements MapperContext {
             && Objects.equals(newTableId, this.tableId))
         ? this
         : new DefaultMapperContext(
-            session, newKeyspaceId, newTableId, nameConverterCache, customState);
+            session, newKeyspaceId, newTableId, null, nameConverterCache, customState);
+  }
+
+  public DefaultMapperContext withExecutionProfile(@Nullable String newExecutionProfile) {
+    return newExecutionProfile.equals(this.executionProfile)
+        ? this
+        : new DefaultMapperContext(
+            session, keyspaceId, tableId, newExecutionProfile, nameConverterCache, customState);
+  }
+
+  public DefaultMapperContext withExecutionProfile(
+      @Nullable DriverExecutionProfile newExecutionProfile) {
+    return withExecutionProfile(newExecutionProfile.getName());
   }
 
   @NonNull
@@ -92,6 +123,12 @@ public class DefaultMapperContext implements MapperContext {
   @Override
   public CqlIdentifier getTableId() {
     return tableId;
+  }
+
+  @Nullable
+  @Override
+  public String getExecutionProfileName() {
+    return executionProfile;
   }
 
   @NonNull
