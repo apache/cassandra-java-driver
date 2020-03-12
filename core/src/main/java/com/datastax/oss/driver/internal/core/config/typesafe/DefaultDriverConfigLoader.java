@@ -55,7 +55,8 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
   public static final Supplier<Config> DEFAULT_CONFIG_SUPPLIER =
       () -> {
         ConfigFactory.invalidateCaches();
-        return ConfigFactory.load().getConfig(DEFAULT_ROOT_PATH);
+        return ConfigFactory.load(DriverConfigLoader.DRIVER_CLASS_LOADER)
+            .getConfig(DEFAULT_ROOT_PATH);
       };
 
   private final Supplier<Config> configSupplier;

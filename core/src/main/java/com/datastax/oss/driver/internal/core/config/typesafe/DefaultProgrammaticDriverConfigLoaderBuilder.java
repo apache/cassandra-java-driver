@@ -37,7 +37,9 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
     implements ProgrammaticDriverConfigLoaderBuilder {
 
   public static final Supplier<Config> DEFAULT_FALLBACK_SUPPLIER =
-      () -> ConfigFactory.defaultApplication().withFallback(ConfigFactory.defaultReference());
+      () ->
+          ConfigFactory.defaultApplication()
+              .withFallback(ConfigFactory.defaultReference(DriverConfigLoader.DRIVER_CLASS_LOADER));
 
   private final NullAllowingImmutableMap.Builder<String, Object> values =
       NullAllowingImmutableMap.builder();
@@ -45,6 +47,25 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
   private final String rootPath;
 
   private String currentProfileName = DriverExecutionProfile.DEFAULT_NAME;
+
+  /**
+   * Builds a supplier that uses the default driver fallback config, but uses the supplied
+   * ClassLoader (as opposed to the Driver's ClassLoader) for application-specific config overrides.
+   *
+   * <p>This method is primarily intended for cases where programmatic config is desired, but you
+   * also want to provide application defaults that override Driver defaults, and the application is
+   * loaded by a different ClassLoader than the current context of the Driver's ClassLoader. This
+   * can be the situation in an OSGi application bundle that uses programmatic configuration with an
+   * {@code application.conf}.
+   *
+   * @param appClassLoader The application's ClassLoader from which to load application
+   *     configuration defaults.
+   */
+  public static Supplier<Config> getDefaultConfigSupplier(ClassLoader appClassLoader) {
+    return () ->
+        ConfigFactory.defaultApplication(appClassLoader)
+            .withFallback(ConfigFactory.defaultReference(DriverConfigLoader.DRIVER_CLASS_LOADER));
+  }
 
   /**
    * @param fallbackSupplier the supplier that will provide fallback configuration for options that
@@ -60,6 +81,18 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
 
   public DefaultProgrammaticDriverConfigLoaderBuilder() {
     this(DEFAULT_FALLBACK_SUPPLIER, DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
+  }
+
+  /**
+   * An instance of a programmatic builder that uses application specific config defaults from the
+   * specified application CLassLoader to override Driver config defaults for config that is not
+   * supplied programmatically.
+   *
+   * @param appClassLoader The application's ClassLoader from which to load application
+   *     configuration defaults.
+   */
+  public DefaultProgrammaticDriverConfigLoaderBuilder(ClassLoader appClassLoader) {
+    this(getDefaultConfigSupplier(appClassLoader), DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
   }
 
   private ProgrammaticDriverConfigLoaderBuilder with(
