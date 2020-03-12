@@ -55,7 +55,7 @@ public class MapperDaoFactoryMethodGeneratorTest extends MapperMethodGeneratorTe
             .build(),
       },
       {
-        "Invalid parameter annotations: DaoFactory method parameters must be annotated with @DaoKeyspace or @DaoTable",
+        "Invalid parameter annotations: DaoFactory method parameters must be annotated with @DaoKeyspace, @DaoTable or @DaoProfile",
         MethodSpec.methodBuilder("productDao")
             .addAnnotation(DaoFactory.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)

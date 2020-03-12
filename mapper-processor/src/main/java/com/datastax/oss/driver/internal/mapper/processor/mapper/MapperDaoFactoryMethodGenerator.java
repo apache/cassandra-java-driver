@@ -143,7 +143,7 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
                 methodElement,
                 processedType,
                 "Invalid parameter annotations: "
-                    + "%s method parameters must be annotated with @%s, @%s, @%s",
+                    + "%s method parameters must be annotated with @%s, @%s or @%s",
                 DaoFactory.class.getSimpleName(),
                 DaoKeyspace.class.getSimpleName(),
                 DaoTable.class.getSimpleName(),
