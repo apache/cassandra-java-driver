@@ -134,7 +134,7 @@ public class ConnectIT {
             .build();
     assertThatThrownBy(
             () ->
-                CqlSession.builder()
+                SessionUtils.baseBuilder()
                     .addContactEndPoints(SIMULACRON_RULE.getContactPoints())
                     .withConfigLoader(loader)
                     .build())
