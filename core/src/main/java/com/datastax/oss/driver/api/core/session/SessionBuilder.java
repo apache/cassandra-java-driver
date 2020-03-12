@@ -62,7 +62,6 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import javax.net.ssl.SSLContext;
 import net.jcip.annotations.NotThreadSafe;
 
@@ -121,8 +120,18 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   @NonNull
+  @Deprecated
   protected DriverConfigLoader defaultConfigLoader() {
     return new DefaultDriverConfigLoader();
+  }
+
+  @NonNull
+  protected DriverConfigLoader defaultConfigLoader(@Nullable ClassLoader classLoader) {
+    if (classLoader == null) {
+      return new DefaultDriverConfigLoader();
+    } else {
+      return new DefaultDriverConfigLoader(classLoader);
+    }
   }
 
   /**
@@ -404,8 +413,20 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   /**
    * The {@link ClassLoader} to use to reflectively load class names defined in configuration.
    *
-   * <p>If null, the driver attempts to use the same {@link ClassLoader} that loaded the core driver
-   * classes, which is generally the right thing to do.
+   * <p>Unless you define a custom {@link #configLoader}, this class loader will also be used to
+   * locate application-specific configuration resources.
+   *
+   * <p>If you do not provide any custom class loader, the driver will attempt to use the following
+   * ones:
+   *
+   * <ol>
+   *   <li>When reflectively loading class names defined in configuration: same class loader that
+   *       loaded the core driver classes.
+   *   <li>When locating application-specific configuration resources: the current thread's
+   *       {@linkplain Thread#getContextClassLoader() context class loader}.
+   * </ol>
+   *
+   * This is generally the right thing to do.
    *
    * <p>Defining a different class loader is typically only needed in web or OSGi environments where
    * there are complex class loading requirements.
@@ -617,7 +638,13 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   @NonNull
   protected final CompletionStage<CqlSession> buildDefaultSessionAsync() {
     try {
-      DriverConfigLoader configLoader = buildIfNull(this.configLoader, this::defaultConfigLoader);
+
+      ProgrammaticArguments programmaticArguments = programmaticArgumentsBuilder.build();
+
+      DriverConfigLoader configLoader =
+          this.configLoader != null
+              ? this.configLoader
+              : defaultConfigLoader(programmaticArguments.getClassLoader());
 
       DriverExecutionProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
       if (cloudConfigInputStream == null) {
@@ -663,7 +690,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       }
 
       return DefaultSession.init(
-          (InternalDriverContext) buildContext(configLoader, programmaticArgumentsBuilder.build()),
+          (InternalDriverContext) buildContext(configLoader, programmaticArguments),
           contactPoints,
           keyspace);
 
@@ -738,9 +765,5 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       Map<String, Predicate<Node>> nodeFilters,
       ClassLoader classLoader) {
     return null;
-  }
-
-  private static <T> T buildIfNull(T value, Supplier<T> builder) {
-    return (value == null) ? builder.get() : value;
   }
 }

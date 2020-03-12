@@ -5,6 +5,7 @@ valid OSGi bundles:
 
 - `java-driver-core`
 - `java-driver-query-builder`
+- `java-driver-mapper-runtime`
 - `java-driver-core-shaded`
 
 Note: some of the driver dependencies are not valid OSGi bundles. Most of them are optional, and the
@@ -48,14 +49,7 @@ and the `ClassLoader` used to reflectively load the class (in this case,
 `ExponentialReconnectionPolicy`).
 
 To overcome these issues, you may specify a `ClassLoader` instance when constructing a `Session`
-by using [withClassLoader()]. In a lot of cases, it may be adequate to pass in the `ClassLoader`
-from a `Class` that is part of the core driver, i.e.:
-
-```java
-CqlSession session = CqlSession.builder()
-    .withClassLoader(CqlSession.class.getClassLoader())
-    .build();
-```
+by using [withClassLoader()].
 
 Alternatively, if you have access to the `BundleContext` (for example, if you are creating the 
 session in an `Activator` class) you can also obtain the bundle's `ClassLoader` the following way:
@@ -69,6 +63,56 @@ CqlSession session = CqlSession.builder()
     .withClassLoader(classLoader)
     .build();
 ```
+
+### Using a custom `ClassLoader` for application-bundled configuration resources
+
+In addition to specifying a `ClassLoader` when constructing a `Session`, you can also specify
+a `ClassLoader` instance on certain `DriverConfigLoader` methods for cases when your OSGi
+application bundle provides overrides to driver configuration defaults. This is typically done by
+including an `application.conf` file in your application bundle.
+ 
+For example, you can use [DriverConfigLoader.fromDefaults(ClassLoader)] to use the driver's default 
+configuration mechanism while specifying a different class loader:
+
+```java
+BundleContext bundleContext = ...;
+Bundle bundle = bundleContext.getBundle();
+BundleWiring bundleWiring = bundle.adapt(BundleWiring.class);
+ClassLoader classLoader = bundleWiring.getClassLoader();
+
+CqlSession session = CqlSession.builder()
+    .withClassLoader(classLoader)
+    .withConfigLoader(DriverConfigLoader.fromDefaults(classLoader))
+    .build();
+```
+
+The above configuration will look for resources named `application.conf` inside the application
+bundle, using the right class loader for that.
+
+Similarly, if you want to use programmatic configuration in you application bundle, but still
+want to be able to provide some configuration in an `application.conf` file, you can use
+[DriverConfigLoader.programmaticBuilder(ClassLoader)]:
+
+```java
+BundleContext bundleContext = ...;
+Bundle bundle = bundleContext.getBundle();
+BundleWiring bundleWiring = bundle.adapt(BundleWiring.class);
+ClassLoader classLoader = bundleWiring.getClassLoader();
+DriverConfigLoader loader =
+    DriverConfigLoader.programmaticBuilder(classLoader)
+        .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(5))
+        .startProfile("slow")
+        .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+        .endProfile()
+        .build();
+CqlSession session = CqlSession.builder()
+    .withClassLoader(classLoader)
+    .withConfigLoader(loader)
+    .build();
+```
+
+The above configuration will honor all programmatic settings, but will look for resources named 
+`application.conf` inside the application bundle, using the right class loader for that.
 
 ## What does the "Error loading libc" DEBUG message mean?
 
@@ -96,3 +140,5 @@ starting the driver:
 [JNR]: https://github.com/jnr/jnr-posix
 [withClassLoader()]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
 [JAVA-1127]:https://datastax-oss.atlassian.net/browse/JAVA-1127
+[DriverConfigLoader.fromDefaults(ClassLoader)]: https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromDefaults-java.lang.ClassLoader-
+[DriverConfigLoader.programmaticBuilder(ClassLoader)]: https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#programmaticBuilder-java.lang.ClassLoader-

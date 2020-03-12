@@ -32,7 +32,7 @@ public class DefaultProgrammaticDriverConfigLoaderBuilderTest {
   public void should_override_option_in_default_profile() {
     DriverConfigLoader loader =
         new DefaultProgrammaticDriverConfigLoaderBuilder(
-                () -> ConfigFactory.parseString(FALLBACK_CONFIG), "")
+                () -> ConfigFactory.parseString(FALLBACK_CONFIG))
             .withInt(MockOptions.INT1, 3)
             .build();
     DriverConfig config = loader.getInitialConfig();
@@ -44,7 +44,7 @@ public class DefaultProgrammaticDriverConfigLoaderBuilderTest {
   public void should_override_option_in_existing_profile() {
     DriverConfigLoader loader =
         new DefaultProgrammaticDriverConfigLoaderBuilder(
-                () -> ConfigFactory.parseString(FALLBACK_CONFIG), "")
+                () -> ConfigFactory.parseString(FALLBACK_CONFIG))
             .startProfile("profile1")
             .withInt(MockOptions.INT1, 3)
             .build();
@@ -57,7 +57,7 @@ public class DefaultProgrammaticDriverConfigLoaderBuilderTest {
   public void should_override_option_in_new_profile() {
     DriverConfigLoader loader =
         new DefaultProgrammaticDriverConfigLoaderBuilder(
-                () -> ConfigFactory.parseString(FALLBACK_CONFIG), "")
+                () -> ConfigFactory.parseString(FALLBACK_CONFIG))
             .startProfile("profile2")
             .withInt(MockOptions.INT1, 3)
             .build();
@@ -72,7 +72,7 @@ public class DefaultProgrammaticDriverConfigLoaderBuilderTest {
   public void should_go_back_to_default_profile_when_profile_ends() {
     DriverConfigLoader loader =
         new DefaultProgrammaticDriverConfigLoaderBuilder(
-                () -> ConfigFactory.parseString(FALLBACK_CONFIG), "")
+                () -> ConfigFactory.parseString(FALLBACK_CONFIG))
             .startProfile("profile2")
             .withInt(MockOptions.INT1, 3)
             .endProfile()
@@ -86,7 +86,7 @@ public class DefaultProgrammaticDriverConfigLoaderBuilderTest {
   public void should_handle_multiple_programmatic_profiles() {
     DriverConfigLoader loader =
         new DefaultProgrammaticDriverConfigLoaderBuilder(
-                () -> ConfigFactory.parseString(FALLBACK_CONFIG), "")
+                () -> ConfigFactory.parseString(FALLBACK_CONFIG))
             .startProfile("profile2")
             .withInt(MockOptions.INT1, 3)
             .startProfile("profile3")

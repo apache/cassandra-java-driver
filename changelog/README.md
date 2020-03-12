@@ -4,6 +4,7 @@
 
 ### 4.7.0 (in progress)
 
+- [bug] JAVA-2657: Add ability to specify the class loader to use for application-specific classpath resources
 - [documentation] JAVA-2666: Document BOM and driver modules
 - [documentation] JAVA-2613: Improve connection pooling documentation
 - [new feature] JAVA-2793: Add composite config loader
