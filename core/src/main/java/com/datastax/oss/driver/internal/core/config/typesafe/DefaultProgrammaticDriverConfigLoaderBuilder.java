@@ -65,12 +65,9 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
   }
 
   /**
-   * An instance of a programmatic builder that uses application specific config defaults from the
-   * specified application CLassLoader to override Driver config defaults for config that is not
-   * supplied programmatically.
-   *
-   * @param appClassLoader The application's ClassLoader from which to load application
-   *     configuration defaults.
+   * Creates an instance of {@link DefaultProgrammaticDriverConfigLoaderBuilder} that locates
+   * application configuration resources using the provided {@link ClassLoader} instead of the
+   * driver's {@linkplain DriverConfigLoader#DRIVER_CLASS_LOADER default one}.
    */
   public DefaultProgrammaticDriverConfigLoaderBuilder(ClassLoader appClassLoader) {
     this(
