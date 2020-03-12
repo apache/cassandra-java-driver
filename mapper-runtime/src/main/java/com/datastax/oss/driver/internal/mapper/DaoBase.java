@@ -28,7 +28,6 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.mapper.MapperContext;
@@ -83,7 +82,7 @@ public class DaoBase {
         (entityHelper != null) ? entityHelper.getKeyspaceId() : context.getKeyspaceId();
     CqlIdentifier tableId =
         (entityHelper != null) ? entityHelper.getTableId() : context.getTableId();
-    String executionProfileName = context.getExecutionProfileName();
+
     String queryString = queryStringTemplate;
     if (queryString.contains(KEYSPACE_ID_PLACEHOLDER)) {
       if (keyspaceId == null) {
@@ -127,11 +126,8 @@ public class DaoBase {
         queryString = queryString.replace(QUALIFIED_TABLE_ID_PLACEHOLDER, qualifiedId);
       }
     }
-    SimpleStatementBuilder builder = SimpleStatement.builder("queryString");
-    if (executionProfileName != null) {
-      builder.setExecutionProfileName(executionProfileName);
-    }
-    return builder.build();
+
+    return SimpleStatement.newInstance(queryString);
   }
 
   public BoundStatementBuilder populateBoundStatementWithStatementAttributes(
