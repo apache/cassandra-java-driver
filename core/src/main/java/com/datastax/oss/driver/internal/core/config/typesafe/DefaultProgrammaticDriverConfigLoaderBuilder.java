@@ -49,25 +49,6 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
   private String currentProfileName = DriverExecutionProfile.DEFAULT_NAME;
 
   /**
-   * Builds a supplier that uses the default driver fallback config, but uses the supplied
-   * ClassLoader (as opposed to the Driver's ClassLoader) for application-specific config overrides.
-   *
-   * <p>This method is primarily intended for cases where programmatic config is desired, but you
-   * also want to provide application defaults that override Driver defaults, and the application is
-   * loaded by a different ClassLoader than the current context of the Driver's ClassLoader. This
-   * can be the situation in an OSGi application bundle that uses programmatic configuration with an
-   * {@code application.conf}.
-   *
-   * @param appClassLoader The application's ClassLoader from which to load application
-   *     configuration defaults.
-   */
-  public static Supplier<Config> getDefaultConfigSupplier(ClassLoader appClassLoader) {
-    return () ->
-        ConfigFactory.defaultApplication(appClassLoader)
-            .withFallback(ConfigFactory.defaultReference(DriverConfigLoader.DRIVER_CLASS_LOADER));
-  }
-
-  /**
    * @param fallbackSupplier the supplier that will provide fallback configuration for options that
    *     haven't been specified programmatically.
    * @param rootPath the root path used in non-programmatic sources (fallback reference.conf and
@@ -92,7 +73,12 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
    *     configuration defaults.
    */
   public DefaultProgrammaticDriverConfigLoaderBuilder(ClassLoader appClassLoader) {
-    this(getDefaultConfigSupplier(appClassLoader), DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
+    this(
+        () ->
+            ConfigFactory.defaultApplication(appClassLoader)
+                .withFallback(
+                    ConfigFactory.defaultReference(DriverConfigLoader.DRIVER_CLASS_LOADER)),
+        DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
   }
 
   private ProgrammaticDriverConfigLoaderBuilder with(

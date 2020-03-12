@@ -67,19 +67,13 @@ public interface DriverConfigLoader extends AutoCloseable {
   }
 
   /**
-   * Just like {@link #fromClasspath(java.lang.String)} except that the loader will use the provided
-   * {@code ClassLoader}, as opposed to the Driver's {@code ClassLoader}, for the effective
-   * classpath.
-   *
-   * <p>This is intended for use when an application's ClassLoader is different from the Driver's
-   * ClassLoader, and the current Context ClassLoader is not the same CLassLoader that loaded the
-   * application (eg. OSGi bundles). For web deployments not using OSGi, use of this method is
-   * normally not necessary, as the Context ClassLoader in that environment can usually access
-   * application bundled resources.
+   * Just like {@link #fromClasspath(java.lang.String)} except that application configuration
+   * resources will be located using the provided {@link ClassLoader} instead of the driver's
+   * {@linkplain DriverConfigLoader#DRIVER_CLASS_LOADER default one}.
    */
   @NonNull
   static DriverConfigLoader fromClasspath(
-      @NonNull String resourceBaseName, ClassLoader appClassLoader) {
+      @NonNull String resourceBaseName, @NonNull ClassLoader appClassLoader) {
     return new DefaultDriverConfigLoader(
         () -> {
           ConfigFactory.invalidateCaches();
@@ -117,22 +111,7 @@ public interface DriverConfigLoader extends AutoCloseable {
    */
   @NonNull
   static DriverConfigLoader fromPath(@NonNull Path file) {
-    return fromPath(file, DRIVER_CLASS_LOADER);
-  }
-
-  /**
-   * Just like {@link #fromPath(java.nio.file.Path)} except that the loader will use the provided
-   * {@code ClassLoader}, as opposed to the Driver's {@code ClassLoader}, to find the {@code Path}.
-   *
-   * <p>This is intended for use when an application's ClassLoader is different from the Driver's
-   * ClassLoader, and the current Context ClassLoader is not the same CLassLoader that loaded the
-   * application (eg. OSGi bundles). For web deployments not using OSGi, use of this method is
-   * normally not necessary, as the Context ClassLoader in that environment can usually access
-   * application bundled resources.
-   */
-  @NonNull
-  static DriverConfigLoader fromPath(@NonNull Path file, ClassLoader appClassLoader) {
-    return fromFile(file.toFile(), appClassLoader);
+    return fromFile(file.toFile());
   }
 
   /**
@@ -157,29 +136,12 @@ public interface DriverConfigLoader extends AutoCloseable {
    */
   @NonNull
   static DriverConfigLoader fromFile(@NonNull File file) {
-    return fromFile(file, DRIVER_CLASS_LOADER);
-  }
-
-  /**
-   * Just like {@link #fromFile(java.io.File)} except that the loader will use the provided {@code
-   * ClassLoader}, as opposed to the Driver's {@code ClassLoader}, to find the {@code File}.
-   *
-   * <p>This is intended for use when an application's ClassLoader is different from the Driver's
-   * ClassLoader, and the current Context ClassLoader is not the same CLassLoader that loaded the
-   * application (eg. OSGi bundles). For web deployments not using OSGi, use of this method is
-   * normally not necessary, as the Context ClassLoader in that environment can usually access
-   * application bundled resources.
-   */
-  @NonNull
-  static DriverConfigLoader fromFile(@NonNull File file, ClassLoader appClassLoader) {
     return new DefaultDriverConfigLoader(
         () -> {
           ConfigFactory.invalidateCaches();
           Config config =
               ConfigFactory.defaultOverrides()
-                  .withFallback(
-                      ConfigFactory.parseFileAnySyntax(
-                          file, ConfigParseOptions.defaults().setClassLoader(appClassLoader)))
+                  .withFallback(ConfigFactory.parseFileAnySyntax(file))
                   .withFallback(ConfigFactory.defaultReference(DRIVER_CLASS_LOADER))
                   .resolve();
           return config.getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
@@ -208,29 +170,12 @@ public interface DriverConfigLoader extends AutoCloseable {
    */
   @NonNull
   static DriverConfigLoader fromUrl(@NonNull URL url) {
-    return fromUrl(url, DRIVER_CLASS_LOADER);
-  }
-
-  /**
-   * Just like {@link #fromUrl(java.net.URL)} except that the loader will use the provided {@code
-   * ClassLoader}, as opposed to the Driver's {@code ClassLoader}, to find the {@code URL}.
-   *
-   * <p>This is intended for use when an application's ClassLoader is different from the Driver's
-   * ClassLoader, and the current Context ClassLoader is not the same CLassLoader that loaded the
-   * application (eg. OSGi bundles). For web deployments not using OSGi, use of this method is
-   * normally not necessary, as the Context ClassLoader in that environment can usually access
-   * application bundled resources.
-   */
-  @NonNull
-  static DriverConfigLoader fromUrl(@NonNull URL url, ClassLoader appClassLoader) {
     return new DefaultDriverConfigLoader(
         () -> {
           ConfigFactory.invalidateCaches();
           Config config =
               ConfigFactory.defaultOverrides()
-                  .withFallback(
-                      ConfigFactory.parseURL(
-                          url, ConfigParseOptions.defaults().setClassLoader(appClassLoader)))
+                  .withFallback(ConfigFactory.parseURL(url))
                   .withFallback(ConfigFactory.defaultReference(DRIVER_CLASS_LOADER))
                   .resolve();
           return config.getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
@@ -339,18 +284,13 @@ public interface DriverConfigLoader extends AutoCloseable {
   }
 
   /**
-  * Just like {@link #programmaticBuilder()} except that the loader will use the provided {@code
-   * ClassLoader}, as opposed to the Driver's {@code ClassLoader}, to find application specific
-   * configuration defaults.
-   *
-   * <p>This is intended for use when an application's ClassLoader is different from the Driver's
-   * ClassLoader, and the current Context ClassLoader is not the same CLassLoader that loaded the
-   * application (eg. OSGi bundles). For web deployments not using OSGi, use of this method is
-   * normally not necessary, as the Context ClassLoader in that environment can usually access
-   * application bundled resources.
+   * Creates an instance of {@link DefaultProgrammaticDriverConfigLoaderBuilder} that locates
+   * application configuration resources using the provided {@link ClassLoader} instead of the
+   * driver's {@linkplain DriverConfigLoader#DRIVER_CLASS_LOADER default one}.
    */
   @NonNull
-  static ProgrammaticDriverConfigLoaderBuilder programmaticBuilder(ClassLoader appClassLoader) {
+  static ProgrammaticDriverConfigLoaderBuilder programmaticBuilder(
+      @NonNull ClassLoader appClassLoader) {
     return new DefaultProgrammaticDriverConfigLoaderBuilder(appClassLoader);
   }
 
