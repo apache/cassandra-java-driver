@@ -70,6 +70,46 @@ CqlSession session = CqlSession.builder()
     .build();
 ```
 
+### Using a custom `ClassLoader` for Application Bundled configuration
+
+In addition to specifying a `ClassLoader` when constructing a `Session`, you can also specify
+a `ClassLoader` instance on certain `DriverConfigLoader` methods for cases when your OSGi
+application bundle provides overrides to Driver configuration defaults. This is typically done by
+including an `application.conf` file in your application bundle. For example, if you want to use
+[DriverConfigLoader.fromClasspath] to specify a different resource name (other than "application"):
+
+```java
+BundleContext bundleContext = ...;
+Bundle bundle = bundleContext.getBundle();
+BundleWiring bundleWiring = bundle.adapt(BundleWiring.class);
+ClassLoader classLoader = bundleWiring.getClassLoader();
+
+CqlSession session = CqlSession.builder()
+    .withClassLoader(classLoader)
+    .withConfigLoader(DriverConfigLoader.fromClasspath("config", classLoader))
+    .build();
+```
+
+Similarly, if you want to use full programmatic configuration in you application bundle:
+
+```java
+BundleContext bundleContext = ...;
+Bundle bundle = bundleContext.getBundle();
+BundleWiring bundleWiring = bundle.adapt(BundleWiring.class);
+ClassLoader classLoader = bundleWiring.getClassLoader();
+DriverConfigLoader loader =
+    DriverConfigLoader.programmaticBuilder(classLoader)
+        .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(5))
+        .startProfile("slow")
+        .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+        .endProfile()
+        .build();
+CqlSession session = CqlSession.builder()
+    .withClassLoader(classLoader)
+    .withConfigLoader(loader)
+    .build();
+```
+
 ## What does the "Error loading libc" DEBUG message mean?
 
 The driver is able to perform native system calls through [JNR] in some cases, for example to
@@ -96,3 +136,4 @@ starting the driver:
 [JNR]: https://github.com/jnr/jnr-ffi
 [withClassLoader()]: https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
 [JAVA-1127]:https://datastax-oss.atlassian.net/browse/JAVA-1127
+[DriverConfigLoader.fromClasspath]: https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromClasspath-java.lang.String-
