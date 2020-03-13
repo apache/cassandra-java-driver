@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.config.typesafe;
 
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
@@ -36,11 +37,6 @@ import net.jcip.annotations.NotThreadSafe;
 public class DefaultProgrammaticDriverConfigLoaderBuilder
     implements ProgrammaticDriverConfigLoaderBuilder {
 
-  public static final Supplier<Config> DEFAULT_FALLBACK_SUPPLIER =
-      () ->
-          ConfigFactory.defaultApplication()
-              .withFallback(ConfigFactory.defaultReference(DriverConfigLoader.DRIVER_CLASS_LOADER));
-
   private final NullAllowingImmutableMap.Builder<String, Object> values =
       NullAllowingImmutableMap.builder();
   private final Supplier<Config> fallbackSupplier;
@@ -60,21 +56,32 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
     this.rootPath = rootPath;
   }
 
+  /**
+   * Creates an instance of {@link DefaultProgrammaticDriverConfigLoaderBuilder} with default
+   * settings.
+   *
+   * <p>Application-specific classpath resources will be located using the {@linkplain
+   * Thread#getContextClassLoader() the current thread's context class loader}. This might not be
+   * suitable for OSGi deployments, which should use {@link
+   * #DefaultProgrammaticDriverConfigLoaderBuilder(ClassLoader)} instead.
+   */
   public DefaultProgrammaticDriverConfigLoaderBuilder() {
-    this(DEFAULT_FALLBACK_SUPPLIER, DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
+    this(
+        DefaultDriverConfigLoader.DEFAULT_CONFIG_SUPPLIER,
+        DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
   }
 
   /**
-   * Creates an instance of {@link DefaultProgrammaticDriverConfigLoaderBuilder} that locates
-   * application configuration resources using the provided {@link ClassLoader} instead of the
-   * driver's {@linkplain DriverConfigLoader#DRIVER_CLASS_LOADER default one}.
+   * Creates an instance of {@link DefaultProgrammaticDriverConfigLoaderBuilder} with default
+   * settings, except that application-specific classpath resources will be located using the
+   * provided {@link ClassLoader} instead of {@linkplain Thread#getContextClassLoader() the current
+   * thread's context class loader}.
    */
   public DefaultProgrammaticDriverConfigLoaderBuilder(ClassLoader appClassLoader) {
     this(
         () ->
             ConfigFactory.defaultApplication(appClassLoader)
-                .withFallback(
-                    ConfigFactory.defaultReference(DriverConfigLoader.DRIVER_CLASS_LOADER)),
+                .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader())),
         DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
   }
 

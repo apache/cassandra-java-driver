@@ -37,11 +37,14 @@ import java.util.concurrent.CompletionStage;
  */
 public interface DriverConfigLoader extends AutoCloseable {
 
-  static final ClassLoader DRIVER_CLASS_LOADER = CqlSession.class.getClassLoader();
-
   /**
    * Builds an instance using the driver's default implementation (based on Typesafe config), except
    * that application-specific options are loaded from a classpath resource with a custom name.
+   *
+   * <p>The class loader used to locate application-specific classpath resources is {@linkplain
+   * Thread#getContextClassLoader() the current thread's context class loader}. This might not be
+   * suitable for OSGi deployments, which should use {@link #fromClasspath(String, ClassLoader)}
+   * instead.
    *
    * <p>More precisely, configuration properties are loaded and merged from the following
    * (first-listed are higher priority):
@@ -63,13 +66,13 @@ public interface DriverConfigLoader extends AutoCloseable {
    */
   @NonNull
   static DriverConfigLoader fromClasspath(@NonNull String resourceBaseName) {
-    return fromClasspath(resourceBaseName, DRIVER_CLASS_LOADER);
+    return fromClasspath(resourceBaseName, Thread.currentThread().getContextClassLoader());
   }
 
   /**
-   * Just like {@link #fromClasspath(java.lang.String)} except that application configuration
-   * resources will be located using the provided {@link ClassLoader} instead of the driver's
-   * {@linkplain DriverConfigLoader#DRIVER_CLASS_LOADER default one}.
+   * Just like {@link #fromClasspath(java.lang.String)} except that application-specific classpath
+   * resources will be located using the provided {@link ClassLoader} instead of {@linkplain
+   * Thread#getContextClassLoader() the current thread's context class loader}.
    */
   @NonNull
   static DriverConfigLoader fromClasspath(
@@ -83,7 +86,7 @@ public interface DriverConfigLoader extends AutoCloseable {
                       ConfigFactory.parseResourcesAnySyntax(
                           resourceBaseName,
                           ConfigParseOptions.defaults().setClassLoader(appClassLoader)))
-                  .withFallback(ConfigFactory.defaultReference(DRIVER_CLASS_LOADER))
+                  .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
                   .resolve();
           return config.getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
         });
@@ -142,7 +145,7 @@ public interface DriverConfigLoader extends AutoCloseable {
           Config config =
               ConfigFactory.defaultOverrides()
                   .withFallback(ConfigFactory.parseFileAnySyntax(file))
-                  .withFallback(ConfigFactory.defaultReference(DRIVER_CLASS_LOADER))
+                  .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
                   .resolve();
           return config.getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
         });
@@ -176,7 +179,7 @@ public interface DriverConfigLoader extends AutoCloseable {
           Config config =
               ConfigFactory.defaultOverrides()
                   .withFallback(ConfigFactory.parseURL(url))
-                  .withFallback(ConfigFactory.defaultReference(DRIVER_CLASS_LOADER))
+                  .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
                   .resolve();
           return config.getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
         });
@@ -231,6 +234,11 @@ public interface DriverConfigLoader extends AutoCloseable {
    * Note that {@code application.*} is entirely optional, you may choose to only rely on the
    * driver's built-in {@code reference.conf} and programmatic overrides.
    *
+   * <p>The class loader used to locate application-specific classpath resources is {@linkplain
+   * Thread#getContextClassLoader() the current thread's context class loader}. This might not be
+   * suitable for OSGi deployments, which should use {@link #programmaticBuilder(ClassLoader)}
+   * instead.
+   *
    * <p>The resulting configuration is expected to contain a {@code datastax-java-driver} section.
    *
    * <p>The loader will honor the reload interval defined by the option {@code
@@ -284,9 +292,9 @@ public interface DriverConfigLoader extends AutoCloseable {
   }
 
   /**
-   * Creates an instance of {@link DefaultProgrammaticDriverConfigLoaderBuilder} that locates
-   * application configuration resources using the provided {@link ClassLoader} instead of the
-   * driver's {@linkplain DriverConfigLoader#DRIVER_CLASS_LOADER default one}.
+   * Just like {@link #programmaticBuilder()} except that application-specific classpath resources
+   * will be located using the provided {@link ClassLoader} instead of {@linkplain
+   * Thread#getContextClassLoader() the current thread's context class loader}.
    */
   @NonNull
   static ProgrammaticDriverConfigLoaderBuilder programmaticBuilder(
