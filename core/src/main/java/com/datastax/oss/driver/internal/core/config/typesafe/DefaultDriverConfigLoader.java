@@ -119,7 +119,8 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
    *     this object is instantiated, and at each reload attempt, if reloading is enabled.
    * @param supportsReloading Whether config reloading should be enabled or not.
    */
-  public DefaultDriverConfigLoader(Supplier<Config> configSupplier, boolean supportsReloading) {
+  public DefaultDriverConfigLoader(
+      @NonNull Supplier<Config> configSupplier, boolean supportsReloading) {
     this.configSupplier = configSupplier;
     this.driverConfig = new TypesafeDriverConfig(configSupplier.get());
     this.supportsReloading = supportsReloading;

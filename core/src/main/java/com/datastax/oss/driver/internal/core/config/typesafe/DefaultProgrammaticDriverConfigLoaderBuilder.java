@@ -51,7 +51,7 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
    *     system properties).
    */
   public DefaultProgrammaticDriverConfigLoaderBuilder(
-      Supplier<Config> fallbackSupplier, String rootPath) {
+      @NonNull Supplier<Config> fallbackSupplier, @NonNull String rootPath) {
     this.fallbackSupplier = fallbackSupplier;
     this.rootPath = rootPath;
   }
@@ -77,7 +77,7 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
    * provided {@link ClassLoader} instead of {@linkplain Thread#getContextClassLoader() the current
    * thread's context class loader}.
    */
-  public DefaultProgrammaticDriverConfigLoaderBuilder(ClassLoader appClassLoader) {
+  public DefaultProgrammaticDriverConfigLoaderBuilder(@NonNull ClassLoader appClassLoader) {
     this(
         () ->
             ConfigFactory.defaultApplication(appClassLoader)
