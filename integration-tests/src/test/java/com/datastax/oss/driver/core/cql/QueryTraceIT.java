@@ -94,8 +94,7 @@ public class QueryTraceIT {
 
   @CassandraRequirement(min = "4.0", description = "Check for added port fields")
   @Test
-  public void should_fetch_ports()
-  {
+  public void should_fetch_ports() {
     ExecutionInfo executionInfo =
         SESSION_RULE
             .session()
