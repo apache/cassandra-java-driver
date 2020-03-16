@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.5.1 (in progress)
+### 4.5.1
 
 - [bug] JAVA-2673: Fix mapper generated code for UPDATE with TTL and IF condition
 
