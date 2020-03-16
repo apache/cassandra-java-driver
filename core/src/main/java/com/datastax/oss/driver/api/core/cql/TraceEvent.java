@@ -32,6 +32,8 @@ public interface TraceEvent {
   @Nullable
   InetAddress getSource();
 
+  /** The port of the host having generated this event. Prior to C* 4.0 this will be set to zero. */
+  int getSourcePort();
   /**
    * The number of microseconds elapsed on the source when this event occurred since the moment when
    * the source started handling the query.

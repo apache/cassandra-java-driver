@@ -30,6 +30,8 @@ import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
+import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.QueryTrace;
 import com.datastax.oss.driver.api.core.cql.Row;
@@ -135,6 +137,7 @@ public class QueryTraceFetcherTest {
               assertThat(trace.getRequestType()).isEqualTo("mock request");
               assertThat(trace.getDurationMicros()).isEqualTo(42);
               assertThat(trace.getCoordinator()).isEqualTo(address);
+              assertThat(trace.getCoordinatorPort()).isEqualTo(0);
               assertThat(trace.getParameters())
                   .hasSize(2)
                   .containsEntry("key1", "value1")
@@ -148,6 +151,7 @@ public class QueryTraceFetcherTest {
                 assertThat(event.getActivity()).isEqualTo("mock activity " + i);
                 assertThat(event.getTimestamp()).isEqualTo(i);
                 assertThat(event.getSource()).isEqualTo(address);
+                assertThat(event.getSourcePort()).isEqualTo(0);
                 assertThat(event.getSourceElapsedMicros()).isEqualTo(i);
                 assertThat(event.getThreadName()).isEqualTo("mock thread " + i);
               }
@@ -215,6 +219,7 @@ public class QueryTraceFetcherTest {
               assertThat(trace.getRequestType()).isEqualTo("mock request");
               assertThat(trace.getDurationMicros()).isEqualTo(42);
               assertThat(trace.getCoordinator()).isEqualTo(address);
+              assertThat(trace.getCoordinatorPort()).isEqualTo(0);
               assertThat(trace.getParameters())
                   .hasSize(2)
                   .containsEntry("key1", "value1")
@@ -228,6 +233,7 @@ public class QueryTraceFetcherTest {
                 assertThat(event.getActivity()).isEqualTo("mock activity " + i);
                 assertThat(event.getTimestamp()).isEqualTo(i);
                 assertThat(event.getSource()).isEqualTo(address);
+                assertThat(event.getSourcePort()).isEqualTo(0);
                 assertThat(event.getSourceElapsedMicros()).isEqualTo(i);
                 assertThat(event.getThreadName()).isEqualTo("mock thread " + i);
               }
@@ -294,6 +300,8 @@ public class QueryTraceFetcherTest {
 
   private CompletionStage<AsyncResultSet> sessionRow(Integer duration) {
     Row row = mock(Row.class);
+    ColumnDefinitions definitions = mock(ColumnDefinitions.class);
+    when(row.getColumnDefinitions()).thenReturn(definitions);
     when(row.getString("request")).thenReturn("mock request");
     if (duration == null) {
       when(row.isNull("duration")).thenReturn(true);
@@ -355,6 +363,8 @@ public class QueryTraceFetcherTest {
 
   private Row eventRow(int i) {
     Row row = mock(Row.class);
+    ColumnDefinitions definitions = mock(ColumnDefinitions.class);
+    when(row.getColumnDefinitions()).thenReturn(definitions);
     when(row.getString("activity")).thenReturn("mock activity " + i);
     when(row.getUuid("event_id")).thenReturn(Uuids.startOf(i));
     when(row.getInetAddress("source")).thenReturn(address);

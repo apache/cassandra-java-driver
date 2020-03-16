@@ -31,6 +31,7 @@ public class DefaultQueryTrace implements QueryTrace {
   private final String requestType;
   private final int durationMicros;
   private final InetAddress coordinator;
+  private final int coordinatorPort;
   private final Map<String, String> parameters;
   private final long startedAt;
   private final List<TraceEvent> events;
@@ -40,6 +41,7 @@ public class DefaultQueryTrace implements QueryTrace {
       String requestType,
       int durationMicros,
       InetAddress coordinator,
+      int coordinatorPort,
       Map<String, String> parameters,
       long startedAt,
       List<TraceEvent> events) {
@@ -47,6 +49,7 @@ public class DefaultQueryTrace implements QueryTrace {
     this.requestType = requestType;
     this.durationMicros = durationMicros;
     this.coordinator = coordinator;
+    this.coordinatorPort = coordinatorPort;
     this.parameters = parameters;
     this.startedAt = startedAt;
     this.events = events;
@@ -73,6 +76,11 @@ public class DefaultQueryTrace implements QueryTrace {
   @Override
   public InetAddress getCoordinator() {
     return coordinator;
+  }
+
+  @Override
+  public int getCoordinatorPort() {
+    return coordinatorPort;
   }
 
   @NonNull

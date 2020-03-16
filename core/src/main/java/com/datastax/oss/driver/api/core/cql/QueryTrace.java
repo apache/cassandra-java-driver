@@ -43,6 +43,12 @@ public interface QueryTrace {
   @NonNull
   InetAddress getCoordinator();
 
+  /**
+   * The port of the node that coordinated the query. Prior to C* 4.0 this is not set and will
+   * default to 0.
+   */
+  int getCoordinatorPort();
+
   /** The parameters attached to this trace. */
   @NonNull
   Map<String, String> getParameters();

@@ -135,20 +135,30 @@ class QueryTraceFetcher {
     ImmutableList.Builder<TraceEvent> eventsBuilder = ImmutableList.builder();
     for (Row eventRow : eventRows) {
       UUID eventId = eventRow.getUuid("event_id");
+      int sourcePort = 0;
+      if (eventRow.getColumnDefinitions().contains("source_port")) {
+        sourcePort = eventRow.getInt("source_port");
+      }
       eventsBuilder.add(
           new DefaultTraceEvent(
               eventRow.getString("activity"),
               eventId == null ? -1 : eventId.timestamp(),
               eventRow.getInetAddress("source"),
+              sourcePort,
               eventRow.getInt("source_elapsed"),
               eventRow.getString("thread")));
     }
     Instant startedAt = sessionRow.getInstant("started_at");
+    int coordinatorPort = 0;
+    if (sessionRow.getColumnDefinitions().contains("coordinator_port")) {
+      coordinatorPort = sessionRow.getInt("coordinator_port");
+    }
     return new DefaultQueryTrace(
         tracingId,
         sessionRow.getString("request"),
         sessionRow.getInt("duration"),
         sessionRow.getInetAddress("coordinator"),
+        coordinatorPort,
         sessionRow.getMap("parameters", String.class, String.class),
         startedAt == null ? -1 : startedAt.toEpochMilli(),
         eventsBuilder.build());

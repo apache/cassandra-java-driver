@@ -28,11 +28,13 @@ public class DefaultTraceEvent implements TraceEvent {
   private final InetAddress source;
   private final int sourceElapsedMicros;
   private final String threadName;
+  private final int sourcePort;
 
   public DefaultTraceEvent(
       String activity,
       long timestamp,
       InetAddress source,
+      int sourcePort,
       int sourceElapsedMicros,
       String threadName) {
     this.activity = activity;
@@ -41,6 +43,7 @@ public class DefaultTraceEvent implements TraceEvent {
     this.source = source;
     this.sourceElapsedMicros = sourceElapsedMicros;
     this.threadName = threadName;
+    this.sourcePort = sourcePort;
   }
 
   @Override
@@ -56,6 +59,11 @@ public class DefaultTraceEvent implements TraceEvent {
   @Override
   public InetAddress getSource() {
     return source;
+  }
+
+  @Override
+  public int getSourcePort() {
+    return sourcePort;
   }
 
   @Override
