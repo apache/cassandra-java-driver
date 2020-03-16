@@ -4991,6 +4991,16 @@
         "old": "class org.apache.tinkerpop.gremlin.process.traversal.util.TraversalExplanation",
         "new": "class org.apache.tinkerpop.gremlin.process.traversal.util.TraversalExplanation",
         "justification": "Upgrade to Tinkerpop 3.4.4"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method int com.datastax.oss.driver.api.core.cql.QueryTrace::getCoordinatorPort()",
+        "justification": "JAVA-2679: Add port information to QueryTrace and TraceEvent"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method int com.datastax.oss.driver.api.core.cql.TraceEvent::getSourcePort()",
+        "justification": "JAVA-2679: Add port information to QueryTrace and TraceEvent"
       }
     ]
   }
