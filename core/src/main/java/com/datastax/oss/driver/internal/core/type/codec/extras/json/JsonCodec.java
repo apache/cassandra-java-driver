@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.examples.json.codecs;
+package com.datastax.oss.driver.internal.core.type.codec.extras.json;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataType;
@@ -30,14 +30,11 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 /**
- * A JSON codec that uses the <a href="http://wiki.fasterxml.com/JacksonHome">Jackson</a> library to
- * perform serialization and deserialization of JSON objects.
- *
- * <p>This codec maps a single Java object to a single JSON structure at a time; mapping of arrays
- * or collections to root-level JSON arrays is not supported, but such a codec can be easily crafted
- * after this one.
+ * A JSON codec that maps arbitrary Java objects to JSON strings stored as CQL type {@code text},
+ * using the Jackson library to perform serialization and deserialization of JSON objects.
  *
  * <p>Note that this codec requires the presence of Jackson library at runtime. If you use Maven,
  * this can be done by declaring the following dependency in your project:
@@ -46,23 +43,47 @@ import java.nio.ByteBuffer;
  * <dependency>
  *   <groupId>com.fasterxml.jackson.core</groupId>
  *   <artifactId>jackson-databind</artifactId>
- *   <version>2.9.8</version>
+ *   <version>LATEST</version>
  * </dependency>
  * }</pre>
+ *
+ * @see <a href="http://wiki.fasterxml.com/JacksonHome">Jackson JSON Library</a>
+ * @param <T> The Java type that this codec serializes from and deserializes to, from JSON strings.
  */
-public class JacksonJsonCodec<T> implements TypeCodec<T> {
+public class JsonCodec<T> implements TypeCodec<T> {
 
   private final ObjectMapper objectMapper;
   private final GenericType<T> javaType;
+  private final JavaType jacksonJavaType;
 
   /**
    * Creates a new instance for the provided {@code javaClass}, using a default, newly-allocated
    * {@link ObjectMapper}.
    *
+   * <p>The codec created with this constructor can handle all primitive CQL types as well as
+   * collections thereof, however it cannot handle tuples and user-defined types; if you need
+   * support for such CQL types, you need to create your own {@link ObjectMapper} and use the
+   * {@linkplain #JsonCodec(Class, ObjectMapper) two-arg constructor} instead.
+   *
    * @param javaClass the Java class this codec maps to.
    */
-  public JacksonJsonCodec(Class<T> javaClass) {
-    this(javaClass, new ObjectMapper());
+  public JsonCodec(@NonNull Class<T> javaClass) {
+    this(GenericType.of(Objects.requireNonNull(javaClass, "javaClass cannot be null")));
+  }
+
+  /**
+   * Creates a new instance for the provided {@code javaType}, using a default, newly-allocated
+   * {@link ObjectMapper}.
+   *
+   * <p>The codec created with this constructor can handle all primitive CQL types as well as
+   * collections thereof, however it cannot handle tuples and user-defined types; if you need
+   * support for such CQL types, you need to create your own {@link ObjectMapper} and use the
+   * {@linkplain #JsonCodec(GenericType, ObjectMapper) two-arg constructor} instead.
+   *
+   * @param javaType the Java type this codec maps to.
+   */
+  public JsonCodec(@NonNull GenericType<T> javaType) {
+    this(javaType, new ObjectMapper());
   }
 
   /**
@@ -70,10 +91,25 @@ public class JacksonJsonCodec<T> implements TypeCodec<T> {
    * ObjectMapper}.
    *
    * @param javaClass the Java class this codec maps to.
+   * @param objectMapper the {@link ObjectMapper} instance to use.
    */
-  public JacksonJsonCodec(Class<T> javaClass, ObjectMapper jsonMapper) {
-    this.javaType = GenericType.of(javaClass);
-    this.objectMapper = jsonMapper;
+  public JsonCodec(@NonNull Class<T> javaClass, @NonNull ObjectMapper objectMapper) {
+    this(
+        GenericType.of(Objects.requireNonNull(javaClass, "javaClass cannot be null")),
+        objectMapper);
+  }
+
+  /**
+   * Creates a new instance for the provided {@code javaType}, and using the provided {@link
+   * ObjectMapper}.
+   *
+   * @param javaType the Java type this codec maps to.
+   * @param objectMapper the {@link ObjectMapper} instance to use.
+   */
+  public JsonCodec(@NonNull GenericType<T> javaType, @NonNull ObjectMapper objectMapper) {
+    this.javaType = Objects.requireNonNull(javaType, "javaType cannot be null");
+    this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper cannot be null");
+    this.jacksonJavaType = TypeFactory.defaultInstance().constructType(javaType.getType());
   }
 
   @NonNull
@@ -97,7 +133,7 @@ public class JacksonJsonCodec<T> implements TypeCodec<T> {
     try {
       return ByteBuffer.wrap(objectMapper.writeValueAsBytes(value));
     } catch (JsonProcessingException e) {
-      throw new IllegalArgumentException(e.getMessage(), e);
+      throw new IllegalArgumentException("Failed to encode value as JSON", e);
     }
   }
 
@@ -108,31 +144,30 @@ public class JacksonJsonCodec<T> implements TypeCodec<T> {
       return null;
     }
     try {
-      return objectMapper.readValue(Bytes.getArray(bytes), toJacksonJavaType());
+      return objectMapper.readValue(Bytes.getArray(bytes), jacksonJavaType);
     } catch (IOException e) {
-      throw new IllegalArgumentException(e.getMessage(), e);
+      throw new IllegalArgumentException("Failed to decode JSON value", e);
     }
   }
 
   @NonNull
   @Override
-  public String format(T value) {
+  public String format(@Nullable T value) {
     if (value == null) {
       return "NULL";
     }
     String json;
     try {
       json = objectMapper.writeValueAsString(value);
-    } catch (IOException e) {
-      throw new IllegalArgumentException(e.getMessage(), e);
+    } catch (JsonProcessingException e) {
+      throw new IllegalArgumentException("Failed to format value as JSON", e);
     }
     return Strings.quote(json);
   }
 
   @Nullable
   @Override
-  @SuppressWarnings("unchecked")
-  public T parse(String value) {
+  public T parse(@Nullable String value) {
     if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) {
       return null;
     }
@@ -141,21 +176,9 @@ public class JacksonJsonCodec<T> implements TypeCodec<T> {
     }
     String json = Strings.unquote(value);
     try {
-      return (T) objectMapper.readValue(json, toJacksonJavaType());
+      return objectMapper.readValue(json, jacksonJavaType);
     } catch (IOException e) {
-      throw new IllegalArgumentException(e.getMessage(), e);
+      throw new IllegalArgumentException("Failed to parse value as JSON", e);
     }
-  }
-
-  /**
-   * This method acts as a bridge between the driver's {@link
-   * com.datastax.oss.driver.api.core.type.reflect.GenericType GenericType} API and Jackson's {@link
-   * JavaType} API.
-   *
-   * @return A {@link JavaType} instance corresponding to the codec's {@link #getJavaType() Java
-   *     type}.
-   */
-  private JavaType toJacksonJavaType() {
-    return TypeFactory.defaultInstance().constructType(getJavaType().getType());
   }
 }

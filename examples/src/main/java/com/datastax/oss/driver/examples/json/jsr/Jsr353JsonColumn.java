@@ -27,7 +27,6 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.examples.json.PlainTextJson;
-import com.datastax.oss.driver.examples.json.codecs.Jsr353JsonCodec;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonStructure;

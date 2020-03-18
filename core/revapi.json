@@ -5005,6 +5005,31 @@
         "new": "parameter int com.datastax.oss.driver.api.core.type.UserDefinedType::firstIndexOf(===java.lang.String===)",
         "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
         "justification": "Add missing `@NonNull` annotation to UserDefinedType.firstIndexOf"
+      },
+      {
+        "code": "java.class.nonPublicPartOfAPI",
+        "new": "class com.fasterxml.jackson.databind.introspect.AnnotatedConstructor.Serialization",
+        "justification": "Caused by the exposure of ObjectMapper as a parameter in ExtraTypeCodecs.json()"
+      },
+      {
+        "code": "java.class.nonPublicPartOfAPI",
+        "new": "class com.fasterxml.jackson.databind.introspect.AnnotatedField.Serialization",
+        "justification": "Caused by the exposure of ObjectMapper as a parameter in ExtraTypeCodecs.json()"
+      },
+      {
+        "code": "java.class.nonPublicPartOfAPI",
+        "new": "class com.fasterxml.jackson.databind.introspect.AnnotatedMethod.Serialization",
+        "justification": "Caused by the exposure of ObjectMapper as a parameter in ExtraTypeCodecs.json()"
+      },
+      {
+        "code": "java.class.nonPublicPartOfAPI",
+        "new": "class com.fasterxml.jackson.databind.type.TypeParser.MyTokenizer",
+        "justification": "Caused by the exposure of ObjectMapper as a parameter in ExtraTypeCodecs.json()"
+      },
+      {
+        "code": "java.class.nonPublicPartOfAPI",
+        "new": "class com.fasterxml.jackson.databind.util.PrimitiveArrayBuilder.Node<T extends java.lang.Object>",
+        "justification": "Caused by the exposure of ObjectMapper as a parameter in ExtraTypeCodecs.json()"
       }
     ]
   }

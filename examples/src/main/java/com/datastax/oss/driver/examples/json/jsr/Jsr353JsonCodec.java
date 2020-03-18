@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.examples.json.codecs;
+package com.datastax.oss.driver.examples.json.jsr;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataType;
@@ -105,7 +105,7 @@ public class Jsr353JsonCodec implements TypeCodec<JsonStructure> {
    * @param config A map of provider-specific configuration properties. May be empty or {@code
    *     null}.
    */
-  public Jsr353JsonCodec(Map<String, ?> config) {
+  public Jsr353JsonCodec(@Nullable Map<String, ?> config) {
     readerFactory = Json.createReaderFactory(config);
     writerFactory = Json.createWriterFactory(config);
   }
@@ -130,15 +130,11 @@ public class Jsr353JsonCodec implements TypeCodec<JsonStructure> {
       return null;
     }
     try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-      try {
-        JsonWriter writer = writerFactory.createWriter(baos);
-        writer.write(value);
-        return ByteBuffer.wrap(baos.toByteArray());
-      } catch (JsonException e) {
-        throw new IllegalArgumentException(e.getMessage(), e);
-      }
-    } catch (IOException e) {
-      throw new IllegalArgumentException(e.getMessage(), e);
+      JsonWriter writer = writerFactory.createWriter(baos);
+      writer.write(value);
+      return ByteBuffer.wrap(baos.toByteArray());
+    } catch (JsonException | IOException e) {
+      throw new IllegalArgumentException("Failed to encode value as JSON", e);
     }
   }
 
@@ -150,40 +146,33 @@ public class Jsr353JsonCodec implements TypeCodec<JsonStructure> {
       return null;
     }
     try (ByteArrayInputStream bais = new ByteArrayInputStream(Bytes.getArray(bytes))) {
-      try {
-        JsonReader reader = readerFactory.createReader(bais);
-        return reader.read();
-      } catch (JsonException e) {
-        throw new IllegalArgumentException(e.getMessage(), e);
-      }
-    } catch (IOException e) {
-      throw new IllegalArgumentException(e.getMessage(), e);
+      JsonReader reader = readerFactory.createReader(bais);
+      return reader.read();
+    } catch (JsonException | IOException e) {
+      throw new IllegalArgumentException("Failed to decode JSON value", e);
     }
   }
 
   @NonNull
   @Override
-  public String format(JsonStructure value) throws IllegalArgumentException {
+  public String format(@Nullable JsonStructure value) {
     if (value == null) {
       return "NULL";
     }
     String json;
     try (StringWriter sw = new StringWriter()) {
-      try {
-        JsonWriter writer = writerFactory.createWriter(sw);
-        writer.write(value);
-        json = sw.toString();
-      } catch (JsonException e) {
-        throw new IllegalArgumentException(e.getMessage(), e);
-      }
-    } catch (IOException e) {
-      throw new IllegalArgumentException(e.getMessage(), e);
+      JsonWriter writer = writerFactory.createWriter(sw);
+      writer.write(value);
+      json = sw.toString();
+    } catch (JsonException | IOException e) {
+      throw new IllegalArgumentException("Failed to format value as JSON", e);
     }
     return Strings.quote(json);
   }
 
+  @Nullable
   @Override
-  public JsonStructure parse(String value) throws IllegalArgumentException {
+  public JsonStructure parse(String value) {
     if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) {
       return null;
     }
@@ -195,7 +184,7 @@ public class Jsr353JsonCodec implements TypeCodec<JsonStructure> {
       JsonReader reader = readerFactory.createReader(sr);
       return reader.read();
     } catch (JsonException e) {
-      throw new IllegalArgumentException(e.getMessage(), e);
+      throw new IllegalArgumentException("Failed to parse value as JSON", e);
     }
   }
 }
