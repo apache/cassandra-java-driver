@@ -35,5 +35,19 @@ public enum DefaultProtocolFeature implements ProtocolFeature {
    * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-10145">CASSANDRA-10145</a>
    */
   PER_REQUEST_KEYSPACE,
+
+  /**
+   * Support for smallint and tinyint types.
+   *
+   * @see <a href="https://jira.apache.org/jira/browse/CASSANDRA-8951">CASSANDRA-8951</a>
+   */
+  SMALLINT_AND_TINYINT_TYPES,
+
+  /**
+   * Support for the date type.
+   *
+   * @see <a href="https://jira.apache.org/jira/browse/CASSANDRA-7523">CASSANDRA-7523</a>
+   */
+  DATE_TYPE,
   ;
 }

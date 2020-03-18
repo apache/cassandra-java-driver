@@ -230,7 +230,9 @@ public class DefaultProtocolVersionRegistry implements ProtocolVersionRegistry {
   @Override
   public boolean supports(ProtocolVersion version, ProtocolFeature feature) {
     int code = version.getCode();
-    if (DefaultProtocolFeature.UNSET_BOUND_VALUES.equals(feature)) {
+    if (DefaultProtocolFeature.SMALLINT_AND_TINYINT_TYPES.equals(feature)
+        || DefaultProtocolFeature.DATE_TYPE.equals(feature)
+        || DefaultProtocolFeature.UNSET_BOUND_VALUES.equals(feature)) {
       // All DSE versions and all OSS V4+
       return DefaultProtocolVersion.V4.getCode() <= code;
     } else if (DefaultProtocolFeature.PER_REQUEST_KEYSPACE.equals(feature)) {

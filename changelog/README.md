@@ -8,6 +8,10 @@
 - [improvement] JAVA-2667: Add ability to fail the build when integration tests fail
 - [bug] JAVA-1861: Add Metadata.getClusterName()
 
+### 4.5.1
+
+- [bug] JAVA-2673: Fix mapper generated code for UPDATE with TTL and IF condition
+
 ### 4.5.0
 
 - [bug] JAVA-2654: Make AdminRequestHandler handle integer serialization

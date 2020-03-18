@@ -162,6 +162,17 @@ public class UpdateCustomIfClauseIT extends InventoryITBase {
         .isEqualTo(false);
   }
 
+  @Test
+  public void should_update_entity_if_condition_is_met_using_ttl() {
+    dao.update(
+        new Product(FLAMETHROWER.getId(), "Description for length 10", new Dimensions(10, 1, 1)));
+    assertThat(dao.findById(FLAMETHROWER.getId())).isNotNull();
+
+    Product otherProduct =
+        new Product(FLAMETHROWER.getId(), "Other description", new Dimensions(1, 1, 1));
+    assertThat(dao.updateIfLengthUsingTtl(otherProduct, 10).wasApplied()).isEqualTo(true);
+  }
+
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
@@ -176,6 +187,9 @@ public class UpdateCustomIfClauseIT extends InventoryITBase {
 
     @Update(customIfClause = "dimensions.length = :length")
     ResultSet updateIfLength(Product product, int length);
+
+    @Update(customIfClause = "dimensions.length = :length", ttl = "20")
+    ResultSet updateIfLengthUsingTtl(Product product, int length);
 
     @Update(customIfClause = "dimensions.length = :length")
     BoundStatement updateIfLengthStatement(Product product, int length);

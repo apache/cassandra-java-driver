@@ -196,9 +196,10 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
         methodBuilder, requestName, helperFieldName, annotation.customWhereClause());
     maybeAddTtl(annotation.ttl(), methodBuilder);
     maybeAddTimestamp(annotation.timestamp(), methodBuilder);
+    methodBuilder.addCode(")");
     maybeAddIfClause(methodBuilder, annotation);
 
-    methodBuilder.addCode(").asCql()");
+    methodBuilder.addCode(".asCql()");
     methodBuilder.addCode(")$];\n");
   }
 
