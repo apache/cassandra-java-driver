@@ -34,25 +34,23 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.datastax.oss.driver.api.core.type.reflect.GenericTypeParameter;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.type.codec.IntCodec;
 import com.datastax.oss.driver.internal.core.type.codec.UdtCodec;
+import com.datastax.oss.driver.internal.core.type.codec.extras.OptionalCodec;
 import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Predicate;
 import org.assertj.core.util.Maps;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -261,33 +259,6 @@ public class CodecRegistryIT {
       Row row = rows.iterator().next();
       assertThat(row.getFloat("v")).isEqualTo(3.0f);
       assertThat(row.getFloat(0)).isEqualTo(3.0f);
-    }
-  }
-
-  private static class OptionalCodec<T> extends MappingCodec<T, Optional<T>> {
-
-    // in cassandra, empty collections are considered null and vise versa.
-    Predicate<T> isAbsent =
-        (i) ->
-            i == null
-                || (i instanceof Collection && ((Collection) i).isEmpty())
-                || (i instanceof Map && ((Map) i).isEmpty());
-
-    OptionalCodec(TypeCodec<T> innerCodec) {
-      super(
-          innerCodec,
-          new GenericType<Optional<T>>() {}.where(
-              new GenericTypeParameter<T>() {}, innerCodec.getJavaType()));
-    }
-
-    @Override
-    protected Optional<T> innerToOuter(T value) {
-      return isAbsent.test(value) ? Optional.empty() : Optional.of(value);
-    }
-
-    @Override
-    protected T outerToInner(Optional<T> value) {
-      return value.orElse(null);
     }
   }
 

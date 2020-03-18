@@ -34,10 +34,12 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import net.jcip.annotations.Immutable;
@@ -95,6 +97,7 @@ public class GenericType<T> {
   public static final GenericType<ZonedDateTime> ZONED_DATE_TIME = of(ZonedDateTime.class);
   public static final GenericType<LocalDate> LOCAL_DATE = of(LocalDate.class);
   public static final GenericType<LocalTime> LOCAL_TIME = of(LocalTime.class);
+  public static final GenericType<LocalDateTime> LOCAL_DATE_TIME = of(LocalDateTime.class);
   public static final GenericType<ByteBuffer> BYTE_BUFFER = of(ByteBuffer.class);
   public static final GenericType<String> STRING = of(String.class);
   public static final GenericType<BigInteger> BIG_INTEGER = of(BigInteger.class);
@@ -159,6 +162,35 @@ public class GenericType<T> {
     TypeToken<Map<K, V>> token =
         new TypeToken<Map<K, V>>() {}.where(new TypeParameter<K>() {}, keyType.token)
             .where(new TypeParameter<V>() {}, valueType.token);
+    return new GenericType<>(token);
+  }
+
+  @NonNull
+  public static <T> GenericType<T[]> arrayOf(@NonNull Class<T> componentType) {
+    TypeToken<T[]> token =
+        new TypeToken<T[]>() {}.where(new TypeParameter<T>() {}, TypeToken.of(componentType));
+    return new GenericType<>(token);
+  }
+
+  @NonNull
+  public static <T> GenericType<T[]> arrayOf(@NonNull GenericType<T> componentType) {
+    TypeToken<T[]> token =
+        new TypeToken<T[]>() {}.where(new TypeParameter<T>() {}, componentType.token);
+    return new GenericType<>(token);
+  }
+
+  @NonNull
+  public static <T> GenericType<Optional<T>> optionalOf(@NonNull Class<T> componentType) {
+    TypeToken<Optional<T>> token =
+        new TypeToken<Optional<T>>() {}.where(
+            new TypeParameter<T>() {}, TypeToken.of(componentType));
+    return new GenericType<>(token);
+  }
+
+  @NonNull
+  public static <T> GenericType<Optional<T>> optionalOf(@NonNull GenericType<T> componentType) {
+    TypeToken<Optional<T>> token =
+        new TypeToken<Optional<T>>() {}.where(new TypeParameter<T>() {}, componentType.token);
     return new GenericType<>(token);
   }
 

@@ -25,9 +25,9 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.type.codec.ExtraTypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.examples.json.PlainTextJson;
-import com.datastax.oss.driver.examples.json.codecs.JacksonJsonCodec;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -35,9 +35,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Illustrates how to map a single table column of type {@code VARCHAR}, containing JSON payloads,
  * into a Java object using the <a href="http://wiki.fasterxml.com/JacksonHome">Jackson</a> library.
  *
- * <p>This example makes usage of a custom {@link TypeCodec codec}, {@link JacksonJsonCodec}, which
- * is implemented in the java-driver-examples module. If you plan to follow this example, make sure
- * to include the following Maven dependencies in your project:
+ * <p>This example makes usage of a {@linkplain ExtraTypeCodecs#json(Class) custom codec for JSON}.
+ * If you plan to follow this example, make sure to include the following Maven dependencies in your
+ * project:
  *
  * <pre>{@code
  * <dependency>
@@ -70,7 +70,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class JacksonJsonColumn {
 
   // A codec to convert JSON payloads into User instances;
-  private static final TypeCodec<User> USER_CODEC = new JacksonJsonCodec<>(User.class);
+  private static final TypeCodec<User> USER_CODEC = ExtraTypeCodecs.json(User.class);
 
   public static void main(String[] args) {
     try (CqlSession session = CqlSession.builder().addTypeCodecs(USER_CODEC).build()) {
