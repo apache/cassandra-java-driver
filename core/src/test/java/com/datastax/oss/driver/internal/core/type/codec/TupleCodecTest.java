@@ -16,8 +16,10 @@
 package com.datastax.oss.driver.internal.core.type.codec;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
@@ -169,7 +171,33 @@ public class TupleCodecTest extends CodecTestBase<TupleValue> {
   }
 
   @Test
-  public void should_parse_tuple() {
+  public void should_parse_empty_tuple() {
+    TupleValue tuple = parse("()");
+
+    assertThat(tuple.isNull(0)).isTrue();
+    assertThat(tuple.isNull(1)).isTrue();
+    assertThat(tuple.isNull(2)).isTrue();
+
+    verifyNoMoreInteractions(intCodec);
+    verifyNoMoreInteractions(doubleCodec);
+    verifyNoMoreInteractions(textCodec);
+  }
+
+  @Test
+  public void should_parse_partial_tuple() {
+    TupleValue tuple = parse("(1,NULL)");
+
+    assertThat(tuple.getInt(0)).isEqualTo(1);
+    assertThat(tuple.isNull(1)).isTrue();
+    assertThat(tuple.isNull(2)).isTrue();
+
+    verify(intCodec).parse("1");
+    verify(doubleCodec).parse("NULL");
+    verifyNoMoreInteractions(textCodec);
+  }
+
+  @Test
+  public void should_parse_full_tuple() {
     TupleValue tuple = parse("(1,NULL,'a')");
 
     assertThat(tuple.getInt(0)).isEqualTo(1);
@@ -181,9 +209,80 @@ public class TupleCodecTest extends CodecTestBase<TupleValue> {
     verify(textCodec).parse("'a'");
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
+  public void should_parse_tuple_with_extra_whitespace() {
+    TupleValue tuple = parse("  (  1  ,  NULL  ,  'a'  )  ");
+
+    assertThat(tuple.getInt(0)).isEqualTo(1);
+    assertThat(tuple.isNull(1)).isTrue();
+    assertThat(tuple.getString(2)).isEqualTo("a");
+
+    verify(intCodec).parse("1");
+    verify(doubleCodec).parse("NULL");
+    verify(textCodec).parse("'a'");
+  }
+
+  @Test
   public void should_fail_to_parse_invalid_input() {
-    parse("not a tuple");
+    // general tuple structure invalid
+    assertThatThrownBy(() -> parse("not a tuple"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse tuple value from \"not a tuple\", at character 0 expecting '(' but got 'n'");
+    assertThatThrownBy(() -> parse(" ( "))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse tuple value from \" ( \", at field 0 (character 3) expecting CQL value or ')', got EOF");
+    assertThatThrownBy(() -> parse("( ["))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse tuple value from \"( [\", invalid CQL value at field 0 (character 2)");
+    assertThatThrownBy(() -> parse("( 12 , "))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse tuple value from \"( 12 , \", at field 1 (character 7) expecting CQL value or ')', got EOF");
+    assertThatThrownBy(() -> parse("( 12 12.34 "))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse tuple value from \"( 12 12.34 \", at field 0 (character 5) expecting ',' but got '1'");
+    assertThatThrownBy(() -> parse("(1234,12.34,'text'"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse tuple value from \"(1234,12.34,'text'\", at field 2 (character 18) expecting ',' or ')', but got EOF");
+    assertThatThrownBy(() -> parse("(1234,12.34,'text'))"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse tuple value from \"(1234,12.34,'text'))\", at character 19 expecting EOF or blank, but got \")\"");
+    assertThatThrownBy(() -> parse("())"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse tuple value from \"())\", at character 2 expecting EOF or blank, but got \")\"");
+    assertThatThrownBy(() -> parse("(1234,12.34,'text') extra"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse tuple value from \"(1234,12.34,'text') extra\", at character 20 expecting EOF or blank, but got \"extra\"");
+    // element syntax invalid
+    assertThatThrownBy(() -> parse("(not a valid int,12.34,'text')"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse tuple value from \"(not a valid int,12.34,'text')\", "
+                + "invalid CQL value at field 0 (character 1): "
+                + "Cannot parse 32-bits int value from \"not\"")
+        .hasRootCauseInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> parse("(1234,not a valid double,'text')"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse tuple value from \"(1234,not a valid double,'text')\", "
+                + "invalid CQL value at field 1 (character 6): "
+                + "Cannot parse 64-bits double value from \"not\"")
+        .hasRootCauseInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> parse("(1234,12.34,not a valid text)"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse tuple value from \"(1234,12.34,not a valid text)\", "
+                + "invalid CQL value at field 2 (character 12): "
+                + "text or varchar values must be enclosed by single quotes")
+        .hasRootCauseInstanceOf(IllegalArgumentException.class);
   }
 
   @Test

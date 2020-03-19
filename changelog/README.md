@@ -4,6 +4,7 @@
 
 ### 4.6.0 (in progress)
 
+- [bug] JAVA-2698: TupleCodec and UdtCodec give wrong error message when parsing fails
 - [improvement] JAVA-2435: Add automatic-module-names to the manifests
 - [new feature] JAVA-2054: Add now_in_seconds to protocol v5 query messages
 - [bug] JAVA-2711: Fix handling of UDT keys in the mapper

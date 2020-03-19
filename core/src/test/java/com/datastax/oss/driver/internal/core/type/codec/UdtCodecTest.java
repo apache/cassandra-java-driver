@@ -16,8 +16,10 @@
 package com.datastax.oss.driver.internal.core.type.codec;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
@@ -191,7 +193,33 @@ public class UdtCodecTest extends CodecTestBase<UdtValue> {
   }
 
   @Test
-  public void should_parse_udt() {
+  public void should_parse_empty_udt() {
+    UdtValue udt = parse("{}");
+
+    assertThat(udt.isNull(0)).isTrue();
+    assertThat(udt.isNull(1)).isTrue();
+    assertThat(udt.isNull(2)).isTrue();
+
+    verifyNoMoreInteractions(intCodec);
+    verifyNoMoreInteractions(doubleCodec);
+    verifyNoMoreInteractions(textCodec);
+  }
+
+  @Test
+  public void should_parse_partial_udt() {
+    UdtValue udt = parse("{field1:1,field2:NULL}");
+
+    assertThat(udt.getInt(0)).isEqualTo(1);
+    assertThat(udt.isNull(1)).isTrue();
+    assertThat(udt.isNull(2)).isTrue();
+
+    verify(intCodec).parse("1");
+    verify(doubleCodec).parse("NULL");
+    verifyNoMoreInteractions(textCodec);
+  }
+
+  @Test
+  public void should_parse_full_udt() {
     UdtValue udt = parse("{field1:1,field2:NULL,field3:'a'}");
 
     assertThat(udt.getInt(0)).isEqualTo(1);
@@ -203,9 +231,96 @@ public class UdtCodecTest extends CodecTestBase<UdtValue> {
     verify(textCodec).parse("'a'");
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
+  public void should_parse_udt_with_extra_whitespace() {
+    UdtValue udt = parse(" { field1 : 1 , field2 : NULL , field3 : 'a' } ");
+
+    assertThat(udt.getInt(0)).isEqualTo(1);
+    assertThat(udt.isNull(1)).isTrue();
+    assertThat(udt.getString(2)).isEqualTo("a");
+
+    verify(intCodec).parse("1");
+    verify(doubleCodec).parse("NULL");
+    verify(textCodec).parse("'a'");
+  }
+
+  @Test
   public void should_fail_to_parse_invalid_input() {
-    parse("not a udt");
+    // general UDT structure invalid
+    assertThatThrownBy(() -> parse("not a udt"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse UDT value from \"not a udt\" at character 0: expecting '{' but got 'n'");
+    assertThatThrownBy(() -> parse(" { "))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse UDT value from \" { \" at character 3: expecting CQL identifier or '}', got EOF");
+    assertThatThrownBy(() -> parse("{ [ "))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse UDT value from \"{ [ \", cannot parse a CQL identifier at character 2");
+    assertThatThrownBy(() -> parse("{ field1 "))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse UDT value from \"{ field1 \", at field field1 (character 9) expecting ':', but got EOF");
+    assertThatThrownBy(() -> parse("{ field1 ,"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse UDT value from \"{ field1 ,\", at field field1 (character 9) expecting ':', but got ','");
+    assertThatThrownBy(() -> parse("{nonExistentField:NULL}"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse UDT value from \"{nonExistentField:NULL}\", unknown CQL identifier at character 17: \"nonExistentField\"");
+    assertThatThrownBy(() -> parse("{ field1 : "))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse UDT value from \"{ field1 : \", invalid CQL value at field field1 (character 11)");
+    assertThatThrownBy(() -> parse("{ field1 : ["))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse UDT value from \"{ field1 : [\", invalid CQL value at field field1 (character 11)");
+    assertThatThrownBy(() -> parse("{ field1 : 1 , "))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse UDT value from \"{ field1 : 1 , \" at field field1 (character 15): expecting CQL identifier or '}', got EOF");
+    assertThatThrownBy(() -> parse("{ field1 : 1 field2 "))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse UDT value from \"{ field1 : 1 field2 \", at field field1 (character 13) expecting ',' but got 'f'");
+    assertThatThrownBy(() -> parse("{field1:1,field2:12.34,field3:'a'"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse UDT value from \"{field1:1,field2:12.34,field3:'a'\", at field field3 (character 33) expecting ',' or '}', but got EOF");
+    assertThatThrownBy(() -> parse("{field1:1,field2:12.34,field3:'a'}}"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse UDT value from \"{field1:1,field2:12.34,field3:'a'}}\", at character 34 expecting EOF or blank, but got \"}\"");
+    assertThatThrownBy(() -> parse("{field1:1,field2:12.34,field3:'a'} extra"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse UDT value from \"{field1:1,field2:12.34,field3:'a'} extra\", at character 35 expecting EOF or blank, but got \"extra\"");
+    // element syntax invalid
+    assertThatThrownBy(() -> parse("{field1:not a valid int,field2:NULL,field3:'a'}"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse UDT value from \"{field1:not a valid int,field2:NULL,field3:'a'}\", "
+                + "invalid CQL value at field field1 (character 8): "
+                + "Cannot parse 32-bits int value from \"not\"")
+        .hasRootCauseInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> parse("{field1:1,field2:not a valid double,field3:'a'}"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse UDT value from \"{field1:1,field2:not a valid double,field3:'a'}\", "
+                + "invalid CQL value at field field2 (character 17): "
+                + "Cannot parse 64-bits double value from \"not\"")
+        .hasRootCauseInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> parse("{field1:1,field2:NULL,field3:not a valid text}"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Cannot parse UDT value from \"{field1:1,field2:NULL,field3:not a valid text}\", "
+                + "invalid CQL value at field field3 (character 29): "
+                + "text or varchar values must be enclosed by single quotes")
+        .hasRootCauseInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
