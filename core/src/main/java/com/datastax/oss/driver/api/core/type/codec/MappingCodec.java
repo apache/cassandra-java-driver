@@ -30,7 +30,7 @@ import java.util.Objects;
  * <p>This codec can be used to provide support for Java types that are not natively handled by the
  * driver, as long as there is a conversion path to and from another supported Java type.
  *
- * @param <InnerT> The "inner" Java type; must be a driver supported Java type< (that is, there must
+ * @param <InnerT> The "inner" Java type; must be a driver supported Java type (that is, there must
  *     exist a codec registered for it).
  * @param <OuterT> The "outer", or target Java type; this codec will handle the mapping to and from
  *     {@code InnerT} and {@code OuterT}.
