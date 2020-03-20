@@ -30,7 +30,7 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 class SimpleReplicationStrategy implements ReplicationStrategy {
 
-  private final int replicationFactor;
+  private final ReplicationFactor replicationFactor;
 
   SimpleReplicationStrategy(Map<String, String> replicationConfig) {
     this(extractReplicationFactor(replicationConfig));
@@ -38,6 +38,10 @@ class SimpleReplicationStrategy implements ReplicationStrategy {
 
   @VisibleForTesting
   SimpleReplicationStrategy(int replicationFactor) {
+    this(ReplicationFactor.fullOnly(replicationFactor));
+  }
+
+  SimpleReplicationStrategy(ReplicationFactor replicationFactor) {
     this.replicationFactor = replicationFactor;
   }
 
@@ -45,7 +49,7 @@ class SimpleReplicationStrategy implements ReplicationStrategy {
   public SetMultimap<Token, Node> computeReplicasByToken(
       Map<Token, Node> tokenToPrimary, List<Token> ring) {
 
-    int rf = Math.min(replicationFactor, ring.size());
+    int rf = Math.min(replicationFactor.fullReplicas(), ring.size());
 
     ImmutableSetMultimap.Builder<Token, Node> result = ImmutableSetMultimap.builder();
     for (int i = 0; i < ring.size(); i++) {
@@ -63,9 +67,9 @@ class SimpleReplicationStrategy implements ReplicationStrategy {
     return ring.get(i % ring.size());
   }
 
-  private static int extractReplicationFactor(Map<String, String> replicationConfig) {
+  private static ReplicationFactor extractReplicationFactor(Map<String, String> replicationConfig) {
     String factorString = replicationConfig.get("replication_factor");
     Preconditions.checkNotNull(factorString, "Missing replication factor in " + replicationConfig);
-    return Integer.parseInt(factorString);
+    return ReplicationFactor.fromString(factorString);
   }
 }

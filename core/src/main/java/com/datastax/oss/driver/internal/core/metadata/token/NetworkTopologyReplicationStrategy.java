@@ -40,15 +40,15 @@ class NetworkTopologyReplicationStrategy implements ReplicationStrategy {
       LoggerFactory.getLogger(NetworkTopologyReplicationStrategy.class);
 
   private final Map<String, String> replicationConfig;
-  private final Map<String, Integer> replicationFactors;
+  private final Map<String, ReplicationFactor> replicationFactors;
   private final String logPrefix;
 
   NetworkTopologyReplicationStrategy(Map<String, String> replicationConfig, String logPrefix) {
     this.replicationConfig = replicationConfig;
-    ImmutableMap.Builder<String, Integer> factorsBuilder = ImmutableMap.builder();
+    ImmutableMap.Builder<String, ReplicationFactor> factorsBuilder = ImmutableMap.builder();
     for (Map.Entry<String, String> entry : replicationConfig.entrySet()) {
       if (!entry.getKey().equals("class")) {
-        factorsBuilder.put(entry.getKey(), Integer.parseInt(entry.getValue()));
+        factorsBuilder.put(entry.getKey(), ReplicationFactor.fromString(entry.getValue()));
       }
     }
     this.replicationFactors = factorsBuilder.build();
@@ -88,7 +88,7 @@ class NetworkTopologyReplicationStrategy implements ReplicationStrategy {
         if (dc == null || !allDcReplicas.containsKey(dc)) {
           continue;
         }
-        Integer rf = replicationFactors.get(dc);
+        Integer rf = replicationFactors.get(dc).fullReplicas();
         Set<Node> dcReplicas = allDcReplicas.get(dc);
         if (rf == null || dcReplicas.size() >= rf) {
           continue;
@@ -123,7 +123,7 @@ class NetworkTopologyReplicationStrategy implements ReplicationStrategy {
       // Warn the user because that leads to quadratic performance of this method (JAVA-702).
       for (Map.Entry<String, Set<Node>> entry : allDcReplicas.entrySet()) {
         String dcName = entry.getKey();
-        int expectedFactor = replicationFactors.get(dcName);
+        int expectedFactor = replicationFactors.get(dcName).fullReplicas();
         int achievedFactor = entry.getValue().size();
         if (achievedFactor < expectedFactor && !warnedDcs.contains(dcName)) {
           LOG.warn(
@@ -148,7 +148,7 @@ class NetworkTopologyReplicationStrategy implements ReplicationStrategy {
     for (Map.Entry<String, Set<Node>> entry : map.entrySet()) {
       String dc = entry.getKey();
       int dcCount = (dcNodeCount.get(dc) == null) ? 0 : dcNodeCount.get(dc);
-      if (entry.getValue().size() < Math.min(replicationFactors.get(dc), dcCount)) {
+      if (entry.getValue().size() < Math.min(replicationFactors.get(dc).fullReplicas(), dcCount)) {
         return false;
       }
     }
