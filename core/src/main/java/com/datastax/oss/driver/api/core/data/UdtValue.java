@@ -57,7 +57,7 @@ public interface UdtValue
    */
   @NonNull
   default String getFormattedContents() {
-    return codecRegistry().codecFor(getType()).format(this);
+    return codecRegistry().codecFor(getType(), UdtValue.class).format(this);
   }
 
   /**

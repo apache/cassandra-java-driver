@@ -56,7 +56,7 @@ public interface TupleValue extends GettableByIndex, SettableByIndex<TupleValue>
    */
   @NonNull
   default String getFormattedContents() {
-    return codecRegistry().codecFor(getType()).format(this);
+    return codecRegistry().codecFor(getType(), TupleValue.class).format(this);
   }
 
   /**
