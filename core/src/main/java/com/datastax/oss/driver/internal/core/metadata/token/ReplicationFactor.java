@@ -29,12 +29,12 @@ public class ReplicationFactor {
     this.fullReplicas = allReplicas - transientReplicas;
   }
 
-  public static ReplicationFactor withTransient(int totalReplicas, int transientReplicas) {
-    return new ReplicationFactor(totalReplicas, transientReplicas);
+  public static ReplicationFactor withTransient(int allReplicas, int transientReplicas) {
+    return new ReplicationFactor(allReplicas, transientReplicas);
   }
 
-  public static ReplicationFactor fullOnly(int totalReplicas) {
-    return new ReplicationFactor(totalReplicas, 0);
+  public static ReplicationFactor fullOnly(int allReplicas) {
+    return new ReplicationFactor(allReplicas, 0);
   }
 
   public int fullReplicas() {
@@ -54,14 +54,14 @@ public class ReplicationFactor {
       List<String> parts = Splitter.on('/').splitToList(s);
       Preconditions.checkArgument(
           parts.size() == 2, "Replication factor format is <replicas> or <replicas>/<transient>");
-      return new ReplicationFactor(Integer.valueOf(parts.get(0)), Integer.valueOf(parts.get(1)));
+      return new ReplicationFactor(Integer.parseInt(parts.get(0)), Integer.parseInt(parts.get(1)));
     } else {
-      return new ReplicationFactor(Integer.valueOf(s), 0);
+      return new ReplicationFactor(Integer.parseInt(s), 0);
     }
   }
 
   public String toParseableString() {
-    return String.valueOf(allReplicas) + (hasTransientReplicas() ? "/" + transientReplicas() : "");
+    return allReplicas + (hasTransientReplicas() ? "/" + transientReplicas() : "");
   }
 
   @Override

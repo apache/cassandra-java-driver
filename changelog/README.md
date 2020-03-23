@@ -4,6 +4,7 @@
 
 ### 4.6.0 (in progress)
 
+- [new feature] JAVA-2105: Add support for transient replication
 - [new feature] JAVA-2670: Provide base class for mapped custom codecs
 - [new feature] JAVA-2633: Add execution profile argument to DAO mapper factory methods
 - [improvement] JAVA-2667: Add ability to fail the build when integration tests fail
