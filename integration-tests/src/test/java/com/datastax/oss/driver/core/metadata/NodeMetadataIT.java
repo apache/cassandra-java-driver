@@ -25,7 +25,7 @@ import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.context.EventBus;
@@ -37,71 +37,69 @@ import java.util.Set;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 public class NodeMetadataIT {
 
-  private CcmRule ccmRule = CcmRule.getInstance();
-
-  private SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
-
-  @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @Rule public CcmRule ccmRule = CcmRule.getInstance();
 
   @Test
   public void should_expose_node_metadata() {
-    CqlSession session = sessionRule.session();
+    try (CqlSession session = SessionUtils.newSession(ccmRule)) {
 
-    Node node = getUniqueNode(session);
-    // Run a few basic checks given what we know about our test environment:
-    assertThat(node.getEndPoint()).isNotNull();
-    InetSocketAddress connectAddress = (InetSocketAddress) node.getEndPoint().resolve();
-    node.getBroadcastAddress()
-        .ifPresent(
-            broadcastAddress ->
-                assertThat(broadcastAddress.getAddress()).isEqualTo(connectAddress.getAddress()));
-    assertThat(node.getListenAddress().get().getAddress()).isEqualTo(connectAddress.getAddress());
-    assertThat(node.getDatacenter()).isEqualTo("dc1");
-    assertThat(node.getRack()).isEqualTo("r1");
-    if (!CcmBridge.DSE_ENABLEMENT) {
-      // CcmBridge does not report accurate C* versions for DSE, only approximated values
-      assertThat(node.getCassandraVersion()).isEqualTo(ccmRule.getCassandraVersion());
+      Node node = getUniqueNode(session);
+      // Run a few basic checks given what we know about our test environment:
+      assertThat(node.getEndPoint()).isNotNull();
+      InetSocketAddress connectAddress = (InetSocketAddress) node.getEndPoint().resolve();
+      node.getBroadcastAddress()
+          .ifPresent(
+              broadcastAddress ->
+                  assertThat(broadcastAddress.getAddress()).isEqualTo(connectAddress.getAddress()));
+      assertThat(node.getListenAddress().get().getAddress()).isEqualTo(connectAddress.getAddress());
+      assertThat(node.getDatacenter()).isEqualTo("dc1");
+      assertThat(node.getRack()).isEqualTo("r1");
+      if (!CcmBridge.DSE_ENABLEMENT) {
+        // CcmBridge does not report accurate C* versions for DSE, only approximated values
+        assertThat(node.getCassandraVersion()).isEqualTo(ccmRule.getCassandraVersion());
+      }
+      assertThat(node.getState()).isSameAs(NodeState.UP);
+      assertThat(node.getDistance()).isSameAs(NodeDistance.LOCAL);
+      assertThat(node.getHostId()).isNotNull();
+      assertThat(node.getSchemaVersion()).isNotNull();
+      long upTime1 = node.getUpSinceMillis();
+      assertThat(upTime1).isGreaterThan(-1);
+
+      // Note: open connections and reconnection status are covered in NodeStateIT
+
+      // Force the node down and back up to check that upSinceMillis gets updated
+      EventBus eventBus = ((InternalDriverContext) session.getContext()).getEventBus();
+      eventBus.fire(TopologyEvent.forceDown(node.getBroadcastRpcAddress().get()));
+      ConditionChecker.checkThat(() -> node.getState() == NodeState.FORCED_DOWN).becomesTrue();
+      assertThat(node.getUpSinceMillis()).isEqualTo(-1);
+      eventBus.fire(TopologyEvent.forceUp(node.getBroadcastRpcAddress().get()));
+      ConditionChecker.checkThat(() -> node.getState() == NodeState.UP).becomesTrue();
+      assertThat(node.getUpSinceMillis()).isGreaterThan(upTime1);
     }
-    assertThat(node.getState()).isSameAs(NodeState.UP);
-    assertThat(node.getDistance()).isSameAs(NodeDistance.LOCAL);
-    assertThat(node.getHostId()).isNotNull();
-    assertThat(node.getSchemaVersion()).isNotNull();
-    long upTime1 = node.getUpSinceMillis();
-    assertThat(upTime1).isGreaterThan(-1);
-
-    // Note: open connections and reconnection status are covered in NodeStateIT
-
-    // Force the node down and back up to check that upSinceMillis gets updated
-    EventBus eventBus = ((InternalDriverContext) session.getContext()).getEventBus();
-    eventBus.fire(TopologyEvent.forceDown(node.getBroadcastRpcAddress().get()));
-    ConditionChecker.checkThat(() -> node.getState() == NodeState.FORCED_DOWN).becomesTrue();
-    assertThat(node.getUpSinceMillis()).isEqualTo(-1);
-    eventBus.fire(TopologyEvent.forceUp(node.getBroadcastRpcAddress().get()));
-    ConditionChecker.checkThat(() -> node.getState() == NodeState.UP).becomesTrue();
-    assertThat(node.getUpSinceMillis()).isGreaterThan(upTime1);
   }
 
   @Test
   @DseRequirement(min = "5.1")
   public void should_expose_dse_node_properties() {
-    Node node = getUniqueNode(sessionRule.session());
+    try (CqlSession session = SessionUtils.newSession(ccmRule)) {
 
-    // Basic checks as we want something that will work with a large range of DSE versions:
-    assertThat(node.getExtras())
-        .containsKeys(
-            DseNodeProperties.DSE_VERSION,
-            DseNodeProperties.DSE_WORKLOADS,
-            DseNodeProperties.SERVER_ID);
-    assertThat(node.getExtras().get(DseNodeProperties.DSE_VERSION))
-        .isEqualTo(ccmRule.getDseVersion().get());
-    assertThat(node.getExtras().get(DseNodeProperties.SERVER_ID)).isInstanceOf(String.class);
-    assertThat(node.getExtras().get(DseNodeProperties.DSE_WORKLOADS)).isInstanceOf(Set.class);
+      Node node = getUniqueNode(session);
+
+      // Basic checks as we want something that will work with a large range of DSE versions:
+      assertThat(node.getExtras())
+          .containsKeys(
+              DseNodeProperties.DSE_VERSION,
+              DseNodeProperties.DSE_WORKLOADS,
+              DseNodeProperties.SERVER_ID);
+      assertThat(node.getExtras().get(DseNodeProperties.DSE_VERSION))
+          .isEqualTo(ccmRule.getDseVersion().get());
+      assertThat(node.getExtras().get(DseNodeProperties.SERVER_ID)).isInstanceOf(String.class);
+      assertThat(node.getExtras().get(DseNodeProperties.DSE_WORKLOADS)).isInstanceOf(Set.class);
+    }
   }
 
   private static Node getUniqueNode(CqlSession session) {
