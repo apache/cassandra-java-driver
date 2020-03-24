@@ -14,7 +14,6 @@ package com.datastax.oss.driver.internal.core.metadata.token;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.util.Objects;
 
 // This class is a subset of server version at org.apache.cassandra.locator.ReplicationFactor
@@ -51,9 +50,6 @@ public class ReplicationFactor {
       int slash = s.indexOf('/');
       String allPart = s.substring(0, slash);
       String transientPart = s.substring(slash + 1);
-      Preconditions.checkArgument(
-          allPart != null && transientPart != null,
-          "Replication factor format is <replicas> or <replicas>/<transient>");
       return new ReplicationFactor(Integer.parseInt(allPart), Integer.parseInt(transientPart));
     } else {
       return new ReplicationFactor(Integer.parseInt(s), 0);
