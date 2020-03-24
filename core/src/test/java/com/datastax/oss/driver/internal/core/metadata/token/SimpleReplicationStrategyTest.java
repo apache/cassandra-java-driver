@@ -61,8 +61,7 @@ public class SimpleReplicationStrategyTest {
     List<Token> ring = ImmutableList.of(TOKEN01, TOKEN06, TOKEN14, TOKEN19);
     Map<Token, Node> tokenToPrimary =
         ImmutableMap.of(TOKEN01, node1, TOKEN06, node2, TOKEN14, node1, TOKEN19, node2);
-    SimpleReplicationStrategy strategy =
-        new SimpleReplicationStrategy(ReplicationFactor.fullOnly(2));
+    SimpleReplicationStrategy strategy = new SimpleReplicationStrategy(new ReplicationFactor(2));
 
     // When
     SetMultimap<Token, Node> replicasByToken =
@@ -84,8 +83,7 @@ public class SimpleReplicationStrategyTest {
     List<Token> ring = ImmutableList.of(TOKEN01, TOKEN06, TOKEN14, TOKEN19);
     Map<Token, Node> tokenToPrimary =
         ImmutableMap.of(TOKEN01, node1, TOKEN06, node1, TOKEN14, node2, TOKEN19, node2);
-    SimpleReplicationStrategy strategy =
-        new SimpleReplicationStrategy(ReplicationFactor.fullOnly(2));
+    SimpleReplicationStrategy strategy = new SimpleReplicationStrategy(new ReplicationFactor(2));
 
     // When
     SetMultimap<Token, Node> replicasByToken =
@@ -106,8 +104,7 @@ public class SimpleReplicationStrategyTest {
     List<Token> ring = ImmutableList.of(TOKEN01, TOKEN06, TOKEN14, TOKEN19);
     Map<Token, Node> tokenToPrimary =
         ImmutableMap.of(TOKEN01, node1, TOKEN06, node1, TOKEN14, node2, TOKEN19, node1);
-    SimpleReplicationStrategy strategy =
-        new SimpleReplicationStrategy(ReplicationFactor.fullOnly(2));
+    SimpleReplicationStrategy strategy = new SimpleReplicationStrategy(new ReplicationFactor(2));
 
     // When
     SetMultimap<Token, Node> replicasByToken =
@@ -128,8 +125,7 @@ public class SimpleReplicationStrategyTest {
     List<Token> ring = ImmutableList.of(TOKEN01, TOKEN06, TOKEN14, TOKEN19);
     Map<Token, Node> tokenToPrimary =
         ImmutableMap.of(TOKEN01, node1, TOKEN06, node2, TOKEN14, node1, TOKEN19, node2);
-    SimpleReplicationStrategy strategy =
-        new SimpleReplicationStrategy(ReplicationFactor.fullOnly(6));
+    SimpleReplicationStrategy strategy = new SimpleReplicationStrategy(new ReplicationFactor(6));
 
     // When
     SetMultimap<Token, Node> replicasByToken =
@@ -189,8 +185,7 @@ public class SimpleReplicationStrategyTest {
             .put(TOKEN18, node6)
             .build();
 
-    SimpleReplicationStrategy strategy =
-        new SimpleReplicationStrategy(ReplicationFactor.fullOnly(3));
+    SimpleReplicationStrategy strategy = new SimpleReplicationStrategy(new ReplicationFactor(3));
 
     // When
     SetMultimap<Token, Node> replicasByToken =

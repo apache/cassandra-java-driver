@@ -35,9 +35,9 @@ public class ReplicationFactorTest {
 
   @Test
   public void should_create_string_from_factor() {
-    ReplicationFactor transFactor = ReplicationFactor.withTransient(3, 1);
-    assertThat(transFactor.toParseableString()).isEqualTo("3/1");
-    ReplicationFactor factor = ReplicationFactor.fullOnly(3);
-    assertThat(factor.toParseableString()).isEqualTo("3");
+    ReplicationFactor transFactor = new ReplicationFactor(3, 1);
+    assertThat(transFactor.toString()).isEqualTo("3/1");
+    ReplicationFactor factor = new ReplicationFactor(3);
+    assertThat(factor.toString()).isEqualTo("3");
   }
 }

@@ -15,26 +15,22 @@ package com.datastax.oss.driver.internal.core.metadata.token;
  * limitations under the License.
  */
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
-import java.util.List;
 import java.util.Objects;
 
 // This class is a subset of server version at org.apache.cassandra.locator.ReplicationFactor
 public class ReplicationFactor {
   private final int allReplicas;
   private final int fullReplicas;
+  private final int transientReplicas;
 
-  private ReplicationFactor(int allReplicas, int transientReplicas) {
+  public ReplicationFactor(int allReplicas, int transientReplicas) {
     this.allReplicas = allReplicas;
+    this.transientReplicas = transientReplicas;
     this.fullReplicas = allReplicas - transientReplicas;
   }
 
-  public static ReplicationFactor withTransient(int allReplicas, int transientReplicas) {
-    return new ReplicationFactor(allReplicas, transientReplicas);
-  }
-
-  public static ReplicationFactor fullOnly(int allReplicas) {
-    return new ReplicationFactor(allReplicas, 0);
+  public ReplicationFactor(int allReplicas) {
+    this(allReplicas, 0);
   }
 
   public int fullReplicas() {
@@ -42,7 +38,7 @@ public class ReplicationFactor {
   }
 
   public int transientReplicas() {
-    return allReplicas - fullReplicas;
+    return transientReplicas;
   }
 
   public boolean hasTransientReplicas() {
@@ -51,28 +47,32 @@ public class ReplicationFactor {
 
   public static ReplicationFactor fromString(String s) {
     if (s.contains("/")) {
-      List<String> parts = Splitter.on('/').splitToList(s);
+
+      int slash = s.indexOf('/');
+      String allPart = s.substring(0, slash);
+      String transientPart = s.substring(slash + 1);
       Preconditions.checkArgument(
-          parts.size() == 2, "Replication factor format is <replicas> or <replicas>/<transient>");
-      return new ReplicationFactor(Integer.parseInt(parts.get(0)), Integer.parseInt(parts.get(1)));
+          allPart != null && transientPart != null,
+          "Replication factor format is <replicas> or <replicas>/<transient>");
+      return new ReplicationFactor(Integer.parseInt(allPart), Integer.parseInt(transientPart));
     } else {
       return new ReplicationFactor(Integer.parseInt(s), 0);
     }
   }
 
-  public String toParseableString() {
+  @Override
+  public String toString() {
     return allReplicas + (hasTransientReplicas() ? "/" + transientReplicas() : "");
   }
 
   @Override
-  public String toString() {
-    return "rf(" + toParseableString() + ')';
-  }
-
-  @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof ReplicationFactor)) return false;
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ReplicationFactor)) {
+      return false;
+    }
     ReplicationFactor that = (ReplicationFactor) o;
     return allReplicas == that.allReplicas && fullReplicas == that.fullReplicas;
   }

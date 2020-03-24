@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.metadata.token;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSetMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.SetMultimap;
@@ -35,6 +36,7 @@ class SimpleReplicationStrategy implements ReplicationStrategy {
     this(extractReplicationFactor(replicationConfig));
   }
 
+  @VisibleForTesting
   SimpleReplicationStrategy(ReplicationFactor replicationFactor) {
     this.replicationFactor = replicationFactor;
   }
