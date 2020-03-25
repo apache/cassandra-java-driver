@@ -26,6 +26,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import io.netty.util.concurrent.EventExecutor;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -143,8 +144,7 @@ class QueryTraceFetcher {
           new DefaultTraceEvent(
               eventRow.getString("activity"),
               eventId == null ? -1 : eventId.timestamp(),
-              eventRow.getInetAddress("source"),
-              sourcePort,
+              new InetSocketAddress(eventRow.getInetAddress("source"), sourcePort),
               eventRow.getInt("source_elapsed"),
               eventRow.getString("thread")));
     }
@@ -157,8 +157,7 @@ class QueryTraceFetcher {
         tracingId,
         sessionRow.getString("request"),
         sessionRow.getInt("duration"),
-        sessionRow.getInetAddress("coordinator"),
-        coordinatorPort,
+        new InetSocketAddress(sessionRow.getInetAddress("coordinator"), coordinatorPort),
         sessionRow.getMap("parameters", String.class, String.class),
         startedAt == null ? -1 : startedAt.toEpochMilli(),
         eventsBuilder.build());

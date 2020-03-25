@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.cql;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -41,13 +42,17 @@ public interface QueryTrace {
 
   /** The IP of the node that coordinated the query. */
   @NonNull
+  @Deprecated
   InetAddress getCoordinator();
 
   /**
-   * The port of the node that coordinated the query. Prior to C* 4.0 this is not set and will
-   * default to 0.
+   * The IP and port of the node that coordinated the query. Prior to C* 4.0 the port is not set and
+   * will default to 0.
    */
-  int getCoordinatorPort();
+  @NonNull
+  default InetSocketAddress getCoordinatorAddress() {
+    return new InetSocketAddress(getCoordinator(), 0);
+  }
 
   /** The parameters attached to this trace. */
   @NonNull

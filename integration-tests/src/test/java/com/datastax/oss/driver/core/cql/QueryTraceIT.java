@@ -18,11 +18,11 @@ package com.datastax.oss.driver.core.cql;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.QueryTrace;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -90,24 +90,12 @@ public class QueryTraceIT {
     assertThat(queryTrace.getStartedAt()).isPositive();
     // Don't want to get too deep into event testing because that could change across versions
     assertThat(queryTrace.getEvents()).isNotEmpty();
-  }
-
-  @CassandraRequirement(min = "4.0", description = "Check for added port fields")
-  @Test
-  public void should_fetch_ports() {
-    ExecutionInfo executionInfo =
-        SESSION_RULE
-            .session()
-            .execute(
-                SimpleStatement.builder("SELECT release_version FROM system.local")
-                    .setTracing()
-                    .build())
-            .getExecutionInfo();
-
-    assertThat(executionInfo.getTracingId()).isNotNull();
-
-    QueryTrace queryTrace = executionInfo.getQueryTrace();
-    assertThat(queryTrace.getCoordinatorPort()).isEqualTo(7000);
-    assertThat(queryTrace.getEvents().get(0).getSourcePort()).isEqualTo(7000);
+    boolean expectPorts =
+        CCM_RULE.getCassandraVersion().nextStable().compareTo(Version.V4_0_0) >= 0
+            && !CCM_RULE.getDseVersion().isPresent();
+    if (expectPorts) {
+      assertThat(queryTrace.getCoordinatorAddress().getPort()).isEqualTo(7000);
+      assertThat(queryTrace.getEvents().get(0).getSourceAddress().getPort()).isEqualTo(7000);
+    }
   }
 }

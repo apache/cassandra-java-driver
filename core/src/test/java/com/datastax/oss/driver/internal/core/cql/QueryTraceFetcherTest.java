@@ -136,7 +136,7 @@ public class QueryTraceFetcherTest {
               assertThat(trace.getRequestType()).isEqualTo("mock request");
               assertThat(trace.getDurationMicros()).isEqualTo(42);
               assertThat(trace.getCoordinator()).isEqualTo(address);
-              assertThat(trace.getCoordinatorPort()).isEqualTo(0);
+              assertThat(trace.getCoordinatorAddress().getPort()).isEqualTo(0);
               assertThat(trace.getParameters())
                   .hasSize(2)
                   .containsEntry("key1", "value1")
@@ -150,7 +150,7 @@ public class QueryTraceFetcherTest {
                 assertThat(event.getActivity()).isEqualTo("mock activity " + i);
                 assertThat(event.getTimestamp()).isEqualTo(i);
                 assertThat(event.getSource()).isEqualTo(address);
-                assertThat(event.getSourcePort()).isEqualTo(0);
+                assertThat(event.getSourceAddress().getPort()).isEqualTo(0);
                 assertThat(event.getSourceElapsedMicros()).isEqualTo(i);
                 assertThat(event.getThreadName()).isEqualTo("mock thread " + i);
               }
@@ -218,7 +218,7 @@ public class QueryTraceFetcherTest {
               assertThat(trace.getRequestType()).isEqualTo("mock request");
               assertThat(trace.getDurationMicros()).isEqualTo(42);
               assertThat(trace.getCoordinator()).isEqualTo(address);
-              assertThat(trace.getCoordinatorPort()).isEqualTo(0);
+              assertThat(trace.getCoordinatorAddress().getPort()).isEqualTo(0);
               assertThat(trace.getParameters())
                   .hasSize(2)
                   .containsEntry("key1", "value1")
@@ -232,7 +232,7 @@ public class QueryTraceFetcherTest {
                 assertThat(event.getActivity()).isEqualTo("mock activity " + i);
                 assertThat(event.getTimestamp()).isEqualTo(i);
                 assertThat(event.getSource()).isEqualTo(address);
-                assertThat(event.getSourcePort()).isEqualTo(0);
+                assertThat(event.getSourceAddress().getPort()).isEqualTo(0);
                 assertThat(event.getSourceElapsedMicros()).isEqualTo(i);
                 assertThat(event.getThreadName()).isEqualTo("mock thread " + i);
               }

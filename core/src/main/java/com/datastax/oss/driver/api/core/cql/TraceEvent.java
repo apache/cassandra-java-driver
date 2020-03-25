@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.cql;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /** An event in a {@link QueryTrace}. */
 public interface TraceEvent {
@@ -32,8 +33,14 @@ public interface TraceEvent {
   @Nullable
   InetAddress getSource();
 
-  /** The port of the host having generated this event. Prior to C* 4.0 this will be set to zero. */
-  int getSourcePort();
+  /**
+   * The IP and Port of the host having generated this event. Prior to C* 4.0 the port will be set
+   * to zero.
+   */
+  @Nullable
+  default InetSocketAddress getSourceAddress() {
+    return new InetSocketAddress(getSource(), 0);
+  }
   /**
    * The number of microseconds elapsed on the source when this event occurred since the moment when
    * the source started handling the query.
