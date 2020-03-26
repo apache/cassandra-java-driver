@@ -91,11 +91,13 @@ public class EmbeddedAdsRule extends ExternalResource {
       adsServer.start();
 
       // Create users and keytabs for the DSE principal and cassandra user.
-      dseKeytab = adsServer.addUserAndCreateKeytab("dse", "dse", servicePrincipal);
+      dseKeytab = adsServer.addUserAndCreateKeytab("dse", "fakePasswordForTests", servicePrincipal);
       alternateKeytab =
-          adsServer.addUserAndCreateKeytab("alternate", "alternate", alternateServicePrincipal);
-      userKeytab = adsServer.addUserAndCreateKeytab("cassandra", "cassandra", userPrincipal);
-      unknownKeytab = adsServer.createKeytab("unknown", "unknown", unknownPrincipal);
+          adsServer.addUserAndCreateKeytab(
+              "alternate", "fakePasswordForTests", alternateServicePrincipal);
+      userKeytab =
+          adsServer.addUserAndCreateKeytab("cassandra", "fakePasswordForTests", userPrincipal);
+      unknownKeytab = adsServer.createKeytab("unknown", "fakePasswordForTests", unknownPrincipal);
 
       String authenticationOptions =
           ""

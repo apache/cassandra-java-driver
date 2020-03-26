@@ -68,9 +68,9 @@ public class CloudConfigFactoryTest {
               .httpServerFactory(new HttpsServerFactory())
               .needClientAuth(true)
               .keystorePath(path("/config/cloud/identity.jks").toString())
-              .keystorePassword("XS78x3GuBWas1OoA5")
+              .keystorePassword("fakePasswordForTests")
               .trustStorePath(path("/config/cloud/trustStore.jks").toString())
-              .trustStorePassword("48ZY5r06BmpVLKxPg"));
+              .trustStorePassword("fakePasswordForTests2"));
 
   public CloudConfigFactoryTest() throws URISyntaxException {}
 
