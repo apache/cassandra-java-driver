@@ -44,20 +44,23 @@ public class DseProxyAuthenticationIT {
 
   @BeforeClass
   public static void addUsers() {
-    bobPrincipal = ads.addUserAndCreateKeyTab("bob", "bob");
-    charliePrincipal = ads.addUserAndCreateKeyTab("charlie", "charlie");
+    bobPrincipal = ads.addUserAndCreateKeyTab("bob", "fakePasswordForBob");
+    charliePrincipal = ads.addUserAndCreateKeyTab("charlie", "fakePasswordForCharlie");
   }
 
   @Before
   public void setupRoles() {
 
     try (CqlSession session = ads.newKeyTabSession()) {
-      session.execute("CREATE ROLE IF NOT EXISTS alice WITH PASSWORD = 'alice' AND LOGIN = FALSE");
-      session.execute("CREATE ROLE IF NOT EXISTS ben WITH PASSWORD = 'ben' AND LOGIN = TRUE");
+      session.execute(
+          "CREATE ROLE IF NOT EXISTS alice WITH PASSWORD = 'fakePasswordForAlice' AND LOGIN = FALSE");
+      session.execute(
+          "CREATE ROLE IF NOT EXISTS ben WITH PASSWORD = 'fakePasswordForBen' AND LOGIN = TRUE");
       session.execute("CREATE ROLE IF NOT EXISTS 'bob@DATASTAX.COM' WITH LOGIN = TRUE");
       session.execute(
-          "CREATE ROLE IF NOT EXISTS 'charlie@DATASTAX.COM' WITH PASSWORD = 'charlie' AND LOGIN = TRUE");
-      session.execute("CREATE ROLE IF NOT EXISTS steve WITH PASSWORD = 'steve' AND LOGIN = TRUE");
+          "CREATE ROLE IF NOT EXISTS 'charlie@DATASTAX.COM' WITH PASSWORD = 'fakePasswordForCharlie' AND LOGIN = TRUE");
+      session.execute(
+          "CREATE ROLE IF NOT EXISTS steve WITH PASSWORD = 'fakePasswordForSteve' AND LOGIN = TRUE");
       session.execute(
           "CREATE KEYSPACE IF NOT EXISTS aliceks WITH REPLICATION = {'class':'SimpleStrategy', 'replication_factor':'1'}");
       session.execute(
@@ -89,7 +92,7 @@ public class DseProxyAuthenticationIT {
             SessionUtils.configLoaderBuilder()
                 .withString(DseDriverOption.AUTH_PROVIDER_AUTHORIZATION_ID, "alice")
                 .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, "ben")
-                .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "ben")
+                .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "fakePasswordForBen")
                 .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, PlainTextAuthProvider.class)
                 .build())) {
       SimpleStatement select = SimpleStatement.builder("select * from aliceks.alicetable").build();
@@ -103,7 +106,7 @@ public class DseProxyAuthenticationIT {
     try (CqlSession session =
         CqlSession.builder()
             .addContactEndPoints(ads.ccm.getContactPoints())
-            .withAuthCredentials("ben", "ben", "alice")
+            .withAuthCredentials("ben", "fakePasswordForBen", "alice")
             .build()) {
       session.execute("select * from system.local");
     }
@@ -137,7 +140,7 @@ public class DseProxyAuthenticationIT {
             SessionUtils.configLoaderBuilder()
                 .withString(DseDriverOption.AUTH_PROVIDER_AUTHORIZATION_ID, "alice")
                 .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, "steve")
-                .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "steve")
+                .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "fakePasswordForSteve")
                 .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, PlainTextAuthProvider.class)
                 .build())) {
       SimpleStatement select = SimpleStatement.builder("select * from aliceks.alicetable").build();
@@ -178,7 +181,7 @@ public class DseProxyAuthenticationIT {
             ads.ccm,
             SessionUtils.configLoaderBuilder()
                 .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, "steve")
-                .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "steve")
+                .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "fakePasswordForSteve")
                 .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, PlainTextAuthProvider.class)
                 .build())) {
       SimpleStatement select = SimpleStatement.builder("select * from aliceks.alicetable").build();
@@ -214,7 +217,7 @@ public class DseProxyAuthenticationIT {
             ads.ccm,
             SessionUtils.configLoaderBuilder()
                 .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, "ben")
-                .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "ben")
+                .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "fakePasswordForBen")
                 .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, PlainTextAuthProvider.class)
                 .build())) {
       SimpleStatement select = SimpleStatement.builder("select * from aliceks.alicetable").build();

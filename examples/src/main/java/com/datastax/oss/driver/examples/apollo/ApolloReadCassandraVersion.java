@@ -53,7 +53,7 @@ public class ApolloReadCassandraVersion {
             // Change the path here to the secure connect bundle location (see javadocs above)
             .withCloudSecureConnectBundle(Paths.get("/path/to/secure-connect-database_name.zip"))
             // Change the user_name and password here for the Apollo instance
-            .withAuthCredentials("user_name", "password")
+            .withAuthCredentials("user_name", "fakePasswordForTests")
             // Uncomment the next line to use a specific keyspace
             // .withKeyspace("keyspace_name")
             .build()) {

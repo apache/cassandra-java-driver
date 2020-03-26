@@ -90,7 +90,7 @@ public class KillrVideoMapperExample {
       User user =
           new User(UUID.randomUUID(), "test", "user", "testuser@example.com", Instant.now());
 
-      if (userDao.create(user, "password123".toCharArray())) {
+      if (userDao.create(user, "fakePasswordForTests".toCharArray())) {
         System.out.println("Created " + user);
       } else {
         user = userDao.getByEmail("testuser@example.com");
@@ -100,11 +100,11 @@ public class KillrVideoMapperExample {
       // Creating another user with the same email should fail
       assert !userDao.create(
           new User(UUID.randomUUID(), "test2", "user", "testuser@example.com", Instant.now()),
-          "secret123".toCharArray());
+          "fakePasswordForTests2".toCharArray());
 
       // Simulate login attempts
-      tryLogin(userDao, "testuser@example.com", "password123");
-      tryLogin(userDao, "testuser@example.com", "secret123");
+      tryLogin(userDao, "testuser@example.com", "fakePasswordForTests");
+      tryLogin(userDao, "testuser@example.com", "fakePasswordForTests2");
 
       // Insert a video
       VideoDao videoDao = mapper.videoDao();

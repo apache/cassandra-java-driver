@@ -79,13 +79,13 @@ public class CcmBridge implements AutoCloseable {
 
   public static final String CLUSTER_NAME = "ccm_1";
 
-  public static final String DEFAULT_CLIENT_TRUSTSTORE_PASSWORD = "cassandra1sfun";
+  public static final String DEFAULT_CLIENT_TRUSTSTORE_PASSWORD = "fakePasswordForTests";
   public static final String DEFAULT_CLIENT_TRUSTSTORE_PATH = "/client.truststore";
 
   public static final File DEFAULT_CLIENT_TRUSTSTORE_FILE =
       createTempStore(DEFAULT_CLIENT_TRUSTSTORE_PATH);
 
-  public static final String DEFAULT_CLIENT_KEYSTORE_PASSWORD = "cassandra1sfun";
+  public static final String DEFAULT_CLIENT_KEYSTORE_PASSWORD = "fakePasswordForTests";
   public static final String DEFAULT_CLIENT_KEYSTORE_PATH = "/client.keystore";
 
   public static final File DEFAULT_CLIENT_KEYSTORE_FILE =
@@ -95,13 +95,13 @@ public class CcmBridge implements AutoCloseable {
   public static final File DEFAULT_CLIENT_PRIVATE_KEY_FILE = createTempStore("/client.key");
   public static final File DEFAULT_CLIENT_CERT_CHAIN_FILE = createTempStore("/client.crt");
 
-  public static final String DEFAULT_SERVER_TRUSTSTORE_PASSWORD = "cassandra1sfun";
+  public static final String DEFAULT_SERVER_TRUSTSTORE_PASSWORD = "fakePasswordForTests";
   public static final String DEFAULT_SERVER_TRUSTSTORE_PATH = "/server.truststore";
 
   private static final File DEFAULT_SERVER_TRUSTSTORE_FILE =
       createTempStore(DEFAULT_SERVER_TRUSTSTORE_PATH);
 
-  public static final String DEFAULT_SERVER_KEYSTORE_PASSWORD = "cassandra1sfun";
+  public static final String DEFAULT_SERVER_KEYSTORE_PASSWORD = "fakePasswordForTests";
   public static final String DEFAULT_SERVER_KEYSTORE_PATH = "/server.keystore";
 
   private static final File DEFAULT_SERVER_KEYSTORE_FILE =

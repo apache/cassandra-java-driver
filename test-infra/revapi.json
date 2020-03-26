@@ -76,6 +76,30 @@
         "old": "parameter com.datastax.oss.driver.api.testinfra.simulacron.QueryCounter.QueryCounterBuilder com.datastax.oss.driver.api.testinfra.simulacron.QueryCounter::builder(===com.datastax.oss.simulacron.server.BoundTopic===)",
         "new": "parameter com.datastax.oss.driver.api.testinfra.simulacron.QueryCounter.QueryCounterBuilder com.datastax.oss.driver.api.testinfra.simulacron.QueryCounter::builder(===com.datastax.oss.simulacron.server.BoundTopic<?, ?>===)",
         "justification": "Fix usage of raw type BoundTopic"
+      },
+      {
+        "code": "java.field.constantValueChanged",
+        "old": "field com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.DEFAULT_CLIENT_KEYSTORE_PASSWORD",
+        "new": "field com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.DEFAULT_CLIENT_KEYSTORE_PASSWORD",
+        "justification": "JAVA-2620: Use clearly dummy passwords in tests"
+      },
+      {
+        "code": "java.field.constantValueChanged",
+        "old": "field com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD",
+        "new": "field com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD",
+        "justification": "JAVA-2620: Use clearly dummy passwords in tests"
+      },
+      {
+        "code": "java.field.constantValueChanged",
+        "old": "field com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.DEFAULT_SERVER_KEYSTORE_PASSWORD",
+        "new": "field com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.DEFAULT_SERVER_KEYSTORE_PASSWORD",
+        "justification": "JAVA-2620: Use clearly dummy passwords in tests"
+      },
+      {
+        "code": "java.field.constantValueChanged",
+        "old": "field com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.DEFAULT_SERVER_TRUSTSTORE_PASSWORD",
+        "new": "field com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.DEFAULT_SERVER_TRUSTSTORE_PASSWORD",
+        "justification": "JAVA-2620: Use clearly dummy passwords in tests"
       }
     ]
   }
