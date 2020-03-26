@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.cql.QueryTrace;
 import com.datastax.oss.driver.api.core.cql.TraceEvent;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -30,7 +31,7 @@ public class DefaultQueryTrace implements QueryTrace {
   private final UUID tracingId;
   private final String requestType;
   private final int durationMicros;
-  private final InetAddress coordinator;
+  private final InetSocketAddress coordinator;
   private final Map<String, String> parameters;
   private final long startedAt;
   private final List<TraceEvent> events;
@@ -39,7 +40,7 @@ public class DefaultQueryTrace implements QueryTrace {
       UUID tracingId,
       String requestType,
       int durationMicros,
-      InetAddress coordinator,
+      InetSocketAddress coordinator,
       Map<String, String> parameters,
       long startedAt,
       List<TraceEvent> events) {
@@ -72,6 +73,12 @@ public class DefaultQueryTrace implements QueryTrace {
   @NonNull
   @Override
   public InetAddress getCoordinator() {
+    return coordinator.getAddress();
+  }
+
+  @NonNull
+  @Override
+  public InetSocketAddress getCoordinatorAddress() {
     return coordinator;
   }
 

@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.cql.TraceEvent;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Date;
 import net.jcip.annotations.Immutable;
 
@@ -25,14 +26,14 @@ public class DefaultTraceEvent implements TraceEvent {
 
   private final String activity;
   private final long timestamp;
-  private final InetAddress source;
+  private final InetSocketAddress source;
   private final int sourceElapsedMicros;
   private final String threadName;
 
   public DefaultTraceEvent(
       String activity,
       long timestamp,
-      InetAddress source,
+      InetSocketAddress source,
       int sourceElapsedMicros,
       String threadName) {
     this.activity = activity;
@@ -55,6 +56,11 @@ public class DefaultTraceEvent implements TraceEvent {
 
   @Override
   public InetAddress getSource() {
+    return source.getAddress();
+  }
+
+  @Override
+  public InetSocketAddress getSourceAddress() {
     return source;
   }
 

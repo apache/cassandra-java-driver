@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.cql;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -39,9 +40,28 @@ public interface QueryTrace {
   /** The server-side duration of the query in microseconds. */
   int getDurationMicros();
 
-  /** The IP of the node that coordinated the query. */
+  /**
+   * @deprecated returns the coordinator IP, but {@link #getCoordinatorAddress()} should be
+   *     preferred, since C* 4.0 and above now returns the port was well.
+   */
   @NonNull
+  @Deprecated
   InetAddress getCoordinator();
+
+  /**
+   * The IP and port of the node that coordinated the query. Prior to C* 4.0 the port is not set and
+   * will default to 0.
+   *
+   * <p>This method's default implementation returns {@link #getCoordinator()} with the port set to
+   * 0. The only reason it exists is to preserve binary compatibility. Internally, the driver
+   * overrides it to set the correct port.
+   *
+   * @since 4.6.0
+   */
+  @NonNull
+  default InetSocketAddress getCoordinatorAddress() {
+    return new InetSocketAddress(getCoordinator(), 0);
+  }
 
   /** The parameters attached to this trace. */
   @NonNull

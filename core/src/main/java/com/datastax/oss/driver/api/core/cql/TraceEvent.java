@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.cql;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /** An event in a {@link QueryTrace}. */
 public interface TraceEvent {
@@ -28,10 +29,28 @@ public interface TraceEvent {
   /** The server-side timestamp of the event. */
   long getTimestamp();
 
-  /** The IP of the host having generated this event. */
+  /**
+   * @deprecated returns the source IP, but {@link #getSourceAddress()} should be preferred, since
+   *     C* 4.0 and above now returns the port was well.
+   */
   @Nullable
+  @Deprecated
   InetAddress getSource();
 
+  /**
+   * The IP and Port of the host having generated this event. Prior to C* 4.0 the port will be set
+   * to zero.
+   *
+   * <p>This method's default implementation returns {@link #getSource()} with the port set to 0.
+   * The only reason it exists is to preserve binary compatibility. Internally, the driver overrides
+   * it to set the correct port.
+   *
+   * @since 4.6.0
+   */
+  @Nullable
+  default InetSocketAddress getSourceAddress() {
+    return new InetSocketAddress(getSource(), 0);
+  }
   /**
    * The number of microseconds elapsed on the source when this event occurred since the moment when
    * the source started handling the query.

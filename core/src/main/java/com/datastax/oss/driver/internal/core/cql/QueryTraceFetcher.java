@@ -26,6 +26,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import io.netty.util.concurrent.EventExecutor;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -135,20 +136,28 @@ class QueryTraceFetcher {
     ImmutableList.Builder<TraceEvent> eventsBuilder = ImmutableList.builder();
     for (Row eventRow : eventRows) {
       UUID eventId = eventRow.getUuid("event_id");
+      int sourcePort = 0;
+      if (eventRow.getColumnDefinitions().contains("source_port")) {
+        sourcePort = eventRow.getInt("source_port");
+      }
       eventsBuilder.add(
           new DefaultTraceEvent(
               eventRow.getString("activity"),
               eventId == null ? -1 : eventId.timestamp(),
-              eventRow.getInetAddress("source"),
+              new InetSocketAddress(eventRow.getInetAddress("source"), sourcePort),
               eventRow.getInt("source_elapsed"),
               eventRow.getString("thread")));
     }
     Instant startedAt = sessionRow.getInstant("started_at");
+    int coordinatorPort = 0;
+    if (sessionRow.getColumnDefinitions().contains("coordinator_port")) {
+      coordinatorPort = sessionRow.getInt("coordinator_port");
+    }
     return new DefaultQueryTrace(
         tracingId,
         sessionRow.getString("request"),
         sessionRow.getInt("duration"),
-        sessionRow.getInetAddress("coordinator"),
+        new InetSocketAddress(sessionRow.getInetAddress("coordinator"), coordinatorPort),
         sessionRow.getMap("parameters", String.class, String.class),
         startedAt == null ? -1 : startedAt.toEpochMilli(),
         eventsBuilder.build());
