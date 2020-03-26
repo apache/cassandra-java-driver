@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -75,13 +76,18 @@ public class QueryTraceIT {
 
     assertThat(executionInfo.getTracingId()).isNotNull();
 
+    EndPoint contactPoint = CCM_RULE.getContactPoints().iterator().next();
+    InetAddress nodeAddress = ((InetSocketAddress) contactPoint.resolve()).getAddress();
+    boolean expectPorts =
+        CCM_RULE.getCassandraVersion().nextStable().compareTo(Version.V4_0_0) >= 0
+            && !CCM_RULE.getDseVersion().isPresent();
+
     QueryTrace queryTrace = executionInfo.getQueryTrace();
     assertThat(queryTrace.getTracingId()).isEqualTo(executionInfo.getTracingId());
     assertThat(queryTrace.getRequestType()).isEqualTo("Execute CQL3 query");
     assertThat(queryTrace.getDurationMicros()).isPositive();
-    EndPoint contactPoint = CCM_RULE.getContactPoints().iterator().next();
-    assertThat(queryTrace.getCoordinator())
-        .isEqualTo(((InetSocketAddress) contactPoint.resolve()).getAddress());
+    assertThat(queryTrace.getCoordinatorAddress().getAddress()).isEqualTo(nodeAddress);
+    assertThat(queryTrace.getCoordinatorAddress().getPort()).isEqualTo(expectPorts ? 7000 : 0);
     assertThat(queryTrace.getParameters())
         .containsEntry("consistency_level", "LOCAL_ONE")
         .containsEntry("page_size", "5000")
@@ -90,12 +96,9 @@ public class QueryTraceIT {
     assertThat(queryTrace.getStartedAt()).isPositive();
     // Don't want to get too deep into event testing because that could change across versions
     assertThat(queryTrace.getEvents()).isNotEmpty();
-    boolean expectPorts =
-        CCM_RULE.getCassandraVersion().nextStable().compareTo(Version.V4_0_0) >= 0
-            && !CCM_RULE.getDseVersion().isPresent();
-    if (expectPorts) {
-      assertThat(queryTrace.getCoordinatorAddress().getPort()).isEqualTo(7000);
-      assertThat(queryTrace.getEvents().get(0).getSourceAddress().getPort()).isEqualTo(7000);
-    }
+    InetSocketAddress sourceAddress0 = queryTrace.getEvents().get(0).getSourceAddress();
+    assertThat(sourceAddress0).isNotNull();
+    assertThat(sourceAddress0.getAddress()).isEqualTo(nodeAddress);
+    assertThat(sourceAddress0.getPort()).isEqualTo(expectPorts ? 7000 : 0);
   }
 }
