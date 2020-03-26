@@ -5,6 +5,7 @@
 ### 4.6.0 (in progress)
 
 - [improvement] JAVA-2679: Add port information to QueryTrace and TraceEvent
+- [improvement] JAVA-2184: Refactor DescribeIT to improve maintainability
 - [new feature] JAVA-2600: Add map-backed config loader
 - [new feature] JAVA-2105: Add support for transient replication
 - [new feature] JAVA-2670: Provide base class for mapped custom codecs
