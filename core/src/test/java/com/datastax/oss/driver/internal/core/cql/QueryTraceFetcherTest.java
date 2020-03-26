@@ -68,6 +68,7 @@ public class QueryTraceFetcherTest {
 
   private static final UUID TRACING_ID = UUID.randomUUID();
   private static final ByteBuffer PAGING_STATE = Bytes.fromHexString("0xdeadbeef");
+  private static final int PORT = 7000;
 
   @Mock private CqlSession session;
   @Mock private InternalDriverContext context;
@@ -135,8 +136,8 @@ public class QueryTraceFetcherTest {
               assertThat(trace.getTracingId()).isEqualTo(TRACING_ID);
               assertThat(trace.getRequestType()).isEqualTo("mock request");
               assertThat(trace.getDurationMicros()).isEqualTo(42);
-              assertThat(trace.getCoordinator()).isEqualTo(address);
-              assertThat(trace.getCoordinatorAddress().getPort()).isEqualTo(0);
+              assertThat(trace.getCoordinatorAddress().getAddress()).isEqualTo(address);
+              assertThat(trace.getCoordinatorAddress().getPort()).isEqualTo(PORT);
               assertThat(trace.getParameters())
                   .hasSize(2)
                   .containsEntry("key1", "value1")
@@ -149,8 +150,9 @@ public class QueryTraceFetcherTest {
                 TraceEvent event = events.get(i);
                 assertThat(event.getActivity()).isEqualTo("mock activity " + i);
                 assertThat(event.getTimestamp()).isEqualTo(i);
-                assertThat(event.getSource()).isEqualTo(address);
-                assertThat(event.getSourceAddress().getPort()).isEqualTo(0);
+                assertThat(event.getSourceAddress()).isNotNull();
+                assertThat(event.getSourceAddress().getAddress()).isEqualTo(address);
+                assertThat(event.getSourceAddress().getPort()).isEqualTo(PORT);
                 assertThat(event.getSourceElapsedMicros()).isEqualTo(i);
                 assertThat(event.getThreadName()).isEqualTo("mock thread " + i);
               }
@@ -217,8 +219,8 @@ public class QueryTraceFetcherTest {
               assertThat(trace.getTracingId()).isEqualTo(TRACING_ID);
               assertThat(trace.getRequestType()).isEqualTo("mock request");
               assertThat(trace.getDurationMicros()).isEqualTo(42);
-              assertThat(trace.getCoordinator()).isEqualTo(address);
-              assertThat(trace.getCoordinatorAddress().getPort()).isEqualTo(0);
+              assertThat(trace.getCoordinatorAddress().getAddress()).isEqualTo(address);
+              assertThat(trace.getCoordinatorAddress().getPort()).isEqualTo(PORT);
               assertThat(trace.getParameters())
                   .hasSize(2)
                   .containsEntry("key1", "value1")
@@ -231,8 +233,9 @@ public class QueryTraceFetcherTest {
                 TraceEvent event = events.get(i);
                 assertThat(event.getActivity()).isEqualTo("mock activity " + i);
                 assertThat(event.getTimestamp()).isEqualTo(i);
-                assertThat(event.getSource()).isEqualTo(address);
-                assertThat(event.getSourceAddress().getPort()).isEqualTo(0);
+                assertThat(event.getSourceAddress()).isNotNull();
+                assertThat(event.getSourceAddress().getAddress()).isEqualTo(address);
+                assertThat(event.getSourceAddress().getPort()).isEqualTo(PORT);
                 assertThat(event.getSourceElapsedMicros()).isEqualTo(i);
                 assertThat(event.getThreadName()).isEqualTo("mock thread " + i);
               }
@@ -308,6 +311,8 @@ public class QueryTraceFetcherTest {
       when(row.getInt("duration")).thenReturn(duration);
     }
     when(row.getInetAddress("coordinator")).thenReturn(address);
+    when(definitions.contains("coordinator_port")).thenReturn(true);
+    when(row.getInt("coordinator_port")).thenReturn(PORT);
     when(row.getMap("parameters", String.class, String.class))
         .thenReturn(ImmutableMap.of("key1", "value1", "key2", "value2"));
     when(row.isNull("started_at")).thenReturn(false);
@@ -367,6 +372,8 @@ public class QueryTraceFetcherTest {
     when(row.getString("activity")).thenReturn("mock activity " + i);
     when(row.getUuid("event_id")).thenReturn(Uuids.startOf(i));
     when(row.getInetAddress("source")).thenReturn(address);
+    when(definitions.contains("source_port")).thenReturn(true);
+    when(row.getInt("source_port")).thenReturn(PORT);
     when(row.getInt("source_elapsed")).thenReturn(i);
     when(row.getString("thread")).thenReturn("mock thread " + i);
     return row;

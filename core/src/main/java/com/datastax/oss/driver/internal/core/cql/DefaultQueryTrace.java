@@ -77,7 +77,8 @@ public class DefaultQueryTrace implements QueryTrace {
   }
 
   @NonNull
-  public InetSocketAddress getCoordinatorAdddress() {
+  @Override
+  public InetSocketAddress getCoordinatorAddress() {
     return coordinator;
   }
 
