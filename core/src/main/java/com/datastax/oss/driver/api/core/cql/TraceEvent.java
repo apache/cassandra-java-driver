@@ -29,13 +29,23 @@ public interface TraceEvent {
   /** The server-side timestamp of the event. */
   long getTimestamp();
 
-  /** The IP of the host having generated this event. */
+  /**
+   * @deprecated returns the source IP, but {@link #getSourceAddress()} should be preferred, since
+   *     C* 4.0 and above now returns the port was well.
+   */
   @Nullable
+  @Deprecated
   InetAddress getSource();
 
   /**
    * The IP and Port of the host having generated this event. Prior to C* 4.0 the port will be set
    * to zero.
+   *
+   * <p>This method's default implementation returns {@link #getSource()} with the port set to 0.
+   * The only reason it exists is to preserve binary compatibility. Internally, the driver overrides
+   * it to set the correct port.
+   *
+   * @since 4.6.0
    */
   @Nullable
   default InetSocketAddress getSourceAddress() {
