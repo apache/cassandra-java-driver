@@ -4,6 +4,7 @@
 
 ### 4.6.0 (in progress)
 
+- [bug] JAVA-2711: Fix handling of UDT keys in the mapper
 - [improvement] JAVA-2631: Add getIndex() shortcuts to TableMetadata
 - [improvement] JAVA-2679: Add port information to QueryTrace and TraceEvent
 - [improvement] JAVA-2184: Refactor DescribeIT to improve maintainability

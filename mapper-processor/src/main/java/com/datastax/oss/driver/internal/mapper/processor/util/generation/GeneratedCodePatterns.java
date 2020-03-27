@@ -296,12 +296,17 @@ public class GeneratedCodePatterns {
               udtValueName,
               NullSavingStrategy.class,
               NullSavingStrategy.DO_NOT_SET)
-          .addStatement("$1L = $1L.setUdtValue($2L, $3L)", targetName, cqlName, udtValueName)
-          .nextControlFlow(
-              "else if ($L == $T.$L)",
-              NULL_SAVING_STRATEGY,
-              NullSavingStrategy.class,
-              NullSavingStrategy.SET_TO_NULL)
+          .addStatement("$1L = $1L.setUdtValue($2L, $3L)", targetName, cqlName, udtValueName);
+      if (useNullSavingStrategy) {
+        methodBuilder.nextControlFlow(
+            "else if ($L == $T.$L)",
+            NULL_SAVING_STRATEGY,
+            NullSavingStrategy.class,
+            NullSavingStrategy.SET_TO_NULL);
+      } else {
+        methodBuilder.nextControlFlow("else");
+      }
+      methodBuilder
           .addStatement("$1L = $1L.setUdtValue($2L, null)", targetName, cqlName)
           .endControlFlow();
     } else {
@@ -333,12 +338,17 @@ public class GeneratedCodePatterns {
               targetName,
               cqlName,
               rawCollectionName,
-              enclosingClass.addGenericTypeConstant(type.asRawTypeName()))
-          .nextControlFlow(
-              "else if ($L == $T.$L)",
-              NULL_SAVING_STRATEGY,
-              NullSavingStrategy.class,
-              NullSavingStrategy.SET_TO_NULL)
+              enclosingClass.addGenericTypeConstant(type.asRawTypeName()));
+      if (useNullSavingStrategy) {
+        methodBuilder.nextControlFlow(
+            "else if ($L == $T.$L)",
+            NULL_SAVING_STRATEGY,
+            NullSavingStrategy.class,
+            NullSavingStrategy.SET_TO_NULL);
+      } else {
+        methodBuilder.nextControlFlow("else");
+      }
+      methodBuilder
           .addStatement(
               "$1L = $1L.set($2L, null, $3L)",
               targetName,
