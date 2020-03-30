@@ -238,7 +238,8 @@ public class InsightsClient {
         QueryOptions.DEFAULT.pagingState,
         QueryOptions.DEFAULT.serialConsistency,
         QueryOptions.DEFAULT.defaultTimestamp,
-        QueryOptions.DEFAULT.keyspace);
+        QueryOptions.DEFAULT.keyspace,
+        QueryOptions.DEFAULT.nowInSeconds);
   }
 
   private boolean shouldSendEvent() {

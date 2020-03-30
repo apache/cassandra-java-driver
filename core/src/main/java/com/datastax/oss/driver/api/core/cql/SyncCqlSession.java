@@ -116,6 +116,8 @@ public interface SyncCqlSession extends Session {
    *             set to {@link Long#MIN_VALUE}, meaning that the value will be assigned by the
    *             session's timestamp generator.
    *         <li>{@link Statement#getNode() boundStatement.getNode()} will always be {@code null}.
+   *         <li>{@link Statement#getNowInSeconds()} boundStatement.getNowInSeconds()} will always
+   *             be equal to {@link Statement#NO_NOW_IN_SECONDS}.
    *       </ul>
    * </ul>
    *

@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.data.ValuesHelper;
@@ -173,7 +174,8 @@ public class DefaultPreparedStatement implements PreparedStatement {
         timeoutForBoundStatements,
         codecRegistry,
         protocolVersion,
-        null);
+        null,
+        Statement.NO_NOW_IN_SECONDS);
   }
 
   @NonNull

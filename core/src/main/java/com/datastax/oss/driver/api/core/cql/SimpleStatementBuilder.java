@@ -182,6 +182,7 @@ public class SimpleStatementBuilder
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 }

@@ -174,6 +174,7 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
         timeout,
         codecRegistry,
         protocolVersion,
-        node);
+        node,
+        nowInSeconds);
   }
 }
