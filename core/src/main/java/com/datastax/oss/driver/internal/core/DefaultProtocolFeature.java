@@ -49,5 +49,12 @@ public enum DefaultProtocolFeature implements ProtocolFeature {
    * @see <a href="https://jira.apache.org/jira/browse/CASSANDRA-7523">CASSANDRA-7523</a>
    */
   DATE_TYPE,
+
+  /**
+   * The ability to set a custom "now" time on statements (for testing purposes).
+   *
+   * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-14664">CASSANDRA-14664</a>
+   */
+  NOW_IN_SECONDS,
   ;
 }

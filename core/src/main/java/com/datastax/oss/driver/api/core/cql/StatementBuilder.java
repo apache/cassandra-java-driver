@@ -58,6 +58,7 @@ public abstract class StatementBuilder<
   @Nullable protected ConsistencyLevel serialConsistencyLevel;
   @Nullable protected Duration timeout;
   @Nullable protected Node node;
+  protected int nowInSeconds = Statement.NO_NOW_IN_SECONDS;
 
   protected StatementBuilder() {
     // nothing to do
@@ -83,6 +84,7 @@ public abstract class StatementBuilder<
     this.serialConsistencyLevel = template.getSerialConsistencyLevel();
     this.timeout = template.getTimeout();
     this.node = template.getNode();
+    this.nowInSeconds = template.getNowInSeconds();
   }
 
   /** @see Statement#setExecutionProfileName(String) */
@@ -224,6 +226,12 @@ public abstract class StatementBuilder<
   /** @see Statement#setNode(Node) */
   public SelfT setNode(@Nullable Node node) {
     this.node = node;
+    return self;
+  }
+
+  /** @see Statement#setNowInSeconds(int) */
+  public SelfT setNowInSeconds(int nowInSeconds) {
+    this.nowInSeconds = nowInSeconds;
     return self;
   }
 

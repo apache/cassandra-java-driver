@@ -65,7 +65,8 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
         null,
         null,
         null,
-        null);
+        null,
+        Statement.NO_NOW_IN_SECONDS);
   }
 
   /**
@@ -95,7 +96,8 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
         null,
         null,
         null,
-        null);
+        null,
+        Statement.NO_NOW_IN_SECONDS);
   }
 
   /**
@@ -125,7 +127,8 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
         null,
         null,
         null,
-        null);
+        null,
+        Statement.NO_NOW_IN_SECONDS);
   }
 
   /**

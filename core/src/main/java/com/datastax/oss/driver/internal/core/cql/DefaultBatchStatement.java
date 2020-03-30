@@ -56,6 +56,7 @@ public class DefaultBatchStatement implements BatchStatement {
   private final ConsistencyLevel serialConsistencyLevel;
   private final Duration timeout;
   private final Node node;
+  private final int nowInSeconds;
 
   public DefaultBatchStatement(
       BatchType batchType,
@@ -75,7 +76,8 @@ public class DefaultBatchStatement implements BatchStatement {
       ConsistencyLevel consistencyLevel,
       ConsistencyLevel serialConsistencyLevel,
       Duration timeout,
-      Node node) {
+      Node node,
+      int nowInSeconds) {
     this.batchType = batchType;
     this.statements = ImmutableList.copyOf(statements);
     this.executionProfileName = executionProfileName;
@@ -94,6 +96,7 @@ public class DefaultBatchStatement implements BatchStatement {
     this.serialConsistencyLevel = serialConsistencyLevel;
     this.timeout = timeout;
     this.node = node;
+    this.nowInSeconds = nowInSeconds;
   }
 
   @NonNull
@@ -123,7 +126,8 @@ public class DefaultBatchStatement implements BatchStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @NonNull
@@ -147,7 +151,8 @@ public class DefaultBatchStatement implements BatchStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @NonNull
@@ -175,7 +180,8 @@ public class DefaultBatchStatement implements BatchStatement {
           consistencyLevel,
           serialConsistencyLevel,
           timeout,
-          node);
+          node,
+          nowInSeconds);
     }
   }
 
@@ -207,7 +213,8 @@ public class DefaultBatchStatement implements BatchStatement {
           consistencyLevel,
           serialConsistencyLevel,
           timeout,
-          node);
+          node,
+          nowInSeconds);
     }
   }
 
@@ -237,7 +244,8 @@ public class DefaultBatchStatement implements BatchStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @NonNull
@@ -272,7 +280,8 @@ public class DefaultBatchStatement implements BatchStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -301,7 +310,8 @@ public class DefaultBatchStatement implements BatchStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Nullable
@@ -331,7 +341,8 @@ public class DefaultBatchStatement implements BatchStatement {
         newConsistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Nullable
@@ -362,7 +373,8 @@ public class DefaultBatchStatement implements BatchStatement {
         consistencyLevel,
         newSerialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -391,7 +403,8 @@ public class DefaultBatchStatement implements BatchStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -420,7 +433,8 @@ public class DefaultBatchStatement implements BatchStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -473,7 +487,8 @@ public class DefaultBatchStatement implements BatchStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @NonNull
@@ -497,7 +512,8 @@ public class DefaultBatchStatement implements BatchStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        newNode);
+        newNode,
+        nowInSeconds);
   }
 
   @Nullable
@@ -542,7 +558,8 @@ public class DefaultBatchStatement implements BatchStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -581,7 +598,8 @@ public class DefaultBatchStatement implements BatchStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @NonNull
@@ -611,7 +629,8 @@ public class DefaultBatchStatement implements BatchStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -646,7 +665,8 @@ public class DefaultBatchStatement implements BatchStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -675,7 +695,8 @@ public class DefaultBatchStatement implements BatchStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -704,7 +725,8 @@ public class DefaultBatchStatement implements BatchStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @NonNull
@@ -728,6 +750,37 @@ public class DefaultBatchStatement implements BatchStatement {
         consistencyLevel,
         serialConsistencyLevel,
         newTimeout,
-        node);
+        node,
+        nowInSeconds);
+  }
+
+  @Override
+  public int getNowInSeconds() {
+    return nowInSeconds;
+  }
+
+  @NonNull
+  @Override
+  public BatchStatement setNowInSeconds(int newNowInSeconds) {
+    return new DefaultBatchStatement(
+        batchType,
+        statements,
+        executionProfileName,
+        executionProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
+        node,
+        newNowInSeconds);
   }
 }

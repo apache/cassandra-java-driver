@@ -152,7 +152,8 @@ public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilde
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   public int getStatementsCount() {
