@@ -51,7 +51,7 @@ public abstract class StatementBuilder<
   @Nullable private NullAllowingImmutableMap.Builder<String, ByteBuffer> customPayloadBuilder;
   @Nullable protected Boolean idempotent;
   protected boolean tracing;
-  protected long timestamp = Long.MIN_VALUE;
+  protected long timestamp = Statement.NO_DEFAULT_TIMESTAMP;
   @Nullable protected ByteBuffer pagingState;
   protected int pageSize = Integer.MIN_VALUE;
   @Nullable protected ConsistencyLevel consistencyLevel;

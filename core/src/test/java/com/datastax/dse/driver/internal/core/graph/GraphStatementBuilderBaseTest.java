@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 
 import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
 import com.datastax.dse.driver.api.core.graph.GraphStatementBuilderBase;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import org.junit.Test;
 
@@ -50,6 +51,6 @@ public class GraphStatementBuilderBaseTest {
   public void should_use_correct_default_timestamp_if_not_set() {
 
     MockGraphStatementBuilder builder = new MockGraphStatementBuilder();
-    assertThat(builder.build().getTimestamp()).isEqualTo(Long.MIN_VALUE);
+    assertThat(builder.build().getTimestamp()).isEqualTo(Statement.NO_DEFAULT_TIMESTAMP);
   }
 }

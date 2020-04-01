@@ -16,6 +16,7 @@
 package com.datastax.dse.driver.api.core.graph;
 
 import com.datastax.dse.driver.internal.core.graph.DefaultFluentGraphStatement;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
@@ -50,7 +51,7 @@ public interface FluentGraphStatement extends GraphStatement<FluentGraphStatemen
         null,
         null,
         null,
-        Long.MIN_VALUE,
+        Statement.NO_DEFAULT_TIMESTAMP,
         null,
         null,
         Collections.emptyMap(),

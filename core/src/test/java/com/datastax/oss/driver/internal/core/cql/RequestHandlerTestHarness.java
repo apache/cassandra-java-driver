@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
@@ -130,7 +131,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
 
     when(context.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
 
-    when(timestampGenerator.next()).thenReturn(Long.MIN_VALUE);
+    when(timestampGenerator.next()).thenReturn(Statement.NO_DEFAULT_TIMESTAMP);
     when(context.getTimestampGenerator()).thenReturn(timestampGenerator);
 
     pools = builder.buildMockPools();

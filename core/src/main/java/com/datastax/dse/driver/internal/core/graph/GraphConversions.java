@@ -33,6 +33,7 @@ import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.cql.Conversions;
@@ -115,7 +116,7 @@ public class GraphConversions extends Conversions {
             .getProtocolCode();
 
     long timestamp = statement.getTimestamp();
-    if (timestamp == Long.MIN_VALUE) {
+    if (timestamp == Statement.NO_DEFAULT_TIMESTAMP) {
       timestamp = context.getTimestampGenerator().next();
     }
 
@@ -183,7 +184,7 @@ public class GraphConversions extends Conversions {
             .getProtocolCode();
 
     long timestamp = statement.getTimestamp();
-    if (timestamp == Long.MIN_VALUE) {
+    if (timestamp == Statement.NO_DEFAULT_TIMESTAMP) {
       timestamp = context.getTimestampGenerator().next();
     }
 

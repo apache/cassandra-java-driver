@@ -69,6 +69,13 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
       new GenericType<CompletionStage<AsyncResultSet>>() {};
 
   /**
+   * A special value for {@link #getQueryTimestamp()} that means "no value".
+   *
+   * <p>It is equal to {@link Long#MIN_VALUE}.
+   */
+  long NO_DEFAULT_TIMESTAMP = QueryOptions.NO_DEFAULT_TIMESTAMP;
+
+  /**
    * A special value for {@link #getNowInSeconds()} that means "no value".
    *
    * <p>It is equal to {@link Integer#MIN_VALUE}.
@@ -225,9 +232,10 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   /**
    * Returns the query timestamp, in microseconds, to send with the statement.
    *
-   * <p>If this is equal to {@link Long#MIN_VALUE}, the {@link TimestampGenerator} configured for
-   * this driver instance will be used to generate a timestamp.
+   * <p>If this is equal to {@link #NO_DEFAULT_TIMESTAMP}, the {@link TimestampGenerator} configured
+   * for this driver instance will be used to generate a timestamp.
    *
+   * @see #NO_DEFAULT_TIMESTAMP
    * @see TimestampGenerator
    */
   long getQueryTimestamp();
@@ -235,12 +243,13 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   /**
    * Sets the query timestamp, in microseconds, to send with the statement.
    *
-   * <p>If this is equal to {@link Long#MIN_VALUE}, the {@link TimestampGenerator} configured for
-   * this driver instance will be used to generate a timestamp.
+   * <p>If this is equal to {@link #NO_DEFAULT_TIMESTAMP}, the {@link TimestampGenerator} configured
+   * for this driver instance will be used to generate a timestamp.
    *
    * <p>All the driver's built-in implementations are immutable, and return a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance.
    *
+   * @see #NO_DEFAULT_TIMESTAMP
    * @see TimestampGenerator
    */
   @NonNull
