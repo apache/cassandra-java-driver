@@ -154,32 +154,6 @@
     <dependency>
       <groupId>org.apache.directory.api</groupId>
       <artifactId>api-ldap-codec-standalone</artifactId>
-      <version>1.0.0-M26</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.ops4j.pax.exam</groupId>
-      <artifactId>pax-exam-junit4</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.ops4j.pax.exam</groupId>
-      <artifactId>pax-exam-container-native</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.ops4j.pax.exam</groupId>
-      <artifactId>pax-exam-link-mvn</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.ops4j.pax.url</groupId>
-      <artifactId>pax-url-wrap</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.felix</groupId>
-      <artifactId>org.apache.felix.framework</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -202,62 +176,7 @@
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <!-- Not needed for maven build but useful for testing from intellij -->
-          <systemPropertyVariables>
-            <project.version>${project.version}</project.version>
-            <assertj.version>${assertj.version}</assertj.version>
-            <config.version>${config.version}</config.version>
-            <commons-exec.version>${commons-exec.version}</commons-exec.version>
-            <hdrhistogram.version>${hdrhistogram.version}</hdrhistogram.version>
-            <jackson.version>${jackson.version}</jackson.version>
-            <jackson-databind.version>${jackson-databind.version}</jackson-databind.version>
-            <logback.version>${logback.version}</logback.version>
-            <lz4.version>${lz4.version}</lz4.version>
-            <metrics.version>${metrics.version}</metrics.version>
-            <netty.version>${netty.version}</netty.version>
-            <simulacron.version>${simulacron.version}</simulacron.version>
-            <slf4j.version>${slf4j.version}</slf4j.version>
-            <snappy.version>${snappy.version}</snappy.version>
-            <esri.version>${esri.version}</esri.version>
-            <json.version>${json.version}</json.version>
-            <legacy-jackson.version>${legacy-jackson.version}</legacy-jackson.version>
-            <reactive-streams.version>${reactive-streams.version}</reactive-streams.version>
-            <rxjava.version>${rxjava.version}</rxjava.version>
-            <tinkerpop.version>${tinkerpop.version}</tinkerpop.version>
-          </systemPropertyVariables>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <configuration>
-          <!-- provide version properties for OSGi tests -->
-          <systemPropertyVariables>
-            <project.version>${project.version}</project.version>
-            <assertj.version>${assertj.version}</assertj.version>
-            <config.version>${config.version}</config.version>
-            <commons-exec.version>${commons-exec.version}</commons-exec.version>
-            <hdrhistogram.version>${hdrhistogram.version}</hdrhistogram.version>
-            <jackson.version>${jackson.version}</jackson.version>
-            <jackson-databind.version>${jackson-databind.version}</jackson-databind.version>
-            <logback.version>${logback.version}</logback.version>
-            <lz4.version>${lz4.version}</lz4.version>
-            <metrics.version>${metrics.version}</metrics.version>
-            <netty.version>${netty.version}</netty.version>
-            <simulacron.version>${simulacron.version}</simulacron.version>
-            <slf4j.version>${slf4j.version}</slf4j.version>
-            <snappy.version>${snappy.version}</snappy.version>
-            <esri.version>${esri.version}</esri.version>
-            <json.version>${json.version}</json.version>
-            <legacy-jackson.version>${legacy-jackson.version}</legacy-jackson.version>
-            <reactive-streams.version>${reactive-streams.version}</reactive-streams.version>
-            <rxjava.version>${rxjava.version}</rxjava.version>
-            <tinkerpop.version>${tinkerpop.version}</tinkerpop.version>
-            <awaitility.version>${awaitility.version}</awaitility.version>
-          </systemPropertyVariables>
-        </configuration>
         <executions>
           <execution>
             <id>parallelizable-tests</id>
