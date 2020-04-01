@@ -113,8 +113,8 @@ public interface SyncCqlSession extends Session {
    *   <li>on the other hand, the following attributes are <b>not</b> propagated:
    *       <ul>
    *         <li>{@link Statement#getQueryTimestamp() boundStatement.getQueryTimestamp()} will be
-   *             set to {@link Long#MIN_VALUE}, meaning that the value will be assigned by the
-   *             session's timestamp generator.
+   *             set to {@link Statement#NO_DEFAULT_TIMESTAMP}, meaning that the value will be
+   *             assigned by the session's timestamp generator.
    *         <li>{@link Statement#getNode() boundStatement.getNode()} will always be {@code null}.
    *         <li>{@link Statement#getNowInSeconds()} boundStatement.getNowInSeconds()} will always
    *             be equal to {@link Statement#NO_NOW_IN_SECONDS}.

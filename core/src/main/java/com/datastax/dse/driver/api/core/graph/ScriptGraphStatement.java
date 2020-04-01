@@ -16,6 +16,7 @@
 package com.datastax.dse.driver.api.core.graph;
 
 import com.datastax.dse.driver.internal.core.graph.DefaultScriptGraphStatement;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -50,7 +51,7 @@ public interface ScriptGraphStatement extends GraphStatement<ScriptGraphStatemen
         null,
         null,
         null,
-        Long.MIN_VALUE,
+        Statement.NO_DEFAULT_TIMESTAMP,
         null,
         null,
         Collections.emptyMap(),

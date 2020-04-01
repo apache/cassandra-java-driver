@@ -59,7 +59,7 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
         Collections.emptyMap(),
         null,
         false,
-        Long.MIN_VALUE,
+        Statement.NO_DEFAULT_TIMESTAMP,
         null,
         Integer.MIN_VALUE,
         null,
@@ -90,7 +90,7 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
         Collections.emptyMap(),
         null,
         false,
-        Long.MIN_VALUE,
+        Statement.NO_DEFAULT_TIMESTAMP,
         null,
         Integer.MIN_VALUE,
         null,
@@ -121,7 +121,7 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
         Collections.emptyMap(),
         null,
         false,
-        Long.MIN_VALUE,
+        Statement.NO_DEFAULT_TIMESTAMP,
         null,
         Integer.MIN_VALUE,
         null,
@@ -260,7 +260,7 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
 
     // timestamp
     if (!(context.getTimestampGenerator() instanceof ServerSideTimestampGenerator)
-        || getQueryTimestamp() != Long.MIN_VALUE) {
+        || getQueryTimestamp() != Statement.NO_DEFAULT_TIMESTAMP) {
 
       size += PrimitiveSizes.LONG;
     }

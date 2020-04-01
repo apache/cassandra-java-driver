@@ -232,7 +232,7 @@ public class AdminRequestHandler<ResultT> implements ResponseCallback {
         pageSize,
         pagingState,
         ProtocolConstants.ConsistencyLevel.SERIAL,
-        Long.MIN_VALUE,
+        Statement.NO_DEFAULT_TIMESTAMP,
         null,
         Statement.NO_NOW_IN_SECONDS);
   }

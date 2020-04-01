@@ -17,6 +17,7 @@ package com.datastax.dse.driver.api.core.graph;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -37,7 +38,7 @@ public abstract class GraphStatementBuilderBase<
   protected Boolean isIdempotent;
   protected Duration timeout;
   protected Node node;
-  protected long timestamp = Long.MIN_VALUE;
+  protected long timestamp = Statement.NO_DEFAULT_TIMESTAMP;
   protected DriverExecutionProfile executionProfile;
   protected String executionProfileName;
   private NullAllowingImmutableMap.Builder<String, ByteBuffer> customPayloadBuilder;

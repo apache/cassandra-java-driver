@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.time;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import net.jcip.annotations.ThreadSafe;
 
@@ -45,7 +46,7 @@ public class ServerSideTimestampGenerator implements TimestampGenerator {
 
   @Override
   public long next() {
-    return Long.MIN_VALUE;
+    return Statement.NO_DEFAULT_TIMESTAMP;
   }
 
   @Override
