@@ -15,9 +15,6 @@
  */
 package com.datastax.oss.driver.osgi;
 
-import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
-import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.categories.IsolatedTests;
 import com.datastax.oss.driver.osgi.support.BundleOptions;
@@ -44,18 +41,18 @@ public class OsgiSnappyIT implements OsgiSimpleTests {
   @Configuration
   public Option[] config() {
     return CoreOptions.options(
-        BundleOptions.snappyBundle(),
+        // BundleOptions.snappyBundle(),
         BundleOptions.driverCoreBundle(),
         BundleOptions.driverQueryBuilderBundle(),
         BundleOptions.baseOptions(),
         BundleOptions.jacksonBundles());
   }
-
-  @Override
-  public ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder() {
-    return DriverConfigLoader.programmaticBuilder()
-        .withString(DefaultDriverOption.PROTOCOL_COMPRESSION, "snappy");
-  }
+  //
+  //  @Override
+  //  public ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder() {
+  //    return DriverConfigLoader.programmaticBuilder()
+  //        .withString(DefaultDriverOption.PROTOCOL_COMPRESSION, "snappy");
+  //  }
 
   @Test
   public void should_connect_and_query_with_snappy_compression() {

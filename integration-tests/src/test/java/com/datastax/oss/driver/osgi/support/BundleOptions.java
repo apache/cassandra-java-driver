@@ -74,7 +74,7 @@ public class BundleOptions {
 
   public static UrlProvisionOption driverCoreBundle() {
     return bundle(
-        "reference:file:"
+        "file:"
             + PathUtils.getBaseDir()
             + "/../core/target/java-driver-core-"
             + getVersionFromSystemProperty("project.version")
@@ -83,7 +83,7 @@ public class BundleOptions {
 
   public static UrlProvisionOption driverCoreShadedBundle() {
     return bundle(
-        "reference:file:"
+        "file:"
             + PathUtils.getBaseDir()
             + "/../core-shaded/target/java-driver-core-shaded-"
             + getVersionFromSystemProperty("project.version")
@@ -92,7 +92,7 @@ public class BundleOptions {
 
   public static UrlProvisionOption driverQueryBuilderBundle() {
     return bundle(
-        "reference:file:"
+        "file:"
             + PathUtils.getBaseDir()
             + "/../query-builder/target/java-driver-query-builder-"
             + getVersionFromSystemProperty("project.version")
@@ -101,7 +101,7 @@ public class BundleOptions {
 
   public static UrlProvisionOption driverTestInfraBundle() {
     return bundle(
-        "reference:file:"
+        "file:"
             + PathUtils.getBaseDir()
             + "/../test-infra/target/java-driver-test-infra-"
             + getVersionFromSystemProperty("project.version")

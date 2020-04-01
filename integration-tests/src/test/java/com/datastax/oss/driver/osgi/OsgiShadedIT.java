@@ -16,6 +16,9 @@
 package com.datastax.oss.driver.osgi;
 
 import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.categories.IsolatedTests;
@@ -59,6 +62,12 @@ public class OsgiShadedIT implements OsgiReactiveTests, OsgiGraphTests, OsgiGeoT
   @Override
   public Version getDseVersion() {
     return CCM_RULE.getDseVersion().orElseThrow(IllegalStateException::new);
+  }
+
+  @Override
+  public ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder() {
+    return DriverConfigLoader.programmaticBuilder()
+        .withString(DefaultDriverOption.PROTOCOL_COMPRESSION, "snappy");
   }
 
   @Test

@@ -58,6 +58,8 @@ public class MandatoryLocalDcHelper extends OptionalLocalDcHelper {
   @Override
   public Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes) {
     Optional<String> optionalLocalDc = super.discoverLocalDc(nodes);
+    System.out.println("ERIK: local DC present: " + optionalLocalDc.isPresent());
+    new Exception().printStackTrace();
     if (optionalLocalDc.isPresent()) {
       return optionalLocalDc;
     }
