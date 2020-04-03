@@ -804,6 +804,13 @@ public enum DefaultDriverOption implements DriverOption {
    * <p>Value-type: {@link java.time.Duration Duration}
    */
   CONNECTION_CONNECT_TIMEOUT("advanced.connection.connect-timeout"),
+
+  /**
+   * The maximum number of live sessions that are allowed to coexist in a given VM.
+   *
+   * <p>Value-type: int
+   */
+  SESSION_LEAK_THRESHOLD("advanced.session-leak.threshold"),
   ;
 
   private final String path;

@@ -549,6 +549,9 @@ public class TypedDriverOption<ValueT> {
   /** The timeout to use when establishing driver connections. */
   public static final TypedDriverOption<Duration> CONNECTION_CONNECT_TIMEOUT =
       new TypedDriverOption<>(DefaultDriverOption.CONNECTION_CONNECT_TIMEOUT, GenericType.DURATION);
+  /** The maximum number of live sessions that are allowed to coexist in a given VM. */
+  public static final TypedDriverOption<Integer> SESSION_LEAK_THRESHOLD =
+      new TypedDriverOption<>(DefaultDriverOption.SESSION_LEAK_THRESHOLD, GenericType.INTEGER);
 
   /** The name of the application using the session. */
   public static final TypedDriverOption<String> APPLICATION_NAME =
