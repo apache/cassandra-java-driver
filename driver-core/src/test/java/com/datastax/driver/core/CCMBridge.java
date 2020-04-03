@@ -1093,6 +1093,10 @@ public class CCMBridge implements CCMAccess {
       return cassandraVersion.nextStable().compareTo(VersionNumber.parse("4.0")) < 0;
     }
 
+    private static boolean isMaterializedViewsSupported(VersionNumber cassandraVersion) {
+      return cassandraVersion.nextStable().compareTo(VersionNumber.parse("4.0")) >= 0;
+    }
+
     public int weight() {
       // the weight is simply function of the number of nodes
       int totalNodes = 0;
