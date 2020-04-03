@@ -55,6 +55,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -80,6 +81,8 @@ public class DefaultSession implements CqlSession {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSession.class);
 
+  private static final AtomicInteger INSTANCE_COUNT = new AtomicInteger();
+
   public static CompletionStage<CqlSession> init(
       InternalDriverContext context, Set<EndPoint> contactPoints, CqlIdentifier keyspace) {
     return new DefaultSession(context, contactPoints).init(keyspace);
@@ -95,7 +98,20 @@ public class DefaultSession implements CqlSession {
   private final SessionMetricUpdater metricUpdater;
 
   private DefaultSession(InternalDriverContext context, Set<EndPoint> contactPoints) {
-    LOG.debug("Creating new session {}", context.getSessionName());
+    int instanceCount = INSTANCE_COUNT.incrementAndGet();
+    int threshold =
+        context.getConfig().getDefaultProfile().getInt(DefaultDriverOption.SESSION_LEAK_THRESHOLD);
+    LOG.debug(
+        "Creating new session {} ({} live instances)", context.getSessionName(), instanceCount);
+    if (threshold > 0 && instanceCount > threshold) {
+      LOG.warn(
+          "You have too many session instances: {} active, expected less than {} "
+              + "(see '{}' in the configuration)",
+          instanceCount,
+          threshold,
+          DefaultDriverOption.SESSION_LEAK_THRESHOLD.getPath());
+    }
+
     this.logPrefix = context.getSessionName();
     this.adminExecutor = context.getNettyOptions().adminEventExecutorGroup().next();
     try {
@@ -106,6 +122,10 @@ public class DefaultSession implements CqlSession {
       this.poolManager = context.getPoolManager();
       this.metricUpdater = context.getMetricsFactory().getSessionUpdater();
     } catch (Throwable t) {
+      LOG.debug(
+          "Error creating session {} ({} live instances)",
+          context.getSessionName(),
+          INSTANCE_COUNT.decrementAndGet());
       // Rethrow but make sure we release any resources allocated by Netty. At this stage there are
       // no scheduled tasks on the event loops so getNow() won't block.
       try {
@@ -344,8 +364,19 @@ public class DefaultSession implements CqlSession {
                   }
                   initFuture.completeExceptionally(error);
                 });
+        LOG.debug(
+            "Error initializing new session {} ({} live instances)",
+            context.getSessionName(),
+            INSTANCE_COUNT.decrementAndGet());
         return;
       }
+
+      closeFuture.whenComplete(
+          (v, error) ->
+              LOG.debug(
+                  "Closing session {} ({} live instances)",
+                  context.getSessionName(),
+                  INSTANCE_COUNT.decrementAndGet()));
 
       MetadataManager metadataManager = context.getMetadataManager();
       metadataManager.addContactPoints(initialContactPoints);
@@ -522,7 +553,6 @@ public class DefaultSession implements CqlSession {
                 if (!f.isSuccess()) {
                   closeFuture.completeExceptionally(f.cause());
                 } else {
-                  LOG.debug("[{}] Shutdown complete", logPrefix);
                   closeFuture.complete(null);
                 }
               });
