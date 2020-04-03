@@ -114,7 +114,7 @@ public class JnrNativeImpl implements NativeImpl {
     Timeval tv = this.posix.map(POSIX::allocateTimeval).orElseThrow(exceptionSupplier);
     int rv = this.posix.map(p -> p.gettimeofday(tv)).orElseThrow(exceptionSupplier);
     if (rv != 0) {
-      throw new IllegalStateException("Call to libc.gettimeofday() failed with result " + rv);
+      throw new IllegalStateException("Expected 0 return valu from gettimeofday(), observed " + rv);
     }
     return tv.sec() * 1000000 + tv.usec();
   }
