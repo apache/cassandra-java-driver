@@ -1090,7 +1090,7 @@ public class CCMBridge implements CCMAccess {
 
     private static boolean isThriftSupported(VersionNumber cassandraVersion) {
       // Thrift is removed from some pre-release 4.x versions, make the comparison work for those
-      return cassandraVersion.compareTo(VersionNumber.parse("4.0-a")) < 0;
+      return cassandraVersion.nextStable().compareTo(VersionNumber.parse("4.0")) < 0;
     }
 
     public int weight() {
