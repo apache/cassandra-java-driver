@@ -17,7 +17,9 @@ install_snapshot()
   }
 }
 
-grep -q '<native-protocol.version>.*-SNAPSHOT</native-protocol.version>' pom.xml
+mvn --projects core dependency:list -DincludeArtifactIds=native-protocol | \
+  tee /dev/tty | \
+  grep -q native-protocol.*SNAPSHOT
 if [ $? -eq 0 ] ; then
   install_snapshot https://github.com/datastax/native-protocol.git native-protocol
 fi
