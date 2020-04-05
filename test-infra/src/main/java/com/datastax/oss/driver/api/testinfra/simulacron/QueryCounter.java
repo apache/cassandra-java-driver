@@ -51,7 +51,7 @@ public class QueryCounter {
   }
 
   private QueryCounter(
-      BoundTopic topic,
+      BoundTopic<?, ?> topic,
       NotificationMode notificationMode,
       Predicate<QueryLog> queryLogFilter,
       long beforeTimeout,
@@ -68,7 +68,7 @@ public class QueryCounter {
   }
 
   /** Creates a builder that tracks counts for the given {@link BoundTopic} (cluster, dc, node). */
-  public static QueryCounterBuilder builder(BoundTopic topic) {
+  public static QueryCounterBuilder builder(BoundTopic<?, ?> topic) {
     return new QueryCounterBuilder(topic);
   }
 
@@ -116,12 +116,12 @@ public class QueryCounter {
     private static Predicate<QueryLog> DEFAULT_FILTER = (q) -> !q.getQuery().isEmpty();
 
     private Predicate<QueryLog> queryLogFilter = DEFAULT_FILTER;
-    private BoundTopic topic;
+    private BoundTopic<?, ?> topic;
     private NotificationMode notificationMode = NotificationMode.BEFORE_PROCESSING;
     private long beforeTimeout = 1;
     private TimeUnit beforeUnit = TimeUnit.SECONDS;
 
-    private QueryCounterBuilder(BoundTopic topic) {
+    private QueryCounterBuilder(BoundTopic<?, ?> topic) {
       this.topic = topic;
     }
 

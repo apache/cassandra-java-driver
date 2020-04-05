@@ -70,6 +70,12 @@
         "new": "parameter java.util.Queue<com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::newQueryPlan(com.datastax.oss.driver.api.core.session.Request, ===com.datastax.oss.driver.api.core.session.Session===)",
         "annotation": "@edu.umd.cs.findbugs.annotations.Nullable",
         "justification": "Method arguments were mistakenly annotated with @NonNull"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter com.datastax.oss.driver.api.testinfra.simulacron.QueryCounter.QueryCounterBuilder com.datastax.oss.driver.api.testinfra.simulacron.QueryCounter::builder(===com.datastax.oss.simulacron.server.BoundTopic===)",
+        "new": "parameter com.datastax.oss.driver.api.testinfra.simulacron.QueryCounter.QueryCounterBuilder com.datastax.oss.driver.api.testinfra.simulacron.QueryCounter::builder(===com.datastax.oss.simulacron.server.BoundTopic<?, ?>===)",
+        "justification": "Fix usage of raw type BoundTopic"
       }
     ]
   }
