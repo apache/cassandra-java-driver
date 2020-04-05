@@ -39,50 +39,48 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
 
   private final NullAllowingImmutableMap.Builder<String, Object> values =
       NullAllowingImmutableMap.builder();
+
   private final Supplier<Config> fallbackSupplier;
-  private final String rootPath;
 
   private String currentProfileName = DriverExecutionProfile.DEFAULT_NAME;
-
-  /**
-   * @param fallbackSupplier the supplier that will provide fallback configuration for options that
-   *     haven't been specified programmatically.
-   * @param rootPath the root path used in non-programmatic sources (fallback reference.conf and
-   *     system properties).
-   */
-  public DefaultProgrammaticDriverConfigLoaderBuilder(
-      @NonNull Supplier<Config> fallbackSupplier, @NonNull String rootPath) {
-    this.fallbackSupplier = fallbackSupplier;
-    this.rootPath = rootPath;
-  }
 
   /**
    * Creates an instance of {@link DefaultProgrammaticDriverConfigLoaderBuilder} with default
    * settings.
    *
-   * <p>Application-specific classpath resources will be located using the {@linkplain
-   * Thread#getContextClassLoader() the current thread's context class loader}. This might not be
-   * suitable for OSGi deployments, which should use {@link
+   * <p>Fallback configuration for options that haven't been specified programmatically will be
+   * obtained from standard classpath resources. Application-specific classpath resources will be
+   * located using the {@linkplain Thread#getContextClassLoader() the current thread's context class
+   * loader}. This might not be suitable for OSGi deployments, which should use {@link
    * #DefaultProgrammaticDriverConfigLoaderBuilder(ClassLoader)} instead.
    */
   public DefaultProgrammaticDriverConfigLoaderBuilder() {
-    this(
-        DefaultDriverConfigLoader.DEFAULT_CONFIG_SUPPLIER,
-        DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
+    this(DefaultDriverConfigLoader.DEFAULT_CONFIG_SUPPLIER);
   }
 
   /**
    * Creates an instance of {@link DefaultProgrammaticDriverConfigLoaderBuilder} with default
-   * settings, except that application-specific classpath resources will be located using the
-   * provided {@link ClassLoader} instead of {@linkplain Thread#getContextClassLoader() the current
-   * thread's context class loader}.
+   * settings but a custom class loader.
+   *
+   * <p>Fallback configuration for options that haven't been specified programmatically will be
+   * obtained from standard classpath resources. Application-specific classpath resources will be
+   * located using the provided {@link ClassLoader} instead of {@linkplain
+   * Thread#getContextClassLoader() the current thread's context class loader}.
    */
   public DefaultProgrammaticDriverConfigLoaderBuilder(@NonNull ClassLoader appClassLoader) {
     this(
         () ->
             ConfigFactory.defaultApplication(appClassLoader)
-                .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader())),
-        DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
+                .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+                .getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH));
+  }
+
+  /**
+   * @param fallbackSupplier the supplier that will provide fallback configuration for options that
+   *     haven't been specified programmatically.
+   */
+  public DefaultProgrammaticDriverConfigLoaderBuilder(@NonNull Supplier<Config> fallbackSupplier) {
+    this.fallbackSupplier = fallbackSupplier;
   }
 
   private ProgrammaticDriverConfigLoaderBuilder with(
@@ -93,9 +91,6 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
   private ProgrammaticDriverConfigLoaderBuilder with(@NonNull String path, @Nullable Object value) {
     if (!DriverExecutionProfile.DEFAULT_NAME.equals(currentProfileName)) {
       path = "profiles." + currentProfileName + "." + path;
-    }
-    if (!rootPath.isEmpty()) {
-      path = rootPath + "." + path;
     }
     values.put(path, value);
     return this;
@@ -233,12 +228,10 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
         () -> {
           ConfigFactory.invalidateCaches();
           Config programmaticConfig = buildConfig();
-          Config config =
-              ConfigFactory.defaultOverrides()
-                  .withFallback(programmaticConfig)
-                  .withFallback(fallbackSupplier.get())
-                  .resolve();
-          return rootPath.isEmpty() ? config : config.getConfig(rootPath);
+          return ConfigFactory.defaultOverrides()
+              .withFallback(programmaticConfig)
+              .withFallback(fallbackSupplier.get())
+              .resolve();
         });
   }
 

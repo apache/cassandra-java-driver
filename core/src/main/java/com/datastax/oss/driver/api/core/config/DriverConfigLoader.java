@@ -254,6 +254,17 @@ public interface DriverConfigLoader extends AutoCloseable {
   }
 
   /**
+   * Just like {@link #programmaticBuilder()} except that application-specific classpath resources
+   * will be located using the provided {@link ClassLoader} instead of {@linkplain
+   * Thread#getContextClassLoader() the current thread's context class loader}.
+   */
+  @NonNull
+  static ProgrammaticDriverConfigLoaderBuilder programmaticBuilder(
+      @NonNull ClassLoader appClassLoader) {
+    return new DefaultProgrammaticDriverConfigLoaderBuilder(appClassLoader);
+  }
+
+  /**
    * Builds an instance backed by an {@link OptionsMap}, which holds all options in memory.
    *
    * <p>This is the simplest implementation. It is intended for clients who wish to completely
@@ -289,17 +300,6 @@ public interface DriverConfigLoader extends AutoCloseable {
   @NonNull
   static DriverConfigLoader fromMap(@NonNull OptionsMap source) {
     return new MapBasedDriverConfigLoader(source, source.asRawMap());
-  }
-
-  /**
-   * Just like {@link #programmaticBuilder()} except that application-specific classpath resources
-   * will be located using the provided {@link ClassLoader} instead of {@linkplain
-   * Thread#getContextClassLoader() the current thread's context class loader}.
-   */
-  @NonNull
-  static ProgrammaticDriverConfigLoaderBuilder programmaticBuilder(
-      @NonNull ClassLoader appClassLoader) {
-    return new DefaultProgrammaticDriverConfigLoaderBuilder(appClassLoader);
   }
 
   /**
