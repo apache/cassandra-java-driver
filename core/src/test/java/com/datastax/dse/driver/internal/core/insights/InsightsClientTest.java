@@ -63,6 +63,7 @@ import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.session.PoolManager;
+import com.datastax.oss.driver.shaded.guava.common.base.Suppliers;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
@@ -94,7 +95,7 @@ import org.mockito.Mockito;
 public class InsightsClientTest {
   private static final StackTraceElement[] EMPTY_STACK_TRACE = {};
   private static final Map<String, Object> EMPTY_OBJECT_MAP = Collections.emptyMap();
-  private static final Supplier<Long> MOCK_TIME_SUPPLIER = () -> 1L;
+  private static final Supplier<Long> MOCK_TIME_SUPPLIER = Suppliers.ofInstance(1L);
   private static final InsightsConfiguration INSIGHTS_CONFIGURATION =
       new InsightsConfiguration(true, 300000L, new DefaultEventLoop());
 

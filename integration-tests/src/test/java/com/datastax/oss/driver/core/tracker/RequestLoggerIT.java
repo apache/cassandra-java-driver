@@ -66,10 +66,15 @@ import org.slf4j.LoggerFactory;
 @RunWith(MockitoJUnitRunner.class)
 public class RequestLoggerIT {
   private static final Pattern LOG_PREFIX_PER_REQUEST = Pattern.compile("\\[s\\d*\\|\\d*]");
+
+  @SuppressWarnings("UnnecessaryLambda")
   private static final Predicate<String> WITH_PER_REQUEST_PREFIX =
       log -> LOG_PREFIX_PER_REQUEST.matcher(log).lookingAt();
+
   private static final Pattern LOG_PREFIX_WITH_EXECUTION_NUMBER =
       Pattern.compile("\\[s\\d*\\|\\d*\\|\\d*]");
+
+  @SuppressWarnings("UnnecessaryLambda")
   private static final Predicate<String> WITH_EXECUTION_PREFIX =
       log -> LOG_PREFIX_WITH_EXECUTION_NUMBER.matcher(log).lookingAt();
 

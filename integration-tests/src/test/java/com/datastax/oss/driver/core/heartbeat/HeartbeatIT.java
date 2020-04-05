@@ -47,7 +47,6 @@ import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -62,9 +61,6 @@ public class HeartbeatIT {
       new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
   private static final String QUERY = "select * from foo";
-  private static final Predicate<QueryLog> IS_OPTION_REQUEST =
-      (l) -> l.getQuery().equals("OPTIONS");
-
   private BoundNode simulacronNode;
 
   @Before
@@ -180,7 +176,7 @@ public class HeartbeatIT {
       // Ensure we get some heartbeats and the node remains up.
       AtomicInteger heartbeats = new AtomicInteger();
       simulacronNode.registerQueryListener(
-          (n, l) -> heartbeats.incrementAndGet(), true, IS_OPTION_REQUEST);
+          (n, l) -> heartbeats.incrementAndGet(), true, this::isOptionRequest);
 
       checkThat(() -> heartbeats.get() >= 2).becomesTrue();
       assertThat(node.getState()).isEqualTo(NodeState.UP);
@@ -242,7 +238,7 @@ public class HeartbeatIT {
             (n, l) -> count.incrementAndGet(),
             false,
             (l) ->
-                IS_OPTION_REQUEST.test(l)
+                isOptionRequest(l)
                     && (regularConnection ^ l.getConnection().equals(controlConnectionAddress)));
     return count;
   }
@@ -261,5 +257,9 @@ public class HeartbeatIT {
     return simulacronNode.getLogs().getQueryLogs().stream()
         .filter(l -> l.getQuery().equals("OPTIONS"))
         .collect(Collectors.toList());
+  }
+
+  private boolean isOptionRequest(QueryLog l) {
+    return l.getQuery().equals("OPTIONS");
   }
 }
