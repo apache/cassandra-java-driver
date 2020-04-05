@@ -55,6 +55,7 @@ public class DefaultTraceEvent implements TraceEvent {
   }
 
   @Override
+  @Deprecated
   public InetAddress getSource() {
     return source.getAddress();
   }
