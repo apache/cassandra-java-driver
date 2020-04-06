@@ -59,9 +59,19 @@ public class Reflection {
       }
       LOG.trace("Successfully loaded {}", className);
       return clazz;
-    } catch (ClassNotFoundException | LinkageError | SecurityException e) {
-      LOG.debug(String.format("Could not load %s: %s", className, e), e);
-      return null;
+    } catch (LinkageError | Exception e) {
+      // Note: only ClassNotFoundException, LinkageError and SecurityException
+      // are declared to be thrown; however some class loaders (Apache Felix)
+      // may throw other checked exceptions, which cannot be caught directly
+      // because that would cause a compilation failure.
+      LOG.debug(
+          String.format("Could not load %s with loader %s: %s", className, classLoader, e), e);
+      if (classLoader == null) {
+        return null;
+      } else {
+        // try with the driver's default class loader
+        return loadClass(null, className);
+      }
     }
   }
 
