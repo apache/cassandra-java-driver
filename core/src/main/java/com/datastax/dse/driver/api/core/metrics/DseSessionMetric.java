@@ -20,7 +20,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 
-/** See {@code dse-reference.conf} for a description of each metric. */
+/** See {@code reference.conf} for a description of each metric. */
 public enum DseSessionMetric implements SessionMetric {
   CONTINUOUS_CQL_REQUESTS("continuous-cql-requests"),
   GRAPH_REQUESTS("graph-requests"),
