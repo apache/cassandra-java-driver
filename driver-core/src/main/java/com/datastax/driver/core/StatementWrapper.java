@@ -233,4 +233,15 @@ public abstract class StatementWrapper extends Statement {
     wrapped.setHost(host);
     return this;
   }
+
+  @Override
+  public int getNowInSeconds() {
+    return wrapped.getNowInSeconds();
+  }
+
+  @Override
+  public Statement setNowInSeconds(int nowInSeconds) {
+    wrapped.setNowInSeconds(nowInSeconds);
+    return this;
+  }
 }

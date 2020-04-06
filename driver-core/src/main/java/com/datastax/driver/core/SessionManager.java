@@ -580,6 +580,12 @@ class SessionManager extends AbstractSession {
       usedPagingState = statement.getPagingState();
     }
 
+    int nowInSeconds = statement.getNowInSeconds();
+    if (nowInSeconds != Integer.MIN_VALUE && protocolVersion.compareTo(ProtocolVersion.V5) < 0) {
+      throw new UnsupportedFeatureException(
+          protocolVersion, "Now in seconds is only supported since native protocol V5");
+    }
+
     if (statement instanceof StatementWrapper)
       statement = ((StatementWrapper) statement).getWrappedStatement();
 
@@ -623,7 +629,8 @@ class SessionManager extends AbstractSession {
               fetchSize,
               usedPagingState,
               serialConsistency,
-              defaultTimestamp);
+              defaultTimestamp,
+              nowInSeconds);
       request = new Requests.Query(qString, options, statement.isTracing());
     } else if (statement instanceof BoundStatement) {
       BoundStatement bs = (BoundStatement) statement;
@@ -652,7 +659,8 @@ class SessionManager extends AbstractSession {
               fetchSize,
               usedPagingState,
               serialConsistency,
-              defaultTimestamp);
+              defaultTimestamp,
+              nowInSeconds);
       request =
           new Requests.Execute(
               bs.statement.getPreparedId().boundValuesMetadata.id,
@@ -671,7 +679,8 @@ class SessionManager extends AbstractSession {
       if (protocolVersion.compareTo(ProtocolVersion.V4) < 0) bs.ensureAllSet();
       BatchStatement.IdAndValues idAndVals = bs.getIdAndValues(protocolVersion, codecRegistry);
       Requests.BatchProtocolOptions options =
-          new Requests.BatchProtocolOptions(consistency, serialConsistency, defaultTimestamp);
+          new Requests.BatchProtocolOptions(
+              consistency, serialConsistency, defaultTimestamp, nowInSeconds);
       request =
           new Requests.Batch(
               bs.batchType, idAndVals.ids, idAndVals.values, options, statement.isTracing());
