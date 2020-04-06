@@ -21,7 +21,7 @@ import java.util.Locale;
 public class Native {
 
   /* Copied from equivalent op in jnr.ffi.Platform.  We have to have this here as it has to be defined
-  * before it's (multiple) uses in determineCpu() */
+   * before it's (multiple) uses in determineCpu() */
   private static final Locale LOCALE = java.util.Locale.ENGLISH;
 
   private static final NativeImpl IMPL = new JnrNativeImpl();
