@@ -27,7 +27,7 @@ import java.util.Optional;
  *
  * <p>This type exists mainly to avoid a hard dependency to Dropwizard Metrics (that is, the JAR can
  * be completely removed from the classpath if metrics are disabled). It also provides convenience
- * methods to access individual metrics programatically.
+ * methods to access individual metrics programmatically.
  */
 public interface Metrics {
 
