@@ -24,8 +24,4 @@ public interface NativeImpl {
   public boolean getpidAvailable();
 
   public int getpid();
-
-  public boolean cpuAvailable();
-
-  public String cpu();
 }

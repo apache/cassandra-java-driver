@@ -15,11 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.os;
 
-import com.datastax.oss.driver.internal.core.util.Reflection;
-import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.function.Supplier;
-import jnr.ffi.Platform;
 import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
 import jnr.posix.Timeval;
@@ -32,12 +29,10 @@ public class JnrNativeImpl implements NativeImpl {
   private static final Logger LOG = LoggerFactory.getLogger(JnrNativeImpl.class);
 
   private final Optional<POSIX> posix;
-  private final Optional<Platform> platform;
 
   public JnrNativeImpl() {
 
     this.posix = loadPosix();
-    this.platform = loadPlatform();
   }
 
   private Optional<POSIX> loadPosix() {
@@ -80,22 +75,6 @@ public class JnrNativeImpl implements NativeImpl {
     return Optional.of(posix);
   }
 
-  private Optional<Platform> loadPlatform() {
-
-    try {
-
-      Class<?> platformClass = Reflection.loadClass(null, "jnr.ffi.Platform");
-      if (platformClass != null) {
-        Method getNativePlatform = platformClass.getMethod("getNativePlatform");
-        return Optional.of((jnr.ffi.Platform) getNativePlatform.invoke(null));
-      }
-      return Optional.empty();
-    } catch (Throwable t) {
-      LOG.debug("Error loading jnr.ffi.Platform class, this class will not be available.", t);
-      return Optional.empty();
-    }
-  }
-
   @Override
   public boolean gettimeofdayAvailable() {
     return posix.isPresent();
@@ -133,22 +112,5 @@ public class JnrNativeImpl implements NativeImpl {
                 new IllegalStateException(
                     "Native call not available. "
                         + "Check isGetProcessIdAvailable() before calling this method."));
-  }
-
-  @Override
-  public boolean cpuAvailable() {
-    return this.platform.isPresent();
-  }
-
-  @Override
-  public String cpu() {
-    return this.platform
-        .map(p -> p.getCPU().toString())
-        .orElseThrow(
-            () -> {
-              throw new IllegalStateException(
-                  "JNR Platform class not loaded. "
-                      + "Check isPlatformAvailable() before calling this method.");
-            });
   }
 }

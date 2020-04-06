@@ -23,9 +23,7 @@ public class NativeTest {
 
   /** Verifies that {@link Native#getCPU()} returns non-empty cpu architecture */
   @Test
-  public void should_return_cpu_if_call_is_available() {
-    if (Native.isPlatformAvailable()) {
-      assertThat(Native.getCPU()).isNotEmpty();
-    }
+  public void should_return_cpu_info() {
+    assertThat(Native.getCPU()).isNotEmpty();
   }
 }
