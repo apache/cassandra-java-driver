@@ -93,8 +93,7 @@ public class GraphSupportChecker {
    *   <li>If the statement declares the protocol to use with {@link
    *       GraphStatement#getSubProtocol()}, then that protocol is returned.
    *   <li>If the driver configuration explicitly defines the protocol to use (see {@link
-   *       DseDriverOption#GRAPH_SUB_PROTOCOL} and reference.conf), then that protocol is
-   *       returned.
+   *       DseDriverOption#GRAPH_SUB_PROTOCOL} and reference.conf), then that protocol is returned.
    *   <li>Otherwise, the graph protocol to use is determined by the DSE version of hosts in the
    *       cluster. If any host has DSE version 6.7.x or lower, the default graph protocol is {@link
    *       GraphProtocol#GRAPHSON_2_0}. If all hosts have DSE version 6.8.0 or higher, the default
