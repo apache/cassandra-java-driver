@@ -81,6 +81,16 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
   }
 
   @Override
+  public boolean requiresReactive() {
+    DaoReturnType returnType =
+        parseAndValidateReturnType(getSupportedReturnTypes(), Insert.class.getSimpleName());
+    if (returnType == null) {
+      return false;
+    }
+    return returnType.requiresReactive();
+  }
+
+  @Override
   public Optional<MethodSpec> generate() {
 
     // Validate the parameters:

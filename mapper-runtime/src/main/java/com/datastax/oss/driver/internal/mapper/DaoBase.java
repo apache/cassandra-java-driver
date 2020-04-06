@@ -15,9 +15,6 @@
  */
 package com.datastax.oss.driver.internal.mapper;
 
-import com.datastax.dse.driver.api.core.cql.reactive.ReactiveResultSet;
-import com.datastax.dse.driver.api.mapper.reactive.MappedReactiveResultSet;
-import com.datastax.dse.driver.internal.mapper.reactive.DefaultMappedReactiveResultSet;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
@@ -282,16 +279,6 @@ public class DaoBase {
       CompletableFuture<MappedAsyncPagingIterable<EntityT>> executeAsyncAndMapToEntityIterable(
           Statement<?> statement, EntityHelper<EntityT> entityHelper) {
     return executeAsync(statement).thenApply(rs -> rs.map(entityHelper::get));
-  }
-
-  protected ReactiveResultSet executeReactive(Statement<?> statement) {
-    return context.getSession().executeReactive(statement);
-  }
-
-  protected <EntityT> MappedReactiveResultSet<EntityT> executeReactiveAndMap(
-      Statement<?> statement, EntityHelper<EntityT> entityHelper) {
-    ReactiveResultSet source = executeReactive(statement);
-    return new DefaultMappedReactiveResultSet<>(source, entityHelper::get);
   }
 
   protected static void throwIfProtocolVersionV3(MapperContext context) {

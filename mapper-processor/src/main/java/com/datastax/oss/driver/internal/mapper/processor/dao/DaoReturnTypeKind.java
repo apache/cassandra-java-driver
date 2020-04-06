@@ -70,4 +70,13 @@ public interface DaoReturnTypeKind {
 
   /** A short description suitable for error messages. */
   String getDescription();
+
+  /**
+   * Whether this return type kind requires the Reactive Streams API.
+   *
+   * <p>If true, the generated DAO class will inherit from {@link
+   * com.datastax.dse.driver.internal.mapper.reactive.ReactiveDaoBase}, otherwise it will inherit
+   * from {@link com.datastax.oss.driver.internal.mapper.DaoBase}.
+   */
+  boolean requiresReactive();
 }
