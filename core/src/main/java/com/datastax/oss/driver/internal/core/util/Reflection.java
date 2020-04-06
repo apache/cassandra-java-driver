@@ -59,9 +59,23 @@ public class Reflection {
       }
       LOG.trace("Successfully loaded {}", className);
       return clazz;
-    } catch (ClassNotFoundException | LinkageError | SecurityException e) {
-      LOG.debug(String.format("Could not load %s: %s", className, e), e);
-      return null;
+    } catch (LinkageError | Exception e) {
+      // Note: only ClassNotFoundException, LinkageError and SecurityException
+      // are declared to be thrown; however some class loaders (Apache Felix)
+      // may throw other checked exceptions, which cannot be caught directly
+      // because that would cause a compilation failure.
+      LOG.debug(
+          String.format("Could not load %s with loader %s: %s", className, classLoader, e), e);
+      if (classLoader == null) {
+        return null;
+      } else {
+        // If the user-supplied class loader is unable to locate the class, try with the driver's
+        // default class loader. This is useful in OSGi deployments where the user-supplied loader
+        // may be able to load some classes but not all of them. Besides, the driver bundle, in
+        // OSGi, has a "Dynamic-Import:*" directive that makes its class loader capable of locating
+        // a great number of classes.
+        return loadClass(null, className);
+      }
     }
   }
 
