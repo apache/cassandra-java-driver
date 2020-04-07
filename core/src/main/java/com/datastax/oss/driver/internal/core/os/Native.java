@@ -60,7 +60,28 @@ public class Native {
     return CPU.toString();
   }
 
-  /* ================= Code copied from jnr.ffi.Platform in jnr-ffi ================= */
+  /* The remainder of this class is copied from jnr.ffi.Platform in jnr-ffi version 2.1.10.
+   * We copy it manually here in order to avoid introducing an extra dependency merely for the sake of
+   * evaluating some system properties.
+   *
+   * jnr-ffi copyright notice follows:
+   *
+   * Copyright (C) 2008-2010 Wayne Meissner
+   *
+   * This file is part of the JNR project.
+   *
+   * Licensed under the Apache License, Version 2.0 (the "License");
+   * you may not use this file except in compliance with the License.
+   * You may obtain a copy of the License at
+   *
+   *    http://www.apache.org/licenses/LICENSE-2.0
+   *
+   * Unless required by applicable law or agreed to in writing, software
+   * distributed under the License is distributed on an "AS IS" BASIS,
+   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   * See the License for the specific language governing permissions and
+   * limitations under the License.
+   */
   /** The supported CPU architectures. */
   private enum CPU {
     /*
