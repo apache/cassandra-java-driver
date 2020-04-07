@@ -67,10 +67,18 @@ public class MissingRpcAddressTest extends CCMTestsSupport {
                         Policies.defaultLoadBalancingPolicy(), Lists.newArrayList(firstHost)))
                 .build());
     Session session = cluster.connect();
-    String deleteStmt =
-        String.format(
-            "DELETE rpc_address FROM system.peers WHERE peer = '%s'",
-            ccm().addressOfNode(2).getHostName());
+    String deleteStmt;
+    if (ccm().getCassandraVersion().nextStable().compareTo(VersionNumber.parse("4.0")) < 0) {
+      deleteStmt =
+          String.format(
+              "DELETE rpc_address FROM system.peers WHERE peer = '%s'",
+              ccm().addressOfNode(2).getHostName());
+    } else {
+      deleteStmt =
+          String.format(
+              "DELETE native_address, native_port FROM system.peers_v2 WHERE peer = '%s' and peer_port = %d",
+              ccm().addressOfNode(2).getHostName(), ccm().getStoragePort());
+    }
     session.execute(deleteStmt);
     session.close();
     cluster.close();
