@@ -29,9 +29,9 @@ CREATE TABLE complex_ks.cyclist_mv (
     country text,
     name text,
     PRIMARY KEY (cid)
-) WITH read_repair_chance = 0.0
-    AND dclocal_read_repair_chance = 0.0
+) WITH read_repair = 'BLOCKING'
     AND gc_grace_seconds = 864000
+    AND additional_write_policy = '99p'
     AND bloom_filter_fp_chance = 0.01
     AND caching = { 'keys' : 'ALL', 'rows_per_partition' : 'NONE' }
     AND comment = ''
@@ -53,9 +53,9 @@ CREATE MATERIALIZED VIEW complex_ks.cyclist_by_a_age AS
     WHERE age IS NOT NULL AND cid IS NOT NULL
     PRIMARY KEY (age, cid)
     WITH CLUSTERING ORDER BY (cid ASC)
-    AND read_repair_chance = 0.0
-    AND dclocal_read_repair_chance = 0.0
+    AND read_repair = 'BLOCKING'
     AND gc_grace_seconds = 864000
+    AND additional_write_policy = '99p'
     AND bloom_filter_fp_chance = 0.01
     AND caching = { 'keys' : 'ALL', 'rows_per_partition' : 'NONE' }
     AND comment = ''
@@ -75,9 +75,9 @@ CREATE MATERIALIZED VIEW complex_ks.cyclist_by_age AS
     WHERE age IS NOT NULL AND cid IS NOT NULL
     PRIMARY KEY (age, cid)
     WITH CLUSTERING ORDER BY (cid ASC)
-    AND read_repair_chance = 0.0
-    AND dclocal_read_repair_chance = 0.0
+    AND read_repair = 'BLOCKING'
     AND gc_grace_seconds = 864000
+    AND additional_write_policy = '99p'
     AND bloom_filter_fp_chance = 0.01
     AND caching = { 'keys' : 'ALL', 'rows_per_partition' : 'NONE' }
     AND comment = 'simple view'
@@ -97,9 +97,9 @@ CREATE MATERIALIZED VIEW complex_ks.cyclist_by_r_age AS
     WHERE age IS NOT NULL AND cid IS NOT NULL
     PRIMARY KEY (age, cid)
     WITH CLUSTERING ORDER BY (cid DESC)
-    AND read_repair_chance = 0.0
-    AND dclocal_read_repair_chance = 0.0
+    AND read_repair = 'BLOCKING'
     AND gc_grace_seconds = 864000
+    AND additional_write_policy = '99p'
     AND bloom_filter_fp_chance = 0.01
     AND caching = { 'keys' : 'ALL', 'rows_per_partition' : 'NONE' }
     AND comment = ''
@@ -120,9 +120,9 @@ CREATE TABLE complex_ks.rank_by_year_and_name (
     cyclist_name text,
     PRIMARY KEY ((race_year, race_name), rank)
 ) WITH CLUSTERING ORDER BY (rank ASC)
-    AND read_repair_chance = 0.0
-    AND dclocal_read_repair_chance = 0.0
+    AND read_repair = 'BLOCKING'
     AND gc_grace_seconds = 864000
+    AND additional_write_policy = '99p'
     AND bloom_filter_fp_chance = 0.01
     AND caching = { 'keys' : 'ALL', 'rows_per_partition' : 'NONE' }
     AND comment = ''
@@ -144,9 +144,9 @@ CREATE TABLE complex_ks.ztable (
     zkey text,
     a frozen<complex_ks.atype>,
     PRIMARY KEY (zkey)
-) WITH read_repair_chance = 0.0
-    AND dclocal_read_repair_chance = 0.0
+) WITH read_repair = 'BLOCKING'
     AND gc_grace_seconds = 864000
+    AND additional_write_policy = '99p'
     AND bloom_filter_fp_chance = 0.1
     AND caching = { 'keys' : 'ALL', 'rows_per_partition' : 'NONE' }
     AND comment = ''
