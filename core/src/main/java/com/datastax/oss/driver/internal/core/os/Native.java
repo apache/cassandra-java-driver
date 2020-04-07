@@ -57,10 +57,10 @@ public class Native {
    * @return the current processor architecture.
    */
   public static String getCPU() {
-    return CPU.toString();
+    return CPU.name().toLowerCase(LOCALE);
   }
 
-  /* The remainder of this class is copied from jnr.ffi.Platform in jnr-ffi version 2.1.10.
+  /* The remainder of this class is largely based on jnr.ffi.Platform in jnr-ffi version 2.1.10.
    * We copy it manually here in order to avoid introducing an extra dependency merely for the sake of
    * evaluating some system properties.
    *
@@ -127,16 +127,6 @@ public class Native {
      * such as address and long size.
      */
     UNKNOWN;
-
-    /**
-     * Returns a {@code String} object representing this {@code CPU} object.
-     *
-     * @return the name of the cpu architecture as a lower case {@code String}.
-     */
-    @Override
-    public String toString() {
-      return name().toLowerCase(LOCALE);
-    }
   }
 
   private static CPU determineCPU() {
