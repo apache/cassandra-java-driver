@@ -298,10 +298,6 @@ are not available on your platform, you can exclude the following dependencies:
   <exclusions>
     <exclusion>
       <groupId>com.github.jnr</groupId>
-      <artifactId>jnr-ffi</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>com.github.jnr</groupId>
       <artifactId>jnr-posix</artifactId>
     </exclusion>
   </exclusions>
