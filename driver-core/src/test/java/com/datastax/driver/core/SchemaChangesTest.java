@@ -257,7 +257,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
     // Create view and ensure event is received and metadata is updated
     session1.execute(
         String.format(
-            "CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c)",
+            "CREATE MATERIALIZED VIEW %s.mv1 AS SELECT pk, c FROM %s.table1 WHERE c IS NOT NULL AND pk IS NOT NULL PRIMARY KEY (pk, c)",
             keyspace, keyspace));
     for (SchemaChangeListener listener : listeners) {
       ArgumentCaptor<MaterializedViewMetadata> viewAdded =
@@ -506,7 +506,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
     session1.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
     session1.execute(
         String.format(
-            "CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c)",
+            "CREATE MATERIALIZED VIEW %s.mv1 AS SELECT pk, c FROM %s.table1 WHERE c IS NOT NULL AND pk IS NOT NULL PRIMARY KEY (pk, c)",
             keyspace, keyspace));
     for (SchemaChangeListener listener : listeners) {
       ArgumentCaptor<MaterializedViewMetadata> removed =
@@ -525,7 +525,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
     session1.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
     session1.execute(
         String.format(
-            "CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c) WITH compaction = { 'class' : 'SizeTieredCompactionStrategy' }",
+            "CREATE MATERIALIZED VIEW %s.mv1 AS SELECT pk, c FROM %s.table1 WHERE c IS NOT NULL AND pk IS NOT NULL PRIMARY KEY (pk, c) WITH compaction = { 'class' : 'SizeTieredCompactionStrategy' }",
             keyspace, keyspace));
     for (SchemaChangeListener listener : listeners) {
       ArgumentCaptor<MaterializedViewMetadata> removed =
@@ -576,7 +576,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
     session1.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
     session1.execute(
         String.format(
-            "CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c)",
+            "CREATE MATERIALIZED VIEW %s.mv1 AS SELECT pk, c FROM %s.table1 WHERE c IS NOT NULL AND pk IS NOT NULL PRIMARY KEY (pk, c)",
             keyspace, keyspace));
     session1.execute(String.format("DROP MATERIALIZED VIEW %s.mv1", keyspace));
     for (SchemaChangeListener listener : listeners) {
