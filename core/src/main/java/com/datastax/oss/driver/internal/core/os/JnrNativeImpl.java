@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.os;
 
 import java.util.Optional;
-import java.util.function.Supplier;
 import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
 import jnr.posix.Timeval;
@@ -24,7 +23,7 @@ import jnr.posix.util.DefaultPOSIXHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JnrNativeImpl implements NativeImpl {
+public class JnrNativeImpl extends AbstractNativeImpl {
 
   private static final Logger LOG = LoggerFactory.getLogger(JnrNativeImpl.class);
 
@@ -83,15 +82,8 @@ public class JnrNativeImpl implements NativeImpl {
   @Override
   public long gettimeofday() {
 
-    Supplier<IllegalStateException> exceptionSupplier =
-        () -> {
-          throw new IllegalStateException(
-              "Native call not available. "
-                  + "Check isCurrentTimeMicrosAvailable() before calling this method.");
-        };
-
-    Timeval tv = this.posix.map(POSIX::allocateTimeval).orElseThrow(exceptionSupplier);
-    int rv = this.posix.map(p -> p.gettimeofday(tv)).orElseThrow(exceptionSupplier);
+    Timeval tv = this.posix.map(POSIX::allocateTimeval).orElseThrow(gettimeofdaySupplier);
+    int rv = this.posix.map(p -> p.gettimeofday(tv)).orElseThrow(gettimeofdaySupplier);
     if (rv != 0) {
       throw new IllegalStateException(
           "Expected 0 return value from gettimeofday(), observed " + rv);
@@ -106,12 +98,6 @@ public class JnrNativeImpl implements NativeImpl {
 
   @Override
   public int getpid() {
-    return this.posix
-        .map(POSIX::getpid)
-        .orElseThrow(
-            () ->
-                new IllegalStateException(
-                    "Native call not available. "
-                        + "Check isGetProcessIdAvailable() before calling this method."));
+    return this.posix.map(POSIX::getpid).orElseThrow(getpidSupplier);
   }
 }

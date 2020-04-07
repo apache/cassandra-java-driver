@@ -16,15 +16,33 @@
 package com.datastax.oss.driver.internal.core.os;
 
 import java.util.Locale;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** A gateway to perform system calls. */
 public class Native {
+
+  private static final Logger LOG = LoggerFactory.getLogger(Native.class);
+
+  private static class ImplLoader {
+
+    public NativeImpl load() {
+      try {
+        return new JnrNativeImpl();
+      } catch (Throwable t) {
+        LOG.info(
+            "Unable to load JNR native implementation.  This could be normal if JNR is excluded from the classpath",
+            t);
+        return new EmptyNativeImpl();
+      }
+    }
+  }
 
   /* Copied from equivalent op in jnr.ffi.Platform.  We have to have this here as it has to be defined
    * before it's (multiple) uses in determineCpu() */
   private static final Locale LOCALE = java.util.Locale.ENGLISH;
 
-  private static final NativeImpl IMPL = new JnrNativeImpl();
+  private static final NativeImpl IMPL = new ImplLoader().load();
 
   @SuppressWarnings("VariableNameSameAsType")
   private static final CPU CPU = determineCPU();
