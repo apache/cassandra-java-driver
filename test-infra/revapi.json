@@ -100,6 +100,36 @@
         "old": "field com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.DEFAULT_SERVER_TRUSTSTORE_PASSWORD",
         "new": "field com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.DEFAULT_SERVER_TRUSTSTORE_PASSWORD",
         "justification": "JAVA-2620: Use clearly dummy passwords in tests"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class com.datastax.oss.simulacron.common.cluster.ClusterSpec",
+        "justification":"Dependency was made optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class com.datastax.oss.simulacron.common.cluster.ClusterSpec.Builder",
+        "justification":"Dependency was made optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class com.datastax.oss.simulacron.common.cluster.QueryLog",
+        "justification":"Dependency was made optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class com.datastax.oss.simulacron.server.BoundCluster",
+        "justification":"Dependency was made optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class com.datastax.oss.simulacron.server.BoundTopic",
+        "justification":"Dependency was made optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class com.datastax.oss.simulacron.server.Server",
+        "justification":"Dependency was made optional"
       }
     ]
   }

@@ -187,6 +187,16 @@
       <artifactId>wiremock</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.datastax.oss.simulacron</groupId>
+      <artifactId>simulacron-native-server</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-exec</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
