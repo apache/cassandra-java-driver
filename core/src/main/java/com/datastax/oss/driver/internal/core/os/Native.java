@@ -16,6 +16,9 @@
 package com.datastax.oss.driver.internal.core.os;
 
 import java.util.Locale;
+import java.util.function.Supplier;
+
+import com.datastax.oss.driver.shaded.guava.common.base.Suppliers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,19 +40,22 @@ public class Native {
       }
     }
   }
+  private static final NativeImpl IMPL = new ImplLoader().load();
+
+  private static final Supplier<IllegalStateException> exceptionSupplier =
+          Suppliers.ofInstance(
+            new IllegalStateException("Native call failed or was not available"));
 
   /* Copied from equivalent op in jnr.ffi.Platform.  We have to have this here as it has to be defined
    * before its (multiple) uses in determineCpu() */
   private static final Locale LOCALE = Locale.ENGLISH;
-
-  private static final NativeImpl IMPL = new ImplLoader().load();
 
   @SuppressWarnings("VariableNameSameAsType")
   private static final Cpu CPU = determineCpu();
 
   /** Whether {@link Native#currentTimeMicros()} is available on this system. */
   public static boolean isCurrentTimeMicrosAvailable() {
-    return IMPL.gettimeofdayAvailable();
+    return IMPL.available();
   }
 
   /**
@@ -57,15 +63,15 @@ public class Native {
    * {@link #isCurrentTimeMicrosAvailable()} is true.
    */
   public static long currentTimeMicros() {
-    return IMPL.gettimeofday();
+    return IMPL.gettimeofday().orElseThrow(exceptionSupplier);
   }
 
   public static boolean isGetProcessIdAvailable() {
-    return IMPL.getpidAvailable();
+    return IMPL.available();
   }
 
   public static int getProcessId() {
-    return IMPL.getpid();
+    return IMPL.getpid().orElseThrow(exceptionSupplier);
   }
 
   /**

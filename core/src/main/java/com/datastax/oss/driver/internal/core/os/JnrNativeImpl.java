@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.os;
 
 import java.util.Optional;
+
 import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
 import jnr.posix.Timeval;
@@ -23,7 +24,7 @@ import jnr.posix.util.DefaultPOSIXHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JnrNativeImpl extends AbstractNativeImpl {
+public class JnrNativeImpl implements NativeImpl {
 
   private static final Logger LOG = LoggerFactory.getLogger(JnrNativeImpl.class);
 
@@ -75,29 +76,26 @@ public class JnrNativeImpl extends AbstractNativeImpl {
   }
 
   @Override
-  public boolean gettimeofdayAvailable() {
-    return posix.isPresent();
+  public boolean available() { return this.posix.isPresent(); }
+
+  @Override
+  public Optional<Long> gettimeofday() {
+
+    return this.posix.flatMap(p -> {
+
+      Timeval tv = p.allocateTimeval();
+      int rv = p.gettimeofday(tv);
+      if (rv != 0) {
+        LOG.info("Expected 0 return value from gettimeofday(), observed " + rv);
+        return Optional.empty();
+      }
+      return Optional.of(tv.sec() * 1_000_000 + tv.usec());
+    });
   }
 
   @Override
-  public long gettimeofday() {
+  public Optional<Integer> getpid() {
 
-    Timeval tv = this.posix.map(POSIX::allocateTimeval).orElseThrow(gettimeofdaySupplier);
-    int rv = this.posix.map(p -> p.gettimeofday(tv)).orElseThrow(gettimeofdaySupplier);
-    if (rv != 0) {
-      throw new IllegalStateException(
-          "Expected 0 return value from gettimeofday(), observed " + rv);
-    }
-    return tv.sec() * 1_000_000 + tv.usec();
-  }
-
-  @Override
-  public boolean getpidAvailable() {
-    return posix.isPresent();
-  }
-
-  @Override
-  public int getpid() {
-    return this.posix.map(POSIX::getpid).orElseThrow(getpidSupplier);
+    return this.posix.map(POSIX::getpid);
   }
 }
