@@ -20,7 +20,7 @@ import java.util.Optional;
 public interface NativeImpl {
 
   /* Maintained to allow Native.isXAvailable() functionality without trying to make a native call if
-  * the underlying support _is_ available. */
+   * the underlying support _is_ available. */
   public boolean available();
 
   public Optional<Long> gettimeofday();
