@@ -153,25 +153,25 @@ public class Native {
         || equalsIgnoreCase("i386", archString)
         || equalsIgnoreCase("i86pc", archString)
         || equalsIgnoreCase("i686", archString)) {
-      return CPU.I386;
+      return Cpu.I386;
     } else if (equalsIgnoreCase("x86_64", archString) || equalsIgnoreCase("amd64", archString)) {
-      return CPU.X86_64;
+      return Cpu.X86_64;
     } else if (equalsIgnoreCase("ppc", archString) || equalsIgnoreCase("powerpc", archString)) {
-      return CPU.PPC;
+      return Cpu.PPC;
     } else if (equalsIgnoreCase("ppc64", archString) || equalsIgnoreCase("powerpc64", archString)) {
       if ("little".equals(System.getProperty("sun.cpu.endian"))) {
-        return CPU.PPC64LE;
+        return Cpu.PPC64LE;
       }
-      return CPU.PPC64;
+      return Cpu.PPC64;
     } else if (equalsIgnoreCase("ppc64le", archString)
         || equalsIgnoreCase("powerpc64le", archString)) {
-      return CPU.PPC64LE;
+      return Cpu.PPC64LE;
     } else if (equalsIgnoreCase("s390", archString) || equalsIgnoreCase("s390x", archString)) {
-      return CPU.S390X;
+      return Cpu.S390X;
     } else if (equalsIgnoreCase("aarch64", archString)) {
-      return CPU.AARCH64;
+      return Cpu.AARCH64;
     } else if (equalsIgnoreCase("arm", archString) || equalsIgnoreCase("armv7l", archString)) {
-      return CPU.ARM;
+      return Cpu.ARM;
     }
 
     // Try to find by lookup up in the CPU list
