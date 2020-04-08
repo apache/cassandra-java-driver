@@ -213,7 +213,7 @@ class PlatformInfoFinder {
 
   private CPUS getCpuInfo() {
     int numberOfProcessors = Runtime.getRuntime().availableProcessors();
-    String model = Native.getCPU();
+    String model = Native.getCpu();
     return new CPUS(numberOfProcessors, model);
   }
 

@@ -21,9 +21,9 @@ import org.junit.Test;
 
 public class NativeTest {
 
-  /** Verifies that {@link Native#getCPU()} returns non-empty cpu architecture */
+  /** Verifies that {@link Native#getCpu()} returns non-empty cpu architecture */
   @Test
   public void should_return_cpu_info() {
-    assertThat(Native.getCPU()).isNotEmpty();
+    assertThat(Native.getCpu()).isNotEmpty();
   }
 }

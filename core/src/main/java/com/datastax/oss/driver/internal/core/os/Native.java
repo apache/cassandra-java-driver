@@ -31,7 +31,7 @@ public class Native {
         return new JnrNativeImpl();
       } catch (Throwable t) {
         LOG.info(
-            "Unable to load JNR native implementation.  This could be normal if JNR is excluded from the classpath",
+            "Unable to load JNR native implementation. This could be normal if JNR is excluded from the classpath",
             t);
         return new EmptyNativeImpl();
       }
@@ -39,13 +39,13 @@ public class Native {
   }
 
   /* Copied from equivalent op in jnr.ffi.Platform.  We have to have this here as it has to be defined
-   * before it's (multiple) uses in determineCpu() */
-  private static final Locale LOCALE = java.util.Locale.ENGLISH;
+   * before its (multiple) uses in determineCpu() */
+  private static final Locale LOCALE = Locale.ENGLISH;
 
   private static final NativeImpl IMPL = new ImplLoader().load();
 
   @SuppressWarnings("VariableNameSameAsType")
-  private static final CPU CPU = determineCPU();
+  private static final Cpu CPU = determineCpu();
 
   /** Whether {@link Native#currentTimeMicros()} is available on this system. */
   public static boolean isCurrentTimeMicrosAvailable() {
@@ -74,7 +74,7 @@ public class Native {
    *
    * @return the current processor architecture.
    */
-  public static String getCPU() {
+  public static String getCpu() {
     return CPU.name().toLowerCase(LOCALE);
   }
 
@@ -101,7 +101,7 @@ public class Native {
    * limitations under the License.
    */
   /** The supported CPU architectures. */
-  private enum CPU {
+  private enum Cpu {
     /*
      * <b>Note</b> The names of the enum values are used in other parts of the
      * code to determine where to find the native stub library.  Do NOT rename.
@@ -147,11 +147,8 @@ public class Native {
     UNKNOWN;
   }
 
-  private static CPU determineCPU() {
+  private static Cpu determineCpu() {
     String archString = System.getProperty("os.arch");
-    assert (archString != null);
-    assert (archString.toUpperCase(LOCALE) != null);
-    assert (archString.toLowerCase(LOCALE) != null);
     if (equalsIgnoreCase("x86", archString)
         || equalsIgnoreCase("i386", archString)
         || equalsIgnoreCase("i86pc", archString)
@@ -178,7 +175,7 @@ public class Native {
     }
 
     // Try to find by lookup up in the CPU list
-    for (CPU cpu : CPU.values()) {
+    for (Cpu cpu : CPU.values()) {
       if (equalsIgnoreCase(cpu.name(), archString)) {
         return cpu;
       }
