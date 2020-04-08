@@ -165,7 +165,6 @@ public class BundleOptions {
                 mavenBundle("ch.qos.logback", "logback-classic", getVersion("logback.version")),
                 mavenBundle("ch.qos.logback", "logback-core", getVersion("logback.version")),
                 mavenBundle("io.dropwizard.metrics", "metrics-core", getVersion("metrics.version")),
-                // mavenBundle("org.yaml", "snakeyaml", getVersion("snakeyaml.version")),
                 mavenBundle(
                     "com.fasterxml.jackson.core",
                     "jackson-databind",

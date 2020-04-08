@@ -986,7 +986,7 @@ public abstract class TestUtils {
    * @param ccm cluster to check against
    */
   public static void compactStorageSupportCheck(CCMAccess ccm) {
-    if (ccm.getCassandraVersion().compareTo(VersionNumber.parse("4.0-a")) >= 0) {
+    if (ccm.getCassandraVersion().nextStable().compareTo(VersionNumber.parse("4.0")) >= 0) {
       throw new SkipException(
           "Compact tables are not allowed in Cassandra starting with 4.0 version");
     }
