@@ -80,7 +80,7 @@ public class JnrNativeImpl implements NativeImpl {
     Timeval tv = posix.allocateTimeval();
     int rv = posix.gettimeofday(tv);
     if (rv != 0) {
-      LOG.info("Expected 0 return value from gettimeofday(), observed " + rv);
+      LOG.debug("Expected 0 return value from gettimeofday(), observed " + rv);
       return Optional.empty();
     }
     return Optional.of(tv.sec() * 1_000_000 + tv.usec());
