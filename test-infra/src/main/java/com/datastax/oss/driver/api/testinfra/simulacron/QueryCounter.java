@@ -16,8 +16,8 @@
 package com.datastax.oss.driver.api.testinfra.simulacron;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
-import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.simulacron.common.cluster.QueryLog;
 import com.datastax.oss.simulacron.server.BoundNode;
 import com.datastax.oss.simulacron.server.BoundTopic;
@@ -83,10 +83,10 @@ public class QueryCounter {
    * expected count within the configured time period.
    */
   public void assertTotalCount(int expected) {
-    ConditionChecker.checkThat(() -> assertThat(totalCount.get()).isEqualTo(expected))
-        .every(10, TimeUnit.MILLISECONDS)
-        .before(beforeTimeout, beforeUnit)
-        .becomesTrue();
+    await()
+        .pollInterval(10, TimeUnit.MILLISECONDS)
+        .atMost(beforeTimeout, beforeUnit)
+        .untilAsserted(() -> assertThat(totalCount.get()).isEqualTo(expected));
   }
 
   /**
@@ -104,10 +104,10 @@ public class QueryCounter {
         expectedCounts.put(id, counts[id]);
       }
     }
-    ConditionChecker.checkThat(() -> assertThat(countMap).containsAllEntriesOf(expectedCounts))
-        .every(10, TimeUnit.MILLISECONDS)
-        .before(beforeTimeout, beforeUnit)
-        .becomesTrue();
+    await()
+        .pollInterval(10, TimeUnit.MILLISECONDS)
+        .atMost(beforeTimeout, beforeUnit)
+        .untilAsserted(() -> assertThat(countMap).containsAllEntriesOf(expectedCounts));
   }
 
   public static class QueryCounterBuilder {

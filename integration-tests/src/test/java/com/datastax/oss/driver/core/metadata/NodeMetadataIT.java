@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.core.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import com.datastax.dse.driver.api.core.metadata.DseNodeProperties;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -26,7 +27,6 @@ import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
-import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -34,6 +34,7 @@ import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -74,10 +75,16 @@ public class NodeMetadataIT {
       // Force the node down and back up to check that upSinceMillis gets updated
       EventBus eventBus = ((InternalDriverContext) session.getContext()).getEventBus();
       eventBus.fire(TopologyEvent.forceDown(node.getBroadcastRpcAddress().get()));
-      ConditionChecker.checkThat(() -> node.getState() == NodeState.FORCED_DOWN).becomesTrue();
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .until(() -> node.getState() == NodeState.FORCED_DOWN);
       assertThat(node.getUpSinceMillis()).isEqualTo(-1);
       eventBus.fire(TopologyEvent.forceUp(node.getBroadcastRpcAddress().get()));
-      ConditionChecker.checkThat(() -> node.getState() == NodeState.UP).becomesTrue();
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .until(() -> node.getState() == NodeState.UP);
       assertThat(node.getUpSinceMillis()).isGreaterThan(upTime1);
     }
   }

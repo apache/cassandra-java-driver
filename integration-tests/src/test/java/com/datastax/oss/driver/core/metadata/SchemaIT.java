@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.core.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -34,12 +35,12 @@ import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
-import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.junit.AssumptionViolatedException;
 import org.junit.Rule;
 import org.junit.Test;
@@ -119,9 +120,10 @@ public class SchemaIT {
       session.setSchemaMetadataEnabled(true);
       assertThat(session.isSchemaMetadataEnabled()).isTrue();
 
-      ConditionChecker.checkThat(
-              () -> assertThat(session.getMetadata().getKeyspaces()).isNotEmpty())
-          .becomesTrue();
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .untilAsserted(() -> assertThat(session.getMetadata().getKeyspaces()).isNotEmpty());
       assertThat(session.getMetadata().getKeyspaces())
           .containsKeys(
               CqlIdentifier.fromInternal("system"),
@@ -153,12 +155,14 @@ public class SchemaIT {
     // Reset to config value (true), should refresh and load the new table
     session.setSchemaMetadataEnabled(null);
     assertThat(session.isSchemaMetadataEnabled()).isTrue();
-    ConditionChecker.checkThat(
+    await()
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .atMost(60, TimeUnit.SECONDS)
+        .untilAsserted(
             () ->
                 assertThat(
                         session.getMetadata().getKeyspace(sessionRule.keyspace()).get().getTables())
-                    .containsKey(CqlIdentifier.fromInternal("foo")))
-        .becomesTrue();
+                    .containsKey(CqlIdentifier.fromInternal("foo")));
   }
 
   @Test

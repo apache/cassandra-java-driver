@@ -15,15 +15,14 @@
  */
 package com.datastax.oss.driver.core.context;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.awaitility.Awaitility.await;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
-import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
@@ -36,6 +35,7 @@ import com.datastax.oss.simulacron.server.RejectScope;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -54,11 +54,11 @@ public class LifecycleListenerIT {
     assertThat(listener.closed).isFalse();
 
     try (CqlSession session = newSession(listener)) {
-      ConditionChecker.checkThat(() -> listener.ready).before(1, SECONDS).becomesTrue();
+      await().atMost(1, TimeUnit.SECONDS).until(() -> listener.ready);
       assertThat(listener.closed).isFalse();
     }
     assertThat(listener.ready).isTrue();
-    ConditionChecker.checkThat(() -> listener.closed).before(1, SECONDS).becomesTrue();
+    await().atMost(1, TimeUnit.SECONDS).until(() -> listener.closed);
   }
 
   @Test
@@ -75,7 +75,7 @@ public class LifecycleListenerIT {
       SIMULACRON_RULE.cluster().acceptConnections();
     }
     assertThat(listener.ready).isFalse();
-    ConditionChecker.checkThat(() -> listener.closed).before(1, SECONDS).becomesTrue();
+    await().atMost(1, TimeUnit.SECONDS).until(() -> listener.closed);
   }
 
   private CqlSession newSession(TestLifecycleListener listener) {

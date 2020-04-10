@@ -18,6 +18,7 @@ package com.datastax.oss.driver.core.loadbalancing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.withinPercentage;
+import static org.awaitility.Awaitility.await;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -35,7 +36,6 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
-import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import com.google.common.collect.ImmutableList;
@@ -48,6 +48,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -187,8 +188,10 @@ public class DefaultLoadBalancingPolicyIT {
       if (replica.getDatacenter().equals(LOCAL_DC)) {
         localReplicas.add(replica);
         context.getEventBus().fire(TopologyEvent.forceDown(replica.getBroadcastRpcAddress().get()));
-        ConditionChecker.checkThat(() -> assertThat(replica.getOpenConnections()).isZero())
-            .becomesTrue();
+        await()
+            .pollInterval(500, TimeUnit.MILLISECONDS)
+            .atMost(60, TimeUnit.SECONDS)
+            .untilAsserted(() -> assertThat(replica.getOpenConnections()).isZero());
       }
     }
     assertThat(localReplicas).hasSize(2);
@@ -222,8 +225,10 @@ public class DefaultLoadBalancingPolicyIT {
 
     for (Node replica : localReplicas) {
       context.getEventBus().fire(TopologyEvent.forceUp(replica.getBroadcastRpcAddress().get()));
-      ConditionChecker.checkThat(() -> assertThat(replica.getOpenConnections()).isPositive())
-          .becomesTrue();
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .untilAsserted(() -> assertThat(replica.getOpenConnections()).isPositive());
     }
   }
 

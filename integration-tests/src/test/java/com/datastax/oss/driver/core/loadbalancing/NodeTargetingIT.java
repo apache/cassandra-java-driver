@@ -20,6 +20,7 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.unavailable;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
+import static org.awaitility.Awaitility.await;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -32,7 +33,6 @@ import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
-import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.codec.ConsistencyLevel;
@@ -63,8 +63,10 @@ public class NodeTargetingIT {
     SIMULACRON_RULE.cluster().clearLogs();
     SIMULACRON_RULE.cluster().clearPrimes(true);
     SIMULACRON_RULE.cluster().node(4).stop();
-    ConditionChecker.checkThat(() -> getNode(4).getState() == NodeState.DOWN)
-        .before(5, TimeUnit.SECONDS);
+    await()
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .atMost(5, TimeUnit.SECONDS)
+        .until(() -> getNode(4).getState() == NodeState.DOWN);
   }
 
   @Test
