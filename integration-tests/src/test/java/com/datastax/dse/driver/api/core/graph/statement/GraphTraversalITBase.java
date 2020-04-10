@@ -22,6 +22,7 @@ import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.assertT
 import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.assertThatContainsProperties;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
@@ -34,7 +35,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import java.util.List;
@@ -52,7 +53,6 @@ import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.assertj.core.api.Assertions;
-import org.assertj.core.api.Assumptions;
 import org.junit.Test;
 
 public abstract class GraphTraversalITBase {
@@ -61,7 +61,7 @@ public abstract class GraphTraversalITBase {
 
   protected abstract boolean isGraphBinary();
 
-  protected abstract CustomCcmRule ccmRule();
+  protected abstract BaseCcmRule ccmRule();
 
   protected abstract GraphTraversalSource graphTraversalSource();
 
@@ -294,7 +294,7 @@ public abstract class GraphTraversalITBase {
    */
   @Test
   public void should_return_zero_results_graphson_2() {
-    Assumptions.assumeThat(isGraphBinary()).isFalse();
+    assumeThat(isGraphBinary()).isFalse();
 
     GraphStatement simpleGraphStatement =
         ScriptGraphStatement.newInstance("g.V().hasLabel('notALabel')");
@@ -495,7 +495,7 @@ public abstract class GraphTraversalITBase {
    */
   @Test
   public void should_handle_subgraph_graphson() {
-    Assumptions.assumeThat(isGraphBinary()).isFalse();
+    assumeThat(isGraphBinary()).isFalse();
     GraphResultSet rs =
         session()
             .execute(
@@ -523,7 +523,7 @@ public abstract class GraphTraversalITBase {
    */
   @Test
   public void should_handle_subgraph_grap_binary() {
-    Assumptions.assumeThat(isGraphBinary()).isTrue();
+    assumeThat(isGraphBinary()).isTrue();
     GraphResultSet rs =
         session()
             .execute(
@@ -550,7 +550,7 @@ public abstract class GraphTraversalITBase {
    */
   @Test
   public void should_allow_use_of_dsl_graphson() throws Exception {
-    Assumptions.assumeThat(isGraphBinary()).isFalse();
+    assumeThat(isGraphBinary()).isFalse();
     SocialTraversalSource gSocial = socialTraversalSource();
 
     GraphStatement gs = newInstance(gSocial.persons("marko").knows("vadas"));
@@ -573,7 +573,7 @@ public abstract class GraphTraversalITBase {
    */
   @Test
   public void should_allow_use_of_dsl_graph_binary() throws Exception {
-    Assumptions.assumeThat(isGraphBinary()).isTrue();
+    assumeThat(isGraphBinary()).isTrue();
     SocialTraversalSource gSocial = socialTraversalSource();
 
     GraphStatement gs =
@@ -595,10 +595,8 @@ public abstract class GraphTraversalITBase {
    */
   @Test
   public void should_return_correct_results_when_bulked() {
-    Assumptions.assumeThat(
-            ccmRule().getCcmBridge().getDseVersion().get().compareTo(Version.parse("5.1.2")) > 0)
-        .isTrue();
-
+    assumeThat(ccmRule().getDseVersion())
+        .hasValueSatisfying(version -> assumeThat(version).isGreaterThan(Version.parse("5.1.2")));
     GraphResultSet rs =
         session().execute(newInstance(graphTraversalSource().E().label().barrier()));
 
@@ -613,7 +611,7 @@ public abstract class GraphTraversalITBase {
 
   @Test
   public void should_handle_asynchronous_execution_graphson() {
-    Assumptions.assumeThat(isGraphBinary()).isFalse();
+    assumeThat(isGraphBinary()).isFalse();
     StringBuilder names = new StringBuilder();
 
     CompletionStage<AsyncGraphResultSet> future =
@@ -638,7 +636,7 @@ public abstract class GraphTraversalITBase {
 
   @Test
   public void should_handle_asynchronous_execution_graph_binary() {
-    Assumptions.assumeThat(isGraphBinary()).isTrue();
+    assumeThat(isGraphBinary()).isTrue();
     StringBuilder names = new StringBuilder();
 
     CompletionStage<AsyncGraphResultSet> future =

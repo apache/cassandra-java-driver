@@ -57,7 +57,8 @@ import org.junit.runner.RunWith;
 @RunWith(DataProviderRunner.class)
 public class GraphPagingIT {
 
-  private static final CustomCcmRule CCM_RULE = GraphTestSupport.GRAPH_CCM_RULE_BUILDER.build();
+  // Can't use the shared CCM rule because we pause/resume a node
+  private static final CustomCcmRule CCM_RULE = GraphTestSupport.CCM_BUILDER_WITH_GRAPH.build();
 
   private static final SessionRule<CqlSession> SESSION_RULE =
       GraphTestSupport.getCoreGraphSessionBuilder(CCM_RULE)

@@ -21,18 +21,21 @@ import com.datastax.dse.driver.api.core.graph.SampleGraphScripts;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
-import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @DseRequirement(min = "5.0.4", description = "DSE 5.0.4 required for script API with GraphSON 2")
+@Category(ParallelizableTests.class)
 public class ClassicGraphDataTypeScriptIT extends ClassicGraphDataTypeITBase {
 
-  private static final CustomCcmRule CCM_RULE = GraphTestSupport.CCM_BUILDER_WITH_GRAPH.build();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
   private static final SessionRule<CqlSession> SESSION_RULE =
       GraphTestSupport.getClassicGraphSessionBuilder(CCM_RULE).build();

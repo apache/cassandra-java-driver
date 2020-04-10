@@ -22,8 +22,9 @@ import com.datastax.dse.driver.api.core.graph.DseGraph;
 import com.datastax.dse.driver.api.core.graph.GraphTestSupport;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
-import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import java.util.Map;
 import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
@@ -31,15 +32,17 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.ClassRule;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 @DseRequirement(min = "6.8.0", description = "DSE 6.8.0 required for Core graph support")
 @RunWith(DataProviderRunner.class)
+@Category(ParallelizableTests.class)
 public class CoreGraphDataTypeRemoteIT extends CoreGraphDataTypeITBase {
 
-  private static final CustomCcmRule CCM_RULE = GraphTestSupport.CCM_BUILDER_WITH_GRAPH.build();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
   private static final SessionRule<CqlSession> SESSION_RULE =
       GraphTestSupport.getCoreGraphSessionBuilder(CCM_RULE).build();

@@ -20,6 +20,7 @@ import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.assertT
 import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.assertThatContainsProperties;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 import com.datastax.dse.driver.Assertions;
 import com.datastax.dse.driver.api.core.graph.SocialTraversalSource;
@@ -29,7 +30,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
-import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -60,7 +61,7 @@ public abstract class GraphTraversalRemoteITBase {
 
   protected abstract SocialTraversalSource socialTraversalSource();
 
-  protected abstract CustomCcmRule ccmRule();
+  protected abstract BaseCcmRule ccmRule();
 
   /**
    * Ensures that a previously returned {@link Vertex}'s {@link Vertex#id()} can be used as an input
@@ -640,10 +641,8 @@ public abstract class GraphTraversalRemoteITBase {
    */
   @Test
   public void should_return_correct_results_when_bulked() {
-    Optional<Version> dseVersion = ccmRule().getCcmBridge().getDseVersion();
-    Assumptions.assumeThat(
-            dseVersion.isPresent() && dseVersion.get().compareTo(Version.parse("5.1.2")) > 0)
-        .isTrue();
+    assumeThat(ccmRule().getDseVersion())
+        .hasValueSatisfying(version -> assumeThat(version).isGreaterThan(Version.parse("5.1.2")));
 
     List<String> results = graphTraversalSource().E().label().barrier().toList();
     Collections.sort(results);

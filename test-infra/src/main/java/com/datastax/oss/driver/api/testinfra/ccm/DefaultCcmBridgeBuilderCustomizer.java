@@ -25,6 +25,13 @@ public class DefaultCcmBridgeBuilderCustomizer {
       builder.withCassandraConfiguration("enable_materialized_views", true);
       builder.withCassandraConfiguration("enable_sasi_indexes", true);
     }
+    if (CcmBridge.DSE_ENABLEMENT) {
+      builder
+          .withDseWorkloads("graph")
+          .withDseConfiguration("graph.max_query_params", 32)
+          .withDseConfiguration(
+              "graph.gremlin_server.scriptEngines.gremlin-groovy.config.sandbox_enabled", "false");
+    }
     return builder;
   }
 }

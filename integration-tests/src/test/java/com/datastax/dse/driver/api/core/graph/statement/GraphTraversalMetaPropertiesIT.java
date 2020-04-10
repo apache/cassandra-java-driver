@@ -28,21 +28,24 @@ import com.datastax.dse.driver.api.core.graph.GraphTestSupport;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
-import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 // INFO: meta props are going away in NGDG
 
 @DseRequirement(min = "5.0.3", description = "DSE 5.0.3 required for remote TinkerPop support")
+@Category(ParallelizableTests.class)
 public class GraphTraversalMetaPropertiesIT {
 
-  private static final CustomCcmRule CCM_RULE = GraphTestSupport.GRAPH_CCM_RULE_BUILDER.build();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
   private static final SessionRule<CqlSession> SESSION_RULE =
       GraphTestSupport.getClassicGraphSessionBuilder(CCM_RULE).build();

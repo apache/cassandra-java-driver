@@ -26,7 +26,7 @@ import com.datastax.dse.driver.api.core.graph.BatchGraphStatement;
 import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
-import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.Map;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -41,7 +41,7 @@ public abstract class GraphTraversalBatchITBase {
 
   protected abstract boolean isGraphBinary();
 
-  protected abstract CustomCcmRule ccmRule();
+  protected abstract BaseCcmRule ccmRule();
 
   protected abstract GraphTraversalSource graphTraversalSource();
 
