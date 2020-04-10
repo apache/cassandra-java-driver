@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.testinfra.utils;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
@@ -47,9 +48,9 @@ public class NodeUtils {
 
   public static void waitFor(Node node, int timeoutSeconds, NodeState nodeState) {
     logger.debug("Waiting for node {} to enter state {}", node, nodeState);
-    ConditionChecker.checkThat(() -> node.getState().equals(nodeState))
-        .every(100, MILLISECONDS)
-        .before(timeoutSeconds, SECONDS)
-        .becomesTrue();
+    await()
+        .pollInterval(100, MILLISECONDS)
+        .atMost(timeoutSeconds, SECONDS)
+        .until(() -> node.getState().equals(nodeState));
   }
 }

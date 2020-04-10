@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.core.metrics;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
@@ -27,7 +28,6 @@ import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
-import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.google.common.collect.Lists;
 import java.util.Collections;
@@ -56,22 +56,23 @@ public class MetricsIT {
 
       // Should have 10 requests, check within 5 seconds as metric increments after
       // caller is notified.
-      ConditionChecker.checkThat(
-              () -> {
-                assertThat(session.getMetrics())
-                    .hasValueSatisfying(
-                        metrics ->
-                            assertThat(
-                                    metrics.<Timer>getSessionMetric(
-                                        DefaultSessionMetric.CQL_REQUESTS))
-                                .hasValueSatisfying(
-                                    cqlRequests -> {
-                                      // No need to be very sophisticated, metrics are already
-                                      // covered individually in unit tests.
-                                      assertThat(cqlRequests.getCount()).isEqualTo(10);
-                                    }));
-              })
-          .before(5, TimeUnit.SECONDS);
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(5, TimeUnit.SECONDS)
+          .untilAsserted(
+              () ->
+                  assertThat(session.getMetrics())
+                      .hasValueSatisfying(
+                          metrics ->
+                              assertThat(
+                                      metrics.<Timer>getSessionMetric(
+                                          DefaultSessionMetric.CQL_REQUESTS))
+                                  .hasValueSatisfying(
+                                      cqlRequests -> {
+                                        // No need to be very sophisticated, metrics are already
+                                        // covered individually in unit tests.
+                                        assertThat(cqlRequests.getCount()).isEqualTo(10);
+                                      })));
     }
   }
 

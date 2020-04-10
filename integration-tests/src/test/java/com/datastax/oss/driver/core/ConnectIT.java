@@ -15,12 +15,11 @@
  */
 package com.datastax.oss.driver.core;
 
-import static com.datastax.oss.driver.api.testinfra.utils.ConditionChecker.checkThat;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.rows;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
@@ -34,7 +33,6 @@ import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
-import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.connection.ConstantReconnectionPolicy;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
@@ -142,9 +140,9 @@ public class ConnectIT {
         .hasMessageContaining(
             "Since you provided explicit contact points, the local DC must be explicitly set");
     // One second should be plenty of time for connections to close server side
-    checkThat(() -> SIMULACRON_RULE.cluster().getConnections().getConnections().isEmpty())
-        .before(1, SECONDS)
-        .becomesTrue();
+    await()
+        .atMost(1, TimeUnit.SECONDS)
+        .until(() -> SIMULACRON_RULE.cluster().getConnections().getConnections().isEmpty());
   }
 
   /**
@@ -160,7 +158,10 @@ public class ConnectIT {
     try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE)) {
       Map<UUID, Node> nodes = session.getMetadata().getNodes();
       // Node states are updated asynchronously, so guard against race conditions
-      ConditionChecker.checkThat(
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .untilAsserted(
               () -> {
                 // Before JAVA-2177, this would fail every other time because if the node was tried
                 // first for the initial connection, it was marked down and not passed to
@@ -176,8 +177,7 @@ public class ConnectIT {
                 assertThat(node1.getDistance()).isEqualTo(NodeDistance.LOCAL);
                 assertThat(node1.getOpenConnections()).isEqualTo(2); // control + regular
                 assertThat(node1.isReconnecting()).isFalse();
-              })
-          .becomesTrue();
+              });
     }
   }
 

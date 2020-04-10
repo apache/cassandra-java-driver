@@ -25,12 +25,21 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BooleanSupplier;
 
+/**
+ * @deprecated We've replaced this home-grown utility by Awaitility in our tests. We're preserving
+ *     it because it was part of the public test infrastructure API, but it won't be maintained
+ *     anymore, and removed in the next major version.
+ * @see <a href="https://github.com/awaitility/awaitility">Awaitility homepage</a>
+ */
+@Deprecated
 public class ConditionChecker {
 
   private static final int DEFAULT_PERIOD_MILLIS = 500;
 
   private static final int DEFAULT_TIMEOUT_MILLIS = 60000;
 
+  /** @deprecated see {@link ConditionChecker} */
+  @Deprecated
   public static class ConditionCheckerBuilder {
 
     private long timeout = DEFAULT_TIMEOUT_MILLIS;

@@ -15,15 +15,17 @@
  */
 package com.datastax.oss.driver.core.session;
 
+import static org.awaitility.Awaitility.await;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
-import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -42,11 +44,16 @@ public class RemovedNodeIT {
     RemovalListener removalListener = new RemovalListener();
     try (CqlSession session = CqlSession.builder().withNodeStateListener(removalListener).build()) {
       CCM_RULE.getCcmBridge().nodetool(2, "decommission");
-      ConditionChecker.checkThat(() -> removalListener.removedNode != null).becomesTrue();
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .until(() -> removalListener.removedNode != null);
 
       Map<Node, ChannelPool> pools = ((DefaultSession) session).getPools();
-      ConditionChecker.checkThat(() -> pools.containsKey(removalListener.removedNode))
-          .becomesFalse();
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .until(() -> !pools.containsKey(removalListener.removedNode));
     }
   }
 

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.core.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -31,13 +32,13 @@ import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
-import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -467,14 +468,16 @@ public class SchemaChangesIT {
       verifyListener.accept(listener1, newElement1);
 
       // Refreshes on a server event are asynchronous:
-      ConditionChecker.checkThat(
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .untilAsserted(
               () -> {
                 T newElement2 =
                     extract.apply(session2.getMetadata()).orElseThrow(AssertionError::new);
                 verifyMetadata.accept(newElement2);
                 verifyListener.accept(listener2, newElement2);
-              })
-          .becomesTrue();
+              });
     }
   }
 
@@ -516,12 +519,14 @@ public class SchemaChangesIT {
       assertThat(extract.apply(session1.getMetadata())).isEmpty();
       verifyListener.accept(listener1, oldElement);
 
-      ConditionChecker.checkThat(
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .untilAsserted(
               () -> {
                 assertThat(extract.apply(session2.getMetadata())).isEmpty();
                 verifyListener.accept(listener2, oldElement);
-              })
-          .becomesTrue();
+              });
     }
   }
 
@@ -564,13 +569,15 @@ public class SchemaChangesIT {
       verifyNewMetadata.accept(newElement);
       verifyListener.accept(listener1, oldElement, newElement);
 
-      ConditionChecker.checkThat(
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .untilAsserted(
               () -> {
                 verifyNewMetadata.accept(
                     extract.apply(session2.getMetadata()).orElseThrow(AssertionError::new));
                 verifyListener.accept(listener2, oldElement, newElement);
-              })
-          .becomesTrue();
+              });
     }
   }
 
@@ -618,23 +625,27 @@ public class SchemaChangesIT {
       session1.setSchemaMetadataEnabled(true);
       session2.setSchemaMetadataEnabled(true);
 
-      ConditionChecker.checkThat(
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .untilAsserted(
               () -> {
                 T newElement =
                     extract.apply(session1.getMetadata()).orElseThrow(AssertionError::new);
                 verifyNewMetadata.accept(newElement);
                 verifyListener.accept(listener1, oldElement, newElement);
-              })
-          .becomesTrue();
+              });
 
-      ConditionChecker.checkThat(
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .untilAsserted(
               () -> {
                 T newElement =
                     extract.apply(session2.getMetadata()).orElseThrow(AssertionError::new);
                 verifyNewMetadata.accept(newElement);
                 verifyListener.accept(listener2, oldElement, newElement);
-              })
-          .becomesTrue();
+              });
     }
   }
 
