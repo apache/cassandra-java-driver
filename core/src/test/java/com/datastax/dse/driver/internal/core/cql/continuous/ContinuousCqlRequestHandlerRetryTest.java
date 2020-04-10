@@ -47,7 +47,6 @@ import com.datastax.oss.driver.api.core.servererrors.ReadTimeoutException;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
-import com.datastax.oss.driver.internal.core.cql.CqlRequestHandlerTestBase;
 import com.datastax.oss.driver.internal.core.cql.RequestHandlerTestHarness;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.Error;
@@ -56,10 +55,11 @@ import com.datastax.oss.protocol.internal.response.error.Unavailable;
 import com.datastax.oss.protocol.internal.response.error.WriteTimeout;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
-import org.junit.Assume;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -69,10 +69,6 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
   @UseDataProvider("allIdempotenceConfigs")
   public void should_always_try_next_node_if_bootstrapping(
       boolean defaultIdempotence, Statement<?> statement, DseProtocolVersion version) {
-
-    Assume.assumeFalse(
-        "Batch statements are not supported with continuous paging",
-        statement instanceof BatchStatement);
 
     try (RequestHandlerTestHarness harness =
         continuousHarnessBuilder()
@@ -121,10 +117,6 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
   public void should_always_rethrow_query_validation_error(
       boolean defaultIdempotence, Statement<?> statement, DseProtocolVersion version) {
 
-    Assume.assumeFalse(
-        "Batch statements are not supported with continuous paging",
-        statement instanceof BatchStatement);
-
     try (RequestHandlerTestHarness harness =
         continuousHarnessBuilder()
             .withProtocolVersion(version)
@@ -169,10 +161,6 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
       boolean defaultIdempotence,
       Statement<?> statement,
       DseProtocolVersion version) {
-
-    Assume.assumeFalse(
-        "Batch statements are not supported with continuous paging",
-        statement instanceof BatchStatement);
 
     RequestHandlerTestHarness.Builder harnessBuilder =
         continuousHarnessBuilder()
@@ -229,10 +217,6 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
       Statement<?> statement,
       DseProtocolVersion version) {
 
-    Assume.assumeFalse(
-        "Batch statements are not supported with continuous paging",
-        statement instanceof BatchStatement);
-
     RequestHandlerTestHarness.Builder harnessBuilder =
         continuousHarnessBuilder()
             .withProtocolVersion(version)
@@ -288,10 +272,6 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
       Statement<?> statement,
       DseProtocolVersion version) {
 
-    Assume.assumeFalse(
-        "Batch statements are not supported with continuous paging",
-        statement instanceof BatchStatement);
-
     RequestHandlerTestHarness.Builder harnessBuilder =
         continuousHarnessBuilder()
             .withProtocolVersion(version)
@@ -344,10 +324,6 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
       Statement<?> statement,
       DseProtocolVersion version) {
 
-    Assume.assumeFalse(
-        "Batch statements are not supported with continuous paging",
-        statement instanceof BatchStatement);
-
     RequestHandlerTestHarness.Builder harnessBuilder =
         continuousHarnessBuilder()
             .withProtocolVersion(version)
@@ -391,10 +367,6 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
       boolean defaultIdempotence,
       Statement<?> statement,
       DseProtocolVersion version) {
-
-    Assume.assumeFalse(
-        "Batch statements are not supported with continuous paging",
-        statement instanceof BatchStatement);
 
     // For two of the possible exceptions, the retry policy is called even if the statement is not
     // idempotent
@@ -602,16 +574,29 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
 
   @DataProvider
   public static Object[][] failureAndIdempotent() {
-    return combine(failure(), idempotentConfig(), allDseProtocolVersions());
+    return combine(failure(), excludeBatchStatements(idempotentConfig()), allDseProtocolVersions());
   }
 
   @DataProvider
   public static Object[][] failureAndNotIdempotent() {
-    return combine(failure(), nonIdempotentConfig(), allDseProtocolVersions());
+    return combine(
+        failure(), excludeBatchStatements(nonIdempotentConfig()), allDseProtocolVersions());
   }
 
   @DataProvider
   public static Object[][] allIdempotenceConfigs() {
-    return combine(CqlRequestHandlerTestBase.allIdempotenceConfigs(), allDseProtocolVersions());
+    return combine(
+        excludeBatchStatements(ContinuousCqlRequestHandlerTestBase.allIdempotenceConfigs()),
+        allDseProtocolVersions());
+  }
+
+  private static Object[][] excludeBatchStatements(Object[][] configs) {
+    List<Object[]> result = new ArrayList<>();
+    for (Object[] config : configs) {
+      if (!(config[1] instanceof BatchStatement)) {
+        result.add(config);
+      }
+    }
+    return result.toArray(new Object[][] {});
   }
 }
