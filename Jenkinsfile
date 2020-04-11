@@ -376,7 +376,7 @@ pipeline {
 
   environment {
     OS_VERSION = 'ubuntu/bionic64/java-driver'
-    JABBA_SHELL = '/home/jenkins/.jabba/jabba.sh'
+    JABBA_SHELL = '/usr/lib/jabba/jabba.sh'
     CCM_ENVIRONMENT_SHELL = '/usr/local/bin/ccm_environment.sh'
     SERIAL_ITS_ARGUMENT = "-DskipSerialITs=${params.SKIP_SERIAL_ITS}"
     ISOLATED_ITS_ARGUMENT = "-DskipIsolatedITs=${params.SKIP_ISOLATED_ITS}"
