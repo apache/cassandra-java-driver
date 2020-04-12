@@ -24,7 +24,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
-import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.tngtech.java.junit.dataprovider.DataProvider;
@@ -46,20 +46,21 @@ import org.junit.runner.RunWith;
 @Category(ParallelizableTests.class)
 public class DefaultReactiveGraphResultSetIT {
 
-  private static CustomCcmRule ccmRule = CustomCcmRule.builder().withDseWorkloads("graph").build();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule)
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(CCM_RULE)
           .withCreateGraph()
           .withCoreEngine()
           .withGraphProtocol(GraphProtocol.GRAPH_BINARY_1_0.toInternalCode())
           .build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @BeforeClass
   public static void setupSchema() {
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(
             ScriptGraphStatement.newInstance(
@@ -68,16 +69,16 @@ public class DefaultReactiveGraphResultSetIT {
                         + ".clusterBy('cc', Int)"
                         + ".property('name', Text)"
                         + ".create();")
-                .setGraphName(sessionRule.getGraphName()));
+                .setGraphName(SESSION_RULE.getGraphName()));
     for (int i = 1; i <= 1000; i++) {
-      sessionRule
+      SESSION_RULE
           .session()
           .execute(
               ScriptGraphStatement.newInstance(
                       String.format(
                           "g.addV('person').property('pk',0).property('cc',%d).property('name', '%s');",
                           i, "user" + i))
-                  .setGraphName(sessionRule.getGraphName()));
+                  .setGraphName(SESSION_RULE.getGraphName()));
     }
   }
 
@@ -87,7 +88,7 @@ public class DefaultReactiveGraphResultSetIT {
       format = "%m [page size %p[0]]")
   public void should_retrieve_all_rows(int pageSize) {
     DriverExecutionProfile profile =
-        sessionRule
+        SESSION_RULE
             .session()
             .getContext()
             .getConfig()
@@ -95,7 +96,7 @@ public class DefaultReactiveGraphResultSetIT {
             .withInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_PAGE_SIZE, pageSize);
     ScriptGraphStatement statement =
         ScriptGraphStatement.builder("g.V()").setExecutionProfile(profile).build();
-    ReactiveGraphResultSet rs = sessionRule.session().executeReactive(statement);
+    ReactiveGraphResultSet rs = SESSION_RULE.session().executeReactive(statement);
     List<ReactiveGraphNode> results = Flowable.fromPublisher(rs).toList().blockingGet();
     assertThat(results.size()).isEqualTo(1000);
     Set<ExecutionInfo> expectedExecInfos = new LinkedHashSet<>();

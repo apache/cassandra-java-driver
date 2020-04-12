@@ -23,9 +23,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.dse.driver.api.core.graph.predicates.CqlCollection;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
-import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.CqlSessionRuleBuilder;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -38,14 +39,15 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @DseRequirement(min = "6.8", description = "DSE 6.8.0 required for collection predicates support")
+@Category(ParallelizableTests.class)
 public class CqlCollectionIT {
 
-  private static final CustomCcmRule CCM_RULE =
-      CustomCcmRule.builder().withDseWorkloads("graph").build();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
   private static final SessionRule<CqlSession> SESSION_RULE =
       new CqlSessionRuleBuilder(CCM_RULE)

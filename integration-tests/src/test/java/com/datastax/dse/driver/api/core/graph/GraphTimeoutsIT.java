@@ -25,30 +25,34 @@ import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
-import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.time.Duration;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @DseRequirement(min = "5.0.0", description = "DSE 5 required for Graph")
+@Category(ParallelizableTests.class)
 public class GraphTimeoutsIT {
 
-  public static CustomCcmRule ccmRule = CustomCcmRule.builder().withDseWorkloads("graph").build();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  public static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule).withCreateGraph().build();
+  private static SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(CCM_RULE).withCreateGraph().build();
 
-  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Test
   public void should_have_driver_wait_indefinitely_by_default_and_server_return_timeout_response() {
     Duration serverTimeout = Duration.ofSeconds(1);
 
     DriverExecutionProfile drivertest1 =
-        sessionRule
+        SESSION_RULE
             .session()
             .getContext()
             .getConfig()
@@ -57,7 +61,7 @@ public class GraphTimeoutsIT {
 
     // We could have done with the server's default but it's 30 secs so the test would have taken at
     // least that time. So we simulate a server timeout change.
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(
             newInstance(
@@ -68,7 +72,7 @@ public class GraphTimeoutsIT {
 
     try {
       // The driver should wait indefinitely, but the server should timeout first.
-      sessionRule
+      SESSION_RULE
           .session()
           .execute(
               newInstance("java.util.concurrent.TimeUnit.MILLISECONDS.sleep(35000L);1+1")
@@ -90,7 +94,7 @@ public class GraphTimeoutsIT {
     Duration clientTimeout = Duration.ofSeconds(10);
 
     DriverExecutionProfile drivertest2 =
-        sessionRule
+        SESSION_RULE
             .session()
             .getContext()
             .getConfig()
@@ -98,7 +102,7 @@ public class GraphTimeoutsIT {
             .withString(DseDriverOption.GRAPH_TRAVERSAL_SOURCE, "drivertest2")
             .withDuration(DseDriverOption.GRAPH_TIMEOUT, clientTimeout);
 
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(
             newInstance(
@@ -109,7 +113,7 @@ public class GraphTimeoutsIT {
 
     try {
       // The driver should wait 32 secs, but the server should timeout first.
-      sessionRule
+      SESSION_RULE
           .session()
           .execute(
               newInstance("java.util.concurrent.TimeUnit.MILLISECONDS.sleep(35000L);1+1")
@@ -131,7 +135,7 @@ public class GraphTimeoutsIT {
     Duration clientTimeout = Duration.ofSeconds(1);
 
     DriverExecutionProfile drivertest3 =
-        sessionRule
+        SESSION_RULE
             .session()
             .getContext()
             .getConfig()
@@ -141,7 +145,7 @@ public class GraphTimeoutsIT {
     // We could have done with the server's default but it's 30 secs so the test would have taken at
     // least that time. Also, we don't want to rely on server's default. So we simulate a server
     // timeout change.
-    sessionRule
+    SESSION_RULE
         .session()
         .execute(
             ScriptGraphStatement.newInstance(
@@ -153,7 +157,7 @@ public class GraphTimeoutsIT {
     try {
       // The timeout on the request is lower than what's defined server side, so it should be taken
       // into account.
-      sessionRule
+      SESSION_RULE
           .session()
           .execute(
               ScriptGraphStatement.newInstance(
