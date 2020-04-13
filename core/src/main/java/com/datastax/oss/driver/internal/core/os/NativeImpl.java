@@ -15,13 +15,15 @@
  */
 package com.datastax.oss.driver.internal.core.os;
 
+import java.util.Optional;
+
 public interface NativeImpl {
 
-  public boolean gettimeofdayAvailable();
+  /* Maintained to allow Native.isXAvailable() functionality without trying to make a native call if
+   * the underlying support _is_ available. */
+  public boolean available();
 
-  public long gettimeofday();
+  public Optional<Long> gettimeofday();
 
-  public boolean getpidAvailable();
-
-  public int getpid();
+  public Optional<Integer> getpid();
 }

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.os;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
 import jnr.posix.Timeval;
@@ -23,7 +24,7 @@ import jnr.posix.util.DefaultPOSIXHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JnrNativeImpl extends AbstractNativeImpl {
+public class JnrNativeImpl implements NativeImpl {
 
   private static final Logger LOG = LoggerFactory.getLogger(JnrNativeImpl.class);
 
@@ -34,70 +35,54 @@ public class JnrNativeImpl extends AbstractNativeImpl {
     this.posix = loadPosix();
   }
 
+  @Override
+  public Optional<Long> gettimeofday() {
+
+    return this.posix.flatMap(this::gettimeofdayImpl);
+  }
+
+  @Override
+  public Optional<Integer> getpid() {
+
+    return this.posix.map(POSIX::getpid);
+  }
+
+  @Override
+  public boolean available() {
+    return this.posix.isPresent();
+  }
+
   private Optional<POSIX> loadPosix() {
 
     try {
       return Optional.of(POSIXFactory.getPOSIX(new DefaultPOSIXHandler(), true))
-          .flatMap(this::validatePosix);
+          .flatMap(p -> catchAll(p, posix -> posix.getpid(), "Error calling getpid()"))
+          .flatMap(p -> catchAll(p, this::gettimeofdayImpl, "Error calling gettimeofday()"));
     } catch (Throwable t) {
       LOG.debug("Error loading POSIX", t);
       return Optional.empty();
     }
   }
 
-  private Optional<POSIX> validatePosix(POSIX posix) {
-
+  private Optional<POSIX> catchAll(POSIX posix, Consumer<POSIX> fn, String debugStr) {
     try {
-
-      posix.getpid();
+      fn.accept(posix);
+      return Optional.of(posix);
     } catch (Throwable t) {
 
-      LOG.debug("Error calling getpid()", t);
+      LOG.debug(debugStr, t);
       return Optional.empty();
     }
-
-    try {
-
-      Timeval tv = posix.allocateTimeval();
-      int rv = posix.gettimeofday(tv);
-      if (rv != 0) {
-
-        LOG.debug("Expected getitimeofday() to return zero, observed {}", rv);
-        return Optional.empty();
-      }
-    } catch (Throwable t) {
-
-      LOG.debug("Error calling gettimeofday()", t);
-      return Optional.empty();
-    }
-
-    return Optional.of(posix);
   }
 
-  @Override
-  public boolean gettimeofdayAvailable() {
-    return posix.isPresent();
-  }
+  private Optional<Long> gettimeofdayImpl(POSIX posix) {
 
-  @Override
-  public long gettimeofday() {
-
-    Timeval tv = this.posix.map(POSIX::allocateTimeval).orElseThrow(gettimeofdaySupplier);
-    int rv = this.posix.map(p -> p.gettimeofday(tv)).orElseThrow(gettimeofdaySupplier);
+    Timeval tv = posix.allocateTimeval();
+    int rv = posix.gettimeofday(tv);
     if (rv != 0) {
-      throw new IllegalStateException(
-          "Expected 0 return value from gettimeofday(), observed " + rv);
+      LOG.debug("Expected 0 return value from gettimeofday(), observed " + rv);
+      return Optional.empty();
     }
-    return tv.sec() * 1_000_000 + tv.usec();
-  }
-
-  @Override
-  public boolean getpidAvailable() {
-    return posix.isPresent();
-  }
-
-  @Override
-  public int getpid() {
-    return this.posix.map(POSIX::getpid).orElseThrow(getpidSupplier);
+    return Optional.of(tv.sec() * 1_000_000 + tv.usec());
   }
 }

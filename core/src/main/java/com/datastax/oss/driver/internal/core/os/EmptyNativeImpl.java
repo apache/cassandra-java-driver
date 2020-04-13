@@ -15,26 +15,23 @@
  */
 package com.datastax.oss.driver.internal.core.os;
 
+import java.util.Optional;
+
 /** A no-op NativeImpl implementation; useful if we can't load one of the others */
-public class EmptyNativeImpl extends AbstractNativeImpl {
+public class EmptyNativeImpl implements NativeImpl {
 
   @Override
-  public boolean gettimeofdayAvailable() {
+  public boolean available() {
     return false;
   }
 
   @Override
-  public long gettimeofday() {
-    throw gettimeofdaySupplier.get();
+  public Optional<Long> gettimeofday() {
+    return Optional.empty();
   }
 
   @Override
-  public boolean getpidAvailable() {
-    return false;
-  }
-
-  @Override
-  public int getpid() {
-    throw getpidSupplier.get();
+  public Optional<Integer> getpid() {
+    return Optional.empty();
   }
 }

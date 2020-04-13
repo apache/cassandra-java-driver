@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import org.junit.Test;
 
 /**
@@ -28,21 +29,29 @@ import org.junit.Test;
 public class JnrNativeImplTest {
 
   @Test
+  public void should_be_available() {
+
+    NativeImpl impl = new JnrNativeImpl();
+    assertThat(impl.available()).isTrue();
+  }
+
+  @Test
   public void should_support_getpid() {
     NativeImpl impl = new JnrNativeImpl();
-    assertThat(impl.getpidAvailable()).isTrue();
-    assertThat(impl.getpid()).isGreaterThan(1);
+    Optional<Integer> val = impl.getpid();
+    assertThat(val).isNotEmpty();
+    assertThat(val.get()).isGreaterThan(1);
   }
 
   @Test
   public void should_support_gettimeofday() {
     NativeImpl impl = new JnrNativeImpl();
-    assertThat(impl.gettimeofdayAvailable()).isTrue();
-    long rv = impl.gettimeofday();
-    assertThat(rv).isGreaterThan(0);
+    Optional<Long> val = impl.gettimeofday();
+    assertThat(val).isNotEmpty();
+    assertThat(val.get()).isGreaterThan(0);
 
     Instant now = Instant.now();
-    Instant rvInstant = Instant.EPOCH.plus(rv, ChronoUnit.MICROS);
+    Instant rvInstant = Instant.EPOCH.plus(val.get(), ChronoUnit.MICROS);
     assertThat(rvInstant.isAfter(now.minusSeconds(1))).isTrue();
     assertThat(rvInstant.isBefore(now.plusSeconds(1))).isTrue();
   }
