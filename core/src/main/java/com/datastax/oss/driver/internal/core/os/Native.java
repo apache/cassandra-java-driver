@@ -15,8 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.os;
 
-import com.datastax.oss.driver.shaded.guava.common.base.Suppliers;
-import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,11 +38,9 @@ public class Native {
   }
 
   private static final Libc IMPL = new ImplLoader().load();
-
-  private static final Supplier<IllegalStateException> exceptionSupplier =
-      Suppliers.ofInstance(new IllegalStateException("Native call failed or was not available"));
-
   private static final CpuInfo.Cpu CPU = CpuInfo.determineCpu();
+
+  private static final String NATIVE_CALL_ERR_MSG = "Native call failed or was not available";
 
   /** Whether {@link Native#currentTimeMicros()} is available on this system. */
   public static boolean isCurrentTimeMicrosAvailable() {
@@ -56,7 +52,7 @@ public class Native {
    * {@link #isCurrentTimeMicrosAvailable()} is true.
    */
   public static long currentTimeMicros() {
-    return IMPL.gettimeofday().orElseThrow(exceptionSupplier);
+    return IMPL.gettimeofday().orElseThrow(() -> new IllegalStateException(NATIVE_CALL_ERR_MSG));
   }
 
   public static boolean isGetProcessIdAvailable() {
@@ -64,7 +60,7 @@ public class Native {
   }
 
   public static int getProcessId() {
-    return IMPL.getpid().orElseThrow(exceptionSupplier);
+    return IMPL.getpid().orElseThrow(() -> new IllegalStateException(NATIVE_CALL_ERR_MSG));
   }
 
   /**
