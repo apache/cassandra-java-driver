@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.time;
 
+import com.datastax.oss.driver.api.core.cql.Statement;
+
 /**
  * Generates client-side, microsecond-precision query timestamps.
  *
@@ -31,8 +33,9 @@ public interface TimestampGenerator extends AutoCloseable {
    * returned value if the clock tick hasn't changed, and possibly drifting in the future. See the
    * built-in driver implementations for more details.
    *
-   * @return the next timestamp, or {@link Long#MIN_VALUE} to indicate that the driver should not
-   *     send one with the query (and let Cassandra generate a server-side timestamp).
+   * @return the next timestamp, or {@link Statement#NO_DEFAULT_TIMESTAMP} to indicate that the
+   *     driver should not send one with the query (and let Cassandra generate a server-side
+   *     timestamp).
    */
   long next();
 }

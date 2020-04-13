@@ -77,6 +77,7 @@ public class StatementAttributesIT {
 
   private static final Simple simple = new Simple(UUID.randomUUID(), "DATA");
 
+  @SuppressWarnings("UnnecessaryLambda")
   private static final Function<BoundStatementBuilder, BoundStatementBuilder> statementFunction =
       builder ->
           builder
@@ -85,6 +86,7 @@ public class StatementAttributesIT {
               .setSerialConsistencyLevel(DefaultConsistencyLevel.QUORUM)
               .setPagingState(ByteBuffer.wrap(PAGING_STATE.getBytes(UTF_8)));
 
+  @SuppressWarnings("UnnecessaryLambda")
   private static final Function<BoundStatementBuilder, BoundStatementBuilder> badStatementFunction =
       builder -> {
         throw new IllegalStateException("mock error");

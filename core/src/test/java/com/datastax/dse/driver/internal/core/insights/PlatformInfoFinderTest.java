@@ -25,37 +25,25 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Function;
 import org.junit.Test;
 
 public class PlatformInfoFinderTest {
-  private static final Function<PlatformInfoFinder.DependencyFromFile, URL> NULL_URL_PROVIDER =
-      d -> null;
 
-  private static final Function<PlatformInfoFinder.DependencyFromFile, URL> NETTY_URL_PROVIDER =
-      new Function<PlatformInfoFinder.DependencyFromFile, URL>() {
-        @Override
-        public URL apply(PlatformInfoFinder.DependencyFromFile d) {
-          return this.getClass().getResource("/insights/pom.properties");
-        }
-      };
+  private URL nullUrlProvider(PlatformInfoFinder.DependencyFromFile d) {
+    return null;
+  }
 
-  private static final Function<PlatformInfoFinder.DependencyFromFile, URL> MALFORMED_URL_PROVIDER =
-      new Function<PlatformInfoFinder.DependencyFromFile, URL>() {
-        @Override
-        public URL apply(PlatformInfoFinder.DependencyFromFile d) {
-          return this.getClass().getResource("/insights/malformed-pom.properties");
-        }
-      };
+  private URL nettyUrlProvider(PlatformInfoFinder.DependencyFromFile d) {
+    return this.getClass().getResource("/insights/pom.properties");
+  }
 
-  private static final Function<PlatformInfoFinder.DependencyFromFile, URL>
-      NON_EXISTING_URL_PROVIDER =
-          new Function<PlatformInfoFinder.DependencyFromFile, URL>() {
-            @Override
-            public URL apply(PlatformInfoFinder.DependencyFromFile d) {
-              return this.getClass().getResource("/insights/non-existing.pom");
-            }
-          };
+  private URL malformedUrlProvider(PlatformInfoFinder.DependencyFromFile d) {
+    return this.getClass().getResource("/insights/malformed-pom.properties");
+  }
+
+  private URL nonExistingUrlProvider(PlatformInfoFinder.DependencyFromFile d) {
+    return this.getClass().getResource("/insights/non-existing.pom");
+  }
 
   @Test
   public void should_find_dependencies_from_file() {
@@ -98,7 +86,7 @@ public class PlatformInfoFinderTest {
 
     // when
     Map<String, RuntimeAndCompileTimeVersions> stringStringMap =
-        new PlatformInfoFinder(NULL_URL_PROVIDER).fetchDependenciesFromFile(inputStream);
+        new PlatformInfoFinder(this::nullUrlProvider).fetchDependenciesFromFile(inputStream);
 
     // then
     assertThat(stringStringMap).hasSize(28);
@@ -113,7 +101,7 @@ public class PlatformInfoFinderTest {
 
     // when
     Map<String, RuntimeAndCompileTimeVersions> stringStringMap =
-        new PlatformInfoFinder(NULL_URL_PROVIDER).fetchDependenciesFromFile(inputStream);
+        new PlatformInfoFinder(this::nullUrlProvider).fetchDependenciesFromFile(inputStream);
 
     // then
     assertThat(stringStringMap).hasSize(1);
@@ -131,7 +119,7 @@ public class PlatformInfoFinderTest {
 
     // when
     Map<String, RuntimeAndCompileTimeVersions> stringStringMap =
-        new PlatformInfoFinder(NULL_URL_PROVIDER).fetchDependenciesFromFile(inputStream);
+        new PlatformInfoFinder(this::nullUrlProvider).fetchDependenciesFromFile(inputStream);
 
     // then
     assertThat(stringStringMap).isEqualTo(expected);
@@ -147,7 +135,7 @@ public class PlatformInfoFinderTest {
     Map<String, Map<String, RuntimeAndCompileTimeVersions>> runtimeDependencies = new HashMap<>();
 
     // when
-    new PlatformInfoFinder(NULL_URL_PROVIDER).addJavaVersion(runtimeDependencies);
+    new PlatformInfoFinder(this::nullUrlProvider).addJavaVersion(runtimeDependencies);
 
     // then
     Map<String, RuntimeAndCompileTimeVersions> javaDependencies = runtimeDependencies.get("java");
@@ -165,7 +153,7 @@ public class PlatformInfoFinderTest {
 
     // when
     Map<String, RuntimeAndCompileTimeVersions> stringStringMap =
-        new PlatformInfoFinder(NETTY_URL_PROVIDER).fetchDependenciesFromFile(inputStream);
+        new PlatformInfoFinder(this::nettyUrlProvider).fetchDependenciesFromFile(inputStream);
 
     // then
     assertThat(stringStringMap).isEqualTo(expected);
@@ -183,7 +171,7 @@ public class PlatformInfoFinderTest {
 
     // when
     Map<String, RuntimeAndCompileTimeVersions> stringStringMap =
-        new PlatformInfoFinder(NETTY_URL_PROVIDER).fetchDependenciesFromFile(inputStream);
+        new PlatformInfoFinder(this::nettyUrlProvider).fetchDependenciesFromFile(inputStream);
 
     // then
     assertThat(stringStringMap).isEqualTo(expected);
@@ -198,7 +186,7 @@ public class PlatformInfoFinderTest {
 
     // when
     Map<String, RuntimeAndCompileTimeVersions> stringStringMap =
-        new PlatformInfoFinder(MALFORMED_URL_PROVIDER).fetchDependenciesFromFile(inputStream);
+        new PlatformInfoFinder(this::malformedUrlProvider).fetchDependenciesFromFile(inputStream);
 
     // then
     assertThat(stringStringMap).isEqualTo(expected);
@@ -213,7 +201,7 @@ public class PlatformInfoFinderTest {
 
     // when
     Map<String, RuntimeAndCompileTimeVersions> stringStringMap =
-        new PlatformInfoFinder(NON_EXISTING_URL_PROVIDER).fetchDependenciesFromFile(inputStream);
+        new PlatformInfoFinder(this::nonExistingUrlProvider).fetchDependenciesFromFile(inputStream);
 
     // then
     assertThat(stringStringMap).isEqualTo(expected);

@@ -20,6 +20,7 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.unavailable;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
@@ -38,12 +39,12 @@ import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteType;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
-import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -82,7 +83,10 @@ public class MapBasedConfigLoaderIT {
 
       optionsMap.put(TypedDriverOption.CONNECTION_POOL_LOCAL_SIZE, 2);
 
-      ConditionChecker.checkThat(() -> node.getOpenConnections() == 3).becomesTrue();
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .until(() -> node.getOpenConnections() == 3);
     }
   }
 

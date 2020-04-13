@@ -31,6 +31,7 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
 import com.datastax.oss.driver.internal.core.util.concurrent.CapturingTimer.CapturedTimeout;
 import com.datastax.oss.protocol.internal.request.Prepare;
@@ -172,6 +173,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
     BoundStatement boundStatement = mock(BoundStatement.class);
     when(boundStatement.getPreparedStatement()).thenReturn(preparedStatement);
     when(boundStatement.getValues()).thenReturn(Collections.emptyList());
+    when(boundStatement.getNowInSeconds()).thenReturn(Statement.NO_NOW_IN_SECONDS);
 
     RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
     // For the first attempt that gets the UNPREPARED response

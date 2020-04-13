@@ -55,6 +55,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
   private final ConsistencyLevel serialConsistencyLevel;
   private final Duration timeout;
   private final Node node;
+  private final int nowInSeconds;
 
   /** @see SimpleStatement#builder(String) */
   public DefaultSimpleStatement(
@@ -76,7 +77,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
       ConsistencyLevel consistencyLevel,
       ConsistencyLevel serialConsistencyLevel,
       Duration timeout,
-      Node node) {
+      Node node,
+      int nowInSeconds) {
     if (!positionalValues.isEmpty() && !namedValues.isEmpty()) {
       throw new IllegalArgumentException("Can't have both positional and named values");
     }
@@ -99,6 +101,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     this.serialConsistencyLevel = serialConsistencyLevel;
     this.timeout = timeout;
     this.node = node;
+    this.nowInSeconds = nowInSeconds;
   }
 
   @NonNull
@@ -129,7 +132,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @NonNull
@@ -160,7 +164,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @NonNull
@@ -191,7 +196,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Nullable
@@ -222,7 +228,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Nullable
@@ -253,7 +260,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Nullable
@@ -284,7 +292,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Nullable
@@ -315,7 +324,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @NonNull
@@ -340,7 +350,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        newNode);
+        newNode,
+        nowInSeconds);
   }
 
   @Nullable
@@ -377,7 +388,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Nullable
@@ -408,7 +420,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @NonNull
@@ -439,7 +452,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Nullable
@@ -470,7 +484,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -500,7 +515,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -530,7 +546,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Nullable
@@ -561,7 +578,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         newTimeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Nullable
@@ -592,7 +610,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -622,7 +641,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Nullable
@@ -653,7 +673,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         newConsistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Nullable
@@ -685,7 +706,39 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         newSerialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
+  }
+
+  @Override
+  public int getNowInSeconds() {
+    return nowInSeconds;
+  }
+
+  @NonNull
+  @Override
+  public SimpleStatement setNowInSeconds(int newNowInSeconds) {
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        namedValues,
+        executionProfileName,
+        executionProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
+        node,
+        newNowInSeconds);
   }
 
   public static Map<CqlIdentifier, Object> wrapKeys(Map<String, Object> namedValues) {
@@ -721,7 +774,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
           && Objects.equals(this.consistencyLevel, that.consistencyLevel)
           && Objects.equals(this.serialConsistencyLevel, that.serialConsistencyLevel)
           && Objects.equals(this.timeout, that.timeout)
-          && Objects.equals(this.node, that.node);
+          && Objects.equals(this.node, that.node)
+          && this.nowInSeconds == that.nowInSeconds;
     } else {
       return false;
     }
@@ -748,6 +802,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
         consistencyLevel,
         serialConsistencyLevel,
         timeout,
-        node);
+        node,
+        nowInSeconds);
   }
 }

@@ -72,7 +72,7 @@ public class DseConversions {
                 config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
             : serialConsistency.getProtocolCode();
     long timestamp = statement.getQueryTimestamp();
-    if (timestamp == Long.MIN_VALUE) {
+    if (timestamp == Statement.NO_DEFAULT_TIMESTAMP) {
       timestamp = context.getTimestampGenerator().next();
     }
     CodecRegistry codecRegistry = context.getCodecRegistry();

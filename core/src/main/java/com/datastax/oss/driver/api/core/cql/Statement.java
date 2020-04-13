@@ -31,6 +31,7 @@ import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.RoutingKey;
+import com.datastax.oss.protocol.internal.request.query.QueryOptions;
 import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -66,6 +67,20 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    */
   GenericType<CompletionStage<AsyncResultSet>> ASYNC =
       new GenericType<CompletionStage<AsyncResultSet>>() {};
+
+  /**
+   * A special value for {@link #getQueryTimestamp()} that means "no value".
+   *
+   * <p>It is equal to {@link Long#MIN_VALUE}.
+   */
+  long NO_DEFAULT_TIMESTAMP = QueryOptions.NO_DEFAULT_TIMESTAMP;
+
+  /**
+   * A special value for {@link #getNowInSeconds()} that means "no value".
+   *
+   * <p>It is equal to {@link Integer#MIN_VALUE}.
+   */
+  int NO_NOW_IN_SECONDS = QueryOptions.NO_NOW_IN_SECONDS;
 
   /**
    * Sets the name of the execution profile that will be used for this statement.
@@ -217,9 +232,10 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   /**
    * Returns the query timestamp, in microseconds, to send with the statement.
    *
-   * <p>If this is equal to {@link Long#MIN_VALUE}, the {@link TimestampGenerator} configured for
-   * this driver instance will be used to generate a timestamp.
+   * <p>If this is equal to {@link #NO_DEFAULT_TIMESTAMP}, the {@link TimestampGenerator} configured
+   * for this driver instance will be used to generate a timestamp.
    *
+   * @see #NO_DEFAULT_TIMESTAMP
    * @see TimestampGenerator
    */
   long getQueryTimestamp();
@@ -227,12 +243,13 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   /**
    * Sets the query timestamp, in microseconds, to send with the statement.
    *
-   * <p>If this is equal to {@link Long#MIN_VALUE}, the {@link TimestampGenerator} configured for
-   * this driver instance will be used to generate a timestamp.
+   * <p>If this is equal to {@link #NO_DEFAULT_TIMESTAMP}, the {@link TimestampGenerator} configured
+   * for this driver instance will be used to generate a timestamp.
    *
    * <p>All the driver's built-in implementations are immutable, and return a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance.
    *
+   * @see #NO_DEFAULT_TIMESTAMP
    * @see TimestampGenerator
    */
   @NonNull
@@ -347,6 +364,34 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
 
   /** Whether tracing information should be recorded for this statement. */
   boolean isTracing();
+
+  /**
+   * A custom "now in seconds" to use when applying the request (for testing purposes).
+   *
+   * <p>This method's default implementation returns {@link #NO_NOW_IN_SECONDS}. The only reason it
+   * exists is to preserve binary compatibility. Internally, the driver overrides it to return the
+   * value that was set programmatically (if any).
+   *
+   * @see #NO_NOW_IN_SECONDS
+   */
+  default int getNowInSeconds() {
+    return NO_NOW_IN_SECONDS;
+  }
+
+  /**
+   * Sets the "now in seconds" to use when applying the request (for testing purposes).
+   *
+   * <p>This method's default implementation returns the statement unchanged. The only reason it
+   * exists is to preserve binary compatibility. Internally, the driver overrides it to record the
+   * new value.
+   *
+   * @see #NO_NOW_IN_SECONDS
+   */
+  @NonNull
+  @SuppressWarnings("unchecked")
+  default SelfT setNowInSeconds(int nowInSeconds) {
+    return (SelfT) this;
+  }
 
   /**
    * Calculates the approximate size in bytes that the statement will have when encoded.

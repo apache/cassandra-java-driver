@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /** Factors common code for mapper tests that rely on a simple inventory model. */
@@ -66,7 +67,7 @@ public abstract class InventoryITBase {
                 "CREATE TABLE product_sale(id uuid, day text, ts uuid, customer_id int, price "
                     + "double, count int, PRIMARY KEY ((id, day), customer_id, ts))");
 
-    if (supportsSASI(ccmRule)) {
+    if (supportsSASI(ccmRule) && !isSasiBroken(ccmRule)) {
       builder.add(
           "CREATE CUSTOM INDEX product_description ON product(description) "
               + "USING 'org.apache.cassandra.index.sasi.SASIIndex' "
@@ -85,6 +86,13 @@ public abstract class InventoryITBase {
   }
 
   private static final Version MINIMUM_SASI_VERSION = Version.parse("3.4.0");
+  private static final Version BROKEN_SASI_VERSION = Version.parse("6.8.0");
+
+  protected static boolean isSasiBroken(CcmRule ccmRule) {
+    Optional<Version> dseVersion = ccmRule.getDseVersion();
+    // creating SASI indexes is broken in DSE 6.8.0
+    return dseVersion.isPresent() && dseVersion.get().compareTo(BROKEN_SASI_VERSION) == 0;
+  }
 
   protected static boolean supportsSASI(CcmRule ccmRule) {
     return ccmRule.getCassandraVersion().compareTo(MINIMUM_SASI_VERSION) >= 0;

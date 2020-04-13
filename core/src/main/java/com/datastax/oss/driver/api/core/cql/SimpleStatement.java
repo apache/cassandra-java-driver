@@ -74,13 +74,14 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
         NullAllowingImmutableMap.of(),
         null,
         false,
-        Long.MIN_VALUE,
+        Statement.NO_DEFAULT_TIMESTAMP,
         null,
         Integer.MIN_VALUE,
         null,
         null,
         null,
-        null);
+        null,
+        Statement.NO_NOW_IN_SECONDS);
   }
 
   /**
@@ -107,13 +108,14 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
         NullAllowingImmutableMap.of(),
         null,
         false,
-        Long.MIN_VALUE,
+        Statement.NO_DEFAULT_TIMESTAMP,
         null,
         Integer.MIN_VALUE,
         null,
         null,
         null,
-        null);
+        null,
+        Statement.NO_NOW_IN_SECONDS);
   }
 
   /**
@@ -137,13 +139,14 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
         NullAllowingImmutableMap.of(),
         null,
         false,
-        Long.MIN_VALUE,
+        Statement.NO_DEFAULT_TIMESTAMP,
         null,
         Integer.MIN_VALUE,
         null,
         null,
         null,
-        null);
+        null,
+        Statement.NO_NOW_IN_SECONDS);
   }
 
   /**
@@ -297,7 +300,7 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
 
     // timestamp
     if (!(context.getTimestampGenerator() instanceof ServerSideTimestampGenerator)
-        || getQueryTimestamp() != Long.MIN_VALUE) {
+        || getQueryTimestamp() != Statement.NO_DEFAULT_TIMESTAMP) {
       size += PrimitiveSizes.LONG;
     }
 

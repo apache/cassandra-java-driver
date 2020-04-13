@@ -26,7 +26,6 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
-import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import io.reactivex.Flowable;
@@ -36,14 +35,12 @@ import java.util.Set;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 @DseRequirement(min = "6.8.0", description = "Graph paging requires DSE 6.8+")
 @RunWith(DataProviderRunner.class)
-@Category(ParallelizableTests.class)
 public class DefaultReactiveGraphResultSetIT {
 
   private static CustomCcmRule ccmRule = CustomCcmRule.builder().withDseWorkloads("graph").build();

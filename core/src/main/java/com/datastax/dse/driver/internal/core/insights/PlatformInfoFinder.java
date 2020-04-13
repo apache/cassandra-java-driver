@@ -43,6 +43,7 @@ class PlatformInfoFinder {
   static final String UNVERIFIED_RUNTIME_VERSION = "UNVERIFIED";
   private final Function<DependencyFromFile, URL> propertiesUrlProvider;
 
+  @SuppressWarnings("UnnecessaryLambda")
   private static final Function<DependencyFromFile, URL> M2_PROPERTIES_PROVIDER =
       d -> {
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();

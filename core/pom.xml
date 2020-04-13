@@ -214,6 +214,13 @@
     <plugins>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Automatic-Module-Name>com.datastax.oss.driver.core</Automatic-Module-Name>
+            </manifestEntries>
+          </archive>
+        </configuration>
         <executions>
           <execution>
             <id>test-jar</id>
@@ -307,14 +314,14 @@
               <goal>list</goal>
             </goals>
             <phase>generate-resources</phase>
+            <configuration>
+              <includeScope>runtime</includeScope>
+              <outputScope>true</outputScope>
+              <excludeGroupIds>com.datastax.cassandra,com.datastax.dse</excludeGroupIds>
+              <outputFile>${project.build.outputDirectory}/com/datastax/dse/driver/internal/deps.txt</outputFile>
+            </configuration>
           </execution>
         </executions>
-        <configuration>
-          <includeScope>runtime</includeScope>
-          <outputScope>true</outputScope>
-          <excludeGroupIds>com.datastax.cassandra,com.datastax.dse</excludeGroupIds>
-          <outputFile>${project.build.outputDirectory}/com/datastax/dse/driver/internal/deps.txt</outputFile>
-        </configuration>
       </plugin>
     </plugins>
   </build>

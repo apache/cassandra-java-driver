@@ -59,6 +59,7 @@ public class DefaultBoundStatement implements BoundStatement {
   private final CodecRegistry codecRegistry;
   private final ProtocolVersion protocolVersion;
   private final Node node;
+  private final int nowInSeconds;
 
   public DefaultBoundStatement(
       PreparedStatement preparedStatement,
@@ -80,7 +81,8 @@ public class DefaultBoundStatement implements BoundStatement {
       Duration timeout,
       CodecRegistry codecRegistry,
       ProtocolVersion protocolVersion,
-      Node node) {
+      Node node,
+      int nowInSeconds) {
     this.preparedStatement = preparedStatement;
     this.variableDefinitions = variableDefinitions;
     this.values = values;
@@ -101,6 +103,7 @@ public class DefaultBoundStatement implements BoundStatement {
     this.codecRegistry = codecRegistry;
     this.protocolVersion = protocolVersion;
     this.node = node;
+    this.nowInSeconds = nowInSeconds;
   }
 
   @Override
@@ -174,7 +177,8 @@ public class DefaultBoundStatement implements BoundStatement {
         timeout,
         codecRegistry,
         protocolVersion,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @NonNull
@@ -217,7 +221,8 @@ public class DefaultBoundStatement implements BoundStatement {
         timeout,
         codecRegistry,
         protocolVersion,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -248,7 +253,8 @@ public class DefaultBoundStatement implements BoundStatement {
         timeout,
         codecRegistry,
         protocolVersion,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -286,7 +292,8 @@ public class DefaultBoundStatement implements BoundStatement {
         timeout,
         codecRegistry,
         protocolVersion,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @NonNull
@@ -312,7 +319,8 @@ public class DefaultBoundStatement implements BoundStatement {
         timeout,
         codecRegistry,
         protocolVersion,
-        newNode);
+        newNode,
+        nowInSeconds);
   }
 
   @Nullable
@@ -370,7 +378,8 @@ public class DefaultBoundStatement implements BoundStatement {
         timeout,
         codecRegistry,
         protocolVersion,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -401,7 +410,8 @@ public class DefaultBoundStatement implements BoundStatement {
         timeout,
         codecRegistry,
         protocolVersion,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @NonNull
@@ -433,7 +443,8 @@ public class DefaultBoundStatement implements BoundStatement {
         timeout,
         codecRegistry,
         protocolVersion,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -464,7 +475,8 @@ public class DefaultBoundStatement implements BoundStatement {
         timeout,
         codecRegistry,
         protocolVersion,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -495,7 +507,8 @@ public class DefaultBoundStatement implements BoundStatement {
         timeout,
         codecRegistry,
         protocolVersion,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -526,7 +539,8 @@ public class DefaultBoundStatement implements BoundStatement {
         timeout,
         codecRegistry,
         protocolVersion,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Nullable
@@ -558,7 +572,8 @@ public class DefaultBoundStatement implements BoundStatement {
         newTimeout,
         codecRegistry,
         protocolVersion,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -589,7 +604,8 @@ public class DefaultBoundStatement implements BoundStatement {
         timeout,
         codecRegistry,
         protocolVersion,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Override
@@ -620,7 +636,8 @@ public class DefaultBoundStatement implements BoundStatement {
         timeout,
         codecRegistry,
         protocolVersion,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Nullable
@@ -652,7 +669,8 @@ public class DefaultBoundStatement implements BoundStatement {
         timeout,
         codecRegistry,
         protocolVersion,
-        node);
+        node,
+        nowInSeconds);
   }
 
   @Nullable
@@ -685,6 +703,39 @@ public class DefaultBoundStatement implements BoundStatement {
         timeout,
         codecRegistry,
         protocolVersion,
-        node);
+        node,
+        nowInSeconds);
+  }
+
+  @Override
+  public int getNowInSeconds() {
+    return nowInSeconds;
+  }
+
+  @NonNull
+  @Override
+  public BoundStatement setNowInSeconds(int newNowInSeconds) {
+    return new DefaultBoundStatement(
+        preparedStatement,
+        variableDefinitions,
+        values,
+        executionProfileName,
+        executionProfile,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
+        codecRegistry,
+        protocolVersion,
+        node,
+        newNowInSeconds);
   }
 }

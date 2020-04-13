@@ -20,7 +20,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 
-/** See {@code dse-reference.conf} for a description of each metric. */
+/** See {@code reference.conf} for a description of each metric. */
 public enum DseNodeMetric implements NodeMetric {
   GRAPH_MESSAGES("graph-messages");
 

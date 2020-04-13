@@ -96,6 +96,16 @@
     </testResources>
     <plugins>
       <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Automatic-Module-Name>com.datastax.oss.driver.querybuilder</Automatic-Module-Name>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
         <configuration>
@@ -115,14 +125,14 @@
               <goal>list</goal>
             </goals>
             <phase>generate-resources</phase>
+            <configuration>
+              <includeScope>runtime</includeScope>
+              <outputScope>true</outputScope>
+              <excludeGroupIds>com.datastax.cassandra,com.datastax.dse</excludeGroupIds>
+              <outputFile>${project.build.outputDirectory}/com/datastax/dse/driver/internal/querybuilder/deps.txt</outputFile>
+            </configuration>
           </execution>
         </executions>
-        <configuration>
-          <includeScope>runtime</includeScope>
-          <outputScope>true</outputScope>
-          <excludeGroupIds>com.datastax.cassandra,com.datastax.dse</excludeGroupIds>
-          <outputFile>${project.build.outputDirectory}/com/datastax/dse/driver/internal/querybuilder/deps.txt</outputFile>
-        </configuration>
       </plugin>
     </plugins>
   </build>

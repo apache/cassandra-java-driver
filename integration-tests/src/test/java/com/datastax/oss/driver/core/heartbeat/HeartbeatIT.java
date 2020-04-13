@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.core.heartbeat;
 
-import static com.datastax.oss.driver.api.testinfra.utils.ConditionChecker.checkThat;
 import static com.datastax.oss.driver.api.testinfra.utils.NodeUtils.waitForDown;
 import static com.datastax.oss.driver.api.testinfra.utils.NodeUtils.waitForUp;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.closeConnection;
@@ -24,6 +23,7 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.awaitility.Awaitility.await;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -46,8 +46,8 @@ import com.datastax.oss.simulacron.server.RejectScope;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -62,9 +62,6 @@ public class HeartbeatIT {
       new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
   private static final String QUERY = "select * from foo";
-  private static final Predicate<QueryLog> IS_OPTION_REQUEST =
-      (l) -> l.getQuery().equals("OPTIONS");
-
   private BoundNode simulacronNode;
 
   @Before
@@ -124,7 +121,10 @@ public class HeartbeatIT {
             .withInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE, 0);
     try (CqlSession session = newSession(loader)) {
       AtomicInteger heartbeats = countHeartbeatsOnControlConnection();
-      checkThat(() -> heartbeats.get() > 0).becomesTrue();
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .until(() -> heartbeats.get() > 0);
     }
   }
 
@@ -146,7 +146,10 @@ public class HeartbeatIT {
       assertThat(nonControlHeartbeats.get()).isZero();
 
       // Stop querying, heartbeats should be sent again
-      checkThat(() -> nonControlHeartbeats.get() >= 1).becomesTrue();
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .until(() -> nonControlHeartbeats.get() >= 1);
     }
   }
 
@@ -180,9 +183,12 @@ public class HeartbeatIT {
       // Ensure we get some heartbeats and the node remains up.
       AtomicInteger heartbeats = new AtomicInteger();
       simulacronNode.registerQueryListener(
-          (n, l) -> heartbeats.incrementAndGet(), true, IS_OPTION_REQUEST);
+          (n, l) -> heartbeats.incrementAndGet(), true, this::isOptionRequest);
 
-      checkThat(() -> heartbeats.get() >= 2).becomesTrue();
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .until(() -> heartbeats.get() >= 2);
       assertThat(node.getState()).isEqualTo(NodeState.UP);
 
       // configure node to not respond to options request, which should cause a timeout.
@@ -190,7 +196,10 @@ public class HeartbeatIT {
       heartbeats.set(0);
 
       // wait for heartbeat to be sent.
-      checkThat(() -> heartbeats.get() >= 1).becomesTrue();
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .until(() -> heartbeats.get() >= 1);
       heartbeats.set(0);
 
       // node should go down because heartbeat was unanswered.
@@ -202,7 +211,10 @@ public class HeartbeatIT {
       // wait for node to come up again and ensure heartbeats are successful and node remains up.
       waitForUp(node);
 
-      checkThat(() -> heartbeats.get() >= 2).becomesTrue();
+      await()
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .atMost(60, TimeUnit.SECONDS)
+          .until(() -> heartbeats.get() >= 2);
       assertThat(node.getState()).isEqualTo(NodeState.UP);
     }
   }
@@ -242,7 +254,7 @@ public class HeartbeatIT {
             (n, l) -> count.incrementAndGet(),
             false,
             (l) ->
-                IS_OPTION_REQUEST.test(l)
+                isOptionRequest(l)
                     && (regularConnection ^ l.getConnection().equals(controlConnectionAddress)));
     return count;
   }
@@ -261,5 +273,9 @@ public class HeartbeatIT {
     return simulacronNode.getLogs().getQueryLogs().stream()
         .filter(l -> l.getQuery().equals("OPTIONS"))
         .collect(Collectors.toList());
+  }
+
+  private boolean isOptionRequest(QueryLog l) {
+    return l.getQuery().equals("OPTIONS");
   }
 }

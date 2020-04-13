@@ -16,8 +16,8 @@
 package com.datastax.oss.driver.api.testinfra.simulacron;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
-import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.simulacron.common.cluster.QueryLog;
 import com.datastax.oss.simulacron.server.BoundNode;
 import com.datastax.oss.simulacron.server.BoundTopic;
@@ -51,7 +51,7 @@ public class QueryCounter {
   }
 
   private QueryCounter(
-      BoundTopic topic,
+      BoundTopic<?, ?> topic,
       NotificationMode notificationMode,
       Predicate<QueryLog> queryLogFilter,
       long beforeTimeout,
@@ -68,7 +68,7 @@ public class QueryCounter {
   }
 
   /** Creates a builder that tracks counts for the given {@link BoundTopic} (cluster, dc, node). */
-  public static QueryCounterBuilder builder(BoundTopic topic) {
+  public static QueryCounterBuilder builder(BoundTopic<?, ?> topic) {
     return new QueryCounterBuilder(topic);
   }
 
@@ -83,10 +83,10 @@ public class QueryCounter {
    * expected count within the configured time period.
    */
   public void assertTotalCount(int expected) {
-    ConditionChecker.checkThat(() -> assertThat(totalCount.get()).isEqualTo(expected))
-        .every(10, TimeUnit.MILLISECONDS)
-        .before(beforeTimeout, beforeUnit)
-        .becomesTrue();
+    await()
+        .pollInterval(10, TimeUnit.MILLISECONDS)
+        .atMost(beforeTimeout, beforeUnit)
+        .untilAsserted(() -> assertThat(totalCount.get()).isEqualTo(expected));
   }
 
   /**
@@ -104,10 +104,10 @@ public class QueryCounter {
         expectedCounts.put(id, counts[id]);
       }
     }
-    ConditionChecker.checkThat(() -> assertThat(countMap).containsAllEntriesOf(expectedCounts))
-        .every(10, TimeUnit.MILLISECONDS)
-        .before(beforeTimeout, beforeUnit)
-        .becomesTrue();
+    await()
+        .pollInterval(10, TimeUnit.MILLISECONDS)
+        .atMost(beforeTimeout, beforeUnit)
+        .untilAsserted(() -> assertThat(countMap).containsAllEntriesOf(expectedCounts));
   }
 
   public static class QueryCounterBuilder {
@@ -116,12 +116,12 @@ public class QueryCounter {
     private static Predicate<QueryLog> DEFAULT_FILTER = (q) -> !q.getQuery().isEmpty();
 
     private Predicate<QueryLog> queryLogFilter = DEFAULT_FILTER;
-    private BoundTopic topic;
+    private BoundTopic<?, ?> topic;
     private NotificationMode notificationMode = NotificationMode.BEFORE_PROCESSING;
     private long beforeTimeout = 1;
     private TimeUnit beforeUnit = TimeUnit.SECONDS;
 
-    private QueryCounterBuilder(BoundTopic topic) {
+    private QueryCounterBuilder(BoundTopic<?, ?> topic) {
       this.topic = topic;
     }
 

@@ -25,7 +25,7 @@ public class ParseUtils {
    * @return the index of the first character in toParse from idx that is not a "space.
    */
   public static int skipSpaces(String toParse, int idx) {
-    while (isBlank(toParse.charAt(idx)) && idx < toParse.length()) ++idx;
+    while (idx < toParse.length() && isBlank(toParse.charAt(idx))) ++idx;
     return idx;
   }
 

@@ -32,6 +32,7 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
@@ -344,7 +345,7 @@ public class BoundStatementCcmIT {
       // Bound statements do not support per-query keyspaces, so this is not set
       assertThat(boundStatement.getKeyspace()).isNull();
       // Should not be propagated
-      assertThat(boundStatement.getQueryTimestamp()).isEqualTo(Long.MIN_VALUE);
+      assertThat(boundStatement.getQueryTimestamp()).isEqualTo(Statement.NO_DEFAULT_TIMESTAMP);
     }
   }
 

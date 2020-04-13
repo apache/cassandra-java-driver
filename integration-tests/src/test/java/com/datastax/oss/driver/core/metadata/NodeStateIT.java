@@ -17,6 +17,7 @@ package com.datastax.oss.driver.core.metadata;
 
 import static com.datastax.oss.driver.assertions.Assertions.assertThat;
 import static com.datastax.oss.driver.assertions.Assertions.fail;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -42,7 +43,6 @@ import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
-import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
@@ -148,13 +148,13 @@ public class NodeStateIT {
             driverContext.getLoadBalancingPolicy(DriverExecutionProfile.DEFAULT_NAME);
 
     // Sanity check: the driver should have connected to simulacron
-    ConditionChecker.checkThat(
+    await()
+        .alias("Connections established")
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .until(
             () ->
                 // 1 control connection + 2 pooled connections per node
-                simulacron.cluster().getActiveConnections() == 5)
-        .as("Connections established")
-        .before(10, TimeUnit.SECONDS)
-        .becomesTrue();
+                simulacron.cluster().getActiveConnections() == 5);
 
     // Find out which node is the control node, and identify the corresponding Simulacron and driver
     // metadata objects.
@@ -194,14 +194,14 @@ public class NodeStateIT {
 
   @Test
   public void should_report_connections_for_healthy_nodes() {
-    ConditionChecker.checkThat(
+    await()
+        .alias("Node metadata up-to-date")
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .untilAsserted(
             () -> {
               assertThat(metadataControlNode).isUp().hasOpenConnections(3).isNotReconnecting();
               assertThat(metadataRegularNode).isUp().hasOpenConnections(2).isNotReconnecting();
-            })
-        .as("Node metadata up-to-date")
-        .before(10, TimeUnit.SECONDS)
-        .becomesTrue();
+            });
   }
 
   @Test
@@ -210,11 +210,11 @@ public class NodeStateIT {
     NodeConnectionReport report = simulacronRegularNode.getConnections();
     simulacron.cluster().closeConnection(report.getConnections().get(0), CloseType.DISCONNECT);
 
-    ConditionChecker.checkThat(
-            () -> assertThat(metadataRegularNode).isUp().hasOpenConnections(1).isReconnecting())
-        .as("Reconnection started")
-        .before(10, TimeUnit.SECONDS)
-        .becomesTrue();
+    await()
+        .alias("Reconnection started")
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .untilAsserted(
+            () -> assertThat(metadataRegularNode).isUp().hasOpenConnections(1).isReconnecting());
     inOrder.verify(nodeStateListener, never()).onDown(metadataRegularNode);
   }
 
@@ -222,11 +222,11 @@ public class NodeStateIT {
   public void should_mark_regular_node_down_when_no_more_connections() {
     simulacronRegularNode.stop();
 
-    ConditionChecker.checkThat(
-            () -> assertThat(metadataRegularNode).isDown().hasOpenConnections(0).isReconnecting())
-        .as("Node going down")
-        .before(10, TimeUnit.SECONDS)
-        .becomesTrue();
+    await()
+        .alias("Node going down")
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .untilAsserted(
+            () -> assertThat(metadataRegularNode).isDown().hasOpenConnections(0).isReconnecting());
 
     expect(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, metadataRegularNode));
     inOrder.verify(nodeStateListener, timeout(500)).onDown(metadataRegularNode);
@@ -244,19 +244,19 @@ public class NodeStateIT {
         simulacron.cluster().closeConnection(address, CloseType.DISCONNECT);
       }
     }
-    ConditionChecker.checkThat(
-            () -> assertThat(metadataControlNode).isUp().hasOpenConnections(1).isReconnecting())
-        .as("Control node lost its non-control connections")
-        .before(10, TimeUnit.SECONDS)
-        .becomesTrue();
+    await()
+        .alias("Control node lost its non-control connections")
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .untilAsserted(
+            () -> assertThat(metadataControlNode).isUp().hasOpenConnections(1).isReconnecting());
     inOrder.verify(nodeStateListener, never()).onDown(metadataRegularNode);
 
     simulacron.cluster().closeConnection(controlAddress, CloseType.DISCONNECT);
-    ConditionChecker.checkThat(
-            () -> assertThat(metadataControlNode).isDown().hasOpenConnections(0).isReconnecting())
-        .as("Control node going down")
-        .before(10, TimeUnit.SECONDS)
-        .becomesTrue();
+    await()
+        .alias("Control node going down")
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .untilAsserted(
+            () -> assertThat(metadataControlNode).isDown().hasOpenConnections(0).isReconnecting());
     inOrder.verify(nodeStateListener, timeout(500)).onDown(metadataControlNode);
 
     expect(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, metadataControlNode));
@@ -266,20 +266,20 @@ public class NodeStateIT {
   public void should_bring_node_back_up_when_reconnection_succeeds() {
     simulacronRegularNode.stop();
 
-    ConditionChecker.checkThat(
-            () -> assertThat(metadataRegularNode).isDown().hasOpenConnections(0).isReconnecting())
-        .as("Node going down")
-        .before(10, TimeUnit.SECONDS)
-        .becomesTrue();
+    await()
+        .alias("Node going down")
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .untilAsserted(
+            () -> assertThat(metadataRegularNode).isDown().hasOpenConnections(0).isReconnecting());
     inOrder.verify(nodeStateListener, timeout(500)).onDown(metadataRegularNode);
 
     simulacronRegularNode.acceptConnections();
 
-    ConditionChecker.checkThat(
-            () -> assertThat(metadataRegularNode).isUp().hasOpenConnections(2).isNotReconnecting())
-        .as("Connections re-established")
-        .before(10, TimeUnit.SECONDS)
-        .becomesTrue();
+    await()
+        .alias("Connections re-established")
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .untilAsserted(
+            () -> assertThat(metadataRegularNode).isUp().hasOpenConnections(2).isNotReconnecting());
     inOrder.verify(nodeStateListener, timeout(500)).onUp(metadataRegularNode);
 
     expect(
@@ -291,45 +291,45 @@ public class NodeStateIT {
   public void should_apply_up_and_down_topology_events_when_ignored() {
     defaultLoadBalancingPolicy.ignore(metadataRegularNode);
 
-    ConditionChecker.checkThat(
+    await()
+        .alias("Driver closed all connections to ignored node")
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .untilAsserted(
             () ->
                 assertThat(metadataRegularNode)
                     .isUp()
                     .isIgnored()
                     .hasOpenConnections(0)
-                    .isNotReconnecting())
-        .as("Driver closed all connections to ignored node")
-        .before(10, TimeUnit.SECONDS)
-        .becomesTrue();
+                    .isNotReconnecting());
 
     driverContext
         .getEventBus()
         .fire(TopologyEvent.suggestDown(metadataRegularNode.getBroadcastRpcAddress().get()));
-    ConditionChecker.checkThat(
+    await()
+        .alias("SUGGEST_DOWN event applied")
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .untilAsserted(
             () ->
                 assertThat(metadataRegularNode)
                     .isDown()
                     .isIgnored()
                     .hasOpenConnections(0)
-                    .isNotReconnecting())
-        .as("SUGGEST_DOWN event applied")
-        .before(10, TimeUnit.SECONDS)
-        .becomesTrue();
+                    .isNotReconnecting());
     inOrder.verify(nodeStateListener, timeout(500)).onDown(metadataRegularNode);
 
     driverContext
         .getEventBus()
         .fire(TopologyEvent.suggestUp(metadataRegularNode.getBroadcastRpcAddress().get()));
-    ConditionChecker.checkThat(
+    await()
+        .alias("SUGGEST_UP event applied")
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .untilAsserted(
             () ->
                 assertThat(metadataRegularNode)
                     .isUp()
                     .isIgnored()
                     .hasOpenConnections(0)
-                    .isNotReconnecting())
-        .as("SUGGEST_UP event applied")
-        .before(10, TimeUnit.MINUTES)
-        .becomesTrue();
+                    .isNotReconnecting());
     inOrder.verify(nodeStateListener, timeout(500)).onUp(metadataRegularNode);
 
     defaultLoadBalancingPolicy.stopIgnoring(metadataRegularNode);
@@ -371,11 +371,11 @@ public class NodeStateIT {
 
       localSimulacronNode.stop();
 
-      ConditionChecker.checkThat(
-              () -> assertThat(localMetadataNode).isDown().hasOpenConnections(0).isReconnecting())
-          .as("Node going down")
-          .before(10, TimeUnit.SECONDS)
-          .becomesTrue();
+      await()
+          .alias("Node going down")
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .untilAsserted(
+              () -> assertThat(localMetadataNode).isDown().hasOpenConnections(0).isReconnecting());
       verify(localNodeStateListener, timeout(500)).onDown(localMetadataNode);
 
       expect(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, localMetadataNode));
@@ -385,10 +385,10 @@ public class NodeStateIT {
           .getEventBus()
           .fire(TopologyEvent.suggestUp(localMetadataNode.getBroadcastRpcAddress().get()));
 
-      ConditionChecker.checkThat(() -> assertThat(localMetadataNode).isUp().isNotReconnecting())
-          .as("Node coming back up")
-          .before(10, TimeUnit.SECONDS)
-          .becomesTrue();
+      await()
+          .alias("Node coming back up")
+          .pollInterval(500, TimeUnit.MILLISECONDS)
+          .untilAsserted(() -> assertThat(localMetadataNode).isUp().isNotReconnecting());
       verify(localNodeStateListener, timeout(500).times(2)).onUp(localMetadataNode);
 
       expect(NodeStateEvent.changed(NodeState.DOWN, NodeState.UP, localMetadataNode));
@@ -400,15 +400,15 @@ public class NodeStateIT {
     driverContext
         .getEventBus()
         .fire(TopologyEvent.forceDown(metadataRegularNode.getBroadcastRpcAddress().get()));
-    ConditionChecker.checkThat(
+    await()
+        .alias("Node forced down")
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .untilAsserted(
             () ->
                 assertThat(metadataRegularNode)
                     .isForcedDown()
                     .hasOpenConnections(0)
-                    .isNotReconnecting())
-        .as("Node forced down")
-        .before(10, TimeUnit.SECONDS)
-        .becomesTrue();
+                    .isNotReconnecting());
     inOrder.verify(nodeStateListener, timeout(500)).onDown(metadataRegularNode);
 
     // Should ignore up/down topology events while forced down
@@ -428,11 +428,11 @@ public class NodeStateIT {
     driverContext
         .getEventBus()
         .fire(TopologyEvent.forceUp(metadataRegularNode.getBroadcastRpcAddress().get()));
-    ConditionChecker.checkThat(
-            () -> assertThat(metadataRegularNode).isUp().hasOpenConnections(2).isNotReconnecting())
-        .as("Node forced back up")
-        .before(10, TimeUnit.SECONDS)
-        .becomesTrue();
+    await()
+        .alias("Node forced back up")
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .untilAsserted(
+            () -> assertThat(metadataRegularNode).isUp().hasOpenConnections(2).isNotReconnecting());
     inOrder.verify(nodeStateListener, timeout(500)).onUp(metadataRegularNode);
   }
 
@@ -443,15 +443,15 @@ public class NodeStateIT {
     driverContext
         .getEventBus()
         .fire(TopologyEvent.forceDown(metadataRegularNode.getBroadcastRpcAddress().get()));
-    ConditionChecker.checkThat(
+    await()
+        .alias("Node forced down")
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .untilAsserted(
             () ->
                 assertThat(metadataRegularNode)
                     .isForcedDown()
                     .hasOpenConnections(0)
-                    .isNotReconnecting())
-        .as("Node forced down")
-        .before(10, TimeUnit.SECONDS)
-        .becomesTrue();
+                    .isNotReconnecting());
     inOrder.verify(nodeStateListener, timeout(500)).onDown(metadataRegularNode);
 
     // Should ignore up/down topology events while forced down
@@ -472,16 +472,16 @@ public class NodeStateIT {
     driverContext
         .getEventBus()
         .fire(TopologyEvent.forceUp(metadataRegularNode.getBroadcastRpcAddress().get()));
-    ConditionChecker.checkThat(
+    await()
+        .alias("Node forced back up")
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .untilAsserted(
             () ->
                 assertThat(metadataRegularNode)
                     .isUp()
                     .isIgnored()
                     .hasOpenConnections(0)
-                    .isNotReconnecting())
-        .as("Node forced back up")
-        .before(10, TimeUnit.SECONDS)
-        .becomesTrue();
+                    .isNotReconnecting());
     inOrder.verify(nodeStateListener, timeout(500)).onUp(metadataRegularNode);
 
     defaultLoadBalancingPolicy.stopIgnoring(metadataRegularNode);

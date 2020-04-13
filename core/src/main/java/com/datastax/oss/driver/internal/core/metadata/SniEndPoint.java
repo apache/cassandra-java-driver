@@ -103,6 +103,7 @@ public class SniEndPoint implements EndPoint {
     return hostString.replace('.', '_') + ':' + proxyAddress.getPort() + '_' + serverName;
   }
 
+  @SuppressWarnings("UnnecessaryLambda")
   private static final Comparator<InetAddress> IP_COMPARATOR =
       (InetAddress address1, InetAddress address2) ->
           UnsignedBytes.lexicographicalComparator()

@@ -79,13 +79,13 @@ public class CcmBridge implements AutoCloseable {
 
   public static final String CLUSTER_NAME = "ccm_1";
 
-  public static final String DEFAULT_CLIENT_TRUSTSTORE_PASSWORD = "cassandra1sfun";
+  public static final String DEFAULT_CLIENT_TRUSTSTORE_PASSWORD = "fakePasswordForTests";
   public static final String DEFAULT_CLIENT_TRUSTSTORE_PATH = "/client.truststore";
 
   public static final File DEFAULT_CLIENT_TRUSTSTORE_FILE =
       createTempStore(DEFAULT_CLIENT_TRUSTSTORE_PATH);
 
-  public static final String DEFAULT_CLIENT_KEYSTORE_PASSWORD = "cassandra1sfun";
+  public static final String DEFAULT_CLIENT_KEYSTORE_PASSWORD = "fakePasswordForTests";
   public static final String DEFAULT_CLIENT_KEYSTORE_PATH = "/client.keystore";
 
   public static final File DEFAULT_CLIENT_KEYSTORE_FILE =
@@ -95,13 +95,13 @@ public class CcmBridge implements AutoCloseable {
   public static final File DEFAULT_CLIENT_PRIVATE_KEY_FILE = createTempStore("/client.key");
   public static final File DEFAULT_CLIENT_CERT_CHAIN_FILE = createTempStore("/client.crt");
 
-  public static final String DEFAULT_SERVER_TRUSTSTORE_PASSWORD = "cassandra1sfun";
+  public static final String DEFAULT_SERVER_TRUSTSTORE_PASSWORD = "fakePasswordForTests";
   public static final String DEFAULT_SERVER_TRUSTSTORE_PATH = "/server.truststore";
 
   private static final File DEFAULT_SERVER_TRUSTSTORE_FILE =
       createTempStore(DEFAULT_SERVER_TRUSTSTORE_PATH);
 
-  public static final String DEFAULT_SERVER_KEYSTORE_PASSWORD = "cassandra1sfun";
+  public static final String DEFAULT_SERVER_KEYSTORE_PASSWORD = "fakePasswordForTests";
   public static final String DEFAULT_SERVER_KEYSTORE_PATH = "/server.keystore";
 
   private static final File DEFAULT_SERVER_KEYSTORE_FILE =
@@ -262,7 +262,13 @@ public class CcmBridge implements AutoCloseable {
 
   public void start() {
     if (started.compareAndSet(false, true)) {
-      execute("start", jvmArgs, "--wait-for-binary-proto");
+      try {
+        execute("start", jvmArgs, "--wait-for-binary-proto");
+      } catch (RuntimeException re) {
+        // if something went wrong starting CCM, see if we can also dump the error
+        executeCheckLogError();
+        throw re;
+      }
     }
   }
 
@@ -315,13 +321,31 @@ public class CcmBridge implements AutoCloseable {
   }
 
   private void execute(CommandLine cli) {
-    logger.debug("Executing: " + cli);
+    execute(cli, false);
+  }
+
+  private void executeCheckLogError() {
+    String command = "ccm checklogerror --config-dir=" + configDirectory.toFile().getAbsolutePath();
+    // force all logs to be error logs
+    execute(CommandLine.parse(command), true);
+  }
+
+  private void execute(CommandLine cli, boolean forceErrorLogging) {
+    if (forceErrorLogging) {
+      logger.error("Executing: " + cli);
+    } else {
+      logger.debug("Executing: " + cli);
+    }
     ExecuteWatchdog watchDog = new ExecuteWatchdog(TimeUnit.MINUTES.toMillis(10));
     try (LogOutputStream outStream =
             new LogOutputStream() {
               @Override
               protected void processLine(String line, int logLevel) {
-                logger.debug("ccmout> {}", line);
+                if (forceErrorLogging) {
+                  logger.error("ccmout> {}", line);
+                } else {
+                  logger.debug("ccmout> {}", line);
+                }
               }
             };
         LogOutputStream errStream =

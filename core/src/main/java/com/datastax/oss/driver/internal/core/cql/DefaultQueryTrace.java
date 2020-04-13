@@ -72,6 +72,7 @@ public class DefaultQueryTrace implements QueryTrace {
 
   @NonNull
   @Override
+  @Deprecated
   public InetAddress getCoordinator() {
     return coordinator.getAddress();
   }

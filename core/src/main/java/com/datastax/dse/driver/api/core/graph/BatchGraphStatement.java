@@ -16,6 +16,7 @@
 package com.datastax.dse.driver.api.core.graph;
 
 import com.datastax.dse.driver.internal.core.graph.DefaultBatchGraphStatement;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
@@ -67,7 +68,7 @@ public interface BatchGraphStatement
         null,
         null,
         null,
-        Long.MIN_VALUE,
+        Statement.NO_DEFAULT_TIMESTAMP,
         null,
         null,
         Collections.emptyMap(),
@@ -87,7 +88,7 @@ public interface BatchGraphStatement
         null,
         null,
         null,
-        Long.MIN_VALUE,
+        Statement.NO_DEFAULT_TIMESTAMP,
         null,
         null,
         Collections.emptyMap(),
