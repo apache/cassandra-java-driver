@@ -24,13 +24,13 @@ import jnr.posix.util.DefaultPOSIXHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JnrNativeImpl implements NativeImpl {
+public class JnrLibc implements Libc {
 
-  private static final Logger LOG = LoggerFactory.getLogger(JnrNativeImpl.class);
+  private static final Logger LOG = LoggerFactory.getLogger(JnrLibc.class);
 
   private final Optional<POSIX> posix;
 
-  public JnrNativeImpl() {
+  public JnrLibc() {
 
     this.posix = loadPosix();
   }

@@ -28,19 +28,19 @@ public class Native {
 
   private static class ImplLoader {
 
-    public NativeImpl load() {
+    public Libc load() {
       try {
-        return new JnrNativeImpl();
+        return new JnrLibc();
       } catch (Throwable t) {
         LOG.info(
             "Unable to load JNR native implementation. This could be normal if JNR is excluded from the classpath",
             t);
-        return new EmptyNativeImpl();
+        return new EmptyLibc();
       }
     }
   }
 
-  private static final NativeImpl IMPL = new ImplLoader().load();
+  private static final Libc IMPL = new ImplLoader().load();
 
   private static final Supplier<IllegalStateException> exceptionSupplier =
       Suppliers.ofInstance(new IllegalStateException("Native call failed or was not available"));

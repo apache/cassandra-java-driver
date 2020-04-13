@@ -17,21 +17,13 @@ package com.datastax.oss.driver.internal.core.os;
 
 import java.util.Optional;
 
-/** A no-op NativeImpl implementation; useful if we can't load one of the others */
-public class EmptyNativeImpl implements NativeImpl {
+public interface Libc {
 
-  @Override
-  public boolean available() {
-    return false;
-  }
+  /* Maintained to allow Native.isXAvailable() functionality without trying to make a native call if
+   * the underlying support _is_ available. */
+  public boolean available();
 
-  @Override
-  public Optional<Long> gettimeofday() {
-    return Optional.empty();
-  }
+  public Optional<Long> gettimeofday();
 
-  @Override
-  public Optional<Integer> getpid() {
-    return Optional.empty();
-  }
+  public Optional<Integer> getpid();
 }

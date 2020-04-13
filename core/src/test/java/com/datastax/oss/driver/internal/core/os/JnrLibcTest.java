@@ -26,18 +26,18 @@ import org.junit.Test;
  * Explicitly test native impl based on jnr's POSIX impl. This test should pass on any platform
  * which is supported by jnr.
  */
-public class JnrNativeImplTest {
+public class JnrLibcTest {
 
   @Test
   public void should_be_available() {
 
-    NativeImpl impl = new JnrNativeImpl();
+    Libc impl = new JnrLibc();
     assertThat(impl.available()).isTrue();
   }
 
   @Test
   public void should_support_getpid() {
-    NativeImpl impl = new JnrNativeImpl();
+    Libc impl = new JnrLibc();
     Optional<Integer> val = impl.getpid();
     assertThat(val).isNotEmpty();
     assertThat(val.get()).isGreaterThan(1);
@@ -45,7 +45,7 @@ public class JnrNativeImplTest {
 
   @Test
   public void should_support_gettimeofday() {
-    NativeImpl impl = new JnrNativeImpl();
+    Libc impl = new JnrLibc();
     Optional<Long> val = impl.gettimeofday();
     assertThat(val).isNotEmpty();
     assertThat(val.get()).isGreaterThan(0);
