@@ -41,7 +41,6 @@ class PlatformInfoFinder {
   private static final String MAVEN_IGNORE_LINE = "The following files have been resolved:";
   private static final Pattern DEPENDENCY_SPLIT_REGEX = Pattern.compile(":");
   static final String UNVERIFIED_RUNTIME_VERSION = "UNVERIFIED";
-  public static final String UNKNOWN = "UNKNOWN";
   private final Function<DependencyFromFile, URL> propertiesUrlProvider;
 
   private static final Function<DependencyFromFile, URL> M2_PROPERTIES_PROVIDER =
