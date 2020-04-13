@@ -49,7 +49,6 @@ public class Native {
    * before its (multiple) uses in determineCpu() */
   private static final Locale LOCALE = Locale.ENGLISH;
 
-  @SuppressWarnings("VariableNameSameAsType")
   private static final Cpu CPU = determineCpu();
 
   /** Whether {@link Native#currentTimeMicros()} is available on this system. */
