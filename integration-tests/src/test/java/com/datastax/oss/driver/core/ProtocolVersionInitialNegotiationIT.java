@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
+import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -80,6 +81,7 @@ public class ProtocolVersionInitialNegotiationIT {
 
   /** Note that this test will need to be updated as new protocol versions are introduced. */
   @CassandraRequirement(min = "2.2", description = "required to meet default protocol version")
+  @DseRequirement(min = "6.0", description = "required to meet default protocol version")
   @Test
   public void should_not_downgrade_if_server_supports_latest_version() {
     try (CqlSession session = SessionUtils.newSession(ccm)) {
