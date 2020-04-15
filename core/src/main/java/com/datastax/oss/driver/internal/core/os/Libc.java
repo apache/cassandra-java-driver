@@ -21,9 +21,9 @@ public interface Libc {
 
   /* Maintained to allow Native.isXAvailable() functionality without trying to make a native call if
    * the underlying support _is_ available. */
-  public boolean available();
+  boolean available();
 
-  public Optional<Long> gettimeofday();
+  Optional<Long> gettimeofday();
 
-  public Optional<Integer> getpid();
+  Optional<Integer> getpid();
 }

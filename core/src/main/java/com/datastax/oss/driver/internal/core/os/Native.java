@@ -23,7 +23,7 @@ public class Native {
 
   private static final Logger LOG = LoggerFactory.getLogger(Native.class);
 
-  private static class ImplLoader {
+  private static class LibcLoader {
 
     public Libc load() {
       try {
@@ -37,14 +37,14 @@ public class Native {
     }
   }
 
-  private static final Libc IMPL = new ImplLoader().load();
+  private static final Libc LIBC = new LibcLoader().load();
   private static final CpuInfo.Cpu CPU = CpuInfo.determineCpu();
 
   private static final String NATIVE_CALL_ERR_MSG = "Native call failed or was not available";
 
   /** Whether {@link Native#currentTimeMicros()} is available on this system. */
   public static boolean isCurrentTimeMicrosAvailable() {
-    return IMPL.available();
+    return LIBC.available();
   }
 
   /**
@@ -52,15 +52,15 @@ public class Native {
    * {@link #isCurrentTimeMicrosAvailable()} is true.
    */
   public static long currentTimeMicros() {
-    return IMPL.gettimeofday().orElseThrow(() -> new IllegalStateException(NATIVE_CALL_ERR_MSG));
+    return LIBC.gettimeofday().orElseThrow(() -> new IllegalStateException(NATIVE_CALL_ERR_MSG));
   }
 
   public static boolean isGetProcessIdAvailable() {
-    return IMPL.available();
+    return LIBC.available();
   }
 
   public static int getProcessId() {
-    return IMPL.getpid().orElseThrow(() -> new IllegalStateException(NATIVE_CALL_ERR_MSG));
+    return LIBC.getpid().orElseThrow(() -> new IllegalStateException(NATIVE_CALL_ERR_MSG));
   }
 
   /**
