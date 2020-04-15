@@ -601,6 +601,7 @@ public class NodeStateIT {
             // Stopped node was tried first and marked down, that's our target scenario
             verify(localNodeStateListener, timeout(500)).onDown(localMetadataNode2);
             verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode1);
+            verify(localNodeStateListener, timeout(500)).onSessionReady(localSession);
             verifyNoMoreInteractions(localNodeStateListener);
             return;
           } else {
