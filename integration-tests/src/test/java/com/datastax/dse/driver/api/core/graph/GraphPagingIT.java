@@ -461,38 +461,6 @@ public class GraphPagingIT {
     }
   }
 
-  @Test
-  public void should_trigger_global_timeout_async_after_first_page() throws InterruptedException {
-    // given
-    Duration timeout = Duration.ofSeconds(1);
-    DriverExecutionProfile profile =
-        enableGraphPaging()
-            .withDuration(DseDriverOption.GRAPH_TIMEOUT, timeout)
-            .withInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES, 1)
-            .withInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_PAGE_SIZE, 10);
-
-    // when
-    try {
-      CompletionStage<AsyncGraphResultSet> firstPageFuture =
-          SESSION_RULE
-              .session()
-              .executeAsync(
-                  ScriptGraphStatement.newInstance("g.V().hasLabel('person').values('name')")
-                      .setGraphName(SESSION_RULE.getGraphName())
-                      .setTraversalSource("g")
-                      .setExecutionProfile(profile));
-      AsyncGraphResultSet firstPage = firstPageFuture.toCompletableFuture().get();
-      CCM_RULE.getCcmBridge().pause(1);
-      CompletionStage<AsyncGraphResultSet> secondPageFuture = firstPage.fetchNextPage();
-      secondPageFuture.toCompletableFuture().get();
-      fail("Expecting DriverTimeoutException");
-    } catch (ExecutionException e) {
-      assertThat(e.getCause()).hasMessage("Query timed out after " + timeout);
-    } finally {
-      CCM_RULE.getCcmBridge().resume(1);
-    }
-  }
-
   private DriverExecutionProfile enableGraphPaging() {
     return SESSION_RULE
         .session()
