@@ -146,13 +146,6 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
     }
   }
 
-  protected void populateBuilderWithProfile(CodeBlock.Builder builder) {
-    builder.beginControlFlow("if(context.getExecutionProfileName() != null)");
-    builder.addStatement(
-        "boundStatementBuilder = boundStatementBuilder.setExecutionProfileName(context.getExecutionProfileName())");
-    builder.endControlFlow();
-  }
-
   protected void populateBuilderWithStatementAttributes(
       CodeBlock.Builder builder, ExecutableElement methodElement) {
     StatementAttributes statementAttributes =

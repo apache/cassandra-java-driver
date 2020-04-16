@@ -111,6 +111,8 @@ assert dao1 == dao2;
 
 ### DAO parameterization
 
+#### Keyspace and table
+
 The mapper allows you to reuse the same DAO interface for different tables. For example, given the
 following definitions:
 
@@ -158,6 +160,24 @@ ProductDao dao3 = inventoryMapper.productDao("keyspace3", "table3");
 
 The DAO's keyspace and table can also be injected into custom query strings; see [Query
 methods](../daos/query/).
+
+#### Execution profile
+
+Similarly, a DAO can be parameterized to use a particular [configuration
+profile](../../core/configuration/#execution-profiles):
+
+```java
+@Mapper
+public interface InventoryMapper {
+  @DaoFactory
+  ProductDao productDao(@DaoProfile String profileName);
+
+  @DaoFactory
+  ProductDao productDao(@DaoProfile DriverExecutionProfile profile);
+}
+```
+
+The mapper will call `setExecutionProfileName` / `setExecutionProfile` on every generated statement.
 
 ### Schema validation
 

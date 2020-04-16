@@ -60,8 +60,13 @@
       {
         "code": "java.method.addedToInterface",
         "new": "method java.lang.String com.datastax.oss.driver.api.mapper.MapperContext::getExecutionProfileName()",
-        "justification": "JAVA-2633 Adding execution profile to mapper"
+        "justification": "JAVA-2633: Add execution profile argument to DAO factory method (accept API break -- it's unlikely that MapperContext will be implemented outside of the driver)"
 
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method com.datastax.oss.driver.api.core.config.DriverExecutionProfile com.datastax.oss.driver.api.mapper.MapperContext::getExecutionProfile()",
+        "justification": "JAVA-2633: Add execution profile argument to DAO factory method (accept API break -- it's unlikely that MapperContext will be implemented outside of the driver)"
       }
     ]
   }

@@ -105,8 +105,8 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
     // Validate the arguments
     String keyspaceArgumentName = null;
     String tableArgumentName = null;
-    String executionProfileName = null;
-    boolean executionProfileIsClass = false;
+    String profileArgumentName = null;
+    boolean profileIsClass = false;
 
     for (VariableElement parameterElement : methodElement.getParameters()) {
       if (parameterElement.getAnnotation(DaoKeyspace.class) != null) {
@@ -125,15 +125,11 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
         }
       } else if (parameterElement.getAnnotation(DaoProfile.class) != null) {
 
-        executionProfileName =
-            validateExecutionProfile(
-                parameterElement, executionProfileName, DaoProfile.class, context);
-        if (context
-            .getClassUtils()
-            .isSame(parameterElement.asType(), DriverExecutionProfile.class)) {
-          executionProfileIsClass = true;
-        }
-        if (executionProfileName == null) {
+        profileArgumentName =
+            validateExecutionProfile(parameterElement, profileArgumentName, context);
+        profileIsClass =
+            context.getClassUtils().isSame(parameterElement.asType(), DriverExecutionProfile.class);
+        if (profileArgumentName == null) {
           return Optional.empty();
         }
       } else {
@@ -151,22 +147,22 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
         return Optional.empty();
       }
     }
-    boolean isCachedByKeyspaceAndTable =
-        (keyspaceArgumentName != null || tableArgumentName != null || executionProfileName != null);
+    boolean isCachedByMethodArguments =
+        (keyspaceArgumentName != null || tableArgumentName != null || profileArgumentName != null);
 
     TypeName returnTypeName = ClassName.get(methodElement.getReturnType());
     String suggestedFieldName = methodElement.getSimpleName() + "Cache";
     String fieldName =
-        isCachedByKeyspaceAndTable
+        isCachedByMethodArguments
             ? enclosingClass.addDaoMapField(suggestedFieldName, returnTypeName)
             : enclosingClass.addDaoSimpleField(
                 suggestedFieldName, returnTypeName, daoImplementationName, isAsync);
 
     MethodSpec.Builder overridingMethodBuilder = GeneratedCodePatterns.override(methodElement);
 
-    if (isCachedByKeyspaceAndTable) {
-      // DaoCacheKey key = new DaoCacheKey(x, y)
-      // where x, y is either the name of the parameter or "(CqlIdentifier)null"
+    if (isCachedByMethodArguments) {
+      // DaoCacheKey key = new DaoCacheKey(<ks>, <table>, <profileName>, <profile>)
+      // where <ks>, <table> is either the name of the parameter or "(CqlIdentifier)null"
       overridingMethodBuilder.addCode("$1T key = new $1T(", DaoCacheKey.class);
       if (keyspaceArgumentName == null) {
         overridingMethodBuilder.addCode("($T)null", CqlIdentifier.class);
@@ -180,28 +176,23 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
         overridingMethodBuilder.addCode("$L", tableArgumentName);
       }
       overridingMethodBuilder.addCode(", ");
-      if (executionProfileName == null) {
-        overridingMethodBuilder.addCode("($T)null", String.class);
+      if (profileArgumentName == null) {
+        overridingMethodBuilder.addCode("null, null);\n");
       } else {
-
-        if (!executionProfileIsClass) {
-          overridingMethodBuilder.addCode("$L", executionProfileName);
+        if (profileIsClass) {
+          overridingMethodBuilder.addCode("null, $L);\n", profileArgumentName);
         } else {
-          overridingMethodBuilder.addCode("$L.getName()", executionProfileName);
+          overridingMethodBuilder.addCode("$L, null);\n", profileArgumentName);
         }
       }
-      overridingMethodBuilder.addCode(");\n");
 
-      overridingMethodBuilder.addCode(
+      overridingMethodBuilder.addStatement(
           "return $L.computeIfAbsent(key, "
-              + "k -> $T.$L(context.withKeyspaceAndTable(k.getKeyspaceId(), k.getTableId())",
+              + "k -> $T.$L(context.withDaoParameters(k.getKeyspaceId(), k.getTableId(), "
+              + "k.getExecutionProfileName(), k.getExecutionProfile())))",
           fieldName,
           daoImplementationName,
           isAsync ? "initAsync" : "init");
-      if (executionProfileName != null) {
-        overridingMethodBuilder.addCode(".withExecutionProfile($L)", executionProfileName);
-      }
-      overridingMethodBuilder.addCode("));\n");
     } else {
       overridingMethodBuilder.addStatement("return $L.get()", fieldName);
     }
@@ -232,8 +223,8 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
   }
 
   private String validateExecutionProfile(
-      VariableElement candidate, String previous, Class<?> annotation, ProcessorContext context) {
-    if (!isSingleAnnotation(candidate, previous, annotation, context)) {
+      VariableElement candidate, String previous, ProcessorContext context) {
+    if (!isSingleAnnotation(candidate, previous, DaoProfile.class, context)) {
       return null;
     }
     TypeMirror type = candidate.asType();
@@ -245,7 +236,7 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
               candidate,
               processedType,
               "Invalid parameter type: @%s-annotated parameter of %s methods must be of type %s or %s ",
-              annotation.getSimpleName(),
+              DaoProfile.class.getSimpleName(),
               DaoFactory.class.getSimpleName(),
               String.class.getSimpleName(),
               DriverExecutionProfile.class.getSimpleName());

@@ -20,11 +20,12 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.query;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
+import com.datastax.oss.driver.api.mapper.MapperBuilder;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoProfile;
@@ -35,38 +36,55 @@ import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
+import com.datastax.oss.driver.api.mapper.annotations.StatementAttributes;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
+import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Execute;
-import com.datastax.oss.simulacron.common.cluster.ClusterQueryLogReport;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.QueryLog;
 import com.datastax.oss.simulacron.common.stubbing.PrimeDsl;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.UnaryOperator;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 public class ProfileIT {
 
-  @ClassRule
-  public static final SimulacronRule SIMULACRON_RULE =
+  private static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
-  private static ProfileIT.SimpleDao daoString;
-  private static ProfileIT.SimpleDao daoClass;
-  private static CqlSession mapperSession;
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(SIMULACRON_RULE)
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .startProfile("cl_one")
+                  .withString(DefaultDriverOption.REQUEST_CONSISTENCY, "ONE")
+                  .build())
+          .build();
+
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(SIMULACRON_RULE).around(SESSION_RULE);
+
+  private static final Simple SAMPLE_ENTITY = new Simple(UUID.randomUUID(), "DATA");
+
+  private static DriverExecutionProfile clTwoProfile;
+  private MapperBuilder<SimpleMapper> mapperBuilder;
 
   @BeforeClass
   public static void setupClass() {
@@ -76,94 +94,137 @@ public class ProfileIT {
     primeCountQuery();
     primeUpdateQuery();
 
-    DriverConfigLoader loader =
-        SessionUtils.configLoaderBuilder()
-            .startProfile("cl")
-            .withString(DefaultDriverOption.REQUEST_CONSISTENCY, "ANY")
-            .build();
-    mapperSession = SessionUtils.newSession(SIMULACRON_RULE, loader);
-
-    ProfileIT.InventoryMapper inventoryMapper =
-        new ProfileIT_InventoryMapperBuilder(mapperSession).build();
-    daoString = inventoryMapper.simpleDao("cl");
-    DriverExecutionProfile clProfile = mapperSession.getContext().getConfig().getProfile("cl");
-    daoClass = inventoryMapper.simpleDao(clProfile);
+    // Deliberately based on the default profile, so that we can assert that a dynamically-set
+    // option is correctly taken into account
+    clTwoProfile =
+        SESSION_RULE
+            .session()
+            .getContext()
+            .getConfig()
+            .getDefaultProfile()
+            .withString(DefaultDriverOption.REQUEST_CONSISTENCY, "TWO");
   }
 
   @Before
   public void setup() {
     SIMULACRON_RULE.cluster().clearLogs();
-  }
-
-  private static final ProfileIT.Simple simple = new ProfileIT.Simple(UUID.randomUUID(), "DATA");
-
-  @Test
-  public void should_honor_exec_profile_on_insert() {
-    daoString.save(simple);
-
-    ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
-    validateQueryOptions(report.getQueryLogs().get(0));
-
-    SIMULACRON_RULE.cluster().clearLogs();
-
-    daoClass.save(simple);
-    report = SIMULACRON_RULE.cluster().getLogs();
-    validateQueryOptions(report.getQueryLogs().get(0));
+    mapperBuilder = SimpleMapper.builder(SESSION_RULE.session());
   }
 
   @Test
-  public void should_honor_exec_profile_on_delete() {
-    daoString.delete(simple);
-
-    ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
-    validateQueryOptions(report.getQueryLogs().get(0));
-
-    SIMULACRON_RULE.cluster().clearLogs();
-
-    daoClass.delete(simple);
-    report = SIMULACRON_RULE.cluster().getLogs();
-    validateQueryOptions(report.getQueryLogs().get(0));
+  public void should_build_dao_with_profile_name() {
+    SimpleMapper mapper = mapperBuilder.build();
+    SimpleDao dao = mapper.simpleDao("cl_one");
+    assertClForAllQueries(dao, ConsistencyLevel.ONE);
   }
 
   @Test
-  public void should_honor_exec_profile_on_update() {
-    daoString.update(simple);
-
-    ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
-    validateQueryOptions(report.getQueryLogs().get(0));
-
-    SIMULACRON_RULE.cluster().clearLogs();
-
-    daoClass.update(simple);
-    report = SIMULACRON_RULE.cluster().getLogs();
-    validateQueryOptions(report.getQueryLogs().get(0));
+  public void should_build_dao_with_profile() {
+    SimpleMapper mapper = mapperBuilder.build();
+    SimpleDao dao = mapper.simpleDao(clTwoProfile);
+    assertClForAllQueries(dao, ConsistencyLevel.TWO);
   }
 
   @Test
-  public void should_honor_exec_profile_on_query() {
-    daoString.findByPk(simple.pk);
-
-    ClusterQueryLogReport report = SIMULACRON_RULE.cluster().getLogs();
-    validateQueryOptions(report.getQueryLogs().get(0));
-
-    SIMULACRON_RULE.cluster().clearLogs();
-
-    daoString.findByPk(simple.pk);
-    report = SIMULACRON_RULE.cluster().getLogs();
-    validateQueryOptions(report.getQueryLogs().get(0));
+  public void should_inherit_mapper_profile_name() {
+    SimpleMapper mapper = mapperBuilder.withDefaultExecutionProfileName("cl_one").build();
+    SimpleDao dao = mapper.simpleDao();
+    assertClForAllQueries(dao, ConsistencyLevel.ONE);
   }
 
-  private void validateQueryOptions(QueryLog log) {
+  @Test
+  public void should_inherit_mapper_profile() {
+    SimpleMapper mapper = mapperBuilder.withDefaultExecutionProfile(clTwoProfile).build();
+    SimpleDao dao = mapper.simpleDao();
+    assertClForAllQueries(dao, ConsistencyLevel.TWO);
+  }
 
-    Message message = log.getFrame().message;
+  @Test
+  public void should_override_mapper_profile_name() {
+    SimpleMapper mapper =
+        mapperBuilder
+            .withDefaultExecutionProfileName("defaultProfile") // doesn't need to exist
+            .build();
+    SimpleDao dao = mapper.simpleDao("cl_one");
+    assertClForAllQueries(dao, ConsistencyLevel.ONE);
+  }
+
+  @Test
+  public void should_override_mapper_profile() {
+    DriverExecutionProfile clThreeProfile =
+        SESSION_RULE
+            .session()
+            .getContext()
+            .getConfig()
+            .getDefaultProfile()
+            .withString(DefaultDriverOption.REQUEST_CONSISTENCY, "THREE");
+    SimpleMapper mapper = mapperBuilder.withDefaultExecutionProfile(clThreeProfile).build();
+    SimpleDao dao = mapper.simpleDao(clTwoProfile);
+    assertClForAllQueries(dao, ConsistencyLevel.TWO);
+  }
+
+  @Test
+  public void should_override_mapper_profile_name_with_a_profile() {
+    SimpleMapper mapper =
+        mapperBuilder
+            .withDefaultExecutionProfileName("defaultProfile") // doesn't need to exist
+            .build();
+    SimpleDao dao = mapper.simpleDao(clTwoProfile);
+    assertClForAllQueries(dao, ConsistencyLevel.TWO);
+  }
+
+  @Test
+  public void should_override_mapper_profile_with_a_name() {
+    SimpleMapper mapper = mapperBuilder.withDefaultExecutionProfile(clTwoProfile).build();
+    SimpleDao dao = mapper.simpleDao("cl_one");
+    assertClForAllQueries(dao, ConsistencyLevel.ONE);
+  }
+
+  @Test
+  public void should_use_default_when_no_profile() {
+    SimpleMapper mapper = mapperBuilder.build();
+    SimpleDao dao = mapper.simpleDao();
+    // Default CL inherited from reference.conf
+    assertClForAllQueries(dao, ConsistencyLevel.LOCAL_ONE);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void should_fail_if_mapper_provides_both_profile_and_name() {
+    mapperBuilder
+        .withDefaultExecutionProfileName("cl_one")
+        .withDefaultExecutionProfile(clTwoProfile);
+  }
+
+  private void assertClForAllQueries(SimpleDao dao, ConsistencyLevel expectedLevel) {
+    dao.save(SAMPLE_ENTITY);
+    assertServerSideCl(expectedLevel);
+    dao.delete(SAMPLE_ENTITY);
+    assertServerSideCl(expectedLevel);
+    dao.update(SAMPLE_ENTITY);
+    assertServerSideCl(expectedLevel);
+    dao.findByPk(SAMPLE_ENTITY.pk);
+    assertServerSideCl(expectedLevel);
+
+    // Special cases: profile defined at the method level with statement attributes, should override
+    // dao-level profile.
+    dao.saveWithClOne(SAMPLE_ENTITY);
+    assertServerSideCl(ConsistencyLevel.ONE);
+    dao.saveWithCustomAttributes(SAMPLE_ENTITY, bs -> bs.setExecutionProfileName("cl_one"));
+    assertServerSideCl(ConsistencyLevel.ONE);
+  }
+
+  private void assertServerSideCl(ConsistencyLevel expectedCl) {
+    List<QueryLog> queryLogs = SIMULACRON_RULE.cluster().getLogs().getQueryLogs();
+    QueryLog lastLog = queryLogs.get(queryLogs.size() - 1);
+    Message message = lastLog.getFrame().message;
     assertThat(message).isInstanceOf(Execute.class);
     Execute queryExecute = (Execute) message;
-    assertThat(queryExecute.options.consistency)
-        .isEqualTo(DefaultConsistencyLevel.ANY.getProtocolCode());
+    assertThat(queryExecute.options.consistency).isEqualTo(expectedCl.getProtocolCode());
   }
 
   private static void primeInsertQuery() {
-    Map<String, Object> params = ImmutableMap.of("pk", simple.getPk(), "data", simple.getData());
+    Map<String, Object> params =
+        ImmutableMap.of("pk", SAMPLE_ENTITY.getPk(), "data", SAMPLE_ENTITY.getData());
     Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid", "data", "ascii");
     SIMULACRON_RULE
         .cluster()
@@ -171,15 +232,16 @@ public class ProfileIT {
             when(query(
                     "INSERT INTO ks.simple (pk,data) VALUES (:pk,:data)",
                     Lists.newArrayList(
+                        com.datastax.oss.simulacron.common.codec.ConsistencyLevel.LOCAL_ONE,
                         com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ONE,
-                        com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ANY),
+                        com.datastax.oss.simulacron.common.codec.ConsistencyLevel.TWO),
                     params,
                     paramTypes))
                 .then(noRows()));
   }
 
   private static void primeDeleteQuery() {
-    Map<String, Object> params = ImmutableMap.of("pk", simple.getPk());
+    Map<String, Object> params = ImmutableMap.of("pk", SAMPLE_ENTITY.getPk());
     Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid");
     SIMULACRON_RULE
         .cluster()
@@ -187,8 +249,9 @@ public class ProfileIT {
             when(query(
                     "DELETE FROM ks.simple WHERE pk=:pk",
                     Lists.newArrayList(
+                        com.datastax.oss.simulacron.common.codec.ConsistencyLevel.LOCAL_ONE,
                         com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ONE,
-                        com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ANY),
+                        com.datastax.oss.simulacron.common.codec.ConsistencyLevel.TWO),
                     params,
                     paramTypes))
                 .then(noRows())
@@ -196,7 +259,7 @@ public class ProfileIT {
   }
 
   private static void primeSelectQuery() {
-    Map<String, Object> params = ImmutableMap.of("pk", simple.getPk());
+    Map<String, Object> params = ImmutableMap.of("pk", SAMPLE_ENTITY.getPk());
     Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid");
     SIMULACRON_RULE
         .cluster()
@@ -204,8 +267,9 @@ public class ProfileIT {
             when(query(
                     "SELECT pk,data FROM ks.simple WHERE pk=:pk",
                     Lists.newArrayList(
+                        com.datastax.oss.simulacron.common.codec.ConsistencyLevel.LOCAL_ONE,
                         com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ONE,
-                        com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ANY),
+                        com.datastax.oss.simulacron.common.codec.ConsistencyLevel.TWO),
                     params,
                     paramTypes))
                 .then(noRows())
@@ -213,7 +277,7 @@ public class ProfileIT {
   }
 
   private static void primeCountQuery() {
-    Map<String, Object> params = ImmutableMap.of("pk", simple.getPk());
+    Map<String, Object> params = ImmutableMap.of("pk", SAMPLE_ENTITY.getPk());
     Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid");
     SIMULACRON_RULE
         .cluster()
@@ -221,8 +285,9 @@ public class ProfileIT {
             when(query(
                     "SELECT count(*) FROM ks.simple WHERE pk=:pk",
                     Lists.newArrayList(
+                        com.datastax.oss.simulacron.common.codec.ConsistencyLevel.LOCAL_ONE,
                         com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ONE,
-                        com.datastax.oss.simulacron.common.codec.ConsistencyLevel.ANY),
+                        com.datastax.oss.simulacron.common.codec.ConsistencyLevel.TWO),
                     params,
                     paramTypes))
                 .then(PrimeDsl.rows().row("count", 1L).columnTypes("count", "bigint").build())
@@ -230,7 +295,8 @@ public class ProfileIT {
   }
 
   private static void primeUpdateQuery() {
-    Map<String, Object> params = ImmutableMap.of("pk", simple.getPk(), "data", simple.getData());
+    Map<String, Object> params =
+        ImmutableMap.of("pk", SAMPLE_ENTITY.getPk(), "data", SAMPLE_ENTITY.getData());
     Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid", "data", "ascii");
     SIMULACRON_RULE
         .cluster()
@@ -246,30 +312,44 @@ public class ProfileIT {
   }
 
   @Mapper
-  public interface InventoryMapper {
+  public interface SimpleMapper {
     @DaoFactory
-    ProfileIT.SimpleDao simpleDao(@DaoProfile String executionProfile);
+    SimpleDao simpleDao();
 
     @DaoFactory
-    ProfileIT.SimpleDao simpleDao(@DaoProfile DriverExecutionProfile executionProfile);
+    SimpleDao simpleDao(@DaoProfile String executionProfile);
+
+    @DaoFactory
+    SimpleDao simpleDao(@DaoProfile DriverExecutionProfile executionProfile);
+
+    static MapperBuilder<SimpleMapper> builder(CqlSession session) {
+      return new ProfileIT_SimpleMapperBuilder(session);
+    }
   }
 
   @Dao
   public interface SimpleDao {
     @Insert
-    void save(ProfileIT.Simple simple);
+    void save(Simple simple);
 
     @Delete
-    void delete(ProfileIT.Simple simple);
+    void delete(Simple simple);
 
     @Select
-    ProfileIT.Simple findByPk(UUID pk);
+    Simple findByPk(UUID pk);
 
     @Query("SELECT count(*) FROM ks.simple WHERE pk=:pk")
     long count(UUID pk);
 
     @Update
-    void update(ProfileIT.Simple simple);
+    void update(Simple simple);
+
+    @Insert
+    @StatementAttributes(executionProfileName = "cl_one")
+    void saveWithClOne(Simple simple);
+
+    @Insert
+    void saveWithCustomAttributes(Simple simple, UnaryOperator<BoundStatementBuilder> attributes);
   }
 
   @Entity(defaultKeyspace = "ks")

@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.mapper.annotations;
 
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -26,18 +27,16 @@ import java.lang.annotation.Target;
  *
  * <p>Example:
  *
- * <p>*
- *
  * <pre>
  *  * &#64;Mapper
  *  * public interface InventoryMapper {
- *  *   ProductDao productDao(@DaoTable String executionProfile);
+ *  *   ProductDao productDao(@DaoProfile String executionProfile);
  *  * }
  *  * </pre>
  *
- * The annotated parameter can be a {@link String}. If it is present, the value will be injected in
- * the DAO instance, where it will be used in generated queries. This allows you to reuse the same
- * DAO for different execution profiles.
+ * The annotated parameter can be a {@link String} or {@link DriverExecutionProfile}. If it is
+ * present, the value will be injected in the DAO instance, where it will be used in generated
+ * queries. This allows you to reuse the same DAO for different execution profiles.
  *
  * @see DaoFactory
  */

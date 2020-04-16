@@ -16,30 +16,49 @@
 package com.datastax.oss.driver.internal.mapper;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import java.util.Objects;
 
 public class DaoCacheKey {
 
   private final CqlIdentifier keyspaceId;
   private final CqlIdentifier tableId;
-  private final String profileName;
+  private final String executionProfileName;
+  private final DriverExecutionProfile executionProfile;
 
-  public DaoCacheKey(CqlIdentifier keyspaceId, CqlIdentifier tableId, String profileName) {
+  public DaoCacheKey(
+      CqlIdentifier keyspaceId,
+      CqlIdentifier tableId,
+      String executionProfileName,
+      DriverExecutionProfile executionProfile) {
     this.keyspaceId = keyspaceId;
     this.tableId = tableId;
-    this.profileName = profileName;
+    this.executionProfileName = executionProfileName;
+    this.executionProfile = executionProfile;
   }
 
-  public DaoCacheKey(CqlIdentifier keyspaceId, String tableName, String profileName) {
-    this(keyspaceId, toId(tableName), profileName);
+  public DaoCacheKey(
+      CqlIdentifier keyspaceId,
+      String tableName,
+      String executionProfileName,
+      DriverExecutionProfile executionProfile) {
+    this(keyspaceId, toId(tableName), executionProfileName, executionProfile);
   }
 
-  public DaoCacheKey(String keyspaceName, CqlIdentifier tableId, String profileName) {
-    this(toId(keyspaceName), tableId, profileName);
+  public DaoCacheKey(
+      String keyspaceName,
+      CqlIdentifier tableId,
+      String executionProfileName,
+      DriverExecutionProfile executionProfile) {
+    this(toId(keyspaceName), tableId, executionProfileName, executionProfile);
   }
 
-  public DaoCacheKey(String keyspaceName, String tableName, String profileName) {
-    this(toId(keyspaceName), toId(tableName), profileName);
+  public DaoCacheKey(
+      String keyspaceName,
+      String tableName,
+      String executionProfileName,
+      DriverExecutionProfile executionProfile) {
+    this(toId(keyspaceName), toId(tableName), executionProfileName, executionProfile);
   }
 
   private static CqlIdentifier toId(String name) {
@@ -54,6 +73,14 @@ public class DaoCacheKey {
     return tableId;
   }
 
+  public String getExecutionProfileName() {
+    return executionProfileName;
+  }
+
+  public DriverExecutionProfile getExecutionProfile() {
+    return executionProfile;
+  }
+
   @Override
   public boolean equals(Object other) {
     if (other == this) {
@@ -62,7 +89,8 @@ public class DaoCacheKey {
       DaoCacheKey that = (DaoCacheKey) other;
       return Objects.equals(this.keyspaceId, that.keyspaceId)
           && Objects.equals(this.tableId, that.tableId)
-          && Objects.equals(this.profileName, that.profileName);
+          && Objects.equals(this.executionProfileName, that.executionProfileName)
+          && Objects.equals(this.executionProfile, that.executionProfile);
     } else {
       return false;
     }
@@ -70,6 +98,6 @@ public class DaoCacheKey {
 
   @Override
   public int hashCode() {
-    return Objects.hash(keyspaceId, tableId, profileName);
+    return Objects.hash(keyspaceId, tableId, executionProfileName, executionProfile);
   }
 }

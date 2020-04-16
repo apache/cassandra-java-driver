@@ -60,6 +60,11 @@ public class DaoBase {
 
   protected static CompletionStage<PreparedStatement> prepare(
       SimpleStatement statement, MapperContext context) {
+    if (context.getExecutionProfileName() != null) {
+      statement = statement.setExecutionProfileName(context.getExecutionProfileName());
+    } else if (context.getExecutionProfile() != null) {
+      statement = statement.setExecutionProfile(context.getExecutionProfile());
+    }
     return context.getSession().prepareAsync(statement);
   }
 

@@ -140,7 +140,6 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
 
     populateBuilderWithStatementAttributes(methodBodyBuilder, methodElement);
     populateBuilderWithFunction(methodBodyBuilder, boundStatementFunction);
-    populateBuilderWithProfile(methodBodyBuilder);
 
     warnIfCqlNamePresent(parameters.subList(0, 1));
     String entityParameterName = parameters.get(0).getSimpleName().toString();
