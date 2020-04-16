@@ -113,6 +113,7 @@ public class BundleOptions {
         options(
             driverTestInfraBundle(),
             simulacronBundles(),
+            awaitilityBundles(),
             nettyBundles(), // required by the test infra bundle, even for the shaded jar
             jacksonBundles(), // required by the Simulacron bundle, even for the shaded jar
             mavenBundle(
@@ -165,6 +166,14 @@ public class BundleOptions {
                 "com.datastax.oss.simulacron",
                 "simulacron-native-protocol-json",
                 simulacronVersion));
+  }
+
+  public static CompositeOption awaitilityBundles() {
+    String awaitilityVersion = getVersionFromSystemProperty("awaitility.version");
+    return () ->
+        options(
+            mavenBundle("org.awaitility", "awaitility", awaitilityVersion),
+            mavenBundle("org.hamcrest", "hamcrest", "2.1"));
   }
 
   public static MavenArtifactProvisionOption lz4Bundle() {
