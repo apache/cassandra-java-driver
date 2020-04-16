@@ -53,7 +53,8 @@ CREATE TABLE ks_0.rank_by_year_and_name (
     rank int,
     cyclist_name text,
     PRIMARY KEY ((race_year, race_name), rank)
-) WITH bloom_filter_fp_chance = 0.01
+) WITH CLUSTERING ORDER BY (rank DESC)
+    AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys':'ALL','rows_per_partition':'NONE'}
     AND comment = ''
     AND compaction = {'class':'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy','max_threshold':'32','min_threshold':'4'}

@@ -4,6 +4,7 @@
 
 ### 4.6.0 (in progress)
 
+- [improvement] JAVA-2741: Make keyspace/table metadata impls serializable
 - [bug] JAVA-2740: Extend peer validity check to include datacenter, rack and tokens
 - [bug] JAVA-2744: Recompute token map when node is added
 - [new feature] JAVA-2614: Provide a utility to emulate offset paging on the client side

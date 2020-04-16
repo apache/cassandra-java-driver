@@ -19,10 +19,13 @@ import com.datastax.dse.driver.api.core.metadata.schema.DseEdgeMetadata;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 
-public class DefaultDseEdgeMetadata implements DseEdgeMetadata {
+public class DefaultDseEdgeMetadata implements DseEdgeMetadata, Serializable {
+
+  private static final long serialVersionUID = 1;
 
   @NonNull private final CqlIdentifier labelName;
 
