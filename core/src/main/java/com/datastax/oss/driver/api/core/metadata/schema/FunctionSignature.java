@@ -19,6 +19,8 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
+
+import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
@@ -30,7 +32,7 @@ import net.jcip.annotations.Immutable;
  * {@code sum(int, int)} are not equal.
  */
 @Immutable
-public class FunctionSignature {
+public class FunctionSignature implements Serializable {
   @NonNull private final CqlIdentifier name;
   @NonNull private final List<DataType> parameterTypes;
 

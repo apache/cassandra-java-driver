@@ -24,12 +24,14 @@ import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import edu.umd.cs.findbugs.annotations.NonNull;
+
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultKeyspaceMetadata implements KeyspaceMetadata {
+public class DefaultKeyspaceMetadata implements KeyspaceMetadata, Serializable {
 
   @NonNull private final CqlIdentifier name;
   private final boolean durableWrites;

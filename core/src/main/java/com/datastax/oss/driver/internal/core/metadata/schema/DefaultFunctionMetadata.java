@@ -21,12 +21,14 @@ import com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
+
+import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultFunctionMetadata implements FunctionMetadata {
+public class DefaultFunctionMetadata implements FunctionMetadata, Serializable {
 
   @NonNull private final CqlIdentifier keyspace;
   @NonNull private final FunctionSignature signature;

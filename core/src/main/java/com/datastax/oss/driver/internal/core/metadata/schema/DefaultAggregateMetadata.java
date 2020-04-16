@@ -22,6 +22,8 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
@@ -29,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Immutable
-public class DefaultAggregateMetadata implements AggregateMetadata {
+public class DefaultAggregateMetadata implements AggregateMetadata, Serializable {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAggregateMetadata.class);
 
@@ -40,7 +42,7 @@ public class DefaultAggregateMetadata implements AggregateMetadata {
   @NonNull private final DataType returnType;
   @NonNull private final FunctionSignature stateFuncSignature;
   @NonNull private final DataType stateType;
-  @NonNull private final TypeCodec<Object> stateTypeCodec;
+  @NonNull private transient final TypeCodec<Object> stateTypeCodec;
 
   public DefaultAggregateMetadata(
       @NonNull CqlIdentifier keyspace,

@@ -22,6 +22,8 @@ import com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -30,7 +32,7 @@ import java.util.UUID;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultTableMetadata implements TableMetadata {
+public class DefaultTableMetadata implements TableMetadata, Serializable {
 
   @NonNull private final CqlIdentifier keyspace;
   @NonNull private final CqlIdentifier name;

@@ -19,11 +19,13 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.type.DataType;
 import edu.umd.cs.findbugs.annotations.NonNull;
+
+import java.io.Serializable;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultColumnMetadata implements ColumnMetadata {
+public class DefaultColumnMetadata implements ColumnMetadata, Serializable {
   @NonNull private final CqlIdentifier keyspace;
   @NonNull private final CqlIdentifier parent;
   @NonNull private final CqlIdentifier name;
