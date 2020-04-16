@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.mapper;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -46,11 +47,24 @@ public interface MapperContext {
   CqlIdentifier getTableId();
 
   /**
-   * If this context belongs to a DAO that was built with a execution-profile-parameterized mapper
-   * method, the value of that parameter. Otherwise null.
+   * If this context belongs to a DAO that was built with a method that takes an execution profile
+   * name as parameter, the value of that parameter. Otherwise null.
+   *
+   * <p>Note that this is mutually exclusive with {@link #getExecutionProfile()}: at most one of the
+   * two methods returns a non-null value (or both return null if no profile was provided).
    */
   @Nullable
   String getExecutionProfileName();
+
+  /**
+   * If this context belongs to a DAO that was built with a method that takes an execution profile
+   * as parameter, the value of that parameter. Otherwise null.
+   *
+   * <p>Note that this is mutually exclusive with {@link #getExecutionProfileName()}: at most one of
+   * the two methods returns a non-null value (or both return null if no profile was provided).
+   */
+  @Nullable
+  DriverExecutionProfile getExecutionProfile();
 
   /**
    * Returns an instance of the given converter class.

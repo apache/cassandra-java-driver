@@ -223,7 +223,6 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
         statementName);
     populateBuilderWithStatementAttributes(methodBodyBuilder, methodElement);
     populateBuilderWithFunction(methodBodyBuilder, boundStatementFunction);
-    populateBuilderWithProfile(methodBodyBuilder);
 
     int nextParameterIndex = 0;
     if (hasEntityParameter) {
