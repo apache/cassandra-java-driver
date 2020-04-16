@@ -53,7 +53,8 @@ CREATE TABLE ks_0.rank_by_year_and_name (
     rank int,
     cyclist_name text,
     PRIMARY KEY ((race_year, race_name), rank)
-) WITH additional_write_policy = '99p'
+) WITH CLUSTERING ORDER BY (rank DESC)
+    AND additional_write_policy = '99p'
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys':'ALL','rows_per_partition':'NONE'}
     AND comment = ''

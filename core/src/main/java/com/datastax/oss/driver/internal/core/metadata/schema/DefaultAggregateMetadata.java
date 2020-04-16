@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
@@ -29,18 +30,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Immutable
-public class DefaultAggregateMetadata implements AggregateMetadata {
+public class DefaultAggregateMetadata implements AggregateMetadata, Serializable {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAggregateMetadata.class);
+
+  private static final long serialVersionUID = 1;
 
   @NonNull private final CqlIdentifier keyspace;
   @NonNull private final FunctionSignature signature;
   @Nullable private final FunctionSignature finalFuncSignature;
   @Nullable private final Object initCond;
+  @Nullable private final String formattedInitCond;
   @NonNull private final DataType returnType;
   @NonNull private final FunctionSignature stateFuncSignature;
   @NonNull private final DataType stateType;
-  @NonNull private final TypeCodec<Object> stateTypeCodec;
 
   public DefaultAggregateMetadata(
       @NonNull CqlIdentifier keyspace,
@@ -55,10 +58,10 @@ public class DefaultAggregateMetadata implements AggregateMetadata {
     this.signature = signature;
     this.finalFuncSignature = finalFuncSignature;
     this.initCond = initCond;
+    this.formattedInitCond = computeFormattedInitCond(initCond, stateTypeCodec);
     this.returnType = returnType;
     this.stateFuncSignature = stateFuncSignature;
     this.stateType = stateType;
-    this.stateTypeCodec = stateTypeCodec;
   }
 
   @NonNull
@@ -106,18 +109,7 @@ public class DefaultAggregateMetadata implements AggregateMetadata {
   @NonNull
   @Override
   public Optional<String> formatInitCond() {
-    if (initCond == null) {
-      return Optional.empty();
-    }
-    try {
-      return Optional.of(stateTypeCodec.format(initCond));
-    } catch (Throwable t) {
-      LOG.warn(
-          String.format(
-              "Failed to format INITCOND for %s.%s, using toString instead",
-              keyspace.asInternal(), signature.getName().asInternal()));
-      return Optional.of(initCond.toString());
-    }
+    return Optional.ofNullable(this.formattedInitCond);
   }
 
   @Override
@@ -159,5 +151,23 @@ public class DefaultAggregateMetadata implements AggregateMetadata {
         + "."
         + signature
         + ")";
+  }
+
+  @Nullable
+  private String computeFormattedInitCond(
+      @Nullable Object initCond, @NonNull TypeCodec<Object> stateTypeCodec) {
+
+    if (initCond == null) {
+      return null;
+    }
+    try {
+      return stateTypeCodec.format(initCond);
+    } catch (Throwable t) {
+      LOG.warn(
+          String.format(
+              "Failed to format INITCOND for %s.%s, using toString instead",
+              keyspace.asInternal(), signature.getName().asInternal()));
+      return initCond.toString();
+    }
   }
 }

@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,7 +33,9 @@ import java.util.UUID;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultDseTableMetadata implements DseGraphTableMetadata {
+public class DefaultDseTableMetadata implements DseGraphTableMetadata, Serializable {
+
+  private static final long serialVersionUID = 1;
 
   @NonNull private final CqlIdentifier keyspace;
   @NonNull private final CqlIdentifier name;

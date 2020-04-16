@@ -23,6 +23,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,7 +32,9 @@ import java.util.UUID;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultViewMetadata implements ViewMetadata {
+public class DefaultViewMetadata implements ViewMetadata, Serializable {
+
+  private static final long serialVersionUID = 1;
 
   @NonNull private final CqlIdentifier keyspace;
   @NonNull private final CqlIdentifier name;

@@ -19,9 +19,12 @@ import com.datastax.dse.driver.api.core.metadata.schema.DseVertexMetadata;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.Serializable;
 import java.util.Objects;
 
-public class DefaultDseVertexMetadata implements DseVertexMetadata {
+public class DefaultDseVertexMetadata implements DseVertexMetadata, Serializable {
+
+  private static final long serialVersionUID = 1;
 
   @NonNull private final CqlIdentifier labelName;
 

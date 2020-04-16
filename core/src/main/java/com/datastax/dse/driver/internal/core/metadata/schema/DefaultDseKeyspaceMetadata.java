@@ -25,13 +25,16 @@ import com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultDseKeyspaceMetadata implements DseGraphKeyspaceMetadata {
+public class DefaultDseKeyspaceMetadata implements DseGraphKeyspaceMetadata, Serializable {
+
+  private static final long serialVersionUID = 1;
 
   @NonNull private final CqlIdentifier name;
   private final boolean durableWrites;
