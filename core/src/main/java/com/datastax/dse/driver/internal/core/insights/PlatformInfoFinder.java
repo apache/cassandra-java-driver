@@ -41,7 +41,6 @@ class PlatformInfoFinder {
   private static final String MAVEN_IGNORE_LINE = "The following files have been resolved:";
   private static final Pattern DEPENDENCY_SPLIT_REGEX = Pattern.compile(":");
   static final String UNVERIFIED_RUNTIME_VERSION = "UNVERIFIED";
-  public static final String UNKNOWN = "UNKNOWN";
   private final Function<DependencyFromFile, URL> propertiesUrlProvider;
 
   @SuppressWarnings("UnnecessaryLambda")
@@ -214,7 +213,7 @@ class PlatformInfoFinder {
 
   private CPUS getCpuInfo() {
     int numberOfProcessors = Runtime.getRuntime().availableProcessors();
-    String model = Native.isPlatformAvailable() ? Native.getCPU() : UNKNOWN;
+    String model = Native.getCpu();
     return new CPUS(numberOfProcessors, model);
   }
 

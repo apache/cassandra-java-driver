@@ -303,11 +303,11 @@ The driver performs native calls with [JNR](https://github.com/jnr). This is use
 * to get the process ID when generating [UUIDs][Uuids].
 
 In both cases, this is completely optional; if system calls are not available on the current
-platform, or the libraries fail to load for any reason, the driver falls back to pure Java
+platform, or the library fails to load for any reason, the driver falls back to pure Java
 workarounds.
 
 If you don't want to use system calls, or already know (from looking at the driver's logs) that they
-are not available on your platform, you can exclude the following dependencies:
+are not available on your platform, you can exclude the following dependency:
 
 ```xml
 <dependency>
@@ -315,10 +315,6 @@ are not available on your platform, you can exclude the following dependencies:
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
-    <exclusion>
-      <groupId>com.github.jnr</groupId>
-      <artifactId>jnr-ffi</artifactId>
-    </exclusion>
     <exclusion>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-posix</artifactId>

@@ -15,15 +15,23 @@
  */
 package com.datastax.oss.driver.internal.core.os;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.Optional;
 
-import org.junit.Test;
+/** A no-op NativeImpl implementation; useful if we can't load one of the others */
+public class EmptyLibc implements Libc {
 
-public class NativeTest {
+  @Override
+  public boolean available() {
+    return false;
+  }
 
-  /** Verifies that {@link Native#getCpu()} returns non-empty cpu architecture */
-  @Test
-  public void should_return_cpu_info() {
-    assertThat(Native.getCpu()).isNotEmpty();
+  @Override
+  public Optional<Long> gettimeofday() {
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<Integer> getpid() {
+    return Optional.empty();
   }
 }

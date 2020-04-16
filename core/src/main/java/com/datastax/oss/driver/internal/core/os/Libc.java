@@ -15,15 +15,15 @@
  */
 package com.datastax.oss.driver.internal.core.os;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.Optional;
 
-import org.junit.Test;
+public interface Libc {
 
-public class NativeTest {
+  /* Maintained to allow Native.isXAvailable() functionality without trying to make a native call if
+   * the underlying support _is_ available. */
+  boolean available();
 
-  /** Verifies that {@link Native#getCpu()} returns non-empty cpu architecture */
-  @Test
-  public void should_return_cpu_info() {
-    assertThat(Native.getCpu()).isNotEmpty();
-  }
+  Optional<Long> gettimeofday();
+
+  Optional<Integer> getpid();
 }
