@@ -4,6 +4,9 @@
 
 ### 4.6.0 (in progress)
 
+- [new feature] JAVA-2614: Provide a utility to emulate offset paging on the client side
+- [new feature] JAVA-2718: Warn when the number of sessions exceeds a configurable threshold
+- [improvement] JAVA-2664: Add a callback to inject the session in listeners
 - [bug] JAVA-2698: TupleCodec and UdtCodec give wrong error message when parsing fails
 - [improvement] JAVA-2435: Add automatic-module-names to the manifests
 - [new feature] JAVA-2054: Add now_in_seconds to protocol v5 query messages

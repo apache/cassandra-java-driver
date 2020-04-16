@@ -18,6 +18,7 @@ package com.datastax.dse.driver.internal.core.tracker;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -106,6 +107,17 @@ public class MultiplexingRequestTracker implements RequestTracker {
         tracker.onNodeError(request, error, latencyNanos, executionProfile, node, logPrefix);
       } catch (Throwable t) {
         LOG.error("[{}] Unexpected error while invoking request tracker", logPrefix, t);
+      }
+    }
+  }
+
+  @Override
+  public void onSessionReady(@NonNull Session session) {
+    for (RequestTracker tracker : trackers) {
+      try {
+        tracker.onSessionReady(session);
+      } catch (Throwable t) {
+        LOG.error("[{}] Unexpected error while invoking request tracker", session.getName(), t);
       }
     }
   }

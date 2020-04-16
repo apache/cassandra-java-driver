@@ -28,6 +28,7 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
+import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -42,6 +43,10 @@ import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 @CassandraRequirement(min = "4.0")
+@DseRequirement(
+    // Use next version -- not sure if it will be in by then, but as a reminder to check
+    min = "6.9",
+    description = "Feature not available in DSE yet")
 public class NowInSecondsIT {
 
   private static final CcmRule CCM_RULE = CcmRule.getInstance();

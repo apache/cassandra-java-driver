@@ -18,17 +18,13 @@ package com.datastax.oss.driver.internal.core.cql;
 import static java.util.stream.StreamSupport.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.oss.driver.api.core.PagingIterable;
-import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
-import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
+import com.datastax.oss.driver.internal.core.MockPagingIterable;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.function.Consumer;
@@ -222,48 +218,6 @@ public class PagingIterableSpliteratorTest {
   private static MockPagingIterable<Integer> iterableOfSize(int size) {
     return new MockPagingIterable<>(
         IntStream.range(0, size).boxed().collect(Collectors.toList()).iterator());
-  }
-
-  private static class MockPagingIterable<T> implements PagingIterable<T> {
-
-    private final Iterator<T> iterator;
-
-    private MockPagingIterable(Iterator<T> iterator) {
-      this.iterator = iterator;
-    }
-
-    @NonNull
-    @Override
-    public Iterator<T> iterator() {
-      return iterator;
-    }
-
-    @Override
-    public boolean isFullyFetched() {
-      return !iterator.hasNext();
-    }
-
-    @NonNull
-    @Override
-    public ColumnDefinitions getColumnDefinitions() {
-      throw new UnsupportedOperationException("irrelevant");
-    }
-
-    @NonNull
-    @Override
-    public List<ExecutionInfo> getExecutionInfos() {
-      throw new UnsupportedOperationException("irrelevant");
-    }
-
-    @Override
-    public int getAvailableWithoutFetching() {
-      throw new UnsupportedOperationException("irrelevant");
-    }
-
-    @Override
-    public boolean wasApplied() {
-      throw new UnsupportedOperationException("irrelevant");
-    }
   }
 
   private static class TestConsumer implements Consumer<Integer> {
