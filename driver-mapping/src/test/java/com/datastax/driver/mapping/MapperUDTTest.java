@@ -34,6 +34,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.UDTValue;
+import com.datastax.driver.core.VersionNumber;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
@@ -493,18 +494,30 @@ public class MapperUDTTest extends CCMTestsSupport {
     MappingManager manager = new MappingManager(session());
     Mapper<User> mapper = manager.mapper(User.class);
     session().execute("DROP TABLE users");
+    // error assertion depends on C* version
+    boolean isCassandra4 =
+        ccm().getCassandraVersion().nextStable().compareTo(VersionNumber.parse("4.0")) >= 0;
     // usage of stale mapper
     try {
       mapper.save(user);
       fail("Expected InvalidQueryException");
     } catch (InvalidQueryException e) {
-      assertThat(e.getMessage()).contains("unconfigured", "users");
+      // error message is different for C* 4.0
+      if (isCassandra4) {
+        assertThat(e.getMessage()).contains("table users", "does not exist");
+      } else {
+        assertThat(e.getMessage()).contains("unconfigured", "users");
+      }
     }
     try {
       mapper.get(user.getUserId());
       fail("Expected InvalidQueryException");
     } catch (InvalidQueryException e) {
-      assertThat(e.getMessage()).contains("unconfigured", "users");
+      if (isCassandra4) {
+        assertThat(e.getMessage()).contains("table users", "does not exist");
+      } else {
+        assertThat(e.getMessage()).contains("unconfigured", "users");
+      }
     }
     // trying to use a new mapper
     try {
