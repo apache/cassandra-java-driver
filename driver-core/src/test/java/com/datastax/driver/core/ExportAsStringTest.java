@@ -146,7 +146,7 @@ public class ExportAsStringTest extends CCMTestsSupport {
         // matter, alphabetical does.
         session.execute(
             "CREATE MATERIALIZED VIEW cyclist_by_r_age "
-                + "AS SELECT age, birthday, name, country "
+                + "AS SELECT cid, age, birthday, name, country "
                 + "FROM cyclist_mv "
                 + "WHERE age IS NOT NULL AND cid IS NOT NULL "
                 + "PRIMARY KEY (age, cid) "
@@ -163,7 +163,7 @@ public class ExportAsStringTest extends CCMTestsSupport {
         // A materialized view for cyclist_mv, select columns
         session.execute(
             "CREATE MATERIALIZED VIEW cyclist_by_age "
-                + "AS SELECT age, birthday, name, country "
+                + "AS SELECT cid, age, birthday, name, country "
                 + "FROM cyclist_mv "
                 + "WHERE age IS NOT NULL AND cid IS NOT NULL "
                 + "PRIMARY KEY (age, cid) WITH comment = 'simple view'");

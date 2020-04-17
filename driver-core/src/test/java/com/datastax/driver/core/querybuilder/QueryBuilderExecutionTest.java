@@ -951,7 +951,7 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
         String.format("INSERT INTO %s (pk, cc, v) VALUES (0,1,1)", table),
         String.format("INSERT INTO %s (pk, cc, v) VALUES (0,2,2)", table),
         String.format(
-            "CREATE MATERIALIZED VIEW %s AS SELECT cc FROM %s WHERE cc IS NOT NULL PRIMARY KEY (pk, cc)",
+            "CREATE MATERIALIZED VIEW %s AS SELECT pk, cc FROM %s WHERE cc IS NOT NULL AND pk IS NOT NULL PRIMARY KEY (pk, cc)",
             mv, table));
 
     // Wait until the MV is fully constructed

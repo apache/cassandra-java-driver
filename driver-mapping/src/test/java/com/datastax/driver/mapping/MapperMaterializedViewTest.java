@@ -43,22 +43,22 @@ public class MapperMaterializedViewTest extends CCMTestsSupport {
             + "       SELECT * FROM scores\n"
             + "       WHERE game IS NOT NULL AND score IS NOT NULL AND user IS NOT NULL AND year IS NOT NULL AND month IS NOT NULL AND day IS NOT NULL\n"
             + "       PRIMARY KEY (game, score, user, year, month, day)\n"
-            + "       WITH CLUSTERING ORDER BY (score desc)",
+            + "       WITH CLUSTERING ORDER BY (score DESC, user ASC, year ASC, month ASC, day ASC)",
         "CREATE MATERIALIZED VIEW dailyhigh AS\n"
             + "       SELECT * FROM scores\n"
             + "       WHERE game IS NOT NULL AND year IS NOT NULL AND month IS NOT NULL AND day IS NOT NULL AND score IS NOT NULL AND user IS NOT NULL\n"
             + "       PRIMARY KEY ((game, year, month, day), score, user)\n"
-            + "       WITH CLUSTERING ORDER BY (score DESC)",
+            + "       WITH CLUSTERING ORDER BY (score DESC, user ASC)",
         "CREATE MATERIALIZED VIEW monthlyhigh AS\n"
             + "       SELECT * FROM scores\n"
             + "       WHERE game IS NOT NULL AND year IS NOT NULL AND month IS NOT NULL AND score IS NOT NULL AND user IS NOT NULL AND day IS NOT NULL\n"
             + "       PRIMARY KEY ((game, year, month), score, user, day)\n"
-            + "       WITH CLUSTERING ORDER BY (score DESC)",
+            + "       WITH CLUSTERING ORDER BY (score DESC, user ASC, day ASC)",
         "CREATE MATERIALIZED VIEW filtereduserhigh AS\n"
             + "       SELECT * FROM scores\n"
             + "       WHERE user in ('jbellis', 'pcmanus') AND game IS NOT NULL AND score IS NOT NULL AND year is NOT NULL AND day is not NULL and month IS NOT NULL\n"
             + "       PRIMARY KEY (game, score, user, year, month, day)\n"
-            + "       WITH CLUSTERING ORDER BY (score DESC)",
+            + "       WITH CLUSTERING ORDER BY (score DESC, user ASC, year ASC, month ASC, day ASC)",
         "INSERT INTO scores (user, game, year, month, day, score) VALUES ('pcmanus', 'Coup', 2015, 5, 1, 4000)",
         "INSERT INTO scores (user, game, year, month, day, score) VALUES ('jbellis', 'Coup', 2015, 5, 3, 1750)",
         "INSERT INTO scores (user, game, year, month, day, score) VALUES ('yukim', 'Coup', 2015, 5, 3, 2250)",

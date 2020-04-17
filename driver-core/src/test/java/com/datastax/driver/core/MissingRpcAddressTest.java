@@ -72,6 +72,14 @@ public class MissingRpcAddressTest extends CCMTestsSupport {
             "DELETE rpc_address FROM system.peers WHERE peer = '%s'",
             ccm().addressOfNode(2).getHostName());
     session.execute(deleteStmt);
+    // For Cassandra 4.0, we also need to remove the info from peers_v2
+    if (ccm().getCassandraVersion().nextStable().compareTo(VersionNumber.parse("4.0")) >= 0) {
+      deleteStmt =
+          String.format(
+              "DELETE native_address, native_port FROM system.peers_v2 WHERE peer = '%s' and peer_port = %d",
+              ccm().addressOfNode(2).getHostName(), ccm().getStoragePort());
+      session.execute(deleteStmt);
+    }
     session.close();
     cluster.close();
   }
