@@ -228,7 +228,7 @@ public class DefaultTopologyMonitorTest {
     verify(peer3).getUuid("host_id");
     verify(peer3, never()).getString(anyString());
 
-    verify(peer2, times(3)).getUuid("host_id");
+    verify(peer2, times(2)).getUuid("host_id");
     verify(peer2).getString("data_center");
   }
 
@@ -258,7 +258,7 @@ public class DefaultTopologyMonitorTest {
     verify(peer3).getUuid("host_id");
     verify(peer3, never()).getString(anyString());
 
-    verify(peer2, times(3)).getUuid("host_id");
+    verify(peer2, times(2)).getUuid("host_id");
     verify(peer2).getString("data_center");
   }
 
@@ -291,7 +291,7 @@ public class DefaultTopologyMonitorTest {
     verify(peer2).getInetAddress("rpc_address");
     verify(peer2, never()).getString(anyString());
 
-    verify(peer1, times(2)).getInetAddress("rpc_address");
+    verify(peer1).getInetAddress("rpc_address");
     verify(peer1).getString("data_center");
   }
 
@@ -324,7 +324,7 @@ public class DefaultTopologyMonitorTest {
     verify(peer2).getInetAddress("native_address");
     verify(peer2, never()).getString(anyString());
 
-    verify(peer1, times(2)).getInetAddress("native_address");
+    verify(peer1).getInetAddress("native_address");
     verify(peer1).getString("data_center");
   }
 
@@ -367,11 +367,7 @@ public class DefaultTopologyMonitorTest {
     topologyMonitor.isSchemaV2 = false;
     node2.broadcastAddress = ADDRESS2;
     AdminRow peer2 = mockPeersRow(2, node2.getHostId());
-    if (columnToCheck.equals("rpc_address")) {
-      when(peer2.getInetAddress(columnToCheck)).thenReturn(null);
-    } else if (columnToCheck.equals("host_id")) {
-      when(peer2.getUuid(columnToCheck)).thenReturn(null);
-    }
+    when(peer2.isNull(columnToCheck)).thenReturn(true);
     topologyMonitor.stubQueries(
         new StubbedQuery(
             "SELECT * FROM system.peers WHERE peer = :address",
@@ -397,17 +393,7 @@ public class DefaultTopologyMonitorTest {
     topologyMonitor.isSchemaV2 = true;
     node2.broadcastAddress = ADDRESS2;
     AdminRow peer2 = mockPeersV2Row(2, node2.getHostId());
-    switch (columnToCheck) {
-      case "native_address":
-        when(peer2.getInetAddress(columnToCheck)).thenReturn(null);
-        break;
-      case "native_port":
-        when(peer2.getInteger(columnToCheck)).thenReturn(null);
-        break;
-      case "host_id":
-        when(peer2.getUuid(columnToCheck)).thenReturn(null);
-        break;
-    }
+    when(peer2.isNull(columnToCheck)).thenReturn(true);
     topologyMonitor.stubQueries(
         new StubbedQuery(
             "SELECT * FROM system.peers_v2 WHERE peer = :address and peer_port = :port",
@@ -428,12 +414,14 @@ public class DefaultTopologyMonitorTest {
 
   @DataProvider
   public static Object[][] columnsToCheckV1() {
-    return new Object[][] {{"rpc_address"}, {"host_id"}};
+    return new Object[][] {{"rpc_address"}, {"host_id"}, {"data_center"}, {"rack"}, {"tokens"}};
   }
 
   @DataProvider
   public static Object[][] columnsToCheckV2() {
-    return new Object[][] {{"native_address"}, {"native_port"}, {"host_id"}};
+    return new Object[][] {
+      {"native_address"}, {"native_port"}, {"host_id"}, {"data_center"}, {"rack"}, {"tokens"}
+    };
   }
 
   @Test
@@ -568,18 +556,23 @@ public class DefaultTopologyMonitorTest {
   private AdminRow mockLocalRow(int i, UUID hostId) {
     try {
       AdminRow row = mock(AdminRow.class);
+      when(row.isNull("host_id")).thenReturn(hostId == null);
       when(row.getUuid("host_id")).thenReturn(hostId);
       when(row.getInetAddress("broadcast_address"))
           .thenReturn(InetAddress.getByName("127.0.0." + i));
+      when(row.isNull("data_center")).thenReturn(false);
       when(row.getString("data_center")).thenReturn("dc" + i);
       when(row.getInetAddress("listen_address")).thenReturn(InetAddress.getByName("127.0.0." + i));
+      when(row.isNull("rack")).thenReturn(false);
       when(row.getString("rack")).thenReturn("rack" + i);
       when(row.getString("release_version")).thenReturn("release_version" + i);
 
       // The driver should not use this column for the local row, because it can contain the
       // non-broadcast RPC address. Simulate the bug to ensure it's handled correctly.
+      when(row.isNull("rpc_address")).thenReturn(false);
       when(row.getInetAddress("rpc_address")).thenReturn(InetAddress.getByName("0.0.0.0"));
 
+      when(row.isNull("tokens")).thenReturn(false);
       when(row.getSetOfString("tokens")).thenReturn(ImmutableSet.of("token" + i));
       when(row.contains("peer")).thenReturn(false);
       return row;
@@ -592,14 +585,23 @@ public class DefaultTopologyMonitorTest {
   private AdminRow mockPeersRow(int i, UUID hostId) {
     try {
       AdminRow row = mock(AdminRow.class);
+      when(row.isNull("host_id")).thenReturn(hostId == null);
       when(row.getUuid("host_id")).thenReturn(hostId);
       when(row.getInetAddress("peer")).thenReturn(InetAddress.getByName("127.0.0." + i));
+      when(row.isNull("data_center")).thenReturn(false);
       when(row.getString("data_center")).thenReturn("dc" + i);
+      when(row.isNull("rack")).thenReturn(false);
       when(row.getString("rack")).thenReturn("rack" + i);
       when(row.getString("release_version")).thenReturn("release_version" + i);
+      when(row.isNull("rpc_address")).thenReturn(false);
       when(row.getInetAddress("rpc_address")).thenReturn(InetAddress.getByName("127.0.0." + i));
+      when(row.isNull("tokens")).thenReturn(false);
       when(row.getSetOfString("tokens")).thenReturn(ImmutableSet.of("token" + i));
       when(row.contains("peer")).thenReturn(true);
+
+      when(row.isNull("native_address")).thenReturn(true);
+      when(row.isNull("native_port")).thenReturn(true);
+
       return row;
     } catch (UnknownHostException e) {
       fail("unexpected", e);
@@ -610,18 +612,26 @@ public class DefaultTopologyMonitorTest {
   private AdminRow mockPeersV2Row(int i, UUID hostId) {
     try {
       AdminRow row = mock(AdminRow.class);
+      when(row.isNull("host_id")).thenReturn(hostId == null);
       when(row.getUuid("host_id")).thenReturn(hostId);
       when(row.getInetAddress("peer")).thenReturn(InetAddress.getByName("127.0.0." + i));
       when(row.getInteger("peer_port")).thenReturn(7000 + i);
+      when(row.isNull("data_center")).thenReturn(false);
       when(row.getString("data_center")).thenReturn("dc" + i);
+      when(row.isNull("rack")).thenReturn(false);
       when(row.getString("rack")).thenReturn("rack" + i);
       when(row.getString("release_version")).thenReturn("release_version" + i);
+      when(row.isNull("native_address")).thenReturn(false);
       when(row.getInetAddress("native_address")).thenReturn(InetAddress.getByName("127.0.0." + i));
+      when(row.isNull("native_port")).thenReturn(false);
       when(row.getInteger("native_port")).thenReturn(9042);
+      when(row.isNull("tokens")).thenReturn(false);
       when(row.getSetOfString("tokens")).thenReturn(ImmutableSet.of("token" + i));
       when(row.contains("peer")).thenReturn(true);
       when(row.contains("peer_port")).thenReturn(true);
       when(row.contains("native_port")).thenReturn(true);
+
+      when(row.isNull("rpc_address")).thenReturn(true);
       return row;
     } catch (UnknownHostException e) {
       fail("unexpected", e);
