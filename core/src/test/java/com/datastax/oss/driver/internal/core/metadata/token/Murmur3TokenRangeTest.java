@@ -74,6 +74,11 @@ public class Murmur3TokenRangeTest {
             range(3074457345618258602L, MIN));
   }
 
+  @Test
+  public void should_format() {
+    assertThat(range(MIN, MAX).format()).isEqualTo(String.format("]%s,%s]", MIN, MAX));
+  }
+
   private Murmur3TokenRange range(long start, long end) {
     return new Murmur3TokenRange(new Murmur3Token(start), new Murmur3Token(end));
   }

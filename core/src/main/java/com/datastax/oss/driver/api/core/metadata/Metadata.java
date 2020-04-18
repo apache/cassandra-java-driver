@@ -15,11 +15,18 @@
  */
 package com.datastax.oss.driver.api.core.metadata;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.metadata.diagnostic.TokenRingDiagnostic;
+import com.datastax.oss.driver.api.core.metadata.diagnostic.TopologyDiagnostic;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.internal.core.metadata.diagnostic.ring.TokenRingDiagnosticGenerator;
+import com.datastax.oss.driver.internal.core.metadata.diagnostic.ring.TokenRingDiagnosticGeneratorFactory;
+import com.datastax.oss.driver.internal.core.metadata.diagnostic.topology.TopologyDiagnosticGenerator;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Optional;
@@ -125,5 +132,52 @@ public interface Metadata {
   @NonNull
   default Optional<String> getClusterName() {
     return Optional.empty();
+  }
+
+  /**
+   * Generates a new {@link TopologyDiagnostic} for this metadata. See the javadocs of {@link
+   * TopologyDiagnostic} for a detailed explanation on the contents of this diagnostic.
+   *
+   * <p>Note: diagnostics rely on Gossip events received by the driver. But Gossip events are not
+   * 100% reliable, and therefore, the accuracy of reported health statuses should be considered
+   * best-effort only, and are not meant to replace a proper operational surveillance tool.
+   */
+  default TopologyDiagnostic generateTopologyDiagnostic() {
+    return new TopologyDiagnosticGenerator(this).generate();
+  }
+
+  /**
+   * Generates a new {@link TokenRingDiagnostic} for this metadata, analyzing token range
+   * availability for the provided keyspace, consistency level and datacenter. See the javadocs of
+   * {@link TokenRingDiagnostic} for a detailed explanation on the contents of this diagnostic.
+   *
+   * <p>For this method to be able to generate a diagnostic, the following conditions need to be
+   * met:
+   *
+   * <ol>
+   *   <li>Token metadata is enabled;
+   *   <li>The keyspace has a supported replication strategy;
+   *   <li>The datacenter name is non-null (required only for {@linkplain
+   *       ConsistencyLevel#isDcLocal() datacenter-local consistency levels}).
+   * </ol>
+   *
+   * <p>Note: diagnostics rely on Gossip events received by the driver. But Gossip events are not
+   * 100% reliable, and therefore, the accuracy of reported health statuses should be considered
+   * best-effort only, and are not meant to replace a proper operational surveillance tool.
+   *
+   * @param keyspace the {@link KeyspaceMetadata keyspace} to analyze.
+   * @param consistencyLevel the {@link ConsistencyLevel consistency level} to use.
+   * @param datacenter the datacenter name; only required for datacenter-local consistency levels,
+   *     may be null otherwise.
+   * @see DefaultDriverOption#METADATA_TOKEN_MAP_ENABLED
+   * @see #getKeyspace(String)
+   */
+  default Optional<TokenRingDiagnostic> generateTokenRingDiagnostic(
+      @NonNull KeyspaceMetadata keyspace,
+      @NonNull ConsistencyLevel consistencyLevel,
+      @Nullable String datacenter) {
+    return new TokenRingDiagnosticGeneratorFactory(this)
+        .maybeCreate(keyspace, consistencyLevel, datacenter)
+        .map(TokenRingDiagnosticGenerator::generate);
   }
 }

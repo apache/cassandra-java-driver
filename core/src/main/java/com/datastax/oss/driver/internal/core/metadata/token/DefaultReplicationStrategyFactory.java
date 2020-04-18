@@ -23,6 +23,16 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class DefaultReplicationStrategyFactory implements ReplicationStrategyFactory {
 
+  public static final String LOCAL_STRATEGY = "org.apache.cassandra.locator.LocalStrategy";
+
+  public static final String SIMPLE_STRATEGY = "org.apache.cassandra.locator.SimpleStrategy";
+
+  public static final String NETWORK_TOPOLOGY_STRATEGY =
+      "org.apache.cassandra.locator.NetworkTopologyStrategy";
+
+  public static final String EVERYWHERE_STRATEGY =
+      "org.apache.cassandra.locator.EverywhereStrategy";
+
   private final String logPrefix;
 
   public DefaultReplicationStrategyFactory(InternalDriverContext context) {
@@ -35,13 +45,13 @@ public class DefaultReplicationStrategyFactory implements ReplicationStrategyFac
     Preconditions.checkNotNull(
         strategyClass, "Missing replication strategy class in " + replicationConfig);
     switch (strategyClass) {
-      case "org.apache.cassandra.locator.LocalStrategy":
+      case LOCAL_STRATEGY:
         return new LocalReplicationStrategy();
-      case "org.apache.cassandra.locator.SimpleStrategy":
+      case SIMPLE_STRATEGY:
         return new SimpleReplicationStrategy(replicationConfig);
-      case "org.apache.cassandra.locator.NetworkTopologyStrategy":
+      case NETWORK_TOPOLOGY_STRATEGY:
         return new NetworkTopologyReplicationStrategy(replicationConfig, logPrefix);
-      case "org.apache.cassandra.locator.EverywhereStrategy":
+      case EVERYWHERE_STRATEGY:
         return new EverywhereReplicationStrategy();
       default:
         throw new IllegalArgumentException("Unsupported replication strategy: " + strategyClass);

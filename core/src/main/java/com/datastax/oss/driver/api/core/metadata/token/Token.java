@@ -15,5 +15,24 @@
  */
 package com.datastax.oss.driver.api.core.metadata.token;
 
+import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
+import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
+import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
+import com.datastax.oss.protocol.internal.util.Bytes;
+
 /** A token on the ring. */
-public interface Token extends Comparable<Token> {}
+public interface Token extends Comparable<Token> {
+
+  /** Formats this token and returns the string representation of its value. */
+  default String format() {
+    if (this instanceof Murmur3Token) {
+      return Long.toString(((Murmur3Token) this).getValue());
+    } else if (this instanceof RandomToken) {
+      return ((RandomToken) this).getValue().toString();
+    } else if (this instanceof ByteOrderedToken) {
+      return Bytes.toHexString(((ByteOrderedToken) this).getValue());
+    } else {
+      return this.toString();
+    }
+  }
+}

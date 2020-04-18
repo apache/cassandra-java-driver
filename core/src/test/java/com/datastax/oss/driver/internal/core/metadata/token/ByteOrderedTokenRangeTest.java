@@ -61,6 +61,11 @@ public class ByteOrderedTokenRangeTest {
     range(MIN, MIN).splitEvenly(1);
   }
 
+  @Test
+  public void should_format() {
+    assertThat(range("0x0a", "0x0d").format()).isEqualTo("]0x0a,0x0d]");
+  }
+
   private ByteOrderedTokenRange range(String start, String end) {
     return new ByteOrderedTokenRange(
         new ByteOrderedToken(Bytes.fromHexString(start)),

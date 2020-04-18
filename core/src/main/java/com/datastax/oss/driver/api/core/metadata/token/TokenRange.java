@@ -144,4 +144,9 @@ public interface TokenRange extends Comparable<TokenRange> {
    */
   @NonNull
   TokenRange mergeWith(@NonNull TokenRange that);
+
+  /** Formats this range as a string of the following generic shape: {@code ]start,end]}. */
+  default String format() {
+    return String.format("]%s,%s]", getStart().format(), getEnd().format());
+  }
 }

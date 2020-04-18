@@ -74,6 +74,11 @@ public class RandomTokenRangeTest {
             range("113427455640312821154458202477256070485", MIN));
   }
 
+  @Test
+  public void should_format() {
+    assertThat(range(MIN, MAX).format()).isEqualTo(String.format("]%s,%s]", MIN, MAX));
+  }
+
   private RandomTokenRange range(String start, String end) {
     return new RandomTokenRange(
         new RandomToken(new BigInteger(start)), new RandomToken(new BigInteger(end)));
