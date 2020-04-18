@@ -100,6 +100,15 @@ public class AdminRow {
     return get(columnName, MAP_OF_STRING_TO_STRING);
   }
 
+  public boolean isNull(String columnName) {
+    if (!contains(columnName)) {
+      return true;
+    } else {
+      int index = columnSpecs.get(columnName).index;
+      return data.get(index) == null;
+    }
+  }
+
   public boolean contains(String columnName) {
     return columnSpecs.containsKey(columnName);
   }
