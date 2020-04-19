@@ -40,7 +40,7 @@ public class AddNodeRefresh extends NodesRefresh {
     Node existing = oldNodes.get(newNodeInfo.getHostId());
     if (existing == null) {
       DefaultNode newNode = new DefaultNode(newNodeInfo.getEndPoint(), context);
-      copyInfos(newNodeInfo, newNode, null, context);
+      copyInfos(newNodeInfo, newNode, context);
       Map<UUID, Node> newNodes =
           ImmutableMap.<UUID, Node>builder()
               .putAll(oldNodes)
@@ -54,7 +54,7 @@ public class AddNodeRefresh extends NodesRefresh {
       // an addition, even though the host_id hasn't changed :(
       // Update the existing instance and emit an UP event to trigger a pool reconnection.
       if (!existing.getEndPoint().equals(newNodeInfo.getEndPoint())) {
-        copyInfos(newNodeInfo, ((DefaultNode) existing), null, context);
+        copyInfos(newNodeInfo, ((DefaultNode) existing), context);
         assert newNodeInfo.getBroadcastRpcAddress().isPresent(); // always for peer nodes
         return new Result(
             oldMetadata,

@@ -17,7 +17,6 @@ package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Collections;
 import java.util.Objects;
@@ -35,10 +34,7 @@ abstract class NodesRefresh implements MetadataRefresh {
    *     mutate the tokens in-place, so there is no way to check this after the fact).
    */
   protected static boolean copyInfos(
-      NodeInfo nodeInfo,
-      DefaultNode node,
-      TokenFactory tokenFactory,
-      InternalDriverContext context) {
+      NodeInfo nodeInfo, DefaultNode node, InternalDriverContext context) {
 
     node.setEndPoint(nodeInfo.getEndPoint(), context);
     node.broadcastRpcAddress = nodeInfo.getBroadcastRpcAddress().orElse(null);
@@ -58,7 +54,7 @@ abstract class NodesRefresh implements MetadataRefresh {
           versionString,
           node.getEndPoint());
     }
-    boolean tokensChanged = tokenFactory != null && !node.rawTokens.equals(nodeInfo.getTokens());
+    boolean tokensChanged = !node.rawTokens.equals(nodeInfo.getTokens());
     if (tokensChanged) {
       node.rawTokens = nodeInfo.getTokens();
     }
