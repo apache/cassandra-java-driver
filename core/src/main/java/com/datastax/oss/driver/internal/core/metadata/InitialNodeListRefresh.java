@@ -72,7 +72,7 @@ class InitialNodeListRefresh extends NodesRefresh {
       if (tokenMapEnabled && tokenFactory == null && nodeInfo.getPartitioner() != null) {
         tokenFactory = tokenFactoryRegistry.tokenFactoryFor(nodeInfo.getPartitioner());
       }
-      copyInfos(nodeInfo, node, tokenFactory, context);
+      copyInfos(nodeInfo, node, context);
       newNodesBuilder.put(node.getHostId(), node);
     }
 

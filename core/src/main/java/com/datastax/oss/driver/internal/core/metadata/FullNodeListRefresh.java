@@ -72,7 +72,7 @@ class FullNodeListRefresh extends NodesRefresh {
       if (tokenFactory == null && nodeInfo.getPartitioner() != null) {
         tokenFactory = tokenFactoryRegistry.tokenFactoryFor(nodeInfo.getPartitioner());
       }
-      tokensChanged |= copyInfos(nodeInfo, node, tokenFactory, context);
+      tokensChanged |= copyInfos(nodeInfo, node, context);
     }
 
     Set<UUID> removed = Sets.difference(oldNodes.keySet(), seen);

@@ -33,52 +33,46 @@ import java.util.concurrent.TimeUnit;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-public class RemovedNodeIT {
+public class AddedNodeIT {
 
   @ClassRule
-  public static final CustomCcmRule CCM_RULE =
-      CustomCcmRule.builder()
-          // We need 4 nodes to run this test against DSE, because it requires at least 3 nodes to
-          // maintain RF=3 for keyspace system_distributed
-          .withNodes(4)
-          .build();
+  public static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().withNodes(3).build();
 
   @Test
-  public void should_signal_and_destroy_pool_when_node_gets_removed() {
-    RemovalListener removalListener = new RemovalListener();
-    try (CqlSession session =
-        SessionUtils.newSession(CCM_RULE, null, removalListener, null, null)) {
+  public void should_signal_and_create_pool_when_node_gets_added() {
+    AddListener addListener = new AddListener();
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, null, addListener, null, null)) {
       assertThat(session.getMetadata().getTokenMap()).isPresent();
       Set<TokenRange> tokenRanges = session.getMetadata().getTokenMap().get().getTokenRanges();
-      assertThat(tokenRanges).hasSize(4);
-      CCM_RULE.getCcmBridge().decommission(2);
+      assertThat(tokenRanges).hasSize(3);
+      CCM_RULE.getCcmBridge().add(4, "dc1");
       await()
           .pollInterval(500, TimeUnit.MILLISECONDS)
           .atMost(60, TimeUnit.SECONDS)
-          .until(() -> removalListener.removedNode != null);
+          .until(() -> addListener.addedNode != null);
       Map<Node, ChannelPool> pools = ((DefaultSession) session).getPools();
       await()
           .pollInterval(500, TimeUnit.MILLISECONDS)
           .atMost(60, TimeUnit.SECONDS)
-          .until(() -> !pools.containsKey(removalListener.removedNode));
+          .until(() -> pools.containsKey(addListener.addedNode));
       await()
           .pollInterval(500, TimeUnit.MILLISECONDS)
           .atMost(60, TimeUnit.SECONDS)
-          .until(() -> session.getMetadata().getTokenMap().get().getTokenRanges().size() == 3);
+          .until(() -> session.getMetadata().getTokenMap().get().getTokenRanges().size() == 4);
     }
   }
 
-  static class RemovalListener implements NodeStateListener {
+  static class AddListener implements NodeStateListener {
 
-    volatile Node removedNode;
+    volatile Node addedNode;
 
     @Override
-    public void onRemove(@NonNull Node node) {
-      removedNode = node;
+    public void onRemove(@NonNull Node node) {}
+
+    @Override
+    public void onAdd(@NonNull Node node) {
+      addedNode = node;
     }
-
-    @Override
-    public void onAdd(@NonNull Node node) {}
 
     @Override
     public void onUp(@NonNull Node node) {}
