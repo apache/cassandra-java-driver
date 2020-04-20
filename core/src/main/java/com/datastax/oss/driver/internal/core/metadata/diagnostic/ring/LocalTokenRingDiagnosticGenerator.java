@@ -66,7 +66,7 @@ public class LocalTokenRingDiagnosticGenerator extends DefaultTokenRingDiagnosti
   @Override
   protected TokenRingDiagnostic generateRingDiagnostic(
       Set<TokenRangeDiagnostic> tokenRangeDiagnostics) {
-    return new DefaultLocalTokenRingDiagnostic(
+    return new DefaultTokenRingDiagnostic(
         keyspace, consistencyLevel, datacenter, tokenRangeDiagnostics);
   }
 }

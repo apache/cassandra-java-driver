@@ -89,7 +89,7 @@ public class EachQuorumTokenRingDiagnosticGenerator extends AbstractTokenRingDia
   protected TokenRingDiagnostic generateRingDiagnostic(
       Set<TokenRangeDiagnostic> tokenRangeDiagnostics) {
     return new DefaultTokenRingDiagnostic(
-        keyspace, ConsistencyLevel.EACH_QUORUM, tokenRangeDiagnostics);
+        keyspace, ConsistencyLevel.EACH_QUORUM, null, tokenRangeDiagnostics);
   }
 
   private Map<String, Integer> getAliveReplicasByDc(Set<Node> aliveReplicas) {

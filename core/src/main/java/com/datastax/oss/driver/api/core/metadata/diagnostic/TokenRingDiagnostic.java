@@ -19,16 +19,13 @@ import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Optional;
 import java.util.SortedSet;
 
 /**
  * A health {@link Diagnostic} on the availability of {@linkplain TokenRange token ranges} in the
  * token ring, for a given {@linkplain #getKeyspace() keyspace} and a given {@linkplain
  * #getConsistencyLevel() consistency level}.
- *
- * <p>This diagnostic is produced for all consistency levels that are <em>not</em> {@linkplain
- * ConsistencyLevel#isDcLocal() datacenter-aware}. Token availability for datacenter-aware
- * consistency levels is usually captured in a {@link LocalTokenRingDiagnostic} instead.
  */
 public interface TokenRingDiagnostic extends Diagnostic {
 
@@ -42,6 +39,13 @@ public interface TokenRingDiagnostic extends Diagnostic {
    */
   @NonNull
   ConsistencyLevel getConsistencyLevel();
+
+  /**
+   * If this diagnostic was produced for a {@linkplain ConsistencyLevel#isDcLocal()
+   * datacenter-local} consistency level, returns the datacenter for which this diagnostic was
+   * established. For all other consistency levels, returns {@link Optional#empty()}.
+   */
+  Optional<String> getDatacenter();
 
   /**
    * @return the {@link TokenRangeDiagnostic}s for each individual {@linkplain TokenRange token

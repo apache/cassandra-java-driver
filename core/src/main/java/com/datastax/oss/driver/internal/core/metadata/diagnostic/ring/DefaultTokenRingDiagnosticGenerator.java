@@ -68,6 +68,6 @@ public class DefaultTokenRingDiagnosticGenerator extends AbstractTokenRingDiagno
   @Override
   protected TokenRingDiagnostic generateRingDiagnostic(
       Set<TokenRangeDiagnostic> tokenRangeDiagnostics) {
-    return new DefaultTokenRingDiagnostic(keyspace, consistencyLevel, tokenRangeDiagnostics);
+    return new DefaultTokenRingDiagnostic(keyspace, consistencyLevel, null, tokenRangeDiagnostics);
   }
 }

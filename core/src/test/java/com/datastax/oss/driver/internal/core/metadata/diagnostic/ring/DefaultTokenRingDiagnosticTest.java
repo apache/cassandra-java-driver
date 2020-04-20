@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata.diagnostic.ring;
 
 import static com.datastax.oss.driver.api.core.ConsistencyLevel.EACH_QUORUM;
+import static com.datastax.oss.driver.api.core.ConsistencyLevel.LOCAL_QUORUM;
 import static com.datastax.oss.driver.api.core.ConsistencyLevel.QUORUM;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -66,6 +67,38 @@ public class DefaultTokenRingDiagnosticTest {
   }
 
   @Test
+  public void should_create_diagnostic_for_local_CL() {
+    // given
+    Set<TokenRangeDiagnostic> trDiagnostics =
+        ImmutableSet.of(
+            new SimpleTokenRangeDiagnostic(tr1, ks, LOCAL_QUORUM, 2, 1),
+            new SimpleTokenRangeDiagnostic(tr2, ks, LOCAL_QUORUM, 2, 3));
+    // when
+    DefaultTokenRingDiagnostic diagnostic =
+        new DefaultTokenRingDiagnostic(ks, LOCAL_QUORUM, "dc1", trDiagnostics);
+    // then
+    assertThat(diagnostic.getKeyspace()).isEqualTo(ks);
+    assertThat(diagnostic.getConsistencyLevel()).isEqualTo(LOCAL_QUORUM);
+    assertThat(diagnostic.getDatacenter()).contains("dc1");
+    assertThat(diagnostic.getTokenRangeDiagnostics()).isEqualTo(trDiagnostics);
+    assertThat(diagnostic.getStatus()).isEqualTo(Status.UNAVAILABLE);
+    assertThat(diagnostic.getDetails())
+        .isEqualTo(
+            ImmutableMap.<String, Object>builder()
+                .put("status", Status.UNAVAILABLE)
+                .put("consistencyLevel", LOCAL_QUORUM)
+                .put("keyspace", "ks1")
+                .put("replication", replication)
+                .put("datacenter", "dc1")
+                .put("availableRanges", 1)
+                .put("unavailableRanges", 1)
+                .put(
+                    "top10UnavailableRanges",
+                    ImmutableMap.of("]1,2]", ImmutableMap.of("alive", 1, "required", 2)))
+                .build());
+  }
+
+  @Test
   public void should_create_diagnostic_for_non_local_CL() {
     // given
     Set<TokenRangeDiagnostic> trDiagnostics =
@@ -74,10 +107,11 @@ public class DefaultTokenRingDiagnosticTest {
             new SimpleTokenRangeDiagnostic(tr2, ks, QUORUM, 2, 3));
     // when
     DefaultTokenRingDiagnostic diagnostic =
-        new DefaultTokenRingDiagnostic(ks, QUORUM, trDiagnostics);
+        new DefaultTokenRingDiagnostic(ks, QUORUM, null, trDiagnostics);
     // then
     assertThat(diagnostic.getKeyspace()).isEqualTo(ks);
     assertThat(diagnostic.getConsistencyLevel()).isEqualTo(QUORUM);
+    assertThat(diagnostic.getDatacenter()).isEmpty();
     assertThat(diagnostic.getTokenRangeDiagnostics()).isEqualTo(trDiagnostics);
     assertThat(diagnostic.getStatus()).isEqualTo(Status.UNAVAILABLE);
     assertThat(diagnostic.getDetails())
@@ -116,10 +150,11 @@ public class DefaultTokenRingDiagnosticTest {
                     "dc2", new SimpleTokenRangeDiagnostic(tr2, ks, EACH_QUORUM, 1, 1))));
     // when
     DefaultTokenRingDiagnostic diagnostic =
-        new DefaultTokenRingDiagnostic(ks, EACH_QUORUM, trDiagnostics);
+        new DefaultTokenRingDiagnostic(ks, EACH_QUORUM, null, trDiagnostics);
     // then
     assertThat(diagnostic.getKeyspace()).isEqualTo(ks);
     assertThat(diagnostic.getConsistencyLevel()).isEqualTo(EACH_QUORUM);
+    assertThat(diagnostic.getDatacenter()).isEmpty();
     assertThat(diagnostic.getTokenRangeDiagnostics()).isEqualTo(trDiagnostics);
     assertThat(diagnostic.getStatus()).isEqualTo(Status.UNAVAILABLE);
     assertThat(diagnostic.getDetails())

@@ -108,6 +108,7 @@ public class EachQuorumTokenRingDiagnosticGeneratorTest {
             new DefaultTokenRingDiagnostic(
                 ks,
                 EACH_QUORUM,
+                null,
                 ImmutableSet.of(
                     new CompositeTokenRangeDiagnostic(
                         tr1,

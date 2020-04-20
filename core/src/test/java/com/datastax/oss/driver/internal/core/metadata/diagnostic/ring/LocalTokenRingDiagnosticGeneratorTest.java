@@ -96,10 +96,10 @@ public class LocalTokenRingDiagnosticGeneratorTest {
     // when
     TokenRingDiagnostic tokenRingDiagnostic = generator.generate();
     // then
-    assertThat(tokenRingDiagnostic).isExactlyInstanceOf(DefaultLocalTokenRingDiagnostic.class);
+    assertThat(tokenRingDiagnostic).isExactlyInstanceOf(DefaultTokenRingDiagnostic.class);
     assertThat(tokenRingDiagnostic)
         .isEqualTo(
-            new DefaultLocalTokenRingDiagnostic(
+            new DefaultTokenRingDiagnostic(
                 ks,
                 LOCAL_QUORUM,
                 "dc1",

@@ -19,13 +19,16 @@ import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.metadata.diagnostic.TokenRangeDiagnostic;
 import com.datastax.oss.driver.api.core.metadata.diagnostic.TokenRingDiagnostic;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSortedSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.stream.Collectors;
@@ -34,17 +37,23 @@ public class DefaultTokenRingDiagnostic implements TokenRingDiagnostic {
 
   private final KeyspaceMetadata keyspace;
   private final ConsistencyLevel consistencyLevel;
+  private final String datacenter;
   private final SortedSet<TokenRangeDiagnostic> tokenRangeDiagnostics;
 
   public DefaultTokenRingDiagnostic(
       @NonNull KeyspaceMetadata keyspace,
       @NonNull ConsistencyLevel consistencyLevel,
+      @Nullable String datacenter,
       @NonNull Set<TokenRangeDiagnostic> tokenRangeDiagnostics) {
     Objects.requireNonNull(keyspace, "keyspace cannot be null");
     Objects.requireNonNull(consistencyLevel, "consistencyLevel cannot be null");
     Objects.requireNonNull(tokenRangeDiagnostics, "tokenRangeDiagnostics cannot be null");
+    Preconditions.checkArgument(
+        !consistencyLevel.isDcLocal() || datacenter != null,
+        "datacenter cannot be null for local consistency level " + consistencyLevel);
     this.keyspace = keyspace;
     this.consistencyLevel = consistencyLevel;
+    this.datacenter = datacenter;
     this.tokenRangeDiagnostics = ImmutableSortedSet.copyOf(tokenRangeDiagnostics);
   }
 
@@ -58,6 +67,11 @@ public class DefaultTokenRingDiagnostic implements TokenRingDiagnostic {
   @Override
   public ConsistencyLevel getConsistencyLevel() {
     return consistencyLevel;
+  }
+
+  @Override
+  public Optional<String> getDatacenter() {
+    return Optional.ofNullable(datacenter);
   }
 
   @NonNull
@@ -100,6 +114,9 @@ public class DefaultTokenRingDiagnostic implements TokenRingDiagnostic {
         .put("keyspace", keyspace.getName().asCql(true))
         .put("replication", keyspace.getReplication())
         .put("consistencyLevel", consistencyLevel);
+    if (datacenter != null) {
+      builder.put("datacenter", datacenter);
+    }
   }
 
   protected void addTokenRangeDiagnosticDetails(ImmutableMap.Builder<String, Object> builder) {
