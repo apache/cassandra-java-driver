@@ -92,7 +92,7 @@ public class DefaultTokenRingDiagnosticGeneratorTest {
                 QUORUM,
                 null,
                 ImmutableSet.of(
-                    new SimpleTokenRangeDiagnostic(tr1, ks, QUORUM, 2, 2),
-                    new SimpleTokenRangeDiagnostic(tr2, ks, QUORUM, 2, 1))));
+                    new SimpleTokenRangeDiagnostic(tr1, 2, 2),
+                    new SimpleTokenRangeDiagnostic(tr2, 2, 1))));
   }
 }

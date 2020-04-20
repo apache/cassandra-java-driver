@@ -18,9 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata.diagnostic.ring;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.metadata.diagnostic.Status;
-import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -38,15 +36,11 @@ public class SimpleTokenRangeDiagnosticTest {
   public void should_create_diagnostic(int requiredReplicas, int aliveReplicas, Status expected) {
     // given
     TokenRange tr = mock(TokenRange.class);
-    KeyspaceMetadata ks = mock(KeyspaceMetadata.class);
-    ConsistencyLevel consistencyLevel = ConsistencyLevel.QUORUM;
     // when
     SimpleTokenRangeDiagnostic diagnostic =
-        new SimpleTokenRangeDiagnostic(tr, ks, consistencyLevel, requiredReplicas, aliveReplicas);
+        new SimpleTokenRangeDiagnostic(tr, requiredReplicas, aliveReplicas);
     // then
     assertThat(diagnostic.getTokenRange()).isEqualTo(tr);
-    assertThat(diagnostic.getKeyspace()).isEqualTo(ks);
-    assertThat(diagnostic.getConsistencyLevel()).isEqualTo(consistencyLevel);
     assertThat(diagnostic.getAliveReplicas()).isEqualTo(aliveReplicas);
     assertThat(diagnostic.getRequiredReplicas()).isEqualTo(requiredReplicas);
     assertThat(diagnostic.isAvailable()).isEqualTo(expected == Status.AVAILABLE);

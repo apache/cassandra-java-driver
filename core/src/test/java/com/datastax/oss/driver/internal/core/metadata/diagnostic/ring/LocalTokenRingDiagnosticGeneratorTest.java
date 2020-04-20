@@ -104,7 +104,7 @@ public class LocalTokenRingDiagnosticGeneratorTest {
                 LOCAL_QUORUM,
                 "dc1",
                 ImmutableSet.of(
-                    new SimpleTokenRangeDiagnostic(tr1, ks, LOCAL_QUORUM, 2, 2),
-                    new SimpleTokenRangeDiagnostic(tr2, ks, LOCAL_QUORUM, 2, 2))));
+                    new SimpleTokenRangeDiagnostic(tr1, 2, 2),
+                    new SimpleTokenRangeDiagnostic(tr2, 2, 2))));
   }
 }

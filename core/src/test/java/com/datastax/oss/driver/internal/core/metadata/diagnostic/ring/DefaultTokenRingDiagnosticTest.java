@@ -71,8 +71,7 @@ public class DefaultTokenRingDiagnosticTest {
     // given
     Set<TokenRangeDiagnostic> trDiagnostics =
         ImmutableSet.of(
-            new SimpleTokenRangeDiagnostic(tr1, ks, LOCAL_QUORUM, 2, 1),
-            new SimpleTokenRangeDiagnostic(tr2, ks, LOCAL_QUORUM, 2, 3));
+            new SimpleTokenRangeDiagnostic(tr1, 2, 1), new SimpleTokenRangeDiagnostic(tr2, 2, 3));
     // when
     DefaultTokenRingDiagnostic diagnostic =
         new DefaultTokenRingDiagnostic(ks, LOCAL_QUORUM, "dc1", trDiagnostics);
@@ -103,8 +102,7 @@ public class DefaultTokenRingDiagnosticTest {
     // given
     Set<TokenRangeDiagnostic> trDiagnostics =
         ImmutableSet.of(
-            new SimpleTokenRangeDiagnostic(tr1, ks, QUORUM, 2, 1),
-            new SimpleTokenRangeDiagnostic(tr2, ks, QUORUM, 2, 3));
+            new SimpleTokenRangeDiagnostic(tr1, 2, 1), new SimpleTokenRangeDiagnostic(tr2, 2, 3));
     // when
     DefaultTokenRingDiagnostic diagnostic =
         new DefaultTokenRingDiagnostic(ks, QUORUM, null, trDiagnostics);
@@ -136,18 +134,14 @@ public class DefaultTokenRingDiagnosticTest {
         ImmutableSet.of(
             new CompositeTokenRangeDiagnostic(
                 tr1,
-                ks,
-                EACH_QUORUM,
                 ImmutableMap.of(
-                    "dc1", new SimpleTokenRangeDiagnostic(tr1, ks, EACH_QUORUM, 2, 1),
-                    "dc2", new SimpleTokenRangeDiagnostic(tr1, ks, EACH_QUORUM, 1, 0))),
+                    "dc1", new SimpleTokenRangeDiagnostic(tr1, 2, 1),
+                    "dc2", new SimpleTokenRangeDiagnostic(tr1, 1, 0))),
             new CompositeTokenRangeDiagnostic(
                 tr2,
-                ks,
-                EACH_QUORUM,
                 ImmutableMap.of(
-                    "dc1", new SimpleTokenRangeDiagnostic(tr2, ks, EACH_QUORUM, 2, 3),
-                    "dc2", new SimpleTokenRangeDiagnostic(tr2, ks, EACH_QUORUM, 1, 1))));
+                    "dc1", new SimpleTokenRangeDiagnostic(tr2, 2, 3),
+                    "dc2", new SimpleTokenRangeDiagnostic(tr2, 1, 1))));
     // when
     DefaultTokenRingDiagnostic diagnostic =
         new DefaultTokenRingDiagnostic(ks, EACH_QUORUM, null, trDiagnostics);

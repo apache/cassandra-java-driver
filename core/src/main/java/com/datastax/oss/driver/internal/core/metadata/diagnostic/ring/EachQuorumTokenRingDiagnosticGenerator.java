@@ -68,18 +68,13 @@ public class EachQuorumTokenRingDiagnosticGenerator extends AbstractTokenRingDia
   protected TokenRangeDiagnostic generateTokenRangeDiagnostic(
       TokenRange range, Set<Node> aliveReplicas) {
     CompositeTokenRangeDiagnostic.Builder diagnostic =
-        new CompositeTokenRangeDiagnostic.Builder(range, keyspace, ConsistencyLevel.EACH_QUORUM);
+        new CompositeTokenRangeDiagnostic.Builder(range);
     Map<String, Integer> aliveReplicasByDc = getAliveReplicasByDc(aliveReplicas);
     for (String datacenter : this.requiredReplicasByDc.keySet()) {
       int requiredReplicasInDc = this.requiredReplicasByDc.get(datacenter);
       int aliveReplicasInDc = aliveReplicasByDc.getOrDefault(datacenter, 0);
       TokenRangeDiagnostic childDiagnostic =
-          new SimpleTokenRangeDiagnostic(
-              range,
-              keyspace,
-              ConsistencyLevel.EACH_QUORUM,
-              requiredReplicasInDc,
-              aliveReplicasInDc);
+          new SimpleTokenRangeDiagnostic(range, requiredReplicasInDc, aliveReplicasInDc);
       diagnostic.addChildDiagnostic(datacenter, childDiagnostic);
     }
     return diagnostic.build();

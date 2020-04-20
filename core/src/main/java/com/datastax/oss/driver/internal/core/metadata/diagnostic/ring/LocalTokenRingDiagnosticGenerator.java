@@ -59,8 +59,7 @@ public class LocalTokenRingDiagnosticGenerator extends DefaultTokenRingDiagnosti
       TokenRange range, Set<Node> aliveReplicas) {
     int aliveReplicasInDc =
         (int) aliveReplicas.stream().map(Node::getDatacenter).filter(datacenter::equals).count();
-    return new SimpleTokenRangeDiagnostic(
-        range, keyspace, consistencyLevel, requiredReplicas, aliveReplicasInDc);
+    return new SimpleTokenRangeDiagnostic(range, requiredReplicas, aliveReplicasInDc);
   }
 
   @Override

@@ -17,7 +17,6 @@ package com.datastax.oss.driver.internal.core.metadata.diagnostic.ring;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.metadata.diagnostic.TokenRangeDiagnostic;
-import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -36,24 +35,13 @@ public class CompositeTokenRangeDiagnostic implements TokenRangeDiagnostic {
 
   private final TokenRange range;
 
-  private final KeyspaceMetadata keyspace;
-
-  private final ConsistencyLevel consistencyLevel;
-
   private final Map<String, TokenRangeDiagnostic> childDiagnostics;
 
   public CompositeTokenRangeDiagnostic(
-      @NonNull TokenRange range,
-      @NonNull KeyspaceMetadata keyspace,
-      @NonNull ConsistencyLevel consistencyLevel,
-      @NonNull Map<String, TokenRangeDiagnostic> childDiagnostics) {
+      @NonNull TokenRange range, @NonNull Map<String, TokenRangeDiagnostic> childDiagnostics) {
     Objects.requireNonNull(range, "range cannot be null");
-    Objects.requireNonNull(keyspace, "keyspace cannot be null");
-    Objects.requireNonNull(consistencyLevel, "consistencyLevel cannot be null");
     Objects.requireNonNull(childDiagnostics, "childDiagnostics cannot be null");
     this.range = range;
-    this.keyspace = keyspace;
-    this.consistencyLevel = consistencyLevel;
     this.childDiagnostics = ImmutableMap.copyOf(childDiagnostics);
   }
 
@@ -61,18 +49,6 @@ public class CompositeTokenRangeDiagnostic implements TokenRangeDiagnostic {
   @Override
   public TokenRange getTokenRange() {
     return range;
-  }
-
-  @NonNull
-  @Override
-  public KeyspaceMetadata getKeyspace() {
-    return keyspace;
-  }
-
-  @NonNull
-  @Override
-  public ConsistencyLevel getConsistencyLevel() {
-    return consistencyLevel;
   }
 
   @Override
@@ -115,38 +91,24 @@ public class CompositeTokenRangeDiagnostic implements TokenRangeDiagnostic {
       return false;
     }
     CompositeTokenRangeDiagnostic that = (CompositeTokenRangeDiagnostic) o;
-    return range.equals(that.range)
-        && keyspace.equals(that.keyspace)
-        && consistencyLevel.equals(that.consistencyLevel)
-        && childDiagnostics.equals(that.childDiagnostics);
+    return range.equals(that.range) && childDiagnostics.equals(that.childDiagnostics);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(range, keyspace, consistencyLevel, childDiagnostics);
+    return Objects.hash(range, childDiagnostics);
   }
 
   public static class Builder {
 
     private final TokenRange range;
 
-    private final KeyspaceMetadata keyspace;
-
-    private final ConsistencyLevel consistencyLevel;
-
     private final ImmutableMap.Builder<String, TokenRangeDiagnostic> childDiagnosticsBuilder =
         ImmutableMap.builder();
 
-    public Builder(
-        @NonNull TokenRange range,
-        @NonNull KeyspaceMetadata keyspace,
-        @NonNull ConsistencyLevel consistencyLevel) {
+    public Builder(@NonNull TokenRange range) {
       Objects.requireNonNull(range, "range cannot be null");
-      Objects.requireNonNull(keyspace, "keyspace cannot be null");
-      Objects.requireNonNull(consistencyLevel, "consistencyLevel cannot be null");
       this.range = range;
-      this.keyspace = keyspace;
-      this.consistencyLevel = consistencyLevel;
     }
 
     public void addChildDiagnostic(
@@ -157,8 +119,7 @@ public class CompositeTokenRangeDiagnostic implements TokenRangeDiagnostic {
     }
 
     public CompositeTokenRangeDiagnostic build() {
-      return new CompositeTokenRangeDiagnostic(
-          range, keyspace, consistencyLevel, childDiagnosticsBuilder.build());
+      return new CompositeTokenRangeDiagnostic(range, childDiagnosticsBuilder.build());
     }
   }
 }

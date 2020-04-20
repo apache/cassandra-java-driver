@@ -112,17 +112,13 @@ public class EachQuorumTokenRingDiagnosticGeneratorTest {
                 ImmutableSet.of(
                     new CompositeTokenRangeDiagnostic(
                         tr1,
-                        ks,
-                        EACH_QUORUM,
                         ImmutableMap.of(
-                            "dc1", new SimpleTokenRangeDiagnostic(tr1, ks, EACH_QUORUM, 2, 2),
-                            "dc2", new SimpleTokenRangeDiagnostic(tr1, ks, EACH_QUORUM, 2, 1))),
+                            "dc1", new SimpleTokenRangeDiagnostic(tr1, 2, 2),
+                            "dc2", new SimpleTokenRangeDiagnostic(tr1, 2, 1))),
                     new CompositeTokenRangeDiagnostic(
                         tr2,
-                        ks,
-                        EACH_QUORUM,
                         ImmutableMap.of(
-                            "dc1", new SimpleTokenRangeDiagnostic(tr2, ks, EACH_QUORUM, 2, 2),
-                            "dc2", new SimpleTokenRangeDiagnostic(tr2, ks, EACH_QUORUM, 2, 1))))));
+                            "dc1", new SimpleTokenRangeDiagnostic(tr2, 2, 2),
+                            "dc2", new SimpleTokenRangeDiagnostic(tr2, 2, 1))))));
   }
 }

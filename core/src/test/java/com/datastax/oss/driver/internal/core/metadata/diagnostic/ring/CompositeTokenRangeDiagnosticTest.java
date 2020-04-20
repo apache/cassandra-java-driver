@@ -15,13 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.diagnostic.ring;
 
-import static com.datastax.oss.driver.api.core.ConsistencyLevel.EACH_QUORUM;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import com.datastax.oss.driver.api.core.metadata.diagnostic.Status;
 import com.datastax.oss.driver.api.core.metadata.diagnostic.TokenRangeDiagnostic;
-import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Map;
@@ -33,18 +31,15 @@ public class CompositeTokenRangeDiagnosticTest {
   public void should_create_diagnostic() {
     // given
     TokenRange tr = mock(TokenRange.class);
-    KeyspaceMetadata ks = mock(KeyspaceMetadata.class);
     Map<String, TokenRangeDiagnostic> childDiagnostics =
         ImmutableMap.of(
-            "dc1", new SimpleTokenRangeDiagnostic(tr, ks, EACH_QUORUM, 2, 1),
-            "dc2", new SimpleTokenRangeDiagnostic(tr, ks, EACH_QUORUM, 1, 0));
+            "dc1", new SimpleTokenRangeDiagnostic(tr, 2, 1),
+            "dc2", new SimpleTokenRangeDiagnostic(tr, 1, 0));
     // when
     CompositeTokenRangeDiagnostic diagnostic =
-        new CompositeTokenRangeDiagnostic(tr, ks, EACH_QUORUM, childDiagnostics);
+        new CompositeTokenRangeDiagnostic(tr, childDiagnostics);
     // then
     assertThat(diagnostic.getTokenRange()).isEqualTo(tr);
-    assertThat(diagnostic.getKeyspace()).isEqualTo(ks);
-    assertThat(diagnostic.getConsistencyLevel()).isEqualTo(EACH_QUORUM);
     assertThat(diagnostic.getAliveReplicas()).isEqualTo(1);
     assertThat(diagnostic.getRequiredReplicas()).isEqualTo(3);
     assertThat(diagnostic.getChildDiagnostics()).isEqualTo(childDiagnostics);

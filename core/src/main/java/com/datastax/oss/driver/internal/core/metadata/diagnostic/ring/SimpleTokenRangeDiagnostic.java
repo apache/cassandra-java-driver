@@ -17,7 +17,6 @@ package com.datastax.oss.driver.internal.core.metadata.diagnostic.ring;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.metadata.diagnostic.TokenRangeDiagnostic;
-import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
@@ -37,26 +36,14 @@ public class SimpleTokenRangeDiagnostic implements TokenRangeDiagnostic {
 
   private final TokenRange range;
 
-  private final KeyspaceMetadata keyspace;
-
-  private final ConsistencyLevel consistencyLevel;
-
   private final int requiredReplicas;
 
   private final int aliveReplicas;
 
   public SimpleTokenRangeDiagnostic(
-      @NonNull TokenRange range,
-      @NonNull KeyspaceMetadata keyspace,
-      @NonNull ConsistencyLevel consistencyLevel,
-      int requiredReplicas,
-      int aliveReplicas) {
+      @NonNull TokenRange range, int requiredReplicas, int aliveReplicas) {
     Objects.requireNonNull(range, "range cannot be null");
-    Objects.requireNonNull(keyspace, "keyspace cannot be null");
-    Objects.requireNonNull(consistencyLevel, "consistencyLevel cannot be null");
     this.range = range;
-    this.keyspace = keyspace;
-    this.consistencyLevel = consistencyLevel;
     this.requiredReplicas = requiredReplicas;
     this.aliveReplicas = aliveReplicas;
   }
@@ -65,18 +52,6 @@ public class SimpleTokenRangeDiagnostic implements TokenRangeDiagnostic {
   @Override
   public TokenRange getTokenRange() {
     return range;
-  }
-
-  @NonNull
-  @Override
-  public KeyspaceMetadata getKeyspace() {
-    return keyspace;
-  }
-
-  @NonNull
-  @Override
-  public ConsistencyLevel getConsistencyLevel() {
-    return consistencyLevel;
   }
 
   @Override
@@ -100,13 +75,11 @@ public class SimpleTokenRangeDiagnostic implements TokenRangeDiagnostic {
     SimpleTokenRangeDiagnostic that = (SimpleTokenRangeDiagnostic) o;
     return requiredReplicas == that.requiredReplicas
         && aliveReplicas == that.aliveReplicas
-        && range.equals(that.range)
-        && keyspace.equals(that.keyspace)
-        && consistencyLevel.equals(that.consistencyLevel);
+        && range.equals(that.range);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(range, keyspace, consistencyLevel, requiredReplicas, aliveReplicas);
+    return Objects.hash(range, requiredReplicas, aliveReplicas);
   }
 }

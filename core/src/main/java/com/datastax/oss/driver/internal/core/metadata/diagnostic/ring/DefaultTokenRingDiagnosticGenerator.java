@@ -61,8 +61,7 @@ public class DefaultTokenRingDiagnosticGenerator extends AbstractTokenRingDiagno
   @Override
   protected TokenRangeDiagnostic generateTokenRangeDiagnostic(
       TokenRange range, Set<Node> aliveReplicas) {
-    return new SimpleTokenRangeDiagnostic(
-        range, keyspace, consistencyLevel, requiredReplicas, aliveReplicas.size());
+    return new SimpleTokenRangeDiagnostic(range, requiredReplicas, aliveReplicas.size());
   }
 
   @Override
