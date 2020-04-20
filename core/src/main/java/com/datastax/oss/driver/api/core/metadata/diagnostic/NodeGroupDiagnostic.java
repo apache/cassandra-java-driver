@@ -62,10 +62,15 @@ public interface NodeGroupDiagnostic extends Diagnostic {
    */
   int getUnknown();
 
+  /**
+   * Returns the status of this node group. The status will be {@link Status#AVAILABLE} if all nodes
+   * are up; {@link Status#UNAVAILABLE} if all nodes are down, or if the group has no node at all.
+   * In all other cases the status will be {@link Status#PARTIALLY_AVAILABLE}.
+   */
   @NonNull
   @Override
   default Status getStatus() {
-    if (getTotal() == 0) {
+    if (getTotal() == 0 || getDown() == getTotal()) {
       return Status.UNAVAILABLE;
     } else if (getDown() == 0 && getUnknown() == 0) {
       return Status.AVAILABLE;

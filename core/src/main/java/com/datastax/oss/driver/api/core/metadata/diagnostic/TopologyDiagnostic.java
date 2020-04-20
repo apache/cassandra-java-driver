@@ -40,6 +40,11 @@ public interface TopologyDiagnostic extends Diagnostic {
   @NonNull
   SortedMap<String, NodeGroupDiagnostic> getLocalDiagnostics();
 
+  /**
+   * Returns the status of the cluster topology. By default this is the same as {@code
+   * getGlobalDiagnostic().getStatus()}. See {@link NodeGroupDiagnostic#getStatus()} for details
+   * about possible statuses and their meanings.
+   */
   @NonNull
   @Override
   default Status getStatus() {
