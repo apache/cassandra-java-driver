@@ -298,6 +298,15 @@ public class CcmBridge implements AutoCloseable {
     execute("node" + n, "stop");
   }
 
+  public void add(int n, String dc) {
+    execute("add", "-i", ipPrefix + n, "-d", dc, "node" + n);
+    start(n);
+  }
+
+  public void decommission(int n) {
+    nodetool(n, "decommission");
+  }
+
   synchronized void execute(String... args) {
     String command =
         "ccm "
