@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.core.metadata;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.metadata.token.DefaultTokenMap;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
@@ -54,11 +53,10 @@ class InitialNodeListRefresh extends NodesRefresh {
     String logPrefix = context.getSessionName();
     TokenFactoryRegistry tokenFactoryRegistry = context.getTokenFactoryRegistry();
 
-    assert oldMetadata.getNodes().isEmpty();
-
-    TokenFactory tokenFactory =
-        oldMetadata.getTokenMap().map(m -> ((DefaultTokenMap) m).getTokenFactory()).orElse(null);
-    boolean tokensChanged = false;
+    // Since this is the first refresh, and we've stored contact points separately until now, the
+    // metadata is empty.
+    assert oldMetadata == DefaultMetadata.EMPTY;
+    TokenFactory tokenFactory = null;
 
     ImmutableMap.Builder<UUID, DefaultNode> newNodesBuilder = ImmutableMap.builder();
 
@@ -71,10 +69,10 @@ class InitialNodeListRefresh extends NodesRefresh {
       } else {
         LOG.debug("[{}] Copying contact point {}", logPrefix, node);
       }
-      if (tokenFactory == null && nodeInfo.getPartitioner() != null) {
+      if (tokenMapEnabled && tokenFactory == null && nodeInfo.getPartitioner() != null) {
         tokenFactory = tokenFactoryRegistry.tokenFactoryFor(nodeInfo.getPartitioner());
       }
-      tokensChanged |= copyInfos(nodeInfo, node, tokenFactory, context);
+      copyInfos(nodeInfo, node, tokenFactory, context);
       newNodesBuilder.put(node.getHostId(), node);
     }
 
@@ -94,7 +92,7 @@ class InitialNodeListRefresh extends NodesRefresh {
 
     return new Result(
         oldMetadata.withNodes(
-            ImmutableMap.copyOf(newNodes), tokenMapEnabled, tokensChanged, tokenFactory, context),
+            ImmutableMap.copyOf(newNodes), tokenMapEnabled, true, tokenFactory, context),
         eventsBuilder.build());
   }
 
