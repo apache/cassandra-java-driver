@@ -17,8 +17,6 @@ package com.datastax.driver.core;
 
 // This class is a subset of server version at org.apache.cassandra.locator.ReplicationFactor
 
-import com.google.common.base.Preconditions;
-
 class ReplicationFactor {
   private final int allReplicas;
   private final int fullReplicas;
@@ -48,13 +46,9 @@ class ReplicationFactor {
 
   static ReplicationFactor fromString(String s) {
     if (s.contains("/")) {
-
       int slash = s.indexOf('/');
       String allPart = s.substring(0, slash);
       String transientPart = s.substring(slash + 1);
-      Preconditions.checkArgument(
-          allPart != null && transientPart != null,
-          "Replication factor format is <replicas> or <replicas>/<transient>");
       return new ReplicationFactor(Integer.parseInt(allPart), Integer.parseInt(transientPart));
     } else {
       return new ReplicationFactor(Integer.parseInt(s), 0);
