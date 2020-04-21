@@ -74,7 +74,8 @@ public final class ConsistencyLevels {
 
   /**
    * Determines the number of replicas required to achieve the desired {@linkplain ConsistencyLevel
-   * consistency level}, given a certain replication factor.
+   * consistency level} on a keyspace/datacenter with the given {@linkplain ReplicationFactor
+   * replication factor}.
    *
    * @param consistencyLevel the {@linkplain ConsistencyLevel consistency level} to achieve.
    * @param replicationFactor the {@linkplain ReplicationFactor replication factor}.
