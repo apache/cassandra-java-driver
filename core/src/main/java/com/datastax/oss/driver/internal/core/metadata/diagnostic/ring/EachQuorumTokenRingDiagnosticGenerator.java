@@ -64,7 +64,9 @@ public class EachQuorumTokenRingDiagnosticGenerator extends AbstractTokenRingDia
       TokenRange range, Set<Node> aliveReplicas) {
     CompositeTokenRangeDiagnostic.Builder diagnostic =
         new CompositeTokenRangeDiagnostic.Builder(range);
-    Map<String, Integer> aliveReplicasByDc = getAliveReplicasByDc(aliveReplicas);
+    Map<String, Integer> aliveReplicasByDc =
+        aliveReplicas.stream()
+            .collect(Collectors.toMap(Node::getDatacenter, replica -> 1, Integer::sum));
     for (String datacenter : this.requiredReplicasByDc.keySet()) {
       int requiredReplicasInDc = this.requiredReplicasByDc.get(datacenter);
       int aliveReplicasInDc = aliveReplicasByDc.getOrDefault(datacenter, 0);
@@ -80,10 +82,5 @@ public class EachQuorumTokenRingDiagnosticGenerator extends AbstractTokenRingDia
       Set<TokenRangeDiagnostic> tokenRangeDiagnostics) {
     return new DefaultTokenRingDiagnostic(
         keyspace, ConsistencyLevel.EACH_QUORUM, null, tokenRangeDiagnostics);
-  }
-
-  private Map<String, Integer> getAliveReplicasByDc(Set<Node> aliveReplicas) {
-    return aliveReplicas.stream()
-        .collect(Collectors.toMap(Node::getDatacenter, (replica) -> 1, Integer::sum));
   }
 }
