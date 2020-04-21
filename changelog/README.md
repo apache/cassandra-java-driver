@@ -2,6 +2,10 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.11.0 (in progress)
+
+- [improvement] JAVA-2704: Remove protocol v5 beta status, add v6-beta
+
 ### 4.10.0
 
 - [improvement] JAVA-2907: Switch Tinkerpop to an optional dependency

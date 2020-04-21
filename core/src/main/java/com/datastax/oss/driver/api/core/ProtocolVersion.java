@@ -31,13 +31,14 @@ public interface ProtocolVersion {
   ProtocolVersion V3 = DefaultProtocolVersion.V3;
   ProtocolVersion V4 = DefaultProtocolVersion.V4;
   ProtocolVersion V5 = DefaultProtocolVersion.V5;
+  ProtocolVersion V6 = DefaultProtocolVersion.V6;
   ProtocolVersion DSE_V1 = DseProtocolVersion.DSE_V1;
   ProtocolVersion DSE_V2 = DseProtocolVersion.DSE_V2;
 
   /** The default version used for {@link Detachable detached} objects. */
   // Implementation note: we can't use the ProtocolVersionRegistry here, this has to be a
   // compile-time constant.
-  ProtocolVersion DEFAULT = DefaultProtocolVersion.V4;
+  ProtocolVersion DEFAULT = DefaultProtocolVersion.V5;
 
   /**
    * A numeric code that uniquely identifies the version (this is the code used in network frames).
