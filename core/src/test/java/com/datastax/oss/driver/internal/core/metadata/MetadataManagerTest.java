@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
-import static org.assertj.core.api.Assertions.fail;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -36,21 +36,18 @@ import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueri
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
-import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import io.netty.channel.DefaultEventLoopGroup;
-import io.netty.util.concurrent.Future;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -144,7 +141,7 @@ public class MetadataManagerTest {
 
     // When
     CompletionStage<Void> refreshNodesFuture = metadataManager.refreshNodes();
-    waitForPendingAdminTasks();
+    waitForPendingAdminTasks(() -> metadataManager.refreshes.size() == 1);
 
     // Then
     assertThatStage(refreshNodesFuture).isSuccess();
@@ -173,7 +170,7 @@ public class MetadataManagerTest {
 
     // When
     CompletionStage<Void> refreshNodesFuture = metadataManager.refreshNodes();
-    waitForPendingAdminTasks();
+    waitForPendingAdminTasks(() -> metadataManager.refreshes.size() == 1);
 
     // Then
     assertThatStage(refreshNodesFuture).isSuccess();
@@ -228,7 +225,7 @@ public class MetadataManagerTest {
 
     // When
     metadataManager.addNode(broadcastRpcAddress);
-    waitForPendingAdminTasks();
+    waitForPendingAdminTasks(() -> metadataManager.addNodeCount == 1);
 
     // Then
     assertThat(metadataManager.refreshes).hasSize(1);
@@ -251,7 +248,7 @@ public class MetadataManagerTest {
 
     // When
     metadataManager.addNode(broadcastRpcAddress2);
-    waitForPendingAdminTasks();
+    waitForPendingAdminTasks(() -> metadataManager.addNodeCount == 1);
 
     // Then
     assertThat(metadataManager.refreshes).isEmpty();
@@ -266,7 +263,7 @@ public class MetadataManagerTest {
 
     // When
     metadataManager.addNode(broadcastRpcAddress2);
-    waitForPendingAdminTasks();
+    waitForPendingAdminTasks(() -> metadataManager.addNodeCount == 1);
 
     // Then
     assertThat(metadataManager.refreshes).isEmpty();
@@ -279,7 +276,7 @@ public class MetadataManagerTest {
 
     // When
     metadataManager.removeNode(broadcastRpcAddress2);
-    waitForPendingAdminTasks();
+    waitForPendingAdminTasks(() -> metadataManager.removeNodeCount == 1);
 
     // Then
     assertThat(metadataManager.refreshes).hasSize(1);
@@ -290,6 +287,8 @@ public class MetadataManagerTest {
   private static class TestMetadataManager extends MetadataManager {
 
     private List<MetadataRefresh> refreshes = new CopyOnWriteArrayList<>();
+    private volatile int addNodeCount = 0;
+    private volatile int removeNodeCount = 0;
 
     public TestMetadataManager(InternalDriverContext context) {
       super(context);
@@ -301,18 +300,28 @@ public class MetadataManagerTest {
       refreshes.add(refresh);
       return null;
     }
+
+    @Override
+    public void addNode(InetSocketAddress broadcastRpcAddress) {
+      // Keep track of addNode calls for condition checking
+      synchronized (this) {
+        ++addNodeCount;
+      }
+      super.addNode(broadcastRpcAddress);
+    }
+
+    @Override
+    public void removeNode(InetSocketAddress broadcastRpcAddress) {
+      // Keep track of removeNode calls for condition checking
+      synchronized (this) {
+        ++removeNodeCount;
+      }
+      super.removeNode(broadcastRpcAddress);
+    }
   }
 
   // Wait for all the tasks on the pool's admin executor to complete.
-  private void waitForPendingAdminTasks() {
-    // This works because the event loop group is single-threaded
-    Future<?> f = adminEventLoopGroup.schedule(() -> null, 5, TimeUnit.NANOSECONDS);
-    try {
-      Uninterruptibles.getUninterruptibly(f, 100, TimeUnit.MILLISECONDS);
-    } catch (ExecutionException e) {
-      fail("unexpected error", e.getCause());
-    } catch (TimeoutException e) {
-      fail("timed out while waiting for admin tasks to complete", e);
-    }
+  private void waitForPendingAdminTasks(Callable<Boolean> condition) {
+    await().atMost(500, TimeUnit.MILLISECONDS).until(condition);
   }
 }
