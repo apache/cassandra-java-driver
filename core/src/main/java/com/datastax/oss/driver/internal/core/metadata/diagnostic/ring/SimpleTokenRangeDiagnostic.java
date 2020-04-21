@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata.diagnostic.ring;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
-import com.datastax.oss.driver.api.core.metadata.diagnostic.TokenRangeDiagnostic;
+import com.datastax.oss.driver.api.core.metadata.diagnostic.TokenRingDiagnostic.TokenRangeDiagnostic;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;

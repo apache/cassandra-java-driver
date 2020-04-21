@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.metadata.diagnostic.ring;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
-import com.datastax.oss.driver.api.core.metadata.diagnostic.TokenRangeDiagnostic;
 import com.datastax.oss.driver.api.core.metadata.diagnostic.TokenRingDiagnostic;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;

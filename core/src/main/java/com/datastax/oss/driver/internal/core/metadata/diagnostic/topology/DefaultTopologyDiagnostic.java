@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.diagnostic.topology;
 
-import com.datastax.oss.driver.api.core.metadata.diagnostic.NodeGroupDiagnostic;
 import com.datastax.oss.driver.api.core.metadata.diagnostic.TopologyDiagnostic;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSortedMap;
 import edu.umd.cs.findbugs.annotations.NonNull;

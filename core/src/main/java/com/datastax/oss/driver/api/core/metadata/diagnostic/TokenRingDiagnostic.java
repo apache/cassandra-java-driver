@@ -18,7 +18,9 @@ package com.datastax.oss.driver.api.core.metadata.diagnostic;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Map;
 import java.util.Optional;
 import java.util.SortedSet;
 
@@ -67,5 +69,65 @@ public interface TokenRingDiagnostic extends Diagnostic {
         .map(TokenRangeDiagnostic::getStatus)
         .reduce(Status::mergeWith)
         .orElse(Status.UNKNOWN);
+  }
+
+  /**
+   * A health {@link Diagnostic} for a given {@link TokenRange}, detailing whether or not the
+   * configured consistency level can be achieved for the configured keyspace on it.
+   *
+   * <p>A {@link TokenRangeDiagnostic} is generated as part of a broader {@link
+   * TokenRingDiagnostic}.
+   */
+  interface TokenRangeDiagnostic extends Diagnostic, Comparable<TokenRangeDiagnostic> {
+
+    /** Returns the {@linkplain TokenRange token range} this report refers to. */
+    @NonNull
+    TokenRange getTokenRange();
+
+    /**
+     * Whether this {@linkplain #getTokenRange() token range} is available or not.
+     *
+     * <p>A token range is considered available when the consistency level is achievable on it. For
+     * that to happen, the number of alive replicas must be equal to or greater than the number of
+     * required replicas.
+     *
+     * @return true if the token range is available, false otherwise.
+     */
+    default boolean isAvailable() {
+      return getAliveReplicas() >= getRequiredReplicas();
+    }
+
+    /**
+     * Returns how many replicas must be alive on this {@linkplain #getTokenRange() token range} for
+     * it to be considered {@linkplain #isAvailable() available}.
+     *
+     * @return how many replicas must be alive.
+     */
+    int getRequiredReplicas();
+
+    /**
+     * Returns how many replicas are effectively alive on this {@linkplain #getTokenRange() token
+     * range}.
+     *
+     * @return how many replicas are effectively alive.
+     */
+    int getAliveReplicas();
+
+    @NonNull
+    @Override
+    default Status getStatus() {
+      return isAvailable() ? Status.AVAILABLE : Status.UNAVAILABLE;
+    }
+
+    @NonNull
+    @Override
+    default Map<String, Object> getDetails() {
+      return ImmutableMap.of("required", getRequiredReplicas(), "alive", getAliveReplicas());
+    }
+
+    @Override
+    default int compareTo(TokenRangeDiagnostic that) {
+      return this.getTokenRange().compareTo(that.getTokenRange());
+    }
   }
 }

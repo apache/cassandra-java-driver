@@ -23,7 +23,7 @@ import static org.mockito.BDDMockito.given;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.diagnostic.Status;
-import com.datastax.oss.driver.api.core.metadata.diagnostic.TokenRangeDiagnostic;
+import com.datastax.oss.driver.api.core.metadata.diagnostic.TokenRingDiagnostic.TokenRangeDiagnostic;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.internal.core.metadata.token.DefaultReplicationStrategyFactory;

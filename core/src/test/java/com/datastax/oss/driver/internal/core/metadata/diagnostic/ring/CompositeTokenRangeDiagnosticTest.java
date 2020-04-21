@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import com.datastax.oss.driver.api.core.metadata.diagnostic.Status;
-import com.datastax.oss.driver.api.core.metadata.diagnostic.TokenRangeDiagnostic;
+import com.datastax.oss.driver.api.core.metadata.diagnostic.TokenRingDiagnostic.TokenRangeDiagnostic;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Map;

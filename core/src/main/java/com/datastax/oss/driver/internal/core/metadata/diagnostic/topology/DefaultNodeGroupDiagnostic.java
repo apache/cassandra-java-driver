@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.diagnostic.topology;
 
-import com.datastax.oss.driver.api.core.metadata.diagnostic.NodeGroupDiagnostic;
+import com.datastax.oss.driver.api.core.metadata.diagnostic.TopologyDiagnostic.NodeGroupDiagnostic;
 import java.util.Objects;
 
 public class DefaultNodeGroupDiagnostic implements NodeGroupDiagnostic {

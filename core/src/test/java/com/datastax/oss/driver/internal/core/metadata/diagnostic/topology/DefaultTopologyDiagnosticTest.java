@@ -17,8 +17,8 @@ package com.datastax.oss.driver.internal.core.metadata.diagnostic.topology;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.oss.driver.api.core.metadata.diagnostic.NodeGroupDiagnostic;
 import com.datastax.oss.driver.api.core.metadata.diagnostic.Status;
+import com.datastax.oss.driver.api.core.metadata.diagnostic.TopologyDiagnostic.NodeGroupDiagnostic;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.tngtech.java.junit.dataprovider.DataProvider;
