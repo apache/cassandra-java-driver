@@ -24,12 +24,12 @@ import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.internal.core.metadata.token.ReplicationFactor;
 import com.datastax.oss.driver.internal.core.util.ConsistencyLevels;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.util.Collections;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
@@ -49,19 +49,14 @@ public class EachQuorumTokenRingDiagnosticGenerator extends AbstractTokenRingDia
       @NonNull Map<String, ReplicationFactor> replicationFactorsByDc) {
     super(metadata, keyspace);
     Objects.requireNonNull(replicationFactorsByDc, "replicationFactorsByDc cannot be null");
-    this.requiredReplicasByDc = createRequiredReplicasByDcMap(replicationFactorsByDc);
-  }
-
-  private Map<String, Integer> createRequiredReplicasByDcMap(
-      Map<String, ReplicationFactor> replicationFactorsByDc) {
-    Map<String, Integer> requiredReplicasByDc = new TreeMap<>();
-    for (String datacenter : replicationFactorsByDc.keySet()) {
-      int requiredReplicas =
-          ConsistencyLevels.requiredReplicas(
-              ConsistencyLevel.EACH_QUORUM, replicationFactorsByDc.get(datacenter));
-      requiredReplicasByDc.put(datacenter, requiredReplicas);
-    }
-    return Collections.unmodifiableMap(requiredReplicasByDc);
+    this.requiredReplicasByDc =
+        replicationFactorsByDc.entrySet().stream()
+            .collect(
+                ImmutableMap.toImmutableMap(
+                    Entry::getKey,
+                    entry ->
+                        ConsistencyLevels.requiredReplicas(
+                            ConsistencyLevel.EACH_QUORUM, entry.getValue())));
   }
 
   @Override
