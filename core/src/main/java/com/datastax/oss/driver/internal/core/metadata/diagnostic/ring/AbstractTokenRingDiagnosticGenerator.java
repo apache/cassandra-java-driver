@@ -62,14 +62,16 @@ public abstract class AbstractTokenRingDiagnosticGenerator implements TokenRingD
     for (TokenRange range : tokenMap.getTokenRanges()) {
       Set<Node> allReplicas = tokenMap.getReplicas(keyspace.getName(), range);
       Set<Node> aliveReplicas =
-          allReplicas.stream()
-              .filter(
-                  node -> node.getState() == NodeState.UP || node.getState() == NodeState.UNKNOWN)
-              .collect(Collectors.toSet());
+          allReplicas.stream().filter(this::isAlive).collect(Collectors.toSet());
       TokenRangeDiagnostic report = generateTokenRangeDiagnostic(range, aliveReplicas);
       reports.add(report);
     }
     return reports;
+  }
+
+  protected boolean isAlive(Node node) {
+    // Be optimistic and count nodes in unknown state as alive
+    return node.getState() == NodeState.UP || node.getState() == NodeState.UNKNOWN;
   }
 
   protected abstract TokenRangeDiagnostic generateTokenRangeDiagnostic(
