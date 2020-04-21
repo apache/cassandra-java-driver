@@ -134,8 +134,8 @@ public class DefaultTokenRingDiagnostic implements TokenRingDiagnostic {
   }
 
   /**
-   * Extracts up to 10 of the most severely unavailable ranges and returns a map of availability
-   * reports keyed by token ranges, formatted for display.
+   * Extracts up to 10 of the most severely unavailable ranges and adds them to the details map,
+   * formatted for display.
    */
   private void addTop10UnavailableRanges(
       ImmutableMap.Builder<String, Object> builder, List<TokenRangeDiagnostic> unavailable) {
