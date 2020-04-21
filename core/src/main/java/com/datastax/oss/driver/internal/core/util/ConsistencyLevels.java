@@ -25,8 +25,8 @@ public final class ConsistencyLevels {
   private ConsistencyLevels() {}
 
   /**
-   * Filters out {@linkplain ConsistencyLevel consistency level} that are not compatible with
-   * SimpleStrategy replications.
+   * Filters out {@linkplain ConsistencyLevel consistency levels} that are not compatible with
+   * SimpleStrategy replications, and replaces them with equivalent compatible ones.
    *
    * <p>More specifically:
    *
