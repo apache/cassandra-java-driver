@@ -160,8 +160,6 @@ public class DefaultTokenRingDiagnostic implements TokenRingDiagnostic {
     int severity1 = diagnostic1.getAliveReplicas() - diagnostic1.getRequiredReplicas();
     int severity2 = diagnostic2.getAliveReplicas() - diagnostic2.getRequiredReplicas();
     int result = Integer.compare(severity1, severity2);
-    return (result == 0)
-        ? diagnostic1.getTokenRange().compareTo(diagnostic2.getTokenRange())
-        : result;
+    return (result == 0) ? diagnostic1.compareTo(diagnostic2) : result;
   }
 }
