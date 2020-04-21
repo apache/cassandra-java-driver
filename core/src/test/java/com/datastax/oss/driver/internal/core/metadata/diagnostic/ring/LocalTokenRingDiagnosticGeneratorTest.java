@@ -88,7 +88,7 @@ public class LocalTokenRingDiagnosticGeneratorTest {
   }
 
   @Test
-  public void should_generate_diagnostic_for_local_CL() {
+  public void should_generate_available_diagnostic_for_local_CL() {
     // given
     LocalTokenRingDiagnosticGenerator generator =
         new LocalTokenRingDiagnosticGenerator(
@@ -106,5 +106,26 @@ public class LocalTokenRingDiagnosticGeneratorTest {
                 ImmutableSet.of(
                     new SimpleTokenRangeDiagnostic(tr1, 2, 2),
                     new SimpleTokenRangeDiagnostic(tr2, 2, 2))));
+  }
+
+  @Test
+  public void should_generate_unavailable_diagnostic_for_local_CL() {
+    // given
+    LocalTokenRingDiagnosticGenerator generator =
+        new LocalTokenRingDiagnosticGenerator(
+            metadata, ks, LOCAL_QUORUM, "dc2", new ReplicationFactor(3));
+    // when
+    TokenRingDiagnostic tokenRingDiagnostic = generator.generate();
+    // then
+    assertThat(tokenRingDiagnostic).isExactlyInstanceOf(DefaultTokenRingDiagnostic.class);
+    assertThat(tokenRingDiagnostic)
+        .isEqualTo(
+            new DefaultTokenRingDiagnostic(
+                ks,
+                LOCAL_QUORUM,
+                "dc2",
+                ImmutableSet.of(
+                    new SimpleTokenRangeDiagnostic(tr1, 2, 1),
+                    new SimpleTokenRangeDiagnostic(tr2, 2, 1))));
   }
 }
