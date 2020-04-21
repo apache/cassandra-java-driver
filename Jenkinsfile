@@ -80,6 +80,8 @@ def executeTests() {
     printenv | sort
 
     mvn -B -V ${INTEGRATION_TESTS_FILTER_ARGUMENT} verify \
+      -DfailIfNoTests=false \
+      -Dmaven.test.failure.ignore=true \
       -Dmaven.javadoc.skip=${SKIP_JAVADOCS} \
       -Dccm.version=${CCM_CASSANDRA_VERSION} \
       -Dccm.dse=${CCM_IS_DSE} \
