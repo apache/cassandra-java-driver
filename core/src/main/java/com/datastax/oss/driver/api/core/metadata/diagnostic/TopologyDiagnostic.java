@@ -19,7 +19,6 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.SortedMap;
 
 /**
  * A health {@link Diagnostic} on the availability of nodes in the cluster. It reports, globally and
@@ -38,7 +37,7 @@ public interface TopologyDiagnostic extends Diagnostic {
    * Returns datacenter-specific {@link NodeGroupDiagnostic} instances, keyed by datacenter name.
    */
   @NonNull
-  SortedMap<String, NodeGroupDiagnostic> getLocalDiagnostics();
+  Map<String, NodeGroupDiagnostic> getLocalDiagnostics();
 
   /**
    * Returns the status of the cluster topology. By default this is the same as {@code

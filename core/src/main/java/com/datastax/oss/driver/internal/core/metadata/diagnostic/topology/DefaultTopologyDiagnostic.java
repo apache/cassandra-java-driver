@@ -46,7 +46,7 @@ public class DefaultTopologyDiagnostic implements TopologyDiagnostic {
 
   @NonNull
   @Override
-  public SortedMap<String, NodeGroupDiagnostic> getLocalDiagnostics() {
+  public Map<String, NodeGroupDiagnostic> getLocalDiagnostics() {
     return localDiagnostics;
   }
 
