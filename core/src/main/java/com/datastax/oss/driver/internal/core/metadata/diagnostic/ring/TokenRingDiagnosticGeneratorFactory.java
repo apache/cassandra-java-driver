@@ -21,7 +21,6 @@ import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.internal.core.metadata.token.DefaultReplicationStrategyFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.ReplicationFactor;
-import com.datastax.oss.driver.internal.core.util.ConsistencyLevels;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.HashMap;
@@ -29,13 +28,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /** A factory for {@link TokenRingDiagnosticGenerator} instances. */
 public class TokenRingDiagnosticGeneratorFactory {
-
-  private static final Log LOG = LogFactory.getLog(TokenRingDiagnosticGeneratorFactory.class);
 
   private final Metadata metadata;
 
@@ -78,19 +73,16 @@ public class TokenRingDiagnosticGeneratorFactory {
 
   protected TokenRingDiagnosticGenerator createForSimpleStrategy(
       KeyspaceMetadata keyspace, ConsistencyLevel consistencyLevel) {
-    ConsistencyLevel filteredConsistencyLevel =
-        ConsistencyLevels.filterForSimpleStrategy(consistencyLevel);
-    if (filteredConsistencyLevel != consistencyLevel) {
-      LOG.warn(
+    if (consistencyLevel.isDcLocal() || consistencyLevel == ConsistencyLevel.EACH_QUORUM) {
+      throw new IllegalArgumentException(
           String.format(
-              "Consistency level %s is not compatible with the SimpleStrategy replication configured for keyspace %s."
-                  + "Token ring health reports will assume %s instead.",
-              consistencyLevel, keyspace.getName().asCql(true), filteredConsistencyLevel));
+              "Consistency level %s is not compatible with the SimpleStrategy replication configured for keyspace %s",
+              consistencyLevel, keyspace.getName().asCql(true)));
     }
     ReplicationFactor replicationFactor =
         ReplicationFactor.fromString(keyspace.getReplication().get("replication_factor"));
     return new DefaultTokenRingDiagnosticGenerator(
-        metadata, keyspace, filteredConsistencyLevel, replicationFactor);
+        metadata, keyspace, consistencyLevel, replicationFactor);
   }
 
   protected TokenRingDiagnosticGenerator createForNetworkTopologyStrategy(

@@ -17,15 +17,8 @@ package com.datastax.oss.driver.internal.core.metadata.diagnostic.ring;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
@@ -35,15 +28,11 @@ import com.datastax.oss.driver.internal.core.metadata.token.DefaultReplicationSt
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.Optional;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.slf4j.LoggerFactory;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TokenRingDiagnosticGeneratorFactoryTest {
@@ -64,32 +53,12 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
           "dc2",
           "3");
 
-  Logger logger;
-  Level initialLogLevel;
-
-  @Mock Appender<ILoggingEvent> appender;
-  @Captor ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
-
   @Before
   public void setUp() {
     given(metadata.getKeyspace(ksName)).willReturn(Optional.of(ks));
     given(ks.getName()).willReturn(ksName);
     given(ks.getReplication()).willReturn(replication);
     given(metadata.getTokenMap()).willReturn(Optional.of(tokenMap));
-  }
-
-  @Before
-  public void addAppender() {
-    logger = (Logger) LoggerFactory.getLogger(TokenRingDiagnosticGeneratorFactory.class);
-    initialLogLevel = logger.getLevel();
-    logger.setLevel(Level.WARN);
-    logger.addAppender(appender);
-  }
-
-  @After
-  public void removeAppender() {
-    logger.detachAppender(appender);
-    logger.setLevel(initialLogLevel);
   }
 
   @Test
@@ -110,11 +79,10 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
         .isExactlyInstanceOf(DefaultTokenRingDiagnosticGenerator.class)
         .extracting("consistencyLevel", "requiredReplicas")
         .containsExactly(ConsistencyLevel.QUORUM, 2);
-    assertNoLog();
   }
 
   @Test
-  public void should_create_generator_for_simple_strategy_and_filter_incompatible_CL() {
+  public void should_not_create_generator_for_simple_strategy_and_incompatible_CL() {
     // given
     given(ks.getReplication())
         .willReturn(
@@ -126,13 +94,12 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     // when
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
-    TokenRingDiagnosticGenerator generator =
-        factory.create(ksName, ConsistencyLevel.LOCAL_QUORUM, "dc1");
-    assertThat(generator)
-        .isExactlyInstanceOf(DefaultTokenRingDiagnosticGenerator.class)
-        .extracting("consistencyLevel", "requiredReplicas")
-        .containsExactly(ConsistencyLevel.QUORUM, 2);
-    assertLog("Consistency level LOCAL_QUORUM is not compatible with the SimpleStrategy");
+    Throwable throwable =
+        catchThrowable(() -> factory.create(ksName, ConsistencyLevel.LOCAL_QUORUM, "dc1"));
+    assertThat(throwable)
+        .isExactlyInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(
+            "Consistency level LOCAL_QUORUM is not compatible with the SimpleStrategy");
   }
 
   @Test
@@ -156,7 +123,6 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
         .isExactlyInstanceOf(LocalTokenRingDiagnosticGenerator.class)
         .extracting("consistencyLevel", "requiredReplicas", "datacenter")
         .containsExactly(ConsistencyLevel.LOCAL_QUORUM, 2, "dc1");
-    assertNoLog();
   }
 
   @Test
@@ -181,7 +147,6 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining(
             "No local datacenter was provided, but the consistency level is local (LOCAL_QUORUM)");
-    assertNoLog();
   }
 
   @Test
@@ -206,7 +171,6 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining(
             "The local datacenter (dc3) does not have a corresponding entry in replication options for keyspace ks1");
-    assertNoLog();
   }
 
   @Test
@@ -229,7 +193,6 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
         .isExactlyInstanceOf(DefaultTokenRingDiagnosticGenerator.class)
         .extracting("consistencyLevel", "requiredReplicas")
         .containsExactly(ConsistencyLevel.QUORUM, 2 + 1);
-    assertNoLog();
   }
 
   @Test
@@ -253,7 +216,6 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
         .isExactlyInstanceOf(EachQuorumTokenRingDiagnosticGenerator.class)
         .extracting("requiredReplicasByDc")
         .isEqualTo(ImmutableMap.of("dc1", 2, "dc2", 1));
-    assertNoLog();
   }
 
   @Test
@@ -268,7 +230,6 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     assertThat(throwable)
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Token metadata computation has been disabled");
-    assertNoLog();
   }
 
   @Test
@@ -283,7 +244,6 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     assertThat(throwable)
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Keyspace ks1 does not exist or its metadata could not be retrieved");
-    assertNoLog();
   }
 
   @Test
@@ -301,15 +261,5 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining(
             "Unsupported replication strategy 'org.apache.cassandra.locator.EverywhereStrategy' for keyspace ks1");
-    assertNoLog();
-  }
-
-  private void assertNoLog() {
-    verify(appender, never()).doAppend(any());
-  }
-
-  private void assertLog(@SuppressWarnings("SameParameterValue") String message) {
-    verify(appender).doAppend(loggingEventCaptor.capture());
-    assertThat(loggingEventCaptor.getValue().getFormattedMessage()).contains(message);
   }
 }

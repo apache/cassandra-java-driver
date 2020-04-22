@@ -32,29 +32,6 @@ import org.junit.runner.RunWith;
 public class ConsistencyLevelsTest {
 
   @Test
-  @UseDataProvider("incompatibleLevels")
-  public void should_filter_incompatible_levels(
-      ConsistencyLevel initial, ConsistencyLevel expected) {
-    // when
-    ConsistencyLevel actual = ConsistencyLevels.filterForSimpleStrategy(initial);
-    // then
-    assertThat(actual).isEqualTo(expected);
-  }
-
-  @Test
-  public void should_throw_for_unknown_cl_when_filtering() {
-    // given
-    ConsistencyLevel unknown = mock(ConsistencyLevel.class, "UNKNOWN");
-    // when
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    Throwable error = catchThrowable(() -> ConsistencyLevels.filterForSimpleStrategy(unknown));
-    // then
-    assertThat(error)
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Unsupported consistency level: UNKNOWN");
-  }
-
-  @Test
   @UseDataProvider("requiredReplicas")
   public void should_compute_required_replicas(ConsistencyLevel cl, int rf, int expected) {
     // when

@@ -25,54 +25,6 @@ public final class ConsistencyLevels {
   private ConsistencyLevels() {}
 
   /**
-   * Filters out {@linkplain ConsistencyLevel consistency levels} that are not compatible with
-   * SimpleStrategy replications, and replaces them with equivalent compatible ones.
-   *
-   * <p>More specifically:
-   *
-   * <ol>
-   *   <li>If the given consistency level is {@linkplain ConsistencyLevel#isDcLocal()
-   *       datacenter-local}, returns its non-local equivalent.
-   *   <li>If the given consistency level is {@link ConsistencyLevel#EACH_QUORUM}, returns {@link
-   *       ConsistencyLevel#QUORUM}.
-   *   <li>For all other consistency levels, returns the provided level unchanged.
-   * </ol>
-   *
-   * <p>Under SimpleStrategy, incompatible consistency levels will cause read operations to fail
-   * with {@link com.datastax.oss.driver.api.core.servererrors.UnavailableException
-   * UnavailableException}. Write operations are still possible though.
-   *
-   * @param consistencyLevel the {@linkplain ConsistencyLevel consistency level} to inspect.
-   * @return a non-local {@linkplain ConsistencyLevel consistency level}.
-   */
-  public static ConsistencyLevel filterForSimpleStrategy(
-      @NonNull ConsistencyLevel consistencyLevel) {
-    if (consistencyLevel instanceof DefaultConsistencyLevel) {
-      DefaultConsistencyLevel defaultConsistencyLevel = (DefaultConsistencyLevel) consistencyLevel;
-      switch (defaultConsistencyLevel) {
-        case LOCAL_ONE:
-          return ConsistencyLevel.ONE;
-        case LOCAL_QUORUM:
-        case EACH_QUORUM:
-          return ConsistencyLevel.QUORUM;
-        case LOCAL_SERIAL:
-          return ConsistencyLevel.SERIAL;
-        case ANY:
-        case ONE:
-        case TWO:
-        case THREE:
-        case QUORUM:
-        case ALL:
-        case SERIAL:
-          return consistencyLevel;
-        default:
-          // fall-through
-      }
-    }
-    throw new IllegalArgumentException("Unsupported consistency level: " + consistencyLevel);
-  }
-
-  /**
    * Determines the number of replicas required to achieve the desired {@linkplain ConsistencyLevel
    * consistency level} on a keyspace/datacenter with the given {@linkplain ReplicationFactor
    * replication factor}.
