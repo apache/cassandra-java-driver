@@ -1435,7 +1435,14 @@ public abstract class TableOptions<T extends TableOptions> extends SchemaStateme
     }
   }
 
-  /** Additional Write Policy. Default value is 99p */
+  /**
+   * Additional Write Policy. Default value is 99p.
+   *
+   * <p>To create instances, use {@link SchemaBuilder#additionalWritePolicyNone() ()}, {@link
+   * SchemaBuilder#additionalWritePolicyAlways()}, {@link
+   * SchemaBuilder#additionalWritePolicyMillisecs(int)} or {@link
+   * SchemaBuilder#additionalWritePolicyMillisecs(int)}.
+   */
   public static class AdditionalWritePolicyValue {
     private String value;
 
