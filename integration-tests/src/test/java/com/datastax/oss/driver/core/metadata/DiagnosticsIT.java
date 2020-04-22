@@ -85,7 +85,7 @@ public class DiagnosticsIT {
     Optional<KeyspaceMetadata> maybeKs = metadata.getKeyspace("ks_simple");
     assertThat(maybeKs).isPresent();
     Optional<TokenRingDiagnostic> maybeDiagnostic =
-        metadata.generateTokenRingDiagnostic(maybeKs.get(), ConsistencyLevel.QUORUM, null);
+        metadata.generateTokenRingDiagnostic(maybeKs.get().getName(), ConsistencyLevel.QUORUM, null);
     assertThat(maybeDiagnostic).isPresent();
     assertThat(maybeDiagnostic.get().getStatus()).isEqualTo(Status.AVAILABLE);
     assertThat(maybeDiagnostic.get().getDetails())
@@ -107,7 +107,7 @@ public class DiagnosticsIT {
     Optional<KeyspaceMetadata> maybeKs = metadata.getKeyspace("ks_nts");
     assertThat(maybeKs).isPresent();
     Optional<TokenRingDiagnostic> maybeDiagnostic =
-        metadata.generateTokenRingDiagnostic(maybeKs.get(), ConsistencyLevel.EACH_QUORUM, null);
+        metadata.generateTokenRingDiagnostic(maybeKs.get().getName(), ConsistencyLevel.EACH_QUORUM, null);
     assertThat(maybeDiagnostic).isPresent();
     assertThat(maybeDiagnostic.get().getStatus()).isEqualTo(Status.AVAILABLE);
     assertThat(maybeDiagnostic.get().getDetails())
