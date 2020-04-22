@@ -18,28 +18,32 @@ package com.datastax.oss.driver.api.core.metadata.diagnostic;
 /** The status of a {@link Diagnostic}. */
 public enum Status {
 
-  // the order of enums matter, see mergeWith
-
   /** The diagnosed system is fully available. */
-  AVAILABLE,
+  AVAILABLE(0),
 
   /**
    * The diagnosed system is partially available and functions in degraded mode, but is still
    * capable of fulfilling its purpose.
    */
-  PARTIALLY_AVAILABLE,
+  PARTIALLY_AVAILABLE(1),
 
   /** The diagnosed system is not available at all; it cannot fulfill its purpose. */
-  UNAVAILABLE,
+  UNAVAILABLE(2),
 
   /** The diagnosed system is in an unknown state. */
-  UNKNOWN;
+  UNKNOWN(3);
+
+  private final int precedence;
+
+  Status(int precedence) {
+    this.precedence = precedence;
+  }
 
   /**
    * Merges the given {@link Status} with this one, in a pessimistic way: unavailable statuses take
    * precedence over available ones.
    */
   public Status mergeWith(Status that) {
-    return this.compareTo(that) > 0 ? this : that;
+    return this.precedence >= that.precedence ? this : that;
   }
 }
