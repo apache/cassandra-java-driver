@@ -47,6 +47,7 @@ public interface TokenRingDiagnostic extends Diagnostic {
    * datacenter-local} consistency level, returns the datacenter for which this diagnostic was
    * established. For all other consistency levels, returns {@link Optional#empty()}.
    */
+  @NonNull
   Optional<String> getDatacenter();
 
   /**

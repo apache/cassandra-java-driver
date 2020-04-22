@@ -68,6 +68,7 @@ public class DefaultTokenRingDiagnostic implements TokenRingDiagnostic {
     return consistencyLevel;
   }
 
+  @NonNull
   @Override
   public Optional<String> getDatacenter() {
     return Optional.ofNullable(datacenter);
