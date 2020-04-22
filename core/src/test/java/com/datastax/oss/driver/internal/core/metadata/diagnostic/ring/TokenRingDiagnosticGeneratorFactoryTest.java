@@ -71,6 +71,7 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
 
   @Before
   public void setUp() {
+    given(metadata.getKeyspace(ksName)).willReturn(Optional.of(ks));
     given(ks.getName()).willReturn(ksName);
     given(ks.getReplication()).willReturn(replication);
     given(metadata.getTokenMap()).willReturn(Optional.of(tokenMap));
@@ -104,7 +105,7 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
     Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ks, ConsistencyLevel.QUORUM, null);
+        factory.maybeCreate(ksName, ConsistencyLevel.QUORUM, null);
     assertThat(maybeGenerator).isPresent();
     assertThat(maybeGenerator.get())
         .isExactlyInstanceOf(DefaultTokenRingDiagnosticGenerator.class)
@@ -127,7 +128,7 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
     Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ks, ConsistencyLevel.LOCAL_QUORUM, "dc1");
+        factory.maybeCreate(ksName, ConsistencyLevel.LOCAL_QUORUM, "dc1");
     assertThat(maybeGenerator).isPresent();
     assertThat(maybeGenerator.get())
         .isExactlyInstanceOf(DefaultTokenRingDiagnosticGenerator.class)
@@ -152,7 +153,7 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
     Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ks, ConsistencyLevel.LOCAL_QUORUM, "dc1");
+        factory.maybeCreate(ksName, ConsistencyLevel.LOCAL_QUORUM, "dc1");
     assertThat(maybeGenerator).isPresent();
     assertThat(maybeGenerator.get())
         .isExactlyInstanceOf(LocalTokenRingDiagnosticGenerator.class)
@@ -178,7 +179,7 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
     Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ks, ConsistencyLevel.LOCAL_QUORUM, null);
+        factory.maybeCreate(ksName, ConsistencyLevel.LOCAL_QUORUM, null);
     assertThat(maybeGenerator).isNotPresent();
     assertLog(
         "No local datacenter was provided, but the consistency level is local (LOCAL_QUORUM)");
@@ -201,7 +202,7 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
     Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ks, ConsistencyLevel.LOCAL_QUORUM, "dc3");
+        factory.maybeCreate(ksName, ConsistencyLevel.LOCAL_QUORUM, "dc3");
     assertThat(maybeGenerator).isNotPresent();
     assertLog(
         "The local datacenter (dc3) does not have a corresponding entry in replication options for keyspace ks1");
@@ -223,7 +224,7 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
     Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ks, ConsistencyLevel.QUORUM, null);
+        factory.maybeCreate(ksName, ConsistencyLevel.QUORUM, null);
     assertThat(maybeGenerator).isPresent();
     assertThat(maybeGenerator.get())
         .isExactlyInstanceOf(DefaultTokenRingDiagnosticGenerator.class)
@@ -248,7 +249,7 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
     Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ks, ConsistencyLevel.EACH_QUORUM, null);
+        factory.maybeCreate(ksName, ConsistencyLevel.EACH_QUORUM, null);
     assertThat(maybeGenerator).isPresent();
     assertThat(maybeGenerator.get())
         .isExactlyInstanceOf(EachQuorumTokenRingDiagnosticGenerator.class)
@@ -265,9 +266,22 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
     Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ks, ConsistencyLevel.QUORUM, null);
+        factory.maybeCreate(ksName, ConsistencyLevel.QUORUM, null);
     assertThat(maybeGenerator).isNotPresent();
     assertLog("Token metadata computation has been disabled");
+  }
+
+  @Test
+  public void should_not_create_generator_when_keyspace_not_found() {
+    // given
+    given(metadata.getKeyspace(ksName)).willReturn(Optional.empty());
+    // when
+    TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
+    // then
+    Optional<TokenRingDiagnosticGenerator> maybeGenerator =
+        factory.maybeCreate(ksName, ConsistencyLevel.QUORUM, null);
+    assertThat(maybeGenerator).isNotPresent();
+    assertLog("Keyspace ks1 does not exist or its metadata could not be retrieved");
   }
 
   @Test
@@ -280,7 +294,7 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
     Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ks, ConsistencyLevel.QUORUM, null);
+        factory.maybeCreate(ksName, ConsistencyLevel.QUORUM, null);
     assertThat(maybeGenerator).isNotPresent();
     assertLog(
         "Unsupported replication strategy 'org.apache.cassandra.locator.EverywhereStrategy' for keyspace ks1");

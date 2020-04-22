@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata.diagnostic.ring;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.internal.core.metadata.token.DefaultReplicationStrategyFactory;
@@ -45,16 +46,25 @@ public class TokenRingDiagnosticGeneratorFactory {
 
   @NonNull
   public Optional<TokenRingDiagnosticGenerator> maybeCreate(
-      @NonNull KeyspaceMetadata keyspace,
+      @NonNull CqlIdentifier keyspaceName,
       @NonNull ConsistencyLevel consistencyLevel,
       @Nullable String datacenter) {
-    Objects.requireNonNull(keyspace, "keyspace must not be null");
+    Objects.requireNonNull(keyspaceName, "keyspaceName must not be null");
     Objects.requireNonNull(consistencyLevel, "consistencyLevel must not be null");
     if (!metadata.getTokenMap().isPresent()) {
       LOG.warn(
           "Token metadata computation has been disabled. Token ring health reports will be disabled");
       return Optional.empty();
     }
+    Optional<KeyspaceMetadata> maybeKeyspace = metadata.getKeyspace(keyspaceName);
+    if (!maybeKeyspace.isPresent()) {
+      LOG.warn(
+          String.format(
+              "Keyspace %s does not exist or its metadata could not be retrieved. Token ring health reports will be disabled",
+              keyspaceName.asCql(true)));
+      return Optional.empty();
+    }
+    KeyspaceMetadata keyspace = maybeKeyspace.get();
     String replicationStrategyClass = keyspace.getReplication().get("class");
     if (replicationStrategyClass.equals(DefaultReplicationStrategyFactory.SIMPLE_STRATEGY)) {
       return createForSimpleStrategy(keyspace, consistencyLevel);

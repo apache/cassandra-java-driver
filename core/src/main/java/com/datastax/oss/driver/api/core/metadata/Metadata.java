@@ -156,7 +156,7 @@ public interface Metadata {
    *
    * <ol>
    *   <li>Token metadata is enabled;
-   *   <li>The keyspace has a supported replication strategy;
+   *   <li>The keyspace exists and has a supported replication strategy;
    *   <li>The datacenter name is non-null (required only for {@linkplain
    *       ConsistencyLevel#isDcLocal() datacenter-local consistency levels}).
    * </ol>
@@ -165,7 +165,7 @@ public interface Metadata {
    * 100% reliable, and therefore, the accuracy of reported health statuses should be considered
    * best-effort only, and are not meant to replace a proper operational surveillance tool.
    *
-   * @param keyspace the {@link KeyspaceMetadata keyspace} to analyze.
+   * @param keyspaceName the {@link CqlIdentifier name} of the keyspace to analyze.
    * @param consistencyLevel the {@link ConsistencyLevel consistency level} to use.
    * @param datacenter the datacenter name; only required for datacenter-local consistency levels,
    *     may be null otherwise.
@@ -173,11 +173,11 @@ public interface Metadata {
    * @see #getKeyspace(String)
    */
   default Optional<TokenRingDiagnostic> generateTokenRingDiagnostic(
-      @NonNull KeyspaceMetadata keyspace,
+      @NonNull CqlIdentifier keyspaceName,
       @NonNull ConsistencyLevel consistencyLevel,
       @Nullable String datacenter) {
     return new TokenRingDiagnosticGeneratorFactory(this)
-        .maybeCreate(keyspace, consistencyLevel, datacenter)
+        .maybeCreate(keyspaceName, consistencyLevel, datacenter)
         .map(TokenRingDiagnosticGenerator::generate);
   }
 }
