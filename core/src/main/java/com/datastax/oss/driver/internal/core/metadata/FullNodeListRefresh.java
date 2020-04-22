@@ -62,17 +62,25 @@ class FullNodeListRefresh extends NodesRefresh {
 
     for (NodeInfo nodeInfo : nodeInfos) {
       UUID id = nodeInfo.getHostId();
-      seen.add(id);
-      DefaultNode node = (DefaultNode) oldNodes.get(id);
-      if (node == null) {
-        node = new DefaultNode(nodeInfo.getEndPoint(), context);
-        LOG.debug("[{}] Adding new node {}", logPrefix, node);
-        added.put(id, node);
+      if (seen.contains(id)) {
+        LOG.warn(
+            "[{}] Found duplicate entries with host_id {} in system.peers, "
+                + "keeping only the first one",
+            logPrefix,
+            id);
+      } else {
+        seen.add(id);
+        DefaultNode node = (DefaultNode) oldNodes.get(id);
+        if (node == null) {
+          node = new DefaultNode(nodeInfo.getEndPoint(), context);
+          LOG.debug("[{}] Adding new node {}", logPrefix, node);
+          added.put(id, node);
+        }
+        if (tokenFactory == null && nodeInfo.getPartitioner() != null) {
+          tokenFactory = tokenFactoryRegistry.tokenFactoryFor(nodeInfo.getPartitioner());
+        }
+        tokensChanged |= copyInfos(nodeInfo, node, context);
       }
-      if (tokenFactory == null && nodeInfo.getPartitioner() != null) {
-        tokenFactory = tokenFactoryRegistry.tokenFactoryFor(nodeInfo.getPartitioner());
-      }
-      tokensChanged |= copyInfos(nodeInfo, node, context);
     }
 
     Set<UUID> removed = Sets.difference(oldNodes.keySet(), seen);

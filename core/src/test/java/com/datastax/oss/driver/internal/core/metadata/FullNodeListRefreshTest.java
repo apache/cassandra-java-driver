@@ -129,4 +129,50 @@ public class FullNodeListRefreshTest {
     assertThat(node2.getSchemaVersion()).isEqualTo(schemaVersion2);
     assertThat(result.events).isEmpty();
   }
+
+  @Test
+  public void should_ignore_duplicate_host_ids() {
+    // Given
+    DefaultMetadata oldMetadata =
+        new DefaultMetadata(
+            ImmutableMap.of(node1.getHostId(), node1, node2.getHostId(), node2),
+            Collections.emptyMap(),
+            null,
+            null);
+
+    Iterable<NodeInfo> newInfos =
+        ImmutableList.of(
+            DefaultNodeInfo.builder()
+                .withEndPoint(node1.getEndPoint())
+                .withDatacenter("dc1")
+                .withRack("rack1")
+                .withHostId(node1.getHostId())
+                .build(),
+            DefaultNodeInfo.builder()
+                .withEndPoint(node2.getEndPoint())
+                .withDatacenter("dc1")
+                .withRack("rack2")
+                .withHostId(node2.getHostId())
+                .build(),
+            // Duplicate host id for node 2, should be ignored:
+            DefaultNodeInfo.builder()
+                .withEndPoint(node2.getEndPoint())
+                .withDatacenter("dc1")
+                .withRack("rack3")
+                .withHostId(node2.getHostId())
+                .build());
+    FullNodeListRefresh refresh = new FullNodeListRefresh(newInfos);
+
+    // When
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false, context);
+
+    // Then
+    assertThat(result.newMetadata.getNodes())
+        .containsOnlyKeys(node1.getHostId(), node2.getHostId());
+    assertThat(node1.getDatacenter()).isEqualTo("dc1");
+    assertThat(node1.getRack()).isEqualTo("rack1");
+    assertThat(node2.getDatacenter()).isEqualTo("dc1");
+    assertThat(node2.getRack()).isEqualTo("rack2");
+    assertThat(result.events).isEmpty();
+  }
 }
