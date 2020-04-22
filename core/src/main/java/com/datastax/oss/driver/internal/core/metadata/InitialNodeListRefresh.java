@@ -23,6 +23,8 @@ import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import net.jcip.annotations.ThreadSafe;
@@ -58,25 +60,33 @@ class InitialNodeListRefresh extends NodesRefresh {
     assert oldMetadata == DefaultMetadata.EMPTY;
     TokenFactory tokenFactory = null;
 
-    ImmutableMap.Builder<UUID, DefaultNode> newNodesBuilder = ImmutableMap.builder();
+    Map<UUID, DefaultNode> newNodes = new HashMap<>();
 
     for (NodeInfo nodeInfo : nodeInfos) {
-      EndPoint endPoint = nodeInfo.getEndPoint();
-      DefaultNode node = findIn(contactPoints, endPoint);
-      if (node == null) {
-        node = new DefaultNode(endPoint, context);
-        LOG.debug("[{}] Adding new node {}", logPrefix, node);
+      UUID hostId = nodeInfo.getHostId();
+      if (newNodes.containsKey(hostId)) {
+        LOG.warn(
+            "[{}] Found duplicate entries with host_id {} in system.peers, "
+                + "keeping only the first one",
+            logPrefix,
+            hostId);
       } else {
-        LOG.debug("[{}] Copying contact point {}", logPrefix, node);
+        EndPoint endPoint = nodeInfo.getEndPoint();
+        DefaultNode node = findIn(contactPoints, endPoint);
+        if (node == null) {
+          node = new DefaultNode(endPoint, context);
+          LOG.debug("[{}] Adding new node {}", logPrefix, node);
+        } else {
+          LOG.debug("[{}] Copying contact point {}", logPrefix, node);
+        }
+        if (tokenMapEnabled && tokenFactory == null && nodeInfo.getPartitioner() != null) {
+          tokenFactory = tokenFactoryRegistry.tokenFactoryFor(nodeInfo.getPartitioner());
+        }
+        copyInfos(nodeInfo, node, context);
+        newNodes.put(hostId, node);
       }
-      if (tokenMapEnabled && tokenFactory == null && nodeInfo.getPartitioner() != null) {
-        tokenFactory = tokenFactoryRegistry.tokenFactoryFor(nodeInfo.getPartitioner());
-      }
-      copyInfos(nodeInfo, node, context);
-      newNodesBuilder.put(node.getHostId(), node);
     }
 
-    ImmutableMap<UUID, DefaultNode> newNodes = newNodesBuilder.build();
     ImmutableList.Builder<Object> eventsBuilder = ImmutableList.builder();
 
     for (DefaultNode newNode : newNodes.values()) {

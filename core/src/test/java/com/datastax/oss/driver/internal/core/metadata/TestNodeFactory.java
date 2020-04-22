@@ -22,11 +22,15 @@ import java.util.UUID;
 public class TestNodeFactory {
 
   public static DefaultNode newNode(int lastIpByte, InternalDriverContext context) {
-    DefaultEndPoint endPoint = newEndPoint(lastIpByte);
-    DefaultNode node = new DefaultNode(endPoint, context);
+    DefaultNode node = newContactPoint(lastIpByte, context);
     node.hostId = UUID.randomUUID();
-    node.broadcastRpcAddress = endPoint.resolve();
+    node.broadcastRpcAddress = ((InetSocketAddress) node.getEndPoint().resolve());
     return node;
+  }
+
+  public static DefaultNode newContactPoint(int lastIpByte, InternalDriverContext context) {
+    DefaultEndPoint endPoint = newEndPoint(lastIpByte);
+    return new DefaultNode(endPoint, context);
   }
 
   public static DefaultEndPoint newEndPoint(int lastByteOfIp) {
