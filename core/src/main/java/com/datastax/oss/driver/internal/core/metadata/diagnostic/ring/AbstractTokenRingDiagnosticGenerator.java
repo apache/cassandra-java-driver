@@ -23,9 +23,9 @@ import com.datastax.oss.driver.api.core.metadata.diagnostic.TokenRingDiagnostic;
 import com.datastax.oss.driver.api.core.metadata.diagnostic.TokenRingDiagnostic.TokenRangeDiagnostic;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
+import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -58,8 +58,9 @@ public abstract class AbstractTokenRingDiagnosticGenerator implements TokenRingD
   }
 
   protected Set<TokenRangeDiagnostic> generateTokenRangeDiagnostics(TokenMap tokenMap) {
-    Set<TokenRangeDiagnostic> reports = new HashSet<>();
-    for (TokenRange range : tokenMap.getTokenRanges()) {
+    Set<TokenRange> tokenRanges = tokenMap.getTokenRanges();
+    Set<TokenRangeDiagnostic> reports = Sets.newHashSetWithExpectedSize(tokenRanges.size());
+    for (TokenRange range : tokenRanges) {
       Set<Node> allReplicas = tokenMap.getReplicas(keyspace.getName(), range);
       Set<Node> aliveReplicas =
           allReplicas.stream().filter(this::isAlive).collect(Collectors.toSet());
