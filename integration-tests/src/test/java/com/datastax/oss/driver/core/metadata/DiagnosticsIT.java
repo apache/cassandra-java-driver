@@ -84,11 +84,11 @@ public class DiagnosticsIT {
     Metadata metadata = session.refreshSchema();
     Optional<KeyspaceMetadata> maybeKs = metadata.getKeyspace("ks_simple");
     assertThat(maybeKs).isPresent();
-    Optional<TokenRingDiagnostic> maybeDiagnostic =
-        metadata.generateTokenRingDiagnostic(maybeKs.get().getName(), ConsistencyLevel.QUORUM, null);
-    assertThat(maybeDiagnostic).isPresent();
-    assertThat(maybeDiagnostic.get().getStatus()).isEqualTo(Status.AVAILABLE);
-    assertThat(maybeDiagnostic.get().getDetails())
+    TokenRingDiagnostic diagnostic =
+        metadata.generateTokenRingDiagnostic(
+            maybeKs.get().getName(), ConsistencyLevel.QUORUM, null);
+    assertThat(diagnostic.getStatus()).isEqualTo(Status.AVAILABLE);
+    assertThat(diagnostic.getDetails())
         .isEqualTo(
             ImmutableMap.<String, Object>builder()
                 .put("status", Status.AVAILABLE)
@@ -106,11 +106,11 @@ public class DiagnosticsIT {
     Metadata metadata = session.refreshSchema();
     Optional<KeyspaceMetadata> maybeKs = metadata.getKeyspace("ks_nts");
     assertThat(maybeKs).isPresent();
-    Optional<TokenRingDiagnostic> maybeDiagnostic =
-        metadata.generateTokenRingDiagnostic(maybeKs.get().getName(), ConsistencyLevel.EACH_QUORUM, null);
-    assertThat(maybeDiagnostic).isPresent();
-    assertThat(maybeDiagnostic.get().getStatus()).isEqualTo(Status.AVAILABLE);
-    assertThat(maybeDiagnostic.get().getDetails())
+    TokenRingDiagnostic diagnostic =
+        metadata.generateTokenRingDiagnostic(
+            maybeKs.get().getName(), ConsistencyLevel.EACH_QUORUM, null);
+    assertThat(diagnostic.getStatus()).isEqualTo(Status.AVAILABLE);
+    assertThat(diagnostic.getDetails())
         .isEqualTo(
             ImmutableMap.<String, Object>builder()
                 .put("status", Status.AVAILABLE)

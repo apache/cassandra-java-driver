@@ -165,6 +165,8 @@ public interface Metadata {
    *       ConsistencyLevel#isDcLocal() datacenter-local consistency levels}).
    * </ol>
    *
+   * If the above conditions are not met, this method throws an {@link IllegalArgumentException}.
+   *
    * <p>Note: diagnostics rely on the driver's current picture of the cluster to determine which
    * nodes are up or down. This picture is obtained from actual attempts to connect to the nodes,
    * and for nodes that the driver does not connect to, from Gossip events.
@@ -186,12 +188,13 @@ public interface Metadata {
    * @see DefaultDriverOption#METADATA_TOKEN_MAP_ENABLED
    * @see #getKeyspace(String)
    */
-  default Optional<TokenRingDiagnostic> generateTokenRingDiagnostic(
+  default TokenRingDiagnostic generateTokenRingDiagnostic(
       @NonNull CqlIdentifier keyspaceName,
       @NonNull ConsistencyLevel consistencyLevel,
       @Nullable String datacenter) {
-    return new TokenRingDiagnosticGeneratorFactory(this)
-        .maybeCreate(keyspaceName, consistencyLevel, datacenter)
-        .map(TokenRingDiagnosticGenerator::generate);
+    TokenRingDiagnosticGenerator generator =
+        new TokenRingDiagnosticGeneratorFactory(this)
+            .create(keyspaceName, consistencyLevel, datacenter);
+    return generator.generate();
   }
 }

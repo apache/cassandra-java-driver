@@ -45,24 +45,21 @@ public class TokenRingDiagnosticGeneratorFactory {
   }
 
   @NonNull
-  public Optional<TokenRingDiagnosticGenerator> maybeCreate(
+  public TokenRingDiagnosticGenerator create(
       @NonNull CqlIdentifier keyspaceName,
       @NonNull ConsistencyLevel consistencyLevel,
       @Nullable String datacenter) {
     Objects.requireNonNull(keyspaceName, "keyspaceName must not be null");
     Objects.requireNonNull(consistencyLevel, "consistencyLevel must not be null");
     if (!metadata.getTokenMap().isPresent()) {
-      LOG.warn(
-          "Token metadata computation has been disabled. Token ring health reports will be disabled");
-      return Optional.empty();
+      throw new IllegalArgumentException("Token metadata computation has been disabled");
     }
     Optional<KeyspaceMetadata> maybeKeyspace = metadata.getKeyspace(keyspaceName);
     if (!maybeKeyspace.isPresent()) {
-      LOG.warn(
+      throw new IllegalArgumentException(
           String.format(
-              "Keyspace %s does not exist or its metadata could not be retrieved. Token ring health reports will be disabled",
+              "Keyspace %s does not exist or its metadata could not be retrieved",
               keyspaceName.asCql(true)));
-      return Optional.empty();
     }
     KeyspaceMetadata keyspace = maybeKeyspace.get();
     String replicationStrategyClass = keyspace.getReplication().get("class");
@@ -73,14 +70,13 @@ public class TokenRingDiagnosticGeneratorFactory {
         DefaultReplicationStrategyFactory.NETWORK_TOPOLOGY_STRATEGY)) {
       return createForNetworkTopologyStrategy(keyspace, consistencyLevel, datacenter);
     }
-    LOG.warn(
+    throw new IllegalArgumentException(
         String.format(
-            "Unsupported replication strategy '%s' for keyspace %s. Token ring health reports will be disabled",
+            "Unsupported replication strategy '%s' for keyspace %s",
             replicationStrategyClass, keyspace.getName().asCql(true)));
-    return Optional.empty();
   }
 
-  protected Optional<TokenRingDiagnosticGenerator> createForSimpleStrategy(
+  protected TokenRingDiagnosticGenerator createForSimpleStrategy(
       KeyspaceMetadata keyspace, ConsistencyLevel consistencyLevel) {
     ConsistencyLevel filteredConsistencyLevel =
         ConsistencyLevels.filterForSimpleStrategy(consistencyLevel);
@@ -93,13 +89,11 @@ public class TokenRingDiagnosticGeneratorFactory {
     }
     ReplicationFactor replicationFactor =
         ReplicationFactor.fromString(keyspace.getReplication().get("replication_factor"));
-    DefaultTokenRingDiagnosticGenerator generator =
-        new DefaultTokenRingDiagnosticGenerator(
-            metadata, keyspace, filteredConsistencyLevel, replicationFactor);
-    return Optional.of(generator);
+    return new DefaultTokenRingDiagnosticGenerator(
+        metadata, keyspace, filteredConsistencyLevel, replicationFactor);
   }
 
-  protected Optional<TokenRingDiagnosticGenerator> createForNetworkTopologyStrategy(
+  protected TokenRingDiagnosticGenerator createForNetworkTopologyStrategy(
       KeyspaceMetadata keyspace, ConsistencyLevel consistencyLevel, String datacenter) {
     if (consistencyLevel.isDcLocal()) {
       return createForLocalCL(keyspace, consistencyLevel, datacenter);
@@ -110,33 +104,29 @@ public class TokenRingDiagnosticGeneratorFactory {
     return createForNonLocalCL(keyspace, consistencyLevel);
   }
 
-  protected Optional<TokenRingDiagnosticGenerator> createForLocalCL(
+  protected TokenRingDiagnosticGenerator createForLocalCL(
       KeyspaceMetadata keyspace, ConsistencyLevel consistencyLevel, String datacenter) {
     if (datacenter == null) {
       // If the consistency level is local, we also need the local DC name
-      LOG.warn(
+      throw new IllegalArgumentException(
           String.format(
-              "No local datacenter was provided, but the consistency level is local (%s). Token ring health reports will be disabled",
+              "No local datacenter was provided, but the consistency level is local (%s)",
               consistencyLevel));
-      return Optional.empty();
     }
     Map<String, String> replication = keyspace.getReplication();
     if (!replication.containsKey(datacenter)) {
       // Bad config: the specified local DC is not listed in the replication options
-      LOG.warn(
+      throw new IllegalArgumentException(
           String.format(
-              "The local datacenter (%s) does not have a corresponding entry in replication options for keyspace %s. Token ring health reports will be disabled",
+              "The local datacenter (%s) does not have a corresponding entry in replication options for keyspace %s",
               datacenter, keyspace.getName().asCql(true)));
-      return Optional.empty();
     }
     ReplicationFactor replicationFactor = ReplicationFactor.fromString(replication.get(datacenter));
-    LocalTokenRingDiagnosticGenerator generator =
-        new LocalTokenRingDiagnosticGenerator(
-            metadata, keyspace, consistencyLevel, datacenter, replicationFactor);
-    return Optional.of(generator);
+    return new LocalTokenRingDiagnosticGenerator(
+        metadata, keyspace, consistencyLevel, datacenter, replicationFactor);
   }
 
-  protected Optional<TokenRingDiagnosticGenerator> createForEachQuorum(KeyspaceMetadata keyspace) {
+  protected TokenRingDiagnosticGenerator createForEachQuorum(KeyspaceMetadata keyspace) {
     Map<String, ReplicationFactor> replicationFactorsByDc = new HashMap<>();
     for (Entry<String, String> entry : keyspace.getReplication().entrySet()) {
       if (entry.getKey().equals("class")) {
@@ -146,12 +136,10 @@ public class TokenRingDiagnosticGeneratorFactory {
       ReplicationFactor replicationFactor = ReplicationFactor.fromString(entry.getValue());
       replicationFactorsByDc.put(datacenter, replicationFactor);
     }
-    EachQuorumTokenRingDiagnosticGenerator generator =
-        new EachQuorumTokenRingDiagnosticGenerator(metadata, keyspace, replicationFactorsByDc);
-    return Optional.of(generator);
+    return new EachQuorumTokenRingDiagnosticGenerator(metadata, keyspace, replicationFactorsByDc);
   }
 
-  protected Optional<TokenRingDiagnosticGenerator> createForNonLocalCL(
+  protected TokenRingDiagnosticGenerator createForNonLocalCL(
       KeyspaceMetadata keyspace, ConsistencyLevel consistencyLevel) {
     int sumOfReplicationFactors = 0;
     for (Entry<String, String> entry : keyspace.getReplication().entrySet()) {
@@ -161,9 +149,7 @@ public class TokenRingDiagnosticGeneratorFactory {
       int replicationFactor = ReplicationFactor.fromString(entry.getValue()).fullReplicas();
       sumOfReplicationFactors += replicationFactor;
     }
-    DefaultTokenRingDiagnosticGenerator generator =
-        new DefaultTokenRingDiagnosticGenerator(
-            metadata, keyspace, consistencyLevel, new ReplicationFactor(sumOfReplicationFactors));
-    return Optional.of(generator);
+    return new DefaultTokenRingDiagnosticGenerator(
+        metadata, keyspace, consistencyLevel, new ReplicationFactor(sumOfReplicationFactors));
   }
 }

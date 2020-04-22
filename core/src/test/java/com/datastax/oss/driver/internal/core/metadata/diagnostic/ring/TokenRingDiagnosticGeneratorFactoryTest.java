@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata.diagnostic.ring;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -104,10 +105,8 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     // when
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
-    Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ksName, ConsistencyLevel.QUORUM, null);
-    assertThat(maybeGenerator).isPresent();
-    assertThat(maybeGenerator.get())
+    TokenRingDiagnosticGenerator generator = factory.create(ksName, ConsistencyLevel.QUORUM, null);
+    assertThat(generator)
         .isExactlyInstanceOf(DefaultTokenRingDiagnosticGenerator.class)
         .extracting("consistencyLevel", "requiredReplicas")
         .containsExactly(ConsistencyLevel.QUORUM, 2);
@@ -127,10 +126,9 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     // when
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
-    Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ksName, ConsistencyLevel.LOCAL_QUORUM, "dc1");
-    assertThat(maybeGenerator).isPresent();
-    assertThat(maybeGenerator.get())
+    TokenRingDiagnosticGenerator generator =
+        factory.create(ksName, ConsistencyLevel.LOCAL_QUORUM, "dc1");
+    assertThat(generator)
         .isExactlyInstanceOf(DefaultTokenRingDiagnosticGenerator.class)
         .extracting("consistencyLevel", "requiredReplicas")
         .containsExactly(ConsistencyLevel.QUORUM, 2);
@@ -152,10 +150,9 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     // when
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
-    Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ksName, ConsistencyLevel.LOCAL_QUORUM, "dc1");
-    assertThat(maybeGenerator).isPresent();
-    assertThat(maybeGenerator.get())
+    TokenRingDiagnosticGenerator generator =
+        factory.create(ksName, ConsistencyLevel.LOCAL_QUORUM, "dc1");
+    assertThat(generator)
         .isExactlyInstanceOf(LocalTokenRingDiagnosticGenerator.class)
         .extracting("consistencyLevel", "requiredReplicas", "datacenter")
         .containsExactly(ConsistencyLevel.LOCAL_QUORUM, 2, "dc1");
@@ -178,11 +175,13 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     // when
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
-    Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ksName, ConsistencyLevel.LOCAL_QUORUM, null);
-    assertThat(maybeGenerator).isNotPresent();
-    assertLog(
-        "No local datacenter was provided, but the consistency level is local (LOCAL_QUORUM)");
+    Throwable throwable =
+        catchThrowable(() -> factory.create(ksName, ConsistencyLevel.LOCAL_QUORUM, null));
+    assertThat(throwable)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(
+            "No local datacenter was provided, but the consistency level is local (LOCAL_QUORUM)");
+    assertNoLog();
   }
 
   @Test
@@ -201,11 +200,13 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     // when
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
-    Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ksName, ConsistencyLevel.LOCAL_QUORUM, "dc3");
-    assertThat(maybeGenerator).isNotPresent();
-    assertLog(
-        "The local datacenter (dc3) does not have a corresponding entry in replication options for keyspace ks1");
+    Throwable throwable =
+        catchThrowable(() -> factory.create(ksName, ConsistencyLevel.LOCAL_QUORUM, "dc3"));
+    assertThat(throwable)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(
+            "The local datacenter (dc3) does not have a corresponding entry in replication options for keyspace ks1");
+    assertNoLog();
   }
 
   @Test
@@ -223,10 +224,8 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     // when
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
-    Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ksName, ConsistencyLevel.QUORUM, null);
-    assertThat(maybeGenerator).isPresent();
-    assertThat(maybeGenerator.get())
+    TokenRingDiagnosticGenerator generator = factory.create(ksName, ConsistencyLevel.QUORUM, null);
+    assertThat(generator)
         .isExactlyInstanceOf(DefaultTokenRingDiagnosticGenerator.class)
         .extracting("consistencyLevel", "requiredReplicas")
         .containsExactly(ConsistencyLevel.QUORUM, 2 + 1);
@@ -248,10 +247,9 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     // when
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
-    Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ksName, ConsistencyLevel.EACH_QUORUM, null);
-    assertThat(maybeGenerator).isPresent();
-    assertThat(maybeGenerator.get())
+    TokenRingDiagnosticGenerator generator =
+        factory.create(ksName, ConsistencyLevel.EACH_QUORUM, null);
+    assertThat(generator)
         .isExactlyInstanceOf(EachQuorumTokenRingDiagnosticGenerator.class)
         .extracting("requiredReplicasByDc")
         .isEqualTo(ImmutableMap.of("dc1", 2, "dc2", 1));
@@ -265,10 +263,12 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     // when
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
-    Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ksName, ConsistencyLevel.QUORUM, null);
-    assertThat(maybeGenerator).isNotPresent();
-    assertLog("Token metadata computation has been disabled");
+    Throwable throwable =
+        catchThrowable(() -> factory.create(ksName, ConsistencyLevel.QUORUM, null));
+    assertThat(throwable)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Token metadata computation has been disabled");
+    assertNoLog();
   }
 
   @Test
@@ -278,10 +278,12 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     // when
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
-    Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ksName, ConsistencyLevel.QUORUM, null);
-    assertThat(maybeGenerator).isNotPresent();
-    assertLog("Keyspace ks1 does not exist or its metadata could not be retrieved");
+    Throwable throwable =
+        catchThrowable(() -> factory.create(ksName, ConsistencyLevel.QUORUM, null));
+    assertThat(throwable)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Keyspace ks1 does not exist or its metadata could not be retrieved");
+    assertNoLog();
   }
 
   @Test
@@ -293,18 +295,20 @@ public class TokenRingDiagnosticGeneratorFactoryTest {
     // when
     TokenRingDiagnosticGeneratorFactory factory = new TokenRingDiagnosticGeneratorFactory(metadata);
     // then
-    Optional<TokenRingDiagnosticGenerator> maybeGenerator =
-        factory.maybeCreate(ksName, ConsistencyLevel.QUORUM, null);
-    assertThat(maybeGenerator).isNotPresent();
-    assertLog(
-        "Unsupported replication strategy 'org.apache.cassandra.locator.EverywhereStrategy' for keyspace ks1");
+    Throwable throwable =
+        catchThrowable(() -> factory.create(ksName, ConsistencyLevel.QUORUM, null));
+    assertThat(throwable)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(
+            "Unsupported replication strategy 'org.apache.cassandra.locator.EverywhereStrategy' for keyspace ks1");
+    assertNoLog();
   }
 
   private void assertNoLog() {
     verify(appender, never()).doAppend(any());
   }
 
-  private void assertLog(String message) {
+  private void assertLog(@SuppressWarnings("SameParameterValue") String message) {
     verify(appender).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getValue().getFormattedMessage()).contains(message);
   }
