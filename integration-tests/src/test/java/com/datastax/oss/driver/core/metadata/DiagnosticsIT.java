@@ -53,7 +53,7 @@ import org.junit.rules.TestRule;
 public class DiagnosticsIT {
 
   private static final SimulacronRule SIMULACRON_RULE =
-      new SimulacronRule(ClusterSpec.builder().withNodes(3, 3));
+      new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
   private static final SessionRule<CqlSession> SESSION_RULE =
       SessionRule.builder(SIMULACRON_RULE)
@@ -86,7 +86,7 @@ public class DiagnosticsIT {
     assertThat(maybeKs).isPresent();
     TokenRingDiagnostic diagnostic =
         metadata.generateTokenRingDiagnostic(
-            maybeKs.get().getName(), ConsistencyLevel.QUORUM, null);
+            maybeKs.get().getName(), ConsistencyLevel.QUORUM, "dc1");
     assertThat(diagnostic.getStatus()).isEqualTo(Status.AVAILABLE);
     assertThat(diagnostic.getDetails())
         .isEqualTo(
@@ -95,7 +95,7 @@ public class DiagnosticsIT {
                 .put("keyspace", "ks_simple")
                 .put("replication", maybeKs.get().getReplication())
                 .put("consistencyLevel", QUORUM)
-                .put("availableRanges", 6)
+                .put("availableRanges", 3)
                 .put("unavailableRanges", 0)
                 .build());
   }
@@ -108,16 +108,17 @@ public class DiagnosticsIT {
     assertThat(maybeKs).isPresent();
     TokenRingDiagnostic diagnostic =
         metadata.generateTokenRingDiagnostic(
-            maybeKs.get().getName(), ConsistencyLevel.EACH_QUORUM, null);
+            maybeKs.get().getName(), ConsistencyLevel.LOCAL_QUORUM, "dc1");
     assertThat(diagnostic.getStatus()).isEqualTo(Status.AVAILABLE);
     assertThat(diagnostic.getDetails())
         .isEqualTo(
             ImmutableMap.<String, Object>builder()
                 .put("status", Status.AVAILABLE)
                 .put("keyspace", "ks_nts")
+                .put("datacenter", "dc1")
                 .put("replication", maybeKs.get().getReplication())
-                .put("consistencyLevel", ConsistencyLevel.EACH_QUORUM)
-                .put("availableRanges", 6)
+                .put("consistencyLevel", ConsistencyLevel.LOCAL_QUORUM)
+                .put("availableRanges", 3)
                 .put("unavailableRanges", 0)
                 .build());
   }
@@ -140,9 +141,7 @@ public class DiagnosticsIT {
                     "class",
                     DefaultReplicationStrategyFactory.NETWORK_TOPOLOGY_STRATEGY,
                     "dc1",
-                    "3",
-                    "dc2",
-                    "1")));
+                    "3")));
     Query whenSelectAllKeyspaces = new Query("SELECT * FROM system_schema.keyspaces");
     SuccessResult thenReturnAllKeyspaces = new SuccessResult(allKeyspacesRows, KEYSPACE_COLUMNS);
     RequestPrime primeAllKeyspaces =
