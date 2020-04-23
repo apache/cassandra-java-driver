@@ -69,22 +69,25 @@ public class TopologyDiagnosticGenerator {
       DefaultNodeGroupDiagnostic.Builder globalDiagnostic,
       Map<String, DefaultNodeGroupDiagnostic.Builder> localDiagnostics) {
     for (Node node : nodes.values()) {
-      DefaultNodeGroupDiagnostic.Builder localDiagnostic =
-          localDiagnostics.compute(
-              node.getDatacenter(),
-              (dc, diag) -> diag == null ? new DefaultNodeGroupDiagnostic.Builder() : diag);
-      localDiagnostic.incrementTotal();
-      globalDiagnostic.incrementTotal();
-      if (node.getState() == NodeState.UP) {
-        localDiagnostic.incrementUp();
-        globalDiagnostic.incrementUp();
-      } else if (node.getState() == NodeState.UNKNOWN) {
-        localDiagnostic.incrementUnknown();
-        globalDiagnostic.incrementUnknown();
-      } else {
-        localDiagnostic.incrementDown();
-        globalDiagnostic.incrementDown();
+      if (node.getDatacenter() != null) {
+        DefaultNodeGroupDiagnostic.Builder localDiagnostic =
+            localDiagnostics.compute(
+                node.getDatacenter(),
+                (dc, diag) -> diag == null ? new DefaultNodeGroupDiagnostic.Builder() : diag);
+        incrementCounters(localDiagnostic, node);
       }
+      incrementCounters(globalDiagnostic, node);
+    }
+  }
+
+  protected void incrementCounters(DefaultNodeGroupDiagnostic.Builder diagnostic, Node node) {
+    diagnostic.incrementTotal();
+    if (node.getState() == NodeState.UP) {
+      diagnostic.incrementUp();
+    } else if (node.getState() == NodeState.UNKNOWN) {
+      diagnostic.incrementUnknown();
+    } else {
+      diagnostic.incrementDown();
     }
   }
 }
