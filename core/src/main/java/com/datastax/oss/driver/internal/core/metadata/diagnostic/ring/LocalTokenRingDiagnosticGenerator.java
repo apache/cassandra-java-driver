@@ -56,10 +56,22 @@ public class LocalTokenRingDiagnosticGenerator extends DefaultTokenRingDiagnosti
 
   @Override
   protected TokenRangeDiagnostic generateTokenRangeDiagnostic(
-      TokenRange range, Set<Node> aliveReplicas) {
-    int aliveReplicasInDc =
-        (int) aliveReplicas.stream().map(Node::getDatacenter).filter(datacenter::equals).count();
-    return new SimpleTokenRangeDiagnostic(range, requiredReplicas, aliveReplicasInDc);
+      TokenRange range, Set<Node> allReplicas) {
+    int pessimisticallyAliveReplicasInDc = getPessimisticallyAliveReplicasInDc(allReplicas);
+    TokenRangeDiagnostic pessimistic =
+        new SimpleTokenRangeDiagnostic(range, requiredReplicas, pessimisticallyAliveReplicasInDc);
+    if (!pessimistic.isAvailable()) {
+      int optimisticallyAliveReplicasInDc = getOptimisticallyAliveReplicasInDc(allReplicas);
+      if (optimisticallyAliveReplicasInDc > pessimisticallyAliveReplicasInDc) {
+        TokenRangeDiagnostic optimistic =
+            new SimpleTokenRangeDiagnostic(
+                range, requiredReplicas, optimisticallyAliveReplicasInDc);
+        if (optimistic.isAvailable()) {
+          throw new UnreliableTokenRangeDiagnosticException(range);
+        }
+      }
+    }
+    return pessimistic;
   }
 
   @Override
@@ -67,5 +79,23 @@ public class LocalTokenRingDiagnosticGenerator extends DefaultTokenRingDiagnosti
       Set<TokenRangeDiagnostic> tokenRangeDiagnostics) {
     return new DefaultTokenRingDiagnostic(
         keyspace, consistencyLevel, datacenter, tokenRangeDiagnostics);
+  }
+
+  private int getPessimisticallyAliveReplicasInDc(Set<Node> allReplicas) {
+    return (int)
+        allReplicas.stream()
+            .filter(this::isPessimisticallyUp)
+            .map(Node::getDatacenter)
+            .filter(datacenter::equals)
+            .count();
+  }
+
+  private int getOptimisticallyAliveReplicasInDc(Set<Node> allReplicas) {
+    return (int)
+        allReplicas.stream()
+            .filter(this::isOptimisticallyUp)
+            .map(Node::getDatacenter)
+            .filter(datacenter::equals)
+            .count();
   }
 }

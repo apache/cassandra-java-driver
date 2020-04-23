@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.metadata.diagnostic.ring;
 
 import static com.datastax.oss.driver.api.core.ConsistencyLevel.LOCAL_QUORUM;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.BDDMockito.given;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
@@ -24,6 +25,7 @@ import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
+import com.datastax.oss.driver.api.core.metadata.diagnostic.Status;
 import com.datastax.oss.driver.api.core.metadata.diagnostic.TokenRingDiagnostic;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
@@ -77,18 +79,22 @@ public class LocalTokenRingDiagnosticGeneratorTest {
         .willReturn(ImmutableSet.of(node1, node2, node3, node4, node5, node6));
     given(tokenMap.getReplicas(ks.getName(), tr2))
         .willReturn(ImmutableSet.of(node1, node2, node3, node4, node5, node6));
-    // dc1: quorum achievable
+    given(node1.getDatacenter()).willReturn("dc1");
+    given(node2.getDatacenter()).willReturn("dc1");
+    given(node4.getDatacenter()).willReturn("dc2");
+    given(node5.getDatacenter()).willReturn("dc2");
+    // dc1: local quorum achievable
     given(node1.getState()).willReturn(NodeState.UP);
     given(node2.getState()).willReturn(NodeState.UP);
     given(node3.getState()).willReturn(NodeState.DOWN);
-    // dc2: quorum not achievable
-    given(node4.getState()).willReturn(NodeState.UNKNOWN);
+    // dc2: local quorum not achievable
+    given(node4.getState()).willReturn(NodeState.UP);
     given(node5.getState()).willReturn(NodeState.DOWN);
     given(node6.getState()).willReturn(NodeState.DOWN);
   }
 
   @Test
-  public void should_generate_available_diagnostic_for_local_CL() {
+  public void should_generate_available_diagnostic_for_local_CL_when_diagnostic_reliable() {
     // given
     LocalTokenRingDiagnosticGenerator generator =
         new LocalTokenRingDiagnosticGenerator(
@@ -97,6 +103,7 @@ public class LocalTokenRingDiagnosticGeneratorTest {
     TokenRingDiagnostic tokenRingDiagnostic = generator.generate();
     // then
     assertThat(tokenRingDiagnostic).isExactlyInstanceOf(DefaultTokenRingDiagnostic.class);
+    assertThat(tokenRingDiagnostic.getStatus()).isEqualTo(Status.AVAILABLE);
     assertThat(tokenRingDiagnostic)
         .isEqualTo(
             new DefaultTokenRingDiagnostic(
@@ -109,13 +116,98 @@ public class LocalTokenRingDiagnosticGeneratorTest {
   }
 
   @Test
-  public void should_generate_unavailable_diagnostic_for_local_CL() {
+  public void should_generate_unavailable_diagnostic_for_local_CL_when_diagnostic_reliable() {
     // given
     LocalTokenRingDiagnosticGenerator generator =
         new LocalTokenRingDiagnosticGenerator(
             metadata, ks, LOCAL_QUORUM, "dc2", new ReplicationFactor(3));
     // when
     TokenRingDiagnostic tokenRingDiagnostic = generator.generate();
+    assertThat(tokenRingDiagnostic.getStatus()).isEqualTo(Status.UNAVAILABLE);
+    // then
+    assertThat(tokenRingDiagnostic).isExactlyInstanceOf(DefaultTokenRingDiagnostic.class);
+    assertThat(tokenRingDiagnostic)
+        .isEqualTo(
+            new DefaultTokenRingDiagnostic(
+                ks,
+                LOCAL_QUORUM,
+                "dc2",
+                ImmutableSet.of(
+                    new SimpleTokenRangeDiagnostic(tr1, 2, 1),
+                    new SimpleTokenRangeDiagnostic(tr2, 2, 1))));
+  }
+
+  @Test
+  public void should_not_generate_available_diagnostic_for_local_CL_when_diagnostic_unreliable() {
+    // given
+    given(node2.getState()).willReturn(NodeState.UNKNOWN); // makes diagnostic unreliable
+    LocalTokenRingDiagnosticGenerator generator =
+        new LocalTokenRingDiagnosticGenerator(
+            metadata, ks, LOCAL_QUORUM, "dc1", new ReplicationFactor(3));
+    // when
+    Throwable throwable = catchThrowable(generator::generate);
+    // then
+    assertThat(throwable)
+        .isInstanceOf(UnreliableTokenRangeDiagnosticException.class)
+        .hasMessageContaining("Cannot establish reliable diagnostic for range ]1,2]")
+        .extracting("tokenRange")
+        .isEqualTo(tr1);
+  }
+
+  @Test
+  public void should_not_generate_unavailable_diagnostic_for_local_CL_when_diagnostic_unreliable() {
+    // given
+    given(node5.getState()).willReturn(NodeState.UNKNOWN); // makes diagnostic unreliable
+    LocalTokenRingDiagnosticGenerator generator =
+        new LocalTokenRingDiagnosticGenerator(
+            metadata, ks, LOCAL_QUORUM, "dc2", new ReplicationFactor(3));
+    // when
+    Throwable throwable = catchThrowable(generator::generate);
+    // then
+    assertThat(throwable)
+        .isInstanceOf(UnreliableTokenRangeDiagnosticException.class)
+        .hasMessageContaining("Cannot establish reliable diagnostic for range ]1,2]")
+        .extracting("tokenRange")
+        .isEqualTo(tr1);
+  }
+
+  @Test
+  public void
+      should_generate_available_diagnostic_for_local_CL_when_node_is_unknown_but_diagnostic_reliable() {
+    // given
+    // does not affect diagnostic's reliability given that other nodes are up
+    given(node3.getState()).willReturn(NodeState.UNKNOWN);
+    LocalTokenRingDiagnosticGenerator generator =
+        new LocalTokenRingDiagnosticGenerator(
+            metadata, ks, LOCAL_QUORUM, "dc1", new ReplicationFactor(3));
+    // when
+    TokenRingDiagnostic tokenRingDiagnostic = generator.generate();
+    // then
+    assertThat(tokenRingDiagnostic).isExactlyInstanceOf(DefaultTokenRingDiagnostic.class);
+    assertThat(tokenRingDiagnostic.getStatus()).isEqualTo(Status.AVAILABLE);
+    assertThat(tokenRingDiagnostic)
+        .isEqualTo(
+            new DefaultTokenRingDiagnostic(
+                ks,
+                LOCAL_QUORUM,
+                "dc1",
+                ImmutableSet.of(
+                    new SimpleTokenRangeDiagnostic(tr1, 2, 2),
+                    new SimpleTokenRangeDiagnostic(tr2, 2, 2))));
+  }
+
+  @Test
+  public void
+      should_generate_unavailable_diagnostic_for_local_CL_when_node_is_unknown_but_diagnostic_reliable() {
+    // given
+    // does not affect diagnostic's reliability given that other nodes are down
+    given(node4.getState()).willReturn(NodeState.UNKNOWN);
+    LocalTokenRingDiagnosticGenerator generator =
+        new LocalTokenRingDiagnosticGenerator(
+            metadata, ks, LOCAL_QUORUM, "dc2", new ReplicationFactor(3));
+    // when
+    TokenRingDiagnostic tokenRingDiagnostic = generator.generate();
+    assertThat(tokenRingDiagnostic.getStatus()).isEqualTo(Status.UNAVAILABLE);
     // then
     assertThat(tokenRingDiagnostic).isExactlyInstanceOf(DefaultTokenRingDiagnostic.class);
     assertThat(tokenRingDiagnostic)

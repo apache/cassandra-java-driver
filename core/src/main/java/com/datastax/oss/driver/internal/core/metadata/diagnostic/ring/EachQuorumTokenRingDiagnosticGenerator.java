@@ -60,20 +60,47 @@ public class EachQuorumTokenRingDiagnosticGenerator extends AbstractTokenRingDia
 
   @Override
   protected TokenRangeDiagnostic generateTokenRangeDiagnostic(
-      TokenRange range, Set<Node> aliveReplicas) {
+      TokenRange range, Set<Node> allReplicas) {
     CompositeTokenRangeDiagnostic.Builder diagnostic =
         new CompositeTokenRangeDiagnostic.Builder(range);
-    Map<String, Integer> aliveReplicasByDc =
-        aliveReplicas.stream()
-            .collect(Collectors.toMap(Node::getDatacenter, replica -> 1, Integer::sum));
+    Map<String, Integer> pessimisticallyAliveReplicasByDc =
+        getPessimisticallyAliveReplicasByDc(allReplicas);
+    Map<String, Integer> optimisticallyAliveReplicasByDc =
+        getOptimisticallyAliveReplicasByDc(allReplicas);
     for (String datacenter : this.requiredReplicasByDc.keySet()) {
       int requiredReplicasInDc = this.requiredReplicasByDc.get(datacenter);
-      int aliveReplicasInDc = aliveReplicasByDc.getOrDefault(datacenter, 0);
-      TokenRangeDiagnostic childDiagnostic =
-          new SimpleTokenRangeDiagnostic(range, requiredReplicasInDc, aliveReplicasInDc);
-      diagnostic.addChildDiagnostic(datacenter, childDiagnostic);
+      int pessimisticallyAliveReplicasInDc =
+          pessimisticallyAliveReplicasByDc.getOrDefault(datacenter, 0);
+      TokenRangeDiagnostic pessimistic =
+          new SimpleTokenRangeDiagnostic(
+              range, requiredReplicasInDc, pessimisticallyAliveReplicasInDc);
+      if (!pessimistic.isAvailable()) {
+        int optimisticallyAliveReplicasInDc =
+            optimisticallyAliveReplicasByDc.getOrDefault(datacenter, 0);
+        if (optimisticallyAliveReplicasInDc > pessimisticallyAliveReplicasInDc) {
+          TokenRangeDiagnostic optimistic =
+              new SimpleTokenRangeDiagnostic(
+                  range, requiredReplicasInDc, optimisticallyAliveReplicasInDc);
+          if (optimistic.isAvailable()) {
+            throw new UnreliableTokenRangeDiagnosticException(range);
+          }
+        }
+      }
+      diagnostic.addChildDiagnostic(datacenter, pessimistic);
     }
     return diagnostic.build();
+  }
+
+  private Map<String, Integer> getPessimisticallyAliveReplicasByDc(Set<Node> allReplicas) {
+    return allReplicas.stream()
+        .filter(this::isPessimisticallyUp)
+        .collect(Collectors.toMap(Node::getDatacenter, replica -> 1, Integer::sum));
+  }
+
+  private Map<String, Integer> getOptimisticallyAliveReplicasByDc(Set<Node> allReplicas) {
+    return allReplicas.stream()
+        .filter(this::isOptimisticallyUp)
+        .collect(Collectors.toMap(Node::getDatacenter, replica -> 1, Integer::sum));
   }
 
   @Override

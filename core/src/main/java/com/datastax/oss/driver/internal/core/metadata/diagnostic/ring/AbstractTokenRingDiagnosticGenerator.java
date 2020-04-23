@@ -28,7 +28,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public abstract class AbstractTokenRingDiagnosticGenerator implements TokenRingDiagnosticGenerator {
 
@@ -62,21 +61,24 @@ public abstract class AbstractTokenRingDiagnosticGenerator implements TokenRingD
     Set<TokenRangeDiagnostic> reports = Sets.newHashSetWithExpectedSize(tokenRanges.size());
     for (TokenRange range : tokenRanges) {
       Set<Node> allReplicas = tokenMap.getReplicas(keyspace.getName(), range);
-      Set<Node> aliveReplicas =
-          allReplicas.stream().filter(this::isAlive).collect(Collectors.toSet());
-      TokenRangeDiagnostic report = generateTokenRangeDiagnostic(range, aliveReplicas);
+      TokenRangeDiagnostic report = generateTokenRangeDiagnostic(range, allReplicas);
       reports.add(report);
     }
     return reports;
   }
 
-  protected boolean isAlive(Node node) {
+  protected boolean isPessimisticallyUp(Node node) {
+    // Be optimistic and count nodes in unknown state as alive
+    return node.getState() == NodeState.UP;
+  }
+
+  protected boolean isOptimisticallyUp(Node node) {
     // Be optimistic and count nodes in unknown state as alive
     return node.getState() == NodeState.UP || node.getState() == NodeState.UNKNOWN;
   }
 
   protected abstract TokenRangeDiagnostic generateTokenRangeDiagnostic(
-      TokenRange range, Set<Node> aliveReplicas);
+      TokenRange range, Set<Node> allReplicas);
 
   protected abstract TokenRingDiagnostic generateRingDiagnostic(
       Set<TokenRangeDiagnostic> tokenRangeDiagnostics);

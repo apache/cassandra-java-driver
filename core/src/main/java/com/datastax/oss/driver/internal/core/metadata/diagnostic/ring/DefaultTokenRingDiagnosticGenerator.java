@@ -60,13 +60,34 @@ public class DefaultTokenRingDiagnosticGenerator extends AbstractTokenRingDiagno
 
   @Override
   protected TokenRangeDiagnostic generateTokenRangeDiagnostic(
-      TokenRange range, Set<Node> aliveReplicas) {
-    return new SimpleTokenRangeDiagnostic(range, requiredReplicas, aliveReplicas.size());
+      TokenRange range, Set<Node> allReplicas) {
+    int pessimisticallyAliveReplicas = getPessimisticallyAliveReplicas(allReplicas);
+    TokenRangeDiagnostic pessimistic =
+        new SimpleTokenRangeDiagnostic(range, requiredReplicas, pessimisticallyAliveReplicas);
+    if (!pessimistic.isAvailable()) {
+      int optimisticallyAliveReplicas = getOptimisticallyAliveReplicas(allReplicas);
+      if (optimisticallyAliveReplicas > pessimisticallyAliveReplicas) {
+        TokenRangeDiagnostic optimistic =
+            new SimpleTokenRangeDiagnostic(range, requiredReplicas, optimisticallyAliveReplicas);
+        if (optimistic.isAvailable()) {
+          throw new UnreliableTokenRangeDiagnosticException(range);
+        }
+      }
+    }
+    return pessimistic;
   }
 
   @Override
   protected TokenRingDiagnostic generateRingDiagnostic(
       Set<TokenRangeDiagnostic> tokenRangeDiagnostics) {
     return new DefaultTokenRingDiagnostic(keyspace, consistencyLevel, null, tokenRangeDiagnostics);
+  }
+
+  private int getOptimisticallyAliveReplicas(Set<Node> allReplicas) {
+    return (int) allReplicas.stream().filter(this::isOptimisticallyUp).count();
+  }
+
+  private int getPessimisticallyAliveReplicas(Set<Node> allReplicas) {
+    return (int) allReplicas.stream().filter(this::isPessimisticallyUp).count();
   }
 }
