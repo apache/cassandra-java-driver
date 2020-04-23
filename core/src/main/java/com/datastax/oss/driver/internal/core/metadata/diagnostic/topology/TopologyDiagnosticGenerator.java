@@ -23,11 +23,8 @@ import com.datastax.oss.driver.api.core.metadata.diagnostic.TopologyDiagnostic;
 import com.datastax.oss.driver.internal.core.metadata.diagnostic.ring.TokenRingDiagnosticGenerator;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.TreeMap;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * A component that checks the health of a Cassandra cluster, and reports which nodes are up or
@@ -55,32 +52,26 @@ public class TopologyDiagnosticGenerator {
    */
   public TopologyDiagnostic generate() {
     Map<UUID, Node> nodes = metadata.getNodes();
-    DefaultNodeGroupDiagnostic.Builder globalDiagnostic = new DefaultNodeGroupDiagnostic.Builder();
-    Map<String, DefaultNodeGroupDiagnostic.Builder> localDiagnostics = new TreeMap<>();
-    generateChildDiagnostics(nodes, globalDiagnostic, localDiagnostics);
-    return new DefaultTopologyDiagnostic(
-        globalDiagnostic.build(),
-        localDiagnostics.entrySet().stream()
-            .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue().build())));
-  }
-
-  protected void generateChildDiagnostics(
-      Map<UUID, Node> nodes,
-      DefaultNodeGroupDiagnostic.Builder globalDiagnostic,
-      Map<String, DefaultNodeGroupDiagnostic.Builder> localDiagnostics) {
+    DefaultTopologyDiagnostic.Builder globalDiagnostic = new DefaultTopologyDiagnostic.Builder();
     for (Node node : nodes.values()) {
-      if (node.getDatacenter() != null) {
-        DefaultNodeGroupDiagnostic.Builder localDiagnostic =
-            localDiagnostics.compute(
-                node.getDatacenter(),
-                (dc, diag) -> diag == null ? new DefaultNodeGroupDiagnostic.Builder() : diag);
-        incrementCounters(localDiagnostic, node);
-      }
       incrementCounters(globalDiagnostic, node);
+      String datacenter = node.getDatacenter();
+      if (datacenter != null) {
+        DefaultTopologyDiagnostic.Builder dcDiagnostic =
+            globalDiagnostic.getLocalDiagnosticsBuilder(datacenter);
+        incrementCounters(dcDiagnostic, node);
+        String rack = node.getRack();
+        if (rack != null) {
+          DefaultTopologyDiagnostic.Builder rackDiagnostic =
+              dcDiagnostic.getLocalDiagnosticsBuilder(rack);
+          incrementCounters(rackDiagnostic, node);
+        }
+      }
     }
+    return globalDiagnostic.build();
   }
 
-  protected void incrementCounters(DefaultNodeGroupDiagnostic.Builder diagnostic, Node node) {
+  protected void incrementCounters(DefaultTopologyDiagnostic.Builder diagnostic, Node node) {
     diagnostic.incrementTotal();
     if (node.getState() == NodeState.UP) {
       diagnostic.incrementUp();

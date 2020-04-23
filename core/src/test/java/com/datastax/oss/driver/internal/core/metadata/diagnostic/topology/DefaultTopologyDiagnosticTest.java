@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata.diagnostic.topology;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.metadata.diagnostic.Status;
-import com.datastax.oss.driver.api.core.metadata.diagnostic.TopologyDiagnostic.NodeGroupDiagnostic;
+import com.datastax.oss.driver.api.core.metadata.diagnostic.TopologyDiagnostic;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.tngtech.java.junit.dataprovider.DataProvider;
@@ -32,60 +32,112 @@ import org.junit.runner.RunWith;
 public class DefaultTopologyDiagnosticTest {
 
   @Test
-  @UseDataProvider("nodeGroupAvailabilities")
-  public void should_create_diagnostic(
-      NodeGroupDiagnostic global, Map<String, NodeGroupDiagnostic> locals, Status expected) {
+  @UseDataProvider("leafNodeAvailabilities")
+  public void should_create_leaf_diagnostic(
+      int total, int up, int down, int unknown, Status expected) {
     // when
-    DefaultTopologyDiagnostic diagnostic = new DefaultTopologyDiagnostic(global, locals);
+    DefaultTopologyDiagnostic diagnostic = new DefaultTopologyDiagnostic(total, up, down, unknown);
     // then
-    assertThat(diagnostic.getGlobalDiagnostic()).isEqualTo(global);
+    assertThat(diagnostic.getTotal()).isEqualTo(total);
+    assertThat(diagnostic.getUp()).isEqualTo(up);
+    assertThat(diagnostic.getDown()).isEqualTo(down);
+    assertThat(diagnostic.getUnknown()).isEqualTo(unknown);
+    assertThat(diagnostic.getStatus()).isEqualTo(expected);
+    assertThat(diagnostic.getDetails())
+        .isEqualTo(
+            ImmutableMap.of(
+                "status", expected, "total", total, "up", up, "down", down, "unknown", unknown));
+  }
+
+  @DataProvider
+  public static Iterable<?> leafNodeAvailabilities() {
+    return ImmutableList.of(
+        ImmutableList.of(10, 10, 0, 0, Status.AVAILABLE),
+        ImmutableList.of(0, 0, 0, 0, Status.UNAVAILABLE),
+        ImmutableList.of(10, 9, 1, 0, Status.PARTIALLY_AVAILABLE),
+        ImmutableList.of(10, 9, 0, 1, Status.PARTIALLY_AVAILABLE),
+        ImmutableList.of(10, 2, 4, 4, Status.PARTIALLY_AVAILABLE));
+  }
+
+  @Test
+  @UseDataProvider("nonLeafAvailabilities")
+  public void should_create_non_leaf_diagnostic(
+      int total,
+      int up,
+      int down,
+      int unknown,
+      Map<String, TopologyDiagnostic> locals,
+      Status expected) {
+    // when
+    DefaultTopologyDiagnostic diagnostic =
+        new DefaultTopologyDiagnostic(total, up, down, unknown, locals);
+    // then
+    assertThat(diagnostic.getTotal()).isEqualTo(total);
+    assertThat(diagnostic.getUp()).isEqualTo(up);
+    assertThat(diagnostic.getDown()).isEqualTo(down);
+    assertThat(diagnostic.getUnknown()).isEqualTo(unknown);
     assertThat(diagnostic.getLocalDiagnostics()).isEqualTo(locals);
     assertThat(diagnostic.getStatus()).isEqualTo(expected);
     assertThat(diagnostic.getDetails())
         .isEqualTo(
             ImmutableMap.builder()
                 .put("status", expected)
-                .put("total", global.getTotal())
-                .put("up", global.getUp())
-                .put("down", global.getDown())
-                .put("unknown", global.getUnknown())
+                .put("total", total)
+                .put("up", up)
+                .put("down", down)
+                .put("unknown", unknown)
                 .put("dc1", locals.get("dc1").getDetails())
                 .put("dc2", locals.get("dc2").getDetails())
                 .build());
   }
 
   @DataProvider
-  public static Iterable<?> nodeGroupAvailabilities() {
+  public static Iterable<?> nonLeafAvailabilities() {
     return ImmutableList.of(
         ImmutableList.of(
-            new DefaultNodeGroupDiagnostic(10, 10, 0, 0),
+            10,
+            10,
+            0,
+            0,
             ImmutableMap.of(
-                "dc1", new DefaultNodeGroupDiagnostic(5, 5, 0, 0),
-                "dc2", new DefaultNodeGroupDiagnostic(5, 5, 0, 0)),
+                "dc1", new DefaultTopologyDiagnostic(5, 5, 0, 0),
+                "dc2", new DefaultTopologyDiagnostic(5, 5, 0, 0)),
             Status.AVAILABLE),
         ImmutableList.of(
-            new DefaultNodeGroupDiagnostic(0, 0, 0, 0),
+            0,
+            0,
+            0,
+            0,
             ImmutableMap.of(
-                "dc1", new DefaultNodeGroupDiagnostic(0, 0, 0, 0),
-                "dc2", new DefaultNodeGroupDiagnostic(0, 0, 0, 0)),
+                "dc1", new DefaultTopologyDiagnostic(0, 0, 0, 0),
+                "dc2", new DefaultTopologyDiagnostic(0, 0, 0, 0)),
             Status.UNAVAILABLE),
         ImmutableList.of(
-            new DefaultNodeGroupDiagnostic(10, 9, 1, 0),
+            10,
+            9,
+            1,
+            0,
             ImmutableMap.of(
-                "dc1", new DefaultNodeGroupDiagnostic(5, 0, 0, 0),
-                "dc2", new DefaultNodeGroupDiagnostic(4, 1, 0, 0)),
+                "dc1", new DefaultTopologyDiagnostic(5, 0, 0, 0),
+                "dc2", new DefaultTopologyDiagnostic(4, 1, 0, 0)),
             Status.PARTIALLY_AVAILABLE),
         ImmutableList.of(
-            new DefaultNodeGroupDiagnostic(10, 9, 0, 1),
+            10,
+            9,
+            0,
+            1,
             ImmutableMap.of(
-                "dc1", new DefaultNodeGroupDiagnostic(5, 0, 0, 0),
-                "dc2", new DefaultNodeGroupDiagnostic(4, 0, 1, 0)),
+                "dc1", new DefaultTopologyDiagnostic(5, 0, 0, 0),
+                "dc2", new DefaultTopologyDiagnostic(4, 0, 1, 0)),
             Status.PARTIALLY_AVAILABLE),
         ImmutableList.of(
-            new DefaultNodeGroupDiagnostic(10, 2, 4, 4),
+            10,
+            2,
+            4,
+            4,
             ImmutableMap.of(
-                "dc1", new DefaultNodeGroupDiagnostic(5, 1, 2, 2),
-                "dc2", new DefaultNodeGroupDiagnostic(5, 1, 2, 2)),
+                "dc1", new DefaultTopologyDiagnostic(5, 1, 2, 2),
+                "dc2", new DefaultTopologyDiagnostic(5, 1, 2, 2)),
             Status.PARTIALLY_AVAILABLE));
   }
 }

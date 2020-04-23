@@ -47,22 +47,66 @@ public class TopologyDiagnosticGeneratorTest {
   @Mock(name = "node4")
   Node node4;
 
+  @Mock(name = "node5")
+  Node node5;
+
+  @Mock(name = "node6")
+  Node node6;
+
+  @Mock(name = "node7")
+  Node node7;
+
+  @Mock(name = "node8")
+  Node node8;
+
   @Before
   public void setUp() {
     UUID id1 = UUID.randomUUID();
     UUID id2 = UUID.randomUUID();
     UUID id3 = UUID.randomUUID();
     UUID id4 = UUID.randomUUID();
+    UUID id5 = UUID.randomUUID();
+    UUID id6 = UUID.randomUUID();
+    UUID id7 = UUID.randomUUID();
+    UUID id8 = UUID.randomUUID();
     given(metadata.getNodes())
-        .willReturn(ImmutableMap.of(id1, node1, id2, node2, id3, node3, id4, node4));
+        .willReturn(
+            ImmutableMap.<UUID, Node>builder()
+                .put(id1, node1)
+                .put(id2, node2)
+                .put(id3, node3)
+                .put(id4, node4)
+                .put(id5, node5)
+                .put(id6, node6)
+                .put(id7, node7)
+                .put(id8, node8)
+                .build());
     given(node1.getDatacenter()).willReturn("dc1");
     given(node2.getDatacenter()).willReturn("dc1");
-    given(node3.getDatacenter()).willReturn("dc2");
-    given(node4.getDatacenter()).willReturn("dc2");
+    given(node3.getDatacenter()).willReturn("dc1");
+    given(node4.getDatacenter()).willReturn("dc1");
+    given(node5.getDatacenter()).willReturn("dc2");
+    given(node6.getDatacenter()).willReturn("dc2");
+    given(node7.getDatacenter()).willReturn("dc2");
+    given(node8.getDatacenter()).willReturn("dc2");
+    given(node1.getRack()).willReturn("rack1a");
+    given(node2.getRack()).willReturn("rack1a");
+    given(node3.getRack()).willReturn("rack1b");
+    given(node4.getRack()).willReturn("rack1b");
+    given(node5.getRack()).willReturn("rack2a");
+    given(node6.getRack()).willReturn("rack2a");
+    given(node7.getRack()).willReturn("rack2b");
+    given(node8.getRack()).willReturn("rack2b");
+    // dc1
     given(node1.getState()).willReturn(NodeState.UP);
     given(node2.getState()).willReturn(NodeState.UP);
     given(node3.getState()).willReturn(NodeState.DOWN);
     given(node4.getState()).willReturn(NodeState.UNKNOWN);
+    // dc2
+    given(node5.getState()).willReturn(NodeState.DOWN);
+    given(node6.getState()).willReturn(NodeState.DOWN);
+    given(node7.getState()).willReturn(NodeState.UP);
+    given(node8.getState()).willReturn(NodeState.UNKNOWN);
   }
 
   @Test
@@ -76,11 +120,32 @@ public class TopologyDiagnosticGeneratorTest {
     assertThat(diagnostic)
         .isEqualTo(
             new DefaultTopologyDiagnostic(
-                new DefaultNodeGroupDiagnostic(4, 2, 1, 1),
+                8,
+                3,
+                3,
+                2,
                 ImmutableMap.of(
                     "dc1",
-                    new DefaultNodeGroupDiagnostic(2, 2, 0, 0),
+                    new DefaultTopologyDiagnostic(
+                        4,
+                        2,
+                        1,
+                        1,
+                        ImmutableMap.of(
+                            "rack1a",
+                            new DefaultTopologyDiagnostic(2, 2, 0, 0),
+                            "rack1b",
+                            new DefaultTopologyDiagnostic(2, 0, 1, 1))),
                     "dc2",
-                    new DefaultNodeGroupDiagnostic(2, 0, 1, 1))));
+                    new DefaultTopologyDiagnostic(
+                        4,
+                        1,
+                        2,
+                        1,
+                        ImmutableMap.of(
+                            "rack2a",
+                            new DefaultTopologyDiagnostic(2, 0, 2, 0),
+                            "rack2b",
+                            new DefaultTopologyDiagnostic(2, 1, 0, 1))))));
   }
 }
