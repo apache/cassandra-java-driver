@@ -54,6 +54,9 @@ public class DefaultTopologyDiagnosticTest {
     return ImmutableList.of(
         ImmutableList.of(10, 10, 0, 0, Status.AVAILABLE),
         ImmutableList.of(0, 0, 0, 0, Status.UNAVAILABLE),
+        ImmutableList.of(10, 0, 10, 0, Status.UNAVAILABLE),
+        ImmutableList.of(10, 0, 0, 10, Status.UNAVAILABLE),
+        ImmutableList.of(10, 0, 5, 5, Status.UNAVAILABLE),
         ImmutableList.of(10, 9, 1, 0, Status.PARTIALLY_AVAILABLE),
         ImmutableList.of(10, 9, 0, 1, Status.PARTIALLY_AVAILABLE),
         ImmutableList.of(10, 2, 4, 4, Status.PARTIALLY_AVAILABLE));

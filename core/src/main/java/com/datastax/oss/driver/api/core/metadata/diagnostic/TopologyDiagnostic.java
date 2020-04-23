@@ -68,16 +68,19 @@ public interface TopologyDiagnostic extends Diagnostic {
 
   /**
    * Returns the status of the cluster topology. The status will be {@link Status#AVAILABLE} if all
-   * nodes are up; {@link Status#UNAVAILABLE} if all nodes are down, or if the group has no node at
-   * all. In all other cases the status will be {@link Status#PARTIALLY_AVAILABLE}.
+   * nodes are up; {@link Status#UNAVAILABLE} if all nodes are down or in "unknown" state, or if the
+   * group has no node at all. In all other cases the status will be {@link
+   * Status#PARTIALLY_AVAILABLE}.
    */
   @NonNull
   @Override
   default Status getStatus() {
-    if (getTotal() == 0 || getDown() == getTotal()) {
+    int up = getUp();
+    int down = getDown() + getUnknown();
+    if (up == 0) {
       return Status.UNAVAILABLE;
     }
-    if (getDown() == 0 && getUnknown() == 0) {
+    if (down == 0) {
       return Status.AVAILABLE;
     }
     return Status.PARTIALLY_AVAILABLE;
