@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.metadata.diagnostic;
 
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -89,13 +90,12 @@ public interface TopologyDiagnostic extends Diagnostic {
   @NonNull
   @Override
   default Map<String, Object> getDetails() {
-    ImmutableMap.Builder<String, Object> builder =
-        ImmutableMap.<String, Object>builder()
-            .put("status", getStatus())
-            .put("total", getTotal())
-            .put("up", getUp())
-            .put("down", getDown())
-            .put("unknown", getUnknown());
+    Map<String, Object> builder = new LinkedHashMap<>();
+    builder.put("status", getStatus());
+    builder.put("total", getTotal());
+    builder.put("up", getUp());
+    builder.put("down", getDown());
+    builder.put("unknown", getUnknown());
     if (!getLocalDiagnostics().isEmpty()) {
       builder.putAll(
           getLocalDiagnostics().entrySet().stream()
@@ -103,6 +103,6 @@ public interface TopologyDiagnostic extends Diagnostic {
                   ImmutableMap.toImmutableMap(
                       Entry::getKey, entry -> entry.getValue().getDetails())));
     }
-    return builder.build();
+    return ImmutableMap.copyOf(builder);
   }
 }
