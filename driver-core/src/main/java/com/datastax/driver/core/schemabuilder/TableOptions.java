@@ -72,6 +72,10 @@ public abstract class TableOptions<T extends TableOptions> extends SchemaStateme
 
   private List<String> customOptions = new ArrayList<String>();
 
+  private Optional<ReadRepairValue> readReapair = Optional.absent();
+
+  private Optional<AdditionalWritePolicyValue> additionalWritePolicy = Optional.absent();
+
   @SuppressWarnings("unchecked")
   private final T self = (T) this;
 
@@ -409,6 +413,45 @@ public abstract class TableOptions<T extends TableOptions> extends SchemaStateme
     return self;
   }
 
+  /**
+   * Define the read_repair mode for this table. Possible values are:
+   *
+   * <ul>
+   *   <li>BLOCKING
+   *   <li>NONE
+   * </ul>
+   *
+   * <p>This option is for Cassandra 4.0+. The default value is {@code BLOCKING}, which means that
+   * when a read repair is started, a read will block on writes sent to other replicas until the CL
+   * is reached by the writes. This provides monotonic quorum reads, but not partition level write
+   * atomicity.
+   *
+   * <p>If {@code NONE} is specified, the coordinator will reconcile any differences between
+   * replicas, but will not attempt to repair them. This provides partition level write atomicity,
+   * but not monotonic quorum reads.
+   *
+   * @param readRepair the read repair mode.
+   * @return this {@code TableOptions} object.
+   */
+  public T readRepair(ReadRepairValue readRepair) {
+    this.readReapair = Optional.fromNullable(readRepair);
+    return self;
+  }
+
+  /**
+   * Define the additional_write_policy for this table. This specifies the threshold at which a
+   * cheap quorum write will be upgraded to include transient replicas.
+   *
+   * <p>This option is for Cassandra 4.0+. The default value is "99p".
+   *
+   * @param additionalWritePolicy the additional write policy threshold.
+   * @return this {@code TableOptions} object.
+   */
+  public T additionalWritePolicy(AdditionalWritePolicyValue additionalWritePolicy) {
+    this.additionalWritePolicy = Optional.fromNullable(additionalWritePolicy);
+    return self;
+  }
+
   private static String buildCustomOption(String key, Object value) {
     return String.format(
         "%s = %s", key, (value instanceof String) ? "'" + value + "'" : value.toString());
@@ -481,6 +524,14 @@ public abstract class TableOptions<T extends TableOptions> extends SchemaStateme
 
     if (cdc.isPresent()) {
       options.add("cdc = " + cdc.get());
+    }
+
+    if (readReapair.isPresent()) {
+      options.add("read_repair = " + readReapair.get().value());
+    }
+
+    if (additionalWritePolicy.isPresent()) {
+      options.add("additional_write_policy = " + additionalWritePolicy.get().value());
     }
 
     options.addAll(customOptions);
@@ -1355,6 +1406,47 @@ public abstract class TableOptions<T extends TableOptions> extends SchemaStateme
     private String value;
 
     CachingRowsPerPartition(String value) {
+      this.value = value;
+    }
+
+    public String value() {
+      return value;
+    }
+  }
+
+  /** Read Repair modes. Possible values: BLOCKING, NONE. */
+  public static enum ReadRepairValue {
+    BLOCKING("'BLOCKING'"),
+    NONE("'NONE'");
+
+    private String value;
+
+    private ReadRepairValue(String value) {
+      this.value = value;
+    }
+
+    public String value() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return value;
+    }
+  }
+
+  /**
+   * Additional Write Policy. Default value is 99p.
+   *
+   * <p>To create instances, use {@link SchemaBuilder#additionalWritePolicyNone() ()}, {@link
+   * SchemaBuilder#additionalWritePolicyAlways()}, {@link
+   * SchemaBuilder#additionalWritePolicyMillisecs(int)} or {@link
+   * SchemaBuilder#additionalWritePolicyMillisecs(int)}.
+   */
+  public static class AdditionalWritePolicyValue {
+    private String value;
+
+    public AdditionalWritePolicyValue(String value) {
       this.value = value;
     }
 

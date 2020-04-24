@@ -46,13 +46,13 @@ abstract class ReplicationStrategy {
         String repFactorString = replicationOptions.get("replication_factor");
         return repFactorString == null
             ? null
-            : new SimpleStrategy(Integer.parseInt(repFactorString));
+            : new SimpleStrategy(ReplicationFactor.fromString(repFactorString));
       } else if (strategyClass.contains("NetworkTopologyStrategy")) {
-        Map<String, Integer> dcRfs = new HashMap<String, Integer>();
+        Map<String, ReplicationFactor> dcRfs = new HashMap<String, ReplicationFactor>();
         for (Map.Entry<String, String> entry : replicationOptions.entrySet()) {
           if (entry.getKey().equals("class")) continue;
 
-          dcRfs.put(entry.getKey(), Integer.parseInt(entry.getValue()));
+          dcRfs.put(entry.getKey(), ReplicationFactor.fromString(entry.getValue()));
         }
         return new NetworkTopologyStrategy(dcRfs);
       } else {
@@ -76,9 +76,9 @@ abstract class ReplicationStrategy {
 
   static class SimpleStrategy extends ReplicationStrategy {
 
-    private final int replicationFactor;
+    private final ReplicationFactor replicationFactor;
 
-    private SimpleStrategy(int replicationFactor) {
+    private SimpleStrategy(ReplicationFactor replicationFactor) {
       this.replicationFactor = replicationFactor;
     }
 
@@ -86,7 +86,7 @@ abstract class ReplicationStrategy {
     Map<Token, Set<Host>> computeTokenToReplicaMap(
         String keyspaceName, Map<Token, Host> tokenToPrimary, List<Token> ring) {
 
-      int rf = Math.min(replicationFactor, ring.size());
+      int rf = Math.min(replicationFactor.fullReplicas(), ring.size());
 
       Map<Token, Set<Host>> replicaMap = new HashMap<Token, Set<Host>>(tokenToPrimary.size());
       for (int i = 0; i < ring.size(); i++) {
@@ -111,16 +111,16 @@ abstract class ReplicationStrategy {
 
     @Override
     public int hashCode() {
-      return replicationFactor;
+      return replicationFactor.hashCode();
     }
   }
 
   static class NetworkTopologyStrategy extends ReplicationStrategy {
     private static final Logger logger = LoggerFactory.getLogger(NetworkTopologyStrategy.class);
 
-    private final Map<String, Integer> replicationFactors;
+    private final Map<String, ReplicationFactor> replicationFactors;
 
-    private NetworkTopologyStrategy(Map<String, Integer> replicationFactors) {
+    private NetworkTopologyStrategy(Map<String, ReplicationFactor> replicationFactors) {
       this.replicationFactors = replicationFactors;
     }
 
@@ -163,7 +163,7 @@ abstract class ReplicationStrategy {
           String dc = h.getDatacenter();
           if (dc == null || !allDcReplicas.containsKey(dc)) continue;
 
-          Integer rf = replicationFactors.get(dc);
+          Integer rf = replicationFactors.get(dc).fullReplicas();
           Set<Host> dcReplicas = allDcReplicas.get(dc);
           if (rf == null || dcReplicas.size() >= rf) continue;
 
@@ -198,7 +198,7 @@ abstract class ReplicationStrategy {
         // Warn the user because that leads to quadratic performance of this method (JAVA-702).
         for (Map.Entry<String, Set<Host>> entry : allDcReplicas.entrySet()) {
           String dcName = entry.getKey();
-          int expectedFactor = replicationFactors.get(dcName);
+          int expectedFactor = replicationFactors.get(dcName).fullReplicas();
           int achievedFactor = entry.getValue().size();
           if (achievedFactor < expectedFactor && !warnedDcs.contains(dcName)) {
             logger.warn(
@@ -230,7 +230,8 @@ abstract class ReplicationStrategy {
       for (Map.Entry<String, Set<Host>> entry : map.entrySet()) {
         String dc = entry.getKey();
         int dcCount = dcHostCount.get(dc) == null ? 0 : dcHostCount.get(dc);
-        if (entry.getValue().size() < Math.min(replicationFactors.get(dc), dcCount)) return false;
+        if (entry.getValue().size() < Math.min(replicationFactors.get(dc).fullReplicas(), dcCount))
+          return false;
       }
       return true;
     }

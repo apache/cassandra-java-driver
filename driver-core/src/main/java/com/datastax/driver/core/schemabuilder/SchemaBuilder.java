@@ -440,4 +440,30 @@ public final class SchemaBuilder {
     }
     return new TableOptions.CachingRowsPerPartition(Integer.toString(rowNumber));
   }
+
+  public static TableOptions.AdditionalWritePolicyValue additionalWritePolicyNever() {
+    return new TableOptions.AdditionalWritePolicyValue("'NEVER'");
+  }
+
+  public static TableOptions.AdditionalWritePolicyValue additionalWritePolicyAlways() {
+    return new TableOptions.AdditionalWritePolicyValue("'ALWAYS'");
+  }
+
+  public static TableOptions.AdditionalWritePolicyValue additionalWritePolicyPercentile(
+      int percentile) {
+    if (percentile < 0 || percentile > 100) {
+      throw new IllegalArgumentException(
+          "Percentile value for additional write policy should be between 0 and 100");
+    }
+    return new TableOptions.AdditionalWritePolicyValue("'" + percentile + "percentile'");
+  }
+
+  public static TableOptions.AdditionalWritePolicyValue additionalWritePolicyMillisecs(
+      int millisecs) {
+    if (millisecs < 0) {
+      throw new IllegalArgumentException(
+          "Millisecond value for speculative retry should be positive");
+    }
+    return new TableOptions.AdditionalWritePolicyValue("'" + millisecs + "ms'");
+  }
 }
