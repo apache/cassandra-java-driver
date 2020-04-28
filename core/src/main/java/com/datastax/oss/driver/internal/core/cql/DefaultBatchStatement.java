@@ -389,7 +389,7 @@ public class DefaultBatchStatement implements BatchStatement {
         batchType,
         statements,
         newConfigProfileName,
-        executionProfile,
+        (newConfigProfileName == null) ? executionProfile : null,
         keyspace,
         routingKeyspace,
         routingKey,
@@ -418,7 +418,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return new DefaultBatchStatement(
         batchType,
         statements,
-        executionProfileName,
+        (newProfile == null) ? executionProfileName : null,
         newProfile,
         keyspace,
         routingKeyspace,

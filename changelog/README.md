@@ -4,6 +4,7 @@
 
 ### 4.7.0 (in progress)
 
+- [improvement] JAVA-2747: Revisit semantics of Statement.setExecutionProfile/Name
 
 ### 4.6.1
 
