@@ -85,8 +85,8 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   /**
    * Sets the name of the execution profile that will be used for this statement.
    *
-   * <p>For all the driver's built-in implementations, this method has no effect if {@link
-   * #setExecutionProfile(DriverExecutionProfile)} has been called with a non-null argument.
+   * <p>For all the driver's built-in implementations, calling this method with a non-null argument
+   * automatically resets {@link #getExecutionProfile()} to null.
    *
    * <p>All the driver's built-in implementations are immutable, and return a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance.
@@ -97,6 +97,9 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
 
   /**
    * Sets the execution profile to use for this statement.
+   *
+   * <p>For all the driver's built-in implementations, calling this method with a non-null argument
+   * automatically resets {@link #getExecutionProfileName()} to null.
    *
    * <p>All the driver's built-in implementations are immutable, and return a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance.
