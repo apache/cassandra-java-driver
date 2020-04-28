@@ -5,7 +5,7 @@
   3.x versions get published.
 -->
 
-## 3.9.0 (in progress)
+## 3.9.0
 
 - [bug] JAVA-2627: Avoid logging error message including stack trace in request handler.
 - [new feature] JAVA-2706: Add now_in_seconds to protocol v5 query messages.
