@@ -53,6 +53,7 @@ api_docs:
   4.5: http://docs.datastax.com/en/drivers/java/4.5
   4.4: http://docs.datastax.com/en/drivers/java/4.4
   4.3: http://docs.datastax.com/en/drivers/java/4.3
+  3.9: http://docs.datastax.com/en/drivers/java/3.9
   3.8: http://docs.datastax.com/en/drivers/java/3.8
   3.7: http://docs.datastax.com/en/drivers/java/3.7
   3.6: http://docs.datastax.com/en/drivers/java/3.6
@@ -73,6 +74,8 @@ versions:
     ref: '4.4.0'
   - name: '4.3'
     ref: '4.3.1'
+  - name: '3.9'
+    ref: '3.9.0'
   - name: '3.8'
     ref: 'c6de8beb5'
   - name: '3.7'
