@@ -361,23 +361,25 @@ Note that the driver already has a [built-in retry mechanism] that can transpare
 queries; the above example should be seen as a demonstration of application-level retries, when a
 more fine-grained control of what should be retried, and how, is required.
 
+[CqlSession]:                       https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/CqlSession.html
+[ReactiveSession]:                  https://docs.datastax.com/en/drivers/java/4.6/com/datastax/dse/driver/api/core/cql/reactive/ReactiveSession.html
+[ResultSet]:                        https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[ReactiveResultSet]:                https://docs.datastax.com/en/drivers/java/4.6/com/datastax/dse/driver/api/core/cql/reactive/ReactiveResultSet.html
+[ReactiveRow]:                      https://docs.datastax.com/en/drivers/java/4.6/com/datastax/dse/driver/api/core/cql/reactive/ReactiveRow.html
+[Row]:                              https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/Row.html
+[getColumnDefinitions]:             https://docs.datastax.com/en/drivers/java/4.6/com/datastax/dse/driver/api/core/cql/reactive/ReactiveResultSet.html#getColumnDefinitions--
+[getExecutionInfos]:                https://docs.datastax.com/en/drivers/java/4.6/com/datastax/dse/driver/api/core/cql/reactive/ReactiveResultSet.html#getExecutionInfos--
+[wasApplied]:                       https://docs.datastax.com/en/drivers/java/4.6/com/datastax/dse/driver/api/core/cql/reactive/ReactiveResultSet.html#wasApplied--
+[ReactiveRow.getColumnDefinitions]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/dse/driver/api/core/cql/reactive/ReactiveRow.html#getColumnDefinitions--
+[ReactiveRow.getExecutionInfo]:     https://docs.datastax.com/en/drivers/java/4.6/com/datastax/dse/driver/api/core/cql/reactive/ReactiveRow.html#getExecutionInfo--
+[ReactiveRow.wasApplied]:           https://docs.datastax.com/en/drivers/java/4.6/com/datastax/dse/driver/api/core/cql/reactive/ReactiveRow.html#wasApplied--
+
+[built-in retry mechanism]: ../retries/
+[request throttling]: ../throttling/
+
+[Managing concurrency in asynchronous query execution]: https://docs.datastax.com/en/devapp/doc/devapp/driverManagingConcurrency.html]
+[Publisher]: https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html
 [reactive streams]: https://en.wikipedia.org/wiki/Reactive_Streams
 [Reactive Streams API]: https://github.com/reactive-streams/reactive-streams-jvm
-[CqlSession]: https://docs.datastax.com/en/drivers/java/4.5/com/datastax/oss/driver/api/core/CqlSession.html
-[ReactiveSession]: https://docs.datastax.com/en/drivers/java-dse/2.3/com/datastax/dse/driver/api/core/cql/reactive/ReactiveSession.html
-[ResultSet]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/ResultSet.html
-[ReactiveResultSet]: https://docs.datastax.com/en/drivers/java-dse/2.3/com/datastax/dse/driver/api/core/cql/reactive/ReactiveResultSet.html
-[ReactiveRow]: https://docs.datastax.com/en/drivers/java-dse/2.3/com/datastax/dse/driver/api/core/cql/reactive/ReactiveRow.html
-[Row]: https://docs.datastax.com/en/drivers/java/4.2/com/datastax/oss/driver/api/core/cql/Row.html
-[Publisher]: https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html
 [Reactive Streams Specification rule 2.2]: https://github.com/reactive-streams/reactive-streams-jvm#2.2
 [Reactor]: https://projectreactor.io/
-[getColumnDefinitions]: https://docs.datastax.com/en/drivers/java-dse/2.3/com/datastax/dse/driver/api/core/cql/reactive/ReactiveResultSet.html#getColumnDefinitions--
-[getExecutionInfos]: https://docs.datastax.com/en/drivers/java-dse/2.3/com/datastax/dse/driver/api/core/cql/reactive/ReactiveResultSet.html#getExecutionInfos--
-[wasApplied]: https://docs.datastax.com/en/drivers/java-dse/2.3/com/datastax/dse/driver/api/core/cql/reactive/ReactiveResultSet.html#wasApplied--
-[ReactiveRow.getColumnDefinitions]: https://docs.datastax.com/en/drivers/java-dse/2.3/com/datastax/dse/driver/api/core/cql/reactive/ReactiveRow.html#getColumnDefinitions--
-[ReactiveRow.getExecutionInfo]: https://docs.datastax.com/en/drivers/java-dse/2.3/com/datastax/dse/driver/api/core/cql/reactive/ReactiveRow.html#getExecutionInfo--
-[ReactiveRow.wasApplied]: https://docs.datastax.com/en/drivers/java-dse/2.3/com/datastax/dse/driver/api/core/cql/reactive/ReactiveRow.html#wasApplied--
-[built-in retry mechanism]: https://docs.datastax.com/en/developer/java-driver/4.3/manual/core/retries/
-[request throttling]: https://docs.datastax.com/en/developer/java-driver/4.3/manual/core/throttling/
-[Managing concurrency in asynchronous query execution]: https://docs.datastax.com/en/devapp/doc/devapp/driverManagingConcurrency.html] 
