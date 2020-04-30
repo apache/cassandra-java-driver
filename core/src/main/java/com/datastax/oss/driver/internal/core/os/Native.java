@@ -30,15 +30,10 @@ public class Native {
      * agreed that this API will not change over time.  We reference these props as literals
      * to avoid introducing a dependency on Graal code for non-Graal users here. */
     private static final String GRAAL_STATUS_PROP = "org.graalvm.nativeimage.imagecode";
-    private static final String GRAAL_BUILDTIME_STATUS = "buildtime";
     private static final String GRAAL_RUNTIME_STATUS = "runtime";
 
     public Libc load() {
       try {
-        if (isGraalBuildTime()) {
-          LOG.info("Using Graal-native functions for Graal build time");
-          return new GraalLibc();
-        }
         if (isGraalRunTime()) {
           LOG.info("Using Graal-native functions for Graal run time");
           return new GraalLibc();
@@ -52,20 +47,10 @@ public class Native {
       }
     }
 
-    private boolean compareGraalSysprop(String expected) {
-
-      String val = System.getProperty(GRAAL_STATUS_PROP);
-      return val != null && val.equals(GRAAL_BUILDTIME_STATUS);
-    }
-
-    private boolean isGraalBuildTime() {
-
-      return compareGraalSysprop(GRAAL_BUILDTIME_STATUS);
-    }
-
     private boolean isGraalRunTime() {
 
-      return compareGraalSysprop(GRAAL_RUNTIME_STATUS);
+      String val = System.getProperty(GRAAL_STATUS_PROP);
+      return val != null && val.equals(GRAAL_RUNTIME_STATUS);
     }
   }
 
