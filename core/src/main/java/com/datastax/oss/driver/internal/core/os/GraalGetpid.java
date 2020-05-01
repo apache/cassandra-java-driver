@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.os;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.graalvm.nativeimage.c.CContext;
@@ -30,13 +29,6 @@ public class GraalGetpid {
     public List<String> getHeaderFiles() {
 
       return Collections.unmodifiableList(Collections.singletonList("<unistd.h>"));
-    }
-
-    /* TODO: I don't know that these are required... */
-    @Override
-    public List<String> getMacroDefinitions() {
-
-      return Collections.unmodifiableList(Arrays.asList("_GNU_SOURCE", "_LARGEFILE64_SOURCE"));
     }
   }
 
