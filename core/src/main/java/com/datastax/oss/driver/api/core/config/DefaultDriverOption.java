@@ -734,11 +734,8 @@ public enum DefaultDriverOption implements DriverOption {
    */
   NETTY_ADMIN_SHUTDOWN_UNIT("advanced.netty.admin-group.shutdown.unit"),
 
-  /**
-   * How many times the coalescer is allowed to reschedule itself when it did no work.
-   *
-   * <p>Value-type: int
-   */
+  /** @deprecated This option was removed in version 4.6.1. */
+  @Deprecated
   COALESCER_MAX_RUNS("advanced.coalescer.max-runs-with-no-work"),
   /**
    * The coalescer reschedule interval.

@@ -509,7 +509,8 @@ public class TypedDriverOption<ValueT> {
   /** Units for admin group quiet period and timeout. */
   public static final TypedDriverOption<String> NETTY_ADMIN_SHUTDOWN_UNIT =
       new TypedDriverOption<>(DefaultDriverOption.NETTY_ADMIN_SHUTDOWN_UNIT, GenericType.STRING);
-  /** How many times the coalescer is allowed to reschedule itself when it did no work. */
+  /** @deprecated This option was removed in version 4.6.1. */
+  @Deprecated
   public static final TypedDriverOption<Integer> COALESCER_MAX_RUNS =
       new TypedDriverOption<>(DefaultDriverOption.COALESCER_MAX_RUNS, GenericType.INTEGER);
   /** The coalescer reschedule interval. */

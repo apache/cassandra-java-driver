@@ -37,9 +37,7 @@ import net.jcip.annotations.ThreadSafe;
  *
  * <p>It maintains a queue per event loop, with the writes targeting the channels that run on this
  * loop. As soon as a write gets enqueued, it triggers a task that will flush the queue (other
- * writes can get enqueued before the task runs). Once that task is complete, it re-triggers itself
- * as long as new writes have been enqueued, or {@code maxRunsWithNoWork} times if there are no more
- * tasks.
+ * writes may get enqueued before or while the task runs).
  *
  * <p>Note that Netty provides a similar mechanism out of the box ({@link
  * io.netty.handler.flush.FlushConsolidationHandler}), but in our experience our approach allows
@@ -49,13 +47,11 @@ import net.jcip.annotations.ThreadSafe;
  */
 @ThreadSafe
 public class DefaultWriteCoalescer implements WriteCoalescer {
-  private final int maxRunsWithNoWork;
   private final long rescheduleIntervalNanos;
   private final ConcurrentMap<EventLoop, Flusher> flushers = new ConcurrentHashMap<>();
 
   public DefaultWriteCoalescer(DriverContext context) {
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
-    maxRunsWithNoWork = config.getInt(DefaultDriverOption.COALESCER_MAX_RUNS);
     rescheduleIntervalNanos = config.getDuration(DefaultDriverOption.COALESCER_INTERVAL).toNanos();
   }
 
@@ -79,9 +75,8 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
     private final Queue<Write> writes = new ConcurrentLinkedQueue<>();
     private final AtomicBoolean running = new AtomicBoolean();
 
-    // These variables are accessed only from runOnEventLoop, they don't need to be thread-safe
+    // This variable is accessed only from runOnEventLoop, it doesn't need to be thread-safe
     private final Set<Channel> channels = new HashSet<>();
-    private int runsWithNoWork = 0;
 
     private Flusher(EventLoop eventLoop) {
       this.eventLoop = eventLoop;
@@ -98,13 +93,11 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
     private void runOnEventLoop() {
       assert eventLoop.inEventLoop();
 
-      boolean didSomeWork = false;
       Write write;
       while ((write = writes.poll()) != null) {
         Channel channel = write.channel;
         channels.add(channel);
         channel.write(write.message, write.writePromise);
-        didSomeWork = true;
       }
 
       for (Channel channel : channels) {
@@ -112,22 +105,24 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
       }
       channels.clear();
 
-      if (didSomeWork) {
-        runsWithNoWork = 0;
-      } else if (++runsWithNoWork > maxRunsWithNoWork) {
-        // Prepare to stop
-        running.set(false);
-        // If no new writes have been enqueued since the previous line, we can return safely
-        if (writes.isEmpty()) {
-          return;
-        }
-        // Otherwise check if those writes have triggered a new run. If not, we need to do that
-        // ourselves (i.e. not return yet)
-        if (!running.compareAndSet(false, true)) {
-          return;
-        }
+      // Prepare to stop
+      running.set(false);
+
+      // enqueue() can be called concurrently with this method. There is a race condition if it:
+      // - added an element in the queue after we were done draining it
+      // - but observed running==true before we flipped it, and therefore didn't schedule another
+      //   run
+
+      // If nothing was added in the queue, there were no concurrent calls, we can stop safely now
+      if (writes.isEmpty()) {
+        return;
       }
-      if (!eventLoop.isShuttingDown()) {
+
+      // Otherwise, check if one of those calls scheduled a run. If so, they flipped the bit back
+      // on. If not, we need to do it ourselves.
+      boolean shouldRestartMyself = running.compareAndSet(false, true);
+
+      if (shouldRestartMyself && !eventLoop.isShuttingDown()) {
         eventLoop.schedule(this::runOnEventLoop, rescheduleIntervalNanos, TimeUnit.NANOSECONDS);
       }
     }
