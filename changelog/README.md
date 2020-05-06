@@ -4,6 +4,7 @@
 
 ### 4.6.1 (in progress)
 
+- [bug] JAVA-2676: Don't reschedule write coalescer after empty runs
 
 ### 4.6.0
 

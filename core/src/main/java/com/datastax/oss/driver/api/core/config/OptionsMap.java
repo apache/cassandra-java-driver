@@ -353,7 +353,6 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.NETTY_ADMIN_SHUTDOWN_UNIT, "SECONDS");
     map.put(TypedDriverOption.NETTY_TIMER_TICK_DURATION, Duration.ofMillis(100));
     map.put(TypedDriverOption.NETTY_TIMER_TICKS_PER_WHEEL, 2048);
-    map.put(TypedDriverOption.COALESCER_MAX_RUNS, 5);
     map.put(TypedDriverOption.COALESCER_INTERVAL, Duration.of(10, ChronoUnit.MICROS));
   }
 
