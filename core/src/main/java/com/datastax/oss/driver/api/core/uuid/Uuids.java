@@ -19,6 +19,7 @@ import com.datastax.oss.driver.internal.core.os.Native;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
+import com.datastax.oss.driver.shaded.guava.common.base.Suppliers;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
@@ -39,6 +40,7 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,7 +115,8 @@ public final class Uuids {
   private Uuids() {}
 
   private static final long START_EPOCH = makeEpoch();
-  private static final long CLOCK_SEQ_AND_NODE = makeClockSeqAndNode();
+  private static final Supplier<Long> CLOCK_SEQ_AND_NODE =
+      Suppliers.memoize(Uuids::makeClockSeqAndNode);
 
   // The min and max possible lsb for a UUID.
   //
@@ -437,7 +440,7 @@ public final class Uuids {
    */
   @NonNull
   public static UUID timeBased() {
-    return new UUID(makeMsb(getCurrentTimestamp()), CLOCK_SEQ_AND_NODE);
+    return new UUID(makeMsb(getCurrentTimestamp()), CLOCK_SEQ_AND_NODE.get().longValue());
   }
 
   /**
