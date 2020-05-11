@@ -5,6 +5,10 @@
 ### 4.7.0 (in progress)
 
 
+### 4.6.1
+
+- [bug] JAVA-2676: Don't reschedule write coalescer after empty runs
+
 ### 4.6.0
 
 - [improvement] JAVA-2741: Make keyspace/table metadata impls serializable
