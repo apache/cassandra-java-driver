@@ -9,7 +9,7 @@ Notes:
 * reactive capabilities require the [Reactive Streams API] to be present on the classpath. The
   driver has a dependency on that library, but if your application does not use reactive queries at
   all, it is possible to exclude it to minimize the number of runtime dependencies. If the library
-  cannot be found at runtime, reactive queries won't be available and a warning will be logged, but
+  cannot be found at runtime, reactive queries won't be available, and a warning will be logged, but
   the driver will otherwise operate normally (this is also valid for OSGi deployments).
 * for historical reasons, reactive-related driver types reside in a package prefixed with `dse`;
   however, reactive queries also work with regular Cassandra.
@@ -50,7 +50,7 @@ The following example reads from a table and prints all the returned rows to the
 error, a `DriverException` is thrown and its stack trace is printed to standard error:
 
 ```java 
-try (DseSession session = ...) {
+try (CqlSession session = ...) {
       Flux.from(session.executeReactive("SELECT ..."))
           .doOnNext(System.out::println)
           .blockLast();
@@ -65,7 +65,7 @@ The following example inserts rows into a table after printing the queries to th
 at the first error, if any. Again, in case of error, a `DriverException` is thrown:
 
 ```java
-try (DseSession session = ...) {
+try (CqlSession session = ...) {
   Flux.just("INSERT ...", "INSERT ...", "INSERT ...", ...)
       .doOnNext(System.out::println)
       .flatMap(session::executeReactive)
@@ -120,11 +120,12 @@ Publisher<? extends ExecutionInfo> getExecutionInfos();
 Publisher<Boolean> wasApplied(); 
 ```
 
-Refer to the javadocs of [getColumnDefinitions],
-[getExecutionInfos] and
-[wasApplied] for more information on these methods.
+Refer to the javadocs of [getColumnDefinitions], [getExecutionInfos] and [wasApplied] for more 
+information on these methods.
 
-To inspect the contents of the above publishers, simply subscribe to them. Note that these publishers cannot complete before the query itself completes; if the query fails, then these publishers will fail with the same error.
+To inspect the contents of the above publishers, simply subscribe to them. Note that these 
+publishers cannot complete before the query itself completes; if the query fails, then these 
+publishers will fail with the same error.
 
 The following example executes a query, then prints all the available metadata to the console:
 
@@ -141,9 +142,12 @@ System.out.println("Was applied: ");
 Mono.from(rs.wasApplied()).doOnNext(System.out::println).block();
 ```
 
-Note that it is also possible to inspect query metadata at row level. Each row returned by a reactive query execution implements [`ReactiveRow`][ReactiveRow], the reactive equivalent of a [`Row`][Row].
+Note that it is also possible to inspect query metadata at row level. Each row returned by a 
+reactive query execution implements [`ReactiveRow`][ReactiveRow], the reactive equivalent of a 
+[`Row`][Row].
 
-`ReactiveRow` exposes the same kind of query metadata and execution info found in `ReactiveResultSet`, but for each individual row:
+`ReactiveRow` exposes the same kind of query metadata and execution info found in 
+`ReactiveResultSet`, but for each individual row:
 
 ```java
 ColumnDefinitions getColumnDefinitions();
