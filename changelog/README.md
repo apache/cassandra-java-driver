@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.6.1 (in progress)
+### 4.6.1
 
 - [bug] JAVA-2676: Don't reschedule write coalescer after empty runs
 
