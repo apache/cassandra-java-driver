@@ -19,7 +19,6 @@ import com.datastax.oss.driver.internal.core.os.Native;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
-import com.datastax.oss.driver.shaded.guava.common.base.Suppliers;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
@@ -40,7 +39,6 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,8 +113,28 @@ public final class Uuids {
   private Uuids() {}
 
   private static final long START_EPOCH = makeEpoch();
-  private static final Supplier<Long> CLOCK_SEQ_AND_NODE =
-      Suppliers.memoize(Uuids::makeClockSeqAndNode);
+
+  /* Container impl adapted from Guava's memoized Supplier impl */
+  private static class ClockSeqAndNodeContainer {
+
+    private volatile boolean initialized = false;
+    private long val;
+
+    private long get() {
+      if (!initialized) {
+        synchronized (ClockSeqAndNodeContainer.class) {
+          if (!initialized) {
+
+            initialized = true;
+            val = makeClockSeqAndNode();
+          }
+        }
+      }
+      return val;
+    }
+  }
+
+  private static final ClockSeqAndNodeContainer CLOCK_SEQ_AND_NODE = new ClockSeqAndNodeContainer();
 
   // The min and max possible lsb for a UUID.
   //
@@ -440,7 +458,7 @@ public final class Uuids {
    */
   @NonNull
   public static UUID timeBased() {
-    return new UUID(makeMsb(getCurrentTimestamp()), CLOCK_SEQ_AND_NODE.get().longValue());
+    return new UUID(makeMsb(getCurrentTimestamp()), CLOCK_SEQ_AND_NODE.get());
   }
 
   /**
