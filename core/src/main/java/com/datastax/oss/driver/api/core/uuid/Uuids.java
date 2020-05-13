@@ -114,7 +114,14 @@ public final class Uuids {
 
   private static final long START_EPOCH = makeEpoch();
 
-  /* Container impl adapted from Guava's memoized Supplier impl */
+  // Lazily initialize clock seq + node value at time of first access.  Quarkus will attempt to
+  // initialize this class at deployment time which prevents us from just setting this value directly.
+  // The "node" part of the clock seq + node includes the current PID which (for GraalVM users)
+  // we obtain via the LLVM interop.  That infrastructure isn't setup at Quarkus deployment time,
+  // however, thus we can't just call makeClockSeqAndNode() in an initializer.  See JAVA-2663 for more
+  // detail on this point.
+  //
+  // Container impl adapted from Guava's memoized Supplier impl.
   private static class ClockSeqAndNodeContainer {
 
     private volatile boolean initialized = false;
