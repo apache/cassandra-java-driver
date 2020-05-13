@@ -4,6 +4,11 @@
 
 ### 4.7.0 (in progress)
 
+- [improvement] JAVA-2747: Revisit semantics of Statement.setExecutionProfile/Name
+
+### 4.6.1
+
+- [bug] JAVA-2676: Don't reschedule write coalescer after empty runs
 
 ### 4.6.0
 
