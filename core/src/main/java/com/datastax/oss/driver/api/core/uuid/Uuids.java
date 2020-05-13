@@ -113,7 +113,35 @@ public final class Uuids {
   private Uuids() {}
 
   private static final long START_EPOCH = makeEpoch();
-  private static final long CLOCK_SEQ_AND_NODE = makeClockSeqAndNode();
+
+  // Lazily initialize clock seq + node value at time of first access.  Quarkus will attempt to
+  // initialize this class at deployment time which prevents us from just setting this value
+  // directly.  The "node" part of the clock seq + node includes the current PID which (for
+  // GraalVM users) we obtain via the LLVM interop.  That infrastructure isn't setup at Quarkus
+  // deployment time, however, thus we can't just call makeClockSeqAndNode() in an initializer.
+  // See JAVA-2663 for more detail on this point.
+  //
+  // Container impl adapted from Guava's memoized Supplier impl.
+  private static class ClockSeqAndNodeContainer {
+
+    private volatile boolean initialized = false;
+    private long val;
+
+    private long get() {
+      if (!initialized) {
+        synchronized (ClockSeqAndNodeContainer.class) {
+          if (!initialized) {
+
+            initialized = true;
+            val = makeClockSeqAndNode();
+          }
+        }
+      }
+      return val;
+    }
+  }
+
+  private static final ClockSeqAndNodeContainer CLOCK_SEQ_AND_NODE = new ClockSeqAndNodeContainer();
 
   // The min and max possible lsb for a UUID.
   //
@@ -437,7 +465,7 @@ public final class Uuids {
    */
   @NonNull
   public static UUID timeBased() {
-    return new UUID(makeMsb(getCurrentTimestamp()), CLOCK_SEQ_AND_NODE);
+    return new UUID(makeMsb(getCurrentTimestamp()), CLOCK_SEQ_AND_NODE.get());
   }
 
   /**
