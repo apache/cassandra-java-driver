@@ -59,8 +59,6 @@ class LZ4Compressor extends FrameCompressor {
   @Override
   Frame compress(Frame frame) throws IOException {
     ByteBuf input = frame.body;
-
-    // TODO: JAVA-1306: Use the same API calls for direct and heap buffers when LZ4 updated.
     ByteBuf frameBody = input.isDirect() ? compressDirect(input) : compressHeap(input);
     return frame.with(frameBody);
   }
@@ -126,8 +124,6 @@ class LZ4Compressor extends FrameCompressor {
   @Override
   Frame decompress(Frame frame) throws IOException {
     ByteBuf input = frame.body;
-
-    // TODO: JAVA-1306: Use the same API calls for direct and heap buffers when LZ4 updated.
     ByteBuf frameBody = input.isDirect() ? decompressDirect(input) : decompressHeap(input);
     return frame.with(frameBody);
   }
