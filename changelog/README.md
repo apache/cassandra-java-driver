@@ -8,6 +8,7 @@
 ## 3.10.0 (in progress)
 
 - [improvement] JAVA-2676: Don't reschedule flusher after empty runs
+- [new feature] JAVA-2772: Support new protocol v5 message format
 
 ## 3.9.0
 

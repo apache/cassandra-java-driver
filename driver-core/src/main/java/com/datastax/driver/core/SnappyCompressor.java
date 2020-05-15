@@ -54,9 +54,12 @@ class SnappyCompressor extends FrameCompressor {
 
   @Override
   Frame compress(Frame frame) throws IOException {
-    ByteBuf input = frame.body;
-    ByteBuf frameBody = input.isDirect() ? compressDirect(input) : compressHeap(input);
-    return frame.with(frameBody);
+    return frame.with(compress(frame.body));
+  }
+
+  @Override
+  ByteBuf compress(ByteBuf buffer) throws IOException {
+    return buffer.isDirect() ? compressDirect(buffer) : compressHeap(buffer);
   }
 
   private ByteBuf compressDirect(ByteBuf input) throws IOException {
@@ -115,6 +118,13 @@ class SnappyCompressor extends FrameCompressor {
     ByteBuf input = frame.body;
     ByteBuf frameBody = input.isDirect() ? decompressDirect(input) : decompressHeap(input);
     return frame.with(frameBody);
+  }
+
+  @Override
+  ByteBuf decompress(ByteBuf buffer, int uncompressedLength) throws IOException {
+    // Note that the Snappy algorithm already encodes the uncompressed length, we don't need the
+    // provided one.
+    return buffer.isDirect() ? decompressDirect(buffer) : decompressHeap(buffer);
   }
 
   private ByteBuf decompressDirect(ByteBuf input) throws IOException {
