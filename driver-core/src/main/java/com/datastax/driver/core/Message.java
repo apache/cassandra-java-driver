@@ -310,7 +310,7 @@ abstract class Message {
   @ChannelHandler.Sharable
   static class ProtocolEncoder extends MessageToMessageEncoder<Request> {
 
-    private final ProtocolVersion protocolVersion;
+    final ProtocolVersion protocolVersion;
 
     ProtocolEncoder(ProtocolVersion version) {
       this.protocolVersion = version;
@@ -319,35 +319,13 @@ abstract class Message {
     @Override
     protected void encode(ChannelHandlerContext ctx, Request request, List<Object> out)
         throws Exception {
-      EnumSet<Frame.Header.Flag> flags = EnumSet.noneOf(Frame.Header.Flag.class);
-      if (request.isTracingRequested()) flags.add(Frame.Header.Flag.TRACING);
-      if (protocolVersion == ProtocolVersion.NEWEST_BETA) flags.add(Frame.Header.Flag.USE_BETA);
-      Map<String, ByteBuffer> customPayload = request.getCustomPayload();
-      if (customPayload != null) {
-        if (protocolVersion.compareTo(ProtocolVersion.V4) < 0)
-          throw new UnsupportedFeatureException(
-              protocolVersion, "Custom payloads are only supported since native protocol V4");
-        flags.add(Frame.Header.Flag.CUSTOM_PAYLOAD);
-      }
-
+      EnumSet<Frame.Header.Flag> flags = computeFlags(request);
+      int messageSize = encodedSize(request);
+      ByteBuf body = ctx.alloc().buffer(messageSize);
       @SuppressWarnings("unchecked")
       Coder<Request> coder = (Coder<Request>) request.type.coder;
-      int messageSize = coder.encodedSize(request, protocolVersion);
-      int payloadLength = -1;
-      if (customPayload != null) {
-        payloadLength = CBUtil.sizeOfBytesMap(customPayload);
-        messageSize += payloadLength;
-      }
-      ByteBuf body = ctx.alloc().buffer(messageSize);
-      if (customPayload != null) {
-        CBUtil.writeBytesMap(customPayload, body);
-        if (logger.isTraceEnabled()) {
-          logger.trace(
-              "Sending payload: {} ({} bytes total)", printPayload(customPayload), payloadLength);
-        }
-      }
-
       coder.encode(request, body, protocolVersion);
+
       if (body.capacity() != messageSize) {
         logger.debug(
             "Detected buffer resizing while encoding {} message ({} => {}), "
@@ -359,6 +337,50 @@ abstract class Message {
       }
       out.add(
           Frame.create(protocolVersion, request.type.opcode, request.getStreamId(), flags, body));
+    }
+
+    EnumSet<Frame.Header.Flag> computeFlags(Request request) {
+      EnumSet<Frame.Header.Flag> flags = EnumSet.noneOf(Frame.Header.Flag.class);
+      if (request.isTracingRequested()) flags.add(Frame.Header.Flag.TRACING);
+      if (protocolVersion == ProtocolVersion.NEWEST_BETA) flags.add(Frame.Header.Flag.USE_BETA);
+      Map<String, ByteBuffer> customPayload = request.getCustomPayload();
+      if (customPayload != null) {
+        if (protocolVersion.compareTo(ProtocolVersion.V4) < 0)
+          throw new UnsupportedFeatureException(
+              protocolVersion, "Custom payloads are only supported since native protocol V4");
+        flags.add(Frame.Header.Flag.CUSTOM_PAYLOAD);
+      }
+      return flags;
+    }
+
+    int encodedSize(Request request) {
+      @SuppressWarnings("unchecked")
+      Coder<Request> coder = (Coder<Request>) request.type.coder;
+      int messageSize = coder.encodedSize(request, protocolVersion);
+      int payloadLength = -1;
+      if (request.getCustomPayload() != null) {
+        payloadLength = CBUtil.sizeOfBytesMap(request.getCustomPayload());
+        messageSize += payloadLength;
+      }
+      return messageSize;
+    }
+
+    void encode(Request request, ByteBuf destination) {
+      @SuppressWarnings("unchecked")
+      Coder<Request> coder = (Coder<Request>) request.type.coder;
+
+      Map<String, ByteBuffer> customPayload = request.getCustomPayload();
+      if (customPayload != null) {
+        CBUtil.writeBytesMap(customPayload, destination);
+        if (logger.isTraceEnabled()) {
+          logger.trace(
+              "Sending payload: {} ({} bytes total)",
+              printPayload(customPayload),
+              CBUtil.sizeOfBytesMap(customPayload));
+        }
+      }
+
+      coder.encode(request, destination, protocolVersion);
     }
   }
 

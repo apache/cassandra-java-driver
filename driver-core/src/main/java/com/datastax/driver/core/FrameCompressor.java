@@ -23,7 +23,16 @@ abstract class FrameCompressor {
 
   abstract Frame compress(Frame frame) throws IOException;
 
+  /**
+   * Unlike {@link #compress(Frame)}, this variant does not store the uncompressed length if the
+   * underlying algorithm does not do it natively (like LZ4). It must be stored separately and
+   * passed back to {@link #decompress(ByteBuf, int)}.
+   */
+  abstract ByteBuf compress(ByteBuf buffer) throws IOException;
+
   abstract Frame decompress(Frame frame) throws IOException;
+
+  abstract ByteBuf decompress(ByteBuf buffer, int uncompressedLength) throws IOException;
 
   protected static ByteBuffer inputNioBuffer(ByteBuf buf) {
     // Using internalNioBuffer(...) as we only hold the reference in this method and so can

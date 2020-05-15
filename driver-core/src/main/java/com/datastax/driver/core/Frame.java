@@ -87,29 +87,14 @@ class Frame {
   final Header header;
   final ByteBuf body;
 
-  private Frame(Header header, ByteBuf body) {
+  Frame(Header header, ByteBuf body) {
     this.header = header;
     this.body = body;
   }
 
   private static Frame create(ByteBuf fullFrame) {
-    assert fullFrame.readableBytes() >= 1
-        : String.format("Frame too short (%d bytes)", fullFrame.readableBytes());
-
-    int versionBytes = fullFrame.readByte();
-    // version first byte is the "direction" of the frame (request or response)
-    ProtocolVersion version = ProtocolVersion.fromInt(versionBytes & 0x7F);
-    int hdrLen = Header.lengthFor(version);
-    assert fullFrame.readableBytes() >= (hdrLen - 1)
-        : String.format("Frame too short (%d bytes)", fullFrame.readableBytes());
-
-    int flags = fullFrame.readByte();
-    int streamId = readStreamid(fullFrame, version);
-    int opcode = fullFrame.readByte();
-    int length = fullFrame.readInt();
-    assert length == fullFrame.readableBytes();
-
-    Header header = new Header(version, flags, streamId, opcode);
+    Header header = Header.decode(fullFrame);
+    assert header.bodyLength == fullFrame.readableBytes();
     return new Frame(header, fullFrame);
   }
 
@@ -129,7 +114,7 @@ class Frame {
 
   static Frame create(
       ProtocolVersion version, int opcode, int streamId, EnumSet<Header.Flag> flags, ByteBuf body) {
-    Header header = new Header(version, flags, streamId, opcode);
+    Header header = new Header(version, flags, streamId, opcode, body.readableBytes());
     return new Frame(header, body);
   }
 
@@ -139,16 +124,22 @@ class Frame {
     final EnumSet<Flag> flags;
     final int streamId;
     final int opcode;
+    final int bodyLength;
 
-    private Header(ProtocolVersion version, int flags, int streamId, int opcode) {
-      this(version, Flag.deserialize(flags), streamId, opcode);
+    private Header(ProtocolVersion version, int flags, int streamId, int opcode, int bodyLength) {
+      this(version, Flag.deserialize(flags), streamId, opcode, bodyLength);
     }
 
-    private Header(ProtocolVersion version, EnumSet<Flag> flags, int streamId, int opcode) {
+    Header(ProtocolVersion version, EnumSet<Flag> flags, int streamId, int opcode, int bodyLength) {
       this.version = version;
       this.flags = flags;
       this.streamId = streamId;
       this.opcode = opcode;
+      this.bodyLength = bodyLength;
+    }
+
+    Header withNewBodyLength(int newBodyLength) {
+      return new Header(version, flags, streamId, opcode, newBodyLength);
     }
 
     /**
@@ -169,6 +160,46 @@ class Frame {
         default:
           throw version.unsupported();
       }
+    }
+
+    public void encodeInto(ByteBuf destination) {
+      // Don't bother with the direction, we only send requests.
+      destination.writeByte(version.toInt());
+      destination.writeByte(Flag.serialize(flags));
+      switch (version) {
+        case V1:
+        case V2:
+          destination.writeByte(streamId);
+          break;
+        case V3:
+        case V4:
+        case V5:
+          destination.writeShort(streamId);
+          break;
+        default:
+          throw version.unsupported();
+      }
+      destination.writeByte(opcode);
+      destination.writeInt(bodyLength);
+    }
+
+    static Header decode(ByteBuf buffer) {
+      assert buffer.readableBytes() >= 1
+          : String.format("Frame too short (%d bytes)", buffer.readableBytes());
+
+      int versionBytes = buffer.readByte();
+      // version first byte is the "direction" of the frame (request or response)
+      ProtocolVersion version = ProtocolVersion.fromInt(versionBytes & 0x7F);
+      int hdrLen = Header.lengthFor(version);
+      assert buffer.readableBytes() >= (hdrLen - 1)
+          : String.format("Frame too short (%d bytes)", buffer.readableBytes());
+
+      int flags = buffer.readByte();
+      int streamId = readStreamid(buffer, version);
+      int opcode = buffer.readByte();
+      int length = buffer.readInt();
+
+      return new Header(version, flags, streamId, opcode, length);
     }
 
     enum Flag {
@@ -197,7 +228,7 @@ class Frame {
   }
 
   Frame with(ByteBuf newBody) {
-    return new Frame(header, newBody);
+    return new Frame(header.withNewBodyLength(newBody.readableBytes()), newBody);
   }
 
   static final class Decoder extends ByteToMessageDecoder {
@@ -273,31 +304,10 @@ class Frame {
         throws Exception {
       ProtocolVersion protocolVersion = frame.header.version;
       ByteBuf header = ctx.alloc().ioBuffer(Frame.Header.lengthFor(protocolVersion));
-      // We don't bother with the direction, we only send requests.
-      header.writeByte(frame.header.version.toInt());
-      header.writeByte(Header.Flag.serialize(frame.header.flags));
-      writeStreamId(frame.header.streamId, header, protocolVersion);
-      header.writeByte(frame.header.opcode);
-      header.writeInt(frame.body.readableBytes());
+      frame.header.encodeInto(header);
 
       out.add(header);
       out.add(frame.body);
-    }
-
-    private void writeStreamId(int streamId, ByteBuf header, ProtocolVersion protocolVersion) {
-      switch (protocolVersion) {
-        case V1:
-        case V2:
-          header.writeByte(streamId);
-          break;
-        case V3:
-        case V4:
-        case V5:
-          header.writeShort(streamId);
-          break;
-        default:
-          throw protocolVersion.unsupported();
-      }
     }
   }
 
