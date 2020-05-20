@@ -16,18 +16,13 @@
 package com.datastax.oss.driver.shaded.guava.common.primitives;
 
 import com.oracle.svm.core.annotate.Alias;
-import com.oracle.svm.core.annotate.Delete;
 import com.oracle.svm.core.annotate.RecomputeFieldValue;
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
 import java.util.Comparator;
 
-@TargetClass(UnsignedBytes.LexicographicalComparatorHolder.UnsafeComparator.class)
-@Delete
-final class UnsafeComparatorSubstitutions {}
-
 @TargetClass(UnsignedBytes.LexicographicalComparatorHolder.class)
-final class LexicographicalComparatorHolderSubstitutions {
+final class LexicographicalComparatorHolderSubstitution {
 
   @Alias
   @RecomputeFieldValue(kind = RecomputeFieldValue.Kind.FromAlias)
