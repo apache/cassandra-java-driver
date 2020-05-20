@@ -19,15 +19,40 @@ import static com.datastax.driver.core.Message.Response.Type.ERROR;
 import static io.netty.handler.timeout.IdleState.READER_IDLE;
 
 import com.datastax.driver.core.Responses.Result.SetKeyspace;
-import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.BusyConnectionException;
+import com.datastax.driver.core.exceptions.ConnectionException;
+import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.FrameTooLongException;
+import com.datastax.driver.core.exceptions.OperationTimedOutException;
+import com.datastax.driver.core.exceptions.TransportException;
+import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.utils.MoreFutures;
 import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.AbstractFuture;
+import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoop;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -44,7 +69,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -65,8 +95,6 @@ class Connection {
       SystemProperties.getBoolean("com.datastax.driver.DISABLE_COALESCING", false);
   private static final int FLUSHER_SCHEDULE_PERIOD_NS =
       SystemProperties.getInt("com.datastax.driver.FLUSHER_SCHEDULE_PERIOD_NS", 10000);
-  private static final int FLUSHER_RUN_WITHOUT_WORK_TIMES =
-      SystemProperties.getInt("com.datastax.driver.FLUSHER_RUN_WITHOUT_WORK_TIMES", 5);
 
   enum State {
     OPEN,
@@ -1098,7 +1126,6 @@ class Connection {
     final Queue<FlushItem> queued = new ConcurrentLinkedQueue<FlushItem>();
     final AtomicBoolean running = new AtomicBoolean(false);
     final HashSet<Channel> channels = new HashSet<Channel>();
-    int runsWithNoWork = 0;
 
     private Flusher(EventLoop eventLoop) {
       this.eventLoopRef = new WeakReference<EventLoop>(eventLoop);
@@ -1114,14 +1141,12 @@ class Connection {
     @Override
     public void run() {
 
-      boolean doneWork = false;
       FlushItem flush;
       while (null != (flush = queued.poll())) {
         Channel channel = flush.channel;
         if (channel.isActive()) {
           channels.add(channel);
           channel.write(flush.request).addListener(flush.listener);
-          doneWork = true;
         }
       }
 
@@ -1129,15 +1154,9 @@ class Connection {
       for (Channel channel : channels) channel.flush();
       channels.clear();
 
-      if (doneWork) {
-        runsWithNoWork = 0;
-      } else {
-        // either reschedule or cancel
-        if (++runsWithNoWork > FLUSHER_RUN_WITHOUT_WORK_TIMES) {
-          running.set(false);
-          if (queued.isEmpty() || !running.compareAndSet(false, true)) return;
-        }
-      }
+      // either reschedule or cancel
+      running.set(false);
+      if (queued.isEmpty() || !running.compareAndSet(false, true)) return;
 
       EventLoop eventLoop = eventLoopRef.get();
       if (eventLoop != null && !eventLoop.isShuttingDown()) {
