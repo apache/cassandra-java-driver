@@ -64,6 +64,7 @@ public abstract class TypesafeDriverExecutionProfile implements DriverExecutionP
     return getCached(option.getPath(), getEffectiveOptions()::getBoolean);
   }
 
+  // We override `with*` methods because they can be implemented a bit better with Typesafe config
   @NonNull
   @Override
   public DriverExecutionProfile withBoolean(@NonNull DriverOption option, boolean value) {
@@ -269,7 +270,7 @@ public abstract class TypesafeDriverExecutionProfile implements DriverExecutionP
   @NonNull
   @Override
   public Object getComparisonKey(@NonNull DriverOption option) {
-    // No need to cache this, it's only used for policy initialization
+    // This method has a default implementation in the interface, but here we can do it in one line:
     return getEffectiveOptions().getConfig(option.getPath());
   }
 

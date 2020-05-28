@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.config;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
+import com.datastax.oss.driver.internal.core.config.composite.CompositeDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.map.MapBasedDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultProgrammaticDriverConfigLoaderBuilder;
@@ -263,6 +264,28 @@ public interface DriverConfigLoader extends AutoCloseable {
   @NonNull
   static DriverConfigLoader fromMap(@NonNull OptionsMap source) {
     return new MapBasedDriverConfigLoader(source, source.asRawMap());
+  }
+
+  /**
+   * Composes two existing config loaders to form a new one.
+   *
+   * <p>When the driver reads an option, the "primary" config will be queried first. If the option
+   * is missing, then it will be looked up in the "fallback" config.
+   *
+   * <p>All execution profiles will be surfaced in the new config. If a profile is defined both in
+   * the primary and the fallback config, its options will be merged using the same precedence rules
+   * as described above.
+   *
+   * <p>The new config is reloadable if at least one of the input configs is. If you invoke {@link
+   * DriverConfigLoader#reload()} on the new loader, it will reload whatever is reloadable, or fail
+   * if nothing is. If the input loaders have periodic reloading built-in, each one will reload at
+   * its own pace, and the changes will be reflected in the new config.
+   */
+  @NonNull
+  static DriverConfigLoader compose(
+      @NonNull DriverConfigLoader primaryConfigLoader,
+      @NonNull DriverConfigLoader fallbackConfigLoader) {
+    return new CompositeDriverConfigLoader(primaryConfigLoader, fallbackConfigLoader);
   }
 
   /**
