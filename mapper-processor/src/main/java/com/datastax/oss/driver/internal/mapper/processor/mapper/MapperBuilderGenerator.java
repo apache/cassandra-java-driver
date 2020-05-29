@@ -76,7 +76,8 @@ public class MapperBuilderGenerator extends SingleFileCodeGenerator {
                     .returns(ClassName.get(interfaceElement))
                     .addStatement(
                         "$1T context = new $1T(session, defaultKeyspaceId, "
-                            + "defaultExecutionProfileName, defaultExecutionProfile, customState)",
+                            + "defaultExecutionProfileName, defaultExecutionProfile, "
+                            + "customState, resultProducers)",
                         DefaultMapperContext.class)
                     .addStatement(
                         "return new $T(context)",

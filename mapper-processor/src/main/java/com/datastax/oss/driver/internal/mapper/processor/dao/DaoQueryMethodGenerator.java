@@ -86,7 +86,7 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
             (methodBuilder, requestName) ->
                 generatePrepareRequest(methodBuilder, requestName, helperFieldName));
 
-    CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
+    CodeBlock.Builder createStatementBlock = CodeBlock.builder();
 
     List<? extends VariableElement> parameters = methodElement.getParameters();
 
@@ -95,7 +95,7 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
       parameters = parameters.subList(0, methodElement.getParameters().size() - 1);
     }
 
-    methodBodyBuilder.addStatement(
+    createStatementBlock.addStatement(
         "$T boundStatementBuilder = $L.boundStatementBuilder()",
         BoundStatementBuilder.class,
         statementName);
@@ -104,28 +104,21 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
         nullSavingStrategyValidation.getNullSavingStrategy(
             Query.class, Query::nullSavingStrategy, methodElement, enclosingClass);
 
-    methodBodyBuilder.addStatement(
+    createStatementBlock.addStatement(
         "$1T nullSavingStrategy = $1T.$2L", NullSavingStrategy.class, nullSavingStrategy);
 
-    populateBuilderWithStatementAttributes(methodBodyBuilder, methodElement);
-    populateBuilderWithFunction(methodBodyBuilder, boundStatementFunction);
+    populateBuilderWithStatementAttributes(createStatementBlock, methodElement);
+    populateBuilderWithFunction(createStatementBlock, boundStatementFunction);
 
     if (validateCqlNamesPresent(parameters)) {
       GeneratedCodePatterns.bindParameters(
-          parameters, methodBodyBuilder, enclosingClass, context, true);
+          parameters, createStatementBlock, enclosingClass, context, true);
 
-      methodBodyBuilder
+      createStatementBlock
           .add("\n")
           .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
-      returnType.getKind().addExecuteStatement(methodBodyBuilder, helperFieldName);
-
-      CodeBlock methodBody = returnType.getKind().wrapWithErrorHandling(methodBodyBuilder.build());
-
-      return Optional.of(
-          GeneratedCodePatterns.override(methodElement, typeParameters)
-              .addCode(methodBody)
-              .build());
+      return crudMethod(createStatementBlock, returnType, helperFieldName);
     } else {
       return Optional.empty();
     }

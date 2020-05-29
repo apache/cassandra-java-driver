@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.TypeName;
 
 /**
  * A "kind" of return type of a DAO method.
@@ -32,9 +33,10 @@ public interface DaoReturnTypeKind {
    *
    * @param methodBuilder the method to add the code to.
    * @param helperFieldName the name of the helper for entity conversions (might not get used for
-   *     certain kinds, in that case it's ok to pass null).
+   * @param returnTypeName
    */
-  void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName);
+  void addExecuteStatement(
+      CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName);
 
   /**
    * Generates a try-catch around the given code block, to translate unchecked exceptions into a
@@ -55,7 +57,7 @@ public interface DaoReturnTypeKind {
    * <p>For some kinds, it's fine to let unchecked exceptions bubble up and no try-catch is
    * necessary; in this case, this method can return {@code innerBlock} unchanged.
    */
-  CodeBlock wrapWithErrorHandling(CodeBlock innerBlock);
+  CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName);
 
   /** A short description suitable for error messages. */
   String getDescription();

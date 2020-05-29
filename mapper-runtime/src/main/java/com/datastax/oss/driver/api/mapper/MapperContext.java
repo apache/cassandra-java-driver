@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.mapper;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -83,4 +84,7 @@ public interface MapperContext {
    */
   @NonNull
   Map<Object, Object> getCustomState();
+
+  @NonNull
+  MappedResultProducer getResultProducer(GenericType<?> resultToProduce);
 }

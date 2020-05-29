@@ -23,7 +23,10 @@ import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -41,10 +44,12 @@ public abstract class MapperBuilder<MapperT> {
   protected Map<Object, Object> customState;
   protected String defaultExecutionProfileName;
   protected DriverExecutionProfile defaultExecutionProfile;
+  protected List<MappedResultProducer> resultProducers;
 
   protected MapperBuilder(CqlSession session) {
     this.session = session;
     this.customState = new HashMap<>();
+    this.resultProducers = new ArrayList<>();
     // schema validation is enabled by default
     customState.put(SCHEMA_VALIDATION_ENABLED_SETTING, true);
   }
@@ -166,6 +171,13 @@ public abstract class MapperBuilder<MapperT> {
   @NonNull
   public MapperBuilder<MapperT> withCustomState(@Nullable Object key, @Nullable Object value) {
     customState.put(key, value);
+    return this;
+  }
+
+  @NonNull
+  public MapperBuilder<MapperT> withResultProducers(
+      @NonNull MappedResultProducer... newResultProducers) {
+    Collections.addAll(resultProducers, newResultProducers);
     return this;
   }
 

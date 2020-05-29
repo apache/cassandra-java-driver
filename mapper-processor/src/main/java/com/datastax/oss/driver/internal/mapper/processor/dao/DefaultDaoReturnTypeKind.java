@@ -19,235 +19,273 @@ import com.datastax.dse.driver.internal.core.cql.reactive.FailedReactiveResultSe
 import com.datastax.dse.driver.internal.mapper.reactive.FailedMappedReactiveResultSet;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.TypeName;
 
 public enum DefaultDaoReturnTypeKind implements DaoReturnTypeKind {
   VOID {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       // Note that the execute* methods in the generated code are defined in DaoBase
       methodBuilder.addStatement("execute(boundStatement)");
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return innerBlock;
     }
   },
   BOOLEAN {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement("return executeAndMapWasAppliedToBoolean(boundStatement)");
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return innerBlock;
     }
   },
   LONG {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement("return executeAndMapFirstColumnToLong(boundStatement)");
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return innerBlock;
     }
   },
   ROW {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement("return executeAndExtractFirstRow(boundStatement)");
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return innerBlock;
     }
   },
   ENTITY {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement(
           "return executeAndMapToSingleEntity(boundStatement, $L)", helperFieldName);
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return innerBlock;
     }
   },
   OPTIONAL_ENTITY {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement(
           "return executeAndMapToOptionalEntity(boundStatement, $L)", helperFieldName);
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return innerBlock;
     }
   },
   RESULT_SET {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement("return execute(boundStatement)");
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return innerBlock;
     }
   },
   BOUND_STATEMENT {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement("return boundStatement");
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return innerBlock;
     }
   },
   PAGING_ITERABLE {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement(
           "return executeAndMapToEntityIterable(boundStatement, $L)", helperFieldName);
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return innerBlock;
     }
   },
 
   FUTURE_OF_VOID {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement("return executeAsyncAndMapToVoid(boundStatement)");
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return wrapWithErrorHandling(innerBlock, FAILED_FUTURE);
     }
   },
   FUTURE_OF_BOOLEAN {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement("return executeAsyncAndMapWasAppliedToBoolean(boundStatement)");
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return wrapWithErrorHandling(innerBlock, FAILED_FUTURE);
     }
   },
   FUTURE_OF_LONG {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement("return executeAsyncAndMapFirstColumnToLong(boundStatement)");
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return wrapWithErrorHandling(innerBlock, FAILED_FUTURE);
     }
   },
   FUTURE_OF_ROW {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement("return executeAsyncAndExtractFirstRow(boundStatement)");
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return wrapWithErrorHandling(innerBlock, FAILED_FUTURE);
     }
   },
   FUTURE_OF_ENTITY {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement(
           "return executeAsyncAndMapToSingleEntity(boundStatement, $L)", helperFieldName);
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return wrapWithErrorHandling(innerBlock, FAILED_FUTURE);
     }
   },
   FUTURE_OF_OPTIONAL_ENTITY {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement(
           "return executeAsyncAndMapToOptionalEntity(boundStatement, $L)", helperFieldName);
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return wrapWithErrorHandling(innerBlock, FAILED_FUTURE);
     }
   },
   FUTURE_OF_ASYNC_RESULT_SET {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement("return executeAsync(boundStatement)");
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return wrapWithErrorHandling(innerBlock, FAILED_FUTURE);
     }
   },
   FUTURE_OF_ASYNC_PAGING_ITERABLE {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement(
           "return executeAsyncAndMapToEntityIterable(boundStatement, $L)", helperFieldName);
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return wrapWithErrorHandling(innerBlock, FAILED_FUTURE);
     }
   },
   REACTIVE_RESULT_SET {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement("return executeReactive(boundStatement)");
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return wrapWithErrorHandling(innerBlock, FAILED_REACTIVE_RESULT_SET);
     }
   },
   MAPPED_REACTIVE_RESULT_SET {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       methodBuilder.addStatement(
           "return executeReactiveAndMap(boundStatement, $L)", helperFieldName);
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       return wrapWithErrorHandling(innerBlock, FAILED_MAPPED_REACTIVE_RESULT_SET);
+    }
+  },
+
+  CUSTOM {
+    @Override
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
+      methodBuilder.addStatement(
+          "return ($T) producer.execute(boundStatement, context, $L)",
+          returnTypeName,
+          helperFieldName);
+    }
+
+    @Override
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
+      return wrapWithErrorHandling(
+          innerBlock, CodeBlock.of("return ($T) producer.wrapError(t)", returnTypeName));
     }
   },
 
   UNSUPPORTED() {
     @Override
-    public void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName) {
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder, String helperFieldName, TypeName returnTypeName) {
       throw new AssertionError("Should never get here");
     }
 
     @Override
-    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock) {
+    public CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, TypeName returnTypeName) {
       throw new AssertionError("Should never get here");
     }
   },

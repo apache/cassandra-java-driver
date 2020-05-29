@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOOLEAN;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOUND_STATEMENT;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.CUSTOM;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_ASYNC_RESULT_SET;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_BOOLEAN;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_VOID;
@@ -71,7 +72,8 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
         RESULT_SET,
         BOUND_STATEMENT,
         FUTURE_OF_ASYNC_RESULT_SET,
-        REACTIVE_RESULT_SET);
+        REACTIVE_RESULT_SET,
+        CUSTOM);
   }
 
   @Override
@@ -215,14 +217,14 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
                 generatePrepareRequest(
                     methodBuilder, requestName, helperFieldName, primaryKeyParameterCount));
 
-    CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
+    CodeBlock.Builder createStatementBlock = CodeBlock.builder();
 
-    methodBodyBuilder.addStatement(
+    createStatementBlock.addStatement(
         "$T boundStatementBuilder = $L.boundStatementBuilder()",
         BoundStatementBuilder.class,
         statementName);
-    populateBuilderWithStatementAttributes(methodBodyBuilder, methodElement);
-    populateBuilderWithFunction(methodBodyBuilder, boundStatementFunction);
+    populateBuilderWithStatementAttributes(createStatementBlock, methodElement);
+    populateBuilderWithFunction(createStatementBlock, boundStatementFunction);
 
     int nextParameterIndex = 0;
     if (hasEntityParameter) {
@@ -234,7 +236,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
             property.getType(),
             CodeBlock.of("$L.$L()", firstParameter.getSimpleName(), property.getGetterName()),
             "boundStatementBuilder",
-            methodBodyBuilder,
+            createStatementBlock,
             enclosingClass);
       }
       nextParameterIndex = 1;
@@ -249,7 +251,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
       List<? extends VariableElement> bindMarkers = parameters.subList(0, primaryKeyParameterCount);
       warnIfCqlNamePresent(bindMarkers);
       GeneratedCodePatterns.bindParameters(
-          bindMarkers, primaryKeyNames, methodBodyBuilder, enclosingClass, context, false);
+          bindMarkers, primaryKeyNames, createStatementBlock, enclosingClass, context, false);
       nextParameterIndex = primaryKeyNames.size();
     }
 
@@ -269,22 +271,17 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
           parameters.subList(nextParameterIndex, parameters.size());
       if (validateCqlNamesPresent(bindMarkers)) {
         GeneratedCodePatterns.bindParameters(
-            bindMarkers, methodBodyBuilder, enclosingClass, context, false);
+            bindMarkers, createStatementBlock, enclosingClass, context, false);
       } else {
         return Optional.empty();
       }
     }
 
-    methodBodyBuilder
+    createStatementBlock
         .add("\n")
         .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
-    returnType.getKind().addExecuteStatement(methodBodyBuilder, helperFieldName);
-
-    CodeBlock methodBody = returnType.getKind().wrapWithErrorHandling(methodBodyBuilder.build());
-
-    return Optional.of(
-        GeneratedCodePatterns.override(methodElement, typeParameters).addCode(methodBody).build());
+    return crudMethod(createStatementBlock, returnType, helperFieldName);
   }
 
   private TypeElement getEntityFromAnnotation() {

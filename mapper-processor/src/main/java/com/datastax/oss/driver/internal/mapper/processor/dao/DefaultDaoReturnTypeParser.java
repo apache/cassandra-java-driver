@@ -204,6 +204,12 @@ public class DefaultDaoReturnTypeParser implements DaoReturnTypeParser {
           }
         }
       }
+
+      // Otherwise assume a custom type. A MappedResultProducer will be looked up from the
+      // MapperContext at runtime.
+      return new DaoReturnType(
+          DefaultDaoReturnTypeKind.CUSTOM,
+          findEntityInCustomType(declaredReturnType, typeParameters));
     }
 
     if (returnTypeMirror.getKind() == TypeKind.TYPEVAR) {
@@ -231,5 +237,26 @@ public class DefaultDaoReturnTypeParser implements DaoReturnTypeParser {
     }
 
     return DaoReturnType.UNSUPPORTED;
+  }
+
+  /**
+   * If we're dealing with a {@link DefaultDaoReturnTypeKind#CUSTOM}, we allow one entity element to
+   * appear at any level of nesting in the type, e.g. {@code MyCustomFuture<Optional<Entity>>}.
+   */
+  private TypeElement findEntityInCustomType(
+      TypeMirror typeMirror, Map<Name, TypeElement> typeParameters) {
+    TypeElement entityElement = EntityUtils.asEntityElement(typeMirror, typeParameters);
+    if (entityElement != null) {
+      return entityElement;
+    } else if (typeMirror.getKind() == TypeKind.DECLARED) {
+      for (TypeMirror typeArgument : ((DeclaredType) typeMirror).getTypeArguments()) {
+        entityElement = findEntityInCustomType(typeArgument, typeParameters);
+        if (entityElement != null) {
+          return entityElement;
+        }
+      }
+    }
+    // null is a valid result even at the top level, a custom type may not contain any entity
+    return null;
   }
 }

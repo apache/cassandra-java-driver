@@ -15,20 +15,26 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.CUSTOM;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
+import com.datastax.oss.driver.api.mapper.MappedResultProducer;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.StatementAttributes;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
+import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeName;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
@@ -233,5 +239,31 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
   protected boolean isFromClassFile() {
     TypeElement enclosingElement = (TypeElement) methodElement.getEnclosingElement();
     return Reflection.loadClass(null, enclosingElement.getQualifiedName().toString()) != null;
+  }
+
+  /**
+   * Common pattern for CRUD methods that build a bound statement, execute it and convert the result
+   * into a target type.
+   *
+   * @param createStatementBlock the code that creates the statement. It must store it into a
+   *     variable named "boundStatement".
+   */
+  protected Optional<MethodSpec> crudMethod(
+      CodeBlock.Builder createStatementBlock, DaoReturnType returnType, String helperFieldName) {
+
+    MethodSpec.Builder method = GeneratedCodePatterns.override(methodElement, typeParameters);
+    TypeName returnTypeName = null;
+    if (returnType.getKind() == CUSTOM) {
+      returnTypeName =
+          GeneratedCodePatterns.getTypeName(methodElement.getReturnType(), typeParameters);
+      method.addStatement(
+          "$T producer = context.getResultProducer($L)",
+          MappedResultProducer.class,
+          enclosingClass.addGenericTypeConstant(returnTypeName));
+    }
+    returnType.getKind().addExecuteStatement(createStatementBlock, helperFieldName, returnTypeName);
+    method.addCode(
+        returnType.getKind().wrapWithErrorHandling(createStatementBlock.build(), returnTypeName));
+    return Optional.of(method.build());
   }
 }

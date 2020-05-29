@@ -18,13 +18,17 @@ package com.datastax.oss.driver.internal.mapper;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.api.mapper.MappedResultProducer;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,13 +43,15 @@ public class DefaultMapperContext implements MapperContext {
   private final DriverExecutionProfile executionProfile;
   private final ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache;
   private final Map<Object, Object> customState;
+  private final List<MappedResultProducer> resultProducers;
 
   public DefaultMapperContext(
       @NonNull CqlSession session,
       @Nullable CqlIdentifier keyspaceId,
       @Nullable String executionProfileName,
       @Nullable DriverExecutionProfile executionProfile,
-      @NonNull Map<Object, Object> customState) {
+      @NonNull Map<Object, Object> customState,
+      @NonNull List<MappedResultProducer> resultProducers) {
     this(
         session,
         keyspaceId,
@@ -53,7 +59,8 @@ public class DefaultMapperContext implements MapperContext {
         executionProfileName,
         executionProfile,
         new ConcurrentHashMap<>(),
-        NullAllowingImmutableMap.copyOf(customState));
+        NullAllowingImmutableMap.copyOf(customState),
+        ImmutableList.copyOf(resultProducers));
   }
 
   private DefaultMapperContext(
@@ -63,7 +70,8 @@ public class DefaultMapperContext implements MapperContext {
       String executionProfileName,
       DriverExecutionProfile executionProfile,
       ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache,
-      Map<Object, Object> customState) {
+      Map<Object, Object> customState,
+      List<MappedResultProducer> resultProducers) {
     if (executionProfile != null && executionProfileName != null) {
       // the mapper code prevents this, so we should never get here
       throw new IllegalArgumentException("Can't provide both a profile and a name");
@@ -75,6 +83,7 @@ public class DefaultMapperContext implements MapperContext {
     this.customState = customState;
     this.executionProfileName = executionProfileName;
     this.executionProfile = executionProfile;
+    this.resultProducers = resultProducers;
   }
 
   public DefaultMapperContext withDaoParameters(
@@ -94,7 +103,8 @@ public class DefaultMapperContext implements MapperContext {
             newExecutionProfileName,
             newExecutionProfile,
             nameConverterCache,
-            customState);
+            customState,
+            resultProducers);
   }
 
   @NonNull
@@ -138,6 +148,20 @@ public class DefaultMapperContext implements MapperContext {
   @Override
   public Map<Object, Object> getCustomState() {
     return customState;
+  }
+
+  @NonNull
+  @Override
+  public MappedResultProducer getResultProducer(GenericType<?> resultToProduce) {
+    for (MappedResultProducer resultProducer : resultProducers) {
+      if (resultProducer.canProduce(resultToProduce)) {
+        return resultProducer;
+      }
+    }
+    throw new IllegalArgumentException(
+        String.format(
+            "Found no registered %s that can produce %s",
+            MappedResultProducer.class.getSimpleName(), resultToProduce));
   }
 
   private static NameConverter buildNameConverter(Class<? extends NameConverter> converterClass) {

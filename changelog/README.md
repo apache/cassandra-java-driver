@@ -4,6 +4,7 @@
 
 ### 4.7.0 (in progress)
 
+- [new feature] JAVA-2792: Allow custom results in the mapper
 - [improvement] JAVA-2747: Revisit semantics of Statement.setExecutionProfile/Name
 
 ### 4.6.1
