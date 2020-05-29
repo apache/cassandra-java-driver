@@ -301,7 +301,10 @@
                   not required at runtime.
                   -->!net.jcip.annotations.*, !edu.umd.cs.findbugs.annotations.*,
                   <!--
-                  2) Use resolution:=optional for optional dependencies in order to make it possible
+                  2) Don't include GraalVM.
+                  -->!org.graalvm.*, !com.oracle.svm.*,
+                  <!--
+                  3) Use resolution:=optional for optional dependencies in order to make it possible
                   to use the driver without such dependencies in an OSGi environment, as long as
                   the application does not attempt to access their packages.
                   Note: dependencies marked as optional are by default included with optional
