@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper.processor;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.Compiler;
 import com.squareup.javapoet.JavaFile;
@@ -55,14 +56,18 @@ public abstract class MapperProcessorTest {
   }
 
   /**
-   * Launches an in-process execution of javac with {@link MapperProcessor} enabled.
+   * Launches an in-process execution of javac with {@link MapperProcessor} enabled, and <b>custom
+   * result types disabled</b>.
    *
    * @param packageName the package of the types to process. Note that it is currently not possible
    *     to process multiple packages (and it's unlikely to be needed in unit tests).
    * @param typeSpecs the contents of the classes or interfaces to process.
    */
   protected Compilation compileWithMapperProcessor(String packageName, TypeSpec... typeSpecs) {
-    return compileWithMapperProcessor(packageName, Collections.emptyList(), typeSpecs);
+    return compileWithMapperProcessor(
+        packageName,
+        ImmutableList.of("-Acom.datastax.oss.driver.mapper.customResults.enabled=false"),
+        typeSpecs);
   }
 
   protected void should_fail_with_expected_error(

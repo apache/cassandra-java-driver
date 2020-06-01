@@ -207,9 +207,11 @@ public class DefaultDaoReturnTypeParser implements DaoReturnTypeParser {
 
       // Otherwise assume a custom type. A MappedResultProducer will be looked up from the
       // MapperContext at runtime.
-      return new DaoReturnType(
-          DefaultDaoReturnTypeKind.CUSTOM,
-          findEntityInCustomType(declaredReturnType, typeParameters));
+      if (context.areCustomResultsEnabled()) {
+        return new DaoReturnType(
+            DefaultDaoReturnTypeKind.CUSTOM,
+            findEntityInCustomType(declaredReturnType, typeParameters));
+      }
     }
 
     if (returnTypeMirror.getKind() == TypeKind.TYPEVAR) {

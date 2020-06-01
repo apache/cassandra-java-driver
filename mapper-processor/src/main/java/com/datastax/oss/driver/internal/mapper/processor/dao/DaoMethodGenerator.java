@@ -38,6 +38,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
@@ -83,7 +84,10 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
               processedType,
               "Invalid return type: %s methods must return one of %s",
               annotationName,
-              validKinds);
+              validKinds.stream()
+                  .filter(k -> k != CUSTOM)
+                  .map(Object::toString)
+                  .collect(Collectors.joining(", ", "[", "]")));
       return null;
     }
     return returnType;

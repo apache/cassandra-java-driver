@@ -38,12 +38,15 @@ import javax.lang.model.util.Types;
 
 public class MapperProcessor extends AbstractProcessor {
   private static final boolean DEFAULT_MAPPER_LOGS_ENABLED = true;
+  private static final boolean DEFAULT_CUSTOM_RESULTS_ENABLED = true;
 
   private static final String INDENT_AMOUNT_OPTION = "com.datastax.oss.driver.mapper.indent";
   private static final String INDENT_WITH_TABS_OPTION =
       "com.datastax.oss.driver.mapper.indentWithTabs";
   private static final String MAPPER_LOGS_ENABLED_OPTION =
       "com.datastax.oss.driver.mapper.logs.enabled";
+  private static final String CUSTOM_RESULTS_ENABLED_OPTION =
+      "com.datastax.oss.driver.mapper.customResults.enabled";
 
   private DecoratedMessager messager;
   private Types typeUtils;
@@ -51,6 +54,7 @@ public class MapperProcessor extends AbstractProcessor {
   private Filer filer;
   private String indent;
   private boolean logsEnabled;
+  private boolean customResultsEnabled;
 
   @Override
   public synchronized void init(ProcessingEnvironment processingEnvironment) {
@@ -59,23 +63,26 @@ public class MapperProcessor extends AbstractProcessor {
     typeUtils = processingEnvironment.getTypeUtils();
     elementUtils = processingEnvironment.getElementUtils();
     filer = processingEnvironment.getFiler();
-    indent = computeIndent(processingEnvironment.getOptions());
-    logsEnabled = isLogsEnabled(processingEnvironment.getOptions());
+    Map<String, String> options = processingEnvironment.getOptions();
+    indent = computeIndent(options);
+    logsEnabled =
+        getBooleanOption(options, MAPPER_LOGS_ENABLED_OPTION, DEFAULT_MAPPER_LOGS_ENABLED);
+    customResultsEnabled =
+        getBooleanOption(options, CUSTOM_RESULTS_ENABLED_OPTION, DEFAULT_CUSTOM_RESULTS_ENABLED);
   }
 
-  private boolean isLogsEnabled(Map<String, String> options) {
-    String mapperLogsEnabled = options.get(MAPPER_LOGS_ENABLED_OPTION);
-    if (mapperLogsEnabled != null) {
-      return Boolean.parseBoolean(mapperLogsEnabled);
-    }
-    return DEFAULT_MAPPER_LOGS_ENABLED;
+  private boolean getBooleanOption(
+      Map<String, String> options, String optionName, boolean defaultValue) {
+    String value = options.get(optionName);
+    return (value == null) ? defaultValue : Boolean.parseBoolean(value);
   }
 
   @Override
   public boolean process(
       Set<? extends TypeElement> annotations, RoundEnvironment roundEnvironment) {
     ProcessorContext context =
-        buildContext(messager, typeUtils, elementUtils, filer, indent, logsEnabled);
+        buildContext(
+            messager, typeUtils, elementUtils, filer, indent, logsEnabled, customResultsEnabled);
 
     CodeGeneratorFactory generatorFactory = context.getCodeGeneratorFactory();
     processAnnotatedTypes(
@@ -93,9 +100,10 @@ public class MapperProcessor extends AbstractProcessor {
       Elements elementUtils,
       Filer filer,
       String indent,
-      boolean logsEnabled) {
+      boolean logsEnabled,
+      boolean customResultsEnabled) {
     return new DefaultProcessorContext(
-        messager, typeUtils, elementUtils, filer, indent, logsEnabled);
+        messager, typeUtils, elementUtils, filer, indent, logsEnabled, customResultsEnabled);
   }
 
   protected void processAnnotatedTypes(
@@ -133,7 +141,10 @@ public class MapperProcessor extends AbstractProcessor {
   @Override
   public Set<String> getSupportedOptions() {
     return ImmutableSet.of(
-        INDENT_AMOUNT_OPTION, INDENT_WITH_TABS_OPTION, MAPPER_LOGS_ENABLED_OPTION);
+        INDENT_AMOUNT_OPTION,
+        INDENT_WITH_TABS_OPTION,
+        MAPPER_LOGS_ENABLED_OPTION,
+        CUSTOM_RESULTS_ENABLED_OPTION);
   }
 
   @Override
