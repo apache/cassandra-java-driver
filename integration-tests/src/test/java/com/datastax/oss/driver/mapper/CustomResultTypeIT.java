@@ -24,9 +24,9 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.datastax.oss.driver.api.mapper.MappedResultProducer;
 import com.datastax.oss.driver.api.mapper.MapperBuilder;
 import com.datastax.oss.driver.api.mapper.MapperContext;
+import com.datastax.oss.driver.api.mapper.MapperResultProducer;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
@@ -179,7 +179,7 @@ public class CustomResultTypeIT extends InventoryITBase {
     }
   }
 
-  public abstract static class ListenableFutureProducer implements MappedResultProducer {
+  public abstract static class ListenableFutureProducer implements MapperResultProducer {
 
     @Override
     public <EntityT> Object execute(

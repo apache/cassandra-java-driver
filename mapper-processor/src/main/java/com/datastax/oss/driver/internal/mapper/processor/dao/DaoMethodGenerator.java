@@ -19,7 +19,7 @@ import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoRe
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
-import com.datastax.oss.driver.api.mapper.MappedResultProducer;
+import com.datastax.oss.driver.api.mapper.MapperResultProducer;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.StatementAttributes;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
@@ -262,7 +262,7 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
           GeneratedCodePatterns.getTypeName(methodElement.getReturnType(), typeParameters);
       method.addStatement(
           "$T producer = context.getResultProducer($L)",
-          MappedResultProducer.class,
+          MapperResultProducer.class,
           enclosingClass.addGenericTypeConstant(returnTypeName));
     }
     returnType.getKind().addExecuteStatement(createStatementBlock, helperFieldName, returnTypeName);

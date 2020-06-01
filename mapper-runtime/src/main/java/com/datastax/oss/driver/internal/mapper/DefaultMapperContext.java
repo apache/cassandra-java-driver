@@ -19,9 +19,9 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.datastax.oss.driver.api.mapper.MappedResultProducer;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.MapperException;
+import com.datastax.oss.driver.api.mapper.MapperResultProducer;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
@@ -43,7 +43,7 @@ public class DefaultMapperContext implements MapperContext {
   private final DriverExecutionProfile executionProfile;
   private final ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache;
   private final Map<Object, Object> customState;
-  private final List<MappedResultProducer> resultProducers;
+  private final List<MapperResultProducer> resultProducers;
 
   public DefaultMapperContext(
       @NonNull CqlSession session,
@@ -51,7 +51,7 @@ public class DefaultMapperContext implements MapperContext {
       @Nullable String executionProfileName,
       @Nullable DriverExecutionProfile executionProfile,
       @NonNull Map<Object, Object> customState,
-      @NonNull List<MappedResultProducer> resultProducers) {
+      @NonNull List<MapperResultProducer> resultProducers) {
     this(
         session,
         keyspaceId,
@@ -71,7 +71,7 @@ public class DefaultMapperContext implements MapperContext {
       DriverExecutionProfile executionProfile,
       ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache,
       Map<Object, Object> customState,
-      List<MappedResultProducer> resultProducers) {
+      List<MapperResultProducer> resultProducers) {
     if (executionProfile != null && executionProfileName != null) {
       // the mapper code prevents this, so we should never get here
       throw new IllegalArgumentException("Can't provide both a profile and a name");
@@ -152,8 +152,8 @@ public class DefaultMapperContext implements MapperContext {
 
   @NonNull
   @Override
-  public MappedResultProducer getResultProducer(GenericType<?> resultToProduce) {
-    for (MappedResultProducer resultProducer : resultProducers) {
+  public MapperResultProducer getResultProducer(GenericType<?> resultToProduce) {
+    for (MapperResultProducer resultProducer : resultProducers) {
       if (resultProducer.canProduce(resultToProduce)) {
         return resultProducer;
       }
@@ -161,7 +161,7 @@ public class DefaultMapperContext implements MapperContext {
     throw new IllegalArgumentException(
         String.format(
             "Found no registered %s that can produce %s",
-            MappedResultProducer.class.getSimpleName(), resultToProduce));
+            MapperResultProducer.class.getSimpleName(), resultToProduce));
   }
 
   private static NameConverter buildNameConverter(Class<? extends NameConverter> converterClass) {

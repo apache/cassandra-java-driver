@@ -44,7 +44,7 @@ public abstract class MapperBuilder<MapperT> {
   protected Map<Object, Object> customState;
   protected String defaultExecutionProfileName;
   protected DriverExecutionProfile defaultExecutionProfile;
-  protected List<MappedResultProducer> resultProducers;
+  protected List<MapperResultProducer> resultProducers;
 
   protected MapperBuilder(CqlSession session) {
     this.session = session;
@@ -176,7 +176,7 @@ public abstract class MapperBuilder<MapperT> {
 
   @NonNull
   public MapperBuilder<MapperT> withResultProducers(
-      @NonNull MappedResultProducer... newResultProducers) {
+      @NonNull MapperResultProducer... newResultProducers) {
     Collections.addAll(resultProducers, newResultProducers);
     return this;
   }

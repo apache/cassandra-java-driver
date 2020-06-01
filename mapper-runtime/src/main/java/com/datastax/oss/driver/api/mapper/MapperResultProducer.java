@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 
-public interface MappedResultProducer {
+public interface MapperResultProducer {
 
   boolean canProduce(GenericType<?> resultType);
 
