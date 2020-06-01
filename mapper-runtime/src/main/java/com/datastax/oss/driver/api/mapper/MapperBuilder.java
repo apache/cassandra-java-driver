@@ -174,6 +174,19 @@ public abstract class MapperBuilder<MapperT> {
     return this;
   }
 
+  /**
+   * Registers one or more components that will be used at runtime to handle unknown result types.
+   *
+   * <p>This is used if you want to extend the mapper with types that are not supported out of the
+   * box. See {@link MapperResultProducer} for more explanations.
+   *
+   * <p>Note that the producers will be tried in the order that they are registered here. If you
+   * have multiple producers that operate on similar types, make sure you register the more specific
+   * ones first (e.g. {@code SomeFuture<Void>} before {@code SomeFuture<any class>}).
+   *
+   * <p>If you call this method multiple times, the new producers will be appended to the end, there
+   * is no deduplication.
+   */
   @NonNull
   public MapperBuilder<MapperT> withResultProducers(
       @NonNull MapperResultProducer... newResultProducers) {
