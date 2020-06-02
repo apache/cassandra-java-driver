@@ -21,8 +21,9 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.MapperException;
-import com.datastax.oss.driver.api.mapper.MapperResultProducer;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
+import com.datastax.oss.driver.api.mapper.result.MapperResultProducer;
+import com.datastax.oss.driver.api.mapper.result.MapperResultProducerRegistry;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -31,10 +32,16 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class DefaultMapperContext implements MapperContext {
+
+  private static final List<MapperResultProducer> RESULT_PRODUCERS = getResultProducers();
+
+  private static final ConcurrentMap<GenericType<?>, MapperResultProducer> RESULT_PRODUCER_CACHE =
+      new ConcurrentHashMap<>();
 
   private final CqlSession session;
   private final CqlIdentifier keyspaceId;
@@ -43,16 +50,13 @@ public class DefaultMapperContext implements MapperContext {
   private final DriverExecutionProfile executionProfile;
   private final ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache;
   private final Map<Object, Object> customState;
-  private final List<MapperResultProducer> resultProducers;
-  private final ConcurrentMap<GenericType<?>, MapperResultProducer> resultProducerCache;
 
   public DefaultMapperContext(
       @NonNull CqlSession session,
       @Nullable CqlIdentifier keyspaceId,
       @Nullable String executionProfileName,
       @Nullable DriverExecutionProfile executionProfile,
-      @NonNull Map<Object, Object> customState,
-      @NonNull List<MapperResultProducer> resultProducers) {
+      @NonNull Map<Object, Object> customState) {
     this(
         session,
         keyspaceId,
@@ -60,9 +64,7 @@ public class DefaultMapperContext implements MapperContext {
         executionProfileName,
         executionProfile,
         new ConcurrentHashMap<>(),
-        NullAllowingImmutableMap.copyOf(customState),
-        ImmutableList.copyOf(resultProducers),
-        new ConcurrentHashMap<>());
+        NullAllowingImmutableMap.copyOf(customState));
   }
 
   private DefaultMapperContext(
@@ -72,9 +74,7 @@ public class DefaultMapperContext implements MapperContext {
       String executionProfileName,
       DriverExecutionProfile executionProfile,
       ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache,
-      Map<Object, Object> customState,
-      List<MapperResultProducer> resultProducers,
-      ConcurrentMap<GenericType<?>, MapperResultProducer> resultProducerCache) {
+      Map<Object, Object> customState) {
     if (executionProfile != null && executionProfileName != null) {
       // the mapper code prevents this, so we should never get here
       throw new IllegalArgumentException("Can't provide both a profile and a name");
@@ -86,8 +86,6 @@ public class DefaultMapperContext implements MapperContext {
     this.customState = customState;
     this.executionProfileName = executionProfileName;
     this.executionProfile = executionProfile;
-    this.resultProducers = resultProducers;
-    this.resultProducerCache = resultProducerCache;
   }
 
   public DefaultMapperContext withDaoParameters(
@@ -107,9 +105,7 @@ public class DefaultMapperContext implements MapperContext {
             newExecutionProfileName,
             newExecutionProfile,
             nameConverterCache,
-            customState,
-            resultProducers,
-            resultProducerCache);
+            customState);
   }
 
   @NonNull
@@ -158,10 +154,10 @@ public class DefaultMapperContext implements MapperContext {
   @NonNull
   @Override
   public MapperResultProducer getResultProducer(@NonNull GenericType<?> resultToProduce) {
-    return resultProducerCache.computeIfAbsent(
+    return RESULT_PRODUCER_CACHE.computeIfAbsent(
         resultToProduce,
         k -> {
-          for (MapperResultProducer resultProducer : resultProducers) {
+          for (MapperResultProducer resultProducer : RESULT_PRODUCERS) {
             if (resultProducer.canProduce(k)) {
               return resultProducer;
             }
@@ -187,5 +183,13 @@ public class DefaultMapperContext implements MapperContext {
               converterClass, NameConverter.class.getSimpleName()),
           e);
     }
+  }
+
+  private static List<MapperResultProducer> getResultProducers() {
+    ImmutableList.Builder<MapperResultProducer> result = ImmutableList.builder();
+    ServiceLoader<MapperResultProducerRegistry> loader =
+        ServiceLoader.load(MapperResultProducerRegistry.class);
+    loader.iterator().forEachRemaining(provider -> result.addAll(provider.getProducers()));
+    return result.build();
   }
 }

@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.mapper;
+package com.datastax.oss.driver.api.mapper.result;
 
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -36,16 +37,8 @@ import java.util.concurrent.CompletionStage;
  * }
  * </pre>
  *
- * <p>Producers are registered at construction time with {@link
- * MapperBuilder#withResultProducers(MapperResultProducer...)}:
- *
- * <pre>
- * InventoryMapper inventoryMapper = new InventoryMapperBuilder(session)
- *     .withResultProducers(new CustomFutureProducer())
- *     .build();
- * </pre>
- *
- * DAO methods can then use the new type:
+ * <p>Producers are registered via the Java Service Provider mechanism (see {@link
+ * MapperResultProducerRegistry}). DAO methods can then use the new type:
  *
  * <pre>
  * &#64;Dao

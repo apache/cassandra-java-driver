@@ -19,14 +19,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.mapper.MapperBuilder;
-import com.datastax.oss.driver.api.mapper.MapperContext;
-import com.datastax.oss.driver.api.mapper.MapperResultProducer;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
@@ -36,15 +31,10 @@ import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
-import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Futures;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.ListenableFuture;
-import com.datastax.oss.driver.shaded.guava.common.util.concurrent.SettableFuture;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import org.junit.BeforeClass;
@@ -75,13 +65,7 @@ public class CustomResultTypeIT extends InventoryITBase {
           SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
     }
 
-    InventoryMapper mapper =
-        InventoryMapper.builder(SESSION_RULE.session())
-            .withResultProducers(
-                // Note that order matters, both producers operate on ListenableFuture<Something>,
-                // the most specific must come first.
-                new VoidListenableFutureProducer(), new SingleEntityListenableFutureProducer())
-            .build();
+    InventoryMapper mapper = InventoryMapper.builder(SESSION_RULE.session()).build();
     dao = mapper.productDao(SESSION_RULE.keyspace());
   }
 
@@ -178,72 +162,6 @@ public class CustomResultTypeIT extends InventoryITBase {
 
     static MapperBuilder<InventoryMapper> builder(CqlSession session) {
       return new CustomResultTypeIT_InventoryMapperBuilder(session);
-    }
-  }
-
-  public abstract static class ListenableFutureProducer implements MapperResultProducer {
-
-    @Nullable
-    @Override
-    public <EntityT> Object execute(
-        @NonNull Statement<?> statement,
-        @NonNull MapperContext context,
-        @Nullable EntityHelper<EntityT> entityHelper) {
-      SettableFuture<Object> result = SettableFuture.create();
-      context
-          .getSession()
-          .executeAsync(statement)
-          .whenComplete(
-              (resultSet, error) -> {
-                if (error != null) {
-                  result.setException(error);
-                } else {
-                  result.set(convert(resultSet, entityHelper));
-                }
-              });
-      return result;
-    }
-
-    protected abstract <EntityT> Object convert(
-        AsyncResultSet resultSet, EntityHelper<EntityT> entityHelper);
-
-    @Nullable
-    @Override
-    public Object wrapError(@NonNull Throwable error) {
-      return Futures.immediateFailedFuture(error);
-    }
-  }
-
-  public static class VoidListenableFutureProducer extends ListenableFutureProducer {
-
-    private static final GenericType<ListenableFuture<Void>> PRODUCED_TYPE =
-        new GenericType<ListenableFuture<Void>>() {};
-
-    @Override
-    public boolean canProduce(@NonNull GenericType<?> resultType) {
-      return resultType.equals(PRODUCED_TYPE);
-    }
-
-    @Override
-    protected <EntityT> Object convert(
-        AsyncResultSet resultSet, EntityHelper<EntityT> entityHelper) {
-      // ignore results
-      return null;
-    }
-  }
-
-  public static class SingleEntityListenableFutureProducer extends ListenableFutureProducer {
-
-    @Override
-    public boolean canProduce(@NonNull GenericType<?> resultType) {
-      return resultType.getRawType().equals(ListenableFuture.class);
-    }
-
-    @Override
-    protected <EntityT> Object convert(
-        AsyncResultSet resultSet, EntityHelper<EntityT> entityHelper) {
-      Row row = resultSet.one();
-      return (row == null) ? null : entityHelper.get(row);
     }
   }
 }

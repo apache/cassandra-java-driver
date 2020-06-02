@@ -21,13 +21,9 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
-import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -45,12 +41,10 @@ public abstract class MapperBuilder<MapperT> {
   protected Map<Object, Object> customState;
   protected String defaultExecutionProfileName;
   protected DriverExecutionProfile defaultExecutionProfile;
-  protected List<MapperResultProducer> resultProducers;
 
   protected MapperBuilder(CqlSession session) {
     this.session = session;
     this.customState = new HashMap<>();
-    this.resultProducers = new ArrayList<>();
     // schema validation is enabled by default
     customState.put(SCHEMA_VALIDATION_ENABLED_SETTING, true);
   }
@@ -172,34 +166,6 @@ public abstract class MapperBuilder<MapperT> {
   @NonNull
   public MapperBuilder<MapperT> withCustomState(@Nullable Object key, @Nullable Object value) {
     customState.put(key, value);
-    return this;
-  }
-
-  /**
-   * Registers one or more components that will be used at runtime to handle unknown result types.
-   *
-   * <p>This is used if you want to extend the mapper with types that are not supported out of the
-   * box. See {@link MapperResultProducer} for more explanations.
-   *
-   * <p>Note that the producers will be tried in the order that they are registered here. If you
-   * have multiple producers that operate on similar types, make sure you register the more specific
-   * ones first (e.g. {@code SomeFuture<Void>} before {@code SomeFuture<any class>}).
-   *
-   * <p>If you call this method multiple times, the new producers will be appended to the end, there
-   * is no deduplication.
-   */
-  @NonNull
-  public MapperBuilder<MapperT> withResultProducers(
-      @NonNull MapperResultProducer... newResultProducers) {
-    Collections.addAll(resultProducers, newResultProducers);
-    return this;
-  }
-
-  /** @see #withResultProducers(MapperResultProducer...) */
-  @NonNull
-  public MapperBuilder<MapperT> withResultProducers(
-      @NonNull Iterable<MapperResultProducer> newResultProducers) {
-    Iterables.addAll(resultProducers, newResultProducers);
     return this;
   }
 

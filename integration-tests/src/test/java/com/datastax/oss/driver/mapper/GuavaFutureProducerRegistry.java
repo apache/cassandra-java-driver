@@ -1,0 +1,108 @@
+/*
+ * Copyright DataStax, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.datastax.oss.driver.mapper;
+
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.api.mapper.MapperContext;
+import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
+import com.datastax.oss.driver.api.mapper.result.MapperResultProducer;
+import com.datastax.oss.driver.api.mapper.result.MapperResultProducerRegistry;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Futures;
+import com.datastax.oss.driver.shaded.guava.common.util.concurrent.ListenableFuture;
+import com.datastax.oss.driver.shaded.guava.common.util.concurrent.SettableFuture;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+public class GuavaFutureProducerRegistry implements MapperResultProducerRegistry {
+
+  @Override
+  public Iterable<MapperResultProducer> getProducers() {
+    return ImmutableList.of(
+        // Note that order matters, both producers operate on ListenableFuture<Something>,
+        // the most specific must come first.
+        new VoidListenableFutureProducer(), new SingleEntityListenableFutureProducer());
+  }
+
+  public abstract static class ListenableFutureProducer implements MapperResultProducer {
+
+    @Nullable
+    @Override
+    public <EntityT> Object execute(
+        @NonNull Statement<?> statement,
+        @NonNull MapperContext context,
+        @Nullable EntityHelper<EntityT> entityHelper) {
+      SettableFuture<Object> result = SettableFuture.create();
+      context
+          .getSession()
+          .executeAsync(statement)
+          .whenComplete(
+              (resultSet, error) -> {
+                if (error != null) {
+                  result.setException(error);
+                } else {
+                  result.set(convert(resultSet, entityHelper));
+                }
+              });
+      return result;
+    }
+
+    protected abstract <EntityT> Object convert(
+        AsyncResultSet resultSet, EntityHelper<EntityT> entityHelper);
+
+    @Nullable
+    @Override
+    public Object wrapError(@NonNull Throwable error) {
+      return Futures.immediateFailedFuture(error);
+    }
+  }
+
+  public static class VoidListenableFutureProducer extends ListenableFutureProducer {
+
+    private static final GenericType<ListenableFuture<Void>> PRODUCED_TYPE =
+        new GenericType<ListenableFuture<Void>>() {};
+
+    @Override
+    public boolean canProduce(@NonNull GenericType<?> resultType) {
+      return resultType.equals(PRODUCED_TYPE);
+    }
+
+    @Override
+    protected <EntityT> Object convert(
+        AsyncResultSet resultSet, EntityHelper<EntityT> entityHelper) {
+      // ignore results
+      return null;
+    }
+  }
+
+  public static class SingleEntityListenableFutureProducer extends ListenableFutureProducer {
+
+    @Override
+    public boolean canProduce(@NonNull GenericType<?> resultType) {
+      return resultType.getRawType().equals(ListenableFuture.class);
+    }
+
+    @Override
+    protected <EntityT> Object convert(
+        AsyncResultSet resultSet, EntityHelper<EntityT> entityHelper) {
+      Row row = resultSet.one();
+      return (row == null) ? null : entityHelper.get(row);
+    }
+  }
+}
