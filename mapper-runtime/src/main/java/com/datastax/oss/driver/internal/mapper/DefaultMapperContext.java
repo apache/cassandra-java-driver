@@ -44,6 +44,7 @@ public class DefaultMapperContext implements MapperContext {
   private final ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache;
   private final Map<Object, Object> customState;
   private final List<MapperResultProducer> resultProducers;
+  private final ConcurrentMap<GenericType<?>, MapperResultProducer> resultProducerCache;
 
   public DefaultMapperContext(
       @NonNull CqlSession session,
@@ -60,7 +61,8 @@ public class DefaultMapperContext implements MapperContext {
         executionProfile,
         new ConcurrentHashMap<>(),
         NullAllowingImmutableMap.copyOf(customState),
-        ImmutableList.copyOf(resultProducers));
+        ImmutableList.copyOf(resultProducers),
+        new ConcurrentHashMap<>());
   }
 
   private DefaultMapperContext(
@@ -71,7 +73,8 @@ public class DefaultMapperContext implements MapperContext {
       DriverExecutionProfile executionProfile,
       ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache,
       Map<Object, Object> customState,
-      List<MapperResultProducer> resultProducers) {
+      List<MapperResultProducer> resultProducers,
+      ConcurrentMap<GenericType<?>, MapperResultProducer> resultProducerCache) {
     if (executionProfile != null && executionProfileName != null) {
       // the mapper code prevents this, so we should never get here
       throw new IllegalArgumentException("Can't provide both a profile and a name");
@@ -84,6 +87,7 @@ public class DefaultMapperContext implements MapperContext {
     this.executionProfileName = executionProfileName;
     this.executionProfile = executionProfile;
     this.resultProducers = resultProducers;
+    this.resultProducerCache = resultProducerCache;
   }
 
   public DefaultMapperContext withDaoParameters(
@@ -104,7 +108,8 @@ public class DefaultMapperContext implements MapperContext {
             newExecutionProfile,
             nameConverterCache,
             customState,
-            resultProducers);
+            resultProducers,
+            resultProducerCache);
   }
 
   @NonNull
@@ -153,15 +158,19 @@ public class DefaultMapperContext implements MapperContext {
   @NonNull
   @Override
   public MapperResultProducer getResultProducer(@NonNull GenericType<?> resultToProduce) {
-    for (MapperResultProducer resultProducer : resultProducers) {
-      if (resultProducer.canProduce(resultToProduce)) {
-        return resultProducer;
-      }
-    }
-    throw new IllegalArgumentException(
-        String.format(
-            "Found no registered %s that can produce %s",
-            MapperResultProducer.class.getSimpleName(), resultToProduce));
+    return resultProducerCache.computeIfAbsent(
+        resultToProduce,
+        k -> {
+          for (MapperResultProducer resultProducer : resultProducers) {
+            if (resultProducer.canProduce(k)) {
+              return resultProducer;
+            }
+          }
+          throw new IllegalArgumentException(
+              String.format(
+                  "Found no registered %s that can produce %s",
+                  MapperResultProducer.class.getSimpleName(), k));
+        });
   }
 
   private static NameConverter buildNameConverter(Class<? extends NameConverter> converterClass) {

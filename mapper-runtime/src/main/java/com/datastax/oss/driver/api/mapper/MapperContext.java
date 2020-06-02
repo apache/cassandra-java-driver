@@ -92,6 +92,8 @@ public interface MapperContext {
    * <p>These components must be registered at build time with {@link
    * MapperBuilder#withResultProducers(MapperResultProducer...)}.
    *
+   * <p>The results of this method are cached at the mapper level.
+   *
    * @throws IllegalArgumentException if no producer was registered for this type.
    */
   @NonNull
