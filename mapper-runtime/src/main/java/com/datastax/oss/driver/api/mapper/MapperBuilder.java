@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
+import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayList;
@@ -191,6 +192,14 @@ public abstract class MapperBuilder<MapperT> {
   public MapperBuilder<MapperT> withResultProducers(
       @NonNull MapperResultProducer... newResultProducers) {
     Collections.addAll(resultProducers, newResultProducers);
+    return this;
+  }
+
+  /** @see #withResultProducers(MapperResultProducer...) */
+  @NonNull
+  public MapperBuilder<MapperT> withResultProducers(
+      @NonNull Iterable<MapperResultProducer> newResultProducers) {
+    Iterables.addAll(resultProducers, newResultProducers);
     return this;
   }
 
