@@ -38,7 +38,7 @@ import java.util.concurrent.CompletionStage;
  * </pre>
  *
  * <p>Producers are registered via the Java Service Provider mechanism (see {@link
- * MapperResultProducerRegistry}). DAO methods can then use the new type:
+ * MapperResultProducerService}). DAO methods can then use the new type:
  *
  * <pre>
  * &#64;Dao

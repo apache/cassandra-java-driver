@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.api.mapper.result;
 
-public interface MapperResultProducerRegistry {
+public interface MapperResultProducerService {
 
   Iterable<MapperResultProducer> getProducers();
 }

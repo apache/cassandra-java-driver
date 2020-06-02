@@ -23,7 +23,7 @@ import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
 import com.datastax.oss.driver.api.mapper.result.MapperResultProducer;
-import com.datastax.oss.driver.api.mapper.result.MapperResultProducerRegistry;
+import com.datastax.oss.driver.api.mapper.result.MapperResultProducerService;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -187,8 +187,8 @@ public class DefaultMapperContext implements MapperContext {
 
   private static List<MapperResultProducer> getResultProducers() {
     ImmutableList.Builder<MapperResultProducer> result = ImmutableList.builder();
-    ServiceLoader<MapperResultProducerRegistry> loader =
-        ServiceLoader.load(MapperResultProducerRegistry.class);
+    ServiceLoader<MapperResultProducerService> loader =
+        ServiceLoader.load(MapperResultProducerService.class);
     loader.iterator().forEachRemaining(provider -> result.addAll(provider.getProducers()));
     return result.build();
   }

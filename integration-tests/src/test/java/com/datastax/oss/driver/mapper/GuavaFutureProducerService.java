@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import com.datastax.oss.driver.api.mapper.result.MapperResultProducer;
-import com.datastax.oss.driver.api.mapper.result.MapperResultProducerRegistry;
+import com.datastax.oss.driver.api.mapper.result.MapperResultProducerService;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Futures;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.ListenableFuture;
@@ -30,7 +30,7 @@ import com.datastax.oss.driver.shaded.guava.common.util.concurrent.SettableFutur
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
-public class GuavaFutureProducerRegistry implements MapperResultProducerRegistry {
+public class GuavaFutureProducerService implements MapperResultProducerService {
 
   @Override
   public Iterable<MapperResultProducer> getProducers() {
