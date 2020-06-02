@@ -192,7 +192,7 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
     for (List<String> compilerOptions :
         ImmutableList.of(
             ImmutableList.of("-Acom.datastax.oss.driver.mapper.customResults.enabled=true"),
-            // The option default to true, so it should also work without explicit options:
+            // The option defaults to true, so it should also work without explicit options:
             Collections.<String>emptyList())) {
       Compilation compilation =
           compileWithMapperProcessor("test", compilerOptions, ENTITY_SPEC, daoSpec);
