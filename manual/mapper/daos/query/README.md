@@ -63,6 +63,8 @@ The method can return:
   asynchronously. Note that for result sets and iterables, you need to switch to the asynchronous
   equivalent [AsyncResultSet] and [MappedAsyncPagingIterable] respectively.
 
+* a [custom type](../custom_types).
+
 ### Target keyspace and table
 
 To avoid hard-coding the keyspace and table name, the query string supports 3 additional

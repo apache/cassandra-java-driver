@@ -124,6 +124,8 @@ The method can return:
     CompletableFuture<AsyncResultSet> updateIfDescriptionMatches(Product product, String expectedDescription);
     ```
 
+* a [custom type](../custom_types).
+
 ### Target keyspace and table
 
 If a keyspace was specified [when creating the DAO](../../mapper/#dao-factory-methods), then the
