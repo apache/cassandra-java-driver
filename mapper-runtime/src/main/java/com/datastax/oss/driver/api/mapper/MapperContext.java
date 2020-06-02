@@ -85,6 +85,15 @@ public interface MapperContext {
   @NonNull
   Map<Object, Object> getCustomState();
 
+  /**
+   * Returns a component that will execute a statement and convert it into a custom result of the
+   * given type.
+   *
+   * <p>These components must be registered at build time with {@link
+   * MapperBuilder#withResultProducers(MapperResultProducer...)}.
+   *
+   * @throws IllegalArgumentException if no producer was registered for this type.
+   */
   @NonNull
   MapperResultProducer getResultProducer(@NonNull GenericType<?> resultToProduce);
 }
