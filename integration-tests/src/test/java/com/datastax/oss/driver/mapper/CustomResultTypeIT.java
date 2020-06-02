@@ -43,6 +43,8 @@ import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Futures;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.ListenableFuture;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.SettableFuture;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import org.junit.BeforeClass;
@@ -181,9 +183,12 @@ public class CustomResultTypeIT extends InventoryITBase {
 
   public abstract static class ListenableFutureProducer implements MapperResultProducer {
 
+    @Nullable
     @Override
     public <EntityT> Object execute(
-        Statement<?> statement, MapperContext context, EntityHelper<EntityT> entityHelper) {
+        @NonNull Statement<?> statement,
+        @NonNull MapperContext context,
+        @Nullable EntityHelper<EntityT> entityHelper) {
       SettableFuture<Object> result = SettableFuture.create();
       context
           .getSession()
@@ -202,8 +207,9 @@ public class CustomResultTypeIT extends InventoryITBase {
     protected abstract <EntityT> Object convert(
         AsyncResultSet resultSet, EntityHelper<EntityT> entityHelper);
 
+    @Nullable
     @Override
-    public Object wrapError(Throwable error) {
+    public Object wrapError(@NonNull Throwable error) {
       return Futures.immediateFailedFuture(error);
     }
   }
@@ -214,7 +220,7 @@ public class CustomResultTypeIT extends InventoryITBase {
         new GenericType<ListenableFuture<Void>>() {};
 
     @Override
-    public boolean canProduce(GenericType<?> resultType) {
+    public boolean canProduce(@NonNull GenericType<?> resultType) {
       return resultType.equals(PRODUCED_TYPE);
     }
 
@@ -229,7 +235,7 @@ public class CustomResultTypeIT extends InventoryITBase {
   public static class SingleEntityListenableFutureProducer extends ListenableFutureProducer {
 
     @Override
-    public boolean canProduce(GenericType<?> resultType) {
+    public boolean canProduce(@NonNull GenericType<?> resultType) {
       return resultType.getRawType().equals(ListenableFuture.class);
     }
 

@@ -86,5 +86,5 @@ public interface MapperContext {
   Map<Object, Object> getCustomState();
 
   @NonNull
-  MapperResultProducer getResultProducer(GenericType<?> resultToProduce);
+  MapperResultProducer getResultProducer(@NonNull GenericType<?> resultToProduce);
 }

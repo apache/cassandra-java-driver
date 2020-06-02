@@ -152,7 +152,7 @@ public class DefaultMapperContext implements MapperContext {
 
   @NonNull
   @Override
-  public MapperResultProducer getResultProducer(GenericType<?> resultToProduce) {
+  public MapperResultProducer getResultProducer(@NonNull GenericType<?> resultToProduce) {
     for (MapperResultProducer resultProducer : resultProducers) {
       if (resultProducer.canProduce(resultToProduce)) {
         return resultProducer;
