@@ -70,7 +70,7 @@
       },
       {
         "code": "java.method.addedToInterface",
-        "new": "method com.datastax.oss.driver.api.mapper.MappedResultProducer com.datastax.oss.driver.api.mapper.MapperContext::getResultProducer(com.datastax.oss.driver.api.core.type.reflect.GenericType<?>)",
+        "new": "method com.datastax.oss.driver.api.mapper.MapperResultProducer com.datastax.oss.driver.api.mapper.MapperContext::getResultProducer(com.datastax.oss.driver.api.core.type.reflect.GenericType<?>)",
         "justification": "JAVA-2792: Allow custom results in the mapper (accept API break -- it's unlikely that MapperContext will be implemented outside of the driver)"
       }
     ]
