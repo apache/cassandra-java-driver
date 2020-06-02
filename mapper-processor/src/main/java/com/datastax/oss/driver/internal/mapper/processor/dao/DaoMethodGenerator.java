@@ -29,7 +29,6 @@ import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeName;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
@@ -256,18 +255,20 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
       CodeBlock.Builder createStatementBlock, DaoReturnType returnType, String helperFieldName) {
 
     MethodSpec.Builder method = GeneratedCodePatterns.override(methodElement, typeParameters);
-    TypeName returnTypeName = null;
     if (returnType.getKind() == CUSTOM) {
-      returnTypeName =
-          GeneratedCodePatterns.getTypeName(methodElement.getReturnType(), typeParameters);
       method.addStatement(
           "$T producer = context.getResultProducer($L)",
           MapperResultProducer.class,
-          enclosingClass.addGenericTypeConstant(returnTypeName));
+          enclosingClass.addGenericTypeConstant(
+              GeneratedCodePatterns.getTypeName(methodElement.getReturnType(), typeParameters)));
     }
-    returnType.getKind().addExecuteStatement(createStatementBlock, helperFieldName, returnTypeName);
+    returnType
+        .getKind()
+        .addExecuteStatement(createStatementBlock, helperFieldName, methodElement, typeParameters);
     method.addCode(
-        returnType.getKind().wrapWithErrorHandling(createStatementBlock.build(), returnTypeName));
+        returnType
+            .getKind()
+            .wrapWithErrorHandling(createStatementBlock.build(), methodElement, typeParameters));
     return Optional.of(method.build());
   }
 }

@@ -105,9 +105,10 @@ public interface MapperResultProducer {
    * <p>For some result types, it is expected that errors will be wrapped in some sort of container
    * instead of thrown directly; for example a failed future or publisher.
    *
-   * <p>If rethrowing is the right thing to do, then it is perfectly fine to do so from this method
-   * (note however that you'll need to wrap checked exceptions).
+   * <p>If rethrowing is the right thing to do, then it is perfectly fine to do so from this method.
+   * If you throw checked exceptions, they will be propagated directly if the DAO method also
+   * declares them, or wrapped into a {@link RuntimeException} otherwise.
    */
   @Nullable
-  Object wrapError(@NonNull Throwable error);
+  Object wrapError(@NonNull Throwable error) throws Exception;
 }
