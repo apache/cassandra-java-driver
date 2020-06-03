@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.mapper.annotations;
 
+import com.datastax.dse.driver.api.core.cql.reactive.ReactiveResultSet;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
@@ -110,6 +111,11 @@ import java.util.function.UnaryOperator;
  *
  * &#64;Delete(entityClass = Product.class, customIfClause = "description = :expectedDescription")
  * CompletionStage&lt;AsyncResultSet&gt; deleteIfDescriptionMatchesAsync(UUID productId, String expectedDescription);
+ *       </pre>
+ *   <li>a {@link ReactiveResultSet}.
+ *       <pre>
+ * &#64;Delete
+ * ReactiveResultSet deleteReactive(Product product);
  *       </pre>
  * </ul>
  *

@@ -122,6 +122,13 @@ In all cases, the method can return:
     @Select(customWhereClause = "description LIKE :searchString")
     CompletionStage<MappedAsyncPagingIterable<Product>> findByDescriptionAsync(String searchString);
     ```
+  
+* a [MappedReactiveResultSet] of the entity class.
+
+    ```java
+    @Select(customWhereClause = "description LIKE :searchString")
+    MappedReactiveResultSet<Product> findByDescriptionReactive(String searchString);
+    ```
 
 ### Target keyspace and table
 
@@ -145,6 +152,7 @@ entity class and the [naming strategy](../../entities/#naming-strategy)).
 [perPartitionLimit()]:       https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/Select.html#perPartitionLimit--
 [MappedAsyncPagingIterable]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/MappedAsyncPagingIterable.html
 [PagingIterable]:            https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/PagingIterable.html
+[MappedReactiveResultSet]:   https://docs.datastax.com/en/drivers/java/4.6/com/datastax/dse/driver/api/mapper/reactive/MappedReactiveResultSet.html
 
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
 [CompletableFuture]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html

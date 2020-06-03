@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.mapper.annotations;
 
+import com.datastax.dse.driver.api.core.cql.reactive.ReactiveResultSet;
+import com.datastax.dse.driver.api.mapper.reactive.MappedReactiveResultSet;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
@@ -91,6 +93,7 @@ import java.util.function.UnaryOperator;
  *       execute the query asynchronously. Note that for result sets and iterables, you need to
  *       switch to the asynchronous equivalent {@link AsyncResultSet} and {@link
  *       MappedAsyncPagingIterable} respectively.
+ *   <li>a {@link ReactiveResultSet}, or a {@link MappedReactiveResultSet} of the entity class.
  * </ul>
  *
  * <h3>Target keyspace and table</h3>
