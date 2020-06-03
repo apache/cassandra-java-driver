@@ -198,8 +198,8 @@ As hinted previously, the order of the producers matter: they will be tried from
 Since our "future of entity" producer would also match `Void`, it must come last.
 
 The mapper uses the Java Service Provider mechanism to register producers: create a new file 
-`META-INF/services/com.datastax.oss.driver.api.mapper.result.MapperResultProducerService`, its
-contents should be a single line with the name of the implementation:
+`META-INF/services/com.datastax.oss.driver.api.mapper.result.MapperResultProducerService`,
+containing the name of the implementation:
 
 ```
 some.package.name.GuavaFutureProducerService

@@ -20,8 +20,8 @@ package com.datastax.oss.driver.api.mapper.result;
  *
  * <p>This class is loaded with the Java Service Provider Interface mechanism, you must reference it
  * via a service descriptor: create a file {@code
- * META-INF/services/com.datastax.oss.driver.api.mapper.result.MapperResultProducerService}, with a
- * single line that contains the name of the implementing class.
+ * META-INF/services/com.datastax.oss.driver.api.mapper.result.MapperResultProducerService}, with
+ * one or more lines, each referencing the name of an implementing class.
  */
 public interface MapperResultProducerService {
 
