@@ -390,10 +390,13 @@ public enum DefaultDaoReturnTypeKind implements DaoReturnTypeKind {
         Map<Name, TypeElement> typeParameters) {
       TypeName returnTypeName =
           GeneratedCodePatterns.getTypeName(methodElement.getReturnType(), typeParameters);
-      methodBuilder.addStatement(
-          "return ($T) producer.execute(boundStatement, context, $L)",
-          returnTypeName,
-          helperFieldName);
+      methodBuilder
+          .addStatement(
+              "@$1T(\"unchecked\") $2T result =\n($2T) producer.execute(boundStatement, context, $3L)",
+              SuppressWarnings.class,
+              returnTypeName,
+              helperFieldName)
+          .addStatement("return result");
     }
 
     @Override
@@ -410,7 +413,11 @@ public enum DefaultDaoReturnTypeKind implements DaoReturnTypeKind {
       CodeBlock.Builder callWrapError =
           CodeBlock.builder()
               .beginControlFlow("try")
-              .addStatement("return ($T) producer.wrapError(t)", returnTypeName);
+              .addStatement(
+                  "@$1T(\"unchecked\") $2T result =\n($2T) producer.wrapError(t)",
+                  SuppressWarnings.class,
+                  returnTypeName)
+              .addStatement("return result");
 
       // Any exception that is explicitly declared by the DAO method can be rethrown directly.
       // (note: manually a multi-catch would be cleaner, but from here it's simpler to generate
