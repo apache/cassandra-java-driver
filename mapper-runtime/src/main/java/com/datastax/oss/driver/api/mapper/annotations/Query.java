@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
+import com.datastax.oss.driver.api.mapper.result.MapperResultProducer;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -91,6 +92,7 @@ import java.util.function.UnaryOperator;
  *       execute the query asynchronously. Note that for result sets and iterables, you need to
  *       switch to the asynchronous equivalent {@link AsyncResultSet} and {@link
  *       MappedAsyncPagingIterable} respectively.
+ *   <li>a {@linkplain MapperResultProducer custom type}.
  * </ul>
  *
  * <h3>Target keyspace and table</h3>
