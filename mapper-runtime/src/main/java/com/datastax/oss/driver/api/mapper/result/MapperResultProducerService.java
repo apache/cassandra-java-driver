@@ -15,7 +15,22 @@
  */
 package com.datastax.oss.driver.api.mapper.result;
 
+/**
+ * Provides the custom mapper result types that will be used in an application.
+ *
+ * <p>This class is loaded with the Java Service Provider Interface mechanism, you must reference it
+ * via a service descriptor: create a file {@code
+ * META-INF/services/com.datastax.oss.driver.api.mapper.result.MapperResultProducerService}, with a
+ * single line that contains the name of the implementing class.
+ */
 public interface MapperResultProducerService {
 
+  /**
+   * Returns the producers provided by this service.
+   *
+   * <p>Note that order matters, the producers will be tried from left to right until one matches.
+   * If there is some overlap between your producers' {@link MapperResultProducer#canProduce
+   * canProduce()} implementations, put the most specific ones first.
+   */
   Iterable<MapperResultProducer> getProducers();
 }
