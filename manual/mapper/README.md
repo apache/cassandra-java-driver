@@ -3,31 +3,9 @@
 The mapper generates the boilerplate to execute queries and convert the results into
 application-level objects.
 
-It is published as two artifacts:
-
-* the `java-driver-mapper-processor` module is **only needed in the compile classpath**, your
-  application doesn't need to depend on it at runtime.
-
-    ```xml
-    <dependency>
-      <groupId>com.datastax.oss</groupId>
-      <artifactId>java-driver-mapper-processor</artifactId>
-      <version>${driver.version}</version>
-    </dependency>
-    ```
-    
-    See [Configuring the annotation processor](config/) for detailed instructions for different
-    build tools.
-    
-* the `java-driver-mapper-runtime` module is a regular runtime dependency: 
-    
-    ```xml
-    <dependency>
-      <groupId>com.datastax.oss</groupId>
-      <artifactId>java-driver-mapper-runtime</artifactId>
-      <version>${driver.version}</version>
-    </dependency>
-    ```
+It is published as two artifacts: `com.datastax.oss:java-driver-mapper-processor` and
+`com.datastax.oss:java-driver-mapper-runtime`. See [Integration](config/) for detailed instructions
+for different build tools.
 
 ### Quick start
 
