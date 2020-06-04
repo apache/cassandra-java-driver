@@ -8,6 +8,77 @@
 
 -----
 
+### Which artifact(s) should I use?
+
+There are multiple driver artifacts under the group id
+[com.datastax.oss](https://search.maven.org/search?q=g:com.datastax.oss). Here's how to pick the
+right dependencies:
+
+<table>
+<tr><th>Feature</th><th>Artifact(s)</th><th>Comments</th></tr>
+<tr>
+  <td>
+    Core functionality: executing queries with <code>CqlSession.execute()</code>, processing the
+    results with <code>ResultSet</code>, etc.
+  </td>
+  <td><code>java&#8209;driver&#8209;core</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td>
+    Same as the above, but without explicit dependencies to <a href="#netty">Netty</a>,
+    <a href="#jackson">Jackson</a> or <a href="#esri">ESRI</a>. 
+  </td>
+  <td><code>java&#8209;driver&#8209;core&#8209;shaded</code></td>
+  <td>
+    Replaces <code>java&#8209;driver&#8209;core</code>.<br/>
+    See <a href="../shaded_jar/">this page</a>.
+  </td>
+</tr>
+<tr>
+  <td>
+    <a href="../../query_builder">Query builder</a>: generating CQL query strings programmatically. 
+  </td>
+  <td><code>java&#8209;driver&#8209;query&#8209;builder</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td>
+    <a href="../../mapper">Object mapper</a>: generating the boilerplate to execute queries and
+    convert the results into your own domain classes.
+  </td>
+  <td>
+    <code>java&#8209;driver&#8209;mapper&#8209;processor</code><br/>
+    <code>java&#8209;driver&#8209;mapper&#8209;runtime</code>
+  </td>
+  <td>
+    Both artifacts are needed.<br/>
+    See <a href="../../mapper/config/">this page</a>.
+  </td>
+</tr>
+<tr>
+  <td>
+    "Bill Of Materials": can help manage versions if you use multiple driver artifacts.
+  </td>
+  <td><code>java&#8209;driver&#8209;bom</code></td>
+  <td>See <a href="../bom/">this page</a>.</td>
+</tr>
+<tr>
+  <td>
+    Writing integration tests that run the driver against Cassandra or <a
+    href="https://github.com/datastax/simulacron">Simulacron</a>.
+  </td>
+  <td><code>java&#8209;driver&#8209;test&#8209;infra</code></td>
+  <td>
+    Those APIs are not covered in this manual, but you can look at the driver's <a
+    href="https://github.com/datastax/java-driver/blob/4.x/CONTRIBUTING.md#integration-tests">contribution
+    guidelines</a> and <a
+    href="https://github.com/datastax/java-driver/tree/4.x/integration-tests">internal tests</a> for
+    guidance.
+  </td>
+</tr>
+</table>
+
 ### Minimal project structure
 
 We publish the driver to [Maven central][central_oss]. Most modern build tools can download the
