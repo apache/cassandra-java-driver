@@ -18,19 +18,30 @@ package com.datastax.oss.driver.internal.mapper;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
+import com.datastax.oss.driver.api.mapper.result.MapperResultProducer;
+import com.datastax.oss.driver.api.mapper.result.MapperResultProducerService;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class DefaultMapperContext implements MapperContext {
+
+  private static final List<MapperResultProducer> RESULT_PRODUCERS = getResultProducers();
+
+  private static final ConcurrentMap<GenericType<?>, MapperResultProducer> RESULT_PRODUCER_CACHE =
+      new ConcurrentHashMap<>();
 
   private final CqlSession session;
   private final CqlIdentifier keyspaceId;
@@ -140,6 +151,24 @@ public class DefaultMapperContext implements MapperContext {
     return customState;
   }
 
+  @NonNull
+  @Override
+  public MapperResultProducer getResultProducer(@NonNull GenericType<?> resultToProduce) {
+    return RESULT_PRODUCER_CACHE.computeIfAbsent(
+        resultToProduce,
+        k -> {
+          for (MapperResultProducer resultProducer : RESULT_PRODUCERS) {
+            if (resultProducer.canProduce(k)) {
+              return resultProducer;
+            }
+          }
+          throw new IllegalArgumentException(
+              String.format(
+                  "Found no registered %s that can produce %s",
+                  MapperResultProducer.class.getSimpleName(), k));
+        });
+  }
+
   private static NameConverter buildNameConverter(Class<? extends NameConverter> converterClass) {
     try {
       return converterClass.getDeclaredConstructor().newInstance();
@@ -154,5 +183,13 @@ public class DefaultMapperContext implements MapperContext {
               converterClass, NameConverter.class.getSimpleName()),
           e);
     }
+  }
+
+  private static List<MapperResultProducer> getResultProducers() {
+    ImmutableList.Builder<MapperResultProducer> result = ImmutableList.builder();
+    ServiceLoader<MapperResultProducerService> loader =
+        ServiceLoader.load(MapperResultProducerService.class);
+    loader.iterator().forEachRemaining(provider -> result.addAll(provider.getProducers()));
+    return result.build();
   }
 }

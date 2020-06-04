@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
+import com.datastax.oss.driver.api.mapper.result.MapperResultProducer;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -117,6 +118,7 @@ import java.util.function.UnaryOperator;
  * &#64;Delete
  * ReactiveResultSet deleteReactive(Product product);
  *       </pre>
+ *   <li>a {@linkplain MapperResultProducer custom type}.
  * </ul>
  *
  * Note that you can also return a boolean or result set for non-conditional queries, but there's no

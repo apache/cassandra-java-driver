@@ -39,4 +39,6 @@ public interface ProcessorContext {
   EntityFactory getEntityFactory();
 
   LoggingGenerator getLoggingGenerator();
+
+  boolean areCustomResultsEnabled();
 }

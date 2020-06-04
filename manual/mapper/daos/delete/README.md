@@ -135,6 +135,8 @@ The method can return:
     ReactiveResultSet deleteReactive(Product product);
     ```
 
+* a [custom type](../custom_types).
+
 Note that you can also return a boolean or result set for non-conditional queries, but there's no
 practical purpose for that since those queries always return `wasApplied = true` and an empty result
 set.

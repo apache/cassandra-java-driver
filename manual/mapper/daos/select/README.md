@@ -130,6 +130,8 @@ In all cases, the method can return:
     MappedReactiveResultSet<Product> findByDescriptionReactive(String searchString);
     ```
 
+* a [custom type](../custom_types).
+
 ### Target keyspace and table
 
 If a keyspace was specified [when creating the DAO](../../mapper/#dao-factory-methods), then the

@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
+import com.datastax.oss.driver.api.mapper.result.MapperResultProducer;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -94,6 +95,7 @@ import java.util.function.UnaryOperator;
  *       switch to the asynchronous equivalent {@link AsyncResultSet} and {@link
  *       MappedAsyncPagingIterable} respectively.
  *   <li>a {@link ReactiveResultSet}, or a {@link MappedReactiveResultSet} of the entity class.
+ *   <li>a {@linkplain MapperResultProducer custom type}.
  * </ul>
  *
  * <h3>Target keyspace and table</h3>

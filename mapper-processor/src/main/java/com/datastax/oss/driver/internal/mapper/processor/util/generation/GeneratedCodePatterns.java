@@ -88,10 +88,13 @@ public class GeneratedCodePatterns {
       TypeName type = getTypeName(parameterElement.asType(), typeParameters);
       result.addParameter(type, parameterElement.getSimpleName().toString());
     }
+    for (TypeMirror thrownType : interfaceMethod.getThrownTypes()) {
+      result.addException(TypeName.get(thrownType));
+    }
     return result;
   }
 
-  private static TypeName getTypeName(TypeMirror mirror, Map<Name, TypeElement> typeParameters) {
+  public static TypeName getTypeName(TypeMirror mirror, Map<Name, TypeElement> typeParameters) {
     if (mirror.getKind() == TypeKind.TYPEVAR) {
       TypeVariable typeVariable = (TypeVariable) mirror;
       Name name = typeVariable.asElement().getSimpleName();

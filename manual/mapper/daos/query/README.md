@@ -65,6 +65,8 @@ The method can return:
   
 * a [ReactiveResultSet], or a [MappedReactiveResultSet] of the entity class.
 
+* a [custom type](../custom_types).
+
 ### Target keyspace and table
 
 To avoid hard-coding the keyspace and table name, the query string supports 3 additional

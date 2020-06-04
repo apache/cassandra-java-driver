@@ -15,23 +15,29 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.CUSTOM;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.StatementAttributes;
+import com.datastax.oss.driver.api.mapper.result.MapperResultProducer;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
+import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
@@ -77,7 +83,10 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
               processedType,
               "Invalid return type: %s methods must return one of %s",
               annotationName,
-              validKinds);
+              validKinds.stream()
+                  .filter(k -> k != CUSTOM)
+                  .map(Object::toString)
+                  .collect(Collectors.joining(", ", "[", "]")));
       return null;
     }
     return returnType;
@@ -233,5 +242,33 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
   protected boolean isFromClassFile() {
     TypeElement enclosingElement = (TypeElement) methodElement.getEnclosingElement();
     return Reflection.loadClass(null, enclosingElement.getQualifiedName().toString()) != null;
+  }
+
+  /**
+   * Common pattern for CRUD methods that build a bound statement, execute it and convert the result
+   * into a target type.
+   *
+   * @param createStatementBlock the code that creates the statement. It must store it into a
+   *     variable named "boundStatement".
+   */
+  protected Optional<MethodSpec> crudMethod(
+      CodeBlock.Builder createStatementBlock, DaoReturnType returnType, String helperFieldName) {
+
+    MethodSpec.Builder method = GeneratedCodePatterns.override(methodElement, typeParameters);
+    if (returnType.getKind() == CUSTOM) {
+      method.addStatement(
+          "$T producer = context.getResultProducer($L)",
+          MapperResultProducer.class,
+          enclosingClass.addGenericTypeConstant(
+              GeneratedCodePatterns.getTypeName(methodElement.getReturnType(), typeParameters)));
+    }
+    returnType
+        .getKind()
+        .addExecuteStatement(createStatementBlock, helperFieldName, methodElement, typeParameters);
+    method.addCode(
+        returnType
+            .getKind()
+            .wrapWithErrorHandling(createStatementBlock.build(), methodElement, typeParameters));
+    return Optional.of(method.build());
   }
 }

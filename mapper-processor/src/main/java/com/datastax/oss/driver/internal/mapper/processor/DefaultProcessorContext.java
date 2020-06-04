@@ -44,6 +44,7 @@ public class DefaultProcessorContext implements ProcessorContext {
   private final Classes classUtils;
   private final JavaPoetFiler filer;
   private final LoggingGenerator loggingGenerator;
+  private final boolean customResultsEnabled;
 
   public DefaultProcessorContext(
       DecoratedMessager messager,
@@ -51,13 +52,15 @@ public class DefaultProcessorContext implements ProcessorContext {
       Elements elementUtils,
       Filer filer,
       String indent,
-      boolean logsEnabled) {
+      boolean logsEnabled,
+      boolean customResultsEnabled) {
     this.messager = messager;
     this.typeUtils = typeUtils;
     this.elementUtils = elementUtils;
     this.classUtils = new Classes(typeUtils, elementUtils);
     this.filer = new JavaPoetFiler(filer, indent);
     this.loggingGenerator = new LoggingGenerator(logsEnabled);
+    this.customResultsEnabled = customResultsEnabled;
   }
 
   protected CodeGeneratorFactory buildCodeGeneratorFactory() {
@@ -106,5 +109,10 @@ public class DefaultProcessorContext implements ProcessorContext {
   @Override
   public LoggingGenerator getLoggingGenerator() {
     return loggingGenerator;
+  }
+
+  @Override
+  public boolean areCustomResultsEnabled() {
+    return customResultsEnabled;
   }
 }

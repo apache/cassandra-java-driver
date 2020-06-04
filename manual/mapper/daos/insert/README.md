@@ -96,6 +96,8 @@ The method can return:
     ReactiveResultSet insertReactive(Product product);
     ```
 
+* a [custom type](../custom_types).
+
 ### Target keyspace and table
 
 If a keyspace was specified [when creating the DAO](../../mapper/#dao-factory-methods), then the
