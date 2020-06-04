@@ -123,6 +123,13 @@ The method can return:
     @Update(customIfClause = "description = :expectedDescription")
     CompletableFuture<AsyncResultSet> updateIfDescriptionMatches(Product product, String expectedDescription);
     ```
+  
+* a [ReactiveResultSet].
+
+    ```java
+    @Update
+    ReactiveResultSet updateReactive(Product product);
+    ```
 
 * a [custom type](../custom_types).
 
@@ -145,3 +152,4 @@ entity class and the naming convention).
 [CompletableFuture]:    https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html
 [ResultSet]:            https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/ResultSet.html
 [BoundStatement]:       https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/BoundStatement.html
+[ReactiveResultSet]:    https://docs.datastax.com/en/drivers/java/4.6/com/datastax/dse/driver/api/core/cql/reactive/ReactiveResultSet.html

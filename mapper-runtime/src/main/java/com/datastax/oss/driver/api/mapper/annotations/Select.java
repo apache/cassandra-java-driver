@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.mapper.annotations;
 
+import com.datastax.dse.driver.api.mapper.reactive.MappedReactiveResultSet;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
@@ -120,6 +121,11 @@ import java.util.function.UnaryOperator;
  *
  * &#64;Select(customWhereClause = "description LIKE :searchString")
  * CompletionStage&lt;MappedAsyncPagingIterable&lt;Product&gt;&gt; findByDescriptionAsync(String searchString);
+ *       </pre>
+ *   <li>a {@link MappedReactiveResultSet} of the entity class.
+ *       <pre>
+ * &#64;Select(customWhereClause = "description LIKE :searchString")
+ * MappedReactiveResultSet&lt;Product&gt; findByDescriptionReactive(String searchString);
  *       </pre>
  *   <li>a {@linkplain MapperResultProducer custom type}.
  * </ul>

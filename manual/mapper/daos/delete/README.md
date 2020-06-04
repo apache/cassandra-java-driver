@@ -127,6 +127,13 @@ The method can return:
     @Delete(entityClass = Product.class, customIfClause = "description = :expectedDescription")
     CompletionStage<AsyncResultSet> deleteIfDescriptionMatchesAsync(UUID productId, String expectedDescription);
     ```
+  
+* a [ReactiveResultSet].
+
+    ```java
+    @Delete
+    ReactiveResultSet deleteReactive(Product product);
+    ```
 
 * a [custom type](../custom_types).
 
@@ -152,6 +159,8 @@ entity class and the [naming strategy](../../entities/#naming-strategy)).
 [ResultSet]:              https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/ResultSet.html
 [ResultSet#wasApplied()]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/ResultSet.html#wasApplied--
 [BoundStatement]:         https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/BoundStatement.html
+[ReactiveResultSet]:      https://docs.datastax.com/en/drivers/java/4.6/com/datastax/dse/driver/api/core/cql/reactive/ReactiveResultSet.html
+
 
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
 [CompletableFuture]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html

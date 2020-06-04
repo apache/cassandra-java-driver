@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.mapper.annotations;
 
+import com.datastax.dse.driver.api.core.cql.reactive.ReactiveResultSet;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
@@ -123,6 +124,11 @@ import java.util.function.UnaryOperator;
  *
  * &#64;Update(customIfClause = "description = :expectedDescription")
  * CompletableFuture&lt;AsyncResultSet&gt; updateIfDescriptionMatches(Product product, String expectedDescription);
+ *       </pre>
+ *   <li>a {@link ReactiveResultSet}.
+ *       <pre>
+ * &#64;Update
+ * ReactiveResultSet updateReactive(Product product);
  *       </pre>
  *   <li>a {@linkplain MapperResultProducer custom type}.
  * </ul>

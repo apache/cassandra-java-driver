@@ -62,6 +62,8 @@ The method can return:
 * a [CompletionStage] or [CompletableFuture] of any of the above. The method will execute the query
   asynchronously. Note that for result sets and iterables, you need to switch to the asynchronous
   equivalent [AsyncResultSet] and [MappedAsyncPagingIterable] respectively.
+  
+* a [ReactiveResultSet], or a [MappedReactiveResultSet] of the entity class.
 
 * a [custom type](../custom_types).
 
@@ -117,6 +119,8 @@ Then:
 [PagingIterable]:            https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/PagingIterable.html
 [Row]:                       https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/Row.html
 [BoundStatement]:            https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/BoundStatement.html
+[ReactiveResultSet]:         https://docs.datastax.com/en/drivers/java/4.6/com/datastax/dse/driver/api/core/cql/reactive/ReactiveResultSet.html
+[MappedReactiveResultSet]:   https://docs.datastax.com/en/drivers/java/4.6/com/datastax/dse/driver/api/mapper/reactive/MappedReactiveResultSet.html
 
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
 [CompletableFuture]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html

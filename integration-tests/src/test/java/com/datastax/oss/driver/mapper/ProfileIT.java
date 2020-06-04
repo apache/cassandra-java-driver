@@ -188,13 +188,6 @@ public class ProfileIT {
     assertClForAllQueries(dao, ConsistencyLevel.LOCAL_ONE);
   }
 
-  @Test(expected = IllegalStateException.class)
-  public void should_fail_if_mapper_provides_both_profile_and_name() {
-    mapperBuilder
-        .withDefaultExecutionProfileName("cl_one")
-        .withDefaultExecutionProfile(clTwoProfile);
-  }
-
   private void assertClForAllQueries(SimpleDao dao, ConsistencyLevel expectedLevel) {
     dao.save(SAMPLE_ENTITY);
     assertServerSideCl(expectedLevel);
