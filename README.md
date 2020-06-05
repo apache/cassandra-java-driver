@@ -77,7 +77,7 @@ See the [upgrade guide](upgrade_guide/) for details.
 * [Changelog]
 * [FAQ]
 
-[API docs]: https://docs.datastax.com/en/drivers/java/4.3
+[API docs]: https://docs.datastax.com/en/drivers/java/4.5
 [JIRA]: https://datastax-oss.atlassian.net/browse/JAVA
 [Mailing list]: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
 [@dsJavaDriver]: https://twitter.com/dsJavaDriver
