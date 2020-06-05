@@ -4,6 +4,7 @@
 
 ### 4.7.0 (in progress)
 
+- [documentation] JAVA-2613: Improve connection pooling documentation
 - [new feature] JAVA-2793: Add composite config loader
 - [new feature] JAVA-2792: Allow custom results in the mapper
 - [improvement] JAVA-2747: Revisit semantics of Statement.setExecutionProfile/Name
