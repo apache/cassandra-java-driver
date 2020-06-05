@@ -57,8 +57,8 @@ public class FutureOfVoidProducer implements MapperResultProducer {
   }
 
   @Override
-  public <EntityT> ListenableFuture<Void> execute(
-      Statement<?> statement, MapperContext context, EntityHelper<EntityT> entityHelper) {
+  public ListenableFuture<Void> execute(
+      Statement<?> statement, MapperContext context, EntityHelper<?> entityHelper) {
     CqlSession session = context.getSession();                                 // (2)
     SettableFuture<Void> result = SettableFuture.create();                     // (3)
     session.executeAsync(statement).whenComplete(
@@ -72,7 +72,7 @@ public class FutureOfVoidProducer implements MapperResultProducer {
   }
 
   @Override
-  public ListenableFuture<Void> wrapError(Throwable error) {
+  public ListenableFuture<Void> wrapError(Exception error) {
     return Futures.immediateFailedFuture(error);                               // (4)
   }
 }
@@ -104,16 +104,17 @@ to read.
 #### Future of entity
 
 ```java
-public static class FutureOfEntityProducer implements MapperResultProducer {
+public class FutureOfEntityProducer implements MapperResultProducer {
   @Override
   public boolean canProduce(GenericType<?> resultType) {
     return resultType.getRawType().equals(ListenableFuture.class);             // (1)
   }
 
   @Override
-  public <EntityT> ListenableFuture<EntityT> execute(
-      Statement<?> statement, MapperContext context, EntityHelper<EntityT> entityHelper) {
-    SettableFuture<EntityT> result = SettableFuture.create();
+  public ListenableFuture<?> execute(
+      Statement<?> statement, MapperContext context, EntityHelper<?> entityHelper) {
+    assert entityHelper != null;
+    SettableFuture<Object> result = SettableFuture.create();
     CqlSession session = context.getSession();
     session
         .executeAsync(statement)
@@ -130,7 +131,7 @@ public static class FutureOfEntityProducer implements MapperResultProducer {
   }
 
   @Override
-  public ListenableFuture<?> wrapError(Throwable error) {
+  public ListenableFuture<?> wrapError(Exception error) {
     return Futures.immediateFailedFuture(error); // same as other producer
   }
 }
@@ -175,8 +176,6 @@ public boolean canProduce(GenericType<?> genericType) {
   return false;
 }
 ```
-
-As you can see, this is not the most pleasant API to work with.
 
 ### Packaging the producers in a service
 
