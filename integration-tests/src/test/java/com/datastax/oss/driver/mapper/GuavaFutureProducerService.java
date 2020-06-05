@@ -44,10 +44,10 @@ public class GuavaFutureProducerService implements MapperResultProducerService {
 
     @Nullable
     @Override
-    public <EntityT> Object execute(
+    public ListenableFuture<?> execute(
         @NonNull Statement<?> statement,
         @NonNull MapperContext context,
-        @Nullable EntityHelper<EntityT> entityHelper) {
+        @Nullable EntityHelper<?> entityHelper) {
       SettableFuture<Object> result = SettableFuture.create();
       context
           .getSession()
@@ -63,13 +63,14 @@ public class GuavaFutureProducerService implements MapperResultProducerService {
       return result;
     }
 
-    protected abstract <EntityT> Object convert(
-        AsyncResultSet resultSet, EntityHelper<EntityT> entityHelper);
+    @Nullable
+    protected abstract Object convert(
+        @NonNull AsyncResultSet resultSet, @Nullable EntityHelper<?> entityHelper);
 
     @Nullable
     @Override
-    public Object wrapError(@NonNull Throwable error) {
-      return Futures.immediateFailedFuture(error);
+    public ListenableFuture<?> wrapError(@NonNull Exception e) {
+      return Futures.immediateFailedFuture(e);
     }
   }
 
@@ -83,9 +84,10 @@ public class GuavaFutureProducerService implements MapperResultProducerService {
       return resultType.equals(PRODUCED_TYPE);
     }
 
+    @Nullable
     @Override
-    protected <EntityT> Object convert(
-        AsyncResultSet resultSet, EntityHelper<EntityT> entityHelper) {
+    protected Object convert(
+        @NonNull AsyncResultSet resultSet, @Nullable EntityHelper<?> entityHelper) {
       // ignore results
       return null;
     }
@@ -98,9 +100,11 @@ public class GuavaFutureProducerService implements MapperResultProducerService {
       return resultType.getRawType().equals(ListenableFuture.class);
     }
 
+    @Nullable
     @Override
-    protected <EntityT> Object convert(
-        AsyncResultSet resultSet, EntityHelper<EntityT> entityHelper) {
+    protected Object convert(
+        @NonNull AsyncResultSet resultSet, @Nullable EntityHelper<?> entityHelper) {
+      assert entityHelper != null;
       Row row = resultSet.one();
       return (row == null) ? null : entityHelper.get(row);
     }
