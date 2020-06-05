@@ -59,6 +59,9 @@ datastax-java-driver.advanced.connection {
 }
 ```
 
+Do not change those values unless informed by concrete performance measurements; see the
+[Tuning](#tuning) section at the end of this page.
+
 Unlike previous versions of the driver, pools do not resize dynamically. However you can adjust the
 options at runtime, the driver will detect and apply the changes.
 
@@ -69,8 +72,9 @@ If connections stay idle for too long, they might be dropped by intermediate net
 keepalive settings might be impractical in some environments.
 
 The driver provides application-side keepalive in the form of a connection heartbeat: when a
-connection does receive incoming reads for a given amount of time, the driver will simulate activity
-by writing a dummy request to it. If that request fails, the connection is trashed and replaced.
+connection does not receive incoming reads for a given amount of time, the driver will simulate
+activity by writing a dummy request to it. If that request fails, the connection is trashed and
+replaced.
 
 This feature is enabled by default. Here are the default values in the configuration:
 
@@ -130,20 +134,28 @@ In particular, it's a good idea to keep an eye on those two metrics:
   connections from opening (either configuration or network issues, or a server-side limitation --
   see [CASSANDRA-8086]);
 * `pool.available-streams`: if this is often close to 0, it's a sign that the pool is getting
-  saturated. Maybe `max-requests-per-connection` is too low, or more connections should be added.
+  saturated. Consider adding more connections per node.
 
 ### Tuning
 
 The driver defaults should be good for most scenarios.
 
+#### Number of requests per connection
+
 In our experience, raising `max-requests-per-connection` above 1024 does not bring any significant
 improvement: the server is only going to service so many requests at a time anyway, so additional
 requests are just going to pile up.
 
-Similarly, 1 connection per node is generally sufficient. However, it might become a bottleneck in
-very high performance scenarios: all I/O for a connection happens on the same thread, so it's
-possible for that thread to max out its CPU core. In our benchmarks, this happened with a
-single-node cluster and a high throughput (approximately 80K requests / second / connection).
+Lowering the value is not a good idea either. If your goal is to limit the global throughput of the
+driver, a [throttler](../throttling) is a better solution.
+
+#### Number of connections per node 
+
+1 connection per node (`pool.local.size` or `pool.remote.size`) is generally sufficient. However, it
+might become a bottleneck in very high performance scenarios: all I/O for a connection happens on
+the same thread, so it's possible for that thread to max out its CPU core. In our benchmarks, this
+happened with a single-node cluster and a high throughput (approximately 80K requests / second /
+connection).
 
 It's unlikely that you'll run into this issue: in most real-world deployments, the driver connects
 to more than one node, so the load will spread across more I/O threads. However if you suspect that
@@ -152,11 +164,11 @@ you experience the issue, here's what to look out for:
 * the driver throughput plateaus but the process does not appear to max out any system resource (in
   particular, overall CPU usage is well below 100%);
 * one of the driver's I/O threads maxes out its CPU core. You can see that with a profiler, or
-  OS-level tools like `pidstat -tu` on Linux. With the default configuration, I/O threads are called
+  OS-level tools like `pidstat -tu` on Linux. By default, I/O threads are named
   `<session_name>-io-<n>`.
 
 Try adding more connections per node. Thanks to the driver's hot-reload mechanism, you can do that
-at runtime and see the effects immediately. 
+at runtime and see the effects immediately.
 
 [CqlSession]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/CqlSession.html
 [CASSANDRA-8086]: https://issues.apache.org/jira/browse/CASSANDRA-8086
