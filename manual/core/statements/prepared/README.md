@@ -208,10 +208,10 @@ BoundStatement bound = ps1.bind()
   .setString("sku", "324378")
   .setString("description", "LCD screen");
 
-// Positional:
+// Named:
 bound = bound.unset("description");
 
-// Named:
+// Positional:
 bound = bound.unset(1);
 ```
 
