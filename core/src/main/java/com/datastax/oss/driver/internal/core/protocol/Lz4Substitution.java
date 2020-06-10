@@ -23,7 +23,7 @@ import io.netty.buffer.ByteBuf;
 
 @TargetClass(
     className = "com.datastax.oss.driver.internal.core.protocol.Lz4Compressor",
-    onlyWith = Lz4Present.class)
+    onlyWith = Lz4Missing.class)
 final class Lz4Substitution {
 
   @Inject
