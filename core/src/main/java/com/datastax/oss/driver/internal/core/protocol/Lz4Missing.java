@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.protocol;
 
 import java.util.function.BooleanSupplier;
 
-public class Lz4Present implements BooleanSupplier {
+public class Lz4Missing implements BooleanSupplier {
 
   private static final String LZ4_CLZ_NAME = "net.jpountz.lz4.LZ4Compressor";
 
