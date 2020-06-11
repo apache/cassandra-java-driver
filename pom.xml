@@ -73,6 +73,7 @@
     <awaitility.version>4.0.2</awaitility.version>
     <apacheds.version>2.0.0-M19</apacheds.version>
     <surefire.version>2.22.2</surefire.version>
+    <graalapi.version>20.0.0</graalapi.version>
     <skipTests>false</skipTests>
     <skipUnitTests>${skipTests}</skipUnitTests>
   </properties>
@@ -380,7 +381,12 @@
       <dependency>
         <groupId>org.graalvm.sdk</groupId>
         <artifactId>graal-sdk</artifactId>
-        <version>20.0.0</version>
+        <version>${graalapi.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.graalvm.nativeimage</groupId>
+        <artifactId>svm</artifactId>
+        <version>${graalapi.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
