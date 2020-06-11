@@ -20,12 +20,12 @@ import com.oracle.svm.core.annotate.TargetClass;
 import java.util.Optional;
 
 /**
- * Add an explicit Graal substitution for {@link JnrLibc}. If we don't implement something like the
- * analysis done at Graal native image build time will discover the jnr references in JnrLibc even
- * though they won't be used at runtime. By default this lib uses {@link
- * ClassLoader#defineClass(String, byte[], int, int)} which isn't supported by Graal. This behaviour
- * can be changed with a system property but the cleanest solution is simply to remove the
- * references to jnr code via a Graal substitution.
+ * Add an explicit Graal substitution for {@link JnrLibc}.  If we don't implement something like this
+ * the analysis done at Graal native image build time will discover the jnr-posix references in
+ * JnrLibc even though they won't be used at runtime.  By default jnr-ffi (used by jnr-posix to do
+ * it's work) will use {@link ClassLoader#defineClass(String, byte[], int, int)} which isn't
+ * supported by Graal.  This behaviour can be changed with a system property but the cleanest
+ * solution is simply to remove the references to jnr-posix code via a Graal substitution.
  */
 @TargetClass(JnrLibc.class)
 @Substitute
