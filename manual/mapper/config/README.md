@@ -1,13 +1,13 @@
-## Configuring the annotation processor
-
-The mapper's annotation processor hooks into the Java compiler, and generates additional source
-files from your annotated classes before the main compilation happens. It is contained in the
-`java-driver-mapper-processor` artifact.
-
-As a reminder, there is also a `java-driver-mapper-runtime` artifact, which contains the annotations
-and a few utility classes. This one is a regular dependency, and it is required at runtime.
+## Integration
 
 ### Builds tools
+
+The `java-driver-mapper-processor` artifact contains the annotation processor. It hooks into the
+Java compiler, and generates additional source files from your annotated classes before the main
+compilation happens. It is only required in the compile classpath.
+
+The `java-driver-mapper-runtime` artifact contains the annotations and a few utility classes. It is
+a regular dependency, required at runtime.
 
 #### Maven
 
@@ -46,6 +46,25 @@ configuration (make sure you use version 3.5 or higher):
     </plugin>
   </plugins>
 </build>
+```
+
+Alternatively (e.g. if you are using the [BOM](../../core/bom/)), you may also declare the processor
+as a regular dependency in the "provided" scope:
+
+```xml
+<dependencies>
+  <dependency>
+    <groupId>com.datastax.oss</groupId>
+    <artifactId>java-driver-mapper-processor</artifactId>
+    <version>${java-driver.version}</version>
+    <scope>provided</scope>
+  </dependency>
+  <dependency>
+    <groupId>com.datastax.oss</groupId>
+    <artifactId>java-driver-mapper-runtime</artifactId>
+    <version>${java-driver.version}</version>
+  </dependency>
+</dependencies>
 ```
 
 The processor runs every time you execute the `mvn compile` phase. It normally supports incremental

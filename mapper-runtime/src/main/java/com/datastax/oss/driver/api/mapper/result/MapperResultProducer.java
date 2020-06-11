@@ -84,12 +84,11 @@ public interface MapperResultProducer {
    * @return the object to return from the DAO method. This must match the type that this producer
    *     was selected for, there will be an unchecked cast at runtime.
    */
-  @SuppressWarnings("TypeParameterUnusedInFormals")
   @Nullable
-  <EntityT> Object execute(
+  Object execute(
       @NonNull Statement<?> statement,
       @NonNull MapperContext context,
-      @Nullable EntityHelper<EntityT> entityHelper);
+      @Nullable EntityHelper<?> entityHelper);
 
   /**
    * Surfaces any error encountered in the DAO method (either in the generated mapper code that
@@ -103,5 +102,5 @@ public interface MapperResultProducer {
    * declares them, or wrapped into a {@link RuntimeException} otherwise.
    */
   @Nullable
-  Object wrapError(@NonNull Throwable error) throws Exception;
+  Object wrapError(@NonNull Exception e) throws Exception;
 }

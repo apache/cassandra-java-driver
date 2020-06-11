@@ -414,7 +414,7 @@ public enum DefaultDaoReturnTypeKind implements DaoReturnTypeKind {
           CodeBlock.builder()
               .beginControlFlow("try")
               .addStatement(
-                  "@$1T(\"unchecked\") $2T result =\n($2T) producer.wrapError(t)",
+                  "@$1T(\"unchecked\") $2T result =\n($2T) producer.wrapError(e)",
                   SuppressWarnings.class,
                   returnTypeName)
               .addStatement("return result");
@@ -423,14 +423,14 @@ public enum DefaultDaoReturnTypeKind implements DaoReturnTypeKind {
       // (note: manually a multi-catch would be cleaner, but from here it's simpler to generate
       // separate clauses)
       for (TypeMirror thrownType : methodElement.getThrownTypes()) {
-        callWrapError.nextControlFlow("catch ($T e)", thrownType).addStatement("throw e");
+        callWrapError.nextControlFlow("catch ($T e2)", thrownType).addStatement("throw e2");
       }
 
       // Otherwise, rethrow unchecked exceptions and wrap checked ones.
       callWrapError
-          .nextControlFlow("catch ($T e)", Exception.class)
-          .addStatement("$T.throwIfUnchecked(e)", Throwables.class)
-          .addStatement("throw new $T(e)", RuntimeException.class)
+          .nextControlFlow("catch ($T e2)", Exception.class)
+          .addStatement("$T.throwIfUnchecked(e2)", Throwables.class)
+          .addStatement("throw new $T(e2)", RuntimeException.class)
           .endControlFlow();
 
       return wrapWithErrorHandling(innerBlock, callWrapError.build());
@@ -466,7 +466,7 @@ public enum DefaultDaoReturnTypeKind implements DaoReturnTypeKind {
     return CodeBlock.builder()
         .beginControlFlow("try")
         .add(innerBlock)
-        .nextControlFlow("catch ($T t)", Throwable.class)
+        .nextControlFlow("catch ($T e)", Exception.class)
         .add(catchBlock)
         .endControlFlow()
         .build();
@@ -474,12 +474,12 @@ public enum DefaultDaoReturnTypeKind implements DaoReturnTypeKind {
 
   private static final CodeBlock FAILED_FUTURE =
       CodeBlock.builder()
-          .addStatement("return $T.failedFuture(t)", CompletableFutures.class)
+          .addStatement("return $T.failedFuture(e)", CompletableFutures.class)
           .build();
   private static final CodeBlock FAILED_REACTIVE_RESULT_SET =
-      CodeBlock.builder().addStatement("return new $T(t)", FailedReactiveResultSet.class).build();
+      CodeBlock.builder().addStatement("return new $T(e)", FailedReactiveResultSet.class).build();
   private static final CodeBlock FAILED_MAPPED_REACTIVE_RESULT_SET =
       CodeBlock.builder()
-          .addStatement("return new $T(t)", FailedMappedReactiveResultSet.class)
+          .addStatement("return new $T(e)", FailedMappedReactiveResultSet.class)
           .build();
 }
