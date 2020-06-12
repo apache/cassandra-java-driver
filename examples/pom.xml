@@ -145,7 +145,7 @@
           <target>1.8</target>
           <annotationProcessorPaths>
             <path>
-              <groupId>com.datastax.oss</groupId>
+              <groupId>com.yugabyte</groupId>
               <artifactId>java-driver-mapper-processor</artifactId>
               <version>${project.version}</version>
             </path>
