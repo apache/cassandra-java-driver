@@ -288,16 +288,33 @@
             </configuration>
           </execution>
           <execution>
-            <id>verify</id>
+            <id>verify-parallelized</id>
             <goals>
               <goal>verify</goal>
             </goals>
             <configuration>
-              <summaryFiles>
-                <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-parallelized.xml</summaryFile>
-                <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-serial.xml</summaryFile>
-                <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-isolated.xml</summaryFile>
-              </summaryFiles>
+              <skipITs>${skipParallelizableITs}</skipITs>
+              <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-parallelized.xml</summaryFile>
+            </configuration>
+          </execution>
+          <execution>
+            <id>verify-serial</id>
+            <goals>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <skipITs>${skipSerialITs}</skipITs>
+              <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-serial.xml</summaryFile>
+            </configuration>
+          </execution>
+          <execution>
+            <id>verify-isolated</id>
+            <goals>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <skipITs>${skipIsolatedITs}</skipITs>
+              <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-isolated.xml</summaryFile>
             </configuration>
           </execution>
         </executions>
