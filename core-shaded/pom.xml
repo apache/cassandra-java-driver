@@ -146,7 +146,7 @@
                   - The core driver itself; it is not relocated but needs to be included.
                   - All the dependencies we want to shade & relocate.
                   -->
-                  <include>com.datastax.oss:java-driver-core</include>
+                  <include>com.yugabyte:java-driver-core</include>
                   <include>io.netty:*</include>
                   <include>com.esri.geometry:*</include>
                   <include>org.json:*</include>
@@ -179,7 +179,7 @@
               <filters>
                 <!-- Exclude everything under META-INF -->
                 <filter>
-                  <artifact>com.datastax.oss:*</artifact>
+                  <artifact>com.yugabyte:*</artifact>
                   <excludes>
                     <exclude>META-INF/**</exclude>
                   </excludes>
