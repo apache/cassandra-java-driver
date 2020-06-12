@@ -81,6 +81,7 @@ import org.slf4j.LoggerFactory;
 @ThreadSafe
 public class ControlConnection implements EventCallback, AsyncAutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(ControlConnection.class);
+  public static final String MOVED_NODE = "MOVED_NODE";
 
   private final InternalDriverContext context;
   private final String logPrefix;
@@ -202,6 +203,8 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
         break;
       case ProtocolConstants.TopologyChangeType.REMOVED_NODE:
         context.getEventBus().fire(TopologyEvent.suggestRemoved(tce.address));
+        break;
+      case MOVED_NODE:
         break;
       default:
         LOG.warn("[{}] Unsupported topology change type: {}", logPrefix, tce.changeType);

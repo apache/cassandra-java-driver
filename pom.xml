@@ -14,18 +14,32 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
+    
+    The following only applies to changes made to this file as part of YugaByte development.
+
+         Portions Copyright (c) Yugabyte, Inc.
+
+      Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+      except in compliance with the License.  You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+      Unless required by applicable law or agreed to in writing, software distributed under the
+      License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+      either express or implied.  See the License for the specific language governing permissions
+      and limitations under the License.
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.yugabyte</groupId>
   <artifactId>java-driver-parent</artifactId>
-  <version>4.6.2-SNAPSHOT</version>
+  <version>4.6.0-yb-1-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>DataStax Java driver for Apache Cassandra(R)</name>
-  <description>A driver for Apache Cassandra(R) 2.1+ that works exclusively with the Cassandra Query Language version 3 (CQL3) and Cassandra's native protocol versions 3 and above.</description>
-  <url>https://github.com/datastax/java-driver</url>
-  <inceptionYear>2017</inceptionYear>
+  <name>Java Driver for YugaByteDB</name>
+  <description>Java Driver for YugaByteDB; derived from DataStax Java Driver for Apache Cassandra.</description>
+  <url>https://github.com/yugabyte/cassandra-java-driver</url>
+  <inceptionYear>2020</inceptionYear>
   <modules>
     <module>core</module>
     <module>core-shaded</module>
@@ -79,7 +93,7 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.datastax.oss</groupId>
+        <groupId>com.yugabyte</groupId>
         <artifactId>java-driver-core</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
@@ -576,7 +590,7 @@
           </excludes>
         </configuration>
       </plugin>
-      <plugin>
+      <!-- <plugin>
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
         <configuration>
@@ -618,7 +632,7 @@ limitations under the License.]]></inlineHeader>
             </goals>
           </execution>
         </executions>
-      </plugin>
+      </plugin> -->
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
@@ -854,12 +868,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </build>
     </profile>
   </profiles>
-  <distributionManagement>
+  <!--   <distributionManagement>
     <repository>
       <id>ossrh</id>
       <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
     </repository>
-  </distributionManagement>
+  </distributionManagement> -->
   <licenses>
     <license>
       <name>Apache 2</name>
@@ -869,15 +883,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </license>
   </licenses>
   <scm>
-    <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
-    <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
-    <url>https://github.com/datastax/java-driver</url>
-    <tag>4.6.0</tag>
+    <connection>scm:git:git@github.com:YugaByte/cassandra-java-driver.git</connection>
+    <developerConnection>scm:git:git@github.com:YugaByte/cassandra-java-driver.git</developerConnection>
+    <url>https://github.com/yugabyte/cassandra-java-driver</url>
+    <tag>4.6.0-yb-1</tag>
   </scm>
   <developers>
     <developer>
-      <name>Various</name>
-      <organization>DataStax</organization>
+      <name>Yugabyte Development Team</name>
+      <email>info@yugabyte.com</email>
+      <organization>YugaByte, Inc.</organization>
+      <organizationUrl>https://www.yugabyte.com</organizationUrl>
     </developer>
   </developers>
+  <distributionManagement>
+    <repository>
+      <id>${yugabyte.releases.repository.id}</id>
+      <url>${yugabyte.releases.repository.url}</url>
+    </repository>
+    <snapshotRepository>
+      <id>${yugabyte.snapshots.repository.id}</id>
+      <url>${yugabyte.snapshots.repository.url}</url>
+    </snapshotRepository>
+  </distributionManagement>
 </project>

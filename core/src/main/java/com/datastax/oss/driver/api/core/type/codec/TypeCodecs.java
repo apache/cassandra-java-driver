@@ -119,6 +119,7 @@ public class TypeCodecs {
   public static final TypeCodec<UUID> TIMEUUID = new TimeUuidCodec();
   public static final TypeCodec<InetAddress> INET = new InetCodec();
   public static final TypeCodec<CqlDuration> DURATION = new CqlDurationCodec();
+  public static final TypeCodec<String> JSONB = new StringCodec(DataTypes.JSONB, Charsets.UTF_8);
 
   @NonNull
   public static TypeCodec<ByteBuffer> custom(@NonNull DataType cqlType) {

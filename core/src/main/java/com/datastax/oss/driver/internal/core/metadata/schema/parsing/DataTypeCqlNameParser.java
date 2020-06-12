@@ -322,5 +322,6 @@ public class DataTypeCqlNameParser implements DataTypeParser {
           .put("tinyint", DataTypes.TINYINT)
           .put("smallint", DataTypes.SMALLINT)
           .put("duration", DataTypes.DURATION)
+          .put("jsonb", DataTypes.JSONB)
           .build();
 }

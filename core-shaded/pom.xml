@@ -19,9 +19,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>com.datastax.oss</groupId>
+    <groupId>com.yugabyte</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.6.2-SNAPSHOT</version>
+    <version>4.6.0-yb-1-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-core-shaded</artifactId>
   <name>DataStax Java driver for Apache Cassandra(R) - core with shaded deps</name>
@@ -42,8 +42,9 @@
     this dependency will be removed from the final pom by the shade plugin.
     -->
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>com.yugabyte</groupId>
       <artifactId>java-driver-core</artifactId>
+      <!-- <version>${project.version}</version> -->
     </dependency>
     <!--
     Repeat all dependencies of the core driver *except* the ones that are going to be shaded,
@@ -230,7 +231,7 @@
             <configuration>
               <artifactItems>
                 <artifactItem>
-                  <groupId>com.datastax.oss</groupId>
+                  <groupId>com.yugabyte</groupId>
                   <artifactId>java-driver-core-shaded</artifactId>
                   <type>jar</type>
                   <outputDirectory>${project.build.outputDirectory}</outputDirectory>
@@ -248,7 +249,7 @@
             <configuration>
               <artifactItems>
                 <artifactItem>
-                  <groupId>com.datastax.oss</groupId>
+                  <groupId>com.yugabyte</groupId>
                   <artifactId>java-driver-core-shaded</artifactId>
                   <type>jar</type>
                   <classifier>sources</classifier>
