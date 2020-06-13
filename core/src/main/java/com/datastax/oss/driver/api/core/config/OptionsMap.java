@@ -260,7 +260,7 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.CONNECTION_POOL_LOCAL_SIZE, 1);
     map.put(TypedDriverOption.CONNECTION_POOL_REMOTE_SIZE, 1);
     map.put(TypedDriverOption.CONNECTION_MAX_REQUESTS, 1024);
-    map.put(TypedDriverOption.CONNECTION_MAX_ORPHAN_REQUESTS, 24576);
+    map.put(TypedDriverOption.CONNECTION_MAX_ORPHAN_REQUESTS, 256);
     map.put(TypedDriverOption.CONNECTION_WARN_INIT_ERROR, true);
     map.put(TypedDriverOption.RECONNECT_ON_INIT, false);
     map.put(TypedDriverOption.RECONNECTION_POLICY_CLASS, "ExponentialReconnectionPolicy");
@@ -306,12 +306,12 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.METRICS_SESSION_THROTTLING_INTERVAL, Duration.ofMinutes(5));
     map.put(
         TypedDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_HIGHEST,
-        Duration.ofSeconds(3));
+        Duration.ofMinutes(2));
     map.put(TypedDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_DIGITS, 3);
     map.put(
         TypedDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_INTERVAL,
         Duration.ofMinutes(5));
-    map.put(TypedDriverOption.METRICS_SESSION_GRAPH_REQUESTS_HIGHEST, Duration.ofSeconds(3));
+    map.put(TypedDriverOption.METRICS_SESSION_GRAPH_REQUESTS_HIGHEST, Duration.ofSeconds(12));
     map.put(TypedDriverOption.METRICS_SESSION_GRAPH_REQUESTS_DIGITS, 3);
     map.put(TypedDriverOption.METRICS_SESSION_GRAPH_REQUESTS_INTERVAL, Duration.ofMinutes(5));
     map.put(TypedDriverOption.METRICS_NODE_ENABLED, Collections.emptyList());
