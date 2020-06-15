@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import static com.datastax.oss.driver.api.mapper.MapperBuilder.SCHEMA_VALIDATION_ENABLED_SETTING;
 
+import com.datastax.dse.driver.internal.mapper.reactive.ReactiveDaoBase;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
@@ -302,9 +303,9 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
         TypeSpec.classBuilder(implementationName)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
             .addModifiers(Modifier.PUBLIC)
-            .superclass(getDaoParentClass())
             .addSuperinterface(ClassName.get(interfaceElement));
 
+    boolean reactive = false;
     for (TypeMirror mirror : interfaces) {
       TypeElement parentInterfaceElement = (TypeElement) context.getTypeUtils().asElement(mirror);
       Map<Name, TypeElement> typeParameters = parseTypeParameters(mirror);
@@ -328,11 +329,14 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
                       "Unrecognized method signature: no implementation will be generated");
             } else {
               maybeGenerator.flatMap(MethodGenerator::generate).ifPresent(classBuilder::addMethod);
+              reactive |= maybeGenerator.get().requiresReactive();
             }
           }
         }
       }
     }
+
+    classBuilder = classBuilder.superclass(getDaoParentClass(reactive));
 
     genericTypeConstantGenerator.generate(classBuilder);
 
@@ -393,8 +397,12 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
   }
 
   @NonNull
-  protected Class<?> getDaoParentClass() {
-    return DaoBase.class;
+  protected Class<?> getDaoParentClass(boolean requiresReactive) {
+    if (requiresReactive) {
+      return ReactiveDaoBase.class;
+    } else {
+      return DaoBase.class;
+    }
   }
 
   /**

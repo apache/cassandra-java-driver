@@ -15,8 +15,6 @@
  */
 package com.datastax.oss.driver.api.testinfra.ccm;
 
-import static io.netty.util.internal.PlatformDependent.isWindows;
-
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
 import com.datastax.oss.driver.shaded.guava.common.io.Resources;
@@ -32,6 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -165,6 +164,11 @@ public class CcmBridge implements AutoCloseable {
     }
     this.jvmArgs = allJvmArgs.toString();
     this.dseWorkloads = dseWorkloads;
+  }
+
+  // Copied from Netty's PlatformDependent to avoid the dependency on Netty
+  private static boolean isWindows() {
+    return System.getProperty("os.name", "").toLowerCase(Locale.US).contains("win");
   }
 
   public Optional<Version> getDseVersion() {

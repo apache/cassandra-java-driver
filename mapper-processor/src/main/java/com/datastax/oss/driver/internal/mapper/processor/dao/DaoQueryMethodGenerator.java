@@ -65,6 +65,17 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
   }
 
   @Override
+  public boolean requiresReactive() {
+    // Validate the return type:
+    DaoReturnType returnType =
+        parseAndValidateReturnType(getSupportedReturnTypes(), Query.class.getSimpleName());
+    if (returnType == null) {
+      return false;
+    }
+    return returnType.requiresReactive();
+  }
+
+  @Override
   public Optional<MethodSpec> generate() {
 
     // Validate the return type:

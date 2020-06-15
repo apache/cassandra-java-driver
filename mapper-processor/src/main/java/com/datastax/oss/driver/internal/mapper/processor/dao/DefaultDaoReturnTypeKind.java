@@ -462,6 +462,11 @@ public enum DefaultDaoReturnTypeKind implements DaoReturnTypeKind {
     return name();
   }
 
+  @Override
+  public boolean requiresReactive() {
+    return this == REACTIVE_RESULT_SET || this == MAPPED_REACTIVE_RESULT_SET;
+  }
+
   static CodeBlock wrapWithErrorHandling(CodeBlock innerBlock, CodeBlock catchBlock) {
     return CodeBlock.builder()
         .beginControlFlow("try")

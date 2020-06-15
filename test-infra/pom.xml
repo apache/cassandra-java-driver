@@ -56,13 +56,17 @@
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
     </dependency>
+    <!-- only required for Simulacron tests -->
     <dependency>
       <groupId>com.datastax.oss.simulacron</groupId>
       <artifactId>simulacron-native-server</artifactId>
+      <optional>true</optional>
     </dependency>
+    <!-- only required for CCM tests -->
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-exec</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.awaitility</groupId>

@@ -166,11 +166,20 @@
                 (so reflection-based loading of policies works)
                 -->
                 <DynamicImport-Package>*</DynamicImport-Package>
-                <!--
-                Don't include the packages below because they aren't OSGi bundles,
-                and the driver can live without them.
-                -->
-                <Import-Package>!net.jcip.annotations.*, !edu.umd.cs.findbugs.annotations.*, *</Import-Package>
+                <Import-Package>
+                  <!--
+                  1) Don't include the packages below because they contain annotations only and are
+                  not required at runtime.
+                  -->!net.jcip.annotations.*, !edu.umd.cs.findbugs.annotations.*,
+                  <!--
+                  2) Use resolution:=optional for optional dependencies in order to make it possible
+                  to use the driver without such dependencies in an OSGi environment, as long as
+                  the application does not attempt to access their packages.
+                  Note: dependencies marked as optional are by default included with optional
+                  resolution in the manifest; we only need to manually set the resolution to
+                  optional for dependencies declared as non-optional in the pom files.
+                  -->org.reactivestreams.*;resolution:=optional, *
+                </Import-Package>
                 <Export-Package>com.datastax.*.driver.*.mapper.*</Export-Package>
               </instructions>
             </configuration>

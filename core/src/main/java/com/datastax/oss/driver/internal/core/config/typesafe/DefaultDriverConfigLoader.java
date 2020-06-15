@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.config.typesafe;
 
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
@@ -55,7 +56,11 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
   public static final Supplier<Config> DEFAULT_CONFIG_SUPPLIER =
       () -> {
         ConfigFactory.invalidateCaches();
-        return ConfigFactory.load().getConfig(DEFAULT_ROOT_PATH);
+        // The thread's context class loader will be used for application classpath resources,
+        // while the driver class loader will be used for reference classpath resources.
+        return ConfigFactory.defaultApplication()
+            .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+            .getConfig(DEFAULT_ROOT_PATH);
       };
 
   private final Supplier<Config> configSupplier;
@@ -68,9 +73,32 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
    * Builds a new instance with the default Typesafe config loading rules (documented in {@link
    * SessionBuilder#withConfigLoader(DriverConfigLoader)}) and the core driver options. This
    * constructor enables config reloading (that is, {@link #supportsReloading} will return true).
+   *
+   * <p>Application-specific classpath resources will be located using the {@linkplain
+   * Thread#getContextClassLoader() the current thread's context class loader}. This might not be
+   * suitable for OSGi deployments, which should use {@link #DefaultDriverConfigLoader(ClassLoader)}
+   * instead.
    */
   public DefaultDriverConfigLoader() {
     this(DEFAULT_CONFIG_SUPPLIER);
+  }
+
+  /**
+   * Builds a new instance with the default Typesafe config loading rules (documented in {@link
+   * SessionBuilder#withConfigLoader(DriverConfigLoader)}) and the core driver options, except that
+   * application-specific classpath resources will be located using the provided {@link ClassLoader}
+   * instead of {@linkplain Thread#getContextClassLoader() the current thread's context class
+   * loader}. This constructor enables config reloading (that is, {@link #supportsReloading} will
+   * return true).
+   */
+  public DefaultDriverConfigLoader(@NonNull ClassLoader appClassLoader) {
+    this(
+        () -> {
+          ConfigFactory.invalidateCaches();
+          return ConfigFactory.defaultApplication(appClassLoader)
+              .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+              .getConfig(DEFAULT_ROOT_PATH);
+        });
   }
 
   /**
@@ -81,7 +109,7 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
    * @param configSupplier A supplier for the Typesafe {@link Config}; it will be invoked once when
    *     this object is instantiated, and at each reload attempt, if reloading is enabled.
    */
-  public DefaultDriverConfigLoader(Supplier<Config> configSupplier) {
+  public DefaultDriverConfigLoader(@NonNull Supplier<Config> configSupplier) {
     this(configSupplier, true);
   }
 
@@ -93,7 +121,8 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
    *     this object is instantiated, and at each reload attempt, if reloading is enabled.
    * @param supportsReloading Whether config reloading should be enabled or not.
    */
-  public DefaultDriverConfigLoader(Supplier<Config> configSupplier, boolean supportsReloading) {
+  public DefaultDriverConfigLoader(
+      @NonNull Supplier<Config> configSupplier, boolean supportsReloading) {
     this.configSupplier = configSupplier;
     this.driverConfig = new TypesafeDriverConfig(configSupplier.get());
     this.supportsReloading = supportsReloading;
