@@ -522,6 +522,27 @@ on: unlike the driver, TinkerPop does not follow semantic versioning, so even a 
 (e.g. 3.3.0 vs 3.3.3) could introduce incompatibilities. So do not declare an explicit dependency in
 your application, let the driver pull it transitively.
 
+#### Reactive Streams
+
+[Reactive Streams](https://www.reactive-streams.org/) types are referenced in our [reactive
+API](../reactive/).
+
+If you never call any of the `executeReactive` methods, you can exclude the dependency:
+
+```xml
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-core</artifactId>
+  <version>${driver.version}</version>
+  <exclusions>
+    <exclusion>
+      <groupId>org.reactivestreams</groupId>
+      <artifactId>reactive-streams</artifactId>
+    </exclusion>
+  </exclusions>
+</dependency>
+```
+
 #### Documenting annotations
 
 The driver team uses annotations to document certain aspects of the code:
