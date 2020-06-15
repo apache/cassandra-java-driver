@@ -7,10 +7,12 @@
 - [improvement] JAVA-2301: Introduce OSGi tests for the mapper
 - [improvement] JAVA-2658: Refactor OSGi tests
 - [bug] JAVA-2657: Add ability to specify the class loader to use for application-specific classpath resources
+- [improvement] JAVA-2803: Add Graal substitutions for protocol compression
 - [documentation] JAVA-2666: Document BOM and driver modules
 - [documentation] JAVA-2613: Improve connection pooling documentation
 - [new feature] JAVA-2793: Add composite config loader
 - [new feature] JAVA-2792: Allow custom results in the mapper
+- [improvement] JAVA-2663: Add Graal substitutions for native functions
 - [improvement] JAVA-2747: Revisit semantics of Statement.setExecutionProfile/Name
 
 ### 4.6.1
