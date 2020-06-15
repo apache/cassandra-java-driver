@@ -130,6 +130,42 @@
         "code": "java.missing.newClass",
         "new": "missing-class com.datastax.oss.simulacron.server.Server",
         "justification":"Dependency was made optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class com.datastax.oss.simulacron.common.cluster.ClusterSpec",
+        "new": "missing-class com.datastax.oss.simulacron.common.cluster.ClusterSpec",
+        "justification": "Dependency was made optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class com.datastax.oss.simulacron.common.cluster.ClusterSpec.Builder",
+        "new": "missing-class com.datastax.oss.simulacron.common.cluster.ClusterSpec.Builder",
+        "justification": "Dependency was made optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class com.datastax.oss.simulacron.common.cluster.QueryLog",
+        "new": "missing-class com.datastax.oss.simulacron.common.cluster.QueryLog",
+        "justification": "Dependency was made optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class com.datastax.oss.simulacron.server.BoundCluster",
+        "new": "missing-class com.datastax.oss.simulacron.server.BoundCluster",
+        "justification": "Dependency was made optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class com.datastax.oss.simulacron.server.BoundTopic",
+        "new": "missing-class com.datastax.oss.simulacron.server.BoundTopic",
+        "justification": "Dependency was made optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class com.datastax.oss.simulacron.server.Server",
+        "new": "missing-class com.datastax.oss.simulacron.server.Server",
+        "justification": "Dependency was made optional"
       }
     ]
   }
