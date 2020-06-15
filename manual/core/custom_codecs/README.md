@@ -360,8 +360,8 @@ private static String formatRow(Row row) {
 }
 ```
 
-[CodecRegistry]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html
-[GenericType]:   https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
-[TypeCodec]:     https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html
-[MappingCodec]:     https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/type/codec/MappingCodec.html
-[SessionBuilder.addTypeCodecs]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addTypeCodecs-com.datastax.oss.driver.api.core.type.codec.TypeCodec...-
+[CodecRegistry]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html
+[GenericType]:   https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
+[TypeCodec]:     https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html
+[MappingCodec]:     https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/type/codec/MappingCodec.html
+[SessionBuilder.addTypeCodecs]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addTypeCodecs-com.datastax.oss.driver.api.core.type.codec.TypeCodec...-

@@ -205,10 +205,10 @@ protocol page size and the logical page size to the same value.
 The [driver examples] include two complete web service implementations demonstrating forward-only
 and offset paging.
 
-[ResultSet]:         https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/ResultSet.html
-[AsyncResultSet]:    https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
-[AsyncPagingIterable.hasMorePages]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/AsyncPagingIterable.html#hasMorePages--
-[AsyncPagingIterable.fetchNextPage]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/AsyncPagingIterable.html#fetchNextPage--
-[OffsetPager]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/paging/OffsetPager.html
+[ResultSet]:         https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[AsyncResultSet]:    https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
+[AsyncPagingIterable.hasMorePages]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/AsyncPagingIterable.html#hasMorePages--
+[AsyncPagingIterable.fetchNextPage]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/AsyncPagingIterable.html#fetchNextPage--
+[OffsetPager]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/paging/OffsetPager.html
 
 [driver examples]: https://github.com/datastax/java-driver/tree/4.x/examples/src/main/java/com/datastax/oss/driver/examples/paging

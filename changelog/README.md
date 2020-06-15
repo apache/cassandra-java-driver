@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.7.0 (in progress)
+### 4.7.0
 
 - [improvement] JAVA-2301: Introduce OSGi tests for the mapper
 - [improvement] JAVA-2658: Refactor OSGi tests
