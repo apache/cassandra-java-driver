@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
 
 @Category(IsolatedTests.class)
 @RunWith(MockitoJUnitRunner.class)
-public class SessionLeakTest {
+public class SessionLeakIT {
 
   @ClassRule
   public static final SimulacronRule SIMULACRON_RULE =
