@@ -8,13 +8,13 @@ documentation for latest version through [DataStax Docs] or via the release tags
 [4.7.0](https://github.com/datastax/java-driver/tree/4.7.0).*
 
 A modern, feature-rich and highly tunable Java client library for [Apache Cassandra®] \(2.1+) and 
-[DataStax Enterprise] \(4.7+), and [DataStax Apollo], using exclusively Cassandra's binary protocol 
+[DataStax Enterprise] \(4.7+), and [DataStax Astra], using exclusively Cassandra's binary protocol
 and Cassandra Query Language (CQL) v3.
 
 [DataStax Docs]: http://docs.datastax.com/en/developer/java-driver/
 [Apache Cassandra®]: http://cassandra.apache.org/
 [DataStax Enterprise]: https://www.datastax.com/products/datastax-enterprise
-[DataStax Apollo]: https://www.datastax.com/constellation/datastax-apollo
+[DataStax Astra]: https://www.datastax.com/products/datastax-astra
 
 ## Getting the driver
 
@@ -52,7 +52,7 @@ builder](manual/query_builder/), [mapper](manual/mapper)).
 ## Compatibility
 
 The driver is compatible with Apache Cassandra® 2.1 and higher, DataStax Enterprise 4.7 and
-higher, and DataStax Apollo.
+higher, and DataStax Astra.
 
 It requires Java 8 or higher.
 

@@ -60,7 +60,10 @@ public class ChannelFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(ChannelFactory.class);
 
-  /** A value for {@link #productType} that indicates that we are connected to Datastax Cloud. */
+  /**
+   * A value for {@link #productType} that indicates that we are connected to DataStax Cloud. This
+   * value matches the one defined at DSE DB server side at {@code ProductType.java}.
+   */
   private static final String DATASTAX_CLOUD_PRODUCT_TYPE = "DATASTAX_APOLLO";
 
   private static final AtomicBoolean LOGGED_ORPHAN_WARNING = new AtomicBoolean();

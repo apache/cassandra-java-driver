@@ -1,16 +1,16 @@
-## Connecting to Apollo (Cloud)
+## Connecting to Astra (Cloud)
 
-Using the DataStax Java Driver to connect to a DataStax Apollo database is almost identical to using
+Using the DataStax Java Driver to connect to a DataStax Astra database is almost identical to using
 the driver to connect to any normal Apache Cassandra® database. The only differences are in how the
 driver is configured in an application and that you will need to obtain a *secure connect bundle*.
 
 ### Prerequisites
 
 1. [Download][Download Maven] and [install][Install Maven] Maven.
-2. Create an Apollo database on [GCP][Create an Apollo database - GCP] or 
-   [AWS][Create an Apollo database - AWS]; alternatively, have a team member provide access to their
-   Apollo database (instructions for [GCP][Access an Apollo database - GCP] and 
-   [AWS][Access an Apollo database - AWS]) to obtain database connection details.
+2. Create an Astra database on [GCP][Create an Astra database - GCP] or
+   [AWS][Create an Astra database - AWS]; alternatively, have a team member provide access to their
+   Astra database (instructions for [GCP][Access an Astra database - GCP] and
+   [AWS][Access an Astra database - AWS]) to obtain database connection details.
 3. Download the secure connect bundle (instructions for 
    [GCP][Download the secure connect bundle - GCP] and 
    [AWS][Download the secure connect bundle - AWS]), that contains connection information such as
@@ -54,10 +54,10 @@ public class Main {
     }
 ```
 
-The path to the secure connect bundle for your Apollo database is specified with
+The path to the secure connect bundle for your Astra database is specified with
 `withCloudSecureConnectBundle()`. The authentication credentials must be specified separately with
 `withAuthCredentials()`, and match the username and password that were configured when creating the
-Apollo database.
+Astra database.
 
 Note the following:
 
@@ -108,7 +108,7 @@ public class Main {
     
   public static void main(String[] args) {
     // Create the CqlSession object; it will read the configuration file and pick the right
-    // values to connect to the Apollo database.
+    // values to connect to the Astra database.
     try (CqlSession session = CqlSession.builder().build()) {
 
       ResultSet rs = session.execute("select release_version from system.local");
@@ -125,11 +125,11 @@ public class Main {
 
 [Download Maven]: https://maven.apache.org/download.cgi
 [Install Maven]: https://maven.apache.org/install.html
-[Create an Apollo database - GCP]: https://helpdocs.datastax.com/gcp/dscloud/apollo/dscloudGettingStarted.html#dscloudCreateCluster
-[Create an Apollo database - AWS]: https://helpdocs.datastax.com/aws/dscloud/apollo/dscloudGettingStarted.html#dscloudCreateCluster
-[Access an Apollo database - GCP]: https://helpdocs.datastax.com/gcp/dscloud/apollo/dscloudShareClusterDetails.html
-[Access an Apollo database - AWS]: https://helpdocs.datastax.com/aws/dscloud/apollo/dscloudShareClusterDetails.html
-[Download the secure connect bundle - GCP]: https://helpdocs.datastax.com/gcp/dscloud/apollo/dscloudObtainingCredentials.html
-[Download the secure connect bundle - AWS]: https://helpdocs.datastax.com/aws/dscloud/apollo/dscloudObtainingCredentials.html
+[Create an Astra database - GCP]: https://docs.datastax.com/en/astra/gcp/doc/dscloud/astra/dscloudGettingStarted.html#dscloudCreateCluster
+[Create an Astra database - AWS]: https://docs.datastax.com/en/astra/aws/doc/dscloud/astra/dscloudGettingStarted.html#dscloudCreateCluster
+[Access an Astra database - GCP]: https://docs.datastax.com/en/astra/gcp/doc/dscloud/astra/dscloudShareClusterDetails.html
+[Access an Astra database - AWS]: https://docs.datastax.com/en/astra/aws/doc/dscloud/astra/dscloudShareClusterDetails.html
+[Download the secure connect bundle - GCP]: https://docs.datastax.com/en/astra/gcp/doc/dscloud/astra/dscloudObtainingCredentials.html
+[Download the secure connect bundle - AWS]: https://docs.datastax.com/en/astra/aws/doc/dscloud/astra/dscloudObtainingCredentials.html
 [minimal project structure]: ../core/integration/#minimal-project-structure
 [driver documentation]: ../core/configuration/
