@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.examples.apollo;
+package com.datastax.oss.driver.examples.astra;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
@@ -21,28 +21,30 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import java.nio.file.Paths;
 
 /**
- * Connects to a DataStax Apollo cluster and extracts basic information from it.
+ * Connects to a DataStax Astra cluster and extracts basic information from it.
  *
  * <p>Preconditions:
  *
  * <ul>
- *   <li>A DataStax Apollo cluster is running and accessible.
- *   <li>A DataStax Apollo secure connect bundle for the running cluster.
+ *   <li>A DataStax Astra cluster is running and accessible.
+ *   <li>A DataStax Astra secure connect bundle for the running cluster.
  * </ul>
  *
  * <p>Side effects: none.
  *
  * @see <a
- *     href="https://helpdocs.datastax.com/gcp/dscloud/apollo/dscloudGettingStarted.html#dscloudCreateCluster">
- *     Creating an Apollo Database</a>
- * @see <a href="https://helpdocs.datastax.com/gcp/dscloud/apollo/dscloudShareClusterDetails.html">
- *     Providing access to Apollo databases</a>
- * @see <a href="https://helpdocs.datastax.com/gcp/dscloud/apollo/dscloudObtainingCredentials.html">
- *     Obtaining Apollo secure connect bundle</a>
- * @see <a href="https://docs.datastax.com/en/developer/java-driver/4.3">Java driver online
+ *     href="https://docs.datastax.com/en/astra/gcp/doc/dscloud/astra/dscloudGettingStarted.html#dscloudCreateCluster">
+ *     Creating an Astra Database (GCP)</a>
+ * @see <a
+ *     href="https://docs.datastax.com/en/astra/gcp/doc/dscloud/astra/dscloudShareClusterDetails.html">
+ *     Providing access to Astra databases (GCP)</a>
+ * @see <a
+ *     href="https://docs.datastax.com/en/astra/gcp/doc/dscloud/astra/dscloudObtainingCredentials.html">
+ *     Obtaining Astra secure connect bundle (GCP)</a>
+ * @see <a href="https://docs.datastax.com/en/developer/java-driver/latest">Java driver online
  *     manual</a>
  */
-public class ApolloReadCassandraVersion {
+public class AstraReadCassandraVersion {
 
   public static void main(String[] args) {
 
@@ -52,7 +54,7 @@ public class ApolloReadCassandraVersion {
         CqlSession.builder()
             // Change the path here to the secure connect bundle location (see javadocs above)
             .withCloudSecureConnectBundle(Paths.get("/path/to/secure-connect-database_name.zip"))
-            // Change the user_name and password here for the Apollo instance
+            // Change the user_name and password here for the Astra instance
             .withAuthCredentials("user_name", "fakePasswordForTests")
             // Uncomment the next line to use a specific keyspace
             // .withKeyspace("keyspace_name")
