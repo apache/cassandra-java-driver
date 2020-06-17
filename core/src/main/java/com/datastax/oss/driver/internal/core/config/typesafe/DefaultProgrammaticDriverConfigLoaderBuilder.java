@@ -90,10 +90,10 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
    *     haven't been specified programmatically.
    * @param rootPath the root path used in non-programmatic sources (fallback reference.conf and
    *     system properties). In most cases it should be {@link
-   *     DefaultDriverConfigLoader#DEFAULT_ROOT_PATH}.
+   *     DefaultDriverConfigLoader#DEFAULT_ROOT_PATH}. Cannot be null but can be empty.
    */
   public DefaultProgrammaticDriverConfigLoaderBuilder(
-      Supplier<Config> fallbackSupplier, String rootPath) {
+      @NonNull Supplier<Config> fallbackSupplier, @NonNull String rootPath) {
     this.fallbackSupplier = fallbackSupplier;
     this.rootPath = rootPath;
   }
