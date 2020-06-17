@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.config.typesafe;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.MockOptions;
@@ -32,7 +33,7 @@ public class DefaultProgrammaticDriverConfigLoaderBuilderTest {
   public void should_override_option_in_default_profile() {
     DriverConfigLoader loader =
         new DefaultProgrammaticDriverConfigLoaderBuilder(
-                () -> ConfigFactory.parseString(FALLBACK_CONFIG))
+                () -> ConfigFactory.parseString(FALLBACK_CONFIG), "")
             .withInt(MockOptions.INT1, 3)
             .build();
     DriverConfig config = loader.getInitialConfig();
@@ -44,7 +45,7 @@ public class DefaultProgrammaticDriverConfigLoaderBuilderTest {
   public void should_override_option_in_existing_profile() {
     DriverConfigLoader loader =
         new DefaultProgrammaticDriverConfigLoaderBuilder(
-                () -> ConfigFactory.parseString(FALLBACK_CONFIG))
+                () -> ConfigFactory.parseString(FALLBACK_CONFIG), "")
             .startProfile("profile1")
             .withInt(MockOptions.INT1, 3)
             .build();
@@ -57,7 +58,7 @@ public class DefaultProgrammaticDriverConfigLoaderBuilderTest {
   public void should_override_option_in_new_profile() {
     DriverConfigLoader loader =
         new DefaultProgrammaticDriverConfigLoaderBuilder(
-                () -> ConfigFactory.parseString(FALLBACK_CONFIG))
+                () -> ConfigFactory.parseString(FALLBACK_CONFIG), "")
             .startProfile("profile2")
             .withInt(MockOptions.INT1, 3)
             .build();
@@ -72,7 +73,7 @@ public class DefaultProgrammaticDriverConfigLoaderBuilderTest {
   public void should_go_back_to_default_profile_when_profile_ends() {
     DriverConfigLoader loader =
         new DefaultProgrammaticDriverConfigLoaderBuilder(
-                () -> ConfigFactory.parseString(FALLBACK_CONFIG))
+                () -> ConfigFactory.parseString(FALLBACK_CONFIG), "")
             .startProfile("profile2")
             .withInt(MockOptions.INT1, 3)
             .endProfile()
@@ -86,7 +87,7 @@ public class DefaultProgrammaticDriverConfigLoaderBuilderTest {
   public void should_handle_multiple_programmatic_profiles() {
     DriverConfigLoader loader =
         new DefaultProgrammaticDriverConfigLoaderBuilder(
-                () -> ConfigFactory.parseString(FALLBACK_CONFIG))
+                () -> ConfigFactory.parseString(FALLBACK_CONFIG), "")
             .startProfile("profile2")
             .withInt(MockOptions.INT1, 3)
             .startProfile("profile3")
@@ -95,5 +96,26 @@ public class DefaultProgrammaticDriverConfigLoaderBuilderTest {
     DriverConfig config = loader.getInitialConfig();
     assertThat(config.getProfile("profile2").getInt(MockOptions.INT1)).isEqualTo(3);
     assertThat(config.getProfile("profile3").getInt(MockOptions.INT1)).isEqualTo(4);
+  }
+
+  @Test
+  public void should_honor_root_path() {
+    String rootPath = "test-root";
+    String propertyKey = rootPath + "." + DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE.getPath();
+    try {
+      System.setProperty(propertyKey, "42");
+      DriverConfigLoader loader =
+          new DefaultProgrammaticDriverConfigLoaderBuilder(
+                  DefaultProgrammaticDriverConfigLoaderBuilder.DEFAULT_FALLBACK_SUPPLIER, rootPath)
+              .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 1234)
+              .build();
+      DriverConfig config = loader.getInitialConfig();
+      assertThat(config.getDefaultProfile().getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
+          .isEqualTo(42);
+      assertThat(config.getDefaultProfile().getInt(DefaultDriverOption.REQUEST_PAGE_SIZE))
+          .isEqualTo(1234);
+    } finally {
+      System.clearProperty(propertyKey);
+    }
   }
 }

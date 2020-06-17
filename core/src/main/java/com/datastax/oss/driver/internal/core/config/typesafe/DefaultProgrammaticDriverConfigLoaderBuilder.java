@@ -37,10 +37,17 @@ import net.jcip.annotations.NotThreadSafe;
 public class DefaultProgrammaticDriverConfigLoaderBuilder
     implements ProgrammaticDriverConfigLoaderBuilder {
 
+  public static final Supplier<Config> DEFAULT_FALLBACK_SUPPLIER =
+      () ->
+          ConfigFactory.defaultApplication()
+              // Do not remove root path here, it must be done after merging configs
+              .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()));
+
   private final NullAllowingImmutableMap.Builder<String, Object> values =
       NullAllowingImmutableMap.builder();
 
   private final Supplier<Config> fallbackSupplier;
+  private final String rootPath;
 
   private String currentProfileName = DriverExecutionProfile.DEFAULT_NAME;
 
@@ -55,7 +62,7 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
    * #DefaultProgrammaticDriverConfigLoaderBuilder(ClassLoader)} instead.
    */
   public DefaultProgrammaticDriverConfigLoaderBuilder() {
-    this(DefaultDriverConfigLoader.DEFAULT_CONFIG_SUPPLIER);
+    this(DEFAULT_FALLBACK_SUPPLIER, DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
   }
 
   /**
@@ -71,16 +78,24 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
     this(
         () ->
             ConfigFactory.defaultApplication(appClassLoader)
-                .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
-                .getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH));
+                .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader())),
+        DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
   }
 
   /**
+   * Creates an instance of {@link DefaultProgrammaticDriverConfigLoaderBuilder} using a custom
+   * fallback config supplier.
+   *
    * @param fallbackSupplier the supplier that will provide fallback configuration for options that
    *     haven't been specified programmatically.
+   * @param rootPath the root path used in non-programmatic sources (fallback reference.conf and
+   *     system properties). In most cases it should be {@link
+   *     DefaultDriverConfigLoader#DEFAULT_ROOT_PATH}.
    */
-  public DefaultProgrammaticDriverConfigLoaderBuilder(@NonNull Supplier<Config> fallbackSupplier) {
+  public DefaultProgrammaticDriverConfigLoaderBuilder(
+      Supplier<Config> fallbackSupplier, String rootPath) {
     this.fallbackSupplier = fallbackSupplier;
+    this.rootPath = rootPath;
   }
 
   private ProgrammaticDriverConfigLoaderBuilder with(
@@ -91,6 +106,9 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
   private ProgrammaticDriverConfigLoaderBuilder with(@NonNull String path, @Nullable Object value) {
     if (!DriverExecutionProfile.DEFAULT_NAME.equals(currentProfileName)) {
       path = "profiles." + currentProfileName + "." + path;
+    }
+    if (!rootPath.isEmpty()) {
+      path = rootPath + "." + path;
     }
     values.put(path, value);
     return this;
@@ -228,10 +246,15 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
         () -> {
           ConfigFactory.invalidateCaches();
           Config programmaticConfig = buildConfig();
-          return ConfigFactory.defaultOverrides()
-              .withFallback(programmaticConfig)
-              .withFallback(fallbackSupplier.get())
-              .resolve();
+          Config config =
+              ConfigFactory.defaultOverrides()
+                  .withFallback(programmaticConfig)
+                  .withFallback(fallbackSupplier.get())
+                  .resolve();
+          // Only remove rootPath after the merge between system properties
+          // and fallback configuration, since both are supposed to
+          // contain the same rootPath prefix.
+          return rootPath.isEmpty() ? config : config.getConfig(rootPath);
         });
   }
 
