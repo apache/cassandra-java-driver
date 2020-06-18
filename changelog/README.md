@@ -2,8 +2,9 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.8.0 (in progress)
+### 4.7.1
 
+- [bug] JAVA-2818: Remove root path only after merging non-programmatic configs
 
 ### 4.7.0
 
