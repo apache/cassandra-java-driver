@@ -280,7 +280,6 @@ public class BoundStatementCcmIT {
             .getDefaultProfile()
             // Value doesn't matter, we just want a distinct profile
             .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(10));
-    String mockConfigProfileName = "mockConfigProfileName";
     ByteBuffer mockPagingState = Bytes.fromHexString("0xaaaa");
     CqlIdentifier mockKeyspace =
         supportsPerRequestKeyspace(session) ? CqlIdentifier.fromCql("system") : null;
@@ -297,7 +296,6 @@ public class BoundStatementCcmIT {
     SimpleStatementBuilder simpleStatementBuilder =
         SimpleStatement.builder("SELECT release_version FROM system.local")
             .setExecutionProfile(mockProfile)
-            .setExecutionProfileName(mockConfigProfileName)
             .setPagingState(mockPagingState)
             .setKeyspace(mockKeyspace)
             .setRoutingKeyspace(mockRoutingKeyspace)
@@ -326,7 +324,6 @@ public class BoundStatementCcmIT {
       BoundStatement boundStatement = createMethod.apply(preparedStatement);
 
       assertThat(boundStatement.getExecutionProfile()).isEqualTo(mockProfile);
-      assertThat(boundStatement.getExecutionProfileName()).isEqualTo(mockConfigProfileName);
       assertThat(boundStatement.getPagingState()).isEqualTo(mockPagingState);
       assertThat(boundStatement.getRoutingKeyspace())
           .isEqualTo(mockKeyspace != null ? mockKeyspace : mockRoutingKeyspace);
