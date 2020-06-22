@@ -676,6 +676,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
         if (cloudConfig.getAuthProvider().isPresent()) {
           withAuthProvider(cloudConfig.getAuthProvider().get());
         }
+        programmaticArguments = programmaticArgumentsBuilder.build();
       }
 
       boolean resolveAddresses =
