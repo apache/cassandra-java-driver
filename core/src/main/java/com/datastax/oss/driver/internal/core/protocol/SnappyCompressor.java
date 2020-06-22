@@ -23,6 +23,13 @@ import java.nio.ByteBuffer;
 import net.jcip.annotations.ThreadSafe;
 import org.xerial.snappy.Snappy;
 
+/**
+ * @implNote The Snappy protocol already encodes the uncompressed length in the compressed payload,
+ *     so {@link #compress(ByteBuf)} and {@link #compressWithoutLength(ByteBuf)} produce the same
+ *     output for this compressor. The corresponding parameters {@code
+ *     prependWithUncompressedLength} and {@code uncompressedLength} are ignored by their respective
+ *     methods.
+ */
 @ThreadSafe
 public class SnappyCompressor extends ByteBufCompressor {
 
@@ -41,7 +48,8 @@ public class SnappyCompressor extends ByteBufCompressor {
   }
 
   @Override
-  protected ByteBuf compressDirect(ByteBuf input) {
+  protected ByteBuf compressDirect(
+      ByteBuf input, /*ignored*/ boolean prependWithUncompressedLength) {
     int maxCompressedLength = Snappy.maxCompressedLength(input.readableBytes());
     // If the input is direct we will allocate a direct output buffer as well as this will allow us
     // to use Snappy.compress(ByteBuffer, ByteBuffer) and so eliminate memory copies.
@@ -64,7 +72,7 @@ public class SnappyCompressor extends ByteBufCompressor {
   }
 
   @Override
-  protected ByteBuf compressHeap(ByteBuf input) {
+  protected ByteBuf compressHeap(ByteBuf input, /*ignored*/ boolean prependWithUncompressedLength) {
     int maxCompressedLength = Snappy.maxCompressedLength(input.readableBytes());
     int inOffset = input.arrayOffset() + input.readerIndex();
     byte[] in = input.array();
@@ -92,7 +100,15 @@ public class SnappyCompressor extends ByteBufCompressor {
   }
 
   @Override
-  protected ByteBuf decompressDirect(ByteBuf input) {
+  protected int readUncompressedLength(ByteBuf compressed) {
+    // Since compress methods don't actually prepend with a length, we have nothing to read here.
+    // Return a bogus length (it will be ignored by the decompress methods, so the actual value
+    // doesn't matter).
+    return -1;
+  }
+
+  @Override
+  protected ByteBuf decompressDirect(ByteBuf input, /*ignored*/ int uncompressedLength) {
     ByteBuffer in = inputNioBuffer(input);
     // Increase reader index.
     input.readerIndex(input.writerIndex());
@@ -122,7 +138,7 @@ public class SnappyCompressor extends ByteBufCompressor {
   }
 
   @Override
-  protected ByteBuf decompressHeap(ByteBuf input) throws RuntimeException {
+  protected ByteBuf decompressHeap(ByteBuf input, /*ignored*/ int uncompressedLength) {
     // Not a direct buffer so use byte arrays...
     int inOffset = input.arrayOffset() + input.readerIndex();
     byte[] in = input.array();

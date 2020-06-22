@@ -78,8 +78,12 @@ public class ChannelFactory {
   public static final String SSL_HANDLER_NAME = "ssl";
   public static final String INBOUND_TRAFFIC_METER_NAME = "inboundTrafficMeter";
   public static final String OUTBOUND_TRAFFIC_METER_NAME = "outboundTrafficMeter";
-  public static final String FRAME_TO_BYTES_ENCODER_NAME = "encoder";
-  public static final String BYTES_TO_FRAME_DECODER_NAME = "decoder";
+  public static final String FRAME_TO_BYTES_ENCODER_NAME = "frameToBytesEncoder";
+  public static final String FRAME_TO_SEGMENT_ENCODER_NAME = "frameToSegmentEncoder";
+  public static final String SEGMENT_TO_BYTES_ENCODER_NAME = "segmentToBytesEncoder";
+  public static final String BYTES_TO_FRAME_DECODER_NAME = "bytesToFrameDecoder";
+  public static final String BYTES_TO_SEGMENT_DECODER_NAME = "bytesToSegmentDecoder";
+  public static final String SEGMENT_TO_FRAME_DECODER_NAME = "segmentToFrameDecoder";
   public static final String HEARTBEAT_HANDLER_NAME = "heartbeat";
   public static final String INFLIGHT_HANDLER_NAME = "inflight";
   public static final String INIT_HANDLER_NAME = "init";
