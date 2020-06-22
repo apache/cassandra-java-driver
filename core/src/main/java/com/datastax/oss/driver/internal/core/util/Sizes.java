@@ -44,7 +44,7 @@ public class Sizes {
 
     // Frame header has a fixed size of 9 for protocol version >= V3, which includes Frame flags
     // size
-    int size = FrameCodec.headerEncodedSize();
+    int size = FrameCodec.V3_ENCODED_HEADER_SIZE;
 
     if (!request.getCustomPayload().isEmpty()) {
       // Custom payload is not supported in v3, but assume user won't have a custom payload set if

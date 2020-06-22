@@ -4,6 +4,7 @@
 
 ### 4.8.0 (in progress)
 
+- [new feature] JAVA-2773: Support new protocol v5 message format
 - [improvement] JAVA-2841: Raise timeouts during connection initialization
 - [bug] JAVA-2331: Unregister old metrics when a node gets removed or changes RPC address
 - [improvement] JAVA-2850: Ignore credentials in secure connect bundle [DataStax Astra]

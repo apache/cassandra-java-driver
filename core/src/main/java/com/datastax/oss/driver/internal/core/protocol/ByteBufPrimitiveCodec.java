@@ -24,6 +24,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.zip.CRC32;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -67,6 +68,16 @@ public class ByteBufPrimitiveCodec implements PrimitiveCodec<ByteBuf> {
   }
 
   @Override
+  public void markReaderIndex(ByteBuf source) {
+    source.markReaderIndex();
+  }
+
+  @Override
+  public void resetReaderIndex(ByteBuf source) {
+    source.resetReaderIndex();
+  }
+
+  @Override
   public byte readByte(ByteBuf source) {
     return source.readByte();
   }
@@ -74,6 +85,11 @@ public class ByteBufPrimitiveCodec implements PrimitiveCodec<ByteBuf> {
   @Override
   public int readInt(ByteBuf source) {
     return source.readInt();
+  }
+
+  @Override
+  public int readInt(ByteBuf source, int offset) {
+    return source.getInt(source.readerIndex() + offset);
   }
 
   @Override
@@ -125,6 +141,16 @@ public class ByteBufPrimitiveCodec implements PrimitiveCodec<ByteBuf> {
   public String readLongString(ByteBuf source) {
     int length = readInt(source);
     return readString(source, length);
+  }
+
+  @Override
+  public ByteBuf readRetainedSlice(ByteBuf source, int sliceLength) {
+    return source.readRetainedSlice(sliceLength);
+  }
+
+  @Override
+  public void updateCrc(ByteBuf source, CRC32 crc) {
+    crc.update(source.internalNioBuffer(source.readerIndex(), source.readableBytes()));
   }
 
   @Override

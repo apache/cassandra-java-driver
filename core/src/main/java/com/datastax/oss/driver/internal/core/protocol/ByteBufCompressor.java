@@ -25,21 +25,39 @@ public abstract class ByteBufCompressor implements Compressor<ByteBuf> {
 
   @Override
   public ByteBuf compress(ByteBuf uncompressed) {
-    return uncompressed.isDirect() ? compressDirect(uncompressed) : compressHeap(uncompressed);
+    return uncompressed.isDirect()
+        ? compressDirect(uncompressed, true)
+        : compressHeap(uncompressed, true);
   }
 
-  protected abstract ByteBuf compressDirect(ByteBuf input);
+  @Override
+  public ByteBuf compressWithoutLength(ByteBuf uncompressed) {
+    return uncompressed.isDirect()
+        ? compressDirect(uncompressed, false)
+        : compressHeap(uncompressed, false);
+  }
 
-  protected abstract ByteBuf compressHeap(ByteBuf input);
+  protected abstract ByteBuf compressDirect(ByteBuf input, boolean prependWithUncompressedLength);
+
+  protected abstract ByteBuf compressHeap(ByteBuf input, boolean prependWithUncompressedLength);
 
   @Override
   public ByteBuf decompress(ByteBuf compressed) {
-    return compressed.isDirect() ? decompressDirect(compressed) : decompressHeap(compressed);
+    return decompressWithoutLength(compressed, readUncompressedLength(compressed));
   }
 
-  protected abstract ByteBuf decompressDirect(ByteBuf input);
+  protected abstract int readUncompressedLength(ByteBuf compressed);
 
-  protected abstract ByteBuf decompressHeap(ByteBuf input);
+  @Override
+  public ByteBuf decompressWithoutLength(ByteBuf compressed, int uncompressedLength) {
+    return compressed.isDirect()
+        ? decompressDirect(compressed, uncompressedLength)
+        : decompressHeap(compressed, uncompressedLength);
+  }
+
+  protected abstract ByteBuf decompressDirect(ByteBuf input, int uncompressedLength);
+
+  protected abstract ByteBuf decompressHeap(ByteBuf input, int uncompressedLength);
 
   protected static ByteBuffer inputNioBuffer(ByteBuf buf) {
     // Using internalNioBuffer(...) as we only hold the reference in this method and so can

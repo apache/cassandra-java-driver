@@ -39,6 +39,8 @@ import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogFormatter;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
+import com.datastax.oss.protocol.internal.PrimitiveCodec;
+import com.datastax.oss.protocol.internal.SegmentCodec;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.buffer.ByteBuf;
@@ -58,7 +60,13 @@ public interface InternalDriverContext extends DriverContext {
   Compressor<ByteBuf> getCompressor();
 
   @NonNull
+  PrimitiveCodec<ByteBuf> getPrimitiveCodec();
+
+  @NonNull
   FrameCodec<ByteBuf> getFrameCodec();
+
+  @NonNull
+  SegmentCodec<ByteBuf> getSegmentCodec();
 
   @NonNull
   ProtocolVersionRegistry getProtocolVersionRegistry();

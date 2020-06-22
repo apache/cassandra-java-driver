@@ -100,8 +100,10 @@ import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
 import com.datastax.oss.driver.shaded.guava.common.base.Ticker;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
+import com.datastax.oss.protocol.internal.PrimitiveCodec;
 import com.datastax.oss.protocol.internal.ProtocolV3ClientCodecs;
 import com.datastax.oss.protocol.internal.ProtocolV5ClientCodecs;
+import com.datastax.oss.protocol.internal.SegmentCodec;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.buffer.ByteBuf;
@@ -166,8 +168,12 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("eventBus", this::buildEventBus, cycleDetector);
   private final LazyReference<Compressor<ByteBuf>> compressorRef =
       new LazyReference<>("compressor", this::buildCompressor, cycleDetector);
+  private final LazyReference<PrimitiveCodec<ByteBuf>> primitiveCodecRef =
+      new LazyReference<>("primitiveCodec", this::buildPrimitiveCodec, cycleDetector);
   private final LazyReference<FrameCodec<ByteBuf>> frameCodecRef =
       new LazyReference<>("frameCodec", this::buildFrameCodec, cycleDetector);
+  private final LazyReference<SegmentCodec<ByteBuf>> segmentCodecRef =
+      new LazyReference<>("segmentCodec", this::buildSegmentCodec, cycleDetector);
   private final LazyReference<ProtocolVersionRegistry> protocolVersionRegistryRef =
       new LazyReference<>(
           "protocolVersionRegistry", this::buildProtocolVersionRegistry, cycleDetector);
@@ -439,15 +445,23 @@ public class DefaultDriverContext implements InternalDriverContext {
     }
   }
 
+  protected PrimitiveCodec<ByteBuf> buildPrimitiveCodec() {
+    return new ByteBufPrimitiveCodec(getNettyOptions().allocator());
+  }
+
   protected FrameCodec<ByteBuf> buildFrameCodec() {
     return new FrameCodec<>(
-        new ByteBufPrimitiveCodec(getNettyOptions().allocator()),
+        getPrimitiveCodec(),
         getCompressor(),
         new ProtocolV3ClientCodecs(),
         new ProtocolV4ClientCodecsForDse(),
         new ProtocolV5ClientCodecs(),
         new DseProtocolV1ClientCodecs(),
         new DseProtocolV2ClientCodecs());
+  }
+
+  protected SegmentCodec<ByteBuf> buildSegmentCodec() {
+    return new SegmentCodec<>(getPrimitiveCodec(), getCompressor());
   }
 
   protected ProtocolVersionRegistry buildProtocolVersionRegistry() {
@@ -784,8 +798,20 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   @NonNull
   @Override
+  public PrimitiveCodec<ByteBuf> getPrimitiveCodec() {
+    return primitiveCodecRef.get();
+  }
+
+  @NonNull
+  @Override
   public FrameCodec<ByteBuf> getFrameCodec() {
     return frameCodecRef.get();
+  }
+
+  @NonNull
+  @Override
+  public SegmentCodec<ByteBuf> getSegmentCodec() {
+    return segmentCodecRef.get();
   }
 
   @NonNull

@@ -240,7 +240,8 @@ public class DefaultProtocolVersionRegistry implements ProtocolVersionRegistry {
       return (DefaultProtocolVersion.V5.getCode() <= code
               && code < DseProtocolVersion.DSE_V1.getCode())
           || DseProtocolVersion.DSE_V2.getCode() <= code;
-    } else if (DefaultProtocolFeature.NOW_IN_SECONDS.equals(feature)) {
+    } else if (DefaultProtocolFeature.NOW_IN_SECONDS.equals(feature)
+        || DefaultProtocolFeature.MODERN_FRAMING.equals(feature)) {
       // OSS only, V5+
       return DefaultProtocolVersion.V5.getCode() <= code
           && code < DseProtocolVersion.DSE_V1.getCode();
