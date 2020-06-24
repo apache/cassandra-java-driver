@@ -198,7 +198,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
       ctx.channel().close();
     } else {
       // remove heartbeat handler from pipeline if present.
-      ChannelHandler heartbeatHandler = ctx.pipeline().get("heartbeat");
+      ChannelHandler heartbeatHandler = ctx.pipeline().get(ChannelFactory.HEARTBEAT_HANDLER_NAME);
       if (heartbeatHandler != null) {
         ctx.pipeline().remove(heartbeatHandler);
       }

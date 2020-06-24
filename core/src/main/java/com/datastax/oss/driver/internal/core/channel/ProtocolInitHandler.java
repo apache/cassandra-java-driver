@@ -123,7 +123,11 @@ class ProtocolInitHandler extends ConnectInitHandler {
     boolean result = super.setConnectSuccess();
     if (result) {
       // add heartbeat to pipeline now that protocol is initialized.
-      ctx.pipeline().addBefore("inflight", "heartbeat", heartbeatHandler);
+      ctx.pipeline()
+          .addBefore(
+              ChannelFactory.INFLIGHT_HANDLER_NAME,
+              ChannelFactory.HEARTBEAT_HANDLER_NAME,
+              heartbeatHandler);
     }
     return result;
   }

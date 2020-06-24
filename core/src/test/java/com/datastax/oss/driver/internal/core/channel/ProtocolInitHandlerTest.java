@@ -102,7 +102,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            "inflight",
+            ChannelFactory.INFLIGHT_HANDLER_NAME,
             new InFlightHandler(
                 DefaultProtocolVersion.V4,
                 new StreamIdGenerator(100),
@@ -120,7 +120,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            "init",
+            ChannelFactory.INIT_HANDLER_NAME,
             new ProtocolInitHandler(
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
@@ -154,7 +154,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            "init",
+            ChannelFactory.INIT_HANDLER_NAME,
             new ProtocolInitHandler(
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
@@ -207,12 +207,12 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
             heartbeatHandler,
             false);
 
-    channel.pipeline().addLast("init", protocolInitHandler);
+    channel.pipeline().addLast(ChannelFactory.INIT_HANDLER_NAME, protocolInitHandler);
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
     // heartbeat should initially not be in pipeline
-    assertThat(channel.pipeline().get("heartbeat")).isNull();
+    assertThat(channel.pipeline().get(ChannelFactory.HEARTBEAT_HANDLER_NAME)).isNull();
 
     // It should send a STARTUP message
     Frame requestFrame = readOutboundFrame();
@@ -231,7 +231,8 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     assertThat(connectFuture).isSuccess();
 
     // should have added heartbeat handler to pipeline.
-    assertThat(channel.pipeline().get("heartbeat")).isEqualTo(heartbeatHandler);
+    assertThat(channel.pipeline().get(ChannelFactory.HEARTBEAT_HANDLER_NAME))
+        .isEqualTo(heartbeatHandler);
     // should have removed itself from pipeline.
     assertThat(channel.pipeline().last()).isNotEqualTo(protocolInitHandler);
   }
@@ -241,7 +242,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            "init",
+            ChannelFactory.INIT_HANDLER_NAME,
             new ProtocolInitHandler(
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
@@ -267,7 +268,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            "init",
+            ChannelFactory.INIT_HANDLER_NAME,
             new ProtocolInitHandler(
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
@@ -332,7 +333,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            "init",
+            ChannelFactory.INIT_HANDLER_NAME,
             new ProtocolInitHandler(
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
@@ -366,7 +367,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            "init",
+            ChannelFactory.INIT_HANDLER_NAME,
             new ProtocolInitHandler(
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
@@ -413,7 +414,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            "init",
+            ChannelFactory.INIT_HANDLER_NAME,
             new ProtocolInitHandler(
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
@@ -444,7 +445,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            "init",
+            ChannelFactory.INIT_HANDLER_NAME,
             new ProtocolInitHandler(
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
@@ -478,7 +479,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            "init",
+            ChannelFactory.INIT_HANDLER_NAME,
             new ProtocolInitHandler(
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
@@ -510,7 +511,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            "init",
+            ChannelFactory.INIT_HANDLER_NAME,
             new ProtocolInitHandler(
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
@@ -545,7 +546,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            "init",
+            ChannelFactory.INIT_HANDLER_NAME,
             new ProtocolInitHandler(
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
@@ -580,7 +581,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            "init",
+            ChannelFactory.INIT_HANDLER_NAME,
             new ProtocolInitHandler(
                 internalDriverContext,
                 DefaultProtocolVersion.V4,
