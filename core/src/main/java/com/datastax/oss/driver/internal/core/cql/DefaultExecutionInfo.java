@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
+import com.datastax.oss.driver.api.core.cql.PagingState;
 import com.datastax.oss.driver.api.core.cql.QueryTrace;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -127,6 +128,20 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   @Nullable
   public ByteBuffer getPagingState() {
     return pagingState;
+  }
+
+  @Nullable
+  @Override
+  public PagingState getSafePagingState() {
+    if (pagingState == null) {
+      return null;
+    } else {
+      if (!(request instanceof Statement)) {
+        throw new IllegalStateException("Only statements should have a paging state");
+      }
+      Statement<?> statement = (Statement<?>) request;
+      return new DefaultPagingState(pagingState, statement, session.getContext());
+    }
   }
 
   @NonNull

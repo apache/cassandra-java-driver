@@ -37,7 +37,6 @@ import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata;
-import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.servererrors.AlreadyExistsException;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
 import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
@@ -56,15 +55,12 @@ import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
 import com.datastax.oss.driver.api.core.session.Request;
-import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.DefaultProtocolFeature;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
-import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
-import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
+import com.datastax.oss.driver.internal.core.data.ValuesHelper;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.primitives.Ints;
@@ -260,7 +256,10 @@ public class Conversions {
       ByteBuffer[] encodedValues = new ByteBuffer[values.size()];
       int i = 0;
       for (Object value : values) {
-        encodedValues[i++] = (value == null) ? null : encode(value, codecRegistry, protocolVersion);
+        encodedValues[i++] =
+            (value == null)
+                ? null
+                : ValuesHelper.encodeToDefaultCqlMapping(value, codecRegistry, protocolVersion);
       }
       return NullAllowingImmutableList.of(encodedValues);
     }
@@ -281,27 +280,11 @@ public class Conversions {
         } else {
           encodedValues.put(
               entry.getKey().asInternal(),
-              encode(entry.getValue(), codecRegistry, protocolVersion));
+              ValuesHelper.encodeToDefaultCqlMapping(
+                  entry.getValue(), codecRegistry, protocolVersion));
         }
       }
       return encodedValues.build();
-    }
-  }
-
-  public static ByteBuffer encode(
-      Object value, CodecRegistry codecRegistry, ProtocolVersion protocolVersion) {
-    if (value instanceof Token) {
-      if (value instanceof Murmur3Token) {
-        return TypeCodecs.BIGINT.encode(((Murmur3Token) value).getValue(), protocolVersion);
-      } else if (value instanceof ByteOrderedToken) {
-        return TypeCodecs.BLOB.encode(((ByteOrderedToken) value).getValue(), protocolVersion);
-      } else if (value instanceof RandomToken) {
-        return TypeCodecs.VARINT.encode(((RandomToken) value).getValue(), protocolVersion);
-      } else {
-        throw new IllegalArgumentException("Unsupported token type " + value.getClass());
-      }
-    } else {
-      return codecRegistry.codecFor(value).encode(value, protocolVersion);
     }
   }
 
