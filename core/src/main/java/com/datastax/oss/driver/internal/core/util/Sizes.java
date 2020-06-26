@@ -24,7 +24,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
-import com.datastax.oss.driver.internal.core.cql.Conversions;
+import com.datastax.oss.driver.internal.core.data.ValuesHelper;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import com.datastax.oss.protocol.internal.PrimitiveSizes;
 import com.datastax.oss.protocol.internal.request.query.QueryOptions;
@@ -83,7 +83,8 @@ public class Sizes {
       List<ByteBuffer> positionalValues =
           new ArrayList<>(simpleStatement.getPositionalValues().size());
       for (Object value : simpleStatement.getPositionalValues()) {
-        positionalValues.add(Conversions.encode(value, codecRegistry, protocolVersion));
+        positionalValues.add(
+            ValuesHelper.encodeToDefaultCqlMapping(value, codecRegistry, protocolVersion));
       }
 
       size += Values.sizeOfPositionalValues(positionalValues);
@@ -94,7 +95,8 @@ public class Sizes {
       for (Map.Entry<CqlIdentifier, Object> value : simpleStatement.getNamedValues().entrySet()) {
         namedValues.put(
             value.getKey().asInternal(),
-            Conversions.encode(value.getValue(), codecRegistry, protocolVersion));
+            ValuesHelper.encodeToDefaultCqlMapping(
+                value.getValue(), codecRegistry, protocolVersion));
       }
 
       size += Values.sizeOfNamedValues(namedValues);

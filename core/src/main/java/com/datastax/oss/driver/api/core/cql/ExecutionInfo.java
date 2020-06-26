@@ -19,12 +19,14 @@ import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
+import com.datastax.oss.driver.internal.core.cql.DefaultPagingState;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -110,7 +112,22 @@ public interface ExecutionInfo {
   List<Map.Entry<Node, Throwable>> getErrors();
 
   /**
-   * The paging state of the query.
+   * The paging state of the query, in its raw form.
+   *
+   * <p>This represents the next page to be fetched if this query has multiple page of results. It
+   * can be saved and reused later on the same statement.
+   *
+   * <p>Note that this is the equivalent of driver 3's {@code getPagingStateUnsafe()}. If you're
+   * looking for the method that returns a {@link PagingState}, use {@link #getSafePagingState()}.
+   *
+   * @return the paging state, or {@code null} if there is no next page.
+   */
+  @Nullable
+  ByteBuffer getPagingState();
+
+  /**
+   * The paging state of the query, in a safe wrapper that checks if it's reused on the right
+   * statement.
    *
    * <p>This represents the next page to be fetched if this query has multiple page of results. It
    * can be saved and reused later on the same statement.
@@ -118,7 +135,21 @@ public interface ExecutionInfo {
    * @return the paging state, or {@code null} if there is no next page.
    */
   @Nullable
-  ByteBuffer getPagingState();
+  default PagingState getSafePagingState() {
+    // Default implementation for backward compatibility, but we override it in the concrete class,
+    // because it knows the attachment point.
+    ByteBuffer rawPagingState = getPagingState();
+    if (rawPagingState == null) {
+      return null;
+    } else {
+      Request request = getRequest();
+      if (!(request instanceof Statement)) {
+        throw new IllegalStateException("Only statements should have a paging state");
+      }
+      Statement<?> statement = (Statement<?>) request;
+      return new DefaultPagingState(rawPagingState, statement, AttachmentPoint.NONE);
+    }
+  }
 
   /**
    * The server-side warnings for this query, if any (otherwise the list will be empty).

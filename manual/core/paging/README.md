@@ -168,6 +168,31 @@ The paging state can only be reused with the exact same statement (same query st
 parameters). It is an opaque value that is only meant to be collected, stored and re-used. If you
 try to modify its contents or reuse it with a different statement, the results are unpredictable.
 
+If you want additional safety, the driver also provides a "safe" wrapper around the raw value:
+[PagingState]. 
+
+```java
+PagingState pagingState = rs.getExecutionInfo().getSafePagingState();
+```
+
+It works in the exact same manner, except that it will throw an `IllegalStateException` if you try
+to reinject it in the wrong statement. This allows you to detect the error early, without a
+roundtrip to the server.
+
+Note that, if you use a simple statement and one of the bound values requires a [custom
+codec](../custom_codecs), you have to provide a reference to the session when reinjecting the paging
+state:
+
+```java
+CustomType value = ...
+SimpleStatement statement = SimpleStatement.newInstance("query", value);
+// session required here, otherwise you will get a CodecNotFoundException:
+statement = statement.setPagingState(pagingState, session);
+```
+
+This is a small corner case because checking the state requires encoding the values, and a simple
+statement doesn't have a reference to the codec registry. If you don't use custom codecs, or if the
+statement is a bound statement, you can use the regular `setPagingState(pagingState)`.
 
 ### Offset queries
 
@@ -233,6 +258,7 @@ and offset paging.
 [AsyncPagingIterable.hasMorePages]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/AsyncPagingIterable.html#hasMorePages--
 [AsyncPagingIterable.fetchNextPage]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/AsyncPagingIterable.html#fetchNextPage--
 [OffsetPager]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/paging/OffsetPager.html
+[PagingState]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/cql/PagingState.html
 
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
 

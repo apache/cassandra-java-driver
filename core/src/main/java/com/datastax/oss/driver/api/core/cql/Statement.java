@@ -303,6 +303,50 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   SelfT setPagingState(@Nullable ByteBuffer newPagingState);
 
   /**
+   * Sets the paging state to send with the statement, or {@code null} if this statement has no
+   * paging state.
+   *
+   * <p>This variant uses the "safe" paging state wrapper, it will throw immediately if the
+   * statement doesn't match the one that the state was initially extracted from (same query string,
+   * same parameters). The advantage is that it fails fast, instead of waiting for an error response
+   * from the server.
+   *
+   * <p>Note that, if this statement is a {@link SimpleStatement} with bound values, those values
+   * must be encoded in order to perform the check. This method uses the default codec registry and
+   * default protocol version. This might fail if you use custom codecs; in that case, use {@link
+   * #setPagingState(PagingState, Session)} instead.
+   *
+   * @throws IllegalArgumentException if the given state does not match this statement.
+   * @see #setPagingState(ByteBuffer)
+   * @see ExecutionInfo#getSafePagingState()
+   */
+  @NonNull
+  @CheckReturnValue
+  default SelfT setPagingState(@Nullable PagingState newPagingState) {
+    return setPagingState(newPagingState, null);
+  }
+
+  /**
+   * Alternative to {@link #setPagingState(PagingState)} that specifies the session the statement
+   * will be executed with. <b>You only need this for simple statements, and if you use custom
+   * codecs.</b> Bound statements already know which session they are attached to.
+   */
+  @NonNull
+  @CheckReturnValue
+  default SelfT setPagingState(@Nullable PagingState newPagingState, @Nullable Session session) {
+    if (newPagingState == null) {
+      return setPagingState((ByteBuffer) null);
+    } else if (newPagingState.matches(this, session)) {
+      return setPagingState(newPagingState.getRawPagingState());
+    } else {
+      throw new IllegalArgumentException(
+          "Paging state mismatch, "
+              + "this means that either the paging state contents were altered, "
+              + "or you're trying to apply it to a different statement");
+    }
+  }
+
+  /**
    * Returns the page size to use for the statement.
    *
    * @return the set page size, otherwise 0 or a negative value to use the default value defined in
