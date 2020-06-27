@@ -166,6 +166,8 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     when(context.getRequestThrottler()).thenReturn(new PassThroughRequestThrottler(context));
 
     when(context.getRequestTracker()).thenReturn(new NoopRequestTracker(context));
+
+    when(session.initFuture()).thenReturn(CompletableFuture.completedFuture(null));
   }
 
   public DefaultSession getSession() {

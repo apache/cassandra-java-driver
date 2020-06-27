@@ -56,30 +56,35 @@ public class CqlPrepareAsyncProcessor
       DefaultSession session,
       InternalDriverContext context,
       String sessionLogPrefix) {
-
-    try {
-      CompletableFuture<PreparedStatement> result = cache.getIfPresent(request);
-      if (result == null) {
-        CompletableFuture<PreparedStatement> mine = new CompletableFuture<>();
-        result = cache.get(request, () -> mine);
-        if (result == mine) {
-          new CqlPrepareHandler(request, session, context, sessionLogPrefix)
-              .handle()
-              .whenComplete(
-                  (preparedStatement, error) -> {
-                    if (error != null) {
-                      mine.completeExceptionally(error);
-                      cache.invalidate(request); // Make sure failure isn't cached indefinitely
-                    } else {
-                      mine.complete(preparedStatement);
-                    }
-                  });
-        }
-      }
-      return result;
-    } catch (ExecutionException e) {
-      return CompletableFutures.failedFuture(e.getCause());
-    }
+    return session
+        .initFuture()
+        .thenCompose(
+            v -> {
+              try {
+                CompletableFuture<PreparedStatement> result = cache.getIfPresent(request);
+                if (result == null) {
+                  CompletableFuture<PreparedStatement> mine = new CompletableFuture<>();
+                  result = cache.get(request, () -> mine);
+                  if (result == mine) {
+                    new CqlPrepareHandler(request, session, context, sessionLogPrefix)
+                        .handle()
+                        .whenComplete(
+                            (preparedStatement, error) -> {
+                              if (error != null) {
+                                mine.completeExceptionally(error);
+                                cache.invalidate(
+                                    request); // Make sure failure isn't cached indefinitely
+                              } else {
+                                mine.complete(preparedStatement);
+                              }
+                            });
+                  }
+                }
+                return result;
+              } catch (ExecutionException e) {
+                return CompletableFutures.failedFuture(e.getCause());
+              }
+            });
   }
 
   @Override

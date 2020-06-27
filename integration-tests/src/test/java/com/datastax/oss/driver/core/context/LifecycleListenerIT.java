@@ -80,8 +80,8 @@ public class LifecycleListenerIT {
 
   private CqlSession newSession(TestLifecycleListener listener) {
     TestContext context = new TestContext(new DefaultDriverConfigLoader(), listener);
-    return CompletableFutures.getUninterruptibly(
-        DefaultSession.init(context, SIMULACRON_RULE.getContactPoints(), null));
+    DefaultSession session = new DefaultSession(context, SIMULACRON_RULE.getContactPoints(), null);
+    return CompletableFutures.getUninterruptibly(session.init().thenApply(v -> session));
   }
 
   public static class TestLifecycleListener implements LifecycleListener {

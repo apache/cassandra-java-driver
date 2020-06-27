@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.cql.LazyCqlSession;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -46,7 +47,9 @@ import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -622,6 +625,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
     CompletableFutures.propagateCancellation(wrapStage, buildStage);
     return wrapStage;
   }
+
   /**
    * Convenience method to call {@link #buildAsync()} and block on the result.
    *
@@ -633,42 +637,73 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
     return CompletableFutures.getUninterruptibly(buildAsync());
   }
 
+  /**
+   * Creates an uninitialized session with the options set by this builder.
+   *
+   * <p>The returned session will be disconnected; it must be manually {@linkplain
+   * LazyCqlSession#init() initialized} before it is used to perform queries.
+   *
+   * @throws UnsupportedOperationException it this builder does not support creating uninitialized
+   *     sessions.
+   */
+  @NonNull
+  public SessionT buildLazy() {
+    LazyCqlSession defaultSession = buildDefaultSessionLazy();
+    return wrapLazy(defaultSession);
+  }
+
   protected abstract SessionT wrap(@NonNull CqlSession defaultSession);
+
+  protected SessionT wrapLazy(@NonNull LazyCqlSession defaultSession) {
+    throw new UnsupportedOperationException("Building uninitialized sessions not supported");
+  }
 
   @NonNull
   protected final CompletionStage<CqlSession> buildDefaultSessionAsync() {
     try {
+      LazyCqlSession defaultSession = buildDefaultSessionLazy();
+      return defaultSession.init().thenApply(v -> defaultSession);
+    } catch (Throwable t) {
+      // We construct the session synchronously (until the init() call), but async clients expect a
+      // failed future if anything goes wrong. So wrap any error from that synchronous part.
+      return CompletableFutures.failedFuture(t);
+    }
+  }
 
-      ProgrammaticArguments programmaticArguments = programmaticArgumentsBuilder.build();
+  @NonNull
+  protected LazyCqlSession buildDefaultSessionLazy() {
 
-      DriverConfigLoader configLoader =
-          this.configLoader != null
-              ? this.configLoader
-              : defaultConfigLoader(programmaticArguments.getClassLoader());
+    ProgrammaticArguments programmaticArguments = programmaticArgumentsBuilder.build();
 
-      DriverExecutionProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
-      if (cloudConfigInputStream == null) {
-        String configUrlString =
-            defaultConfig.getString(DefaultDriverOption.CLOUD_SECURE_CONNECT_BUNDLE, null);
-        if (configUrlString != null) {
-          cloudConfigInputStream = () -> getURL(configUrlString).openStream();
-        }
+    DriverConfigLoader configLoader1 =
+        this.configLoader != null
+            ? this.configLoader
+            : defaultConfigLoader(programmaticArguments.getClassLoader());
+
+    DriverExecutionProfile defaultConfig = configLoader1.getInitialConfig().getDefaultProfile();
+    if (cloudConfigInputStream == null) {
+      String configUrlString =
+          defaultConfig.getString(DefaultDriverOption.CLOUD_SECURE_CONNECT_BUNDLE, null);
+      if (configUrlString != null) {
+        cloudConfigInputStream = () -> getURL(configUrlString).openStream();
       }
-      List<String> configContactPoints =
-          defaultConfig.getStringList(DefaultDriverOption.CONTACT_POINTS, Collections.emptyList());
-      if (cloudConfigInputStream != null) {
-        if (!programmaticContactPoints.isEmpty() || !configContactPoints.isEmpty()) {
-          throw new IllegalStateException(
-              "Can't use withCloudSecureConnectBundle and addContactPoint(s). They are mutually exclusive.");
-        }
-        String configuredSSLFactory =
-            defaultConfig.getString(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS, null);
-        if (sslConfigured || configuredSSLFactory != null) {
-          throw new IllegalStateException(
-              "Can't use withCloudSecureConnectBundle and explicitly specify ssl configuration. They are mutually exclusive.");
-        }
-        CloudConfig cloudConfig =
-            new CloudConfigFactory().createCloudConfig(cloudConfigInputStream.call());
+    }
+    List<String> configContactPoints =
+        defaultConfig.getStringList(DefaultDriverOption.CONTACT_POINTS, Collections.emptyList());
+    if (cloudConfigInputStream != null) {
+      if (!programmaticContactPoints.isEmpty() || !configContactPoints.isEmpty()) {
+        throw new IllegalStateException(
+            "Can't use withCloudSecureConnectBundle and addContactPoint(s). They are mutually exclusive.");
+      }
+      String configuredSSLFactory =
+          defaultConfig.getString(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS, null);
+      if (sslConfigured || configuredSSLFactory != null) {
+        throw new IllegalStateException(
+            "Can't use withCloudSecureConnectBundle and explicitly specify ssl configuration. They are mutually exclusive.");
+      }
+      try {
+        InputStream is = cloudConfigInputStream.call();
+        CloudConfig cloudConfig = new CloudConfigFactory().createCloudConfig(is);
         addContactEndPoints(cloudConfig.getEndPoints());
         withLocalDatacenter(cloudConfig.getLocalDatacenter());
         withSslEngineFactory(cloudConfig.getSslEngineFactory());
@@ -676,30 +711,29 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
         if (cloudConfig.getAuthProvider().isPresent()) {
           withAuthProvider(cloudConfig.getAuthProvider().get());
         }
-        programmaticArguments = programmaticArgumentsBuilder.build();
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
       }
-
-      boolean resolveAddresses =
-          defaultConfig.getBoolean(DefaultDriverOption.RESOLVE_CONTACT_POINTS, true);
-
-      Set<EndPoint> contactPoints =
-          ContactPoints.merge(programmaticContactPoints, configContactPoints, resolveAddresses);
-
-      if (keyspace == null && defaultConfig.isDefined(DefaultDriverOption.SESSION_KEYSPACE)) {
-        keyspace =
-            CqlIdentifier.fromCql(defaultConfig.getString(DefaultDriverOption.SESSION_KEYSPACE));
-      }
-
-      return DefaultSession.init(
-          (InternalDriverContext) buildContext(configLoader, programmaticArguments),
-          contactPoints,
-          keyspace);
-
-    } catch (Throwable t) {
-      // We construct the session synchronously (until the init() call), but async clients expect a
-      // failed future if anything goes wrong. So wrap any error from that synchronous part.
-      return CompletableFutures.failedFuture(t);
+      programmaticArguments = programmaticArgumentsBuilder.build();
     }
+
+    boolean resolveAddresses =
+        defaultConfig.getBoolean(DefaultDriverOption.RESOLVE_CONTACT_POINTS, true);
+
+    Set<EndPoint> contactPoints =
+        ContactPoints.merge(programmaticContactPoints, configContactPoints, resolveAddresses);
+
+    InternalDriverContext driverContext =
+        (InternalDriverContext) buildContext(configLoader1, programmaticArguments);
+
+    if (keyspace == null && defaultConfig.isDefined(DefaultDriverOption.SESSION_KEYSPACE)) {
+      keyspace =
+          CqlIdentifier.fromCql(defaultConfig.getString(DefaultDriverOption.SESSION_KEYSPACE));
+    }
+
+    return new DefaultSession(driverContext, contactPoints, keyspace);
   }
 
   /**

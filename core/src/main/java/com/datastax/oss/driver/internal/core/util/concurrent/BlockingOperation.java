@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
+import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.FastThreadLocalThread;
 import java.util.concurrent.ThreadFactory;
@@ -46,6 +47,17 @@ public class BlockingOperation {
           "Detected a synchronous API call on a driver thread, "
               + "failing because this can cause deadlocks.");
     }
+  }
+
+  /**
+   * Waits indefinitely until the given session is initialized.
+   *
+   * @throws com.datastax.oss.driver.api.core.DriverException if the thread is interrupted while
+   *     waiting, or if the session fails to initialize.
+   */
+  public static void waitUntilSessionInitialized(DefaultSession session) {
+    checkNotDriverThread();
+    CompletableFutures.getUninterruptibly(session.initFuture());
   }
 
   /**

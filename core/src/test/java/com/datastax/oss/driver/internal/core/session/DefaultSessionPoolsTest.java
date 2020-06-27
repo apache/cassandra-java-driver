@@ -914,7 +914,8 @@ public class DefaultSessionPoolsTest {
   }
 
   private CompletionStage<CqlSession> newSession() {
-    return DefaultSession.init(context, Collections.emptySet(), KEYSPACE);
+    DefaultSession session = new DefaultSession(context, Collections.emptySet(), KEYSPACE);
+    return session.init().thenApply(v -> session);
   }
 
   private static DefaultNode mockLocalNode(int i) {

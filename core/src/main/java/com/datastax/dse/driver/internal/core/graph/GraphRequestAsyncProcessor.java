@@ -73,26 +73,30 @@ public class GraphRequestAsyncProcessor
       DefaultSession session,
       InternalDriverContext context,
       String sessionLogPrefix) {
-
-    if (graphSupportChecker.isPagingEnabled(request, context)) {
-      return new ContinuousGraphRequestHandler(
-              request,
-              session,
-              context,
-              sessionLogPrefix,
-              getGraphBinaryModule(),
-              graphSupportChecker)
-          .handle();
-    } else {
-      return new GraphRequestHandler(
-              request,
-              session,
-              context,
-              sessionLogPrefix,
-              getGraphBinaryModule(),
-              graphSupportChecker)
-          .handle();
-    }
+    return session
+        .initFuture()
+        .thenCompose(
+            v -> {
+              if (graphSupportChecker.isPagingEnabled(request, context)) {
+                return new ContinuousGraphRequestHandler(
+                        request,
+                        session,
+                        context,
+                        sessionLogPrefix,
+                        getGraphBinaryModule(),
+                        graphSupportChecker)
+                    .handle();
+              } else {
+                return new GraphRequestHandler(
+                        request,
+                        session,
+                        context,
+                        sessionLogPrefix,
+                        getGraphBinaryModule(),
+                        graphSupportChecker)
+                    .handle();
+              }
+            });
   }
 
   @Override

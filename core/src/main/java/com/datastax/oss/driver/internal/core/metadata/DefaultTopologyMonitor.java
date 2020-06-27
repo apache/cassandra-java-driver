@@ -108,41 +108,48 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     if (closeFuture.isDone()) {
       return CompletableFutures.failedFuture(new IllegalStateException("closed"));
     }
-    LOG.debug("[{}] Refreshing info for {}", logPrefix, node);
-    DriverChannel channel = controlConnection.channel();
-    EndPoint localEndPoint = channel.getEndPoint();
-    if (node.getEndPoint().equals(channel.getEndPoint())) {
-      // refreshNode is called for nodes that just came up. If the control node just came up, it
-      // means the control connection just reconnected, which means we did a full node refresh. So
-      // we don't need to process this call.
-      LOG.debug("[{}] Ignoring refresh of control node", logPrefix);
-      return CompletableFuture.completedFuture(Optional.empty());
-    } else if (node.getBroadcastAddress().isPresent()) {
-      CompletionStage<AdminResult> query;
-      if (isSchemaV2) {
-        query =
-            query(
-                channel,
-                "SELECT * FROM "
-                    + getPeerTableName()
-                    + " WHERE peer = :address and peer_port = :port",
-                ImmutableMap.of(
-                    "address",
-                    node.getBroadcastAddress().get().getAddress(),
-                    "port",
-                    node.getBroadcastAddress().get().getPort()));
-      } else {
-        query =
-            query(
-                channel,
-                "SELECT * FROM " + getPeerTableName() + " WHERE peer = :address",
-                ImmutableMap.of("address", node.getBroadcastAddress().get().getAddress()));
-      }
-      return query.thenApply(result -> firstPeerRowAsNodeInfo(result, localEndPoint));
-    } else {
-      return query(channel, "SELECT * FROM " + getPeerTableName())
-          .thenApply(result -> findInPeers(result, node.getHostId(), localEndPoint));
-    }
+    return initFuture()
+        .thenCompose(
+            v -> {
+              LOG.debug("[{}] Refreshing info for {}", logPrefix, node);
+              DriverChannel channel = controlConnection.channel();
+              EndPoint localEndPoint = channel.getEndPoint();
+              if (node.getEndPoint().equals(channel.getEndPoint())) {
+                // refreshNode is called for nodes that just came up. If the control node just came
+                // up, it
+                // means the control connection just reconnected, which means we did a full node
+                // refresh. So
+                // we don't need to process this call.
+                LOG.debug("[{}] Ignoring refresh of control node", logPrefix);
+                return CompletableFuture.completedFuture(Optional.empty());
+              } else if (node.getBroadcastAddress().isPresent()) {
+                CompletionStage<AdminResult> query;
+                if (isSchemaV2) {
+                  query =
+                      query(
+                          channel,
+                          "SELECT * FROM "
+                              + getPeerTableName()
+                              + " WHERE peer = :address and peer_port = :port",
+                          ImmutableMap.of(
+                              "address",
+                              node.getBroadcastAddress().get().getAddress(),
+                              "port",
+                              node.getBroadcastAddress().get().getPort()));
+                } else {
+                  query =
+                      query(
+                          channel,
+                          "SELECT * FROM " + getPeerTableName() + " WHERE peer = :address",
+                          ImmutableMap.of(
+                              "address", node.getBroadcastAddress().get().getAddress()));
+                }
+                return query.thenApply(result -> firstPeerRowAsNodeInfo(result, localEndPoint));
+              } else {
+                return query(channel, "SELECT * FROM " + getPeerTableName())
+                    .thenApply(result -> findInPeers(result, node.getHostId(), localEndPoint));
+              }
+            });
   }
 
   @Override
@@ -150,11 +157,15 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     if (closeFuture.isDone()) {
       return CompletableFutures.failedFuture(new IllegalStateException("closed"));
     }
-    LOG.debug("[{}] Fetching info for new node {}", logPrefix, broadcastRpcAddress);
-    DriverChannel channel = controlConnection.channel();
-    EndPoint localEndPoint = channel.getEndPoint();
-    return query(channel, "SELECT * FROM " + getPeerTableName())
-        .thenApply(result -> findInPeers(result, broadcastRpcAddress, localEndPoint));
+    return initFuture()
+        .thenCompose(
+            s -> {
+              LOG.debug("[{}] Fetching info for new node {}", logPrefix, broadcastRpcAddress);
+              DriverChannel channel = controlConnection.channel();
+              EndPoint localEndPoint = channel.getEndPoint();
+              return query(channel, "SELECT * FROM " + getPeerTableName())
+                  .thenApply(result -> findInPeers(result, broadcastRpcAddress, localEndPoint));
+            });
   }
 
   @Override
@@ -162,61 +173,72 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     if (closeFuture.isDone()) {
       return CompletableFutures.failedFuture(new IllegalStateException("closed"));
     }
-    LOG.debug("[{}] Refreshing node list", logPrefix);
-    DriverChannel channel = controlConnection.channel();
-    EndPoint localEndPoint = channel.getEndPoint();
+    return initFuture()
+        .thenCompose(
+            s -> {
+              LOG.debug("[{}] Refreshing node list", logPrefix);
+              DriverChannel channel = controlConnection.channel();
+              EndPoint localEndPoint = channel.getEndPoint();
 
-    savePort(channel);
+              savePort(channel);
 
-    CompletionStage<AdminResult> localQuery = query(channel, "SELECT * FROM system.local");
-    CompletionStage<AdminResult> peersV2Query = query(channel, "SELECT * FROM system.peers_v2");
-    CompletableFuture<AdminResult> peersQuery = new CompletableFuture<>();
+              CompletionStage<AdminResult> localQuery =
+                  query(channel, "SELECT * FROM system.local");
+              CompletionStage<AdminResult> peersV2Query =
+                  query(channel, "SELECT * FROM system.peers_v2");
+              CompletableFuture<AdminResult> peersQuery = new CompletableFuture<>();
 
-    peersV2Query.whenComplete(
-        (r, t) -> {
-          if (t != null) {
-            // If system.peers_v2 does not exist, downgrade to system.peers
-            if (t instanceof UnexpectedResponseException
-                && ((UnexpectedResponseException) t).message instanceof Error) {
-              Error error = (Error) ((UnexpectedResponseException) t).message;
-              if (error.code == ProtocolConstants.ErrorCode.INVALID
-                  // Also downgrade on server error with a specific error message (DSE 6.0.0 to
-                  // 6.0.2 with search enabled)
-                  || (error.code == ProtocolConstants.ErrorCode.SERVER_ERROR
-                      && error.message.contains("Unknown keyspace/cf pair (system.peers_v2)"))) {
-                this.isSchemaV2 = false; // We should not attempt this query in the future.
-                CompletableFutures.completeFrom(
-                    query(channel, "SELECT * FROM system.peers"), peersQuery);
-                return;
-              }
-            }
-            peersQuery.completeExceptionally(t);
-          } else {
-            peersQuery.complete(r);
-          }
-        });
+              peersV2Query.whenComplete(
+                  (r, t) -> {
+                    if (t != null) {
+                      // If system.peers_v2 does not exist, downgrade to system.peers
+                      if (t instanceof UnexpectedResponseException
+                          && ((UnexpectedResponseException) t).message instanceof Error) {
+                        Error error = (Error) ((UnexpectedResponseException) t).message;
+                        if (error.code == ProtocolConstants.ErrorCode.INVALID
+                            // Also downgrade on server error with a specific error message (DSE
+                            // 6.0.0 to
+                            // 6.0.2 with search enabled)
+                            || (error.code == ProtocolConstants.ErrorCode.SERVER_ERROR
+                                && error.message.contains(
+                                    "Unknown keyspace/cf pair (system.peers_v2)"))) {
+                          this.isSchemaV2 =
+                              false; // We should not attempt this query in the future.
+                          CompletableFutures.completeFrom(
+                              query(channel, "SELECT * FROM system.peers"), peersQuery);
+                          return;
+                        }
+                      }
+                      peersQuery.completeExceptionally(t);
+                    } else {
+                      peersQuery.complete(r);
+                    }
+                  });
 
-    return localQuery.thenCombine(
-        peersQuery,
-        (controlNodeResult, peersResult) -> {
-          List<NodeInfo> nodeInfos = new ArrayList<>();
-          AdminRow localRow = controlNodeResult.iterator().next();
-          InetSocketAddress localBroadcastRpcAddress =
-              getBroadcastRpcAddress(localRow, localEndPoint);
-          nodeInfos.add(nodeInfoBuilder(localRow, localBroadcastRpcAddress, localEndPoint).build());
-          for (AdminRow peerRow : peersResult) {
-            if (isPeerValid(peerRow)) {
-              InetSocketAddress peerBroadcastRpcAddress =
-                  getBroadcastRpcAddress(peerRow, localEndPoint);
-              if (peerBroadcastRpcAddress != null) {
-                NodeInfo nodeInfo =
-                    nodeInfoBuilder(peerRow, peerBroadcastRpcAddress, localEndPoint).build();
-                nodeInfos.add(nodeInfo);
-              }
-            }
-          }
-          return nodeInfos;
-        });
+              return localQuery.thenCombine(
+                  peersQuery,
+                  (controlNodeResult, peersResult) -> {
+                    List<NodeInfo> nodeInfos = new ArrayList<>();
+                    AdminRow localRow = controlNodeResult.iterator().next();
+                    InetSocketAddress localBroadcastRpcAddress =
+                        getBroadcastRpcAddress(localRow, localEndPoint);
+                    nodeInfos.add(
+                        nodeInfoBuilder(localRow, localBroadcastRpcAddress, localEndPoint).build());
+                    for (AdminRow peerRow : peersResult) {
+                      if (isPeerValid(peerRow)) {
+                        InetSocketAddress peerBroadcastRpcAddress =
+                            getBroadcastRpcAddress(peerRow, localEndPoint);
+                        if (peerBroadcastRpcAddress != null) {
+                          NodeInfo nodeInfo =
+                              nodeInfoBuilder(peerRow, peerBroadcastRpcAddress, localEndPoint)
+                                  .build();
+                          nodeInfos.add(nodeInfo);
+                        }
+                      }
+                    }
+                    return nodeInfos;
+                  });
+            });
   }
 
   @Override
@@ -224,8 +246,12 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     if (closeFuture.isDone()) {
       return CompletableFuture.completedFuture(true);
     }
-    DriverChannel channel = controlConnection.channel();
-    return new SchemaAgreementChecker(channel, context, logPrefix).run();
+    return initFuture()
+        .thenCompose(
+            s -> {
+              DriverChannel channel = controlConnection.channel();
+              return new SchemaAgreementChecker(channel, context, logPrefix).run();
+            });
   }
 
   @NonNull

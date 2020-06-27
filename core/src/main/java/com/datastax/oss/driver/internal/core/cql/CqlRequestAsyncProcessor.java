@@ -41,7 +41,10 @@ public class CqlRequestAsyncProcessor
       DefaultSession session,
       InternalDriverContext context,
       String sessionLogPrefix) {
-    return new CqlRequestHandler(request, session, context, sessionLogPrefix).handle();
+    return session
+        .initFuture()
+        .thenCompose(
+            v -> new CqlRequestHandler(request, session, context, sessionLogPrefix).handle());
   }
 
   @Override

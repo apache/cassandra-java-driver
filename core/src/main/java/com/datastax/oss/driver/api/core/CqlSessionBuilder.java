@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import com.datastax.oss.driver.api.core.cql.LazyCqlSession;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.NotThreadSafe;
@@ -29,6 +30,11 @@ public class CqlSessionBuilder extends SessionBuilder<CqlSessionBuilder, CqlSess
 
   @Override
   protected CqlSession wrap(@NonNull CqlSession defaultSession) {
+    return defaultSession;
+  }
+
+  @Override
+  protected LazyCqlSession wrapLazy(@NonNull LazyCqlSession defaultSession) {
     return defaultSession;
   }
 }

@@ -2,6 +2,10 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.8.0 (in progress)
+
+- [new feature] JAVA-2832: Ability to create uninitialized sessions
+
 ### 4.7.2
 
 - [bug] JAVA-2821: Can't connect to DataStax Astra using driver 4.7.x

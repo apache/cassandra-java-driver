@@ -47,8 +47,7 @@ public class CqlRequestSyncProcessor implements RequestProcessor<Statement<?>, R
       DefaultSession session,
       InternalDriverContext context,
       String sessionLogPrefix) {
-
-    BlockingOperation.checkNotDriverThread();
+    BlockingOperation.waitUntilSessionInitialized(session);
     AsyncResultSet firstPage =
         CompletableFutures.getUninterruptibly(
             asyncProcessor.process(request, session, context, sessionLogPrefix));

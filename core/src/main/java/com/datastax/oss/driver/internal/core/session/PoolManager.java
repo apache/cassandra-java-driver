@@ -102,29 +102,38 @@ public class PoolManager implements AsyncAutoCloseable {
     return singleThreaded.initFuture;
   }
 
+  public CompletionStage<Void> initFuture() {
+    return singleThreaded.initFuture;
+  }
+
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
   public CompletionStage<Void> setKeyspace(CqlIdentifier newKeyspace) {
-    CqlIdentifier oldKeyspace = this.keyspace;
-    if (Objects.equals(oldKeyspace, newKeyspace)) {
-      return CompletableFuture.completedFuture(null);
-    }
-    if (config.getBoolean(DefaultDriverOption.REQUEST_WARN_IF_SET_KEYSPACE)) {
-      LOG.warn(
-          "[{}] Detected a keyspace change at runtime ({} => {}). "
-              + "This is an anti-pattern that should be avoided in production "
-              + "(see '{}' in the configuration).",
-          logPrefix,
-          (oldKeyspace == null) ? "<none>" : oldKeyspace.asInternal(),
-          newKeyspace.asInternal(),
-          DefaultDriverOption.REQUEST_WARN_IF_SET_KEYSPACE.getPath());
-    }
-    this.keyspace = newKeyspace;
-    CompletableFuture<Void> result = new CompletableFuture<>();
-    RunOrSchedule.on(adminExecutor, () -> singleThreaded.setKeyspace(newKeyspace, result));
-    return result;
+    return initFuture()
+        .thenCompose(
+            s -> {
+              CqlIdentifier oldKeyspace = this.keyspace;
+              if (Objects.equals(oldKeyspace, newKeyspace)) {
+                return CompletableFuture.completedFuture(null);
+              }
+              if (config.getBoolean(DefaultDriverOption.REQUEST_WARN_IF_SET_KEYSPACE)) {
+                LOG.warn(
+                    "[{}] Detected a keyspace change at runtime ({} => {}). "
+                        + "This is an anti-pattern that should be avoided in production "
+                        + "(see '{}' in the configuration).",
+                    logPrefix,
+                    (oldKeyspace == null) ? "<none>" : oldKeyspace.asInternal(),
+                    newKeyspace.asInternal(),
+                    DefaultDriverOption.REQUEST_WARN_IF_SET_KEYSPACE.getPath());
+              }
+              this.keyspace = newKeyspace;
+              CompletableFuture<Void> result = new CompletableFuture<>();
+              RunOrSchedule.on(
+                  adminExecutor, () -> singleThreaded.setKeyspace(newKeyspace, result));
+              return result;
+            });
   }
 
   public Map<Node, ChannelPool> getPools() {

@@ -17,10 +17,10 @@ package com.datastax.oss.driver.internal.core.session;
 
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.cql.LazyCqlSession;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
@@ -77,17 +77,13 @@ import org.slf4j.LoggerFactory;
  * </ul>
  */
 @ThreadSafe
-public class DefaultSession implements CqlSession {
+public class DefaultSession implements LazyCqlSession {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSession.class);
 
   private static final AtomicInteger INSTANCE_COUNT = new AtomicInteger();
 
-  public static CompletionStage<CqlSession> init(
-      InternalDriverContext context, Set<EndPoint> contactPoints, CqlIdentifier keyspace) {
-    return new DefaultSession(context, contactPoints).init(keyspace);
-  }
-
+  private final CqlIdentifier keyspace;
   private final InternalDriverContext context;
   private final EventExecutor adminExecutor;
   private final String logPrefix;
@@ -97,7 +93,11 @@ public class DefaultSession implements CqlSession {
   private final PoolManager poolManager;
   private final SessionMetricUpdater metricUpdater;
 
-  private DefaultSession(InternalDriverContext context, Set<EndPoint> contactPoints) {
+  public DefaultSession(
+      @NonNull InternalDriverContext context,
+      @NonNull Set<EndPoint> contactPoints,
+      @Nullable CqlIdentifier keyspace) {
+    this.keyspace = keyspace;
     int instanceCount = INSTANCE_COUNT.incrementAndGet();
     int threshold =
         context.getConfig().getDefaultProfile().getInt(DefaultDriverOption.SESSION_LEAK_THRESHOLD);
@@ -142,8 +142,20 @@ public class DefaultSession implements CqlSession {
     }
   }
 
-  private CompletionStage<CqlSession> init(CqlIdentifier keyspace) {
+  @Override
+  public boolean isInitialized() {
+    return singleThreaded.initFuture.isDone();
+  }
+
+  @Override
+  @NonNull
+  public CompletionStage<Void> init() {
     RunOrSchedule.on(adminExecutor, () -> singleThreaded.init(keyspace));
+    return singleThreaded.initFuture;
+  }
+
+  @NonNull
+  public CompletionStage<Void> initFuture() {
     return singleThreaded.initFuture;
   }
 
@@ -167,21 +179,21 @@ public class DefaultSession implements CqlSession {
   @NonNull
   @Override
   public CompletionStage<Metadata> setSchemaMetadataEnabled(@Nullable Boolean newValue) {
-    return metadataManager.setSchemaEnabled(newValue);
+    return initFuture().thenCompose(v -> metadataManager.setSchemaEnabled(newValue));
   }
 
   @NonNull
   @Override
   public CompletionStage<Metadata> refreshSchemaAsync() {
-    return metadataManager
-        .refreshSchema(null, true, true)
+    return initFuture()
+        .thenCompose(v -> metadataManager.refreshSchema(null, true, true))
         .thenApply(RefreshSchemaResult::getMetadata);
   }
 
   @NonNull
   @Override
   public CompletionStage<Boolean> checkSchemaAgreementAsync() {
-    return context.getTopologyMonitor().checkSchemaAgreement();
+    return initFuture().thenCompose(v -> context.getTopologyMonitor().checkSchemaAgreement());
   }
 
   @NonNull
@@ -211,7 +223,7 @@ public class DefaultSession implements CqlSession {
    */
   @NonNull
   public CompletionStage<Void> setKeyspace(@NonNull CqlIdentifier newKeyspace) {
-    return poolManager.setKeyspace(newKeyspace);
+    return initFuture().thenCompose(v -> poolManager.setKeyspace(newKeyspace));
   }
 
   @NonNull
@@ -303,7 +315,7 @@ public class DefaultSession implements CqlSession {
     private final Set<EndPoint> initialContactPoints;
     private final NodeStateManager nodeStateManager;
     private final SchemaListenerNotifier schemaListenerNotifier;
-    private final CompletableFuture<CqlSession> initFuture = new CompletableFuture<>();
+    private final CompletableFuture<Void> initFuture = new CompletableFuture<>();
     private boolean initWasCalled;
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
     private boolean closeWasCalled;
@@ -452,7 +464,7 @@ public class DefaultSession implements CqlSession {
                     initFuture.completeExceptionally(error);
                   } else {
                     notifyListeners();
-                    initFuture.complete(DefaultSession.this);
+                    initFuture.complete(null);
                   }
                 });
       } catch (Throwable throwable) {

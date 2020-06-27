@@ -119,6 +119,7 @@ public class DefaultTopologyMonitorTest {
 
     when(channel.getEndPoint()).thenReturn(node1.getEndPoint());
     when(controlConnection.channel()).thenReturn(channel);
+    when(controlConnection.initFuture()).thenReturn(CompletableFuture.completedFuture(null));
     when(context.getControlConnection()).thenReturn(controlConnection);
 
     topologyMonitor = new TestTopologyMonitor(context);

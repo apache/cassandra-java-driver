@@ -54,8 +54,7 @@ public class CqlPrepareSyncProcessor
       DefaultSession session,
       InternalDriverContext context,
       String sessionLogPrefix) {
-
-    BlockingOperation.checkNotDriverThread();
+    BlockingOperation.waitUntilSessionInitialized(session);
     return CompletableFutures.getUninterruptibly(
         asyncProcessor.process(request, session, context, sessionLogPrefix));
   }

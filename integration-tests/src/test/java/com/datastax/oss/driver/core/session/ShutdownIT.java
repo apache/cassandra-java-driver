@@ -28,6 +28,7 @@ import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import java.util.Set;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -92,6 +93,9 @@ public class ShutdownIT {
                           // - the request races with the channel closing: it acquires a channel,
                           //   but by the time it tries to write on it is closing
                           //   => AllNodesFailedException wrapping IllegalStateException
+                          if (error instanceof CompletionException) {
+                            error = error.getCause();
+                          }
                           if (error instanceof IllegalStateException
                               && "Session is closed".equals(error.getMessage())) {
                             gotSessionClosedError.countDown();

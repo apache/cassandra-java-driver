@@ -51,7 +51,7 @@ public class ContinuousCqlRequestSyncProcessor
       DefaultSession session,
       InternalDriverContext context,
       String sessionLogPrefix) {
-    BlockingOperation.checkNotDriverThread();
+    BlockingOperation.waitUntilSessionInitialized(session);
     ContinuousAsyncResultSet firstPage =
         CompletableFutures.getUninterruptibly(
             asyncProcessor.process(request, session, context, sessionLogPrefix));
