@@ -21,10 +21,10 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import org.junit.Test;
 
-public class StringCodecTest extends CodecTestBase<String> {
+public class TextCodecTest extends CodecTestBase<String> {
 
-  public StringCodecTest() {
-    // We don't test ASCII, since it only differs by the encoding used
+  public TextCodecTest() {
+    // We will test edge cases of ASCII in AsciiCodecTest
     this.codec = TypeCodecs.TEXT;
   }
 

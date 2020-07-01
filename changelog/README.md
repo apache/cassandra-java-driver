@@ -4,6 +4,7 @@
 
 ### 4.8.0 (in progress)
 
+- [bug] JAVA-2837: make StringCodec strict about unicode in ascii
 
 ### 4.7.2
 
