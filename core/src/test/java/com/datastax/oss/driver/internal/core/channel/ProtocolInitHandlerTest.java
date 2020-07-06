@@ -16,10 +16,16 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
@@ -50,8 +56,10 @@ import com.datastax.oss.protocol.internal.response.Ready;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import io.netty.channel.ChannelFuture;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -60,6 +68,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.slf4j.LoggerFactory;
 
 public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
 
@@ -71,6 +80,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
   @Mock private InternalDriverContext internalDriverContext;
   @Mock private DriverConfig driverConfig;
   @Mock private DriverExecutionProfile defaultProfile;
+  @Mock private Appender<ILoggingEvent> appender;
 
   private ProtocolVersionRegistry protocolVersionRegistry =
       new DefaultProtocolVersionRegistry("test");
@@ -597,5 +607,43 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 assertThat(error)
                     .isInstanceOf(InvalidKeyspaceException.class)
                     .hasMessage("invalid keyspace"));
+  }
+
+  /**
+   * This covers a corner case where {@code abortAllInFlight} was recursing into itself, causing a
+   * {@link ConcurrentModificationException}. This was recoverable but caused Netty to generate a
+   * warning log.
+   *
+   * @see <a href="https://datastax-oss.atlassian.net/browse/JAVA-2838">JAVA-2838</a>
+   */
+  @Test
+  public void should_fail_pending_requests_only_once_if_init_fails() {
+    Logger logger =
+        (Logger) LoggerFactory.getLogger("io.netty.channel.AbstractChannelHandlerContext");
+    Level levelBefore = logger.getLevel();
+    logger.setLevel(Level.WARN);
+    logger.addAppender(appender);
+
+    channel
+        .pipeline()
+        .addLast(
+            "init",
+            new ProtocolInitHandler(
+                internalDriverContext,
+                DefaultProtocolVersion.V4,
+                null,
+                END_POINT,
+                DriverChannelOptions.DEFAULT,
+                heartbeatHandler,
+                false));
+
+    ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
+    channel.pipeline().fireExceptionCaught(new IOException("Mock I/O exception"));
+    assertThat(connectFuture).isFailed();
+
+    verify(appender, never()).doAppend(any(ILoggingEvent.class));
+
+    logger.detachAppender(appender);
+    logger.setLevel(levelBefore);
   }
 }
