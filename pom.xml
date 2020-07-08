@@ -709,6 +709,11 @@ limitations under the License.]]></inlineHeader>
           <doclint>all,-missing</doclint>
           <excludePackageNames>com.datastax.*.driver.internal*</excludePackageNames>
           <tags>
+            <tag>
+              <name>apiNote</name>
+              <placement>a</placement>
+              <head>API note:</head>
+            </tag>
             <!--
               For custom `leaks-private-api` tag (apparently dash separators are not handled
               correctly)

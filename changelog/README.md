@@ -4,6 +4,7 @@
 
 ### 4.8.0 (in progress)
 
+- [improvement] JAVA-2431: Set all occurrences when bound variables are used multiple times
 - [improvement] JAVA-2829: Log protocol negotiation messages at DEBUG level
 - [bug] JAVA-2846: Give system properties the highest precedence in DefaultDriverConfigLoader
 - [new feature] JAVA-2691: Provide driver 4 support for extra codecs
