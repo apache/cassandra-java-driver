@@ -39,9 +39,9 @@ public interface UserDefinedType extends DataType, Describable {
   @NonNull
   List<CqlIdentifier> getFieldNames();
 
-  int firstIndexOf(CqlIdentifier id);
+  int firstIndexOf(@NonNull CqlIdentifier id);
 
-  int firstIndexOf(String name);
+  int firstIndexOf(@NonNull String name);
 
   default boolean contains(@NonNull CqlIdentifier id) {
     return firstIndexOf(id) >= 0;

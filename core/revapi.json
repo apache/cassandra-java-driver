@@ -4991,6 +4991,20 @@
         "old": "class org.apache.tinkerpop.gremlin.process.traversal.util.TraversalExplanation",
         "new": "class org.apache.tinkerpop.gremlin.process.traversal.util.TraversalExplanation",
         "justification": "Upgrade to Tinkerpop 3.4.4"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "parameter int com.datastax.oss.driver.api.core.type.UserDefinedType::firstIndexOf(===com.datastax.oss.driver.api.core.CqlIdentifier===)",
+        "new": "parameter int com.datastax.oss.driver.api.core.type.UserDefinedType::firstIndexOf(===com.datastax.oss.driver.api.core.CqlIdentifier===)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "Add missing `@NonNull` annotation to UserDefinedType.firstIndexOf"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "parameter int com.datastax.oss.driver.api.core.type.UserDefinedType::firstIndexOf(===java.lang.String===)",
+        "new": "parameter int com.datastax.oss.driver.api.core.type.UserDefinedType::firstIndexOf(===java.lang.String===)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+        "justification": "Add missing `@NonNull` annotation to UserDefinedType.firstIndexOf"
       }
     ]
   }
