@@ -117,6 +117,16 @@ public class DefaultBoundStatement implements BoundStatement {
     return variableDefinitions.get(i).getType();
   }
 
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+    List<Integer> indices = variableDefinitions.allIndicesOf(id);
+    if (indices.isEmpty()) {
+      throw new IllegalArgumentException(id + " is not a variable in this bound statement");
+    }
+    return indices;
+  }
+
   @Override
   public int firstIndexOf(@NonNull CqlIdentifier id) {
     int indexOf = variableDefinitions.firstIndexOf(id);
@@ -124,6 +134,16 @@ public class DefaultBoundStatement implements BoundStatement {
       throw new IllegalArgumentException(id + " is not a variable in this bound statement");
     }
     return indexOf;
+  }
+
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull String name) {
+    List<Integer> indices = variableDefinitions.allIndicesOf(name);
+    if (indices.isEmpty()) {
+      throw new IllegalArgumentException(name + " is not a variable in this bound statement");
+    }
+    return indices;
   }
 
   @Override
