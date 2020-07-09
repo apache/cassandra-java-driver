@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.core.metrics;
+package com.datastax.oss.driver.internal.metrics.micrometer;
 
-import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -23,14 +22,19 @@ import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metrics.MetricPaths;
+import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
+import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
+import com.datastax.oss.driver.internal.core.metrics.NoopNodeMetricUpdater;
+import com.datastax.oss.driver.internal.core.metrics.NoopSessionMetricUpdater;
+import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.base.Ticker;
 import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
 import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
 import com.datastax.oss.driver.shaded.guava.common.cache.RemovalNotification;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import net.jcip.annotations.ThreadSafe;
@@ -38,34 +42,37 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ThreadSafe
-public class DropwizardMetricsFactory implements MetricsFactory {
+public class MicrometerMetricsFactory implements MetricsFactory {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DropwizardMetricsFactory.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MicrometerMetricsFactory.class);
   static final Duration LOWEST_ACCEPTABLE_EXPIRE_AFTER = Duration.ofMinutes(5);
 
   private final InternalDriverContext context;
   private final Set<NodeMetric> enabledNodeMetrics;
-  private final MetricRegistry registry;
-  @Nullable private final Metrics metrics;
+  private final MeterRegistry registry;
   private final SessionMetricUpdater sessionUpdater;
-  private final Cache<Node, DropwizardNodeMetricUpdater> metricsCache;
+  private final Cache<Node, MicrometerNodeMetricUpdater> metricsCache;
 
-  public DropwizardMetricsFactory(InternalDriverContext context, Ticker ticker) {
+  public MicrometerMetricsFactory(
+      InternalDriverContext context, MeterRegistry registry, Ticker ticker) {
     this.context = context;
     String logPrefix = context.getSessionName();
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     Set<SessionMetric> enabledSessionMetrics =
-        parseSessionMetricPaths(config.getStringList(DefaultDriverOption.METRICS_SESSION_ENABLED));
-    Duration evictionTime = getAndValidateEvictionTime(config, logPrefix);
+        MetricPaths.parseSessionMetricPaths(
+            config.getStringList(DefaultDriverOption.METRICS_SESSION_ENABLED), logPrefix);
     this.enabledNodeMetrics =
-        parseNodeMetricPaths(config.getStringList(DefaultDriverOption.METRICS_NODE_ENABLED));
+        MetricPaths.parseNodeMetricPaths(
+            config.getStringList(DefaultDriverOption.METRICS_NODE_ENABLED), logPrefix);
+
+    Duration evictionTime = getAndValidateEvictionTime(config, logPrefix);
 
     metricsCache =
         CacheBuilder.newBuilder()
             .ticker(ticker)
             .expireAfterAccess(evictionTime)
             .removalListener(
-                (RemovalNotification<Node, DropwizardNodeMetricUpdater> notification) -> {
+                (RemovalNotification<Node, MicrometerNodeMetricUpdater> notification) -> {
                   LOG.debug(
                       "[{}] Removing metrics for node: {} from cache after {}",
                       logPrefix,
@@ -79,13 +86,10 @@ public class DropwizardMetricsFactory implements MetricsFactory {
       LOG.debug("[{}] All metrics are disabled, Session.getMetrics will be empty", logPrefix);
       this.registry = null;
       this.sessionUpdater = NoopSessionMetricUpdater.INSTANCE;
-      this.metrics = null;
     } else {
-      this.registry = new MetricRegistry();
-      DropwizardSessionMetricUpdater dropwizardSessionUpdater =
-          new DropwizardSessionMetricUpdater(enabledSessionMetrics, registry, context);
-      this.sessionUpdater = dropwizardSessionUpdater;
-      this.metrics = new DefaultMetrics(registry, dropwizardSessionUpdater);
+      this.registry = registry;
+      this.sessionUpdater =
+          new MicrometerSessionMetricUpdater(enabledSessionMetrics, this.registry, this.context);
     }
   }
 
@@ -107,7 +111,8 @@ public class DropwizardMetricsFactory implements MetricsFactory {
 
   @Override
   public Optional<Metrics> getMetrics() {
-    return Optional.ofNullable(metrics);
+    throw new UnsupportedOperationException(
+        "getMetrics() is not supported with Micrometer. The driver publishes its metrics directly to the global MeterRegistry.");
   }
 
   @Override
@@ -119,20 +124,11 @@ public class DropwizardMetricsFactory implements MetricsFactory {
   public NodeMetricUpdater newNodeUpdater(Node node) {
     if (registry == null) {
       return NoopNodeMetricUpdater.INSTANCE;
-    } else {
-      DropwizardNodeMetricUpdater dropwizardNodeMetricUpdater =
-          new DropwizardNodeMetricUpdater(
-              node, enabledNodeMetrics, registry, context, () -> metricsCache.getIfPresent(node));
-      metricsCache.put(node, dropwizardNodeMetricUpdater);
-      return dropwizardNodeMetricUpdater;
     }
-  }
-
-  protected Set<SessionMetric> parseSessionMetricPaths(List<String> paths) {
-    return MetricPaths.parseSessionMetricPaths(paths, context.getSessionName());
-  }
-
-  protected Set<NodeMetric> parseNodeMetricPaths(List<String> paths) {
-    return MetricPaths.parseNodeMetricPaths(paths, context.getSessionName());
+    MicrometerNodeMetricUpdater updater =
+        new MicrometerNodeMetricUpdater(
+            node, enabledNodeMetrics, registry, context, () -> metricsCache.getIfPresent(node));
+    metricsCache.put(node, updater);
+    return updater;
   }
 }
