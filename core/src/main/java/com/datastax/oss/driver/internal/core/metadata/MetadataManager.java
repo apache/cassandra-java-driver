@@ -61,6 +61,7 @@ public class MetadataManager implements AsyncAutoCloseable {
   private final DriverExecutionProfile config;
   private final SingleThreaded singleThreaded;
   private final ControlConnection controlConnection;
+  //  private final boolean requiresPartitionMap;
 
   private volatile DefaultMetadata metadata; // only updated from adminExecutor
   private volatile boolean schemaEnabledInConfig;
@@ -87,6 +88,7 @@ public class MetadataManager implements AsyncAutoCloseable {
         config.getStringList(
             DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList());
     this.tokenMapEnabled = config.getBoolean(DefaultDriverOption.METADATA_TOKEN_MAP_ENABLED);
+    //    this.requiresPartitionMap = requiresPartitionMap(this.context.getSes)
 
     context.getEventBus().register(ConfigChangeEvent.class, this::onConfigChanged);
   }
@@ -289,6 +291,26 @@ public class MetadataManager implements AsyncAutoCloseable {
   public CompletionStage<Void> forceCloseAsync() {
     return this.closeAsync();
   }
+
+  /**
+   * Checks whether this cluster's load balancing policy requires (directly or indirectly) the
+   * partition map from the system.partitions table.
+   *
+   * @param policy the load balancing policy
+   * @return true if the policy uses the partition map, false otherwise
+   */
+  //  private boolean requiresPartitionMap(LoadBalancingPolicy policy) {
+  ////    if (policy instanceof PartitionAwarePolicy) {
+  ////      return true;
+  ////    } else if (policy instanceof ChainableLoadBalancingPolicy) {
+  ////      return requiresPartitionMap(((ChainableLoadBalancingPolicy) policy).getChildPolicy());
+  ////    }
+  //    return false;
+  //  }
+  //
+  //  public boolean requiresPartitionMap() {
+  //    return requiresPartitionMap;
+  //  }
 
   private class SingleThreaded {
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();

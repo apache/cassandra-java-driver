@@ -33,7 +33,7 @@ public enum DefaultConsistencyLevel implements ConsistencyLevel {
   EACH_QUORUM(ProtocolConstants.ConsistencyLevel.EACH_QUORUM),
 
   SERIAL(ProtocolConstants.ConsistencyLevel.SERIAL),
-  LOCAL_SERIAL(ProtocolConstants.ConsistencyLevel.LOCAL_SERIAL),
+  LOCAL_SERIAL(ProtocolConstants.ConsistencyLevel.LOCAL_SERIAL);
   ;
   // Note that, for the sake of convenience, we also expose shortcuts to these constants on the
   // ConsistencyLevel interface. If you add a new enum constant, remember to update the interface as
@@ -62,6 +62,16 @@ public enum DefaultConsistencyLevel implements ConsistencyLevel {
   @Override
   public boolean isDcLocal() {
     return this == LOCAL_ONE || this == LOCAL_QUORUM || this == LOCAL_SERIAL;
+  }
+
+  /**
+   * Whether or not this consistency level corresponds to YB strong consistency.
+   *
+   * @return whether this consistency level is {@code QUORUM} or {@code LOCAL_ONE}.
+   */
+  @Override
+  public boolean isYBStrong() {
+    return this == QUORUM || this == LOCAL_ONE;
   }
 
   @Override

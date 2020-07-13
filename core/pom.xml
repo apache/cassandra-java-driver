@@ -39,7 +39,7 @@
   </dependencyManagement>
   <dependencies>
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>com.yugabyte</groupId>
       <artifactId>native-protocol</artifactId>
     </dependency>
     <dependency>

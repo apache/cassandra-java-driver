@@ -39,6 +39,8 @@ public class AdminRow {
   private static final TypeCodec<Set<String>> SET_OF_TEXT = TypeCodecs.setOf(TypeCodecs.TEXT);
   private static final TypeCodec<Map<String, String>> MAP_OF_STRING_TO_STRING =
       TypeCodecs.mapOf(TypeCodecs.TEXT, TypeCodecs.TEXT);
+  private static final TypeCodec<Map<InetAddress, String>> MAP_OF_INET_TO_STRING =
+      TypeCodecs.mapOf(TypeCodecs.INET, TypeCodecs.TEXT);
 
   private final Map<String, ColumnSpec> columnSpecs;
   private final List<ByteBuffer> data;
@@ -98,6 +100,11 @@ public class AdminRow {
   @Nullable
   public Map<String, String> getMapOfStringToString(String columnName) {
     return get(columnName, MAP_OF_STRING_TO_STRING);
+  }
+
+  @Nullable
+  public Map<InetAddress, String> getMapOfInetAddressToString(String columnName) {
+    return get(columnName, MAP_OF_INET_TO_STRING);
   }
 
   public boolean isNull(String columnName) {

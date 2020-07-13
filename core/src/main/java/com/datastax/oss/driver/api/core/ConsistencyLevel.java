@@ -37,6 +37,8 @@ public interface ConsistencyLevel {
   ConsistencyLevel EACH_QUORUM = DefaultConsistencyLevel.EACH_QUORUM;
   ConsistencyLevel SERIAL = DefaultConsistencyLevel.SERIAL;
   ConsistencyLevel LOCAL_SERIAL = DefaultConsistencyLevel.LOCAL_SERIAL;
+  ConsistencyLevel YB_CONSISTENT_PREFIX = DefaultConsistencyLevel.ONE;
+  ConsistencyLevel YB_STRONG = DefaultConsistencyLevel.QUORUM;
 
   /** The numerical value that the level is encoded to in protocol frames. */
   int getProtocolCode();
@@ -47,6 +49,13 @@ public interface ConsistencyLevel {
 
   /** Whether this consistency level applies to the local datacenter only. */
   boolean isDcLocal();
+
+  /**
+   * Whether or not this consistency level corresponds to YB strong consistency.
+   *
+   * @return whether this consistency level is {@code QUORUM} or {@code LOCAL_ONE}.
+   */
+  public boolean isYBStrong();
 
   /**
    * Whether this consistency level is serial, that is, applies only to the "paxos" phase of a <a

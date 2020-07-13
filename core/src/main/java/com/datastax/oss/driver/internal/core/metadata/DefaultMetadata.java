@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
@@ -27,6 +28,7 @@ import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.yugabyte.oss.driver.api.core.DefaultPartitionMetadata;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
@@ -46,22 +48,26 @@ import org.slf4j.LoggerFactory;
 public class DefaultMetadata implements Metadata {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadata.class);
   public static DefaultMetadata EMPTY =
-      new DefaultMetadata(Collections.emptyMap(), Collections.emptyMap(), null, null);
+      new DefaultMetadata(Collections.emptyMap(), Collections.emptyMap(), null, null, null);
 
   protected final Map<UUID, Node> nodes;
   protected final Map<CqlIdentifier, KeyspaceMetadata> keyspaces;
   protected final TokenMap tokenMap;
   protected final String clusterName;
+  // Partition split metadata for each table.
+  protected final DefaultPartitionMetadata partitionMetadata;
 
   protected DefaultMetadata(
       Map<UUID, Node> nodes,
       Map<CqlIdentifier, KeyspaceMetadata> keyspaces,
       TokenMap tokenMap,
-      String clusterName) {
+      String clusterName,
+      DefaultPartitionMetadata partitionMetadata) {
     this.nodes = nodes;
     this.keyspaces = keyspaces;
     this.tokenMap = tokenMap;
     this.clusterName = clusterName;
+    this.partitionMetadata = partitionMetadata;
   }
 
   @NonNull
@@ -87,6 +93,23 @@ public class DefaultMetadata implements Metadata {
   public Optional<String> getClusterName() {
     return Optional.ofNullable(clusterName);
   }
+
+  @Override
+  public Optional<DefaultPartitionMetadata> getDefaultPartitionMetadata() {
+    // TODO Auto-generated method stub
+    return Optional.ofNullable(partitionMetadata);
+  }
+
+  //  /**
+  //   * Set the partition splits metadata for each table. Typically called when refreshing the
+  // schema
+  //   * metadata or the known list of nodes.
+  //   *
+  //   * @param tableSplits the table splits map
+  //   */
+  //  void setTableSplits(Map<QualifiedTableName, TableSplitMetadata> tableSplits) {
+  //    this.tableSplits = tableSplits;
+  //  }
 
   /**
    * Refreshes the current metadata with the given list of nodes.
@@ -114,7 +137,8 @@ public class DefaultMetadata implements Metadata {
         this.keyspaces,
         rebuildTokenMap(
             newNodes, keyspaces, tokenMapEnabled, forceFullRebuild, tokenFactory, context),
-        context.getChannelFactory().getClusterName());
+        context.getChannelFactory().getClusterName(),
+        rebuildPartitionMap(context));
   }
 
   public DefaultMetadata withSchema(
@@ -125,7 +149,8 @@ public class DefaultMetadata implements Metadata {
         this.nodes,
         ImmutableMap.copyOf(newKeyspaces),
         rebuildTokenMap(nodes, newKeyspaces, tokenMapEnabled, false, null, context),
-        context.getChannelFactory().getClusterName());
+        context.getChannelFactory().getClusterName(),
+        rebuildPartitionMap(context));
   }
 
   @Nullable
@@ -187,5 +212,17 @@ public class DefaultMetadata implements Metadata {
     } finally {
       LOG.debug("[{}] Rebuilding token map took {}", logPrefix, NanoTime.formatTimeSince(start));
     }
+  }
+
+  @Nullable
+  protected DefaultPartitionMetadata rebuildPartitionMap(InternalDriverContext context) {
+    return new DefaultPartitionMetadata(
+        context.getSessionName(),
+        context.getControlConnection(),
+        context
+            .getConfig()
+            .getDefaultProfile()
+            .getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT),
+        context.getMetadataManager().getMetadata().getNodes());
   }
 }

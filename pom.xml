@@ -702,7 +702,7 @@ limitations under the License.]]></inlineHeader>
           <verbose>false</verbose>
           <quiet>true</quiet>
           <doclint>all,-missing</doclint>
-          <excludePackageNames>com.datastax.*.driver.internal*</excludePackageNames>
+          <excludePackageNames>com.datastax.*.driver.internal*:com.yugabyte.*</excludePackageNames>
           <tags>
             <!--
               For custom `leaks-private-api` tag (apparently dash separators are not handled

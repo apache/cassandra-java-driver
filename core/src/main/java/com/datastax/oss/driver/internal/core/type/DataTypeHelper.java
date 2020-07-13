@@ -98,7 +98,8 @@ public class DataTypeHelper {
           DataTypes.TIME,
           DataTypes.SMALLINT,
           DataTypes.TINYINT,
-          DataTypes.DURATION);
+          DataTypes.DURATION,
+          DataTypes.JSONB);
 
   private static IntMap<DataType> sortByProtocolCode(DataType... types) {
     IntMap.Builder<DataType> builder = IntMap.builder();

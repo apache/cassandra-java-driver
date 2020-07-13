@@ -55,6 +55,7 @@ public class RemoveNodeRefreshTest {
             ImmutableMap.of(node1.getHostId(), node1, node2.getHostId(), node2),
             Collections.emptyMap(),
             null,
+            null,
             null);
     RemoveNodeRefresh refresh = new RemoveNodeRefresh(node2.getBroadcastRpcAddress().get());
 
@@ -71,7 +72,7 @@ public class RemoveNodeRefreshTest {
     // Given
     DefaultMetadata oldMetadata =
         new DefaultMetadata(
-            ImmutableMap.of(node1.getHostId(), node1), Collections.emptyMap(), null, null);
+            ImmutableMap.of(node1.getHostId(), node1), Collections.emptyMap(), null, null, null);
     RemoveNodeRefresh refresh = new RemoveNodeRefresh(node2.getBroadcastRpcAddress().get());
 
     // When

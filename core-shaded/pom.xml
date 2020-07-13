@@ -52,7 +52,7 @@
     option of the shade plugin because it promotes all dependencies, even nested ones, to top level).
     -->
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>com.yugabyte</groupId>
       <artifactId>native-protocol</artifactId>
     </dependency>
     <dependency>

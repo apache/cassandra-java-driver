@@ -30,8 +30,6 @@ import java.util.Arrays;
 /** Constants and factory methods to obtain data type instances. */
 public class DataTypes {
 
-  private static final int JSONB_HEX_VALUE = 0x0080;
-
   public static final DataType ASCII = new PrimitiveType(ProtocolConstants.DataType.ASCII);
   public static final DataType BIGINT = new PrimitiveType(ProtocolConstants.DataType.BIGINT);
   public static final DataType BLOB = new PrimitiveType(ProtocolConstants.DataType.BLOB);
@@ -52,7 +50,7 @@ public class DataTypes {
   public static final DataType SMALLINT = new PrimitiveType(ProtocolConstants.DataType.SMALLINT);
   public static final DataType TINYINT = new PrimitiveType(ProtocolConstants.DataType.TINYINT);
   public static final DataType DURATION = new PrimitiveType(ProtocolConstants.DataType.DURATION);
-  public static final DataType JSONB = new PrimitiveType(JSONB_HEX_VALUE);
+  public static final DataType JSONB = new PrimitiveType(ProtocolConstants.DataType.JSONB);
 
   @NonNull
   public static DataType custom(@NonNull String className) {

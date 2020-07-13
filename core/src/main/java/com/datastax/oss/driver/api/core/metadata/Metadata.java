@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.session.Session;
+import com.yugabyte.oss.driver.api.core.DefaultPartitionMetadata;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetSocketAddress;
 import java.util.Map;
@@ -126,4 +127,14 @@ public interface Metadata {
   default Optional<String> getClusterName() {
     return Optional.empty();
   }
+
+  /**
+   * The cluster name to which this session is connected. The Optional returned should contain the
+   * value from the server for <b>system.local.cluster_name</b>.
+   *
+   * <p>Note that this method has a default implementation for backwards compatibility. It is
+   * expected that any implementing classes override this method.
+   */
+  @NonNull
+  Optional<DefaultPartitionMetadata> getDefaultPartitionMetadata();
 }

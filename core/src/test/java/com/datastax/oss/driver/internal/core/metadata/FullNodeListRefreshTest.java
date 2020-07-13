@@ -65,6 +65,7 @@ public class FullNodeListRefreshTest {
             ImmutableMap.of(node1.getHostId(), node1, node2.getHostId(), node2),
             Collections.emptyMap(),
             null,
+            null,
             null);
     Iterable<NodeInfo> newInfos =
         ImmutableList.of(
@@ -92,6 +93,7 @@ public class FullNodeListRefreshTest {
         new DefaultMetadata(
             ImmutableMap.of(node1.getHostId(), node1, node2.getHostId(), node2),
             Collections.emptyMap(),
+            null,
             null,
             null);
 
@@ -137,6 +139,7 @@ public class FullNodeListRefreshTest {
         new DefaultMetadata(
             ImmutableMap.of(node1.getHostId(), node1, node2.getHostId(), node2),
             Collections.emptyMap(),
+            null,
             null,
             null);
 
