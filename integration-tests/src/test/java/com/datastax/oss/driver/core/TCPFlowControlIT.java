@@ -105,13 +105,16 @@ public class TCPFlowControlIT {
       int numberOfFinished = 0;
       for (CompletionStage<AsyncResultSet> result : pendingRequests) {
         AsyncResultSet asyncResultSet = result.toCompletableFuture().get();
-        numberOfFinished = +1;
+        numberOfFinished = numberOfFinished + 1;
         System.out.println("errors:" + asyncResultSet.getExecutionInfo().getErrors());
+        // todo this is triggering the final drain, when the Channel#isWritable returns true.
+        // it should be replaced with callback to ChannelInboundHandler#channelWritabilityChanged()
+        session.executeAsync(SimpleStatement.newInstance(queryString)).toCompletableFuture().get();
       }
-      writeQueueSize = getWriterQueueSize(session);
 
-      System.out.println("writeQueueSize: " + writeQueueSize);
-      System.out.println("numberOfFinished: " + numberOfFinished);
+      writeQueueSize = getWriterQueueSize(session);
+      assertThat(writeQueueSize).isEqualTo(0);
+      assertThat(numberOfFinished).isEqualTo(MAX_REQUESTS_PER_CONNECTION);
     }
   }
 
