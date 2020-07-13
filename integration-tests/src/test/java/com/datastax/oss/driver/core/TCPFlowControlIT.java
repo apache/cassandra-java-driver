@@ -104,7 +104,7 @@ public class TCPFlowControlIT {
   }
 
   @Test
-  public void should_continue_routing_traffic_to_non_paused_nodes()
+  public void should_process_requests_successfully_on_non_paused_nodes()
       throws InterruptedException, ExecutionException {
     byte[] buffer = new byte[10240];
     Arrays.fill(buffer, (byte) 1);
@@ -142,7 +142,6 @@ public class TCPFlowControlIT {
       }
 
       // Non-paused nodes should process the requests correctly
-
       for (Node n : nonPausedNodes) {
         Awaitility.await()
             .until(
@@ -155,11 +154,6 @@ public class TCPFlowControlIT {
       // There are still requests that haven't been written
       waitForWriteQueueToStabilize(session);
       assertThat(getWriteQueueSize(session)).isGreaterThan(1);
-
-      // Non-paused nodes should continue processing requests
-      for (Node n : nonPausedNodes) {
-        // todo send 2 queries to non paused nodes.
-      }
 
       SIMULACRON_RULE.cluster().resumeRead();
 
