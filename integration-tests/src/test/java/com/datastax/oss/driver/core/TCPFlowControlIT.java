@@ -21,6 +21,8 @@ import com.datastax.oss.driver.internal.core.channel.DefaultWriteCoalescer;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.request.Query;
+import com.datastax.oss.simulacron.server.BoundNode;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -29,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import org.awaitility.Awaitility;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -59,9 +62,6 @@ public class TCPFlowControlIT {
         SessionUtils.newSession(
             SIMULACRON_RULE,
             SessionUtils.configLoaderBuilder()
-                .withStringList(
-                    DefaultDriverOption.METRICS_NODE_ENABLED,
-                    Collections.singletonList("pool.in-flight"))
                 .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(10))
                 .build())) {
       SIMULACRON_RULE.cluster().pauseRead();
@@ -75,30 +75,15 @@ public class TCPFlowControlIT {
         pendingRequests.add(session.executeAsync(SimpleStatement.newInstance(queryString)));
       }
 
-      Integer writeQueueSize = getWriterQueueSize(session);
+      Integer writeQueueSize = getWriteQueueSize(session);
       System.out.println("writeQueueSize: " + writeQueueSize);
 
-      for (Node n : session.getMetadata().getNodes().values()) {
-
-        System.out.println(
-            "for node: "
-                + n
-                + " value: "
-                + ((Gauge)
-                        session
-                            .getMetrics()
-                            .get()
-                            .getNodeMetric(n, DefaultNodeMetric.IN_FLIGHT)
-                            .get())
-                    .getValue());
-      }
-      ;
       System.out.println("after");
 
       waitForWriteQueueToStabilize(session);
 
       // Assert that there are still requests that haven't been written
-      assertThat(getWriterQueueSize(session)).isGreaterThan(1);
+      assertThat(getWriteQueueSize(session)).isGreaterThan(1);
 
       SIMULACRON_RULE.cluster().resumeRead();
 
@@ -112,20 +97,102 @@ public class TCPFlowControlIT {
         session.executeAsync(SimpleStatement.newInstance(queryString)).toCompletableFuture().get();
       }
 
-      writeQueueSize = getWriterQueueSize(session);
+      writeQueueSize = getWriteQueueSize(session);
       assertThat(writeQueueSize).isEqualTo(0);
       assertThat(numberOfFinished).isEqualTo(MAX_REQUESTS_PER_CONNECTION);
     }
   }
 
-  private Integer getWriterQueueSize(CqlSession session) {
+  @Test
+  public void should_continue_routing_traffic_to_non_paused_nodes()
+      throws InterruptedException, ExecutionException {
+    byte[] buffer = new byte[10240];
+    Arrays.fill(buffer, (byte) 1);
+    ByteBuffer buffer10Kb = ByteBuffer.wrap(buffer);
+
+    String queryString =
+        String.format("INSERT INTO table1 (id) VALUES (%s)", ByteUtils.toHexString(buffer10Kb));
+    Query query = new Query(queryString, emptyList(), emptyMap(), emptyMap());
+
+    SIMULACRON_RULE.cluster().prime(when(query).then(noRows()));
+
+    try (CqlSession session =
+        SessionUtils.newSession(
+            SIMULACRON_RULE,
+            SessionUtils.configLoaderBuilder()
+                .withStringList(
+                    DefaultDriverOption.METRICS_NODE_ENABLED,
+                    Collections.singletonList("pool.in-flight"))
+                .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(10))
+                .build())) {
+      int hostIndex = 2;
+      BoundNode pausedNode = SIMULACRON_RULE.cluster().node(hostIndex);
+      SocketAddress pausedHostAddress = pausedNode.getAddress();
+      List<Node> nonPausedNodes =
+          session.getMetadata().getNodes().values().stream()
+              .filter(n -> !pausedHostAddress.equals(n.getBroadcastRpcAddress().get()))
+              .collect(Collectors.toList());
+      assertThat(nonPausedNodes.size()).isEqualTo(2);
+
+      SIMULACRON_RULE.cluster().node(2).pauseRead();
+
+      List<CompletionStage<AsyncResultSet>> pendingRequests = new ArrayList<>();
+      for (int i = 0; i < MAX_REQUESTS_PER_CONNECTION; i++) {
+        pendingRequests.add(session.executeAsync(SimpleStatement.newInstance(queryString)));
+      }
+
+      // Non-paused nodes should process the requests correctly
+
+      for (Node n : nonPausedNodes) {
+        Awaitility.await()
+            .until(
+                () -> {
+                  int inFlightRequests = getInFlightRequests(session, n);
+                  return inFlightRequests == 0;
+                });
+      }
+
+      // There are still requests that haven't been written
+      waitForWriteQueueToStabilize(session);
+      assertThat(getWriteQueueSize(session)).isGreaterThan(1);
+
+      // Non-paused nodes should continue processing requests
+      for (Node n : nonPausedNodes) {
+        // todo send 2 queries to non paused nodes.
+      }
+
+      SIMULACRON_RULE.cluster().resumeRead();
+
+      int numberOfFinished = 0;
+      for (CompletionStage<AsyncResultSet> result : pendingRequests) {
+        AsyncResultSet asyncResultSet = result.toCompletableFuture().get();
+        numberOfFinished = numberOfFinished + 1;
+        System.out.println("errors:" + asyncResultSet.getExecutionInfo().getErrors());
+        // todo this is triggering the final drain, when the Channel#isWritable returns true.
+        // it should be replaced with callback to ChannelInboundHandler#channelWritabilityChanged()
+        session.executeAsync(SimpleStatement.newInstance(queryString)).toCompletableFuture().get();
+      }
+
+      int writeQueueSize = getWriteQueueSize(session);
+      assertThat(writeQueueSize).isEqualTo(0);
+      assertThat(numberOfFinished).isEqualTo(MAX_REQUESTS_PER_CONNECTION);
+    }
+  }
+
+  private int getInFlightRequests(CqlSession session, Node n) {
+    return ((Gauge<Integer>)
+            session.getMetrics().get().getNodeMetric(n, DefaultNodeMetric.IN_FLIGHT).get())
+        .getValue();
+  }
+
+  private Integer getWriteQueueSize(CqlSession session) {
     return ((DefaultWriteCoalescer)
             ((DefaultDriverContext) session.getContext()).getWriteCoalescer())
         .getWriteQueueSize();
   }
 
   private void waitForWriteQueueToStabilize(CqlSession cqlSession) throws InterruptedException {
-    final Integer[] lastWriteQueueValue = {getWriterQueueSize(cqlSession)};
+    final Integer[] lastWriteQueueValue = {getWriteQueueSize(cqlSession)};
     // initial delay
     Thread.sleep(500);
     Awaitility.await()
@@ -133,7 +200,7 @@ public class TCPFlowControlIT {
         .pollDelay(Duration.ofSeconds(1))
         .until(
             () -> {
-              Integer currentValue = getWriterQueueSize(cqlSession);
+              Integer currentValue = getWriteQueueSize(cqlSession);
               Integer tmpLastValue = lastWriteQueueValue[0];
               lastWriteQueueValue[0] = currentValue;
               return tmpLastValue.equals(currentValue);
