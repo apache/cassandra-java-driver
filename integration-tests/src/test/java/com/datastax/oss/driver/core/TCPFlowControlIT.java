@@ -62,7 +62,7 @@ public class TCPFlowControlIT {
                 .withStringList(
                     DefaultDriverOption.METRICS_NODE_ENABLED,
                     Collections.singletonList("pool.in-flight"))
-                .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+                .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(10))
                 .build())) {
       SIMULACRON_RULE.cluster().pauseRead();
 
@@ -98,7 +98,7 @@ public class TCPFlowControlIT {
       waitForWriteQueueToStabilize(session);
 
       // Assert that there are still requests that haven't been written
-      assertThat(getWriterQueueSize(session)).isGreaterThanOrEqualTo(1);
+      assertThat(getWriterQueueSize(session)).isGreaterThan(1);
 
       SIMULACRON_RULE.cluster().resumeRead();
 
@@ -108,10 +108,7 @@ public class TCPFlowControlIT {
         numberOfFinished = +1;
         System.out.println("errors:" + asyncResultSet.getExecutionInfo().getErrors());
       }
-      writeQueueSize =
-          ((DefaultWriteCoalescer)
-                  ((DefaultDriverContext) session.getContext()).getWriteCoalescer())
-              .getWriteQueueSize();
+      writeQueueSize = getWriterQueueSize(session);
 
       System.out.println("writeQueueSize: " + writeQueueSize);
       System.out.println("numberOfFinished: " + numberOfFinished);
