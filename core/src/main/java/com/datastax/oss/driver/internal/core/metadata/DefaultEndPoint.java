@@ -44,8 +44,16 @@ public class DefaultEndPoint implements EndPoint, Serializable {
     if (other == this) {
       return true;
     } else if (other instanceof DefaultEndPoint) {
-      DefaultEndPoint that = (DefaultEndPoint) other;
-      return this.address.equals(that.address);
+      InetSocketAddress thisAddress = this.address;
+      InetSocketAddress thatAddress = ((DefaultEndPoint) other).address;
+      // If only one of the addresses is unresolved, resolve the other. Otherwise (both resolved or
+      // both unresolved), compare as-is.
+      if (thisAddress.isUnresolved() && !thatAddress.isUnresolved()) {
+        thisAddress = new InetSocketAddress(thisAddress.getHostName(), thisAddress.getPort());
+      } else if (thatAddress.isUnresolved() && !thisAddress.isUnresolved()) {
+        thatAddress = new InetSocketAddress(thatAddress.getHostName(), thatAddress.getPort());
+      }
+      return thisAddress.equals(thatAddress);
     } else {
       return false;
     }
