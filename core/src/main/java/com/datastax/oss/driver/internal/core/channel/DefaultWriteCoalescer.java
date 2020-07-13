@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.channel;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPromise;
@@ -68,12 +69,21 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
     flusher.enqueue(write);
   }
 
+  @VisibleForTesting
+  public Integer getWriteQueueSize() {
+    return flushers.values().stream().map(v -> v.getWrites().size()).mapToInt(v -> v).sum();
+  }
+
   private class Flusher {
     private final EventLoop eventLoop;
 
     // These variables are accessed both from client threads and the event loop
     private final Queue<Write> writes = new ConcurrentLinkedQueue<>();
     private final AtomicBoolean running = new AtomicBoolean();
+
+    public Queue<Write> getWrites() {
+      return writes;
+    }
 
     // This variable is accessed only from runOnEventLoop, it doesn't need to be thread-safe
     private final Set<Channel> channels = new HashSet<>();
@@ -84,8 +94,9 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
 
     private void enqueue(Write write) {
       boolean added = writes.offer(write);
+      System.out.println("writes size: " + writes.size() + " for Flusher: " + this);
       assert added; // always true (see MpscLinkedAtomicQueue implementation)
-      if (running.compareAndSet(false, true)) {
+      if (write.isWritable() && running.compareAndSet(false, true)) {
         eventLoop.execute(this::runOnEventLoop);
       }
     }
@@ -97,7 +108,12 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
       while ((write = writes.poll()) != null) {
         Channel channel = write.channel;
         channels.add(channel);
-        channel.write(write.message, write.writePromise);
+        if (channel.isWritable()) {
+          channel.write(write.message, write.writePromise);
+        } else {
+          enqueue(write);
+          break;
+        }
       }
 
       for (Channel channel : channels) {
@@ -114,7 +130,7 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
       //   run
 
       // If nothing was added in the queue, there were no concurrent calls, we can stop safely now
-      if (writes.isEmpty()) {
+      if (writes.isEmpty() || (write != null && !write.isWritable())) {
         return;
       }
 
@@ -137,6 +153,10 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
       this.channel = channel;
       this.message = message;
       this.writePromise = writePromise;
+    }
+
+    public boolean isWritable() {
+      return channel.isWritable();
     }
   }
 }

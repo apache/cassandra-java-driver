@@ -4,24 +4,32 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import com.codahale.metrics.Gauge;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.data.ByteUtils;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.IsolatedTests;
+import com.datastax.oss.driver.internal.core.channel.DefaultWriteCoalescer;
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.request.Query;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
+import org.awaitility.Awaitility;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -48,16 +56,14 @@ public class TCPFlowControlIT {
     SIMULACRON_RULE.cluster().prime(when(query).then(noRows()));
 
     try (CqlSession session =
-        (CqlSession)
-            SessionUtils.baseBuilder()
-                .addContactEndPoints(SIMULACRON_RULE.getContactPoints())
-                .build()) {
-      List<Integer> collect =
-          session.getMetadata().getNodes().values().stream()
-              .map(Node::getOpenConnections)
-              .collect(Collectors.toList());
-      System.out.println(collect);
-
+        SessionUtils.newSession(
+            SIMULACRON_RULE,
+            SessionUtils.configLoaderBuilder()
+                .withStringList(
+                    DefaultDriverOption.METRICS_NODE_ENABLED,
+                    Collections.singletonList("pool.in-flight"))
+                .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+                .build())) {
       SIMULACRON_RULE.cluster().pauseRead();
 
       // The TCP send and receive buffer size depends on the OS
@@ -66,18 +72,71 @@ public class TCPFlowControlIT {
       // Send 20Mb+ to each node
       List<CompletionStage<AsyncResultSet>> pendingRequests = new ArrayList<>();
       for (int i = 0; i < MAX_REQUESTS_PER_CONNECTION; i++) {
-        System.out.println("i" + i);
         pendingRequests.add(session.executeAsync(SimpleStatement.newInstance(queryString)));
       }
 
+      Integer writeQueueSize = getWriterQueueSize(session);
+      System.out.println("writeQueueSize: " + writeQueueSize);
+
+      for (Node n : session.getMetadata().getNodes().values()) {
+
+        System.out.println(
+            "for node: "
+                + n
+                + " value: "
+                + ((Gauge)
+                        session
+                            .getMetrics()
+                            .get()
+                            .getNodeMetric(n, DefaultNodeMetric.IN_FLIGHT)
+                            .get())
+                    .getValue());
+      }
+      ;
       System.out.println("after");
 
-      // todo assert that isWritable was false and requests are queued
+      waitForWriteQueueToStabilize(session);
+
+      // Assert that there are still requests that haven't been written
+      assertThat(getWriterQueueSize(session)).isGreaterThanOrEqualTo(1);
 
       SIMULACRON_RULE.cluster().resumeRead();
+
+      int numberOfFinished = 0;
       for (CompletionStage<AsyncResultSet> result : pendingRequests) {
-        result.toCompletableFuture().get();
+        AsyncResultSet asyncResultSet = result.toCompletableFuture().get();
+        numberOfFinished = +1;
+        System.out.println("errors:" + asyncResultSet.getExecutionInfo().getErrors());
       }
+      writeQueueSize =
+          ((DefaultWriteCoalescer)
+                  ((DefaultDriverContext) session.getContext()).getWriteCoalescer())
+              .getWriteQueueSize();
+
+      System.out.println("writeQueueSize: " + writeQueueSize);
+      System.out.println("numberOfFinished: " + numberOfFinished);
     }
+  }
+
+  private Integer getWriterQueueSize(CqlSession session) {
+    return ((DefaultWriteCoalescer)
+            ((DefaultDriverContext) session.getContext()).getWriteCoalescer())
+        .getWriteQueueSize();
+  }
+
+  private void waitForWriteQueueToStabilize(CqlSession cqlSession) throws InterruptedException {
+    final Integer[] lastWriteQueueValue = {getWriterQueueSize(cqlSession)};
+    // initial delay
+    Thread.sleep(500);
+    Awaitility.await()
+        .atMost(Duration.ofSeconds(5))
+        .pollDelay(Duration.ofSeconds(1))
+        .until(
+            () -> {
+              Integer currentValue = getWriterQueueSize(cqlSession);
+              Integer tmpLastValue = lastWriteQueueValue[0];
+              lastWriteQueueValue[0] = currentValue;
+              return tmpLastValue.equals(currentValue);
+            });
   }
 }
