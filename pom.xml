@@ -66,7 +66,7 @@
     <osgi.version>6.0.0</osgi.version>
     <felix.version>6.0.3</felix.version>
     <pax-exam.version>4.13.3</pax-exam.version>
-    <simulacron.version>0.8.9</simulacron.version>
+    <simulacron.version>0.10.0</simulacron.version>
     <jsr353-api.version>1.0</jsr353-api.version>
     <jersey.version>2.28</jersey.version>
     <hk2.version>2.5.0</hk2.version>

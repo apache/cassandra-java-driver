@@ -90,6 +90,7 @@ public class DriverChannel {
       return channel.newFailedFuture(new IllegalStateException("Driver channel is closing"));
     }
     RequestMessage message = new RequestMessage(request, tracing, customPayload, responseCallback);
+    System.out.println("is channel.isWritable: " + channel.isWritable());
     return writeCoalescer.writeAndFlush(channel, message);
   }
 
