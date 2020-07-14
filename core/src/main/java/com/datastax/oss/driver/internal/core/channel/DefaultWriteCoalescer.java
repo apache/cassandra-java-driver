@@ -64,6 +64,10 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
     return writePromise;
   }
 
+  public void restartFlushers() {
+    flushers.values().forEach(Flusher::restartLoop);
+  }
+
   private void enqueue(Write write, EventLoop eventLoop) {
     Flusher flusher = flushers.computeIfAbsent(eventLoop, Flusher::new);
     flusher.enqueue(write);
@@ -96,7 +100,13 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
       boolean added = writes.offer(write);
       System.out.println("writes size: " + writes.size() + " for Flusher: " + this);
       assert added; // always true (see MpscLinkedAtomicQueue implementation)
-      if (write.isWritable() && running.compareAndSet(false, true)) {
+      if (write.isWritable()) {
+        restartLoop();
+      }
+    }
+
+    private void restartLoop() {
+      if (running.compareAndSet(false, true)) {
         System.out.println("runOnEventLoop#100");
         eventLoop.execute(this::runOnEventLoop);
       }

@@ -77,6 +77,10 @@ public class DriverChannel {
     this.protocolVersion = protocolVersion;
   }
 
+  public WriteCoalescer getWriteCoalescer() {
+    return writeCoalescer;
+  }
+
   /**
    * @return a future that succeeds when the request frame was successfully written on the channel.
    *     Beyond that, the caller will be notified through the {@code responseCallback}.

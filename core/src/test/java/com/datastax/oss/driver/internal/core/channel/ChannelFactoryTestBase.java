@@ -257,7 +257,8 @@ public abstract class ChannelFactoryTestBase {
                     setKeyspaceTimeoutMillis,
                     channel.newPromise(),
                     null,
-                    "test");
+                    "test",
+                    resultFuture);
 
             HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultProfile);
             ProtocolInitHandler initHandler =

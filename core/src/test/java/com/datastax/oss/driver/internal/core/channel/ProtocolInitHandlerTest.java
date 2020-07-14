@@ -63,6 +63,7 @@ import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
@@ -81,6 +82,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
   @Mock private DriverConfig driverConfig;
   @Mock private DriverExecutionProfile defaultProfile;
   @Mock private Appender<ILoggingEvent> appender;
+  @Mock private DriverChannel driverChannel;
 
   private ProtocolVersionRegistry protocolVersionRegistry =
       new DefaultProtocolVersionRegistry("test");
@@ -110,7 +112,8 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 100,
                 channel.newPromise(),
                 null,
-                "test"));
+                "test",
+                CompletableFuture.completedFuture(driverChannel)));
 
     heartbeatHandler = new HeartbeatHandler(defaultProfile);
   }

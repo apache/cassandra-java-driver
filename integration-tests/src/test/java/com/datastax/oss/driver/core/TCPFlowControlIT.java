@@ -107,9 +107,6 @@ public class TCPFlowControlIT {
         AsyncResultSet asyncResultSet = result.toCompletableFuture().get();
         numberOfFinished = numberOfFinished + 1;
         System.out.println("errors:" + asyncResultSet.getExecutionInfo().getErrors());
-        // todo this is triggering the final drain, when the Channel#isWritable returns true.
-        // it should be replaced with callback to ChannelInboundHandler#channelWritabilityChanged()
-        session.executeAsync(SimpleStatement.newInstance(queryString)).toCompletableFuture().get();
       }
 
       writeQueueSize = getWriteQueueSize(session);
@@ -177,9 +174,6 @@ public class TCPFlowControlIT {
         AsyncResultSet asyncResultSet = result.toCompletableFuture().get();
         numberOfFinished = numberOfFinished + 1;
         System.out.println("errors:" + asyncResultSet.getExecutionInfo().getErrors());
-        // todo this is triggering the final drain, when the Channel#isWritable returns true.
-        // it should be replaced with callback to ChannelInboundHandler#channelWritabilityChanged()
-        session.executeAsync(SimpleStatement.newInstance(queryString)).toCompletableFuture().get();
       }
 
       int writeQueueSize = getWriteQueueSize(session);
@@ -188,6 +182,7 @@ public class TCPFlowControlIT {
     }
   }
 
+  @SuppressWarnings("unchecked")
   private int getInFlightRequests(CqlSession session, Node n) {
     return ((Gauge<Integer>)
             session.getMetrics().get().getNodeMetric(n, DefaultNodeMetric.IN_FLIGHT).get())

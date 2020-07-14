@@ -296,7 +296,8 @@ public class ChannelFactory {
                   setKeyspaceTimeoutMillis,
                   channel.newPromise(),
                   options.eventCallback,
-                  options.ownerLogPrefix);
+                  options.ownerLogPrefix,
+                  resultFuture);
           HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultConfig);
           ProtocolInitHandler initHandler =
               new ProtocolInitHandler(

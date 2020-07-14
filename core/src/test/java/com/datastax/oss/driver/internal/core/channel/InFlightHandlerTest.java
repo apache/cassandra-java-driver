@@ -38,6 +38,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPromise;
 import java.net.InetSocketAddress;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,6 +52,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   private static final int MAX_ORPHAN_IDS = 10;
 
   @Mock private StreamIdGenerator streamIds;
+  @Mock DriverChannel driverChannel;
 
   @Before
   @Override
@@ -592,6 +594,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
                 SET_KEYSPACE_TIMEOUT_MILLIS,
                 channel.newPromise(),
                 eventCallback,
-                "test"));
+                "test",
+                CompletableFuture.completedFuture(driverChannel)));
   }
 }

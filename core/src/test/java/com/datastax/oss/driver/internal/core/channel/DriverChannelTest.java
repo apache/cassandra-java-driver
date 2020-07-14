@@ -30,6 +30,7 @@ import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -48,6 +49,9 @@ public class DriverChannelTest extends ChannelHandlerTestBase {
   public void setup() {
     super.setup();
     MockitoAnnotations.initMocks(this);
+    driverChannel =
+        new DriverChannel(
+            new EmbeddedEndPoint(), channel, writeCoalescer, DefaultProtocolVersion.V3);
     channel
         .pipeline()
         .addLast(
@@ -58,11 +62,9 @@ public class DriverChannelTest extends ChannelHandlerTestBase {
                 SET_KEYSPACE_TIMEOUT_MILLIS,
                 channel.newPromise(),
                 null,
-                "test"));
+                "test",
+                CompletableFuture.completedFuture(driverChannel)));
     writeCoalescer = new MockWriteCoalescer();
-    driverChannel =
-        new DriverChannel(
-            new EmbeddedEndPoint(), channel, writeCoalescer, DefaultProtocolVersion.V3);
   }
 
   /**
