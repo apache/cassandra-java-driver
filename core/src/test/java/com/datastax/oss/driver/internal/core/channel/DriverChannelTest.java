@@ -49,6 +49,7 @@ public class DriverChannelTest extends ChannelHandlerTestBase {
   public void setup() {
     super.setup();
     MockitoAnnotations.initMocks(this);
+    writeCoalescer = new MockWriteCoalescer();
     driverChannel =
         new DriverChannel(
             new EmbeddedEndPoint(), channel, writeCoalescer, DefaultProtocolVersion.V3);
@@ -64,7 +65,6 @@ public class DriverChannelTest extends ChannelHandlerTestBase {
                 null,
                 "test",
                 CompletableFuture.completedFuture(driverChannel)));
-    writeCoalescer = new MockWriteCoalescer();
   }
 
   /**
