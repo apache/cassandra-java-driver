@@ -46,6 +46,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import org.awaitility.Awaitility;
 import org.junit.ClassRule;
@@ -58,11 +60,12 @@ public class TCPFlowControlIT {
   public static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
-  private static int MAX_REQUESTS_PER_CONNECTION = 2048;
+  // this number is calculated empirically to be high enough to saturate the underling TCP buffer
+  private static int NUMBER_OF_SUBMITTED_REQUESTS = 2048;
 
   @Test
   public void should_not_write_more_requests_to_the_socket_after_the_server_paused_reading()
-      throws InterruptedException, ExecutionException {
+      throws InterruptedException, ExecutionException, TimeoutException {
     byte[] buffer = new byte[10240];
     Arrays.fill(buffer, (byte) 1);
     ByteBuffer buffer10Kb = ByteBuffer.wrap(buffer);
@@ -74,11 +77,7 @@ public class TCPFlowControlIT {
     SIMULACRON_RULE.cluster().prime(when(query).then(noRows()));
 
     try (CqlSession session =
-        SessionUtils.newSession(
-            SIMULACRON_RULE,
-            SessionUtils.configLoaderBuilder()
-                .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(10))
-                .build())) {
+        SessionUtils.newSession(SIMULACRON_RULE, SessionUtils.configLoaderBuilder().build())) {
       SIMULACRON_RULE.cluster().pauseRead();
 
       // The TCP send and receive buffer size depends on the OS
@@ -86,38 +85,34 @@ public class TCPFlowControlIT {
       // Channel#isWritable return false)
       // Send 20Mb+ to each node
       List<CompletionStage<AsyncResultSet>> pendingRequests = new ArrayList<>();
-      for (int i = 0; i < MAX_REQUESTS_PER_CONNECTION; i++) {
+      for (int i = 0; i < NUMBER_OF_SUBMITTED_REQUESTS; i++) {
         pendingRequests.add(session.executeAsync(SimpleStatement.newInstance(queryString)));
       }
 
       Integer writeQueueSize = getWriteQueueSize(session);
       System.out.println("writeQueueSize: " + writeQueueSize);
-
-      System.out.println("after");
-
-      waitForWriteQueueToStabilize(session);
-
       // Assert that there are still requests that haven't been written
+      waitForWriteQueueToStabilize(session);
       assertThat(getWriteQueueSize(session)).isGreaterThan(1);
 
       SIMULACRON_RULE.cluster().resumeRead();
 
       int numberOfFinished = 0;
       for (CompletionStage<AsyncResultSet> result : pendingRequests) {
-        AsyncResultSet asyncResultSet = result.toCompletableFuture().get();
+        result.toCompletableFuture().get(1, TimeUnit.SECONDS);
+        ;
         numberOfFinished = numberOfFinished + 1;
-        System.out.println("errors:" + asyncResultSet.getExecutionInfo().getErrors());
       }
 
       writeQueueSize = getWriteQueueSize(session);
       assertThat(writeQueueSize).isEqualTo(0);
-      assertThat(numberOfFinished).isEqualTo(MAX_REQUESTS_PER_CONNECTION);
+      assertThat(numberOfFinished).isEqualTo(NUMBER_OF_SUBMITTED_REQUESTS);
     }
   }
 
   @Test
   public void should_process_requests_successfully_on_non_paused_nodes()
-      throws InterruptedException, ExecutionException {
+      throws InterruptedException, ExecutionException, TimeoutException {
     byte[] buffer = new byte[10240];
     Arrays.fill(buffer, (byte) 1);
     ByteBuffer buffer10Kb = ByteBuffer.wrap(buffer);
@@ -135,7 +130,6 @@ public class TCPFlowControlIT {
                 .withStringList(
                     DefaultDriverOption.METRICS_NODE_ENABLED,
                     Collections.singletonList("pool.in-flight"))
-                .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(10))
                 .build())) {
       int hostIndex = 2;
       BoundNode pausedNode = SIMULACRON_RULE.cluster().node(hostIndex);
@@ -149,7 +143,7 @@ public class TCPFlowControlIT {
       SIMULACRON_RULE.cluster().node(2).pauseRead();
 
       List<CompletionStage<AsyncResultSet>> pendingRequests = new ArrayList<>();
-      for (int i = 0; i < MAX_REQUESTS_PER_CONNECTION; i++) {
+      for (int i = 0; i < NUMBER_OF_SUBMITTED_REQUESTS; i++) {
         pendingRequests.add(session.executeAsync(SimpleStatement.newInstance(queryString)));
       }
 
@@ -171,14 +165,13 @@ public class TCPFlowControlIT {
 
       int numberOfFinished = 0;
       for (CompletionStage<AsyncResultSet> result : pendingRequests) {
-        AsyncResultSet asyncResultSet = result.toCompletableFuture().get();
+        result.toCompletableFuture().get(1, TimeUnit.SECONDS);
         numberOfFinished = numberOfFinished + 1;
-        System.out.println("errors:" + asyncResultSet.getExecutionInfo().getErrors());
       }
 
       int writeQueueSize = getWriteQueueSize(session);
       assertThat(writeQueueSize).isEqualTo(0);
-      assertThat(numberOfFinished).isEqualTo(MAX_REQUESTS_PER_CONNECTION);
+      assertThat(numberOfFinished).isEqualTo(NUMBER_OF_SUBMITTED_REQUESTS);
     }
   }
 
