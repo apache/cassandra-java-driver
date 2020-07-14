@@ -20,9 +20,11 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.codahale.metrics.Gauge;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -89,8 +91,6 @@ public class TCPFlowControlIT {
         pendingRequests.add(session.executeAsync(SimpleStatement.newInstance(queryString)));
       }
 
-      Integer writeQueueSize = getWriteQueueSize(session);
-      System.out.println("writeQueueSize: " + writeQueueSize);
       // Assert that there are still requests that haven't been written
       waitForWriteQueueToStabilize(session);
       assertThat(getWriteQueueSize(session)).isGreaterThan(1);
@@ -103,7 +103,7 @@ public class TCPFlowControlIT {
         numberOfFinished = numberOfFinished + 1;
       }
 
-      writeQueueSize = getWriteQueueSize(session);
+      int writeQueueSize = getWriteQueueSize(session);
       assertThat(writeQueueSize).isEqualTo(0);
       assertThat(numberOfFinished).isEqualTo(NUMBER_OF_SUBMITTED_REQUESTS);
     }
@@ -171,6 +171,46 @@ public class TCPFlowControlIT {
       int writeQueueSize = getWriteQueueSize(session);
       assertThat(writeQueueSize).isEqualTo(0);
       assertThat(numberOfFinished).isEqualTo(NUMBER_OF_SUBMITTED_REQUESTS);
+    }
+  }
+
+  @Test
+  public void should_timeout_requests_when_the_server_paused_reading_without_resumimg()
+      throws InterruptedException {
+    byte[] buffer = new byte[10240];
+    Arrays.fill(buffer, (byte) 1);
+    ByteBuffer buffer10Kb = ByteBuffer.wrap(buffer);
+
+    String queryString =
+        String.format("INSERT INTO table1 (id) VALUES (%s)", ByteUtils.toHexString(buffer10Kb));
+    Query query = new Query(queryString, emptyList(), emptyMap(), emptyMap());
+
+    SIMULACRON_RULE.cluster().prime(when(query).then(noRows()));
+
+    try (CqlSession session =
+        SessionUtils.newSession(SIMULACRON_RULE, SessionUtils.configLoaderBuilder().build())) {
+      SIMULACRON_RULE.cluster().pauseRead();
+
+      List<CompletionStage<AsyncResultSet>> pendingRequests = new ArrayList<>();
+      for (int i = 0; i < NUMBER_OF_SUBMITTED_REQUESTS; i++) {
+        pendingRequests.add(session.executeAsync(SimpleStatement.newInstance(queryString)));
+      }
+
+      // Assert that there are still requests that haven't been written
+      waitForWriteQueueToStabilize(session);
+      assertThat(getWriteQueueSize(session)).isGreaterThan(1);
+
+      // do not resumeRead
+      for (CompletionStage<AsyncResultSet> result : pendingRequests) {
+        assertThatThrownBy(() -> result.toCompletableFuture().get())
+            .isInstanceOf(ExecutionException.class)
+            .hasCauseInstanceOf(DriverTimeoutException.class);
+      }
+
+      // write queue size is still non empty
+      int writeQueueSize = getWriteQueueSize(session);
+      assertThat(writeQueueSize).isGreaterThan(1);
+      SIMULACRON_RULE.cluster().stop();
     }
   }
 

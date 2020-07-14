@@ -98,7 +98,6 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
 
     private void enqueue(Write write) {
       boolean added = writes.offer(write);
-      System.out.println("writes size: " + writes.size() + " for Flusher: " + this);
       assert added; // always true (see MpscLinkedAtomicQueue implementation)
       if (write.isWritable()) {
         restartLoop();
