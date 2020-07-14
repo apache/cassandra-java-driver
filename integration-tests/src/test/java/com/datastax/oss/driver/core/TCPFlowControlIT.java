@@ -175,7 +175,7 @@ public class TCPFlowControlIT {
   }
 
   @Test
-  public void should_timeout_requests_when_the_server_paused_reading_without_resumimg()
+  public void should_timeout_requests_when_the_server_paused_reading_without_resuming()
       throws InterruptedException {
     byte[] buffer = new byte[10240];
     Arrays.fill(buffer, (byte) 1);
