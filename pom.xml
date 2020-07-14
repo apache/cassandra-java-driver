@@ -34,7 +34,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.yugabyte</groupId>
   <artifactId>java-driver-parent</artifactId>
-  <version>4.6.0-yb-4-RC2</version>
+  <version>4.6.0-yb-4-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Java Driver for YugaByteDB</name>
   <description>Java Driver for YugaByteDB; derived from DataStax Java Driver for Apache Cassandra.</description>
@@ -886,7 +886,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <connection>scm:git:git@github.com:YugaByte/cassandra-java-driver.git</connection>
     <developerConnection>scm:git:git@github.com:YugaByte/cassandra-java-driver.git</developerConnection>
     <url>https://github.com/yugabyte/cassandra-java-driver</url>
-    <tag>4.6.0-yb-4-RC2</tag>
+    <tag>4.6.0-yb-2-RC2</tag>
   </scm>
   <developers>
     <developer>
