@@ -251,8 +251,7 @@ public class DefaultDriverContext implements InternalDriverContext {
       this.sessionName = "s" + SESSION_NAME_COUNTER.getAndIncrement();
     }
     this.localDatacentersFromBuilder = programmaticArguments.getLocalDatacenters();
-    this.codecRegistry =
-        buildCodecRegistry(this.sessionName, programmaticArguments.getTypeCodecs());
+    this.codecRegistry = buildCodecRegistry(programmaticArguments);
     this.nodeStateListenerFromBuilder = programmaticArguments.getNodeStateListener();
     this.nodeStateListenerRef =
         new LazyReference<>(
@@ -563,9 +562,12 @@ public class DefaultDriverContext implements InternalDriverContext {
     return new RequestProcessorRegistry(logPrefix, processors.toArray(new RequestProcessor[0]));
   }
 
-  protected CodecRegistry buildCodecRegistry(String logPrefix, List<TypeCodec<?>> codecs) {
-    MutableCodecRegistry registry = new DefaultCodecRegistry(logPrefix);
-    registry.register(codecs);
+  protected CodecRegistry buildCodecRegistry(ProgrammaticArguments arguments) {
+    MutableCodecRegistry registry = arguments.getCodecRegistry();
+    if (registry == null) {
+      registry = new DefaultCodecRegistry(this.sessionName);
+    }
+    registry.register(arguments.getTypeCodecs());
     registry.register(DseTypeCodecs.DATE_RANGE);
     if (DependencyCheck.ESRI.isPresent()) {
       registry.register(DseTypeCodecs.LINE_STRING, DseTypeCodecs.POINT, DseTypeCodecs.POLYGON);
