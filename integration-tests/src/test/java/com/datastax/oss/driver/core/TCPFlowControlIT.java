@@ -100,7 +100,6 @@ public class TCPFlowControlIT {
       int numberOfFinished = 0;
       for (CompletionStage<AsyncResultSet> result : pendingRequests) {
         result.toCompletableFuture().get(1, TimeUnit.SECONDS);
-        ;
         numberOfFinished = numberOfFinished + 1;
       }
 
