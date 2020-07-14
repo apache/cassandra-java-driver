@@ -32,6 +32,7 @@ import com.datastax.oss.driver.api.core.ssl.ProgrammaticSslEngineFactory;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.internal.core.ContactPoints;
 import com.datastax.oss.driver.internal.core.auth.ProgrammaticPlainTextAuthProvider;
@@ -485,6 +486,18 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
     } catch (MalformedURLException e) {
       throw new IllegalArgumentException("Incorrect format of cloudConfigPath", e);
     }
+    return self;
+  }
+
+  /**
+   * Registers a CodecRegistry to use for the session.
+   *
+   * <p>When both this and {@link #addTypeCodecs(TypeCodec[])} are called, the added type codecs
+   * will be registered on the provided CodecRegistry.
+   */
+  @NonNull
+  public SelfT withCodecRegistry(@Nullable MutableCodecRegistry codecRegistry) {
+    this.programmaticArgumentsBuilder.withCodecRegistry(codecRegistry);
     return self;
   }
 

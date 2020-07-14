@@ -4,6 +4,7 @@
 
 ### 4.8.0 (in progress)
 
+- [improvement] Allow injection of CodecRegistry on session builder
 - [improvement] JAVA-2828: Add safe paging state wrapper
 - [bug] JAVA-2835: Correctly handle unresolved addresses in DefaultEndPoint.equals
 - [bug] JAVA-2838: Avoid ConcurrentModificationException when closing connection
