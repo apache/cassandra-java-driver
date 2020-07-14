@@ -16,6 +16,7 @@
 package com.datastax.dse.driver.internal.core.graph.schema.refresh;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.datastax.dse.driver.api.core.metadata.schema.DseEdgeMetadata;
@@ -26,6 +27,8 @@ import com.datastax.dse.driver.internal.core.metadata.schema.DefaultDseKeyspaceM
 import com.datastax.dse.driver.internal.core.metadata.schema.DefaultDseTableMetadata;
 import com.datastax.dse.driver.internal.core.metadata.schema.DefaultDseVertexMetadata;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.type.DataTypes;
@@ -72,6 +75,10 @@ public class GraphSchemaRefreshTest {
   @Before
   public void setup() {
     when(context.getChannelFactory()).thenReturn(channelFactory);
+    DriverExecutionProfile defaultExecutionProfile = mockDefaultExecutionProfile();
+    Map<String, DriverExecutionProfile> profiles =
+        ImmutableMap.of("default", defaultExecutionProfile);
+    mockDriverContextWithProfiles(context, defaultExecutionProfile, profiles);
     oldMetadata =
         DefaultMetadata.EMPTY.withSchema(
             ImmutableMap.of(OLD_KS1.getName(), OLD_KS1, KS_WITH_ENGINE.getName(), KS_WITH_ENGINE),
@@ -412,5 +419,21 @@ public class GraphSchemaRefreshTest {
         toTable,
         Collections.emptyList(),
         Collections.emptyList());
+  }
+
+  private InternalDriverContext mockDriverContextWithProfiles(
+      InternalDriverContext context,
+      DriverExecutionProfile defaultExecutionProfile,
+      Map<String, DriverExecutionProfile> profiles) {
+    DriverConfig driverConfig = mock(DriverConfig.class);
+    when(driverConfig.getDefaultProfile()).thenReturn(defaultExecutionProfile);
+    when(context.getConfig()).thenReturn(driverConfig);
+    return context;
+  }
+
+  private DriverExecutionProfile mockDefaultExecutionProfile() {
+
+    DriverExecutionProfile profile = mock(DriverExecutionProfile.class);
+    return profile;
   }
 }
