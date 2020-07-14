@@ -27,7 +27,6 @@ import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.util.Map;
 import java.util.UUID;
@@ -65,8 +64,6 @@ public class InitialNodeListRefreshTest {
     hostId3 = UUID.randomUUID();
 
     DriverExecutionProfile defaultExecutionProfile = mockDefaultExecutionProfile();
-    Map<String, DriverExecutionProfile> profiles =
-        ImmutableMap.of("default", defaultExecutionProfile);
     mockDriverContextWithProfiles(context, defaultExecutionProfile);
   }
 

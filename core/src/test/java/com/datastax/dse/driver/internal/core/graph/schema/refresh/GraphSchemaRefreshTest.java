@@ -76,9 +76,7 @@ public class GraphSchemaRefreshTest {
   public void setup() {
     when(context.getChannelFactory()).thenReturn(channelFactory);
     DriverExecutionProfile defaultExecutionProfile = mockDefaultExecutionProfile();
-    Map<String, DriverExecutionProfile> profiles =
-        ImmutableMap.of("default", defaultExecutionProfile);
-    mockDriverContextWithProfiles(context, defaultExecutionProfile, profiles);
+    mockDriverContextWithProfiles(context, defaultExecutionProfile);
     oldMetadata =
         DefaultMetadata.EMPTY.withSchema(
             ImmutableMap.of(OLD_KS1.getName(), OLD_KS1, KS_WITH_ENGINE.getName(), KS_WITH_ENGINE),
@@ -422,9 +420,7 @@ public class GraphSchemaRefreshTest {
   }
 
   private InternalDriverContext mockDriverContextWithProfiles(
-      InternalDriverContext context,
-      DriverExecutionProfile defaultExecutionProfile,
-      Map<String, DriverExecutionProfile> profiles) {
+      InternalDriverContext context, DriverExecutionProfile defaultExecutionProfile) {
     DriverConfig driverConfig = mock(DriverConfig.class);
     when(driverConfig.getDefaultProfile()).thenReturn(defaultExecutionProfile);
     when(context.getConfig()).thenReturn(driverConfig);
