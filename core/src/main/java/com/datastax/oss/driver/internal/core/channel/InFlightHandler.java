@@ -97,7 +97,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
 
   @Override
   public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-    System.out.println("Channel writability changed " + ctx.channel().isWritable());
+    LOG.trace("Channel isWritable changed: {}", ctx.channel().isWritable());
     if (ctx.channel().isWritable()) {
       driverChannel.thenAccept(
           d -> {

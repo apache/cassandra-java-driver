@@ -106,7 +106,6 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
 
     private void restartLoop() {
       if (running.compareAndSet(false, true)) {
-        System.out.println("runOnEventLoop#100");
         eventLoop.execute(this::runOnEventLoop);
       }
     }
@@ -119,10 +118,8 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
         Channel channel = write.channel;
         channels.add(channel);
         if (channel.isWritable()) {
-          System.out.println("channel.isWritable()113" + channel.isWritable());
           channel.write(write.message, write.writePromise);
         } else {
-          System.out.println("channel.isWritable()#116" + channel.isWritable());
           enqueue(write);
           break;
         }
@@ -143,7 +140,6 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
 
       // If nothing was added in the queue, there were no concurrent calls, we can stop safely now
       if (writes.isEmpty() || (write != null && !write.isWritable())) {
-        System.out.println("break !write.isWritable() " + !write.isWritable());
         return;
       }
 
