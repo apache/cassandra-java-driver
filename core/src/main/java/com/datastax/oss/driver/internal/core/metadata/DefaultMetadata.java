@@ -216,6 +216,7 @@ public class DefaultMetadata implements Metadata {
 
   @Nullable
   protected DefaultPartitionMetadata rebuildPartitionMap(InternalDriverContext context) {
+
     return new DefaultPartitionMetadata(
         context.getSessionName(),
         context.getControlConnection(),
@@ -223,6 +224,10 @@ public class DefaultMetadata implements Metadata {
             .getConfig()
             .getDefaultProfile()
             .getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT),
-        context.getMetadataManager().getMetadata().getNodes());
+        context
+            .getConfig()
+            .getDefaultProfile()
+            .getBoolean(DefaultDriverOption.METADATA_PARTITION_METADATA_ENABLED),
+        this.getNodes());
   }
 }

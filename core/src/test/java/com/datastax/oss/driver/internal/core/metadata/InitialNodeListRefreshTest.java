@@ -15,15 +15,19 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
-import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.util.Map;
 import java.util.UUID;
@@ -59,6 +63,11 @@ public class InitialNodeListRefreshTest {
     hostId1 = UUID.randomUUID();
     hostId2 = UUID.randomUUID();
     hostId3 = UUID.randomUUID();
+
+    DriverExecutionProfile defaultExecutionProfile = mockDefaultExecutionProfile();
+    Map<String, DriverExecutionProfile> profiles =
+        ImmutableMap.of("default", defaultExecutionProfile);
+    mockDriverContextWithProfiles(context, defaultExecutionProfile);
   }
 
   @Test
@@ -150,5 +159,19 @@ public class InitialNodeListRefreshTest {
     assertThat(newNodes.get(hostId1)).isEqualTo(contactPoint1);
     assertThat(contactPoint1.getHostId()).isEqualTo(hostId1);
     assertThat(contactPoint1.getDatacenter()).isEqualTo("dc1");
+  }
+
+  private InternalDriverContext mockDriverContextWithProfiles(
+      InternalDriverContext context, DriverExecutionProfile defaultExecutionProfile) {
+    DriverConfig driverConfig = mock(DriverConfig.class);
+    when(driverConfig.getDefaultProfile()).thenReturn(defaultExecutionProfile);
+    when(context.getConfig()).thenReturn(driverConfig);
+    return context;
+  }
+
+  private DriverExecutionProfile mockDefaultExecutionProfile() {
+
+    DriverExecutionProfile profile = mock(DriverExecutionProfile.class);
+    return profile;
   }
 }

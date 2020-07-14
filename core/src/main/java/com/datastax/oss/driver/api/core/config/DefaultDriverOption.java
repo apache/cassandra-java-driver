@@ -624,6 +624,13 @@ public enum DefaultDriverOption implements DriverOption {
   METADATA_TOKEN_MAP_ENABLED("advanced.metadata.token-map.enabled"),
 
   /**
+   * Whether partition metadata is enabled.
+   *
+   * <p>Value-type: boolean
+   */
+  METADATA_PARTITION_METADATA_ENABLED("advanced.metadata.partition-metadata.enabled"),
+
+  /**
    * How long the driver waits for responses to control queries.
    *
    * <p>Value-type: {@link java.time.Duration Duration}

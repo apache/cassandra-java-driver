@@ -16,8 +16,11 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
@@ -45,6 +48,9 @@ public class RemoveNodeRefreshTest {
     when(context.getChannelFactory()).thenReturn(channelFactory);
     node1 = TestNodeFactory.newNode(1, context);
     node2 = TestNodeFactory.newNode(2, context);
+
+    DriverExecutionProfile defaultExecutionProfile = mockDefaultExecutionProfile();
+    mockDriverContextWithProfiles(context, defaultExecutionProfile);
   }
 
   @Test
@@ -81,5 +87,19 @@ public class RemoveNodeRefreshTest {
     // Then
     assertThat(result.newMetadata.getNodes()).containsOnlyKeys(node1.getHostId());
     assertThat(result.events).isEmpty();
+  }
+
+  private InternalDriverContext mockDriverContextWithProfiles(
+      InternalDriverContext context, DriverExecutionProfile defaultExecutionProfile) {
+    DriverConfig driverConfig = mock(DriverConfig.class);
+    when(driverConfig.getDefaultProfile()).thenReturn(defaultExecutionProfile);
+    when(context.getConfig()).thenReturn(driverConfig);
+    return context;
+  }
+
+  private DriverExecutionProfile mockDefaultExecutionProfile() {
+
+    DriverExecutionProfile profile = mock(DriverExecutionProfile.class);
+    return profile;
   }
 }

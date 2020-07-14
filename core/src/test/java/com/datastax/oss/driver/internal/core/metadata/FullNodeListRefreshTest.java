@@ -15,9 +15,12 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
-import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
@@ -55,6 +58,9 @@ public class FullNodeListRefreshTest {
 
     endPoint3 = TestNodeFactory.newEndPoint(3);
     hostId3 = UUID.randomUUID();
+
+    DriverExecutionProfile defaultExecutionProfile = mockDefaultExecutionProfile();
+    mockDriverContextWithProfiles(context, defaultExecutionProfile);
   }
 
   @Test
@@ -177,5 +183,19 @@ public class FullNodeListRefreshTest {
     assertThat(node2.getDatacenter()).isEqualTo("dc1");
     assertThat(node2.getRack()).isEqualTo("rack2");
     assertThat(result.events).isEmpty();
+  }
+
+  private InternalDriverContext mockDriverContextWithProfiles(
+      InternalDriverContext context, DriverExecutionProfile defaultExecutionProfile) {
+    DriverConfig driverConfig = mock(DriverConfig.class);
+    when(driverConfig.getDefaultProfile()).thenReturn(defaultExecutionProfile);
+    when(context.getConfig()).thenReturn(driverConfig);
+    return context;
+  }
+
+  private DriverExecutionProfile mockDefaultExecutionProfile() {
+
+    DriverExecutionProfile profile = mock(DriverExecutionProfile.class);
+    return profile;
   }
 }

@@ -15,11 +15,13 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
-import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
@@ -61,6 +63,8 @@ public class DefaultMetadataTokenMapTest {
     when(context.getChannelFactory()).thenReturn(channelFactory);
     DefaultReplicationStrategyFactory replicationStrategyFactory =
         new DefaultReplicationStrategyFactory(context);
+    DriverExecutionProfile defaultExecutionProfile = mockDefaultExecutionProfile();
+    mockDriverContextWithProfiles(context, defaultExecutionProfile);
     when(context.getReplicationStrategyFactory()).thenReturn(replicationStrategyFactory);
   }
 
@@ -166,5 +170,19 @@ public class DefaultMetadataTokenMapTest {
     when(keyspace.getName()).thenReturn(name);
     when(keyspace.getReplication()).thenReturn(replicationConfig);
     return keyspace;
+  }
+
+  private InternalDriverContext mockDriverContextWithProfiles(
+      InternalDriverContext context, DriverExecutionProfile defaultExecutionProfile) {
+    DriverConfig driverConfig = mock(DriverConfig.class);
+    when(driverConfig.getDefaultProfile()).thenReturn(defaultExecutionProfile);
+    when(context.getConfig()).thenReturn(driverConfig);
+    return context;
+  }
+
+  private DriverExecutionProfile mockDefaultExecutionProfile() {
+
+    DriverExecutionProfile profile = mock(DriverExecutionProfile.class);
+    return profile;
   }
 }

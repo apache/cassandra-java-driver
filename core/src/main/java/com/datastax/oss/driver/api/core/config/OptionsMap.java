@@ -332,6 +332,7 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.METADATA_SCHEMA_WINDOW, Duration.ofSeconds(1));
     map.put(TypedDriverOption.METADATA_SCHEMA_MAX_EVENTS, 20);
     map.put(TypedDriverOption.METADATA_TOKEN_MAP_ENABLED, true);
+    map.put(TypedDriverOption.METADATA_PARTITION_METADATA_ENABLED, true);
     map.put(TypedDriverOption.CONTROL_CONNECTION_TIMEOUT, Duration.ofMillis(500));
     map.put(TypedDriverOption.CONTROL_CONNECTION_AGREEMENT_INTERVAL, Duration.ofMillis(200));
     map.put(TypedDriverOption.CONTROL_CONNECTION_AGREEMENT_TIMEOUT, Duration.ofSeconds(10));

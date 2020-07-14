@@ -448,6 +448,10 @@ public class TypedDriverOption<ValueT> {
   /** Whether token metadata is enabled. */
   public static final TypedDriverOption<Boolean> METADATA_TOKEN_MAP_ENABLED =
       new TypedDriverOption<>(DefaultDriverOption.METADATA_TOKEN_MAP_ENABLED, GenericType.BOOLEAN);
+  /** Whether token metadata is enabled. */
+  public static final TypedDriverOption<Boolean> METADATA_PARTITION_METADATA_ENABLED =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METADATA_PARTITION_METADATA_ENABLED, GenericType.BOOLEAN);
   /** How long the driver waits for responses to control queries. */
   public static final TypedDriverOption<Duration> CONTROL_CONNECTION_TIMEOUT =
       new TypedDriverOption<>(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT, GenericType.DURATION);
