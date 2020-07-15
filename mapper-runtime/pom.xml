@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.yugabyte</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.6.0-yb-5-RC2</version>
+    <version>4.6.0-yb-6-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-mapper-runtime</artifactId>
   <packaging>bundle</packaging>
