@@ -169,7 +169,23 @@ CqlSession session = CqlSession.builder()
     .build();
 ```
 
-There is also a convenience shortcut if you just want to use an existing `javax.net.ssl.SSLContext`:
+If you are reusing code that configures SSL programmatically, you can use
+[ProgrammaticSslEngineFactory] as an easy way to wrap that into a factory instance:
+
+```java
+SSLContext sslContext = ...
+String[] cipherSuites = ...
+boolean requireHostNameValidation = ...
+CqlSession session =
+    CqlSession.builder()
+        .withSslEngineFactory(
+            new ProgrammaticSslEngineFactory(
+                sslContext, cipherSuites, requireHostNameValidation))
+        .build();
+```
+
+Finally, there is a convenient shortcut on the session builder if you just need to pass an
+`SSLContext`:
 
 ```java
 SSLContext sslContext = ...
@@ -190,3 +206,4 @@ the box, but with a bit of custom development it is fairly easy to add. See
 [JSSE system properties]: http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html#Customization
 [SessionBuilder.withSslEngineFactory]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withSslEngineFactory-com.datastax.oss.driver.api.core.ssl.SslEngineFactory-
 [SessionBuilder.withSslContext]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withSslContext-javax.net.ssl.SSLContext-
+[ProgrammaticSslEngineFactory]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/ssl/ProgrammaticSslEngineFactory.html
