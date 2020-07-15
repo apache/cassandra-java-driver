@@ -27,7 +27,7 @@ import java.nio.ByteBuffer;
  * <p>This class performs additional checks to fail fast if the paging state is not reused on the
  * same query, and it provides utility methods for conversion to/from strings and byte arrays.
  *
- * <p>The serialized form returned by {@link #toBytes()} and {@link #toString()} is an opaque
+ * <p>The serialized form returned by {@link #toBytes()} and {@link Object#toString()} is an opaque
  * sequence of bytes. Note however that it is <b>not cryptographically secure</b>: the contents are
  * not encrypted and the checks are performed with a simple MD5 checksum. If you need stronger
  * guarantees, you should build your own wrapper around {@link ExecutionInfo#getPagingState()}.
