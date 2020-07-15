@@ -47,7 +47,7 @@
     <module>mapper-runtime</module>
     <module>mapper-processor</module>
     <module>test-infra</module>
-    <module>integration-tests</module>
+    <!--    <module>integration-tests</module> -->
     <module>distribution</module>
     <module>examples</module>
     <module>bom</module>
