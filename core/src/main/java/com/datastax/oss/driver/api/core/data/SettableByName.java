@@ -194,6 +194,17 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
   }
 
   /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias
+   *     for{@link #setBoolean(String, boolean)}.
+   */
+  @Deprecated
+  @NonNull
+  @CheckReturnValue
+  default SelfT setBool(@NonNull String name, boolean v) {
+    return setBoolean(name, v);
+  }
+
+  /**
    * Sets the value for all occurrences of {@code name} to the provided Java primitive byte.
    *
    * <p>By default, this works with CQL type {@code tinyint}.

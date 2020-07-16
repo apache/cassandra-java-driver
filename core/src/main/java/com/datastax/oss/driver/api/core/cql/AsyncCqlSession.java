@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.cql.DefaultPrepareRequest;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 
@@ -45,12 +46,54 @@ public interface AsyncCqlSession extends Session {
    * Executes a CQL statement asynchronously (the call returns as soon as the statement was sent,
    * generally before the result is available).
    *
+   * <p>This is an alias for {@link #executeAsync(Statement)}
+   * executeAsync(SimpleStatement.newInstance(query))}.
+   *
    * @param query the CQL query to execute.
    * @return a {@code CompletionStage} that, once complete, will produce the async result set.
+   * @see SimpleStatement#newInstance(String)
    */
   @NonNull
   default CompletionStage<AsyncResultSet> executeAsync(@NonNull String query) {
     return executeAsync(SimpleStatement.newInstance(query));
+  }
+
+  /**
+   * Executes a CQL statement asynchronously (the call returns as soon as the statement was sent,
+   * generally before the result is available).
+   *
+   * <p>This is an alias for {@link #executeAsync(Statement)}
+   * executeAsync(SimpleStatement.newInstance(query, values))}.
+   *
+   * @param query the CQL query to execute.
+   * @param values the values for placeholders in the query string. Individual values can be {@code
+   *     null}, but the vararg array itself can't.
+   * @return a {@code CompletionStage} that, once complete, will produce the async result set.
+   * @see SimpleStatement#newInstance(String, Object...)
+   */
+  @NonNull
+  default CompletionStage<AsyncResultSet> executeAsync(
+      @NonNull String query, @NonNull Object... values) {
+    return executeAsync(SimpleStatement.newInstance(query, values));
+  }
+
+  /**
+   * Executes a CQL statement asynchronously (the call returns as soon as the statement was sent,
+   * generally before the result is available).
+   *
+   * <p>This is an alias for {@link #executeAsync(Statement)}
+   * executeAsync(SimpleStatement.newInstance(query, values))}.
+   *
+   * @param query the CQL query to execute.
+   * @param values the values for named placeholders in the query string. Individual values can be
+   *     {@code null}, but the map itself can't.
+   * @return a {@code CompletionStage} that, once complete, will produce the async result set.
+   * @see SimpleStatement#newInstance(String, Map)
+   */
+  @NonNull
+  default CompletionStage<AsyncResultSet> executeAsync(
+      @NonNull String query, @NonNull Map<String, Object> values) {
+    return executeAsync(SimpleStatement.newInstance(query, values));
   }
 
   /**

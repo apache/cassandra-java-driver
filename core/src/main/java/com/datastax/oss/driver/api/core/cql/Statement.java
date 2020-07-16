@@ -233,6 +233,28 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   SelfT setTracing(boolean newTracing);
 
   /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #setTracing(boolean) setTracing(true)}.
+   */
+  @Deprecated
+  @NonNull
+  @CheckReturnValue
+  default SelfT enableTracing() {
+    return setTracing(true);
+  }
+
+  /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #setTracing(boolean) setTracing(false)}.
+   */
+  @Deprecated
+  @NonNull
+  @CheckReturnValue
+  default SelfT disableTracing() {
+    return setTracing(false);
+  }
+
+  /**
    * Returns the query timestamp, in microseconds, to send with the statement.
    *
    * <p>If this is equal to {@link #NO_DEFAULT_TIMESTAMP}, the {@link TimestampGenerator} configured
@@ -242,6 +264,15 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * @see TimestampGenerator
    */
   long getQueryTimestamp();
+
+  /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #getQueryTimestamp()}.
+   */
+  @Deprecated
+  default long getDefaultTimestamp() {
+    return getQueryTimestamp();
+  }
 
   /**
    * Sets the query timestamp, in microseconds, to send with the statement.
@@ -258,6 +289,17 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   @NonNull
   @CheckReturnValue
   SelfT setQueryTimestamp(long newTimestamp);
+
+  /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #setQueryTimestamp(long)}.
+   */
+  @Deprecated
+  @NonNull
+  @CheckReturnValue
+  default SelfT setDefaultTimestamp(long newTimestamp) {
+    return setQueryTimestamp(newTimestamp);
+  }
 
   /**
    * Sets how long to wait for this request to complete. This is a global limit on the duration of a
@@ -356,6 +398,15 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   int getPageSize();
 
   /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #getPageSize()}.
+   */
+  @Deprecated
+  default int getFetchSize() {
+    return getPageSize();
+  }
+
+  /**
    * Configures how many rows will be retrieved simultaneously in a single network roundtrip (the
    * goal being to avoid loading too many results in memory at the same time).
    *
@@ -366,6 +417,17 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   @NonNull
   @CheckReturnValue
   SelfT setPageSize(int newPageSize);
+
+  /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #setPageSize(int)}.
+   */
+  @Deprecated
+  @NonNull
+  @CheckReturnValue
+  default SelfT setFetchSize(int newPageSize) {
+    return setPageSize(newPageSize);
+  }
 
   /**
    * Returns the {@link ConsistencyLevel} to use for the statement.

@@ -311,6 +311,27 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #withAuthCredentials(String, String)}.
+   */
+  @Deprecated
+  @NonNull
+  public SelfT withCredentials(@NonNull String username, @NonNull String password) {
+    return withAuthCredentials(username, password);
+  }
+
+  /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #withAuthCredentials(String, String,String)}.
+   */
+  @Deprecated
+  @NonNull
+  public SelfT withCredentials(
+      @NonNull String username, @NonNull String password, @NonNull String authorizationId) {
+    return withAuthCredentials(username, password, authorizationId);
+  }
+
+  /**
    * Registers an SSL engine factory for the session.
    *
    * <p>If the factory is provided programmatically with this method, it overrides the configuration
