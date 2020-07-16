@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.session.Session;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Map;
 import java.util.Objects;
 import org.reactivestreams.Publisher;
 
@@ -39,12 +40,53 @@ public interface ReactiveSession extends Session {
    * Returns a {@link Publisher} that, once subscribed to, executes the given query and emits all
    * the results.
    *
+   * <p>This is an alias for {@link #executeReactive(Statement)}
+   * executeReactive(SimpleStatement.newInstance(query))}.
+   *
    * @param query the query to execute.
    * @return The {@link Publisher} that will publish the returned results.
+   * @see SimpleStatement#newInstance(String)
    */
   @NonNull
   default ReactiveResultSet executeReactive(@NonNull String query) {
     return executeReactive(SimpleStatement.newInstance(query));
+  }
+
+  /**
+   * Returns a {@link Publisher} that, once subscribed to, executes the given query and emits all
+   * the results.
+   *
+   * <p>This is an alias for {@link #executeReactive(Statement)}
+   * executeReactive(SimpleStatement.newInstance(query, values))}.
+   *
+   * @param query the query to execute.
+   * @param values the values for placeholders in the query string. Individual values can be {@code
+   *     null}, but the vararg array itself can't.
+   * @return The {@link Publisher} that will publish the returned results.
+   * @see SimpleStatement#newInstance(String,Object...)
+   */
+  @NonNull
+  default ReactiveResultSet executeReactive(@NonNull String query, @NonNull Object... values) {
+    return executeReactive(SimpleStatement.newInstance(query, values));
+  }
+
+  /**
+   * Returns a {@link Publisher} that, once subscribed to, executes the given query and emits all
+   * the results.
+   *
+   * <p>This is an alias for {@link #executeReactive(Statement)}
+   * executeReactive(SimpleStatement.newInstance(query,values))}.
+   *
+   * @param query the query to execute.
+   * @param values the values for named placeholders in the query string. Individual values can be
+   *     {@code null}, but the map itself can't.
+   * @return The {@link Publisher} that will publish the returned results.
+   * @see SimpleStatement#newInstance(String,Map)
+   */
+  @NonNull
+  default ReactiveResultSet executeReactive(
+      @NonNull String query, @NonNull Map<String, Object> values) {
+    return executeReactive(SimpleStatement.newInstance(query, values));
   }
 
   /**

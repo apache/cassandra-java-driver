@@ -4,6 +4,7 @@
 
 ### 4.8.0 (in progress)
 
+- [improvement] JAVA-2811: Add aliases for driver 3 method names
 - [new feature] JAVA-2808: Provide metrics bindings for Micrometer and MicroProfile
 - [new feature] JAVA-2773: Support new protocol v5 message format
 - [improvement] JAVA-2841: Raise timeouts during connection initialization

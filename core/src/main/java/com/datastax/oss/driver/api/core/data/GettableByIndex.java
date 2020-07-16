@@ -176,6 +176,15 @@ public interface GettableByIndex extends AccessibleByIndex {
   }
 
   /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #getBoolean(int)}.
+   */
+  @Deprecated
+  default boolean getBool(int i) {
+    return getBoolean(i);
+  }
+
+  /**
    * Returns the {@code i}th value as a Java primitive byte.
    *
    * <p>By default, this works with CQL type {@code tinyint}.

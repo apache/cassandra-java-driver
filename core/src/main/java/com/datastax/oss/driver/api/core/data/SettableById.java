@@ -195,6 +195,17 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   }
 
   /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #setBoolean(CqlIdentifier, boolean)}.
+   */
+  @Deprecated
+  @NonNull
+  @CheckReturnValue
+  default SelfT setBool(@NonNull CqlIdentifier id, boolean v) {
+    return setBoolean(id, v);
+  }
+
+  /**
    * Sets the value for all occurrences of {@code id} to the provided Java primitive byte.
    *
    * <p>By default, this works with CQL type {@code tinyint}.
