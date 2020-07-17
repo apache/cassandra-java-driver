@@ -104,6 +104,7 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
         channel.flush();
       }
       channels.clear();
+
       // Prepare to stop
       running.set(false);
 

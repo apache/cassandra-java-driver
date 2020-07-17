@@ -7,4 +7,3 @@ Apache Cassandra(R).
 
 Unless otherwise stated, all examples assume that you have a single-node Cassandra 3.0 cluster 
 listening on localhost:9042.
- 
