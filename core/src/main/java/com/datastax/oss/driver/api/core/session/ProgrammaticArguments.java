@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -58,6 +59,7 @@ public class ProgrammaticArguments {
   private final UUID startupClientId;
   private final String startupApplicationName;
   private final String startupApplicationVersion;
+  private final MutableCodecRegistry codecRegistry;
 
   private ProgrammaticArguments(
       @NonNull List<TypeCodec<?>> typeCodecs,
@@ -72,7 +74,8 @@ public class ProgrammaticArguments {
       @Nullable InetSocketAddress cloudProxyAddress,
       @Nullable UUID startupClientId,
       @Nullable String startupApplicationName,
-      @Nullable String startupApplicationVersion) {
+      @Nullable String startupApplicationVersion,
+      @Nullable MutableCodecRegistry codecRegistry) {
 
     this.typeCodecs = typeCodecs;
     this.nodeStateListener = nodeStateListener;
@@ -87,6 +90,7 @@ public class ProgrammaticArguments {
     this.startupClientId = startupClientId;
     this.startupApplicationName = startupApplicationName;
     this.startupApplicationVersion = startupApplicationVersion;
+    this.codecRegistry = codecRegistry;
   }
 
   @NonNull
@@ -154,6 +158,11 @@ public class ProgrammaticArguments {
     return startupApplicationVersion;
   }
 
+  @Nullable
+  public MutableCodecRegistry getCodecRegistry() {
+    return codecRegistry;
+  }
+
   public static class Builder {
 
     private ImmutableList.Builder<TypeCodec<?>> typeCodecsBuilder = ImmutableList.builder();
@@ -170,6 +179,7 @@ public class ProgrammaticArguments {
     private UUID startupClientId;
     private String startupApplicationName;
     private String startupApplicationVersion;
+    private MutableCodecRegistry codecRegistry;
 
     @NonNull
     public Builder addTypeCodecs(@NonNull TypeCodec<?>... typeCodecs) {
@@ -268,6 +278,12 @@ public class ProgrammaticArguments {
     }
 
     @NonNull
+    public Builder withCodecRegistry(@Nullable MutableCodecRegistry codecRegistry) {
+      this.codecRegistry = codecRegistry;
+      return this;
+    }
+
+    @NonNull
     public ProgrammaticArguments build() {
       return new ProgrammaticArguments(
           typeCodecsBuilder.build(),
@@ -282,7 +298,8 @@ public class ProgrammaticArguments {
           cloudProxyAddress,
           startupClientId,
           startupApplicationName,
-          startupApplicationVersion);
+          startupApplicationVersion,
+          codecRegistry);
     }
   }
 }

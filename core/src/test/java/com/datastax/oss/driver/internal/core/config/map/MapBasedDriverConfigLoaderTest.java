@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.config.map;
 
+import static com.typesafe.config.ConfigFactory.defaultReference;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -30,6 +31,7 @@ import com.datastax.oss.driver.internal.core.config.MockOptions;
 import com.datastax.oss.driver.internal.core.config.MockTypedOptions;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.typesafe.config.ConfigException;
+import com.typesafe.config.ConfigFactory;
 import java.util.Optional;
 import org.junit.Test;
 
@@ -58,7 +60,14 @@ public class MapBasedDriverConfigLoaderTest {
     DriverExecutionProfile mapBasedConfig =
         DriverConfigLoader.fromMap(optionsMap).getInitialConfig().getDefaultProfile();
     DriverExecutionProfile fileBasedConfig =
-        new DefaultDriverConfigLoader().getInitialConfig().getDefaultProfile();
+        new DefaultDriverConfigLoader(
+                () -> {
+                  // Only load reference.conf since we are focusing on driver defaults
+                  ConfigFactory.invalidateCaches();
+                  return defaultReference().getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
+                })
+            .getInitialConfig()
+            .getDefaultProfile();
 
     // Make sure we're not missing any options. -1 is for CONFIG_RELOAD_INTERVAL, which is not
     // defined by OptionsMap because it is irrelevant for the map-based config.

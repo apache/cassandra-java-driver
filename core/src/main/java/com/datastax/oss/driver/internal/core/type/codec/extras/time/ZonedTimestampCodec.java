@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.core.type.codec;
+package com.datastax.oss.driver.internal.core.type.codec.extras.time;
 
-import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.type.DataType;
-import com.datastax.oss.driver.api.core.type.DataTypes;
-import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.type.codec.MappingCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.internal.core.type.codec.TimestampCodec;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -34,7 +32,8 @@ import net.jcip.annotations.ThreadSafe;
  *
  * <p>Note that Apache Cassandra(R)'s timestamp type does not store any time zone; this codec is
  * provided merely as a convenience for users that need to deal with zoned timestamps in their
- * applications.
+ * applications. If you need to persist the time zone in the database, consider using {@link
+ * PersistentZonedTimestampCodec} instead.
  *
  * <p>This codec shares its logic with {@link TimestampCodec}. See the javadocs of this codec for
  * important remarks about implementation notes and accepted timestamp formats.
@@ -42,9 +41,8 @@ import net.jcip.annotations.ThreadSafe;
  * @see TimestampCodec
  */
 @ThreadSafe
-public class ZonedTimestampCodec implements TypeCodec<ZonedDateTime> {
+public class ZonedTimestampCodec extends MappingCodec<Instant, ZonedDateTime> {
 
-  private final TypeCodec<Instant> instantCodec;
   private final ZoneId timeZone;
 
   /**
@@ -64,63 +62,27 @@ public class ZonedTimestampCodec implements TypeCodec<ZonedDateTime> {
    * information.
    */
   public ZonedTimestampCodec(ZoneId timeZone) {
-    instantCodec = new TimestampCodec(timeZone);
+    super(
+        new TimestampCodec(Objects.requireNonNull(timeZone, "timeZone cannot be null")),
+        GenericType.ZONED_DATE_TIME);
     this.timeZone = timeZone;
-  }
-
-  @NonNull
-  @Override
-  public GenericType<ZonedDateTime> getJavaType() {
-    return GenericType.ZONED_DATE_TIME;
-  }
-
-  @NonNull
-  @Override
-  public DataType getCqlType() {
-    return DataTypes.TIMESTAMP;
   }
 
   @Override
   public boolean accepts(@NonNull Object value) {
+    Objects.requireNonNull(value);
     return value instanceof ZonedDateTime;
   }
 
+  @Nullable
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
-    return javaClass == ZonedDateTime.class;
+  protected ZonedDateTime innerToOuter(@Nullable Instant value) {
+    return value == null ? null : value.atZone(timeZone);
   }
 
   @Nullable
   @Override
-  public ByteBuffer encode(
-      @Nullable ZonedDateTime value, @NonNull ProtocolVersion protocolVersion) {
-    return instantCodec.encode(value != null ? value.toInstant() : null, protocolVersion);
-  }
-
-  @Nullable
-  @Override
-  public ZonedDateTime decode(
-      @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
-    Instant instant = instantCodec.decode(bytes, protocolVersion);
-    if (instant == null) {
-      return null;
-    }
-    return instant.atZone(timeZone);
-  }
-
-  @NonNull
-  @Override
-  public String format(@Nullable ZonedDateTime value) {
-    return instantCodec.format(value != null ? value.toInstant() : null);
-  }
-
-  @Nullable
-  @Override
-  public ZonedDateTime parse(@Nullable String value) {
-    Instant instant = instantCodec.parse(value);
-    if (instant == null) {
-      return null;
-    }
-    return instant.atZone(timeZone);
+  protected Instant outerToInner(@Nullable ZonedDateTime value) {
+    return value == null ? null : value.toInstant();
   }
 }

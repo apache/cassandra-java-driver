@@ -58,8 +58,10 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
         ConfigFactory.invalidateCaches();
         // The thread's context class loader will be used for application classpath resources,
         // while the driver class loader will be used for reference classpath resources.
-        return ConfigFactory.defaultApplication()
+        return ConfigFactory.defaultOverrides()
+            .withFallback(ConfigFactory.defaultApplication())
             .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+            .resolve()
             .getConfig(DEFAULT_ROOT_PATH);
       };
 
@@ -95,8 +97,10 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
     this(
         () -> {
           ConfigFactory.invalidateCaches();
-          return ConfigFactory.defaultApplication(appClassLoader)
+          return ConfigFactory.defaultOverrides()
+              .withFallback(ConfigFactory.defaultApplication(appClassLoader))
               .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+              .resolve()
               .getConfig(DEFAULT_ROOT_PATH);
         });
   }
