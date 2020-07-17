@@ -81,7 +81,6 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
   @Mock private DriverConfig driverConfig;
   @Mock private DriverExecutionProfile defaultProfile;
   @Mock private Appender<ILoggingEvent> appender;
-  @Mock private DriverChannel driverChannel;
 
   private ProtocolVersionRegistry protocolVersionRegistry =
       new DefaultProtocolVersionRegistry("test");

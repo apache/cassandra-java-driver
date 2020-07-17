@@ -51,7 +51,6 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   private static final int MAX_ORPHAN_IDS = 10;
 
   @Mock private StreamIdGenerator streamIds;
-  @Mock DriverChannel driverChannel;
 
   @Before
   @Override

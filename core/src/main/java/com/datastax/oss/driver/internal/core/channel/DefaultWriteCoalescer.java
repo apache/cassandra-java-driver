@@ -75,14 +75,6 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
     private final Queue<Write> writes = new ConcurrentLinkedQueue<>();
     private final AtomicBoolean running = new AtomicBoolean();
 
-    public Queue<Write> getWrites() {
-      return writes;
-    }
-
-    public Set<Channel> channels() {
-      return channels;
-    };
-
     // This variable is accessed only from runOnEventLoop, it doesn't need to be thread-safe
     private final Set<Channel> channels = new HashSet<>();
 
@@ -93,7 +85,6 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
     private void enqueue(Write write) {
       boolean added = writes.offer(write);
       assert added; // always true (see MpscLinkedAtomicQueue implementation)
-
       if (running.compareAndSet(false, true)) {
         eventLoop.execute(this::runOnEventLoop);
       }
@@ -112,7 +103,6 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
       for (Channel channel : channels) {
         channel.flush();
       }
-
       channels.clear();
       // Prepare to stop
       running.set(false);
