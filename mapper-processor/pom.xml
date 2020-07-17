@@ -57,6 +57,15 @@
       <groupId>com.github.spotbugs</groupId>
       <artifactId>spotbugs-annotations</artifactId>
     </dependency>
+    <!--
+      The processor depends on SLF4J because it's used in generated code, but it doesn't have a
+      proper SLF4J backend in its own classpath. This can generate warnings in certain scenarios
+      (JAVA-2800), so add a no-op implementation as a workaround.
+    -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-nop</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.google.testing.compile</groupId>
       <artifactId>compile-testing</artifactId>
