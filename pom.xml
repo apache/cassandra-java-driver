@@ -191,11 +191,6 @@
         <version>3.1.12</version>
       </dependency>
       <dependency>
-        <groupId>org.javatuples</groupId>
-        <artifactId>javatuples</artifactId>
-        <version>1.2</version>
-      </dependency>
-      <dependency>
         <groupId>com.squareup</groupId>
         <artifactId>javapoet</artifactId>
         <version>1.11.1</version>
