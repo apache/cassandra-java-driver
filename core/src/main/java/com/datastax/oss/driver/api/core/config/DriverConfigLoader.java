@@ -201,6 +201,46 @@ public interface DriverConfigLoader extends AutoCloseable {
   }
 
   /**
+   * Builds an instance using the driver's default implementation (based on Typesafe config), except
+   * that application-specific options are parsed from the given string.
+   *
+   * <p>The string must be in HOCON format and contain a {@code datastax-java-driver} section.
+   * Options must be separated by line breaks:
+   *
+   * <pre>
+   * DriverConfigLoader.fromString(
+   *         "datastax-java-driver.basic { session-name = my-app\nrequest.timeout = 1 millisecond }")
+   * </pre>
+   *
+   * <p>More precisely, configuration properties are loaded and merged from the following
+   * (first-listed are higher priority):
+   *
+   * <ul>
+   *   <li>system properties
+   *   <li>the config in {@code contents}
+   *   <li>{@code reference.conf} (all resources on classpath with this name). In particular, this
+   *       will load the {@code reference.conf} included in the core driver JAR, that defines
+   *       default options for all mandatory options.
+   * </ul>
+   *
+   * <p>This loader does not support runtime reloading.
+   */
+  @NonNull
+  static DriverConfigLoader fromString(@NonNull String contents) {
+    return new DefaultDriverConfigLoader(
+        () -> {
+          ConfigFactory.invalidateCaches();
+          Config config =
+              ConfigFactory.defaultOverrides()
+                  .withFallback(ConfigFactory.parseString(contents))
+                  .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+                  .resolve();
+          return config.getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
+        },
+        false);
+  }
+
+  /**
    * Starts a builder that allows configuration options to be overridden programmatically.
    *
    * <p>Note that {@link #fromMap(OptionsMap)} provides an alternative approach for programmatic

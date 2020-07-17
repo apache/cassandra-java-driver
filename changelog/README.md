@@ -4,6 +4,7 @@
 
 ### 4.8.0 (in progress)
 
+- [new feature] JAVA-2819: Add DriverConfigLoader.fromString
 - [improvement] JAVA-2431: Set all occurrences when bound variables are used multiple times
 - [improvement] JAVA-2829: Log protocol negotiation messages at DEBUG level
 - [bug] JAVA-2846: Give system properties the highest precedence in DefaultDriverConfigLoader
