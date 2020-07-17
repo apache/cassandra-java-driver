@@ -34,8 +34,7 @@ import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.IsolatedTests;
-import com.datastax.oss.driver.internal.core.channel.DefaultWriteCoalescer;
-import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
+import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.request.Query;
 import com.datastax.oss.simulacron.server.BoundNode;
@@ -221,10 +220,18 @@ public class TCPFlowControlIT {
         .getValue();
   }
 
-  private Integer getWriteQueueSize(CqlSession session) {
-    return ((DefaultWriteCoalescer)
-            ((DefaultDriverContext) session.getContext()).getWriteCoalescer())
-        .getWriteQueueSize();
+  private int getWriteQueueSize(CqlSession session) {
+    int writeQueueSize = 0;
+    for (Node n : session.getMetadata().getNodes().values()) {
+      writeQueueSize +=
+          ((DefaultSession) session)
+              .getChannel(n, "ignore")
+              .getChannel()
+              .unsafe()
+              .outboundBuffer()
+              .size();
+    }
+    return writeQueueSize;
   }
 
   private void waitForWriteQueueToStabilize(CqlSession cqlSession) throws InterruptedException {
@@ -239,7 +246,8 @@ public class TCPFlowControlIT {
               Integer currentValue = getWriteQueueSize(cqlSession);
               Integer tmpLastValue = lastWriteQueueValue[0];
               lastWriteQueueValue[0] = currentValue;
-              return tmpLastValue.equals(currentValue);
+
+              return tmpLastValue > 0 && currentValue > 0 && tmpLastValue.equals(currentValue);
             });
   }
 }

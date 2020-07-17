@@ -275,6 +275,10 @@ public class DriverChannel {
     return channel.toString();
   }
 
+  public Channel getChannel() {
+    return channel;
+  }
+
   // This is essentially a stripped-down Frame. We can't materialize the frame before writing,
   // because we need the stream id, which is assigned from within the event loop.
   static class RequestMessage {

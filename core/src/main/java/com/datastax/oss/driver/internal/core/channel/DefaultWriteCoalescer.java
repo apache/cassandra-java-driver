@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.core.channel;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPromise;
@@ -69,15 +68,6 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
     flusher.enqueue(write);
   }
 
-  @VisibleForTesting
-  public Integer getWriteQueueSize() {
-    return flushers.values().stream()
-        .flatMap(v -> v.channels().stream())
-        .map(c -> c.unsafe().outboundBuffer().size())
-        .mapToInt(v -> v)
-        .sum();
-  }
-
   private class Flusher {
     private final EventLoop eventLoop;
 
@@ -103,6 +93,7 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
     private void enqueue(Write write) {
       boolean added = writes.offer(write);
       assert added; // always true (see MpscLinkedAtomicQueue implementation)
+
       if (running.compareAndSet(false, true)) {
         eventLoop.execute(this::runOnEventLoop);
       }
@@ -121,8 +112,8 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
       for (Channel channel : channels) {
         channel.flush();
       }
-      //      channels.clear();
 
+      channels.clear();
       // Prepare to stop
       running.set(false);
 
@@ -156,9 +147,5 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
       this.message = message;
       this.writePromise = writePromise;
     }
-
-    //    public boolean isWritable() {
-    //      return channel.isWritable();
-    //    }
   }
 }
