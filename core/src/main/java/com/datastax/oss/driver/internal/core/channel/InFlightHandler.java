@@ -96,21 +96,6 @@ public class InFlightHandler extends ChannelDuplexHandler {
   }
 
   @Override
-  public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-    LOG.trace("Channel isWritable changed: {}", ctx.channel().isWritable());
-    if (ctx.channel().isWritable()) {
-      driverChannel.thenAccept(
-          d -> {
-            WriteCoalescer writeCoalescer = d.getWriteCoalescer();
-            if (writeCoalescer instanceof DefaultWriteCoalescer) {
-              ((DefaultWriteCoalescer) writeCoalescer).restartFlushers();
-            }
-          });
-    }
-    super.channelWritabilityChanged(ctx);
-  }
-
-  @Override
   public void write(ChannelHandlerContext ctx, Object in, ChannelPromise promise) throws Exception {
     if (in == DriverChannel.GRACEFUL_CLOSE_MESSAGE) {
       LOG.debug("[{}] Received graceful close request", logPrefix);

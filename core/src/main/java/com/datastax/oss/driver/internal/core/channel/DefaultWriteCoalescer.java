@@ -64,10 +64,6 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
     return writePromise;
   }
 
-  public void restartFlushers() {
-    flushers.values().forEach(Flusher::restartLoop);
-  }
-
   private void enqueue(Write write, EventLoop eventLoop) {
     Flusher flusher = flushers.computeIfAbsent(eventLoop, Flusher::new);
     flusher.enqueue(write);
@@ -75,7 +71,11 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
 
   @VisibleForTesting
   public Integer getWriteQueueSize() {
-    return flushers.values().stream().map(v -> v.getWrites().size()).mapToInt(v -> v).sum();
+    return flushers.values().stream()
+        .flatMap(v -> v.channels().stream())
+        .map(c -> c.unsafe().outboundBuffer().size())
+        .mapToInt(v -> v)
+        .sum();
   }
 
   private class Flusher {
@@ -89,6 +89,10 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
       return writes;
     }
 
+    public Set<Channel> channels() {
+      return channels;
+    };
+
     // This variable is accessed only from runOnEventLoop, it doesn't need to be thread-safe
     private final Set<Channel> channels = new HashSet<>();
 
@@ -99,12 +103,6 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
     private void enqueue(Write write) {
       boolean added = writes.offer(write);
       assert added; // always true (see MpscLinkedAtomicQueue implementation)
-      if (write.isWritable()) {
-        restartLoop();
-      }
-    }
-
-    private void restartLoop() {
       if (running.compareAndSet(false, true)) {
         eventLoop.execute(this::runOnEventLoop);
       }
@@ -117,18 +115,13 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
       while ((write = writes.poll()) != null) {
         Channel channel = write.channel;
         channels.add(channel);
-        if (channel.isWritable()) {
-          channel.write(write.message, write.writePromise);
-        } else {
-          enqueue(write);
-          break;
-        }
+        channel.write(write.message, write.writePromise);
       }
 
       for (Channel channel : channels) {
         channel.flush();
       }
-      channels.clear();
+      //      channels.clear();
 
       // Prepare to stop
       running.set(false);
@@ -139,7 +132,7 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
       //   run
 
       // If nothing was added in the queue, there were no concurrent calls, we can stop safely now
-      if (writes.isEmpty() || (write != null && !write.isWritable())) {
+      if (writes.isEmpty()) {
         return;
       }
 
@@ -164,8 +157,8 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
       this.writePromise = writePromise;
     }
 
-    public boolean isWritable() {
-      return channel.isWritable();
-    }
+    //    public boolean isWritable() {
+    //      return channel.isWritable();
+    //    }
   }
 }
