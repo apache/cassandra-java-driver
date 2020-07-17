@@ -21,10 +21,14 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import javax.lang.model.element.Modifier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class LoggingGenerator {
+
+  // Reference these types by name to avoid a compile-time dependency to SFL4J
+  private static final ClassName LOGGER_FACTORY_CLASS_NAME =
+      ClassName.get("org.slf4j", "LoggerFactory");
+  private static final ClassName LOGGER_CLASS_NAME = ClassName.get("org.slf4j", "Logger");
+
   private final boolean logsEnabled;
 
   public LoggingGenerator(boolean logsEnabled) {
@@ -45,12 +49,8 @@ public class LoggingGenerator {
     if (logsEnabled) {
       classBuilder.addField(
           FieldSpec.builder(
-                  ClassName.get(Logger.class),
-                  "LOG",
-                  Modifier.PRIVATE,
-                  Modifier.FINAL,
-                  Modifier.STATIC)
-              .initializer("$T.getLogger($T.class)", LoggerFactory.class, className)
+                  LOGGER_CLASS_NAME, "LOG", Modifier.PRIVATE, Modifier.FINAL, Modifier.STATIC)
+              .initializer("$T.getLogger($T.class)", LOGGER_FACTORY_CLASS_NAME, className)
               .build());
     }
   }
