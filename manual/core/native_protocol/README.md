@@ -86,14 +86,17 @@ force the protocol version manually anymore.
 
 ### Debugging protocol negotiation
 
-The main steps are [logged](../logging/) at level `INFO`. If the driver downgrades while negotiating
-with the first node, you should see logs such as:
+You can observe the negotiation process in the [logs](../logging/).
+ 
+The versions tried while negotiating with the first node are logged at level `DEBUG` in the category
+`com.datastax.oss.driver.internal.core.channel.ChannelFactory`:
 
 ```
-INFO ChannelFactory - Failed to connect with protocol v4, retrying with v3
+DEBUG ChannelFactory - Failed to connect with protocol v4, retrying with v3
 ```
 
-If it then detects a mixed cluster with lower versions, it will log: 
+If a mixed cluster renegotiation happens, it is logged at level `INFO` in the category
+`com.datastax.oss.driver.internal.core.session.DefaultSession`:
 
 ```
 INFO DefaultSession - Negotiated protocol version v4 for the initial contact point, but other nodes
