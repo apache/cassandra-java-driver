@@ -38,7 +38,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPromise;
 import java.net.InetSocketAddress;
 import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
@@ -594,7 +593,6 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
                 SET_KEYSPACE_TIMEOUT_MILLIS,
                 channel.newPromise(),
                 eventCallback,
-                "test",
-                CompletableFuture.completedFuture(driverChannel)));
+                "test"));
   }
 }

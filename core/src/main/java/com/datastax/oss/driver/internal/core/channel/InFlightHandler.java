@@ -41,7 +41,6 @@ import io.netty.util.concurrent.Promise;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +56,6 @@ public class InFlightHandler extends ChannelDuplexHandler {
   private final String ownerLogPrefix;
   private final BiMap<Integer, ResponseCallback> inFlight;
   private final Map<Integer, ResponseCallback> orphaned;
-  private final CompletableFuture<DriverChannel> driverChannel;
   private volatile int orphanedSize; // thread-safe view for metrics
   private final long setKeyspaceTimeoutMillis;
   private final EventCallback eventCallback;
@@ -73,8 +71,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
       long setKeyspaceTimeoutMillis,
       ChannelPromise closeStartedFuture,
       EventCallback eventCallback,
-      String ownerLogPrefix,
-      CompletableFuture<DriverChannel> driverChannel) {
+      String ownerLogPrefix) {
     this.protocolVersion = protocolVersion;
     this.streamIds = streamIds;
     this.maxOrphanStreamIds = maxOrphanStreamIds;
@@ -85,7 +82,6 @@ public class InFlightHandler extends ChannelDuplexHandler {
     this.orphaned = new HashMap<>(maxOrphanStreamIds);
     this.setKeyspaceTimeoutMillis = setKeyspaceTimeoutMillis;
     this.eventCallback = eventCallback;
-    this.driverChannel = driverChannel;
   }
 
   @Override

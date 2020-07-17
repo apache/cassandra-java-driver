@@ -30,7 +30,6 @@ import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.CompletableFuture;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -63,8 +62,7 @@ public class DriverChannelTest extends ChannelHandlerTestBase {
                 SET_KEYSPACE_TIMEOUT_MILLIS,
                 channel.newPromise(),
                 null,
-                "test",
-                CompletableFuture.completedFuture(driverChannel)));
+                "test"));
   }
 
   /**
