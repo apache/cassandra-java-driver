@@ -1,3 +1,9 @@
+# master uses a Gatling DSE plugin based on 3.x
+# DSP-17972-unified-driver uses a Gatling DSE plugin based on the unified driver (>= 4.5.x)
+branch: "master"
+
+---
+
 ensemble:
   server:
     node.count: 3
@@ -26,10 +32,7 @@ ensemble:
       - name: gatling
         properties:
           git.repository: git@github.com:riptano/dse-benchmarks.git
-          # master uses a Gatling DSE plugin based on 3.x
-          #git.branch: master
-          # This feature branch uses a Gatling DSE plugin based on the unified driver (>= 4.5.x)
-          git.branch: DSP-17972-unified-driver
+          git.branch: {{branch}}
 
 workload:
   phases:
