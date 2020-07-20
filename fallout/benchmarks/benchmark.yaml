@@ -1,0 +1,81 @@
+ensemble:
+  server:
+    node.count: 3
+    provisioner:
+      name: ctool
+      properties:
+        cloud.provider: nebula
+        cloud.instance.type: m3.large
+    configuration_manager:
+      - name: ctool
+        properties:
+          product.type: cassandra
+          product.install.type: tarball
+          product.version: "3.11.6"
+  client:
+    node.count: 1
+    provisioner:
+      name: ctool
+      properties:
+        cloud.provider: nebula
+        cloud.instance.type: m3.xlarge
+    configuration_manager:
+      - name: ctool
+        properties:
+          install.maven: true
+      - name: gatling
+        properties:
+          git.repository: git@github.com:riptano/dse-benchmarks.git
+          # master uses a Gatling DSE plugin based on 3.x
+          #git.branch: master
+          # This feature branch uses a Gatling DSE plugin based on the unified driver (>= 4.5.x)
+          git.branch: DSP-17972-unified-driver
+
+workload:
+  phases:
+    # This simulation isn't necessary in a single-node case; Timeseries_Write will
+    # create the infrastructure that's needed.  We do need it in the multi-node
+    # client case; otherwise you can see weird timing errors around the existence
+    # of the expected keyspace/table on various nodes.
+    - timeseries-schema:
+        module: gatling
+        properties:
+          maven_args: >
+              scala:testCompile
+              gatling:execute
+              -Dgatling.disableCompiler
+              -Dgatling.simulationClass=core.timeseries.Timeseries_Schema
+    - timeseries-write:
+        module: gatling
+        properties:
+          maven_args: >
+              scala:testCompile
+              gatling:execute
+              -Dgatling.disableCompiler
+              -Dgatling.simulationClass=core.timeseries.Timeseries_Write
+              -DconnectionsPerHost=8
+              -DrowsPerPartition=1000
+              -DinjectionType=constant
+              -Dthroughput=10000
+              -DbenchmarkDurationInMinutes=10
+    - timeseries-read:
+        module: gatling
+        properties:
+          maven_args: >
+              scala:testCompile
+              gatling:execute
+              -Dgatling.disableCompiler
+              -Dgatling.simulationClass=core.timeseries.Timeseries_Read
+              -DconnectionsPerHost=8
+              -DrowsPerPartition=1000
+              -DinjectionType=constant
+              -Dthroughput=10000
+              -DbenchmarkDurationInMinutes=10
+  checkers:
+    nofail:
+      checker: nofail
+  artifact_checkers:
+    systemlog:
+      artifact_checker: systemlog
+    generate_chart:
+      artifact_checker: hdrtool
