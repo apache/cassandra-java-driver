@@ -110,7 +110,7 @@ public class MetricsSimulacronIT {
     }
   }
 
-  private class MetricsTestContextBuilder
+  private static class MetricsTestContextBuilder
       extends SessionBuilder<MetricsTestContextBuilder, CqlSession> {
 
     private Ticker ticker;
@@ -132,7 +132,7 @@ public class MetricsSimulacronIT {
     }
   }
 
-  private class MetricsTestContext extends DefaultDriverContext {
+  private static class MetricsTestContext extends DefaultDriverContext {
     private final Ticker ticker;
 
     public MetricsTestContext(
@@ -148,7 +148,7 @@ public class MetricsSimulacronIT {
       return new DropwizardMetricsFactoryCustomTicker(this, ticker);
     }
 
-    private class DropwizardMetricsFactoryCustomTicker extends DropwizardMetricsFactory {
+    private static class DropwizardMetricsFactoryCustomTicker extends DropwizardMetricsFactory {
 
       public DropwizardMetricsFactoryCustomTicker(InternalDriverContext context, Ticker ticker) {
         super(context, ticker);
