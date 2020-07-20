@@ -278,7 +278,7 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
    * @param stmt the statement to calculate the hash key for
    * @return the hash key for the statement, or -1 when hash key cannot be determined
    */
-  static int getKey(BoundStatement stmt) {
+  public static int getKey(BoundStatement stmt) {
     PreparedStatement pstmt = stmt.getPreparedStatement();
     List<Integer> hashIndexes = pstmt.getPartitionKeyIndices();
 
@@ -297,7 +297,7 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
       for (int i = 0; i < hashIndexes.size(); i++) {
         int index = hashIndexes.get(i);
         DataType type = variables.get(index).getType();
-        ByteBuffer value = stmt.getBytesUnsafe(index);
+        ByteBuffer value = stmt.getBytesUnsafe(index).duplicate();
         AppendValueToChannel(type, value, channel);
       }
       channel.close();

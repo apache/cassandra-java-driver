@@ -118,6 +118,8 @@ public class PrimitiveType implements DataType, Serializable {
         return "TINYINT";
       case ProtocolConstants.DataType.DURATION:
         return "DURATION";
+      case ProtocolConstants.DataType.JSONB:
+        return "JSONB";
       default:
         return "0x" + Integer.toHexString(protocolCode);
     }
