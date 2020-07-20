@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.yugabyte</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.6.0-yb-6</version>
+    <version>4.6.0-yb-7-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-distribution</artifactId>
   <!-- Should be pom but Javadoc generation requires a "classpath-capable" package -->
