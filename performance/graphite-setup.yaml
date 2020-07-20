@@ -1,0 +1,102 @@
+dse_version: 6.0.11
+# Driver branch to use
+driver_oss_branch: 4.x
+# Driver dse branch to use
+driver_dse_branch: 4.x
+# Driver version identifier (used as part of graphite prefix)
+driver_version: 4.8.0
+# Driver examples branch to use
+driver_examples_branch: java-driver-4.x
+# How long to run test for
+duration: 2d
+
+---
+
+ensemble:
+  observer:
+    node.count: 1
+    provisioner:
+      name: ctool
+      properties:
+        kill_cluster_after_test: false
+        cloud.provider: openstack
+        cloud.tenant: performance
+        cloud.instance.type: ms1.small
+    configuration_manager:
+      - name: ctool_monitoring
+        properties:
+          graphite.create_server: true
+  server:
+    node.count: 3
+    provisioner:
+      name: ctool
+      properties:
+        kill_cluster_after_test: false
+        cloud.provider: openstack
+        cloud.tenant: performance
+        cloud.instance.type: ms1.small
+    configuration_manager:
+      - name: ctool
+        properties:
+          product.type: dse
+          product.install.type: tarball
+          product.version: {{dse_version}}
+          cassandra.yaml:
+            hinted_handoff_enabled: false
+          datacenters:
+            datacenter1:
+              size: 3
+              workload: cassandra
+  client:
+    node.count: 1
+    provisioner:
+      name: ctool
+      properties:
+        kill_cluster_after_test: false
+        cloud.provider: openstack
+        cloud.tenant: performance
+        cloud.instance.type: ms1.small
+    configuration_manager:
+      - name: ctool
+        properties:
+          java.version: openjdk8
+          install.maven: true
+      - name: java_driver
+        properties:
+          oss.git.repository: git@github.com:datastax/java-driver.git
+          oss.git.branch: {{driver_oss_branch}}
+          dse.git.branch: {{driver_dse_branch}}
+          type: FOUR_X_OSS
+      - name: java_driver_duration_test
+        properties:
+          git.branch: {{driver_examples_branch}}
+workload:
+  phases:
+    - upload-dashboards-to-grafana:
+        module: bash
+        properties:
+          script: |
+            echo "BASH SCRIPT FALLOUT HOST IS..."
+            echo "${FALLOUT_OBSERVER_NODE0_GRAPHITE_HOST}"
+
+            git clone git@github.com:riptano/testeng-devtools.git /home/automaton/fallout_scratch/dashboard
+            curl --user admin:admin -d "@${FALLOUT_SCRATCH_DIR}/dashboard/duration-tests/java/grafana/aggregate.json" -X POST -H "Content-Type: application/json" http://${FALLOUT_OBSERVER_NODE0_MONITORING_GRAPHITE_HOST}:3000/api/dashboards/db/
+            curl --user admin:admin -d "@${FALLOUT_SCRATCH_DIR}/dashboard/duration-tests/java/grafana/aggregate4.json" -X POST -H "Content-Type: application/json" http://${FALLOUT_OBSERVER_NODE0_MONITORING_GRAPHITE_HOST}:3000/api/dashboards/db/
+            curl --user admin:admin -d "@${FALLOUT_SCRATCH_DIR}/dashboard/duration-tests/java/grafana/focus.json" -X POST -H "Content-Type: application/json" http://${FALLOUT_OBSERVER_NODE0_MONITORING_GRAPHITE_HOST}:3000/api/dashboards/db/
+            curl --user admin:admin -d "@${FALLOUT_SCRATCH_DIR}/dashboard/duration-tests/java/grafana/focus4.json" -X POST -H "Content-Type: application/json" http://${FALLOUT_OBSERVER_NODE0_MONITORING_GRAPHITE_HOST}:3000/api/dashboards/db/
+          target.group: client
+    - run-endurance:
+        module: java_driver_duration_test
+        properties:
+          duration: {{duration}}
+          is.four: true
+          graphite.prefix: endurance-test-java-{{driver_version}}-DSE-{{dse_version}}
+      kill_nodes:
+        module: killnode_rhino
+        properties:
+          target.strategy: whitelist
+          target.number_of_nodes: 1
+          target.selector: "*:*"
+          repeat.delay: 120
+          repeat.iterations: 0
+          graceful: true
