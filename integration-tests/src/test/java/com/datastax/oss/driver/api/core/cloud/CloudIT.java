@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.cloud;
 
+import static com.datastax.oss.driver.internal.core.util.LoggerTest.setupTestLogger;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
@@ -22,15 +23,20 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
+import ch.qos.logback.classic.Level;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
 import com.datastax.oss.driver.internal.core.ssl.DefaultSslEngineFactory;
+import com.datastax.oss.driver.internal.core.util.LoggerTest;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import java.io.IOException;
 import java.io.InputStream;
@@ -210,18 +216,32 @@ public class CloudIT {
   }
 
   @Test
-  public void should_error_when_contact_points_and_secure_bundle_used() {
+  public void should_connect_and_log_info_when_contact_points_and_secure_bundle_used() {
     // given
+    LoggerTest.LoggerSetup logger = setupTestLogger(SessionBuilder.class, Level.INFO);
+
     Path bundle = proxyRule.getProxy().getBundleWithoutCredentialsPath();
-    CqlSessionBuilder builder =
+
+    ResultSet set;
+    try (CqlSession session =
         CqlSession.builder()
             .withCloudSecureConnectBundle(bundle)
             .addContactPoint(new InetSocketAddress("127.0.0.1", 9042))
-            .withAuthCredentials("cassandra", "cassandra");
-    assertThatThrownBy(() -> builder.build())
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessage(
-            "Can't use withCloudSecureConnectBundle and addContactPoint(s). They are mutually exclusive.");
+            .withAuthCredentials("cassandra", "cassandra")
+            .build(); ) {
+
+      // then
+      set = session.execute("select * from system.local");
+      assertThat(set).isNotNull();
+      verify(logger.appender, timeout(500).times(1)).doAppend(logger.loggingEventCaptor.capture());
+      assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
+      assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
+          .contains(
+              "The withCloudSecureConnectBundle and addContactPoint(s) were provided. They are mutually exclusive. The addContactPoint(s) setting will be ignored.");
+
+    } finally {
+      logger.close();
+    }
   }
 
   @Test

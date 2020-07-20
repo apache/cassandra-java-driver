@@ -65,6 +65,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
 import javax.net.ssl.SSLContext;
 import net.jcip.annotations.NotThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Base implementation to build session instances.
@@ -76,6 +78,8 @@ import net.jcip.annotations.NotThreadSafe;
  */
 @NotThreadSafe
 public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SessionBuilder.class);
 
   @SuppressWarnings("unchecked")
   protected final SelfT self = (SelfT) this;
@@ -671,8 +675,11 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
           defaultConfig.getStringList(DefaultDriverOption.CONTACT_POINTS, Collections.emptyList());
       if (cloudConfigInputStream != null) {
         if (!programmaticContactPoints.isEmpty() || !configContactPoints.isEmpty()) {
-          throw new IllegalStateException(
-              "Can't use withCloudSecureConnectBundle and addContactPoint(s). They are mutually exclusive.");
+          LOG.info(
+              "The withCloudSecureConnectBundle and addContactPoint(s) were provided. They are mutually exclusive. The addContactPoint(s) setting will be ignored.");
+          // clear the contact points provided in the setting file and via addContactPoints
+          configContactPoints = Collections.emptyList();
+          programmaticContactPoints = new HashSet<>();
         }
         String configuredSSLFactory =
             defaultConfig.getString(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS, null);
