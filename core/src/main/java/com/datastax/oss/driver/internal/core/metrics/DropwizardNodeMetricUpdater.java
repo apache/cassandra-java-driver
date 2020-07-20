@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
+import com.datastax.oss.driver.shaded.guava.common.base.Ticker;
 import java.util.Set;
 import java.util.function.Function;
 import net.jcip.annotations.ThreadSafe;
@@ -41,8 +42,9 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
       Node node,
       Set<NodeMetric> enabledMetrics,
       MetricRegistry registry,
-      InternalDriverContext context) {
-    super(enabledMetrics, registry);
+      InternalDriverContext context,
+      Ticker ticker) {
+    super(enabledMetrics, registry, ticker);
     this.metricNamePrefix = buildPrefix(context.getSessionName(), node.getEndPoint());
 
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();

@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.shaded.guava.common.base.Ticker;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.HashSet;
@@ -44,14 +45,16 @@ public class DropwizardMetricsFactory implements MetricsFactory {
 
   private final String logPrefix;
   private final InternalDriverContext context;
+  private Ticker ticker;
   private final Set<NodeMetric> enabledNodeMetrics;
   private final MetricRegistry registry;
   @Nullable private final Metrics metrics;
   private final SessionMetricUpdater sessionUpdater;
 
-  public DropwizardMetricsFactory(InternalDriverContext context) {
+  public DropwizardMetricsFactory(InternalDriverContext context, Ticker ticker) {
     this.logPrefix = context.getSessionName();
     this.context = context;
+    this.ticker = ticker;
 
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     Set<SessionMetric> enabledSessionMetrics =
@@ -67,7 +70,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
     } else {
       this.registry = new MetricRegistry();
       DropwizardSessionMetricUpdater dropwizardSessionUpdater =
-          new DropwizardSessionMetricUpdater(enabledSessionMetrics, registry, context);
+          new DropwizardSessionMetricUpdater(enabledSessionMetrics, registry, context, ticker);
       this.sessionUpdater = dropwizardSessionUpdater;
       this.metrics = new DefaultMetrics(registry, dropwizardSessionUpdater);
     }
@@ -87,7 +90,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
   public NodeMetricUpdater newNodeUpdater(Node node) {
     return (registry == null)
         ? NoopNodeMetricUpdater.INSTANCE
-        : new DropwizardNodeMetricUpdater(node, enabledNodeMetrics, registry, context);
+        : new DropwizardNodeMetricUpdater(node, enabledNodeMetrics, registry, context, ticker);
   }
 
   protected Set<SessionMetric> parseSessionMetricPaths(List<String> paths) {

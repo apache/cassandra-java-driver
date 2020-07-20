@@ -20,9 +20,16 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
+import com.datastax.oss.driver.shaded.guava.common.base.Ticker;
+import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
+import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
+import com.datastax.oss.driver.shaded.guava.common.cache.RemovalNotification;
+import com.datastax.oss.driver.shaded.guava.common.util.concurrent.UncheckedExecutionException;
 import java.time.Duration;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,11 +40,30 @@ public abstract class DropwizardMetricUpdater<MetricT> implements MetricUpdater<
   private static final Logger LOG = LoggerFactory.getLogger(DropwizardMetricUpdater.class);
 
   protected final Set<MetricT> enabledMetrics;
+
   protected final MetricRegistry registry;
 
-  protected DropwizardMetricUpdater(Set<MetricT> enabledMetrics, MetricRegistry registry) {
+  protected final Cache<String, Metric> metricsCache;
+
+  protected DropwizardMetricUpdater(
+      Set<MetricT> enabledMetrics, MetricRegistry registry, Ticker ticker) {
+    this(enabledMetrics, registry, ticker, Duration.ofHours(1));
+  }
+
+  protected DropwizardMetricUpdater(
+      Set<MetricT> enabledMetrics, MetricRegistry registry, Ticker ticker, Duration expiresAfter) {
     this.enabledMetrics = enabledMetrics;
     this.registry = registry;
+    metricsCache =
+        CacheBuilder.newBuilder()
+            .ticker(ticker)
+            .expireAfterAccess(expiresAfter)
+            .removalListener(
+                (RemovalNotification<String, Metric> notif) -> {
+                  LOG.debug("Removing {} from cache after {}", notif.getKey(), expiresAfter);
+                  registry.remove(notif.getKey());
+                })
+            .build();
   }
 
   protected abstract String buildFullName(MetricT metric, String profileName);
@@ -45,34 +71,49 @@ public abstract class DropwizardMetricUpdater<MetricT> implements MetricUpdater<
   @Override
   public void incrementCounter(MetricT metric, String profileName, long amount) {
     if (isEnabled(metric, profileName)) {
-      registry.counter(buildFullName(metric, profileName)).inc(amount);
+      getOrCreateMetric(metric, profileName, registry::counter).inc();
     }
   }
 
   @Override
   public void updateHistogram(MetricT metric, String profileName, long value) {
     if (isEnabled(metric, profileName)) {
-      registry.histogram(buildFullName(metric, profileName)).update(value);
+      getOrCreateMetric(metric, profileName, registry::histogram).update(value);
     }
   }
 
   @Override
   public void markMeter(MetricT metric, String profileName, long amount) {
     if (isEnabled(metric, profileName)) {
-      registry.meter(buildFullName(metric, profileName)).mark(amount);
+      getOrCreateMetric(metric, profileName, registry::meter).mark(amount);
     }
   }
 
   @Override
   public void updateTimer(MetricT metric, String profileName, long duration, TimeUnit unit) {
     if (isEnabled(metric, profileName)) {
-      registry.timer(buildFullName(metric, profileName)).update(duration, unit);
+      getOrCreateMetric(metric, profileName, registry::timer).update(duration, unit);
     }
   }
 
   @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
   public <T extends Metric> T getMetric(MetricT metric, String profileName) {
-    return (T) registry.getMetrics().get(buildFullName(metric, profileName));
+    String name = buildFullName(metric, profileName);
+    return (T) metricsCache.getIfPresent(name);
+  }
+
+  @SuppressWarnings("unchecked")
+  protected <T extends Metric> T getOrCreateMetric(
+      MetricT metric, String profileName, Function<String, T> metricBuilder) {
+    String name = buildFullName(metric, profileName);
+    try {
+      return (T) metricsCache.get(name, () -> metricBuilder.apply(name));
+    } catch (ExecutionException ignored) {
+      // should never happen
+      throw new AssertionError();
+    } catch (UncheckedExecutionException e) {
+      throw (RuntimeException) e.getCause();
+    }
   }
 
   @Override
@@ -83,7 +124,7 @@ public abstract class DropwizardMetricUpdater<MetricT> implements MetricUpdater<
   protected void initializeDefaultCounter(MetricT metric, String profileName) {
     if (isEnabled(metric, profileName)) {
       // Just initialize eagerly so that the metric appears even when it has no data yet
-      registry.counter(buildFullName(metric, profileName));
+      getOrCreateMetric(metric, profileName, registry::counter);
     }
   }
 
@@ -95,30 +136,30 @@ public abstract class DropwizardMetricUpdater<MetricT> implements MetricUpdater<
       DriverOption intervalOption) {
     String profileName = config.getName();
     if (isEnabled(metric, profileName)) {
-      String fullName = buildFullName(metric, profileName);
-
-      Duration highestLatency = config.getDuration(highestLatencyOption);
-      final int significantDigits;
-      int d = config.getInt(significantDigitsOption);
-      if (d >= 0 && d <= 5) {
-        significantDigits = d;
-      } else {
-        LOG.warn(
-            "[{}] Configuration option {} is out of range (expected between 0 and 5, found {}); "
-                + "using 3 instead.",
-            fullName,
-            significantDigitsOption,
-            d);
-        significantDigits = 3;
-      }
-      Duration refreshInterval = config.getDuration(intervalOption);
-
       // Initialize eagerly to use the custom implementation
-      registry.timer(
-          fullName,
-          () ->
-              new Timer(
-                  new HdrReservoir(highestLatency, significantDigits, refreshInterval, fullName)));
+      getOrCreateMetric(
+          metric,
+          profileName,
+          metricName -> {
+            Duration highestLatency = config.getDuration(highestLatencyOption);
+            final int significantDigits;
+            int d = config.getInt(significantDigitsOption);
+            if (d >= 0 && d <= 5) {
+              significantDigits = d;
+            } else {
+              LOG.warn(
+                  "[{}] Configuration option {} is out of range (expected between 0 and 5, found {}); "
+                      + "using 3 instead.",
+                  metricName,
+                  significantDigitsOption,
+                  d);
+              significantDigits = 3;
+            }
+            Duration refreshInterval = config.getDuration(intervalOption);
+            HdrReservoir reservoir =
+                new HdrReservoir(highestLatency, significantDigits, refreshInterval, metricName);
+            return registry.register(metricName, new Timer(reservoir));
+          });
     }
   }
 }
