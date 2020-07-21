@@ -2,7 +2,7 @@
 
 ## Setup Graphite
  
-1. Create a new test based on the [graphite-setup.yaml](graphite-setup.yaml)
+1. Create a new test based on the [graphite-setup.yaml](graphite-setup.yaml) template.
 2. Modify the parameters to match the scenario.
     * Change the dse_version to match one of the versions you plan on testing against
     * Change driver_oss_branch to be whatever branch of the driver you are using
