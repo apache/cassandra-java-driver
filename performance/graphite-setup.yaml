@@ -91,7 +91,7 @@ workload:
           duration: {{duration}}
           is.four: true
           graphite.prefix: endurance-test-java-{{driver_version}}-DSE-{{dse_version}}
-      kill_nodes:
+    - kill_nodes:
         module: killnode_rhino
         properties:
           target.strategy: whitelist
