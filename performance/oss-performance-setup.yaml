@@ -21,7 +21,7 @@ ensemble:
     provisioner:
       name: ctool
       properties:
-        kill_cluster_after_test: false
+        mark_for_reuse: true
         cloud.provider: openstack
         cloud.tenant: performance
         cloud.instance.type: ms1.small
@@ -40,7 +40,7 @@ ensemble:
     provisioner:
       name: ctool
       properties:
-        kill_cluster_after_test: false
+        mark_for_reuse: true
         cluster_ttl: 2d
         cloud.provider: openstack
         cloud.tenant: performance
