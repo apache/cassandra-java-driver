@@ -18,7 +18,10 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.data.AccessibleByName;
 import com.datastax.oss.driver.api.core.detach.Detachable;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Metadata about a set of CQL columns.
@@ -98,21 +101,60 @@ public interface ColumnDefinitions extends Iterable<ColumnDefinition>, Detachabl
   boolean contains(@NonNull CqlIdentifier id);
 
   /**
+   * Returns the indices of all columns that use the given name.
+   *
+   * <p>Because raw strings are ambiguous with regard to case-sensitivity, the argument will be
+   * interpreted according to the rules described in {@link AccessibleByName}.
+   *
+   * @return the indices, or an empty list if no column uses this name.
+   * @apiNote the default implementation only exists for backward compatibility. It wraps the result
+   *     of {@link #firstIndexOf(String)} in a singleton list, which is not entirely correct, as it
+   *     will only return the first occurrence. Therefore it also logs a warning.
+   *     <p>Implementors should always override this method (all built-in driver implementations
+   *     do).
+   */
+  @NonNull
+  default List<Integer> allIndicesOf(@NonNull String name) {
+    Loggers.COLUMN_DEFINITIONS.warn(
+        "{} should override allIndicesOf(String), the default implementation is a "
+            + "workaround for backward compatibility, it only returns the first occurrence",
+        getClass().getName());
+    return Collections.singletonList(firstIndexOf(name));
+  }
+
+  /**
    * Returns the index of the first column that uses the given name.
    *
    * <p>Because raw strings are ambiguous with regard to case-sensitivity, the argument will be
    * interpreted according to the rules described in {@link AccessibleByName}.
    *
-   * <p>Also, note that if multiple columns use the same name, there is no way to find the index for
-   * the next occurrences. One way to avoid this is to use aliases in your CQL queries.
+   * @return the index, or -1 if no column uses this name.
    */
   int firstIndexOf(@NonNull String name);
 
   /**
+   * Returns the indices of all columns that use the given identifier.
+   *
+   * @return the indices, or an empty list if no column uses this identifier.
+   * @apiNote the default implementation only exists for backward compatibility. It wraps the result
+   *     of {@link #firstIndexOf(CqlIdentifier)} in a singleton list, which is not entirely correct,
+   *     as it will only return the first occurrence. Therefore it also logs a warning.
+   *     <p>Implementors should always override this method (all built-in driver implementations
+   *     do).
+   */
+  @NonNull
+  default List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+    Loggers.COLUMN_DEFINITIONS.warn(
+        "{} should override allIndicesOf(CqlIdentifier), the default implementation is a "
+            + "workaround for backward compatibility, it only returns the first occurrence",
+        getClass().getName());
+    return Collections.singletonList(firstIndexOf(id));
+  }
+
+  /**
    * Returns the index of the first column that uses the given identifier.
    *
-   * <p>Note that if multiple columns use the same identifier, there is no way to find the index for
-   * the next occurrences. One way to avoid this is to use aliases in your CQL queries.
+   * @return the index, or -1 if no column uses this identifier.
    */
   int firstIndexOf(@NonNull CqlIdentifier id);
 }

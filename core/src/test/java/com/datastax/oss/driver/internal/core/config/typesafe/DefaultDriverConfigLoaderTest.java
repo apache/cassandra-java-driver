@@ -294,4 +294,19 @@ public class DefaultDriverConfigLoaderTest {
       System.clearProperty("datastax-java-driver.basic.request.timeout");
     }
   }
+
+  @Test
+  public void should_create_from_string() {
+    DriverExecutionProfile config =
+        DriverConfigLoader.fromString(
+                "datastax-java-driver.basic { session-name = my-app\nrequest.timeout = 1 millisecond }")
+            .getInitialConfig()
+            .getDefaultProfile();
+
+    assertThat(config.getString(DefaultDriverOption.SESSION_NAME)).isEqualTo("my-app");
+    assertThat(config.getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
+        .isEqualTo(Duration.ofMillis(1));
+    // Any option not in the string should be pulled from reference.conf
+    assertThat(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY)).isEqualTo("LOCAL_ONE");
+  }
 }

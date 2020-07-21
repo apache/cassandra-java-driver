@@ -224,7 +224,7 @@ public class ChannelFactory {
               Optional<ProtocolVersion> downgraded =
                   context.getProtocolVersionRegistry().downgrade(currentVersion);
               if (downgraded.isPresent()) {
-                LOG.info(
+                LOG.debug(
                     "[{}] Failed to connect with protocol {}, retrying with {}",
                     logPrefix,
                     currentVersion,

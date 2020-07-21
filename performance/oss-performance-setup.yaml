@@ -1,0 +1,79 @@
+cassandra_version: cassandra-3.11.4
+cassandra_install_type: git
+# Driver branch to use
+driver_oss_branch: 4.x
+# Driver dse branch to use
+driver_dse_branch: 4.x
+# Driver version identifier (used as part of graphite prefix)
+driver_version: 4.8.0
+# Driver examples branch to use
+driver_examples_branch: java-driver-4.x
+# How long to run test for
+duration: 2d
+# The ip of the observer node from graphite-setup.yaml step
+graphite_host: {provide-graphite-host-ip}
+
+---
+
+ensemble:
+  server:
+    node.count: 3
+    provisioner:
+      name: ctool
+      properties:
+        mark_for_reuse: true
+        cloud.provider: openstack
+        cloud.tenant: performance
+        cloud.instance.type: ms1.small
+        cluster_ttl: 2d
+    configuration_manager:
+      - name: ctool
+        properties:
+          java.version: openjdk8
+          product.type: cassandra
+          product.install.type: {{cassandra_install_type}}
+          product.version: {{cassandra_version}}
+          cassandra.yaml:
+            hinted_handoff_enabled: false
+  client:
+    node.count: 1
+    provisioner:
+      name: ctool
+      properties:
+        mark_for_reuse: true
+        cluster_ttl: 2d
+        cloud.provider: openstack
+        cloud.tenant: performance
+        cloud.instance.type: ms1.small
+    configuration_manager:
+      - name: ctool
+        properties:
+          java.version: openjdk8
+          install.maven: true
+      - name: java_driver
+        properties:
+          oss.git.repository: git@github.com:datastax/java-driver.git
+          oss.git.branch: {{driver_oss_branch}}
+          dse.git.branch: {{driver_dse_branch}}
+          type: FOUR_X_OSS
+      - name: java_driver_duration_test
+        properties:
+          git.branch: {{driver_examples_branch}}
+workload:
+  phases:
+    - run-endurance:
+        module: java_driver_duration_test
+        properties:
+          duration: {{duration}}
+          is.four: true
+          graphite.host: {{graphite_host}}
+          graphite.prefix: endurance-test-java-{{driver_version}}-OSS-{{cassandra_version}}
+      kill_nodes:
+        module: killnode_rhino
+        properties:
+          target.strategy: whitelist
+          target.number_of_nodes: 1
+          target.selector: "*:*"
+          repeat.delay: 120
+          repeat.iterations: 0
+          graceful: true
