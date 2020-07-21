@@ -102,12 +102,55 @@ public class MetricsSimulacronIT {
       Awaitility.await()
           .until(
               () -> {
-                // get only node in cluster and evaluate its metrics.
+                // get only node in a cluster and evaluate its metrics.
                 Node node = session.getMetadata().getNodes().values().iterator().next();
                 Metrics metrics = session.getMetrics().get();
                 return !metrics.<Meter>getNodeMetric(node, DefaultNodeMetric.BYTES_SENT).isPresent()
                     && !metrics
                         .<Meter>getNodeMetric(node, DefaultNodeMetric.BYTES_RECEIVED)
+                        .isPresent();
+              });
+    }
+  }
+
+  @Test
+  public void
+      should_not_evict_not_updated_node_metric_if_any_other_node_level_metric_was_updated() {
+    // given
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withStringList(
+                DefaultDriverOption.METRICS_NODE_ENABLED,
+                Lists.newArrayList("bytes-sent", "errors.request.aborted"))
+            .build();
+    FakeTicker fakeTicker = new FakeTicker();
+    try (CqlSession session =
+        new MetricsTestContextBuilder()
+            .addContactEndPoints(SIMULACRON_RULE.getContactPoints())
+            .withConfigLoader(loader)
+            .withTicker(fakeTicker)
+            .build()) {
+      for (int i = 0; i < 10; i++) {
+        session.execute("SELECT release_version FROM system.local");
+      }
+
+      // when advance time to before eviction
+      fakeTicker.advance(Duration.ofMinutes(59));
+      // execute query that update only bytes-sent
+      session.execute("SELECT release_version FROM system.local");
+      // advance time to after eviction
+      fakeTicker.advance(Duration.ofMinutes(2));
+
+      // then all node-level metrics should not be evicted
+      Awaitility.await()
+          .until(
+              () -> {
+                // get only node in a cluster and evaluate its metrics.
+                Node node = session.getMetadata().getNodes().values().iterator().next();
+                Metrics metrics = session.getMetrics().get();
+                return metrics.<Meter>getNodeMetric(node, DefaultNodeMetric.BYTES_SENT).isPresent()
+                    && metrics
+                        .<Meter>getNodeMetric(node, DefaultNodeMetric.ABORTED_REQUESTS)
                         .isPresent();
               });
     }

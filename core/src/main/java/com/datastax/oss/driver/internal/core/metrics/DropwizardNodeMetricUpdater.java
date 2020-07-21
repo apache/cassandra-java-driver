@@ -132,6 +132,7 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
     super.updateTimer(metric, profileName, duration, unit);
   }
 
+  @Override
   @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
   public <T extends Metric> T getMetric(NodeMetric metric, String profileName) {
     signalMetricUpdated.run();
