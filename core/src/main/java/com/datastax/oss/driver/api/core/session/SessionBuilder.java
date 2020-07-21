@@ -676,7 +676,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       if (cloudConfigInputStream != null) {
         if (!programmaticContactPoints.isEmpty() || !configContactPoints.isEmpty()) {
           LOG.info(
-              "The withCloudSecureConnectBundle and addContactPoint(s) were provided. They are mutually exclusive. The addContactPoint(s) setting will be ignored.");
+              "Both a secure connect bundle and contact points were provided. These are mutually exclusive. The contact points from a secure bundle will have priority.");
           // clear the contact points provided in the setting file and via addContactPoints
           configContactPoints = Collections.emptyList();
           programmaticContactPoints = new HashSet<>();
@@ -684,8 +684,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
         String configuredSSLFactory =
             defaultConfig.getString(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS, null);
         if (sslConfigured || configuredSSLFactory != null) {
-          throw new IllegalStateException(
-              "Can't use withCloudSecureConnectBundle and explicitly specify ssl configuration. They are mutually exclusive.");
+          LOG.info(
+              "Both withCloudSecureConnectBundle and explicitly specified ssl configuration were provided. They are mutually exclusive. The ssl settings from a secure bundle will have priority.");
         }
         CloudConfig cloudConfig =
             new CloudConfigFactory().createCloudConfig(cloudConfigInputStream.call());

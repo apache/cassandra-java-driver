@@ -22,13 +22,11 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import ch.qos.logback.classic.Level;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
@@ -222,7 +220,6 @@ public class CloudIT {
 
     Path bundle = proxyRule.getProxy().getBundleWithoutCredentialsPath();
 
-    ResultSet set;
     try (CqlSession session =
         CqlSession.builder()
             .withCloudSecureConnectBundle(bundle)
@@ -230,14 +227,15 @@ public class CloudIT {
             .withAuthCredentials("cassandra", "cassandra")
             .build(); ) {
 
+      // when
+      ResultSet set = session.execute("select * from system.local");
       // then
-      set = session.execute("select * from system.local");
       assertThat(set).isNotNull();
       verify(logger.appender, timeout(500).times(1)).doAppend(logger.loggingEventCaptor.capture());
       assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
       assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
           .contains(
-              "The withCloudSecureConnectBundle and addContactPoint(s) were provided. They are mutually exclusive. The addContactPoint(s) setting will be ignored.");
+              "Both a secure connect bundle and contact points were provided. These are mutually exclusive. The contact points from a secure bundle will have priority.");
 
     } finally {
       logger.close();
@@ -245,26 +243,38 @@ public class CloudIT {
   }
 
   @Test
-  public void should_error_when_ssl_context_and_secure_bundle_used_programatic()
+  public void should_connect_and_log_info_when_ssl_context_and_secure_bundle_used_programmatic()
       throws NoSuchAlgorithmException {
     // given
+    LoggerTest.LoggerSetup logger = setupTestLogger(SessionBuilder.class, Level.INFO);
+
     Path bundle = proxyRule.getProxy().getBundleWithoutCredentialsPath();
-    CqlSessionBuilder builder =
+
+    try (CqlSession session =
         CqlSession.builder()
             .withCloudSecureConnectBundle(bundle)
             .withAuthCredentials("cassandra", "cassandra")
-            .withSslContext(SSLContext.getInstance("SSL"));
-    // then
-    assertThatThrownBy(() -> builder.build())
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessage(
-            "Can't use withCloudSecureConnectBundle and explicitly specify ssl configuration. They are mutually exclusive.");
+            .withSslContext(SSLContext.getInstance("SSL"))
+            .build()) {
+      // when
+      ResultSet set = session.execute("select * from system.local");
+      // then
+      assertThat(set).isNotNull();
+      verify(logger.appender, timeout(500).times(1)).doAppend(logger.loggingEventCaptor.capture());
+      assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
+      assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
+          .contains(
+              "Both withCloudSecureConnectBundle and explicitly specified ssl configuration were provided. They are mutually exclusive. The ssl settings from a secure bundle will have priority.");
+    } finally {
+      logger.close();
+    }
   }
 
   @Test
   public void should_error_when_ssl_context_and_secure_bundle_used_config()
       throws NoSuchAlgorithmException {
     // given
+    LoggerTest.LoggerSetup logger = setupTestLogger(SessionBuilder.class, Level.INFO);
 
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
@@ -273,16 +283,24 @@ public class CloudIT {
             .build();
 
     Path bundle = proxyRule.getProxy().getBundleWithoutCredentialsPath();
-    CqlSessionBuilder builder =
+
+    try (CqlSession session =
         CqlSession.builder()
             .withConfigLoader(loader)
             .withCloudSecureConnectBundle(bundle)
-            .withAuthCredentials("cassandra", "cassandra");
-
-    // then
-    assertThatThrownBy(() -> builder.build())
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessage(
-            "Can't use withCloudSecureConnectBundle and explicitly specify ssl configuration. They are mutually exclusive.");
+            .withAuthCredentials("cassandra", "cassandra")
+            .build()) {
+      // when
+      ResultSet set = session.execute("select * from system.local");
+      // then
+      assertThat(set).isNotNull();
+      verify(logger.appender, timeout(500).times(1)).doAppend(logger.loggingEventCaptor.capture());
+      assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
+      assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
+          .contains(
+              "Both withCloudSecureConnectBundle and explicitly specified ssl configuration were provided. They are mutually exclusive. The ssl settings from a secure bundle will have priority.");
+    } finally {
+      logger.close();
+    }
   }
 }
