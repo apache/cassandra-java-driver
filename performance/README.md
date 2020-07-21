@@ -9,7 +9,7 @@
     * Driver_examples_branch should stay java-driver-4.x
 3. Run the graphite-setup test (wait for its successful setup) and get the graphite server address:
     * Navigate to running test, and obtain the ip from the observer node this will be used as a graphite server in the other tests. 
-    The ip is in the ctool-cluster-info.txt:
+    The ip can be found in the `ctool-cluster-info.txt` file:
     ![ctool-cluster-info](ctool-cluster-info.png)
     * Login to the graphite server the address should match the observer’s, the web interface is on port 3000. 
     The username/password is admin/admin
