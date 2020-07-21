@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 public class DropwizardMetricsFactory implements MetricsFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(DropwizardMetricsFactory.class);
+  private static final Duration LOWEST_ACCEPTABLE_EVICTION_TIME = Duration.ofHours(1);
 
   private final String logPrefix;
   private final InternalDriverContext context;
@@ -62,7 +63,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     Set<SessionMetric> enabledSessionMetrics =
         parseSessionMetricPaths(config.getStringList(DefaultDriverOption.METRICS_SESSION_ENABLED));
-    Duration evictionTime = config.getDuration(DefaultDriverOption.METRICS_NODE_EVICTION_TIME);
+    Duration evictionTime = getAndValidateEvictionTime(config);
 
     this.enabledNodeMetrics =
         parseNodeMetricPaths(config.getStringList(DefaultDriverOption.METRICS_NODE_ENABLED));
@@ -93,6 +94,20 @@ public class DropwizardMetricsFactory implements MetricsFactory {
       this.sessionUpdater = dropwizardSessionUpdater;
       this.metrics = new DefaultMetrics(registry, dropwizardSessionUpdater);
     }
+  }
+
+  private Duration getAndValidateEvictionTime(DriverExecutionProfile config) {
+    Duration evictionTime = config.getDuration(DefaultDriverOption.METRICS_NODE_EVICTION_TIME);
+
+    if (evictionTime.compareTo(LOWEST_ACCEPTABLE_EVICTION_TIME) < 0) {
+      LOG.warn(
+          "The {} setting was provided with too low value. Consider increasing it to at least {} hour. "
+              + "Having lower value may cause disappearing and reappearing of your node-level metrics.",
+          DefaultDriverOption.METRICS_NODE_EVICTION_TIME,
+          LOWEST_ACCEPTABLE_EVICTION_TIME.toHours());
+    }
+
+    return evictionTime;
   }
 
   @Override
