@@ -11,7 +11,7 @@
     * Navigate to running test, and obtain the ip from the observer node this will be used as a graphite server in the other tests. 
     The ip can be found in the `ctool-cluster-info.txt` file:
     ![ctool-cluster-info](ctool-cluster-info.png)
-    * Login to the graphite server the address should match the observer’s, the web interface is on port 3000. 
+    * Login to the graphite server; the address should match the observer’s, the web interface is on port 3000. 
     The username/password is admin/admin
     * Dashboards will be loaded automatically.
     
