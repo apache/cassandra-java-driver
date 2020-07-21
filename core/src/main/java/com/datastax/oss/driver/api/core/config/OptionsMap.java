@@ -321,6 +321,7 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.METRICS_NODE_GRAPH_MESSAGES_HIGHEST, Duration.ofSeconds(3));
     map.put(TypedDriverOption.METRICS_NODE_GRAPH_MESSAGES_DIGITS, 3);
     map.put(TypedDriverOption.METRICS_NODE_GRAPH_MESSAGES_INTERVAL, Duration.ofMinutes(5));
+    map.put(TypedDriverOption.METRICS_NODE_EVICTION_TIME, Duration.ofHours(1));
     map.put(TypedDriverOption.SOCKET_TCP_NODELAY, true);
     map.put(TypedDriverOption.HEARTBEAT_INTERVAL, Duration.ofSeconds(30));
     map.put(TypedDriverOption.HEARTBEAT_TIMEOUT, Duration.ofMillis(500));
