@@ -79,7 +79,7 @@ workload:
             echo "BASH SCRIPT FALLOUT HOST IS..."
             echo "${FALLOUT_OBSERVER_NODE0_GRAPHITE_HOST}"
 
-            git clone git@github.com:riptano/testeng-devtools.git /home/automaton/fallout_scratch/dashboard
+            git clone git@github.com:riptano/testeng-devtools.git ${FALLOUT_SCRATCH_DIR}/dashboard
             curl --user admin:admin -d "@${FALLOUT_SCRATCH_DIR}/dashboard/duration-tests/java/grafana/aggregate.json" -X POST -H "Content-Type: application/json" http://${FALLOUT_OBSERVER_NODE0_MONITORING_GRAPHITE_HOST}:3000/api/dashboards/db/
             curl --user admin:admin -d "@${FALLOUT_SCRATCH_DIR}/dashboard/duration-tests/java/grafana/aggregate4.json" -X POST -H "Content-Type: application/json" http://${FALLOUT_OBSERVER_NODE0_MONITORING_GRAPHITE_HOST}:3000/api/dashboards/db/
             curl --user admin:admin -d "@${FALLOUT_SCRATCH_DIR}/dashboard/duration-tests/java/grafana/focus.json" -X POST -H "Content-Type: application/json" http://${FALLOUT_OBSERVER_NODE0_MONITORING_GRAPHITE_HOST}:3000/api/dashboards/db/
