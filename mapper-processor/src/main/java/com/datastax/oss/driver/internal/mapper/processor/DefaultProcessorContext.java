@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.mapper.processor;
 
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
-import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
 import com.datastax.oss.driver.internal.mapper.processor.dao.LoggingGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.entity.DefaultEntityFactory;
@@ -29,14 +28,11 @@ import javax.lang.model.util.Types;
 /** This follows the same principles as {@link DefaultDriverContext}. */
 public class DefaultProcessorContext implements ProcessorContext {
 
-  private final CycleDetector cycleDetector =
-      new CycleDetector("Detected cycle in context initialization");
-
   private final LazyReference<CodeGeneratorFactory> codeGeneratorFactoryRef =
-      new LazyReference<>("codeGeneratorFactory", this::buildCodeGeneratorFactory, cycleDetector);
+      new LazyReference<>(this::buildCodeGeneratorFactory);
 
   private final LazyReference<EntityFactory> entityFactoryRef =
-      new LazyReference<>("entityFactory", this::buildEntityFactory, cycleDetector);
+      new LazyReference<>(this::buildEntityFactory);
 
   private final DecoratedMessager messager;
   private final Types typeUtils;
