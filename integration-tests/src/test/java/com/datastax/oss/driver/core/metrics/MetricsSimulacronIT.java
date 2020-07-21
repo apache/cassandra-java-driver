@@ -60,8 +60,9 @@ public class MetricsSimulacronIT {
   }
 
   @Test
-  public void
-      should_expose_bytes_sent_and_received_but_remove_node_specific_metrics_after_underlying_cache_will_expire() {
+  public void should_remove_node_metrics_and_not_remove_session_metrics_after_eviction_time() {
+
+    // given
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
             .withStringList(
@@ -82,20 +83,22 @@ public class MetricsSimulacronIT {
         session.execute("SELECT release_version FROM system.local");
       }
 
+      // when
+      fakeTicker.advance(Duration.ofHours(2));
+
+      // then session metrics are not evicted
       assertThat(session.getMetrics())
           .hasValueSatisfying(
               metrics -> {
                 assertThat(metrics.<Meter>getSessionMetric(DefaultSessionMetric.BYTES_SENT))
                     .hasValueSatisfying(
-                        // Can't be precise here as payload can be dependent on protocol version.
                         bytesSent -> assertThat(bytesSent.getCount()).isGreaterThan(0));
                 assertThat(metrics.<Meter>getSessionMetric(DefaultSessionMetric.BYTES_RECEIVED))
                     .hasValueSatisfying(
                         bytesReceived -> assertThat(bytesReceived.getCount()).isGreaterThan(0));
               });
 
-      fakeTicker.advance(Duration.ofHours(2));
-
+      // and node metrics are evicted
       Awaitility.await()
           .until(
               () -> {
@@ -151,7 +154,7 @@ public class MetricsSimulacronIT {
     private static class DropwizardMetricsFactoryCustomTicker extends DropwizardMetricsFactory {
 
       public DropwizardMetricsFactoryCustomTicker(InternalDriverContext context, Ticker ticker) {
-        super(context, ticker);
+        super(context, ticker, Duration.ofHours(1));
       }
     }
   }

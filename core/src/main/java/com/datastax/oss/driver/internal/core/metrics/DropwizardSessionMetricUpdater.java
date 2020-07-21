@@ -30,7 +30,6 @@ import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
 import com.datastax.oss.driver.internal.core.session.throttling.ConcurrencyLimitingRequestThrottler;
 import com.datastax.oss.driver.internal.core.session.throttling.RateLimitingRequestThrottler;
-import com.datastax.oss.driver.shaded.guava.common.base.Ticker;
 import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Set;
@@ -47,11 +46,8 @@ public class DropwizardSessionMetricUpdater extends DropwizardMetricUpdater<Sess
   private final String metricNamePrefix;
 
   public DropwizardSessionMetricUpdater(
-      Set<SessionMetric> enabledMetrics,
-      MetricRegistry registry,
-      InternalDriverContext context,
-      Ticker ticker) {
-    super(enabledMetrics, registry, ticker);
+      Set<SessionMetric> enabledMetrics, MetricRegistry registry, InternalDriverContext context) {
+    super(enabledMetrics, registry);
     this.metricNamePrefix = context.getSessionName() + ".";
 
     if (enabledMetrics.contains(DefaultSessionMetric.CONNECTED_NODES)) {

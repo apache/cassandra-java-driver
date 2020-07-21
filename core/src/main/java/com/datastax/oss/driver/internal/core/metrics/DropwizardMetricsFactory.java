@@ -28,7 +28,11 @@ import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.base.Ticker;
+import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
+import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
+import com.datastax.oss.driver.shaded.guava.common.cache.RemovalNotification;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -45,22 +49,33 @@ public class DropwizardMetricsFactory implements MetricsFactory {
 
   private final String logPrefix;
   private final InternalDriverContext context;
-  private Ticker ticker;
   private final Set<NodeMetric> enabledNodeMetrics;
   private final MetricRegistry registry;
   @Nullable private final Metrics metrics;
   private final SessionMetricUpdater sessionUpdater;
+  private Cache<Node, DropwizardNodeMetricUpdater> metricsCache;
 
-  public DropwizardMetricsFactory(InternalDriverContext context, Ticker ticker) {
+  public DropwizardMetricsFactory(
+      InternalDriverContext context, Ticker ticker, Duration evictionTime) {
     this.logPrefix = context.getSessionName();
     this.context = context;
-    this.ticker = ticker;
 
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     Set<SessionMetric> enabledSessionMetrics =
         parseSessionMetricPaths(config.getStringList(DefaultDriverOption.METRICS_SESSION_ENABLED));
     this.enabledNodeMetrics =
         parseNodeMetricPaths(config.getStringList(DefaultDriverOption.METRICS_NODE_ENABLED));
+
+    metricsCache =
+        CacheBuilder.newBuilder()
+            .ticker(ticker)
+            .expireAfterAccess(evictionTime)
+            .removalListener(
+                (RemovalNotification<Node, DropwizardNodeMetricUpdater> notification) -> {
+                  LOG.debug("Removing {} from cache after {}", notification.getKey(), evictionTime);
+                  notification.getValue().cleanupNodeMetrics();
+                })
+            .build();
 
     if (enabledSessionMetrics.isEmpty() && enabledNodeMetrics.isEmpty()) {
       LOG.debug("[{}] All metrics are disabled, Session.getMetrics will be empty", logPrefix);
@@ -70,7 +85,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
     } else {
       this.registry = new MetricRegistry();
       DropwizardSessionMetricUpdater dropwizardSessionUpdater =
-          new DropwizardSessionMetricUpdater(enabledSessionMetrics, registry, context, ticker);
+          new DropwizardSessionMetricUpdater(enabledSessionMetrics, registry, context);
       this.sessionUpdater = dropwizardSessionUpdater;
       this.metrics = new DefaultMetrics(registry, dropwizardSessionUpdater);
     }
@@ -88,9 +103,15 @@ public class DropwizardMetricsFactory implements MetricsFactory {
 
   @Override
   public NodeMetricUpdater newNodeUpdater(Node node) {
-    return (registry == null)
-        ? NoopNodeMetricUpdater.INSTANCE
-        : new DropwizardNodeMetricUpdater(node, enabledNodeMetrics, registry, context, ticker);
+    if (registry == null) {
+      return NoopNodeMetricUpdater.INSTANCE;
+    } else {
+      DropwizardNodeMetricUpdater dropwizardNodeMetricUpdater =
+          new DropwizardNodeMetricUpdater(
+              node, enabledNodeMetrics, registry, context, () -> metricsCache.getIfPresent(node));
+      metricsCache.put(node, dropwizardNodeMetricUpdater);
+      return dropwizardNodeMetricUpdater;
+    }
   }
 
   protected Set<SessionMetric> parseSessionMetricPaths(List<String> paths) {

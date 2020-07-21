@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metrics;
 
 import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.metrics.DseNodeMetric;
@@ -27,8 +28,8 @@ import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
-import com.datastax.oss.driver.shaded.guava.common.base.Ticker;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import net.jcip.annotations.ThreadSafe;
 
@@ -37,15 +38,19 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
     implements NodeMetricUpdater {
 
   private final String metricNamePrefix;
+  private final Runnable signalMetricUpdated;
+  private final InternalDriverContext context;
 
   public DropwizardNodeMetricUpdater(
       Node node,
       Set<NodeMetric> enabledMetrics,
       MetricRegistry registry,
       InternalDriverContext context,
-      Ticker ticker) {
-    super(enabledMetrics, registry, ticker);
+      Runnable signalMetricUpdated) {
+    super(enabledMetrics, registry);
+    this.signalMetricUpdated = signalMetricUpdated;
     this.metricNamePrefix = buildPrefix(context.getSessionName(), node.getEndPoint());
+    this.context = context;
 
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
 
@@ -103,6 +108,36 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
     return sessionName + ".nodes." + endPoint.asMetricPrefix() + ".";
   }
 
+  @Override
+  public void incrementCounter(NodeMetric metric, String profileName, long amount) {
+    signalMetricUpdated.run();
+    super.incrementCounter(metric, profileName, amount);
+  }
+
+  @Override
+  public void updateHistogram(NodeMetric metric, String profileName, long value) {
+    signalMetricUpdated.run();
+    super.updateHistogram(metric, profileName, value);
+  }
+
+  @Override
+  public void markMeter(NodeMetric metric, String profileName, long amount) {
+    signalMetricUpdated.run();
+    super.markMeter(metric, profileName, amount);
+  }
+
+  @Override
+  public void updateTimer(NodeMetric metric, String profileName, long duration, TimeUnit unit) {
+    signalMetricUpdated.run();
+    super.updateTimer(metric, profileName, duration, unit);
+  }
+
+  @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
+  public <T extends Metric> T getMetric(NodeMetric metric, String profileName) {
+    signalMetricUpdated.run();
+    return super.getMetric(metric, profileName);
+  }
+
   private void initializePoolGauge(
       NodeMetric metric,
       Node node,
@@ -117,5 +152,41 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
                 return (pool == null) ? 0 : reading.apply(pool);
               });
     }
+  }
+
+  public void cleanupNodeMetrics() {
+    String profileName = context.getConfig().getDefaultProfile().getName();
+    registry.remove(buildFullName(DefaultNodeMetric.OPEN_CONNECTIONS, null));
+    registry.remove(buildFullName(DefaultNodeMetric.AVAILABLE_STREAMS, null));
+    registry.remove(buildFullName(DefaultNodeMetric.IN_FLIGHT, null));
+    registry.remove(buildFullName(DefaultNodeMetric.ORPHANED_STREAMS, null));
+
+    registry.remove(buildFullName(DefaultNodeMetric.CQL_MESSAGES, profileName));
+
+    registry.remove(buildFullName(DefaultNodeMetric.UNSENT_REQUESTS, null));
+    registry.remove(buildFullName(DefaultNodeMetric.ABORTED_REQUESTS, null));
+    registry.remove(buildFullName(DefaultNodeMetric.WRITE_TIMEOUTS, null));
+    registry.remove(buildFullName(DefaultNodeMetric.READ_TIMEOUTS, null));
+    registry.remove(buildFullName(DefaultNodeMetric.UNAVAILABLES, null));
+    registry.remove(buildFullName(DefaultNodeMetric.OTHER_ERRORS, null));
+    registry.remove(buildFullName(DefaultNodeMetric.RETRIES, null));
+    registry.remove(buildFullName(DefaultNodeMetric.RETRIES_ON_ABORTED, null));
+    registry.remove(buildFullName(DefaultNodeMetric.RETRIES_ON_READ_TIMEOUT, null));
+    registry.remove(buildFullName(DefaultNodeMetric.RETRIES_ON_WRITE_TIMEOUT, null));
+    registry.remove(buildFullName(DefaultNodeMetric.RETRIES_ON_UNAVAILABLE, null));
+    registry.remove(buildFullName(DefaultNodeMetric.RETRIES_ON_OTHER_ERROR, null));
+    registry.remove(buildFullName(DefaultNodeMetric.IGNORES, null));
+    registry.remove(buildFullName(DefaultNodeMetric.IGNORES_ON_ABORTED, null));
+    registry.remove(buildFullName(DefaultNodeMetric.IGNORES_ON_READ_TIMEOUT, null));
+    registry.remove(buildFullName(DefaultNodeMetric.IGNORES_ON_WRITE_TIMEOUT, null));
+    registry.remove(buildFullName(DefaultNodeMetric.IGNORES_ON_UNAVAILABLE, null));
+    registry.remove(buildFullName(DefaultNodeMetric.IGNORES_ON_OTHER_ERROR, null));
+    registry.remove(buildFullName(DefaultNodeMetric.SPECULATIVE_EXECUTIONS, null));
+    registry.remove(buildFullName(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null));
+    registry.remove(buildFullName(DefaultNodeMetric.AUTHENTICATION_ERRORS, null));
+    registry.remove(buildFullName(DseNodeMetric.GRAPH_MESSAGES, profileName));
+
+    registry.remove(buildFullName(DefaultNodeMetric.BYTES_RECEIVED, null));
+    registry.remove(buildFullName(DefaultNodeMetric.BYTES_SENT, null));
   }
 }

@@ -106,6 +106,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.buffer.ByteBuf;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -601,7 +602,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected MetricsFactory buildMetricsFactory() {
-    return new DropwizardMetricsFactory(this, Ticker.systemTicker());
+    return new DropwizardMetricsFactory(this, Ticker.systemTicker(), Duration.ofHours(1));
   }
 
   protected RequestThrottler buildRequestThrottler() {
