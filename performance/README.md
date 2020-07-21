@@ -7,7 +7,7 @@
     * Change the dse_version to match one of the versions you plan on testing against
     * Change driver_oss_branch to be whatever branch of the driver you are using
     * Driver_examples_branch should stay java-driver-4.x
-3. Start the graphite-setup (wait for the successful setup) and get the graphite server address:
+3. Run the graphite-setup test (wait for its successful setup) and get the graphite server address:
     * Navigate to running test, and obtain the ip from the observer node this will be used as a graphite server in the other tests. 
     The ip is in the ctool-cluster-info.txt:
     ![ctool-cluster-info](ctool-cluster-info.png)
