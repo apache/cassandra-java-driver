@@ -20,7 +20,7 @@
 
 1. Create a new test based on the [oss-performance-setup.yaml](oss-performance-setup.yaml) template.
 2. Change the parameters in the same manner as the first test, with the addition of the graphite_host parameter. 
-Use the IP from the first cluster’s observer mode (the previous setup step).
+Use the IP from the first cluster’s observer node (the previous setup step).
 3. Monitor the performance on the graphite observer host IP (taken from the Setup Graphite step)
    The performance tests will report metrics in the two dashboards:
    ![metrics-dashboards](metrics-dashboards.png) 
