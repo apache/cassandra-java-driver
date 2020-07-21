@@ -519,6 +519,15 @@ public enum DefaultDriverOption implements DriverOption {
   METRICS_NODE_CQL_MESSAGES_INTERVAL("advanced.metrics.node.cql-messages.refresh-interval"),
 
   /**
+   * The time after the node level metrics will be evicted. The eviction will happen only if none of
+   * the enabled node-level metrics is updated for a given node for a given time. When the
+   * eviction-time will elapse, all metrics for a given node are removed.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_NODE_EVICTION_TIME("advanced.metrics.node.eviction-time"),
+
+  /**
    * Whether or not to disable the Nagle algorithm.
    *
    * <p>Value-type: boolean

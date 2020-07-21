@@ -71,6 +71,7 @@ public class MetricsSimulacronIT {
             .withStringList(
                 DefaultDriverOption.METRICS_NODE_ENABLED,
                 Lists.newArrayList("bytes-sent", "bytes-received"))
+            .withDuration(DefaultDriverOption.METRICS_NODE_EVICTION_TIME, Duration.ofHours(1))
             .build();
     FakeTicker fakeTicker = new FakeTicker();
     try (CqlSession session =
@@ -122,6 +123,7 @@ public class MetricsSimulacronIT {
             .withStringList(
                 DefaultDriverOption.METRICS_NODE_ENABLED,
                 Lists.newArrayList("bytes-sent", "errors.request.aborted"))
+            .withDuration(DefaultDriverOption.METRICS_NODE_EVICTION_TIME, Duration.ofHours(1))
             .build();
     FakeTicker fakeTicker = new FakeTicker();
     try (CqlSession session =
@@ -197,7 +199,7 @@ public class MetricsSimulacronIT {
     private static class DropwizardMetricsFactoryCustomTicker extends DropwizardMetricsFactory {
 
       public DropwizardMetricsFactoryCustomTicker(InternalDriverContext context, Ticker ticker) {
-        super(context, ticker, Duration.ofHours(1));
+        super(context, ticker);
       }
     }
   }

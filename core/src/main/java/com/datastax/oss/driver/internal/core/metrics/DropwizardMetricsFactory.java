@@ -55,14 +55,15 @@ public class DropwizardMetricsFactory implements MetricsFactory {
   private final SessionMetricUpdater sessionUpdater;
   private Cache<Node, DropwizardNodeMetricUpdater> metricsCache;
 
-  public DropwizardMetricsFactory(
-      InternalDriverContext context, Ticker ticker, Duration evictionTime) {
+  public DropwizardMetricsFactory(InternalDriverContext context, Ticker ticker) {
     this.logPrefix = context.getSessionName();
     this.context = context;
 
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     Set<SessionMetric> enabledSessionMetrics =
         parseSessionMetricPaths(config.getStringList(DefaultDriverOption.METRICS_SESSION_ENABLED));
+    Duration evictionTime = config.getDuration(DefaultDriverOption.METRICS_NODE_EVICTION_TIME);
+
     this.enabledNodeMetrics =
         parseNodeMetricPaths(config.getStringList(DefaultDriverOption.METRICS_NODE_ENABLED));
 
@@ -72,7 +73,10 @@ public class DropwizardMetricsFactory implements MetricsFactory {
             .expireAfterAccess(evictionTime)
             .removalListener(
                 (RemovalNotification<Node, DropwizardNodeMetricUpdater> notification) -> {
-                  LOG.debug("Removing {} from cache after {}", notification.getKey(), evictionTime);
+                  LOG.debug(
+                      "Removing metrics for node: {} from cache after {}",
+                      notification.getKey(),
+                      evictionTime);
                   notification.getValue().cleanupNodeMetrics();
                 })
             .build();
