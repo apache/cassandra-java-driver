@@ -1,4 +1,4 @@
-# How to run the fallout tests
+# How to run the Fallout performance tests
 
 ## Setup Graphite
  
