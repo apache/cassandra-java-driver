@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.auth.PlainTextAuthProviderBase;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
@@ -91,8 +92,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
 
   protected ProgrammaticArguments.Builder programmaticArgumentsBuilder =
       ProgrammaticArguments.builder();
-  private boolean sslConfigured = false;
-  private boolean localDatacenterConfigured = false;
+  private boolean programmaticSslFactory = false;
+  private boolean programmaticLocalDatacenter = false;
 
   /**
    * Sets the configuration loader to use.
@@ -319,7 +320,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    */
   @NonNull
   public SelfT withSslEngineFactory(@Nullable SslEngineFactory sslEngineFactory) {
-    this.sslConfigured = true;
+    this.programmaticSslFactory = true;
     this.programmaticArgumentsBuilder.withSslEngineFactory(sslEngineFactory);
     return self;
   }
@@ -357,7 +358,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * if you use a third-party implementation, refer to their documentation.
    */
   public SelfT withLocalDatacenter(@NonNull String profileName, @NonNull String localDatacenter) {
-    this.localDatacenterConfigured = true;
+    this.programmaticLocalDatacenter = true;
     this.programmaticArgumentsBuilder.withLocalDatacenter(profileName, localDatacenter);
     return self;
   }
@@ -683,9 +684,9 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
           configContactPoints = Collections.emptyList();
           programmaticContactPoints = new HashSet<>();
         }
-        boolean configSslFactoryDefined =
-            defaultConfig.isDefined(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS);
-        if (sslConfigured || configSslFactoryDefined) {
+
+        if (programmaticSslFactory
+            || defaultConfig.isDefined(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS)) {
           LOG.info(
               "Both a secure connect bundle and SSL options were provided. They are mutually exclusive. The SSL options from the secure bundle will have priority.");
         }
@@ -694,8 +695,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
         addContactEndPoints(cloudConfig.getEndPoints());
 
         boolean localDataCenterDefined =
-            defaultConfig.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER);
-        if (localDatacenterConfigured || localDataCenterDefined) {
+            anyProfileHasDatacenterDefined(configLoader.getInitialConfig());
+        if (programmaticLocalDatacenter || localDataCenterDefined) {
           LOG.info(
               "Both a secure connect bundle and a local datacenter were provided. They are mutually exclusive. The local datacenter from the secure bundle will have priority.");
           programmaticArgumentsBuilder.clearDatacenters();
@@ -730,6 +731,15 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       // failed future if anything goes wrong. So wrap any error from that synchronous part.
       return CompletableFutures.failedFuture(t);
     }
+  }
+
+  private boolean anyProfileHasDatacenterDefined(DriverConfig driverConfig) {
+    for (DriverExecutionProfile driverExecutionProfile : driverConfig.getProfiles().values()) {
+      if (driverExecutionProfile.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
