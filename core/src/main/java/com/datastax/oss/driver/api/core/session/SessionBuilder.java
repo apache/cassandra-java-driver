@@ -695,7 +695,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
 
         if (localDatacenterConfigured) {
           LOG.info(
-              "Both withCloudSecureConnectBundle and explicitly specified local datacenter configuration were provided. They are mutually exclusive. The local datacenter settings from a secure bundle will have priority.");
+              "Both a secure connect bundle and a local datacenter were provided. They are mutually exclusive. The local datacenter from the secure bundle will have priority.");
           programmaticArgumentsBuilder.clearDatacenters();
         }
         withLocalDatacenter(cloudConfig.getLocalDatacenter());
