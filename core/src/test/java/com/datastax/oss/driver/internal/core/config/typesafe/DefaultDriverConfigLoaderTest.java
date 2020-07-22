@@ -185,7 +185,7 @@ public class DefaultDriverConfigLoaderTest {
     DriverExecutionProfile config = loader.getInitialConfig().getDefaultProfile();
     // From customApplication.conf:
     assertThat(config.getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
-        .isEqualTo(Duration.ofMillis(500));
+        .isEqualTo(Duration.ofSeconds(5));
     // From customApplication.json:
     assertThat(config.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE)).isEqualTo(2000);
     // From customApplication.properties:
@@ -204,7 +204,7 @@ public class DefaultDriverConfigLoaderTest {
     DriverExecutionProfile config = loader.getInitialConfig().getDefaultProfile();
     // From customApplication.conf:
     assertThat(config.getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
-        .isEqualTo(Duration.ofMillis(500));
+        .isEqualTo(Duration.ofSeconds(5));
     // From reference.conf:
     assertThat(config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
         .isEqualTo(DefaultConsistencyLevel.SERIAL.name());
@@ -220,7 +220,7 @@ public class DefaultDriverConfigLoaderTest {
       DriverExecutionProfile config = loader.getInitialConfig().getDefaultProfile();
       // From customApplication.conf:
       assertThat(config.getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
-          .isEqualTo(Duration.ofMillis(500));
+          .isEqualTo(Duration.ofSeconds(5));
       // From reference.conf:
       assertThat(config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
           .isEqualTo(DefaultConsistencyLevel.SERIAL.name());
