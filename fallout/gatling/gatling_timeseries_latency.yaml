@@ -11,7 +11,8 @@ ensemble:
       name: ctool
       properties:
         cloud.provider: nebula
-        cloud.instance.type: m3.large
+        cloud.tenant: moonshot-v2
+        cloud.instance.type: ms2.small
     configuration_manager:
       - name: ctool
         properties:
