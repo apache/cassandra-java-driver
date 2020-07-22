@@ -242,6 +242,8 @@ public class OptionsMap implements Serializable {
   }
 
   protected static void fillWithDriverDefaults(OptionsMap map) {
+    Duration initQueryTimeout = Duration.ofSeconds(5);
+
     // Sorted by order of appearance in reference.conf:
 
     // Skip CONFIG_RELOAD_INTERVAL because the map-based config doesn't need periodic reloading
@@ -255,8 +257,8 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.LOAD_BALANCING_POLICY_SLOW_AVOIDANCE, true);
     map.put(TypedDriverOption.SESSION_LEAK_THRESHOLD, 4);
     map.put(TypedDriverOption.CONNECTION_CONNECT_TIMEOUT, Duration.ofSeconds(5));
-    map.put(TypedDriverOption.CONNECTION_INIT_QUERY_TIMEOUT, Duration.ofMillis(500));
-    map.put(TypedDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT, Duration.ofMillis(500));
+    map.put(TypedDriverOption.CONNECTION_INIT_QUERY_TIMEOUT, initQueryTimeout);
+    map.put(TypedDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT, initQueryTimeout);
     map.put(TypedDriverOption.CONNECTION_POOL_LOCAL_SIZE, 1);
     map.put(TypedDriverOption.CONNECTION_POOL_REMOTE_SIZE, 1);
     map.put(TypedDriverOption.CONNECTION_MAX_REQUESTS, 1024);
@@ -324,7 +326,7 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.METRICS_NODE_EXPIRE_AFTER, Duration.ofHours(1));
     map.put(TypedDriverOption.SOCKET_TCP_NODELAY, true);
     map.put(TypedDriverOption.HEARTBEAT_INTERVAL, Duration.ofSeconds(30));
-    map.put(TypedDriverOption.HEARTBEAT_TIMEOUT, Duration.ofMillis(500));
+    map.put(TypedDriverOption.HEARTBEAT_TIMEOUT, initQueryTimeout);
     map.put(TypedDriverOption.METADATA_TOPOLOGY_WINDOW, Duration.ofSeconds(1));
     map.put(TypedDriverOption.METADATA_TOPOLOGY_MAX_EVENTS, 20);
     map.put(TypedDriverOption.METADATA_SCHEMA_ENABLED, true);
@@ -333,7 +335,7 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.METADATA_SCHEMA_WINDOW, Duration.ofSeconds(1));
     map.put(TypedDriverOption.METADATA_SCHEMA_MAX_EVENTS, 20);
     map.put(TypedDriverOption.METADATA_TOKEN_MAP_ENABLED, true);
-    map.put(TypedDriverOption.CONTROL_CONNECTION_TIMEOUT, Duration.ofMillis(500));
+    map.put(TypedDriverOption.CONTROL_CONNECTION_TIMEOUT, initQueryTimeout);
     map.put(TypedDriverOption.CONTROL_CONNECTION_AGREEMENT_INTERVAL, Duration.ofMillis(200));
     map.put(TypedDriverOption.CONTROL_CONNECTION_AGREEMENT_TIMEOUT, Duration.ofSeconds(10));
     map.put(TypedDriverOption.CONTROL_CONNECTION_AGREEMENT_WARN, true);
@@ -342,7 +344,7 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.REPREPARE_CHECK_SYSTEM_TABLE, false);
     map.put(TypedDriverOption.REPREPARE_MAX_STATEMENTS, 0);
     map.put(TypedDriverOption.REPREPARE_MAX_PARALLELISM, 100);
-    map.put(TypedDriverOption.REPREPARE_TIMEOUT, Duration.ofMillis(500));
+    map.put(TypedDriverOption.REPREPARE_TIMEOUT, initQueryTimeout);
     map.put(TypedDriverOption.NETTY_DAEMON, false);
     map.put(TypedDriverOption.NETTY_IO_SIZE, 0);
     map.put(TypedDriverOption.NETTY_IO_SHUTDOWN_QUIET_PERIOD, 2);

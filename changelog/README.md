@@ -4,6 +4,7 @@
 
 ### 4.8.0 (in progress)
 
+- [improvement] JAVA-2841: Raise timeouts during connection initialization
 - [bug] JAVA-2331: Unregister old metrics when a node gets removed or changes RPC address
 - [improvement] JAVA-2850: Ignore credentials in secure connect bundle [DataStax Astra]
 - [improvement] JAVA-2813: Don't fail when secure bundle is specified together with other options
