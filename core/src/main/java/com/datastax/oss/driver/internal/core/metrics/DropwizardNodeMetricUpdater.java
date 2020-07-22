@@ -156,38 +156,6 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
   }
 
   public void cleanupNodeMetrics() {
-    String profileName = context.getConfig().getDefaultProfile().getName();
-    registry.remove(buildFullName(DefaultNodeMetric.OPEN_CONNECTIONS, null));
-    registry.remove(buildFullName(DefaultNodeMetric.AVAILABLE_STREAMS, null));
-    registry.remove(buildFullName(DefaultNodeMetric.IN_FLIGHT, null));
-    registry.remove(buildFullName(DefaultNodeMetric.ORPHANED_STREAMS, null));
-
-    registry.remove(buildFullName(DefaultNodeMetric.CQL_MESSAGES, profileName));
-
-    registry.remove(buildFullName(DefaultNodeMetric.UNSENT_REQUESTS, null));
-    registry.remove(buildFullName(DefaultNodeMetric.ABORTED_REQUESTS, null));
-    registry.remove(buildFullName(DefaultNodeMetric.WRITE_TIMEOUTS, null));
-    registry.remove(buildFullName(DefaultNodeMetric.READ_TIMEOUTS, null));
-    registry.remove(buildFullName(DefaultNodeMetric.UNAVAILABLES, null));
-    registry.remove(buildFullName(DefaultNodeMetric.OTHER_ERRORS, null));
-    registry.remove(buildFullName(DefaultNodeMetric.RETRIES, null));
-    registry.remove(buildFullName(DefaultNodeMetric.RETRIES_ON_ABORTED, null));
-    registry.remove(buildFullName(DefaultNodeMetric.RETRIES_ON_READ_TIMEOUT, null));
-    registry.remove(buildFullName(DefaultNodeMetric.RETRIES_ON_WRITE_TIMEOUT, null));
-    registry.remove(buildFullName(DefaultNodeMetric.RETRIES_ON_UNAVAILABLE, null));
-    registry.remove(buildFullName(DefaultNodeMetric.RETRIES_ON_OTHER_ERROR, null));
-    registry.remove(buildFullName(DefaultNodeMetric.IGNORES, null));
-    registry.remove(buildFullName(DefaultNodeMetric.IGNORES_ON_ABORTED, null));
-    registry.remove(buildFullName(DefaultNodeMetric.IGNORES_ON_READ_TIMEOUT, null));
-    registry.remove(buildFullName(DefaultNodeMetric.IGNORES_ON_WRITE_TIMEOUT, null));
-    registry.remove(buildFullName(DefaultNodeMetric.IGNORES_ON_UNAVAILABLE, null));
-    registry.remove(buildFullName(DefaultNodeMetric.IGNORES_ON_OTHER_ERROR, null));
-    registry.remove(buildFullName(DefaultNodeMetric.SPECULATIVE_EXECUTIONS, null));
-    registry.remove(buildFullName(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null));
-    registry.remove(buildFullName(DefaultNodeMetric.AUTHENTICATION_ERRORS, null));
-    registry.remove(buildFullName(DseNodeMetric.GRAPH_MESSAGES, profileName));
-
-    registry.remove(buildFullName(DefaultNodeMetric.BYTES_RECEIVED, null));
-    registry.remove(buildFullName(DefaultNodeMetric.BYTES_SENT, null));
+    registry.removeMatching((name, metric) -> name.startsWith(metricNamePrefix));
   }
 }
