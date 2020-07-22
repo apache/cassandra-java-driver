@@ -687,7 +687,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
             defaultConfig.getString(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS, null);
         if (sslConfigured || configuredSSLFactory != null) {
           LOG.info(
-              "Both withCloudSecureConnectBundle and explicitly specified ssl configuration were provided. They are mutually exclusive. The ssl settings from a secure bundle will have priority.");
+              "Both a secure connect bundle and SSL options were provided. They are mutually exclusive. The SSL options from the secure bundle will have priority.");
         }
         CloudConfig cloudConfig =
             new CloudConfigFactory().createCloudConfig(cloudConfigInputStream.call());
