@@ -678,7 +678,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       if (cloudConfigInputStream != null) {
         if (!programmaticContactPoints.isEmpty() || !configContactPoints.isEmpty()) {
           LOG.info(
-              "Both a secure connect bundle and contact points were provided. These are mutually exclusive. The contact points from a secure bundle will have priority.");
+              "Both a secure connect bundle and contact points were provided. These are mutually exclusive. The contact points from the secure bundle will have priority.");
           // clear the contact points provided in the setting file and via addContactPoints
           configContactPoints = Collections.emptyList();
           programmaticContactPoints = new HashSet<>();
