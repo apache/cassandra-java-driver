@@ -683,9 +683,9 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
           configContactPoints = Collections.emptyList();
           programmaticContactPoints = new HashSet<>();
         }
-        String configuredSSLFactory =
+        String configSslFactory =
             defaultConfig.getString(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS, null);
-        if (sslConfigured || configuredSSLFactory != null) {
+        if (sslConfigured || configSslFactory != null) {
           LOG.info(
               "Both a secure connect bundle and SSL options were provided. They are mutually exclusive. The SSL options from the secure bundle will have priority.");
         }
