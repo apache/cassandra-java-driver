@@ -809,8 +809,7 @@ public enum DefaultDriverOption implements DriverOption {
   SESSION_LEAK_THRESHOLD("advanced.session-leak.threshold"),
   /**
    * The period of inactivity after which the node level metrics will be evicted. The eviction will happen only if none of
-   * the enabled node-level metrics is updated for a given node for a given time. When the
-   * eviction-time will elapse, all metrics for a given node are removed.
+   * the enabled node-level metrics is updated for a given node within this time window.
    *
    * <p>Value-type: {@link java.time.Duration Duration}
    */
