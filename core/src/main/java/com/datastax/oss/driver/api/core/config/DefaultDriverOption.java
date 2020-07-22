@@ -517,6 +517,7 @@ public enum DefaultDriverOption implements DriverOption {
    * <p>Value-type: {@link java.time.Duration Duration}
    */
   METRICS_NODE_CQL_MESSAGES_INTERVAL("advanced.metrics.node.cql-messages.refresh-interval"),
+
   /**
    * Whether or not to disable the Nagle algorithm.
    *
@@ -808,12 +809,13 @@ public enum DefaultDriverOption implements DriverOption {
    */
   SESSION_LEAK_THRESHOLD("advanced.session-leak.threshold"),
   /**
-   * The period of inactivity after which the node level metrics will be evicted. The eviction will happen only if none of
-   * the enabled node-level metrics is updated for a given node within this time window.
+   * The period of inactivity after which the node level metrics will be evicted. The eviction will
+   * happen only if none of the enabled node-level metrics is updated for a given node within this
+   * time window.
    *
    * <p>Value-type: {@link java.time.Duration Duration}
    */
-  METRICS_NODE_EVICTION_TIME("advanced.metrics.node.eviction-time"),
+  METRICS_NODE_EXPIRE_AFTER("advanced.metrics.node.expire-after"),
   ;
 
   private final String path;

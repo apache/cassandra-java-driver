@@ -80,7 +80,7 @@ public class MetricsSimulacronIT {
             .withStringList(
                 DefaultDriverOption.METRICS_NODE_ENABLED,
                 Lists.newArrayList("bytes-sent", "bytes-received"))
-            .withDuration(DefaultDriverOption.METRICS_NODE_EVICTION_TIME, Duration.ofHours(1))
+            .withDuration(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER, Duration.ofHours(1))
             .build();
     FakeTicker fakeTicker = new FakeTicker();
     try (CqlSession session =
@@ -132,7 +132,7 @@ public class MetricsSimulacronIT {
             .withStringList(
                 DefaultDriverOption.METRICS_NODE_ENABLED,
                 Lists.newArrayList("bytes-sent", "errors.request.aborted"))
-            .withDuration(DefaultDriverOption.METRICS_NODE_EVICTION_TIME, Duration.ofHours(1))
+            .withDuration(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER, Duration.ofHours(1))
             .build();
     FakeTicker fakeTicker = new FakeTicker();
     try (CqlSession session =
@@ -170,9 +170,10 @@ public class MetricsSimulacronIT {
   @Test
   public void should_log_warning_when_provided_eviction_time_setting_is_too_low() {
     // given
+    Duration expireAfter = Duration.ofMinutes(59);
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
-            .withDuration(DefaultDriverOption.METRICS_NODE_EVICTION_TIME, Duration.ofMinutes(59))
+            .withDuration(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER, expireAfter)
             .build();
     LoggerTest.LoggerSetup logger =
         LoggerTest.setupTestLogger(DropwizardMetricsFactory.class, Level.WARN);
@@ -187,8 +188,10 @@ public class MetricsSimulacronIT {
       assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
       assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
           .contains(
-              "The METRICS_NODE_EVICTION_TIME setting was provided with too low value. Consider increasing it to at least 1 hour. "
-                  + "Having lower value may cause disappearing and reappearing of your node-level metrics");
+              String.format(
+                  "The %s setting was provided with too low value: %s. Consider increasing it to at least 1 hour. "
+                      + "Having lower values may cause your node-level metrics to keep disappearing and reappearing.",
+                  DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER, expireAfter));
     } finally {
       logger.close();
     }
@@ -201,7 +204,7 @@ public class MetricsSimulacronIT {
     // given
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
-            .withDuration(DefaultDriverOption.METRICS_NODE_EVICTION_TIME, evictionTime)
+            .withDuration(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER, evictionTime)
             .build();
     LoggerTest.LoggerSetup logger =
         LoggerTest.setupTestLogger(DropwizardMetricsFactory.class, Level.WARN);

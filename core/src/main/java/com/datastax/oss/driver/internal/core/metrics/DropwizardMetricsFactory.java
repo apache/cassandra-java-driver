@@ -97,13 +97,14 @@ public class DropwizardMetricsFactory implements MetricsFactory {
   }
 
   private Duration getAndValidateEvictionTime(DriverExecutionProfile config) {
-    Duration evictionTime = config.getDuration(DefaultDriverOption.METRICS_NODE_EVICTION_TIME);
+    Duration evictionTime = config.getDuration(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER);
 
     if (evictionTime.compareTo(LOWEST_ACCEPTABLE_EVICTION_TIME) < 0) {
       LOG.warn(
-          "The {} setting was provided with too low value. Consider increasing it to at least {} hour. "
+          "The {} setting was provided with too low value: {}. Consider increasing it to at least {} hour. "
               + "Having lower values may cause your node-level metrics to keep disappearing and reappearing.",
-          DefaultDriverOption.METRICS_NODE_EVICTION_TIME,
+          DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER,
+          evictionTime,
           LOWEST_ACCEPTABLE_EVICTION_TIME.toHours());
     }
 

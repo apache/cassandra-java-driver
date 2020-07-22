@@ -702,8 +702,8 @@ public class TypedDriverOption<ValueT> {
           DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_INTERVAL, GenericType.DURATION);
 
   /** The time after the node level metrics will be evicted. */
-  public static final TypedDriverOption<Duration> METRICS_NODE_EVICTION_TIME =
-      new TypedDriverOption<>(DefaultDriverOption.METRICS_NODE_EVICTION_TIME, GenericType.DURATION);
+  public static final TypedDriverOption<Duration> METRICS_NODE_EXPIRE_AFTER =
+      new TypedDriverOption<>(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER, GenericType.DURATION);
 
   private static Iterable<TypedDriverOption<?>> introspectBuiltInValues() {
     try {
