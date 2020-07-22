@@ -26,6 +26,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
@@ -43,6 +44,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 import javax.net.ssl.SSLContext;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -214,7 +216,8 @@ public class CloudIT {
   }
 
   @Test
-  public void should_connect_and_log_info_when_contact_points_and_secure_bundle_used() {
+  public void
+      should_connect_and_log_info_when_contact_points_and_secure_bundle_used_programmatic() {
     // given
     LoggerTest.LoggerSetup logger = setupTestLogger(SessionBuilder.class, Level.INFO);
 
@@ -231,9 +234,48 @@ public class CloudIT {
       ResultSet set = session.execute("select * from system.local");
       // then
       assertThat(set).isNotNull();
-      verify(logger.appender, timeout(500).times(1)).doAppend(logger.loggingEventCaptor.capture());
-      assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
-      assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
+      verify(logger.appender, timeout(500).atLeast(1))
+          .doAppend(logger.loggingEventCaptor.capture());
+      assertThat(
+              logger.loggingEventCaptor.getAllValues().stream()
+                  .map(ILoggingEvent::getFormattedMessage))
+          .contains(
+              "Both a secure connect bundle and contact points were provided. These are mutually exclusive. The contact points from the secure bundle will have priority.");
+
+    } finally {
+      logger.close();
+    }
+  }
+
+  @Test
+  public void should_connect_and_log_info_when_contact_points_and_secure_bundle_used_config() {
+    // given
+    LoggerTest.LoggerSetup logger = setupTestLogger(SessionBuilder.class, Level.INFO);
+
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withStringList(
+                DefaultDriverOption.CONTACT_POINTS, Collections.singletonList("localhost:9042"))
+            .build();
+
+    Path bundle = proxyRule.getProxy().getBundleWithoutCredentialsPath();
+
+    try (CqlSession session =
+        CqlSession.builder()
+            .withConfigLoader(loader)
+            .withCloudSecureConnectBundle(bundle)
+            .withAuthCredentials("cassandra", "cassandra")
+            .build(); ) {
+
+      // when
+      ResultSet set = session.execute("select * from system.local");
+      // then
+      assertThat(set).isNotNull();
+      verify(logger.appender, timeout(500).atLeast(1))
+          .doAppend(logger.loggingEventCaptor.capture());
+      assertThat(
+              logger.loggingEventCaptor.getAllValues().stream()
+                  .map(ILoggingEvent::getFormattedMessage))
           .contains(
               "Both a secure connect bundle and contact points were provided. These are mutually exclusive. The contact points from the secure bundle will have priority.");
 
@@ -260,9 +302,11 @@ public class CloudIT {
       ResultSet set = session.execute("select * from system.local");
       // then
       assertThat(set).isNotNull();
-      verify(logger.appender, timeout(500).times(1)).doAppend(logger.loggingEventCaptor.capture());
-      assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
-      assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
+      verify(logger.appender, timeout(500).atLeast(1))
+          .doAppend(logger.loggingEventCaptor.capture());
+      assertThat(
+              logger.loggingEventCaptor.getAllValues().stream()
+                  .map(ILoggingEvent::getFormattedMessage))
           .contains(
               "Both a secure connect bundle and SSL options were provided. They are mutually exclusive. The SSL options from the secure bundle will have priority.");
     } finally {
@@ -294,9 +338,11 @@ public class CloudIT {
       ResultSet set = session.execute("select * from system.local");
       // then
       assertThat(set).isNotNull();
-      verify(logger.appender, timeout(500).times(1)).doAppend(logger.loggingEventCaptor.capture());
-      assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
-      assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
+      verify(logger.appender, timeout(500).atLeast(1))
+          .doAppend(logger.loggingEventCaptor.capture());
+      assertThat(
+              logger.loggingEventCaptor.getAllValues().stream()
+                  .map(ILoggingEvent::getFormattedMessage))
           .contains(
               "Both a secure connect bundle and SSL options were provided. They are mutually exclusive. The SSL options from the secure bundle will have priority.");
     } finally {
@@ -305,7 +351,44 @@ public class CloudIT {
   }
 
   @Test
-  public void should_connect_and_log_info_when_local_data_center_and_secure_bundle_used() {
+  public void
+      should_connect_and_log_info_when_local_data_center_and_secure_bundle_used_programmatic() {
+    // given
+    LoggerTest.LoggerSetup logger = setupTestLogger(SessionBuilder.class, Level.INFO);
+
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, "dc-ignore")
+            .build();
+
+    Path bundle = proxyRule.getProxy().getBundleWithoutCredentialsPath();
+
+    try (CqlSession session =
+        CqlSession.builder()
+            .withCloudSecureConnectBundle(bundle)
+            .withConfigLoader(loader)
+            .withAuthCredentials("cassandra", "cassandra")
+            .build(); ) {
+
+      // when
+      ResultSet set = session.execute("select * from system.local");
+      // then
+      assertThat(set).isNotNull();
+      verify(logger.appender, timeout(500).atLeast(1))
+          .doAppend(logger.loggingEventCaptor.capture());
+      assertThat(
+              logger.loggingEventCaptor.getAllValues().stream()
+                  .map(ILoggingEvent::getFormattedMessage))
+          .contains(
+              "Both a secure connect bundle and a local datacenter were provided. They are mutually exclusive. The local datacenter from the secure bundle will have priority.");
+
+    } finally {
+      logger.close();
+    }
+  }
+
+  @Test
+  public void should_connect_and_log_info_when_local_data_center_and_secure_bundle_used_config() {
     // given
     LoggerTest.LoggerSetup logger = setupTestLogger(SessionBuilder.class, Level.INFO);
 
@@ -322,9 +405,11 @@ public class CloudIT {
       ResultSet set = session.execute("select * from system.local");
       // then
       assertThat(set).isNotNull();
-      verify(logger.appender, timeout(500).times(1)).doAppend(logger.loggingEventCaptor.capture());
-      assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
-      assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
+      verify(logger.appender, timeout(500).atLeast(1))
+          .doAppend(logger.loggingEventCaptor.capture());
+      assertThat(
+              logger.loggingEventCaptor.getAllValues().stream()
+                  .map(ILoggingEvent::getFormattedMessage))
           .contains(
               "Both a secure connect bundle and a local datacenter were provided. They are mutually exclusive. The local datacenter from the secure bundle will have priority.");
 

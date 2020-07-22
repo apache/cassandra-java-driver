@@ -683,9 +683,9 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
           configContactPoints = Collections.emptyList();
           programmaticContactPoints = new HashSet<>();
         }
-        String configSslFactory =
-            defaultConfig.getString(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS, null);
-        if (sslConfigured || configSslFactory != null) {
+        boolean configSslFactoryDefined =
+            defaultConfig.isDefined(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS);
+        if (sslConfigured || configSslFactoryDefined) {
           LOG.info(
               "Both a secure connect bundle and SSL options were provided. They are mutually exclusive. The SSL options from the secure bundle will have priority.");
         }
@@ -693,7 +693,9 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
             new CloudConfigFactory().createCloudConfig(cloudConfigInputStream.call());
         addContactEndPoints(cloudConfig.getEndPoints());
 
-        if (localDatacenterConfigured) {
+        boolean localDataCenterDefined =
+            defaultConfig.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER);
+        if (localDatacenterConfigured || localDataCenterDefined) {
           LOG.info(
               "Both a secure connect bundle and a local datacenter were provided. They are mutually exclusive. The local datacenter from the secure bundle will have priority.");
           programmaticArgumentsBuilder.clearDatacenters();
