@@ -235,7 +235,7 @@ public class CloudIT {
       assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
       assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
           .contains(
-              "Both a secure connect bundle and contact points were provided. These are mutually exclusive. The contact points from a secure bundle will have priority.");
+              "Both a secure connect bundle and contact points were provided. These are mutually exclusive. The contact points from the secure bundle will have priority.");
 
     } finally {
       logger.close();
@@ -264,7 +264,7 @@ public class CloudIT {
       assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
       assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
           .contains(
-              "Both withCloudSecureConnectBundle and explicitly specified ssl configuration were provided. They are mutually exclusive. The ssl settings from a secure bundle will have priority.");
+              "Both a secure connect bundle and SSL options were provided. They are mutually exclusive. The SSL options from the secure bundle will have priority.");
     } finally {
       logger.close();
     }
@@ -298,7 +298,7 @@ public class CloudIT {
       assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
       assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
           .contains(
-              "Both withCloudSecureConnectBundle and explicitly specified ssl configuration were provided. They are mutually exclusive. The ssl settings from a secure bundle will have priority.");
+              "Both a secure connect bundle and SSL options were provided. They are mutually exclusive. The SSL options from the secure bundle will have priority.");
     } finally {
       logger.close();
     }
@@ -326,7 +326,7 @@ public class CloudIT {
       assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
       assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
           .contains(
-              "Both withCloudSecureConnectBundle and explicitly specified local datacenter configuration were provided. They are mutually exclusive. The local datacenter settings from a secure bundle will have priority.");
+              "Both a secure connect bundle and a local datacenter were provided. They are mutually exclusive. The local datacenter from the secure bundle will have priority.");
 
     } finally {
       logger.close();
