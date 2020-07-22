@@ -39,7 +39,6 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
 
   private final String metricNamePrefix;
   private final Runnable signalMetricUpdated;
-  private final InternalDriverContext context;
 
   public DropwizardNodeMetricUpdater(
       Node node,
@@ -50,7 +49,6 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
     super(enabledMetrics, registry);
     this.signalMetricUpdated = signalMetricUpdated;
     this.metricNamePrefix = buildPrefix(context.getSessionName(), node.getEndPoint());
-    this.context = context;
 
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
 
