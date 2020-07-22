@@ -92,6 +92,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   protected ProgrammaticArguments.Builder programmaticArgumentsBuilder =
       ProgrammaticArguments.builder();
   private boolean sslConfigured = false;
+  private boolean localDatacenterConfigured = false;
 
   /**
    * Sets the configuration loader to use.
@@ -356,6 +357,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * if you use a third-party implementation, refer to their documentation.
    */
   public SelfT withLocalDatacenter(@NonNull String profileName, @NonNull String localDatacenter) {
+    this.localDatacenterConfigured = true;
     this.programmaticArgumentsBuilder.withLocalDatacenter(profileName, localDatacenter);
     return self;
   }
@@ -690,6 +692,12 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
         CloudConfig cloudConfig =
             new CloudConfigFactory().createCloudConfig(cloudConfigInputStream.call());
         addContactEndPoints(cloudConfig.getEndPoints());
+
+        if(localDatacenterConfigured){
+          LOG.info(
+                  "Both withCloudSecureConnectBundle and explicitly specified local datacenter configuration were provided. They are mutually exclusive. The local datacenter settings from a secure bundle will have priority.");
+          programmaticArgumentsBuilder.clearDatacenters();
+        }
         withLocalDatacenter(cloudConfig.getLocalDatacenter());
         withSslEngineFactory(cloudConfig.getSslEngineFactory());
         withCloudProxyAddress(cloudConfig.getProxyAddress());

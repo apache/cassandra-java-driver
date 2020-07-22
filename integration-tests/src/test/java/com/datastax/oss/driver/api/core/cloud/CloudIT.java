@@ -303,4 +303,34 @@ public class CloudIT {
       logger.close();
     }
   }
+
+
+  @Test
+  public void should_connect_and_log_info_when_local_data_center_and_secure_bundle_used() {
+    // given
+    LoggerTest.LoggerSetup logger = setupTestLogger(SessionBuilder.class, Level.INFO);
+
+    Path bundle = proxyRule.getProxy().getBundleWithoutCredentialsPath();
+
+    try (CqlSession session =
+                 CqlSession.builder()
+                         .withCloudSecureConnectBundle(bundle)
+                         .withLocalDatacenter("dc-ignored")
+                         .withAuthCredentials("cassandra", "cassandra")
+                         .build(); ) {
+
+      // when
+      ResultSet set = session.execute("select * from system.local");
+      // then
+      assertThat(set).isNotNull();
+      verify(logger.appender, timeout(500).times(1)).doAppend(logger.loggingEventCaptor.capture());
+      assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
+      assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
+              .contains(
+                      "Both withCloudSecureConnectBundle and explicitly specified local datacenter configuration were provided. They are mutually exclusive. The local datacenter settings from a secure bundle will have priority.");
+
+    } finally {
+      logger.close();
+    }
+  }
 }
