@@ -693,9 +693,9 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
             new CloudConfigFactory().createCloudConfig(cloudConfigInputStream.call());
         addContactEndPoints(cloudConfig.getEndPoints());
 
-        if(localDatacenterConfigured){
+        if (localDatacenterConfigured) {
           LOG.info(
-                  "Both withCloudSecureConnectBundle and explicitly specified local datacenter configuration were provided. They are mutually exclusive. The local datacenter settings from a secure bundle will have priority.");
+              "Both withCloudSecureConnectBundle and explicitly specified local datacenter configuration were provided. They are mutually exclusive. The local datacenter settings from a secure bundle will have priority.");
           programmaticArgumentsBuilder.clearDatacenters();
         }
         withLocalDatacenter(cloudConfig.getLocalDatacenter());
