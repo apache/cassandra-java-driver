@@ -1,5 +1,7 @@
 package com.datastax.oss.driver.internal.core.metrics;
 
+import static com.datastax.oss.driver.internal.core.metrics.DropwizardMetricsFactory.DEFAULT_EXPIRE_AFTER;
+import static com.datastax.oss.driver.internal.core.metrics.DropwizardMetricsFactory.LOWEST_ACCEPTABLE_EXPIRE_AFTER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
@@ -25,7 +27,7 @@ public class DropwizardMetricsFactoryTest {
   @Test
   public void should_log_warning_when_provided_eviction_time_setting_is_too_low() {
     // given
-    Duration expireAfter = Duration.ofMinutes(59);
+    Duration expireAfter = LOWEST_ACCEPTABLE_EXPIRE_AFTER.minusMinutes(1);
     LoggerTest.LoggerSetup logger =
         LoggerTest.setupTestLogger(DropwizardMetricsFactory.class, Level.WARN);
     DriverExecutionProfile driverExecutionProfile = mock(DriverExecutionProfile.class);
@@ -41,8 +43,12 @@ public class DropwizardMetricsFactoryTest {
     assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
         .contains(
             String.format(
-                "[%s] Value too low for %s: %s. Forcing to PT1H instead.",
-                LOG_PREFIX, DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER.getPath(), expireAfter));
+                "[%s] Value too low for %s: %s (It should be higher than %s). Forcing to %s instead.",
+                LOG_PREFIX,
+                DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER.getPath(),
+                expireAfter,
+                LOWEST_ACCEPTABLE_EXPIRE_AFTER,
+                DEFAULT_EXPIRE_AFTER));
   }
 
   @Test
@@ -65,6 +71,8 @@ public class DropwizardMetricsFactoryTest {
 
   @DataProvider
   public static Object[][] acceptableEvictionTimes() {
-    return new Object[][] {{Duration.ofHours(1)}, {Duration.ofMinutes(61)}};
+    return new Object[][] {
+      {LOWEST_ACCEPTABLE_EXPIRE_AFTER}, {LOWEST_ACCEPTABLE_EXPIRE_AFTER.plusMinutes(1)}
+    };
   }
 }
