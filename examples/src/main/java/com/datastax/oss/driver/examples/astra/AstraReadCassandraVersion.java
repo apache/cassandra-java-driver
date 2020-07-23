@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.examples.astra;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import java.nio.file.Paths;
@@ -57,7 +56,6 @@ public class AstraReadCassandraVersion {
             .withCloudSecureConnectBundle(Paths.get("/path/to/secure-connect-database_name.zip"))
             // Change the user_name and password here for the Astra instance
             .withAuthCredentials("user_name", "fakePasswordForTests")
-            .withConfigLoader(DriverConfigLoader.fromClasspath("application-astra"))
             // Uncomment the next line to use a specific keyspace
             // .withKeyspace("keyspace_name")
             .build()) {

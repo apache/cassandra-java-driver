@@ -4,6 +4,7 @@
 
 ### 4.8.0 (in progress)
 
+- [improvement] JAVA-2813: Don't fail when secure bundle is specified together with other options
 - [bug] JAVA-2800: Exclude SLF4J from mapper-processor dependencies
 - [new feature] JAVA-2819: Add DriverConfigLoader.fromString
 - [improvement] JAVA-2431: Set all occurrences when bound variables are used multiple times
