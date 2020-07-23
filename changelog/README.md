@@ -4,6 +4,7 @@
 
 ### 4.8.0 (in progress)
 
+- [bug] JAVA-2331: Unregister old metrics when a node gets removed or changes RPC address
 - [bug] JAVA-2846: Give system properties the highest precedence in DefaultDriverConfigLoader
 - [new feature] JAVA-2691: Provide driver 4 support for extra codecs
 - [improvement] Allow injection of CodecRegistry on session builder
