@@ -5,6 +5,17 @@ branch: "master"
 ---
 
 ensemble:
+  observer:
+    node.count: 1
+    provisioner:
+      name: ctool
+      properties:
+        cloud.provider: nebula
+        cloud.instance.type: m3.large
+    configuration_manager:
+      - name: ctool_monitoring
+        properties:
+          graphite.create_server: true
   server:
     node.count: 3
     provisioner:
@@ -19,6 +30,9 @@ ensemble:
           product.type: cassandra
           product.install.type: tarball
           product.version: "3.11.6"
+      - name: ctool_monitoring
+        properties:
+          components: OS,JVM,GRAPH
   client:
     node.count: 1
     provisioner:
