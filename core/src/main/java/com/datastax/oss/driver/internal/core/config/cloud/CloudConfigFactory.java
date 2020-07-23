@@ -176,8 +176,8 @@ public class CloudConfigFactory {
 
   protected void validateIfBundleContainsUsernamePassword(JsonNode configFile) {
     if (configFile.has("username") || configFile.has("password")) {
-      LOG.warn(
-          "Bundle contains username and/or password. Providing it in the bundle is deprecated and ignored.");
+      LOG.info(
+          "The bundle contains config.json with username and/or password. Providing it in the bundle is deprecated and ignored.");
     }
   }
 

@@ -36,6 +36,7 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
+import com.datastax.oss.driver.internal.core.config.cloud.CloudConfigFactory;
 import com.datastax.oss.driver.internal.core.ssl.DefaultSslEngineFactory;
 import com.datastax.oss.driver.internal.core.util.LoggerTest;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
@@ -76,6 +77,29 @@ public class CloudIT {
             .withCloudSecureConnectBundle(bundle)
             .build()) {
       set = session.execute("select * from system.local");
+    }
+    assertThat(set).isNotNull();
+  }
+
+  @Test
+  public void should_connect_and_log_info_that_config_json_with_username_password_was_provided() {
+    ResultSet set;
+    Path bundle = proxyRule.getProxy().getDefaultBundlePath();
+    LoggerTest.LoggerSetup logger = setupTestLogger(CloudConfigFactory.class, Level.INFO);
+
+    try (CqlSession session =
+        CqlSession.builder()
+            .withAuthCredentials("cassandra", "cassandra")
+            .withCloudSecureConnectBundle(bundle)
+            .build()) {
+      set = session.execute("select * from system.local");
+      verify(logger.appender, timeout(500).atLeast(1))
+          .doAppend(logger.loggingEventCaptor.capture());
+      assertThat(
+              logger.loggingEventCaptor.getAllValues().stream()
+                  .map(ILoggingEvent::getFormattedMessage))
+          .contains(
+              "The bundle contains config.json with username and/or password. Providing it in the bundle is deprecated and ignored.");
     }
     assertThat(set).isNotNull();
   }
