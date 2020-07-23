@@ -54,7 +54,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
   private final MetricRegistry registry;
   @Nullable private final Metrics metrics;
   private final SessionMetricUpdater sessionUpdater;
-  private Cache<Node, DropwizardNodeMetricUpdater> metricsCache;
+  private final Cache<Node, DropwizardNodeMetricUpdater> metricsCache;
 
   public DropwizardMetricsFactory(InternalDriverContext context, Ticker ticker) {
     this.logPrefix = context.getSessionName();
