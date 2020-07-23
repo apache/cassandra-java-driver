@@ -16,10 +16,8 @@
 package com.datastax.oss.driver.core.metrics;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
+import static org.awaitility.Awaitility.await;
 
-import ch.qos.logback.classic.Level;
 import com.codahale.metrics.Meter;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -38,24 +36,17 @@ import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.DropwizardMetricsFactory;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
-import com.datastax.oss.driver.internal.core.util.LoggerTest;
 import com.datastax.oss.driver.shaded.guava.common.base.Ticker;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.google.common.collect.Lists;
-import com.tngtech.java.junit.dataprovider.DataProvider;
-import com.tngtech.java.junit.dataprovider.DataProviderRunner;
-import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
-import org.awaitility.Awaitility;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
 
 @Category(ParallelizableTests.class)
-@RunWith(DataProviderRunner.class)
 public class MetricsSimulacronIT {
 
   @ClassRule
@@ -109,7 +100,7 @@ public class MetricsSimulacronIT {
               });
 
       // and node metrics are evicted
-      Awaitility.await()
+      await()
           .until(
               () -> {
                 // get only node in a cluster and evaluate its metrics.
@@ -153,7 +144,7 @@ public class MetricsSimulacronIT {
       fakeTicker.advance(Duration.ofMinutes(2));
 
       // then all node-level metrics should not be evicted
-      Awaitility.await()
+      await()
           .until(
               () -> {
                 // get only node in a cluster and evaluate its metrics.
@@ -165,65 +156,6 @@ public class MetricsSimulacronIT {
                         .isPresent();
               });
     }
-  }
-
-  @Test
-  public void should_log_warning_when_provided_eviction_time_setting_is_too_low() {
-    // given
-    Duration expireAfter = Duration.ofMinutes(59);
-    DriverConfigLoader loader =
-        SessionUtils.configLoaderBuilder()
-            .withDuration(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER, expireAfter)
-            .build();
-    LoggerTest.LoggerSetup logger =
-        LoggerTest.setupTestLogger(DropwizardMetricsFactory.class, Level.WARN);
-
-    try {
-      new MetricsTestContextBuilder()
-          .addContactEndPoints(SIMULACRON_RULE.getContactPoints())
-          .withTicker(new FakeTicker())
-          .withConfigLoader(loader)
-          .build();
-      verify(logger.appender, timeout(500).times(1)).doAppend(logger.loggingEventCaptor.capture());
-      assertThat(logger.loggingEventCaptor.getValue().getMessage()).isNotNull();
-      assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
-          .contains(
-              String.format(
-                  "The %s setting was provided with too low value: %s. Consider increasing it to at least 1 hour. "
-                      + "Having lower values may cause your node-level metrics to keep disappearing and reappearing.",
-                  DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER, expireAfter));
-    } finally {
-      logger.close();
-    }
-  }
-
-  @Test
-  @UseDataProvider(value = "acceptableEvictionTimes")
-  public void should_not_log_warning_when_provided_eviction_time_setting_is_acceptable(
-      Duration evictionTime) {
-    // given
-    DriverConfigLoader loader =
-        SessionUtils.configLoaderBuilder()
-            .withDuration(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER, evictionTime)
-            .build();
-    LoggerTest.LoggerSetup logger =
-        LoggerTest.setupTestLogger(DropwizardMetricsFactory.class, Level.WARN);
-
-    try {
-      new MetricsTestContextBuilder()
-          .addContactEndPoints(SIMULACRON_RULE.getContactPoints())
-          .withTicker(new FakeTicker())
-          .withConfigLoader(loader)
-          .build();
-      verify(logger.appender, timeout(500).times(0)).doAppend(logger.loggingEventCaptor.capture());
-    } finally {
-      logger.close();
-    }
-  }
-
-  @DataProvider
-  public static Object[][] acceptableEvictionTimes() {
-    return new Object[][] {{Duration.ofHours(1)}, {Duration.ofMinutes(61)}};
   }
 
   private static class MetricsTestContextBuilder

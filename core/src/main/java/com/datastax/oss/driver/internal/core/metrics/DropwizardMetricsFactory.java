@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.base.Ticker;
 import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
 import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
@@ -63,7 +64,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     Set<SessionMetric> enabledSessionMetrics =
         parseSessionMetricPaths(config.getStringList(DefaultDriverOption.METRICS_SESSION_ENABLED));
-    Duration evictionTime = getAndValidateEvictionTime(config);
+    Duration evictionTime = getAndValidateEvictionTime(config, logPrefix);
 
     this.enabledNodeMetrics =
         parseNodeMetricPaths(config.getStringList(DefaultDriverOption.METRICS_NODE_ENABLED));
@@ -97,7 +98,8 @@ public class DropwizardMetricsFactory implements MetricsFactory {
     }
   }
 
-  private Duration getAndValidateEvictionTime(DriverExecutionProfile config) {
+  @VisibleForTesting
+  static Duration getAndValidateEvictionTime(DriverExecutionProfile config, String logPrefix) {
     Duration evictionTime = config.getDuration(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER);
 
     if (evictionTime.compareTo(LOWEST_ACCEPTABLE_EVICTION_TIME) < 0) {
