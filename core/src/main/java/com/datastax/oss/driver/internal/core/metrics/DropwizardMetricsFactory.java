@@ -75,7 +75,8 @@ public class DropwizardMetricsFactory implements MetricsFactory {
             .removalListener(
                 (RemovalNotification<Node, DropwizardNodeMetricUpdater> notification) -> {
                   LOG.debug(
-                      "Removing metrics for node: {} from cache after {}",
+                      "[{}] Removing metrics for node: {} from cache after {}",
+                      logPrefix,
                       notification.getKey(),
                       evictionTime);
                   notification.getValue().cleanupNodeMetrics();
