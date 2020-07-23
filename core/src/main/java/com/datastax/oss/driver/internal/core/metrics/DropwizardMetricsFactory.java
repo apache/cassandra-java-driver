@@ -102,11 +102,11 @@ public class DropwizardMetricsFactory implements MetricsFactory {
 
     if (evictionTime.compareTo(LOWEST_ACCEPTABLE_EVICTION_TIME) < 0) {
       LOG.warn(
-          "The {} setting was provided with too low value: {}. Consider increasing it to at least {} hour. "
-              + "Having lower values may cause your node-level metrics to keep disappearing and reappearing.",
-          DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER,
+          "[{}] Value too low for {}: {}. Forcing to {} instead.",
+          logPrefix,
+          DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER.getPath(),
           evictionTime,
-          LOWEST_ACCEPTABLE_EVICTION_TIME.toHours());
+          LOWEST_ACCEPTABLE_EVICTION_TIME);
     }
 
     return evictionTime;
