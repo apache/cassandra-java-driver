@@ -86,7 +86,7 @@ public class DefaultEndPoint implements EndPoint, Serializable {
       // append getCanonicalHostName() to distinguish ip6 address from ip4
       return hostString.replace('.', '_')
           + ':'
-          + address.getAddress().getCanonicalHostName()
+          + address.getAddress().getHostAddress()
           + ':'
           + address.getPort();
     } else {
