@@ -28,6 +28,11 @@ mvn xml-format:xml-format
 The formatter does not enforce a maximum line length, but please try to keep it below 100 characters
 to keep files readable across all mediums (IDE, terminal, Github...).
 
+### Other text files (markdown, etc)
+
+Similarly, enforce a right margin of 100 characters in those files. Editors and IDEs generally have
+a way to configure this (for IDEA, install the "Wrap to column" plugin).
+
 ## Coding style -- production code
 
 Do not use static imports. They make things harder to understand when you look at the code 
@@ -212,6 +217,10 @@ Static imports are permitted in a couple of places:
   ```java
   when(codecRegistry.codecFor(DataTypes.INT)).thenReturn(codec);
   verify(codec).decodePrimitive(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
+  ```
+* All Awaitility methods, e.g.:
+  ```java
+  await().until(() -> somethingBecomesTrue());
   ```
 
 Test methods names use lower snake case, generally start with `should`, and clearly indicate the

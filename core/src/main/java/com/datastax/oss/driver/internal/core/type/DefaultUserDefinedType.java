@@ -109,9 +109,21 @@ public class DefaultUserDefinedType implements UserDefinedType, Serializable {
     return fieldNames;
   }
 
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+    return index.allIndicesOf(id);
+  }
+
   @Override
   public int firstIndexOf(@NonNull CqlIdentifier id) {
     return index.firstIndexOf(id);
+  }
+
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull String name) {
+    return index.allIndicesOf(name);
   }
 
   @Override

@@ -66,10 +66,6 @@
       <artifactId>jnr-posix</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.javatuples</groupId>
-      <artifactId>javatuples</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.xerial.snappy</groupId>
       <artifactId>snappy-java</artifactId>
       <optional>true</optional>
