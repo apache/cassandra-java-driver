@@ -71,7 +71,6 @@ workload:
               gatling:execute
               -Dgatling.disableCompiler
               -Dgatling.simulationClass=core.timeseries.Timeseries_Write
-              -DconnectionsPerHost=8
               -DrowsPerPartition=1000
               -DinjectionType=constant
               -Dthroughput=10000
@@ -84,7 +83,6 @@ workload:
               gatling:execute
               -Dgatling.disableCompiler
               -Dgatling.simulationClass=core.timeseries.Timeseries_Read
-              -DconnectionsPerHost=8
               -DrowsPerPartition=1000
               -DinjectionType=constant
               -Dthroughput=10000
