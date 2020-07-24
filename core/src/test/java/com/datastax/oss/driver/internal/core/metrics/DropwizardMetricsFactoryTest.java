@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.metrics;
 
-import static com.datastax.oss.driver.internal.core.metrics.DropwizardMetricsFactory.DEFAULT_EXPIRE_AFTER;
 import static com.datastax.oss.driver.internal.core.metrics.DropwizardMetricsFactory.LOWEST_ACCEPTABLE_EXPIRE_AFTER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -58,12 +57,11 @@ public class DropwizardMetricsFactoryTest {
     assertThat(logger.loggingEventCaptor.getValue().getFormattedMessage())
         .contains(
             String.format(
-                "[%s] Value too low for %s: %s (It should be higher than %s). Forcing to %s instead.",
+                "[%s] Value too low for %s: %s. Forcing to %s instead.",
                 LOG_PREFIX,
                 DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER.getPath(),
                 expireAfter,
-                LOWEST_ACCEPTABLE_EXPIRE_AFTER,
-                DEFAULT_EXPIRE_AFTER));
+                LOWEST_ACCEPTABLE_EXPIRE_AFTER));
   }
 
   @Test

@@ -48,7 +48,6 @@ public class DropwizardMetricsFactory implements MetricsFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(DropwizardMetricsFactory.class);
   static final Duration LOWEST_ACCEPTABLE_EXPIRE_AFTER = Duration.ofMinutes(5);
-  static final Duration DEFAULT_EXPIRE_AFTER = Duration.ofHours(1);
 
   private final String logPrefix;
   private final InternalDriverContext context;
@@ -105,12 +104,11 @@ public class DropwizardMetricsFactory implements MetricsFactory {
 
     if (evictionTime.compareTo(LOWEST_ACCEPTABLE_EXPIRE_AFTER) < 0) {
       LOG.warn(
-          "[{}] Value too low for {}: {} (It should be higher than {}). Forcing to {} instead.",
+          "[{}] Value too low for {}: {}. Forcing to {} instead.",
           logPrefix,
           DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER.getPath(),
           evictionTime,
-          LOWEST_ACCEPTABLE_EXPIRE_AFTER,
-          DEFAULT_EXPIRE_AFTER);
+          LOWEST_ACCEPTABLE_EXPIRE_AFTER);
     }
 
     return evictionTime;
