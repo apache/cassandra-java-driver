@@ -77,8 +77,7 @@ public class TCPFlowControlIT {
 
     SIMULACRON_RULE.cluster().prime(when(query).then(noRows()));
 
-    try (CqlSession session =
-        SessionUtils.newSession(SIMULACRON_RULE, SessionUtils.configLoaderBuilder().build())) {
+    try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE)) {
       SIMULACRON_RULE.cluster().pauseRead();
 
       // The TCP send and receive buffer size depends on the OS
@@ -186,8 +185,7 @@ public class TCPFlowControlIT {
 
     SIMULACRON_RULE.cluster().prime(when(query).then(noRows()));
 
-    try (CqlSession session =
-        SessionUtils.newSession(SIMULACRON_RULE, SessionUtils.configLoaderBuilder().build())) {
+    try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE)) {
       SIMULACRON_RULE.cluster().pauseRead();
 
       List<CompletionStage<AsyncResultSet>> pendingRequests = new ArrayList<>();
