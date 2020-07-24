@@ -213,6 +213,12 @@ public class ProgrammaticArguments {
     }
 
     @NonNull
+    public Builder clearDatacenters() {
+      this.localDatacentersBuilder = ImmutableMap.builder();
+      return this;
+    }
+
+    @NonNull
     public Builder withLocalDatacenters(Map<String, String> localDatacenters) {
       for (Map.Entry<String, String> entry : localDatacenters.entrySet()) {
         this.localDatacentersBuilder.put(entry.getKey(), entry.getValue());

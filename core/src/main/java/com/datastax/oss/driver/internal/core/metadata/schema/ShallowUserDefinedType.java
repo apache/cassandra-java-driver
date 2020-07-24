@@ -84,8 +84,22 @@ public class ShallowUserDefinedType implements UserDefinedType, Serializable {
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+    throw new UnsupportedOperationException(
+        "This implementation should only be used internally, this is likely a driver bug");
+  }
+
   @Override
   public int firstIndexOf(@NonNull CqlIdentifier id) {
+    throw new UnsupportedOperationException(
+        "This implementation should only be used internally, this is likely a driver bug");
+  }
+
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull String name) {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }

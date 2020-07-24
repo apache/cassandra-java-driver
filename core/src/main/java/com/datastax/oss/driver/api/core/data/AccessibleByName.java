@@ -17,7 +17,10 @@ package com.datastax.oss.driver.api.core.data;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A data structure where the values are accessible via a name string.
@@ -41,6 +44,25 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * <p>In the driver, these data structures are always accessible by index as well.
  */
 public interface AccessibleByName extends AccessibleByIndex {
+
+  /**
+   * Returns all the indices where a given identifier appears.
+   *
+   * @throws IllegalArgumentException if the name is invalid.
+   * @apiNote the default implementation only exists for backward compatibility. It wraps the result
+   *     of {@link #firstIndexOf(String)} in a singleton list, which is not entirely correct, as it
+   *     will only return the first occurrence. Therefore it also logs a warning.
+   *     <p>Implementors should always override this method (all built-in driver implementations
+   *     do).
+   */
+  @NonNull
+  default List<Integer> allIndicesOf(@NonNull String name) {
+    Loggers.ACCESSIBLE_BY_NAME.warn(
+        "{} should override allIndicesOf(String), the default implementation is a "
+            + "workaround for backward compatibility, it only returns the first occurrence",
+        getClass().getName());
+    return Collections.singletonList(firstIndexOf(name));
+  }
 
   /**
    * Returns the first index where a given identifier appears (depending on the implementation,

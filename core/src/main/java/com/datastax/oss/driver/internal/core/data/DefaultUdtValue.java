@@ -29,6 +29,7 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Objects;
 import net.jcip.annotations.NotThreadSafe;
 
@@ -75,6 +76,16 @@ public class DefaultUdtValue implements UdtValue, Serializable {
     return values.length;
   }
 
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+    List<Integer> indices = type.allIndicesOf(id);
+    if (indices.isEmpty()) {
+      throw new IllegalArgumentException(id + " is not a field in this UDT");
+    }
+    return indices;
+  }
+
   @Override
   public int firstIndexOf(@NonNull CqlIdentifier id) {
     int indexOf = type.firstIndexOf(id);
@@ -82,6 +93,16 @@ public class DefaultUdtValue implements UdtValue, Serializable {
       throw new IllegalArgumentException(id + " is not a field in this UDT");
     }
     return indexOf;
+  }
+
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull String name) {
+    List<Integer> indices = type.allIndicesOf(name);
+    if (indices.isEmpty()) {
+      throw new IllegalArgumentException(name + " is not a field in this UDT");
+    }
+    return indices;
   }
 
   @Override

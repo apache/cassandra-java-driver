@@ -25,7 +25,8 @@ public class IdentifierIndexTest {
   private static final CqlIdentifier Foo = CqlIdentifier.fromInternal("Foo");
   private static final CqlIdentifier foo = CqlIdentifier.fromInternal("foo");
   private static final CqlIdentifier fOO = CqlIdentifier.fromInternal("fOO");
-  private IdentifierIndex index = new IdentifierIndex(ImmutableList.of(Foo, foo, fOO));
+  private IdentifierIndex index =
+      new IdentifierIndex(ImmutableList.of(Foo, foo, fOO, Foo, foo, fOO));
 
   @Test
   public void should_find_first_index_of_existing_identifier() {
@@ -59,5 +60,39 @@ public class IdentifierIndexTest {
   @Test
   public void should_not_find_index_of_nonexistent_case_sensitive_name() {
     assertThat(index.firstIndexOf("\"FOO\"")).isEqualTo(-1);
+  }
+
+  @Test
+  public void should_find_all_indices_of_existing_identifier() {
+    assertThat(index.allIndicesOf(Foo)).containsExactly(0, 3);
+    assertThat(index.allIndicesOf(foo)).containsExactly(1, 4);
+    assertThat(index.allIndicesOf(fOO)).containsExactly(2, 5);
+  }
+
+  @Test
+  public void should_not_find_indices_of_nonexistent_identifier() {
+    assertThat(index.allIndicesOf(CqlIdentifier.fromInternal("FOO"))).isEmpty();
+  }
+
+  @Test
+  public void should_all_indices_of_case_insensitive_name() {
+    assertThat(index.allIndicesOf("foo")).containsExactly(0, 1, 2, 3, 4, 5);
+  }
+
+  @Test
+  public void should_not_find_indices_of_nonexistent_case_insensitive_name() {
+    assertThat(index.allIndicesOf("bar")).isEmpty();
+  }
+
+  @Test
+  public void should_find_all_indices_of_case_sensitive_name() {
+    assertThat(index.allIndicesOf("\"Foo\"")).containsExactly(0, 3);
+    assertThat(index.allIndicesOf("\"foo\"")).containsExactly(1, 4);
+    assertThat(index.allIndicesOf("\"fOO\"")).containsExactly(2, 5);
+  }
+
+  @Test
+  public void should_not_find_indices_of_nonexistent_case_sensitive_name() {
+    assertThat(index.allIndicesOf("\"FOO\"")).isEmpty();
   }
 }

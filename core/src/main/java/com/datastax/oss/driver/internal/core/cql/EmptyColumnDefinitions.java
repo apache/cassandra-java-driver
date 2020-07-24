@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * The singleton that represents no column definitions (implemented as an enum which provides the
@@ -51,9 +52,21 @@ public enum EmptyColumnDefinitions implements ColumnDefinitions {
     return false;
   }
 
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull String name) {
+    return Collections.emptyList();
+  }
+
   @Override
   public int firstIndexOf(@NonNull String name) {
     return -1;
+  }
+
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+    return Collections.emptyList();
   }
 
   @Override
