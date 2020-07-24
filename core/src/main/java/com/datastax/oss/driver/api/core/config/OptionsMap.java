@@ -243,13 +243,18 @@ public class OptionsMap implements Serializable {
 
   protected static void fillWithDriverDefaults(OptionsMap map) {
     Duration initQueryTimeout = Duration.ofSeconds(5);
+    Duration requestTimeout = Duration.ofSeconds(2);
+    int requestPageSize = 5000;
+    int continuousMaxPages = 0;
+    int continuousMaxPagesPerSecond = 0;
+    int continuousMaxEnqueuedPages = 4;
 
     // Sorted by order of appearance in reference.conf:
 
     // Skip CONFIG_RELOAD_INTERVAL because the map-based config doesn't need periodic reloading
-    map.put(TypedDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(2));
+    map.put(TypedDriverOption.REQUEST_TIMEOUT, requestTimeout);
     map.put(TypedDriverOption.REQUEST_CONSISTENCY, "LOCAL_ONE");
-    map.put(TypedDriverOption.REQUEST_PAGE_SIZE, 5000);
+    map.put(TypedDriverOption.REQUEST_PAGE_SIZE, requestPageSize);
     map.put(TypedDriverOption.REQUEST_SERIAL_CONSISTENCY, "SERIAL");
     map.put(TypedDriverOption.REQUEST_DEFAULT_IDEMPOTENCE, false);
     map.put(TypedDriverOption.GRAPH_TRAVERSAL_SOURCE, "g");
@@ -287,15 +292,18 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.REQUEST_TRACE_CONSISTENCY, "ONE");
     map.put(TypedDriverOption.REQUEST_LOG_WARNINGS, true);
     map.put(TypedDriverOption.GRAPH_PAGING_ENABLED, "AUTO");
-    map.put(TypedDriverOption.GRAPH_CONTINUOUS_PAGING_PAGE_SIZE, 5000);
-    map.put(TypedDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_PAGES, 0);
-    map.put(TypedDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_PAGES_PER_SECOND, 0);
-    map.put(TypedDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES, 4);
-    map.put(TypedDriverOption.CONTINUOUS_PAGING_PAGE_SIZE, 5000);
+    map.put(TypedDriverOption.GRAPH_CONTINUOUS_PAGING_PAGE_SIZE, requestPageSize);
+    map.put(TypedDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_PAGES, continuousMaxPages);
+    map.put(
+        TypedDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_PAGES_PER_SECOND,
+        continuousMaxPagesPerSecond);
+    map.put(
+        TypedDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES, continuousMaxEnqueuedPages);
+    map.put(TypedDriverOption.CONTINUOUS_PAGING_PAGE_SIZE, requestPageSize);
     map.put(TypedDriverOption.CONTINUOUS_PAGING_PAGE_SIZE_BYTES, false);
-    map.put(TypedDriverOption.CONTINUOUS_PAGING_MAX_PAGES, 0);
-    map.put(TypedDriverOption.CONTINUOUS_PAGING_MAX_PAGES_PER_SECOND, 0);
-    map.put(TypedDriverOption.CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES, 4);
+    map.put(TypedDriverOption.CONTINUOUS_PAGING_MAX_PAGES, continuousMaxPages);
+    map.put(TypedDriverOption.CONTINUOUS_PAGING_MAX_PAGES_PER_SECOND, continuousMaxPagesPerSecond);
+    map.put(TypedDriverOption.CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES, continuousMaxEnqueuedPages);
     map.put(TypedDriverOption.CONTINUOUS_PAGING_TIMEOUT_FIRST_PAGE, Duration.ofSeconds(2));
     map.put(TypedDriverOption.CONTINUOUS_PAGING_TIMEOUT_OTHER_PAGES, Duration.ofSeconds(1));
     map.put(TypedDriverOption.MONITOR_REPORTING_ENABLED, true);
@@ -330,8 +338,8 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.METADATA_TOPOLOGY_WINDOW, Duration.ofSeconds(1));
     map.put(TypedDriverOption.METADATA_TOPOLOGY_MAX_EVENTS, 20);
     map.put(TypedDriverOption.METADATA_SCHEMA_ENABLED, true);
-    map.put(TypedDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT, Duration.ofSeconds(2));
-    map.put(TypedDriverOption.METADATA_SCHEMA_REQUEST_PAGE_SIZE, 5000);
+    map.put(TypedDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT, requestTimeout);
+    map.put(TypedDriverOption.METADATA_SCHEMA_REQUEST_PAGE_SIZE, requestPageSize);
     map.put(TypedDriverOption.METADATA_SCHEMA_WINDOW, Duration.ofSeconds(1));
     map.put(TypedDriverOption.METADATA_SCHEMA_MAX_EVENTS, 20);
     map.put(TypedDriverOption.METADATA_TOKEN_MAP_ENABLED, true);
