@@ -15,15 +15,12 @@
  */
 package com.datastax.oss.driver.internal.core.config.cloud;
 
-import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.List;
-import java.util.Optional;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -33,19 +30,16 @@ public class CloudConfig {
   private final List<EndPoint> endPoints;
   private final String localDatacenter;
   private final SslEngineFactory sslEngineFactory;
-  @Nullable private final AuthProvider authProvider;
 
   CloudConfig(
       @NonNull InetSocketAddress proxyAddress,
       @NonNull List<EndPoint> endPoints,
       @NonNull String localDatacenter,
-      @NonNull SslEngineFactory sslEngineFactory,
-      @Nullable AuthProvider authProvider) {
+      @NonNull SslEngineFactory sslEngineFactory) {
     this.proxyAddress = proxyAddress;
     this.endPoints = ImmutableList.copyOf(endPoints);
     this.localDatacenter = localDatacenter;
     this.sslEngineFactory = sslEngineFactory;
-    this.authProvider = authProvider;
   }
 
   @NonNull
@@ -66,10 +60,5 @@ public class CloudConfig {
   @NonNull
   public SslEngineFactory getSslEngineFactory() {
     return sslEngineFactory;
-  }
-
-  @NonNull
-  public Optional<AuthProvider> getAuthProvider() {
-    return Optional.ofNullable(authProvider);
   }
 }

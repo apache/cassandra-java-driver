@@ -27,13 +27,16 @@ import static org.mockito.Mockito.verify;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
+import com.datastax.oss.driver.internal.core.config.cloud.CloudConfigFactory;
 import com.datastax.oss.driver.internal.core.ssl.DefaultSslEngineFactory;
 import com.datastax.oss.driver.internal.core.util.LoggerTest;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
@@ -45,6 +48,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
+import java.util.List;
 import javax.net.ssl.SSLContext;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -67,10 +71,55 @@ public class CloudIT {
   public void should_connect_to_proxy_using_path() {
     ResultSet set;
     Path bundle = proxyRule.getProxy().getDefaultBundlePath();
-    try (CqlSession session = CqlSession.builder().withCloudSecureConnectBundle(bundle).build()) {
+    try (CqlSession session =
+        CqlSession.builder()
+            .withAuthCredentials("cassandra", "cassandra")
+            .withCloudSecureConnectBundle(bundle)
+            .build()) {
       set = session.execute("select * from system.local");
     }
     assertThat(set).isNotNull();
+  }
+
+  @Test
+  public void should_connect_and_log_info_that_config_json_with_username_password_was_provided() {
+    ResultSet set;
+    Path bundle = proxyRule.getProxy().getDefaultBundlePath();
+    LoggerTest.LoggerSetup logger = setupTestLogger(CloudConfigFactory.class, Level.INFO);
+
+    try (CqlSession session =
+        CqlSession.builder()
+            .withAuthCredentials("cassandra", "cassandra")
+            .withCloudSecureConnectBundle(bundle)
+            .build()) {
+      set = session.execute("select * from system.local");
+      verify(logger.appender, timeout(500).atLeast(1))
+          .doAppend(logger.loggingEventCaptor.capture());
+      assertThat(
+              logger.loggingEventCaptor.getAllValues().stream()
+                  .map(ILoggingEvent::getFormattedMessage))
+          .contains(
+              "The bundle contains config.json with username and/or password. Providing it in the bundle is deprecated and ignored.");
+    }
+    assertThat(set).isNotNull();
+  }
+
+  @Test
+  public void
+      should_fail_with_auth_error_when_connecting_using_bundle_with_username_password_in_config_json() {
+    Path bundle = proxyRule.getProxy().getDefaultBundlePath();
+
+    // fails with auth error because username/password from config.json is ignored
+    AllNodesFailedException exception = null;
+    try {
+      CqlSession.builder().withCloudSecureConnectBundle(bundle).build();
+    } catch (AllNodesFailedException ex) {
+      exception = ex;
+    }
+    assertThat(exception).isNotNull();
+    List<Throwable> errors = exception.getAllErrors().values().iterator().next();
+    Throwable firstError = errors.get(0);
+    assertThat(firstError).isInstanceOf(AuthenticationException.class);
   }
 
   @Test
@@ -91,7 +140,11 @@ public class CloudIT {
   public void should_connect_to_proxy_using_non_normalized_path() {
     Path bundle = proxyRule.getProxy().getBundlesRootPath().resolve("../bundles/creds-v1.zip");
     ResultSet set;
-    try (CqlSession session = CqlSession.builder().withCloudSecureConnectBundle(bundle).build()) {
+    try (CqlSession session =
+        CqlSession.builder()
+            .withAuthCredentials("cassandra", "cassandra")
+            .withCloudSecureConnectBundle(bundle)
+            .build()) {
       set = session.execute("select * from system.local");
     }
     assertThat(set).isNotNull();
@@ -101,7 +154,11 @@ public class CloudIT {
   public void should_connect_to_proxy_using_input_stream() throws IOException {
     InputStream bundle = Files.newInputStream(proxyRule.getProxy().getDefaultBundlePath());
     ResultSet set;
-    try (CqlSession session = CqlSession.builder().withCloudSecureConnectBundle(bundle).build()) {
+    try (CqlSession session =
+        CqlSession.builder()
+            .withAuthCredentials("cassandra", "cassandra")
+            .withCloudSecureConnectBundle(bundle)
+            .build()) {
       set = session.execute("select * from system.local");
     }
     assertThat(set).isNotNull();
@@ -124,7 +181,10 @@ public class CloudIT {
     // when
     ResultSet set;
     try (CqlSession session =
-        CqlSession.builder().withCloudSecureConnectBundle(bundleUrl).build()) {
+        CqlSession.builder()
+            .withAuthCredentials("cassandra", "cassandra")
+            .withCloudSecureConnectBundle(bundleUrl)
+            .build()) {
 
       // then
       set = session.execute("select * from system.local");
@@ -142,7 +202,11 @@ public class CloudIT {
             .build();
     // when
     ResultSet set;
-    try (CqlSession session = CqlSession.builder().withConfigLoader(loader).build()) {
+    try (CqlSession session =
+        CqlSession.builder()
+            .withAuthCredentials("cassandra", "cassandra")
+            .withConfigLoader(loader)
+            .build()) {
 
       // then
       set = session.execute("select * from system.local");
@@ -161,7 +225,11 @@ public class CloudIT {
             .build();
     // when
     ResultSet set;
-    try (CqlSession session = CqlSession.builder().withConfigLoader(loader).build()) {
+    try (CqlSession session =
+        CqlSession.builder()
+            .withAuthCredentials("cassandra", "cassandra")
+            .withConfigLoader(loader)
+            .build()) {
 
       // then
       set = session.execute("select * from system.local");
@@ -180,7 +248,11 @@ public class CloudIT {
             .build();
     // when
     ResultSet set;
-    try (CqlSession session = CqlSession.builder().withConfigLoader(loader).build()) {
+    try (CqlSession session =
+        CqlSession.builder()
+            .withAuthCredentials("cassandra", "cassandra")
+            .withConfigLoader(loader)
+            .build()) {
 
       // then
       set = session.execute("select * from system.local");
@@ -207,7 +279,11 @@ public class CloudIT {
             .build();
     // when
     ResultSet set;
-    try (CqlSession session = CqlSession.builder().withConfigLoader(loader).build()) {
+    try (CqlSession session =
+        CqlSession.builder()
+            .withAuthCredentials("cassandra", "cassandra")
+            .withConfigLoader(loader)
+            .build()) {
 
       // then
       set = session.execute("select * from system.local");

@@ -704,9 +704,6 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
         withLocalDatacenter(cloudConfig.getLocalDatacenter());
         withSslEngineFactory(cloudConfig.getSslEngineFactory());
         withCloudProxyAddress(cloudConfig.getProxyAddress());
-        if (cloudConfig.getAuthProvider().isPresent()) {
-          withAuthProvider(cloudConfig.getAuthProvider().get());
-        }
         programmaticArguments = programmaticArgumentsBuilder.build();
       }
 
