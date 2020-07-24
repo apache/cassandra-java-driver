@@ -51,10 +51,10 @@ ensemble:
 
 workload:
   phases:
-    # This simulation isn't necessary in a single-node case; Timeseries_Write will
-    # create the infrastructure that's needed.  We do need it in the multi-node
-    # client case; otherwise you can see weird timing errors around the existence
-    # of the expected keyspace/table on various nodes.
+    # This simulation isn't necessary in a single-node case; both Timeseries_Read
+    # and Timeseries_Write will create the required keyspace and tables as necessary.
+    # We do need it in the multi-node client case.  Without it you can see weird
+    # timing errors around the existence of the expected keyspace/table on various nodes.
     - timeseries-schema:
         module: gatling
         properties:
