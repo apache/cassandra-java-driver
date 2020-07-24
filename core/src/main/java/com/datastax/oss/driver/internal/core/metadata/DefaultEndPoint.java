@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.Serializable;
+import java.net.Inet6Address;
 import java.net.InetSocketAddress;
 import java.util.Objects;
 
@@ -81,7 +82,16 @@ public class DefaultEndPoint implements EndPoint, Serializable {
       throw new IllegalArgumentException(
           "Could not extract a host string from provided address " + address);
     }
-    // Append the port since Cassandra 4 supports nodes with different ports
-    return hostString.replace('.', '_') + ':' + address.getPort();
+    if (address.getAddress() instanceof Inet6Address) {
+      // append getCanonicalHostName() to distinguish ip6 address from ip4
+      return hostString.replace('.', '_')
+          + ':'
+          + address.getAddress().getCanonicalHostName()
+          + ':'
+          + address.getPort();
+    } else {
+      // Append the port since Cassandra 4 supports nodes with different ports
+      return hostString.replace('.', '_') + ':' + address.getPort();
+    }
   }
 }

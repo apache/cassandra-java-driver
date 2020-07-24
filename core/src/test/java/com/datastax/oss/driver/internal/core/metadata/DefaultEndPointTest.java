@@ -17,7 +17,11 @@ package com.datastax.oss.driver.internal.core.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -41,7 +45,32 @@ public class DefaultEndPointTest {
   @Test
   public void should_create_from_literal_ipv6_address() {
     DefaultEndPoint endPoint = new DefaultEndPoint(new InetSocketAddress("::1", 9042));
-    assertThat(endPoint.asMetricPrefix()).isEqualTo("0:0:0:0:0:0:0:1:9042");
+    assertThat(endPoint.asMetricPrefix()).isEqualTo("0:0:0:0:0:0:0:1:localhost:9042");
+  }
+
+  @Test
+  public void should_create_from_ipv4_exact_type_address() throws UnknownHostException {
+    // given
+    byte[] ipAddr = new byte[] {127, 0, 0, 1};
+    InetAddress inet4Address = Inet4Address.getByAddress("localhost", ipAddr);
+    // when
+    DefaultEndPoint defaultEndPoint =
+        new DefaultEndPoint(new InetSocketAddress(inet4Address, 9042));
+    // then
+    assertThat(defaultEndPoint.asMetricPrefix()).isEqualTo("localhost:9042");
+  }
+
+  @Test
+  public void should_create_from_ipv6_exact_type_address() throws UnknownHostException {
+    // given
+    byte[] ipAddr = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    InetAddress inet4Address = Inet6Address.getByAddress("localhost", ipAddr);
+    // when
+    DefaultEndPoint defaultEndPoint =
+        new DefaultEndPoint(new InetSocketAddress(inet4Address, 9042));
+    // then
+    assertThat(defaultEndPoint.asMetricPrefix())
+        .isEqualTo("localhost:102:304:506:708:90a:b0c:d0e:f10:9042");
   }
 
   @Test
