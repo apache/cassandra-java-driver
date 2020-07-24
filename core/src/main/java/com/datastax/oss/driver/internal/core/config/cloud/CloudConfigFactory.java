@@ -15,9 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.config.cloud;
 
-import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
-import com.datastax.oss.driver.internal.core.auth.ProgrammaticPlainTextAuthProvider;
 import com.datastax.oss.driver.internal.core.metadata.SniEndPoint;
 import com.datastax.oss.driver.internal.core.ssl.SniSslEngineFactory;
 import com.datastax.oss.driver.shaded.guava.common.io.ByteStreams;
@@ -26,7 +24,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -53,10 +50,12 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import net.jcip.annotations.ThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ThreadSafe
 public class CloudConfigFactory {
-
+  private static final Logger LOG = LoggerFactory.getLogger(CloudConfigFactory.class);
   /**
    * Creates a {@link CloudConfig} with information fetched from the specified Cloud configuration
    * URL.
@@ -138,9 +137,8 @@ public class CloudConfigFactory {
     List<EndPoint> endPoints = getEndPoints(proxyMetadataJson, sniProxyAddress);
     String localDatacenter = getLocalDatacenter(proxyMetadataJson);
     SniSslEngineFactory sslEngineFactory = new SniSslEngineFactory(sslContext);
-    AuthProvider authProvider = getAuthProvider(configJson);
-    return new CloudConfig(
-        sniProxyAddress, endPoints, localDatacenter, sslEngineFactory, authProvider);
+    validateIfBundleContainsUsernamePassword(configJson);
+    return new CloudConfig(sniProxyAddress, endPoints, localDatacenter, sslEngineFactory);
   }
 
   @NonNull
@@ -176,16 +174,11 @@ public class CloudConfigFactory {
     }
   }
 
-  @Nullable
-  protected AuthProvider getAuthProvider(JsonNode configFile) {
-    if (configFile.has("username")) {
-      String username = configFile.get("username").asText();
-      if (configFile.has("password")) {
-        String password = configFile.get("password").asText();
-        return new ProgrammaticPlainTextAuthProvider(username, password);
-      }
+  protected void validateIfBundleContainsUsernamePassword(JsonNode configFile) {
+    if (configFile.has("username") || configFile.has("password")) {
+      LOG.info(
+          "The bundle contains config.json with username and/or password. Providing it in the bundle is deprecated and ignored.");
     }
-    return null;
   }
 
   @NonNull
