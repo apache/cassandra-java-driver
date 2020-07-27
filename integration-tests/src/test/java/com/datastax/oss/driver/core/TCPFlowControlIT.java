@@ -73,8 +73,7 @@ public class TCPFlowControlIT {
   }
 
   @Test
-  public void should_not_write_more_requests_to_the_socket_after_the_server_paused_reading()
-      throws InterruptedException {
+  public void should_not_write_more_requests_to_the_socket_after_the_server_paused_reading() {
 
     try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE)) {
       SIMULACRON_RULE.cluster().pauseRead();
@@ -104,8 +103,7 @@ public class TCPFlowControlIT {
   }
 
   @Test
-  public void should_process_requests_successfully_on_non_paused_nodes()
-      throws InterruptedException {
+  public void should_process_requests_successfully_on_non_paused_nodes() {
 
     try (CqlSession session =
         SessionUtils.newSession(
@@ -157,8 +155,7 @@ public class TCPFlowControlIT {
   }
 
   @Test
-  public void should_timeout_requests_when_the_server_paused_reading_without_resuming()
-      throws InterruptedException {
+  public void should_timeout_requests_when_the_server_paused_reading_without_resuming() {
 
     try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE)) {
       SIMULACRON_RULE.cluster().pauseRead();
@@ -203,10 +200,8 @@ public class TCPFlowControlIT {
     return writeQueueSize;
   }
 
-  private void waitForWriteQueueToStabilize(CqlSession cqlSession) throws InterruptedException {
+  private void waitForWriteQueueToStabilize(CqlSession cqlSession) {
     final Integer[] lastWriteQueueValue = {getWriteQueueSize(cqlSession)};
-    // initial delay
-    Thread.sleep(500);
     await()
         .atMost(Duration.ofSeconds(5))
         .pollDelay(Duration.ofSeconds(1))
