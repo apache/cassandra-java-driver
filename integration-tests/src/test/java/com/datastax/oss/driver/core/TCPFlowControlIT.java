@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.core;
 
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static java.util.Collections.emptyList;
@@ -44,8 +45,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import org.awaitility.Awaitility;
 import org.junit.BeforeClass;
@@ -73,7 +72,7 @@ public class TCPFlowControlIT {
 
   @Test
   public void should_not_write_more_requests_to_the_socket_after_the_server_paused_reading()
-      throws InterruptedException, ExecutionException, TimeoutException {
+      throws InterruptedException {
 
     try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE)) {
       SIMULACRON_RULE.cluster().pauseRead();
@@ -93,21 +92,18 @@ public class TCPFlowControlIT {
 
       SIMULACRON_RULE.cluster().resumeRead();
 
-      int numberOfFinished = 0;
       for (CompletionStage<AsyncResultSet> result : pendingRequests) {
-        result.toCompletableFuture().get(1, TimeUnit.SECONDS);
-        numberOfFinished = numberOfFinished + 1;
+        assertThatStage(result).isSuccess();
       }
 
       int writeQueueSize = getWriteQueueSize(session);
       assertThat(writeQueueSize).isEqualTo(0);
-      assertThat(numberOfFinished).isEqualTo(NUMBER_OF_SUBMITTED_REQUESTS);
     }
   }
 
   @Test
   public void should_process_requests_successfully_on_non_paused_nodes()
-      throws InterruptedException, ExecutionException, TimeoutException {
+      throws InterruptedException {
 
     try (CqlSession session =
         SessionUtils.newSession(
@@ -149,15 +145,12 @@ public class TCPFlowControlIT {
 
       SIMULACRON_RULE.cluster().resumeRead();
 
-      int numberOfFinished = 0;
       for (CompletionStage<AsyncResultSet> result : pendingRequests) {
-        result.toCompletableFuture().get(1, TimeUnit.SECONDS);
-        numberOfFinished = numberOfFinished + 1;
+        assertThatStage(result).isSuccess();
       }
 
       int writeQueueSize = getWriteQueueSize(session);
       assertThat(writeQueueSize).isEqualTo(0);
-      assertThat(numberOfFinished).isEqualTo(NUMBER_OF_SUBMITTED_REQUESTS);
     }
   }
 
