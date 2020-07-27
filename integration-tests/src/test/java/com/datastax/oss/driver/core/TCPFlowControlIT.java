@@ -28,21 +28,19 @@ import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.data.ByteUtils;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.IsolatedTests;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
+import com.datastax.oss.driver.shaded.guava.common.base.Strings;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.request.Query;
 import com.datastax.oss.simulacron.server.BoundNode;
 import java.net.SocketAddress;
-import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -51,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import org.awaitility.Awaitility;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -64,18 +63,18 @@ public class TCPFlowControlIT {
   // this number is calculated empirically to be high enough to saturate the underling TCP buffer
   private static final int NUMBER_OF_SUBMITTED_REQUESTS = 2048;
 
+  private static final String QUERY_STRING =
+      String.format("INSERT INTO table1 (id) VALUES (0x%s)", Strings.repeat("01", 10240));
+
+  @BeforeClass
+  public static void primeQueries() {
+    Query query = new Query(QUERY_STRING, emptyList(), emptyMap(), emptyMap());
+    SIMULACRON_RULE.cluster().prime(when(query).then(noRows()));
+  }
+
   @Test
   public void should_not_write_more_requests_to_the_socket_after_the_server_paused_reading()
       throws InterruptedException, ExecutionException, TimeoutException {
-    byte[] buffer = new byte[10240];
-    Arrays.fill(buffer, (byte) 1);
-    ByteBuffer buffer10Kb = ByteBuffer.wrap(buffer);
-
-    String queryString =
-        String.format("INSERT INTO table1 (id) VALUES (%s)", ByteUtils.toHexString(buffer10Kb));
-    Query query = new Query(queryString, emptyList(), emptyMap(), emptyMap());
-
-    SIMULACRON_RULE.cluster().prime(when(query).then(noRows()));
 
     try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE)) {
       SIMULACRON_RULE.cluster().pauseRead();
@@ -86,7 +85,7 @@ public class TCPFlowControlIT {
       // Send 20Mb+ to each node
       List<CompletionStage<AsyncResultSet>> pendingRequests = new ArrayList<>();
       for (int i = 0; i < NUMBER_OF_SUBMITTED_REQUESTS; i++) {
-        pendingRequests.add(session.executeAsync(SimpleStatement.newInstance(queryString)));
+        pendingRequests.add(session.executeAsync(SimpleStatement.newInstance(QUERY_STRING)));
       }
 
       // Assert that there are still requests that haven't been written
@@ -110,15 +109,6 @@ public class TCPFlowControlIT {
   @Test
   public void should_process_requests_successfully_on_non_paused_nodes()
       throws InterruptedException, ExecutionException, TimeoutException {
-    byte[] buffer = new byte[10240];
-    Arrays.fill(buffer, (byte) 1);
-    ByteBuffer buffer10Kb = ByteBuffer.wrap(buffer);
-
-    String queryString =
-        String.format("INSERT INTO table1 (id) VALUES (%s)", ByteUtils.toHexString(buffer10Kb));
-    Query query = new Query(queryString, emptyList(), emptyMap(), emptyMap());
-
-    SIMULACRON_RULE.cluster().prime(when(query).then(noRows()));
 
     try (CqlSession session =
         SessionUtils.newSession(
@@ -141,7 +131,7 @@ public class TCPFlowControlIT {
 
       List<CompletionStage<AsyncResultSet>> pendingRequests = new ArrayList<>();
       for (int i = 0; i < NUMBER_OF_SUBMITTED_REQUESTS; i++) {
-        pendingRequests.add(session.executeAsync(SimpleStatement.newInstance(queryString)));
+        pendingRequests.add(session.executeAsync(SimpleStatement.newInstance(QUERY_STRING)));
       }
 
       // Non-paused nodes should process the requests correctly
@@ -175,22 +165,13 @@ public class TCPFlowControlIT {
   @Test
   public void should_timeout_requests_when_the_server_paused_reading_without_resuming()
       throws InterruptedException {
-    byte[] buffer = new byte[10240];
-    Arrays.fill(buffer, (byte) 1);
-    ByteBuffer buffer10Kb = ByteBuffer.wrap(buffer);
-
-    String queryString =
-        String.format("INSERT INTO table1 (id) VALUES (%s)", ByteUtils.toHexString(buffer10Kb));
-    Query query = new Query(queryString, emptyList(), emptyMap(), emptyMap());
-
-    SIMULACRON_RULE.cluster().prime(when(query).then(noRows()));
 
     try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE)) {
       SIMULACRON_RULE.cluster().pauseRead();
 
       List<CompletionStage<AsyncResultSet>> pendingRequests = new ArrayList<>();
       for (int i = 0; i < NUMBER_OF_SUBMITTED_REQUESTS; i++) {
-        pendingRequests.add(session.executeAsync(SimpleStatement.newInstance(queryString)));
+        pendingRequests.add(session.executeAsync(SimpleStatement.newInstance(QUERY_STRING)));
       }
 
       // Assert that there are still requests that haven't been written
