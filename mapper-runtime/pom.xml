@@ -88,7 +88,6 @@
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-core</artifactId>
       <scope>test</scope>
-      <version>${project.version}</version>
       <type>test-jar</type>
     </dependency>
   </dependencies>
