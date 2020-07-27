@@ -185,14 +185,12 @@ public class TCPFlowControlIT {
     }
   }
 
-  @SuppressWarnings("unchecked")
   private int getInFlightRequests(CqlSession session, Node n) {
     return session
         .getMetrics()
-        .flatMap(metrics -> metrics.getNodeMetric(n, DefaultNodeMetric.IN_FLIGHT))
-        .map(metric -> (Gauge<Integer>) metric)
+        .flatMap(metrics -> metrics.<Gauge<Integer>>getNodeMetric(n, DefaultNodeMetric.IN_FLIGHT))
         .map(Gauge::getValue)
-        .orElse(-1);
+        .orElseThrow(() -> new AssertionError("Expected in-flight metric to be enabled"));
   }
 
   private int getWriteQueueSize(CqlSession session) {
