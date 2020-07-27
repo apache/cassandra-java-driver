@@ -33,6 +33,7 @@ import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.IsolatedTests;
+import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.shaded.guava.common.base.Strings;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
@@ -43,6 +44,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -186,21 +188,20 @@ public class TCPFlowControlIT {
 
   @SuppressWarnings("unchecked")
   private int getInFlightRequests(CqlSession session, Node n) {
-    return ((Gauge<Integer>)
-            session.getMetrics().get().getNodeMetric(n, DefaultNodeMetric.IN_FLIGHT).get())
-        .getValue();
+    return session
+        .getMetrics()
+        .flatMap(metrics -> metrics.getNodeMetric(n, DefaultNodeMetric.IN_FLIGHT))
+        .map(metric -> (Gauge<Integer>) metric)
+        .map(Gauge::getValue)
+        .orElse(-1);
   }
 
   private int getWriteQueueSize(CqlSession session) {
     int writeQueueSize = 0;
     for (Node n : session.getMetadata().getNodes().values()) {
-      writeQueueSize +=
-          ((DefaultSession) session)
-              .getChannel(n, "ignore")
-              .getChannel()
-              .unsafe()
-              .outboundBuffer()
-              .size();
+      DriverChannel channel =
+          Objects.requireNonNull(((DefaultSession) session).getChannel(n, "ignore"));
+      writeQueueSize += channel.getChannel().unsafe().outboundBuffer().size();
     }
     return writeQueueSize;
   }
@@ -214,10 +215,9 @@ public class TCPFlowControlIT {
         .pollDelay(Duration.ofSeconds(1))
         .until(
             () -> {
-              Integer currentValue = getWriteQueueSize(cqlSession);
+              int currentValue = getWriteQueueSize(cqlSession);
               Integer tmpLastValue = lastWriteQueueValue[0];
               lastWriteQueueValue[0] = currentValue;
-
               return tmpLastValue > 0 && currentValue > 0 && tmpLastValue.equals(currentValue);
             });
   }
