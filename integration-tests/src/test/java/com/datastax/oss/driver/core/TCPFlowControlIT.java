@@ -22,6 +22,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 
 import com.codahale.metrics.Gauge;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -48,7 +49,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import org.awaitility.Awaitility;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -133,7 +133,7 @@ public class TCPFlowControlIT {
 
       // Non-paused nodes should process the requests correctly
       for (Node n : nonPausedNodes) {
-        Awaitility.await()
+        await()
             .until(
                 () -> {
                   int inFlightRequests = getInFlightRequests(session, n);
@@ -210,7 +210,7 @@ public class TCPFlowControlIT {
     final Integer[] lastWriteQueueValue = {getWriteQueueSize(cqlSession)};
     // initial delay
     Thread.sleep(500);
-    Awaitility.await()
+    await()
         .atMost(Duration.ofSeconds(5))
         .pollDelay(Duration.ofSeconds(1))
         .until(
