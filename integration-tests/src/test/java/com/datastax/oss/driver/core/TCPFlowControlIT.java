@@ -182,7 +182,6 @@ public class TCPFlowControlIT {
       // write queue size is still non empty
       int writeQueueSize = getWriteQueueSize(session);
       assertThat(writeQueueSize).isGreaterThan(1);
-      SIMULACRON_RULE.cluster().stop();
     }
   }
 
