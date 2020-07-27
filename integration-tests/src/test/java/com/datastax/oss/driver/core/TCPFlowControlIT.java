@@ -62,7 +62,7 @@ public class TCPFlowControlIT {
       new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
   // this number is calculated empirically to be high enough to saturate the underling TCP buffer
-  private static int NUMBER_OF_SUBMITTED_REQUESTS = 2048;
+  private static final int NUMBER_OF_SUBMITTED_REQUESTS = 2048;
 
   @Test
   public void should_not_write_more_requests_to_the_socket_after_the_server_paused_reading()
