@@ -124,7 +124,7 @@ public class TCPFlowControlIT {
               .collect(Collectors.toList());
       assertThat(nonPausedNodes.size()).isEqualTo(2);
 
-      SIMULACRON_RULE.cluster().node(2).pauseRead();
+      SIMULACRON_RULE.cluster().node(hostIndex).pauseRead();
 
       List<CompletionStage<AsyncResultSet>> pendingRequests = new ArrayList<>();
       for (int i = 0; i < NUMBER_OF_SUBMITTED_REQUESTS; i++) {
