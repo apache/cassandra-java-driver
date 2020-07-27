@@ -27,7 +27,6 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
-import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -85,7 +84,7 @@ public class TCPFlowControlIT {
       // Send 20Mb+ to each node
       List<CompletionStage<AsyncResultSet>> pendingRequests = new ArrayList<>();
       for (int i = 0; i < NUMBER_OF_SUBMITTED_REQUESTS; i++) {
-        pendingRequests.add(session.executeAsync(SimpleStatement.newInstance(QUERY_STRING)));
+        pendingRequests.add(session.executeAsync(QUERY_STRING));
       }
 
       // Assert that there are still requests that haven't been written
@@ -131,7 +130,7 @@ public class TCPFlowControlIT {
 
       List<CompletionStage<AsyncResultSet>> pendingRequests = new ArrayList<>();
       for (int i = 0; i < NUMBER_OF_SUBMITTED_REQUESTS; i++) {
-        pendingRequests.add(session.executeAsync(SimpleStatement.newInstance(QUERY_STRING)));
+        pendingRequests.add(session.executeAsync(QUERY_STRING));
       }
 
       // Non-paused nodes should process the requests correctly
@@ -171,7 +170,7 @@ public class TCPFlowControlIT {
 
       List<CompletionStage<AsyncResultSet>> pendingRequests = new ArrayList<>();
       for (int i = 0; i < NUMBER_OF_SUBMITTED_REQUESTS; i++) {
-        pendingRequests.add(session.executeAsync(SimpleStatement.newInstance(QUERY_STRING)));
+        pendingRequests.add(session.executeAsync(QUERY_STRING));
       }
 
       // Assert that there are still requests that haven't been written
