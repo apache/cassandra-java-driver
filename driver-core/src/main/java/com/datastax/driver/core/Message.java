@@ -317,14 +317,11 @@ abstract class Message {
     }
 
     @Override
-    protected void encode(ChannelHandlerContext ctx, Request request, List<Object> out)
-        throws Exception {
+    protected void encode(ChannelHandlerContext ctx, Request request, List<Object> out) {
       EnumSet<Frame.Header.Flag> flags = computeFlags(request);
       int messageSize = encodedSize(request);
       ByteBuf body = ctx.alloc().buffer(messageSize);
-      @SuppressWarnings("unchecked")
-      Coder<Request> coder = (Coder<Request>) request.type.coder;
-      coder.encode(request, body, protocolVersion);
+      encode(request, body);
 
       if (body.capacity() != messageSize) {
         logger.debug(
