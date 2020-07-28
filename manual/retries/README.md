@@ -146,33 +146,33 @@ implementations to handle idempotence (the new behavior is equivalent to what yo
 `IdempotenceAwareRetryPolicy` before).
 
 
-[RetryDecision]:                        http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/policies/RetryPolicy.RetryDecision.html
-[retry()]:                              http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/policies/RetryPolicy.RetryDecision.html#retry-com.datastax.driver.core.ConsistencyLevel-
-[tryNextHost()]:                        http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/policies/RetryPolicy.RetryDecision.html#tryNextHost-com.datastax.driver.core.ConsistencyLevel-
-[rethrow()]:                            http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/policies/RetryPolicy.RetryDecision.html#rethrow--
-[ignore()]:                             http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/policies/RetryPolicy.RetryDecision.html#ignore--
-[NoHostAvailableException]:             http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/exceptions/NoHostAvailableException.html
-[getErrors()]:                          http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/exceptions/NoHostAvailableException.html#getErrors--
-[RetryPolicy]:                          http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/policies/RetryPolicy.html
-[DefaultRetryPolicy]:                   http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/policies/DefaultRetryPolicy.html
-[onReadTimeout]:                        http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/policies/DefaultRetryPolicy.html#onReadTimeout-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-int-int-boolean-int-
-[onWriteTimeout]:                       http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/policies/DefaultRetryPolicy.html#onWriteTimeout-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-com.datastax.driver.core.WriteType-int-int-int-
-[onUnavailable]:                        http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/policies/DefaultRetryPolicy.html#onUnavailable-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-int-int-int-
-[onRequestError]:                       http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/policies/DefaultRetryPolicy.html#onRequestError-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-com.datastax.driver.core.exceptions.DriverException-int-
-[UnavailableException]:                 http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/exceptions/UnavailableException.html
-[ReadTimeoutException]:                 http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/exceptions/ReadTimeoutException.html
-[WriteTimeoutException]:                http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/exceptions/WriteTimeoutException.html
-[OverloadedException]:                  http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/exceptions/OverloadedException.html
-[ServerError]:                          http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/exceptions/ServerError.html
-[OperationTimedOutException]:           http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/exceptions/OperationTimedOutException.html
-[ConnectionException]:                  http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/exceptions/ConnectionException.html
-[QueryValidationException]:             http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/exceptions/QueryValidationException.html
-[InvalidQueryException]:                http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/exceptions/InvalidQueryException.html
-[InvalidConfigurationInQueryException]: http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/exceptions/InvalidConfigurationInQueryException.html
-[UnauthorizedException]:                http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/exceptions/UnauthorizedException.html
-[SyntaxError]:                          http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/exceptions/SyntaxError.html
-[AlreadyExistsException]:               http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/exceptions/AlreadyExistsException.html
-[TruncateException]:                    http://docs.datastax.com/en/drivers/java/3.9/com/datastax/driver/core/exceptions/TruncateException.html
+[RetryDecision]:                        https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/RetryPolicy.RetryDecision.html
+[retry()]:                              https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/RetryPolicy.RetryDecision.html#retry-com.datastax.driver.core.ConsistencyLevel-
+[tryNextHost()]:                        https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/RetryPolicy.RetryDecision.html#tryNextHost-com.datastax.driver.core.ConsistencyLevel-
+[rethrow()]:                            https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/RetryPolicy.RetryDecision.html#rethrow--
+[ignore()]:                             https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/RetryPolicy.RetryDecision.html#ignore--
+[NoHostAvailableException]:             https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/exceptions/NoHostAvailableException.html
+[getErrors()]:                          https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/exceptions/NoHostAvailableException.html#getErrors--
+[RetryPolicy]:                          https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/RetryPolicy.html
+[DefaultRetryPolicy]:                   https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/DefaultRetryPolicy.html
+[onReadTimeout]:                        https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/DefaultRetryPolicy.html#onReadTimeout-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-int-int-boolean-int-
+[onWriteTimeout]:                       https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/DefaultRetryPolicy.html#onWriteTimeout-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-com.datastax.driver.core.WriteType-int-int-int-
+[onUnavailable]:                        https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/DefaultRetryPolicy.html#onUnavailable-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-int-int-int-
+[onRequestError]:                       https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/DefaultRetryPolicy.html#onRequestError-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-com.datastax.driver.core.exceptions.DriverException-int-
+[UnavailableException]:                 https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/exceptions/UnavailableException.html
+[ReadTimeoutException]:                 https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/exceptions/ReadTimeoutException.html
+[WriteTimeoutException]:                https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/exceptions/WriteTimeoutException.html
+[OverloadedException]:                  https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/exceptions/OverloadedException.html
+[ServerError]:                          https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/exceptions/ServerError.html
+[OperationTimedOutException]:           https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/exceptions/OperationTimedOutException.html
+[ConnectionException]:                  https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/exceptions/ConnectionException.html
+[QueryValidationException]:             https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/exceptions/QueryValidationException.html
+[InvalidQueryException]:                https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/exceptions/InvalidQueryException.html
+[InvalidConfigurationInQueryException]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/exceptions/InvalidConfigurationInQueryException.html
+[UnauthorizedException]:                https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/exceptions/UnauthorizedException.html
+[SyntaxError]:                          https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/exceptions/SyntaxError.html
+[AlreadyExistsException]:               https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/exceptions/AlreadyExistsException.html
+[TruncateException]:                    https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/exceptions/TruncateException.html
 
 [query plan]: ../load_balancing/#query-plan
 [connection pool]: ../pooling/
