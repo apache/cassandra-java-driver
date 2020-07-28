@@ -98,7 +98,7 @@ class Frame {
     return new Frame(header, fullFrame);
   }
 
-  private static int readStreamid(ByteBuf fullFrame, ProtocolVersion version) {
+  private static int readStreamId(ByteBuf fullFrame, ProtocolVersion version) {
     switch (version) {
       case V1:
       case V2:
@@ -195,7 +195,7 @@ class Frame {
           : String.format("Frame too short (%d bytes)", buffer.readableBytes());
 
       int flags = buffer.readByte();
-      int streamId = readStreamid(buffer, version);
+      int streamId = readStreamId(buffer, version);
       int opcode = buffer.readByte();
       int length = buffer.readInt();
 
