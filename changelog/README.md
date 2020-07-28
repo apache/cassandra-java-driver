@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.8.0 (in progress)
+### 4.8.0
 
 - [improvement] JAVA-2811: Add aliases for driver 3 method names
 - [new feature] JAVA-2808: Provide metrics bindings for Micrometer and MicroProfile

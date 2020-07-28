@@ -227,8 +227,8 @@ InventoryMapper inventoryMapper = new InventoryMapperBuilder(session)
     .build();
 ```
 
-[CqlIdentifier]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/CqlIdentifier.html
-[@DaoFactory]:   https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/mapper/annotations/DaoFactory.html
-[@DaoKeyspace]:  https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/mapper/annotations/DaoKeyspace.html
-[@DaoTable]:     https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/mapper/annotations/DaoTable.html
-[@Mapper]:       https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/mapper/annotations/Mapper.html
+[CqlIdentifier]: https://docs.datastax.com/en/drivers/java/4.8/com/datastax/oss/driver/api/core/CqlIdentifier.html
+[@DaoFactory]:   https://docs.datastax.com/en/drivers/java/4.8/com/datastax/oss/driver/api/mapper/annotations/DaoFactory.html
+[@DaoKeyspace]:  https://docs.datastax.com/en/drivers/java/4.8/com/datastax/oss/driver/api/mapper/annotations/DaoKeyspace.html
+[@DaoTable]:     https://docs.datastax.com/en/drivers/java/4.8/com/datastax/oss/driver/api/mapper/annotations/DaoTable.html
+[@Mapper]:       https://docs.datastax.com/en/drivers/java/4.8/com/datastax/oss/driver/api/mapper/annotations/Mapper.html

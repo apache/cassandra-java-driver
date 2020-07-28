@@ -74,8 +74,8 @@ fluent API returns Apache TinkerPop™ types directly.
 
 [Apache TinkerPop™]: http://tinkerpop.apache.org/
 
-[CqlSession]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/CqlSession.html
-[GraphSession]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/dse/driver/api/core/graph/GraphSession.html
+[CqlSession]: https://docs.datastax.com/en/drivers/java/4.8/com/datastax/oss/driver/api/core/CqlSession.html
+[GraphSession]: https://docs.datastax.com/en/drivers/java/4.8/com/datastax/dse/driver/api/core/graph/GraphSession.html
 
 [DSE developer guide]: https://docs.datastax.com/en/dse/6.0/dse-dev/datastax_enterprise/graph/graphTOC.html
 [Gremlin]: https://docs.datastax.com/en/dse/6.0/dse-dev/datastax_enterprise/graph/dseGraphAbout.html#dseGraphAbout__what-is-cql

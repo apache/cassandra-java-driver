@@ -88,4 +88,4 @@ dropTable("address").ifExists();
 // DROP TYPE IF EXISTS address
 ```
 
-[SchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
+[SchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.8/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
