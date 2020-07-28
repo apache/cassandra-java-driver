@@ -2,6 +2,9 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.9.0 (in progress)
+
+
 ### 4.8.0
 
 - [improvement] JAVA-2811: Add aliases for driver 3 method names
