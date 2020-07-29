@@ -26,15 +26,27 @@ first node the driver connects to:
 
 | Cassandra version   | Negotiated protocol version with driver 4 ¹     |
 |---------------------|-------------------------------------------------|
-| 2.1.x (DSE 4.7/4.8) | v3                                              |
+| 2.1.x               | v3                                              |
 | 2.2.x               | v4                                              |
-| 3.x (DSE 5.0/5.1)   | v4                                              |
+| 3.x                 | v4                                              |
 | 4.x ²               | v5                                              |
 
 *(1) for previous driver versions, see the [3.x documentation][driver3]*
 
 *(2) at the time of writing, Cassandra 4 is not released yet. Protocol v5 support is still in beta,
 and must be enabled explicitly (negotiation will yield v4).*
+
+Since version 4.5.0, the driver can also use DSE protocols when all nodes are running a version of
+DSE. The table below shows the protocol matrix for these cases:
+
+| DSE version         | Negotiated protocol version with driver 4       |
+|---------------------|-------------------------------------------------|
+| 4.7/4.8             | v3                                              |
+| 5.0                 | v4                                              |
+| 5.1                 | DSE_V1 ³                                        |
+| 6.0/6.7/6.8         | DSE_V2 ³                                        |
+
+*(3) DSE Protocols are chosen before other Cassandra native protocols.
 
 ### Controlling the protocol version
 
@@ -121,7 +133,7 @@ If you want to see the details of mixed cluster negotiation, enable `DEBUG` leve
   in the face of schema changes
 
 [protocol spec]: https://github.com/datastax/native-protocol/tree/1.x/src/main/resources
-[driver3]: https://docs.datastax.com/en/developer/java-driver/3.5/manual/native_protocol/
+[driver3]: https://docs.datastax.com/en/developer/java-driver/3.10/manual/native_protocol/
 
 [ExecutionInfo.getWarnings]: https://docs.datastax.com/en/drivers/java/4.8/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getWarnings--
 [Request.getCustomPayload]:  https://docs.datastax.com/en/drivers/java/4.8/com/datastax/oss/driver/api/core/session/Request.html#getCustomPayload--
