@@ -106,6 +106,13 @@ public class EntityUtils {
       ExecutableElement methodElement,
       TypeElement processedType,
       String exceptionCondition) {
+
+    if (exceptionCondition == null || exceptionCondition.isEmpty()) {
+      exceptionCondition = "";
+    } else {
+      exceptionCondition = " that " + exceptionCondition;
+    }
+
     List<TypeName> primaryKeyTypes =
         entityDefinition.getPrimaryKey().stream()
             .map(d -> d.getType().asTypeName())
@@ -123,7 +130,7 @@ public class EntityUtils {
           .error(
               methodElement,
               processedType,
-              "Invalid parameter list: %s methods that %s "
+              "Invalid parameter list: %s methods%s "
                   + "must at least specify partition key components "
                   + "(expected partition key of %s: %s)",
               annotationClass.getSimpleName(),
@@ -139,7 +146,7 @@ public class EntityUtils {
           .error(
               methodElement,
               processedType,
-              "Invalid parameter list: %s methods that %s "
+              "Invalid parameter list: %s methods%s "
                   + "must match the primary key components in the exact order "
                   + "(expected primary key of %s: %s). Too many parameters provided",
               annotationClass.getSimpleName(),
@@ -159,7 +166,7 @@ public class EntityUtils {
             .error(
                 methodElement,
                 processedType,
-                "Invalid parameter list: %s methods that %s "
+                "Invalid parameter list: %s methods%s "
                     + "must match the primary key components in the exact order "
                     + "(expected primary key of %s: %s). Mismatch at index %d: %s should be %s",
                 annotationClass.getSimpleName(),
