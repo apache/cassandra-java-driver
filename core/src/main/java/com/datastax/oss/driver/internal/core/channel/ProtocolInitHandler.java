@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
@@ -27,6 +33,8 @@ import com.datastax.oss.driver.api.core.connection.ConnectionInitException;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.protocol.ShardingInfo;
+import com.datastax.oss.driver.internal.core.protocol.ShardingInfo.ConnectionShardingInfo;
 import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.protocol.internal.Message;
@@ -193,6 +201,11 @@ class ProtocolInitHandler extends ConnectInitHandler {
       try {
         if (step == Step.OPTIONS && response instanceof Supported) {
           channel.attr(DriverChannel.OPTIONS_KEY).set(((Supported) response).options);
+          Supported res = (Supported) response;
+          ConnectionShardingInfo info = ShardingInfo.parseShardingInfo(res.options);
+          if (info != null) {
+            channel.attr(DriverChannel.SHARDING_INFO_KEY).set(info);
+          }
           step = Step.STARTUP;
           send();
         } else if (step == Step.STARTUP && response instanceof Ready) {

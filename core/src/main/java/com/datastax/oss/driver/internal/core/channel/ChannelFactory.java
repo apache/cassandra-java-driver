@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
@@ -300,13 +306,7 @@ public class ChannelFactory {
           HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultConfig);
           ProtocolInitHandler initHandler =
               new ProtocolInitHandler(
-                  context,
-                  protocolVersion,
-                  clusterName,
-                  endPoint,
-                  options,
-                  heartbeatHandler,
-                  productType == null);
+                  context, protocolVersion, clusterName, endPoint, options, heartbeatHandler, true);
 
           ChannelPipeline pipeline = channel.pipeline();
           context
