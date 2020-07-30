@@ -76,7 +76,7 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
     return tableId;
   }
 
-  protected void throwIfKeyspaceMissing() {
+  public void throwIfKeyspaceMissing() {
     if (this.getKeyspaceId() == null && !context.getSession().getKeyspace().isPresent()) {
       throw new MapperException(
           String.format(

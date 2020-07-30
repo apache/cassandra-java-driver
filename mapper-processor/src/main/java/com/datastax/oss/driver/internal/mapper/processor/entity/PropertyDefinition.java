@@ -28,6 +28,12 @@ import com.squareup.javapoet.CodeBlock;
 public interface PropertyDefinition {
 
   /**
+   * @return the name of the property, in the JavaBeans sense. In other words this is {@link
+   *     #getGetterName()} minus the "get" prefix and decapitalized.
+   */
+  String getJavaName();
+
+  /**
    * @return A Java snippet that produces the corresponding expression in a <code>SELECT</code>
    *     statement, for example:
    *     <ul>

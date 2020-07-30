@@ -4,6 +4,7 @@
 
 ### 4.9.0 (in progress)
 
+- [new feature] JAVA-2721: Add counter support in the mapper
 - [bug] JAVA-2863: Reintroduce mapper processor dependency to SLF4J
 
 ### 4.8.0

@@ -44,13 +44,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.TypeMirror;
 
 public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
 
@@ -151,7 +148,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
       entityDefinition = context.getEntityFactory().getDefinition(entityElement);
       primaryKeyParameterCount = entityDefinition.getPrimaryKey().size();
     } else {
-      entityElement = getEntityFromAnnotation();
+      entityElement = getEntityClassFromAnnotation(Delete.class);
       if (entityElement == null) {
         context
             .getMessager()
@@ -293,46 +290,6 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
         .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
     return crudMethod(createStatementBlock, returnType, helperFieldName);
-  }
-
-  private TypeElement getEntityFromAnnotation() {
-    // Note: because Delete.entityClass references a class, we can't read it directly through
-    // methodElement.getAnnotation(Delete.class).
-
-    AnnotationMirror annotationMirror = null;
-    for (AnnotationMirror candidate : methodElement.getAnnotationMirrors()) {
-      if (context.getClassUtils().isSame(candidate.getAnnotationType(), Delete.class)) {
-        annotationMirror = candidate;
-        break;
-      }
-    }
-    assert annotationMirror != null;
-
-    for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry :
-        annotationMirror.getElementValues().entrySet()) {
-      if (entry.getKey().getSimpleName().contentEquals("entityClass")) {
-        @SuppressWarnings("unchecked")
-        List<? extends AnnotationValue> values = (List) entry.getValue().getValue();
-        if (values.isEmpty()) {
-          return null;
-        }
-        TypeMirror mirror = (TypeMirror) values.get(0).getValue();
-        TypeElement element = EntityUtils.asEntityElement(mirror, typeParameters);
-        if (values.size() > 1) {
-          context
-              .getMessager()
-              .warn(
-                  methodElement,
-                  processedType,
-                  "Too many entity classes: %s must have at most one 'entityClass' argument "
-                      + "(will use the first one: %s)",
-                  Delete.class.getSimpleName(),
-                  element.getSimpleName());
-        }
-        return element;
-      }
-    }
-    return null;
   }
 
   private void generatePrepareRequest(
