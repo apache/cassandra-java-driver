@@ -21,9 +21,12 @@ import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.NamingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.mapper.annotations.PropertyStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Transient;
 import com.datastax.oss.driver.api.mapper.annotations.TransientProperties;
+import com.datastax.oss.driver.api.mapper.entity.naming.GetterStyle;
 import com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention;
+import com.datastax.oss.driver.api.mapper.entity.naming.SetterStyle;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.AnnotationScanner;
 import com.datastax.oss.driver.internal.mapper.processor.util.Capitalizer;
@@ -45,14 +48,17 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
@@ -83,6 +89,15 @@ public class DefaultEntityFactory implements EntityFactory {
       typeHierarchy.add((TypeElement) context.getTypeUtils().asElement(type));
     }
 
+    Language language = Language.detect(typeHierarchy);
+
+    Optional<PropertyStrategy> propertyStrategy = getPropertyStrategy(typeHierarchy);
+    GetterStyle getterStyle =
+        propertyStrategy.map(PropertyStrategy::getterStyle).orElse(language.defaultGetterStyle);
+    SetterStyle setterStyle =
+        propertyStrategy.map(PropertyStrategy::setterStyle).orElse(language.defaultSetterStyle);
+    boolean mutable =
+        propertyStrategy.map(PropertyStrategy::mutable).orElse(language.defaultMutable);
     CqlNameGenerator cqlNameGenerator = buildCqlNameGenerator(typeHierarchy);
     Set<String> transientProperties = getTransientPropertyNames(typeHierarchy);
 
@@ -111,32 +126,42 @@ public class DefaultEntityFactory implements EntityFactory {
         }
 
         String getMethodName = getMethod.getSimpleName().toString();
-        boolean regularGetterName = getMethodName.startsWith("get");
-        boolean booleanGetterName =
-            getMethodName.startsWith("is")
-                && (typeMirror.getKind() == TypeKind.BOOLEAN
-                    || context.getClassUtils().isSame(typeMirror, Boolean.class));
-        if (!regularGetterName && !booleanGetterName) {
+
+        // Skip methods that test as false positives with the fluent getter style: toString(),
+        // hashCode() and a few Scala or Kotlin methods.
+        if (getMethodName.equals("toString")
+            || getMethodName.equals("hashCode")
+            || (language == Language.SCALA_CASE_CLASS
+                && (getMethodName.equals("productPrefix")
+                    || getMethodName.equals("productArity")
+                    || getMethodName.equals("productIterator")
+                    || getMethodName.equals("productElementNames")
+                    || getMethodName.startsWith("copy$default$")))
+            || (language == Language.KOTLIN_DATA_CLASS
+                && getMethodName.matches("component[0-9]+"))) {
           continue;
         }
 
-        String propertyName;
-        String setMethodName;
-        if (regularGetterName) {
-          propertyName = Capitalizer.decapitalize(getMethodName.substring(3));
-          setMethodName = getMethodName.replaceFirst("get", "set");
-        } else {
-          propertyName = Capitalizer.decapitalize(getMethodName.substring(2));
-          setMethodName = getMethodName.replaceFirst("is", "set");
+        String propertyName = inferPropertyName(getMethodName, getterStyle, typeMirror);
+        if (propertyName == null) {
+          // getMethodName does not follow a known pattern => this is not a getter, skip
+          continue;
         }
+
         // skip properties we've already encountered.
         if (encounteredPropertyNames.contains(propertyName)) {
           continue;
         }
 
-        ExecutableElement setMethod = findSetMethod(typeHierarchy, setMethodName, typeMirror);
-        if (setMethod == null) {
-          continue; // must have both
+        String setMethodName;
+        if (mutable) {
+          setMethodName = inferSetMethodName(propertyName, setterStyle);
+          ExecutableElement setMethod = findSetMethod(typeHierarchy, setMethodName, typeMirror);
+          if (setMethod == null) {
+            continue; // must have both
+          }
+        } else {
+          setMethodName = null;
         }
         VariableElement field = findField(typeHierarchy, propertyName, typeMirror);
 
@@ -223,16 +248,55 @@ public class DefaultEntityFactory implements EntityFactory {
     String entityName = Capitalizer.decapitalize(processedClass.getSimpleName().toString());
     String defaultKeyspace = processedClass.getAnnotation(Entity.class).defaultKeyspace();
 
-    return new DefaultEntityDefinition(
-        ClassName.get(processedClass),
-        entityName,
-        defaultKeyspace.isEmpty() ? null : defaultKeyspace,
-        Optional.ofNullable(processedClass.getAnnotation(CqlName.class)).map(CqlName::value),
-        ImmutableList.copyOf(partitionKey.values()),
-        ImmutableList.copyOf(clusteringColumns.values()),
-        regularColumns.build(),
-        computedValues.build(),
-        cqlNameGenerator);
+    EntityDefinition entityDefinition =
+        new DefaultEntityDefinition(
+            ClassName.get(processedClass),
+            entityName,
+            defaultKeyspace.isEmpty() ? null : defaultKeyspace,
+            Optional.ofNullable(processedClass.getAnnotation(CqlName.class)).map(CqlName::value),
+            ImmutableList.copyOf(partitionKey.values()),
+            ImmutableList.copyOf(clusteringColumns.values()),
+            regularColumns.build(),
+            computedValues.build(),
+            cqlNameGenerator,
+            mutable);
+    validateConstructor(entityDefinition, processedClass);
+    return entityDefinition;
+  }
+
+  private String inferPropertyName(String getMethodName, GetterStyle getterStyle, TypeMirror type) {
+    switch (getterStyle) {
+      case FLUENT:
+        return getMethodName;
+      case JAVABEANS:
+        if (getMethodName.startsWith("get") && getMethodName.length() > 3) {
+          return Capitalizer.decapitalize(getMethodName.substring(3));
+        } else if (getMethodName.startsWith("is")
+            && getMethodName.length() > 2
+            && (type.getKind() == TypeKind.BOOLEAN
+                || context.getClassUtils().isSame(type, Boolean.class))) {
+          return Capitalizer.decapitalize(getMethodName.substring(2));
+        } else {
+          return null;
+        }
+      default:
+        throw new AssertionError("Unsupported getter style " + getterStyle);
+    }
+  }
+
+  private String inferSetMethodName(String propertyName, SetterStyle setterStyle) {
+    String setMethodName;
+    switch (setterStyle) {
+      case JAVABEANS:
+        setMethodName = "set" + Capitalizer.capitalize(propertyName);
+        break;
+      case FLUENT:
+        setMethodName = propertyName;
+        break;
+      default:
+        throw new AssertionError("Unsupported setter style " + setterStyle);
+    }
+    return setMethodName;
   }
 
   @Nullable
@@ -452,6 +516,11 @@ public class DefaultEntityFactory implements EntityFactory {
         : Collections.emptySet();
   }
 
+  private Optional<PropertyStrategy> getPropertyStrategy(Set<TypeElement> typeHierarchy) {
+    return AnnotationScanner.getClassAnnotation(PropertyStrategy.class, typeHierarchy)
+        .map(ResolvedAnnotation::getAnnotation);
+  }
+
   private void reportMultipleAnnotationError(
       Element element,
       Class<? extends Annotation> a0,
@@ -553,6 +622,142 @@ public class DefaultEntityFactory implements EntityFactory {
           annotations.put(annotationClass, annotation.get().getAnnotation());
         }
       }
+    }
+  }
+
+  private void validateConstructor(EntityDefinition entity, TypeElement processedClass) {
+    if (entity.isMutable()) {
+      validateNoArgConstructor(processedClass);
+    } else {
+      validateAllColumnsConstructor(processedClass, entity.getAllColumns());
+    }
+  }
+
+  private void validateNoArgConstructor(TypeElement processedClass) {
+    for (Element child : processedClass.getEnclosedElements()) {
+      if (child.getKind() == ElementKind.CONSTRUCTOR) {
+        ExecutableElement constructor = (ExecutableElement) child;
+        Set<Modifier> modifiers = constructor.getModifiers();
+        if (!modifiers.contains(Modifier.PRIVATE) && constructor.getParameters().isEmpty()) {
+          return;
+        }
+      }
+    }
+    context
+        .getMessager()
+        .error(
+            processedClass,
+            "Mutable @%s-annotated class must have a no-arg constructor.",
+            Entity.class.getSimpleName());
+  }
+
+  private void validateAllColumnsConstructor(
+      TypeElement processedClass, List<PropertyDefinition> columns) {
+    for (Element child : processedClass.getEnclosedElements()) {
+      if (child.getKind() == ElementKind.CONSTRUCTOR) {
+        ExecutableElement constructor = (ExecutableElement) child;
+        Set<Modifier> modifiers = constructor.getModifiers();
+        if (!modifiers.contains(Modifier.PRIVATE)
+            && areAssignable(columns, constructor.getParameters())) {
+          return;
+        }
+      }
+    }
+    String signature =
+        columns.stream()
+            .map(
+                column ->
+                    String.format("%s %s", column.getType().asTypeMirror(), column.getGetterName()))
+            .collect(Collectors.joining(", "));
+    context
+        .getMessager()
+        .error(
+            processedClass,
+            "Immutable @%s-annotated class must have an \"all columns\" constructor. "
+                + "Expected signature: (%s).",
+            Entity.class.getSimpleName(),
+            signature);
+  }
+
+  private boolean areAssignable(
+      List<PropertyDefinition> columns, List<? extends VariableElement> parameters) {
+    if (columns.size() != parameters.size()) {
+      return false;
+    } else {
+      for (int i = 0; i < columns.size(); i++) {
+        // What the generated code will pass to the constructor:
+        TypeMirror argumentType = columns.get(i).getType().asTypeMirror();
+        // What the constructor declares:
+        TypeMirror parameterType = parameters.get(i).asType();
+        if (!context.getTypeUtils().isAssignable(argumentType, parameterType)) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+
+  /**
+   * The source language (and construct) of an entity type. It impacts the defaults for entities
+   * that do not explicitly declare the {@link PropertyStrategy} annotation.
+   */
+  private enum Language {
+    SCALA_CASE_CLASS(false, GetterStyle.FLUENT, null),
+    KOTLIN_DATA_CLASS(false, GetterStyle.JAVABEANS, null),
+    JAVA14_RECORD(false, GetterStyle.FLUENT, null),
+    UNKNOWN(true, GetterStyle.JAVABEANS, SetterStyle.JAVABEANS),
+    ;
+
+    final boolean defaultMutable;
+    final GetterStyle defaultGetterStyle;
+    final SetterStyle defaultSetterStyle;
+
+    Language(
+        boolean defaultMutable, GetterStyle defaultGetterStyle, SetterStyle defaultSetterStyle) {
+      this.defaultMutable = defaultMutable;
+      this.defaultGetterStyle = defaultGetterStyle;
+      this.defaultSetterStyle = defaultSetterStyle;
+    }
+
+    static Language detect(Set<TypeElement> typeHierarchy) {
+      for (TypeElement type : typeHierarchy) {
+        if (isNamed(type, "scala.Product")) {
+          return SCALA_CASE_CLASS;
+        }
+        if (isNamed(type, "java.lang.Record")) {
+          return JAVA14_RECORD;
+        }
+      }
+
+      TypeElement entityClass = typeHierarchy.iterator().next();
+      // Kotlin adds `@kotlin.Metadata` on every generated class, we also check `component1` which
+      // is a generated method specific to data classes (to eliminate regular Kotlin classes).
+      if (entityClass.getAnnotationMirrors().stream().anyMatch(Language::isKotlinMetadata)
+          && entityClass.getEnclosedElements().stream()
+              .anyMatch(e -> isMethodNamed(e, "component1"))) {
+        return KOTLIN_DATA_CLASS;
+      }
+
+      return UNKNOWN;
+    }
+
+    private static boolean isNamed(TypeElement type, String expectedName) {
+      Name name = type.getQualifiedName();
+      return name != null && name.toString().equals(expectedName);
+    }
+
+    private static boolean isKotlinMetadata(AnnotationMirror a) {
+      DeclaredType declaredType = a.getAnnotationType();
+      if (declaredType.getKind() == TypeKind.DECLARED) {
+        TypeElement element = (TypeElement) declaredType.asElement();
+        return element.getQualifiedName().toString().equals("kotlin.Metadata");
+      }
+      return false;
+    }
+
+    private static boolean isMethodNamed(Element element, String methodName) {
+      return element.getKind() == ElementKind.METHOD
+          && element.getSimpleName().toString().equals(methodName);
     }
   }
 }

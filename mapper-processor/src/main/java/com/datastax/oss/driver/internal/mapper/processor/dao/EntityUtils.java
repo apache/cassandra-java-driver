@@ -79,7 +79,9 @@ public class EntityUtils {
     } else {
       return null;
     }
-    if (element.getKind() != ElementKind.CLASS) {
+    if (element.getKind() != ElementKind.CLASS
+        // Hack to support Java 14 records without having to compile against JDK 14
+        && !element.getKind().name().equals("RECORD")) {
       return null;
     }
     TypeElement typeElement = (TypeElement) element;

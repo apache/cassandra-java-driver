@@ -23,4 +23,15 @@ public class Capitalizer {
   public static String decapitalize(String name) {
     return Introspector.decapitalize(Objects.requireNonNull(name));
   }
+
+  public static String capitalize(String name) {
+    Objects.requireNonNull(name);
+    if (name.isEmpty() || Character.isUpperCase(name.charAt(0))) {
+      return name;
+    } else {
+      char[] chars = name.toCharArray();
+      chars[0] = Character.toUpperCase(chars[0]);
+      return new String(chars);
+    }
+  }
 }
