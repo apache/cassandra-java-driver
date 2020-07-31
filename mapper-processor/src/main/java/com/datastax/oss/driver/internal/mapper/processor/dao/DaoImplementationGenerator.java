@@ -30,6 +30,7 @@ import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.util.Capitalizer;
 import com.datastax.oss.driver.internal.mapper.processor.util.HierarchyScanner;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
@@ -45,7 +46,6 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.beans.Introspector;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -138,7 +138,7 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
     return entityHelperFields.computeIfAbsent(
         helperClass,
         k -> {
-          String baseName = Introspector.decapitalize(entityClassName.simpleName()) + "Helper";
+          String baseName = Capitalizer.decapitalize(entityClassName.simpleName()) + "Helper";
           return nameIndex.uniqueField(baseName);
         });
   }
