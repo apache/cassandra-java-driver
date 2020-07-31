@@ -21,6 +21,7 @@ import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.util.Capitalizer;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.BindableHandlingSharedCode;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
@@ -33,7 +34,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import java.beans.Introspector;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +76,7 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
     return childHelpers.computeIfAbsent(
         childEntityName,
         k -> {
-          String baseName = Introspector.decapitalize(childEntityName.simpleName()) + "Helper";
+          String baseName = Capitalizer.decapitalize(childEntityName.simpleName()) + "Helper";
           return nameIndex.uniqueField(baseName);
         });
   }

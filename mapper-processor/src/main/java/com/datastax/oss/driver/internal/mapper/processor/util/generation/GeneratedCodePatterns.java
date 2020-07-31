@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
+import com.datastax.oss.driver.internal.mapper.processor.util.Capitalizer;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
@@ -37,7 +38,6 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.beans.Introspector;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -470,7 +470,7 @@ public class GeneratedCodePatterns {
       String udtTypeName =
           enclosingClass
               .getNameIndex()
-              .uniqueField(Introspector.decapitalize(entityClass.simpleName()) + "UdtType");
+              .uniqueField(Capitalizer.decapitalize(entityClass.simpleName()) + "UdtType");
       udtTypesBuilder.addStatement(
           "$1T $2L = ($1T) $3L", UserDefinedType.class, udtTypeName, currentCqlType);
 

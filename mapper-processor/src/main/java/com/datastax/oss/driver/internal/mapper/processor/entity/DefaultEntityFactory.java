@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.mapper.annotations.TransientProperties;
 import com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.AnnotationScanner;
+import com.datastax.oss.driver.internal.mapper.processor.util.Capitalizer;
 import com.datastax.oss.driver.internal.mapper.processor.util.HierarchyScanner;
 import com.datastax.oss.driver.internal.mapper.processor.util.ResolvedAnnotation;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
@@ -36,7 +37,6 @@ import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import java.beans.Introspector;
 import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.List;
@@ -123,10 +123,10 @@ public class DefaultEntityFactory implements EntityFactory {
         String propertyName;
         String setMethodName;
         if (regularGetterName) {
-          propertyName = Introspector.decapitalize(getMethodName.substring(3));
+          propertyName = Capitalizer.decapitalize(getMethodName.substring(3));
           setMethodName = getMethodName.replaceFirst("get", "set");
         } else {
-          propertyName = Introspector.decapitalize(getMethodName.substring(2));
+          propertyName = Capitalizer.decapitalize(getMethodName.substring(2));
           setMethodName = getMethodName.replaceFirst("is", "set");
         }
         // skip properties we've already encountered.
@@ -220,7 +220,7 @@ public class DefaultEntityFactory implements EntityFactory {
               Entity.class.getSimpleName());
     }
 
-    String entityName = Introspector.decapitalize(processedClass.getSimpleName().toString());
+    String entityName = Capitalizer.decapitalize(processedClass.getSimpleName().toString());
     String defaultKeyspace = processedClass.getAnnotation(Entity.class).defaultKeyspace();
 
     return new DefaultEntityDefinition(
