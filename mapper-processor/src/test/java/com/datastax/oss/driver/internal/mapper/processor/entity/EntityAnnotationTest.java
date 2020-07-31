@@ -97,7 +97,7 @@ public class EntityAnnotationTest extends MapperProcessorTest {
                 StandardLocation.SOURCE_OUTPUT, "test", "Foo_BarHelper__MapperGenerated.java")
             .contentsAsUtf8String();
     contents.contains("target = target.setBoolean(\"bool\", entity.isBool())");
-    contents.contains("returnValue.setBool(source.getBoolean(\"bool\"))");
+    contents.contains("boolean propertyValue = source.getBoolean(\"bool\");");
   }
 
   @Test

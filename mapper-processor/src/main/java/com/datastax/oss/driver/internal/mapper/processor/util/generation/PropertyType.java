@@ -53,21 +53,31 @@ public abstract class PropertyType {
         PropertyType elementType = parse(declaredType.getTypeArguments().get(0), context);
         return (elementType instanceof Simple)
             ? new Simple(typeMirror)
-            : new EntityList(elementType);
+            : new EntityList(typeMirror, elementType);
       } else if (context.getClassUtils().isSet(declaredType)) {
         PropertyType elementType = parse(declaredType.getTypeArguments().get(0), context);
         return (elementType instanceof Simple)
             ? new Simple(typeMirror)
-            : new EntitySet(elementType);
+            : new EntitySet(typeMirror, elementType);
       } else if (context.getClassUtils().isMap(declaredType)) {
         PropertyType keyType = parse(declaredType.getTypeArguments().get(0), context);
         PropertyType valueType = parse(declaredType.getTypeArguments().get(1), context);
         return (keyType instanceof Simple && valueType instanceof Simple)
             ? new Simple(typeMirror)
-            : new EntityMap(keyType, valueType);
+            : new EntityMap(typeMirror, keyType, valueType);
       }
     }
     return new Simple(typeMirror);
+  }
+
+  private final TypeMirror typeMirror;
+
+  protected PropertyType(TypeMirror typeMirror) {
+    this.typeMirror = typeMirror;
+  }
+
+  public TypeMirror asTypeMirror() {
+    return typeMirror;
   }
 
   public abstract TypeName asTypeName();
@@ -87,6 +97,7 @@ public abstract class PropertyType {
     public final TypeName typeName;
 
     public Simple(TypeMirror typeMirror) {
+      super(typeMirror);
       this.typeName = ClassName.get(typeMirror);
     }
 
@@ -106,6 +117,7 @@ public abstract class PropertyType {
     public final ClassName entityName;
 
     public SingleEntity(DeclaredType declaredType) {
+      super(declaredType);
       this.entityName = (ClassName) TypeName.get(declaredType);
     }
 
@@ -124,7 +136,8 @@ public abstract class PropertyType {
   public static class EntityList extends PropertyType {
     public final PropertyType elementType;
 
-    public EntityList(PropertyType elementType) {
+    public EntityList(TypeMirror typeMirror, PropertyType elementType) {
+      super(typeMirror);
       this.elementType = elementType;
     }
 
@@ -143,7 +156,8 @@ public abstract class PropertyType {
   public static class EntitySet extends PropertyType {
     public final PropertyType elementType;
 
-    public EntitySet(PropertyType elementType) {
+    public EntitySet(TypeMirror typeMirror, PropertyType elementType) {
+      super(typeMirror);
       this.elementType = elementType;
     }
 
@@ -163,7 +177,8 @@ public abstract class PropertyType {
     public final PropertyType keyType;
     public final PropertyType valueType;
 
-    public EntityMap(PropertyType keyType, PropertyType valueType) {
+    public EntityMap(TypeMirror typeMirror, PropertyType keyType, PropertyType valueType) {
+      super(typeMirror);
       this.keyType = keyType;
       this.valueType = valueType;
     }
