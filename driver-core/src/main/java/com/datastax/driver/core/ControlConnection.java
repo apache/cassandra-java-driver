@@ -77,6 +77,8 @@ class ControlConnection implements Connection.Owner {
   private static final String SELECT_SCHEMA_LOCAL =
       "SELECT schema_version, host_id FROM system.local WHERE key='local'";
 
+  private static final VersionNumber _3_11 = VersionNumber.parse("3.11.0");
+
   @VisibleForTesting
   final AtomicReference<Connection> connectionRef = new AtomicReference<Connection>();
 
@@ -406,6 +408,10 @@ class ControlConnection implements Connection.Owner {
           dseVersion == null
               ? SchemaParser.forVersion(cassandraVersion)
               : SchemaParser.forDseVersion(dseVersion);
+      if (dseVersion != null && dseVersion.getMajor() == 6 && dseVersion.getMinor() < 8) {
+        // DSE 6.0 and 6.7 report C* 4.0, but consider it C* 3.11 for schema parsing purposes
+        cassandraVersion = _3_11;
+      }
     }
 
     schemaParser.refresh(

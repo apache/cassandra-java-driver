@@ -5,9 +5,11 @@
   3.x versions get published.
 -->
 
-## 3.10.1
+## 3.10.1 (in progress)
 
 - [bug] JAVA-2857: Fix NPE when built statements without parameters are logged at TRACE level.
+- [bug] JAVA-2843: Successfully parse DSE table schema in OSS driver.
+
 
 ## 3.10.0
 

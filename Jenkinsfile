@@ -220,8 +220,12 @@ pipeline {
                 '3.0',       // Previous Apache CassandraⓇ
                 '3.11',      // Current Apache CassandraⓇ
                 '4.0',       // Development Apache CassandraⓇ
+                'dse-5.1',   // Legacy DataStax Enterprise
+                'dse-6.0',   // Previous DataStax Enterprise
+                'dse-6.7',   // Previous DataStax Enterprise
+                'dse-6.8.0', // Current DataStax Enterprise
                 'ALL'],
-      description: '''Apache Cassandra&reg; server version to use for adhoc <b>BUILD-AND-EXECUTE-TESTS</b> builds
+      description: '''Apache Cassandra&reg; or DataStax Enterprise server version to use for adhoc <b>BUILD-AND-EXECUTE-TESTS</b> builds
                       <table style="width:100%">
                         <col width="15%">
                         <col width="85%">
@@ -248,6 +252,22 @@ pipeline {
                         <tr>
                           <td><strong>4.0</strong></td>
                           <td>Apache Cassandra&reg; v4.x (<b>CURRENTLY UNDER DEVELOPMENT</b>)</td>
+                        </tr>
+                        <tr>
+                          <td><strong>dse-5.1</strong></td>
+                          <td>DataStax Enterprise v5.1.x</td>
+                        </tr>
+                        <tr>
+                          <td><strong>dse-6.0</strong></td>
+                          <td>DataStax Enterprise v6.0.x</td>
+                        </tr>
+                        <tr>
+                          <td><strong>dse-6.7</strong></td>
+                          <td>DataStax Enterprise v6.7.x</td>
+                        </tr>
+                        <tr>
+                          <td><strong>dse-6.8.0</strong></td>
+                          <td>DataStax Enterprise v6.8.0</td>
                         </tr>
                       </table>''')
     choice(
