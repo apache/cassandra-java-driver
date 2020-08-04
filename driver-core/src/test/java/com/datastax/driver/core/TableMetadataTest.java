@@ -295,13 +295,17 @@ public class TableMetadataTest extends CCMTestsSupport {
 
   @Test(groups = "short")
   public void should_parse_table_options() {
-    VersionNumber version = TestUtils.findHost(cluster(), 1).getCassandraVersion();
+    VersionNumber version = ccm().getCassandraVersion();
+    VersionNumber dseVersion = ccm().getDSEVersion();
+    boolean isRealCassandra4 =
+        version.getMajor() > 3
+            && (dseVersion == null || dseVersion.compareTo(VersionNumber.parse("6.8")) >= 0);
 
     // given
     String cql;
 
     // Cassandra 4.0 +
-    if (version.getMajor() > 3) {
+    if (isRealCassandra4) {
       cql =
           String.format(
               "CREATE TABLE %s.with_options (\n"
@@ -325,7 +329,7 @@ public class TableMetadataTest extends CCMTestsSupport {
               keyspace);
 
       // Cassandra 3.0 +
-    } else if (version.getMajor() > 2) {
+    } else if (version.compareTo(VersionNumber.parse("3.0")) >= 0) {
       cql =
           String.format(
               "CREATE TABLE %s.with_options (\n"
@@ -426,7 +430,7 @@ public class TableMetadataTest extends CCMTestsSupport {
     assertThat(table);
 
     // Cassandra 4.0 +
-    if (version.getMajor() > 3) {
+    if (isRealCassandra4) {
 
       assertThat(table.getOptions().getGcGraceInSeconds()).isEqualTo(42);
       assertThat(table.getOptions().getBloomFilterFalsePositiveChance()).isEqualTo(0.01);
@@ -445,7 +449,8 @@ public class TableMetadataTest extends CCMTestsSupport {
       assertThat(table.getOptions().getCompression())
           .contains(entry("chunk_length_in_kb", "128")); // note the "in" prefix
       assertThat(table.getOptions().getDefaultTimeToLive()).isEqualTo(0);
-      assertThat(table.getOptions().getSpeculativeRetry()).isEqualTo("99.9p");
+      assertThat(table.getOptions().getSpeculativeRetry())
+          .isEqualTo(dseVersion == null ? "99.9p" : "99.9PERCENTILE");
       assertThat(table.getOptions().getIndexInterval()).isNull();
       assertThat(table.getOptions().getMinIndexInterval()).isEqualTo(128);
       assertThat(table.getOptions().getMaxIndexInterval()).isEqualTo(2048);
@@ -467,7 +472,10 @@ public class TableMetadataTest extends CCMTestsSupport {
               "'class' : 'org.apache.cassandra.io.compress.SnappyCompressor'") // sstable_compression becomes class
           .contains("'chunk_length_in_kb' : 128") // note the "in" prefix
           .contains("default_time_to_live = 0")
-          .contains("speculative_retry = '99.9p'")
+          .contains(
+              dseVersion == null
+                  ? "speculative_retry = '99.9p'"
+                  : "speculative_retry = '99.9PERCENTILE'")
           .contains("min_index_interval = 128")
           .contains("max_index_interval = 2048")
           .contains("crc_check_chance = 0.5")
@@ -476,7 +484,7 @@ public class TableMetadataTest extends CCMTestsSupport {
           .doesNotContain(" index_interval")
           .doesNotContain("replicate_on_write");
       // Cassandra 3.8 +
-    } else if (version.getMajor() == 3 && version.getMinor() >= 8) {
+    } else if (version.compareTo(VersionNumber.parse("3.8")) >= 0) {
 
       assertThat(table.getOptions().getReadRepairChance()).isEqualTo(0.5);
       assertThat(table.getOptions().getLocalReadRepairChance()).isEqualTo(0.6);
@@ -528,7 +536,7 @@ public class TableMetadataTest extends CCMTestsSupport {
           .doesNotContain(" index_interval")
           .doesNotContain("replicate_on_write");
       // Cassandra 3.0 +
-    } else if (version.getMajor() > 2) {
+    } else if (version.compareTo(VersionNumber.parse("3.0")) >= 0) {
 
       assertThat(table.getOptions().getReadRepairChance()).isEqualTo(0.5);
       assertThat(table.getOptions().getLocalReadRepairChance()).isEqualTo(0.6);
@@ -719,6 +727,18 @@ public class TableMetadataTest extends CCMTestsSupport {
           .doesNotContain("cdc")
           .doesNotContain("memtable_flush_period_in_ms"); // 2.0 +
     }
+
+    // Also check that the generated CQL is valid and creates an identical table
+    session().execute("DROP TABLE " + table.getName());
+    session().execute(table.asCQLQuery());
+    TableMetadata actual =
+        cluster()
+            .getMetadata()
+            .getKeyspace(table.getKeyspace().getName())
+            .getTable(table.getName());
+
+    assertThat(actual.getOptions()).isEqualTo(table.getOptions());
+    assertThat(actual.asCQLQuery(true)).isEqualTo(table.asCQLQuery(true));
   }
 
   /**

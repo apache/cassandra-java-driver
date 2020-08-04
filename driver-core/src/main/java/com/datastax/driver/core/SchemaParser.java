@@ -56,6 +56,7 @@ abstract class SchemaParser {
   }
 
   static SchemaParser forDseVersion(VersionNumber dseVersion) {
+    if (dseVersion.getMajor() == 6 && dseVersion.getMinor() >= 8) return V4_PARSER;
     if (dseVersion.getMajor() >= 5) return V3_PARSER;
     return V2_PARSER;
   }
