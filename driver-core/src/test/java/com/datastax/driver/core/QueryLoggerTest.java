@@ -414,6 +414,64 @@ public class QueryLoggerTest extends CCMTestsSupport {
 
   // Tests with query parameters (log level TRACE)
 
+  /** @jira_ticket JAVA-2857 */
+  @Test(groups = "short")
+  @CassandraVersion("2.0.0")
+  public void should_log_simple_statements_without_parameters() throws Exception {
+    // given
+    normal.setLevel(TRACE);
+    queryLogger = QueryLogger.builder().build();
+    cluster().register(queryLogger);
+
+    // when
+    String query = "UPDATE test SET c_int = 42 WHERE pk = 42";
+    SimpleStatement stmt = new SimpleStatement(query);
+    session().execute(stmt);
+
+    // then
+    String line = normalAppender.waitAndGet(10000);
+    assertThat(line).contains("Query completed normally").contains(query);
+  }
+
+  /** @jira_ticket JAVA-2857 */
+  @Test(groups = "short")
+  @CassandraVersion("2.0.0")
+  public void should_log_bound_statements_without_parameters() throws Exception {
+    // given
+    normal.setLevel(TRACE);
+    queryLogger = QueryLogger.builder().build();
+    cluster().register(queryLogger);
+
+    // when
+    String query = "UPDATE test SET c_int = 42 WHERE pk = 42";
+    PreparedStatement ps = session().prepare(query);
+    BoundStatement bs = ps.bind();
+    session().execute(bs);
+
+    // then
+    String line = normalAppender.waitAndGet(10000);
+    assertThat(line).contains("Query completed normally").contains(query);
+  }
+
+  /** @jira_ticket JAVA-2857 */
+  @Test(groups = "short")
+  @CassandraVersion("2.0.0")
+  public void should_log_built_statements_without_parameters() throws Exception {
+    // given
+    normal.setLevel(TRACE);
+    queryLogger = QueryLogger.builder().build();
+    cluster().register(queryLogger);
+
+    // when
+    // both c_int and pk will be inlined
+    BuiltStatement update = update("test").with(set("c_int", 42)).where(eq("pk", 42));
+    session().execute(update);
+
+    // then
+    String line = normalAppender.waitAndGet(10000);
+    assertThat(line).contains("Query completed normally").contains(update.getQueryString());
+  }
+
   @Test(groups = "short")
   @CassandraVersion("2.0.0")
   public void should_log_non_null_named_parameter_bound_statements() throws Exception {

@@ -5,6 +5,10 @@
   3.x versions get published.
 -->
 
+## 3.10.1
+
+- [bug] JAVA-2857: Fix NPE when built statements without parameters are logged at TRACE level.
+
 ## 3.10.0
 
 - [improvement] JAVA-2676: Don't reschedule flusher after empty runs
