@@ -1047,13 +1047,15 @@ public class CCMBridge implements CCMAccess {
         cassandraConfiguration.remove("rpc_port");
         cassandraConfiguration.remove("thrift_prepared_statements_cache_size_mb");
       }
-      if (isMaterializedViewsDisabledByDefault(cassandraVersion)) {
-        // enable materialized views
-        cassandraConfiguration.put("enable_materialized_views", true);
-      }
-      if (isSasiConfigEnablementRequired(cassandraVersion)) {
-        // enable SASI indexing in config (disabled by default in C* 4.0)
-        cassandraConfiguration.put("enable_sasi_indexes", true);
+      if (!dse) {
+        if (isMaterializedViewsDisabledByDefault(cassandraVersion)) {
+          // enable materialized views
+          cassandraConfiguration.put("enable_materialized_views", true);
+        }
+        if (isSasiConfigEnablementRequired(cassandraVersion)) {
+          // enable SASI indexing in config (disabled by default in C* 4.0)
+          cassandraConfiguration.put("enable_sasi_indexes", true);
+        }
       }
       final CCMBridge ccm =
           new CCMBridge(
