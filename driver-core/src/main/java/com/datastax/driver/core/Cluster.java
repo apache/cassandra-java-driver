@@ -1878,7 +1878,11 @@ public class Cluster implements Closeable {
 
     void reportQuery(Host host, Statement statement, Exception exception, long latencyNanos) {
       for (LatencyTracker tracker : latencyTrackers) {
-        tracker.update(host, statement, exception, latencyNanos);
+        try {
+          tracker.update(host, statement, exception, latencyNanos);
+        } catch (Exception e) {
+          logger.error("Call to latency tracker failed", e);
+        }
       }
     }
 
