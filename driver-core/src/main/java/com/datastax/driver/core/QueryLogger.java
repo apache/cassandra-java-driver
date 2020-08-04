@@ -872,9 +872,9 @@ public abstract class QueryLogger implements LatencyTracker {
     if (remaining == 0) {
       return 0;
     }
-    int numberOfParameters =
-        statement.getValues(protocolVersion(), cluster.getConfiguration().getCodecRegistry())
-            .length;
+    ByteBuffer[] values =
+        statement.getValues(protocolVersion(), cluster.getConfiguration().getCodecRegistry());
+    int numberOfParameters = values == null ? 0 : values.length;
     if (numberOfParameters > 0) {
       int numberOfLoggedParameters;
       if (remaining == -1) {
