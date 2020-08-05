@@ -47,7 +47,7 @@ public class UDTFieldMapperTest extends CCMTestsSupport {
     Session session1 = cluster1.connect();
     // Create type and table
     session1.execute(
-        "create schema if not exists java_509 "
+        "create keyspace if not exists java_509 "
             + "with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };");
     session1.execute("create type java_509.my_tuple (" + "type text, " + "value text);");
     session1.execute(
@@ -89,7 +89,7 @@ public class UDTFieldMapperTest extends CCMTestsSupport {
                 .build());
     Session session1 = cluster1.connect();
     session1.execute(
-        "create schema if not exists java_509b "
+        "create keyspace if not exists java_509b "
             + "with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };");
     session1.execute("use java_509b");
     session1.execute("create type my_tuple (" + "type text, " + "value text);");
