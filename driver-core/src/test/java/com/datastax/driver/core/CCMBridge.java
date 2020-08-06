@@ -173,12 +173,6 @@ public class CCMBridge implements CCMAccess {
     String installDirectory = System.getProperty("cassandra.directory");
     String branch = System.getProperty("cassandra.branch");
 
-    String dseProperty = System.getProperty("dse");
-    // If -Ddse, if the value is empty interpret it as enabled,
-    // otherwise if there is a value, parse as boolean.
-    boolean isDse =
-        dseProperty != null && (dseProperty.isEmpty() || Boolean.parseBoolean(dseProperty));
-
     ImmutableSet.Builder<String> installArgs = ImmutableSet.builder();
     if (installDirectory != null && !installDirectory.trim().isEmpty()) {
       installArgs.add("--install-dir=" + new File(installDirectory).getAbsolutePath());
@@ -188,7 +182,7 @@ public class CCMBridge implements CCMAccess {
       installArgs.add("-v " + inputCassandraVersion);
     }
 
-    if (isDse) {
+    if (isDse()) {
       installArgs.add("--dse");
     }
 
@@ -219,7 +213,7 @@ public class CCMBridge implements CCMAccess {
     }
     ENVIRONMENT_MAP = ImmutableMap.copyOf(envMap);
 
-    if (isDse) {
+    if (isDse()) {
       GLOBAL_DSE_VERSION_NUMBER = VersionNumber.parse(inputCassandraVersion);
       GLOBAL_CASSANDRA_VERSION_NUMBER = CCMBridge.getCassandraVersion(GLOBAL_DSE_VERSION_NUMBER);
       logger.info(
@@ -245,6 +239,11 @@ public class CCMBridge implements CCMAccess {
   /** @return {@link VersionNumber} configured for DSE based on system properties. */
   public static VersionNumber getGlobalDSEVersion() {
     return GLOBAL_DSE_VERSION_NUMBER;
+  }
+
+  public static boolean isDse() {
+    // System property "dse" must be present and evaluate to TRUE to indicate DSE is enabled.
+    return Boolean.getBoolean("dse");
   }
 
   /**
@@ -862,13 +861,13 @@ public class CCMBridge implements CCMAccess {
     int[] nodes = {1};
     private int[] jmxPorts = {};
     private boolean start = true;
-    private boolean dse = false;
+    private boolean dse = isDse();
     private VersionNumber version = null;
-    private Set<String> createOptions = new LinkedHashSet<String>();
-    private Set<String> jvmArgs = new LinkedHashSet<String>();
+    private final Set<String> createOptions = new LinkedHashSet<String>();
+    private final Set<String> jvmArgs = new LinkedHashSet<String>();
     private final Map<String, Object> cassandraConfiguration = Maps.newLinkedHashMap();
     private final Map<String, Object> dseConfiguration = Maps.newLinkedHashMap();
-    private Map<Integer, Workload[]> workloads = new HashMap<Integer, Workload[]>();
+    private final Map<Integer, Workload[]> workloads = new HashMap<Integer, Workload[]>();
 
     private Builder() {
       cassandraConfiguration.put("start_rpc", false);
