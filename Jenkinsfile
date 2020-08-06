@@ -74,6 +74,7 @@ def executeTests() {
       -Dcom.datastax.driver.TEST_BASE_NODE_WAIT=120 \
       -Dcom.datastax.driver.NEW_NODE_DELAY_SECONDS=100 \
       -Dcassandra.version=${CCM_CASSANDRA_VERSION} \
+      -Ddse=${CCM_IS_DSE} \
       -Dccm.java.home=${CCM_JAVA_HOME} \
       -Dccm.path=${CCM_JAVA_HOME}/bin \
       -Dccm.maxNumberOfNodes=3 \
@@ -88,6 +89,7 @@ def executeTests() {
       -Dcom.datastax.driver.TEST_BASE_NODE_WAIT=120 \
       -Dcom.datastax.driver.NEW_NODE_DELAY_SECONDS=100 \
       -Dcassandra.version=${CCM_CASSANDRA_VERSION} \
+      -Ddse=${CCM_IS_DSE} \
       -Dccm.java.home=${CCM_JAVA_HOME} \
       -Dccm.path=${CCM_JAVA_HOME}/bin \
       -Dccm.maxNumberOfNodes=3 \
