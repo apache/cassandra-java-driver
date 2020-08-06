@@ -215,7 +215,6 @@ pipeline {
                 '3.0',       // Previous Apache CassandraⓇ
                 '3.11',      // Current Apache CassandraⓇ
                 '4.0',       // Development Apache CassandraⓇ
-                'ddac-5.1',  // Current DataStax Distribution of Apache CassandraⓇ
                 'dse-4.8',   // Previous EOSL DataStax Enterprise
                 'dse-5.0',   // Long Term Support DataStax Enterprise
                 'dse-5.1',   // Legacy DataStax Enterprise
@@ -251,10 +250,6 @@ pipeline {
                         <tr>
                           <td><strong>4.0</strong></td>
                           <td>Apache Cassandra&reg; v4.x (<b>CURRENTLY UNDER DEVELOPMENT</b>)</td>
-                        </tr>
-                        <tr>
-                          <td><strong>ddac-5.1</strong></td>
-                          <td>DataStax Distribution of Apache Cassandra&reg; v5.1.x</td>
                         </tr>
                         <tr>
                           <td><strong>dse-4.8</strong></td>
@@ -366,8 +361,8 @@ pipeline {
     // schedules only run against release branches (i.e. 3.x, 4.x, 4.5.x, etc.)
     parameterizedCron(branchPatternCron.matcher(env.BRANCH_NAME).matches() ? """
       # Every weeknight (Monday - Friday) around 2:00 AM
-      ### JDK8 tests against 2.1, 3.0, DDAC-5.1, DSE 4.8, DSE 5.0, DSE 5.1, DSE-6.0 and DSE 6.7
-      H 2 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=2.1 3.0 ddac-5.1 dse-4.8 dse-5.0 dse-5.1 dse-6.0 dse-6.7;CI_SCHEDULE_JABBA_VERSION=1.8
+      ### JDK8 tests against 2.1, 3.0, DSE 4.8, DSE 5.0, DSE 5.1, DSE-6.0 and DSE 6.7
+      H 2 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=2.1 3.0 dse-4.8 dse-5.0 dse-5.1 dse-6.0 dse-6.7;CI_SCHEDULE_JABBA_VERSION=1.8
       ### JDK11 tests against 3.11, 4.0, DSE 6.7 and DSE 6.8.0
       H 2 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=3.11 4.0 dse-6.7 dse-6.8.0;CI_SCHEDULE_JABBA_VERSION=openjdk@1.11
       # Every weekend (Sunday) around 12:00 PM noon
@@ -521,7 +516,6 @@ pipeline {
                    '3.0',       // Previous Apache CassandraⓇ
                    '3.11',      // Current Apache CassandraⓇ
                    '4.0',       // Development Apache CassandraⓇ
-                   'ddac-5.1',  // Current DataStax Distribution of Apache CassandraⓇ
                    'dse-4.8',   // Previous EOSL DataStax Enterprise
                    'dse-5.0',   // Last EOSL DataStax Enterprise
                    'dse-5.1',   // Legacy DataStax Enterprise
