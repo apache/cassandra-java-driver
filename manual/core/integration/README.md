@@ -462,11 +462,7 @@ If you don't use either of those features, you can safely exclude the dependency
   <exclusions>
     <exclusion>
       <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-core</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
+      <artifactId>*</artifactId>
     </exclusion>
   </exclusions>
 </dependency>
@@ -507,11 +503,7 @@ If you don't use DSE graph at all, you can exclude the dependencies:
   <exclusions>
     <exclusion>
       <groupId>org.apache.tinkerpop</groupId>
-      <artifactId>gremlin-core</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>org.apache.tinkerpop</groupId>
-      <artifactId>tinkergraph-gremlin</artifactId>
+      <artifactId>*</artifactId>
     </exclusion>
   </exclusions>
 </dependency>
