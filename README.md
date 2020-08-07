@@ -50,7 +50,7 @@ The driver contains the following modules:
   driver releases and important announcements (low frequency).
   [@DataStaxEng](https://twitter.com/datastaxeng) has more news including
   other drivers, Cassandra, and DSE.
-- DOCS: the [manual](http://docs.datastax.com/en/developer/java-driver/3.9/manual/) has quick
+- DOCS: the [manual](http://docs.datastax.com/en/developer/java-driver/3.10/manual/) has quick
   start material and technical details about the driver and its features.
 - API: https://docs.datastax.com/en/drivers/java/3.10
 - GITHUB REPOSITORY: https://github.com/datastax/java-driver
