@@ -1045,7 +1045,7 @@ public class CCMBridge implements CCMAccess {
         }
       }
 
-      if (!isThriftSupported(cassandraVersion)) {
+      if (!isThriftSupported(cassandraVersion, dseVersion)) {
         // remove thrift configuration
         cassandraConfiguration.remove("start_rpc");
         cassandraConfiguration.remove("rpc_port");
@@ -1102,9 +1102,14 @@ public class CCMBridge implements CCMAccess {
       return ccm;
     }
 
-    private static boolean isThriftSupported(VersionNumber cassandraVersion) {
-      // Thrift is removed from some pre-release 4.x versions, make the comparison work for those
-      return cassandraVersion.nextStable().compareTo(VersionNumber.parse("4.0")) < 0;
+    private static boolean isThriftSupported(
+        VersionNumber cassandraVersion, VersionNumber dseVersion) {
+      if (dseVersion == null) {
+        // Thrift is removed from some pre-release 4.x versions, make the comparison work for those
+        return cassandraVersion.nextStable().compareTo(VersionNumber.parse("4.0")) < 0;
+      } else {
+        return dseVersion.nextStable().compareTo(VersionNumber.parse("6.0")) < 0;
+      }
     }
 
     private static boolean isMaterializedViewsDisabledByDefault(VersionNumber cassandraVersion) {
