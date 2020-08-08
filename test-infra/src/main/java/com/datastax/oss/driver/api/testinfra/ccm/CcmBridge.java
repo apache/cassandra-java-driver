@@ -305,7 +305,11 @@ public class CcmBridge implements AutoCloseable {
   }
 
   public void add(int n, String dc) {
-    execute("add", "-i", ipPrefix + n, "-d", dc, "node" + n);
+    if (getDseVersion().isPresent()) {
+      execute("add", "-i", ipPrefix + n, "-d", dc, "node" + n, "--dse");
+    } else {
+      execute("add", "-i", ipPrefix + n, "-d", dc, "node" + n);
+    }
     start(n);
   }
 
