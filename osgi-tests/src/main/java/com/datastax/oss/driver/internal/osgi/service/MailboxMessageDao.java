@@ -17,11 +17,14 @@ package com.datastax.oss.driver.internal.osgi.service;
 
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.osgi.service.MailboxMessage;
 
 @Dao
+@DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
 public interface MailboxMessageDao {
 
   @Insert

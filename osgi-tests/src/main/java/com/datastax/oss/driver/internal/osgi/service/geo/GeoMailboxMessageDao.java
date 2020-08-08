@@ -17,12 +17,15 @@ package com.datastax.oss.driver.internal.osgi.service.geo;
 
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.osgi.service.geo.GeoMailboxMessage;
 import com.datastax.oss.driver.internal.osgi.service.MailboxMessageDao;
 
 @Dao
+@DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
 public interface GeoMailboxMessageDao extends MailboxMessageDao {
 
   @Insert

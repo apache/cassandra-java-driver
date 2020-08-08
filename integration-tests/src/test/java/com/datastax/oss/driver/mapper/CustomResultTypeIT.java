@@ -25,12 +25,14 @@ import com.datastax.oss.driver.api.mapper.MapperBuilder;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
+import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Delete;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -131,6 +133,7 @@ public class CustomResultTypeIT extends InventoryITBase {
     assertThat(selectedProduct).isNull();
   }
 
+  @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
   public interface ListenableFutureDao<EntityT> {
 
     @Select
