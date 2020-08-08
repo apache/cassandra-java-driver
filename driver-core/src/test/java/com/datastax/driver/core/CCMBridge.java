@@ -902,6 +902,7 @@ public class CCMBridge implements CCMAccess {
     /** Enables SSL encryption. */
     public Builder withSSL() {
       cassandraConfiguration.put("client_encryption_options.enabled", "true");
+      cassandraConfiguration.put("client_encryption_options.optional", "false");
       cassandraConfiguration.put(
           "client_encryption_options.keystore", DEFAULT_SERVER_KEYSTORE_FILE.getAbsolutePath());
       cassandraConfiguration.put(
