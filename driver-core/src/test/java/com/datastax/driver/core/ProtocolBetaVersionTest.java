@@ -21,11 +21,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.driver.core.utils.CassandraVersion;
+import org.testng.SkipException;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /** Tests for the new USE_BETA flag introduced in protocol v5 and Cassandra 3.10. */
 @CassandraVersion("3.10")
 public class ProtocolBetaVersionTest extends CCMTestsSupport {
+
+  @BeforeClass
+  public void checkNotCassandra4OrHigher() {
+    if (ccm().getCassandraVersion().getMajor() > 3) {
+      throw new SkipException(
+          "ProtocolBetaVersionTest should only be executed against C* versions >= 3.10 and < 4.0");
+    }
+  }
 
   /**
    * Verifies that the cluster builder fails when version is explicitly set and user attempts to set
@@ -99,9 +109,12 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
    * Verifies that the driver can connect to 3.10 with the following combination of options: Version
    * UNSET Flag SET Expected version: V5
    *
+   * <p>Note: Since driver 3.10, and due to JAVA-2772, it is not possible anymore to connect with v5
+   * to a Cassandra 3.x cluster.
+   *
    * @jira_ticket JAVA-1248
    */
-  @Test(groups = "short")
+  @Test(groups = "short", enabled = false)
   public void should_connect_with_beta_when_no_version_explicitly_required_and_flag_set()
       throws Exception {
     // Note: when the driver's ProtocolVersion.NEWEST_SUPPORTED will be incremented to V6 or higher
