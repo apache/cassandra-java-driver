@@ -23,13 +23,13 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-parent</artifactId>
-  <version>4.7.2-SNAPSHOT</version>
+  <version>4.7.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>DataStax Java driver for Apache Cassandra(R)</name>
-  <description>A driver for Apache Cassandra(R) 2.1+ that works exclusively with the Cassandra Query Language version 3 (CQL3) and Cassandra's native protocol versions 3 and above.</description>
-  <url>https://github.com/datastax/java-driver</url>
+  <name>Java Driver for Scylla and Apache Cassandra</name>
+  <description>A driver for Scylla and Apache Cassandra(R) 2.1+ that works exclusively with the Cassandra Query Language version 3 (CQL3) and Cassandra's native protocol versions 3 and above.</description>
+  <url>https://github.com/scylladb/java-driver</url>
   <inceptionYear>2017</inceptionYear>
   <modules>
     <module>core</module>
@@ -88,7 +88,7 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.datastax.oss</groupId>
+        <groupId>com.scylladb</groupId>
         <artifactId>java-driver-core</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
@@ -486,6 +486,15 @@
         <plugin>
           <artifactId>maven-deploy-plugin</artifactId>
           <version>2.7</version>
+          <executions>
+            <execution>
+              <id>default-deploy</id>
+              <phase>deploy</phase>
+              <goals>
+                <goal>deploy</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <artifactId>maven-dependency-plugin</artifactId>
@@ -648,8 +657,8 @@
         <configuration>
           <serverId>ossrh</serverId>
           <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-          <autoReleaseAfterClose>false</autoReleaseAfterClose>
-          <skipLocalStaging>true</skipLocalStaging>
+          <autoReleaseAfterClose>true</autoReleaseAfterClose>
+          <!-- skipLocalStaging>true</skipLocalStaging -->
         </configuration>
       </plugin>
       <plugin>
@@ -772,12 +781,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <configuration>
           <tagNameFormat>@{project.version}</tagNameFormat>
           <autoVersionSubmodules>true</autoVersionSubmodules>
-          <useReleaseProfile>false</useReleaseProfile>
+          <!-- useReleaseProfile>false</useReleaseProfile>
           <releaseProfiles>release</releaseProfiles>
-          <goals>deploy</goals>
+          <goals>deploy</goals-->
+          <pushChanges>true</pushChanges>
+          <mavenExecutorId>forked-path</mavenExecutorId>
+          <arguments>-Dgpg.passphrase=${gpg.passphrase}</arguments>
           <!-- Our integration tests are too long to run during a release, we run them in CI -->
           <arguments>-DskipITs</arguments>
         </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.scm</groupId>
+            <artifactId>maven-scm-provider-gitexe</artifactId>
+            <version>1.9.5</version>
+          </dependency>
+        </dependencies>
       </plugin>
       <plugin>
         <groupId>org.apache.felix</groupId>
@@ -816,10 +835,43 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </build>
   <profiles>
     <profile>
+      <id>release-sign-artifacts</id>
+      <activation>
+        <property>
+          <name>performRelease</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+                <configuration>
+                  <gpgArguments>
+                    <arg>--pinentry-mode</arg>
+                    <arg>loopback</arg>
+                  </gpgArguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
       <id>release</id>
       <build>
         <plugins>
           <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
             <executions>
               <execution>
@@ -836,6 +888,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </profile>
   </profiles>
   <distributionManagement>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
     <repository>
       <id>ossrh</id>
       <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
@@ -850,15 +906,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </license>
   </licenses>
   <scm>
-    <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
-    <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
-    <url>https://github.com/datastax/java-driver</url>
+    <connection>scm:git:https://github.com/scylladb/java-driver</connection>
+    <developerConnection>scm:git:https://github.com/scylladb/java-driver</developerConnection>
+    <url>https://github.com/scylladb/java-driver</url>
     <tag>HEAD</tag>
   </scm>
   <developers>
     <developer>
       <name>Various</name>
       <organization>DataStax</organization>
+    </developer>
+    <developer>
+      <name>Various</name>
+      <organization>ScyllaDB</organization>
     </developer>
   </developers>
 </project>

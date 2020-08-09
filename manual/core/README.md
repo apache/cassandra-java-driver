@@ -5,7 +5,7 @@ following coordinates:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
 </dependency>

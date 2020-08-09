@@ -11,7 +11,7 @@ To import the driver's BOM, add the following section in your application's own 
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.datastax.oss</groupId>
+        <groupId>com.scylladb</groupId>
         <artifactId>java-driver-bom</artifactId>
         <version>4.7.0</version>
         <type>pom</type>
@@ -28,7 +28,7 @@ This allows you to omit the version when you later reference the driver artifact
   ...
   <dependencies>
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>com.scylladb</groupId>
       <artifactId>java-driver-query-builder</artifactId>
     </dependency>
   </dependencies>
@@ -52,7 +52,7 @@ scope:
 ```xml
   <dependencies>
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>com.scylladb</groupId>
       <artifactId>java-driver-mapper-processor</artifactId>
       <scope>provided</scope>
     </dependency>
@@ -70,7 +70,7 @@ good idea to extract a property to keep it in sync with the BOM:
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.datastax.oss</groupId>
+        <groupId>com.scylladb</groupId>
         <artifactId>java-driver-bom</artifactId>
         <version>${java-driver.version}</version>
         <type>pom</type>
@@ -81,7 +81,7 @@ good idea to extract a property to keep it in sync with the BOM:
   <dependencies>
     <!-- Regular dependency, no need to repeat the version: -->
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>com.scylladb</groupId>
       <artifactId>java-driver-mapper-runtime</artifactId>
     </dependency>
   </dependencies>
@@ -93,7 +93,7 @@ good idea to extract a property to keep it in sync with the BOM:
           <annotationProcessorPaths>
             <!-- Annotation processor, can't use the BOM => explicit version -->
             <path>
-              <groupId>com.datastax.oss</groupId>
+              <groupId>com.scylladb</groupId>
               <artifactId>java-driver-mapper-processor</artifactId>
               <version>${java-driver.version}</version>
             </path>

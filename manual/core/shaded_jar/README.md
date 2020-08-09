@@ -10,7 +10,7 @@ dependency to `java-driver-core` by:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-core-shaded</artifactId>
   <version>${driver.version}</version>
 </dependency>
@@ -21,18 +21,18 @@ you need to remove its dependency to the non-shaded JAR:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-core-shaded</artifactId>
   <version>${driver.version}</version>
 </dependency>
 
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-query-builder</artifactId>
   <version>${driver.version}</version>
   <exclusions>
     <exclusion>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>com.scylladb</groupId>
       <artifactId>java-driver-core</artifactId>
     </exclusion>
   </exclusions>
@@ -51,7 +51,7 @@ Notes:
   
     ```xml
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>com.scylladb</groupId>
       <artifactId>java-driver-core</artifactId>
       <version>${driver.version}</version>
     </dependency>

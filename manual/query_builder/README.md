@@ -12,7 +12,7 @@ To use it in your application, add the following dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-query-builder</artifactId>
   <version>${driver.version}</version>
 </dependency>

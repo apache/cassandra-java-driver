@@ -114,7 +114,7 @@ dependencies, and tell Maven that we're going to use Java 8:
 
   <dependencies>
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>com.scylladb</groupId>
       <artifactId>java-driver-core</artifactId>
       <version>${driver.version}</version>
     </dependency>
@@ -354,7 +354,7 @@ In that case, you can exclude the dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -382,7 +382,7 @@ are not available on your platform, you can exclude the following dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -412,7 +412,7 @@ and never call [Session.getMetrics] anywhere in your application, you can remove
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -433,7 +433,7 @@ If all of these metrics are disabled, you can remove the dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -456,7 +456,7 @@ If you don't use either of those features, you can safely exclude the dependency
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -481,7 +481,7 @@ If you don't use geospatial types anywhere in your application, you can exclude 
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -501,7 +501,7 @@ If you don't use DSE graph at all, you can exclude the dependencies:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -531,7 +531,7 @@ If you never call any of the `executeReactive` methods, you can exclude the depe
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -557,7 +557,7 @@ exclude them:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>

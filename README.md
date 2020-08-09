@@ -1,41 +1,38 @@
-# Datastax Java Driver for Apache Cassandra®
+# Java Driver for Scylla and Apache Cassandra®
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.datastax.oss/java-driver-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.datastax.oss/java-driver-core)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.scylladb/java-driver-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.scylladb/java-driver-core)
 
 *If you're reading this on github.com, please note that this is the readme for the development 
 version and that some features described here might not yet have been released. You can find the
 documentation for latest version through [DataStax Docs] or via the release tags, e.g. 
 [4.7.0](https://github.com/datastax/java-driver/tree/4.7.0).*
 
-A modern, feature-rich and highly tunable Java client library for [Apache Cassandra®] \(2.1+) and 
-[DataStax Enterprise] \(4.7+), and [DataStax Astra], using exclusively Cassandra's binary protocol
-and Cassandra Query Language (CQL) v3.
+A modern, feature-rich and highly tunable Java client library for Scylla and [Apache Cassandra®] \(2.1+),
+using exclusively Cassandra's binary protocol and Cassandra Query Language (CQL) v3.
 
 [DataStax Docs]: http://docs.datastax.com/en/developer/java-driver/
 [Apache Cassandra®]: http://cassandra.apache.org/
-[DataStax Enterprise]: https://www.datastax.com/products/datastax-enterprise
-[DataStax Astra]: https://www.datastax.com/products/datastax-astra
 
 ## Getting the driver
 
-The driver artifacts are published in Maven central, under the group id [com.datastax.oss]; there
+The driver artifacts are published in Maven central, under the group id [com.scylladb]; there
 are multiple modules, all prefixed with `java-driver-`.
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
 </dependency>
 
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-query-builder</artifactId>
   <version>${driver.version}</version>
 </dependency>
 
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-mapper-runtime</artifactId>
   <version>${driver.version}</version>
 </dependency>
@@ -47,17 +44,13 @@ dependency if you plan to use it.
 Refer to each module's manual for more details ([core](manual/core/), [query
 builder](manual/query_builder/), [mapper](manual/mapper)).
 
-[com.datastax.oss]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.datastax.oss%22
+[com.scylladb]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.scylladb%22
 
 ## Compatibility
 
-The driver is compatible with Apache Cassandra® 2.1 and higher, DataStax Enterprise 4.7 and
-higher, and DataStax Astra.
+The driver is compatible with Scylla and Apache Cassandra® 2.1 and higher.
 
 It requires Java 8 or higher.
-
-Disclaimer: Some DataStax/DataStax Enterprise products might partially work on big-endian systems,
-but DataStax does not officially support these systems.
 
 ## Migrating from previous versions
 
@@ -72,16 +65,12 @@ See the [upgrade guide](upgrade_guide/) for details.
 * [API docs]
 * Bug tracking: [JIRA]
 * [Mailing list]
-* Twitter: [@dsJavaDriver] tweets Java driver releases and important announcements (low frequency).
-    [@DataStaxEng] has more news, including other drivers, Cassandra, and DSE.
 * [Changelog]
 * [FAQ]
 
 [API docs]: https://docs.datastax.com/en/drivers/java/4.7
 [JIRA]: https://datastax-oss.atlassian.net/browse/JAVA
 [Mailing list]: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
-[@dsJavaDriver]: https://twitter.com/dsJavaDriver
-[@DataStaxEng]: https://twitter.com/datastaxeng
 [Changelog]: changelog/
 [FAQ]: faq/
 

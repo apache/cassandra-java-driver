@@ -16,17 +16,22 @@
     limitations under the License.
 
 -->
+<!--
+    Copyright (C) 2020 ScyllaDB
+
+    Modified by ScyllaDB
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>com.datastax.oss</groupId>
+    <groupId>com.scylladb</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.7.2-SNAPSHOT</version>
+    <version>4.7.2.0-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-distribution</artifactId>
   <!-- Should be pom but Javadoc generation requires a "classpath-capable" package -->
   <packaging>jar</packaging>
-  <name>DataStax Java driver for Apache Cassandra(R) - binary distribution</name>
+  <name>Java driver for Scylla and Apache Cassandra(R) - binary distribution</name>
   <!--
     These dependencies are only here to ensure proper build order and proper inclusion of binaries
     in the final tarball
@@ -65,7 +70,7 @@
     </dependency>
   </dependencies>
   <build>
-    <finalName>datastax-java-driver-${project.version}</finalName>
+    <finalName>scylla-java-driver-${project.version}</finalName>
     <plugins>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
@@ -109,6 +114,14 @@
           <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <version>1.5</version>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
   <profiles>
@@ -127,8 +140,8 @@
                 </goals>
                 <configuration>
                   <includeDependencySources>true</includeDependencySources>
-                  <doctitle>DataStax Java driver for Apache Cassandra® ${project.version} API</doctitle>
-                  <windowtitle>DataStax Java driver for Apache Cassandra(R) ${project.version} API</windowtitle>
+                  <doctitle>Java driver for Scylla and Apache Cassandra® ${project.version} API</doctitle>
+                  <windowtitle>Java driver for Scylla and Apache Cassandra(R) ${project.version} API</windowtitle>
                   <additionalDependencies>
                     <additionalDependency>
                       <groupId>org.lz4</groupId>

@@ -16,47 +16,52 @@
     limitations under the License.
 
 -->
+<!--
+    Copyright (C) 2020 ScyllaDB
+
+    Modified by ScyllaDB
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>com.datastax.oss</groupId>
+    <groupId>com.scylladb</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.7.2-SNAPSHOT</version>
+    <version>4.7.2.0-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-bom</artifactId>
   <packaging>pom</packaging>
-  <name>DataStax Java driver for Apache Cassandra(R) - Bill Of Materials</name>
+  <name>Java driver for Scylla and Apache Cassandra(R) - Bill Of Materials</name>
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.datastax.oss</groupId>
+        <groupId>com.scylladb</groupId>
         <artifactId>java-driver-core</artifactId>
-        <version>4.7.2-SNAPSHOT</version>
+        <version>4.7.2.0-SNAPSHOT</version>
       </dependency>
       <dependency>
-        <groupId>com.datastax.oss</groupId>
+        <groupId>com.scylladb</groupId>
         <artifactId>java-driver-core-shaded</artifactId>
-        <version>4.7.2-SNAPSHOT</version>
+        <version>4.7.2.0-SNAPSHOT</version>
       </dependency>
       <dependency>
-        <groupId>com.datastax.oss</groupId>
+        <groupId>com.scylladb</groupId>
         <artifactId>java-driver-mapper-processor</artifactId>
-        <version>4.7.2-SNAPSHOT</version>
+        <version>4.7.2.0-SNAPSHOT</version>
       </dependency>
       <dependency>
-        <groupId>com.datastax.oss</groupId>
+        <groupId>com.scylladb</groupId>
         <artifactId>java-driver-mapper-runtime</artifactId>
-        <version>4.7.2-SNAPSHOT</version>
+        <version>4.7.2.0-SNAPSHOT</version>
       </dependency>
       <dependency>
-        <groupId>com.datastax.oss</groupId>
+        <groupId>com.scylladb</groupId>
         <artifactId>java-driver-query-builder</artifactId>
-        <version>4.7.2-SNAPSHOT</version>
+        <version>4.7.2.0-SNAPSHOT</version>
       </dependency>
       <dependency>
-        <groupId>com.datastax.oss</groupId>
+        <groupId>com.scylladb</groupId>
         <artifactId>java-driver-test-infra</artifactId>
-        <version>4.7.2-SNAPSHOT</version>
+        <version>4.7.2.0-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>com.datastax.oss</groupId>

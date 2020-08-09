@@ -129,9 +129,9 @@ The core driver is available from:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-core</artifactId>
-  <version>4.0.0</version>
+  <version>4.8.0-scylla-0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -496,9 +496,9 @@ The query builder is now distributed as a separate artifact:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>com.scylladb</groupId>
   <artifactId>java-driver-query-builder</artifactId>
-  <version>4.0.0</version>
+  <version>4.8.0-scylla-0-SNAPSHOT</version>
 </dependency>
 ```
 
