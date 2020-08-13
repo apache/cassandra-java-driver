@@ -193,8 +193,10 @@ class Connection {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
               writer.decrementAndGet();
+              // Note: future.channel() can be null in some error cases, so we need to guard against
+              // it in the rest of the code below.
               channel = future.channel();
-              if (isClosed()) {
+              if (isClosed() && channel != null) {
                 channel
                     .close()
                     .addListener(
@@ -208,7 +210,9 @@ class Connection {
                           }
                         });
               } else {
-                Connection.this.factory.allChannels.add(channel);
+                if (channel != null) {
+                  Connection.this.factory.allChannels.add(channel);
+                }
                 if (!future.isSuccess()) {
                   if (logger.isDebugEnabled())
                     logger.debug(
@@ -221,6 +225,7 @@ class Connection {
                       new TransportException(
                           Connection.this.endPoint, "Cannot connect", future.cause()));
                 } else {
+                  assert channel != null;
                   logger.debug(
                       "{} Connection established, initializing transport", Connection.this);
                   channel.closeFuture().addListener(new ChannelCloseListener());
