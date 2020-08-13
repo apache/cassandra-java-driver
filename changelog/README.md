@@ -5,6 +5,10 @@
   3.x versions get published.
 -->
 
+## 3.10.2 (in progress)
+
+- [bug] JAVA-2860: Avoid NPE if channel initialization crashes
+
 ## 3.10.1
 
 - [bug] JAVA-2857: Fix NPE when built statements without parameters are logged at TRACE level.
