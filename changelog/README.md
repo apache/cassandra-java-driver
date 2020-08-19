@@ -4,6 +4,7 @@
 
 ### 4.9.0 (in progress)
 
+- [bug] JAVA-2863: Reintroduce mapper processor dependency to SLF4J
 
 ### 4.8.0
 
