@@ -41,6 +41,13 @@ configuration (make sure you use version 3.5 or higher):
             <artifactId>java-driver-mapper-processor</artifactId>
             <version>${java-driver.version}</version>
           </path>
+          <!-- Optional: add this if you want to avoid the SLF4J warning "Failed to load class
+            StaticLoggerBinder, defaulting to no-operation implementation" when compiling. -->
+          <path>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-nop</artifactId>
+            <version>1.7.26</version>
+          </path>
         </annotationProcessorPaths>
       </configuration>
     </plugin>
