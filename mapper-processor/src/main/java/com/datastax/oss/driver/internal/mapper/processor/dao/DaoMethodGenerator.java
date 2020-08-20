@@ -84,7 +84,6 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Invalid return type: %s methods must return one of %s",
               annotationName,
               validKinds.stream()
@@ -120,7 +119,6 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
               .getMessager()
               .warn(
                   methodElement,
-                  processedType,
                   "Invalid "
                       + valueDescription
                       + " value: "
@@ -137,7 +135,6 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
               .getMessager()
               .warn(
                   methodElement,
-                  processedType,
                   "Invalid "
                       + valueDescription
                       + " value: "
@@ -214,7 +211,6 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
               .getMessager()
               .error(
                   methodElement,
-                  processedType,
                   "Parameter %s is declared in a compiled method "
                       + "and refers to a bind marker "
                       + "and thus must be annotated with @%s",
@@ -235,7 +231,6 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
             .getMessager()
             .warn(
                 methodElement,
-                processedType,
                 "Parameter %s does not refer to a bind marker, " + "@%s annotation will be ignored",
                 parameter.getSimpleName(),
                 CqlName.class.getSimpleName());
@@ -310,7 +305,6 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
               .getMessager()
               .warn(
                   methodElement,
-                  processedType,
                   "Too many entity classes: %s must have at most one 'entityClass' argument "
                       + "(will use the first one: %s)",
                   annotation.getSimpleName(),

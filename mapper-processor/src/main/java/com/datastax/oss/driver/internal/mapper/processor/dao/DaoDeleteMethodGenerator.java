@@ -94,7 +94,6 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Invalid annotation parameters: %s cannot have both ifExists and customIfClause",
               Delete.class.getSimpleName());
       return Optional.empty();
@@ -118,7 +117,6 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Wrong number of parameters: %s methods with no custom clause "
                   + "must take either an entity instance, or the primary key components",
               Delete.class.getSimpleName());
@@ -139,7 +137,6 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
             .getMessager()
             .error(
                 methodElement,
-                processedType,
                 "Invalid parameter list: %s methods that have a custom where clause "
                     + "must not take an Entity (%s) as a parameter",
                 Delete.class.getSimpleName(),
@@ -154,7 +151,6 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
             .getMessager()
             .error(
                 methodElement,
-                processedType,
                 "Missing entity class: %s methods that do not operate on an entity "
                     + "instance must have an 'entityClass' argument",
                 Delete.class.getSimpleName());
@@ -178,7 +174,6 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
                 .getMessager()
                 .error(
                     methodElement,
-                    processedType,
                     "Invalid parameter list: %s methods that have a custom if clause"
                         + "must specify the entire primary key (expected primary keys of %s: %s)",
                     Delete.class.getSimpleName(),
@@ -270,7 +265,6 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
             .getMessager()
             .error(
                 methodElement,
-                processedType,
                 "Wrong number of parameters: %s methods can only have additional "
                     + "parameters if they specify a custom WHERE or IF clause",
                 Delete.class.getSimpleName());

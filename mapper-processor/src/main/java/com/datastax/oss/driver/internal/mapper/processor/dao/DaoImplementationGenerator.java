@@ -256,7 +256,6 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
                 .getMessager()
                 .error(
                     element,
-                    interfaceElement,
                     "Could not resolve type parameter %s "
                         + "on %s from child interfaces. This error usually means an interface "
                         + "was inappropriately annotated with @%s. Interfaces should only be annotated "
@@ -325,7 +324,6 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
                   .getMessager()
                   .error(
                       methodElement,
-                      interfaceElement,
                       "Unrecognized method signature: no implementation will be generated");
             } else {
               maybeGenerator.flatMap(MethodGenerator::generate).ifPresent(classBuilder::addMethod);

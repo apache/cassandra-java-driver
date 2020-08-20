@@ -30,7 +30,7 @@ public class DaoCompiledMethodGeneratorTest extends DaoMethodGeneratorTest {
   @Test
   public void should_fail_with_expected_error() {
     should_fail_with_expected_error(
-        "[findByDescriptionCompiledWrong(java.lang.String) inherited from CompiledProductDao] "
+        "[CompiledProductDao.findByDescriptionCompiledWrong] "
             + "Parameter arg0 is declared in a compiled method "
             + "and refers to a bind marker "
             + "and thus must be annotated with @CqlName",

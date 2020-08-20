@@ -125,13 +125,13 @@ public class MapperProcessor extends AbstractProcessor {
           generatorFactory.apply(typeElement).generate();
         } catch (Exception e) {
           messager.error(
-              (TypeElement) element,
+              element,
               "Unexpected error while writing generated code: %s",
               Throwables.getStackTraceAsString(e));
         }
       } else {
         messager.error(
-            (TypeElement) element,
+            element,
             "Only %s elements can be annotated with %s (got %s)",
             expectedKind,
             annotationClass.getSimpleName(),

@@ -256,7 +256,6 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Can't parse ordering '%s', expected a column name followed by ASC or DESC",
               orderingSpec);
       return;

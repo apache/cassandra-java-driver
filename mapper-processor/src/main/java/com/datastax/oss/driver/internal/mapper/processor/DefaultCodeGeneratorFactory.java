@@ -82,8 +82,7 @@ public class DefaultCodeGeneratorFactory implements CodeGeneratorFactory {
       MapperImplementationSharedCode enclosingClass) {
     if (methodElement.getAnnotation(DaoFactory.class) != null) {
       return Optional.of(
-          new MapperDaoFactoryMethodGenerator(
-              methodElement, processedType, enclosingClass, context));
+          new MapperDaoFactoryMethodGenerator(methodElement, enclosingClass, context));
     } else {
       return Optional.empty();
     }
