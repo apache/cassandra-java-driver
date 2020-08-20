@@ -68,7 +68,6 @@ public class DaoGetEntityMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Wrong number of parameters: %s methods must have exactly one",
               GetEntity.class.getSimpleName());
       return Optional.empty();
@@ -85,7 +84,6 @@ public class DaoGetEntityMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Invalid parameter type: %s methods must take a %s, %s or %s",
               GetEntity.class.getSimpleName(),
               GettableByName.class.getSimpleName(),
@@ -108,7 +106,6 @@ public class DaoGetEntityMethodGenerator extends DaoMethodGenerator {
               .getMessager()
               .error(
                   methodElement,
-                  processedType,
                   "Invalid return type: %s methods must return %s if the argument is %s",
                   GetEntity.class.getSimpleName(),
                   PagingIterable.class.getSimpleName(),
@@ -123,7 +120,6 @@ public class DaoGetEntityMethodGenerator extends DaoMethodGenerator {
               .getMessager()
               .error(
                   methodElement,
-                  processedType,
                   "Invalid return type: %s methods must return %s if the argument is %s",
                   GetEntity.class.getSimpleName(),
                   MappedAsyncPagingIterable.class.getSimpleName(),
@@ -139,7 +135,6 @@ public class DaoGetEntityMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Invalid return type: "
                   + "%s methods must return a %s-annotated class, or a %s or %s thereof",
               GetEntity.class.getSimpleName(),

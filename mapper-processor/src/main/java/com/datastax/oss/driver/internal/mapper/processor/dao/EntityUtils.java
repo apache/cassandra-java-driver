@@ -131,7 +131,6 @@ public class EntityUtils {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Invalid parameter list: %s methods%s "
                   + "must at least specify partition key components "
                   + "(expected partition key of %s: %s)",
@@ -147,7 +146,6 @@ public class EntityUtils {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Invalid parameter list: %s methods%s "
                   + "must match the primary key components in the exact order "
                   + "(expected primary key of %s: %s). Too many parameters provided",
@@ -167,7 +165,6 @@ public class EntityUtils {
             .getMessager()
             .error(
                 methodElement,
-                processedType,
                 "Invalid parameter list: %s methods%s "
                     + "must match the primary key components in the exact order "
                     + "(expected primary key of %s: %s). Mismatch at index %d: %s should be %s",

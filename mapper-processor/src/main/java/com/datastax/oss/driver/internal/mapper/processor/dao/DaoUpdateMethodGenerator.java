@@ -107,7 +107,6 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "%s methods must take the entity to update as the first parameter",
               Update.class.getSimpleName());
       return Optional.empty();
@@ -240,7 +239,6 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Invalid annotation parameters: %s cannot have both ifExists and customIfClause",
               Update.class.getSimpleName());
     }

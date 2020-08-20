@@ -85,7 +85,6 @@ public class DaoIncrementMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Missing entity class: %s methods must always have an 'entityClass' argument",
               Increment.class.getSimpleName());
       return Optional.empty();
@@ -114,7 +113,6 @@ public class DaoIncrementMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Invalid parameter list: %s methods must specify the entire primary key "
                   + "(expected primary keys of %s: %s)",
               Increment.class.getSimpleName(),
@@ -152,7 +150,6 @@ public class DaoIncrementMethodGenerator extends DaoMethodGenerator {
             .getMessager()
             .error(
                 methodElement,
-                processedType,
                 "Invalid argument type: increment parameters of %s methods can only be "
                     + "primitive longs or java.lang.Long. Offending parameter: '%s' (%s)",
                 Increment.class.getSimpleName(),
@@ -239,7 +236,6 @@ public class DaoIncrementMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "%s method must take at least one parameter representing an increment to a "
                   + "counter column",
               Increment.class.getSimpleName());
@@ -283,7 +279,6 @@ public class DaoIncrementMethodGenerator extends DaoMethodGenerator {
               .getMessager()
               .error(
                   parameter,
-                  processedType,
                   "Could not match '%s' with any counter column in %s (expected one of: %s). "
                       + "You can also specify a CQL name directly with @%s.",
                   parameter.getSimpleName(),
