@@ -816,6 +816,13 @@ public enum DefaultDriverOption implements DriverOption {
    * <p>Value-type: {@link java.time.Duration Duration}
    */
   METRICS_NODE_EXPIRE_AFTER("advanced.metrics.node.expire-after"),
+
+  /**
+   * The classname of the desired MetricsFactory implementation.
+   *
+   * <p>Value-type: {@link String}
+   */
+  METRICS_FACTORY_CLASS("advanced.metrics.factory.class"),
   ;
 
   private final String path;

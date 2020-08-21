@@ -4,6 +4,7 @@
 
 ### 4.9.0 (in progress)
 
+- [improvement] JAVA-2855: Allow selection of the metrics framework via the config
 - [improvement] JAVA-2864: Revisit mapper processor's messaging
 - [new feature] JAVA-2816: Support immutability and fluent accessors in the mapper
 - [new feature] JAVA-2721: Add counter support in the mapper

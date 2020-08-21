@@ -321,6 +321,7 @@ public class OptionsMap implements Serializable {
     map.put(
         TypedDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_INTERVAL,
         Duration.ofMinutes(5));
+    map.put(TypedDriverOption.METRICS_FACTORY_CLASS, "DropwizardMetricsFactory");
     map.put(TypedDriverOption.METRICS_SESSION_GRAPH_REQUESTS_HIGHEST, Duration.ofSeconds(12));
     map.put(TypedDriverOption.METRICS_SESSION_GRAPH_REQUESTS_DIGITS, 3);
     map.put(TypedDriverOption.METRICS_SESSION_GRAPH_REQUESTS_INTERVAL, Duration.ofMinutes(5));

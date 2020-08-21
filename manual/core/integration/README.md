@@ -407,9 +407,10 @@ enable compression. See the [Compression](../compression/) page for more details
 The driver exposes [metrics](../metrics/) through the
 [Dropwizard](http://metrics.dropwizard.io/4.0.0/manual/index.html) library.
 
-The dependency is declared as required, but metrics are optional. If you've disabled all metrics,
-or if you are using a [different metrics framework](../../developer/common/metrics), and you never 
-call [Session.getMetrics] anywhere in your application, then you can remove the dependency:
+The dependency is declared as required, but metrics are optional. If you've disabled all metrics, or
+if you are using a [different metrics framework](../metrics/#changing-the-metrics-frameworks), and
+you never call [Session.getMetrics] anywhere in your application, then you can remove the
+dependency:
 
 ```xml
 <dependency>
