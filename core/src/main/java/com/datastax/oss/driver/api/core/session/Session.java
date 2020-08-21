@@ -197,8 +197,15 @@ public interface Session extends AsyncAutoCloseable {
   Optional<CqlIdentifier> getKeyspace();
 
   /**
-   * Returns a gateway to the driver's metrics, or {@link Optional#empty()} if all metrics are
-   * disabled.
+   * Returns a gateway to the driver's DropWizard metrics, or {@link Optional#empty()} if all
+   * metrics are disabled, or if the driver has been configured to use MicroProfile or Micrometer
+   * instead of DropWizard (see {@code advanced.metrics.factory.class} in the configuration).
+   *
+   * <p>{@link Metrics} was originally intended to allow programmatic access to the metrics, but it
+   * has a hard dependency to the DropWizard API, which makes it unsuitable for alternative metric
+   * frameworks. A workaround is to inject your own metric registry with {@link
+   * SessionBuilder#withMetricRegistry(Object)} when you build the session. You can then use the
+   * framework's proprietary APIs to retrieve the metrics from the registry.
    */
   @NonNull
   Optional<Metrics> getMetrics();

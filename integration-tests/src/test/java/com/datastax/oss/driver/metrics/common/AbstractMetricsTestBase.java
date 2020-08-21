@@ -18,13 +18,13 @@ package com.datastax.oss.driver.metrics.common;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
-import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import java.util.Collection;
@@ -47,7 +47,11 @@ public abstract class AbstractMetricsTestBase {
           .map(DefaultNodeMetric::getPath)
           .collect(Collectors.toList());
 
-  protected abstract SessionBuilder<?, ?> getSessionBuilder();
+  protected Object getMetricRegistry() {
+    return null;
+  }
+
+  protected abstract String getMetricFactoryClass();
 
   protected abstract void assertMetrics(CqlSession session);
 
@@ -59,10 +63,13 @@ public abstract class AbstractMetricsTestBase {
         SessionUtils.configLoaderBuilder()
             .withStringList(DefaultDriverOption.METRICS_SESSION_ENABLED, ENABLED_SESSION_METRICS)
             .withStringList(DefaultDriverOption.METRICS_NODE_ENABLED, ENABLED_NODE_METRICS)
+            .withString(DefaultDriverOption.METRICS_FACTORY_CLASS, getMetricFactoryClass())
             .build();
-    SessionBuilder<?, ?> builder =
-        getSessionBuilder().addContactEndPoints(CCM_RULE.getContactPoints());
-    try (CqlSession session = (CqlSession) builder.withConfigLoader(loader).build()) {
+    CqlSessionBuilder builder =
+        CqlSession.builder().addContactEndPoints(CCM_RULE.getContactPoints());
+    try (CqlSession session =
+        (CqlSession)
+            builder.withConfigLoader(loader).withMetricRegistry(getMetricRegistry()).build()) {
       for (int i = 0; i < 10; i++) {
         session.execute("SELECT release_version FROM system.local");
       }

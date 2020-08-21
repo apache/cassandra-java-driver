@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.metrics.micrometer;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
@@ -53,8 +54,11 @@ public class MicrometerMetricsFactory implements MetricsFactory {
   private final SessionMetricUpdater sessionUpdater;
   private final Cache<Node, MicrometerNodeMetricUpdater> metricsCache;
 
-  public MicrometerMetricsFactory(
-      InternalDriverContext context, MeterRegistry registry, Ticker ticker) {
+  public MicrometerMetricsFactory(DriverContext context) {
+    this((InternalDriverContext) context, Ticker.systemTicker());
+  }
+
+  public MicrometerMetricsFactory(InternalDriverContext context, Ticker ticker) {
     this.context = context;
     String logPrefix = context.getSessionName();
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
@@ -87,9 +91,26 @@ public class MicrometerMetricsFactory implements MetricsFactory {
       this.registry = null;
       this.sessionUpdater = NoopSessionMetricUpdater.INSTANCE;
     } else {
-      this.registry = registry;
-      this.sessionUpdater =
-          new MicrometerSessionMetricUpdater(enabledSessionMetrics, this.registry, this.context);
+      // try to get the metric registry from the context
+      Object possibleMetricRegistry = context.getMetricRegistry();
+      if (possibleMetricRegistry == null) {
+        // metrics are enabled, but a metric registry was not supplied to the context
+        // use the global registry
+        possibleMetricRegistry = io.micrometer.core.instrument.Metrics.globalRegistry;
+      }
+      if (possibleMetricRegistry instanceof MeterRegistry) {
+        this.registry = (MeterRegistry) possibleMetricRegistry;
+        this.sessionUpdater =
+            new MicrometerSessionMetricUpdater(enabledSessionMetrics, this.registry, this.context);
+      } else {
+        // Metrics are enabled, but the registry object is not an expected type
+        throw new IllegalArgumentException(
+            "Unexpected Metrics registry object. Expected registry object to be of type '"
+                + MeterRegistry.class.getName()
+                + "', but was '"
+                + possibleMetricRegistry.getClass().getName()
+                + "'");
+      }
     }
   }
 
@@ -111,8 +132,7 @@ public class MicrometerMetricsFactory implements MetricsFactory {
 
   @Override
   public Optional<Metrics> getMetrics() {
-    throw new UnsupportedOperationException(
-        "getMetrics() is not supported with Micrometer. The driver publishes its metrics directly to the global MeterRegistry.");
+    return Optional.empty();
   }
 
   @Override

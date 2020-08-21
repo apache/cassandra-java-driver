@@ -8,9 +8,10 @@
 
 -----
 
-The driver exposes measurements of its internal behavior through the popular [Dropwizard Metrics]
-library. Application developers can select which metrics are enabled, and export them to a
-monitoring tool. 
+The driver exposes measurements of its internal behavior through a choice of three popular metrics
+frameworks: [Dropwizard Metrics], [Micrometer Metrics] or [MicroProfile Metrics]. Application
+developers can select a metrics framework, which metrics are enabled, and export them to a
+monitoring tool.
 
 ### Structure
  
@@ -52,10 +53,82 @@ If you specify a metric that doesn't exist, it will be ignored and a warning wil
 The `metrics` section may also contain additional configuration for some specific metrics; again,
 see the [reference configuration] for more details.
 
+#### Changing the Metrics Frameworks
+
+The default metrics framework is Dropwizard. You can change this to either Micrometer or
+MicroProfile in the configuration:
+
+```
+datastax-java-driver.advanced.metrics {
+  factory.class = MicrometerMetricsFactory
+}
+```
+
+or
+
+```
+datastax-java-driver.advanced.metrics {
+  factory.class = MicroProfileMetricsFactory
+}
+```
+
+In addition to the configuration change above, you will also need to include the appropriate module
+in your project. For Micrometer:
+
+```xml
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-metrics-micrometer</artifactId>
+  <version>${driver.version}</version>
+</dependency>
+```
+
+For MicroProfile:
+
+```xml
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-metrics-microprofile</artifactId>
+  <version>${driver.version}</version>
+</dependency>
+```
+
+#### Metric Registry
+
+For any of the three metrics frameworks, you can provide an external Metric Registry object when
+building a Session. This will easily allow your application to export the driver's operational
+metrics to whatever reporting system you want to use.
+
+```java
+CqlSessionBuilder builder = CqlSession.builder();
+builder.withMetricRegistry(myRegistryObject);
+CqlSession session = builder.build();
+```
+
+In the above example, `myRegistryObject` should be an instance of the base registry type for the
+metrics framework you are using:
+
+```
+Dropwizard:   com.codahale.metrics.MetricRegistry
+Micrometer:   io.micrometer.core.instrument.MeterRegistry
+MicroProfile: org.eclipse.microprofile.metrics.MetricRegistry
+```
+
+**NOTE:** Only MicroProfile **requires** an external instance of its Registry to be provided. For
+Micrometer, if no Registry object is provided, Micrometer's `globalRegistry` will be used. For
+Dropwizard, if no Registry object is provided, an instance of `MetricRegistry` will be created and
+used.
+
 ### Export
 
-The Dropwizard `MetricRegistry` is exposed via `session.getMetrics()`. You can retrieve it and
-configure a `Reporter` to send the metrics to a monitoring tool.
+The Dropwizard `MetricRegistry` is exposed via `session.getMetrics().getRegistry()`. You can
+retrieve it and configure a `Reporter` to send the metrics to a monitoring tool.
+
+**NOTE:** At this time, `session.getMetrics()` is not available when using Micrometer or
+MicroProfile metrics. If you wish to use either of those metrics frameworks, it is recommended to
+provide a Registry implementation to the driver as described in the [Metric Registry
+section](#metric-registry), and follow best practices for exporting that registry to your desired
+reporting framework.
 
 #### JMX
 
@@ -136,4 +209,6 @@ CSV files, SLF4J logs and Graphite. Refer to their [manual][Dropwizard manual] f
 
 [Dropwizard Metrics]: http://metrics.dropwizard.io/4.0.0/manual/index.html
 [Dropwizard Manual]: http://metrics.dropwizard.io/4.0.0/getting-started.html#reporting-via-http
+[Micrometer Metrics]: https://micrometer.io/docs
+[MicroProfile Metrics]: https://github.com/eclipse/microprofile-metrics
 [reference configuration]: ../configuration/reference/

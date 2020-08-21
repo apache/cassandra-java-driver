@@ -77,7 +77,6 @@ import com.datastax.oss.driver.internal.core.metadata.token.DefaultReplicationSt
 import com.datastax.oss.driver.internal.core.metadata.token.DefaultTokenFactoryRegistry;
 import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
-import com.datastax.oss.driver.internal.core.metrics.DropwizardMetricsFactory;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
@@ -97,7 +96,6 @@ import com.datastax.oss.driver.internal.core.util.DependencyCheck;
 import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
-import com.datastax.oss.driver.shaded.guava.common.base.Ticker;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import com.datastax.oss.protocol.internal.PrimitiveCodec;
@@ -243,6 +241,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final UUID startupClientId;
   private final String startupApplicationName;
   private final String startupApplicationVersion;
+  private final Object metricRegistry;
   // A stack trace captured in the constructor. Used to extract information about the client
   // application.
   private final StackTraceElement[] initStackTrace;
@@ -300,6 +299,7 @@ public class DefaultDriverContext implements InternalDriverContext {
       stackTrace = new StackTraceElement[] {};
     }
     this.initStackTrace = stackTrace;
+    this.metricRegistry = programmaticArguments.getMetricRegistry();
   }
 
   /**
@@ -615,7 +615,19 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected MetricsFactory buildMetricsFactory() {
-    return new DropwizardMetricsFactory(this, Ticker.systemTicker());
+    return Reflection.buildFromConfig(
+            this,
+            DefaultDriverOption.METRICS_FACTORY_CLASS,
+            MetricsFactory.class,
+            "com.datastax.oss.driver.internal.core.metrics",
+            "com.datastax.oss.driver.internal.metrics.microprofile",
+            "com.datastax.oss.driver.internal.metrics.micrometer")
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Missing metrics factory, check your config (%s)",
+                        DefaultDriverOption.METRICS_FACTORY_CLASS)));
   }
 
   protected RequestThrottler buildRequestThrottler() {
@@ -1002,5 +1014,11 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public List<LifecycleListener> getLifecycleListeners() {
     return lifecycleListenersRef.get();
+  }
+
+  @Nullable
+  @Override
+  public Object getMetricRegistry() {
+    return metricRegistry;
   }
 }

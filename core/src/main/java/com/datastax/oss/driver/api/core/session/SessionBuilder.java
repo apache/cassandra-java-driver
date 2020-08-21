@@ -651,6 +651,29 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
+   * The metric registry object for storing driver metrics.
+   *
+   * <p>The argument should be an instance of the base registry type for the metrics framework you
+   * are using (see {@code advanced.metrics.factory.class} in the configuration):
+   *
+   * <ul>
+   *   <li>Dropwizard (the default): {@code com.codahale.metrics.MetricRegistry}
+   *   <li>Micrometer: {@code io.micrometer.core.instrument.MeterRegistry}
+   *   <li>MicroProfile: {@code org.eclipse.microprofile.metrics.MetricRegistry}
+   * </ul>
+   *
+   * Only MicroProfile <em>requires</em> an external instance of its registry to be provided. For
+   * Micrometer, if no Registry object is provided, Micrometer's {@code globalRegistry} will be
+   * used. For Dropwizard, if no Registry object is provided, an instance of {@code MetricRegistry}
+   * will be created and used.
+   */
+  @NonNull
+  public SelfT withMetricRegistry(@Nullable Object metricRegistry) {
+    this.programmaticArgumentsBuilder.withMetricRegistry(metricRegistry);
+    return self;
+  }
+
+  /**
    * Creates the session with the options set by this builder.
    *
    * @return a completion stage that completes with the session when it is fully initialized.
