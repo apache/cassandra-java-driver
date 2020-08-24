@@ -31,22 +31,22 @@ final class SnappySubstitution {
   private final String EXCEPTION_MSG = "Snappy compression is not supported for native images";
 
   @Substitute
-  protected ByteBuf compressHeap(ByteBuf input) {
+  protected ByteBuf compressHeap(ByteBuf input, boolean prependWithUncompressedLength) {
     throw new UnsupportedOperationException(EXCEPTION_MSG);
   }
 
   @Substitute
-  protected ByteBuf decompressDirect(ByteBuf input) {
+  protected ByteBuf decompressDirect(ByteBuf input, int uncompressedLength) {
     throw new UnsupportedOperationException(EXCEPTION_MSG);
   }
 
   @Substitute
-  protected ByteBuf decompressHeap(ByteBuf input) {
+  protected ByteBuf decompressHeap(ByteBuf input, int uncompressedLength) {
     throw new UnsupportedOperationException(EXCEPTION_MSG);
   }
 
   @Substitute
-  protected ByteBuf compressDirect(ByteBuf input) {
+  protected ByteBuf compressDirect(ByteBuf input, boolean prependWithUncompressedLength) {
     throw new UnsupportedOperationException(EXCEPTION_MSG);
   }
 }

@@ -34,22 +34,22 @@ final class Lz4Substitution {
   public Lz4Substitution(DriverContext context) {}
 
   @Substitute
-  protected ByteBuf compressHeap(ByteBuf input) {
+  protected ByteBuf compressHeap(ByteBuf input, boolean prependWithUncompressedLength) {
     throw new UnsupportedOperationException(EXCEPTION_MSG);
   }
 
   @Substitute
-  protected ByteBuf decompressDirect(ByteBuf input) {
+  protected ByteBuf decompressDirect(ByteBuf input, int uncompressedLength) {
     throw new UnsupportedOperationException(EXCEPTION_MSG);
   }
 
   @Substitute
-  protected ByteBuf decompressHeap(ByteBuf input) {
+  protected ByteBuf decompressHeap(ByteBuf input, int uncompressedLength) {
     throw new UnsupportedOperationException(EXCEPTION_MSG);
   }
 
   @Substitute
-  protected ByteBuf compressDirect(ByteBuf input) {
+  protected ByteBuf compressDirect(ByteBuf input, boolean prependWithUncompressedLength) {
     throw new UnsupportedOperationException(EXCEPTION_MSG);
   }
 }
