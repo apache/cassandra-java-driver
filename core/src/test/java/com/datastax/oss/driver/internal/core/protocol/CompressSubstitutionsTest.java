@@ -31,7 +31,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.junit.Test;
 
-public class SubstitutionsTest {
+public class CompressSubstitutionsTest {
 
   @Test
   public void Lz4SubstitutionShouldSubstituteAllProtectedMethodsFromLz4Compressor() {
@@ -103,7 +103,7 @@ public class SubstitutionsTest {
   }
 
   public static List<Method> getProtectedMethods(Class<?> clazz) {
-    return getProtectedMethodsIgnoring(clazz, SubstitutionsTest::doNotIgnore);
+    return getProtectedMethodsIgnoring(clazz, CompressSubstitutionsTest::doNotIgnore);
   }
 
   private MethodNameWithoutClass toMethodNameIgnoringDeclaringClass(Method method) {
