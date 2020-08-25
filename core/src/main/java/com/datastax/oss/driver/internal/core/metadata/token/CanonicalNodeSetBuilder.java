@@ -16,25 +16,40 @@
 package com.datastax.oss.driver.internal.core.metadata.token;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.metadata.token.Token;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import net.jcip.annotations.ThreadSafe;
+import net.jcip.annotations.NotThreadSafe;
 
-@ThreadSafe
-class LocalReplicationStrategy implements ReplicationStrategy {
+/**
+ * A reusable set builder that guarantees that identical sets (same elements in the same order) will
+ * be represented by the same instance.
+ */
+@NotThreadSafe
+class CanonicalNodeSetBuilder {
 
-  @Override
-  public Map<Token, Set<Node>> computeReplicasByToken(
-      Map<Token, Node> tokenToPrimary, List<Token> ring) {
-    ImmutableMap.Builder<Token, Set<Node>> result = ImmutableMap.builder();
-    // Each token maps to exactly one node
-    for (Map.Entry<Token, Node> entry : tokenToPrimary.entrySet()) {
-      result.put(entry.getKey(), ImmutableSet.of(entry.getValue()));
+  private final Map<List<Node>, Set<Node>> canonicalSets = new HashMap<>();
+  private final List<Node> elements = new ArrayList<>();
+
+  void add(Node node) {
+    // This is O(n), but the cardinality is low (max possible size is the replication factor).
+    if (!elements.contains(node)) {
+      elements.add(node);
     }
-    return result.build();
+  }
+
+  int size() {
+    return elements.size();
+  }
+
+  Set<Node> build() {
+    return canonicalSets.computeIfAbsent(elements, ImmutableSet::copyOf);
+  }
+
+  void clear() {
+    elements.clear();
   }
 }
