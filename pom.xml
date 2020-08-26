@@ -21,7 +21,7 @@
 
     <groupId>com.datastax.cassandra</groupId>
     <artifactId>cassandra-driver-parent</artifactId>
-    <version>3.10.2-SNAPSHOT</version>
+    <version>3.10.3-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>DataStax Java Driver for Apache Cassandra</name>
     <description>
@@ -641,7 +641,7 @@
                         </execution>
                     </executions>
                     <configuration>
-                        <comparisonVersion>3.10.0</comparisonVersion>
+                        <comparisonVersion>3.10.1</comparisonVersion>
                         <ignoredDifferencesFile>../clirr-ignores.xml</ignoredDifferencesFile>
                         <excludes>
                             <exclude>com/datastax/shaded/**</exclude>
