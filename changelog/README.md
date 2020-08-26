@@ -5,9 +5,9 @@
   3.x versions get published.
 -->
 
-## 3.10.2 (in progress)
+## 3.10.2
 
-- [bug] JAVA-2860: Avoid NPE if channel initialization crashes
+- [bug] JAVA-2860: Avoid NPE if channel initialization crashes.
 
 ## 3.10.1
 
