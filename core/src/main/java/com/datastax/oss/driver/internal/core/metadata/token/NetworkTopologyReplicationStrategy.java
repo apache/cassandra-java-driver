@@ -69,8 +69,7 @@ class NetworkTopologyReplicationStrategy implements ReplicationStrategy {
     // find maximum number of nodes in each DC
     for (Node node : Sets.newHashSet(tokenToPrimary.values())) {
       String dc = node.getDatacenter();
-      dcNodeCount.putIfAbsent(dc, 0);
-      dcNodeCount.put(dc, dcNodeCount.get(dc) + 1);
+      dcNodeCount.merge(dc, 1, Integer::sum);
     }
     for (int i = 0; i < ring.size(); i++) {
       replicasBuilder.clear();
@@ -90,9 +89,11 @@ class NetworkTopologyReplicationStrategy implements ReplicationStrategy {
         if (dc == null || !allDcReplicas.containsKey(dc)) {
           continue;
         }
-        Integer rf = replicationFactors.get(dc).fullReplicas();
+        ReplicationFactor dcConfig = replicationFactors.get(dc);
+        assert dcConfig != null; // since allDcReplicas.containsKey(dc)
+        int rf = dcConfig.fullReplicas();
         Set<Node> dcReplicas = allDcReplicas.get(dc);
-        if (rf == null || dcReplicas.size() >= rf) {
+        if (dcReplicas.size() >= rf) {
           continue;
         }
         String rack = h.getRack();
