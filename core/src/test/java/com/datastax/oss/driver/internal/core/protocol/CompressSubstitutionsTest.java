@@ -17,143 +17,54 @@ package com.datastax.oss.driver.internal.core.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
-import com.datastax.oss.driver.shaded.guava.common.collect.Sets.SetView;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import com.tngtech.java.junit.dataprovider.DataProvider;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
+import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.Comparator;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(DataProviderRunner.class)
 public class CompressSubstitutionsTest {
 
-  @Test
-  public void Lz4SubstitutionShouldSubstituteAllProtectedMethodsFromLz4Compressor() {
-    // given
-    List<Method> compressorMethods =
-        getProtectedMethodsIgnoring(Lz4Compressor.class, this::readUncompressedLengthIgnoreMethod);
-    List<Method> substitutionMethods = getProtectedMethods(Lz4Substitution.class);
+  private static final Set<String> EXCLUDED_METHOD_NAMES =
+      ImmutableSet.of("algorithm", "readUncompressedLength");
 
-    // when
-    Set<MethodNameWithoutClass> compressorMethodsWithoutClassName =
-        compressorMethods.stream()
-            .map(this::toMethodNameIgnoringDeclaringClass)
-            .collect(Collectors.toSet());
-    Set<MethodNameWithoutClass> substitutionMethodsWithoutClassName =
-        substitutionMethods.stream()
-            .map(this::toMethodNameIgnoringDeclaringClass)
-            .collect(Collectors.toSet());
-
-    // then
-    SetView<MethodNameWithoutClass> difference =
-        Sets.difference(compressorMethodsWithoutClassName, substitutionMethodsWithoutClassName);
-    assertThat(difference).isEmpty();
-  }
+  private static final Comparator<Method> METHOD_SIGNATURE_COMPARATOR =
+      Comparator.comparing(Method::getName)
+          .thenComparing(Method::getReturnType, (ret1, ret2) -> ret1.equals(ret2) ? 0 : -1)
+          .thenComparing(
+              Method::getParameterTypes,
+              (params1, params2) -> Arrays.deepEquals(params1, params2) ? 0 : -1);
 
   @Test
-  public void SnappySubstitutionShouldSubstituteAllProtectedMethodsFromSnappyCompressor() {
-    // given
-    List<Method> compressorMethods =
-        getProtectedMethodsIgnoring(
-            SnappyCompressor.class, this::readUncompressedLengthIgnoreMethod);
-    List<Method> substitutionMethods = getProtectedMethods(SnappySubstitution.class);
+  @UseDataProvider(value = "substitutionClasses")
+  public void should_substitute_compressor_methods(
+      Class<?> substitutedClass, Class<?> substitutionClass) {
 
-    // when
-    Set<MethodNameWithoutClass> compressorMethodsWithoutClassName =
-        compressorMethods.stream()
-            .map(this::toMethodNameIgnoringDeclaringClass)
-            .collect(Collectors.toSet());
-    Set<MethodNameWithoutClass> substitutionMethodsWithoutClassName =
-        substitutionMethods.stream()
-            .map(this::toMethodNameIgnoringDeclaringClass)
+    Set<Method> methodsToSubstitute =
+        Arrays.stream(substitutedClass.getDeclaredMethods())
+            .filter(method -> !EXCLUDED_METHOD_NAMES.contains(method.getName()))
             .collect(Collectors.toSet());
 
-    // then
-    SetView<MethodNameWithoutClass> difference =
-        Sets.difference(compressorMethodsWithoutClassName, substitutionMethodsWithoutClassName);
-    assertThat(difference).isEmpty();
+    Set<Method> substitutedMethods =
+        Arrays.stream(substitutionClass.getDeclaredMethods()).collect(Collectors.toSet());
+
+    assertThat(methodsToSubstitute)
+        .usingElementComparator(METHOD_SIGNATURE_COMPARATOR)
+        .containsExactlyInAnyOrderElementsOf(substitutedMethods);
   }
 
-  public static List<Method> getProtectedMethodsIgnoring(
-      Class<?> clazz, Predicate<Method> methodToIgnore) {
-    List<Method> result = new ArrayList<>();
-
-    for (Method method : clazz.getDeclaredMethods()) {
-      int modifiers = method.getModifiers();
-      if (Modifier.isProtected(modifiers) && !methodToIgnore.test(method)) {
-        result.add(method);
-      }
-    }
-
-    return result;
-  }
-
-  private static boolean doNotIgnore(Method ignore) {
-    return false;
-  }
-
-  private boolean readUncompressedLengthIgnoreMethod(Method m) {
-    return m.getName().equals("readUncompressedLength");
-  }
-
-  public static List<Method> getProtectedMethods(Class<?> clazz) {
-    return getProtectedMethodsIgnoring(clazz, CompressSubstitutionsTest::doNotIgnore);
-  }
-
-  private MethodNameWithoutClass toMethodNameIgnoringDeclaringClass(Method method) {
-    return new MethodNameWithoutClass(
-        method.getName(), method.getReturnType(), method.getParameters());
-  }
-
-  private static class MethodNameWithoutClass {
-    private final String name;
-
-    private final Class<?> returnType;
-
-    private final List<Class<?>> parameters;
-
-    public MethodNameWithoutClass(String name, Class<?> returnType, Parameter[] parameters) {
-
-      this.name = name;
-      this.returnType = returnType;
-      this.parameters =
-          Arrays.stream(parameters).map(Parameter::getType).collect(Collectors.toList());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof MethodNameWithoutClass)) return false;
-
-      MethodNameWithoutClass that = (MethodNameWithoutClass) o;
-
-      if (!Objects.equals(name, that.name)) return false;
-      if (!Objects.equals(returnType, that.returnType)) return false;
-      return Objects.equals(parameters, that.parameters);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(name, returnType, parameters);
-    }
-
-    @Override
-    public String toString() {
-      return "MethodNameWithoutClass{"
-          + "name='"
-          + name
-          + '\''
-          + ", returnType="
-          + returnType
-          + ", parameters="
-          + parameters
-          + '}';
-    }
+  @DataProvider
+  public static Object[][] substitutionClasses() {
+    return new Object[][] {
+      {Lz4Compressor.class, Lz4Substitution.class},
+      {SnappyCompressor.class, SnappySubstitution.class}
+    };
   }
 }
