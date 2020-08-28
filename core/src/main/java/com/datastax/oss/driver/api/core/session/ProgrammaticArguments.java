@@ -60,6 +60,7 @@ public class ProgrammaticArguments {
   private final String startupApplicationName;
   private final String startupApplicationVersion;
   private final MutableCodecRegistry codecRegistry;
+  private final Object metricRegistry;
 
   private ProgrammaticArguments(
       @NonNull List<TypeCodec<?>> typeCodecs,
@@ -75,7 +76,8 @@ public class ProgrammaticArguments {
       @Nullable UUID startupClientId,
       @Nullable String startupApplicationName,
       @Nullable String startupApplicationVersion,
-      @Nullable MutableCodecRegistry codecRegistry) {
+      @Nullable MutableCodecRegistry codecRegistry,
+      @Nullable Object metricRegistry) {
 
     this.typeCodecs = typeCodecs;
     this.nodeStateListener = nodeStateListener;
@@ -91,6 +93,7 @@ public class ProgrammaticArguments {
     this.startupApplicationName = startupApplicationName;
     this.startupApplicationVersion = startupApplicationVersion;
     this.codecRegistry = codecRegistry;
+    this.metricRegistry = metricRegistry;
   }
 
   @NonNull
@@ -163,6 +166,11 @@ public class ProgrammaticArguments {
     return codecRegistry;
   }
 
+  @Nullable
+  public Object getMetricRegistry() {
+    return metricRegistry;
+  }
+
   public static class Builder {
 
     private ImmutableList.Builder<TypeCodec<?>> typeCodecsBuilder = ImmutableList.builder();
@@ -180,6 +188,7 @@ public class ProgrammaticArguments {
     private String startupApplicationName;
     private String startupApplicationVersion;
     private MutableCodecRegistry codecRegistry;
+    private Object metricRegistry;
 
     @NonNull
     public Builder addTypeCodecs(@NonNull TypeCodec<?>... typeCodecs) {
@@ -290,6 +299,12 @@ public class ProgrammaticArguments {
     }
 
     @NonNull
+    public Builder withMetricRegistry(@Nullable Object metricRegistry) {
+      this.metricRegistry = metricRegistry;
+      return this;
+    }
+
+    @NonNull
     public ProgrammaticArguments build() {
       return new ProgrammaticArguments(
           typeCodecsBuilder.build(),
@@ -305,7 +320,8 @@ public class ProgrammaticArguments {
           startupClientId,
           startupApplicationName,
           startupApplicationVersion,
-          codecRegistry);
+          codecRegistry,
+          metricRegistry);
     }
   }
 }

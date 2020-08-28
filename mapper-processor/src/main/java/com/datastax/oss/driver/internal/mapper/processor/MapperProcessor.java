@@ -112,23 +112,30 @@ public class MapperProcessor extends AbstractProcessor {
       ElementKind expectedKind,
       Function<TypeElement, CodeGenerator> generatorFactory) {
     for (Element element : roundEnvironment.getElementsAnnotatedWith(annotationClass)) {
-      if (element.getKind() != expectedKind) {
-        messager.error(
-            (TypeElement) element,
-            "Only %s elements can be annotated with %s",
-            expectedKind,
-            annotationClass.getSimpleName());
-      } else {
+      ElementKind actualKind = element.getKind();
+      boolean isExpectedElement =
+          actualKind == expectedKind
+              // Hack to support Java 14 records without having to compile against JDK 14 (also
+              // possible because we only expect CLASS for entities).
+              || (expectedKind == ElementKind.CLASS && actualKind.name().equals("RECORD"));
+      if (isExpectedElement) {
         // Safe cast given that we checked the kind above
         TypeElement typeElement = (TypeElement) element;
         try {
           generatorFactory.apply(typeElement).generate();
         } catch (Exception e) {
           messager.error(
-              (TypeElement) element,
+              element,
               "Unexpected error while writing generated code: %s",
               Throwables.getStackTraceAsString(e));
         }
+      } else {
+        messager.error(
+            element,
+            "Only %s elements can be annotated with %s (got %s)",
+            expectedKind,
+            annotationClass.getSimpleName(),
+            actualKind);
       }
     }
   }

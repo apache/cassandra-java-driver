@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.metrics;
 import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
@@ -50,6 +51,10 @@ public class DropwizardMetricsFactory implements MetricsFactory {
   private final SessionMetricUpdater sessionUpdater;
   private final Cache<Node, DropwizardNodeMetricUpdater> metricsCache;
 
+  public DropwizardMetricsFactory(DriverContext context) {
+    this((InternalDriverContext) context, Ticker.systemTicker());
+  }
+
   public DropwizardMetricsFactory(InternalDriverContext context, Ticker ticker) {
     this.context = context;
     String logPrefix = context.getSessionName();
@@ -81,11 +86,28 @@ public class DropwizardMetricsFactory implements MetricsFactory {
       this.sessionUpdater = NoopSessionMetricUpdater.INSTANCE;
       this.metrics = null;
     } else {
-      this.registry = new MetricRegistry();
-      DropwizardSessionMetricUpdater dropwizardSessionUpdater =
-          new DropwizardSessionMetricUpdater(enabledSessionMetrics, registry, context);
-      this.sessionUpdater = dropwizardSessionUpdater;
-      this.metrics = new DefaultMetrics(registry, dropwizardSessionUpdater);
+      // try to get the metric registry from the context
+      Object possibleMetricRegistry = context.getMetricRegistry();
+      if (possibleMetricRegistry == null) {
+        // metrics are enabled, but a metric registry was not supplied to the context
+        // create a registry object
+        possibleMetricRegistry = new MetricRegistry();
+      }
+      if (possibleMetricRegistry instanceof MetricRegistry) {
+        this.registry = (MetricRegistry) possibleMetricRegistry;
+        DropwizardSessionMetricUpdater dropwizardSessionUpdater =
+            new DropwizardSessionMetricUpdater(enabledSessionMetrics, registry, context);
+        this.sessionUpdater = dropwizardSessionUpdater;
+        this.metrics = new DefaultMetrics(registry, dropwizardSessionUpdater);
+      } else {
+        // Metrics are enabled, but the registry object is not an expected type
+        throw new IllegalArgumentException(
+            "Unexpected Metrics registry object. Expected registry object to be of type '"
+                + MetricRegistry.class.getName()
+                + "', but was '"
+                + possibleMetricRegistry.getClass().getName()
+                + "'");
+      }
     }
   }
 

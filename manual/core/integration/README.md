@@ -407,8 +407,10 @@ enable compression. See the [Compression](../compression/) page for more details
 The driver exposes [metrics](../metrics/) through the
 [Dropwizard](http://metrics.dropwizard.io/4.0.0/manual/index.html) library.
 
-The dependency is declared as required, but metrics are optional. If you've disabled all metrics,
-and never call [Session.getMetrics] anywhere in your application, you can remove the dependency:
+The dependency is declared as required, but metrics are optional. If you've disabled all metrics, or
+if you are using a [different metrics framework](../metrics/#changing-the-metrics-frameworks), and
+you never call [Session.getMetrics] anywhere in your application, then you can remove the
+dependency:
 
 ```xml
 <dependency>
@@ -450,7 +452,8 @@ If all of these metrics are disabled, you can remove the dependency:
 [Jackson](https://github.com/FasterXML/jackson) is used:
 
 * when connecting to [Datastax Astra](../../cloud/);
-* when Insights monitoring is enabled.
+* when Insights monitoring is enabled;
+* when [Json codecs](../custom_codecs) are being used. 
  
 If you don't use either of those features, you can safely exclude the dependency:
 
@@ -462,11 +465,7 @@ If you don't use either of those features, you can safely exclude the dependency
   <exclusions>
     <exclusion>
       <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-core</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
+      <artifactId>*</artifactId>
     </exclusion>
   </exclusions>
 </dependency>
@@ -507,11 +506,7 @@ If you don't use DSE graph at all, you can exclude the dependencies:
   <exclusions>
     <exclusion>
       <groupId>org.apache.tinkerpop</groupId>
-      <artifactId>gremlin-core</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>org.apache.tinkerpop</groupId>
-      <artifactId>tinkergraph-gremlin</artifactId>
+      <artifactId>*</artifactId>
     </exclusion>
   </exclusions>
 </dependency>

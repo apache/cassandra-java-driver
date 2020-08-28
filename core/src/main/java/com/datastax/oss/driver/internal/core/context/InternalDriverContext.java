@@ -180,4 +180,20 @@ public interface InternalDriverContext extends DriverContext {
    */
   @NonNull
   RequestLogFormatter getRequestLogFormatter();
+
+  /**
+   * A metric registry for storing metrics.
+   *
+   * <p>This will return the object from {@link
+   * SessionBuilder#withMetricRegistry(java.lang.Object)}. Access to this registry object is only
+   * intended for {@link MetricsFactory} implementations that need to expose a way to specify the
+   * registry external to the Factory implementation itself.
+   *
+   * <p>The default metrics framework used by the Driver is DropWizard and does not need an external
+   * metrics registry object.
+   */
+  @Nullable
+  default Object getMetricRegistry() {
+    return null;
+  }
 }

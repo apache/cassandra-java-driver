@@ -46,17 +46,14 @@ import javax.lang.model.type.TypeMirror;
 public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
 
   private final ExecutableElement methodElement;
-  private final TypeElement processedType;
   private final MapperImplementationSharedCode enclosingClass;
   private final ProcessorContext context;
 
   public MapperDaoFactoryMethodGenerator(
       ExecutableElement methodElement,
-      TypeElement processedType,
       MapperImplementationSharedCode enclosingClass,
       ProcessorContext context) {
     this.methodElement = methodElement;
-    this.processedType = processedType;
     this.enclosingClass = enclosingClass;
     this.context = context;
   }
@@ -94,7 +91,6 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Invalid return type: %s methods must return a %s-annotated interface, "
                   + "or future thereof",
               DaoFactory.class.getSimpleName(),
@@ -137,7 +133,6 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
             .getMessager()
             .error(
                 methodElement,
-                processedType,
                 "Invalid parameter annotations: "
                     + "%s method parameters must be annotated with @%s, @%s or @%s",
                 DaoFactory.class.getSimpleName(),
@@ -211,7 +206,6 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               candidate,
-              processedType,
               "Invalid parameter type: @%s-annotated parameter of %s methods must be of type %s or %s",
               annotation.getSimpleName(),
               DaoFactory.class.getSimpleName(),
@@ -234,7 +228,6 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               candidate,
-              processedType,
               "Invalid parameter type: @%s-annotated parameter of %s methods must be of type %s or %s ",
               DaoProfile.class.getSimpleName(),
               DaoFactory.class.getSimpleName(),
@@ -252,7 +245,6 @@ public class MapperDaoFactoryMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               candidate,
-              processedType,
               "Invalid parameter annotations: "
                   + "only one %s method parameter can be annotated with @%s",
               DaoFactory.class.getSimpleName(),

@@ -19,16 +19,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
-import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
-import com.datastax.oss.driver.api.core.session.ProgrammaticArguments;
-import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.internal.metrics.micrometer.MicrometerDriverContext;
 import com.datastax.oss.driver.metrics.common.AbstractMetricsTestBase;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
@@ -113,8 +107,13 @@ public class MicrometerMetricsIT extends AbstractMetricsTestBase {
   }
 
   @Override
-  protected SessionBuilder<?, ?> getSessionBuilder() {
-    return new MicrometerSessionBuilder(METER_REGISTRY);
+  protected Object getMetricRegistry() {
+    return METER_REGISTRY;
+  }
+
+  @Override
+  protected String getMetricFactoryClass() {
+    return "MicrometerMetricsFactory";
   }
 
   @Override
@@ -165,29 +164,5 @@ public class MicrometerMetricsIT extends AbstractMetricsTestBase {
             && verifyFunction.apply(gauge.value());
       }
     };
-  }
-
-  private static class MicrometerSessionBuilder
-      extends SessionBuilder<MicrometerSessionBuilder, CqlSession> {
-
-    private final MeterRegistry registry;
-
-    MicrometerSessionBuilder(@NonNull MeterRegistry registry) {
-      this.registry = registry;
-    }
-
-    @Override
-    @NonNull
-    protected CqlSession wrap(@NonNull CqlSession defaultSession) {
-      return defaultSession;
-    }
-
-    @Override
-    @NonNull
-    protected DriverContext buildContext(
-        @NonNull DriverConfigLoader configLoader,
-        @NonNull ProgrammaticArguments programmaticArguments) {
-      return new MicrometerDriverContext(configLoader, programmaticArguments, registry);
-    }
   }
 }

@@ -44,6 +44,7 @@ annotations:
 * [@Select](select/)
 * [@SetEntity](setentity/)
 * [@Update](update/)
+* [@Increment](increment/)
 
 The methods can have any name. The allowed parameters and return type are specific to each
 annotation.

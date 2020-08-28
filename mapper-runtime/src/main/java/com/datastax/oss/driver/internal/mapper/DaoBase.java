@@ -174,9 +174,11 @@ public class DaoBase {
   }
 
   protected final MapperContext context;
+  protected final boolean isProtocolVersionV3;
 
   protected DaoBase(MapperContext context) {
     this.context = context;
+    this.isProtocolVersionV3 = isProtocolVersionV3(context);
   }
 
   protected ResultSet execute(Statement<?> statement) {
@@ -282,12 +284,16 @@ public class DaoBase {
   }
 
   protected static void throwIfProtocolVersionV3(MapperContext context) {
-    if (context.getSession().getContext().getProtocolVersion().getCode()
-        <= ProtocolConstants.Version.V3) {
+    if (isProtocolVersionV3(context)) {
       throw new MapperException(
           String.format(
               "You cannot use %s.%s for protocol version V3.",
               NullSavingStrategy.class.getSimpleName(), NullSavingStrategy.DO_NOT_SET.name()));
     }
+  }
+
+  protected static boolean isProtocolVersionV3(MapperContext context) {
+    return context.getSession().getContext().getProtocolVersion().getCode()
+        <= ProtocolConstants.Version.V3;
   }
 }

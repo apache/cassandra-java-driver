@@ -24,7 +24,9 @@ import javax.lang.model.element.Modifier;
 
 public class LoggingGenerator {
 
-  // Reference these types by name to avoid a compile-time dependency to SFL4J
+  // Reference these types by name. They are in the classpath but that is more of a workaround in
+  // case they get accidentally referenced via driver core types (see JAVA-2863), the mapper
+  // processor does not directly "use" SLF4J.
   private static final ClassName LOGGER_FACTORY_CLASS_NAME =
       ClassName.get("org.slf4j", "LoggerFactory");
   private static final ClassName LOGGER_CLASS_NAME = ClassName.get("org.slf4j", "Logger");

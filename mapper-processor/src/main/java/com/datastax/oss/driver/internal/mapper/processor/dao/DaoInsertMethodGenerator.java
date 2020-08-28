@@ -111,7 +111,6 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "%s methods must take the entity to insert as the first parameter",
               Insert.class.getSimpleName());
       return Optional.empty();
@@ -129,7 +128,6 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Invalid return type: %s methods must return the same entity as their argument ",
               Insert.class.getSimpleName());
       return Optional.empty();
