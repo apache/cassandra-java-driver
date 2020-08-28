@@ -894,6 +894,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </plugins>
       </build>
     </profile>
+    <profile>
+      <!-- Speeds up `mvn install` when testing something locally -->
+      <id>fast</id>
+      <properties>
+        <license.skip>true</license.skip>
+        <fmt.skip>true</fmt.skip>
+        <xml-format.skip>true</xml-format.skip>
+        <skipTests>true</skipTests>
+        <jacoco.skip>true</jacoco.skip>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+        <maven.source.skip>true</maven.source.skip>
+        <revapi.skip>true</revapi.skip>
+      </properties>
+    </profile>
   </profiles>
   <distributionManagement>
     <repository>

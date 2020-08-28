@@ -423,6 +423,23 @@ the script to only test what's actually being committed, but I couldn't get it t
 (it's still in there but commented). Keep this in mind when you commit, and don't forget to re-add
 the changes if the first attempt failed and you fixed the tests.
 
+## Speeding up the build for local tests
+
+If you need to install something in your local repository quickly, you can use the `fast` profile to
+skip all "non-essential" checks (licenses, formatting, tests, etc):
+
+```
+mvn clean install -Pfast
+```
+
+You can speed things up even more by targeting specific modules with the `-pl` option:
+
+```
+mvn clean install -Pfast -pl core,query-builder,mapper-runtime,mapper-processor,bom
+```
+
+Please run the normal build at least once before you push your changes.
+
 ## Commits
 
 Keep your changes **focused**. Each commit should have a single, clear purpose expressed in its 
