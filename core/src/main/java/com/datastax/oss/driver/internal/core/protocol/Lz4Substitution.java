@@ -24,31 +24,47 @@ import io.netty.buffer.ByteBuf;
 @TargetClass(
     className = "com.datastax.oss.driver.internal.core.protocol.Lz4Compressor",
     onlyWith = Lz4Missing.class)
-final class Lz4Substitution {
+final class Lz4Substitution extends Lz4Compressor {
 
   @Inject
   private final String EXCEPTION_MSG =
       "This native image was not built with support for LZ4 compression";
 
-  @Substitute
-  public Lz4Substitution(DriverContext context) {}
+  @Override
+  public String algorithm() {
+    return "lz4";
+  }
 
   @Substitute
+  public Lz4Substitution(DriverContext context) {
+	  super(context);
+  }
+
+  @Substitute
+  @Override
   protected ByteBuf compressHeap(ByteBuf input, boolean prependWithUncompressedLength) {
     throw new UnsupportedOperationException(EXCEPTION_MSG);
   }
 
+  @Override
+  protected int readUncompressedLength(ByteBuf compressed) {
+    return compressed.readInt();
+  }
+
   @Substitute
+  @Override
   protected ByteBuf decompressDirect(ByteBuf input, int uncompressedLength) {
     throw new UnsupportedOperationException(EXCEPTION_MSG);
   }
 
   @Substitute
+  @Override
   protected ByteBuf decompressHeap(ByteBuf input, int uncompressedLength) {
     throw new UnsupportedOperationException(EXCEPTION_MSG);
   }
 
   @Substitute
+  @Override
   protected ByteBuf compressDirect(ByteBuf input, boolean prependWithUncompressedLength) {
     throw new UnsupportedOperationException(EXCEPTION_MSG);
   }
