@@ -4,6 +4,7 @@
 
 ### 4.9.0 (in progress)
 
+- [bug] JAVA-2867: Revisit compressor substitutions
 - [improvement] JAVA-2870: Optimize memory usage of token map
 - [improvement] JAVA-2855: Allow selection of the metrics framework via the config
 - [improvement] JAVA-2864: Revisit mapper processor's messaging

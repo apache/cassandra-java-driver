@@ -79,9 +79,8 @@ import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyF
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
+import com.datastax.oss.driver.internal.core.protocol.BuiltInCompressors;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
-import com.datastax.oss.driver.internal.core.protocol.Lz4Compressor;
-import com.datastax.oss.driver.internal.core.protocol.SnappyCompressor;
 import com.datastax.oss.driver.internal.core.servererrors.DefaultWriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.servererrors.WriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.session.PoolManager;
@@ -430,19 +429,7 @@ public class DefaultDriverContext implements InternalDriverContext {
     DriverExecutionProfile defaultProfile = getConfig().getDefaultProfile();
     String name = defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none");
     assert name != null : "should use default value";
-    switch (name.toLowerCase()) {
-      case "lz4":
-        return new Lz4Compressor(this);
-      case "snappy":
-        return new SnappyCompressor(this);
-      case "none":
-        return Compressor.none();
-      default:
-        throw new IllegalArgumentException(
-            String.format(
-                "Unsupported compression algorithm '%s' (from configuration option %s)",
-                name, DefaultDriverOption.PROTOCOL_COMPRESSION.getPath()));
-    }
+    return BuiltInCompressors.newInstance(name, this);
   }
 
   protected PrimitiveCodec<ByteBuf> buildPrimitiveCodec() {
