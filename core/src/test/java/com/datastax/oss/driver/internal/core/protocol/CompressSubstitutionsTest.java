@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.junit.Test;
 
@@ -35,7 +36,8 @@ public class CompressSubstitutionsTest {
   @Test
   public void Lz4SubstitutionShouldSubstituteAllProtectedMethodsFromLz4Compressor() {
     // given
-    List<Method> compressorMethods = getProtectedMethods(Lz4Compressor.class);
+    List<Method> compressorMethods =
+        getProtectedMethodsIgnoring(Lz4Compressor.class, this::readUncompressedLengthIgnoreMethod);
     List<Method> substitutionMethods = getProtectedMethods(Lz4Substitution.class);
 
     // when
@@ -57,7 +59,9 @@ public class CompressSubstitutionsTest {
   @Test
   public void SnappySubstitutionShouldSubstituteAllProtectedMethodsFromSnappyCompressor() {
     // given
-    List<Method> compressorMethods = getProtectedMethods(SnappyCompressor.class);
+    List<Method> compressorMethods =
+        getProtectedMethodsIgnoring(
+            SnappyCompressor.class, this::readUncompressedLengthIgnoreMethod);
     List<Method> substitutionMethods = getProtectedMethods(SnappySubstitution.class);
 
     // when
@@ -76,17 +80,30 @@ public class CompressSubstitutionsTest {
     assertThat(difference).isEmpty();
   }
 
-  public static List<Method> getProtectedMethods(Class<?> clazz) {
+  public static List<Method> getProtectedMethodsIgnoring(
+      Class<?> clazz, Predicate<Method> methodToIgnore) {
     List<Method> result = new ArrayList<>();
 
     for (Method method : clazz.getDeclaredMethods()) {
       int modifiers = method.getModifiers();
-      if (Modifier.isProtected(modifiers)) {
+      if (Modifier.isProtected(modifiers) && !methodToIgnore.test(method)) {
         result.add(method);
       }
     }
 
     return result;
+  }
+
+  private static boolean doNotIgnore(Method ignore) {
+    return false;
+  }
+
+  private boolean readUncompressedLengthIgnoreMethod(Method m) {
+    return m.getName().equals("readUncompressedLength");
+  }
+
+  public static List<Method> getProtectedMethods(Class<?> clazz) {
+    return getProtectedMethodsIgnoring(clazz, CompressSubstitutionsTest::doNotIgnore);
   }
 
   private MethodNameWithoutClass toMethodNameIgnoringDeclaringClass(Method method) {
