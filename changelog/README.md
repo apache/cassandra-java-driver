@@ -4,6 +4,9 @@
 
 ### 4.9.0 (in progress)
 
+- [task] JAVA-2859: Upgrade Tinkerpop to 3.4.8
+- [bug] JAVA-2726: Fix Tinkerpop incompatibility with JPMS
+- [bug] JAVA-2842: Remove security vulnerabilities introduced by Tinkerpop
 - [bug] JAVA-2867: Revisit compressor substitutions
 - [improvement] JAVA-2870: Optimize memory usage of token map
 - [improvement] JAVA-2855: Allow selection of the metrics framework via the config
