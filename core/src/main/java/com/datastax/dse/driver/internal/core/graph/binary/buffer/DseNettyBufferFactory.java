@@ -15,22 +15,26 @@
  */
 package com.datastax.dse.driver.internal.core.graph.binary.buffer;
 
-import io.netty.buffer.*;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.CompositeByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.buffer.UnpooledByteBufAllocator;
 import java.nio.ByteBuffer;
 import java.util.function.Supplier;
-import org.apache.tinkerpop.gremlin.driver.ser.NettyBufferFactory;
 import org.apache.tinkerpop.gremlin.structure.io.Buffer;
 import org.apache.tinkerpop.gremlin.structure.io.BufferFactory;
 
 /**
  * Internal BufferFactory impl for creation of Tinkerpop buffers. We implement an internal type here
  * to allow for this class to use shaded Netty types (without bringing all of Tinkerpop into the
- * shaded JAR). The impl is based on the initial impl of {@link NettyBufferFactory} but we don't
- * guarantee that this class will mirror changes to that class over time.
+ * shaded JAR). The impl is based on the initial impl of {@code
+ * org.apache.tinkerpop.gremlin.driver.ser.NettyBufferFactory} but we don't guarantee that this
+ * class will mirror changes to that class over time.
  */
 public class DseNettyBufferFactory implements BufferFactory<ByteBuf> {
 
-  private static ByteBufAllocator DEFAULT_ALLOCATOR = new UnpooledByteBufAllocator(false);
+  private static final ByteBufAllocator DEFAULT_ALLOCATOR = new UnpooledByteBufAllocator(false);
 
   private final ByteBufAllocator allocator;
 

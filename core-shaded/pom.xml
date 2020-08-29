@@ -94,10 +94,6 @@
     </dependency>
     <dependency>
       <groupId>org.apache.tinkerpop</groupId>
-      <artifactId>gremlin-driver</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.tinkerpop</groupId>
       <artifactId>tinkergraph-gremlin</artifactId>
     </dependency>
     <dependency>
