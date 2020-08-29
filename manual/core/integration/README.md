@@ -311,21 +311,6 @@ as `application.conf` and `logback.xml` in our previous examples, must be in the
 
 All the driver's artifacts are JPMS automatic modules.
 
-Note that TinkerPop cannot currently be used in a JPMS application. You will get the following
-error:
-
-```
-Error occurred during initialization of boot layer
-java.lang.module.FindException: Unable to derive module descriptor for /path/to/gremlin-shaded-3.4.5.jar
-Caused by: java.lang.module.InvalidModuleDescriptorException: Provider class com.fasterxml.jackson.core.JsonFactory not in module
-```
-
-This is a known issue that will be resolved in TinkerPop 3.4.7. The driver will upgrade as soon as
-possible, see [JAVA-2726](https://datastax-oss.atlassian.net/browse/JAVA-2726).
-
-Unfortunately, the only workaround in the meantime is to exclude TinkerPop dependencies, as
-explained [here](#tinker-pop). Graph functionality won't be available.
-
 ### Driver dependencies
 
 The driver depends on a number of third-party libraries; some of those dependencies are opt-in,

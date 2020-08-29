@@ -50,7 +50,7 @@
     <metrics.version>4.0.5</metrics.version>
     <netty.version>4.1.51.Final</netty.version>
     <esri.version>1.2.1</esri.version>
-    <tinkerpop.version>3.4.5</tinkerpop.version>
+    <tinkerpop.version>3.4.8</tinkerpop.version>
     <slf4j.version>1.7.26</slf4j.version>
     <reactive-streams.version>1.0.2</reactive-streams.version>
     <json.version>20190722</json.version>
