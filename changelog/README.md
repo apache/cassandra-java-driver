@@ -4,6 +4,7 @@
 
 ### 4.9.0 (in progress)
 
+- [improvement] JAVA-2827: Exclude unused Tinkerpop transitive dependencies
 - [improvement] JAVA-2827: Remove dependency to Tinkerpop gremlin-driver
 - [task] JAVA-2859: Upgrade Tinkerpop to 3.4.8
 - [bug] JAVA-2726: Fix Tinkerpop incompatibility with JPMS

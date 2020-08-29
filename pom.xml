@@ -155,6 +155,24 @@
         <groupId>org.apache.tinkerpop</groupId>
         <artifactId>gremlin-core</artifactId>
         <version>${tinkerpop.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.carrotsearch</groupId>
+            <artifactId>hppc</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.jcabi</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>net.objecthunter</groupId>
+            <artifactId>exp4j</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.tinkerpop</groupId>
