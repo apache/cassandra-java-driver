@@ -59,6 +59,11 @@ It requires Java 8 or higher.
 Disclaimer: Some DataStax/DataStax Enterprise products might partially work on big-endian systems,
 but DataStax does not officially support these systems.
 
+## Connecting to DataStax Astra
+
+The driver comes with built-in support for Astra, DataStax's cloud-native Cassandra-as-a-service
+offering. See the dedicated [manual page](manual/cloud/) for more details.
+
 ## Migrating from previous versions
 
 Java driver 4 is **not binary compatible** with previous versions. However, most of the concepts
