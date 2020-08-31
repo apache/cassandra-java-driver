@@ -4,6 +4,7 @@
 
 ### 4.9.0 (in progress)
 
+- [documentation] JAVA-2823: Make Astra more visible in the docs
 - [documentation] JAVA-2869: Advise against using 4.5.x-4.6.0 in the upgrade guide
 - [documentation] JAVA-2868: Cover reconnect-on-init in the manual
 - [improvement] JAVA-2827: Exclude unused Tinkerpop transitive dependencies
