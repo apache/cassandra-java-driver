@@ -4,6 +4,7 @@
 
 ### 4.9.0 (in progress)
 
+- [documentation] JAVA-2868: Cover reconnect-on-init in the manual
 - [improvement] JAVA-2827: Exclude unused Tinkerpop transitive dependencies
 - [improvement] JAVA-2827: Remove dependency to Tinkerpop gremlin-driver
 - [task] JAVA-2859: Upgrade Tinkerpop to 3.4.8

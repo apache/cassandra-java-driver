@@ -56,6 +56,10 @@ We recommend that you take a look at the [reference configuration](configuration
 list of available options, and cross-reference with the sub-sections in this manual for more
 explanations.
 
+By default, `CqlSession.builder().build()` fails immediately if the cluster is not available. If you
+want to retry instead, you can set the [reconnect-on-init](reconnection/#at-init-time) option in the
+configuration.
+
 ##### Contact points
 
 If you don't specify any contact point, the driver defaults to `127.0.0.1:9042`:
