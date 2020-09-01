@@ -1,5 +1,11 @@
 ## Upgrade guide
 
+### 4.5.x - 4.6.0
+
+These versions are subject to [JAVA-2676](https://datastax-oss.atlassian.net/browse/JAVA-2676), a
+bug that causes performance degradations in certain scenarios. We strongly recommend upgrading to at
+least 4.6.1.
+
 ### 4.4.0
 
 Datastax Enterprise support is now available directly in the main driver. There is no longer a
