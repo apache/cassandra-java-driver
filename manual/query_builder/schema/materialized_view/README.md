@@ -85,5 +85,5 @@ dropTable("cyclist_by_age").ifExists();
 // DROP MATERIALIZED VIEW IF EXISTS cyclist_by_age
 ```
 
-[SchemaBuilder]:     https://docs.datastax.com/en/drivers/java/4.8/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
-[RelationStructure]: https://docs.datastax.com/en/drivers/java/4.8/com/datastax/oss/driver/api/querybuilder/schema/RelationStructure.html
+[SchemaBuilder]:     https://docs.datastax.com/en/drivers/java/4.9/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
+[RelationStructure]: https://docs.datastax.com/en/drivers/java/4.9/com/datastax/oss/driver/api/querybuilder/schema/RelationStructure.html

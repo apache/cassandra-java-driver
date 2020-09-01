@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.9.0 (in progress)
+### 4.9.0
 
 - [documentation] JAVA-2823: Make Astra more visible in the docs
 - [documentation] JAVA-2869: Advise against using 4.5.x-4.6.0 in the upgrade guide
@@ -497,6 +497,26 @@ changelog](https://docs.datastax.com/en/developer/java-driver-dse/latest/changel
 - [bug] JAVA-1499: Wait for load balancing policy at cluster initialization
 - [new feature] JAVA-1495: Add prepared statements
 
+## 3.10.2
+
+- [bug] JAVA-2860: Avoid NPE if channel initialization crashes.
+
+## 3.10.1
+
+- [bug] JAVA-2857: Fix NPE when built statements without parameters are logged at TRACE level.
+- [bug] JAVA-2843: Successfully parse DSE table schema in OSS driver.
+
+## 3.10.0
+
+- [improvement] JAVA-2676: Don't reschedule flusher after empty runs
+- [new feature] JAVA-2772: Support new protocol v5 message format
+
+## 3.9.0
+
+- [bug] JAVA-2627: Avoid logging error message including stack trace in request handler.
+- [new feature] JAVA-2706: Add now_in_seconds to protocol v5 query messages.
+- [improvement] JAVA-2730: Add support for Cassandra® 4.0 table options
+- [improvement] JAVA-2702: Transient Replication Support for Cassandra® 4.0
 
 ## 3.8.0
 

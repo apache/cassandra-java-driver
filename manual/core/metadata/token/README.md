@@ -169,5 +169,5 @@ on [schema metadata](../schema/). If schema metadata is disabled or filtered, to
 also be unavailable for the excluded keyspaces.
 
 
-[Metadata#getTokenMap]: https://docs.datastax.com/en/drivers/java/4.8/com/datastax/oss/driver/api/core/metadata/Metadata.html#getTokenMap--
-[TokenMap]:             https://docs.datastax.com/en/drivers/java/4.8/com/datastax/oss/driver/api/core/metadata/TokenMap.html
+[Metadata#getTokenMap]: https://docs.datastax.com/en/drivers/java/4.9/com/datastax/oss/driver/api/core/metadata/Metadata.html#getTokenMap--
+[TokenMap]:             https://docs.datastax.com/en/drivers/java/4.9/com/datastax/oss/driver/api/core/metadata/TokenMap.html

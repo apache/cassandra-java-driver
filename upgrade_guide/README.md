@@ -98,7 +98,7 @@ you can obtain in most web environments by calling `Thread.getContextClassLoader
  
 See the javadocs of [SessionBuilder.withClassLoader] for more information.
 
-[SessionBuilder.withClassLoader]: https://docs.datastax.com/en/drivers/java/4.8/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
+[SessionBuilder.withClassLoader]: https://docs.datastax.com/en/drivers/java/4.9/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
 
 ### 4.1.0
 

@@ -101,6 +101,6 @@ Note however that some types of queries can only be performed through the script
 * configuration;
 * DSE graph schema queries.
 
-[ScriptGraphStatement]: https://docs.datastax.com/en/drivers/java/4.8/com/datastax/dse/driver/api/core/graph/ScriptGraphStatement.html
-[ScriptGraphStatement.newInstance]: https://docs.datastax.com/en/drivers/java/4.8/com/datastax/dse/driver/api/core/graph/ScriptGraphStatement.html#newInstance-java.lang.String-
-[ScriptGraphStatement.builder]: https://docs.datastax.com/en/drivers/java/4.8/com/datastax/dse/driver/api/core/graph/ScriptGraphStatement.html#builder-java.lang.String-
+[ScriptGraphStatement]: https://docs.datastax.com/en/drivers/java/4.9/com/datastax/dse/driver/api/core/graph/ScriptGraphStatement.html
+[ScriptGraphStatement.newInstance]: https://docs.datastax.com/en/drivers/java/4.9/com/datastax/dse/driver/api/core/graph/ScriptGraphStatement.html#newInstance-java.lang.String-
+[ScriptGraphStatement.builder]: https://docs.datastax.com/en/drivers/java/4.9/com/datastax/dse/driver/api/core/graph/ScriptGraphStatement.html#builder-java.lang.String-

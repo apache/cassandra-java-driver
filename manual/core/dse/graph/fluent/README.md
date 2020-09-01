@@ -109,8 +109,8 @@ All the DSE predicates are available on the driver side:
             .values("name");
     ```
 
-[Search]: https://docs.datastax.com/en/drivers/java/4.8/com/datastax/dse/driver/api/core/graph/predicates/Search.html
-[Geo]:    https://docs.datastax.com/en/drivers/java/4.8/com/datastax/dse/driver/api/core/graph/predicates/Geo.html
+[Search]: https://docs.datastax.com/en/drivers/java/4.9/com/datastax/dse/driver/api/core/graph/predicates/Search.html
+[Geo]:    https://docs.datastax.com/en/drivers/java/4.9/com/datastax/dse/driver/api/core/graph/predicates/Geo.html
 
 [Apache TinkerPop™]: http://tinkerpop.apache.org/
 [TinkerPop DSL]: http://tinkerpop.apache.org/docs/current/reference/#dsl
