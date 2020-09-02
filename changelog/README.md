@@ -4,6 +4,8 @@
 
 ### 4.10.0 (in progress)
 
+- [improvement] JAVA-2871: Allow keyspace exclusions in the metadata, and exclude system keyspaces
+  by default
 
 ### 4.9.0
 
