@@ -2,6 +2,9 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.10.0 (in progress)
+
+
 ### 4.9.0
 
 - [documentation] JAVA-2823: Make Astra more visible in the docs
