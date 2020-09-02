@@ -70,7 +70,7 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
         config.getStringList(
             DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList());
     assert refreshedKeyspaces != null; // per the default value
-    this.keyspaceFilter = new KeyspaceFilter(logPrefix, refreshedKeyspaces);
+    this.keyspaceFilter = KeyspaceFilter.newInstance(logPrefix, refreshedKeyspaces);
   }
 
   protected abstract String selectKeyspacesQuery();
