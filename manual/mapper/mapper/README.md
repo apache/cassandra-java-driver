@@ -216,7 +216,7 @@ The following checks are then performed:
 * additionally, if the target element is a table, the primary key must be [properly
   annotated](../entities/#primary-key-columns) in the entity.
  
-If any of those steps fails, an `IllegalArgumentException` is thrown.
+If any of those steps fails, a warning is logged.
 
 Schema validation adds a small startup overhead, so once your application is stable you may want to
 disable it:
