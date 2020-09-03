@@ -15,11 +15,13 @@
  */
 package com.datastax.oss.driver.mapper;
 
-import static com.datastax.oss.driver.api.mapper.annotations.SchemaHint.*;
+import static com.datastax.oss.driver.api.mapper.annotations.SchemaHint.TargetElement;
 import static com.datastax.oss.driver.internal.core.util.LoggerTest.setupTestLogger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -28,6 +30,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
+import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
@@ -35,9 +38,11 @@ import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
 import com.datastax.oss.driver.api.mapper.annotations.SchemaHint;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
+import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -312,6 +317,20 @@ public class SchemaValidationIT extends InventoryITBase {
     }
   }
 
+  @Test
+  public void should_not_warn_or_throw_when_target_element_is_NONE() {
+    LoggerTest.LoggerSetup logger =
+        setupTestLogger(
+            SchemaValidationIT_DoesNotExistNoValidationHelper__MapperGenerated.class, Level.WARN);
+
+    // when
+    mapper.noValidationDao(sessionRule.keyspace());
+
+    // then
+    // no exceptions, no logs
+    verify(logger.appender, never()).doAppend(any());
+  }
+
   @Mapper
   public interface InventoryMapper {
     @DaoFactory
@@ -353,6 +372,9 @@ public class SchemaValidationIT extends InventoryITBase {
 
     @DaoFactory
     ProductPkAndClusteringDao productPkAndClusteringDao(@DaoKeyspace CqlIdentifier keyspace);
+
+    @DaoFactory
+    NoValidationDao noValidationDao(@DaoKeyspace CqlIdentifier keyspace);
   }
 
   @Dao
@@ -435,6 +457,25 @@ public class SchemaValidationIT extends InventoryITBase {
 
     @Select
     ProductPkAndClustering findById(UUID productId);
+  }
+
+  @Dao
+  public interface NoValidationDao {
+    // Not a real query, we just need to reference the entities
+    @QueryProvider(
+        providerClass = DummyProvider.class,
+        entityHelpers = {DoesNotExistNoValidation.class, ProductCqlTableMissingNoValidation.class})
+    void doNothing();
+  }
+
+  @SuppressWarnings("unused")
+  static class DummyProvider {
+    DummyProvider(
+        MapperContext context,
+        EntityHelper<DoesNotExistNoValidation> helper1,
+        EntityHelper<ProductCqlTableMissingNoValidation> helper2) {}
+
+    void doNothing() {}
   }
 
   @Entity
@@ -1188,4 +1229,22 @@ public class SchemaValidationIT extends InventoryITBase {
           + '}';
     }
   }
+
+  @Entity
+  @SchemaHint(targetElement = TargetElement.NONE)
+  public static class DoesNotExistNoValidation {
+    private int k;
+
+    public int getK() {
+      return k;
+    }
+
+    public void setK(int k) {
+      this.k = k;
+    }
+  }
+
+  @Entity
+  @SchemaHint(targetElement = TargetElement.NONE)
+  public static class ProductCqlTableMissingNoValidation extends ProductCqlTableMissing {}
 }

@@ -4,6 +4,7 @@
 
 ### 4.10.0 (in progress)
 
+- [improvement] JAVA-2877: Allow skipping validation for individual mapped entities
 
 ### 4.9.0
 
