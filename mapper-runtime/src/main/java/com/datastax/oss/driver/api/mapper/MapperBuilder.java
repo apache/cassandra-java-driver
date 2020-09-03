@@ -159,7 +159,7 @@ public abstract class MapperBuilder<MapperT> {
    *       annotated in the entity.
    * </ul>
    *
-   * If any of those steps fails, a warning is logged.
+   * If any of those steps fails, an {@link IllegalArgumentException} is thrown.
    *
    * <p>Schema validation is enabled by default; it adds a small startup overhead, so once your
    * application is stable you may want to disable it.
