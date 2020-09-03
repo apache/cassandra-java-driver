@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.querybuilder;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
@@ -32,6 +33,9 @@ import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.api.querybuilder.truncate.Truncate;
 import com.datastax.oss.driver.api.querybuilder.update.UpdateStart;
 import com.datastax.oss.driver.internal.core.metadata.schema.ShallowUserDefinedType;
+import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
+import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
+import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
 import com.datastax.oss.driver.internal.querybuilder.ArithmeticOperator;
 import com.datastax.oss.driver.internal.querybuilder.DefaultLiteral;
 import com.datastax.oss.driver.internal.querybuilder.DefaultRaw;
@@ -402,6 +406,15 @@ public class QueryBuilder {
    */
   @NonNull
   public static Literal literal(@Nullable Object value, @NonNull CodecRegistry codecRegistry) {
+    if (value instanceof Murmur3Token) {
+      value = ((Murmur3Token) value).getValue();
+    } else if (value instanceof ByteOrderedToken) {
+      value = ((ByteOrderedToken) value).getValue();
+    } else if (value instanceof RandomToken) {
+      value = ((RandomToken) value).getValue();
+    } else if (value instanceof Token) {
+      throw new IllegalArgumentException("Unsupported token type: " + value.getClass().getName());
+    }
     try {
       return literal(value, (value == null) ? null : codecRegistry.codecFor(value));
     } catch (CodecNotFoundException e) {
@@ -424,6 +437,8 @@ public class QueryBuilder {
    */
   @NonNull
   public static <T> Literal literal(@Nullable T value, @Nullable TypeCodec<T> codec) {
+    // Don't handle Token here, if the user calls this directly we assume they passed a codec that
+    // can handle the value
     return new DefaultLiteral<>(value, codec);
   }
 

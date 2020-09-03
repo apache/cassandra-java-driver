@@ -4,6 +4,7 @@
 
 ### 4.10.0 (in progress)
 
+- [bug] JAVA-2647: Handle token types in QueryBuilder.literal()
 
 ### 4.9.0
 
