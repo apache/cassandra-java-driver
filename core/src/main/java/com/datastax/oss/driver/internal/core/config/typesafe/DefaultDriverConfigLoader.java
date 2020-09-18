@@ -201,6 +201,42 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
     return new DefaultDriverConfigLoaderBuilder();
   }
 
+  /**
+   * Builds an instance using the driver's default implementation (based on Typesafe config), except
+   * that application-specific options are provided as a typesafe config object.
+   *
+   * <pre>
+   * DefaultDriverConfigLoader.fromConfig(
+   *         ConfigFactory.load("my-custom-config.conf"))
+   * </pre>
+   *
+   * <p>More precisely, configuration properties are loaded and merged from the following
+   * (first-listed are higher priority):
+   *
+   * <ul>
+   *   <li>system properties
+   *   <li>the config in {@code config}
+   *   <li>{@code reference.conf} (all resources on classpath with this name). In particular, this
+   *       will load the {@code reference.conf} included in the core driver JAR, that defines
+   *       default options for all mandatory options.
+   * </ul>
+   *
+   * <p>This loader does not support runtime reloading.
+   */
+  @NonNull
+  public static DefaultDriverConfigLoader fromConfig(@NonNull Config config) {
+    return new DefaultDriverConfigLoader(
+        () -> {
+          ConfigFactory.invalidateCaches();
+          return ConfigFactory.defaultOverrides()
+              .withFallback(config)
+              .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+              .resolve()
+              .getConfig(DEFAULT_ROOT_PATH);
+        },
+        false);
+  }
+
   private class SingleThreaded {
     private final String logPrefix;
     private final EventExecutor adminExecutor;
