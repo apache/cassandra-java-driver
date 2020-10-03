@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSortedSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -35,8 +36,8 @@ public class CompositeDriverExecutionProfile implements DriverExecutionProfile {
   private final DriverConfig fallbackConfig;
   private final String profileName;
 
-  private volatile DriverExecutionProfile primaryProfile;
-  private volatile DriverExecutionProfile fallbackProfile;
+  @Nullable private volatile DriverExecutionProfile primaryProfile;
+  @Nullable private volatile DriverExecutionProfile fallbackProfile;
 
   public CompositeDriverExecutionProfile(
       @NonNull DriverConfig primaryConfig,
@@ -89,8 +90,13 @@ public class CompositeDriverExecutionProfile implements DriverExecutionProfile {
 
   @Override
   public boolean isDefined(@NonNull DriverOption option) {
-    return (primaryProfile != null && primaryProfile.isDefined(option))
-        || (fallbackProfile != null && fallbackProfile.isDefined(option));
+    DriverExecutionProfile primaryProfile = this.primaryProfile;
+    if (primaryProfile != null && primaryProfile.isDefined(option)) {
+      return true;
+    } else {
+      DriverExecutionProfile fallbackProfile = this.fallbackProfile;
+      return fallbackProfile != null && fallbackProfile.isDefined(option);
+    }
   }
 
   @Override
@@ -181,21 +187,34 @@ public class CompositeDriverExecutionProfile implements DriverExecutionProfile {
   private <ValueT> ValueT get(
       @NonNull DriverOption option,
       BiFunction<DriverExecutionProfile, DriverOption, ValueT> getter) {
+    DriverExecutionProfile primaryProfile = this.primaryProfile;
     if (primaryProfile != null && primaryProfile.isDefined(option)) {
       return getter.apply(primaryProfile, option);
-    } else if (fallbackProfile != null && fallbackProfile.isDefined(option)) {
-      return getter.apply(fallbackProfile, option);
     } else {
-      throw new IllegalArgumentException("Unknown option: " + option);
+      DriverExecutionProfile fallbackProfile = this.fallbackProfile;
+      if (fallbackProfile != null && fallbackProfile.isDefined(option)) {
+        return getter.apply(fallbackProfile, option);
+      } else {
+        throw new IllegalArgumentException("Unknown option: " + option);
+      }
     }
   }
 
   @NonNull
   @Override
   public SortedSet<Map.Entry<String, Object>> entrySet() {
-    SortedSet<Map.Entry<String, Object>> result = new TreeSet<>(Map.Entry.comparingByKey());
-    result.addAll(fallbackProfile.entrySet());
-    result.addAll(primaryProfile.entrySet());
-    return ImmutableSortedSet.copyOf(result);
+    DriverExecutionProfile primaryProfile = this.primaryProfile;
+    DriverExecutionProfile fallbackProfile = this.fallbackProfile;
+    if (primaryProfile != null && fallbackProfile != null) {
+      SortedSet<Map.Entry<String, Object>> result = new TreeSet<>(Map.Entry.comparingByKey());
+      result.addAll(fallbackProfile.entrySet());
+      result.addAll(primaryProfile.entrySet());
+      return ImmutableSortedSet.copyOf(Map.Entry.comparingByKey(), result);
+    } else if (primaryProfile != null) {
+      return primaryProfile.entrySet();
+    } else {
+      assert fallbackProfile != null;
+      return fallbackProfile.entrySet();
+    }
   }
 }
