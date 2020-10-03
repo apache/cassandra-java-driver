@@ -16,7 +16,9 @@
 package com.datastax.oss.driver.internal.core.config.composite;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 
+import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
@@ -59,6 +61,10 @@ public class CompositeDriverConfigTest {
         .isTrue();
     assertThat(compositeDefaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
         .isEqualTo(1);
+    assertThat(compositeDefaultProfile.entrySet())
+        .containsExactly(
+            entry(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE.getPath(), 1),
+            entry(DseDriverOption.CONTINUOUS_PAGING_MAX_PAGES.getPath(), 1));
   }
 
   @Test
@@ -70,6 +76,10 @@ public class CompositeDriverConfigTest {
         .isTrue();
     assertThat(compositeDefaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
         .isEqualTo(1);
+    assertThat(compositeDefaultProfile.entrySet())
+        .containsExactly(
+            entry(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE.getPath(), 1),
+            entry(DseDriverOption.CONTINUOUS_PAGING_MAX_PAGES.getPath(), 1));
   }
 
   @Test
@@ -80,6 +90,10 @@ public class CompositeDriverConfigTest {
         .isTrue();
     assertThat(compositeDefaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
         .isEqualTo(1);
+    assertThat(compositeDefaultProfile.entrySet())
+        .containsExactly(
+            entry(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE.getPath(), 1),
+            entry(DseDriverOption.CONTINUOUS_PAGING_MAX_PAGES.getPath(), 1));
   }
 
   @Test
@@ -112,5 +126,20 @@ public class CompositeDriverConfigTest {
                 .getProfile("onlyInFallback")
                 .getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
         .isEqualTo(4);
+
+    assertThat(compositeConfig.getProfile("onlyInPrimary").entrySet())
+        .containsExactly(
+            entry(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE.getPath(), 1),
+            entry(DseDriverOption.CONTINUOUS_PAGING_MAX_PAGES.getPath(), 1));
+
+    assertThat(compositeConfig.getProfile("inBoth").entrySet())
+        .containsExactly(
+            entry(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE.getPath(), 2),
+            entry(DseDriverOption.CONTINUOUS_PAGING_MAX_PAGES.getPath(), 1));
+
+    assertThat(compositeConfig.getProfile("onlyInFallback").entrySet())
+        .containsExactly(
+            entry(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE.getPath(), 4),
+            entry(DseDriverOption.CONTINUOUS_PAGING_MAX_PAGES.getPath(), 1));
   }
 }
