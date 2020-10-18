@@ -65,14 +65,25 @@ See the [upgrade guide](upgrade_guide/) for details.
 * [API docs]
 * Bug tracking: [JIRA]
 * [Mailing list]
+* Training: [Scylla University]
 * [Changelog]
 * [FAQ]
 
 [API docs]: https://docs.datastax.com/en/drivers/java/4.7
 [JIRA]: https://datastax-oss.atlassian.net/browse/JAVA
 [Mailing list]: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
+[Scylla University]: https://university.scylladb.com 
 [Changelog]: changelog/
 [FAQ]: faq/
+
+## Training:
+
+The course [Using Scylla Drivers](https://university.scylladb.com/courses/using-scylla-drivers/) in [Scylla University](https://university.scylladb.com/) explains how to use drivers in different languages to interact 
+with a Scylla cluster. The lesson, [Coding with Java Part 1](https://university.scylladb.com/courses/using-scylla-drivers/lessons/coding-with-java-part-1/), goes over a sample application that, 
+using the Java driver,  interacts with a three-node Scylla cluster. It connects to a Scylla cluster, 
+displays the contents of a  table, inserts and deletes data, and shows the contents of the table after each action. 
+The course also includes more advanced lessons that demonstrate working with prepares statements and datatypes. 
+
 
 ## License
 
