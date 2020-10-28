@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.tracker;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
@@ -266,6 +272,7 @@ public class RequestLogFormatterTest {
         query,
         DefaultColumnDefinitions.valueOf(definitions.build()),
         Collections.emptyList(),
+        null,
         null,
         null,
         null,

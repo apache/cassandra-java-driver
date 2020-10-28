@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
@@ -37,6 +43,7 @@ import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata;
+import com.datastax.oss.driver.api.core.metadata.token.Partitioner;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.servererrors.AlreadyExistsException;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
@@ -62,6 +69,7 @@ import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.DefaultProtocolFeature;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.PartitionerFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
 import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
 import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
@@ -380,6 +388,8 @@ public class Conversions {
             ? computePkIndices(variableDefinitions, context)
             : Ints.asList(pkIndicesInResponse);
 
+    Partitioner partitioner = PartitionerFactory.partitioner(variableDefinitions, context);
+
     return new DefaultPreparedStatement(
         ByteBuffer.wrap(response.preparedQueryId).asReadOnlyBuffer(),
         request.getQuery(),
@@ -390,6 +400,7 @@ public class Conversions {
             : ByteBuffer.wrap(response.resultMetadataId).asReadOnlyBuffer(),
         toColumnDefinitions(response.resultMetadata, context),
         request.getKeyspace(),
+        partitioner,
         NullAllowingImmutableMap.copyOf(request.getCustomPayload()),
         request.getExecutionProfileNameForBoundStatements(),
         request.getExecutionProfileForBoundStatements(),

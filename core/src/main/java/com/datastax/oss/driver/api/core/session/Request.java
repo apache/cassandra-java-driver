@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.api.core.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
@@ -21,6 +27,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.token.Partitioner;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -130,6 +137,14 @@ public interface Request {
    */
   @Nullable
   Token getRoutingToken();
+
+  /**
+   * The partitioner to use for token-aware routing. If {@code null}, the cluster-wide partitioner
+   * will be used.
+   */
+  default Partitioner getPartitioner() {
+    return null;
+  }
 
   /**
    * Returns the custom payload to send alongside the request.

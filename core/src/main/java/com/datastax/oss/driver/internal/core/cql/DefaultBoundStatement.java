@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
@@ -23,6 +29,7 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.token.Partitioner;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
@@ -255,6 +262,11 @@ public class DefaultBoundStatement implements BoundStatement {
         protocolVersion,
         node,
         nowInSeconds);
+  }
+
+  @Override
+  public Partitioner getPartitioner() {
+    return preparedStatement.getPartitioner();
   }
 
   @Override

@@ -13,10 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
+import com.datastax.oss.driver.api.core.metadata.token.Partitioner;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
@@ -50,6 +57,12 @@ public interface PreparedStatement {
   /** A description of the bind variables of this prepared statement. */
   @NonNull
   ColumnDefinitions getVariableDefinitions();
+
+  /**
+   * The partitioner to use for token-aware routing. If {@code null}, the cluster-wide partitioner
+   * will be used.
+   */
+  Partitioner getPartitioner();
 
   /**
    * The indices of the variables in {@link #getVariableDefinitions()} that correspond to the target
