@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.protocol;
 
 import com.datastax.oss.driver.api.core.metadata.token.Token;
-import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
+import com.datastax.oss.driver.internal.core.metadata.token.TokenLong64;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -55,10 +55,10 @@ public class ShardingInfo {
   }
 
   public int shardId(Token t) {
-    if (!(t instanceof Murmur3Token)) {
+    if (!(t instanceof TokenLong64)) {
       return ThreadLocalRandom.current().nextInt(shardsCount);
     }
-    long token = ((Murmur3Token) t).getValue();
+    long token = ((TokenLong64) t).getValue();
     token += Long.MIN_VALUE;
     token <<= shardingIgnoreMSB;
     long tokLo = token & 0xffffffffL;
