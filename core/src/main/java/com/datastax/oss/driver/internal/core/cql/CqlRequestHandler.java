@@ -34,6 +34,7 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
+import com.datastax.oss.driver.api.core.metadata.token.Partitioner;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
@@ -256,6 +257,10 @@ public class CqlRequestHandler implements Throttled {
     ByteBuffer key = statement.getRoutingKey();
     if (key == null) {
       return null;
+    }
+    Partitioner partitioner = statement.getPartitioner();
+    if (partitioner != null) {
+      return partitioner.hash(key);
     }
     TokenMap tokenMap = context.getMetadataManager().getMetadata().getTokenMap().orElse(null);
     return tokenMap == null ? null : ((DefaultTokenMap) tokenMap).getTokenFactory().hash(key);

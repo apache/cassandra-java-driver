@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.loadbalancing;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
@@ -23,6 +29,7 @@ import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
+import com.datastax.oss.driver.api.core.metadata.token.Partitioner;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
@@ -236,6 +243,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
     CqlIdentifier keyspace = null;
     Token token = null;
     ByteBuffer key = null;
+    Partitioner partitioner = null;
     try {
       keyspace = request.getKeyspace();
       if (keyspace == null) {
@@ -253,6 +261,8 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
       if (token == null && key == null) {
         return Collections.emptySet();
       }
+
+      partitioner = request.getPartitioner();
     } catch (Exception e) {
       // Protect against poorly-implemented Request instances
       LOG.error("Unexpected error while trying to compute query plan", e);
@@ -262,7 +272,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
     TokenMap tokenMap = maybeTokenMap.get();
     return token != null
         ? tokenMap.getReplicas(keyspace, token)
-        : tokenMap.getReplicas(keyspace, key);
+        : tokenMap.getReplicas(keyspace, partitioner, key);
   }
 
   /** Exposed as a protected method so that it can be accessed by tests */

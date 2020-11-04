@@ -13,9 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.metadata.token;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.token.Partitioner;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.internal.core.util.NanoTime;
@@ -97,8 +104,11 @@ class KeyspaceTokenMap {
     return tokenRangesByNode.get(replica);
   }
 
-  Set<Node> getReplicas(ByteBuffer partitionKey) {
-    return getReplicas(tokenFactory.hash(partitionKey));
+  Set<Node> getReplicas(Partitioner partitioner, ByteBuffer partitionKey) {
+    if (partitioner == null) {
+      partitioner = tokenFactory;
+    }
+    return getReplicas(partitioner.hash(partitionKey));
   }
 
   Set<Node> getReplicas(Token token) {

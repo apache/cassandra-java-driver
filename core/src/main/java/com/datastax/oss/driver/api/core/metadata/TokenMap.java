@@ -13,17 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.api.core.metadata;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.metadata.token.Partitioner;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Set;
 
@@ -51,12 +59,19 @@ public interface TokenMap {
   /**
    * Builds a token from a partition key.
    *
+   * @param partitioner the partitioner to use or {@code null} for this TokenMap's partitioner.
    * @param partitionKey the partition key components, in their serialized form (which can be
    *     obtained with {@link TypeCodec#encode(Object, ProtocolVersion)}. Neither the individual
    *     components, nor the vararg array itself, can be {@code null}.
    */
   @NonNull
-  Token newToken(@NonNull ByteBuffer... partitionKey);
+  Token newToken(@Nullable Partitioner partitioner, @NonNull ByteBuffer... partitionKey);
+
+  /** Shortcut for {@link #newToken(Partitioner, ByteBuffer...) newToken(null, partitionKey)}. */
+  @NonNull
+  default Token newToken(@NonNull ByteBuffer... partitionKey) {
+    return newToken(null, partitionKey);
+  }
 
   @NonNull
   TokenRange newTokenRange(@NonNull Token start, @NonNull Token end);
@@ -99,15 +114,39 @@ public interface TokenMap {
 
   /** The replicas for a given partition key in the given keyspace. */
   @NonNull
-  Set<Node> getReplicas(@NonNull CqlIdentifier keyspace, @NonNull ByteBuffer partitionKey);
+  Set<Node> getReplicas(
+      @NonNull CqlIdentifier keyspace,
+      @Nullable Partitioner partitioner,
+      @NonNull ByteBuffer partitionKey);
 
   /**
-   * Shortcut for {@link #getReplicas(CqlIdentifier, ByteBuffer)
-   * getReplicas(CqlIdentifier.fromCql(keyspaceName), partitionKey)}.
+   * Shortcut for {@link #getReplicas(CqlIdentifier, Partitioner, ByteBuffer) getReplicas(keyspace,
+   * null, partitionKey)}.
+   */
+  @NonNull
+  default Set<Node> getReplicas(@NonNull CqlIdentifier keyspace, @NonNull ByteBuffer partitionKey) {
+    return getReplicas(keyspace, null, partitionKey);
+  }
+
+  /**
+   * Shortcut for {@link #getReplicas(CqlIdentifier, Partitioner, ByteBuffer)
+   * getReplicas(CqlIdentifier.fromCql(keyspaceName), partitioner, partitionKey)}.
+   */
+  @NonNull
+  default Set<Node> getReplicas(
+      @NonNull String keyspaceName,
+      @Nullable Partitioner partitioner,
+      @NonNull ByteBuffer partitionKey) {
+    return getReplicas(CqlIdentifier.fromCql(keyspaceName), partitioner, partitionKey);
+  }
+
+  /**
+   * Shortcut for {@link #getReplicas(CqlIdentifier, Partitioner, ByteBuffer)
+   * getReplicas(CqlIdentifier.fromCql(keyspaceName), null, partitionKey)}.
    */
   @NonNull
   default Set<Node> getReplicas(@NonNull String keyspaceName, @NonNull ByteBuffer partitionKey) {
-    return getReplicas(CqlIdentifier.fromCql(keyspaceName), partitionKey);
+    return getReplicas(CqlIdentifier.fromCql(keyspaceName), null, partitionKey);
   }
 
   /** The replicas for a given token in the given keyspace. */

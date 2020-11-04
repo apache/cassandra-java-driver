@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.metadata.token;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
+import com.datastax.oss.driver.api.core.metadata.token.Partitioner;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
@@ -30,6 +37,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSetMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.SetMultimap;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Collections;
@@ -140,8 +148,11 @@ public class DefaultTokenMap implements TokenMap {
 
   @NonNull
   @Override
-  public Token newToken(@NonNull ByteBuffer... partitionKey) {
-    return tokenFactory.hash(RoutingKey.compose(partitionKey));
+  public Token newToken(@Nullable Partitioner partitioner, @NonNull ByteBuffer... partitionKey) {
+    if (partitioner == null) {
+      partitioner = tokenFactory;
+    }
+    return partitioner.hash(RoutingKey.compose(partitionKey));
   }
 
   @NonNull
@@ -171,9 +182,14 @@ public class DefaultTokenMap implements TokenMap {
 
   @NonNull
   @Override
-  public Set<Node> getReplicas(@NonNull CqlIdentifier keyspace, @NonNull ByteBuffer partitionKey) {
+  public Set<Node> getReplicas(
+      @NonNull CqlIdentifier keyspace,
+      @Nullable Partitioner partitioner,
+      @NonNull ByteBuffer partitionKey) {
     KeyspaceTokenMap keyspaceMap = getKeyspaceMap(keyspace);
-    return (keyspaceMap == null) ? Collections.emptySet() : keyspaceMap.getReplicas(partitionKey);
+    return (keyspaceMap == null)
+        ? Collections.emptySet()
+        : keyspaceMap.getReplicas(partitioner, partitionKey);
   }
 
   @NonNull
