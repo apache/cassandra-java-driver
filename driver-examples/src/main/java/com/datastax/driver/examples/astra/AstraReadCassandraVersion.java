@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.datastax.driver.examples.apollo;
+package com.datastax.driver.examples.astra;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ResultSet;
@@ -23,27 +23,28 @@ import com.datastax.driver.core.Session;
 import java.io.File;
 
 /**
- * Connects to a DataStax Apollo cluster and extracts basic information from it.
+ * Connects to a DataStax Astra cluster and extracts basic information from it.
  *
  * <p>Preconditions:
  *
  * <ul>
- *   <li>A DataStax Apollo cluster is running and accessible.
- *   <li>A DataStax Apollo secure connect bundle for the running cluster.
+ *   <li>A DataStax Astra cluster is running and accessible.
+ *   <li>A DataStax Astra secure connect bundle for the running cluster.
  * </ul>
  *
  * <p>Side effects: none.
  *
+ * @see <a href="https://docs.astra.datastax.com/docs/creating-your-astra-database">Creating an
+ *     Astra Database</a>
  * @see <a
- *     href="https://helpdocs.datastax.com/gcp/dscloud/apollo/dscloudGettingStarted.html#dscloudCreateCluster">
- *     Creating an Apollo Database</a>
- * @see <a href="https://helpdocs.datastax.com/gcp/dscloud/apollo/dscloudShareClusterDetails.html">
- *     Providing access to Apollo databases</a>
- * @see <a href="https://helpdocs.datastax.com/gcp/dscloud/apollo/dscloudObtainingCredentials.html">
- *     Obtaining Apollo secure connect bundle</a>
+ *     href="https://docs.astra.datastax.com/docs/obtaining-database-credentials#sharing-your-secure-connect-bundle">
+ *     Providing access to Astra databases</a>
+ * @see <a
+ *     href="https://docs.astra.datastax.com/docs/obtaining-database-credentials#getting-your-secure-connect-bundle">
+ *     Obtaining Astra secure connect bundle</a>
  * @see <a href="http://datastax.github.io/java-driver/manual/">Java driver online manual</a>
  */
-public class ApolloReadCassandraVersion {
+public class AstraReadCassandraVersion {
 
   public static void main(String[] args) {
 
@@ -58,7 +59,7 @@ public class ApolloReadCassandraVersion {
           Cluster.builder()
               // Change the path here to the secure connect bundle location (see javadocs above)
               .withCloudSecureConnectBundle(new File("/path/to/secure-connect-database_name.zip"))
-              // Change the user_name and password here for the Apollo instance
+              // Change the user_name and password here for the Astra instance
               .withCredentials("user_name", "password")
               // Uncomment the next line to use a specific keyspace
               // .withKeyspace("keyspace_name")
