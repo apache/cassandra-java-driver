@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.examples.mapper.killrvideo.KillrVideoMapper;
 import com.datastax.oss.driver.examples.mapper.killrvideo.user.User;
 import com.datastax.oss.driver.examples.mapper.killrvideo.user.UserDao;
@@ -39,7 +40,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -87,8 +87,7 @@ public class KillrVideoMapperExample {
       // Create a new user
       UserDao userDao = mapper.userDao();
 
-      User user =
-          new User(UUID.randomUUID(), "test", "user", "testuser@example.com", Instant.now());
+      User user = new User(Uuids.random(), "test", "user", "testuser@example.com", Instant.now());
 
       if (userDao.create(user, "fakePasswordForTests".toCharArray())) {
         System.out.println("Created " + user);
@@ -99,7 +98,7 @@ public class KillrVideoMapperExample {
 
       // Creating another user with the same email should fail
       assert !userDao.create(
-          new User(UUID.randomUUID(), "test2", "user", "testuser@example.com", Instant.now()),
+          new User(Uuids.random(), "test2", "user", "testuser@example.com", Instant.now()),
           "fakePasswordForTests2".toCharArray());
 
       // Simulate login attempts
