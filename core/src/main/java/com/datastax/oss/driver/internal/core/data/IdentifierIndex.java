@@ -23,6 +23,7 @@ import com.datastax.oss.driver.internal.core.util.Strings;
 import com.datastax.oss.driver.shaded.guava.common.collect.LinkedListMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ListMultimap;
 import java.util.List;
+import java.util.Locale;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -47,7 +48,7 @@ public class IdentifierIndex {
     for (CqlIdentifier id : ids) {
       byId.put(id, i);
       byCaseSensitiveName.put(id.asInternal(), i);
-      byCaseInsensitiveName.put(id.asInternal().toLowerCase(), i);
+      byCaseInsensitiveName.put(id.asInternal().toLowerCase(Locale.ROOT), i);
       i += 1;
     }
   }
@@ -59,7 +60,7 @@ public class IdentifierIndex {
   public List<Integer> allIndicesOf(String name) {
     return Strings.isDoubleQuoted(name)
         ? byCaseSensitiveName.get(Strings.unDoubleQuote(name))
-        : byCaseInsensitiveName.get(name.toLowerCase());
+        : byCaseInsensitiveName.get(name.toLowerCase(Locale.ROOT));
   }
 
   /**
