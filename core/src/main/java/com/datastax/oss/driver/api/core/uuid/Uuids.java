@@ -28,7 +28,6 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -37,7 +36,6 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
 import java.util.SplittableRandom;
-import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
@@ -113,7 +111,16 @@ public final class Uuids {
 
   private Uuids() {}
 
-  private static final long START_EPOCH = makeEpoch();
+  /**
+   * UUID v1 timestamps must be expressed relatively to October 15th, 1582 – the day when Gregorian
+   * calendar was introduced. This constant captures that moment in time expressed in milliseconds
+   * before the Unix epoch. It can be obtained by calling:
+   *
+   * <pre>
+   *   Instant.parse("1582-10-15T00:00:00Z").toEpochMilli();
+   * </pre>
+   */
+  private static final long START_EPOCH_MILLIS = -12219292800000L;
 
   // Lazily initialize clock seq + node value at time of first access.  Quarkus will attempt to
   // initialize this class at deployment time which prevents us from just setting this value
@@ -156,19 +163,6 @@ public final class Uuids {
   private static final long MAX_CLOCK_SEQ_AND_NODE = 0x7f7f7f7f7f7f7f7fL;
 
   private static final AtomicLong lastTimestamp = new AtomicLong(0L);
-
-  private static long makeEpoch() {
-    // UUID v1 timestamps must be in 100-nanoseconds interval since 00:00:00.000 15 Oct 1582.
-    Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT-0"));
-    c.set(Calendar.YEAR, 1582);
-    c.set(Calendar.MONTH, Calendar.OCTOBER);
-    c.set(Calendar.DAY_OF_MONTH, 15);
-    c.set(Calendar.HOUR_OF_DAY, 0);
-    c.set(Calendar.MINUTE, 0);
-    c.set(Calendar.SECOND, 0);
-    c.set(Calendar.MILLISECOND, 0);
-    return c.getTimeInMillis();
-  }
 
   private static long makeNode() {
 
@@ -590,7 +584,7 @@ public final class Uuids {
               uuid.version()));
     }
     long timestamp = uuid.timestamp();
-    return (timestamp / 10000) + START_EPOCH;
+    return (timestamp / 10000) + START_EPOCH_MILLIS;
   }
 
   // Use {@link System#currentTimeMillis} for a base time in milliseconds, and if we are in the same
@@ -627,7 +621,7 @@ public final class Uuids {
 
   @VisibleForTesting
   static long fromUnixTimestamp(long tstamp) {
-    return (tstamp - START_EPOCH) * 10000;
+    return (tstamp - START_EPOCH_MILLIS) * 10000;
   }
 
   private static long millisOf(long timestamp) {
