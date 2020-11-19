@@ -255,7 +255,8 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   }
 
   /**
-   * Returns the query timestamp, in microseconds, to send with the statement.
+   * Returns the query timestamp, in microseconds, to send with the statement. See {@link
+   * #setQueryTimestamp(long)} for details.
    *
    * <p>If this is equal to {@link #NO_DEFAULT_TIMESTAMP}, the {@link TimestampGenerator} configured
    * for this driver instance will be used to generate a timestamp.
@@ -276,6 +277,19 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
 
   /**
    * Sets the query timestamp, in microseconds, to send with the statement.
+   *
+   * <p>This is an alternative to appending a {@code USING TIMESTAMP} clause in the statement's
+   * query string, and has the advantage of sending the timestamp separately from the query string
+   * itself, which doesn't have to be modified when executing the same statement with different
+   * timestamps. Note that, if both a {@code USING TIMESTAMP} clause and a query timestamp are set
+   * for a given statement, the timestamp from the {@code USING TIMESTAMP} clause wins.
+   *
+   * <p>This method can be used on any instance of {@link SimpleStatement}, {@link BoundStatement}
+   * or {@link BatchStatement}. For a {@link BatchStatement}, the timestamp will apply to all its
+   * child statements; it is not possible to define per-child timestamps using this method, and
+   * consequently, if this method is called on a batch child statement, the provided timestamp will
+   * be silently ignored. If different timestamps are required for individual child statements, this
+   * can only be achieved with a custom {@code USING TIMESTAMP} clause in each child query.
    *
    * <p>If this is equal to {@link #NO_DEFAULT_TIMESTAMP}, the {@link TimestampGenerator} configured
    * for this driver instance will be used to generate a timestamp.
