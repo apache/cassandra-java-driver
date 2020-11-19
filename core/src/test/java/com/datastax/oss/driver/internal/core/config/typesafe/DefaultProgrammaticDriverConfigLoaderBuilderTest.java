@@ -42,6 +42,22 @@ public class DefaultProgrammaticDriverConfigLoaderBuilderTest {
   }
 
   @Test
+  public void should_override_option_more_than_once() {
+    DriverConfigLoader loader =
+        new DefaultProgrammaticDriverConfigLoaderBuilder(
+                () -> ConfigFactory.parseString(FALLBACK_CONFIG), "")
+            .withInt(MockOptions.INT1, 2)
+            .withInt(MockOptions.INT1, 3)
+            .withInt(MockOptions.INT1, 4)
+            .withInt(MockOptions.INT2, 3)
+            .withInt(MockOptions.INT2, 4)
+            .build();
+    DriverConfig config = loader.getInitialConfig();
+    assertThat(config.getDefaultProfile().getInt(MockOptions.INT1)).isEqualTo(4);
+    assertThat(config.getDefaultProfile().getInt(MockOptions.INT2)).isEqualTo(4);
+  }
+
+  @Test
   public void should_override_option_in_existing_profile() {
     DriverConfigLoader loader =
         new DefaultProgrammaticDriverConfigLoaderBuilder(
