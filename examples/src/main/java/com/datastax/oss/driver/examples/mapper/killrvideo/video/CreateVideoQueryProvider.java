@@ -22,13 +22,13 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.UUID;
 
 /**
  * Provides the implementation of {@link VideoDao#create}.
@@ -68,7 +68,7 @@ class CreateVideoQueryProvider {
 
   void create(Video video) {
     if (video.getVideoid() == null) {
-      video.setVideoid(UUID.randomUUID());
+      video.setVideoid(Uuids.random());
     }
     if (video.getAddedDate() == null) {
       video.setAddedDate(Instant.now());

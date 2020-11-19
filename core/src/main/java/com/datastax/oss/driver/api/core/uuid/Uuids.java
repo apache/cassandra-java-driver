@@ -36,6 +36,7 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
+import java.util.SplittableRandom;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
@@ -263,11 +264,61 @@ public final class Uuids {
   /**
    * Creates a new random (version 4) UUID.
    *
-   * <p>This method is just a convenience for {@link UUID#randomUUID()}.
+   * <p><b>This method has received a new implementation as of driver 4.10.</b> Unlike the JDK's
+   * {@link UUID#randomUUID()} method, it does not use anymore the cryptographic {@link
+   * java.security.SecureRandom} number generator. Instead, it uses the non-cryptographic {@link
+   * Random} class, with a different seed at every invocation.
+   *
+   * <p>Using a non-cryptographic generator has two advantages:
+   *
+   * <ol>
+   *   <li>UUID generation is much faster than with {@link UUID#randomUUID()};
+   *   <li>Contrary to {@link UUID#randomUUID()}, UUID generation with this method does not require
+   *       I/O and is not a blocking call, which makes this method better suited for non-blocking
+   *       applications.
+   * </ol>
+   *
+   * Of course, this method is intended for usage where cryptographic strength is not required, such
+   * as when generating row identifiers for insertion in the database. If you still need
+   * cryptographic strength, consider using {@link Uuids#random(Random)} instead, and pass an
+   * instance of {@link java.security.SecureRandom}.
    */
   @NonNull
   public static UUID random() {
-    return UUID.randomUUID();
+    return random(new Random());
+  }
+
+  /**
+   * Creates a new random (version 4) UUID using the provided {@link Random} instance.
+   *
+   * <p>This method offers more flexibility than {@link #random()} as it allows to customize the
+   * {@link Random} instance to use, and also offers the possibility to reuse instances across
+   * successive calls. Reusing Random instances is the norm when using {@link
+   * java.util.concurrent.ThreadLocalRandom}, for instance; however other Random implementations may
+   * perform poorly under heavy thread contention.
+   *
+   * <p>Note: some Random implementations, such as {@link java.security.SecureRandom}, may trigger
+   * I/O activity during random number generation; these instances should not be used in
+   * non-blocking contexts.
+   */
+  @NonNull
+  public static UUID random(@NonNull Random random) {
+    byte[] data = new byte[16];
+    random.nextBytes(data);
+    return buildUuid(data, 4);
+  }
+
+  /**
+   * Creates a new random (version 4) UUID using the provided {@link SplittableRandom} instance.
+   *
+   * <p>This method should be preferred to {@link #random()} when UUID generation happens in massive
+   * parallel computations, such as when using the ForkJoin framework. Note that {@link
+   * SplittableRandom} instances are not thread-safe.
+   */
+  @NonNull
+  public static UUID random(@NonNull SplittableRandom random) {
+    byte[] data = toBytes(random.nextLong(), random.nextLong());
+    return buildUuid(data, 4);
   }
 
   /**
@@ -344,7 +395,7 @@ public final class Uuids {
     MessageDigest md = newMessageDigest(version);
     md.update(toBytes(namespace));
     md.update(name);
-    return buildNamedUuid(md.digest(), version);
+    return buildUuid(md.digest(), version);
   }
 
   /**
@@ -390,7 +441,7 @@ public final class Uuids {
     }
     MessageDigest md = newMessageDigest(version);
     md.update(namespaceAndName);
-    return buildNamedUuid(md.digest(), version);
+    return buildUuid(md.digest(), version);
   }
 
   @NonNull
@@ -408,7 +459,7 @@ public final class Uuids {
   }
 
   @NonNull
-  private static UUID buildNamedUuid(@NonNull byte[] data, int version) {
+  private static UUID buildUuid(@NonNull byte[] data, int version) {
     // clear and set version
     data[6] &= (byte) 0x0f;
     data[6] |= (byte) (version << 4);
@@ -433,12 +484,16 @@ public final class Uuids {
   }
 
   private static byte[] toBytes(UUID uuid) {
-    byte[] out = new byte[16];
     long msb = uuid.getMostSignificantBits();
+    long lsb = uuid.getLeastSignificantBits();
+    return toBytes(msb, lsb);
+  }
+
+  private static byte[] toBytes(long msb, long lsb) {
+    byte[] out = new byte[16];
     for (int i = 0; i < 8; i++) {
       out[i] = (byte) (msb >> ((7 - i) * 8));
     }
-    long lsb = uuid.getLeastSignificantBits();
     for (int i = 8; i < 16; i++) {
       out[i] = (byte) (lsb >> ((15 - i) * 8));
     }
