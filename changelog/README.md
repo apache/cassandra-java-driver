@@ -4,6 +4,7 @@
 
 ### 4.10.0 (in progress)
 
+- [new feature] JAVA-2903: BlockHound integration
 - [improvement] JAVA-2449: Use non-cryptographic random number generation in Uuids.random()
 - [improvement] JAVA-2893: Allow duplicate keys in DefaultProgrammaticDriverConfigLoaderBuilder
 - [documentation] JAVA-2894: Clarify usage of Statement.setQueryTimestamp

@@ -676,6 +676,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   /**
    * Creates the session with the options set by this builder.
    *
+   * <p>The session initialization will happen asynchronously in a driver internal thread pool.
+   *
    * @return a completion stage that completes with the session when it is fully initialized.
    */
   @NonNull
@@ -688,6 +690,10 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
   /**
    * Convenience method to call {@link #buildAsync()} and block on the result.
+   *
+   * <p>Usage in non-blocking applications: beware that session initialization is a costly
+   * operation. It should only be triggered from a thread that is allowed to block. If that is not
+   * the case, consider using {@link #buildAsync()} instead.
    *
    * <p>This must not be called on a driver thread.
    */

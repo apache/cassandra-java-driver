@@ -13,6 +13,8 @@ Notes:
   the driver will otherwise operate normally (this is also valid for OSGi deployments).
 * for historical reasons, reactive-related driver types reside in a package prefixed with `dse`;
   however, reactive queries also work with regular Cassandra.
+* The reactive execution model is implemented in a non-blocking fashion: see the manual page on 
+  [non-blocking programming](../non_blocking) for details.
 
 ### Overview
 

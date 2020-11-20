@@ -59,7 +59,7 @@ public class BlockingOperation {
     }
   }
 
-  private static class InternalThread extends FastThreadLocalThread {
+  static class InternalThread extends FastThreadLocalThread {
     private InternalThread(Runnable runnable) {
       super(runnable);
     }
