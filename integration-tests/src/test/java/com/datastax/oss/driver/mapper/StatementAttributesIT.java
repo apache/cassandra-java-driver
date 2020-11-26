@@ -20,6 +20,7 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.query;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
@@ -54,9 +55,7 @@ import java.util.function.Function;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
@@ -69,8 +68,6 @@ public class StatementAttributesIT {
 
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(SIMULACRON_RULE).around(SESSION_RULE);
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private static String PAGING_STATE = "paging_state";
   private static int PAGE_SIZE = 13;
@@ -192,9 +189,8 @@ public class StatementAttributesIT {
 
   @Test
   public void should_fail_runtime_attributes_bad() {
-    thrown.expect(IllegalStateException.class);
-    thrown.expectMessage("mock error");
-    dao.save(simple, badStatementFunction);
+    Throwable t = catchThrowable(() -> dao.save(simple, badStatementFunction));
+    assertThat(t).isInstanceOf(IllegalStateException.class).hasMessage("mock error");
   }
 
   private static void primeInsertQuery() {

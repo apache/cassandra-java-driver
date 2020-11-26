@@ -60,7 +60,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestName;
 import org.junit.rules.TestRule;
@@ -83,8 +82,6 @@ public class BoundStatementCcmIT {
   @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   @Rule public TestName name = new TestName();
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private static final String KEY = "test";
 
