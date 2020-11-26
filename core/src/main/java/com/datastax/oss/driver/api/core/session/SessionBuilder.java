@@ -497,8 +497,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * the provided {@link Path}.
    *
    * <p>To connect to a Cloud database, you must first download the secure database bundle from the
-   * DataStax Astra console that contains the connection information, then instruct the
-   * driver to read its contents using either this method or one if its variants.
+   * DataStax Astra console that contains the connection information, then instruct the driver to
+   * read its contents using either this method or one if its variants.
    *
    * <p>For more information, please refer to the DataStax Astra documentation.
    *
@@ -534,8 +534,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * the provided {@link URL}.
    *
    * <p>To connect to a Cloud database, you must first download the secure database bundle from the
-   * DataStax Astra console that contains the connection information, then instruct the
-   * driver to read its contents using either this method or one if its variants.
+   * DataStax Astra console that contains the connection information, then instruct the driver to
+   * read its contents using either this method or one if its variants.
    *
    * <p>For more information, please refer to the DataStax Astra documentation.
    *
@@ -554,8 +554,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * the provided {@link InputStream}.
    *
    * <p>To connect to a Cloud database, you must first download the secure database bundle from the
-   * DataStax Astra console that contains the connection information, then instruct the
-   * driver to read its contents using either this method or one if its variants.
+   * DataStax Astra console that contains the connection information, then instruct the driver to
+   * read its contents using either this method or one if its variants.
    *
    * <p>For more information, please refer to the DataStax Astra documentation.
    *
