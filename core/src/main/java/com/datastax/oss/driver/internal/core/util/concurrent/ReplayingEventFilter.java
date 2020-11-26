@@ -55,7 +55,7 @@ public class ReplayingEventFilter<EventT> {
   private State state;
 
   @GuardedBy("stateLock")
-  private List<EventT> recordedEvents;
+  private final List<EventT> recordedEvents;
 
   public ReplayingEventFilter(Consumer<EventT> consumer) {
     this.consumer = consumer;
