@@ -85,7 +85,7 @@ public class ContinuousGraphRequestHandlerTest {
 
     try (RequestHandlerTestHarness harness = builder.build()) {
 
-      GraphStatement graphStatement =
+      GraphStatement<?> graphStatement =
           ScriptGraphStatement.newInstance("mockQuery").setExecutionProfileName(profileName);
 
       ContinuousGraphRequestHandler handler =
@@ -158,7 +158,7 @@ public class ContinuousGraphRequestHandlerTest {
       when(profile.getString(DseDriverOption.GRAPH_SUB_PROTOCOL))
           .thenReturn(GraphProtocol.GRAPH_BINARY_1_0.toInternalCode());
 
-      GraphStatement graphStatement = ScriptGraphStatement.newInstance("mockQuery");
+      GraphStatement<?> graphStatement = ScriptGraphStatement.newInstance("mockQuery");
 
       // when
       ContinuousGraphRequestHandler handler =
@@ -207,7 +207,7 @@ public class ContinuousGraphRequestHandlerTest {
       when(profile.getString(DseDriverOption.GRAPH_SUB_PROTOCOL))
           .thenReturn(GraphProtocol.GRAPH_BINARY_1_0.toInternalCode());
 
-      GraphStatement graphStatement =
+      GraphStatement<?> graphStatement =
           ScriptGraphStatement.newInstance("mockQuery").setTimeout(statementTimeout);
 
       // when
@@ -249,10 +249,7 @@ public class ContinuousGraphRequestHandlerTest {
 
     verify(harness.getSession().getMetricUpdater())
         .updateTimer(
-            eq(DseSessionMetric.GRAPH_REQUESTS),
-            eq(profileName),
-            anyLong(),
-            eq(TimeUnit.NANOSECONDS));
+            eq(DseSessionMetric.GRAPH_REQUESTS), eq(null), anyLong(), eq(TimeUnit.NANOSECONDS));
     verifyNoMoreInteractions(harness.getSession().getMetricUpdater());
   }
 }

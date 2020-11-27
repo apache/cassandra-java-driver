@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.when;
 
 import com.datastax.dse.driver.DseTestFixtures;
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
@@ -38,8 +39,8 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
-import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
+import com.datastax.oss.driver.api.core.retry.RetryVerdict;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
 import com.datastax.oss.driver.api.core.servererrors.DefaultWriteType;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
@@ -170,8 +171,8 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
     harnessBuilder.withResponse(node2, defaultFrameOf(DseTestFixtures.singleDseRow()));
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
-      failureScenario.mockRetryPolicyDecision(
-          harness.getContext().getRetryPolicy(anyString()), RetryDecision.RETRY_NEXT);
+      failureScenario.mockRetryPolicyVerdict(
+          harness.getContext().getRetryPolicy(anyString()), RetryVerdict.RETRY_NEXT);
 
       ContinuousCqlRequestHandler handler =
           new ContinuousCqlRequestHandler(
@@ -225,8 +226,8 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
     harnessBuilder.withResponse(node1, defaultFrameOf(DseTestFixtures.singleDseRow()));
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
-      failureScenario.mockRetryPolicyDecision(
-          harness.getContext().getRetryPolicy(anyString()), RetryDecision.RETRY_SAME);
+      failureScenario.mockRetryPolicyVerdict(
+          harness.getContext().getRetryPolicy(anyString()), RetryVerdict.RETRY_SAME);
 
       ContinuousCqlRequestHandler handler =
           new ContinuousCqlRequestHandler(
@@ -279,8 +280,8 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
     failureScenario.mockRequestError(harnessBuilder, node1);
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
-      failureScenario.mockRetryPolicyDecision(
-          harness.getContext().getRetryPolicy(anyString()), RetryDecision.IGNORE);
+      failureScenario.mockRetryPolicyVerdict(
+          harness.getContext().getRetryPolicy(anyString()), RetryVerdict.IGNORE);
 
       ContinuousCqlRequestHandler handler =
           new ContinuousCqlRequestHandler(
@@ -332,8 +333,8 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
-      failureScenario.mockRetryPolicyDecision(
-          harness.getContext().getRetryPolicy(anyString()), RetryDecision.RETHROW);
+      failureScenario.mockRetryPolicyVerdict(
+          harness.getContext().getRetryPolicy(anyString()), RetryVerdict.RETHROW);
 
       ContinuousCqlRequestHandler handler =
           new ContinuousCqlRequestHandler(
@@ -384,8 +385,8 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
       if (shouldCallRetryPolicy) {
-        failureScenario.mockRetryPolicyDecision(
-            harness.getContext().getRetryPolicy(anyString()), RetryDecision.RETHROW);
+        failureScenario.mockRetryPolicyVerdict(
+            harness.getContext().getRetryPolicy(anyString()), RetryVerdict.RETHROW);
       }
 
       ContinuousCqlRequestHandler handler =
@@ -441,7 +442,7 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
 
     abstract void mockRequestError(RequestHandlerTestHarness.Builder builder, Node node);
 
-    abstract void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision);
+    abstract void mockRetryPolicyVerdict(RetryPolicy policy, RetryVerdict verdict);
   }
 
   @DataProvider
@@ -462,16 +463,15 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
           }
 
           @Override
-          public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
-            Mockito.when(
-                    policy.onReadTimeout(
-                        any(SimpleStatement.class),
-                        eq(DefaultConsistencyLevel.LOCAL_ONE),
-                        eq(2),
-                        eq(1),
-                        eq(true),
-                        eq(0)))
-                .thenReturn(decision);
+          public void mockRetryPolicyVerdict(RetryPolicy policy, RetryVerdict verdict) {
+            when(policy.onReadTimeoutVerdict(
+                    any(SimpleStatement.class),
+                    eq(DefaultConsistencyLevel.LOCAL_ONE),
+                    eq(2),
+                    eq(1),
+                    eq(true),
+                    eq(0)))
+                .thenReturn(verdict);
           }
         },
         new FailureScenario(
@@ -493,16 +493,15 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
           }
 
           @Override
-          public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
-            Mockito.when(
-                    policy.onWriteTimeout(
-                        any(SimpleStatement.class),
-                        eq(DefaultConsistencyLevel.LOCAL_ONE),
-                        eq(DefaultWriteType.SIMPLE),
-                        eq(2),
-                        eq(1),
-                        eq(0)))
-                .thenReturn(decision);
+          public void mockRetryPolicyVerdict(RetryPolicy policy, RetryVerdict verdict) {
+            when(policy.onWriteTimeoutVerdict(
+                    any(SimpleStatement.class),
+                    eq(DefaultConsistencyLevel.LOCAL_ONE),
+                    eq(DefaultWriteType.SIMPLE),
+                    eq(2),
+                    eq(1),
+                    eq(0)))
+                .thenReturn(verdict);
           }
         },
         new FailureScenario(
@@ -520,15 +519,14 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
           }
 
           @Override
-          public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
-            Mockito.when(
-                    policy.onUnavailable(
-                        any(SimpleStatement.class),
-                        eq(DefaultConsistencyLevel.LOCAL_ONE),
-                        eq(2),
-                        eq(1),
-                        eq(0)))
-                .thenReturn(decision);
+          public void mockRetryPolicyVerdict(RetryPolicy policy, RetryVerdict verdict) {
+            when(policy.onUnavailableVerdict(
+                    any(SimpleStatement.class),
+                    eq(DefaultConsistencyLevel.LOCAL_ONE),
+                    eq(2),
+                    eq(1),
+                    eq(0)))
+                .thenReturn(verdict);
           }
         },
         new FailureScenario(
@@ -545,11 +543,10 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
           }
 
           @Override
-          public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
-            Mockito.when(
-                    policy.onErrorResponse(
-                        any(SimpleStatement.class), any(ServerError.class), eq(0)))
-                .thenReturn(decision);
+          public void mockRetryPolicyVerdict(RetryPolicy policy, RetryVerdict verdict) {
+            when(policy.onErrorResponseVerdict(
+                    any(SimpleStatement.class), any(ServerError.class), eq(0)))
+                .thenReturn(verdict);
           }
         },
         new FailureScenario(
@@ -563,11 +560,10 @@ public class ContinuousCqlRequestHandlerRetryTest extends ContinuousCqlRequestHa
           }
 
           @Override
-          public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
-            Mockito.when(
-                    policy.onRequestAborted(
-                        any(SimpleStatement.class), any(HeartbeatException.class), eq(0)))
-                .thenReturn(decision);
+          public void mockRetryPolicyVerdict(RetryPolicy policy, RetryVerdict verdict) {
+            when(policy.onRequestAbortedVerdict(
+                    any(SimpleStatement.class), any(HeartbeatException.class), eq(0)))
+                .thenReturn(verdict);
           }
         });
   }
