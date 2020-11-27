@@ -40,27 +40,34 @@ public abstract class RetryPolicyTestBase {
   protected Assert<?, RetryDecision> assertOnReadTimeout(
       ConsistencyLevel cl, int blockFor, int received, boolean dataPresent, int retryCount) {
     return assertThat(
-        policy.onReadTimeout(request, cl, blockFor, received, dataPresent, retryCount));
+        policy
+            .onReadTimeoutVerdict(request, cl, blockFor, received, dataPresent, retryCount)
+            .getRetryDecision());
   }
 
   protected Assert<?, RetryDecision> assertOnWriteTimeout(
       ConsistencyLevel cl, WriteType writeType, int blockFor, int received, int retryCount) {
     return assertThat(
-        policy.onWriteTimeout(request, cl, writeType, blockFor, received, retryCount));
+        policy
+            .onWriteTimeoutVerdict(request, cl, writeType, blockFor, received, retryCount)
+            .getRetryDecision());
   }
 
   protected Assert<?, RetryDecision> assertOnUnavailable(
       ConsistencyLevel cl, int required, int alive, int retryCount) {
-    return assertThat(policy.onUnavailable(request, cl, required, alive, retryCount));
+    return assertThat(
+        policy.onUnavailableVerdict(request, cl, required, alive, retryCount).getRetryDecision());
   }
 
   protected Assert<?, RetryDecision> assertOnRequestAborted(
       Class<? extends Throwable> errorClass, int retryCount) {
-    return assertThat(policy.onRequestAborted(request, mock(errorClass), retryCount));
+    return assertThat(
+        policy.onRequestAbortedVerdict(request, mock(errorClass), retryCount).getRetryDecision());
   }
 
   protected Assert<?, RetryDecision> assertOnErrorResponse(
       Class<? extends CoordinatorException> errorClass, int retryCount) {
-    return assertThat(policy.onErrorResponse(request, mock(errorClass), retryCount));
+    return assertThat(
+        policy.onErrorResponseVerdict(request, mock(errorClass), retryCount).getRetryDecision());
   }
 }

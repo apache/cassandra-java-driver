@@ -2,6 +2,30 @@
 
 ### 4.10.0
 
+#### New `RetryVerdict` API
+
+[JAVA-2900](https://datastax-oss.atlassian.net/browse/JAVA-2900) introduced [`RetryVerdict`], a new 
+interface that allows custom retry policies to customize the request before it is retried.
+
+For this reason, the following methods in the `RetryPolicy` interface were added; they all return
+a `RetryVerdict` instance:
+
+1. [`onReadTimeoutVerdict`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onReadTimeoutVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-boolean-int-)
+2. [`onWriteTimeoutVerdict`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onWriteTimeoutVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-com.datastax.oss.driver.api.core.servererrors.WriteType-int-int-int-)
+3. [`onUnavailableVerdict`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onUnavailableVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-int-)
+4. [`onRequestAbortedVerdict`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onRequestAbortedVerdict-com.datastax.oss.driver.api.core.session.Request-java.lang.Throwable-int-)
+5. [`onErrorResponseVerdict`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onErrorResponseVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.servererrors.CoordinatorException-int-)
+
+The following methods were deprecated:
+
+1. [`onReadTimeout`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onReadTimeout-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-boolean-int-)
+2. [`onWriteTimeout`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onWriteTimeout-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-com.datastax.oss.driver.api.core.servererrors.WriteType-int-int-int-)
+3. [`onUnavailable`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onUnavailable-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-int-)
+4. [`onRequestAborted`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onRequestAborted-com.datastax.oss.driver.api.core.session.Request-java.lang.Throwable-int-)
+5. [`onErrorResponse`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onErrorResponse-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.servererrors.CoordinatorException-int-)
+
+[`RetryVerdict`]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryVerdict.html
+
 #### Enhancements to the `Uuids` utility class
 
 [JAVA-2449](https://datastax-oss.atlassian.net/browse/JAVA-2449) modified the implementation of

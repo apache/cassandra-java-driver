@@ -122,6 +122,7 @@ public class FrameLengthIT {
     }
 
     @Override
+    @Deprecated
     public RetryDecision onRequestAborted(
         @NonNull Request request, @NonNull Throwable error, int retryCount) {
       return RetryDecision.RETRY_NEXT;
