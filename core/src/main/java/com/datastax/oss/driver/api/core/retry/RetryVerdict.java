@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.retry;
 
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.internal.core.retry.DefaultRetryVerdict;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
@@ -27,16 +28,16 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public interface RetryVerdict {
 
   /** A retry verdict that retries the same request on the same node. */
-  RetryVerdict RETRY_SAME = () -> RetryDecision.RETRY_SAME;
+  RetryVerdict RETRY_SAME = new DefaultRetryVerdict(RetryDecision.RETRY_SAME);
 
   /** A retry verdict that retries the same request on the next node in the query plan. */
-  RetryVerdict RETRY_NEXT = () -> RetryDecision.RETRY_NEXT;
+  RetryVerdict RETRY_NEXT = new DefaultRetryVerdict(RetryDecision.RETRY_NEXT);
 
   /** A retry verdict that ignores the error, returning and empty result set to the caller. */
-  RetryVerdict IGNORE = () -> RetryDecision.IGNORE;
+  RetryVerdict IGNORE = new DefaultRetryVerdict(RetryDecision.IGNORE);
 
   /** A retry verdict that rethrows the execution error to the calling code. */
-  RetryVerdict RETHROW = () -> RetryDecision.RETHROW;
+  RetryVerdict RETHROW = new DefaultRetryVerdict(RetryDecision.RETHROW);
 
   /** @return The retry decision to apply. */
   @NonNull

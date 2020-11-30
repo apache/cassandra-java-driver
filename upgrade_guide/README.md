@@ -16,13 +16,18 @@ a `RetryVerdict` instance:
 4. [`onRequestAbortedVerdict`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onRequestAbortedVerdict-com.datastax.oss.driver.api.core.session.Request-java.lang.Throwable-int-)
 5. [`onErrorResponseVerdict`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onErrorResponseVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.servererrors.CoordinatorException-int-)
 
-The following methods were deprecated:
+The following methods were deprecated and will be removed in the next major version:
 
 1. [`onReadTimeout`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onReadTimeout-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-boolean-int-)
 2. [`onWriteTimeout`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onWriteTimeout-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-com.datastax.oss.driver.api.core.servererrors.WriteType-int-int-int-)
 3. [`onUnavailable`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onUnavailable-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-int-)
 4. [`onRequestAborted`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onRequestAborted-com.datastax.oss.driver.api.core.session.Request-java.lang.Throwable-int-)
 5. [`onErrorResponse`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onErrorResponse-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.servererrors.CoordinatorException-int-)
+
+Driver 4.10.0 also re-introduced a retry policy whose behavior is equivalent to the
+`DowngradingConsistencyRetryPolicy` from driver 3.x. See this
+[FAQ entry](https://docs.datastax.com/en/developer/java-driver/latest/faq/#where-is-downgrading-consistency-retry-policy)
+for more information.
 
 [`RetryVerdict`]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryVerdict.html
 
@@ -33,7 +38,7 @@ The following methods were deprecated:
 implementation, but instead re-implements random UUID generation using the non-cryptographic
 random number generator `java.util.Random`.
 
-For most users, non cryptographic strength is enough and this change should translate into better 
+For most users, non-cryptographic strength is enough and this change should translate into better 
 performance when generating UUIDs for database insertion. However, in the unlikely case where your
 application requires cryptographic strength for UUID generation, you should update your code to
 use `java.util.UUID.randomUUID()` instead of `com.datastax.oss.driver.api.core.uuid.Uuids.random()` 
