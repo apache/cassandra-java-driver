@@ -22,7 +22,8 @@ import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
 import com.datastax.oss.driver.api.core.servererrors.WriteType;
 import com.datastax.oss.driver.api.core.session.Request;
-import org.assertj.core.api.Assert;
+import com.datastax.oss.driver.internal.core.retry.ConsistencyDowngradingRetryVerdict;
+import org.assertj.core.api.AbstractAssert;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -37,37 +38,52 @@ public abstract class RetryPolicyTestBase {
     this.policy = policy;
   }
 
-  protected Assert<?, RetryDecision> assertOnReadTimeout(
+  protected RetryVerdictAssert assertOnReadTimeout(
       ConsistencyLevel cl, int blockFor, int received, boolean dataPresent, int retryCount) {
-    return assertThat(
-        policy
-            .onReadTimeoutVerdict(request, cl, blockFor, received, dataPresent, retryCount)
-            .getRetryDecision());
+    return new RetryVerdictAssert(
+        policy.onReadTimeoutVerdict(request, cl, blockFor, received, dataPresent, retryCount));
   }
 
-  protected Assert<?, RetryDecision> assertOnWriteTimeout(
+  protected RetryVerdictAssert assertOnWriteTimeout(
       ConsistencyLevel cl, WriteType writeType, int blockFor, int received, int retryCount) {
-    return assertThat(
-        policy
-            .onWriteTimeoutVerdict(request, cl, writeType, blockFor, received, retryCount)
-            .getRetryDecision());
+    return new RetryVerdictAssert(
+        policy.onWriteTimeoutVerdict(request, cl, writeType, blockFor, received, retryCount));
   }
 
-  protected Assert<?, RetryDecision> assertOnUnavailable(
+  protected RetryVerdictAssert assertOnUnavailable(
       ConsistencyLevel cl, int required, int alive, int retryCount) {
-    return assertThat(
-        policy.onUnavailableVerdict(request, cl, required, alive, retryCount).getRetryDecision());
+    return new RetryVerdictAssert(
+        policy.onUnavailableVerdict(request, cl, required, alive, retryCount));
   }
 
-  protected Assert<?, RetryDecision> assertOnRequestAborted(
+  protected RetryVerdictAssert assertOnRequestAborted(
       Class<? extends Throwable> errorClass, int retryCount) {
-    return assertThat(
-        policy.onRequestAbortedVerdict(request, mock(errorClass), retryCount).getRetryDecision());
+    return new RetryVerdictAssert(
+        policy.onRequestAbortedVerdict(request, mock(errorClass), retryCount));
   }
 
-  protected Assert<?, RetryDecision> assertOnErrorResponse(
+  protected RetryVerdictAssert assertOnErrorResponse(
       Class<? extends CoordinatorException> errorClass, int retryCount) {
-    return assertThat(
-        policy.onErrorResponseVerdict(request, mock(errorClass), retryCount).getRetryDecision());
+    return new RetryVerdictAssert(
+        policy.onErrorResponseVerdict(request, mock(errorClass), retryCount));
+  }
+
+  public static class RetryVerdictAssert extends AbstractAssert<RetryVerdictAssert, RetryVerdict> {
+    RetryVerdictAssert(RetryVerdict actual) {
+      super(actual, RetryVerdictAssert.class);
+    }
+
+    public RetryVerdictAssert hasDecision(RetryDecision decision) {
+      assertThat(actual.getRetryDecision()).isEqualTo(decision);
+      return this;
+    }
+
+    public RetryVerdictAssert hasConsistency(ConsistencyLevel cl) {
+      assertThat(actual)
+          .isInstanceOf(ConsistencyDowngradingRetryVerdict.class)
+          .extracting("consistencyLevel")
+          .isEqualTo(cl);
+      return this;
+    }
   }
 }
