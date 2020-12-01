@@ -342,9 +342,9 @@ public class DefaultDriverContext implements InternalDriverContext {
         DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS,
         DefaultDriverOption.LOAD_BALANCING_POLICY,
         LoadBalancingPolicy.class,
+        "com.yugabyte.oss.driver.internal.core.loadbalancing",
         "com.datastax.oss.driver.internal.core.loadbalancing",
-        "com.datastax.dse.driver.internal.core.loadbalancing",
-        "com.yugabyte.oss.driver.internal.core.loadbalancing");
+        "com.datastax.dse.driver.internal.core.loadbalancing");
   }
 
   protected Map<String, RetryPolicy> buildRetryPolicies() {
