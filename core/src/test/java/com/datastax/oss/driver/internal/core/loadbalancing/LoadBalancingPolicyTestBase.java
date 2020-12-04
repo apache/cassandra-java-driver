@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.DefaultConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
@@ -40,7 +41,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
 
 @RunWith(MockitoJUnitRunner.class)
-public abstract class DefaultLoadBalancingPolicyTestBase {
+public abstract class LoadBalancingPolicyTestBase {
 
   @Mock protected DefaultNode node1;
   @Mock protected DefaultNode node2;
@@ -71,6 +72,13 @@ public abstract class DefaultLoadBalancingPolicyTestBase {
         .thenReturn("dc1");
     when(defaultProfile.getBoolean(DefaultDriverOption.LOAD_BALANCING_POLICY_SLOW_AVOIDANCE, true))
         .thenReturn(true);
+    when(defaultProfile.getInt(
+            DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_MAX_NODES_PER_REMOTE_DC))
+        .thenReturn(0);
+    when(defaultProfile.getBoolean(
+            DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_ALLOW_FOR_LOCAL_CONSISTENCY_LEVELS))
+        .thenReturn(false);
+    when(defaultProfile.getString(DefaultDriverOption.REQUEST_CONSISTENCY)).thenReturn("ONE");
 
     when(context.getMetadataManager()).thenReturn(metadataManager);
 
@@ -83,6 +91,7 @@ public abstract class DefaultLoadBalancingPolicyTestBase {
     }
 
     when(context.getLocalDatacenter(anyString())).thenReturn(null);
+    when(context.getConsistencyLevelRegistry()).thenReturn(new DefaultConsistencyLevelRegistry());
   }
 
   @After

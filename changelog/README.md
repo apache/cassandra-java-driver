@@ -4,6 +4,7 @@
 
 ### 4.10.0 (in progress)
 
+- [new feature] JAVA-2899: Re-introduce cross-DC failover in driver 4
 - [new feature] JAVA-2900: Re-introduce consistency downgrading retries
 - [new feature] JAVA-2903: BlockHound integration
 - [improvement] JAVA-2877: Allow skipping validation for individual mapped entities

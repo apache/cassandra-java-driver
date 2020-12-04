@@ -29,8 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-public class DefaultLoadBalancingPolicyRequestTrackerTest
-    extends DefaultLoadBalancingPolicyTestBase {
+public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingPolicyTestBase {
 
   @Mock Request request;
   @Mock DriverExecutionProfile profile;

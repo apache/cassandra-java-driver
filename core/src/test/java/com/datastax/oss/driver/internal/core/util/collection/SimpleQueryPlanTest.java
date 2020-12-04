@@ -13,24 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.core;
+package com.datastax.oss.driver.internal.core.util.collection;
 
-import com.datastax.oss.driver.api.core.ConsistencyLevel;
-import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.api.core.metadata.Node;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
-/**
- * Extension point to plug custom consistency levels.
- *
- * <p>This is overridable through {@link InternalDriverContext}.
- */
-public interface ConsistencyLevelRegistry {
+@RunWith(MockitoJUnitRunner.class)
+public class SimpleQueryPlanTest extends QueryPlanTestBase {
 
-  ConsistencyLevel codeToLevel(int code);
-
-  int nameToCode(String name);
-
-  ConsistencyLevel nameToLevel(String name);
-
-  /** @return all the values known to this driver instance. */
-  Iterable<ConsistencyLevel> getValues();
+  @Override
+  protected QueryPlan newQueryPlan(Node... nodes) {
+    return new SimpleQueryPlan((Object[]) nodes);
+  }
 }

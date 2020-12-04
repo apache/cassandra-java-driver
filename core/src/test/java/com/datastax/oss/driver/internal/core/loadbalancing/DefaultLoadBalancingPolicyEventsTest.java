@@ -41,7 +41,7 @@ public class DefaultLoadBalancingPolicyEventsTest extends BasicLoadBalancingPoli
     DefaultLoadBalancingPolicy policy = new DefaultLoadBalancingPolicy(context, DEFAULT_NAME);
     policy.init(
         ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2), distanceReporter);
-    assertThat(policy.getLiveNodes()).containsOnly(node1, node2);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsOnly(node1, node2);
     reset(distanceReporter);
     return policy;
   }
