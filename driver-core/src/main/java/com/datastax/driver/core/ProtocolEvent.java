@@ -155,6 +155,7 @@ class ProtocolEvent {
         case V3:
         case V4:
         case V5:
+        case V6:
           change = CBUtil.readEnumValue(Change.class, bb);
           targetType = CBUtil.readEnumValue(SchemaElement.class, bb);
           targetKeyspace = CBUtil.readString(bb);

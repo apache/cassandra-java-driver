@@ -194,6 +194,7 @@ public abstract class RegularStatement extends Statement {
         case V3:
         case V4:
         case V5:
+        case V6:
           size += CBUtil.sizeOfConsistencyLevel(getConsistencyLevel());
           size += QueryFlag.serializedSize(protocolVersion);
           if (hasValues()) {
