@@ -48,7 +48,7 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
   private final String logPrefix;
   private final Duration timeout;
   private final int pageSize;
-  private final String whereClause;
+  private final KeyspaceFilter keyspaceFilter;
   // The future we return from execute, completes when all the queries are done.
   private final CompletableFuture<SchemaRows> schemaRowsFuture = new CompletableFuture<>();
   private final long startTimeNs = System.nanoTime();
@@ -69,25 +69,8 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
     List<String> refreshedKeyspaces =
         config.getStringList(
             DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList());
-    this.whereClause = buildWhereClause(refreshedKeyspaces);
-  }
-
-  private static String buildWhereClause(List<String> refreshedKeyspaces) {
-    if (refreshedKeyspaces.isEmpty()) {
-      return "";
-    } else {
-      StringBuilder builder = new StringBuilder(" WHERE keyspace_name in (");
-      boolean first = true;
-      for (String keyspace : refreshedKeyspaces) {
-        if (first) {
-          first = false;
-        } else {
-          builder.append(",");
-        }
-        builder.append('\'').append(keyspace).append('\'');
-      }
-      return builder.append(")").toString();
-    }
+    assert refreshedKeyspaces != null; // per the default value
+    this.keyspaceFilter = KeyspaceFilter.newInstance(logPrefix, refreshedKeyspaces);
   }
 
   protected abstract String selectKeyspacesQuery();
@@ -125,7 +108,8 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
   private void executeOnAdminExecutor() {
     assert adminExecutor.inEventLoop();
 
-    schemaRowsBuilder = new CassandraSchemaRows.Builder(node, logPrefix);
+    schemaRowsBuilder = new CassandraSchemaRows.Builder(node, keyspaceFilter, logPrefix);
+    String whereClause = keyspaceFilter.getWhereClause();
 
     query(selectKeyspacesQuery() + whereClause, schemaRowsBuilder::withKeyspaces);
     query(selectTypesQuery() + whereClause, schemaRowsBuilder::withTypes);

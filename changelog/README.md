@@ -4,6 +4,8 @@
 
 ### 4.10.0 (in progress)
 
+- [improvement] JAVA-2871: Allow keyspace exclusions in the metadata, and exclude system keyspaces
+  by default
 - [improvement] JAVA-2449: Use non-cryptographic random number generation in Uuids.random()
 - [improvement] JAVA-2893: Allow duplicate keys in DefaultProgrammaticDriverConfigLoaderBuilder
 - [documentation] JAVA-2894: Clarify usage of Statement.setQueryTimestamp
