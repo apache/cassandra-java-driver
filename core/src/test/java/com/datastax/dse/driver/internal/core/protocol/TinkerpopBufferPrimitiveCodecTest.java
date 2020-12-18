@@ -16,6 +16,7 @@
 package com.datastax.dse.driver.internal.core.protocol;
 
 import static com.datastax.dse.driver.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.dse.driver.Assertions;
 import com.datastax.dse.driver.internal.core.graph.binary.buffer.DseNettyBufferFactory;
@@ -29,9 +30,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.function.Supplier;
 import org.apache.tinkerpop.gremlin.structure.io.Buffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 
 /**
@@ -44,8 +43,6 @@ public class TinkerpopBufferPrimitiveCodecTest {
 
   private static final DseNettyBufferFactory factory = new DseNettyBufferFactory();
   private final TinkerpopBufferPrimitiveCodec codec = new TinkerpopBufferPrimitiveCodec(factory);
-
-  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void should_concatenate() {
@@ -93,8 +90,6 @@ public class TinkerpopBufferPrimitiveCodecTest {
 
   @Test
   public void should_fail_to_read_inet_if_length_invalid() {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Invalid address length: 3 ([127, 0, 1])");
     Buffer source =
         factory.withBytes(
             // length (as a byte)
@@ -108,7 +103,9 @@ public class TinkerpopBufferPrimitiveCodecTest {
             0x00,
             0x23,
             0x52);
-    codec.readInet(source);
+    assertThatThrownBy(() -> codec.readInet(source))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid address length: 3 ([127, 0, 1])");
   }
 
   @Test
@@ -138,9 +135,6 @@ public class TinkerpopBufferPrimitiveCodecTest {
 
   @Test
   public void should_fail_to_read_inetaddr_if_length_invalid() {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Invalid address length: 3 ([127, 0, 1])");
-
     Buffer source =
         factory.withBytes(
             // length (as a byte)
@@ -149,7 +143,9 @@ public class TinkerpopBufferPrimitiveCodecTest {
             0x7f,
             0x00,
             0x01);
-    codec.readInetAddr(source);
+    assertThatThrownBy(() -> codec.readInetAddr(source))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid address length: 3 ([127, 0, 1])");
   }
 
   @Test
@@ -220,14 +216,12 @@ public class TinkerpopBufferPrimitiveCodecTest {
 
   @Test
   public void should_fail_to_read_string_if_not_enough_characters() {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage(
-        "Not enough bytes to read an UTF-8 serialized string of size 4");
-
     Buffer source = factory.heap();
     source.writeShort(4);
 
-    codec.readString(source);
+    assertThatThrownBy(() -> codec.readString(source))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Not enough bytes to read an UTF-8 serialized string of size 4");
   }
 
   @Test
@@ -250,13 +244,12 @@ public class TinkerpopBufferPrimitiveCodecTest {
 
   @Test
   public void should_fail_to_read_long_string_if_not_enough_characters() {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage(
-        "Not enough bytes to read an UTF-8 serialized string of size 4");
     Buffer source = factory.heap(4, 4);
     source.writeInt(4);
 
-    codec.readLongString(source);
+    assertThatThrownBy(() -> codec.readLongString(source))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Not enough bytes to read an UTF-8 serialized string of size 4");
   }
 
   @Test

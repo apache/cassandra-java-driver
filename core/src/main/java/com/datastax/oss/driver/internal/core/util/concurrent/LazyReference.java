@@ -27,7 +27,7 @@ public class LazyReference<T> {
   private final Supplier<T> supplier;
   private final CycleDetector checker;
   private volatile T value;
-  private ReentrantLock lock = new ReentrantLock();
+  private final ReentrantLock lock = new ReentrantLock();
 
   public LazyReference(String name, Supplier<T> supplier, CycleDetector cycleDetector) {
     this.name = name;

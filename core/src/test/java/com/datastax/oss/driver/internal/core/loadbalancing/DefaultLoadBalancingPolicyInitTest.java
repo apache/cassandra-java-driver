@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.loadbalancing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.filter;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.atLeast;
@@ -102,12 +103,12 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     when(metadataManager.wasImplicitContactPoint()).thenReturn(false);
     DefaultLoadBalancingPolicy policy = createPolicy();
 
-    thrown.expect(IllegalStateException.class);
-    thrown.expectMessage(
-        "Since you provided explicit contact points, the local DC must be explicitly set");
-
     // When
-    policy.init(ImmutableMap.of(UUID.randomUUID(), node2), distanceReporter);
+    assertThatThrownBy(
+            () -> policy.init(ImmutableMap.of(UUID.randomUUID(), node2), distanceReporter))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining(
+            "Since you provided explicit contact points, the local DC must be explicitly set");
   }
 
   @Test

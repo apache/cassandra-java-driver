@@ -17,9 +17,16 @@ package com.datastax.oss.driver.api.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.oss.driver.TestDataProviders;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
+import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import java.util.Locale;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(DataProviderRunner.class)
 public class CqlIdentifierTest {
+
   @Test
   public void should_build_from_internal() {
     assertThat(CqlIdentifier.fromInternal("foo").asInternal()).isEqualTo("foo");
@@ -30,13 +37,22 @@ public class CqlIdentifierTest {
   }
 
   @Test
-  public void should_build_from_valid_cql() {
-    assertThat(CqlIdentifier.fromCql("foo").asInternal()).isEqualTo("foo");
-    assertThat(CqlIdentifier.fromCql("Foo").asInternal()).isEqualTo("foo");
-    assertThat(CqlIdentifier.fromCql("\"Foo\"").asInternal()).isEqualTo("Foo");
-    assertThat(CqlIdentifier.fromCql("\"foo bar\"").asInternal()).isEqualTo("foo bar");
-    assertThat(CqlIdentifier.fromCql("\"foo\"\"bar\"").asInternal()).isEqualTo("foo\"bar");
-    assertThat(CqlIdentifier.fromCql("\"create\"").asInternal()).isEqualTo("create");
+  @UseDataProvider(location = TestDataProviders.class, value = "locales")
+  public void should_build_from_valid_cql(Locale locale) {
+    Locale def = Locale.getDefault();
+    try {
+      Locale.setDefault(locale);
+      assertThat(CqlIdentifier.fromCql("foo").asInternal()).isEqualTo("foo");
+      assertThat(CqlIdentifier.fromCql("Foo").asInternal()).isEqualTo("foo");
+      assertThat(CqlIdentifier.fromCql("\"Foo\"").asInternal()).isEqualTo("Foo");
+      assertThat(CqlIdentifier.fromCql("\"foo bar\"").asInternal()).isEqualTo("foo bar");
+      assertThat(CqlIdentifier.fromCql("\"foo\"\"bar\"").asInternal()).isEqualTo("foo\"bar");
+      assertThat(CqlIdentifier.fromCql("\"create\"").asInternal()).isEqualTo("create");
+      // JAVA-2883: this would fail under turkish locale if it was used internally
+      assertThat(CqlIdentifier.fromCql("TITLE").asInternal()).isEqualTo("title");
+    } finally {
+      Locale.setDefault(def);
+    }
   }
 
   @Test(expected = IllegalArgumentException.class)

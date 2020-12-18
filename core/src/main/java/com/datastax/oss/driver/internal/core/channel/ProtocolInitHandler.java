@@ -79,7 +79,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
   private final HeartbeatHandler heartbeatHandler;
   private String logPrefix;
   private ChannelHandlerContext ctx;
-  private boolean querySupportedOptions;
+  private final boolean querySupportedOptions;
 
   /**
    * @param querySupportedOptions whether to send OPTIONS as the first message, to request which

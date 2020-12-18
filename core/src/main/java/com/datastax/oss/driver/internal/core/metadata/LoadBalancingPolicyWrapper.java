@@ -84,7 +84,7 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
   private final String logPrefix;
   private final ReplayingEventFilter<NodeStateEvent> eventFilter =
       new ReplayingEventFilter<>(this::processNodeStateEvent);
-  private AtomicReference<State> stateRef = new AtomicReference<>(State.BEFORE_INIT);
+  private final AtomicReference<State> stateRef = new AtomicReference<>(State.BEFORE_INIT);
 
   public LoadBalancingPolicyWrapper(
       @NonNull InternalDriverContext context,

@@ -112,7 +112,7 @@ public class KillrVideoMapperExample {
       Video video = new Video();
       video.setUserid(user.getUserid());
       video.setName(
-          "Getting Started with DataStax Apache Cassandra as a Service on DataStax Constellation");
+          "Getting Started with DataStax Apache Cassandra as a Service on DataStax Astra");
       video.setLocation("https://www.youtube.com/watch?v=68xzKpcZURA");
       Set<String> tags = new HashSet<>();
       tags.add("apachecassandra");
@@ -146,7 +146,7 @@ public class KillrVideoMapperExample {
       Video template = new Video();
       template.setVideoid(video.getVideoid());
       template.setName(
-          "Getting Started with DataStax Apache Cassandra® as a Service on DataStax Constellation");
+          "Getting Started with DataStax Apache Cassandra® as a Service on DataStax Astra");
       videoDao.update(template);
       // Reload the whole entity and check the fields
       video = videoDao.get(video.getVideoid());

@@ -105,14 +105,13 @@ public class DefaultSessionPoolsTest {
   private DefaultNode node1;
   private DefaultNode node2;
   private DefaultNode node3;
-  private DefaultEventLoopGroup adminEventLoopGroup;
   private EventBus eventBus;
 
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    adminEventLoopGroup = new DefaultEventLoopGroup(1);
+    DefaultEventLoopGroup adminEventLoopGroup = new DefaultEventLoopGroup(1);
     when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
     when(context.getNettyOptions()).thenReturn(nettyOptions);
 
@@ -153,6 +152,7 @@ public class DefaultSessionPoolsTest {
     node1 = mockLocalNode(1);
     node2 = mockLocalNode(2);
     node3 = mockLocalNode(3);
+    @SuppressWarnings("ConstantConditions")
     ImmutableMap<UUID, Node> nodes =
         ImmutableMap.of(
             node1.getHostId(), node1,

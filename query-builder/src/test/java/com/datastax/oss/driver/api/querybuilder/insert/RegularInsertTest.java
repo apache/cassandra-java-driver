@@ -19,18 +19,15 @@ import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.insert.DefaultInsert;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Map;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class RegularInsertTest {
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void should_generate_column_assignments() {
@@ -123,18 +120,22 @@ public class RegularInsertTest {
     DefaultInsert defaultInsert =
         (DefaultInsert) insertInto("foo").value("a", bindMarker()).usingTtl(10);
 
-    thrown.expect(IllegalArgumentException.class);
-    thrown.expectMessage("TTL value must be a BindMarker or an Integer");
+    Throwable t =
+        catchThrowable(
+            () ->
+                new DefaultInsert(
+                    defaultInsert.getKeyspace(),
+                    defaultInsert.getTable(),
+                    (Term) defaultInsert.getJson(),
+                    defaultInsert.getMissingJsonBehavior(),
+                    defaultInsert.getAssignments(),
+                    defaultInsert.getTimestamp(),
+                    new Object(), // invalid TTL object
+                    defaultInsert.isIfNotExists()));
 
-    new DefaultInsert(
-        defaultInsert.getKeyspace(),
-        defaultInsert.getTable(),
-        (Term) defaultInsert.getJson(),
-        defaultInsert.getMissingJsonBehavior(),
-        defaultInsert.getAssignments(),
-        defaultInsert.getTimestamp(),
-        new Object(), // invalid TTL object
-        defaultInsert.isIfNotExists());
+    assertThat(t)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("TTL value must be a BindMarker or an Integer");
   }
 
   @Test
@@ -142,17 +143,20 @@ public class RegularInsertTest {
     DefaultInsert defaultInsert =
         (DefaultInsert) insertInto("foo").value("a", bindMarker()).usingTimestamp(1);
 
-    thrown.expect(IllegalArgumentException.class);
-    thrown.expectMessage("TIMESTAMP value must be a BindMarker or a Long");
-
-    new DefaultInsert(
-        defaultInsert.getKeyspace(),
-        defaultInsert.getTable(),
-        (Term) defaultInsert.getJson(),
-        defaultInsert.getMissingJsonBehavior(),
-        defaultInsert.getAssignments(),
-        new Object(), // invalid timestamp object)
-        defaultInsert.getTtlInSeconds(),
-        defaultInsert.isIfNotExists());
+    Throwable t =
+        catchThrowable(
+            () ->
+                new DefaultInsert(
+                    defaultInsert.getKeyspace(),
+                    defaultInsert.getTable(),
+                    (Term) defaultInsert.getJson(),
+                    defaultInsert.getMissingJsonBehavior(),
+                    defaultInsert.getAssignments(),
+                    new Object(), // invalid timestamp object)
+                    defaultInsert.getTtlInSeconds(),
+                    defaultInsert.isIfNotExists()));
+    assertThat(t)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("TIMESTAMP value must be a BindMarker or a Long");
   }
 }

@@ -77,6 +77,10 @@ public abstract class DriverException extends RuntimeException {
    * AllNodesFailedException#getAllErrors()} or {@link ExecutionInfo#getErrors()} do not contain
    * their own execution info, and therefore return null from this method.
    *
+   * <p>This method will also return null for low-level exceptions thrown directly from a driver
+   * channel, such as {@link com.datastax.oss.driver.api.core.connection.ConnectionInitException} or
+   * {@link com.datastax.oss.driver.api.core.connection.ClosedConnectionException}.
+   *
    * <p>It will also be null if you serialize and deserialize an exception.
    */
   public ExecutionInfo getExecutionInfo() {
