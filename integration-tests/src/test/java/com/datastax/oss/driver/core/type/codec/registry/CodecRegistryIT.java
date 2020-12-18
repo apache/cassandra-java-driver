@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.core.type.codec.registry;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
@@ -57,7 +58,6 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestName;
 import org.junit.rules.TestRule;
@@ -73,8 +73,6 @@ public class CodecRegistryIT {
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Rule public TestName name = new TestName();
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @BeforeClass
   public static void createSchema() {
@@ -153,10 +151,17 @@ public class CodecRegistryIT {
     PreparedStatement prepared =
         SESSION_RULE.session().prepare("INSERT INTO test (k, v) values (?, ?)");
 
-    thrown.expect(CodecNotFoundException.class);
-
     // float value for int column should not work since no applicable codec.
-    prepared.boundStatementBuilder().setString(0, name.getMethodName()).setFloat(1, 3.14f).build();
+    Throwable t =
+        catchThrowable(
+            () ->
+                prepared
+                    .boundStatementBuilder()
+                    .setString(0, name.getMethodName())
+                    .setFloat(1, 3.14f)
+                    .build());
+
+    assertThat(t).isInstanceOf(CodecNotFoundException.class);
   }
 
   @Test
@@ -182,9 +187,9 @@ public class CodecRegistryIT {
     // should not be able to access int column as float as no codec is registered to handle that.
     Row row = rows.iterator().next();
 
-    thrown.expect(CodecNotFoundException.class);
+    Throwable t = catchThrowable(() -> assertThat(row.getFloat("v")).isEqualTo(3.0f));
 
-    assertThat(row.getFloat("v")).isEqualTo(3.0f);
+    assertThat(t).isInstanceOf(CodecNotFoundException.class);
   }
 
   @Test

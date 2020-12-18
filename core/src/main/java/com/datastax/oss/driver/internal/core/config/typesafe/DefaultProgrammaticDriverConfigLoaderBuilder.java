@@ -20,13 +20,13 @@ import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
-import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigValueFactory;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -43,8 +43,7 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
               // Do not remove root path here, it must be done after merging configs
               .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()));
 
-  private final NullAllowingImmutableMap.Builder<String, Object> values =
-      NullAllowingImmutableMap.builder();
+  private final Map<String, Object> values = new HashMap<>();
 
   private final Supplier<Config> fallbackSupplier;
   private final String rootPath;
@@ -260,7 +259,7 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
 
   private Config buildConfig() {
     Config config = ConfigFactory.empty();
-    for (Map.Entry<String, Object> entry : values.build().entrySet()) {
+    for (Map.Entry<String, Object> entry : values.entrySet()) {
       config = config.withValue(entry.getKey(), ConfigValueFactory.fromAnyRef(entry.getValue()));
     }
     return config;

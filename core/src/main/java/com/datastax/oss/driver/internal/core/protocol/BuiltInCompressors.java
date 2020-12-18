@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.protocol.internal.Compressor;
 import io.netty.buffer.ByteBuf;
+import java.util.Locale;
 
 /**
  * Provides a single entry point to create compressor instances in the driver.
@@ -29,7 +30,7 @@ import io.netty.buffer.ByteBuf;
 public class BuiltInCompressors {
 
   public static Compressor<ByteBuf> newInstance(String name, DriverContext context) {
-    switch (name.toLowerCase()) {
+    switch (name.toLowerCase(Locale.ROOT)) {
       case "lz4":
         return new Lz4Compressor(context);
       case "snappy":

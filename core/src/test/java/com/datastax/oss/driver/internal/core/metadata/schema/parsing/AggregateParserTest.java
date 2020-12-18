@@ -56,7 +56,9 @@ public class AggregateParserTest extends SchemaParserTestBase {
           "0");
 
   @Before
+  @Override
   public void setup() {
+    super.setup();
     when(context.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
     when(context.getProtocolVersion()).thenReturn(ProtocolVersion.DEFAULT);
   }

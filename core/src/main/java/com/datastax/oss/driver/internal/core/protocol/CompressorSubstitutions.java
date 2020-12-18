@@ -22,6 +22,7 @@ import com.oracle.svm.core.annotate.Delete;
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
 import io.netty.buffer.ByteBuf;
+import java.util.Locale;
 import java.util.function.BooleanSupplier;
 
 /**
@@ -38,7 +39,7 @@ public class CompressorSubstitutions {
   public static final class BuiltInCompressorsLz4Only {
     @Substitute
     public static Compressor<ByteBuf> newInstance(String name, DriverContext context) {
-      switch (name.toLowerCase()) {
+      switch (name.toLowerCase(Locale.ROOT)) {
         case "lz4":
           return new Lz4Compressor(context);
         case "snappy":
@@ -59,7 +60,7 @@ public class CompressorSubstitutions {
   public static final class NoBuiltInCompressors {
     @Substitute
     public static Compressor<ByteBuf> newInstance(String name, DriverContext context) {
-      switch (name.toLowerCase()) {
+      switch (name.toLowerCase(Locale.ROOT)) {
         case "lz4":
           throw new UnsupportedOperationException(
               "This native image was not built with support for LZ4 compression");

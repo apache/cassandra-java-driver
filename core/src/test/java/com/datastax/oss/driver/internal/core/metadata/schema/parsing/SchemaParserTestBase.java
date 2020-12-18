@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata.schema.parsing;
 
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -25,11 +26,13 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultMetadata;
+import com.datastax.oss.driver.internal.core.metadata.schema.queries.KeyspaceFilter;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
+import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -42,6 +45,12 @@ public abstract class SchemaParserTestBase {
   protected static final CqlIdentifier KEYSPACE_ID = CqlIdentifier.fromInternal("ks");
   @Mock protected DefaultMetadata currentMetadata;
   @Mock protected InternalDriverContext context;
+  @Mock protected KeyspaceFilter keyspaceFilter;
+
+  @Before
+  public void setup() {
+    when(keyspaceFilter.includes(anyString())).thenReturn(true);
+  }
 
   protected static AdminRow mockFunctionRow(
       String keyspace,
