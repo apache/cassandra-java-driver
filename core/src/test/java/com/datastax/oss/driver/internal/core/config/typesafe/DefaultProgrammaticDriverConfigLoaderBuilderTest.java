@@ -30,19 +30,7 @@ public class DefaultProgrammaticDriverConfigLoaderBuilderTest {
       "int1 = 1\nint2 = 2\nprofiles.profile1 { int1 = 11 }";
 
   @Test
-  public void should_override_option_in_default_profile() {
-    DriverConfigLoader loader =
-        new DefaultProgrammaticDriverConfigLoaderBuilder(
-                () -> ConfigFactory.parseString(FALLBACK_CONFIG), "")
-            .withInt(MockOptions.INT1, 3)
-            .build();
-    DriverConfig config = loader.getInitialConfig();
-    assertThat(config.getDefaultProfile().getInt(MockOptions.INT1)).isEqualTo(3);
-    assertThat(config.getDefaultProfile().getInt(MockOptions.INT2)).isEqualTo(2);
-  }
-
-  @Test
-  public void should_override_option_more_than_once() {
+  public void should_override_option() {
     DriverConfigLoader loader =
         new DefaultProgrammaticDriverConfigLoaderBuilder(
                 () -> ConfigFactory.parseString(FALLBACK_CONFIG), "")
@@ -55,6 +43,18 @@ public class DefaultProgrammaticDriverConfigLoaderBuilderTest {
     DriverConfig config = loader.getInitialConfig();
     assertThat(config.getDefaultProfile().getInt(MockOptions.INT1)).isEqualTo(4);
     assertThat(config.getDefaultProfile().getInt(MockOptions.INT2)).isEqualTo(4);
+  }
+
+  @Test
+  public void should_override_option_in_default_profile() {
+    DriverConfigLoader loader =
+        new DefaultProgrammaticDriverConfigLoaderBuilder(
+                () -> ConfigFactory.parseString(FALLBACK_CONFIG), "")
+            .withInt(MockOptions.INT1, 3)
+            .build();
+    DriverConfig config = loader.getInitialConfig();
+    assertThat(config.getDefaultProfile().getInt(MockOptions.INT1)).isEqualTo(3);
+    assertThat(config.getDefaultProfile().getInt(MockOptions.INT2)).isEqualTo(2);
   }
 
   @Test
