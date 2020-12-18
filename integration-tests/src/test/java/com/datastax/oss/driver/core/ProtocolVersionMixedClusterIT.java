@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.core;
 
 import static com.datastax.oss.driver.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -35,10 +36,8 @@ import com.datastax.oss.simulacron.server.BoundCluster;
 import com.datastax.oss.simulacron.server.BoundNode;
 import com.datastax.oss.simulacron.server.BoundTopic;
 import java.util.stream.Stream;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 
 /**
  * Covers protocol re-negotiation with a mixed cluster: if, after the initial connection and the
@@ -47,7 +46,6 @@ import org.junit.rules.ExpectedException;
  */
 @Category(ParallelizableTests.class)
 public class ProtocolVersionMixedClusterIT {
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void should_downgrade_if_peer_does_not_support_negotiated_version() {
@@ -113,19 +111,25 @@ public class ProtocolVersionMixedClusterIT {
 
   @Test
   public void should_fail_if_peer_does_not_support_v3() {
-    thrown.expect(UnsupportedProtocolVersionException.class);
-    thrown.expectMessage(
-        "reports Cassandra version 2.0.9, but the driver only supports 2.1.0 and above");
 
-    try (BoundCluster simulacron = mixedVersions("3.0.0", "2.0.9", "3.11");
-        BoundNode contactPoint = simulacron.node(0);
-        CqlSession ignored =
-            (CqlSession)
-                SessionUtils.baseBuilder()
-                    .addContactPoint(contactPoint.inetSocketAddress())
-                    .build()) {
-      fail("Cluster init should have failed");
-    }
+    Throwable t =
+        catchThrowable(
+            () -> {
+              try (BoundCluster simulacron = mixedVersions("3.0.0", "2.0.9", "3.11");
+                  BoundNode contactPoint = simulacron.node(0);
+                  CqlSession ignored =
+                      (CqlSession)
+                          SessionUtils.baseBuilder()
+                              .addContactPoint(contactPoint.inetSocketAddress())
+                              .build()) {
+                fail("Cluster init should have failed");
+              }
+            });
+
+    assertThat(t)
+        .isInstanceOf(UnsupportedProtocolVersionException.class)
+        .hasMessageContaining(
+            "reports Cassandra version 2.0.9, but the driver only supports 2.1.0 and above");
   }
 
   @Test

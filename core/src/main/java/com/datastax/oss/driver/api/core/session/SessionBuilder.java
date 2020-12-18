@@ -497,10 +497,10 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * the provided {@link Path}.
    *
    * <p>To connect to a Cloud database, you must first download the secure database bundle from the
-   * DataStax Constellation console that contains the connection information, then instruct the
-   * driver to read its contents using either this method or one if its variants.
+   * DataStax Astra console that contains the connection information, then instruct the driver to
+   * read its contents using either this method or one if its variants.
    *
-   * <p>For more information, please refer to the DataStax Constellation documentation.
+   * <p>For more information, please refer to the DataStax Astra documentation.
    *
    * @param cloudConfigPath Path to the secure connect bundle zip file.
    * @see #withCloudSecureConnectBundle(URL)
@@ -534,10 +534,10 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * the provided {@link URL}.
    *
    * <p>To connect to a Cloud database, you must first download the secure database bundle from the
-   * DataStax Constellation console that contains the connection information, then instruct the
-   * driver to read its contents using either this method or one if its variants.
+   * DataStax Astra console that contains the connection information, then instruct the driver to
+   * read its contents using either this method or one if its variants.
    *
-   * <p>For more information, please refer to the DataStax Constellation documentation.
+   * <p>For more information, please refer to the DataStax Astra documentation.
    *
    * @param cloudConfigUrl URL to the secure connect bundle zip file.
    * @see #withCloudSecureConnectBundle(Path)
@@ -554,10 +554,10 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * the provided {@link InputStream}.
    *
    * <p>To connect to a Cloud database, you must first download the secure database bundle from the
-   * DataStax Constellation console that contains the connection information, then instruct the
-   * driver to read its contents using either this method or one if its variants.
+   * DataStax Astra console that contains the connection information, then instruct the driver to
+   * read its contents using either this method or one if its variants.
    *
-   * <p>For more information, please refer to the DataStax Constellation documentation.
+   * <p>For more information, please refer to the DataStax Astra documentation.
    *
    * <p>Note that the provided stream will be consumed <em>and closed</em> when either {@link
    * #build()} or {@link #buildAsync()} are called; attempting to reuse it afterwards will result in
@@ -584,7 +584,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * monitor tailored for Cloud deployments. This topology monitor assumes that the target cluster
    * should be contacted through the proxy specified here, using SNI routing.
    *
-   * <p>For more information, please refer to the DataStax Constellation documentation.
+   * <p>For more information, please refer to the DataStax Astra documentation.
    *
    * @param cloudProxyAddress The address of the Cloud proxy to use.
    * @see <a href="https://en.wikipedia.org/wiki/Server_Name_Indication">Server Name Indication</a>

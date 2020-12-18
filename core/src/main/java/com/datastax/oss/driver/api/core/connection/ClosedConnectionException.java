@@ -26,8 +26,9 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  * <p>For example, this can happen if the node is unresponsive and a heartbeat query failed, or if
  * the node was forced down.
  *
- * <p>The driver will always retry these requests on the next node transparently. Therefore, the
- * only way to observe this exception is as part of an {@link AllNodesFailedException}.
+ * <p>The driver will retry these requests on the next node transparently, unless the request is not
+ * idempotent. Therefore, this exception is usually observed as part of an {@link
+ * AllNodesFailedException}.
  */
 public class ClosedConnectionException extends DriverException {
 
