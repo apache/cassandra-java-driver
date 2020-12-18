@@ -138,7 +138,8 @@ Each element in the list can be one of the following:
    its exact case.
 2. An exact name exclusion, for example `"!Ks1"`.
 3. A regex inclusion, enclosed in slashes, for example `"/^Ks.*/"`. The part between the slashes
-   must follow the syntax rules of [java.util.regex.Pattern].
+   must follow the syntax rules of [java.util.regex.Pattern]. The regex must match the entire
+   keyspace name (no partial matching).
 4. A regex exclusion, for example `"!/^Ks.*/"`.
 
 If the list is empty, or the option is unset, all keyspaces will match. Otherwise:
