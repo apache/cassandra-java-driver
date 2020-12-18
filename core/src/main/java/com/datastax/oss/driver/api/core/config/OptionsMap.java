@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.InvalidObjectException;
@@ -339,6 +340,9 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.METADATA_TOPOLOGY_WINDOW, Duration.ofSeconds(1));
     map.put(TypedDriverOption.METADATA_TOPOLOGY_MAX_EVENTS, 20);
     map.put(TypedDriverOption.METADATA_SCHEMA_ENABLED, true);
+    map.put(
+        TypedDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES,
+        ImmutableList.of("!system", "!/^system_.*/", "!/^dse_.*/", "!solr_admin"));
     map.put(TypedDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT, requestTimeout);
     map.put(TypedDriverOption.METADATA_SCHEMA_REQUEST_PAGE_SIZE, requestPageSize);
     map.put(TypedDriverOption.METADATA_SCHEMA_WINDOW, Duration.ofSeconds(1));

@@ -132,7 +132,54 @@ You can also limit the metadata to a subset of keyspaces:
 datastax-java-driver.advanced.metadata.schema.refreshed-keyspaces = [ "users", "products" ]
 ```
 
-If the property is absent or the list is empty, it is interpreted as "all keyspaces".
+Each element in the list can be one of the following:
+
+1. An exact name inclusion, for example `"Ks1"`. If the name is case-sensitive, it must appear in
+   its exact case.
+2. An exact name exclusion, for example `"!Ks1"`.
+3. A regex inclusion, enclosed in slashes, for example `"/^Ks.*/"`. The part between the slashes
+   must follow the syntax rules of [java.util.regex.Pattern]. The regex must match the entire
+   keyspace name (no partial matching).
+4. A regex exclusion, for example `"!/^Ks.*/"`.
+
+If the list is empty, or the option is unset, all keyspaces will match. Otherwise:
+
+* If a keyspace matches an exact name inclusion, it is always included, regardless of what any other
+  rule says.
+* Otherwise, if it matches an exact name exclusion, it is always excluded, regardless of what any
+  regex rule says.
+* Otherwise, if there are regex rules:
+
+  * if they're only inclusions, the keyspace must match at least one of them.
+  * if they're only exclusions, the keyspace must match none of them.
+  * if they're both, the keyspace must match at least one inclusion and none of the
+    exclusions.
+
+For example, given the keyspaces `system`, `ks1`, `ks2`, `data1` and `data2`, here's the outcome of
+a few filters:
+
+|Filter|Outcome|Translation|
+|---|---|---|
+| `[]` | `system`, `ks1`, `ks2`, `data1`, `data2` | Include all. |
+| `["ks1", "ks2"]` | `ks1`, `ks2` | Include ks1 and ks2 (recommended, see explanation below). |
+| `["!system"]` | `ks1`, `ks2`, `data1`, `data2` | Include all except system. |
+| `["/^ks.*/"]` | `ks1`, `ks2` | Include all that start with ks. |
+| `["!/^ks.*/"]` | `system`, `data1`, `data2` | Exclude all that start with ks (and include everything else). |
+| `["system", "/^ks.*/"]` | `system`, `ks1`, `ks2` | Include system, and all that start with ks. |
+| `["/^ks.*/", "!ks2"]` | `ks1` | Include all that start with ks, except ks2. |
+| `["!/^ks.*/", "ks1"]` | `system`, `ks1`, `data1`, `data2` | Exclude all that start with ks, except ks1 (and also include everything else). |
+| `["/^s.*/", /^ks.*/", "!/.*2$/"]` | `system`, `ks1` | Include all that start with s or ks, except if they end with 2. |
+
+
+If an element is malformed, or if its regex has a syntax error, a warning is logged and that single
+element is ignored.
+
+The default configuration (see [reference.conf](../../configuration/reference/)) excludes all
+Cassandra and DSE system keyspaces.
+
+Try to use only exact name inclusions if possible. This allows the driver to filter on the server
+side with a `WHERE IN` clause. If you use any other rule, it has to fetch all system rows and filter
+on the client side.
 
 Note that, if you change the list at runtime, `onKeyspaceAdded`/`onKeyspaceDropped` will be invoked
 on your schema listeners for the newly included/excluded keyspaces. 
@@ -272,3 +319,4 @@ take a look at the [Performance](../../performance/#schema-updates) page for a f
 [DseAggregateMetadata]: https://docs.datastax.com/en/drivers/java/4.9/com/datastax/dse/driver/api/core/metadata/schema/DseAggregateMetadata.html
 
 [JAVA-750]: https://datastax-oss.atlassian.net/browse/JAVA-750
+[java.util.regex.Pattern]: https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html

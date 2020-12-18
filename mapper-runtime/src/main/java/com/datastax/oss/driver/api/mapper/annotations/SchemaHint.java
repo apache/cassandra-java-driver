@@ -39,6 +39,9 @@ import java.lang.annotation.Target;
  * <p>By default, the mapper first tries to match the entity with a table, and if that doesn't work,
  * with a UDT. This annotation allows you to provide a hint as to which check should be done, so
  * that the mapper can skip the other one.
+ *
+ * <p>In addition, you can ask to completely skip the validation for this entity by using {@link
+ * TargetElement#NONE}.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -47,6 +50,8 @@ public @interface SchemaHint {
 
   enum TargetElement {
     TABLE,
-    UDT
+    UDT,
+    NONE,
+    ;
   }
 }

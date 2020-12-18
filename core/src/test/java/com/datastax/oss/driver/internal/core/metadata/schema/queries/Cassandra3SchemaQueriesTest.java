@@ -58,7 +58,7 @@ public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
             DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList()))
         .thenReturn(ImmutableList.of("ks1", "ks2"));
 
-    should_query_with_where_clause(" WHERE keyspace_name in ('ks1','ks2')");
+    should_query_with_where_clause(" WHERE keyspace_name IN ('ks1','ks2')");
   }
 
   private void should_query_with_where_clause(String whereClause) {
