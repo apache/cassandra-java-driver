@@ -28,6 +28,7 @@ import java.time.temporal.TemporalAmount;
 import java.time.temporal.TemporalUnit;
 import java.time.temporal.UnsupportedTemporalTypeException;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.jcip.annotations.Immutable;
@@ -232,7 +233,7 @@ public final class CqlDuration implements TemporalAmount {
   }
 
   private static Builder add(@NonNull Builder builder, long number, @NonNull String symbol) {
-    String s = symbol.toLowerCase();
+    String s = symbol.toLowerCase(Locale.ROOT);
     if (s.equals("y")) {
       return builder.addYears(number);
     } else if (s.equals("mo")) {
