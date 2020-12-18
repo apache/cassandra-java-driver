@@ -38,7 +38,7 @@ public class GeoServiceChecks {
         service.sendGeoMessage(message);
       }
       Iterable<GeoMailboxMessage> retrievedMessages = service.getGeoMessages(recipient);
-      assertThat(retrievedMessages).containsExactlyElementsOf(insertedMessages);
+      assertThat(retrievedMessages).containsExactlyInAnyOrderElementsOf(insertedMessages);
     } finally {
       service.clearGeoMailbox(recipient);
     }

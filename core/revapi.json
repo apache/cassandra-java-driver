@@ -5028,7 +5028,7 @@
       },
       {
         "code": "java.class.nonPublicPartOfAPI",
-        "new": "class com.fasterxml.jackson.databind.util.PrimitiveArrayBuilder.Node<T extends java.lang.Object>",
+        "new": "class com.fasterxml.jackson.databind.util.PrimitiveArrayBuilder.Node<T>",
         "justification": "Caused by the exposure of ObjectMapper as a parameter in ExtraTypeCodecs.json()"
       }
     ]
