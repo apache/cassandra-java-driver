@@ -41,7 +41,7 @@ public class KeyspaceFilterTest {
         KeyspaceFilter.newInstance("inventory_test", "customers_test", "!system");
     // Note that exact excludes are redundant in this case: either they match an include and will be
     // ignored, or they don't and the keyspace is already ignored.
-    // We let it slides, but a warning is logged.
+    // We let it slide, but a warning is logged.
     assertThat(filter.getWhereClause())
         .isEqualTo(" WHERE keyspace_name IN ('inventory_test','customers_test')");
     assertThat(apply(filter, KEYSPACES)).containsOnly("inventory_test", "customers_test");
