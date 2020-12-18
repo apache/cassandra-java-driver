@@ -46,8 +46,8 @@ import reactor.test.StepVerifier;
 
 /**
  * This test exercises the driver with BlockHound installed and tests that the rules defined in
- * {@link DriverBlockHoundIntegration} are being applied, and especially when continuous paging
- * is used.
+ * {@link DriverBlockHoundIntegration} are being applied, and especially when continuous paging is
+ * used.
  */
 @DseRequirement(
     min = "5.1.0",
