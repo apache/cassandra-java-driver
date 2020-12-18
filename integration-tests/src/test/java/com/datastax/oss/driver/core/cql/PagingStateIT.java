@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -35,10 +36,8 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.function.UnaryOperator;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
@@ -50,8 +49,6 @@ public class PagingStateIT {
   private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
   @ClassRule public static TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Before
   public void setupSchema() {
@@ -158,13 +155,16 @@ public class PagingStateIT {
     ResultSet resultSet = session.execute(boundStatement1);
     PagingState pagingState = resultSet.getExecutionInfo().getSafePagingState();
 
-    thrown.expect(IllegalArgumentException.class);
-    @SuppressWarnings("unused")
-    BoundStatement ignored =
-        session
-            .prepare(SimpleStatement.newInstance(query2).setPageSize(15))
-            .bind(value2)
-            .setPagingState(pagingState);
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    Throwable t =
+        catchThrowable(
+            () ->
+                session
+                    .prepare(SimpleStatement.newInstance(query2).setPageSize(15))
+                    .bind(value2)
+                    .setPagingState(pagingState));
+
+    assertThat(t).isInstanceOf(IllegalArgumentException.class);
   }
 
   static class IntWrapper {
