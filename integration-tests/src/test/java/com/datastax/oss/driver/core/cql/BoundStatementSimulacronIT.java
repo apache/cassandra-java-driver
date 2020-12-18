@@ -19,6 +19,7 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.query;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
@@ -40,10 +41,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 
 @Category(ParallelizableTests.class)
 public class BoundStatementSimulacronIT {
@@ -51,8 +50,6 @@ public class BoundStatementSimulacronIT {
   @ClassRule
   public static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(1));
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Before
   public void clearPrimes() {
@@ -148,10 +145,11 @@ public class BoundStatementSimulacronIT {
               .build();
       PreparedStatement prepared = session.prepare(st);
 
-      thrown.expect(DriverTimeoutException.class);
-      thrown.expectMessage("Query timed out after PT1S");
+      Throwable t = catchThrowable(() -> session.execute(prepared.bind(0)));
 
-      session.execute(prepared.bind(0));
+      assertThat(t)
+          .isInstanceOf(DriverTimeoutException.class)
+          .hasMessage("Query timed out after PT1S");
     }
   }
 
@@ -179,10 +177,13 @@ public class BoundStatementSimulacronIT {
               .build();
       PreparedStatement prepared = session.prepare(st);
 
-      thrown.expect(DriverTimeoutException.class);
-      thrown.expectMessage("Query timed out after PT0.15S");
+      Throwable t =
+          catchThrowable(
+              () -> session.execute(prepared.bind(0).setTimeout(Duration.ofMillis(150))));
 
-      session.execute(prepared.bind(0).setTimeout(Duration.ofMillis(150)));
+      assertThat(t)
+          .isInstanceOf(DriverTimeoutException.class)
+          .hasMessage("Query timed out after PT0.15S");
     }
   }
 }

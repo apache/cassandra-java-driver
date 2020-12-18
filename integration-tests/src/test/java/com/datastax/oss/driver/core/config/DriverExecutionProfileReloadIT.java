@@ -19,6 +19,7 @@ import static com.datastax.oss.driver.internal.core.config.typesafe.DefaultDrive
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.Assert.fail;
 
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -36,17 +37,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class DriverExecutionProfileReloadIT {
 
   @ClassRule
   public static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(3));
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Before
   public void clearPrimes() {
@@ -55,7 +52,7 @@ public class DriverExecutionProfileReloadIT {
   }
 
   @Test
-  public void should_periodically_reload_configuration() throws Exception {
+  public void should_periodically_reload_configuration() {
     String query = "mockquery";
     // Define a loader which configures a reload interval of 2s and current value of configSource.
     AtomicReference<String> configSource = new AtomicReference<>("");
@@ -93,7 +90,7 @@ public class DriverExecutionProfileReloadIT {
   }
 
   @Test
-  public void should_reload_configuration_when_event_fired() throws Exception {
+  public void should_reload_configuration_when_event_fired() {
     String query = "mockquery";
     // Define a loader which configures no automatic reloads and current value of configSource.
     AtomicReference<String> configSource = new AtomicReference<>("");
@@ -132,7 +129,7 @@ public class DriverExecutionProfileReloadIT {
   }
 
   @Test
-  public void should_not_allow_dynamically_adding_profile() throws Exception {
+  public void should_not_allow_dynamically_adding_profile() {
     String query = "mockquery";
     // Define a loader which configures a reload interval of 2s and current value of configSource.
     AtomicReference<String> configSource = new AtomicReference<>("");
@@ -164,13 +161,18 @@ public class DriverExecutionProfileReloadIT {
 
       // Execute again, should expect to fail again because doesn't allow to dynamically define
       // profile.
-      thrown.expect(IllegalArgumentException.class);
-      session.execute(SimpleStatement.builder(query).setExecutionProfileName("slow").build());
+      Throwable t =
+          catchThrowable(
+              () ->
+                  session.execute(
+                      SimpleStatement.builder(query).setExecutionProfileName("slow").build()));
+
+      assertThat(t).isInstanceOf(IllegalArgumentException.class);
     }
   }
 
   @Test
-  public void should_reload_profile_config_when_reloading_config() throws Exception {
+  public void should_reload_profile_config_when_reloading_config() {
     String query = "mockquery";
     // Define a loader which configures a reload interval of 2s and current value of configSource.
     // Define initial profile settings so it initially exists.

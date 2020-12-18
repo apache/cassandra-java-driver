@@ -5,6 +5,8 @@
 ### 4.10.0 (in progress)
 
 - [bug] JAVA-2883: Use root locale explicitly when changing string case
+- [bug] JAVA-2890: Fix off-by-one error in UdtCodec
+- [improvement] JAVA-2905: Prevent new connections from using a protocol version higher than the negotiated one
 - [bug] JAVA-2647: Handle token types in QueryBuilder.literal()
 - [bug] JAVA-2887: Handle composite profiles with more than one key and/or backed by only one profile
 

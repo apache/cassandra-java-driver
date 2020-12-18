@@ -32,8 +32,6 @@ import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -43,8 +41,6 @@ import org.slf4j.LoggerFactory;
 
 @RunWith(MockitoJUnitRunner.class)
 public abstract class DefaultLoadBalancingPolicyTestBase {
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Mock protected DefaultNode node1;
   @Mock protected DefaultNode node2;

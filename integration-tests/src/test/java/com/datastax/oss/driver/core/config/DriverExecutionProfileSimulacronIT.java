@@ -19,6 +19,7 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.serverError;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.Assert.fail;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
@@ -38,10 +39,8 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 
 @Category(ParallelizableTests.class)
 public class DriverExecutionProfileSimulacronIT {
@@ -49,8 +48,6 @@ public class DriverExecutionProfileSimulacronIT {
   @ClassRule
   public static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(3));
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Before
   public void clearPrimes() {
@@ -66,9 +63,11 @@ public class DriverExecutionProfileSimulacronIT {
               .setExecutionProfileName("IDONTEXIST")
               .build();
 
-      thrown.expect(IllegalArgumentException.class);
-      thrown.expectMessage("Unknown profile 'IDONTEXIST'. Check your configuration");
-      session.execute(statement);
+      Throwable t = catchThrowable(() -> session.execute(statement));
+
+      assertThat(t)
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("Unknown profile 'IDONTEXIST'. Check your configuration.");
     }
   }
 
@@ -119,8 +118,13 @@ public class DriverExecutionProfileSimulacronIT {
       }
 
       // Execute query with profile, should retry on all hosts since query is idempotent.
-      thrown.expect(AllNodesFailedException.class);
-      session.execute(SimpleStatement.builder(query).setExecutionProfileName("idem").build());
+      Throwable t =
+          catchThrowable(
+              () ->
+                  session.execute(
+                      SimpleStatement.builder(query).setExecutionProfileName("idem").build()));
+
+      assertThat(t).isInstanceOf(AllNodesFailedException.class);
     }
   }
 

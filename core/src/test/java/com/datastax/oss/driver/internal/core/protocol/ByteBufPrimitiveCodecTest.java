@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.protocol;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.internal.core.util.ByteBufs;
 import com.datastax.oss.protocol.internal.util.Bytes;
@@ -24,9 +25,7 @@ import io.netty.buffer.ByteBufAllocator;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 /**
  * Note: we don't test trivial methods that simply delegate to ByteBuf, nor default implementations
@@ -34,8 +33,6 @@ import org.junit.rules.ExpectedException;
  */
 public class ByteBufPrimitiveCodecTest {
   private ByteBufPrimitiveCodec codec = new ByteBufPrimitiveCodec(ByteBufAllocator.DEFAULT);
-
-  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void should_concatenate() {
@@ -91,8 +88,6 @@ public class ByteBufPrimitiveCodecTest {
 
   @Test
   public void should_fail_to_read_inet_if_length_invalid() {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Invalid address length: 3 ([127, 0, 1])");
     ByteBuf source =
         ByteBufs.wrap(
             // length (as a byte)
@@ -106,7 +101,9 @@ public class ByteBufPrimitiveCodecTest {
             0x00,
             0x23,
             0x52);
-    codec.readInet(source);
+    assertThatThrownBy(() -> codec.readInet(source))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid address length: 3 ([127, 0, 1])");
   }
 
   @Test
@@ -136,9 +133,6 @@ public class ByteBufPrimitiveCodecTest {
 
   @Test
   public void should_fail_to_read_inetaddr_if_length_invalid() {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Invalid address length: 3 ([127, 0, 1])");
-
     ByteBuf source =
         ByteBufs.wrap(
             // length (as a byte)
@@ -147,7 +141,9 @@ public class ByteBufPrimitiveCodecTest {
             0x7f,
             0x00,
             0x01);
-    codec.readInetAddr(source);
+    assertThatThrownBy(() -> codec.readInetAddr(source))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid address length: 3 ([127, 0, 1])");
   }
 
   @Test
@@ -207,14 +203,12 @@ public class ByteBufPrimitiveCodecTest {
 
   @Test
   public void should_fail_to_read_string_if_not_enough_characters() {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage(
-        "Not enough bytes to read an UTF-8 serialized string of size 4");
-
     ByteBuf source = codec.allocate(2);
     source.writeShort(4);
 
-    codec.readString(source);
+    assertThatThrownBy(() -> codec.readString(source))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Not enough bytes to read an UTF-8 serialized string of size 4");
   }
 
   @Test
@@ -237,13 +231,12 @@ public class ByteBufPrimitiveCodecTest {
 
   @Test
   public void should_fail_to_read_long_string_if_not_enough_characters() {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage(
-        "Not enough bytes to read an UTF-8 serialized string of size 4");
     ByteBuf source = codec.allocate(4);
     source.writeInt(4);
 
-    codec.readLongString(source);
+    assertThatThrownBy(() -> codec.readLongString(source))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Not enough bytes to read an UTF-8 serialized string of size 4");
   }
 
   @Test

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -49,10 +50,8 @@ import java.util.concurrent.CompletionStage;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
@@ -65,8 +64,6 @@ public class QueryReturnTypesIT {
 
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private static TestDao dao;
 
@@ -122,11 +119,12 @@ public class QueryReturnTypesIT {
 
   @Test
   public void should_fail_to_map_to_long_if_query_returns_other_type() {
-    thrown.expect(MapperException.class);
-    thrown.expectMessage(
-        "Expected the query to return a column with CQL type BIGINT in first position "
-            + "(return type long is intended for COUNT queries)");
-    dao.wrongCount();
+    Throwable t = catchThrowable(() -> dao.wrongCount());
+    assertThat(t)
+        .isInstanceOf(MapperException.class)
+        .hasMessage(
+            "Expected the query to return a column with CQL type BIGINT in first position "
+                + "(return type long is intended for COUNT queries)");
   }
 
   @Test
