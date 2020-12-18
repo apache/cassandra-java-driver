@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.mapper;
 
 import static com.datastax.oss.driver.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.data.Offset.offset;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
@@ -50,10 +51,8 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
@@ -66,8 +65,6 @@ public class ComputedIT {
 
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private static TestMapper mapper;
 
@@ -225,9 +222,11 @@ public class ComputedIT {
                 1));
 
     // should raise an exception as 'writetime' is not found in result set.
-    thrown.expect(IllegalArgumentException.class);
-    thrown.expectMessage("writetime is not a column in this row");
-    computedDao.get(result.one());
+    Throwable t = catchThrowable(() -> computedDao.get(result.one()));
+
+    assertThat(t)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("writetime is not a column in this row");
   }
 
   @Test

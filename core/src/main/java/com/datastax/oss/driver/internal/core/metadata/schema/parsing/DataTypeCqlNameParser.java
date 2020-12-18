@@ -28,6 +28,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import net.jcip.annotations.ThreadSafe;
 
@@ -68,7 +69,7 @@ public class DataTypeCqlNameParser implements DataTypeParser {
       return DataTypes.custom(type);
     }
 
-    DataType nativeType = NATIVE_TYPES_BY_NAME.get(type.toLowerCase());
+    DataType nativeType = NATIVE_TYPES_BY_NAME.get(type.toLowerCase(Locale.ROOT));
     if (nativeType != null) {
       return nativeType;
     }

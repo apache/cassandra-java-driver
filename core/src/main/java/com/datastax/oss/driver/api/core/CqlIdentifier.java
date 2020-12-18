@@ -21,6 +21,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.Locale;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -75,7 +76,7 @@ public class CqlIdentifier implements Serializable {
     if (Strings.isDoubleQuoted(cql)) {
       internal = Strings.unDoubleQuote(cql);
     } else {
-      internal = cql.toLowerCase();
+      internal = cql.toLowerCase(Locale.ROOT);
       Preconditions.checkArgument(
           !Strings.needsDoubleQuotes(internal), "Invalid CQL form [%s]: needs double quotes", cql);
     }

@@ -26,7 +26,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  *
  * <p>The only time when this is returned directly to the client (wrapped in a {@link
  * AllNodesFailedException}) is at initialization. If it happens later when the driver is already
- * connected, it is just logged an the connection is reattempted.
+ * connected, it is just logged and the connection is reattempted.
  */
 public class ConnectionInitException extends DriverException {
   public ConnectionInitException(@NonNull String message, @Nullable Throwable cause) {
