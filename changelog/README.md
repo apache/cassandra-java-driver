@@ -4,6 +4,7 @@
 
 ### 4.10.0 (in progress)
 
+- [documentation] JAVA-2894: Clarify usage of Statement.setQueryTimestamp
 - [bug] JAVA-2889: Remove TypeSafe imports from DriverConfigLoader
 - [bug] JAVA-2883: Use root locale explicitly when changing string case
 - [bug] JAVA-2890: Fix off-by-one error in UdtCodec
