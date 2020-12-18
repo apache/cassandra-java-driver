@@ -37,11 +37,6 @@ public interface KeyspaceFilter {
     }
   }
 
-  @VisibleForTesting
-  static KeyspaceFilter newInstance(@NonNull String... specs) {
-    return newInstance("test", Arrays.asList(specs));
-  }
-
   /** The WHERE IN clause, or an empty string if there is no server-side filtering. */
   @NonNull
   String getWhereClause();
