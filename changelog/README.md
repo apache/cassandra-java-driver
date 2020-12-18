@@ -4,6 +4,7 @@
 
 ### 4.10.0 (in progress)
 
+- [new feature] JAVA-2903: BlockHound integration
 - [improvement] JAVA-2877: Allow skipping validation for individual mapped entities
 - [improvement] JAVA-2871: Allow keyspace exclusions in the metadata, and exclude system keyspaces
   by default

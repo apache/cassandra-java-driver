@@ -696,28 +696,28 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       }
       LOG.trace("[{}] Scheduling timeout for page {} in {}", logPrefix, expectedPage, timeout);
       return timer.newTimeout(
-          timeout1 -> {
-            lock.lock();
-            try {
-              if (state == expectedPage) {
-                abort(
-                    new DriverTimeoutException(
-                        String.format("Timed out waiting for page %d", expectedPage)),
-                    false);
-              } else {
-                // Ignore timeout if the request has moved on in the interim.
-                LOG.trace(
-                    "[{}] Timeout fired for page {} but query already at state {}, skipping",
-                    logPrefix,
-                    expectedPage,
-                    state);
-              }
-            } finally {
-              lock.unlock();
-            }
-          },
-          timeout.toNanos(),
-          TimeUnit.NANOSECONDS);
+          t -> onPageTimeout(expectedPage), timeout.toNanos(), TimeUnit.NANOSECONDS);
+    }
+
+    private void onPageTimeout(int expectedPage) {
+      lock.lock();
+      try {
+        if (state == expectedPage) {
+          abort(
+              new DriverTimeoutException(
+                  String.format("Timed out waiting for page %d", expectedPage)),
+              false);
+        } else {
+          // Ignore timeout if the request has moved on in the interim.
+          LOG.trace(
+              "[{}] Timeout fired for page {} but query already at state {}, skipping",
+              logPrefix,
+              expectedPage,
+              state);
+        }
+      } finally {
+        lock.unlock();
+      }
     }
 
     /**

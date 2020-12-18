@@ -130,6 +130,11 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>io.projectreactor.tools</groupId>
+      <artifactId>blockhound</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <scope>test</scope>
@@ -302,7 +307,7 @@
                   Note: dependencies marked as optional are by default included with optional
                   resolution in the manifest; we only need to manually set the resolution to
                   optional for dependencies declared as non-optional in the pom files.
-                  -->jnr.*;resolution:=optional, com.esri.core.geometry.*;resolution:=optional, org.reactivestreams.*;resolution:=optional, org.apache.tinkerpop.*;resolution:=optional, org.javatuples.*;resolution:=optional, *
+                  -->jnr.*;resolution:=optional, com.esri.core.geometry.*;resolution:=optional, org.reactivestreams.*;resolution:=optional, org.apache.tinkerpop.*;resolution:=optional, org.javatuples.*;resolution:=optional, reactor.blockhound.*;resolution:=optional, *
                 </Import-Package>
                 <Export-Package>com.datastax.oss.driver.*.core.*, com.datastax.dse.driver.*.core.*</Export-Package>
               </instructions>

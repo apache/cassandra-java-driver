@@ -108,12 +108,20 @@ public class DefaultNettyOptions implements NettyOptions {
               + "Please set advanced.netty.timer.tick-duration to 100 ms or higher.",
           tickDuration.toMillis());
     }
-    timer =
+    this.timer = createTimer(timerThreadFactory, tickDuration);
+  }
+
+  private HashedWheelTimer createTimer(ThreadFactory timerThreadFactory, Duration tickDuration) {
+    HashedWheelTimer timer =
         new HashedWheelTimer(
             timerThreadFactory,
             tickDuration.toNanos(),
             TimeUnit.NANOSECONDS,
             config.getInt(DefaultDriverOption.NETTY_TIMER_TICKS_PER_WHEEL));
+    // Start the background thread eagerly during session initialization because
+    // it is a blocking operation.
+    timer.start();
+    return timer;
   }
 
   @Override

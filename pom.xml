@@ -420,6 +420,23 @@
         <artifactId>smallrye-metrics</artifactId>
         <version>2.4.4</version>
       </dependency>
+      <dependency>
+        <groupId>io.projectreactor</groupId>
+        <artifactId>reactor-bom</artifactId>
+        <version>2020.0.1</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.projectreactor.tools</groupId>
+        <artifactId>blockhound</artifactId>
+        <version>1.0.4.RELEASE</version>
+      </dependency>
+      <dependency>
+        <groupId>io.projectreactor.tools</groupId>
+        <artifactId>blockhound-junit-platform</artifactId>
+        <version>1.0.4.RELEASE</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
   <build>

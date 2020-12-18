@@ -6,13 +6,15 @@ streams].
 
 Notes:
 
-* reactive capabilities require the [Reactive Streams API] to be present on the classpath. The
+* Reactive capabilities require the [Reactive Streams API] to be present on the classpath. The
   driver has a dependency on that library, but if your application does not use reactive queries at
   all, it is possible to exclude it to minimize the number of runtime dependencies. If the library
   cannot be found at runtime, reactive queries won't be available, and a warning will be logged, but
   the driver will otherwise operate normally (this is also valid for OSGi deployments).
-* for historical reasons, reactive-related driver types reside in a package prefixed with `dse`;
+* For historical reasons, reactive-related driver types reside in a package prefixed with `dse`;
   however, reactive queries also work with regular Cassandra.
+* The reactive execution model is implemented in a non-blocking fashion: see the manual page on 
+  [non-blocking programming](../non_blocking) for details.
 
 ### Overview
 
