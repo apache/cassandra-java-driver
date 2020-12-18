@@ -209,9 +209,9 @@ Until driver 4.9, the [`Uuids.random()`] method was a blocking call. Because of 
 could not be used in non-blocking contexts, making UUID generation a difficult issue to solve.
 
 Moreover, this method is used in a few places internally. This situation was unfortunate because
-lock-freedom enforcement tools could report calls to that method, and it is currently not possible 
-to suppress these calls. Thanks to [JAVA-2449], released with driver 4.10, `Uuids.random()` became 
-a non-blocking call and random UUIDs can now be safely generated in non-blocking applications.
+lock-freedom enforcement tools could report calls to that method, but it was impossible to suppress
+these calls. Thanks to [JAVA-2449], released with driver 4.10.0, `Uuids.random()` became a
+non-blocking call and random UUIDs can now be safely generated in non-blocking applications.
 
 [`Uuids.random()`]: https://docs.datastax.com/en/drivers/java/latest/com/datastax/oss/driver/api/core/uuid/Uuids.html#random--
 [JAVA-2449]: https://datastax-oss.atlassian.net/browse/JAVA-2449
