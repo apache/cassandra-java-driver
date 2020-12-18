@@ -15,9 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.util.Arrays;
 import java.util.List;
 
 /**
