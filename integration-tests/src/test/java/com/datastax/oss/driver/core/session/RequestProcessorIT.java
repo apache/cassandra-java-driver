@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.core.session;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -37,10 +38,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
@@ -71,8 +70,6 @@ public class RequestProcessorIT {
 
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   public static final String KEY = "test";
 
@@ -150,9 +147,14 @@ public class RequestProcessorIT {
     // Since cluster does not have a processor registered for returning ListenableFuture, an
     // IllegalArgumentException
     // should be thrown.
-    thrown.expect(IllegalArgumentException.class);
-    SESSION_RULE
-        .session()
-        .execute(SimpleStatement.newInstance("select * from test"), GuavaSession.ASYNC);
+    Throwable t =
+        catchThrowable(
+            () ->
+                SESSION_RULE
+                    .session()
+                    .execute(
+                        SimpleStatement.newInstance("select * from test"), GuavaSession.ASYNC));
+
+    assertThat(t).isInstanceOf(IllegalArgumentException.class);
   }
 }

@@ -104,7 +104,7 @@ public class UdtCodec implements TypeCodec<UdtValue> {
       UdtValue value = cqlType.newValue();
       int i = 0;
       while (input.hasRemaining()) {
-        if (i > cqlType.getFieldTypes().size()) {
+        if (i == cqlType.getFieldTypes().size()) {
           throw new IllegalArgumentException(
               String.format(
                   "Too many fields in encoded UDT value, expected %d",

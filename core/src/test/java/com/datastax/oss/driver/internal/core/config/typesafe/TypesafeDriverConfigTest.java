@@ -24,13 +24,9 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class TypesafeDriverConfigTest {
-
-  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void should_load_minimal_config_with_no_profiles() {

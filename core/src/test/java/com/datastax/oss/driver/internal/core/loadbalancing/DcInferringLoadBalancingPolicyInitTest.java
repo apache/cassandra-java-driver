@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.loadbalancing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.Assertions.filter;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.atLeast;
@@ -102,13 +103,19 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
     when(node2.getDatacenter()).thenReturn("dc2");
     BasicLoadBalancingPolicy policy = createPolicy();
 
-    thrown.expect(IllegalStateException.class);
-    thrown.expectMessage(
-        "No local DC was provided, but the contact points are from different DCs: node1=dc1, node2=dc2");
-
     // When
-    policy.init(
-        ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2), distanceReporter);
+    Throwable t =
+        catchThrowable(
+            () ->
+                policy.init(
+                    ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2),
+                    distanceReporter));
+
+    // Then
+    assertThat(t)
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining(
+            "No local DC was provided, but the contact points are from different DCs: node1=dc1, node2=dc2");
   }
 
   @Test
@@ -121,13 +128,19 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
     when(node2.getDatacenter()).thenReturn(null);
     BasicLoadBalancingPolicy policy = createPolicy();
 
-    thrown.expect(IllegalStateException.class);
-    thrown.expectMessage(
-        "The local DC could not be inferred from contact points, please set it explicitly");
-
     // When
-    policy.init(
-        ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2), distanceReporter);
+    Throwable t =
+        catchThrowable(
+            () ->
+                policy.init(
+                    ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2),
+                    distanceReporter));
+
+    // Then
+    assertThat(t)
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining(
+            "The local DC could not be inferred from contact points, please set it explicitly");
   }
 
   @Test

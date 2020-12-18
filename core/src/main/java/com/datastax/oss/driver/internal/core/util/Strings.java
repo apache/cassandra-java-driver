@@ -15,7 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.util;
 
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import java.util.Locale;
 
 public class Strings {
 
@@ -230,8 +232,9 @@ public class Strings {
     return new String(result);
   }
 
-  private static boolean isReservedCqlKeyword(String id) {
-    return id != null && RESERVED_KEYWORDS.contains(id.toLowerCase());
+  @VisibleForTesting
+  static boolean isReservedCqlKeyword(String id) {
+    return id != null && RESERVED_KEYWORDS.contains(id.toLowerCase(Locale.ROOT));
   }
 
   /**
