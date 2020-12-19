@@ -2,6 +2,8 @@
 
 ### 4.10.0
 
+#### Enhancements to the `Uuids` utility class
+
 [JAVA-2449](https://datastax-oss.atlassian.net/browse/JAVA-2449) modified the implementation of
 [Uuids.random()]: this method does not delegate anymore to the JDK's `java.util.UUID.randomUUID()`
 implementation, but instead re-implements random UUID generation using the non-cryptographic
@@ -23,6 +25,29 @@ This release also introduces two new methods for random UUID generation:
 [Uuids.random()]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/uuid/Uuids.html#random--
 [Uuids.random(Random)]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/uuid/Uuids.html#random-java.util.Random-
 [Uuids.random(SplittableRandom)]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/uuid/Uuids.html#random-java.util.SplittableRandom-
+
+#### System and DSE keyspaces automatically excluded from metadata and token map computation
+
+[JAVA-2871](https://datastax-oss.atlassian.net/browse/JAVA-2871) now allows for a more fine-grained
+control over which keyspaces should qualify for metadata and token map computation, including the 
+ability to *exclude* keyspaces based on their names.
+
+From now on, the following keyspaces are automatically excluded:
+
+1. The `system` keyspace;
+2. All keyspaces starting with `system_`;
+3. DSE-specific keyspaces: 
+   1. All keyspaces starting with `dse_`;
+   2. The `solr_admin` keyspace;
+   3. The `OpsCenter` keyspace.
+   
+This means that they won't show up anymore in [Metadata.getKeyspaces()], and [TokenMap] will return
+empty replicas and token ranges for them. If you need the driver to keep computing metadata and
+token map for these keyspaces, you now must modify the following configuration option:
+`datastax-java-driver.advanced.metadata.schema.refreshed-keyspaces`.
+
+[Metadata.getKeyspaces()]: https://docs.datastax.com/en/drivers/java/latest/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
+[TokenMap]: https://docs.datastax.com/en/drivers/java/latest/com/datastax/oss/driver/api/core/metadata/TokenMap.html
 
 ### 4.5.x - 4.6.0
 
