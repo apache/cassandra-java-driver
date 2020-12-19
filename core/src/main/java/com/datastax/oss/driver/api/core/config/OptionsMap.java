@@ -342,7 +342,7 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.METADATA_SCHEMA_ENABLED, true);
     map.put(
         TypedDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES,
-        ImmutableList.of("!system", "!/^system_.*/", "!/^dse_.*/", "!solr_admin"));
+        ImmutableList.of("!system", "!/^system_.*/", "!/^dse_.*/", "!solr_admin", "!OpsCenter"));
     map.put(TypedDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT, requestTimeout);
     map.put(TypedDriverOption.METADATA_SCHEMA_REQUEST_PAGE_SIZE, requestPageSize);
     map.put(TypedDriverOption.METADATA_SCHEMA_WINDOW, Duration.ofSeconds(1));
