@@ -60,18 +60,21 @@ public class SchemaIT {
   @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   @Test
-  public void should_expose_system_and_test_keyspace() {
+  public void should_not_expose_system_and_test_keyspace() {
     Map<CqlIdentifier, KeyspaceMetadata> keyspaces =
         sessionRule.session().getMetadata().getKeyspaces();
     assertThat(keyspaces)
-        .containsKeys(
+        .doesNotContainKeys(
             // Don't test exhaustively because system keyspaces depend on the Cassandra version, and
             // keyspaces from other tests might also be present
-            CqlIdentifier.fromInternal("system"),
-            CqlIdentifier.fromInternal("system_traces"),
-            sessionRule.keyspace());
-    assertThat(keyspaces.get(CqlIdentifier.fromInternal("system")).getTables())
-        .containsKeys(CqlIdentifier.fromInternal("local"), CqlIdentifier.fromInternal("peers"));
+            CqlIdentifier.fromInternal("system"), CqlIdentifier.fromInternal("system_traces"));
+  }
+
+  @Test
+  public void should_expose_test_keyspace() {
+    Map<CqlIdentifier, KeyspaceMetadata> keyspaces =
+        sessionRule.session().getMetadata().getKeyspaces();
+    assertThat(keyspaces).containsKey(sessionRule.keyspace());
   }
 
   @Test
@@ -124,11 +127,7 @@ public class SchemaIT {
           .pollInterval(500, TimeUnit.MILLISECONDS)
           .atMost(60, TimeUnit.SECONDS)
           .untilAsserted(() -> assertThat(session.getMetadata().getKeyspaces()).isNotEmpty());
-      assertThat(session.getMetadata().getKeyspaces())
-          .containsKeys(
-              CqlIdentifier.fromInternal("system"),
-              CqlIdentifier.fromInternal("system_traces"),
-              sessionRule.keyspace());
+      assertThat(session.getMetadata().getKeyspaces()).containsKey(sessionRule.keyspace());
 
       session.setSchemaMetadataEnabled(null);
       assertThat(session.isSchemaMetadataEnabled()).isFalse();
@@ -177,11 +176,7 @@ public class SchemaIT {
       assertThat(session.getMetadata().getKeyspaces()).isEmpty();
 
       Metadata newMetadata = session.refreshSchema();
-      assertThat(newMetadata.getKeyspaces())
-          .containsKeys(
-              CqlIdentifier.fromInternal("system"),
-              CqlIdentifier.fromInternal("system_traces"),
-              sessionRule.keyspace());
+      assertThat(newMetadata.getKeyspaces()).containsKey(sessionRule.keyspace());
 
       assertThat(session.getMetadata()).isSameAs(newMetadata);
     }
