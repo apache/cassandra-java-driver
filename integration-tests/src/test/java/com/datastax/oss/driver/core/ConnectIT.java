@@ -67,7 +67,7 @@ public class ConnectIT {
             // Absolute minimum for a working schema metadata (we just want to check that it gets
             // loaded at startup).
             when("SELECT * FROM system_schema.keyspaces")
-                .then(rows().row("keyspace_name", "system")));
+                .then(rows().row("keyspace_name", "system").row("keyspace_name", "test")));
   }
 
   @Test
@@ -113,7 +113,7 @@ public class ConnectIT {
 
     // Then this doesn't throw
     try (Session session = sessionFuture.get(30, TimeUnit.SECONDS)) {
-      assertThat(session.getMetadata().getKeyspaces()).containsKey(CqlIdentifier.fromCql("system"));
+      assertThat(session.getMetadata().getKeyspaces()).containsKey(CqlIdentifier.fromCql("test"));
     }
   }
 
