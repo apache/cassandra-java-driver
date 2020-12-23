@@ -603,7 +603,7 @@ public class DefaultEntityFactory implements EntityFactory {
     if (entity.isMutable()) {
       validateNoArgConstructor(processedClass);
     } else {
-      validateAllColumnsConstructor(processedClass, entity.getAllColumns());
+      validateAllValuesConstructor(processedClass, entity.getAllValues());
     }
   }
 
@@ -625,7 +625,7 @@ public class DefaultEntityFactory implements EntityFactory {
             Entity.class.getSimpleName());
   }
 
-  private void validateAllColumnsConstructor(
+  private void validateAllValuesConstructor(
       TypeElement processedClass, List<PropertyDefinition> columns) {
     for (Element child : processedClass.getEnclosedElements()) {
       if (child.getKind() == ElementKind.CONSTRUCTOR) {
@@ -641,15 +641,16 @@ public class DefaultEntityFactory implements EntityFactory {
         columns.stream()
             .map(
                 column ->
-                    String.format("%s %s", column.getType().asTypeMirror(), column.getGetterName()))
+                    String.format("%s %s", column.getType().asTypeMirror(), column.getJavaName()))
             .collect(Collectors.joining(", "));
     context
         .getMessager()
         .error(
             processedClass,
-            "Immutable @%s-annotated class must have an \"all columns\" constructor. "
-                + "Expected signature: (%s).",
+            "Immutable @%s-annotated class must have an \"all values\" constructor. "
+                + "Expected signature: %s(%s).",
             Entity.class.getSimpleName(),
+            processedClass.getSimpleName(),
             signature);
   }
 

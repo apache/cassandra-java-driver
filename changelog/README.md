@@ -4,6 +4,7 @@
 
 ### 4.10.0 (in progress)
 
+- [bug] JAVA-2902: Consider computed values when validating constructors for immutable entities
 - [new feature] JAVA-2903: BlockHound integration
 - [improvement] JAVA-2877: Allow skipping validation for individual mapped entities
 - [improvement] JAVA-2871: Allow keyspace exclusions in the metadata, and exclude system keyspaces

@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.MapperBuilder;
+import com.datastax.oss.driver.api.mapper.annotations.Computed;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
@@ -73,7 +74,7 @@ public class ImmutableEntityIT extends InventoryITBase {
   @Test
   public void should_insert_and_retrieve_immutable_entities() {
     ImmutableProduct originalProduct =
-        new ImmutableProduct(UUID.randomUUID(), "mock description", new Dimensions(1, 2, 3));
+        new ImmutableProduct(UUID.randomUUID(), "mock description", new Dimensions(1, 2, 3), -1);
     dao.save(originalProduct);
 
     ImmutableProduct retrievedProduct = dao.findById(originalProduct.id());
@@ -88,10 +89,14 @@ public class ImmutableEntityIT extends InventoryITBase {
     private final String description;
     private final Dimensions dimensions;
 
-    public ImmutableProduct(UUID id, String description, Dimensions dimensions) {
+    @Computed("writetime(description)")
+    private final long writetime;
+
+    public ImmutableProduct(UUID id, String description, Dimensions dimensions, long writetime) {
       this.id = id;
       this.description = description;
       this.dimensions = dimensions;
+      this.writetime = writetime;
     }
 
     public UUID id() {
@@ -104,6 +109,10 @@ public class ImmutableEntityIT extends InventoryITBase {
 
     public Dimensions dimensions() {
       return dimensions;
+    }
+
+    public long writetime() {
+      return writetime;
     }
 
     @Override
