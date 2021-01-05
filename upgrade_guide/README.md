@@ -87,6 +87,34 @@ token map for these keyspaces, you now must modify the following configuration o
 [Metadata.getKeyspaces()]: https://docs.datastax.com/en/drivers/java/latest/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
 [TokenMap]: https://docs.datastax.com/en/drivers/java/latest/com/datastax/oss/driver/api/core/metadata/TokenMap.html
 
+#### DSE Graph dependencies are now optional
+
+Until driver 4.9.0, the driver declared a mandatory dependency to Apache Tinkerpop, a library
+required only when connecting to DSE Graph. The vast majority of Apache Cassandra users did not need
+that library, but were paying the price of having that heavy-weight library in their application's
+classpath. 
+
+_Starting with driver 4.10.0, Tinkerpop is now considered an optional dependency_. 
+
+Regular users of Apache Cassandra that do not use DSE Graph will not notice any disruption.
+
+DSE Graph users, however, will now have to explicitly declare a dependency to Apache Tinkerpop. This
+can be achieved with Maven by adding the following dependencies to the `<dependencies>` section of
+your POM file:
+
+```xml
+<dependency>
+  <groupId>org.apache.tinkerpop</groupId>
+  <artifactId>gremlin-core</artifactId>
+  <version>${tinkerpop.version}</version>
+</dependency>
+<dependency>
+  <groupId>org.apache.tinkerpop</groupId>
+  <artifactId>tinkergraph-gremlin</artifactId>
+  <version>${tinkerpop.version}</version>
+</dependency>
+```
+
 ### 4.5.x - 4.6.0
 
 These versions are subject to [JAVA-2676](https://datastax-oss.atlassian.net/browse/JAVA-2676), a
