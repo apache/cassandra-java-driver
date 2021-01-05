@@ -15,98 +15,76 @@
  */
 package com.datastax.oss.driver.internal.core.util.collection;
 
-import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
-import com.datastax.oss.driver.internal.core.loadbalancing.DefaultLoadBalancingPolicy;
-import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-import java.util.AbstractCollection;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Queue;
-import java.util.concurrent.atomic.AtomicInteger;
 import net.jcip.annotations.ThreadSafe;
 
 /**
- * A specialized, thread-safe queue implementation for {@link
- * LoadBalancingPolicy#newQueryPlan(Request, Session)}.
+ * A specialized, thread-safe node queue for use when creating {@linkplain
+ * com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy#newQueryPlan(Request, Session)
+ * query plans}.
  *
- * <p>All nodes must be provided at construction time. After that, the only valid mutation operation
- * is {@link #poll()}, other methods throw.
+ * <p>This interface and its built-in implementations are not general-purpose queues; they are
+ * tailored for the specific use case of creating query plans in the driver. They make a few
+ * unconventional API choices for the sake of performance.
  *
- * <p>This class is not a general-purpose implementation, it is tailored for a specific use case in
- * the driver. It makes a few unconventional API choices for the sake of performance (see {@link
- * #QueryPlan(Object...)}. It can be reused for custom load balancing policies; if you plan to do
- * so, study the source code of {@link DefaultLoadBalancingPolicy}.
+ * <p>Furthermore, the driver only consumes query plans through calls to its {@link #poll()} method;
+ * therefore, this method is the only valid mutation operation for a query plan, other mutating
+ * methods throw.
+ *
+ * <p>Both {@link #size()} and {@link #iterator()} are supported and never throw, even if called
+ * concurrently. These methods are implemented for reporting purposes only, the driver itself does
+ * not use them.
+ *
+ * <p>All built-in {@link QueryPlan} implementations can be safely reused for custom load balancing
+ * policies; if you plan to do so, study the source code of {@link
+ * com.datastax.oss.driver.internal.core.loadbalancing.DefaultLoadBalancingPolicy} or {@link
+ * com.datastax.oss.driver.internal.core.loadbalancing.BasicLoadBalancingPolicy}.
+ *
+ * @see QueryPlanBase
  */
 @ThreadSafe
-public class QueryPlan extends AbstractCollection<Node> implements Queue<Node> {
+public interface QueryPlan extends Queue<Node> {
 
-  private final Object[] nodes;
-  private final AtomicInteger nextIndex = new AtomicInteger();
-
-  /**
-   * @param nodes the nodes to initially fill the queue with. For efficiency, there is no defensive
-   *     copy, the provided array is used directly. The declared type is {@code Object[]} because of
-   *     implementation details of {@link DefaultLoadBalancingPolicy}, but all elements must be
-   *     instances of {@link Node}, otherwise instance methods will fail later.
-   */
-  public QueryPlan(@NonNull Object... nodes) {
-    this.nodes = nodes;
-  }
-
-  @Nullable
-  @Override
-  public Node poll() {
-    // We don't handle overflow. In practice it won't be an issue, since the driver stops polling
-    // once the query plan is empty.
-    int i = nextIndex.getAndIncrement();
-    return (i >= nodes.length) ? null : (Node) nodes[i];
-  }
+  QueryPlan EMPTY = new EmptyQueryPlan();
 
   /**
    * {@inheritDoc}
    *
-   * <p>The returned iterator reflects the state of the queue at the time of the call, and is not
-   * affected by further modifications.
+   * <p>Implementation note: query plan iterators are snapshots that reflect the contents of the
+   * queue at the time of the call, and are not affected by further modifications. Successive calls
+   * to this method will return different objects.
    */
   @NonNull
   @Override
-  public Iterator<Node> iterator() {
-    int i = nextIndex.get();
-    if (i >= nodes.length) {
-      return Collections.<Node>emptyList().iterator();
-    } else {
-      return Iterators.forArray(Arrays.copyOfRange(nodes, i, nodes.length, Node[].class));
-    }
-  }
+  Iterator<Node> iterator();
 
   @Override
-  public int size() {
-    return Math.max(nodes.length - nextIndex.get(), 0);
-  }
-
-  @Override
-  public boolean offer(Node node) {
+  default boolean offer(Node node) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public Node remove() {
+  default Node peek() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public Node element() {
+  default boolean add(Node node) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public Node peek() {
+  default Node remove() {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @Override
+  default Node element() {
     throw new UnsupportedOperationException("Not implemented");
   }
 }

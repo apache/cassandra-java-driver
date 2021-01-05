@@ -50,12 +50,12 @@
     <metrics.version>4.1.16</metrics.version>
     <netty.version>4.1.51.Final</netty.version>
     <esri.version>1.2.1</esri.version>
-    <tinkerpop.version>3.4.8</tinkerpop.version>
+    <tinkerpop.version>3.4.9</tinkerpop.version>
     <slf4j.version>1.7.26</slf4j.version>
     <reactive-streams.version>1.0.3</reactive-streams.version>
     <json.version>20201115</json.version>
-    <jackson.version>2.11.0</jackson.version>
-    <jackson-databind.version>2.11.0</jackson-databind.version>
+    <jackson.version>2.12.0</jackson.version>
+    <jackson-databind.version>2.12.0</jackson-databind.version>
     <legacy-jackson.version>1.9.12</legacy-jackson.version>
     <!-- optional dependencies -->
     <snappy.version>1.1.7.3</snappy.version>
@@ -423,7 +423,7 @@
       <dependency>
         <groupId>io.projectreactor</groupId>
         <artifactId>reactor-bom</artifactId>
-        <version>2020.0.1</version>
+        <version>2020.0.2</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

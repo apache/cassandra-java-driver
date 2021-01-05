@@ -37,6 +37,7 @@ import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata;
+import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.servererrors.AlreadyExistsException;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
 import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
@@ -55,6 +56,7 @@ import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.DefaultProtocolFeature;
@@ -86,6 +88,7 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableList;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -516,5 +519,31 @@ public class Conversions {
       default:
         return new ProtocolError(node, "Unknown error code: " + errorMessage.code);
     }
+  }
+
+  public static boolean resolveIdempotence(Request request, InternalDriverContext context) {
+    Boolean requestIsIdempotent = request.isIdempotent();
+    DriverExecutionProfile executionProfile = resolveExecutionProfile(request, context);
+    return (requestIsIdempotent == null)
+        ? executionProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
+        : requestIsIdempotent;
+  }
+
+  public static Duration resolveRequestTimeout(Request request, InternalDriverContext context) {
+    DriverExecutionProfile executionProfile = resolveExecutionProfile(request, context);
+    return request.getTimeout() != null
+        ? request.getTimeout()
+        : executionProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
+  }
+
+  public static RetryPolicy resolveRetryPolicy(Request request, InternalDriverContext context) {
+    DriverExecutionProfile executionProfile = resolveExecutionProfile(request, context);
+    return context.getRetryPolicy(executionProfile.getName());
+  }
+
+  public static SpeculativeExecutionPolicy resolveSpeculativeExecutionPolicy(
+      Request request, InternalDriverContext context) {
+    DriverExecutionProfile executionProfile = resolveExecutionProfile(request, context);
+    return context.getSpeculativeExecutionPolicy(executionProfile.getName());
   }
 }

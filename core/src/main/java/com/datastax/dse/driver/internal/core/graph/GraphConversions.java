@@ -384,4 +384,21 @@ public class GraphConversions extends Conversions {
         : "Graph protocol error. Received object should be a Traverser but it is not.";
     return new ObjectGraphNode(deserializedObject);
   }
+
+  public static Duration resolveGraphRequestTimeout(
+      GraphStatement<?> statement, InternalDriverContext context) {
+    DriverExecutionProfile executionProfile = resolveExecutionProfile(statement, context);
+    return statement.getTimeout() != null
+        ? statement.getTimeout()
+        : executionProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT);
+  }
+
+  public static GraphProtocol resolveGraphSubProtocol(
+      GraphStatement<?> statement,
+      GraphSupportChecker graphSupportChecker,
+      InternalDriverContext context) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(statement, context);
+    return graphSupportChecker.inferGraphProtocol(statement, executionProfile, context);
+  }
 }

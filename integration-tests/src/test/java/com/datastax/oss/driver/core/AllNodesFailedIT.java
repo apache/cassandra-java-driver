@@ -86,6 +86,7 @@ public class AllNodesFailedIT {
     }
 
     @Override
+    @Deprecated
     public RetryDecision onReadTimeout(
         @NonNull Request request,
         @NonNull ConsistencyLevel cl,

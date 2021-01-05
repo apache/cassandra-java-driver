@@ -38,7 +38,7 @@ import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 
-public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPolicyTestBase {
+public class DefaultLoadBalancingPolicyInitTest extends LoadBalancingPolicyTestBase {
 
   @Override
   @Before
@@ -58,7 +58,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     policy.init(ImmutableMap.of(UUID.randomUUID(), node1), distanceReporter);
 
     // Then
-    assertThat(policy.getLocalDatacenter()).contains("dc1");
+    assertThat(policy.getLocalDatacenter()).isEqualTo("dc1");
   }
 
   @Test
@@ -74,7 +74,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     policy.init(ImmutableMap.of(UUID.randomUUID(), node1), distanceReporter);
 
     // Then
-    assertThat(policy.getLocalDatacenter()).contains("dc1");
+    assertThat(policy.getLocalDatacenter()).isEqualTo("dc1");
     verify(defaultProfile, never())
         .getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null);
   }
@@ -92,7 +92,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     policy.init(ImmutableMap.of(UUID.randomUUID(), node1), distanceReporter);
 
     // Then
-    assertThat(policy.getLocalDatacenter()).contains("dc1");
+    assertThat(policy.getLocalDatacenter()).isEqualTo("dc1");
   }
 
   @Test
@@ -158,7 +158,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     verify(distanceReporter).setDistance(node2, NodeDistance.LOCAL);
     verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
     // But only include UP or UNKNOWN nodes in the live set
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1, node3);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1, node3);
   }
 
   @Test
@@ -179,7 +179,9 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
     verify(distanceReporter).setDistance(node2, NodeDistance.IGNORED);
     verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1);
+    assertThat(policy.getLiveNodes().dc("dc2")).isEmpty();
+    assertThat(policy.getLiveNodes().dc("dc3")).isEmpty();
   }
 
   @Test
@@ -201,7 +203,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
     verify(distanceReporter).setDistance(node2, NodeDistance.IGNORED);
     verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1);
   }
 
   @NonNull

@@ -709,6 +709,19 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<String> METRICS_FACTORY_CLASS =
       new TypedDriverOption<>(DefaultDriverOption.METRICS_FACTORY_CLASS, GenericType.STRING);
 
+  /** The maximum number of nodes from remote DCs to include in query plans. */
+  public static final TypedDriverOption<Integer>
+      LOAD_BALANCING_DC_FAILOVER_MAX_NODES_PER_REMOTE_DC =
+          new TypedDriverOption<>(
+              DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_MAX_NODES_PER_REMOTE_DC,
+              GenericType.INTEGER);
+  /** Whether to consider nodes from remote DCs if the request's consistency level is local. */
+  public static final TypedDriverOption<Boolean>
+      LOAD_BALANCING_DC_FAILOVER_ALLOW_FOR_LOCAL_CONSISTENCY_LEVELS =
+          new TypedDriverOption<>(
+              DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_ALLOW_FOR_LOCAL_CONSISTENCY_LEVELS,
+              GenericType.BOOLEAN);
+
   private static Iterable<TypedDriverOption<?>> introspectBuiltInValues() {
     try {
       ImmutableList.Builder<TypedDriverOption<?>> result = ImmutableList.builder();

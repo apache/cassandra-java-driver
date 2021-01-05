@@ -31,7 +31,6 @@ import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
@@ -52,7 +51,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 // TODO fix unnecessary stubbing of config option in parent class (and stop using "silent" runner)
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class BasicLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingPolicyTestBase {
+public class BasicLoadBalancingPolicyQueryPlanTest extends LoadBalancingPolicyTestBase {
 
   protected static final CqlIdentifier KEYSPACE = CqlIdentifier.fromInternal("ks");
   protected static final ByteBuffer ROUTING_KEY = Bytes.fromHexString("0xdeadbeef");
@@ -74,10 +73,6 @@ public class BasicLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingP
     when(metadata.getTokenMap()).thenAnswer(invocation -> Optional.of(this.tokenMap));
 
     policy = createAndInitPolicy();
-
-    // Note: this test relies on the fact that the policy uses a CopyOnWriteArraySet which preserves
-    // insertion order.
-    assertThat(policy.liveNodes).containsExactly(node1, node2, node3, node4, node5);
   }
 
   @Test
@@ -186,7 +181,7 @@ public class BasicLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingP
   }
 
   @Test
-  public void should_round_robin_and_log_error_when_request_throws() {
+  public void should_use_round_robin_and_log_error_when_request_throws() {
     // Given
     given(request.getKeyspace()).willThrow(new NullPointerException());
     // When
@@ -197,7 +192,7 @@ public class BasicLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingP
         .contains("Unexpected error while trying to compute query plan");
   }
 
-  private void assertRoundRobinQueryPlans() {
+  protected void assertRoundRobinQueryPlans() {
     for (int i = 0; i < 3; i++) {
       assertThat(policy.newQueryPlan(request, session))
           .containsExactly(node1, node2, node3, node4, node5);
@@ -253,8 +248,14 @@ public class BasicLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingP
   protected BasicLoadBalancingPolicy createAndInitPolicy() {
     // Use a subclass to disable shuffling, we just spy to make sure that the shuffling method was
     // called (makes tests easier)
-    NonShufflingBasicLoadBalancingPolicy policy =
-        spy(new NonShufflingBasicLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME));
+    BasicLoadBalancingPolicy policy =
+        spy(
+            new BasicLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME) {
+              @Override
+              protected void shuffleHead(Object[] currentNodes, int headLength) {
+                // nothing (keep in same order)
+              }
+            });
     policy.init(
         ImmutableMap.of(
             UUID.randomUUID(), node1,
@@ -263,17 +264,7 @@ public class BasicLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancingP
             UUID.randomUUID(), node4,
             UUID.randomUUID(), node5),
         distanceReporter);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1, node2, node3, node4, node5);
     return policy;
-  }
-
-  static class NonShufflingBasicLoadBalancingPolicy extends BasicLoadBalancingPolicy {
-    NonShufflingBasicLoadBalancingPolicy(DriverContext context, String profileName) {
-      super(context, profileName);
-    }
-
-    @Override
-    protected void shuffleHead(Object[] currentNodes, int replicaCount) {
-      // nothing (keep in same order)
-    }
   }
 }
