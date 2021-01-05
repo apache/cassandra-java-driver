@@ -38,8 +38,10 @@ import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import org.junit.AssumptionViolatedException;
 import org.junit.Rule;
@@ -51,11 +53,12 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class SchemaIT {
 
-  private static final Version DSE_MIN_VIRTUAL_TABLES = Version.parse("6.7.0");
+  private static final Version DSE_MIN_VIRTUAL_TABLES =
+      Objects.requireNonNull(Version.parse("6.7.0"));
 
-  private CcmRule ccmRule = CcmRule.getInstance();
+  private final CcmRule ccmRule = CcmRule.getInstance();
 
-  private SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
+  private final SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
 
   @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
@@ -187,59 +190,69 @@ public class SchemaIT {
   public void should_get_virtual_metadata() {
     skipIfDse60();
 
-    Metadata md = sessionRule.session().getMetadata();
-    KeyspaceMetadata kmd = md.getKeyspace("system_views").get();
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withStringList(
+                DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES,
+                Collections.singletonList("system_views"))
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
 
-    // Keyspace name should be set, marked as virtual, and have at least sstable_tasks table.
-    // All other values should be defaulted since they are not defined in the virtual schema tables.
-    assertThat(kmd.getTables().size()).isGreaterThanOrEqualTo(1);
-    assertThat(kmd.isVirtual()).isTrue();
-    assertThat(kmd.isDurableWrites()).isFalse();
-    assertThat(kmd.getName().asCql(true)).isEqualTo("system_views");
+      Metadata md = session.getMetadata();
+      KeyspaceMetadata kmd = md.getKeyspace("system_views").get();
 
-    // Virtual tables lack User Types, Functions, Views and Aggregates
-    assertThat(kmd.getUserDefinedTypes().size()).isEqualTo(0);
-    assertThat(kmd.getFunctions().size()).isEqualTo(0);
-    assertThat(kmd.getViews().size()).isEqualTo(0);
-    assertThat(kmd.getAggregates().size()).isEqualTo(0);
+      // Keyspace name should be set, marked as virtual, and have at least sstable_tasks table.
+      // All other values should be defaulted since they are not defined in the virtual schema
+      // tables.
+      assertThat(kmd.getTables().size()).isGreaterThanOrEqualTo(1);
+      assertThat(kmd.isVirtual()).isTrue();
+      assertThat(kmd.isDurableWrites()).isFalse();
+      assertThat(kmd.getName().asCql(true)).isEqualTo("system_views");
 
-    assertThat(kmd.describe(true))
-        .isEqualTo(
-            "/* VIRTUAL KEYSPACE system_views WITH replication = { 'class' : 'null' } "
-                + "AND durable_writes = false; */");
-    // Table name should be set, marked as virtual, and it should have columns set.
-    // indexes, views, clustering column, clustering order and id are not defined in the virtual
-    // schema tables.
-    TableMetadata tm = kmd.getTable("sstable_tasks").get();
-    assertThat(tm).isNotNull();
-    assertThat(tm.getName().toString()).isEqualTo("sstable_tasks");
-    assertThat(tm.isVirtual()).isTrue();
-    assertThat(tm.getColumns().size()).isEqualTo(7);
-    assertThat(tm.getIndexes().size()).isEqualTo(0);
-    assertThat(tm.getPartitionKey().size()).isEqualTo(1);
-    assertThat(tm.getPartitionKey().get(0).getName().toString()).isEqualTo("keyspace_name");
-    assertThat(tm.getClusteringColumns().size()).isEqualTo(2);
-    assertThat(tm.getId().isPresent()).isFalse();
-    assertThat(tm.getOptions().size()).isEqualTo(0);
-    assertThat(tm.getKeyspace()).isEqualTo(kmd.getName());
-    assertThat(tm.describe(true))
-        .isEqualTo(
-            "/* VIRTUAL TABLE system_views.sstable_tasks (\n"
-                + "    keyspace_name text,\n"
-                + "    table_name text,\n"
-                + "    task_id uuid,\n"
-                + "    kind text,\n"
-                + "    progress bigint,\n"
-                + "    total bigint,\n"
-                + "    unit text,\n"
-                + "    PRIMARY KEY (keyspace_name, table_name, task_id)\n"
-                + "); */");
-    // ColumnMetadata is as expected
-    ColumnMetadata cm = tm.getColumn("progress").get();
-    assertThat(cm).isNotNull();
-    assertThat(cm.getParent()).isEqualTo(tm.getName());
-    assertThat(cm.getType()).isEqualTo(DataTypes.BIGINT);
-    assertThat(cm.getName().toString()).isEqualTo("progress");
+      // Virtual tables lack User Types, Functions, Views and Aggregates
+      assertThat(kmd.getUserDefinedTypes().size()).isEqualTo(0);
+      assertThat(kmd.getFunctions().size()).isEqualTo(0);
+      assertThat(kmd.getViews().size()).isEqualTo(0);
+      assertThat(kmd.getAggregates().size()).isEqualTo(0);
+
+      assertThat(kmd.describe(true))
+          .isEqualTo(
+              "/* VIRTUAL KEYSPACE system_views WITH replication = { 'class' : 'null' } "
+                  + "AND durable_writes = false; */");
+      // Table name should be set, marked as virtual, and it should have columns set.
+      // indexes, views, clustering column, clustering order and id are not defined in the virtual
+      // schema tables.
+      TableMetadata tm = kmd.getTable("sstable_tasks").get();
+      assertThat(tm).isNotNull();
+      assertThat(tm.getName().toString()).isEqualTo("sstable_tasks");
+      assertThat(tm.isVirtual()).isTrue();
+      assertThat(tm.getColumns().size()).isEqualTo(7);
+      assertThat(tm.getIndexes().size()).isEqualTo(0);
+      assertThat(tm.getPartitionKey().size()).isEqualTo(1);
+      assertThat(tm.getPartitionKey().get(0).getName().toString()).isEqualTo("keyspace_name");
+      assertThat(tm.getClusteringColumns().size()).isEqualTo(2);
+      assertThat(tm.getId().isPresent()).isFalse();
+      assertThat(tm.getOptions().size()).isEqualTo(0);
+      assertThat(tm.getKeyspace()).isEqualTo(kmd.getName());
+      assertThat(tm.describe(true))
+          .isEqualTo(
+              "/* VIRTUAL TABLE system_views.sstable_tasks (\n"
+                  + "    keyspace_name text,\n"
+                  + "    table_name text,\n"
+                  + "    task_id uuid,\n"
+                  + "    kind text,\n"
+                  + "    progress bigint,\n"
+                  + "    total bigint,\n"
+                  + "    unit text,\n"
+                  + "    PRIMARY KEY (keyspace_name, table_name, task_id)\n"
+                  + "); */");
+      // ColumnMetadata is as expected
+      ColumnMetadata cm = tm.getColumn("progress").get();
+      assertThat(cm).isNotNull();
+      assertThat(cm.getParent()).isEqualTo(tm.getName());
+      assertThat(cm.getType()).isEqualTo(DataTypes.BIGINT);
+      assertThat(cm.getName().toString()).isEqualTo("progress");
+    }
   }
 
   @CassandraRequirement(min = "4.0", description = "virtual tables introduced in 4.0")
@@ -247,18 +260,27 @@ public class SchemaIT {
   public void should_exclude_virtual_keyspaces_from_token_map() {
     skipIfDse60();
 
-    Metadata metadata = sessionRule.session().getMetadata();
-    Map<CqlIdentifier, KeyspaceMetadata> keyspaces = metadata.getKeyspaces();
-    assertThat(keyspaces)
-        .containsKey(CqlIdentifier.fromCql("system_views"))
-        .containsKey(CqlIdentifier.fromCql("system_virtual_schema"));
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withStringList(
+                DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES,
+                Arrays.asList(
+                    "system_views", "system_virtual_schema", sessionRule.keyspace().asInternal()))
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
+      Metadata metadata = session.getMetadata();
+      Map<CqlIdentifier, KeyspaceMetadata> keyspaces = metadata.getKeyspaces();
+      assertThat(keyspaces)
+          .containsKey(CqlIdentifier.fromCql("system_views"))
+          .containsKey(CqlIdentifier.fromCql("system_virtual_schema"));
 
-    TokenMap tokenMap = metadata.getTokenMap().orElseThrow(AssertionError::new);
-    ByteBuffer partitionKey = Bytes.fromHexString("0x00"); // value does not matter
-    assertThat(tokenMap.getReplicas("system_views", partitionKey)).isEmpty();
-    assertThat(tokenMap.getReplicas("system_virtual_schema", partitionKey)).isEmpty();
-    // Check that a non-virtual keyspace is present
-    assertThat(tokenMap.getReplicas(sessionRule.keyspace(), partitionKey)).isNotEmpty();
+      TokenMap tokenMap = metadata.getTokenMap().orElseThrow(AssertionError::new);
+      ByteBuffer partitionKey = Bytes.fromHexString("0x00"); // value does not matter
+      assertThat(tokenMap.getReplicas("system_views", partitionKey)).isEmpty();
+      assertThat(tokenMap.getReplicas("system_virtual_schema", partitionKey)).isEmpty();
+      // Check that a non-virtual keyspace is present
+      assertThat(tokenMap.getReplicas(sessionRule.keyspace(), partitionKey)).isNotEmpty();
+    }
   }
 
   private void skipIfDse60() {
