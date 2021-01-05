@@ -135,6 +135,11 @@
       <artifactId>bcrypt</artifactId>
       <version>0.8.0</version>
     </dependency>
+    <!-- Reactor (reactive framework) -->
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-core</artifactId>
+    </dependency>
   </dependencies>
   <build>
     <plugins>

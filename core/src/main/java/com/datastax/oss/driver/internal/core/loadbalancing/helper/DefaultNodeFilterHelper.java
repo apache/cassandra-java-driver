@@ -62,14 +62,7 @@ public class DefaultNodeFilterHelper implements NodeFilterHelper {
       @Nullable String localDc, @NonNull Map<UUID, Node> nodes) {
     Predicate<Node> filterFromConfig = nodeFilterFromConfig();
     return node -> {
-      if (localDc != null && !localDc.equals(node.getDatacenter())) {
-        LOG.debug(
-            "[{}] Ignoring {} because it doesn't belong to the local DC {}",
-            logPrefix,
-            node,
-            localDc);
-        return false;
-      } else if (!filterFromConfig.test(node)) {
+      if (!filterFromConfig.test(node)) {
         LOG.debug(
             "[{}] Ignoring {} because it doesn't match the user-provided predicate",
             logPrefix,

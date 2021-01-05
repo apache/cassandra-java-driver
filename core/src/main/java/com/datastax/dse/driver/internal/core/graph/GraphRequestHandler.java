@@ -15,7 +15,6 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
-import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
@@ -33,8 +32,8 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
-import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
+import com.datastax.oss.driver.api.core.retry.RetryVerdict;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
 import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
 import com.datastax.oss.driver.api.core.servererrors.FunctionFailureException;
@@ -45,7 +44,6 @@ import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
 import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
-import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
@@ -59,7 +57,7 @@ import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogger;
 import com.datastax.oss.driver.internal.core.util.Loggers;
-import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
+import com.datastax.oss.driver.internal.core.util.collection.SimpleQueryPlan;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.response.Error;
@@ -99,15 +97,11 @@ public class GraphRequestHandler implements Throttled {
 
   private final long startTimeNanos;
   private final String logPrefix;
-  private final GraphStatement<?> statement;
+  private final GraphStatement<?> initialStatement;
   private final DefaultSession session;
   private final InternalDriverContext context;
-  private final DriverExecutionProfile executionProfile;
-  private final boolean isIdempotent;
   protected final CompletableFuture<AsyncGraphResultSet> result;
-  private final Message message;
   private final Timer timer;
-  private final GraphProtocol subProtocol;
 
   /**
    * How many speculative executions are currently running (including the initial execution). We
@@ -126,13 +120,11 @@ public class GraphRequestHandler implements Throttled {
   private final Timeout scheduledTimeout;
   private final List<Timeout> scheduledExecutions;
   private final List<NodeResponseCallback> inFlightCallbacks;
-  private final RetryPolicy retryPolicy;
-  private final SpeculativeExecutionPolicy speculativeExecutionPolicy;
   private final RequestThrottler throttler;
   private final RequestTracker requestTracker;
   private final SessionMetricUpdater sessionMetricUpdater;
-  private final Map<String, ByteBuffer> queryCustomPayload;
   private final GraphBinaryModule graphBinaryModule;
+  private final GraphSupportChecker graphSupportChecker;
 
   // The errors on the nodes that were already tried (lazily initialized on the first error).
   // We don't use a map because nodes can appear multiple times.
@@ -148,18 +140,10 @@ public class GraphRequestHandler implements Throttled {
     this.startTimeNanos = System.nanoTime();
     this.logPrefix = sessionLogPrefix + "|" + this.hashCode();
     LOG.trace("[{}] Creating new Graph request handler for request {}", logPrefix, statement);
-    this.statement = statement;
+    this.initialStatement = statement;
     this.session = dseSession;
     this.context = context;
-    this.executionProfile = GraphConversions.resolveExecutionProfile(this.statement, this.context);
-    this.retryPolicy = context.getRetryPolicy(executionProfile.getName());
-    this.speculativeExecutionPolicy =
-        context.getSpeculativeExecutionPolicy(executionProfile.getName());
-    Boolean statementIsIdempotent = statement.isIdempotent();
-    this.isIdempotent =
-        (statementIsIdempotent == null)
-            ? executionProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
-            : statementIsIdempotent;
+    this.graphSupportChecker = graphSupportChecker;
     this.result = new CompletableFuture<>();
     this.result.exceptionally(
         t -> {
@@ -173,30 +157,18 @@ public class GraphRequestHandler implements Throttled {
           return null;
         });
     this.graphBinaryModule = graphBinaryModule;
-    this.subProtocol =
-        graphSupportChecker.inferGraphProtocol(this.statement, executionProfile, this.context);
-    LOG.debug("[{}], Graph protocol used for query: {}", logPrefix, subProtocol);
-    this.message =
-        GraphConversions.createMessageFromGraphStatement(
-            this.statement, subProtocol, executionProfile, this.context, this.graphBinaryModule);
     this.timer = context.getNettyOptions().getTimer();
-    Duration timeout =
-        statement.getTimeout() != null
-            ? statement.getTimeout()
-            : executionProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, null);
-    this.scheduledTimeout = scheduleTimeout(timeout);
 
     this.activeExecutionsCount = new AtomicInteger(1);
     this.startedSpeculativeExecutionsCount = new AtomicInteger(0);
-    this.scheduledExecutions = isIdempotent ? new CopyOnWriteArrayList<>() : null;
+    this.scheduledExecutions = new CopyOnWriteArrayList<>();
     this.inFlightCallbacks = new CopyOnWriteArrayList<>();
-
-    this.queryCustomPayload =
-        GraphConversions.createCustomPayload(
-            this.statement, subProtocol, executionProfile, this.context, this.graphBinaryModule);
 
     this.requestTracker = context.getRequestTracker();
     this.sessionMetricUpdater = session.getMetricUpdater();
+
+    Duration timeout = GraphConversions.resolveGraphRequestTimeout(statement, context);
+    this.scheduledTimeout = scheduleTimeout(timeout);
 
     this.throttler = context.getRequestThrottler();
     this.throttler.register(this);
@@ -204,6 +176,8 @@ public class GraphRequestHandler implements Throttled {
 
   @Override
   public void onThrottleReady(boolean wasDelayed) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(initialStatement, context);
     if (wasDelayed
         // avoid call to nanoTime() if metric is disabled:
         && sessionMetricUpdater.isEnabled(
@@ -215,12 +189,12 @@ public class GraphRequestHandler implements Throttled {
           TimeUnit.NANOSECONDS);
     }
     Queue<Node> queryPlan =
-        statement.getNode() != null
-            ? new QueryPlan(statement.getNode())
+        initialStatement.getNode() != null
+            ? new SimpleQueryPlan(initialStatement.getNode())
             : context
                 .getLoadBalancingPolicyWrapper()
-                .newQueryPlan(statement, executionProfile.getName(), session);
-    sendRequest(null, queryPlan, 0, 0, true);
+                .newQueryPlan(initialStatement, executionProfile.getName(), session);
+    sendRequest(initialStatement, null, queryPlan, 0, 0, true);
   }
 
   public CompletionStage<AsyncGraphResultSet> handle() {
@@ -233,6 +207,7 @@ public class GraphRequestHandler implements Throttled {
         return this.timer.newTimeout(
             (Timeout timeout1) ->
                 setFinalError(
+                    initialStatement,
                     new DriverTimeoutException("Query timed out after " + timeoutDuration),
                     null,
                     NO_SUCCESSFUL_EXECUTION),
@@ -262,6 +237,7 @@ public class GraphRequestHandler implements Throttled {
    * @param scheduleNextExecution whether to schedule the next speculative execution
    */
   private void sendRequest(
+      GraphStatement<?> statement,
       Node retriedNode,
       Queue<Node> queryPlan,
       int currentExecutionIndex,
@@ -285,11 +261,15 @@ public class GraphRequestHandler implements Throttled {
       if (!result.isDone() && activeExecutionsCount.decrementAndGet() == 0) {
         // We're the last execution so fail the result
         setFinalError(
-            AllNodesFailedException.fromErrors(this.errors), null, NO_SUCCESSFUL_EXECUTION);
+            statement,
+            AllNodesFailedException.fromErrors(this.errors),
+            null,
+            NO_SUCCESSFUL_EXECUTION);
       }
     } else {
       NodeResponseCallback nodeResponseCallback =
           new NodeResponseCallback(
+              statement,
               node,
               queryPlan,
               channel,
@@ -297,8 +277,18 @@ public class GraphRequestHandler implements Throttled {
               retryCount,
               scheduleNextExecution,
               logPrefix);
+      DriverExecutionProfile executionProfile =
+          Conversions.resolveExecutionProfile(statement, context);
+      GraphProtocol graphSubProtocol =
+          GraphConversions.resolveGraphSubProtocol(statement, graphSupportChecker, context);
+      Message message =
+          GraphConversions.createMessageFromGraphStatement(
+              statement, graphSubProtocol, executionProfile, context, graphBinaryModule);
+      Map<String, ByteBuffer> customPayload =
+          GraphConversions.createCustomPayload(
+              statement, graphSubProtocol, executionProfile, context, graphBinaryModule);
       channel
-          .write(message, statement.isTracing(), queryCustomPayload, nodeResponseCallback)
+          .write(message, statement.isTracing(), customPayload, nodeResponseCallback)
           .addListener(nodeResponseCallback);
     }
   }
@@ -335,7 +325,11 @@ public class GraphRequestHandler implements Throttled {
       Result resultMessage, Frame responseFrame, NodeResponseCallback callback) {
     try {
       ExecutionInfo executionInfo = buildExecutionInfo(callback, responseFrame);
-
+      DriverExecutionProfile executionProfile =
+          Conversions.resolveExecutionProfile(callback.statement, context);
+      GraphProtocol subProtocol =
+          GraphConversions.resolveGraphSubProtocol(
+              callback.statement, graphSupportChecker, context);
       Queue<GraphNode> graphNodes = new ArrayDeque<>();
       for (List<ByteBuffer> row : ((Rows) resultMessage).getData()) {
         if (subProtocol.isGraphBinary()) {
@@ -361,9 +355,9 @@ public class GraphRequestHandler implements Throttled {
           totalLatencyNanos = completionTimeNanos - startTimeNanos;
           long nodeLatencyNanos = completionTimeNanos - callback.nodeStartTimeNanos;
           requestTracker.onNodeSuccess(
-              statement, nodeLatencyNanos, executionProfile, callback.node, logPrefix);
+              callback.statement, nodeLatencyNanos, executionProfile, callback.node, logPrefix);
           requestTracker.onSuccess(
-              statement, totalLatencyNanos, executionProfile, callback.node, logPrefix);
+              callback.statement, totalLatencyNanos, executionProfile, callback.node, logPrefix);
         }
         if (sessionMetricUpdater.isEnabled(
             DseSessionMetric.GRAPH_REQUESTS, executionProfile.getName())) {
@@ -382,14 +376,16 @@ public class GraphRequestHandler implements Throttled {
       if (!executionInfo.getWarnings().isEmpty()
           && executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOG_WARNINGS)
           && LOG.isWarnEnabled()) {
-        logServerWarnings(executionInfo.getWarnings());
+        logServerWarnings(callback.statement, executionInfo.getWarnings());
       }
     } catch (Throwable error) {
-      setFinalError(error, callback.node, NO_SUCCESSFUL_EXECUTION);
+      setFinalError(callback.statement, error, callback.node, NO_SUCCESSFUL_EXECUTION);
     }
   }
 
-  private void logServerWarnings(List<String> warnings) {
+  private void logServerWarnings(GraphStatement<?> statement, List<String> warnings) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(statement, context);
     // use the RequestLogFormatter to format the query
     StringBuilder statementString = new StringBuilder();
     context
@@ -416,8 +412,10 @@ public class GraphRequestHandler implements Throttled {
   }
 
   private ExecutionInfo buildExecutionInfo(NodeResponseCallback callback, Frame responseFrame) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(callback.statement, context);
     return new DefaultExecutionInfo(
-        statement,
+        callback.statement,
         callback.node,
         startedSpeculativeExecutionsCount.get(),
         callback.execution,
@@ -432,12 +430,17 @@ public class GraphRequestHandler implements Throttled {
 
   @Override
   public void onThrottleFailure(@NonNull RequestThrottlingException error) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(initialStatement, context);
     sessionMetricUpdater.incrementCounter(
         DefaultSessionMetric.THROTTLING_ERRORS, executionProfile.getName());
-    setFinalError(error, null, NO_SUCCESSFUL_EXECUTION);
+    setFinalError(initialStatement, error, null, NO_SUCCESSFUL_EXECUTION);
   }
 
-  private void setFinalError(Throwable error, Node node, int execution) {
+  private void setFinalError(
+      GraphStatement<?> statement, Throwable error, Node node, int execution) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(statement, context);
     if (error instanceof DriverException) {
       ((DriverException) error)
           .setExecutionInfo(
@@ -479,6 +482,7 @@ public class GraphRequestHandler implements Throttled {
       implements ResponseCallback, GenericFutureListener<Future<java.lang.Void>> {
 
     private final long nodeStartTimeNanos = System.nanoTime();
+    private final GraphStatement<?> statement;
     private final Node node;
     private final Queue<Node> queryPlan;
     private final DriverChannel channel;
@@ -490,8 +494,10 @@ public class GraphRequestHandler implements Throttled {
     private final int retryCount;
     private final boolean scheduleNextExecution;
     private final String logPrefix;
+    private final DriverExecutionProfile executionProfile;
 
     private NodeResponseCallback(
+        GraphStatement<?> statement,
         Node node,
         Queue<Node> queryPlan,
         DriverChannel channel,
@@ -499,6 +505,7 @@ public class GraphRequestHandler implements Throttled {
         int retryCount,
         boolean scheduleNextExecution,
         String logPrefix) {
+      this.statement = statement;
       this.node = node;
       this.queryPlan = queryPlan;
       this.channel = channel;
@@ -506,6 +513,7 @@ public class GraphRequestHandler implements Throttled {
       this.retryCount = retryCount;
       this.scheduleNextExecution = scheduleNextExecution;
       this.logPrefix = logPrefix + "|" + execution;
+      this.executionProfile = Conversions.resolveExecutionProfile(statement, context);
     }
 
     // this gets invoked once the write completes.
@@ -516,7 +524,7 @@ public class GraphRequestHandler implements Throttled {
         if (error instanceof EncoderException
             && error.getCause() instanceof FrameTooLongException) {
           trackNodeError(node, error.getCause(), NANOTIME_NOT_MEASURED_YET);
-          setFinalError(error.getCause(), node, execution);
+          setFinalError(statement, error.getCause(), node, execution);
         } else {
           LOG.trace(
               "[{}] Failed to send request on {}, trying next node (cause: {})",
@@ -529,7 +537,12 @@ public class GraphRequestHandler implements Throttled {
               .getMetricUpdater()
               .incrementCounter(DefaultNodeMetric.UNSENT_REQUESTS, executionProfile.getName());
           sendRequest(
-              null, queryPlan, execution, retryCount, scheduleNextExecution); // try next node
+              statement,
+              null,
+              queryPlan,
+              execution,
+              retryCount,
+              scheduleNextExecution); // try next node
         }
       } else {
         LOG.trace("[{}] Request sent on {}", logPrefix, channel);
@@ -539,12 +552,13 @@ public class GraphRequestHandler implements Throttled {
           cancel();
         } else {
           inFlightCallbacks.add(this);
-          if (scheduleNextExecution && isIdempotent) {
+          if (scheduleNextExecution && Conversions.resolveIdempotence(statement, context)) {
             int nextExecution = execution + 1;
             long nextDelay;
             try {
               nextDelay =
-                  speculativeExecutionPolicy.nextExecution(node, null, statement, nextExecution);
+                  Conversions.resolveSpeculativeExecutionPolicy(statement, context)
+                      .nextExecution(node, null, statement, nextExecution);
             } catch (Throwable cause) {
               // This is a bug in the policy, but not fatal since we have at least one other
               // execution already running. Don't fail the whole request.
@@ -586,7 +600,7 @@ public class GraphRequestHandler implements Throttled {
                         .getMetricUpdater()
                         .incrementCounter(
                             DefaultNodeMetric.SPECULATIVE_EXECUTIONS, executionProfile.getName());
-                    sendRequest(null, queryPlan, index, 0, true);
+                    sendRequest(statement, null, queryPlan, index, 0, true);
                   }
                 },
                 delay,
@@ -632,11 +646,14 @@ public class GraphRequestHandler implements Throttled {
               new IllegalStateException("Unexpected response " + responseMessage),
               nodeResponseTimeNanos);
           setFinalError(
-              new IllegalStateException("Unexpected response " + responseMessage), node, execution);
+              statement,
+              new IllegalStateException("Unexpected response " + responseMessage),
+              node,
+              execution);
         }
       } catch (Throwable t) {
         trackNodeError(node, t, nodeResponseTimeNanos);
-        setFinalError(t, node, execution);
+        setFinalError(statement, t, node, execution);
       }
     }
 
@@ -647,20 +664,21 @@ public class GraphRequestHandler implements Throttled {
         LOG.trace("[{}] {} is bootstrapping, trying next node", logPrefix, node);
         recordError(node, error);
         trackNodeError(node, error, NANOTIME_NOT_MEASURED_YET);
-        sendRequest(null, queryPlan, execution, retryCount, false);
+        sendRequest(statement, null, queryPlan, execution, retryCount, false);
       } else if (error instanceof QueryValidationException
           || error instanceof FunctionFailureException
           || error instanceof ProtocolError) {
         LOG.trace("[{}] Unrecoverable error, rethrowing", logPrefix);
         metricUpdater.incrementCounter(DefaultNodeMetric.OTHER_ERRORS, executionProfile.getName());
         trackNodeError(node, error, NANOTIME_NOT_MEASURED_YET);
-        setFinalError(error, node, execution);
+        setFinalError(statement, error, node, execution);
       } else {
-        RetryDecision decision;
+        RetryPolicy retryPolicy = Conversions.resolveRetryPolicy(statement, context);
+        RetryVerdict verdict;
         if (error instanceof ReadTimeoutException) {
           ReadTimeoutException readTimeout = (ReadTimeoutException) error;
-          decision =
-              retryPolicy.onReadTimeout(
+          verdict =
+              retryPolicy.onReadTimeoutVerdict(
                   statement,
                   readTimeout.getConsistencyLevel(),
                   readTimeout.getBlockFor(),
@@ -669,32 +687,32 @@ public class GraphRequestHandler implements Throttled {
                   retryCount);
           updateErrorMetrics(
               metricUpdater,
-              decision,
+              verdict,
               DefaultNodeMetric.READ_TIMEOUTS,
               DefaultNodeMetric.RETRIES_ON_READ_TIMEOUT,
               DefaultNodeMetric.IGNORES_ON_READ_TIMEOUT);
         } else if (error instanceof WriteTimeoutException) {
           WriteTimeoutException writeTimeout = (WriteTimeoutException) error;
-          decision =
-              isIdempotent
-                  ? retryPolicy.onWriteTimeout(
+          verdict =
+              Conversions.resolveIdempotence(statement, context)
+                  ? retryPolicy.onWriteTimeoutVerdict(
                       statement,
                       writeTimeout.getConsistencyLevel(),
                       writeTimeout.getWriteType(),
                       writeTimeout.getBlockFor(),
                       writeTimeout.getReceived(),
                       retryCount)
-                  : RetryDecision.RETHROW;
+                  : RetryVerdict.RETHROW;
           updateErrorMetrics(
               metricUpdater,
-              decision,
+              verdict,
               DefaultNodeMetric.WRITE_TIMEOUTS,
               DefaultNodeMetric.RETRIES_ON_WRITE_TIMEOUT,
               DefaultNodeMetric.IGNORES_ON_WRITE_TIMEOUT);
         } else if (error instanceof UnavailableException) {
           UnavailableException unavailable = (UnavailableException) error;
-          decision =
-              retryPolicy.onUnavailable(
+          verdict =
+              retryPolicy.onUnavailableVerdict(
                   statement,
                   unavailable.getConsistencyLevel(),
                   unavailable.getRequired(),
@@ -702,42 +720,54 @@ public class GraphRequestHandler implements Throttled {
                   retryCount);
           updateErrorMetrics(
               metricUpdater,
-              decision,
+              verdict,
               DefaultNodeMetric.UNAVAILABLES,
               DefaultNodeMetric.RETRIES_ON_UNAVAILABLE,
               DefaultNodeMetric.IGNORES_ON_UNAVAILABLE);
         } else {
-          decision =
-              isIdempotent
-                  ? retryPolicy.onErrorResponse(statement, error, retryCount)
-                  : RetryDecision.RETHROW;
+          verdict =
+              Conversions.resolveIdempotence(statement, context)
+                  ? retryPolicy.onErrorResponseVerdict(statement, error, retryCount)
+                  : RetryVerdict.RETHROW;
           updateErrorMetrics(
               metricUpdater,
-              decision,
+              verdict,
               DefaultNodeMetric.OTHER_ERRORS,
               DefaultNodeMetric.RETRIES_ON_OTHER_ERROR,
               DefaultNodeMetric.IGNORES_ON_OTHER_ERROR);
         }
-        processRetryDecision(decision, error);
+        processRetryVerdict(verdict, error);
       }
     }
 
-    private void processRetryDecision(RetryDecision decision, Throwable error) {
-      LOG.trace("[{}] Processing retry decision {}", logPrefix, decision);
-      switch (decision) {
+    private void processRetryVerdict(RetryVerdict verdict, Throwable error) {
+      LOG.trace("[{}] Processing retry decision {}", logPrefix, verdict);
+      switch (verdict.getRetryDecision()) {
         case RETRY_SAME:
           recordError(node, error);
           trackNodeError(node, error, NANOTIME_NOT_MEASURED_YET);
-          sendRequest(node, queryPlan, execution, retryCount + 1, false);
+          sendRequest(
+              verdict.getRetryRequest(statement),
+              node,
+              queryPlan,
+              execution,
+              retryCount + 1,
+              false);
           break;
         case RETRY_NEXT:
           recordError(node, error);
           trackNodeError(node, error, NANOTIME_NOT_MEASURED_YET);
-          sendRequest(null, queryPlan, execution, retryCount + 1, false);
+          sendRequest(
+              verdict.getRetryRequest(statement),
+              null,
+              queryPlan,
+              execution,
+              retryCount + 1,
+              false);
           break;
         case RETHROW:
           trackNodeError(node, error, NANOTIME_NOT_MEASURED_YET);
-          setFinalError(error, node, execution);
+          setFinalError(statement, error, node, execution);
           break;
         case IGNORE:
           setFinalResult(Void.INSTANCE, null, this);
@@ -747,12 +777,12 @@ public class GraphRequestHandler implements Throttled {
 
     private void updateErrorMetrics(
         NodeMetricUpdater metricUpdater,
-        RetryDecision decision,
+        RetryVerdict verdict,
         DefaultNodeMetric error,
         DefaultNodeMetric retriesOnError,
         DefaultNodeMetric ignoresOnError) {
       metricUpdater.incrementCounter(error, executionProfile.getName());
-      switch (decision) {
+      switch (verdict.getRetryDecision()) {
         case RETRY_SAME:
         case RETRY_NEXT:
           metricUpdater.incrementCounter(DefaultNodeMetric.RETRIES, executionProfile.getName());
@@ -774,24 +804,27 @@ public class GraphRequestHandler implements Throttled {
         return;
       }
       LOG.trace("[{}] Request failure, processing: {}", logPrefix, error);
-      RetryDecision decision;
-      if (!isIdempotent || error instanceof FrameTooLongException) {
-        decision = RetryDecision.RETHROW;
+      RetryVerdict verdict;
+      if (!Conversions.resolveIdempotence(statement, context)
+          || error instanceof FrameTooLongException) {
+        verdict = RetryVerdict.RETHROW;
       } else {
         try {
-          decision = retryPolicy.onRequestAborted(statement, error, retryCount);
+          RetryPolicy retryPolicy = Conversions.resolveRetryPolicy(statement, context);
+          verdict = retryPolicy.onRequestAbortedVerdict(statement, error, retryCount);
         } catch (Throwable cause) {
           setFinalError(
+              statement,
               new IllegalStateException("Unexpected error while invoking the retry policy", cause),
               node,
               NO_SUCCESSFUL_EXECUTION);
           return;
         }
       }
-      processRetryDecision(decision, error);
+      processRetryVerdict(verdict, error);
       updateErrorMetrics(
           ((DefaultNode) node).getMetricUpdater(),
-          decision,
+          verdict,
           DefaultNodeMetric.ABORTED_REQUESTS,
           DefaultNodeMetric.RETRIES_ON_ABORTED,
           DefaultNodeMetric.IGNORES_ON_ABORTED);

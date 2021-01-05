@@ -37,8 +37,8 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
-import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
+import com.datastax.oss.driver.api.core.retry.RetryVerdict;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
 import com.datastax.oss.driver.api.core.servererrors.DefaultWriteType;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
@@ -152,8 +152,8 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
     harnessBuilder.withResponse(node2, defaultFrameOf(singleRow()));
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
-      failureScenario.mockRetryPolicyDecision(
-          harness.getContext().getRetryPolicy(anyString()), RetryDecision.RETRY_NEXT);
+      failureScenario.mockRetryPolicyVerdict(
+          harness.getContext().getRetryPolicy(anyString()), RetryVerdict.RETRY_NEXT);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
           new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
@@ -203,8 +203,8 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
     harnessBuilder.withResponse(node1, defaultFrameOf(singleRow()));
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
-      failureScenario.mockRetryPolicyDecision(
-          harness.getContext().getRetryPolicy(anyString()), RetryDecision.RETRY_SAME);
+      failureScenario.mockRetryPolicyVerdict(
+          harness.getContext().getRetryPolicy(anyString()), RetryVerdict.RETRY_SAME);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
           new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
@@ -253,8 +253,8 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
     failureScenario.mockRequestError(harnessBuilder, node1);
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
-      failureScenario.mockRetryPolicyDecision(
-          harness.getContext().getRetryPolicy(anyString()), RetryDecision.IGNORE);
+      failureScenario.mockRetryPolicyVerdict(
+          harness.getContext().getRetryPolicy(anyString()), RetryVerdict.IGNORE);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
           new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
@@ -302,8 +302,8 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
-      failureScenario.mockRetryPolicyDecision(
-          harness.getContext().getRetryPolicy(anyString()), RetryDecision.RETHROW);
+      failureScenario.mockRetryPolicyVerdict(
+          harness.getContext().getRetryPolicy(anyString()), RetryVerdict.RETHROW);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
           new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
@@ -349,8 +349,8 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
       if (shouldCallRetryPolicy) {
-        failureScenario.mockRetryPolicyDecision(
-            harness.getContext().getRetryPolicy(anyString()), RetryDecision.RETHROW);
+        failureScenario.mockRetryPolicyVerdict(
+            harness.getContext().getRetryPolicy(anyString()), RetryVerdict.RETHROW);
       }
 
       CompletionStage<AsyncResultSet> resultSetFuture =
@@ -405,7 +405,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 
     abstract void mockRequestError(RequestHandlerTestHarness.Builder builder, Node node);
 
-    abstract void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision);
+    abstract void mockRetryPolicyVerdict(RetryPolicy policy, RetryVerdict verdict);
   }
 
   @DataProvider
@@ -426,15 +426,15 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           }
 
           @Override
-          public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
-            when(policy.onReadTimeout(
+          public void mockRetryPolicyVerdict(RetryPolicy policy, RetryVerdict verdict) {
+            when(policy.onReadTimeoutVerdict(
                     any(Statement.class),
                     eq(DefaultConsistencyLevel.LOCAL_ONE),
                     eq(2),
                     eq(1),
                     eq(true),
                     eq(0)))
-                .thenReturn(decision);
+                .thenReturn(verdict);
           }
         },
         new FailureScenario(
@@ -456,15 +456,15 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           }
 
           @Override
-          public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
-            when(policy.onWriteTimeout(
+          public void mockRetryPolicyVerdict(RetryPolicy policy, RetryVerdict verdict) {
+            when(policy.onWriteTimeoutVerdict(
                     any(Statement.class),
                     eq(DefaultConsistencyLevel.LOCAL_ONE),
                     eq(DefaultWriteType.SIMPLE),
                     eq(2),
                     eq(1),
                     eq(0)))
-                .thenReturn(decision);
+                .thenReturn(verdict);
           }
         },
         new FailureScenario(
@@ -482,14 +482,14 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           }
 
           @Override
-          public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
-            when(policy.onUnavailable(
+          public void mockRetryPolicyVerdict(RetryPolicy policy, RetryVerdict verdict) {
+            when(policy.onUnavailableVerdict(
                     any(Statement.class),
                     eq(DefaultConsistencyLevel.LOCAL_ONE),
                     eq(2),
                     eq(1),
                     eq(0)))
-                .thenReturn(decision);
+                .thenReturn(verdict);
           }
         },
         new FailureScenario(
@@ -506,9 +506,9 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           }
 
           @Override
-          public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
-            when(policy.onErrorResponse(any(Statement.class), any(ServerError.class), eq(0)))
-                .thenReturn(decision);
+          public void mockRetryPolicyVerdict(RetryPolicy policy, RetryVerdict verdict) {
+            when(policy.onErrorResponseVerdict(any(Statement.class), any(ServerError.class), eq(0)))
+                .thenReturn(verdict);
           }
         },
         new FailureScenario(
@@ -522,10 +522,10 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           }
 
           @Override
-          public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
-            when(policy.onRequestAborted(
+          public void mockRetryPolicyVerdict(RetryPolicy policy, RetryVerdict verdict) {
+            when(policy.onRequestAbortedVerdict(
                     any(Statement.class), any(HeartbeatException.class), eq(0)))
-                .thenReturn(decision);
+                .thenReturn(verdict);
           }
         });
   }

@@ -43,24 +43,47 @@ use a fully asynchronous programming model (chaining callbacks instead of blocki
 At any rate, `CompletionStage` has a `toCompletableFuture()` method. In current JDK versions, every
 `CompletionStage` is a `CompletableFuture`, so the conversion has no performance overhead.
 
-### Where is `DowngradingConsistencyRetryPolicy`?
+### Where is `DowngradingConsistencyRetryPolicy` from driver 3?
 
-That retry policy was deprecated in driver 3.5.0, and does not exist anymore in 4.0.0. The main
-motivation is that this behavior should be the application's concern, not the driver's.
+**As of driver 4.10, this retry policy was made available again as a built-in alternative to the 
+default retry policy**: see the [manual](../manual/core/retries) to understand how to use it. 
+For versions between 4.0 and 4.9 inclusive, there is no built-in equivalent of driver 3 
+`DowngradingConsistencyRetryPolicy`.
 
-We recognize that there are use cases where downgrading is good -- for instance, a dashboard
-application would present the latest information by reading at QUORUM, but it's acceptable for it to
-display stale information by reading at ONE sometimes. 
+That retry policy was indeed removed in driver 4.0.0. The main motivation is that this behavior 
+should be the application's concern, not the driver's. APIs provided by the driver should instead 
+encourage idiomatic use of a distributed system like Apache Cassandra, and a downgrading policy 
+works against this. It suggests that an anti-pattern such as "try to read at QUORUM, but fall back 
+to ONE if that fails" is a good idea in general use cases, when in reality it provides no better 
+consistency guarantees than working directly at ONE, but with higher latencies. 
 
-But APIs provided by the driver should instead encourage idiomatic use of a distributed system like
-Apache Cassandra, and a downgrading policy works against this. It suggests that an anti-pattern such
-as "try to read at QUORUM, but fall back to ONE if that fails" is a good idea in general use cases, 
-when in reality it provides no better consistency guarantees than working directly at ONE, but with
-higher latencies. 
+However, we recognize that there are use cases where downgrading is good -- for instance, a 
+dashboard application would present the latest information by reading at QUORUM, but it's acceptable 
+for it to display stale information by reading at ONE sometimes. 
 
-We therefore urge users to carefully choose upfront the consistency level that works best for their
-use cases. If there is a legitimate reason to downgrade and retry, that should be handled by the
-application code.
+Thanks to [JAVA-2900], an equivalent retry policy with downgrading behavior was re-introduced in
+driver 4.10. Nonetheless, we urge users to avoid using it unless strictly required, and instead, 
+carefully choose upfront the consistency level that works best for their use cases. Even if there 
+is a legitimate reason to downgrade and retry, that should be preferably handled by the application 
+code. An example of downgrading retries implemented at application level can be found in the driver
+[examples repository].
+
+[JAVA-2900]: https://datastax-oss.atlassian.net/browse/JAVA-2900
+[examples repository]: https://github.com/datastax/java-driver/blob/4.x/examples/src/main/java/com/datastax/oss/driver/examples/retry/DowngradingRetry.java
+
+### Where is the cross-datacenter failover feature that existed in driver 3?
+
+In driver 3, it was possible to configure the load balancing policy to automatically failover to
+a remote datacenter, when the local datacenter is down.
+
+This ability is considered a misfeature and has been removed from driver 4.0 onwards.
+
+However, due to popular demand, cross-datacenter failover has been brought back to driver 4 in
+version 4.10.0.
+
+If you are using a driver version >= 4.10.0, read the [manual](../manual/core/loadbalancing/) to
+understand how to enable this feature; for driver versions < 4.10.0, this feature is simply not
+available.
 
 ### I want to set a date on a bound statement, where did `setTimestamp()` go?
 

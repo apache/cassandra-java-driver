@@ -31,8 +31,8 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
+import com.datastax.oss.driver.api.core.retry.RetryVerdict;
 import com.datastax.oss.driver.api.core.servererrors.OverloadedException;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -177,8 +177,8 @@ public class CqlPrepareHandlerTest {
       when(harness
               .getContext()
               .getRetryPolicy(anyString())
-              .onErrorResponse(eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
-          .thenReturn(RetryDecision.RETRY_NEXT);
+              .onErrorResponseVerdict(eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
+          .thenReturn(RetryVerdict.RETRY_NEXT);
 
       CompletionStage<PreparedStatement> prepareFuture =
           new CqlPrepareHandler(PREPARE_REQUEST, harness.getSession(), harness.getContext(), "test")
@@ -210,8 +210,8 @@ public class CqlPrepareHandlerTest {
       when(harness
               .getContext()
               .getRetryPolicy(anyString())
-              .onErrorResponse(eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
-          .thenReturn(RetryDecision.RETHROW);
+              .onErrorResponseVerdict(eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
+          .thenReturn(RetryVerdict.RETHROW);
 
       CompletionStage<PreparedStatement> prepareFuture =
           new CqlPrepareHandler(PREPARE_REQUEST, harness.getSession(), harness.getContext(), "test")
@@ -243,9 +243,9 @@ public class CqlPrepareHandlerTest {
       // Make node1's error unrecoverable, will rethrow
       RetryPolicy mockRetryPolicy =
           harness.getContext().getRetryPolicy(DriverExecutionProfile.DEFAULT_NAME);
-      when(mockRetryPolicy.onErrorResponse(
+      when(mockRetryPolicy.onErrorResponseVerdict(
               eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
-          .thenReturn(RetryDecision.IGNORE);
+          .thenReturn(RetryVerdict.IGNORE);
 
       CompletionStage<PreparedStatement> prepareFuture =
           new CqlPrepareHandler(PREPARE_REQUEST, harness.getSession(), harness.getContext(), "test")
