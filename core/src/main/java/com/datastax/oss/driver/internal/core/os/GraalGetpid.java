@@ -28,7 +28,7 @@ public class GraalGetpid {
     @Override
     public List<String> getHeaderFiles() {
 
-      return Collections.unmodifiableList(Collections.singletonList("<unistd.h>"));
+      return Collections.singletonList("<unistd.h>");
     }
   }
 
