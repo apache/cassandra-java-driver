@@ -250,17 +250,27 @@ public abstract class TokenITBase {
       Set<TokenRange> hostRanges = tokenMap.getTokenRanges(keyspace, node);
       // Special case: When using vnodes the tokens are not evenly assigned to each replica.
       if (!useVnodes) {
-        assertThat(hostRanges).hasSize(replicationFactor * tokensPerNode);
+        assertThat(hostRanges)
+            .as(
+                "Node %s: expected %d ranges, got %d",
+                node, replicationFactor * tokensPerNode, hostRanges.size())
+            .hasSize(replicationFactor * tokensPerNode);
       }
       allRangesWithDuplicates.addAll(hostRanges);
     }
 
     // Special case check for vnodes to ensure that total number of replicated ranges is correct.
-    assertThat(allRangesWithDuplicates).hasSize(3 * tokensPerNode * replicationFactor);
+    assertThat(allRangesWithDuplicates)
+        .as(
+            "Expected %d total replicated ranges with duplicates, got %d",
+            3 * replicationFactor * tokensPerNode, allRangesWithDuplicates.size())
+        .hasSize(3 * replicationFactor * tokensPerNode);
 
     // Once we ignore duplicates, the number of ranges should match the number of nodes.
     Set<TokenRange> allRanges = new TreeSet<>(allRangesWithDuplicates);
-    assertThat(allRanges).hasSize(3 * tokensPerNode);
+    assertThat(allRanges)
+        .as("Expected %d total replicated ranges, got %d", 3 * tokensPerNode, allRanges.size())
+        .hasSize(3 * tokensPerNode);
 
     // And the ranges should cover the whole ring and no ranges intersect.
     checkRanges(allRanges);
@@ -269,7 +279,7 @@ public abstract class TokenITBase {
   // Ensures that no ranges intersect and that they cover the entire ring.
   private void checkRanges(Collection<TokenRange> ranges) {
     // Ensure no ranges intersect.
-    TokenRange[] rangesArray = ranges.toArray(new TokenRange[ranges.size()]);
+    TokenRange[] rangesArray = ranges.toArray(new TokenRange[0]);
     for (int i = 0; i < rangesArray.length; i++) {
       TokenRange rangeI = rangesArray[i];
       for (int j = i + 1; j < rangesArray.length; j++) {
