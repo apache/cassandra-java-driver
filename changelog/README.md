@@ -4,6 +4,7 @@
 
 ### 4.10.0 (in progress)
 
+- [bug] JAVA-2911: Prevent control connection from scheduling too many reconnections
 - [bug] JAVA-2902: Consider computed values when validating constructors for immutable entities
 - [new feature] JAVA-2899: Re-introduce cross-DC failover in driver 4
 - [new feature] JAVA-2900: Re-introduce consistency downgrading retries
