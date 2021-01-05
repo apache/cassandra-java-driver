@@ -35,6 +35,7 @@ import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,11 +47,12 @@ import org.junit.runner.RunWith;
 @RunWith(DataProviderRunner.class)
 public abstract class ClassicGraphDataTypeITBase {
 
-  private static final boolean IS_DSE50 = CcmBridge.VERSION.compareTo(Version.parse("5.1")) < 0;
+  private static final boolean IS_DSE50 =
+      CcmBridge.VERSION.compareTo(Objects.requireNonNull(Version.parse("5.1"))) < 0;
   private static final Set<String> TYPES_REQUIRING_DSE51 =
       ImmutableSet.of("Date()", "Time()", "Point()", "Linestring()", "Polygon()");
 
-  private static AtomicInteger schemaCounter = new AtomicInteger();
+  private static final AtomicInteger SCHEMA_COUNTER = new AtomicInteger();
 
   @DataProvider
   public static Object[][] typeSamples() {
@@ -97,29 +99,29 @@ public abstract class ClassicGraphDataTypeITBase {
       {"Decimal()", new BigDecimal("8675309.9998")},
       {"Varint()", new BigInteger("8675309")},
       // Geospatial types
-      {"Point().withBounds(-2, -2, 2, 2)", Point.fromCoordinates((double) 0, (double) 1)},
-      {"Point().withBounds(-40, -40, 40, 40)", Point.fromCoordinates((double) -5, (double) 20)},
+      {"Point().withBounds(-2, -2, 2, 2)", Point.fromCoordinates(0, 1)},
+      {"Point().withBounds(-40, -40, 40, 40)", Point.fromCoordinates(-5, 20)},
       {
         "Linestring().withGeoBounds()",
         LineString.fromPoints(
-            Point.fromCoordinates((double) 30, (double) 10),
-            Point.fromCoordinates((double) 10, (double) 30),
-            Point.fromCoordinates((double) 40, (double) 40))
+            Point.fromCoordinates(30, 10),
+            Point.fromCoordinates(10, 30),
+            Point.fromCoordinates(40, 40))
       },
       {
         "Polygon().withGeoBounds()",
         Polygon.builder()
             .addRing(
-                Point.fromCoordinates((double) 35, (double) 10),
-                Point.fromCoordinates((double) 45, (double) 45),
-                Point.fromCoordinates((double) 15, (double) 40),
-                Point.fromCoordinates((double) 10, (double) 20),
-                Point.fromCoordinates((double) 35, (double) 10))
+                Point.fromCoordinates(35, 10),
+                Point.fromCoordinates(45, 45),
+                Point.fromCoordinates(15, 40),
+                Point.fromCoordinates(10, 20),
+                Point.fromCoordinates(35, 10))
             .addRing(
-                Point.fromCoordinates((double) 20, (double) 30),
-                Point.fromCoordinates((double) 35, (double) 35),
-                Point.fromCoordinates((double) 30, (double) 20),
-                Point.fromCoordinates((double) 20, (double) 30))
+                Point.fromCoordinates(20, 30),
+                Point.fromCoordinates(35, 35),
+                Point.fromCoordinates(30, 20),
+                Point.fromCoordinates(20, 30))
             .build()
       }
     };
@@ -133,11 +135,11 @@ public abstract class ClassicGraphDataTypeITBase {
       throw new AssumptionViolatedException(type + " not supported in DSE " + CcmBridge.VERSION);
     }
 
-    int id = schemaCounter.getAndIncrement();
+    int id = SCHEMA_COUNTER.getAndIncrement();
 
     String vertexLabel = "vertex" + id;
     String propertyName = "prop" + id;
-    GraphStatement addVertexLabelAndProperty =
+    GraphStatement<?> addVertexLabelAndProperty =
         ScriptGraphStatement.builder(
                 "schema.propertyKey(property)."
                     + type

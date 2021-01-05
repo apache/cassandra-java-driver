@@ -35,7 +35,7 @@ import org.junit.rules.TestRule;
 
 /**
  * A regression test for a specific case of schema parsing for graphs built from tables containing
- * case-sensitive column names in it's tables. See JAVA-2492 for more information.
+ * case-sensitive column names in its tables. See JAVA-2492 for more information.
  */
 @Category(ParallelizableTests.class)
 @DseRequirement(min = "6.8")
