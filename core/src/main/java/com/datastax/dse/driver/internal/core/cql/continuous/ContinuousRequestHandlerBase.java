@@ -62,7 +62,7 @@ import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
 import com.datastax.oss.driver.internal.core.util.Loggers;
-import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
+import com.datastax.oss.driver.internal.core.util.collection.SimpleQueryPlan;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
@@ -194,7 +194,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
         Conversions.resolveExecutionProfile(statement, context);
     this.queryPlan =
         statement.getNode() != null
-            ? new QueryPlan(statement.getNode())
+            ? new SimpleQueryPlan(statement.getNode())
             : context
                 .getLoadBalancingPolicyWrapper()
                 .newQueryPlan(statement, executionProfile.getName(), session);

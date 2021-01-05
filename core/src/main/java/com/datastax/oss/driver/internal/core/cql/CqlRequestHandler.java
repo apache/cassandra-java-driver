@@ -55,7 +55,7 @@ import com.datastax.oss.driver.internal.core.session.RepreparePayload;
 import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogger;
 import com.datastax.oss.driver.internal.core.util.Loggers;
-import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
+import com.datastax.oss.driver.internal.core.util.collection.SimpleQueryPlan;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -187,7 +187,7 @@ public class CqlRequestHandler implements Throttled {
     }
     Queue<Node> queryPlan =
         this.initialStatement.getNode() != null
-            ? new QueryPlan(this.initialStatement.getNode())
+            ? new SimpleQueryPlan(this.initialStatement.getNode())
             : context
                 .getLoadBalancingPolicyWrapper()
                 .newQueryPlan(initialStatement, executionProfile.getName(), session);

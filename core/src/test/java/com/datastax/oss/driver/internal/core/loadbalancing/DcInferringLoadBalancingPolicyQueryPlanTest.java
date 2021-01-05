@@ -25,7 +25,7 @@ public class DcInferringLoadBalancingPolicyQueryPlanTest
     extends DefaultLoadBalancingPolicyQueryPlanTest {
 
   @Override
-  protected DefaultLoadBalancingPolicy createAndInitPolicy() {
+  protected DcInferringLoadBalancingPolicy createAndInitPolicy() {
     DcInferringLoadBalancingPolicy policy =
         spy(
             new DcInferringLoadBalancingPolicy(context, DEFAULT_NAME) {

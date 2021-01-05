@@ -370,6 +370,8 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.NETTY_TIMER_TICK_DURATION, Duration.ofMillis(100));
     map.put(TypedDriverOption.NETTY_TIMER_TICKS_PER_WHEEL, 2048);
     map.put(TypedDriverOption.COALESCER_INTERVAL, Duration.of(10, ChronoUnit.MICROS));
+    map.put(TypedDriverOption.LOAD_BALANCING_DC_FAILOVER_MAX_NODES_PER_REMOTE_DC, 0);
+    map.put(TypedDriverOption.LOAD_BALANCING_DC_FAILOVER_ALLOW_FOR_LOCAL_CONSISTENCY_LEVELS, false);
   }
 
   @Immutable

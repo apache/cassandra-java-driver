@@ -2,6 +2,15 @@
 
 ### 4.10.0
 
+#### Cross-datacenter failover
+
+[JAVA-2899](https://datastax-oss.atlassian.net/browse/JAVA-2676) re-introduced the ability to
+perform cross-datacenter failover using the driver's built-in load balancing policies. See [Load
+balancing](../manual/core/loadbalancing/) in the manual for details.
+
+Cross-datacenter failover is disabled by default, therefore existing applications should not
+experience any disruption.
+
 #### New `RetryVerdict` API
 
 [JAVA-2900](https://datastax-oss.atlassian.net/browse/JAVA-2900) introduced [`RetryVerdict`], a new 

@@ -39,7 +39,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 // TODO fix unnecessary stubbing of config option in parent class (and stop using "silent" runner)
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class BasicLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPolicyTestBase {
+public class BasicLoadBalancingPolicyEventsTest extends LoadBalancingPolicyTestBase {
 
   @Mock private Predicate<Node> filter;
 
@@ -62,7 +62,7 @@ public class BasicLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPoli
     policy.onDown(node2);
 
     // Then
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1);
     verify(distanceReporter, never()).setDistance(eq(node2), any(NodeDistance.class));
     // should have been called only once, during initialization, but not during onDown
     verify(filter).test(node2);
@@ -74,7 +74,7 @@ public class BasicLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPoli
     policy.onRemove(node2);
 
     // Then
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1);
     verify(distanceReporter, never()).setDistance(eq(node2), any(NodeDistance.class));
     // should have been called only once, during initialization, but not during onRemove
     verify(filter).test(node2);
@@ -89,7 +89,7 @@ public class BasicLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPoli
     verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
     verify(filter).test(node3);
     // Not added to the live set yet, we're waiting for the pool to open
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1, node2);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1, node2);
   }
 
   @Test
@@ -102,7 +102,7 @@ public class BasicLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPoli
 
     // Then
     verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1, node2);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1, node2);
   }
 
   @Test
@@ -115,7 +115,8 @@ public class BasicLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPoli
 
     // Then
     verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1, node2);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1, node2);
+    assertThat(policy.getLiveNodes().dc("dc2")).isEmpty();
   }
 
   @Test
@@ -126,7 +127,7 @@ public class BasicLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPoli
     // Then
     verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
     verify(filter).test(node3);
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1, node2, node3);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1, node2, node3);
   }
 
   @Test
@@ -140,7 +141,7 @@ public class BasicLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPoli
     // Then
     verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
     verify(filter).test(node3);
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1, node2);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1, node2);
   }
 
   @Test
@@ -153,7 +154,8 @@ public class BasicLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPoli
 
     // Then
     verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1, node2);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1, node2);
+    assertThat(policy.getLiveNodes().dc("dc2")).isEmpty();
   }
 
   @NonNull
@@ -162,7 +164,7 @@ public class BasicLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPoli
         new BasicLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
     policy.init(
         ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2), distanceReporter);
-    assertThat(policy.liveNodes).containsExactlyInAnyOrder(node1, node2);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1, node2);
     return policy;
   }
 }

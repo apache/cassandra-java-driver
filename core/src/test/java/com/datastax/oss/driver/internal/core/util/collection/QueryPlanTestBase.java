@@ -16,16 +16,21 @@
 package com.datastax.oss.driver.internal.core.util.collection;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class QueryPlanTest {
+public abstract class QueryPlanTestBase {
 
   @Mock private Node node1;
   @Mock private Node node2;
@@ -33,7 +38,7 @@ public class QueryPlanTest {
 
   @Test
   public void should_poll_elements() {
-    QueryPlan queryPlan = new QueryPlan(node1, node2, node3);
+    QueryPlan queryPlan = newQueryPlan(node1, node2, node3);
     assertThat(queryPlan.poll()).isSameAs(node1);
     assertThat(queryPlan.poll()).isSameAs(node2);
     assertThat(queryPlan.poll()).isSameAs(node3);
@@ -42,8 +47,48 @@ public class QueryPlanTest {
   }
 
   @Test
+  public void should_poll_elements_concurrently() throws InterruptedException {
+    for (int runs = 0; runs < 5; runs++) {
+      Node[] nodes = new Node[1000];
+      for (int i = 0; i < 1000; i++) {
+        nodes[i] = mock(Node.class, "node" + i);
+        when(nodes[i].getOpenConnections()).thenReturn(i);
+      }
+      QueryPlan queryPlan = newQueryPlan(nodes);
+      Set<Node> actual =
+          new ConcurrentSkipListSet<>(Comparator.comparingInt(Node::getOpenConnections));
+      Thread[] threads = new Thread[5];
+      for (int i = 0; i < 5; i++) {
+        threads[i] =
+            new Thread(
+                () -> {
+                  while (true) {
+                    Node node = queryPlan.poll();
+                    if (node == null) {
+                      return;
+                    }
+                    actual.add(node);
+                  }
+                });
+      }
+      for (Thread thread : threads) {
+        thread.start();
+      }
+      for (Thread thread : threads) {
+        thread.join();
+      }
+      assertThat(actual).hasSize(1000);
+      Iterator<Node> iterator = actual.iterator();
+      for (int i = 0; iterator.hasNext(); i++) {
+        Node node = iterator.next();
+        assertThat(node.getOpenConnections()).isEqualTo(i);
+      }
+    }
+  }
+
+  @Test
   public void should_return_size() {
-    QueryPlan queryPlan = new QueryPlan(node1, node2, node3);
+    QueryPlan queryPlan = newQueryPlan(node1, node2, node3);
     assertThat(queryPlan.size()).isEqualTo(3);
     queryPlan.poll();
     assertThat(queryPlan.size()).isEqualTo(2);
@@ -57,7 +102,7 @@ public class QueryPlanTest {
 
   @Test
   public void should_return_iterator() {
-    QueryPlan queryPlan = new QueryPlan(node1, node2, node3);
+    QueryPlan queryPlan = newQueryPlan(node1, node2, node3);
     Iterator<Node> iterator3 = queryPlan.iterator();
     queryPlan.poll();
     Iterator<Node> iterator2 = queryPlan.iterator();
@@ -74,4 +119,6 @@ public class QueryPlanTest {
     assertThat(iterator0).toIterable().isEmpty();
     assertThat(iterator00).toIterable().isEmpty();
   }
+
+  protected abstract QueryPlan newQueryPlan(Node... nodes);
 }

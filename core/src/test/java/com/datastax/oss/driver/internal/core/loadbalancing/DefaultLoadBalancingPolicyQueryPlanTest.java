@@ -78,9 +78,10 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends BasicLoadBalancingP
     given(metadata.getTokenMap()).willAnswer(invocation -> Optional.of(tokenMap));
     super.setup();
     dsePolicy = (DefaultLoadBalancingPolicy) policy;
-    // Note: tests in this class rely on the fact that the policy uses a CopyOnWriteArraySet which
-    // preserves insertion order, which is why we can use containsExactly() throughout this class.
-    assertThat(dsePolicy.getLiveNodes()).containsExactly(node1, node2, node3, node4, node5);
+    // Note: this assertion relies on the fact that policy.getLiveNodes() implementation preserves
+    // insertion order.
+    assertThat(dsePolicy.getLiveNodes().dc("dc1"))
+        .containsExactly(node1, node2, node3, node4, node5);
   }
 
   @Test
