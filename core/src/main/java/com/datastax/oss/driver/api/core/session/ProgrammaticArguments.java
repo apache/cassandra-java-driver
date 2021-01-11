@@ -173,12 +173,12 @@ public class ProgrammaticArguments {
 
   public static class Builder {
 
-    private ImmutableList.Builder<TypeCodec<?>> typeCodecsBuilder = ImmutableList.builder();
+    private final ImmutableList.Builder<TypeCodec<?>> typeCodecsBuilder = ImmutableList.builder();
     private NodeStateListener nodeStateListener;
     private SchemaChangeListener schemaChangeListener;
     private RequestTracker requestTracker;
     private ImmutableMap.Builder<String, String> localDatacentersBuilder = ImmutableMap.builder();
-    private ImmutableMap.Builder<String, Predicate<Node>> nodeFiltersBuilder =
+    private final ImmutableMap.Builder<String, Predicate<Node>> nodeFiltersBuilder =
         ImmutableMap.builder();
     private ClassLoader classLoader;
     private AuthProvider authProvider;
