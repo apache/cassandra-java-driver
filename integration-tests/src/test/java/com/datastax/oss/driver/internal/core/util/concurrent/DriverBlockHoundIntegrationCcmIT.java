@@ -39,6 +39,8 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.blockhound.BlockHound;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
@@ -55,9 +57,8 @@ import reactor.test.StepVerifier;
 @Category(IsolatedTests.class)
 public class DriverBlockHoundIntegrationCcmIT extends ContinuousPagingITBase {
 
-  static {
-    BlockHound.install();
-  }
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(DriverBlockHoundIntegrationCcmIT.class);
 
   private static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().build();
 
@@ -70,6 +71,12 @@ public class DriverBlockHoundIntegrationCcmIT extends ContinuousPagingITBase {
 
   @BeforeClass
   public static void setUp() {
+    try {
+      BlockHound.install();
+    } catch (Throwable t) {
+      LOGGER.error("BlockHound could not be installed", t);
+      fail("BlockHound could not be installed", t);
+    }
     initialize(SESSION_RULE.session(), SESSION_RULE.slowProfile());
   }
 

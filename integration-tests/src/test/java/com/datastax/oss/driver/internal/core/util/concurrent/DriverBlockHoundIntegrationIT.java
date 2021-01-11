@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.util.concurrent;
 
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.rows;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
+import static org.assertj.core.api.Fail.fail;
 
 import com.datastax.dse.driver.api.core.cql.reactive.ReactiveRow;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -27,9 +28,12 @@ import com.datastax.oss.driver.categories.IsolatedTests;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import java.util.UUID;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.blockhound.BlockHound;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -43,13 +47,21 @@ import reactor.test.StepVerifier;
 @Category(IsolatedTests.class)
 public class DriverBlockHoundIntegrationIT {
 
-  static {
-    BlockHound.install();
-  }
+  private static final Logger LOGGER = LoggerFactory.getLogger(DriverBlockHoundIntegrationIT.class);
 
   @ClassRule
   public static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(1));
+
+  @BeforeClass
+  public static void setUp() {
+    try {
+      BlockHound.install();
+    } catch (Throwable t) {
+      LOGGER.error("BlockHound could not be installed", t);
+      fail("BlockHound could not be installed", t);
+    }
+  }
 
   @Before
   public void setup() {
