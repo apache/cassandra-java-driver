@@ -137,9 +137,21 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<String> LOAD_BALANCING_LOCAL_DATACENTER =
       new TypedDriverOption<>(
           DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, GenericType.STRING);
-  /** A custom filter to include/exclude nodes. */
+  /**
+   * A custom filter to include/exclude nodes.
+   *
+   * @deprecated Use {@link #LOAD_BALANCING_DISTANCE_EVALUATOR_CLASS} instead.
+   */
+  @Deprecated
   public static final TypedDriverOption<String> LOAD_BALANCING_FILTER_CLASS =
       new TypedDriverOption<>(DefaultDriverOption.LOAD_BALANCING_FILTER_CLASS, GenericType.STRING);
+  /**
+   * The class name of a custom {@link
+   * com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator}.
+   */
+  public static final TypedDriverOption<String> LOAD_BALANCING_DISTANCE_EVALUATOR_CLASS =
+      new TypedDriverOption<>(
+          DefaultDriverOption.LOAD_BALANCING_DISTANCE_EVALUATOR_CLASS, GenericType.STRING);
   /** The timeout to use for internal queries that run as part of the initialization process. */
   public static final TypedDriverOption<Duration> CONNECTION_INIT_QUERY_TIMEOUT =
       new TypedDriverOption<>(

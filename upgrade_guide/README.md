@@ -24,6 +24,50 @@ are encouraged to try out the new `TaggingMetricIdGenerator`, as it generates me
 that will look more familiar to users of libraries such as Micrometer or MicroProfile Metrics (and
 look nicer when exported to Prometheus or Graphite).
 
+#### New `NodeDistanceEvaluator` API
+
+All driver built-in load-balancing policies now accept a new optional component called
+[NodeDistanceEvaluator]. This component gets invoked each time a node is added to the cluster or
+comes back up. If the evaluator returns a non-null distance for the node, that distance will be
+used, otherwise the driver will use its built-in logic to assign a default distance to it.
+
+[NodeDistanceEvaluator]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/loadbalancing/NodeDistanceEvaluator.html
+
+This component replaces the old "node filter" component. As a consequence, all `withNodeFilter`
+methods in `SessionBuilder` are now deprecated and should be replaced by the equivalent
+`withNodeDistanceEvaluator` methods.
+
+If you have an existing node filter implementation, it can be converted to a `NodeDistanceEvaluator`
+very easily:
+
+```java
+Predicate<Node> nodeFilter = ...
+NodeDistanceEvaluator nodeEvaluator = 
+    (node, dc) -> nodeFilter.test(node) ? null : NodeDistance.IGNORED;
+```
+
+The above can also be achieved by an adapter class as shown below:
+
+```java
+public class NodeFilterToDistanceEvaluatorAdapter implements NodeDistanceEvaluator {
+
+  private final Predicate<Node> nodeFilter;
+
+  public NodeFilterToDistanceEvaluatorAdapter(@NonNull Predicate<Node> nodeFilter) {
+    this.nodeFilter = nodeFilter;
+  }
+
+  @Nullable @Override
+  public NodeDistance evaluateDistance(@NonNull Node node, @Nullable String localDc) {
+    return nodeFilter.test(node) ? null : NodeDistance.IGNORED;
+  }
+}
+```
+
+Finally, the `datastax-java-driver.basic.load-balancing-policy.filter.class` configuration option
+has been deprecated; it should be replaced with a node distance evaluator class defined by the
+`datastax-java-driver.basic.load-balancing-policy.evaluator.class` option instead.
+
 ### 4.10.0
 
 #### Cross-datacenter failover

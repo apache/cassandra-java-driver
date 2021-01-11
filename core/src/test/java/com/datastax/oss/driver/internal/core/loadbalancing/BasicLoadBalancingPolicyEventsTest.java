@@ -25,12 +25,11 @@ import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
-import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.UUID;
-import java.util.function.Predicate;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,7 +40,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class BasicLoadBalancingPolicyEventsTest extends LoadBalancingPolicyTestBase {
 
-  @Mock private Predicate<Node> filter;
+  @Mock private NodeDistanceEvaluator nodeDistanceEvaluator;
 
   private BasicLoadBalancingPolicy policy;
 
@@ -49,8 +48,8 @@ public class BasicLoadBalancingPolicyEventsTest extends LoadBalancingPolicyTestB
   @Override
   public void setup() {
     super.setup();
-    when(filter.test(any(Node.class))).thenReturn(true);
-    when(context.getNodeFilter(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(filter);
+    when(context.getNodeDistanceEvaluator(DriverExecutionProfile.DEFAULT_NAME))
+        .thenReturn(nodeDistanceEvaluator);
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1));
     policy = createAndInitPolicy();
     reset(distanceReporter);
@@ -65,7 +64,7 @@ public class BasicLoadBalancingPolicyEventsTest extends LoadBalancingPolicyTestB
     assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1);
     verify(distanceReporter, never()).setDistance(eq(node2), any(NodeDistance.class));
     // should have been called only once, during initialization, but not during onDown
-    verify(filter).test(node2);
+    verify(nodeDistanceEvaluator).evaluateDistance(node2, "dc1");
   }
 
   @Test
@@ -77,7 +76,7 @@ public class BasicLoadBalancingPolicyEventsTest extends LoadBalancingPolicyTestB
     assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1);
     verify(distanceReporter, never()).setDistance(eq(node2), any(NodeDistance.class));
     // should have been called only once, during initialization, but not during onRemove
-    verify(filter).test(node2);
+    verify(nodeDistanceEvaluator).evaluateDistance(node2, "dc1");
   }
 
   @Test
@@ -87,7 +86,7 @@ public class BasicLoadBalancingPolicyEventsTest extends LoadBalancingPolicyTestB
 
     // Then
     verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
-    verify(filter).test(node3);
+    verify(nodeDistanceEvaluator).evaluateDistance(node3, "dc1");
     // Not added to the live set yet, we're waiting for the pool to open
     assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1, node2);
   }
@@ -95,7 +94,7 @@ public class BasicLoadBalancingPolicyEventsTest extends LoadBalancingPolicyTestB
   @Test
   public void should_ignore_added_node_when_filtered() {
     // Given
-    when(filter.test(node3)).thenReturn(false);
+    when(nodeDistanceEvaluator.evaluateDistance(node3, "dc1")).thenReturn(NodeDistance.IGNORED);
 
     // When
     policy.onAdd(node3);
@@ -126,21 +125,21 @@ public class BasicLoadBalancingPolicyEventsTest extends LoadBalancingPolicyTestB
 
     // Then
     verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
-    verify(filter).test(node3);
+    verify(nodeDistanceEvaluator).evaluateDistance(node3, "dc1");
     assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1, node2, node3);
   }
 
   @Test
   public void should_ignore_up_node_when_filtered() {
     // Given
-    when(filter.test(node3)).thenReturn(false);
+    when(nodeDistanceEvaluator.evaluateDistance(node3, "dc1")).thenReturn(NodeDistance.IGNORED);
 
     // When
     policy.onUp(node3);
 
     // Then
     verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
-    verify(filter).test(node3);
+    verify(nodeDistanceEvaluator).evaluateDistance(node3, "dc1");
     assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1, node2);
   }
 

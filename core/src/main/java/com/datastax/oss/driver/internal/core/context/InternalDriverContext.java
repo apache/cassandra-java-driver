@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.context;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
@@ -49,7 +49,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 /** Extends the driver context with additional components that are not exposed by our public API. */
 public interface InternalDriverContext extends DriverContext {
@@ -138,12 +137,13 @@ public interface InternalDriverContext extends DriverContext {
   String getLocalDatacenter(@NonNull String profileName);
 
   /**
-   * This is the filter from {@link SessionBuilder#withNodeFilter(String, Predicate)}. If the filter
-   * for this profile was specified through the configuration instead, this method will return
-   * {@code null}.
+   * This is the node distance evaluator from {@link
+   * SessionBuilder#withNodeDistanceEvaluator(String, NodeDistanceEvaluator)}. If the evaluator for
+   * this profile was specified through the configuration instead, this method will return {@code
+   * null}.
    */
   @Nullable
-  Predicate<Node> getNodeFilter(@NonNull String profileName);
+  NodeDistanceEvaluator getNodeDistanceEvaluator(@NonNull String profileName);
 
   /**
    * The {@link ClassLoader} to use to reflectively load class names defined in configuration. If

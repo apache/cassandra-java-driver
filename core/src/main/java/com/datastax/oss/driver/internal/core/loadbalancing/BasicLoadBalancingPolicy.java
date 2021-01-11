@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
@@ -30,7 +31,7 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.loadbalancing.helper.DefaultNodeFilterHelper;
+import com.datastax.oss.driver.internal.core.loadbalancing.helper.DefaultNodeDistanceEvaluatorHelper;
 import com.datastax.oss.driver.internal.core.loadbalancing.helper.OptionalLocalDcHelper;
 import com.datastax.oss.driver.internal.core.loadbalancing.nodeset.DcAgnosticNodeSet;
 import com.datastax.oss.driver.internal.core.loadbalancing.nodeset.MultiDcNodeSet;
@@ -53,7 +54,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntUnaryOperator;
-import java.util.function.Predicate;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,7 +111,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
 
   // private because they should be set in init() and never be modified after
   private volatile DistanceReporter distanceReporter;
-  private volatile Predicate<Node> filter;
+  private volatile NodeDistanceEvaluator nodeDistanceEvaluator;
   private volatile String localDc;
   private volatile NodeSet liveNodes;
 
@@ -155,7 +155,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
     this.distanceReporter = distanceReporter;
     localDc = discoverLocalDc(nodes).orElse(null);
-    filter = createNodeFilter(localDc, nodes);
+    nodeDistanceEvaluator = createNodeDistanceEvaluator(localDc, nodes);
     liveNodes =
         localDc == null
             ? new DcAgnosticNodeSet()
@@ -200,7 +200,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   }
 
   /**
-   * Creates a new node filter to use with this policy.
+   * Creates a new node distance evaluator to use with this policy.
    *
    * <p>This method is called only once, during {@linkplain LoadBalancingPolicy#init(Map,
    * LoadBalancingPolicy.DistanceReporter) initialization}, and only after local datacenter
@@ -209,14 +209,14 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
    * @param localDc The local datacenter that was just discovered, or null if none found.
    * @param nodes All the nodes that were known to exist in the cluster (regardless of their state)
    *     when the load balancing policy was initialized. This argument is provided in case
-   *     implementors need to inspect the cluster topology to create the node filter.
-   * @return the node filter to use.
+   *     implementors need to inspect the cluster topology to create the evaluator.
+   * @return the distance evaluator to use.
    */
   @NonNull
-  protected Predicate<Node> createNodeFilter(
+  protected NodeDistanceEvaluator createNodeDistanceEvaluator(
       @Nullable String localDc, @NonNull Map<UUID, Node> nodes) {
-    return new DefaultNodeFilterHelper(context, profile, logPrefix)
-        .createNodeFilter(localDc, nodes);
+    return new DefaultNodeDistanceEvaluatorHelper(context, profile, logPrefix)
+        .createNodeDistanceEvaluator(localDc, nodes);
   }
 
   @NonNull
@@ -399,20 +399,21 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
    * a node {@linkplain #onAdd(Node) is added}, and when a node {@linkplain #onUp(Node) is back UP}.
    */
   protected NodeDistance computeNodeDistance(@NonNull Node node) {
-    // We interrogate the filter every time since it could be dynamic
+    // We interrogate the custom evaluator every time since it could be dynamic
     // and change its verdict between two invocations of this method.
-    if (!filter.test(node)) {
-      return NodeDistance.IGNORED;
+    NodeDistance distance = nodeDistanceEvaluator.evaluateDistance(node, localDc);
+    if (distance != null) {
+      return distance;
     }
-    // no local DC is defined, all nodes accepted by the filter are LOCAL.
+    // no local DC defined: all nodes are considered LOCAL.
     if (localDc == null) {
       return NodeDistance.LOCAL;
     }
-    // the node is LOCAL if its datacenter is the local datacenter.
+    // otherwise, the node is LOCAL if its datacenter is the local datacenter.
     if (Objects.equals(node.getDatacenter(), localDc)) {
       return NodeDistance.LOCAL;
     }
-    // otherwise the node will be either REMOTE or IGNORED, depending
+    // otherwise, the node will be either REMOTE or IGNORED, depending
     // on how many remote nodes we accept per DC.
     if (maxNodesPerRemoteDc > 0) {
       Object[] remoteNodes = liveNodes.dc(node.getDatacenter()).toArray();

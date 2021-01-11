@@ -215,11 +215,11 @@ public class DcInferringLoadBalancingPolicyInitTest extends LoadBalancingPolicyT
   }
 
   @Test
-  public void should_ignore_nodes_excluded_by_filter() {
+  public void should_ignore_nodes_excluded_by_distance_reporter() {
     // Given
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2));
-    when(context.getNodeFilter(DriverExecutionProfile.DEFAULT_NAME))
-        .thenReturn(node -> node.equals(node1));
+    when(context.getNodeDistanceEvaluator(DriverExecutionProfile.DEFAULT_NAME))
+        .thenReturn((node, dc) -> node.equals(node1) ? NodeDistance.IGNORED : null);
 
     BasicLoadBalancingPolicy policy = createPolicy();
 
@@ -230,10 +230,10 @@ public class DcInferringLoadBalancingPolicyInitTest extends LoadBalancingPolicyT
         distanceReporter);
 
     // Then
-    verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
-    verify(distanceReporter).setDistance(node2, NodeDistance.IGNORED);
-    verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
-    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1);
+    verify(distanceReporter).setDistance(node1, NodeDistance.IGNORED);
+    verify(distanceReporter).setDistance(node2, NodeDistance.LOCAL);
+    verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node2, node3);
   }
 
   @NonNull
