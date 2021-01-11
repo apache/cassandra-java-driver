@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.loadbalancing.nodeset;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
@@ -27,7 +26,7 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class DcAgnosticNodeSet implements NodeSet {
 
-  @VisibleForTesting final Set<Node> nodes = new CopyOnWriteArraySet<>();
+  private final Set<Node> nodes = new CopyOnWriteArraySet<>();
 
   @Override
   public boolean add(@NonNull Node node) {

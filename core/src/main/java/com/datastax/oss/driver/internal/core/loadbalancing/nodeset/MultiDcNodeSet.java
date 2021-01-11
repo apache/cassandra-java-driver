@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.loadbalancing.nodeset;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
@@ -32,7 +31,7 @@ public class MultiDcNodeSet implements NodeSet {
 
   private static final String UNKNOWN_DC = "";
 
-  @VisibleForTesting final Map<String, Set<Node>> nodes = new ConcurrentHashMap<>();
+  private final Map<String, Set<Node>> nodes = new ConcurrentHashMap<>();
 
   @Override
   public boolean add(@NonNull Node node) {

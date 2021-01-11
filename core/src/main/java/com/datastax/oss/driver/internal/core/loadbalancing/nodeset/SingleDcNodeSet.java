@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.loadbalancing.nodeset;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -29,7 +28,7 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class SingleDcNodeSet implements NodeSet {
 
-  @VisibleForTesting final Set<Node> nodes = new CopyOnWriteArraySet<>();
+  private final Set<Node> nodes = new CopyOnWriteArraySet<>();
 
   private final String dc;
   private final Set<String> dcs;
