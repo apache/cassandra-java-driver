@@ -4,6 +4,8 @@
 
 ### 4.10.0 (in progress)
 
+- [improvement] JAVA-2907: Switch Tinkerpop to an optional dependency
+- [improvement] JAVA-2904: Upgrade Jackson to 2.12.0 and Tinkerpop to 3.4.9
 - [bug] JAVA-2911: Prevent control connection from scheduling too many reconnections
 - [bug] JAVA-2902: Consider computed values when validating constructors for immutable entities
 - [new feature] JAVA-2899: Re-introduce cross-DC failover in driver 4

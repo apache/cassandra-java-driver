@@ -5440,6 +5440,51 @@
         "new": "field com.fasterxml.jackson.databind.type.TypeFactory.serialVersionUID",
         "serialVersionUID": "1",
         "justification": "JAVA-2904: Jackson upgraded to 2.12.0. Caused by the exposure of ObjectMapper as a parameter in ExtraTypeCodecs.json()"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class org.apache.tinkerpop.gremlin.process.remote.RemoteConnection",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class org.apache.tinkerpop.gremlin.process.traversal.P",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class org.apache.tinkerpop.gremlin.process.traversal.Path",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class org.apache.tinkerpop.gremlin.structure.Edge",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class org.apache.tinkerpop.gremlin.structure.Property",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class org.apache.tinkerpop.gremlin.structure.Vertex",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class org.apache.tinkerpop.gremlin.structure.VertexProperty",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
       }
     ]
   }
