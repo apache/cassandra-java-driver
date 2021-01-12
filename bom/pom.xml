@@ -71,7 +71,7 @@
       <dependency>
         <groupId>com.datastax.oss</groupId>
         <artifactId>native-protocol</artifactId>
-        <version>1.4.11</version>
+        <version>1.4.12</version>
       </dependency>
       <dependency>
         <groupId>com.datastax.oss</groupId>
