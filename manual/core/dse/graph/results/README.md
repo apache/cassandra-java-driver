@@ -137,8 +137,8 @@ If a type doesn't have a corresponding `asXxx()` method, use the variant that ta
 UUID uuid = graphNode.as(UUID.class);
 ```
 
-[GraphNode]:           https://docs.datastax.com/en/drivers/java/4.9/com/datastax/dse/driver/api/core/graph/GraphNode.html
-[GraphResultSet]:      https://docs.datastax.com/en/drivers/java/4.9/com/datastax/dse/driver/api/core/graph/GraphResultSet.html
-[AsyncGraphResultSet]: https://docs.datastax.com/en/drivers/java/4.9/com/datastax/dse/driver/api/core/graph/AsyncGraphResultSet.html
+[GraphNode]:           https://docs.datastax.com/en/drivers/java/4.10/com/datastax/dse/driver/api/core/graph/GraphNode.html
+[GraphResultSet]:      https://docs.datastax.com/en/drivers/java/4.10/com/datastax/dse/driver/api/core/graph/GraphResultSet.html
+[AsyncGraphResultSet]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/dse/driver/api/core/graph/AsyncGraphResultSet.html
 
 [DSE data types]: https://docs.datastax.com/en/dse/6.0/dse-dev/datastax_enterprise/graph/reference/refDSEGraphDataTypes.html
