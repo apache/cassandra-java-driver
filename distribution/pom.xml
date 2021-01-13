@@ -140,6 +140,16 @@
                       <artifactId>snappy-java</artifactId>
                       <version>${snappy.version}</version>
                     </additionalDependency>
+                    <additionalDependency>
+                      <groupId>org.apache.tinkerpop</groupId>
+                      <artifactId>gremlin-core</artifactId>
+                      <version>${tinkerpop.version}</version>
+                    </additionalDependency>
+                    <additionalDependency>
+                      <groupId>org.apache.tinkerpop</groupId>
+                      <artifactId>tinkergraph-gremlin</artifactId>
+                      <version>${tinkerpop.version}</version>
+                    </additionalDependency>
                   </additionalDependencies>
                 </configuration>
               </execution>
