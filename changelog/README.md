@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.10.0 (in progress)
+### 4.10.0
 
 - [improvement] JAVA-2907: Switch Tinkerpop to an optional dependency
 - [improvement] JAVA-2904: Upgrade Jackson to 2.12.0 and Tinkerpop to 3.4.9

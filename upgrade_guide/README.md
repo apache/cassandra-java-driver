@@ -84,8 +84,8 @@ empty replicas and token ranges for them. If you need the driver to keep computi
 token map for these keyspaces, you now must modify the following configuration option:
 `datastax-java-driver.advanced.metadata.schema.refreshed-keyspaces`.
 
-[Metadata.getKeyspaces()]: https://docs.datastax.com/en/drivers/java/latest/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
-[TokenMap]: https://docs.datastax.com/en/drivers/java/latest/com/datastax/oss/driver/api/core/metadata/TokenMap.html
+[Metadata.getKeyspaces()]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
+[TokenMap]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/metadata/TokenMap.html
 
 #### DSE Graph dependencies are now optional
 
@@ -213,7 +213,7 @@ you can obtain in most web environments by calling `Thread.getContextClassLoader
  
 See the javadocs of [SessionBuilder.withClassLoader] for more information.
 
-[SessionBuilder.withClassLoader]: https://docs.datastax.com/en/drivers/java/4.9/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
+[SessionBuilder.withClassLoader]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
 
 ### 4.1.0
 
