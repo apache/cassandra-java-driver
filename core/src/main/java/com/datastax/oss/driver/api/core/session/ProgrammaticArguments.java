@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
+import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -61,6 +62,7 @@ public class ProgrammaticArguments {
   private final String startupApplicationVersion;
   private final MutableCodecRegistry codecRegistry;
   private final Object metricRegistry;
+  private final NettyOptions nettyOptions;
 
   private ProgrammaticArguments(
       @NonNull List<TypeCodec<?>> typeCodecs,
@@ -77,7 +79,8 @@ public class ProgrammaticArguments {
       @Nullable String startupApplicationName,
       @Nullable String startupApplicationVersion,
       @Nullable MutableCodecRegistry codecRegistry,
-      @Nullable Object metricRegistry) {
+      @Nullable Object metricRegistry,
+      @Nullable NettyOptions nettyOptions) {
 
     this.typeCodecs = typeCodecs;
     this.nodeStateListener = nodeStateListener;
@@ -94,6 +97,7 @@ public class ProgrammaticArguments {
     this.startupApplicationVersion = startupApplicationVersion;
     this.codecRegistry = codecRegistry;
     this.metricRegistry = metricRegistry;
+    this.nettyOptions = nettyOptions;
   }
 
   @NonNull
@@ -171,6 +175,11 @@ public class ProgrammaticArguments {
     return metricRegistry;
   }
 
+  @Nullable
+  public NettyOptions getNettyOptions() {
+    return nettyOptions;
+  }
+
   public static class Builder {
 
     private final ImmutableList.Builder<TypeCodec<?>> typeCodecsBuilder = ImmutableList.builder();
@@ -189,6 +198,7 @@ public class ProgrammaticArguments {
     private String startupApplicationVersion;
     private MutableCodecRegistry codecRegistry;
     private Object metricRegistry;
+    private NettyOptions nettyOptions;
 
     @NonNull
     public Builder addTypeCodecs(@NonNull TypeCodec<?>... typeCodecs) {
@@ -305,6 +315,12 @@ public class ProgrammaticArguments {
     }
 
     @NonNull
+    public Builder withNettyOptions(@Nullable NettyOptions nettyOptions) {
+      this.nettyOptions = nettyOptions;
+      return this;
+    }
+
+    @NonNull
     public ProgrammaticArguments build() {
       return new ProgrammaticArguments(
           typeCodecsBuilder.build(),
@@ -321,7 +337,8 @@ public class ProgrammaticArguments {
           startupApplicationName,
           startupApplicationVersion,
           codecRegistry,
-          metricRegistry);
+          metricRegistry,
+          nettyOptions);
     }
   }
 }

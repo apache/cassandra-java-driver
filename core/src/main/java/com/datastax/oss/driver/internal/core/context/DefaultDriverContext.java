@@ -113,6 +113,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -179,8 +180,7 @@ public class DefaultDriverContext implements InternalDriverContext {
           "consistencyLevelRegistry", this::buildConsistencyLevelRegistry, cycleDetector);
   private final LazyReference<WriteTypeRegistry> writeTypeRegistryRef =
       new LazyReference<>("writeTypeRegistry", this::buildWriteTypeRegistry, cycleDetector);
-  private final LazyReference<NettyOptions> nettyOptionsRef =
-      new LazyReference<>("nettyOptions", this::buildNettyOptions, cycleDetector);
+  private final LazyReference<NettyOptions> nettyOptionsRef;
   private final LazyReference<WriteCoalescer> writeCoalescerRef =
       new LazyReference<>("writeCoalescer", this::buildWriteCoalescer, cycleDetector);
   private final LazyReference<Optional<SslHandlerFactory>> sslHandlerFactoryRef =
@@ -299,6 +299,14 @@ public class DefaultDriverContext implements InternalDriverContext {
     }
     this.initStackTrace = stackTrace;
     this.metricRegistry = programmaticArguments.getMetricRegistry();
+
+    Supplier<NettyOptions> optionsSupplier;
+    if (programmaticArguments.getNettyOptions() != null) {
+      optionsSupplier = programmaticArguments::getNettyOptions;
+    } else {
+      optionsSupplier = this::buildNettyOptions;
+    }
+    this.nettyOptionsRef = new LazyReference<>("nettyOptions", optionsSupplier, cycleDetector);
   }
 
   /**

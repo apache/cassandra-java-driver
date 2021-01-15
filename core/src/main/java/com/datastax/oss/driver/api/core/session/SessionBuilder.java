@@ -42,6 +42,7 @@ import com.datastax.oss.driver.internal.core.config.cloud.CloudConfigFactory;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
@@ -670,6 +671,13 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   @NonNull
   public SelfT withMetricRegistry(@Nullable Object metricRegistry) {
     this.programmaticArgumentsBuilder.withMetricRegistry(metricRegistry);
+    return self;
+  }
+
+  /** The custom netty options. */
+  @NonNull
+  public SelfT withNettyOptions(@Nullable NettyOptions nettyOptions) {
+    this.programmaticArgumentsBuilder.withNettyOptions(nettyOptions);
     return self;
   }
 
