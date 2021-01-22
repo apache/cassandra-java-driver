@@ -35,7 +35,7 @@ The following methods were deprecated and will be removed in the next major vers
 
 Driver 4.10.0 also re-introduced a retry policy whose behavior is equivalent to the
 `DowngradingConsistencyRetryPolicy` from driver 3.x. See this
-[FAQ entry](https://docs.datastax.com/en/developer/java-driver/latest/faq/#where-is-downgrading-consistency-retry-policy)
+[FAQ entry](https://docs.datastax.com/en/developer/java-driver/4.10/faq/#where-is-downgrading-consistency-retry-policy)
 for more information.
 
 [`RetryVerdict`]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryVerdict.html
@@ -89,16 +89,16 @@ token map for these keyspaces, you now must modify the following configuration o
 
 #### DSE Graph dependencies are now optional
 
-Until driver 4.9.0, the driver declared a mandatory dependency to Apache Tinkerpop, a library
+Until driver 4.9.0, the driver declared a mandatory dependency to Apache TinkerPop, a library
 required only when connecting to DSE Graph. The vast majority of Apache Cassandra users did not need
 that library, but were paying the price of having that heavy-weight library in their application's
 classpath. 
 
-_Starting with driver 4.10.0, Tinkerpop is now considered an optional dependency_. 
+_Starting with driver 4.10.0, TinkerPop is now considered an optional dependency_. 
 
 Regular users of Apache Cassandra that do not use DSE Graph will not notice any disruption.
 
-DSE Graph users, however, will now have to explicitly declare a dependency to Apache Tinkerpop. This
+DSE Graph users, however, will now have to explicitly declare a dependency to Apache TinkerPop. This
 can be achieved with Maven by adding the following dependencies to the `<dependencies>` section of
 your POM file:
 
@@ -114,6 +114,9 @@ your POM file:
   <version>${tinkerpop.version}</version>
 </dependency>
 ```
+
+See the [integration](../manual/core/integration/#tinker-pop) section in the manual for more details
+as well as a driver vs. TinkerPop version compatibility matrix.
 
 ### 4.5.x - 4.6.0
 
@@ -135,7 +138,7 @@ Apart from that, the only visible change is that DSE-specific features are now e
 
 * new execution methods: `CqlSession.executeGraph`, `CqlSession.executeContinuously*`. They all
   have default implementations so this doesn't break binary compatibility. You can just ignore them.
-* new driver dependencies: Tinkerpop, ESRI, Reactive Streams. If you want to keep your classpath
+* new driver dependencies: TinkerPop, ESRI, Reactive Streams. If you want to keep your classpath
   lean, you can exclude some dependencies when you don't use the corresponding DSE features; see the 
   [Integration>Driver dependencies](../manual/core/integration/#driver-dependencies) section.
 

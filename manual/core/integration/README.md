@@ -440,7 +440,8 @@ If all of these metrics are disabled, you can remove the dependency:
 * when Insights monitoring is enabled;
 * when [Json codecs](../custom_codecs) are being used. 
  
-If you don't use either of those features, you can safely exclude the dependency:
+Jackson is declared as a required dependency, but the driver can operate normally without it. If you
+don't use any of the above features, you can safely exclude the dependency:
 
 ```xml
 <dependency>
@@ -461,7 +462,8 @@ If you don't use either of those features, you can safely exclude the dependency
 Our [geospatial types](../dse/geotypes/) implementation is based on the [Esri Geometry
 API](https://github.com/Esri/geometry-api-java).
 
-If you don't use geospatial types anywhere in your application, you can exclude the dependency:
+Esri is declared as a required dependency, but the driver can operate normally without it. If you
+don't use geospatial types anywhere in your application, you can exclude the dependency:
 
 ```xml
 <dependency>
@@ -471,7 +473,7 @@ If you don't use geospatial types anywhere in your application, you can exclude 
   <exclusions>
    <exclusion>
      <groupId>com.esri.geometry</groupId>
-     <artifactId>esri-geometry-api</artifactId>
+     <artifactId>*</artifactId>
    </exclusion>
   </exclusions>
 </dependency>
@@ -479,9 +481,13 @@ If you don't use geospatial types anywhere in your application, you can exclude 
 
 #### TinkerPop
 
-[Apache TinkerPop™](http://tinkerpop.apache.org/) is used in our [graph API](../dse/graph/).
+[Apache TinkerPop™](http://tinkerpop.apache.org/) is used in our [graph API](../dse/graph/),
+introduced in the OSS driver in version 4.4.0 (it was previously a feature only available in the
+now-retired DSE driver).
 
-If you don't use DSE graph at all, you can exclude the dependencies:
+For driver versions ranging from 4.4.0 to 4.9.0 inclusive, TinkerPop is declared as a required
+dependency, but the driver can operate normally without it. If you don't use the graph API at all,
+you can exclude the TinkerPop dependencies:
 
 ```xml
 <dependency>
@@ -497,17 +503,47 @@ If you don't use DSE graph at all, you can exclude the dependencies:
 </dependency>
 ```
 
+Starting with driver 4.10 however, TinkerPop switched to an optional dependency. Excluding TinkerPop
+explicitly is not required anymore if you don't use it. _If you do use the graph API though, you now
+need to explicitly include the dependencies below in your application_:
+
+```xml
+<dependency>
+  <groupId>org.apache.tinkerpop</groupId>
+  <artifactId>gremlin-core</artifactId>
+  <version>${tinkerpop.version}</version>
+</dependency>
+<dependency>
+  <groupId>org.apache.tinkerpop</groupId>
+  <artifactId>tinkergraph-gremlin</artifactId>
+  <version>${tinkerpop.version}</version>
+</dependency>
+```
+
 If you do use graph, it is important to keep the precise TinkerPop version that the driver depends
 on: unlike the driver, TinkerPop does not follow semantic versioning, so even a patch version change
-(e.g. 3.3.0 vs 3.3.3) could introduce incompatibilities. So do not declare an explicit dependency in
-your application, let the driver pull it transitively.
+(e.g. 3.3.0 vs 3.3.3) could introduce incompatibilities.
+
+Here are the recommended TinkerPop versions for each driver version:
+
+<table>
+<tr><th>Driver version</th><th>TinkerPop version</th></tr>
+<tr><td>4.10.0</td><td>3.4.9</td></tr>
+<tr><td>4.9.0</td><td>3.4.8</td></tr>
+<tr><td>4.8.0</td><td>3.4.5</td></tr>
+<tr><td>4.7.0</td><td>3.4.5</td></tr>
+<tr><td>4.6.0</td><td>3.4.5</td></tr>
+<tr><td>4.5.0</td><td>3.4.5</td></tr>
+<tr><td>4.4.0</td><td>3.3.3</td></tr>
+</table>
 
 #### Reactive Streams
 
 [Reactive Streams](https://www.reactive-streams.org/) types are referenced in our [reactive
 API](../reactive/).
 
-If you never call any of the `executeReactive` methods, you can exclude the dependency:
+The Reactive Streams API is declared as a required dependency, but the driver can operate normally
+without it. If you never call any of the `executeReactive` methods, you can exclude the dependency:
 
 ```xml
 <dependency>

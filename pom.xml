@@ -50,6 +50,10 @@
     <metrics.version>4.1.16</metrics.version>
     <netty.version>4.1.51.Final</netty.version>
     <esri.version>1.2.1</esri.version>
+    <!--
+    When upgrading TinkerPop please upgrade the version matrix in
+    manual/core/integration/README.md
+    -->
     <tinkerpop.version>3.4.9</tinkerpop.version>
     <slf4j.version>1.7.26</slf4j.version>
     <reactive-streams.version>1.0.3</reactive-streams.version>
