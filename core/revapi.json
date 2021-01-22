@@ -5485,6 +5485,60 @@
         "code": "java.missing.newClass",
         "new": "missing-class org.apache.tinkerpop.gremlin.structure.VertexProperty",
         "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class org.apache.tinkerpop.gremlin.process.remote.RemoteConnection",
+        "new": "missing-class org.apache.tinkerpop.gremlin.process.remote.RemoteConnection",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class org.apache.tinkerpop.gremlin.process.traversal.P",
+        "new": "missing-class org.apache.tinkerpop.gremlin.process.traversal.P",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class org.apache.tinkerpop.gremlin.process.traversal.Path",
+        "new": "missing-class org.apache.tinkerpop.gremlin.process.traversal.Path",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal",
+        "new": "missing-class org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource",
+        "new": "missing-class org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class org.apache.tinkerpop.gremlin.structure.Edge",
+        "new": "missing-class org.apache.tinkerpop.gremlin.structure.Edge",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class org.apache.tinkerpop.gremlin.structure.Property",
+        "new": "missing-class org.apache.tinkerpop.gremlin.structure.Property",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class org.apache.tinkerpop.gremlin.structure.Vertex",
+        "new": "missing-class org.apache.tinkerpop.gremlin.structure.Vertex",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class org.apache.tinkerpop.gremlin.structure.VertexProperty",
+        "new": "missing-class org.apache.tinkerpop.gremlin.structure.VertexProperty",
+        "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
       }
     ]
   }
