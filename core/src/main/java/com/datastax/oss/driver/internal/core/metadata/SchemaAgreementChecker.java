@@ -105,8 +105,7 @@ class SchemaAgreementChecker {
     } else {
       CompletionStage<AdminResult> localQuery =
           query("SELECT schema_version FROM system.local WHERE key='local'");
-      CompletionStage<AdminResult> peersQuery =
-          query("SELECT host_id, schema_version FROM system.peers");
+      CompletionStage<AdminResult> peersQuery = query("SELECT * FROM system.peers");
 
       localQuery
           .thenCombine(peersQuery, this::extractSchemaVersions)
@@ -142,30 +141,11 @@ class SchemaAgreementChecker {
 
     Map<UUID, Node> nodes = context.getMetadataManager().getMetadata().getNodes();
     for (AdminRow peerRow : peersResult) {
-      UUID hostId = peerRow.getUuid("host_id");
-      if (hostId == null) {
-        LOG.warn(
-            "[{}] Missing host_id in system.peers row, excluding from schema agreement check",
-            logPrefix);
+      if (!isPeerValid(peerRow, nodes)) {
         continue;
       }
+
       UUID schemaVersion = peerRow.getUuid("schema_version");
-      if (schemaVersion == null) {
-        LOG.warn(
-            "[{}] Missing schema_version in system.peers row for {}, "
-                + "excluding from schema agreement check",
-            logPrefix,
-            hostId);
-        continue;
-      }
-      Node node = nodes.get(hostId);
-      if (node == null) {
-        LOG.warn("[{}] Unknown peer {}, excluding from schema agreement check", logPrefix, hostId);
-        continue;
-      } else if (node.getState() != NodeState.UP) {
-        LOG.debug("[{}] Peer {} is down, excluding from schema agreement check", logPrefix, hostId);
-        continue;
-      }
       schemaVersions.add(schemaVersion);
     }
     return schemaVersions.build();
@@ -206,5 +186,19 @@ class SchemaAgreementChecker {
     return AdminRequestHandler.query(
             channel, queryString, queryTimeout, INFINITE_PAGE_SIZE, logPrefix)
         .start();
+  }
+
+  private boolean isPeerValid(AdminRow peerRow, Map<UUID, Node> nodes) {
+    Node node = !peerRow.isNull("host_id") ? nodes.get(peerRow.getUuid("host_id")) : null;
+
+    if (!PeerRowValidator.isValid(peerRow) || node == null || node.getState() != NodeState.UP) {
+      LOG.warn(
+          "[{}] Found invalid peer: {}. " + " This will be excluded in the schema agreement check.",
+          logPrefix,
+          peerRow.getInetAddress("peer"));
+      return false;
+    }
+
+    return true;
   }
 }
