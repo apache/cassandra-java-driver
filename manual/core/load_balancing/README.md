@@ -251,7 +251,7 @@ possibly scaling up its bandwidth to cope with the network traffic spike. This i
 solution for the cross-datacenter failover issue in general, but we acknowledge that it also
 requires a purpose-built infrastructure. To help you explore this option, read our [white paper].
 
-[application-level failover example]: https://github.com/datastax/java-driver/blob/4.x/examples/src/main/java/com/datastax/oss/driver/examples/retry/CrossDatacenterFailover.java
+[application-level failover example]: https://github.com/datastax/java-driver/blob/4.x/examples/src/main/java/com/datastax/oss/driver/examples/failover/CrossDatacenterFailover.java
 [white paper]: https://www.datastax.com/sites/default/files/content/whitepaper/files/2019-09/Designing-Fault-Tolerant-Applications-DataStax.pdf
 
 #### Token-aware
