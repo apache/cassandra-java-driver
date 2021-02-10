@@ -26,7 +26,7 @@ public enum ProtocolVersion {
   V2("2.0.0", 2, V1),
   V3("2.1.0", 3, V2),
   V4("2.2.0", 4, V3),
-  V5("3.10.0", 5, V4),
+  V5("4.0.0", 5, V4),
   V6("4.0.0", 6, V5);
 
   /** The most recent protocol version supported by the driver. */
