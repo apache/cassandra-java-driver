@@ -5,6 +5,10 @@
   3.x versions get published.
 -->
 
+### 3.11.0 (in progress)
+
+- [improvement] JAVA-2705: Remove protocol v5 beta status, add v6-beta.
+
 ## 3.10.2
 
 - [bug] JAVA-2860: Avoid NPE if channel initialization crashes.
