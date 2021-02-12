@@ -17,23 +17,19 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class PeerRowValidator {
 
-  /**
-   * Returns {@code true} if the given peer row is valid, and {@code false} otherwise.
-   *
-   * <p>This method must at least ensure that the peer row contains enough information to extract
-   * the node's broadcast RPC address and host ID; otherwise the driver may not work properly.
-   */
-  static boolean isValid(AdminRow peerRow) {
+  /** Returns {@code true} if the given peer row is valid, and {@code false} otherwise. */
+  public static boolean isValid(@NonNull AdminRow peerRow) {
 
     boolean hasPeersRpcAddress = !peerRow.isNull("rpc_address");
     boolean hasPeersV2RpcAddress =
         !peerRow.isNull("native_address") && !peerRow.isNull("native_port");
-    boolean hasRpcAddress = hasPeersV2RpcAddress || hasPeersRpcAddress;
+    boolean hasRpcAddress = hasPeersRpcAddress || hasPeersV2RpcAddress;
 
     return hasRpcAddress
         && !peerRow.isNull("host_id")

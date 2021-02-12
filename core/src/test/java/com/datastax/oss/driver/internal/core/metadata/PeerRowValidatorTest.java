@@ -81,9 +81,9 @@ public class PeerRowValidatorTest {
   public void should_succeed_for_valid_peer_v2() {
     AdminRow peerRow = mock(AdminRow.class);
     when(peerRow.isNull("host_id")).thenReturn(false);
+    when(peerRow.isNull("rpc_address")).thenReturn(true);
     when(peerRow.isNull("native_address")).thenReturn(false);
     when(peerRow.isNull("native_port")).thenReturn(false);
-    when(peerRow.isNull("rpc_address")).thenReturn(true);
     when(peerRow.isNull("data_center")).thenReturn(false);
     when(peerRow.isNull("rack")).thenReturn(false);
     when(peerRow.isNull("tokens")).thenReturn(false);

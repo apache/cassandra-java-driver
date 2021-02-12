@@ -2,6 +2,10 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.11.0 (in progress)
+
+- [bug] JAVA-2918: Exclude invalid peers from schema agreement checks
+
 ### 4.10.0
 
 - [improvement] JAVA-2907: Switch Tinkerpop to an optional dependency

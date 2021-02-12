@@ -32,6 +32,7 @@ import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -141,12 +142,10 @@ class SchemaAgreementChecker {
 
     Map<UUID, Node> nodes = context.getMetadataManager().getMetadata().getNodes();
     for (AdminRow peerRow : peersResult) {
-      if (!isPeerValid(peerRow, nodes)) {
-        continue;
+      if (isPeerValid(peerRow, nodes)) {
+        UUID schemaVersion = Objects.requireNonNull(peerRow.getUuid("schema_version"));
+        schemaVersions.add(schemaVersion);
       }
-
-      UUID schemaVersion = peerRow.getUuid("schema_version");
-      schemaVersions.add(schemaVersion);
     }
     return schemaVersions.build();
   }
@@ -188,17 +187,24 @@ class SchemaAgreementChecker {
         .start();
   }
 
-  private boolean isPeerValid(AdminRow peerRow, Map<UUID, Node> nodes) {
-    Node node = !peerRow.isNull("host_id") ? nodes.get(peerRow.getUuid("host_id")) : null;
-
-    if (!PeerRowValidator.isValid(peerRow) || node == null || node.getState() != NodeState.UP) {
+  protected boolean isPeerValid(AdminRow peerRow, Map<UUID, Node> nodes) {
+    if (PeerRowValidator.isValid(peerRow)) {
+      UUID hostId = peerRow.getUuid("host_id");
+      Node node = nodes.get(hostId);
+      if (node == null) {
+        LOG.warn("[{}] Unknown peer {}, excluding from schema agreement check", logPrefix, hostId);
+        return false;
+      } else if (node.getState() != NodeState.UP) {
+        LOG.debug("[{}] Peer {} is down, excluding from schema agreement check", logPrefix, hostId);
+        return false;
+      }
+      return true;
+    } else {
       LOG.warn(
-          "[{}] Found invalid peer: {}. " + " This will be excluded in the schema agreement check.",
+          "[{}] Found invalid system.peers row for peer: {}, excluding from schema agreement check.",
           logPrefix,
           peerRow.getInetAddress("peer"));
       return false;
     }
-
-    return true;
   }
 }

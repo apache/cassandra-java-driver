@@ -539,15 +539,16 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
    * node's broadcast RPC address and host ID; otherwise the driver may not work properly.
    */
   protected boolean isPeerValid(AdminRow peerRow) {
-    boolean valid = PeerRowValidator.isValid(peerRow);
-    if (!valid) {
+    if (PeerRowValidator.isValid(peerRow)) {
+      return true;
+    } else {
       LOG.warn(
           "[{}] Found invalid row in {} for peer: {}. "
               + "This is likely a gossip or snitch issue, this node will be ignored.",
           logPrefix,
           getPeerTableName(),
           peerRow.getInetAddress("peer"));
+      return false;
     }
-    return valid;
   }
 }
