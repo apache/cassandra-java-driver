@@ -28,6 +28,13 @@ public class TestNodeFactory {
     return node;
   }
 
+  public static DefaultNode newNode(int lastIpByte, UUID hostId, InternalDriverContext context) {
+    DefaultNode node = newContactPoint(lastIpByte, context);
+    node.hostId = hostId;
+    node.broadcastRpcAddress = ((InetSocketAddress) node.getEndPoint().resolve());
+    return node;
+  }
+
   public static DefaultNode newContactPoint(int lastIpByte, InternalDriverContext context) {
     DefaultEndPoint endPoint = newEndPoint(lastIpByte);
     return new DefaultNode(endPoint, context);
