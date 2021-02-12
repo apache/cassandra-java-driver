@@ -33,7 +33,7 @@ public class SegmentToFrameDecoderTest {
   private static final ByteBuf SMALL_BODY_1 = buffer(128);
   private static final Header SMALL_HEADER_1 =
       new Header(
-          ProtocolVersion.V6,
+          ProtocolVersion.V5,
           EnumSet.noneOf(Flag.class),
           2,
           READY.opcode,
@@ -42,7 +42,7 @@ public class SegmentToFrameDecoderTest {
   private static final ByteBuf SMALL_BODY_2 = buffer(1024);
   private static final Header SMALL_HEADER_2 =
       new Header(
-          ProtocolVersion.V6,
+          ProtocolVersion.V5,
           EnumSet.noneOf(Flag.class),
           7,
           RESULT.opcode,
@@ -51,7 +51,7 @@ public class SegmentToFrameDecoderTest {
   private static final ByteBuf LARGE_BODY = buffer(256 * 1024);
   private static final Header LARGE_HEADER =
       new Header(
-          ProtocolVersion.V6,
+          ProtocolVersion.V5,
           EnumSet.noneOf(Flag.class),
           12,
           RESULT.opcode,
