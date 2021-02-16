@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.metadata.schema.parsing;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
@@ -103,7 +109,7 @@ public class RawColumn implements Comparable<RawColumn> {
     this.dataType = row.contains("validator") ? row.getString("validator") : row.getString("type");
     this.reversed =
         row.contains("clustering_order")
-            ? "desc".equals(row.getString("clustering_order"))
+            ? "desc".equalsIgnoreCase(row.getString("clustering_order"))
             : DataTypeClassNameParser.isReversed(dataType);
     this.indexName = row.getString("index_name");
     this.indexType = row.getString("index_type");
