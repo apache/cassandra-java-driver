@@ -5,6 +5,7 @@
 ### 4.11.0 (in progress)
 
 - [improvement] JAVA-2704: Remove protocol v5 beta status, add v6-beta
+- [bug] JAVA-2918: Exclude invalid peers from schema agreement checks
 
 ### 4.10.0
 
