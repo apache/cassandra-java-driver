@@ -47,6 +47,7 @@ class StreamIdGenerator {
       case V3:
       case V4:
       case V5:
+      case V6:
         return 2;
       default:
         throw version.unsupported();

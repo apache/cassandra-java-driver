@@ -394,6 +394,7 @@ class Connection {
               case V3:
               case V4:
               case V5:
+              case V6:
                 return authenticateV2(authenticator, protocolVersion, initExecutor);
               default:
                 throw defunct(protocolVersion.unsupported());
@@ -1659,6 +1660,8 @@ class Connection {
         new Message.ProtocolEncoder(ProtocolVersion.V4);
     private static final Message.ProtocolEncoder messageEncoderV5 =
         new Message.ProtocolEncoder(ProtocolVersion.V5);
+    private static final Message.ProtocolEncoder messageEncoderV6 =
+        new Message.ProtocolEncoder(ProtocolVersion.V6);
     private static final Frame.Encoder frameEncoder = new Frame.Encoder();
 
     private final ProtocolVersion protocolVersion;
@@ -1756,6 +1759,8 @@ class Connection {
           return messageEncoderV4;
         case V5:
           return messageEncoderV5;
+        case V6:
+          return messageEncoderV6;
         default:
           throw new DriverInternalError("Unsupported protocol version " + protocolVersion);
       }
@@ -1769,7 +1774,6 @@ class Connection {
    */
   void switchToV5Framing() {
     assert factory.protocolVersion.compareTo(ProtocolVersion.V5) >= 0;
-
     // We want to do this on the event loop, to make sure it doesn't race with incoming requests
     assert channel.eventLoop().inEventLoop();
 

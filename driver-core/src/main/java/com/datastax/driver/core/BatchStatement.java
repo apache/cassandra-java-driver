@@ -220,6 +220,7 @@ public class BatchStatement extends Statement {
         case V3:
         case V4:
         case V5:
+        case V6:
           size += CBUtil.sizeOfConsistencyLevel(getConsistencyLevel());
           size += QueryFlag.serializedSize(protocolVersion);
           // Serial CL and default timestamp also depend on session-level defaults (QueryOptions).

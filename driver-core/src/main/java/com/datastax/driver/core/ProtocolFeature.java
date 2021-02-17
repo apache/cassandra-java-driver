@@ -42,7 +42,7 @@ enum ProtocolFeature {
   boolean isSupportedBy(ProtocolVersion version) {
     switch (this) {
       case PREPARED_METADATA_CHANGES:
-        return version == ProtocolVersion.V5;
+        return version.compareTo(ProtocolVersion.V5) >= 0;
       case CUSTOM_PAYLOADS:
         return version.compareTo(ProtocolVersion.V4) >= 0;
       case CLIENT_TIMESTAMPS:
