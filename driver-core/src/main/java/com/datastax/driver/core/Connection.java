@@ -1773,7 +1773,6 @@ class Connection {
    * v5.
    */
   void switchToV5Framing() {
-    assert factory.protocolVersion.compareTo(ProtocolVersion.V5) >= 0;
     // We want to do this on the event loop, to make sure it doesn't race with incoming requests
     assert channel.eventLoop().inEventLoop();
 
