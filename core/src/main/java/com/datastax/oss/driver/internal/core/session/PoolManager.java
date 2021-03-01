@@ -82,8 +82,7 @@ public class PoolManager implements AsyncAutoCloseable {
   // (e.g. DefaultPreparedStatement) which are handled at the protocol level (e.g.
   // CqlPrepareAsyncProcessor). We keep the two separate to avoid introducing a dependency from the
   // session to a particular processor implementation.
-  private ConcurrentMap<ByteBuffer, RepreparePayload> repreparePayloads =
-      new MapMaker().weakValues().makeMap();
+  private ConcurrentMap<ByteBuffer, RepreparePayload> repreparePayloads = new MapMaker().makeMap();
 
   private final String logPrefix;
   private final EventExecutor adminExecutor;
