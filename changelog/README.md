@@ -5,9 +5,10 @@
   3.x versions get published.
 -->
 
-### 3.11.0 (in progress)
+## 3.11.0 (in progress)
 
 - [improvement] JAVA-2705: Remove protocol v5 beta status, add v6-beta.
+- [bug] JAVA-2922: Switch to modern framing format inside a channel handler.
 
 ## 3.10.2
 
