@@ -799,8 +799,10 @@ public class CCMBridge implements CCMAccess {
       return ProtocolVersion.V2;
     } else if (version.compareTo(VersionNumber.parse("2.2")) < 0) {
       return ProtocolVersion.V3;
-    } else {
+    } else if (version.compareTo(VersionNumber.parse("4.0")) < 0) {
       return ProtocolVersion.V4;
+    } else {
+      return ProtocolVersion.V5;
     }
   }
 
