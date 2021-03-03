@@ -228,8 +228,8 @@ class CloudConfigFactory {
         throw new IllegalStateException(
             "Invalid proxy metadata: missing port from field sni_proxy_address");
       }
-      return InetSocketAddress.createUnresolved(
-          sniProxyHostAndPort.getHostText(), sniProxyHostAndPort.getPort());
+      String host = GuavaCompatibility.INSTANCE.getHost(sniProxyHostAndPort);
+      return InetSocketAddress.createUnresolved(host, sniProxyHostAndPort.getPort());
     } else {
       throw new IllegalStateException("Invalid proxy metadata: missing field sni_proxy_address");
     }

@@ -19,6 +19,7 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.google.common.base.Function;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.Maps;
+import com.google.common.net.HostAndPort;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
@@ -179,6 +180,24 @@ public abstract class GuavaCompatibility {
    * @see MoreExecutors#directExecutor()
    */
   public abstract Executor sameThreadExecutor();
+
+  /**
+   * Returns the portion of the given {@link HostAndPort} instance that should represent the
+   * hostname or IPv4/IPv6 literal.
+   *
+   * <p>The method {@code HostAndPort.getHostText} has been replaced with {@code
+   * HostAndPort.getHost} starting with Guava 20.0; it has been completely removed in Guava 22.0.
+   */
+  @SuppressWarnings("JavaReflectionMemberAccess")
+  public String getHost(HostAndPort hostAndPort) {
+    try {
+      // Guava >= 20.0
+      return (String) HostAndPort.class.getMethod("getHost").invoke(hostAndPort);
+    } catch (Exception e) {
+      // Guava < 22.0
+      return hostAndPort.getHostText();
+    }
+  }
 
   private static GuavaCompatibility selectImplementation() {
     if (isGuava_19_0_OrHigher()) {
