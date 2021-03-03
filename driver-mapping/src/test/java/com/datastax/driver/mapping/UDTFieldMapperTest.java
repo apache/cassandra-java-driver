@@ -38,12 +38,7 @@ public class UDTFieldMapperTest extends CCMTestsSupport {
 
   @Test(groups = "short")
   public void udt_and_tables_with_ks_created_in_another_session_should_be_mapped() {
-    Cluster cluster1 =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
-                .build());
+    Cluster cluster1 = register(createClusterBuilder().build());
     Session session1 = cluster1.connect();
     // Create type and table
     session1.execute(
@@ -57,12 +52,7 @@ public class UDTFieldMapperTest extends CCMTestsSupport {
     cluster1.close();
 
     // Create entities with another connection
-    Cluster cluster2 =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
-                .build());
+    Cluster cluster2 = register(createClusterBuilder().build());
     Session session2 = cluster2.newSession();
     Mapper<MyHashWithKeyspace> hashMapper =
         new MappingManager(session2).mapper(MyHashWithKeyspace.class);
@@ -81,12 +71,7 @@ public class UDTFieldMapperTest extends CCMTestsSupport {
 
   @Test(groups = "short")
   public void udt_and_tables_without_ks_created_in_another_session_should_be_mapped() {
-    Cluster cluster1 =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
-                .build());
+    Cluster cluster1 = register(createClusterBuilder().build());
     Session session1 = cluster1.connect();
     session1.execute(
         "create keyspace if not exists java_509b "
@@ -100,12 +85,7 @@ public class UDTFieldMapperTest extends CCMTestsSupport {
     cluster1.close();
 
     // Create entities with another connection
-    Cluster cluster2 =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
-                .build());
+    Cluster cluster2 = register(createClusterBuilder().build());
     Session session2 = cluster2.newSession();
 
     session2.execute("use java_509b");

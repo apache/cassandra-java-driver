@@ -174,9 +174,7 @@ public class ClusterStressTest extends CCMTestsSupport {
     CreateClusterAndCheckConnections(CountDownLatch startSignal) {
       this.startSignal = startSignal;
       this.cluster =
-          Cluster.builder()
-              .addContactPoints(getContactPoints())
-              .withPort(ccm().getBinaryPort())
+          createClusterBuilder()
               .withPoolingOptions(
                   new PoolingOptions().setCoreConnectionsPerHost(HostDistance.LOCAL, 1))
               .withNettyOptions(channelMonitor.nettyOptions())

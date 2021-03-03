@@ -104,19 +104,12 @@ public class UnresolvedUserTypeTest extends CCMTestsSupport {
   public void should_resolve_nested_user_types() throws ExecutionException, InterruptedException {
 
     // Each CREATE TYPE statement in getTableDefinitions() has triggered a partial schema refresh
-    // that
-    // should have used previous UDT definitions for dependencies.
+    // that should have used previous UDT definitions for dependencies.
     checkUserTypes(cluster().getMetadata());
 
     // Create a different Cluster instance to force a full refresh where all UDTs are loaded at
-    // once.
-    // The parsing logic should sort them to make sure they are loaded in the right order.
-    Cluster newCluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints())
-                .withPort(ccm().getBinaryPort())
-                .build());
+    // once. The parsing logic should sort them to make sure they are loaded in the right order.
+    Cluster newCluster = register(createClusterBuilder().build());
     checkUserTypes(newCluster.getMetadata());
   }
 

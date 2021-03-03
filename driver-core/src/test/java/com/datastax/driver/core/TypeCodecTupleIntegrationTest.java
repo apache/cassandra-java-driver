@@ -97,17 +97,13 @@ public class TypeCodecTupleIntegrationTest extends CCMTestsSupport {
 
   @Test(groups = "short")
   public void should_handle_tuples_with_custom_codecs() {
-    CodecRegistry codecRegistry = new CodecRegistry();
-    Cluster cluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints())
-                .withPort(ccm().getBinaryPort())
-                .withCodecRegistry(codecRegistry)
-                .build());
+    Cluster cluster = register(createClusterBuilder().build());
     Session session = cluster.connect(keyspace);
     setUpTupleTypes(cluster);
-    codecRegistry.register(new LocationCodec(TypeCodec.tuple(locationType)));
+    cluster
+        .getConfiguration()
+        .getCodecRegistry()
+        .register(new LocationCodec(TypeCodec.tuple(locationType)));
     session.execute(insertQuery, uuid, "John Doe", locationValue);
     ResultSet rows = session.execute(selectQuery, uuid);
     Row row = rows.one();
@@ -129,17 +125,13 @@ public class TypeCodecTupleIntegrationTest extends CCMTestsSupport {
 
   @Test(groups = "short")
   public void should_handle_partial_tuples_with_custom_codecs() {
-    CodecRegistry codecRegistry = new CodecRegistry();
-    Cluster cluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints())
-                .withPort(ccm().getBinaryPort())
-                .withCodecRegistry(codecRegistry)
-                .build());
+    Cluster cluster = register(createClusterBuilder().build());
     Session session = cluster.connect(keyspace);
     setUpTupleTypes(cluster);
-    codecRegistry.register(new LocationCodec(TypeCodec.tuple(locationType)));
+    cluster
+        .getConfiguration()
+        .getCodecRegistry()
+        .register(new LocationCodec(TypeCodec.tuple(locationType)));
     session.execute(insertQuery, uuid, "John Doe", partialLocationValueInserted);
     ResultSet rows = session.execute(selectQuery, uuid);
     Row row = rows.one();

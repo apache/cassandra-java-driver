@@ -19,6 +19,7 @@ import static com.datastax.driver.core.ConditionChecker.check;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.core.policies.WhiteListPolicy;
 import com.google.common.base.Predicate;
@@ -815,11 +816,39 @@ public abstract class TestUtils {
     Host controlHost = cluster.manager.controlConnection.connectedHost();
     List<InetSocketAddress> singleAddress =
         Collections.singletonList(controlHost.getEndPoint().resolve());
-    return Cluster.builder()
-        .addContactPoints(controlHost.getEndPoint().resolve().getAddress())
-        .withPort(ccm.getBinaryPort())
+    return configureClusterBuilder(Cluster.builder(), ccm)
         .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), singleAddress))
         .build();
+  }
+
+  /**
+   * Configures the builder with one contact point and port matching the given CCM cluster.
+   * Therefore it's not required to call {@link Cluster.Builder#addContactPoints}, it will be done
+   * automatically.
+   *
+   * @return The cluster builder (for method chaining).
+   */
+  public static Builder configureClusterBuilder(Builder builder, CCMAccess ccm) {
+    // add only one contact point to force node1 to become the control host; some tests rely on
+    // that.
+    return configureClusterBuilder(builder, ccm, ccm.getContactPoints().get(0));
+  }
+
+  /**
+   * Configures the builder with binary port matching the given CCM cluster and with the given
+   * contact points. Therefore it's not required to call {@link Cluster.Builder#addContactPoints},
+   * it will be done automatically.
+   *
+   * @return The cluster builder (for method chaining).
+   */
+  public static Builder configureClusterBuilder(
+      Builder builder, CCMAccess ccm, InetAddress... contactPoints) {
+    builder
+        // use a different codec registry for each cluster instance
+        .withCodecRegistry(new CodecRegistry())
+        .addContactPoints(contactPoints)
+        .withPort(ccm.getBinaryPort());
+    return builder;
   }
 
   /** @return a {@link QueryOptions} that disables debouncing by setting intervals to 0ms. */
@@ -867,6 +896,8 @@ public abstract class TestUtils {
     try {
       task.call();
     } catch (Exception e) {
+      if (logException) logger.error(e.getMessage(), e);
+    } catch (AssertionError e) {
       if (logException) logger.error(e.getMessage(), e);
     }
   }
@@ -981,7 +1012,7 @@ public abstract class TestUtils {
 
   /**
    * Throws a {@link SkipException} if the input {@link CCMAccess} does not support compact storage
-   * (C* 4.0+)
+   * (C* 4.0+ or DSE 6.0+).
    *
    * @param ccm cluster to check against
    */
@@ -989,6 +1020,10 @@ public abstract class TestUtils {
     if (ccm.getCassandraVersion().nextStable().compareTo(VersionNumber.parse("4.0")) >= 0) {
       throw new SkipException(
           "Compact tables are not allowed in Cassandra starting with 4.0 version");
+    }
+    if (ccm.getDSEVersion() != null
+        && ccm.getDSEVersion().compareTo(VersionNumber.parse("6.0")) >= 0) {
+      throw new SkipException("Compact tables are not allowed in DSE starting with 6.0 version");
     }
   }
 }

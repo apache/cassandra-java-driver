@@ -40,9 +40,7 @@ public class CloseableLoadBalancingPolicyTest extends CCMTestsSupport {
   @Override
   public Cluster.Builder createClusterBuilder() {
     policy = new CloseMonitoringPolicy(Policies.defaultLoadBalancingPolicy());
-    return Cluster.builder()
-        .addContactPoints(getContactPoints().get(0))
-        .withLoadBalancingPolicy(policy);
+    return super.createClusterBuilder().withLoadBalancingPolicy(policy);
   }
 
   static class CloseMonitoringPolicy extends DelegatingLoadBalancingPolicy {

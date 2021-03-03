@@ -42,13 +42,7 @@ public class NodeListRefreshDebouncerTest extends CCMTestsSupport {
     queryOptions.setMaxPendingRefreshNodeListRequests(5);
     queryOptions.setRefreshSchemaIntervalMillis(0);
     // Create a separate cluster that will receive the schema events on its control connection.
-    cluster2 =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints())
-                .withPort(ccm().getBinaryPort())
-                .withQueryOptions(queryOptions)
-                .build());
+    cluster2 = register(createClusterBuilder().withQueryOptions(queryOptions).build());
 
     cluster2.init();
 

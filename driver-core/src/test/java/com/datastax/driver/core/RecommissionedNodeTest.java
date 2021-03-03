@@ -55,9 +55,8 @@ public class RecommissionedNodeTest {
 
     // Now start the driver that will connect to node2 and node3, and consider node1 down
     mainCluster =
-        Cluster.builder()
-            .addContactPoints(mainCcm.addressOfNode(2).getAddress())
-            .withPort(mainCcm.getBinaryPort())
+        TestUtils.configureClusterBuilder(
+                Cluster.builder(), mainCcm, mainCcm.addressOfNode(2).getAddress())
             .withQueryOptions(nonDebouncingQueryOptions())
             .build();
     mainCluster.connect();
@@ -89,9 +88,8 @@ public class RecommissionedNodeTest {
 
     // Start the driver, the control connection will be on node2
     mainCluster =
-        Cluster.builder()
-            .addContactPoints(mainCcm.addressOfNode(2).getAddress())
-            .withPort(mainCcm.getBinaryPort())
+        TestUtils.configureClusterBuilder(
+                Cluster.builder(), mainCcm, mainCcm.addressOfNode(2).getAddress())
             .withQueryOptions(nonDebouncingQueryOptions())
             .build();
     mainCluster.connect();
@@ -134,9 +132,8 @@ public class RecommissionedNodeTest {
 
     // Start the driver, it should only connect to node 2
     mainCluster =
-        Cluster.builder()
-            .addContactPoints(mainCcm.addressOfNode(2).getAddress())
-            .withPort(mainCcm.getBinaryPort())
+        TestUtils.configureClusterBuilder(
+                Cluster.builder(), mainCcm, mainCcm.addressOfNode(2).getAddress())
             .withQueryOptions(nonDebouncingQueryOptions())
             .build();
 
@@ -181,9 +178,8 @@ public class RecommissionedNodeTest {
 
     // Start the driver, it should only connect to node 2
     mainCluster =
-        Cluster.builder()
-            .addContactPoints(mainCcm.addressOfNode(2).getAddress())
-            .withPort(mainCcm.getBinaryPort())
+        TestUtils.configureClusterBuilder(
+                Cluster.builder(), mainCcm, mainCcm.addressOfNode(2).getAddress())
             .withQueryOptions(nonDebouncingQueryOptions())
             .build();
 

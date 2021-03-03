@@ -46,7 +46,7 @@ public class TypeCodecOverlappingJavaTypeIntegrationTest extends CCMTestsSupport
   }
 
   public Cluster.Builder createClusterBuilder() {
-    return Cluster.builder()
+    return super.createClusterBuilder()
         .withCodecRegistry(new CodecRegistry().register(new IntToStringCodec()));
   }
 

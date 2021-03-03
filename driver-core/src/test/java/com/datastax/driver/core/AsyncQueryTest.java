@@ -24,7 +24,6 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -83,13 +82,7 @@ public class AsyncQueryTest extends CCMTestsSupport {
   public void should_init_cluster_and_session_if_needed() throws Exception {
     // For this test we need an uninitialized cluster, so we can't reuse the one provided by the
     // parent class. Rebuild a new one with the same (unique) host.
-    Host host = cluster().getMetadata().allHosts().iterator().next();
-
-    Cluster cluster2 =
-        register(
-            Cluster.builder()
-                .addContactPointsWithPorts(Lists.newArrayList(host.getEndPoint().resolve()))
-                .build());
+    Cluster cluster2 = register(createClusterBuilder().build());
     try {
       Session session2 = cluster2.newSession();
 

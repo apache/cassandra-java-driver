@@ -35,11 +35,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -365,6 +369,24 @@ public class CCMBridge implements CCMAccess {
   @Override
   public int[] getNodeCount() {
     return Arrays.copyOf(nodes, nodes.length);
+  }
+
+  @Override
+  public List<InetAddress> getContactPoints() {
+    List<InetAddress> contactPoints = new ArrayList<InetAddress>();
+    int n = 1;
+    for (int dc = 1; dc <= nodes.length; dc++) {
+      int nodesInDc = nodes[dc - 1];
+      for (int i = 0; i < nodesInDc; i++) {
+        try {
+          contactPoints.add(InetAddress.getByName(ipOfNode(n)));
+        } catch (UnknownHostException e) {
+          Throwables.propagate(e);
+        }
+        n++;
+      }
+    }
+    return contactPoints;
   }
 
   protected String ipOfNode(int n) {

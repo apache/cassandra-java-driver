@@ -17,7 +17,6 @@ package com.datastax.driver.core;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
-import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 import static com.datastax.driver.core.TestUtils.waitForUp;
 
 import com.google.common.collect.Maps;
@@ -57,13 +56,7 @@ public class MetadataTest extends CCMTestsSupport {
   @Test(groups = "long")
   @CCMConfig(numberOfNodes = 3, dirtiesContext = true, createCluster = false)
   public void should_update_metadata_on_topology_change() {
-    Cluster cluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
-                .withQueryOptions(nonDebouncingQueryOptions())
-                .build());
+    Cluster cluster = register(createClusterBuilderNoDebouncing().build());
     Session session = cluster.connect();
 
     String keyspace = "test";

@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.fail;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.EndPoint;
 import com.datastax.driver.core.PlainTextAuthProvider;
+import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.AuthenticationException;
@@ -73,6 +74,7 @@ public class CloudTest {
     Session session =
         Cluster.builder()
             .withCloudSecureConnectBundle(proxy.getSecureBundleFile())
+            .withProtocolVersion(ProtocolVersion.V4)
             .build()
             .connect();
     ResultSet set = session.execute("select * from system.local");
@@ -84,7 +86,11 @@ public class CloudTest {
     String path =
         String.format("%s/%s", proxy.getProxyRootPath(), "certs/bundles/../bundles/creds-v1.zip");
     Session session =
-        Cluster.builder().withCloudSecureConnectBundle(new File(path)).build().connect();
+        Cluster.builder()
+            .withCloudSecureConnectBundle(new File(path))
+            .withProtocolVersion(ProtocolVersion.V4)
+            .build()
+            .connect();
     ResultSet set = session.execute("select * from system.local");
     assertThat(set).isNotNull();
   }
@@ -104,7 +110,12 @@ public class CloudTest {
         new URL(String.format("http://localhost:%d%s", wireMockServer.port(), CERTS_BUNDLE_SUFFIX));
 
     // when
-    Session session = Cluster.builder().withCloudSecureConnectBundle(configFile).build().connect();
+    Session session =
+        Cluster.builder()
+            .withCloudSecureConnectBundle(configFile)
+            .withProtocolVersion(ProtocolVersion.V4)
+            .build()
+            .connect();
 
     // then
     ResultSet set = session.execute("select * from system.local");
@@ -127,7 +138,11 @@ public class CloudTest {
 
     // when
     Session session =
-        Cluster.builder().withCloudSecureConnectBundle(configFile.openStream()).build().connect();
+        Cluster.builder()
+            .withCloudSecureConnectBundle(configFile.openStream())
+            .withProtocolVersion(ProtocolVersion.V4)
+            .build()
+            .connect();
 
     // then
     ResultSet set = session.execute("select * from system.local");
@@ -140,6 +155,7 @@ public class CloudTest {
         Cluster.builder()
             .withCloudSecureConnectBundle(proxy.getSecureBundleNoCredsPath())
             .withAuthProvider(new PlainTextAuthProvider("cassandra", "cassandra"))
+            .withProtocolVersion(ProtocolVersion.V4)
             .build()
             .connect();
     ResultSet set = session.execute("select * from system.local");
@@ -152,6 +168,7 @@ public class CloudTest {
       Session session =
           Cluster.builder()
               .withCloudSecureConnectBundle(proxy.getSecureBundleNoCredsPath())
+              .withProtocolVersion(ProtocolVersion.V4)
               .build()
               .connect();
       fail("Expected an AuthenticationException");
@@ -166,6 +183,7 @@ public class CloudTest {
       Session session =
           Cluster.builder()
               .withCloudSecureConnectBundle(proxy.getSecureBundleUnreachable())
+              .withProtocolVersion(ProtocolVersion.V4)
               .build()
               .connect();
       fail("Expected an IllegalStateException");
@@ -182,6 +200,7 @@ public class CloudTest {
               .addContactPoint("127.0.0.1")
               .withCloudSecureConnectBundle(proxy.getSecureBundleNoCredsPath())
               .withCredentials("cassandra", "cassandra")
+              .withProtocolVersion(ProtocolVersion.V4)
               .build()
               .connect();
       fail("Expected an IllegalStateException");
@@ -200,6 +219,7 @@ public class CloudTest {
               .withCloudSecureConnectBundle(proxy.getSecureBundleNoCredsPath())
               .addContactPoint("127.0.0.1")
               .withCredentials("cassandra", "cassandra")
+              .withProtocolVersion(ProtocolVersion.V4)
               .build()
               .connect();
       fail("Expected an IllegalStateException");
@@ -224,6 +244,7 @@ public class CloudTest {
                     }
                   })
               .withCredentials("cassandra", "cassandra")
+              .withProtocolVersion(ProtocolVersion.V4)
               .build()
               .connect();
       fail("Expected an IllegalStateException");

@@ -36,7 +36,7 @@ public class MetricsTest extends CCMTestsSupport {
 
   @Override
   public Cluster.Builder createClusterBuilder() {
-    return Cluster.builder()
+    return super.createClusterBuilder()
         .withRetryPolicy(
             new RetryPolicy() {
               @Override
@@ -141,13 +141,7 @@ public class MetricsTest extends CCMTestsSupport {
    */
   @Test(groups = "short", expectedExceptions = InstanceNotFoundException.class)
   public void metrics_should_be_null_when_metrics_disabled() throws Exception {
-    Cluster cluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints())
-                .withPort(ccm().getBinaryPort())
-                .withoutMetrics()
-                .build());
+    Cluster cluster = register(createClusterBuilder().withoutMetrics().build());
     try {
       cluster.init();
       assertThat(cluster.getMetrics()).isNull();
@@ -169,13 +163,7 @@ public class MetricsTest extends CCMTestsSupport {
    */
   @Test(groups = "short", expectedExceptions = InstanceNotFoundException.class)
   public void should_be_no_jmx_mbean_when_jmx_is_disabled() throws Exception {
-    Cluster cluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints())
-                .withPort(ccm().getBinaryPort())
-                .withoutJMXReporting()
-                .build());
+    Cluster cluster = register(createClusterBuilder().withoutJMXReporting().build());
     try {
       cluster.init();
       assertThat(cluster.getMetrics()).isNotNull();

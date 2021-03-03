@@ -50,7 +50,7 @@ public class StatementWrapperTest extends CCMTestsSupport {
 
   @Override
   public Cluster.Builder createClusterBuilder() {
-    return Cluster.builder()
+    return super.createClusterBuilder()
         .withLoadBalancingPolicy(loadBalancingPolicy)
         .withSpeculativeExecutionPolicy(speculativeExecutionPolicy)
         .withRetryPolicy(retryPolicy);

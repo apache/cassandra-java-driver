@@ -63,7 +63,7 @@ public class TimeoutStressTest extends CCMTestsSupport {
     channelMonitor = register(new SocketChannelMonitor());
     PoolingOptions poolingOptions =
         new PoolingOptions().setConnectionsPerHost(HostDistance.LOCAL, 8, 8);
-    return Cluster.builder()
+    return super.createClusterBuilder()
         .withPoolingOptions(poolingOptions)
         .withNettyOptions(channelMonitor.nettyOptions())
         .withReconnectionPolicy(new ConstantReconnectionPolicy(1000));

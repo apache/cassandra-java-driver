@@ -17,7 +17,6 @@ package com.datastax.driver.core;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
-import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.api.Assertions.fail;
@@ -40,11 +39,8 @@ public class SessionLeakTest extends CCMTestsSupport {
     channelMonitor.reportAtFixedInterval(1, TimeUnit.SECONDS);
     Cluster cluster =
         register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
+            createClusterBuilderNoDebouncing()
                 .withNettyOptions(channelMonitor.nettyOptions())
-                .withQueryOptions(nonDebouncingQueryOptions())
                 .build());
 
     cluster.init();
@@ -102,12 +98,7 @@ public class SessionLeakTest extends CCMTestsSupport {
     channelMonitor = new SocketChannelMonitor();
     channelMonitor.reportAtFixedInterval(1, TimeUnit.SECONDS);
     Cluster cluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
-                .withNettyOptions(channelMonitor.nettyOptions())
-                .build());
+        register(createClusterBuilder().withNettyOptions(channelMonitor.nettyOptions()).build());
     cluster.init();
     assertThat(cluster.manager.sessions.size()).isEqualTo(0);
     try {

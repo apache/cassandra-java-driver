@@ -76,12 +76,7 @@ public class SSLEncryptionTest extends SSLTestBase {
       groups = "short",
       expectedExceptions = {NoHostAvailableException.class})
   public void should_not_connect_without_ssl_but_node_uses_ssl() throws Exception {
-    Cluster cluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints())
-                .withPort(ccm().getBinaryPort())
-                .build());
+    Cluster cluster = register(createClusterBuilder().build());
     cluster.connect();
   }
 
@@ -99,11 +94,7 @@ public class SSLEncryptionTest extends SSLTestBase {
       throws Exception {
     Cluster cluster =
         register(
-            Cluster.builder()
-                .addContactPoints(this.getContactPoints())
-                .withPort(ccm().getBinaryPort())
-                .withSSL(getSSLOptions(sslImplementation, true, true))
-                .build());
+            createClusterBuilder().withSSL(getSSLOptions(sslImplementation, true, true)).build());
 
     cluster.connect();
 

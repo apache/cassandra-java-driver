@@ -17,7 +17,9 @@ package com.datastax.driver.core;
 
 import java.io.Closeable;
 import java.io.File;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.Map;
 
 public interface CCMAccess extends Closeable {
@@ -41,16 +43,12 @@ public interface CCMAccess extends Closeable {
    * is assumed that this value is only used for representing the compatible Cassandra version for
    * that DSE version.
    *
-   * <p>
-   *
    * @return The version of this CCM cluster.
    */
   VersionNumber getCassandraVersion();
 
   /**
    * Returns the DSE version of this CCM cluster if this is a DSE cluster, otherwise null.
-   *
-   * <p>
    *
    * @return The version of this CCM cluster.
    */
@@ -87,12 +85,28 @@ public interface CCMAccess extends Closeable {
   void setKeepLogs(boolean keepLogs);
 
   /**
-   * @return the node count for each datacenter, mapped in the corresponding cell of the returned
-   *     int array. This is the count that was passed at initialization (that is, the argument to
-   *     {@link CCMBridge.Builder#withNodes(int...)} or {@link CCMConfig#numberOfNodes()}). Note
-   *     that it will <b>NOT</b> be updated dynamically if nodes are added or removed at runtime.
+   * Returns the node count for each datacenter, mapped in the corresponding cell of the returned
+   * int array.
+   *
+   * <p>This is the count that was passed at initialization (that is, the argument to {@link
+   * CCMBridge.Builder#withNodes(int...)} or {@link CCMConfig#numberOfNodes()}). Note that it will
+   * <b>NOT</b> be updated dynamically if nodes are added or removed at runtime.
+   *
+   * @return the node count for each datacenter.
    */
   int[] getNodeCount();
+
+  /**
+   * Returns the contact points to use to contact the CCM cluster.
+   *
+   * <p>This reflects the initial number of nodes in the cluster, as configured at initialization
+   * (that is, the argument to {@link CCMBridge.Builder#withNodes(int...)} or {@link
+   * CCMConfig#numberOfNodes()}). Note that it will <b>NOT</b> be updated dynamically if nodes are
+   * added or removed at runtime.
+   *
+   * @return the contact points to use to contact the CCM cluster.
+   */
+  List<InetAddress> getContactPoints();
 
   /**
    * Returns the address of the {@code nth} host in the CCM cluster (counting from 1, i.e., {@code

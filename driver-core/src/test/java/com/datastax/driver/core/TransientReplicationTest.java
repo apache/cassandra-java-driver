@@ -28,11 +28,9 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-@CassandraVersion(
-    value = "4.0.0-alpha1",
-    description = "Transient Replication is for Cassandra 4.0+")
+@CassandraVersion(value = "4.0.0", description = "Transient Replication is for Cassandra 4.0+")
 @CCMConfig(config = "enable_transient_replication:true")
-public class TransietReplicationTest extends CCMTestsSupport {
+public class TransientReplicationTest extends CCMTestsSupport {
 
   private static final String TRANSIENT_REPLICATION_KEYSPACE = "transient_rep_ks";
 

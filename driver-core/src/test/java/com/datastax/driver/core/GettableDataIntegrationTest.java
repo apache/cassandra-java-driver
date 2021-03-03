@@ -58,7 +58,7 @@ public class GettableDataIntegrationTest extends CCMTestsSupport {
 
   @Override
   public Cluster.Builder createClusterBuilder() {
-    return Cluster.builder().withCodecRegistry(registry);
+    return super.createClusterBuilder().withCodecRegistry(registry);
   }
 
   @BeforeClass(groups = "short")

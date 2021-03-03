@@ -39,7 +39,7 @@ public class QueryTimestampTest extends CCMTestsSupport {
   public Cluster.Builder createClusterBuilder() {
     @SuppressWarnings("deprecation")
     Builder builder =
-        Cluster.builder()
+        super.createClusterBuilder()
             .withTimestampGenerator(
                 new TimestampGenerator() {
                   @Override

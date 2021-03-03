@@ -27,6 +27,7 @@ import org.testng.annotations.Test;
 
 /** Tests for the new USE_BETA flag introduced in protocol v5 and Cassandra 3.10. */
 @CassandraVersion("3.10")
+@CCMConfig(createCluster = false)
 public class ProtocolBetaVersionTest extends CCMTestsSupport {
 
   @BeforeClass
@@ -44,8 +45,7 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
    * @jira_ticket JAVA-1248
    */
   @Test(groups = "short")
-  public void should_not_initialize_when_version_explicitly_required_and_beta_flag_is_set()
-      throws Exception {
+  public void should_not_initialize_when_version_explicitly_required_and_beta_flag_is_set() {
     try {
       Cluster.builder()
           .addContactPoints(getContactPoints())
@@ -67,8 +67,7 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
    * @jira_ticket JAVA-1248
    */
   @Test(groups = "short")
-  public void should_not_initialize_when_beta_flag_is_set_and_version_explicitly_required()
-      throws Exception {
+  public void should_not_initialize_when_beta_flag_is_set_and_version_explicitly_required() {
     try {
       Cluster.builder()
           .addContactPoints(getContactPoints())
@@ -90,8 +89,7 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
    * @jira_ticket JAVA-1248
    */
   @Test(groups = "short")
-  public void should_not_connect_when_beta_version_explicitly_required_and_flag_not_set()
-      throws Exception {
+  public void should_not_connect_when_beta_version_explicitly_required_and_flag_not_set() {
     try {
       Cluster.builder()
           .addContactPoints(getContactPoints())
@@ -101,7 +99,7 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
       fail("Expected IllegalArgumentException");
     } catch (IllegalArgumentException e) {
       assertThat(e.getMessage())
-          .startsWith("Can not use V5 protocol version. Newest supported protocol version is: V4");
+          .startsWith("Can not use V6 protocol version. Newest supported protocol version is: V5");
     }
   }
 
@@ -109,17 +107,10 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
    * Verifies that the driver can connect to 3.10 with the following combination of options: Version
    * UNSET Flag SET Expected version: V5
    *
-   * <p>Note: Since driver 3.10, and due to JAVA-2772, it is not possible anymore to connect with v5
-   * to a Cassandra 3.x cluster.
-   *
    * @jira_ticket JAVA-1248
    */
   @Test(groups = "short", enabled = false)
-  public void should_connect_with_beta_when_no_version_explicitly_required_and_flag_set()
-      throws Exception {
-    // Note: when the driver's ProtocolVersion.NEWEST_SUPPORTED will be incremented to V6 or higher
-    // a renegotiation will start taking place here and will downgrade the version from V6 to V5,
-    // but the test should remain valid since it's executed against 3.10 exclusively
+  public void should_connect_with_beta_when_no_version_explicitly_required_and_flag_set() {
     Cluster cluster =
         Cluster.builder()
             .addContactPoints(getContactPoints())
@@ -134,15 +125,15 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
    * Verifies that the driver can connect to 3.10 with the following combination of options: Version
    * UNSET Flag UNSET Expected version: V4
    *
+   * <p>This test has been disabled as of driver 3.11 because v5 is not beta anymore in the driver.
+   * As a consequence, protocol negotiation without specifying an initial version is not possible
+   * anymore against C* >= 3.10 and < 4.0.
+   *
    * @jira_ticket JAVA-1248
    */
-  @Test(groups = "short")
+  @Test(groups = "short", enabled = false)
   public void
-      should_connect_after_renegotiation_when_no_version_explicitly_required_and_flag_not_set()
-          throws Exception {
-    // Note: when the driver's ProtocolVersion.NEWEST_SUPPORTED will be incremented to V6 or higher
-    // the renegotiation will start downgrading the version from V6 to V4 instead of V5 to V4,
-    // but the test should remain valid since it's executed against 3.10 exclusively
+      should_connect_after_renegotiation_when_no_version_explicitly_required_and_flag_not_set() {
     Cluster cluster =
         Cluster.builder()
             .addContactPoints(getContactPoints())

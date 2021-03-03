@@ -52,13 +52,7 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
   public void should_init_policy_with_up_contact_points() throws Exception {
     HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
 
-    Cluster cluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints())
-                .withPort(ccm().getBinaryPort())
-                .withLoadBalancingPolicy(policy)
-                .build());
+    Cluster cluster = register(createClusterBuilder().withLoadBalancingPolicy(policy).build());
 
     try {
       cluster.init();
@@ -103,13 +97,7 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
       ccm().waitForDown(nodeToStop);
 
       HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
-      Cluster cluster =
-          register(
-              Cluster.builder()
-                  .addContactPoints(getContactPoints())
-                  .withPort(ccm().getBinaryPort())
-                  .withLoadBalancingPolicy(policy)
-                  .build());
+      Cluster cluster = register(createClusterBuilder().withLoadBalancingPolicy(policy).build());
 
       try {
         cluster.init();

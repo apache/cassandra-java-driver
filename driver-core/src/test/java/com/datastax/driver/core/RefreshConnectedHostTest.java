@@ -40,13 +40,10 @@ public class RefreshConnectedHostTest extends CCMTestsSupport {
     PoolingOptions poolingOptions = Mockito.spy(new PoolingOptions());
     Cluster cluster =
         register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
+            createClusterBuilderNoDebouncing()
                 .withPoolingOptions(poolingOptions)
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .withReconnectionPolicy(new ConstantReconnectionPolicy(1000))
-                .withQueryOptions(TestUtils.nonDebouncingQueryOptions())
                 .build());
 
     Session session = cluster.connect();

@@ -73,9 +73,7 @@ public class NettyOptionsTest extends CCMTestsSupport {
         .afterChannelInitialized(any(SocketChannel.class));
     Cluster cluster =
         register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
+            createClusterBuilder()
                 .withPoolingOptions(
                     new PoolingOptions()
                         .setConnectionsPerHost(

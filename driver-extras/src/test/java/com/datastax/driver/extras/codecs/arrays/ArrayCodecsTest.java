@@ -63,7 +63,7 @@ public class ArrayCodecsTest extends CCMTestsSupport {
 
   @Override
   public Cluster.Builder createClusterBuilder() {
-    return Cluster.builder()
+    return super.createClusterBuilder()
         .withCodecRegistry(
             new CodecRegistry()
                 .register(IntArrayCodec.instance)

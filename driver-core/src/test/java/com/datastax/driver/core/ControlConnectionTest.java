@@ -19,7 +19,6 @@ import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static com.datastax.driver.core.ScassandraCluster.SELECT_PEERS;
 import static com.datastax.driver.core.ScassandraCluster.datacenter;
-import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.scassandra.http.client.PrimingRequest.then;
@@ -79,9 +78,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
     // this host
     Cluster cluster =
         register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
+            createClusterBuilder()
                 .withReconnectionPolicy(reconnectionPolicy)
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .build());
@@ -109,12 +106,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
   @CassandraVersion("2.1.0")
   public void should_parse_UDT_definitions_when_using_default_protocol_version() {
     // First driver instance: create UDT
-    Cluster cluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
-                .build());
+    Cluster cluster = register(createClusterBuilder().build());
     Session session = cluster.connect();
     session.execute(
         "create keyspace ks WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
@@ -122,12 +114,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
     cluster.close();
 
     // Second driver instance: read UDT definition
-    Cluster cluster2 =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
-                .build());
+    Cluster cluster2 = register(createClusterBuilder().build());
     UserType fooType = cluster2.getMetadata().getKeyspace("ks").getUserType("foo");
 
     assertThat(fooType.getFieldNames()).containsExactly("i");
@@ -146,13 +133,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
   @CCMConfig(numberOfNodes = 3)
   public void should_reestablish_if_control_node_decommissioned() throws InterruptedException {
     InetSocketAddress firstHost = ccm().addressOfNode(1);
-    Cluster cluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(firstHost.getAddress())
-                .withPort(ccm().getBinaryPort())
-                .withQueryOptions(nonDebouncingQueryOptions())
-                .build());
+    Cluster cluster = register(createClusterBuilderNoDebouncing().build());
     cluster.init();
 
     // Ensure the control connection host is that of the first node.

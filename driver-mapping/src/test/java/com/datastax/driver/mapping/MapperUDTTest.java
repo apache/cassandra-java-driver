@@ -338,12 +338,7 @@ public class MapperUDTTest extends CCMTestsSupport {
   public void should_be_able_to_use_udtCodec_standalone() {
     // Create a separate Cluster/Session to start with a CodecRegistry from scratch (so not already
     // registered).
-    Cluster cluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints())
-                .withPort(ccm().getBinaryPort())
-                .build());
+    Cluster cluster = register(createClusterBuilder().build());
     CodecRegistry registry = cluster.getConfiguration().getCodecRegistry();
     Session session = cluster.connect(keyspace);
 
@@ -557,7 +552,7 @@ public class MapperUDTTest extends CCMTestsSupport {
     } catch (InvalidQueryException e) {
       // Error message varies by C* version.
       assertThat(e.getMessage())
-          .isIn("Unknown identifier mainaddress", "Undefined column name mainaddress");
+          .matches("(Unknown identifier mainaddress|Undefined column name mainaddress.*)");
     }
     try {
       mapper.get(user.getUserId());
@@ -565,17 +560,15 @@ public class MapperUDTTest extends CCMTestsSupport {
     } catch (InvalidQueryException e) {
       // Error message varies by C* version.
       assertThat(e.getMessage())
-          .isIn(
-              "Undefined name mainaddress in selection clause",
-              "Undefined column name mainaddress");
+          .matches(
+              "(Undefined name mainaddress in selection clause|Undefined column name mainaddress.*)");
     }
     // trying to use a new mapper
     try {
       manager.mapper(User.class);
       fail("Expected IllegalArgumentException");
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage())
-          .isIn(String.format("Column mainaddress does not exist in table \"%s\".users", keyspace));
+      assertThat(e.getMessage()).startsWith("Column mainaddress does not exist");
     }
   }
 

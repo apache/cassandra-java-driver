@@ -45,13 +45,7 @@ public class NodeRefreshDebouncerTest extends CCMTestsSupport {
     int refreshNodeInterval = 30000;
     QueryOptions queryOptions =
         new QueryOptions().setRefreshNodeIntervalMillis(refreshNodeInterval);
-    Cluster cluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
-                .withQueryOptions(queryOptions)
-                .build());
+    Cluster cluster = register(createClusterBuilder().withQueryOptions(queryOptions).build());
     cluster.connect();
     Host.StateListener listener = mock(Host.StateListener.class);
     cluster.register(listener);

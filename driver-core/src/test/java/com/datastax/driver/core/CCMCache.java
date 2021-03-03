@@ -23,8 +23,10 @@ import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.cache.Weigher;
 import java.io.File;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -105,6 +107,11 @@ public class CCMCache {
     @Override
     public int[] getNodeCount() {
       return ccm.getNodeCount();
+    }
+
+    @Override
+    public List<InetAddress> getContactPoints() {
+      return ccm.getContactPoints();
     }
 
     @Override

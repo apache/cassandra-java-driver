@@ -58,22 +58,10 @@ public class SchemaChangesCCTest extends CCMTestsSupport {
   public void should_receive_changes_made_while_control_connection_is_down_on_reconnect()
       throws Exception {
     ToggleablePolicy lbPolicy = new ToggleablePolicy(Policies.defaultLoadBalancingPolicy());
-    Cluster cluster =
-        register(
-            Cluster.builder()
-                .withLoadBalancingPolicy(lbPolicy)
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
-                .build());
+    Cluster cluster = register(createClusterBuilder().withLoadBalancingPolicy(lbPolicy).build());
     // Put cluster2 control connection on node 2 so it doesn't go down (to prevent noise for
     // debugging).
-    Cluster cluster2 =
-        register(
-            Cluster.builder()
-                .withLoadBalancingPolicy(lbPolicy)
-                .addContactPoints(getContactPoints().get(1))
-                .withPort(ccm().getBinaryPort())
-                .build());
+    Cluster cluster2 = register(createClusterBuilder().withLoadBalancingPolicy(lbPolicy).build());
     SchemaChangeListener listener = mock(SchemaChangeListener.class);
 
     cluster.init();

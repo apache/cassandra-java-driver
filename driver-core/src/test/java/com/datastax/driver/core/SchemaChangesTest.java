@@ -81,23 +81,11 @@ public class SchemaChangesTest extends CCMTestsSupport {
 
   @BeforeClass(groups = "short")
   public void setup() throws InterruptedException {
-    cluster1 =
-        Cluster.builder()
-            .addContactPoints(getContactPoints())
-            .withPort(ccm().getBinaryPort())
-            .withQueryOptions(nonDebouncingQueryOptions())
-            .build();
-    cluster2 =
-        Cluster.builder()
-            .addContactPoints(getContactPoints())
-            .withPort(ccm().getBinaryPort())
-            .withQueryOptions(nonDebouncingQueryOptions())
-            .build();
+    cluster1 = createClusterBuilderNoDebouncing().build();
+    cluster2 = createClusterBuilderNoDebouncing().build();
     schemaDisabledCluster =
         spy(
-            Cluster.builder()
-                .addContactPoints(getContactPoints())
-                .withPort(ccm().getBinaryPort())
+            createClusterBuilder()
                 .withClusterName("schema-disabled")
                 .withQueryOptions(nonDebouncingQueryOptions().setMetadataEnabled(false))
                 .build());
@@ -660,9 +648,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
   @Test(groups = "short", expectedExceptions = IllegalStateException.class)
   public void should_throw_illegal_state_exception_on_newToken_with_metadata_disabled() {
     Cluster cluster =
-        Cluster.builder()
-            .addContactPoints(getContactPoints())
-            .withPort(ccm().getBinaryPort())
+        createClusterBuilder()
             .withQueryOptions(nonDebouncingQueryOptions().setMetadataEnabled(false))
             .build();
 
@@ -684,9 +670,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
   @Test(groups = "short", expectedExceptions = IllegalStateException.class)
   public void should_throw_illegal_state_exception_on_newTokenRange_with_metadata_disabled() {
     Cluster cluster =
-        Cluster.builder()
-            .addContactPoints(getContactPoints())
-            .withPort(ccm().getBinaryPort())
+        createClusterBuilder()
             .withQueryOptions(nonDebouncingQueryOptions().setMetadataEnabled(false))
             .build();
 

@@ -74,19 +74,14 @@ public class TypeCodecUDTIntegrationTest extends CCMTestsSupport {
 
   @Test(groups = "short")
   public void should_handle_udts_with_custom_codecs() {
-    CodecRegistry codecRegistry = new CodecRegistry();
-    Cluster cluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints())
-                .withPort(ccm().getBinaryPort())
-                .withCodecRegistry(codecRegistry)
-                .build());
+    Cluster cluster = register(createClusterBuilder().build());
     Session session = cluster.connect(keyspace);
     setUpUserTypes(cluster);
     TypeCodec<UDTValue> addressTypeCodec = TypeCodec.userType(addressType);
     TypeCodec<UDTValue> phoneTypeCodec = TypeCodec.userType(phoneType);
-    codecRegistry
+    cluster
+        .getConfiguration()
+        .getCodecRegistry()
         .register(new AddressCodec(addressTypeCodec, Address.class))
         .register(new PhoneCodec(phoneTypeCodec, Phone.class));
     session.execute(insertQuery, uuid, "John Doe", address);

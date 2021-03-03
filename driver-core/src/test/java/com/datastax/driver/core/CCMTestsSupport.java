@@ -23,6 +23,7 @@ import static com.datastax.driver.core.TestUtils.ipOfNode;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.driver.core.CCMAccess.Workload;
+import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.CreateCCM.TestMode;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.google.common.base.Throwables;
@@ -155,6 +156,11 @@ public class CCMTestsSupport {
     @Override
     public int[] getNodeCount() {
       return delegate.getNodeCount();
+    }
+
+    @Override
+    public List<InetAddress> getContactPoints() {
+      return delegate.getContactPoints();
     }
 
     @Override
@@ -631,7 +637,7 @@ public class CCMTestsSupport {
       } catch (Exception e) {
         LOGGER.error(e.getMessage(), e);
         errorOut();
-        fail(e.getMessage());
+        throw e;
       }
     }
   }
@@ -706,18 +712,15 @@ public class CCMTestsSupport {
   /**
    * Returns the cluster builder to use for this test.
    *
-   * <p>The default implementation returns a vanilla builder.
-   *
-   * <p>It's not required to call {@link
-   * com.datastax.driver.core.Cluster.Builder#addContactPointsWithPorts}, it will be done
-   * automatically.
+   * <p>The default implementation returns a vanilla builder with contact points and port that match
+   * the running CCM cluster. Therefore it's not required to call {@link
+   * Cluster.Builder#addContactPointsWithPorts}, it will be done automatically.
    *
    * @return The cluster builder to use for the tests.
    */
   public Cluster.Builder createClusterBuilder() {
-    return Cluster.builder()
-        // use a different codec registry for each cluster instance
-        .withCodecRegistry(new CodecRegistry());
+    Cluster.Builder builder = Cluster.builder();
+    return configureClusterBuilder(builder);
   }
 
   /**
@@ -730,7 +733,18 @@ public class CCMTestsSupport {
    * @return The cluster builder to use for the tests.
    */
   public Cluster.Builder createClusterBuilderNoDebouncing() {
-    return Cluster.builder().withQueryOptions(TestUtils.nonDebouncingQueryOptions());
+    return createClusterBuilder().withQueryOptions(TestUtils.nonDebouncingQueryOptions());
+  }
+
+  /**
+   * Configures the builder with contact points and port that match the running CCM cluster.
+   * Therefore it's not required to call {@link Cluster.Builder#addContactPointsWithPorts}, it will
+   * be done automatically.
+   *
+   * @return The cluster builder (for method chaining).
+   */
+  protected Builder configureClusterBuilder(Builder builder) {
+    return TestUtils.configureClusterBuilder(builder, ccm());
   }
 
   /**
@@ -963,6 +977,12 @@ public class CCMTestsSupport {
       // add contact points only if the provided builder didn't do so
       if (builder.getContactPoints().isEmpty()) builder.addContactPoints(getContactPoints());
       builder.withPort(ccm.getBinaryPort());
+      if (ccm().getCassandraVersion().compareTo(VersionNumber.parse("3.10")) >= 0
+          && ccm().getCassandraVersion().compareTo(VersionNumber.parse("4.0-beta5")) < 0) {
+        // prevent usage of protocol v5 for 3.10 and 3.11 since these versions have the beta
+        // version of it
+        builder.withProtocolVersion(ProtocolVersion.V4);
+      }
       cluster = register(builder.build());
       cluster.init();
     }

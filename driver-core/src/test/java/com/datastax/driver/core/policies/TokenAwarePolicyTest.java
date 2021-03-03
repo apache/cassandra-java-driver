@@ -508,9 +508,7 @@ public class TokenAwarePolicyTest {
     ccm.start();
 
     Cluster cluster =
-        Cluster.builder()
-            .addContactPoints(ccm.addressOfNode(1).getAddress())
-            .withPort(ccm.getBinaryPort())
+        TestUtils.configureClusterBuilder(Cluster.builder(), ccm)
             .withNettyOptions(nonQuietClusterCloseOptions)
             .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()))
             .build();

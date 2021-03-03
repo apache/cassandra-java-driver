@@ -50,9 +50,7 @@ public class ReconnectionTest extends CCMTestsSupport {
   public void should_reconnect_after_full_connectivity_loss() throws InterruptedException {
     Cluster cluster =
         register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
+            createClusterBuilder()
                 .withReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMillis))
                 .build());
     cluster.connect();
@@ -92,9 +90,7 @@ public class ReconnectionTest extends CCMTestsSupport {
     CountingAuthProvider authProvider = new CountingAuthProvider("cassandra", "cassandra");
     Cluster cluster =
         register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
+            createClusterBuilder()
                 // Start with the correct auth so that we can initialize the server
                 .withAuthProvider(authProvider)
                 .withReconnectionPolicy(reconnectionPolicy)
@@ -141,12 +137,7 @@ public class ReconnectionTest extends CCMTestsSupport {
         new CountingReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMillis));
 
     Cluster cluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
-                .withReconnectionPolicy(reconnectionPolicy)
-                .build());
+        register(createClusterBuilder().withReconnectionPolicy(reconnectionPolicy).build());
     cluster.connect();
 
     // Stop a node and cancel the reconnection attempts to it
@@ -173,9 +164,7 @@ public class ReconnectionTest extends CCMTestsSupport {
     TogglabePolicy loadBalancingPolicy = new TogglabePolicy(new RoundRobinPolicy());
     Cluster cluster =
         register(
-            Cluster.builder()
-                .addContactPointsWithPorts(ccm().addressOfNode(1))
-                .withPort(ccm().getBinaryPort())
+            createClusterBuilder()
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .withReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMillis))
                 .build());
@@ -230,9 +219,7 @@ public class ReconnectionTest extends CCMTestsSupport {
     SocketOptions socketOptions = spy(new SocketOptions());
     Cluster cluster =
         register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
+            createClusterBuilder()
                 .withReconnectionPolicy(new ConstantReconnectionPolicy(5000))
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .withSocketOptions(socketOptions)

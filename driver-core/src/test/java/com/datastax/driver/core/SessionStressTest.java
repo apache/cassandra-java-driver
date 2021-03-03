@@ -99,9 +99,7 @@ public class SessionStressTest extends CCMTestsSupport {
     // override inherited field with a new cluster object and ensure 0 sessions and connections
     channelMonitor.reportAtFixedInterval(1, TimeUnit.SECONDS);
     stressCluster =
-        Cluster.builder()
-            .addContactPoints(getContactPoints())
-            .withPort(ccm().getBinaryPort())
+        createClusterBuilder()
             .withPoolingOptions(
                 new PoolingOptions().setCoreConnectionsPerHost(HostDistance.LOCAL, 1))
             .withNettyOptions(channelMonitor.nettyOptions())

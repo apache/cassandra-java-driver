@@ -53,12 +53,7 @@ public class AuthenticationTest extends CCMTestsSupport {
   @Test(groups = "short")
   public void should_connect_with_credentials() {
     PlainTextAuthProvider authProvider = spy(new PlainTextAuthProvider("cassandra", "cassandra"));
-    Cluster cluster =
-        Cluster.builder()
-            .addContactPoints(getContactPoints())
-            .withPort(ccm().getBinaryPort())
-            .withAuthProvider(authProvider)
-            .build();
+    Cluster cluster = createClusterBuilder().withAuthProvider(authProvider).build();
     cluster.connect();
     verify(authProvider, atLeastOnce())
         .newAuthenticator(
@@ -78,13 +73,7 @@ public class AuthenticationTest extends CCMTestsSupport {
    */
   @Test(groups = "short")
   public void should_fail_to_connect_with_wrong_credentials() {
-    Cluster cluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints())
-                .withPort(ccm().getBinaryPort())
-                .withCredentials("bogus", "bogus")
-                .build());
+    Cluster cluster = register(createClusterBuilder().withCredentials("bogus", "bogus").build());
 
     try {
       cluster.connect();
@@ -106,12 +95,7 @@ public class AuthenticationTest extends CCMTestsSupport {
 
   @Test(groups = "short", expectedExceptions = AuthenticationException.class)
   public void should_fail_to_connect_without_credentials() {
-    Cluster cluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints())
-                .withPort(ccm().getBinaryPort())
-                .build());
+    Cluster cluster = register(createClusterBuilder().build());
     cluster.connect();
   }
 
@@ -124,9 +108,7 @@ public class AuthenticationTest extends CCMTestsSupport {
   @CCMConfig(dirtiesContext = true)
   public void should_connect_with_slow_server() {
     Cluster cluster =
-        Cluster.builder()
-            .addContactPoints(getContactPoints())
-            .withPort(ccm().getBinaryPort())
+        createClusterBuilder()
             .withAuthProvider(new SlowAuthProvider())
             .withPoolingOptions(new PoolingOptions().setHeartbeatIntervalSeconds(1))
             .build();
@@ -169,13 +151,7 @@ public class AuthenticationTest extends CCMTestsSupport {
   @Test(groups = "short")
   public void should_not_create_pool_with_wrong_credentials() {
     PlainTextAuthProvider authProvider = new PlainTextAuthProvider("cassandra", "cassandra");
-    Cluster cluster =
-        register(
-            Cluster.builder()
-                .addContactPoints(getContactPoints())
-                .withPort(ccm().getBinaryPort())
-                .withAuthProvider(authProvider)
-                .build());
+    Cluster cluster = register(createClusterBuilder().withAuthProvider(authProvider).build());
     cluster.init();
     authProvider.setPassword("wrong");
     Level previous = TestUtils.setLogLevel(Session.class, Level.WARN);
