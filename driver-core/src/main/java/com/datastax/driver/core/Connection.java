@@ -577,7 +577,9 @@ class Connection {
     // Testing for a specific string is a tad fragile but well, we don't have much choice
     // C* 2.1 reports a server error instead of protocol error, see CASSANDRA-9451
     return (error.code == ExceptionCode.PROTOCOL_ERROR || error.code == ExceptionCode.SERVER_ERROR)
-        && error.message.contains("Invalid or unsupported protocol version");
+        && (error.message.contains("Invalid or unsupported protocol version")
+            // JAVA-2924: server is behind driver and considers the proposed version as beta
+            || error.message.contains("Beta version of the protocol used"));
   }
 
   private UnsupportedProtocolVersionException unsupportedProtocolVersionException(

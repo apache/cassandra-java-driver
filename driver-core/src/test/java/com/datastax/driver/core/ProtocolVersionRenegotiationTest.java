@@ -16,7 +16,7 @@
 package com.datastax.driver.core;
 
 import static com.datastax.driver.core.ProtocolVersion.V1;
-import static com.datastax.driver.core.ProtocolVersion.V4;
+import static com.datastax.driver.core.ProtocolVersion.V5;
 import static com.datastax.driver.core.ProtocolVersion.V6;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -55,13 +55,14 @@ public class ProtocolVersionRenegotiationTest extends CCMTestsSupport {
   /** @jira_ticket JAVA-1367 */
   @Test(groups = "short")
   public void should_fail_when_version_provided_and_too_high() throws Exception {
-    if (ccm().getCassandraVersion().compareTo(VersionNumber.parse("2.2")) >= 0) {
-      throw new SkipException("Server supports protocol V4");
+    if (ccm().getCassandraVersion().compareTo(VersionNumber.parse("3.10")) >= 0) {
+      throw new SkipException("Server supports protocol V5");
     }
-    UnsupportedProtocolVersionException e = connectWithUnsupportedVersion(V4);
-    assertThat(e.getUnsupportedVersion()).isEqualTo(V4);
-    // pre-CASSANDRA-11464: server replies with its own version
-    assertThat(e.getServerVersion()).isEqualTo(protocolVersion);
+    UnsupportedProtocolVersionException e = connectWithUnsupportedVersion(V5);
+    assertThat(e.getUnsupportedVersion()).isEqualTo(V5);
+    // see CASSANDRA-11464: for C* < 3.0.9 and 3.8, server replies with its own version;
+    // otherwise it replies with the client's version.
+    assertThat(e.getServerVersion()).isIn(V5, protocolVersion);
   }
 
   /** @jira_ticket JAVA-1367 */
