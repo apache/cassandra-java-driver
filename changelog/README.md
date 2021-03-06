@@ -9,6 +9,7 @@
 
 - [improvement] JAVA-2705: Remove protocol v5 beta status, add v6-beta.
 - [bug] JAVA-2923: Detect and use Guava's new HostAndPort.getHost method.
+- [bug] JAVA-2922: Switch to modern framing format inside a channel handler.
 
 ## 3.10.2
 
