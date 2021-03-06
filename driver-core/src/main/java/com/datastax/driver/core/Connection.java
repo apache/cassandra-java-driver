@@ -351,11 +351,6 @@ class Connection {
     return new AsyncFunction<Message.Response, Void>() {
       @Override
       public ListenableFuture<Void> apply(Message.Response response) throws Exception {
-
-        if (protocolVersion.compareTo(ProtocolVersion.V5) >= 0 && response.type != ERROR) {
-          switchToV5Framing();
-        }
-
         switch (response.type) {
           case READY:
             return checkClusterName(protocolVersion, initExecutor);
@@ -1730,6 +1725,8 @@ class Connection {
       pipeline.addLast("frameDecoder", new Frame.Decoder());
       pipeline.addLast("frameEncoder", frameEncoder);
 
+      pipeline.addLast("framingFormatHandler", new FramingFormatHandler(connection.factory));
+
       if (compressor != null
           // Frame-level compression is only done in legacy protocol versions. In V5 and above, it
           // happens at a higher level ("segment" that groups multiple frames), so never install
@@ -1767,37 +1764,6 @@ class Connection {
           throw new DriverInternalError("Unsupported protocol version " + protocolVersion);
       }
     }
-  }
-
-  /**
-   * Rearranges the pipeline to deal with the new framing structure in protocol v5 and above. This
-   * has to be done manually, because it only happens once we've confirmed that the server supports
-   * v5.
-   */
-  void switchToV5Framing() {
-    // We want to do this on the event loop, to make sure it doesn't race with incoming requests
-    assert channel.eventLoop().inEventLoop();
-
-    ChannelPipeline pipeline = channel.pipeline();
-    SegmentCodec segmentCodec =
-        new SegmentCodec(
-            channel.alloc(), factory.configuration.getProtocolOptions().getCompression());
-
-    // Outbound: "message -> segment -> bytes" instead of "message -> frame -> bytes"
-    Message.ProtocolEncoder requestEncoder =
-        (Message.ProtocolEncoder) pipeline.get("messageEncoder");
-    pipeline.replace(
-        "messageEncoder",
-        "messageToSegmentEncoder",
-        new MessageToSegmentEncoder(channel.alloc(), requestEncoder));
-    pipeline.replace(
-        "frameEncoder", "segmentToBytesEncoder", new SegmentToBytesEncoder(segmentCodec));
-
-    // Inbound: "frame <- segment <- bytes" instead of "frame <- bytes"
-    pipeline.replace(
-        "frameDecoder", "bytesToSegmentDecoder", new BytesToSegmentDecoder(segmentCodec));
-    pipeline.addAfter(
-        "bytesToSegmentDecoder", "segmentToFrameDecoder", new SegmentToFrameDecoder());
   }
 
   /** A component that "owns" a connection, and should be notified when it dies. */
