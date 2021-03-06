@@ -875,7 +875,7 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
                   .groupBy("a", "clustering1"));
       fail("Expecting IQE");
     } catch (InvalidQueryException e) {
-      assertThat(e.getMessage()).isEqualTo("Undefined column name clustering1");
+      assertThat(e.getMessage()).startsWith("Undefined column name clustering1");
     }
 
     try {
@@ -890,7 +890,7 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
                   .groupBy("a", "b", "z"));
       fail("Expecting IQE");
     } catch (InvalidQueryException e) {
-      assertThat(e.getMessage()).isEqualTo("Undefined column name z");
+      assertThat(e.getMessage()).startsWith("Undefined column name z");
     }
 
     // Test with composite partition key
