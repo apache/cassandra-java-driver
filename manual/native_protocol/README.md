@@ -20,13 +20,13 @@ backward-compatible with older versions:
 <th>Cassandra 2.0.x<br/>(DSE 4.0 to 4.6)</th><th>Cassandra 2.1.x<br/>(DSE 4.7)</th>
 <th>Cassandra 2.2.x</th>
 <th>Cassandra 3.0.x &amp; 3.x<br/>(DSE 5.0+)</th><th>Cassandra 4.0+</th></tr>
-<tr><th>1.0.x</th> <td>v1</td> <td>v1</td>  <td>v1</td> <td>v1</td> <td>Unsupported <i>(1)</i></td> 
+<tr><td>1.0.x</td> <td>v1</td> <td>v1</td>  <td>v1</td> <td>v1</td> <td>Unsupported <i>(1)</i></td> 
 <td>Unsupported <i>(1)</i></td> </tr>
-<tr><th>2.0.x to 2.1.1</th> <td>v1</td> <td>v2</td> <td>v2</td> <td>v2</td> 
+<tr><td>2.0.x to 2.1.1</td> <td>v1</td> <td>v2</td> <td>v2</td> <td>v2</td> 
 <td>Unsupported <i>(1)</i></td> <td>Unsupported <i>(1)</i></td> </tr>
-<tr><th>2.1.2 to 2.1.x</th> <td>v1</td> <td>v2</td>  <td>v3</td> <td>v3</td>
+<tr><td>2.1.2 to 2.1.x</td> <td>v1</td> <td>v2</td>  <td>v3</td> <td>v3</td>
 <td>Unsupported <i>(2)</i></td><td>Unsupported <i>(2)</i></td> </tr>
-<tr><th>3.x</th> <td>v1</td> <td>v2</td>  <td>v3</td> <td>v4</td> <td>v4</td> <td>v5</td> </tr>
+<tr><td>3.x</td> <td>v1</td> <td>v2</td>  <td>v3</td> <td>v4</td> <td>v4</td> <td>v5</td> </tr>
 </table>
 
 *(1) Cassandra 3.0+ does not support protocol versions v1 and v2*
