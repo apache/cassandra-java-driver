@@ -54,7 +54,6 @@ The driver contains the following modules:
 - API: https://docs.datastax.com/en/drivers/java/3.11
 - GITHUB REPOSITORY: https://github.com/datastax/java-driver
 - [changelog](changelog/)
-- [binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-3.11.0.tar.gz)
 
 ## Getting the driver
 
