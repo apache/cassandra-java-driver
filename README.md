@@ -67,7 +67,7 @@ using DataStax Enterprise, install the [DataStax Enterprise Java driver][dse-dri
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>3.10.2</version>
+  <version>3.11.0</version>
 </dependency>
 ```
 
