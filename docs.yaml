@@ -95,7 +95,7 @@ versions:
   - name: '4.0'
     ref: '4.0.1'
   - name: '3.11'
-    ref: '3.11.0'
+    ref: '0e80e4cc5'
   - name: '3.10'
     ref: '3.10.2_fixes'
   - name: '3.9'
