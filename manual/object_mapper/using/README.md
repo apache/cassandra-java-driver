@@ -28,9 +28,9 @@ Mapper<User> mapper = manager.mapper(User.class);
 calling `manager#mapper` more than once for the same class will return
 the previously generated mapper.
 
-[Mapper]:https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/mapping/Mapper.html
-[MappingManager]:https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/mapping/MappingManager.html
-[Session]:https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Session.html
+[Mapper]:https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/mapping/Mapper.html
+[MappingManager]:https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/mapping/MappingManager.html
+[Session]:https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Session.html
 
 #### Basic CRUD operations
 
@@ -179,7 +179,7 @@ It provides methods `one()`, `all()`, `iterator()`, `getExecutionInfo()`
 and `isExhausted()`. Note that iterating the `Result` will consume the
 `ResultSet`, and vice-versa.
 
-[Result]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/mapping/Result.html
+[Result]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/mapping/Result.html
 
 ### Accessors
 
@@ -229,7 +229,7 @@ corresponds to which marker:
 ResultSet insert(@Param("u") UUID userId, @Param("n") String name);
 ```
 
-[param]:https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/mapping/annotations/Param.html
+[param]:https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/mapping/annotations/Param.html
 
 If a method argument is a Java enumeration, it must be annotated with
 `@Enumerated` to indicate how to convert it to a CQL type (the rules are
@@ -301,7 +301,7 @@ query with the annotation [@QueryParameters]. Then, options like
 public ListenableFuture<Result<User>> getAllAsync();
 ```
 
-[@QueryParameters]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/mapping/annotations/QueryParameters.html
+[@QueryParameters]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/mapping/annotations/QueryParameters.html
 
 
 ### Mapping configuration
@@ -345,6 +345,6 @@ PropertyMapper propertyMapper = new DefaultPropertyMapper()
 There is more to `DefaultPropertyMapper`; see the Javadocs and implementation for details.
 
 
-[MappingConfiguration]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/mapping/MappingConfiguration.html
-[PropertyMapper]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/mapping/PropertyMapper.html
-[DefaultPropertyMapper]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/mapping/DefaultPropertyMapper.html
+[MappingConfiguration]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/mapping/MappingConfiguration.html
+[PropertyMapper]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/mapping/PropertyMapper.html
+[DefaultPropertyMapper]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/mapping/DefaultPropertyMapper.html

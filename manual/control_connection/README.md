@@ -18,4 +18,4 @@ used exclusively for administrative requests. It is included in [Session.State.g
 as well as the `open-connections` [metric](../metrics); for example, if you've configured a pool
 size of 2, the control node will have 3 connections.
 
-[Session.State.getOpenConnections]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Session.State.html#getOpenConnections-com.datastax.driver.core.Host-
+[Session.State.getOpenConnections]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Session.State.html#getOpenConnections-com.datastax.driver.core.Host-

@@ -4,7 +4,7 @@ The driver maintains global information about the Cassandra cluster it
 is connected to. It is available via
 [Cluster#getMetadata()][getMetadata].
 
-[getMetadata]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Cluster.html#getMetadata--
+[getMetadata]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Cluster.html#getMetadata--
 
 ### Schema metadata
 
@@ -12,8 +12,8 @@ Use [getKeyspace(String)][getKeyspace] or [getKeyspaces()][getKeyspaces]
 to get keyspace-level metadata. From there you can access the keyspace's
 objects (tables, and UDTs and UDFs if relevant).
 
-[getKeyspace]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Metadata.html#getKeyspace-java.lang.String-
-[getKeyspaces]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Metadata.html#getKeyspaces--
+[getKeyspace]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Metadata.html#getKeyspace-java.lang.String-
+[getKeyspaces]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Metadata.html#getKeyspaces--
 
 #### Refreshes
 
@@ -47,8 +47,8 @@ Note that it is preferable to register a listener only *after* the cluster is fu
 otherwise the listener could be notified with a great deal of "Added" events as
 the driver builds the schema metadata from scratch for the first time.
 
-[SchemaChangeListener]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/SchemaChangeListener.html
-[registerListener]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Cluster.html#register-com.datastax.driver.core.SchemaChangeListener-
+[SchemaChangeListener]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/SchemaChangeListener.html
+[registerListener]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Cluster.html#register-com.datastax.driver.core.SchemaChangeListener-
 
 #### Schema agreement
 
@@ -135,9 +135,9 @@ custom executor).
 
 Check out the API docs for the features in this section:
 
-* [withMaxSchemaAgreementWaitSeconds(int)](https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Cluster.Builder.html#withMaxSchemaAgreementWaitSeconds-int-)
-* [isSchemaInAgreement()](https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/ExecutionInfo.html#isSchemaInAgreement--)
-* [checkSchemaAgreement()](https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Metadata.html#checkSchemaAgreement--)
+* [withMaxSchemaAgreementWaitSeconds(int)](https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Cluster.Builder.html#withMaxSchemaAgreementWaitSeconds-int-)
+* [isSchemaInAgreement()](https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/ExecutionInfo.html#isSchemaInAgreement--)
+* [checkSchemaAgreement()](https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Metadata.html#checkSchemaAgreement--)
 
 
 ### Token metadata
@@ -181,14 +181,14 @@ Starting with Cassandra 2.1.5, this information is available in a system
 table (see
 [CASSANDRA-7688](https://issues.apache.org/jira/browse/CASSANDRA-7688)).
 
-[metadata]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Metadata.html
-[getTokenRanges]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Metadata.html#getTokenRanges--
-[getTokenRanges2]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Metadata.html#getTokenRanges-java.lang.String-com.datastax.driver.core.Host-
-[getReplicas]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Metadata.html#getReplicas-java.lang.String-com.datastax.driver.core.TokenRange-
-[newToken]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Metadata.html#newToken-java.lang.String-
-[newTokenRange]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Metadata.html#newTokenRange-com.datastax.driver.core.Token-com.datastax.driver.core.Token-
-[TokenRange]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/TokenRange.html
-[getTokens]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Host.html#getTokens--
-[setToken]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/BoundStatement.html#setToken-int-com.datastax.driver.core.Token-
-[getToken]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Row.html#getToken-int-
-[getPKToken]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Row.html#getPartitionKeyToken--
+[metadata]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Metadata.html
+[getTokenRanges]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Metadata.html#getTokenRanges--
+[getTokenRanges2]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Metadata.html#getTokenRanges-java.lang.String-com.datastax.driver.core.Host-
+[getReplicas]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Metadata.html#getReplicas-java.lang.String-com.datastax.driver.core.TokenRange-
+[newToken]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Metadata.html#newToken-java.lang.String-
+[newTokenRange]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Metadata.html#newTokenRange-com.datastax.driver.core.Token-com.datastax.driver.core.Token-
+[TokenRange]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/TokenRange.html
+[getTokens]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Host.html#getTokens--
+[setToken]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/BoundStatement.html#setToken-int-com.datastax.driver.core.Token-
+[getToken]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Row.html#getToken-int-
+[getPKToken]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Row.html#getPartitionKeyToken--

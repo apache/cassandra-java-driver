@@ -73,7 +73,7 @@ Speculative executions are controlled by an instance of
 `Cluster`.  This policy defines the threshold after which a new
 speculative execution will be triggered.
 
-[SpeculativeExecutionPolicy]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/SpeculativeExecutionPolicy.html
+[SpeculativeExecutionPolicy]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/policies/SpeculativeExecutionPolicy.html
 
 Two implementations are provided with the driver:
 
@@ -101,7 +101,7 @@ way:
 * if no response has been received at t0 + 1000 milliseconds, start
   another speculative execution on a third node.
 
-[ConstantSpeculativeExecutionPolicy]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/ConstantSpeculativeExecutionPolicy.html
+[ConstantSpeculativeExecutionPolicy]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/policies/ConstantSpeculativeExecutionPolicy.html
 
 #### [PercentileSpeculativeExecutionPolicy]
 
@@ -160,10 +160,10 @@ Note that `PercentileTracker` may also be used with a slow query
 logger (see the [Logging](../logging/) section). In that case, you would
 create a single tracker object and share it with both components.
 
-[PercentileSpeculativeExecutionPolicy]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/PercentileSpeculativeExecutionPolicy.html
-[PercentileTracker]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/PercentileTracker.html
-[ClusterWidePercentileTracker]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/ClusterWidePercentileTracker.html
-[PerHostPercentileTracker]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/PerHostPercentileTracker.html
+[PercentileSpeculativeExecutionPolicy]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/policies/PercentileSpeculativeExecutionPolicy.html
+[PercentileTracker]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/PercentileTracker.html
+[ClusterWidePercentileTracker]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/ClusterWidePercentileTracker.html
+[PerHostPercentileTracker]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/PerHostPercentileTracker.html
 [hdr]: http://hdrhistogram.github.io/HdrHistogram/
 
 #### Using your own
@@ -210,7 +210,7 @@ client           driver          exec1  exec2
 The only impact is that all executions of the same query always share
 the same query plan, so each host will be used by at most one execution.
 
-[retry_policy]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/RetryPolicy.html
+[retry_policy]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/policies/RetryPolicy.html
 
 ### Tuning and practical details
 
@@ -225,8 +225,8 @@ You can monitor how many speculative executions were triggered with the
 It should only be a few percents of the total number of requests
 ([cluster.getMetrics().getRequestsTimer().getCount()][request_metric]).
 
-[se_metric]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Metrics.Errors.html#getSpeculativeExecutions--
-[request_metric]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Metrics.html#getRequestsTimer--
+[se_metric]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Metrics.Errors.html#getSpeculativeExecutions--
+[request_metric]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Metrics.html#getRequestsTimer--
 
 #### Stream id exhaustion
 
@@ -255,8 +255,8 @@ sustained. If you're unsure of which native protocol version you're
 using, you can check with
 [cluster.getConfiguration().getProtocolOptions().getProtocolVersion()][protocol_version].
 
-[session_state]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Session.State.html
-[protocol_version]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersion--
+[session_state]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Session.State.html
+[protocol_version]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersion--
 
 #### Request ordering and client timestamps
 

@@ -28,7 +28,7 @@ You can also write your own provider; it must implement [AuthProvider].
 
 [SASL]: https://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer
 
-[Cluster.Builder.withCredentials]:  https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Cluster.Builder.html#withCredentials-java.lang.String-java.lang.String-
-[AuthProvider]:                     https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/AuthProvider.html
-[Cluster.Builder.withAuthProvider]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Cluster.Builder.html#withAuthProvider-com.datastax.driver.core.AuthProvider-
-[PlainTextAuthProvider]:            https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/PlainTextAuthProvider.html
+[Cluster.Builder.withCredentials]:  https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Cluster.Builder.html#withCredentials-java.lang.String-java.lang.String-
+[AuthProvider]:                     https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/AuthProvider.html
+[Cluster.Builder.withAuthProvider]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Cluster.Builder.html#withAuthProvider-com.datastax.driver.core.AuthProvider-
+[PlainTextAuthProvider]:            https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/PlainTextAuthProvider.html

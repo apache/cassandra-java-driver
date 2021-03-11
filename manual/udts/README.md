@@ -95,5 +95,5 @@ session.execute(bs);
 
 [cql_doc]: https://docs.datastax.com/en/cql/3.3/cql/cql_reference/cqlRefUDType.html
 
-[UDTValue]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/UDTValue.html
-[UserType]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/UserType.html
+[UDTValue]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/UDTValue.html
+[UserType]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/UserType.html

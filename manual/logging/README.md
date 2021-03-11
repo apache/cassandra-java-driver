@@ -208,12 +208,12 @@ Aggregation query used without partition key
 ```
 
 These
-[query warnings](https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/ExecutionInfo.html#getWarnings--)
+[query warnings](https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/ExecutionInfo.html#getWarnings--)
 are available programmatically from the
-[ExecutionInfo](https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/ExecutionInfo.html)
+[ExecutionInfo](https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/ExecutionInfo.html)
 via
-[ResultSet](https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/ResultSet.html)'s
-[getExecutionInfo()](https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/PagingIterable.html#getExecutionInfo--)
+[ResultSet](https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/ResultSet.html)'s
+[getExecutionInfo()](https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/PagingIterable.html#getExecutionInfo--)
 method. They are also logged by the driver:
 
 ```
@@ -340,4 +340,4 @@ It also turns on slow query tracing as described above.
 </log4j:configuration>
 ```
 
-[query_logger]:https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/QueryLogger.html
+[query_logger]:https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/QueryLogger.html

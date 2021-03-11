@@ -29,7 +29,7 @@ You can also write your own policy; it must implement [ReconnectionPolicy].
 For best results, use reasonable values: very low values (for example a constant delay of 10
 milliseconds) will quickly saturate your system.
 
-[ReconnectionPolicy]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/ReconnectionPolicy.html
-[Cluster.Builder.withReconnectionPolicy]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/Cluster.Builder.html#withReconnectionPolicy-com.datastax.driver.core.policies.ReconnectionPolicy-
-[ExponentialReconnectionPolicy]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/ExponentialReconnectionPolicy.html
-[ConstantReconnectionPolicy]:    https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/policies/ConstantReconnectionPolicy.html
+[ReconnectionPolicy]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/policies/ReconnectionPolicy.html
+[Cluster.Builder.withReconnectionPolicy]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/Cluster.Builder.html#withReconnectionPolicy-com.datastax.driver.core.policies.ReconnectionPolicy-
+[ExponentialReconnectionPolicy]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/policies/ExponentialReconnectionPolicy.html
+[ConstantReconnectionPolicy]:    https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/policies/ConstantReconnectionPolicy.html

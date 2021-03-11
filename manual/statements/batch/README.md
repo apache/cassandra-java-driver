@@ -34,9 +34,9 @@ In addition, simple statements with named parameters are currently not supported
 due to a [protocol limitation][CASSANDRA-10246] that will be fixed in a future version). If you try
 to execute such a batch, an `IllegalArgumentException` is thrown.
 
-[BatchStatement]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/BatchStatement.html
+[BatchStatement]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/BatchStatement.html
 [batch_dse]: http://docs.datastax.com/en/dse/5.1/cql/cql/cql_using/useBatch.html
-[LOGGED]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/BatchStatement.Type.html#LOGGED
-[UNLOGGED]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/BatchStatement.Type.html#UNLOGGED
+[LOGGED]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/BatchStatement.Type.html#LOGGED
+[UNLOGGED]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/BatchStatement.Type.html#UNLOGGED
 [batch_size_fail_threshold]: https://docs.datastax.com/en/cassandra/3.x/cassandra/configuration/configCassandra_yaml.html#configCassandra_yaml__batch_size_fail_threshold_in_kb
 [CASSANDRA-10246]: https://issues.apache.org/jira/browse/CASSANDRA-10246

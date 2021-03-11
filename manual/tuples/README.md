@@ -96,7 +96,7 @@ bs.setList("l", Arrays.asList(oneTimeUsageTuple.newValue("1", "1"), oneTimeUsage
 session.execute(bs);
 ```
 
-[TupleType]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/TupleType.html
-[TupleValue]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/TupleValue.html
-[newValueVararg]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/TupleType.html#newValue-java.lang.Object...-
-[newValue]: https://docs.datastax.com/en/drivers/java/3.10/com/datastax/driver/core/TupleType.html#newValue--
+[TupleType]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/TupleType.html
+[TupleValue]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/TupleValue.html
+[newValueVararg]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/TupleType.html#newValue-java.lang.Object...-
+[newValue]: https://docs.datastax.com/en/drivers/java/3.11/com/datastax/driver/core/TupleType.html#newValue--
