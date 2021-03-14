@@ -36,6 +36,7 @@ public enum DependencyCheck {
       "com.fasterxml.jackson.core.JsonParser",
       // jackson-databind
       "com.fasterxml.jackson.databind.ObjectMapper"),
+  DROPWIZARD("com.codahale.metrics.MetricRegistry"),
   ;
 
   /**
