@@ -37,6 +37,7 @@ import com.datastax.oss.driver.internal.mapper.processor.util.generation.Generic
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -301,6 +302,10 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
     TypeSpec.Builder classBuilder =
         TypeSpec.classBuilder(implementationName)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
+            .addAnnotation(
+                AnnotationSpec.builder(SuppressWarnings.class)
+                    .addMember("value", "\"all\"")
+                    .build())
             .addModifiers(Modifier.PUBLIC)
             .addSuperinterface(ClassName.get(interfaceElement));
 

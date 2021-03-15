@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.protocol;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.internal.core.util.DependencyCheck;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.oracle.svm.core.annotate.Delete;
 import com.oracle.svm.core.annotate.Substitute;
@@ -33,6 +34,7 @@ import java.util.function.BooleanSupplier;
  * BuiltInCompressors#newInstance(String, DriverContext)} to throw an error if the user attempts to
  * configure it.
  */
+@SuppressWarnings("unused")
 public class CompressorSubstitutions {
 
   @TargetClass(value = BuiltInCompressors.class, onlyWith = Lz4Present.class)
@@ -87,17 +89,9 @@ public class CompressorSubstitutions {
   public static final class DeleteSnappyCompressor {}
 
   public static class Lz4Present implements BooleanSupplier {
-
-    private static final String LZ4_CLZ_NAME = "net.jpountz.lz4.LZ4Compressor";
-
     @Override
     public boolean getAsBoolean() {
-      try {
-        Class.forName(LZ4_CLZ_NAME);
-        return true;
-      } catch (ClassNotFoundException e) {
-        return false;
-      }
+      return DependencyCheck.LZ4.isPresent();
     }
   }
 

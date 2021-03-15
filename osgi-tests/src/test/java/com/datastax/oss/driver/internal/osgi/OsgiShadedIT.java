@@ -47,7 +47,7 @@ public class OsgiShadedIT {
   }
 
   @Test
-  public void test_shaded_reactive() throws Exception {
+  public void test_shaded() throws Exception {
     DefaultServiceChecks.checkService(service);
   }
 }
