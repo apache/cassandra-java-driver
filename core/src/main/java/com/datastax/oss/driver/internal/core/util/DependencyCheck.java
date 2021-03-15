@@ -15,7 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.util;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import com.datastax.oss.driver.shaded.guava.common.base.Supplier;
+import com.datastax.oss.driver.shaded.guava.common.base.Suppliers;
 
 /**
  * A set of driver optional dependencies and a common mechanism to test the presence of such
@@ -39,21 +40,32 @@ public enum DependencyCheck {
   DROPWIZARD("com.codahale.metrics.MetricRegistry"),
   ;
 
+  @SuppressWarnings("ImmutableEnumChecker")
+  private final Supplier<Boolean> present;
+
   /**
-   * The fully-qualified name of classes that must exist for the dependency to work properly; we use
-   * them to test the presence of the whole dependency on the classpath, including its transitive
-   * dependencies if applicable. This assumes that if these classes are present, then the entire
-   * library is present and functional, and vice versa.
+   * We use the given fully-qualified names of classes to test the presence of the whole dependency
+   * on the classpath, including its transitive dependencies if applicable. This assumes that if
+   * these classes are present, then the entire library is present and functional, and vice versa.
    *
    * <p>Note: some of the libraries declared here may be shaded; in these cases the shade plugin
    * will replace the package names listed above with names starting with {@code
    * com.datastax.oss.driver.shaded.*}, but the presence check would still work as expected.
    */
-  @SuppressWarnings("ImmutableEnumChecker")
-  private final ImmutableSet<String> fqcns;
-
-  DependencyCheck(String... fqcns) {
-    this.fqcns = ImmutableSet.copyOf(fqcns);
+  DependencyCheck(String... classNamesToTest) {
+    this.present =
+        Suppliers.memoize(
+            () -> {
+              for (String classNameToTest : classNamesToTest) {
+                // Always use the driver class loader, assuming that the driver classes and
+                // the dependency classes are either being loaded by the same class loader,
+                // or – as in OSGi deployments – by two distinct, but compatible class loaders.
+                if (Reflection.loadClass(null, classNameToTest) == null) {
+                  return false;
+                }
+              }
+              return true;
+            });
   }
 
   /**
@@ -62,14 +74,6 @@ public enum DependencyCheck {
    * @return true if the dependency is present and loadable, false otherwise.
    */
   public boolean isPresent() {
-    for (String fqcn : fqcns) {
-      // Always use the driver class loader, assuming that the driver classes and
-      // the dependency classes are either being loaded by the same class loader,
-      // or – as in OSGi deployments – by two distinct, but compatible class loaders.
-      if (Reflection.loadClass(null, fqcn) == null) {
-        return false;
-      }
-    }
-    return true;
+    return present.get();
   }
 }
