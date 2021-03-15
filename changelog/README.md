@@ -4,6 +4,7 @@
 
 ### 4.11.0 (in progress)
 
+- [improvement] JAVA-2704: Remove protocol v5 beta status, add v6-beta
 - [improvement] JAVA-2916: Annotate generated classes with `@SuppressWarnings`
 - [bug] JAVA-2927: Make Dropwizard truly optional
 - [improvement] JAVA-2917: Include GraalVM substitutions for request processors and geo codecs

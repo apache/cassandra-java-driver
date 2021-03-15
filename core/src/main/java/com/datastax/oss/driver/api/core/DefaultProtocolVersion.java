@@ -30,14 +30,17 @@ public enum DefaultProtocolVersion implements ProtocolVersion {
   /** Version 4, supported by Cassandra 2.2 and above. */
   V4(ProtocolConstants.Version.V4, false),
 
+  /** Version 5, supported by Cassandra 4.0 and above. */
+  V5(ProtocolConstants.Version.V5, false),
+
   /**
-   * Version 5, currently supported as a beta preview in Cassandra 3.10 and above.
+   * Version 6, currently supported as a beta preview in Cassandra 4.0 and above.
    *
    * <p>Do not use this in production.
    *
    * @see ProtocolVersion#isBeta()
    */
-  V5(ProtocolConstants.Version.V5, true),
+  V6(ProtocolConstants.Version.V6, true),
   ;
   // Note that, for the sake of convenience, we also expose shortcuts to these constants on the
   // ProtocolVersion interface. If you add a new enum constant, remember to update the interface as
