@@ -95,6 +95,44 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
   }
 
   @Test
+  public void should_fail_if_version_specified_and_considered_beta_by_server() {
+    // Given
+    when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn(true);
+    when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn("V5");
+    when(protocolVersionRegistry.fromName("V5")).thenReturn(DefaultProtocolVersion.V5);
+    ChannelFactory factory = newChannelFactory();
+
+    // When
+    CompletionStage<DriverChannel> channelFuture =
+        factory.connect(
+            SERVER_ADDRESS, DriverChannelOptions.DEFAULT, NoopNodeMetricUpdater.INSTANCE);
+
+    Frame requestFrame = readOutboundFrame();
+    assertThat(requestFrame.message).isInstanceOf(Options.class);
+    writeInboundFrame(requestFrame, TestResponses.supportedResponse("mock_key", "mock_value"));
+
+    requestFrame = readOutboundFrame();
+    assertThat(requestFrame.protocolVersion).isEqualTo(DefaultProtocolVersion.V5.getCode());
+    // Server considers v5 beta, e.g. C* 3.10 or 3.11
+    writeInboundFrame(
+        requestFrame,
+        new Error(
+            ProtocolConstants.ErrorCode.PROTOCOL_ERROR,
+            "Beta version of the protocol used (5/v5-beta), but USE_BETA flag is unset"));
+
+    // Then
+    assertThatStage(channelFuture)
+        .isFailed(
+            e -> {
+              assertThat(e)
+                  .isInstanceOf(UnsupportedProtocolVersionException.class)
+                  .hasMessageContaining("Host does not support protocol version V5");
+              assertThat(((UnsupportedProtocolVersionException) e).getAttemptedVersions())
+                  .containsExactly(DefaultProtocolVersion.V5);
+            });
+  }
+
+  @Test
   public void should_succeed_if_version_not_specified_and_server_supports_latest_supported() {
     // Given
     when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn(false);
