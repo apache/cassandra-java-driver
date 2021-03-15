@@ -36,8 +36,8 @@ import com.datastax.oss.simulacron.common.cluster.QueryLog;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -125,8 +125,8 @@ public class BoundStatementSimulacronIT {
   @Test
   public void should_use_timeout_from_simple_statement() {
     try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE)) {
-      Map<String, Object> params = ImmutableMap.of("k", 0);
-      Map<String, String> paramTypes = ImmutableMap.of("k", "int");
+      LinkedHashMap<String, Object> params = new LinkedHashMap<>(ImmutableMap.of("k", 0));
+      LinkedHashMap<String, String> paramTypes = new LinkedHashMap<>(ImmutableMap.of("k", "int"));
       SIMULACRON_RULE
           .cluster()
           .prime(
@@ -156,8 +156,8 @@ public class BoundStatementSimulacronIT {
   @Test
   public void should_use_timeout() {
     try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE)) {
-      Map<String, Object> params = ImmutableMap.of("k", 0);
-      Map<String, String> paramTypes = ImmutableMap.of("k", "int");
+      LinkedHashMap<String, Object> params = new LinkedHashMap<>(ImmutableMap.of("k", 0));
+      LinkedHashMap<String, String> paramTypes = new LinkedHashMap<>(ImmutableMap.of("k", "int"));
       // set timeout on simple statement, but will be unused since overridden by bound statement.
       SIMULACRON_RULE
           .cluster()
