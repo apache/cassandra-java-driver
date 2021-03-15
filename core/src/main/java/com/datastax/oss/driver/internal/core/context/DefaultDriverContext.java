@@ -16,17 +16,9 @@
 package com.datastax.oss.driver.internal.core.context;
 
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
-import com.datastax.dse.driver.api.core.type.codec.DseTypeCodecs;
 import com.datastax.dse.driver.internal.core.InsightsClientLifecycleListener;
-import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousCqlRequestAsyncProcessor;
-import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousCqlRequestSyncProcessor;
-import com.datastax.dse.driver.internal.core.cql.continuous.reactive.ContinuousCqlRequestReactiveProcessor;
-import com.datastax.dse.driver.internal.core.cql.reactive.CqlRequestReactiveProcessor;
-import com.datastax.dse.driver.internal.core.graph.GraphRequestAsyncProcessor;
-import com.datastax.dse.driver.internal.core.graph.GraphRequestSyncProcessor;
-import com.datastax.dse.driver.internal.core.graph.GraphSupportChecker;
-import com.datastax.dse.driver.internal.core.graph.reactive.ReactiveGraphRequestProcessor;
 import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
+import com.datastax.dse.driver.internal.core.type.codec.DseTypeCodecsRegistrar;
 import com.datastax.dse.protocol.internal.DseProtocolV1ClientCodecs;
 import com.datastax.dse.protocol.internal.DseProtocolV2ClientCodecs;
 import com.datastax.dse.protocol.internal.ProtocolV4ClientCodecsForDse;
@@ -60,10 +52,6 @@ import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.DefaultWriteCoalescer;
 import com.datastax.oss.driver.internal.core.channel.WriteCoalescer;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
-import com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor;
-import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
-import com.datastax.oss.driver.internal.core.cql.CqlRequestAsyncProcessor;
-import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
 import com.datastax.oss.driver.internal.core.metadata.CloudTopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.DefaultTopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
@@ -83,6 +71,7 @@ import com.datastax.oss.driver.internal.core.protocol.BuiltInCompressors;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
 import com.datastax.oss.driver.internal.core.servererrors.DefaultWriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.servererrors.WriteTypeRegistry;
+import com.datastax.oss.driver.internal.core.session.BuiltInRequestProcessors;
 import com.datastax.oss.driver.internal.core.session.PoolManager;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
@@ -105,7 +94,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.buffer.ByteBuf;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -503,65 +491,10 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected RequestProcessorRegistry buildRequestProcessorRegistry() {
-    String logPrefix = getSessionName();
-
-    List<RequestProcessor<?, ?>> processors = new ArrayList<>();
-
-    // regular requests (sync and async)
-    CqlRequestAsyncProcessor cqlRequestAsyncProcessor = new CqlRequestAsyncProcessor();
-    CqlRequestSyncProcessor cqlRequestSyncProcessor =
-        new CqlRequestSyncProcessor(cqlRequestAsyncProcessor);
-    processors.add(cqlRequestAsyncProcessor);
-    processors.add(cqlRequestSyncProcessor);
-
-    // prepare requests (sync and async)
-    CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor = new CqlPrepareAsyncProcessor();
-    CqlPrepareSyncProcessor cqlPrepareSyncProcessor =
-        new CqlPrepareSyncProcessor(cqlPrepareAsyncProcessor);
-    processors.add(cqlPrepareAsyncProcessor);
-    processors.add(cqlPrepareSyncProcessor);
-
-    // continuous requests (sync and async)
-    ContinuousCqlRequestAsyncProcessor continuousCqlRequestAsyncProcessor =
-        new ContinuousCqlRequestAsyncProcessor();
-    ContinuousCqlRequestSyncProcessor continuousCqlRequestSyncProcessor =
-        new ContinuousCqlRequestSyncProcessor(continuousCqlRequestAsyncProcessor);
-    processors.add(continuousCqlRequestAsyncProcessor);
-    processors.add(continuousCqlRequestSyncProcessor);
-
-    // graph requests (sync and async)
-    GraphRequestAsyncProcessor graphRequestAsyncProcessor = null;
-    if (DependencyCheck.TINKERPOP.isPresent()) {
-      graphRequestAsyncProcessor = new GraphRequestAsyncProcessor(this, new GraphSupportChecker());
-      GraphRequestSyncProcessor graphRequestSyncProcessor =
-          new GraphRequestSyncProcessor(graphRequestAsyncProcessor);
-      processors.add(graphRequestAsyncProcessor);
-      processors.add(graphRequestSyncProcessor);
-    } else {
-      LOG.info(
-          "Could not register Graph extensions; "
-              + "this is normal if Tinkerpop was explicitly excluded from classpath");
-    }
-
-    // reactive requests (regular, continuous and graph)
-    if (DependencyCheck.REACTIVE_STREAMS.isPresent()) {
-      CqlRequestReactiveProcessor cqlRequestReactiveProcessor =
-          new CqlRequestReactiveProcessor(cqlRequestAsyncProcessor);
-      ContinuousCqlRequestReactiveProcessor continuousCqlRequestReactiveProcessor =
-          new ContinuousCqlRequestReactiveProcessor(continuousCqlRequestAsyncProcessor);
-      processors.add(cqlRequestReactiveProcessor);
-      processors.add(continuousCqlRequestReactiveProcessor);
-      if (graphRequestAsyncProcessor != null) {
-        ReactiveGraphRequestProcessor reactiveGraphRequestProcessor =
-            new ReactiveGraphRequestProcessor(graphRequestAsyncProcessor);
-        processors.add(reactiveGraphRequestProcessor);
-      }
-    } else {
-      LOG.info(
-          "Could not register Reactive extensions; "
-              + "this is normal if Reactive Streams was explicitly excluded from classpath");
-    }
-    return new RequestProcessorRegistry(logPrefix, processors.toArray(new RequestProcessor[0]));
+    List<RequestProcessor<?, ?>> processors =
+        BuiltInRequestProcessors.createDefaultProcessors(this);
+    return new RequestProcessorRegistry(
+        getSessionName(), processors.toArray(new RequestProcessor[0]));
   }
 
   protected CodecRegistry buildCodecRegistry(ProgrammaticArguments arguments) {
@@ -570,14 +503,7 @@ public class DefaultDriverContext implements InternalDriverContext {
       registry = new DefaultCodecRegistry(this.sessionName);
     }
     registry.register(arguments.getTypeCodecs());
-    registry.register(DseTypeCodecs.DATE_RANGE);
-    if (DependencyCheck.ESRI.isPresent()) {
-      registry.register(DseTypeCodecs.LINE_STRING, DseTypeCodecs.POINT, DseTypeCodecs.POLYGON);
-    } else {
-      LOG.info(
-          "Could not register Geo codecs; "
-              + "this is normal if ESRI was explicitly excluded from classpath");
-    }
+    DseTypeCodecsRegistrar.registerDseCodecs(registry);
     return registry;
   }
 

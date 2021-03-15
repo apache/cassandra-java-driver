@@ -2,27 +2,135 @@
 
 ### Quick overview
 
-* `advanced.metrics` in the configuration. All disabled by default, can be selected individually.
+* `advanced.metrics` in the configuration. All metrics disabled by default. To enable, select the
+  metrics library to use, then define which individual metrics to activate.
 * some metrics are per node, others global to the session, or both.
 * unlike driver 3, JMX is not provided out of the box. You need to add the dependency manually.
 
 -----
 
-The driver exposes measurements of its internal behavior through a choice of three popular metrics
-frameworks: [Dropwizard Metrics], [Micrometer Metrics] or [MicroProfile Metrics]. Application
-developers can select a metrics framework, which metrics are enabled, and export them to a
-monitoring tool.
+The driver is able to report measurements of its internal behavior to a variety of metrics
+libraries, and ships with bindings for three popular ones: [Dropwizard Metrics] , [Micrometer
+Metrics] and [MicroProfile Metrics].
 
-### Structure
- 
-There are two categories of metrics:
+### Selecting a Metrics Library
+
+#### Dropwizard Metrics
+
+Dropwizard is the driver's default metrics library; there is no additional configuration nor any
+extra dependency to add if you wish to use Dropwizard.
+
+#### Micrometer
+
+To use Micrometer you must:
+
+1. Define `MicrometerMetricsFactory` as the metrics factory to use in the driver configuration: 
+
+```
+datastax-java-driver.advanced.metrics {
+  factory.class = MicrometerMetricsFactory
+}
+```
+
+2. Add a dependency to `java-driver-metrics-micrometer` in your application. This separate driver
+module contains the actual bindings for Micrometer, and depends itself on the Micrometer library:
+
+```xml
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-metrics-micrometer</artifactId>
+  <version>${driver.version}</version>
+</dependency>
+```
+
+3. You should also exclude Dropwizard and HdrHistogram, which are two transitive dependencies of the
+driver, because they are not relevant when using Micrometer:
+
+```xml
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-core</artifactId>
+  <exclusions>
+    <exclusion>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+    </exclusion>
+    <exclusion>
+      <groupId>org.hdrhistogram</groupId>
+      <artifactId>HdrHistogram</artifactId>
+    </exclusion>
+  </exclusions>
+</dependency>
+```
+
+#### MicroProfile Metrics
+
+To use MicroProfile Metrics you must:
+
+1. Define `MicroProfileMetricsFactory` as the metrics factory to use in the driver configuration:
+
+```
+datastax-java-driver.advanced.metrics {
+  factory.class = MicroProfileMetricsFactory
+}
+```
+
+2. Add a dependency to `java-driver-metrics-microprofile` in your application. This separate driver
+module contains the actual bindings for MicroProfile, and depends itself on the MicroProfile Metrics
+library:
+
+```xml
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-metrics-microprofile</artifactId>
+  <version>${driver.version}</version>
+</dependency>
+```
+
+3. You should also exclude Dropwizard and HdrHistogram, which are two transitive dependencies of the
+driver, because they are not relevant when using MicroProfile Metrics:
+
+```xml
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-core</artifactId>
+  <exclusions>
+    <exclusion>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+    </exclusion>
+    <exclusion>
+      <groupId>org.hdrhistogram</groupId>
+      <artifactId>HdrHistogram</artifactId>
+    </exclusion>
+  </exclusions>
+</dependency>
+```
+
+#### Other Metrics libraries
+
+Other metrics libraries can also be used. However, you will need to provide a custom
+metrics factory. Simply implement the
+`com.datastax.oss.driver.internal.core.metrics.MetricsFactory` interface for your library of choice,
+then pass the fully-qualified name of that implementation class to the driver using the
+`advanced.metrics.factory.class` option. See the [reference configuration].
+
+You will certainly need to add the metrics library as a dependency to your application as well.
+It is also recommended excluding Dropwizard and HdrHistogram, as shown above.
+
+### Enabling specific driver metrics
+
+Now that the metrics library is configured, you need to activate the driver metrics you are
+interested in.
+
+There are two categories of driver metrics:
 
 * session-level: the measured data is global to a `Session` instance. For example, `connected-nodes`
   measures the number of nodes to which we have connections.
 * node-level: the data is specific to a node (and therefore there is one metric instance per node).
   For example, `pool.open-connections` measures the number of connections open to this particular
   node.
-  
+
 Metric names are path-like, dot-separated strings. The driver prefixes them with the name of the
 session (see `session-name` in the configuration), and in the case of node-level metrics, `nodes`
 followed by a textual representation of the node's address. For example:
@@ -33,7 +141,8 @@ s0.nodes.127_0_0_1:9042.pool.open-connections => 2
 s0.nodes.127_0_0_2:9042.pool.open-connections => 1
 ```  
 
-### Configuration
+To find out which metrics are available, see the [reference configuration]. It contains a
+commented-out line for each metric, with detailed explanations on its intended usage.
 
 By default, all metrics are disabled. You can turn them on individually in the configuration, by
 adding their name to these lists:
@@ -45,59 +154,21 @@ datastax-java-driver.advanced.metrics {
 }
 ```
 
-To find out which metrics are available, see the [reference configuration]. It contains a
-commented-out line for each metric, with detailed explanations on its intended usage.
+If you specify a metric that doesn't exist, it will be ignored, and a warning will be logged.
 
-If you specify a metric that doesn't exist, it will be ignored and a warning will be logged.
+Finally, if you are using Dropwizard and enabled any metric of timer type, such as `cql-requests`,
+it is also possible to provide additional configuration to fine-tune the underlying histogram's
+characteristics and precision, such as its highest expected latency, its number of significant
+digits to use, and its refresh interval. Again, see the [reference configuration] for more details.
 
-The `metrics` section may also contain additional configuration for some specific metrics; again,
-see the [reference configuration] for more details.
+### Using an external metric registry
 
-#### Changing the Metrics Frameworks
+Regardless of which metrics library is used, you can provide an external metric registry object when
+building a session. This allows the driver to transparently export its operational metrics to
+whatever reporting system you want to use.
 
-The default metrics framework is Dropwizard. You can change this to either Micrometer or
-MicroProfile in the configuration:
-
-```
-datastax-java-driver.advanced.metrics {
-  factory.class = MicrometerMetricsFactory
-}
-```
-
-or
-
-```
-datastax-java-driver.advanced.metrics {
-  factory.class = MicroProfileMetricsFactory
-}
-```
-
-In addition to the configuration change above, you will also need to include the appropriate module
-in your project. For Micrometer:
-
-```xml
-<dependency>
-  <groupId>com.datastax.oss</groupId>
-  <artifactId>java-driver-metrics-micrometer</artifactId>
-  <version>${driver.version}</version>
-</dependency>
-```
-
-For MicroProfile:
-
-```xml
-<dependency>
-  <groupId>com.datastax.oss</groupId>
-  <artifactId>java-driver-metrics-microprofile</artifactId>
-  <version>${driver.version}</version>
-</dependency>
-```
-
-#### Metric Registry
-
-For any of the three metrics frameworks, you can provide an external Metric Registry object when
-building a Session. This will easily allow your application to export the driver's operational
-metrics to whatever reporting system you want to use.
+To pass a metric registry object to the session, use the `CqlSessionBuilder.withMetricRegistry()`
+method:
 
 ```java
 CqlSessionBuilder builder = CqlSession.builder();
@@ -105,43 +176,51 @@ builder.withMetricRegistry(myRegistryObject);
 CqlSession session = builder.build();
 ```
 
-In the above example, `myRegistryObject` should be an instance of the base registry type for the
-metrics framework you are using:
+Beware that the driver does not inspect the provided object, it simply passes it to the metrics
+factory in use; it is the user's responsibility to provide registry objects compatible with the
+metrics library in use. For reference, here are the expected base types for the three built-in
+metrics libraries:
 
-```
-Dropwizard:   com.codahale.metrics.MetricRegistry
-Micrometer:   io.micrometer.core.instrument.MeterRegistry
-MicroProfile: org.eclipse.microprofile.metrics.MetricRegistry
-```
+* Dropwizard:   `com.codahale.metrics.MetricRegistry`
+* Micrometer:   `io.micrometer.core.instrument.MeterRegistry`
+* MicroProfile: `org.eclipse.microprofile.metrics.MetricRegistry`
 
-**NOTE:** Only MicroProfile **requires** an external instance of its Registry to be provided. For
-Micrometer, if no Registry object is provided, Micrometer's `globalRegistry` will be used. For
-Dropwizard, if no Registry object is provided, an instance of `MetricRegistry` will be created and
-used.
+**NOTE:** MicroProfile **requires** an external instance of its registry to be provided. For
+Micrometer, if no registry object is provided, Micrometer's `globalRegistry` will be used. For
+Dropwizard, if no registry object is provided, an instance of `MetricRegistry` will be created and
+used (in which case, it can be retrieved programmatically if needed, see below).
 
-### Export
+### Programmatic access to driver metrics
 
-The Dropwizard `MetricRegistry` is exposed via `session.getMetrics().getRegistry()`. You can
-retrieve it and configure a `Reporter` to send the metrics to a monitoring tool.
+Programmatic access to driver metrics is only available when using Dropwizard Metrics. Users of
+other libraries are encouraged to provide an external registry when creating the driver session (see
+above), then use it to gain programmatic access to the driver metrics.
 
-**NOTE:** At this time, `session.getMetrics()` is not available when using Micrometer or
-MicroProfile metrics. If you wish to use either of those metrics frameworks, it is recommended to
-provide a Registry implementation to the driver as described in the [Metric Registry
-section](#metric-registry), and follow best practices for exporting that registry to your desired
-reporting framework.
+The Dropwizard `MetricRegistry` object is exposed in the driver API via
+`session.getMetrics().getRegistry()`. You can retrieve it and, for example, configure a `Reporter`
+to send the metrics to a monitoring tool.
 
-#### JMX
+**NOTE:** Beware that `session.getMetrics()` is not available when using other metrics libraries,
+and will throw a `NoClassDefFoundError` at runtime if accessed in such circumstances.
+
+### Exposing driver metrics with JMX
 
 Unlike previous driver versions, JMX support is not included out of the box.
+
+The way to add JMX support to your application depends largely on the metrics library being used. We
+show below instructions for Dropwizard only. Micrometer also has support for JMX: please refer to
+its [official documentation][Micrometer JMX].
+
+#### Dropwizard Metrics
 
 Add the following dependency to your application (make sure the version matches the `metrics-core`
 dependency of the driver):
 
-```
+```xml
 <dependency>
   <groupId>io.dropwizard.metrics</groupId>
   <artifactId>metrics-jmx</artifactId>
-  <version>4.0.2</version>
+  <version>4.1.2</version>
 </dependency>
 ```
 
@@ -201,14 +280,14 @@ JmxReporter reporter =
 reporter.start();
 ```
 
-#### Other protocols
+### Exporting metrics with other protocols
 
 Dropwizard Metrics has built-in reporters for other output formats: JSON (via a servlet), stdout,
 CSV files, SLF4J logs and Graphite. Refer to their [manual][Dropwizard manual] for more details.
 
-
-[Dropwizard Metrics]: http://metrics.dropwizard.io/4.0.0/manual/index.html
-[Dropwizard Manual]: http://metrics.dropwizard.io/4.0.0/getting-started.html#reporting-via-http
+[Dropwizard Metrics]: https://metrics.dropwizard.io/4.1.2
+[Dropwizard Manual]: https://metrics.dropwizard.io/4.1.2/getting-started.html
 [Micrometer Metrics]: https://micrometer.io/docs
+[Micrometer JMX]: https://micrometer.io/docs/registry/jmx
 [MicroProfile Metrics]: https://github.com/eclipse/microprofile-metrics
 [reference configuration]: ../configuration/reference/

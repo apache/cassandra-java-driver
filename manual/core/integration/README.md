@@ -58,6 +58,20 @@ right dependencies:
 </tr>
 <tr>
   <td>
+    Instrumenting the driver and gathering metrics using the Micrometer metrics library.
+  </td>
+  <td><code>java&#8209;driver&#8209;metrics&#8209;micrometer</code></td>
+  <td>See <a href="../metrics/">this page</a>.</td>
+</tr>
+<tr>
+  <td>
+    Instrumenting the driver and gathering metrics using the MicroProfile Metrics library.
+  </td>
+  <td><code>java&#8209;driver&#8209;metrics&#8209;microprofile</code></td>
+  <td>See <a href="../metrics/">this page</a>.</td>
+</tr>
+<tr>
+  <td>
     "Bill Of Materials": can help manage versions if you use multiple driver artifacts.
   </td>
   <td><code>java&#8209;driver&#8209;bom</code></td>
@@ -390,12 +404,11 @@ enable compression. See the [Compression](../compression/) page for more details
 #### Metrics
 
 The driver exposes [metrics](../metrics/) through the
-[Dropwizard](http://metrics.dropwizard.io/4.0.0/manual/index.html) library.
+[Dropwizard](http://metrics.dropwizard.io/4.1.2/) library.
 
 The dependency is declared as required, but metrics are optional. If you've disabled all metrics, or
-if you are using a [different metrics framework](../metrics/#changing-the-metrics-frameworks), and
-you never call [Session.getMetrics] anywhere in your application, then you can remove the
-dependency:
+if you are using a different metrics library, and you never call [Session.getMetrics] anywhere in
+your application, then you can remove the dependency:
 
 ```xml
 <dependency>
@@ -411,12 +424,14 @@ dependency:
 </dependency>
 ```
 
-In addition, "timer" metrics use [HdrHistogram](http://hdrhistogram.github.io/HdrHistogram/) to
-record latency percentiles. At the time of writing, these metrics are: `cql-requests`,
-`throttling.delay` and `cql-messages`; you can also identify them by reading the comments in the
-[configuration reference](../configuration/reference/) (look for "exposed as a Timer").
+In addition, when using Dropwizard, "timer" metrics use
+[HdrHistogram](http://hdrhistogram.github.io/HdrHistogram/) to record latency percentiles. At the
+time of writing, these metrics are: `cql-requests`, `throttling.delay` and `cql-messages`; you can
+also identify them by reading the comments in the [configuration
+reference](../configuration/reference/) (look for "exposed as a Timer").
 
-If all of these metrics are disabled, you can remove the dependency:
+If all of these metrics are disabled, or if you use a different metrics library, you can remove the
+dependency:
 
 ```xml
 <dependency>

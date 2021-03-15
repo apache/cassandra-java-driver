@@ -51,7 +51,7 @@ public class MockedDriverContextFactory {
               when(blankProfile.isDefined(DefaultDriverOption.METRICS_FACTORY_CLASS))
                   .thenReturn(true);
               when(blankProfile.getString(DefaultDriverOption.METRICS_FACTORY_CLASS))
-                  .thenReturn("DropwizardMetricsFactory");
+                  .thenReturn("DefaultMetricsFactory");
               return blankProfile;
             });
 

@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 
 public class MetricPaths {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DropwizardMetricsFactory.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MetricPaths.class);
 
   public static Set<SessionMetric> parseSessionMetricPaths(List<String> paths, String logPrefix) {
     Set<SessionMetric> result = new HashSet<>();
