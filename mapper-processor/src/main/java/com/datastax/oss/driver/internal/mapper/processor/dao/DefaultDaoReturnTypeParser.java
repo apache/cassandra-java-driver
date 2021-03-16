@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Name;
@@ -75,6 +76,7 @@ public class DefaultDaoReturnTypeParser implements DaoReturnTypeParser {
           .put(CompletionStage.class, DefaultDaoReturnTypeKind.FUTURE_OF_ENTITY)
           .put(CompletableFuture.class, DefaultDaoReturnTypeKind.FUTURE_OF_ENTITY)
           .put(PagingIterable.class, DefaultDaoReturnTypeKind.PAGING_ITERABLE)
+          .put(Stream.class, DefaultDaoReturnTypeKind.STREAM)
           .put(MappedReactiveResultSet.class, DefaultDaoReturnTypeKind.MAPPED_REACTIVE_RESULT_SET)
           .build();
 

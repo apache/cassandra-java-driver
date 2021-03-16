@@ -47,6 +47,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -225,6 +226,12 @@ public class QueryReturnTypesIT {
   }
 
   @Test
+  public void should_execute_query_and_map_to_stream() {
+    Stream<TestEntity> stream = dao.findByIdAsStream(1);
+    assertThat(stream).hasSize(10);
+  }
+
+  @Test
   public void should_execute_async_query_and_map_to_iterable() {
     MappedAsyncPagingIterable<TestEntity> iterable =
         CompletableFutures.getUninterruptibly(dao.findByIdAsync(1));
@@ -287,6 +294,9 @@ public class QueryReturnTypesIT {
 
     @Query("SELECT * FROM ${qualifiedTableId} WHERE id = :id")
     PagingIterable<TestEntity> findById(int id);
+
+    @Query("SELECT * FROM ${qualifiedTableId} WHERE id = :id")
+    Stream<TestEntity> findByIdAsStream(int id);
 
     @Query("SELECT * FROM ${qualifiedTableId} WHERE id = :id")
     CompletableFuture<MappedAsyncPagingIterable<TestEntity>> findByIdAsync(int id);

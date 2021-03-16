@@ -4,6 +4,7 @@
 
 ### 4.11.0 (in progress)
 
+- [new feature] JAVA-2830: Add mapper support for Java streams
 - [bug] JAVA-2925: Consider protocol version unsupported when server requires USE_BETA flag for it
 - [improvement] JAVA-2704: Remove protocol v5 beta status, add v6-beta
 - [improvement] JAVA-2916: Annotate generated classes with `@SuppressWarnings`

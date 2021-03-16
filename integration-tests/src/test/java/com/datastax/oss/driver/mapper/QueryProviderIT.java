@@ -43,6 +43,8 @@ import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -115,8 +117,14 @@ public class QueryProviderIT {
   @Dao
   @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
   public interface SensorDao {
+
     @QueryProvider(providerClass = FindSliceProvider.class, entityHelpers = SensorReading.class)
     PagingIterable<SensorReading> findSlice(int id, Integer month, Integer day);
+
+    @QueryProvider(
+        providerClass = FindSliceStreamProvider.class,
+        entityHelpers = SensorReading.class)
+    Stream<SensorReading> findSliceAsStream(int id, Integer month, Integer day);
 
     @Insert
     void save(SensorReading reading);
@@ -161,6 +169,18 @@ public class QueryProviderIT {
         }
       }
       return session.execute(boundStatementBuilder.build()).map(sensorReadingHelper::get);
+    }
+  }
+
+  public static class FindSliceStreamProvider extends FindSliceProvider {
+
+    public FindSliceStreamProvider(
+        MapperContext context, EntityHelper<SensorReading> sensorReadingHelper) {
+      super(context, sensorReadingHelper);
+    }
+
+    public Stream<SensorReading> findSliceAsStream(int id, Integer month, Integer day) {
+      return StreamSupport.stream(findSlice(id, month, day).spliterator(), false);
     }
   }
 

@@ -23,6 +23,7 @@ import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoRe
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.MAPPED_REACTIVE_RESULT_SET;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.OPTIONAL_ENTITY;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.PAGING_ITERABLE;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.STREAM;
 
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
@@ -68,6 +69,7 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
         FUTURE_OF_ENTITY,
         FUTURE_OF_OPTIONAL_ENTITY,
         PAGING_ITERABLE,
+        STREAM,
         FUTURE_OF_ASYNC_PAGING_ITERABLE,
         MAPPED_REACTIVE_RESULT_SET,
         CUSTOM);
