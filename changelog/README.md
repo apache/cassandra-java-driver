@@ -4,6 +4,8 @@
 
 ### 4.11.0 (in progress)
 
+- [bug] JAVA-2928: Generate counter increment/decrement constructs compatible with legacy C* 
+  versions
 - [bug] JAVA-2925: Consider protocol version unsupported when server requires USE_BETA flag for it
 - [improvement] JAVA-2704: Remove protocol v5 beta status, add v6-beta
 - [improvement] JAVA-2916: Annotate generated classes with `@SuppressWarnings`

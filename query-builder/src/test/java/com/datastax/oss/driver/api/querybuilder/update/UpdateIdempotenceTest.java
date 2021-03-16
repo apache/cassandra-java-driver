@@ -90,10 +90,10 @@ public class UpdateIdempotenceTest {
   @Test
   public void should_not_be_idempotent_if_updating_counter() {
     assertThat(update("foo").increment("c").whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET c+=1 WHERE k=?")
+        .hasCql("UPDATE foo SET c=c+1 WHERE k=?")
         .isNotIdempotent();
     assertThat(update("foo").decrement("c").whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET c-=1 WHERE k=?")
+        .hasCql("UPDATE foo SET c=c-1 WHERE k=?")
         .isNotIdempotent();
   }
 
