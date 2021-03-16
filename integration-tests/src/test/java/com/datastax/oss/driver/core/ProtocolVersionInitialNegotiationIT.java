@@ -31,6 +31,7 @@ import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -46,7 +47,17 @@ public class ProtocolVersionInitialNegotiationIT {
       max = "2.2",
       description = "Only C* in [2.1,2.2[ has V3 as its highest version")
   @Test
-  public void should_downgrade_to_v3() {
+  public void should_downgrade_to_v3_oss() {
+    Assume.assumeFalse("This test is only for OSS C*", ccm.getDseVersion().isPresent());
+    try (CqlSession session = SessionUtils.newSession(ccm)) {
+      assertThat(session.getContext().getProtocolVersion().getCode()).isEqualTo(3);
+      session.execute("select * from system.local");
+    }
+  }
+
+  @DseRequirement(max = "5.0", description = "Only DSE in [*,5.0[ has V3 as its highest version")
+  @Test
+  public void should_downgrade_to_v3_dse() {
     try (CqlSession session = SessionUtils.newSession(ccm)) {
       assertThat(session.getContext().getProtocolVersion().getCode()).isEqualTo(3);
       session.execute("select * from system.local");
@@ -58,7 +69,8 @@ public class ProtocolVersionInitialNegotiationIT {
       max = "4.0",
       description = "Only C* in [2.2,4.0[ has V4 as its highest version")
   @Test
-  public void should_downgrade_to_v4() {
+  public void should_downgrade_to_v4_oss() {
+    Assume.assumeFalse("This test is only for OSS C*", ccm.getDseVersion().isPresent());
     try (CqlSession session = SessionUtils.newSession(ccm)) {
       assertThat(session.getContext().getProtocolVersion().getCode()).isEqualTo(4);
       session.execute("select * from system.local");
@@ -66,8 +78,21 @@ public class ProtocolVersionInitialNegotiationIT {
   }
 
   @DseRequirement(
+      min = "5.0",
+      max = "5.1",
+      description = "Only DSE in [5.0,5.1[ has V4 as its highest version")
+  @Test
+  public void should_downgrade_to_v4_dse() {
+    try (CqlSession session = SessionUtils.newSession(ccm)) {
+      assertThat(session.getContext().getProtocolVersion().getCode()).isEqualTo(4);
+      session.execute("select * from system.local");
+    }
+  }
+
+  @DseRequirement(
+      min = "5.1",
       max = "6.0",
-      description = "Only DSE in [*,6.0[ has DSE_V1 as its highest version")
+      description = "Only DSE in [5.1,6.0[ has DSE_V1 as its highest version")
   @Test
   public void should_downgrade_to_dse_v1() {
     try (CqlSession session = SessionUtils.newSession(ccm)) {
@@ -78,7 +103,27 @@ public class ProtocolVersionInitialNegotiationIT {
 
   @CassandraRequirement(max = "2.2", description = "Only C* in [*,2.2[ has V4 unsupported")
   @Test
-  public void should_fail_if_provided_v4_is_not_supported() {
+  public void should_fail_if_provided_v4_is_not_supported_oss() {
+    Assume.assumeFalse("This test is only for OSS C*", ccm.getDseVersion().isPresent());
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withString(DefaultDriverOption.PROTOCOL_VERSION, "V4")
+            .build();
+    try (CqlSession ignored = SessionUtils.newSession(ccm, loader)) {
+      fail("Expected an AllNodesFailedException");
+    } catch (AllNodesFailedException anfe) {
+      Throwable cause = anfe.getAllErrors().values().iterator().next().get(0);
+      assertThat(cause).isInstanceOf(UnsupportedProtocolVersionException.class);
+      UnsupportedProtocolVersionException unsupportedException =
+          (UnsupportedProtocolVersionException) cause;
+      assertThat(unsupportedException.getAttemptedVersions())
+          .containsOnly(DefaultProtocolVersion.V4);
+    }
+  }
+
+  @DseRequirement(max = "5.0", description = "Only DSE in [*,5.0[ has V4 unsupported")
+  @Test
+  public void should_fail_if_provided_v4_is_not_supported_dse() {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V4")
@@ -100,7 +145,8 @@ public class ProtocolVersionInitialNegotiationIT {
       max = "4.0",
       description = "Only C* in [2.1,4.0[ has V5 unsupported or supported as beta")
   @Test
-  public void should_fail_if_provided_v5_is_not_supported() {
+  public void should_fail_if_provided_v5_is_not_supported_oss() {
+    Assume.assumeFalse("This test is only for OSS C*", ccm.getDseVersion().isPresent());
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V5")
@@ -179,7 +225,8 @@ public class ProtocolVersionInitialNegotiationIT {
   /** Note that this test will need to be updated as new protocol versions are introduced. */
   @CassandraRequirement(min = "4.0", description = "Only C* in [4.0,*[ has V5 supported")
   @Test
-  public void should_not_downgrade_if_server_supports_latest_version() {
+  public void should_not_downgrade_if_server_supports_latest_version_oss() {
+    Assume.assumeFalse("This test is only for OSS C*", ccm.getDseVersion().isPresent());
     try (CqlSession session = SessionUtils.newSession(ccm)) {
       assertThat(session.getContext().getProtocolVersion()).isEqualTo(ProtocolVersion.V5);
       session.execute("select * from system.local");
@@ -198,7 +245,8 @@ public class ProtocolVersionInitialNegotiationIT {
 
   @CassandraRequirement(min = "2.1", description = "Only C* in [2.1,*[ has V3 supported")
   @Test
-  public void should_use_explicitly_provided_v3() {
+  public void should_use_explicitly_provided_v3_oss() {
+    Assume.assumeFalse("This test is only for OSS C*", ccm.getDseVersion().isPresent());
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V3")
@@ -224,7 +272,8 @@ public class ProtocolVersionInitialNegotiationIT {
 
   @CassandraRequirement(min = "2.2", description = "Only C* in [2.2,*[ has V4 supported")
   @Test
-  public void should_use_explicitly_provided_v4() {
+  public void should_use_explicitly_provided_v4_oss() {
+    Assume.assumeFalse("This test is only for OSS C*", ccm.getDseVersion().isPresent());
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V4")
@@ -250,7 +299,8 @@ public class ProtocolVersionInitialNegotiationIT {
 
   @CassandraRequirement(min = "4.0", description = "Only C* in [4.0,*[ has V5 supported")
   @Test
-  public void should_use_explicitly_provided_v5() {
+  public void should_use_explicitly_provided_v5_oss() {
+    Assume.assumeFalse("This test is only for OSS C*", ccm.getDseVersion().isPresent());
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V5")
