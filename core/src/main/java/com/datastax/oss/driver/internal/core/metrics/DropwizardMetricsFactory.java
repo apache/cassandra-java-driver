@@ -96,7 +96,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
       if (possibleMetricRegistry instanceof MetricRegistry) {
         this.registry = (MetricRegistry) possibleMetricRegistry;
         DropwizardSessionMetricUpdater dropwizardSessionUpdater =
-            new DropwizardSessionMetricUpdater(enabledSessionMetrics, registry, context);
+            new DropwizardSessionMetricUpdater(context, enabledSessionMetrics, registry);
         this.sessionUpdater = dropwizardSessionUpdater;
         this.metrics = new DefaultMetrics(registry, dropwizardSessionUpdater);
       } else {
@@ -144,7 +144,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
     } else {
       DropwizardNodeMetricUpdater dropwizardNodeMetricUpdater =
           new DropwizardNodeMetricUpdater(
-              node, enabledNodeMetrics, registry, context, () -> metricsCache.getIfPresent(node));
+              node, context, enabledNodeMetrics, registry, () -> metricsCache.getIfPresent(node));
       metricsCache.put(node, dropwizardNodeMetricUpdater);
       return dropwizardNodeMetricUpdater;
     }

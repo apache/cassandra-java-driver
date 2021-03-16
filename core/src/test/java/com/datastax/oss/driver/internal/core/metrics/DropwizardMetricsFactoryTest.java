@@ -35,7 +35,7 @@ import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.time.Duration;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -102,8 +102,8 @@ public class DropwizardMetricsFactoryTest {
     InternalDriverContext context = mock(InternalDriverContext.class);
     DriverExecutionProfile profile = mock(DriverExecutionProfile.class);
     DriverConfig config = mock(DriverConfig.class);
-    Duration expireAfter = LOWEST_ACCEPTABLE_EXPIRE_AFTER.minusMinutes(1);
-    List<String> enabledMetrics = Arrays.asList(DefaultSessionMetric.CQL_REQUESTS.getPath());
+    List<String> enabledMetrics =
+        Collections.singletonList(DefaultSessionMetric.CQL_REQUESTS.getPath());
     // when
     when(config.getDefaultProfile()).thenReturn(profile);
     when(context.getConfig()).thenReturn(config);
@@ -111,14 +111,14 @@ public class DropwizardMetricsFactoryTest {
     // registry object is not a registry type
     when(context.getMetricRegistry()).thenReturn(Integer.MAX_VALUE);
     when(profile.getDuration(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER))
-        .thenReturn(expireAfter);
+        .thenReturn(LOWEST_ACCEPTABLE_EXPIRE_AFTER);
     when(profile.getStringList(DefaultDriverOption.METRICS_SESSION_ENABLED))
         .thenReturn(enabledMetrics);
     // then
     try {
       new DropwizardMetricsFactory(context);
       fail(
-          "MetricsFactory should require correct registy object type: "
+          "MetricsFactory should require correct registry object type: "
               + MetricRegistry.class.getName());
     } catch (IllegalArgumentException iae) {
       assertThat(iae.getMessage())

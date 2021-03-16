@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.shaded.guava.common.primitives.UnsignedBytes;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -48,6 +49,7 @@ public class SniEndPoint implements EndPoint {
     return serverName;
   }
 
+  @NonNull
   @Override
   public InetSocketAddress resolve() {
     try {
@@ -93,6 +95,7 @@ public class SniEndPoint implements EndPoint {
     return proxyAddress.toString() + ":" + serverName;
   }
 
+  @NonNull
   @Override
   public String asMetricPrefix() {
     String hostString = proxyAddress.getHostString();

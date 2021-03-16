@@ -161,6 +161,61 @@ it is also possible to provide additional configuration to fine-tune the underly
 characteristics and precision, such as its highest expected latency, its number of significant
 digits to use, and its refresh interval. Again, see the [reference configuration] for more details.
 
+### Selecting a metric identifier style
+
+Most metric libraries uniquely identify a metric by a name and, optionally, by a set of key-value
+pairs, usually called tags.
+
+The `advanced.metrics.id-generator.class` option is used to customize how the driver generates
+metric identifiers. The driver ships with two built-in implementations:
+
+- `DefaultMetricIdGenerator`: generates identifiers composed solely of (unique) metric names; it
+  does not generate tags. It is mostly suitable for use with metrics libraries that do not support
+  tags, like Dropwizard.
+- `TaggingMetricIdGenerator`: generates identifiers composed of name and tags. It is mostly suitable
+  for use with metrics libraries that support tags, like Micrometer or MicroProfile Metrics.
+
+For example, here is how each one of them generates identifiers for the session metric "bytes-sent",
+assuming that the session is named "s0":
+
+- `DefaultMetricDescriptor`:
+  - name:`s0.bytes-sent`
+  - tags: `{}`
+- `TaggingMetricDescriptor`:
+  - name: `session.bytes-sent`
+  - tags: `{ "session" : "s0" }`
+
+Here is how each one of them generates identifiers for the node metric "bytes-sent", assuming that
+the session is named "s0", and the node's broadcast address is 10.1.2.3:9042:
+
+- `DefaultMetricDescriptor`:
+  - name : `s0.nodes.10_1_2_3:9042.bytes-sent`
+  - tags: `{}`
+- `TaggingMetricDescriptor`:
+  - name `nodes.bytes-sent`
+  - tags: `{ "session" : "s0", "node" : "\10.1.2.3:9042" }`
+
+As shown above, both built-in implementations generate names that are path-like structures separated
+by dots. This is indeed the most common expected format by reporting tools.
+
+Finally, it is also possible to define a global prefix for all metric names; this can be done with
+the `advanced.metrics.id-generator.prefix` option.
+
+The prefix should not start nor end with a dot or any other path separator; the following are two
+valid examples: `cassandra` or `myapp.prod.cassandra`.
+
+For example, if this prefix is set to `cassandra`, here is how the session metric "bytes-sent" would
+be named, assuming that the session is named "s0":
+
+- with `DefaultMetricDescriptor`: `cassandra.s0.bytes-sent`
+- with `TaggingMetricDescriptor`: `cassandra.session.bytes-sent`
+
+Here is how the node metric "bytes-sent" would be named, assuming that the session is named "s0",
+and the node's broadcast address is 10.1.2.3:9042:
+
+- with `DefaultMetricDescriptor`: `cassandra.s0.nodes.10_1_2_3:9042.bytes-sent`
+- with `TaggingMetricDescriptor`: `cassandra.nodes.bytes-sent`
+
 ### Using an external metric registry
 
 Regardless of which metrics library is used, you can provide an external metric registry object when

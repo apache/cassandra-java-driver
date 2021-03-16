@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.metrics;
+package com.datastax.oss.driver.internal.metrics.microprofile;
 
-import com.datastax.oss.driver.api.core.session.Session;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import org.eclipse.microprofile.metrics.Tag;
 
-/**
- * A node-level metric exposed through {@link Session#getMetrics()}.
- *
- * <p>All metrics exposed out of the box by the driver are instances of {@link DefaultNodeMetric} or
- * {@link com.datastax.dse.driver.api.core.metrics.DseNodeMetric DseNodeMetric} (this interface only
- * exists to allow custom metrics in driver extensions).
- *
- * @see SessionMetric
- */
-public interface NodeMetric {
+public class MicroProfileTags {
 
-  @NonNull
-  String getPath();
+  public static Tag[] toMicroProfileTags(Map<String, String> tags) {
+    List<Tag> micrometerTags = new ArrayList<>(tags.size());
+    for (Entry<String, String> entry : tags.entrySet()) {
+      micrometerTags.add(new Tag(entry.getKey(), entry.getValue()));
+    }
+    return micrometerTags.toArray(new Tag[0]);
+  }
 }

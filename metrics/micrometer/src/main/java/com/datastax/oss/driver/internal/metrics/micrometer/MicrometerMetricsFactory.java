@@ -101,7 +101,7 @@ public class MicrometerMetricsFactory implements MetricsFactory {
       if (possibleMetricRegistry instanceof MeterRegistry) {
         this.registry = (MeterRegistry) possibleMetricRegistry;
         this.sessionUpdater =
-            new MicrometerSessionMetricUpdater(enabledSessionMetrics, this.registry, this.context);
+            new MicrometerSessionMetricUpdater(this.context, enabledSessionMetrics, this.registry);
       } else {
         // Metrics are enabled, but the registry object is not an expected type
         throw new IllegalArgumentException(
@@ -147,7 +147,7 @@ public class MicrometerMetricsFactory implements MetricsFactory {
     }
     MicrometerNodeMetricUpdater updater =
         new MicrometerNodeMetricUpdater(
-            node, enabledNodeMetrics, registry, context, () -> metricsCache.getIfPresent(node));
+            node, context, enabledNodeMetrics, registry, () -> metricsCache.getIfPresent(node));
     metricsCache.put(node, updater);
     return updater;
   }
