@@ -1,5 +1,16 @@
 ## Upgrade guide
 
+### 4.11.0
+
+#### Native protocol V5 is now production-ready
+
+Thanks to [JAVA-2704](https://datastax-oss.atlassian.net/browse/JAVA-2704), 4.11.0 is the first
+version in the driver 4.x series to fully support Cassandra's native protocol version 5, which has
+been promoted from beta to production-ready in the upcoming Cassandra 4.0 release.
+
+Users should not experience any disruption. When connecting to Cassandra 4.0, V5 will be
+transparently selected as the protocol version to use.
+
 ### 4.10.0
 
 #### Cross-datacenter failover
