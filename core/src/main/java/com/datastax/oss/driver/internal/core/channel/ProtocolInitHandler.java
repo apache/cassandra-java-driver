@@ -326,9 +326,11 @@ class ProtocolInitHandler extends ConnectInitHandler {
               (step == Step.OPTIONS && querySupportedOptions) || step == Step.STARTUP;
           boolean serverOrProtocolError =
               error.code == ErrorCode.PROTOCOL_ERROR || error.code == ErrorCode.SERVER_ERROR;
-          if (firstRequest
-              && serverOrProtocolError
-              && error.message.contains("Invalid or unsupported protocol version")) {
+          boolean badProtocolVersionMessage =
+              error.message.contains("Invalid or unsupported protocol version")
+                  // JAVA-2925: server is behind driver and considers the proposed version as beta
+                  || error.message.contains("Beta version of the protocol used");
+          if (firstRequest && serverOrProtocolError && badProtocolVersionMessage) {
             fail(
                 UnsupportedProtocolVersionException.forSingleAttempt(
                     endPoint, initialProtocolVersion));
