@@ -11,6 +11,19 @@ been promoted from beta to production-ready in the upcoming Cassandra 4.0 releas
 Users should not experience any disruption. When connecting to Cassandra 4.0, V5 will be
 transparently selected as the protocol version to use.
 
+#### Customizable metric names, support for metric tags
+
+[JAVA-2872](https://datastax-oss.atlassian.net/browse/JAVA-2872) introduced the ability to configure
+how metric identifiers are generated. Metric names can now be configured, but most importantly,
+metric tags are now supported. See the [metrics](../manual/core/metrics/) section of the online
+manual, or the `advanced.metrics.id-generator` section in the
+[reference.conf](../manual/core/configuration/reference/) file for details.
+
+Users should not experience any disruption. However, those using metrics libraries that support tags
+are encouraged to try out the new `TaggingMetricIdGenerator`, as it generates metric names and tags
+that will look more familiar to users of libraries such as Micrometer or MicroProfile Metrics (and
+look nicer when exported to Prometheus or Graphite).
+
 ### 4.10.0
 
 #### Cross-datacenter failover
