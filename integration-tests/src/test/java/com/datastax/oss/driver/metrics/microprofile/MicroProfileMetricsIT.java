@@ -196,6 +196,7 @@ public class MicroProfileMetricsIT extends AbstractMetricsTestBase {
     MetricIdGenerator metricIdGenerator = context.getMetricIdGenerator();
     MetricRegistry registry = (MetricRegistry) context.getMetricRegistry();
     assertThat(registry).isNotNull();
+    // FIXME see JAVA-2929
     triggerCacheCleanup(context.getMetricsFactory());
     for (DefaultNodeMetric metric : ENABLED_NODE_METRICS) {
       MetricId id = metricIdGenerator.nodeMetricId(node, metric);
@@ -210,6 +211,7 @@ public class MicroProfileMetricsIT extends AbstractMetricsTestBase {
     MetricIdGenerator metricIdGenerator = context.getMetricIdGenerator();
     MetricRegistry registry = (MetricRegistry) context.getMetricRegistry();
     assertThat(registry).isNotNull();
+    // FIXME see JAVA-2929
     triggerCacheCleanup(context.getMetricsFactory());
     for (DefaultNodeMetric metric : ENABLED_NODE_METRICS) {
       MetricId id = metricIdGenerator.nodeMetricId(node, metric);

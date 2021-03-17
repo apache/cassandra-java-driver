@@ -189,6 +189,7 @@ public class MicrometerMetricsIT extends AbstractMetricsTestBase {
     MetricIdGenerator metricIdGenerator = context.getMetricIdGenerator();
     MeterRegistry registry = (MeterRegistry) context.getMetricRegistry();
     assertThat(registry).isNotNull();
+    // FIXME see JAVA-2929
     triggerCacheCleanup(context.getMetricsFactory());
     for (DefaultNodeMetric metric : ENABLED_NODE_METRICS) {
       MetricId id = metricIdGenerator.nodeMetricId(node, metric);
@@ -204,6 +205,7 @@ public class MicrometerMetricsIT extends AbstractMetricsTestBase {
     MetricIdGenerator metricIdGenerator = context.getMetricIdGenerator();
     MeterRegistry registry = (MeterRegistry) context.getMetricRegistry();
     assertThat(registry).isNotNull();
+    // FIXME see JAVA-2929
     triggerCacheCleanup(context.getMetricsFactory());
     for (DefaultNodeMetric metric : ENABLED_NODE_METRICS) {
       MetricId id = metricIdGenerator.nodeMetricId(node, metric);
@@ -219,7 +221,6 @@ public class MicrometerMetricsIT extends AbstractMetricsTestBase {
     @SuppressWarnings("unchecked")
     Cache<Node, MicrometerNodeMetricUpdater> cache =
         (Cache<Node, MicrometerNodeMetricUpdater>) metricsCache.get(metricsFactory);
-    // trigger a cache cleanup
     cache.cleanUp();
   }
 }
