@@ -178,20 +178,20 @@ metric identifiers. The driver ships with two built-in implementations:
 For example, here is how each one of them generates identifiers for the session metric "bytes-sent",
 assuming that the session is named "s0":
 
-- `DefaultMetricDescriptor`:
+- `DefaultMetricIdGenerator`:
   - name:`s0.bytes-sent`
   - tags: `{}`
-- `TaggingMetricDescriptor`:
+- `TaggingMetricIdGenerator`:
   - name: `session.bytes-sent`
   - tags: `{ "session" : "s0" }`
 
 Here is how each one of them generates identifiers for the node metric "bytes-sent", assuming that
 the session is named "s0", and the node's broadcast address is 10.1.2.3:9042:
 
-- `DefaultMetricDescriptor`:
+- `DefaultMetricIdGenerator`:
   - name : `s0.nodes.10_1_2_3:9042.bytes-sent`
   - tags: `{}`
-- `TaggingMetricDescriptor`:
+- `TaggingMetricIdGenerator`:
   - name `nodes.bytes-sent`
   - tags: `{ "session" : "s0", "node" : "\10.1.2.3:9042" }`
 
@@ -207,14 +207,14 @@ valid examples: `cassandra` or `myapp.prod.cassandra`.
 For example, if this prefix is set to `cassandra`, here is how the session metric "bytes-sent" would
 be named, assuming that the session is named "s0":
 
-- with `DefaultMetricDescriptor`: `cassandra.s0.bytes-sent`
-- with `TaggingMetricDescriptor`: `cassandra.session.bytes-sent`
+- with `DefaultMetricIdGenerator`: `cassandra.s0.bytes-sent`
+- with `TaggingMetricIdGenerator`: `cassandra.session.bytes-sent`
 
 Here is how the node metric "bytes-sent" would be named, assuming that the session is named "s0",
 and the node's broadcast address is 10.1.2.3:9042:
 
-- with `DefaultMetricDescriptor`: `cassandra.s0.nodes.10_1_2_3:9042.bytes-sent`
-- with `TaggingMetricDescriptor`: `cassandra.nodes.bytes-sent`
+- with `DefaultMetricIdGenerator`: `cassandra.s0.nodes.10_1_2_3:9042.bytes-sent`
+- with `TaggingMetricIdGenerator`: `cassandra.nodes.bytes-sent`
 
 ### Using an external metric registry
 
