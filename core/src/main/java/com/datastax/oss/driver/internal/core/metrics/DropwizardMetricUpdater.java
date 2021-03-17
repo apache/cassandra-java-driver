@@ -156,13 +156,8 @@ public abstract class DropwizardMetricUpdater<MetricT> extends AbstractMetricUpd
             metric,
             m -> {
               MetricId id = getMetricId(m);
-              Timer timer;
               Reservoir reservoir = reservoirs.get(metric);
-              if (reservoir == null) {
-                timer = new Timer();
-              } else {
-                timer = new Timer(reservoir);
-              }
+              Timer timer = reservoir == null ? new Timer() : new Timer(reservoir);
               return registry.timer(id.getName(), () -> timer);
             });
   }
