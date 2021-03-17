@@ -174,20 +174,17 @@ public abstract class DropwizardMetricUpdater<MetricT> extends AbstractMetricUpd
       DriverOption significantDigitsOption,
       DriverOption intervalOption) {
     MetricId id = getMetricId(metric);
-    final int significantDigits;
-    int d = profile.getInt(significantDigitsOption);
-    if (d >= 0 && d <= 5) {
-      significantDigits = d;
-    } else {
+    Duration highestLatency = profile.getDuration(highestLatencyOption);
+    int significantDigits = profile.getInt(significantDigitsOption);
+    if (significantDigits < 0 || significantDigits > 5) {
       LOG.warn(
           "[{}] Configuration option {} is out of range (expected between 0 and 5, "
               + "found {}); using 3 instead.",
           id.getName(),
           significantDigitsOption,
-          d);
+          significantDigits);
       significantDigits = 3;
     }
-    Duration highestLatency = profile.getDuration(highestLatencyOption);
     Duration refreshInterval = profile.getDuration(intervalOption);
     return new HdrReservoir(highestLatency, significantDigits, refreshInterval, id.getName());
   }
