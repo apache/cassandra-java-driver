@@ -20,18 +20,14 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
-import com.datastax.oss.driver.shaded.guava.common.base.Ticker;
-import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
-import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
-import com.datastax.oss.driver.shaded.guava.common.cache.RemovalNotification;
+import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
+import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import java.time.Duration;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import net.jcip.annotations.ThreadSafe;
@@ -42,44 +38,23 @@ import org.slf4j.LoggerFactory;
 public class DropwizardMetricsFactory implements MetricsFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(DropwizardMetricsFactory.class);
-  static final Duration LOWEST_ACCEPTABLE_EXPIRE_AFTER = Duration.ofMinutes(5);
 
   private final InternalDriverContext context;
   private final Set<NodeMetric> enabledNodeMetrics;
   private final MetricRegistry registry;
   @Nullable private final Metrics metrics;
   private final SessionMetricUpdater sessionUpdater;
-  private final Cache<Node, DropwizardNodeMetricUpdater> metricsCache;
 
   public DropwizardMetricsFactory(DriverContext context) {
-    this((InternalDriverContext) context, Ticker.systemTicker());
-  }
-
-  public DropwizardMetricsFactory(InternalDriverContext context, Ticker ticker) {
-    this.context = context;
+    this.context = (InternalDriverContext) context;
     String logPrefix = context.getSessionName();
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     Set<SessionMetric> enabledSessionMetrics =
-        parseSessionMetricPaths(config.getStringList(DefaultDriverOption.METRICS_SESSION_ENABLED));
-    Duration evictionTime = getAndValidateEvictionTime(config, logPrefix);
+        MetricPaths.parseSessionMetricPaths(
+            config.getStringList(DefaultDriverOption.METRICS_SESSION_ENABLED), logPrefix);
     this.enabledNodeMetrics =
-        parseNodeMetricPaths(config.getStringList(DefaultDriverOption.METRICS_NODE_ENABLED));
-
-    metricsCache =
-        CacheBuilder.newBuilder()
-            .ticker(ticker)
-            .expireAfterAccess(evictionTime)
-            .removalListener(
-                (RemovalNotification<Node, DropwizardNodeMetricUpdater> notification) -> {
-                  LOG.debug(
-                      "[{}] Removing metrics for node: {} from cache after {}",
-                      logPrefix,
-                      notification.getKey(),
-                      evictionTime);
-                  notification.getValue().cleanupNodeMetrics();
-                })
-            .build();
-
+        MetricPaths.parseNodeMetricPaths(
+            config.getStringList(DefaultDriverOption.METRICS_NODE_ENABLED), logPrefix);
     if (enabledSessionMetrics.isEmpty() && enabledNodeMetrics.isEmpty()) {
       LOG.debug("[{}] All metrics are disabled, Session.getMetrics will be empty", logPrefix);
       this.registry = null;
@@ -87,7 +62,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
       this.metrics = null;
     } else {
       // try to get the metric registry from the context
-      Object possibleMetricRegistry = context.getMetricRegistry();
+      Object possibleMetricRegistry = this.context.getMetricRegistry();
       if (possibleMetricRegistry == null) {
         // metrics are enabled, but a metric registry was not supplied to the context
         // create a registry object
@@ -96,7 +71,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
       if (possibleMetricRegistry instanceof MetricRegistry) {
         this.registry = (MetricRegistry) possibleMetricRegistry;
         DropwizardSessionMetricUpdater dropwizardSessionUpdater =
-            new DropwizardSessionMetricUpdater(context, enabledSessionMetrics, registry);
+            new DropwizardSessionMetricUpdater(this.context, enabledSessionMetrics, registry);
         this.sessionUpdater = dropwizardSessionUpdater;
         this.metrics = new DefaultMetrics(registry, dropwizardSessionUpdater);
       } else {
@@ -108,23 +83,16 @@ public class DropwizardMetricsFactory implements MetricsFactory {
                 + possibleMetricRegistry.getClass().getName()
                 + "'");
       }
+      if (!enabledNodeMetrics.isEmpty()) {
+        this.context
+            .getEventBus()
+            .register(
+                NodeStateEvent.class,
+                RunOrSchedule.on(
+                    this.context.getNettyOptions().adminEventExecutorGroup(),
+                    this::processNodeStateEvent));
+      }
     }
-  }
-
-  @VisibleForTesting
-  static Duration getAndValidateEvictionTime(DriverExecutionProfile config, String logPrefix) {
-    Duration evictionTime = config.getDuration(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER);
-
-    if (evictionTime.compareTo(LOWEST_ACCEPTABLE_EXPIRE_AFTER) < 0) {
-      LOG.warn(
-          "[{}] Value too low for {}: {}. Forcing to {} instead.",
-          logPrefix,
-          DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER.getPath(),
-          evictionTime,
-          LOWEST_ACCEPTABLE_EXPIRE_AFTER);
-    }
-
-    return evictionTime;
   }
 
   @Override
@@ -142,19 +110,20 @@ public class DropwizardMetricsFactory implements MetricsFactory {
     if (registry == null) {
       return NoopNodeMetricUpdater.INSTANCE;
     } else {
-      DropwizardNodeMetricUpdater dropwizardNodeMetricUpdater =
-          new DropwizardNodeMetricUpdater(
-              node, context, enabledNodeMetrics, registry, () -> metricsCache.getIfPresent(node));
-      metricsCache.put(node, dropwizardNodeMetricUpdater);
-      return dropwizardNodeMetricUpdater;
+      return new DropwizardNodeMetricUpdater(node, context, enabledNodeMetrics, registry);
     }
   }
 
-  protected Set<SessionMetric> parseSessionMetricPaths(List<String> paths) {
-    return MetricPaths.parseSessionMetricPaths(paths, context.getSessionName());
-  }
-
-  protected Set<NodeMetric> parseNodeMetricPaths(List<String> paths) {
-    return MetricPaths.parseNodeMetricPaths(paths, context.getSessionName());
+  protected void processNodeStateEvent(NodeStateEvent event) {
+    if (event.newState == NodeState.DOWN
+        || event.newState == NodeState.FORCED_DOWN
+        || event.newState == null) {
+      // node is DOWN or REMOVED
+      ((DropwizardNodeMetricUpdater) event.node.getMetricUpdater()).startMetricsExpirationTimeout();
+    } else if (event.newState == NodeState.UP || event.newState == NodeState.UNKNOWN) {
+      // node is UP or ADDED
+      ((DropwizardNodeMetricUpdater) event.node.getMetricUpdater())
+          .cancelMetricsExpirationTimeout();
+    }
   }
 }

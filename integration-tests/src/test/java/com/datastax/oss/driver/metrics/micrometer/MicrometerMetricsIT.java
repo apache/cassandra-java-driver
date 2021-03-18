@@ -23,16 +23,11 @@ import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.core.metrics.MetricsITBase;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricId;
 import com.datastax.oss.driver.internal.core.metrics.MetricIdGenerator;
-import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
-import com.datastax.oss.driver.internal.metrics.micrometer.MicrometerMetricsFactory;
-import com.datastax.oss.driver.internal.metrics.micrometer.MicrometerNodeMetricUpdater;
 import com.datastax.oss.driver.internal.metrics.micrometer.MicrometerTags;
-import com.datastax.oss.driver.metrics.common.AbstractMetricsTestBase;
-import com.datastax.oss.driver.shaded.guava.common.base.Ticker;
-import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
@@ -41,12 +36,11 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.lang.reflect.Field;
 import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
 
 @Category(ParallelizableTests.class)
-public class MicrometerMetricsIT extends AbstractMetricsTestBase {
+public class MicrometerMetricsIT extends MetricsITBase {
 
   @ClassRule
   public static final SimulacronRule SIMULACRON_RULE =
@@ -68,12 +62,7 @@ public class MicrometerMetricsIT extends AbstractMetricsTestBase {
   }
 
   @Override
-  protected MetricsFactory newTickingMetricsFactory(InternalDriverContext context, Ticker ticker) {
-    return new MicrometerMetricsFactory(context, ticker);
-  }
-
-  @Override
-  protected void assertMetrics(CqlSession session) {
+  protected void assertMetricsPresent(CqlSession session) {
 
     MeterRegistry registry =
         (MeterRegistry) ((InternalDriverContext) session.getContext()).getMetricRegistry();
@@ -91,32 +80,38 @@ public class MicrometerMetricsIT extends AbstractMetricsTestBase {
       Meter m = registry.find(id.getName()).tags(tags).meter();
       assertThat(m).isNotNull();
       switch (metric) {
-        case BYTES_SENT:
-        case BYTES_RECEIVED:
-          assertThat(m).isInstanceOf(Counter.class);
-          assertThat(((Counter) m).count()).isGreaterThan(0.0);
-          break;
         case CONNECTED_NODES:
           assertThat(m).isInstanceOf(Gauge.class);
-          assertThat(((Gauge) m).value()).isEqualTo(3.0);
+          assertThat(((Gauge) m).value()).isEqualTo(3);
           break;
         case CQL_REQUESTS:
           assertThat(m).isInstanceOf(Timer.class);
-          assertThat(((Timer) m).count()).isEqualTo(30);
+          assertThat(((Timer) m).count()).isEqualTo(63);
           break;
         case CQL_CLIENT_TIMEOUTS:
-        case THROTTLING_ERRORS:
           assertThat(m).isInstanceOf(Counter.class);
-          assertThat(((Counter) m).count()).isZero();
+          assertThat(((Counter) m).count()).isEqualTo(3);
+          break;
+        case CQL_PREPARED_CACHE_SIZE:
+          assertThat(m).isInstanceOf(Gauge.class);
+          assertThat(((Gauge) m).value()).isOne();
+          break;
+        case BYTES_SENT:
+        case BYTES_RECEIVED:
+          assertThat(m).isInstanceOf(Counter.class);
+          assertThat(((Counter) m).count()).isGreaterThan(0);
           break;
         case THROTTLING_DELAY:
           assertThat(m).isInstanceOf(Timer.class);
           assertThat(((Timer) m).count()).isZero();
           break;
         case THROTTLING_QUEUE_SIZE:
-        case CQL_PREPARED_CACHE_SIZE:
           assertThat(m).isInstanceOf(Gauge.class);
           assertThat(((Gauge) m).value()).isZero();
+          break;
+        case THROTTLING_ERRORS:
+          assertThat(m).isInstanceOf(Counter.class);
+          assertThat(((Counter) m).count()).isZero();
           break;
       }
     }
@@ -136,47 +131,50 @@ public class MicrometerMetricsIT extends AbstractMetricsTestBase {
             break;
           case CQL_MESSAGES:
             assertThat(m).isInstanceOf(Timer.class);
-            assertThat(((Timer) m).count()).isEqualTo(10);
+            assertThat(((Timer) m).count()).isEqualTo(28);
             break;
-          case AVAILABLE_STREAMS:
-            assertThat(m).isInstanceOf(Gauge.class);
-            assertThat(((Gauge) m).value()).isGreaterThan(100);
-            break;
-          case IN_FLIGHT:
-            assertThat(m).isInstanceOf(Gauge.class);
-            break;
-          case ORPHANED_STREAMS:
-            assertThat(m).isInstanceOf(Gauge.class);
-            assertThat(((Gauge) m).value()).isZero();
-            break;
-          case BYTES_SENT:
-          case BYTES_RECEIVED:
-            assertThat(m).isInstanceOf(Counter.class);
-            assertThat(((Counter) m).count()).isGreaterThan(0.0);
-            break;
-          case UNSENT_REQUESTS:
-          case ABORTED_REQUESTS:
-          case WRITE_TIMEOUTS:
           case READ_TIMEOUTS:
+          case WRITE_TIMEOUTS:
           case UNAVAILABLES:
+          case ABORTED_REQUESTS:
           case OTHER_ERRORS:
+            assertThat(m).isInstanceOf(Counter.class);
+            assertThat(((Counter) m).count()).isEqualTo(3);
+            break;
           case RETRIES:
+          case IGNORES:
+            assertThat(m).isInstanceOf(Counter.class);
+            assertThat(((Counter) m).count()).isEqualTo(5);
+            break;
           case RETRIES_ON_ABORTED:
           case RETRIES_ON_READ_TIMEOUT:
           case RETRIES_ON_WRITE_TIMEOUT:
           case RETRIES_ON_UNAVAILABLE:
           case RETRIES_ON_OTHER_ERROR:
-          case IGNORES:
           case IGNORES_ON_ABORTED:
           case IGNORES_ON_READ_TIMEOUT:
           case IGNORES_ON_WRITE_TIMEOUT:
           case IGNORES_ON_UNAVAILABLE:
           case IGNORES_ON_OTHER_ERROR:
           case SPECULATIVE_EXECUTIONS:
+            assertThat(m).isInstanceOf(Counter.class);
+            assertThat(((Counter) m).count()).isOne();
+            break;
+          case UNSENT_REQUESTS:
           case CONNECTION_INIT_ERRORS:
           case AUTHENTICATION_ERRORS:
             assertThat(m).isInstanceOf(Counter.class);
             assertThat(((Counter) m).count()).isZero();
+            break;
+          case BYTES_SENT:
+          case BYTES_RECEIVED:
+            assertThat(m).isInstanceOf(Counter.class);
+            assertThat(((Counter) m).count()).isGreaterThan(0.0);
+            break;
+          case AVAILABLE_STREAMS:
+          case IN_FLIGHT:
+          case ORPHANED_STREAMS:
+            assertThat(m).isInstanceOf(Gauge.class);
             break;
         }
       }
@@ -184,13 +182,11 @@ public class MicrometerMetricsIT extends AbstractMetricsTestBase {
   }
 
   @Override
-  protected void assertNodeMetricsNotEvicted(CqlSession session, Node node) throws Exception {
+  protected void assertNodeMetricsNotEvicted(CqlSession session, Node node) {
     InternalDriverContext context = (InternalDriverContext) session.getContext();
     MetricIdGenerator metricIdGenerator = context.getMetricIdGenerator();
     MeterRegistry registry = (MeterRegistry) context.getMetricRegistry();
     assertThat(registry).isNotNull();
-    // FIXME see JAVA-2929
-    triggerCacheCleanup(context.getMetricsFactory());
     for (DefaultNodeMetric metric : ENABLED_NODE_METRICS) {
       MetricId id = metricIdGenerator.nodeMetricId(node, metric);
       Iterable<Tag> tags = MicrometerTags.toMicrometerTags(id.getTags());
@@ -200,27 +196,16 @@ public class MicrometerMetricsIT extends AbstractMetricsTestBase {
   }
 
   @Override
-  protected void assertNodeMetricsEvicted(CqlSession session, Node node) throws Exception {
+  protected void assertNodeMetricsEvicted(CqlSession session, Node node) {
     InternalDriverContext context = (InternalDriverContext) session.getContext();
     MetricIdGenerator metricIdGenerator = context.getMetricIdGenerator();
     MeterRegistry registry = (MeterRegistry) context.getMetricRegistry();
     assertThat(registry).isNotNull();
-    // FIXME see JAVA-2929
-    triggerCacheCleanup(context.getMetricsFactory());
     for (DefaultNodeMetric metric : ENABLED_NODE_METRICS) {
       MetricId id = metricIdGenerator.nodeMetricId(node, metric);
       Iterable<Tag> tags = MicrometerTags.toMicrometerTags(id.getTags());
       Meter m = registry.find(id.getName()).tags(tags).meter();
       assertThat(m).isNull();
     }
-  }
-
-  private void triggerCacheCleanup(MetricsFactory metricsFactory) throws Exception {
-    Field metricsCache = MicrometerMetricsFactory.class.getDeclaredField("metricsCache");
-    metricsCache.setAccessible(true);
-    @SuppressWarnings("unchecked")
-    Cache<Node, MicrometerNodeMetricUpdater> cache =
-        (Cache<Node, MicrometerNodeMetricUpdater>) metricsCache.get(metricsFactory);
-    cache.cleanUp();
   }
 }

@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.metrics;
 
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
@@ -27,7 +29,11 @@ import com.datastax.oss.driver.internal.core.session.throttling.ConcurrencyLimit
 import com.datastax.oss.driver.internal.core.session.throttling.RateLimitingRequestThrottler;
 import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.netty.util.Timeout;
+import java.time.Duration;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,17 +41,39 @@ public abstract class AbstractMetricUpdater<MetricT> implements MetricUpdater<Me
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractMetricUpdater.class);
 
+  // Not final for testing purposes
+  public static Duration MIN_EXPIRE_AFTER = Duration.ofMinutes(5);
+
   protected final InternalDriverContext context;
   protected final Set<MetricT> enabledMetrics;
+
+  private final AtomicReference<Timeout> metricsExpirationTimeoutRef = new AtomicReference<>();
+  private final Duration expireAfter;
 
   protected AbstractMetricUpdater(InternalDriverContext context, Set<MetricT> enabledMetrics) {
     this.context = context;
     this.enabledMetrics = enabledMetrics;
+    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
+    Duration expireAfter = config.getDuration(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER);
+    if (expireAfter.compareTo(MIN_EXPIRE_AFTER) < 0) {
+      LOG.warn(
+          "[{}] Value too low for {}: {}. Forcing to {} instead.",
+          context.getSessionName(),
+          DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER.getPath(),
+          expireAfter,
+          MIN_EXPIRE_AFTER);
+      expireAfter = MIN_EXPIRE_AFTER;
+    }
+    this.expireAfter = expireAfter;
   }
 
   @Override
   public boolean isEnabled(MetricT metric, String profileName) {
     return enabledMetrics.contains(metric);
+  }
+
+  public Duration getExpireAfter() {
+    return expireAfter;
   }
 
   protected int connectedNodes() {
@@ -60,7 +88,6 @@ public abstract class AbstractMetricUpdater<MetricT> implements MetricUpdater<Me
 
   protected int throttlingQueueSize() {
     RequestThrottler requestThrottler = context.getRequestThrottler();
-    String logPrefix = context.getSessionName();
     if (requestThrottler instanceof ConcurrencyLimitingRequestThrottler) {
       return ((ConcurrencyLimitingRequestThrottler) requestThrottler).getQueueSize();
     }
@@ -69,7 +96,7 @@ public abstract class AbstractMetricUpdater<MetricT> implements MetricUpdater<Me
     }
     LOG.warn(
         "[{}] Metric {} does not support {}, it will always return 0",
-        logPrefix,
+        context.getSessionName(),
         DefaultSessionMetric.THROTTLING_QUEUE_SIZE.getPath(),
         requestThrottler.getClass().getName());
     return 0;
@@ -117,4 +144,40 @@ public abstract class AbstractMetricUpdater<MetricT> implements MetricUpdater<Me
     ChannelPool pool = context.getPoolManager().getPools().get(node);
     return (pool == null) ? 0 : pool.getOrphanedIds();
   }
+
+  protected void startMetricsExpirationTimeout() {
+    metricsExpirationTimeoutRef.accumulateAndGet(
+        newTimeout(),
+        (current, update) -> {
+          if (current == null) {
+            return update;
+          } else {
+            update.cancel();
+            return current;
+          }
+        });
+  }
+
+  protected void cancelMetricsExpirationTimeout() {
+    Timeout t = metricsExpirationTimeoutRef.getAndSet(null);
+    if (t != null) {
+      t.cancel();
+    }
+  }
+
+  protected Timeout newTimeout() {
+    return context
+        .getNettyOptions()
+        .getTimer()
+        .newTimeout(
+            t -> {
+              if (t.isExpired()) {
+                clearMetrics();
+              }
+            },
+            expireAfter.toNanos(),
+            TimeUnit.NANOSECONDS);
+  }
+
+  protected abstract void clearMetrics();
 }

@@ -13,38 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.metrics.microprofile;
+package com.datastax.oss.driver.core.metrics;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
+import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.core.metrics.MetricsITBase;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricId;
 import com.datastax.oss.driver.internal.core.metrics.MetricIdGenerator;
-import com.datastax.oss.driver.internal.metrics.microprofile.MicroProfileTags;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
-import io.smallrye.metrics.MetricsRegistryImpl;
 import java.util.ArrayList;
 import java.util.List;
-import org.eclipse.microprofile.metrics.Counter;
-import org.eclipse.microprofile.metrics.Gauge;
-import org.eclipse.microprofile.metrics.Meter;
-import org.eclipse.microprofile.metrics.Metric;
-import org.eclipse.microprofile.metrics.MetricID;
-import org.eclipse.microprofile.metrics.MetricRegistry;
-import org.eclipse.microprofile.metrics.Tag;
-import org.eclipse.microprofile.metrics.Timer;
 import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
 
 @Category(ParallelizableTests.class)
-public class MicroProfileMetricsIT extends MetricsITBase {
+public class DropwizardMetricsIT extends MetricsITBase {
 
   @ClassRule
   public static final SimulacronRule SIMULACRON_RULE =
@@ -57,12 +53,12 @@ public class MicroProfileMetricsIT extends MetricsITBase {
 
   @Override
   protected MetricRegistry newMetricRegistry() {
-    return new MetricsRegistryImpl();
+    return new MetricRegistry();
   }
 
   @Override
   protected String getMetricsFactoryClass() {
-    return "MicroProfileMetricsFactory";
+    return "DropwizardMetricsFactory";
   }
 
   @Override
@@ -78,12 +74,20 @@ public class MicroProfileMetricsIT extends MetricsITBase {
     MetricIdGenerator metricIdGenerator =
         ((InternalDriverContext) session.getContext()).getMetricIdGenerator();
 
+    assertThat(session.getMetrics()).isPresent();
+    Metrics metrics = session.getMetrics().get();
+
     for (DefaultSessionMetric metric : ENABLED_SESSION_METRICS) {
-      MetricId metricId = metricIdGenerator.sessionMetricId(metric);
-      Tag[] tags = MicroProfileTags.toMicroProfileTags(metricId.getTags());
-      MetricID id = new MetricID(metricId.getName(), tags);
-      Metric m = registry.getMetrics().get(id);
+
+      MetricId id = metricIdGenerator.sessionMetricId(metric);
+      Metric m = registry.getMetrics().get(id.getName());
       assertThat(m).isNotNull();
+
+      // assert that the same metric is retrievable through the registry and through the driver API
+      assertThat(metrics.getSessionMetric(metric))
+          .isPresent()
+          .hasValueSatisfying(v -> assertThat(v).isSameAs(m));
+
       switch (metric) {
         case CONNECTED_NODES:
           assertThat(m).isInstanceOf(Gauge.class);
@@ -124,11 +128,17 @@ public class MicroProfileMetricsIT extends MetricsITBase {
     for (Node node : session.getMetadata().getNodes().values()) {
 
       for (DefaultNodeMetric metric : ENABLED_NODE_METRICS) {
-        MetricId description = metricIdGenerator.nodeMetricId(node, metric);
-        Tag[] tags = MicroProfileTags.toMicroProfileTags(description.getTags());
-        MetricID id = new MetricID(description.getName(), tags);
-        Metric m = registry.getMetrics().get(id);
+
+        MetricId id = metricIdGenerator.nodeMetricId(node, metric);
+        Metric m = registry.getMetrics().get(id.getName());
         assertThat(m).isNotNull();
+
+        // assert that the same metric is retrievable through the registry and through the driver
+        // API
+        assertThat(metrics.getNodeMetric(node, metric))
+            .isPresent()
+            .hasValueSatisfying(v -> assertThat(v).isSameAs(m));
+
         switch (metric) {
           case OPEN_CONNECTIONS:
             assertThat(m).isInstanceOf(Gauge.class);
@@ -192,7 +202,7 @@ public class MicroProfileMetricsIT extends MetricsITBase {
     InternalDriverContext context = (InternalDriverContext) session.getContext();
     MetricRegistry registry = (MetricRegistry) context.getMetricRegistry();
     assertThat(registry).isNotNull();
-    for (MetricID id : nodeMetricIds(context, node)) {
+    for (String id : nodeMetricIds(context, node)) {
       assertThat(registry.getMetrics()).containsKey(id);
     }
   }
@@ -202,16 +212,16 @@ public class MicroProfileMetricsIT extends MetricsITBase {
     InternalDriverContext context = (InternalDriverContext) session.getContext();
     MetricRegistry registry = (MetricRegistry) context.getMetricRegistry();
     assertThat(registry).isNotNull();
-    for (MetricID id : nodeMetricIds(context, node)) {
+    for (String id : nodeMetricIds(context, node)) {
       assertThat(registry.getMetrics()).doesNotContainKey(id);
     }
   }
 
-  private List<MetricID> nodeMetricIds(InternalDriverContext context, Node node) {
-    List<MetricID> ids = new ArrayList<>();
+  private List<String> nodeMetricIds(InternalDriverContext context, Node node) {
+    List<String> ids = new ArrayList<>();
     for (DefaultNodeMetric metric : ENABLED_NODE_METRICS) {
       MetricId id = context.getMetricIdGenerator().nodeMetricId(node, metric);
-      ids.add(new MetricID(id.getName(), MicroProfileTags.toMicroProfileTags(id.getTags())));
+      ids.add(id.getName());
     }
     return ids;
   }

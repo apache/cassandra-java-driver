@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.metrics;
 
-import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.metrics.DseNodeMetric;
@@ -26,7 +25,6 @@ import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -34,17 +32,14 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
     implements NodeMetricUpdater {
 
   private final Node node;
-  private final Runnable signalMetricUpdated;
 
   public DropwizardNodeMetricUpdater(
       Node node,
       InternalDriverContext context,
       Set<NodeMetric> enabledMetrics,
-      MetricRegistry registry,
-      Runnable signalMetricUpdated) {
+      MetricRegistry registry) {
     super(context, enabledMetrics, registry);
     this.node = node;
-    this.signalMetricUpdated = signalMetricUpdated;
 
     DriverExecutionProfile profile = context.getConfig().getDefaultProfile();
 
@@ -87,46 +82,6 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
         DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_HIGHEST,
         DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_DIGITS,
         DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_INTERVAL);
-  }
-
-  @Override
-  public void incrementCounter(NodeMetric metric, String profileName, long amount) {
-    signalMetricUpdated.run();
-    super.incrementCounter(metric, profileName, amount);
-  }
-
-  @Override
-  public void updateHistogram(NodeMetric metric, String profileName, long value) {
-    signalMetricUpdated.run();
-    super.updateHistogram(metric, profileName, value);
-  }
-
-  @Override
-  public void markMeter(NodeMetric metric, String profileName, long amount) {
-    signalMetricUpdated.run();
-    super.markMeter(metric, profileName, amount);
-  }
-
-  @Override
-  public void updateTimer(NodeMetric metric, String profileName, long duration, TimeUnit unit) {
-    signalMetricUpdated.run();
-    super.updateTimer(metric, profileName, duration, unit);
-  }
-
-  @Override
-  @SuppressWarnings("TypeParameterUnusedInFormals")
-  public <T extends Metric> T getMetric(NodeMetric metric, String profileName) {
-    signalMetricUpdated.run();
-    return super.getMetric(metric, profileName);
-  }
-
-  public void cleanupNodeMetrics() {
-    for (NodeMetric metric : metrics.keySet()) {
-      MetricId id = getMetricId(metric);
-      registry.remove(id.getName());
-    }
-    metrics.clear();
-    reservoirs.clear();
   }
 
   @Override
