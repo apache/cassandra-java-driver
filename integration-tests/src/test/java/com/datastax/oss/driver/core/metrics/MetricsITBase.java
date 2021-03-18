@@ -130,8 +130,8 @@ public abstract class MetricsITBase {
             .withString(
                 DefaultDriverOption.RECONNECTION_POLICY_CLASS,
                 ConstantReconnectionPolicy.class.getName())
-            .withDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY, Duration.ofMillis(100))
-            .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(1))
+            .withDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY, Duration.ofSeconds(1))
+            .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(2))
             .startProfile("spec_exec")
             .withString(
                 DefaultDriverOption.SPECULATIVE_EXECUTION_POLICY_CLASS,
@@ -161,6 +161,8 @@ public abstract class MetricsITBase {
       assertMetricsPresent(session);
 
     } catch (Exception e) {
+
+      e.printStackTrace();
 
       // Dropwizard is incompatible with metric tags
       assertThat(metricIdGenerator.getSimpleName()).contains("Tagging");

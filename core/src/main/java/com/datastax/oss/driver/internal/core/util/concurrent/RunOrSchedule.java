@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
 import io.netty.util.concurrent.EventExecutor;
-import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -57,17 +56,6 @@ public class RunOrSchedule {
     } else {
       executor.submit(task).addListener(UncaughtExceptions::log);
     }
-  }
-
-  public static <T> Consumer<T> on(EventExecutorGroup executorGroup, Consumer<T> task) {
-    return (t) -> {
-      EventExecutor executor = executorGroup.next();
-      if (executor.inEventLoop()) {
-        task.accept(t);
-      } else {
-        executor.submit(() -> task.accept(t)).addListener(UncaughtExceptions::log);
-      }
-    };
   }
 
   public static <T> Consumer<T> on(EventExecutor executor, Consumer<T> task) {

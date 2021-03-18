@@ -32,6 +32,7 @@ import com.datastax.oss.driver.internal.core.metrics.NoopNodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.NoopSessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
+import io.netty.util.concurrent.EventExecutor;
 import java.util.Optional;
 import java.util.Set;
 import net.jcip.annotations.ThreadSafe;
@@ -87,13 +88,13 @@ public class MicroProfileMetricsFactory implements MetricsFactory {
                 + "'");
       }
       if (!enabledNodeMetrics.isEmpty()) {
+        EventExecutor adminEventExecutor =
+            this.context.getNettyOptions().adminEventExecutorGroup().next();
         this.context
             .getEventBus()
             .register(
                 NodeStateEvent.class,
-                RunOrSchedule.on(
-                    this.context.getNettyOptions().adminEventExecutorGroup(),
-                    this::processNodeStateEvent));
+                RunOrSchedule.on(adminEventExecutor, this::processNodeStateEvent));
       }
     }
   }
