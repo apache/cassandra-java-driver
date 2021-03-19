@@ -73,18 +73,18 @@ public class UpdateFluentAssignmentTest {
   @Test
   public void should_generate_counter_operations() {
     assertThat(update("foo").increment("c").whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET c+=1 WHERE k=?");
+        .hasCql("UPDATE foo SET c=c+1 WHERE k=?");
     assertThat(update("foo").increment("c", literal(2)).whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET c+=2 WHERE k=?");
+        .hasCql("UPDATE foo SET c=c+2 WHERE k=?");
     assertThat(update("foo").increment("c", bindMarker()).whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET c+=? WHERE k=?");
+        .hasCql("UPDATE foo SET c=c+? WHERE k=?");
 
     assertThat(update("foo").decrement("c").whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET c-=1 WHERE k=?");
+        .hasCql("UPDATE foo SET c=c-1 WHERE k=?");
     assertThat(update("foo").decrement("c", literal(2)).whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET c-=2 WHERE k=?");
+        .hasCql("UPDATE foo SET c=c-2 WHERE k=?");
     assertThat(update("foo").decrement("c", bindMarker()).whereColumn("k").isEqualTo(bindMarker()))
-        .hasCql("UPDATE foo SET c-=? WHERE k=?");
+        .hasCql("UPDATE foo SET c=c-? WHERE k=?");
   }
 
   @Test
