@@ -40,6 +40,8 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /** Base class for generated implementations of {@link Dao}-annotated interfaces. */
 public class DaoBase {
@@ -238,6 +240,11 @@ public class DaoBase {
   protected <EntityT> PagingIterable<EntityT> executeAndMapToEntityIterable(
       Statement<?> statement, EntityHelper<EntityT> entityHelper) {
     return execute(statement).map(entityHelper::get);
+  }
+
+  protected <EntityT> Stream<EntityT> executeAndMapToEntityStream(
+      Statement<?> statement, EntityHelper<EntityT> entityHelper) {
+    return StreamSupport.stream(execute(statement).map(entityHelper::get).spliterator(), false);
   }
 
   protected CompletableFuture<AsyncResultSet> executeAsync(Statement<?> statement) {
