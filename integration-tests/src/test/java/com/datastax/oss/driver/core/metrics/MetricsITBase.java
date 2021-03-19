@@ -151,12 +151,14 @@ public abstract class MetricsITBase {
             .withMetricRegistry(newMetricRegistry())
             .build()) {
 
+      awaitClusterUp(session);
       session.prepare("irrelevant");
       queryAllNodes(session);
       triggerErrors(session, RetryVerdict.RETRY_NEXT);
       triggerErrors(session, RetryVerdict.IGNORE);
       triggerErrors(session, RetryVerdict.RETHROW);
       triggerTimeouts(session);
+      awaitClusterUp(session);
 
       assertMetricsPresent(session);
 
@@ -392,6 +394,17 @@ public abstract class MetricsITBase {
       }
       await().untilAsserted(() -> assertThat(first.getState() == NodeState.UP).isTrue());
     }
+  }
+
+  private void awaitClusterUp(CqlSession session) {
+    await()
+        .untilAsserted(
+            () ->
+                assertThat(
+                        session.getMetadata().getNodes().values().stream()
+                            .filter(n -> n.getState() == NodeState.UP)
+                            .count())
+                    .isEqualTo(3));
   }
 
   // timeouts do not increment cql-messages and cql-requests, but the speculative executions will
