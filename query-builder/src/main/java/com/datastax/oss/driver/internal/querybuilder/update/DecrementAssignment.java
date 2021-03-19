@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.metrics;
+package com.datastax.oss.driver.internal.querybuilder.update;
 
-import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.querybuilder.term.Term;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import net.jcip.annotations.Immutable;
 
-/**
- * A node-level metric exposed through {@link Session#getMetrics()}.
- *
- * <p>All metrics exposed out of the box by the driver are instances of {@link DefaultNodeMetric} or
- * {@link com.datastax.dse.driver.api.core.metrics.DseNodeMetric DseNodeMetric} (this interface only
- * exists to allow custom metrics in driver extensions).
- *
- * @see SessionMetric
- */
-public interface NodeMetric {
+@Immutable
+public class DecrementAssignment extends CounterAssignment {
 
-  @NonNull
-  String getPath();
+  public DecrementAssignment(@NonNull CqlIdentifier columnId, @NonNull Term value) {
+    super(columnId, Operator.DECREMENT, value);
+  }
 }

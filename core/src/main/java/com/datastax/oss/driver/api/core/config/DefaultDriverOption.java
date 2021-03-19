@@ -838,6 +838,20 @@ public enum DefaultDriverOption implements DriverOption {
    */
   LOAD_BALANCING_DC_FAILOVER_ALLOW_FOR_LOCAL_CONSISTENCY_LEVELS(
       "advanced.load-balancing-policy.dc-failover.allow-for-local-consistency-levels"),
+
+  /**
+   * The classname of the desired {@code MetricIdGenerator} implementation.
+   *
+   * <p>Value-type: {@link String}
+   */
+  METRICS_ID_GENERATOR_CLASS("advanced.metrics.id-generator.class"),
+
+  /**
+   * The value of the prefix to prepend to all metric names.
+   *
+   * <p>Value-type: {@link String}
+   */
+  METRICS_ID_GENERATOR_PREFIX("advanced.metrics.id-generator.prefix"),
   ;
 
   private final String path;

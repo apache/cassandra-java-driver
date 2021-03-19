@@ -15,95 +15,78 @@
  */
 package com.datastax.oss.driver.internal.core.metrics;
 
-import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.metrics.DseNodeMetric;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMetric>
     implements NodeMetricUpdater {
 
-  private final String metricNamePrefix;
+  private final Node node;
   private final Runnable signalMetricUpdated;
 
   public DropwizardNodeMetricUpdater(
       Node node,
+      InternalDriverContext context,
       Set<NodeMetric> enabledMetrics,
       MetricRegistry registry,
-      InternalDriverContext context,
       Runnable signalMetricUpdated) {
-    super(enabledMetrics, registry);
+    super(context, enabledMetrics, registry);
+    this.node = node;
     this.signalMetricUpdated = signalMetricUpdated;
-    this.metricNamePrefix = buildPrefix(context.getSessionName(), node.getEndPoint());
 
-    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
+    DriverExecutionProfile profile = context.getConfig().getDefaultProfile();
 
-    if (enabledMetrics.contains(DefaultNodeMetric.OPEN_CONNECTIONS)) {
-      this.registry.register(
-          buildFullName(DefaultNodeMetric.OPEN_CONNECTIONS, null),
-          (Gauge<Integer>) node::getOpenConnections);
-    }
-    initializePoolGauge(
-        DefaultNodeMetric.AVAILABLE_STREAMS, node, ChannelPool::getAvailableIds, context);
-    initializePoolGauge(DefaultNodeMetric.IN_FLIGHT, node, ChannelPool::getInFlight, context);
-    initializePoolGauge(
-        DefaultNodeMetric.ORPHANED_STREAMS, node, ChannelPool::getOrphanedIds, context);
+    initializeGauge(DefaultNodeMetric.OPEN_CONNECTIONS, profile, node::getOpenConnections);
+    initializeGauge(DefaultNodeMetric.AVAILABLE_STREAMS, profile, () -> availableStreamIds(node));
+    initializeGauge(DefaultNodeMetric.IN_FLIGHT, profile, () -> inFlightRequests(node));
+    initializeGauge(DefaultNodeMetric.ORPHANED_STREAMS, profile, () -> orphanedStreamIds(node));
+
+    initializeCounter(DefaultNodeMetric.UNSENT_REQUESTS, profile);
+    initializeCounter(DefaultNodeMetric.ABORTED_REQUESTS, profile);
+    initializeCounter(DefaultNodeMetric.WRITE_TIMEOUTS, profile);
+    initializeCounter(DefaultNodeMetric.READ_TIMEOUTS, profile);
+    initializeCounter(DefaultNodeMetric.UNAVAILABLES, profile);
+    initializeCounter(DefaultNodeMetric.OTHER_ERRORS, profile);
+    initializeCounter(DefaultNodeMetric.RETRIES, profile);
+    initializeCounter(DefaultNodeMetric.RETRIES_ON_ABORTED, profile);
+    initializeCounter(DefaultNodeMetric.RETRIES_ON_READ_TIMEOUT, profile);
+    initializeCounter(DefaultNodeMetric.RETRIES_ON_WRITE_TIMEOUT, profile);
+    initializeCounter(DefaultNodeMetric.RETRIES_ON_UNAVAILABLE, profile);
+    initializeCounter(DefaultNodeMetric.RETRIES_ON_OTHER_ERROR, profile);
+    initializeCounter(DefaultNodeMetric.IGNORES, profile);
+    initializeCounter(DefaultNodeMetric.IGNORES_ON_ABORTED, profile);
+    initializeCounter(DefaultNodeMetric.IGNORES_ON_READ_TIMEOUT, profile);
+    initializeCounter(DefaultNodeMetric.IGNORES_ON_WRITE_TIMEOUT, profile);
+    initializeCounter(DefaultNodeMetric.IGNORES_ON_UNAVAILABLE, profile);
+    initializeCounter(DefaultNodeMetric.IGNORES_ON_OTHER_ERROR, profile);
+    initializeCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS, profile);
+    initializeCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, profile);
+    initializeCounter(DefaultNodeMetric.AUTHENTICATION_ERRORS, profile);
+
     initializeHdrTimer(
         DefaultNodeMetric.CQL_MESSAGES,
-        config,
+        profile,
         DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_HIGHEST,
         DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_DIGITS,
         DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_INTERVAL);
-    initializeDefaultCounter(DefaultNodeMetric.UNSENT_REQUESTS, null);
-    initializeDefaultCounter(DefaultNodeMetric.ABORTED_REQUESTS, null);
-    initializeDefaultCounter(DefaultNodeMetric.WRITE_TIMEOUTS, null);
-    initializeDefaultCounter(DefaultNodeMetric.READ_TIMEOUTS, null);
-    initializeDefaultCounter(DefaultNodeMetric.UNAVAILABLES, null);
-    initializeDefaultCounter(DefaultNodeMetric.OTHER_ERRORS, null);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES, null);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_ABORTED, null);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_READ_TIMEOUT, null);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_WRITE_TIMEOUT, null);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_UNAVAILABLE, null);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_OTHER_ERROR, null);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES, null);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_ABORTED, null);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_READ_TIMEOUT, null);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_WRITE_TIMEOUT, null);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_UNAVAILABLE, null);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_OTHER_ERROR, null);
-    initializeDefaultCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS, null);
-    initializeDefaultCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
-    initializeDefaultCounter(DefaultNodeMetric.AUTHENTICATION_ERRORS, null);
     initializeHdrTimer(
         DseNodeMetric.GRAPH_MESSAGES,
-        context.getConfig().getDefaultProfile(),
+        profile,
         DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_HIGHEST,
         DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_DIGITS,
         DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_INTERVAL);
-  }
-
-  @Override
-  public String buildFullName(NodeMetric metric, String profileName) {
-    return metricNamePrefix + metric.getPath();
-  }
-
-  private String buildPrefix(String sessionName, EndPoint endPoint) {
-    return sessionName + ".nodes." + endPoint.asMetricPrefix() + ".";
   }
 
   @Override
@@ -131,29 +114,27 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
   }
 
   @Override
-  @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
+  @SuppressWarnings("TypeParameterUnusedInFormals")
   public <T extends Metric> T getMetric(NodeMetric metric, String profileName) {
     signalMetricUpdated.run();
     return super.getMetric(metric, profileName);
   }
 
-  private void initializePoolGauge(
-      NodeMetric metric,
-      Node node,
-      Function<ChannelPool, Integer> reading,
-      InternalDriverContext context) {
-    if (enabledMetrics.contains(metric)) {
-      registry.register(
-          buildFullName(metric, null),
-          (Gauge<Integer>)
-              () -> {
-                ChannelPool pool = context.getPoolManager().getPools().get(node);
-                return (pool == null) ? 0 : reading.apply(pool);
-              });
+  public void cleanupNodeMetrics() {
+    for (NodeMetric metric : metrics.keySet()) {
+      MetricId id = getMetricId(metric);
+      registry.remove(id.getName());
     }
+    metrics.clear();
+    reservoirs.clear();
   }
 
-  public void cleanupNodeMetrics() {
-    registry.removeMatching((name, metric) -> name.startsWith(metricNamePrefix));
+  @Override
+  protected MetricId getMetricId(NodeMetric metric) {
+    MetricId id = context.getMetricIdGenerator().nodeMetricId(node, metric);
+    if (!id.getTags().isEmpty()) {
+      throw new IllegalStateException("Cannot use metric tags with Dropwizard");
+    }
+    return id;
   }
 }

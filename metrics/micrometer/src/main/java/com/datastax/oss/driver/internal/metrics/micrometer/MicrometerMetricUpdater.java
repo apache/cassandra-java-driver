@@ -16,70 +16,123 @@
 package com.datastax.oss.driver.internal.metrics.micrometer;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.internal.core.metrics.MetricUpdater;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metrics.AbstractMetricUpdater;
+import com.datastax.oss.driver.internal.core.metrics.MetricId;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Timer;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
-public abstract class MicrometerMetricUpdater<MetricT> implements MetricUpdater<MetricT> {
-  protected final Set<MetricT> enabledMetrics;
-  protected final MeterRegistry registry;
+public abstract class MicrometerMetricUpdater<MetricT> extends AbstractMetricUpdater<MetricT> {
 
-  protected MicrometerMetricUpdater(Set<MetricT> enabledMetrics, MeterRegistry registry) {
-    this.enabledMetrics = enabledMetrics;
+  protected final MeterRegistry registry;
+  protected final ConcurrentMap<MetricT, Meter> metrics = new ConcurrentHashMap<>();
+
+  protected MicrometerMetricUpdater(
+      InternalDriverContext context, Set<MetricT> enabledMetrics, MeterRegistry registry) {
+    super(context, enabledMetrics);
     this.registry = registry;
   }
 
-  protected abstract String buildFullName(MetricT metric, String profileName);
-
   @Override
-  public void incrementCounter(MetricT metric, String profileName, long amount) {
+  public void incrementCounter(MetricT metric, @Nullable String profileName, long amount) {
     if (isEnabled(metric, profileName)) {
-      registry.counter(buildFullName(metric, profileName)).increment(amount);
+      getOrCreateCounterFor(metric).increment(amount);
     }
   }
 
   @Override
-  public void updateHistogram(MetricT metric, String profileName, long value) {
+  public void updateHistogram(MetricT metric, @Nullable String profileName, long value) {
     if (isEnabled(metric, profileName)) {
-      registry.summary(buildFullName(metric, profileName)).record(value);
+      getOrCreateDistributionSummaryFor(metric).record(value);
     }
   }
 
   @Override
-  public void markMeter(MetricT metric, String profileName, long amount) {
+  public void markMeter(MetricT metric, @Nullable String profileName, long amount) {
     if (isEnabled(metric, profileName)) {
-      registry.counter(buildFullName(metric, profileName)).increment(amount);
+      // There is no meter type in Micrometer, so use a counter
+      getOrCreateCounterFor(metric).increment(amount);
     }
   }
 
   @Override
-  public void updateTimer(MetricT metric, String profileName, long duration, TimeUnit unit) {
+  public void updateTimer(
+      MetricT metric, @Nullable String profileName, long duration, TimeUnit unit) {
     if (isEnabled(metric, profileName)) {
-      registry.timer(buildFullName(metric, profileName)).record(duration, unit);
+      getOrCreateTimerFor(metric).record(duration, unit);
     }
   }
 
-  @Override
-  public boolean isEnabled(MetricT metric, String profileName) {
-    return enabledMetrics.contains(metric);
-  }
+  protected abstract MetricId getMetricId(MetricT metric);
 
-  protected void initializeDefaultCounter(MetricT metric, String profileName) {
-    if (isEnabled(metric, profileName)) {
-      // Just initialize eagerly so that the metric appears even when it has no data yet
-      registry.counter(buildFullName(metric, profileName));
+  protected void initializeGauge(
+      MetricT metric, DriverExecutionProfile profile, Supplier<Number> supplier) {
+    if (isEnabled(metric, profile.getName())) {
+      metrics.computeIfAbsent(
+          metric,
+          m -> {
+            MetricId id = getMetricId(m);
+            Iterable<Tag> tags = MicrometerTags.toMicrometerTags(id.getTags());
+            return Gauge.builder(id.getName(), supplier).tags(tags).register(registry);
+          });
     }
   }
 
-  protected void initializeTimer(MetricT metric, DriverExecutionProfile config) {
-    String profileName = config.getName();
-    if (isEnabled(metric, profileName)) {
-      String fullName = buildFullName(metric, profileName);
-
-      registry.timer(fullName);
+  protected void initializeCounter(MetricT metric, DriverExecutionProfile profile) {
+    if (isEnabled(metric, profile.getName())) {
+      getOrCreateCounterFor(metric);
     }
+  }
+
+  protected void initializeTimer(MetricT metric, DriverExecutionProfile profile) {
+    if (isEnabled(metric, profile.getName())) {
+      getOrCreateTimerFor(metric);
+    }
+  }
+
+  protected Counter getOrCreateCounterFor(MetricT metric) {
+    return (Counter)
+        metrics.computeIfAbsent(
+            metric,
+            m -> {
+              MetricId id = getMetricId(m);
+              Iterable<Tag> tags = MicrometerTags.toMicrometerTags(id.getTags());
+              return Counter.builder(id.getName()).tags(tags).register(registry);
+            });
+  }
+
+  protected DistributionSummary getOrCreateDistributionSummaryFor(MetricT metric) {
+    return (DistributionSummary)
+        metrics.computeIfAbsent(
+            metric,
+            m -> {
+              MetricId id = getMetricId(m);
+              Iterable<Tag> tags = MicrometerTags.toMicrometerTags(id.getTags());
+              return DistributionSummary.builder(id.getName()).tags(tags).register(registry);
+            });
+  }
+
+  protected Timer getOrCreateTimerFor(MetricT metric) {
+    return (Timer)
+        metrics.computeIfAbsent(
+            metric,
+            m -> {
+              MetricId id = getMetricId(m);
+              Iterable<Tag> tags = MicrometerTags.toMicrometerTags(id.getTags());
+              return Timer.builder(id.getName()).tags(tags).register(registry);
+            });
   }
 }

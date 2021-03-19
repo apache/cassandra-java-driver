@@ -102,7 +102,7 @@ public class MicroProfileMetricsFactory implements MetricsFactory {
         this.registry = (MetricRegistry) possibleMetricRegistry;
         this.sessionUpdater =
             new MicroProfileSessionMetricUpdater(
-                enabledSessionMetrics, this.registry, this.context);
+                this.context, enabledSessionMetrics, this.registry);
       } else {
         // Metrics are enabled, but the registry object is not an expected type
         throw new IllegalArgumentException(
@@ -148,7 +148,7 @@ public class MicroProfileMetricsFactory implements MetricsFactory {
     }
     MicroProfileNodeMetricUpdater updater =
         new MicroProfileNodeMetricUpdater(
-            node, enabledNodeMetrics, registry, context, () -> metricsCache.getIfPresent(node));
+            node, context, enabledNodeMetrics, registry, () -> metricsCache.getIfPresent(node));
     metricsCache.put(node, updater);
     return updater;
   }

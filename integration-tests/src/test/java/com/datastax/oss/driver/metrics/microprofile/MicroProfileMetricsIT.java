@@ -16,171 +16,216 @@
 package com.datastax.oss.driver.metrics.microprofile;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
+import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metrics.MetricId;
+import com.datastax.oss.driver.internal.core.metrics.MetricIdGenerator;
+import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
+import com.datastax.oss.driver.internal.metrics.micrometer.MicrometerNodeMetricUpdater;
+import com.datastax.oss.driver.internal.metrics.microprofile.MicroProfileMetricsFactory;
+import com.datastax.oss.driver.internal.metrics.microprofile.MicroProfileTags;
 import com.datastax.oss.driver.metrics.common.AbstractMetricsTestBase;
+import com.datastax.oss.driver.shaded.guava.common.base.Ticker;
+import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
+import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import io.smallrye.metrics.MetricsRegistryImpl;
-import java.util.Collection;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.regex.Pattern;
-import org.assertj.core.api.Condition;
+import java.lang.reflect.Field;
 import org.eclipse.microprofile.metrics.Counter;
 import org.eclipse.microprofile.metrics.Gauge;
 import org.eclipse.microprofile.metrics.Meter;
 import org.eclipse.microprofile.metrics.Metric;
 import org.eclipse.microprofile.metrics.MetricID;
 import org.eclipse.microprofile.metrics.MetricRegistry;
+import org.eclipse.microprofile.metrics.Tag;
 import org.eclipse.microprofile.metrics.Timer;
+import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
 
 @Category(ParallelizableTests.class)
 public class MicroProfileMetricsIT extends AbstractMetricsTestBase {
 
-  private static final MetricRegistry METRIC_REGISTRY = new MetricsRegistryImpl();
+  @ClassRule
+  public static final SimulacronRule SIMULACRON_RULE =
+      new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
   @Override
-  protected void assertMetrics(CqlSession session) {
-    await()
-        .pollInterval(500, TimeUnit.MILLISECONDS)
-        .atMost(5, TimeUnit.SECONDS)
-        .untilAsserted(
-            () ->
-                assertThat(METRIC_REGISTRY.getMetrics())
-                    .hasEntrySatisfying(
-                        buildTimerCondition(
-                            "CQL_REQUESTS should be a SESSION Timer with count 10",
-                            buildSessionMetricPattern(DefaultSessionMetric.CQL_REQUESTS, session),
-                            a -> a == 10))
-                    .hasEntrySatisfying(
-                        buildGaugeCondition(
-                            "CONNECTED_NODES should be a SESSION Gauge with count 1",
-                            buildSessionMetricPattern(
-                                DefaultSessionMetric.CONNECTED_NODES, session),
-                            a -> a == 1))
-                    .hasEntrySatisfying(
-                        buildMeterCondition(
-                            "BYTES_SENT should be a SESSION Meter with count > 0",
-                            buildSessionMetricPattern(DefaultSessionMetric.BYTES_SENT, session),
-                            a -> a > 0))
-                    .hasEntrySatisfying(
-                        buildMeterCondition(
-                            "BYTES_SENT should be a SESSION Meter with count > 0",
-                            buildNodeMetricPattern(DefaultNodeMetric.BYTES_SENT, session),
-                            a -> a > 0))
-                    .hasEntrySatisfying(
-                        buildMeterCondition(
-                            "BYTES_RECEIVED should be a SESSION Meter with count > 0",
-                            buildSessionMetricPattern(DefaultSessionMetric.BYTES_RECEIVED, session),
-                            a -> a > 0))
-                    .hasEntrySatisfying(
-                        buildMeterCondition(
-                            "BYTES_RECEIVED should be a NODE Meter with count > 0",
-                            buildNodeMetricPattern(DefaultNodeMetric.BYTES_RECEIVED, session),
-                            a -> a > 0))
-                    .hasEntrySatisfying(
-                        buildTimerCondition(
-                            "CQL_MESSAGESS should be a NODE Timer with count 10",
-                            buildNodeMetricPattern(DefaultNodeMetric.CQL_MESSAGES, session),
-                            a -> a == 10))
-                    .hasEntrySatisfying(
-                        buildGaugeCondition(
-                            "AVAILABLE_STREAMS should be a NODE Gauge with count 1024",
-                            buildNodeMetricPattern(DefaultNodeMetric.AVAILABLE_STREAMS, session),
-                            a -> a == 1024))
-                    .hasEntrySatisfying(
-                        buildCounterCondition(
-                            "RETRIES should be a NODE Counter with count 0",
-                            buildNodeMetricPattern(DefaultNodeMetric.RETRIES, session),
-                            a -> a == 0)));
+  protected SimulacronRule simulacron() {
+    return SIMULACRON_RULE;
   }
 
   @Override
-  protected Object getMetricRegistry() {
-    return METRIC_REGISTRY;
+  protected MetricRegistry newMetricRegistry() {
+    return new MetricsRegistryImpl();
   }
 
   @Override
-  protected String getMetricFactoryClass() {
+  protected String getMetricsFactoryClass() {
     return "MicroProfileMetricsFactory";
   }
 
   @Override
-  protected Collection<?> getRegistryMetrics() {
-    return METRIC_REGISTRY.getMetrics().entrySet();
+  protected MetricsFactory newTickingMetricsFactory(InternalDriverContext context, Ticker ticker) {
+    return new MicroProfileMetricsFactory(context, ticker);
   }
 
-  private Condition<Entry<MetricID, Metric>> buildTimerCondition(
-      String description, String metricPattern, Function<Long, Boolean> verifyFunction) {
-    return new Condition<Entry<MetricID, Metric>>(description) {
-      @Override
-      public boolean matches(Entry<MetricID, Metric> metric) {
-        if (!(metric.getValue() instanceof Timer)) {
-          // Metric is not a Timer
-          return false;
-        }
-        final Timer timer = (Timer) metric.getValue();
-        final MetricID id = metric.getKey();
-        return verifyFunction.apply(timer.getCount())
-            && Pattern.matches(metricPattern, id.getName());
+  @Override
+  protected void assertMetrics(CqlSession session) {
+
+    MetricRegistry registry =
+        (MetricRegistry) ((InternalDriverContext) session.getContext()).getMetricRegistry();
+    assertThat(registry).isNotNull();
+
+    assertThat(registry.getMetrics())
+        .hasSize(ENABLED_SESSION_METRICS.size() + ENABLED_NODE_METRICS.size() * 3);
+
+    MetricIdGenerator metricIdGenerator =
+        ((InternalDriverContext) session.getContext()).getMetricIdGenerator();
+
+    for (DefaultSessionMetric metric : ENABLED_SESSION_METRICS) {
+      MetricId metricId = metricIdGenerator.sessionMetricId(metric);
+      Tag[] tags = MicroProfileTags.toMicroProfileTags(metricId.getTags());
+      MetricID id = new MetricID(metricId.getName(), tags);
+      Metric m = registry.getMetrics().get(id);
+      assertThat(m).isNotNull();
+      switch (metric) {
+        case BYTES_SENT:
+        case BYTES_RECEIVED:
+          assertThat(m).isInstanceOf(Meter.class);
+          assertThat(((Meter) m).getCount()).isGreaterThan(0L);
+          break;
+        case CONNECTED_NODES:
+          assertThat(m).isInstanceOf(Gauge.class);
+          assertThat((Integer) ((Gauge<?>) m).getValue()).isEqualTo(3);
+          break;
+        case CQL_REQUESTS:
+          assertThat(m).isInstanceOf(Timer.class);
+          assertThat(((Timer) m).getCount()).isEqualTo(30L);
+          break;
+        case CQL_CLIENT_TIMEOUTS:
+        case THROTTLING_ERRORS:
+          assertThat(m).isInstanceOf(Counter.class);
+          assertThat(((Counter) m).getCount()).isZero();
+          break;
+        case THROTTLING_DELAY:
+          assertThat(m).isInstanceOf(Timer.class);
+          assertThat(((Timer) m).getCount()).isZero();
+          break;
+        case THROTTLING_QUEUE_SIZE:
+          assertThat(m).isInstanceOf(Gauge.class);
+          assertThat((Integer) ((Gauge<?>) m).getValue()).isZero();
+          break;
+        case CQL_PREPARED_CACHE_SIZE:
+          assertThat(m).isInstanceOf(Gauge.class);
+          assertThat((Long) ((Gauge<?>) m).getValue()).isZero();
+          break;
       }
-    };
+    }
+
+    for (Node node : session.getMetadata().getNodes().values()) {
+
+      for (DefaultNodeMetric metric : ENABLED_NODE_METRICS) {
+        MetricId description = metricIdGenerator.nodeMetricId(node, metric);
+        Tag[] tags = MicroProfileTags.toMicroProfileTags(description.getTags());
+        MetricID id = new MetricID(description.getName(), tags);
+        Metric m = registry.getMetrics().get(id);
+        assertThat(m).isNotNull();
+        switch (metric) {
+          case OPEN_CONNECTIONS:
+            assertThat(m).isInstanceOf(Gauge.class);
+            // control node has 2 connections
+            assertThat((Integer) ((Gauge<?>) m).getValue()).isBetween(1, 2);
+            break;
+          case CQL_MESSAGES:
+            assertThat(m).isInstanceOf(Timer.class);
+            assertThat(((Timer) m).getCount()).isEqualTo(10L);
+            break;
+          case AVAILABLE_STREAMS:
+            assertThat(m).isInstanceOf(Gauge.class);
+            assertThat((Integer) ((Gauge<?>) m).getValue()).isGreaterThan(100);
+            break;
+          case IN_FLIGHT:
+            assertThat(m).isInstanceOf(Gauge.class);
+            break;
+          case ORPHANED_STREAMS:
+            assertThat(m).isInstanceOf(Gauge.class);
+            assertThat((Integer) ((Gauge<?>) m).getValue()).isZero();
+            break;
+          case BYTES_SENT:
+          case BYTES_RECEIVED:
+            assertThat(m).isInstanceOf(Meter.class);
+            assertThat(((Meter) m).getCount()).isGreaterThan(0L);
+            break;
+          case UNSENT_REQUESTS:
+          case ABORTED_REQUESTS:
+          case WRITE_TIMEOUTS:
+          case READ_TIMEOUTS:
+          case UNAVAILABLES:
+          case OTHER_ERRORS:
+          case RETRIES:
+          case RETRIES_ON_ABORTED:
+          case RETRIES_ON_READ_TIMEOUT:
+          case RETRIES_ON_WRITE_TIMEOUT:
+          case RETRIES_ON_UNAVAILABLE:
+          case RETRIES_ON_OTHER_ERROR:
+          case IGNORES:
+          case IGNORES_ON_ABORTED:
+          case IGNORES_ON_READ_TIMEOUT:
+          case IGNORES_ON_WRITE_TIMEOUT:
+          case IGNORES_ON_UNAVAILABLE:
+          case IGNORES_ON_OTHER_ERROR:
+          case SPECULATIVE_EXECUTIONS:
+          case CONNECTION_INIT_ERRORS:
+          case AUTHENTICATION_ERRORS:
+            assertThat(m).isInstanceOf(Counter.class);
+            assertThat(((Counter) m).getCount()).isZero();
+            break;
+        }
+      }
+    }
   }
 
-  private Condition<Entry<MetricID, Metric>> buildCounterCondition(
-      String description, String metricPattern, Function<Long, Boolean> verifyFunction) {
-    return new Condition<Entry<MetricID, Metric>>(description) {
-      @Override
-      public boolean matches(Entry<MetricID, Metric> metric) {
-        if (!(metric.getValue() instanceof Counter)) {
-          // Metric is not a Counter
-          return false;
-        }
-        final Counter counter = (Counter) metric.getValue();
-        final MetricID id = metric.getKey();
-        return verifyFunction.apply(counter.getCount())
-            && Pattern.matches(metricPattern, id.getName());
-      }
-    };
+  @Override
+  protected void assertNodeMetricsNotEvicted(CqlSession session, Node node) throws Exception {
+    InternalDriverContext context = (InternalDriverContext) session.getContext();
+    MetricIdGenerator metricIdGenerator = context.getMetricIdGenerator();
+    MetricRegistry registry = (MetricRegistry) context.getMetricRegistry();
+    assertThat(registry).isNotNull();
+    // FIXME see JAVA-2929
+    triggerCacheCleanup(context.getMetricsFactory());
+    for (DefaultNodeMetric metric : ENABLED_NODE_METRICS) {
+      MetricId id = metricIdGenerator.nodeMetricId(node, metric);
+      Tag[] tags = MicroProfileTags.toMicroProfileTags(id.getTags());
+      assertThat(registry.getMetrics()).containsKey(new MetricID(id.getName(), tags));
+    }
   }
 
-  private Condition<Entry<MetricID, Metric>> buildMeterCondition(
-      String description, String metricPattern, Function<Long, Boolean> verifyFunction) {
-    return new Condition<Entry<MetricID, Metric>>(description) {
-      @Override
-      public boolean matches(Entry<MetricID, Metric> metric) {
-        if (!(metric.getValue() instanceof Meter)) {
-          // Metric is not a Meter
-          return false;
-        }
-        final Meter meter = (Meter) metric.getValue();
-        final MetricID id = metric.getKey();
-        return verifyFunction.apply(meter.getCount())
-            && Pattern.matches(metricPattern, id.getName());
-      }
-    };
+  @Override
+  protected void assertNodeMetricsEvicted(CqlSession session, Node node) throws Exception {
+    InternalDriverContext context = (InternalDriverContext) session.getContext();
+    MetricIdGenerator metricIdGenerator = context.getMetricIdGenerator();
+    MetricRegistry registry = (MetricRegistry) context.getMetricRegistry();
+    assertThat(registry).isNotNull();
+    // FIXME see JAVA-2929
+    triggerCacheCleanup(context.getMetricsFactory());
+    for (DefaultNodeMetric metric : ENABLED_NODE_METRICS) {
+      MetricId id = metricIdGenerator.nodeMetricId(node, metric);
+      Tag[] tags = MicroProfileTags.toMicroProfileTags(id.getTags());
+      assertThat(registry.getMetrics()).doesNotContainKey(new MetricID(id.getName(), tags));
+    }
   }
 
-  private Condition<Entry<MetricID, Metric>> buildGaugeCondition(
-      String description, String metricPattern, Function<Double, Boolean> verifyFunction) {
-    return new Condition<Entry<MetricID, Metric>>(description) {
-      @Override
-      public boolean matches(Entry<MetricID, Metric> metric) {
-        if (!(metric.getValue() instanceof Gauge)) {
-          // Metric is not a Gauge
-          return false;
-        }
-        final Gauge<?> gauge = (Gauge<?>) metric.getValue();
-        final Number gaugeValue = (Number) gauge.getValue();
-        final MetricID id = metric.getKey();
-        return verifyFunction.apply(gaugeValue.doubleValue())
-            && Pattern.matches(metricPattern, id.getName());
-      }
-    };
+  private void triggerCacheCleanup(MetricsFactory metricsFactory) throws Exception {
+    Field metricsCache = MicroProfileMetricsFactory.class.getDeclaredField("metricsCache");
+    metricsCache.setAccessible(true);
+    @SuppressWarnings("unchecked")
+    Cache<Node, MicrometerNodeMetricUpdater> cache =
+        (Cache<Node, MicrometerNodeMetricUpdater>) metricsCache.get(metricsFactory);
+    cache.cleanUp();
   }
 }
