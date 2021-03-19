@@ -58,6 +58,11 @@
       </exclusions>
     </dependency>
     <dependency>
+      <groupId>io.smallrye</groupId>
+      <artifactId>smallrye-metrics</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <scope>test</scope>

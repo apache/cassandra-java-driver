@@ -38,6 +38,7 @@ import net.jcip.annotations.ThreadSafe;
 public abstract class MicrometerMetricUpdater<MetricT> extends AbstractMetricUpdater<MetricT> {
 
   protected final MeterRegistry registry;
+
   protected final ConcurrentMap<MetricT, Meter> metrics = new ConcurrentHashMap<>();
 
   protected MicrometerMetricUpdater(
@@ -74,6 +75,14 @@ public abstract class MicrometerMetricUpdater<MetricT> extends AbstractMetricUpd
     if (isEnabled(metric, profileName)) {
       getOrCreateTimerFor(metric).record(duration, unit);
     }
+  }
+
+  @Override
+  protected void clearMetrics() {
+    for (Meter metric : metrics.values()) {
+      registry.remove(metric);
+    }
+    metrics.clear();
   }
 
   protected abstract MetricId getMetricId(MetricT metric);

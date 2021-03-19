@@ -19,23 +19,21 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metrics.MetricPaths;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.NoopNodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.NoopSessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
-import com.datastax.oss.driver.shaded.guava.common.base.Ticker;
-import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
-import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
-import com.datastax.oss.driver.shaded.guava.common.cache.RemovalNotification;
+import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import io.micrometer.core.instrument.MeterRegistry;
-import java.time.Duration;
+import io.netty.util.concurrent.EventExecutor;
 import java.util.Optional;
 import java.util.Set;
 import net.jcip.annotations.ThreadSafe;
@@ -46,20 +44,14 @@ import org.slf4j.LoggerFactory;
 public class MicrometerMetricsFactory implements MetricsFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(MicrometerMetricsFactory.class);
-  static final Duration LOWEST_ACCEPTABLE_EXPIRE_AFTER = Duration.ofMinutes(5);
 
   private final InternalDriverContext context;
   private final Set<NodeMetric> enabledNodeMetrics;
   private final MeterRegistry registry;
   private final SessionMetricUpdater sessionUpdater;
-  private final Cache<Node, MicrometerNodeMetricUpdater> metricsCache;
 
   public MicrometerMetricsFactory(DriverContext context) {
-    this((InternalDriverContext) context, Ticker.systemTicker());
-  }
-
-  public MicrometerMetricsFactory(InternalDriverContext context, Ticker ticker) {
-    this.context = context;
+    this.context = (InternalDriverContext) context;
     String logPrefix = context.getSessionName();
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     Set<SessionMetric> enabledSessionMetrics =
@@ -68,31 +60,13 @@ public class MicrometerMetricsFactory implements MetricsFactory {
     this.enabledNodeMetrics =
         MetricPaths.parseNodeMetricPaths(
             config.getStringList(DefaultDriverOption.METRICS_NODE_ENABLED), logPrefix);
-
-    Duration evictionTime = getAndValidateEvictionTime(config, logPrefix);
-
-    metricsCache =
-        CacheBuilder.newBuilder()
-            .ticker(ticker)
-            .expireAfterAccess(evictionTime)
-            .removalListener(
-                (RemovalNotification<Node, MicrometerNodeMetricUpdater> notification) -> {
-                  LOG.debug(
-                      "[{}] Removing metrics for node: {} from cache after {}",
-                      logPrefix,
-                      notification.getKey(),
-                      evictionTime);
-                  notification.getValue().cleanupNodeMetrics();
-                })
-            .build();
-
     if (enabledSessionMetrics.isEmpty() && enabledNodeMetrics.isEmpty()) {
       LOG.debug("[{}] All metrics are disabled, Session.getMetrics will be empty", logPrefix);
       this.registry = null;
       this.sessionUpdater = NoopSessionMetricUpdater.INSTANCE;
     } else {
       // try to get the metric registry from the context
-      Object possibleMetricRegistry = context.getMetricRegistry();
+      Object possibleMetricRegistry = this.context.getMetricRegistry();
       if (possibleMetricRegistry == null) {
         // metrics are enabled, but a metric registry was not supplied to the context
         // use the global registry
@@ -111,23 +85,16 @@ public class MicrometerMetricsFactory implements MetricsFactory {
                 + possibleMetricRegistry.getClass().getName()
                 + "'");
       }
+      if (!enabledNodeMetrics.isEmpty()) {
+        EventExecutor adminEventExecutor =
+            this.context.getNettyOptions().adminEventExecutorGroup().next();
+        this.context
+            .getEventBus()
+            .register(
+                NodeStateEvent.class,
+                RunOrSchedule.on(adminEventExecutor, this::processNodeStateEvent));
+      }
     }
-  }
-
-  @VisibleForTesting
-  static Duration getAndValidateEvictionTime(DriverExecutionProfile config, String logPrefix) {
-    Duration evictionTime = config.getDuration(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER);
-
-    if (evictionTime.compareTo(LOWEST_ACCEPTABLE_EXPIRE_AFTER) < 0) {
-      LOG.warn(
-          "[{}] Value too low for {}: {}. Forcing to {} instead.",
-          logPrefix,
-          DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER.getPath(),
-          evictionTime,
-          LOWEST_ACCEPTABLE_EXPIRE_AFTER);
-    }
-
-    return evictionTime;
   }
 
   @Override
@@ -144,11 +111,21 @@ public class MicrometerMetricsFactory implements MetricsFactory {
   public NodeMetricUpdater newNodeUpdater(Node node) {
     if (registry == null) {
       return NoopNodeMetricUpdater.INSTANCE;
+    } else {
+      return new MicrometerNodeMetricUpdater(node, context, enabledNodeMetrics, registry);
     }
-    MicrometerNodeMetricUpdater updater =
-        new MicrometerNodeMetricUpdater(
-            node, context, enabledNodeMetrics, registry, () -> metricsCache.getIfPresent(node));
-    metricsCache.put(node, updater);
-    return updater;
+  }
+
+  protected void processNodeStateEvent(NodeStateEvent event) {
+    if (event.newState == NodeState.DOWN
+        || event.newState == NodeState.FORCED_DOWN
+        || event.newState == null) {
+      // node is DOWN or REMOVED
+      ((MicrometerNodeMetricUpdater) event.node.getMetricUpdater()).startMetricsExpirationTimeout();
+    } else if (event.newState == NodeState.UP || event.newState == NodeState.UNKNOWN) {
+      // node is UP or ADDED
+      ((MicrometerNodeMetricUpdater) event.node.getMetricUpdater())
+          .cancelMetricsExpirationTimeout();
+    }
   }
 }

@@ -4,6 +4,7 @@
 
 ### 4.11.0 (in progress)
 
+- [improvement] JAVA-2929: Revisit node-level metric eviction
 - [new feature] JAVA-2830: Add mapper support for Java streams
 - [bug] JAVA-2928: Generate counter increment/decrement constructs compatible with legacy C* 
   versions

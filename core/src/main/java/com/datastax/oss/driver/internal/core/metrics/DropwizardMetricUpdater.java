@@ -54,7 +54,8 @@ public abstract class DropwizardMetricUpdater<MetricT> extends AbstractMetricUpd
   }
 
   @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
-  public <T extends Metric> T getMetric(MetricT metric, String profileName) {
+  public <T extends Metric> T getMetric(
+      MetricT metric, @SuppressWarnings("unused") String profileName) {
     return (T) metrics.get(metric);
   }
 
@@ -85,6 +86,16 @@ public abstract class DropwizardMetricUpdater<MetricT> extends AbstractMetricUpd
     if (isEnabled(metric, profileName)) {
       getOrCreateTimerFor(metric).update(duration, unit);
     }
+  }
+
+  @Override
+  protected void clearMetrics() {
+    for (MetricT metric : metrics.keySet()) {
+      MetricId id = getMetricId(metric);
+      registry.remove(id.getName());
+    }
+    metrics.clear();
+    reservoirs.clear();
   }
 
   protected abstract MetricId getMetricId(MetricT metric);

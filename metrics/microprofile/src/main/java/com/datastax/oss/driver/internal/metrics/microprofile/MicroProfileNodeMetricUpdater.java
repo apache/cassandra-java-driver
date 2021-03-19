@@ -24,28 +24,22 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricId;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import net.jcip.annotations.ThreadSafe;
-import org.eclipse.microprofile.metrics.MetricID;
 import org.eclipse.microprofile.metrics.MetricRegistry;
-import org.eclipse.microprofile.metrics.Tag;
 
 @ThreadSafe
 public class MicroProfileNodeMetricUpdater extends MicroProfileMetricUpdater<NodeMetric>
     implements NodeMetricUpdater {
 
   private final Node node;
-  private final Runnable signalMetricUpdated;
 
   public MicroProfileNodeMetricUpdater(
       Node node,
       InternalDriverContext context,
       Set<NodeMetric> enabledMetrics,
-      MetricRegistry registry,
-      Runnable signalMetricUpdated) {
+      MetricRegistry registry) {
     super(context, enabledMetrics, registry);
     this.node = node;
-    this.signalMetricUpdated = signalMetricUpdated;
 
     DriverExecutionProfile profile = context.getConfig().getDefaultProfile();
 
@@ -81,40 +75,17 @@ public class MicroProfileNodeMetricUpdater extends MicroProfileMetricUpdater<Nod
   }
 
   @Override
-  public void incrementCounter(NodeMetric metric, String profileName, long amount) {
-    signalMetricUpdated.run();
-    super.incrementCounter(metric, profileName, amount);
-  }
-
-  @Override
-  public void updateHistogram(NodeMetric metric, String profileName, long value) {
-    signalMetricUpdated.run();
-    super.updateHistogram(metric, profileName, value);
-  }
-
-  @Override
-  public void markMeter(NodeMetric metric, String profileName, long amount) {
-    signalMetricUpdated.run();
-    super.markMeter(metric, profileName, amount);
-  }
-
-  @Override
-  public void updateTimer(NodeMetric metric, String profileName, long duration, TimeUnit unit) {
-    signalMetricUpdated.run();
-    super.updateTimer(metric, profileName, duration, unit);
-  }
-
-  public void cleanupNodeMetrics() {
-    for (NodeMetric metric : metrics.keySet()) {
-      MetricId id = getMetricId(metric);
-      Tag[] tags = MicroProfileTags.toMicroProfileTags(id.getTags());
-      registry.remove(new MetricID(id.getName(), tags));
-    }
-    metrics.clear();
-  }
-
-  @Override
   protected MetricId getMetricId(NodeMetric metric) {
     return context.getMetricIdGenerator().nodeMetricId(node, metric);
+  }
+
+  @Override
+  protected void startMetricsExpirationTimeout() {
+    super.startMetricsExpirationTimeout();
+  }
+
+  @Override
+  protected void cancelMetricsExpirationTimeout() {
+    super.cancelMetricsExpirationTimeout();
   }
 }

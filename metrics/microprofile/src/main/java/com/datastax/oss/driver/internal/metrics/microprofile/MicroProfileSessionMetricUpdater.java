@@ -41,14 +41,14 @@ public class MicroProfileSessionMetricUpdater extends MicroProfileMetricUpdater<
     initializeGauge(
         DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE, profile, this::preparedStatementCacheSize);
 
+    initializeCounter(DefaultSessionMetric.CQL_CLIENT_TIMEOUTS, profile);
+    initializeCounter(DefaultSessionMetric.THROTTLING_ERRORS, profile);
+    initializeCounter(DseSessionMetric.GRAPH_CLIENT_TIMEOUTS, profile);
+
     initializeTimer(DefaultSessionMetric.CQL_REQUESTS, profile);
     initializeTimer(DefaultSessionMetric.THROTTLING_DELAY, profile);
     initializeTimer(DseSessionMetric.CONTINUOUS_CQL_REQUESTS, profile);
     initializeTimer(DseSessionMetric.GRAPH_REQUESTS, profile);
-
-    initializeCounter(DefaultSessionMetric.CQL_CLIENT_TIMEOUTS, profile);
-    initializeCounter(DefaultSessionMetric.THROTTLING_ERRORS, profile);
-    initializeCounter(DseSessionMetric.GRAPH_CLIENT_TIMEOUTS, profile);
   }
 
   @Override

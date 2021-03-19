@@ -23,10 +23,8 @@ import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricId;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
-import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -34,17 +32,14 @@ public class MicrometerNodeMetricUpdater extends MicrometerMetricUpdater<NodeMet
     implements NodeMetricUpdater {
 
   private final Node node;
-  private final Runnable signalMetricUpdated;
 
   public MicrometerNodeMetricUpdater(
       Node node,
       InternalDriverContext context,
       Set<NodeMetric> enabledMetrics,
-      MeterRegistry registry,
-      Runnable signalMetricUpdated) {
+      MeterRegistry registry) {
     super(context, enabledMetrics, registry);
     this.node = node;
-    this.signalMetricUpdated = signalMetricUpdated;
 
     DriverExecutionProfile profile = context.getConfig().getDefaultProfile();
 
@@ -80,38 +75,17 @@ public class MicrometerNodeMetricUpdater extends MicrometerMetricUpdater<NodeMet
   }
 
   @Override
-  public void incrementCounter(NodeMetric metric, String profileName, long amount) {
-    signalMetricUpdated.run();
-    super.incrementCounter(metric, profileName, amount);
-  }
-
-  @Override
-  public void updateHistogram(NodeMetric metric, String profileName, long value) {
-    signalMetricUpdated.run();
-    super.updateHistogram(metric, profileName, value);
-  }
-
-  @Override
-  public void markMeter(NodeMetric metric, String profileName, long amount) {
-    signalMetricUpdated.run();
-    super.markMeter(metric, profileName, amount);
-  }
-
-  @Override
-  public void updateTimer(NodeMetric metric, String profileName, long duration, TimeUnit unit) {
-    signalMetricUpdated.run();
-    super.updateTimer(metric, profileName, duration, unit);
-  }
-
-  public void cleanupNodeMetrics() {
-    for (Meter meter : metrics.values()) {
-      registry.remove(meter);
-    }
-    metrics.clear();
-  }
-
-  @Override
   protected MetricId getMetricId(NodeMetric metric) {
     return context.getMetricIdGenerator().nodeMetricId(node, metric);
+  }
+
+  @Override
+  protected void startMetricsExpirationTimeout() {
+    super.startMetricsExpirationTimeout();
+  }
+
+  @Override
+  protected void cancelMetricsExpirationTimeout() {
+    super.cancelMetricsExpirationTimeout();
   }
 }

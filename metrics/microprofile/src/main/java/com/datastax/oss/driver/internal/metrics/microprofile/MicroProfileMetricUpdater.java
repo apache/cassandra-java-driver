@@ -31,6 +31,7 @@ import org.eclipse.microprofile.metrics.Histogram;
 import org.eclipse.microprofile.metrics.Metadata;
 import org.eclipse.microprofile.metrics.Meter;
 import org.eclipse.microprofile.metrics.Metric;
+import org.eclipse.microprofile.metrics.MetricID;
 import org.eclipse.microprofile.metrics.MetricRegistry;
 import org.eclipse.microprofile.metrics.MetricType;
 import org.eclipse.microprofile.metrics.Tag;
@@ -40,6 +41,7 @@ import org.eclipse.microprofile.metrics.Timer;
 public abstract class MicroProfileMetricUpdater<MetricT> extends AbstractMetricUpdater<MetricT> {
 
   protected final MetricRegistry registry;
+
   protected final ConcurrentMap<MetricT, Metric> metrics = new ConcurrentHashMap<>();
 
   protected MicroProfileMetricUpdater(
@@ -75,6 +77,16 @@ public abstract class MicroProfileMetricUpdater<MetricT> extends AbstractMetricU
     if (isEnabled(metric, profileName)) {
       getOrCreateTimerFor(metric).update(duration, unit);
     }
+  }
+
+  @Override
+  protected void clearMetrics() {
+    for (MetricT metric : metrics.keySet()) {
+      MetricId id = getMetricId(metric);
+      Tag[] tags = MicroProfileTags.toMicroProfileTags(id.getTags());
+      registry.remove(new MetricID(id.getName(), tags));
+    }
+    metrics.clear();
   }
 
   protected abstract MetricId getMetricId(MetricT metric);
