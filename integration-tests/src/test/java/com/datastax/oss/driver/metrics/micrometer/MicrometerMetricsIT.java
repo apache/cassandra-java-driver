@@ -86,11 +86,7 @@ public class MicrometerMetricsIT extends MetricsITBase {
           break;
         case CQL_REQUESTS:
           assertThat(m).isInstanceOf(Timer.class);
-          assertThat(((Timer) m).count()).isEqualTo(63);
-          break;
-        case CQL_CLIENT_TIMEOUTS:
-          assertThat(m).isInstanceOf(Counter.class);
-          assertThat(((Counter) m).count()).isEqualTo(3);
+          assertThat(((Timer) m).count()).isEqualTo(30);
           break;
         case CQL_PREPARED_CACHE_SIZE:
           assertThat(m).isInstanceOf(Gauge.class);
@@ -101,6 +97,11 @@ public class MicrometerMetricsIT extends MetricsITBase {
           assertThat(m).isInstanceOf(Counter.class);
           assertThat(((Counter) m).count()).isGreaterThan(0);
           break;
+        case CQL_CLIENT_TIMEOUTS:
+        case THROTTLING_ERRORS:
+          assertThat(m).isInstanceOf(Counter.class);
+          assertThat(((Counter) m).count()).isZero();
+          break;
         case THROTTLING_DELAY:
           assertThat(m).isInstanceOf(Timer.class);
           assertThat(((Timer) m).count()).isZero();
@@ -108,10 +109,6 @@ public class MicrometerMetricsIT extends MetricsITBase {
         case THROTTLING_QUEUE_SIZE:
           assertThat(m).isInstanceOf(Gauge.class);
           assertThat(((Gauge) m).value()).isZero();
-          break;
-        case THROTTLING_ERRORS:
-          assertThat(m).isInstanceOf(Counter.class);
-          assertThat(((Counter) m).count()).isZero();
           break;
       }
     }
@@ -131,36 +128,27 @@ public class MicrometerMetricsIT extends MetricsITBase {
             break;
           case CQL_MESSAGES:
             assertThat(m).isInstanceOf(Timer.class);
-            assertThat(((Timer) m).count()).isEqualTo(28);
+            assertThat(((Timer) m).count()).isEqualTo(10);
             break;
           case READ_TIMEOUTS:
           case WRITE_TIMEOUTS:
           case UNAVAILABLES:
-          case ABORTED_REQUESTS:
           case OTHER_ERRORS:
-            assertThat(m).isInstanceOf(Counter.class);
-            assertThat(((Counter) m).count()).isEqualTo(3);
-            break;
+          case ABORTED_REQUESTS:
+          case UNSENT_REQUESTS:
           case RETRIES:
           case IGNORES:
-            assertThat(m).isInstanceOf(Counter.class);
-            assertThat(((Counter) m).count()).isEqualTo(5);
-            break;
-          case RETRIES_ON_ABORTED:
           case RETRIES_ON_READ_TIMEOUT:
           case RETRIES_ON_WRITE_TIMEOUT:
           case RETRIES_ON_UNAVAILABLE:
           case RETRIES_ON_OTHER_ERROR:
-          case IGNORES_ON_ABORTED:
+          case RETRIES_ON_ABORTED:
           case IGNORES_ON_READ_TIMEOUT:
           case IGNORES_ON_WRITE_TIMEOUT:
           case IGNORES_ON_UNAVAILABLE:
           case IGNORES_ON_OTHER_ERROR:
+          case IGNORES_ON_ABORTED:
           case SPECULATIVE_EXECUTIONS:
-            assertThat(m).isInstanceOf(Counter.class);
-            assertThat(((Counter) m).count()).isOne();
-            break;
-          case UNSENT_REQUESTS:
           case CONNECTION_INIT_ERRORS:
           case AUTHENTICATION_ERRORS:
             assertThat(m).isInstanceOf(Counter.class);
