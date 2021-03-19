@@ -4,6 +4,7 @@
 
 ### 4.11.0 (in progress)
 
+- [new feature] JAVA-2830: Add mapper support for Java streams
 - [bug] JAVA-2928: Generate counter increment/decrement constructs compatible with legacy C* 
   versions
 - [new feature] JAVA-2872: Ability to customize metric names and tags

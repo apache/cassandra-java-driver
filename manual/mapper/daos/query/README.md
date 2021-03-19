@@ -59,6 +59,9 @@ The method can return:
 
 * a [PagingIterable]. The method will convert each row into an entity instance.
 
+* a [Stream]. The method will convert each row into an entity instance. For details about the
+  stream's characteristics, see [PagingIterable.spliterator].
+
 * a [CompletionStage] or [CompletableFuture] of any of the above. The method will execute the query
   asynchronously. Note that for result sets and iterables, you need to switch to the asynchronous
   equivalent [AsyncResultSet] and [MappedAsyncPagingIterable] respectively.
@@ -117,6 +120,7 @@ Then:
 [ResultSet#wasApplied()]:    https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/cql/ResultSet.html#wasApplied--
 [MappedAsyncPagingIterable]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/MappedAsyncPagingIterable.html
 [PagingIterable]:            https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/PagingIterable.html
+[PagingIterable.spliterator]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/PagingIterable.html#spliterator--
 [Row]:                       https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/cql/Row.html
 [BoundStatement]:            https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/cql/BoundStatement.html
 [ReactiveResultSet]:         https://docs.datastax.com/en/drivers/java/4.10/com/datastax/dse/driver/api/core/cql/reactive/ReactiveResultSet.html
@@ -125,3 +129,4 @@ Then:
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
 [CompletableFuture]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html
 [Optional]: https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html
+[Stream]: https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html
