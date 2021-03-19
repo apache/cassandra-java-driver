@@ -30,6 +30,7 @@ import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParse
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
+import com.datastax.oss.driver.internal.core.metrics.MetricIdGenerator;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.servererrors.WriteTypeRegistry;
@@ -124,6 +125,9 @@ public interface InternalDriverContext extends DriverContext {
 
   @NonNull
   MetricsFactory getMetricsFactory();
+
+  @NonNull
+  MetricIdGenerator getMetricIdGenerator();
 
   /**
    * The value that was passed to {@link SessionBuilder#withLocalDatacenter(String,String)} for this

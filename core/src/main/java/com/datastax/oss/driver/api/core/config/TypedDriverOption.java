@@ -709,6 +709,14 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<String> METRICS_FACTORY_CLASS =
       new TypedDriverOption<>(DefaultDriverOption.METRICS_FACTORY_CLASS, GenericType.STRING);
 
+  /** The classname of the desired {@code MetricIdGenerator} implementation. */
+  public static final TypedDriverOption<String> METRICS_ID_GENERATOR_CLASS =
+      new TypedDriverOption<>(DefaultDriverOption.METRICS_ID_GENERATOR_CLASS, GenericType.STRING);
+
+  /** The value of the prefix to prepend to all metric names. */
+  public static final TypedDriverOption<String> METRICS_ID_GENERATOR_PREFIX =
+      new TypedDriverOption<>(DefaultDriverOption.METRICS_ID_GENERATOR_PREFIX, GenericType.STRING);
+
   /** The maximum number of nodes from remote DCs to include in query plans. */
   public static final TypedDriverOption<Integer>
       LOAD_BALANCING_DC_FAILOVER_MAX_NODES_PER_REMOTE_DC =

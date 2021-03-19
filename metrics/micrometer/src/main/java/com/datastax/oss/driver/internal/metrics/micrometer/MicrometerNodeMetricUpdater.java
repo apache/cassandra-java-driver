@@ -17,79 +17,66 @@ package com.datastax.oss.driver.internal.metrics.micrometer;
 
 import com.datastax.dse.driver.api.core.metrics.DseNodeMetric;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metrics.MetricId;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
-import com.datastax.oss.driver.internal.core.pool.ChannelPool;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class MicrometerNodeMetricUpdater extends MicrometerMetricUpdater<NodeMetric>
     implements NodeMetricUpdater {
 
-  private final String metricNamePrefix;
+  private final Node node;
   private final Runnable signalMetricUpdated;
 
   public MicrometerNodeMetricUpdater(
       Node node,
+      InternalDriverContext context,
       Set<NodeMetric> enabledMetrics,
       MeterRegistry registry,
-      DriverContext driverContext,
       Runnable signalMetricUpdated) {
-    super(enabledMetrics, registry);
+    super(context, enabledMetrics, registry);
+    this.node = node;
     this.signalMetricUpdated = signalMetricUpdated;
-    InternalDriverContext context = (InternalDriverContext) driverContext;
-    this.metricNamePrefix = buildPrefix(driverContext.getSessionName(), node.getEndPoint());
 
-    DriverExecutionProfile config = driverContext.getConfig().getDefaultProfile();
+    DriverExecutionProfile profile = context.getConfig().getDefaultProfile();
 
-    if (enabledMetrics.contains(DefaultNodeMetric.OPEN_CONNECTIONS)) {
-      this.registry.gauge(
-          buildFullName(DefaultNodeMetric.OPEN_CONNECTIONS, null), node.getOpenConnections());
-    }
-    initializePoolGauge(
-        DefaultNodeMetric.AVAILABLE_STREAMS, node, ChannelPool::getAvailableIds, context);
-    initializePoolGauge(DefaultNodeMetric.IN_FLIGHT, node, ChannelPool::getInFlight, context);
-    initializePoolGauge(
-        DefaultNodeMetric.ORPHANED_STREAMS, node, ChannelPool::getOrphanedIds, context);
-    initializeTimer(DefaultNodeMetric.CQL_MESSAGES, config);
-    initializeDefaultCounter(DefaultNodeMetric.UNSENT_REQUESTS, null);
-    initializeDefaultCounter(DefaultNodeMetric.ABORTED_REQUESTS, null);
-    initializeDefaultCounter(DefaultNodeMetric.WRITE_TIMEOUTS, null);
-    initializeDefaultCounter(DefaultNodeMetric.READ_TIMEOUTS, null);
-    initializeDefaultCounter(DefaultNodeMetric.UNAVAILABLES, null);
-    initializeDefaultCounter(DefaultNodeMetric.OTHER_ERRORS, null);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES, null);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_ABORTED, null);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_READ_TIMEOUT, null);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_WRITE_TIMEOUT, null);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_UNAVAILABLE, null);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_OTHER_ERROR, null);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES, null);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_ABORTED, null);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_READ_TIMEOUT, null);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_WRITE_TIMEOUT, null);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_UNAVAILABLE, null);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_OTHER_ERROR, null);
-    initializeDefaultCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS, null);
-    initializeDefaultCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
-    initializeDefaultCounter(DefaultNodeMetric.AUTHENTICATION_ERRORS, null);
-    initializeTimer(DseNodeMetric.GRAPH_MESSAGES, driverContext.getConfig().getDefaultProfile());
-  }
+    initializeGauge(DefaultNodeMetric.OPEN_CONNECTIONS, profile, node::getOpenConnections);
+    initializeGauge(DefaultNodeMetric.AVAILABLE_STREAMS, profile, () -> availableStreamIds(node));
+    initializeGauge(DefaultNodeMetric.IN_FLIGHT, profile, () -> inFlightRequests(node));
+    initializeGauge(DefaultNodeMetric.ORPHANED_STREAMS, profile, () -> orphanedStreamIds(node));
 
-  @Override
-  public String buildFullName(NodeMetric metric, String profileName) {
-    return metricNamePrefix + metric.getPath();
-  }
+    initializeCounter(DefaultNodeMetric.UNSENT_REQUESTS, profile);
+    initializeCounter(DefaultNodeMetric.ABORTED_REQUESTS, profile);
+    initializeCounter(DefaultNodeMetric.WRITE_TIMEOUTS, profile);
+    initializeCounter(DefaultNodeMetric.READ_TIMEOUTS, profile);
+    initializeCounter(DefaultNodeMetric.UNAVAILABLES, profile);
+    initializeCounter(DefaultNodeMetric.OTHER_ERRORS, profile);
+    initializeCounter(DefaultNodeMetric.RETRIES, profile);
+    initializeCounter(DefaultNodeMetric.RETRIES_ON_ABORTED, profile);
+    initializeCounter(DefaultNodeMetric.RETRIES_ON_READ_TIMEOUT, profile);
+    initializeCounter(DefaultNodeMetric.RETRIES_ON_WRITE_TIMEOUT, profile);
+    initializeCounter(DefaultNodeMetric.RETRIES_ON_UNAVAILABLE, profile);
+    initializeCounter(DefaultNodeMetric.RETRIES_ON_OTHER_ERROR, profile);
+    initializeCounter(DefaultNodeMetric.IGNORES, profile);
+    initializeCounter(DefaultNodeMetric.IGNORES_ON_ABORTED, profile);
+    initializeCounter(DefaultNodeMetric.IGNORES_ON_READ_TIMEOUT, profile);
+    initializeCounter(DefaultNodeMetric.IGNORES_ON_WRITE_TIMEOUT, profile);
+    initializeCounter(DefaultNodeMetric.IGNORES_ON_UNAVAILABLE, profile);
+    initializeCounter(DefaultNodeMetric.IGNORES_ON_OTHER_ERROR, profile);
+    initializeCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS, profile);
+    initializeCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, profile);
+    initializeCounter(DefaultNodeMetric.AUTHENTICATION_ERRORS, profile);
 
-  private String buildPrefix(String sessionName, EndPoint endPoint) {
-    return sessionName + ".nodes." + endPoint.asMetricPrefix() + ".";
+    initializeTimer(DefaultNodeMetric.CQL_MESSAGES, profile);
+    initializeTimer(DseNodeMetric.GRAPH_MESSAGES, profile);
   }
 
   @Override
@@ -116,24 +103,15 @@ public class MicrometerNodeMetricUpdater extends MicrometerMetricUpdater<NodeMet
     super.updateTimer(metric, profileName, duration, unit);
   }
 
-  private void initializePoolGauge(
-      NodeMetric metric,
-      Node node,
-      Function<ChannelPool, Integer> reading,
-      InternalDriverContext context) {
-    if (enabledMetrics.contains(metric)) {
-      final String metricName = buildFullName(metric, null);
-      registry.gauge(
-          metricName,
-          context,
-          c -> {
-            ChannelPool pool = c.getPoolManager().getPools().get(node);
-            return (pool == null) ? 0 : reading.apply(pool);
-          });
+  public void cleanupNodeMetrics() {
+    for (Meter meter : metrics.values()) {
+      registry.remove(meter);
     }
+    metrics.clear();
   }
 
-  public void cleanupNodeMetrics() {
-    registry.getMeters().removeIf(metric -> metric.getId().getName().startsWith(metricNamePrefix));
+  @Override
+  protected MetricId getMetricId(NodeMetric metric) {
+    return context.getMetricIdGenerator().nodeMetricId(node, metric);
   }
 }

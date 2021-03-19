@@ -65,6 +65,7 @@ import com.datastax.oss.driver.internal.core.metadata.token.DefaultReplicationSt
 import com.datastax.oss.driver.internal.core.metadata.token.DefaultTokenFactoryRegistry;
 import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
+import com.datastax.oss.driver.internal.core.metrics.MetricIdGenerator;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.protocol.BuiltInCompressors;
@@ -200,6 +201,8 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("poolManager", this::buildPoolManager, cycleDetector);
   private final LazyReference<MetricsFactory> metricsFactoryRef =
       new LazyReference<>("metricsFactory", this::buildMetricsFactory, cycleDetector);
+  private final LazyReference<MetricIdGenerator> metricIdGeneratorRef =
+      new LazyReference<>("metricIdGenerator", this::buildMetricIdGenerator, cycleDetector);
   private final LazyReference<RequestThrottler> requestThrottlerRef =
       new LazyReference<>("requestThrottler", this::buildRequestThrottler, cycleDetector);
   private final LazyReference<Map<String, String>> startupOptionsRef =
@@ -543,6 +546,20 @@ public class DefaultDriverContext implements InternalDriverContext {
                         DefaultDriverOption.METRICS_FACTORY_CLASS)));
   }
 
+  protected MetricIdGenerator buildMetricIdGenerator() {
+    return Reflection.buildFromConfig(
+            this,
+            DefaultDriverOption.METRICS_ID_GENERATOR_CLASS,
+            MetricIdGenerator.class,
+            "com.datastax.oss.driver.internal.core.metrics")
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Missing metric descriptor, check your config (%s)",
+                        DefaultDriverOption.METRICS_ID_GENERATOR_CLASS)));
+  }
+
   protected RequestThrottler buildRequestThrottler() {
     return Reflection.buildFromConfig(
             this,
@@ -851,6 +868,12 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public MetricsFactory getMetricsFactory() {
     return metricsFactoryRef.get();
+  }
+
+  @NonNull
+  @Override
+  public MetricIdGenerator getMetricIdGenerator() {
+    return metricIdGeneratorRef.get();
   }
 
   @NonNull
