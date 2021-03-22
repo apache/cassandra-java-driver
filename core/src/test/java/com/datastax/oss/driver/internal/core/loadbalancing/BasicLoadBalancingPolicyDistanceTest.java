@@ -23,12 +23,12 @@ import static org.mockito.Mockito.when;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.UUID;
-import java.util.function.Predicate;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,7 +39,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class BasicLoadBalancingPolicyDistanceTest extends LoadBalancingPolicyTestBase {
 
-  @Mock private Predicate<Node> filter;
+  @Mock private NodeDistanceEvaluator nodeDistanceEvaluator;
 
   private ImmutableMap<UUID, Node> nodes;
 
@@ -47,11 +47,8 @@ public class BasicLoadBalancingPolicyDistanceTest extends LoadBalancingPolicyTes
   @Override
   public void setup() {
     super.setup();
-    when(filter.test(node1)).thenReturn(true);
-    when(filter.test(node2)).thenReturn(true);
-    when(filter.test(node3)).thenReturn(true);
-    when(filter.test(node4)).thenReturn(true);
-    when(context.getNodeFilter(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(filter);
+    when(context.getNodeDistanceEvaluator(DriverExecutionProfile.DEFAULT_NAME))
+        .thenReturn(nodeDistanceEvaluator);
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2, node3));
     nodes =
         ImmutableMap.of(
@@ -59,15 +56,20 @@ public class BasicLoadBalancingPolicyDistanceTest extends LoadBalancingPolicyTes
   }
 
   @Test
-  public void should_report_IGNORED_when_excluded_by_filter() {
+  public void should_report_distance_reported_by_user_distance_reporter() {
     // Given
-    given(filter.test(node1)).willReturn(false);
+    given(node2.getDatacenter()).willReturn("dc2");
+    given(nodeDistanceEvaluator.evaluateDistance(node1, "dc1")).willReturn(NodeDistance.LOCAL);
+    given(nodeDistanceEvaluator.evaluateDistance(node2, "dc1")).willReturn(NodeDistance.REMOTE);
+    given(nodeDistanceEvaluator.evaluateDistance(node3, "dc1")).willReturn(NodeDistance.IGNORED);
     BasicLoadBalancingPolicy policy = createPolicy();
     // When
     policy.init(nodes, distanceReporter);
     // Then
-    verify(distanceReporter).setDistance(node1, NodeDistance.IGNORED);
-    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node2, node3);
+    verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
+    verify(distanceReporter).setDistance(node2, NodeDistance.REMOTE);
+    verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1);
   }
 
   @Test

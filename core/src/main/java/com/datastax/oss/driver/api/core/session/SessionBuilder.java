@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
+import com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
@@ -390,6 +391,36 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
+   * Adds a custom {@link NodeDistanceEvaluator} for a particular execution profile. This assumes
+   * that you're also using a dedicated load balancing policy for that profile.
+   *
+   * <p>Node distance evaluators are honored by all the driver built-in load balancing policies. If
+   * you use a custom policy implementation however, you'll need to explicitly invoke the evaluator
+   * whenever appropriate.
+   *
+   * <p>If an evaluator is specified programmatically with this method, it overrides the
+   * configuration (that is, the {@code load-balancing-policy.evaluator.class} option will be
+   * ignored).
+   *
+   * @see #withNodeDistanceEvaluator(NodeDistanceEvaluator)
+   */
+  @NonNull
+  public SelfT withNodeDistanceEvaluator(
+      @NonNull String profileName, @NonNull NodeDistanceEvaluator nodeDistanceEvaluator) {
+    this.programmaticArgumentsBuilder.withNodeDistanceEvaluator(profileName, nodeDistanceEvaluator);
+    return self;
+  }
+
+  /**
+   * Alias to {@link #withNodeDistanceEvaluator(String, NodeDistanceEvaluator)} for the default
+   * profile.
+   */
+  @NonNull
+  public SelfT withNodeDistanceEvaluator(@NonNull NodeDistanceEvaluator nodeDistanceEvaluator) {
+    return withNodeDistanceEvaluator(DriverExecutionProfile.DEFAULT_NAME, nodeDistanceEvaluator);
+  }
+
+  /**
    * Adds a custom filter to include/exclude nodes for a particular execution profile. This assumes
    * that you're also using a dedicated load balancing policy for that profile.
    *
@@ -398,21 +429,60 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * policy will suggest distance IGNORED (meaning the driver won't ever connect to it if all
    * policies agree), and never included in any query plan.
    *
-   * <p>Note that this behavior is implemented in the default load balancing policy. If you use a
-   * custom policy implementation, you'll need to explicitly invoke the filter.
+   * <p>Note that this behavior is implemented in the driver built-in load balancing policies. If
+   * you use a custom policy implementation, you'll need to explicitly invoke the filter.
    *
    * <p>If the filter is specified programmatically with this method, it overrides the configuration
    * (that is, the {@code load-balancing-policy.filter.class} option will be ignored).
    *
+   * <p><strong>This method has been deprecated in favor of {@link
+   * #withNodeDistanceEvaluator(String, NodeDistanceEvaluator)}</strong>. If you were using node
+   * filters, you can easily replace your filters with the following implementation of {@link
+   * NodeDistanceEvaluator}:
+   *
+   * <pre>{@code
+   * public class NodeFilterToDistanceEvaluatorAdapter implements NodeDistanceEvaluator {
+   *
+   *   private final Predicate<Node> nodeFilter;
+   *
+   *   public NodeFilterToDistanceEvaluatorAdapter(Predicate<Node> nodeFilter) {
+   *     this.nodeFilter = nodeFilter;
+   *   }
+   *
+   *   public NodeDistance evaluateDistance(Node node, String localDc) {
+   *     return nodeFilter.test(node) ? null : NodeDistance.IGNORED;
+   *   }
+   * }
+   * }</pre>
+   *
+   * The same can be achieved using a lambda + closure:
+   *
+   * <pre>{@code
+   * Predicate<Node> nodeFilter = ...
+   * NodeDistanceEvaluator evaluator =
+   *   (node, localDc) -> nodeFilter.test(node) ? null : NodeDistance.IGNORED;
+   * }</pre>
+   *
    * @see #withNodeFilter(Predicate)
+   * @deprecated Use {@link #withNodeDistanceEvaluator(String, NodeDistanceEvaluator)} instead.
    */
+  @Deprecated
   @NonNull
   public SelfT withNodeFilter(@NonNull String profileName, @NonNull Predicate<Node> nodeFilter) {
     this.programmaticArgumentsBuilder.withNodeFilter(profileName, nodeFilter);
     return self;
   }
 
-  /** Alias to {@link #withNodeFilter(String, Predicate)} for the default profile. */
+  /**
+   * Alias to {@link #withNodeFilter(String, Predicate)} for the default profile.
+   *
+   * <p><strong>This method has been deprecated in favor of {@link
+   * #withNodeDistanceEvaluator(NodeDistanceEvaluator)}</strong>. See the javadocs of {@link
+   * #withNodeFilter(String, Predicate)} to understand how to migrate your legacy node filters.
+   *
+   * @deprecated Use {@link #withNodeDistanceEvaluator(NodeDistanceEvaluator)} instead.
+   */
+  @Deprecated
   @NonNull
   public SelfT withNodeFilter(@NonNull Predicate<Node> nodeFilter) {
     return withNodeFilter(DriverExecutionProfile.DEFAULT_NAME, nodeFilter);

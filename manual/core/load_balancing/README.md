@@ -346,37 +346,40 @@ nodes in query plans will likely fail, causing the query plans to eventually try
 instead. If the local datacenter unavailability persists, local nodes will be eventually marked down
 and will be removed from query plans completely from query plans, until they are back up again.
 
-#### Optional node filtering
+#### Customizing node distance assignment
 
-Finally, the default policy accepts an optional node filter that gets applied just after the test
-for inclusion in the local DC. If a node doesn't pass this test, it will be set at distance
-`IGNORED` and the driver will never try to connect to it. This is a good way to exclude nodes on
-some custom criteria.
+Finally, all the driver the built-in policies accept an optional node distance evaluator that gets
+invoked each time a node is added to the cluster or comes back up. If the evaluator returns a
+non-null distance for the node, that distance will be used, otherwise the driver will use its
+built-in logic to assign a default distance to it. This is a good way to exclude nodes or to adjust
+their distance according to custom, dynamic criteria.
 
-You can pass the filter through the configuration:
+You can pass the node distance evaluator through the configuration:
 
 ```
 datastax-java-driver.basic.load-balancing-policy {
   class = DefaultLoadBalancingPolicy
   local-datacenter = datacenter1
-  filter-class = com.acme.MyNodeFilter
+  evaluator.class = com.acme.MyNodeDistanceEvaluator
 }
 ```
 
-The filter class must implement `java.util.function.predicate<Node>`, and have a public constructor
-that takes a [DriverContext] argument: `public MyNodeFilter(DriverContext context)`.
+The node distance evaluator class must implement [NodeDistanceEvaluator], and have a public
+constructor that takes a [DriverContext] argument: `public MyNodeDistanceEvaluator(DriverContext
+context)`.
 
-Sometimes it's more convenient to pass the filter programmatically; you can do that with
-`SessionBuilder.withNodeFilter`:
+Sometimes it's more convenient to pass the evaluator programmatically; you can do that with
+`SessionBuilder.withNodeDistanceEvaluator`:
 
 ```java
-List<Node> whiteList = ...
+Map<Node, NodeDistance> distances = ...
 CqlSession session = CqlSession.builder()
-    .withNodeFilter(whiteList::contains)
+    .withNodeDistanceEvaluator((node, dc) -> distances.get(node))
     .build();
 ```
 
-If a programmatic filter is provided, the configuration option is ignored.
+If a programmatic node distance evaluator evaluator is provided, the configuration option is
+ignored.
 
 ### Custom implementation
 
@@ -429,5 +432,6 @@ Then it uses the "closest" distance for any given node. For example:
 [getRoutingKeyspace()]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKeyspace--
 [getRoutingToken()]:    https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/session/Request.html#getRoutingToken--
 [getRoutingKey()]:      https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKey--
+[NodeDistanceEvaluator]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/loadbalancing/NodeDistanceEvaluator.html
 [`nodetool status`]: https://docs.datastax.com/en/dse/6.7/dse-dev/datastax_enterprise/tools/nodetool/toolsStatus.html 
 [cqlsh]: https://docs.datastax.com/en/dse/6.7/cql/cql/cql_using/startCqlshStandalone.html
