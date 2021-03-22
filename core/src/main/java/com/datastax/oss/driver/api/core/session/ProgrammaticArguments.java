@@ -129,6 +129,7 @@ public class ProgrammaticArguments {
 
   @NonNull
   @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public Map<String, Predicate<Node>> getNodeFilters() {
     return nodeFilters;
   }
