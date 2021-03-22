@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.metrics.micrometer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -86,7 +87,7 @@ public class MicrometerMetricsIT extends MetricsITBase {
           break;
         case CQL_REQUESTS:
           assertThat(m).isInstanceOf(Timer.class);
-          assertThat(((Timer) m).count()).isEqualTo(30);
+          await().untilAsserted(() -> assertThat(((Timer) m).count()).isEqualTo(30));
           break;
         case CQL_PREPARED_CACHE_SIZE:
           assertThat(m).isInstanceOf(Gauge.class);
@@ -128,7 +129,7 @@ public class MicrometerMetricsIT extends MetricsITBase {
             break;
           case CQL_MESSAGES:
             assertThat(m).isInstanceOf(Timer.class);
-            assertThat(((Timer) m).count()).isEqualTo(10);
+            await().untilAsserted(() -> assertThat(((Timer) m).count()).isEqualTo(10));
             break;
           case READ_TIMEOUTS:
           case WRITE_TIMEOUTS:
