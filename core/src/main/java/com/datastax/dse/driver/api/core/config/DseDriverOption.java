@@ -247,6 +247,47 @@ public enum DseDriverOption implements DriverOption {
    * <p>Value-type: {@link java.time.Duration Duration}
    */
   METRICS_NODE_GRAPH_MESSAGES_INTERVAL("advanced.metrics.node.graph-messages.refresh-interval"),
+
+  /**
+   * The shortest latency that we expect to record for continuous requests.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_LOWEST(
+      "advanced.metrics.session.continuous-cql-requests.lowest-latency"),
+  /**
+   * Optional service-level objectives to meet, as a list of latencies to track.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_SLO(
+      "advanced.metrics.session.continuous-cql-requests.slo"),
+
+  /**
+   * The shortest latency that we expect to record for graph requests.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_GRAPH_REQUESTS_LOWEST("advanced.metrics.session.graph-requests.lowest-latency"),
+  /**
+   * Optional service-level objectives to meet, as a list of latencies to track.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_GRAPH_REQUESTS_SLO("advanced.metrics.session.graph-requests.slo"),
+
+  /**
+   * The shortest latency that we expect to record for graph requests.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_NODE_GRAPH_MESSAGES_LOWEST("advanced.metrics.node.graph-messages.lowest-latency"),
+  /**
+   * Optional service-level objectives to meet, as a list of latencies to track.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_NODE_GRAPH_MESSAGES_SLO("advanced.metrics.node.graph-messages.slo"),
   ;
 
   private final String path;

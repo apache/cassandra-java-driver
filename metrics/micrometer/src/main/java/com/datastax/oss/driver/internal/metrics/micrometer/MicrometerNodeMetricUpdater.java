@@ -15,7 +15,9 @@
  */
 package com.datastax.oss.driver.internal.metrics.micrometer;
 
+import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.api.core.metrics.DseNodeMetric;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
@@ -24,6 +26,8 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricId;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import java.time.Duration;
 import java.util.Set;
 import net.jcip.annotations.ThreadSafe;
 
@@ -87,5 +91,41 @@ public class MicrometerNodeMetricUpdater extends MicrometerMetricUpdater<NodeMet
   @Override
   protected void cancelMetricsExpirationTimeout() {
     super.cancelMetricsExpirationTimeout();
+  }
+
+  @Override
+  protected Timer.Builder configureTimer(Timer.Builder builder, NodeMetric metric, MetricId id) {
+    DriverExecutionProfile profile = context.getConfig().getDefaultProfile();
+    if (metric == DefaultNodeMetric.CQL_MESSAGES) {
+      return builder
+          .publishPercentileHistogram()
+          .minimumExpectedValue(
+              profile.getDuration(DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_LOWEST))
+          .maximumExpectedValue(
+              profile.getDuration(DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_HIGHEST))
+          .serviceLevelObjectives(
+              profile.isDefined(DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_SLO)
+                  ? profile
+                      .getDurationList(DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_SLO)
+                      .toArray(new Duration[0])
+                  : null)
+          .percentilePrecision(
+              profile.getInt(DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_DIGITS));
+    } else if (metric == DseNodeMetric.GRAPH_MESSAGES) {
+      return builder
+          .publishPercentileHistogram()
+          .minimumExpectedValue(
+              profile.getDuration(DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_LOWEST))
+          .maximumExpectedValue(
+              profile.getDuration(DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_HIGHEST))
+          .serviceLevelObjectives(
+              profile.isDefined(DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_SLO)
+                  ? profile
+                      .getDurationList(DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_SLO)
+                      .toArray(new Duration[0])
+                  : null)
+          .percentilePrecision(profile.getInt(DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_DIGITS));
+    }
+    return super.configureTimer(builder, metric, id);
   }
 }
