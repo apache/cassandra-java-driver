@@ -76,7 +76,7 @@ api_docs:
   2.0: http://docs.datastax.com/en/drivers/java/2.0
 versions:
   - name: '4.11'
-    ref: '4.11.0'
+    ref: 'eea59c6d0'
   - name: '4.10'
     ref: '346db0460'
   - name: '4.9'
