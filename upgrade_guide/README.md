@@ -68,7 +68,7 @@ Finally, the `datastax-java-driver.basic.load-balancing-policy.filter.class` con
 has been deprecated; it should be replaced with a node distance evaluator class defined by the
 `datastax-java-driver.basic.load-balancing-policy.evaluator.class` option instead.
 
-### 4.11.0
+### 4.10.0
 
 #### Cross-datacenter failover
 
