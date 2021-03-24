@@ -863,6 +863,45 @@ public enum DefaultDriverOption implements DriverOption {
    * <p>Value-Type: {@link String}
    */
   LOAD_BALANCING_DISTANCE_EVALUATOR_CLASS("basic.load-balancing-policy.evaluator.class"),
+
+  /**
+   * The shortest latency that we expect to record for requests.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_CQL_REQUESTS_LOWEST("advanced.metrics.session.cql-requests.lowest-latency"),
+  /**
+   * Optional service-level objectives to meet, as a list of latencies to track.
+   *
+   * <p>Value-type: List of {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_CQL_REQUESTS_SLO("advanced.metrics.session.cql-requests.slo"),
+
+  /**
+   * The shortest latency that we expect to record for throttling.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_THROTTLING_LOWEST("advanced.metrics.session.throttling.delay.lowest-latency"),
+  /**
+   * Optional service-level objectives to meet, as a list of latencies to track.
+   *
+   * <p>Value-type: List of {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_THROTTLING_SLO("advanced.metrics.session.throttling.delay.slo"),
+
+  /**
+   * The shortest latency that we expect to record for requests.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_NODE_CQL_MESSAGES_LOWEST("advanced.metrics.node.cql-messages.lowest-latency"),
+  /**
+   * Optional service-level objectives to meet, as a list of latencies to track.
+   *
+   * <p>Value-type: List of {@link java.time.Duration Duration}
+   */
+  METRICS_NODE_CQL_MESSAGES_SLO("advanced.metrics.node.cql-messages.slo"),
   ;
 
   private final String path;

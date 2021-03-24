@@ -363,6 +363,15 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<Duration> METRICS_SESSION_CQL_REQUESTS_HIGHEST =
       new TypedDriverOption<>(
           DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_HIGHEST, GenericType.DURATION);
+  /** The shortest latency that we expect to record for requests. */
+  public static final TypedDriverOption<Duration> METRICS_SESSION_CQL_REQUESTS_LOWEST =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_LOWEST, GenericType.DURATION);
+  /** Optional service-level objectives to meet, as a list of latencies to track. */
+  public static final TypedDriverOption<List<Duration>> METRICS_SESSION_CQL_REQUESTS_SLO =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_SLO,
+          GenericType.listOf(GenericType.DURATION));
   /**
    * The number of significant decimal digits to which internal structures will maintain for
    * requests.
@@ -378,6 +387,15 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<Duration> METRICS_SESSION_THROTTLING_HIGHEST =
       new TypedDriverOption<>(
           DefaultDriverOption.METRICS_SESSION_THROTTLING_HIGHEST, GenericType.DURATION);
+  /** The shortest latency that we expect to record for throttling. */
+  public static final TypedDriverOption<Duration> METRICS_SESSION_THROTTLING_LOWEST =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_SESSION_THROTTLING_LOWEST, GenericType.DURATION);
+  /** Optional service-level objectives to meet, as a list of latencies to track. */
+  public static final TypedDriverOption<List<Duration>> METRICS_SESSION_THROTTLING_SLO =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_SESSION_THROTTLING_SLO,
+          GenericType.listOf(GenericType.DURATION));
   /**
    * The number of significant decimal digits to which internal structures will maintain for
    * throttling.
@@ -393,6 +411,15 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<Duration> METRICS_NODE_CQL_MESSAGES_HIGHEST =
       new TypedDriverOption<>(
           DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_HIGHEST, GenericType.DURATION);
+  /** The shortest latency that we expect to record for requests. */
+  public static final TypedDriverOption<Duration> METRICS_NODE_CQL_MESSAGES_LOWEST =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_LOWEST, GenericType.DURATION);
+  /** Optional service-level objectives to meet, as a list of latencies to track. */
+  public static final TypedDriverOption<List<Duration>> METRICS_NODE_CQL_MESSAGES_SLO =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_SLO,
+          GenericType.listOf(GenericType.DURATION));
   /**
    * The number of significant decimal digits to which internal structures will maintain for
    * requests.
@@ -621,6 +648,18 @@ public class TypedDriverOption<ValueT> {
           new TypedDriverOption<>(
               DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_HIGHEST,
               GenericType.DURATION);
+  /** The shortest latency that we expect to record for continuous requests. */
+  public static final TypedDriverOption<Duration>
+      CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_LOWEST =
+          new TypedDriverOption<>(
+              DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_LOWEST,
+              GenericType.DURATION);
+  /** Optional service-level objectives to meet, as a list of latencies to track. */
+  public static final TypedDriverOption<List<Duration>>
+      CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_SLO =
+          new TypedDriverOption<>(
+              DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_SLO,
+              GenericType.listOf(GenericType.DURATION));
   /**
    * The number of significant decimal digits to which internal structures will maintain for
    * continuous requests.
@@ -686,6 +725,15 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<Duration> METRICS_SESSION_GRAPH_REQUESTS_HIGHEST =
       new TypedDriverOption<>(
           DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_HIGHEST, GenericType.DURATION);
+  /** The shortest latency that we expect to record for graph requests. */
+  public static final TypedDriverOption<Duration> METRICS_SESSION_GRAPH_REQUESTS_LOWEST =
+      new TypedDriverOption<>(
+          DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_LOWEST, GenericType.DURATION);
+  /** Optional service-level objectives to meet, as a list of latencies to track. */
+  public static final TypedDriverOption<List<Duration>> METRICS_SESSION_GRAPH_REQUESTS_SLO =
+      new TypedDriverOption<>(
+          DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_SLO,
+          GenericType.listOf(GenericType.DURATION));
   /**
    * The number of significant decimal digits to which internal structures will maintain for graph
    * requests.
@@ -701,6 +749,15 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<Duration> METRICS_NODE_GRAPH_MESSAGES_HIGHEST =
       new TypedDriverOption<>(
           DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_HIGHEST, GenericType.DURATION);
+  /** The shortest latency that we expect to record for graph requests. */
+  public static final TypedDriverOption<Duration> METRICS_NODE_GRAPH_MESSAGES_LOWEST =
+      new TypedDriverOption<>(
+          DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_LOWEST, GenericType.DURATION);
+  /** Optional service-level objectives to meet, as a list of latencies to track. */
+  public static final TypedDriverOption<List<Duration>> METRICS_NODE_GRAPH_MESSAGES_SLO =
+      new TypedDriverOption<>(
+          DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_SLO,
+          GenericType.listOf(GenericType.DURATION));
   /**
    * The number of significant decimal digits to which internal structures will maintain for graph
    * requests.

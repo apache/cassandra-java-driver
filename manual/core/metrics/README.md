@@ -156,10 +156,11 @@ datastax-java-driver.advanced.metrics {
 
 If you specify a metric that doesn't exist, it will be ignored, and a warning will be logged.
 
-Finally, if you are using Dropwizard and enabled any metric of timer type, such as `cql-requests`,
-it is also possible to provide additional configuration to fine-tune the underlying histogram's
-characteristics and precision, such as its highest expected latency, its number of significant
-digits to use, and its refresh interval. Again, see the [reference configuration] for more details.
+Finally, if you are using Dropwizard or Micrometer and enabled any metric of timer type, such as
+`cql-requests`, it is also possible to provide additional configuration to fine-tune the underlying
+histogram's characteristics and precision, such as its highest expected latency, its number of
+significant digits to use, and its refresh interval. Again, see the [reference configuration] for
+more details.
 
 ### Selecting a metric identifier style
 

@@ -130,7 +130,10 @@ public abstract class MicrometerMetricUpdater<MetricT> extends AbstractMetricUpd
             m -> {
               MetricId id = getMetricId(m);
               Iterable<Tag> tags = MicrometerTags.toMicrometerTags(id.getTags());
-              return DistributionSummary.builder(id.getName()).tags(tags).register(registry);
+              DistributionSummary.Builder builder =
+                  DistributionSummary.builder(id.getName()).tags(tags);
+              builder = configureDistributionSummary(builder, metric, id);
+              return builder.register(registry);
             });
   }
 
@@ -141,7 +144,19 @@ public abstract class MicrometerMetricUpdater<MetricT> extends AbstractMetricUpd
             m -> {
               MetricId id = getMetricId(m);
               Iterable<Tag> tags = MicrometerTags.toMicrometerTags(id.getTags());
-              return Timer.builder(id.getName()).tags(tags).register(registry);
+              Timer.Builder builder = Timer.builder(id.getName()).tags(tags);
+              builder = configureTimer(builder, metric, id);
+              return builder.register(registry);
             });
+  }
+
+  protected Timer.Builder configureTimer(Timer.Builder builder, MetricT metric, MetricId id) {
+    return builder.publishPercentileHistogram();
+  }
+
+  @SuppressWarnings("unused")
+  protected DistributionSummary.Builder configureDistributionSummary(
+      DistributionSummary.Builder builder, MetricT metric, MetricId id) {
+    return builder.publishPercentileHistogram();
   }
 }
