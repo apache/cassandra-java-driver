@@ -79,6 +79,11 @@ public class MicrometerNodeMetricUpdaterTest {
     when(profile.getDuration(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER))
         .thenReturn(expireAfter);
     when(generator.nodeMetricId(node, DefaultNodeMetric.CQL_MESSAGES)).thenReturn(METRIC_ID);
+    when(profile.getDuration(DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_HIGHEST))
+        .thenReturn(Duration.ofSeconds(10));
+    when(profile.getDuration(DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_LOWEST))
+        .thenReturn(Duration.ofMillis(1));
+    when(profile.getInt(DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_DIGITS)).thenReturn(5);
 
     MicrometerNodeMetricUpdater updater =
         new MicrometerNodeMetricUpdater(node, context, enabledMetrics, new SimpleMeterRegistry());
@@ -118,6 +123,11 @@ public class MicrometerNodeMetricUpdaterTest {
     when(profile.getDuration(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER))
         .thenReturn(expireAfter);
     when(generator.nodeMetricId(node, DefaultNodeMetric.CQL_MESSAGES)).thenReturn(METRIC_ID);
+    when(profile.getDuration(DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_HIGHEST))
+        .thenReturn(Duration.ofSeconds(10));
+    when(profile.getDuration(DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_LOWEST))
+        .thenReturn(Duration.ofMillis(1));
+    when(profile.getInt(DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_DIGITS)).thenReturn(5);
 
     MicrometerNodeMetricUpdater updater =
         new MicrometerNodeMetricUpdater(node, context, enabledMetrics, new SimpleMeterRegistry());
