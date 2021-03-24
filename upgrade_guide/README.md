@@ -68,7 +68,7 @@ Finally, the `datastax-java-driver.basic.load-balancing-policy.filter.class` con
 has been deprecated; it should be replaced with a node distance evaluator class defined by the
 `datastax-java-driver.basic.load-balancing-policy.evaluator.class` option instead.
 
-### 4.10.0
+### 4.11.0
 
 #### Cross-datacenter failover
 
@@ -87,26 +87,26 @@ interface that allows custom retry policies to customize the request before it i
 For this reason, the following methods in the `RetryPolicy` interface were added; they all return
 a `RetryVerdict` instance:
 
-1. [`onReadTimeoutVerdict`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onReadTimeoutVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-boolean-int-)
-2. [`onWriteTimeoutVerdict`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onWriteTimeoutVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-com.datastax.oss.driver.api.core.servererrors.WriteType-int-int-int-)
-3. [`onUnavailableVerdict`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onUnavailableVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-int-)
-4. [`onRequestAbortedVerdict`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onRequestAbortedVerdict-com.datastax.oss.driver.api.core.session.Request-java.lang.Throwable-int-)
-5. [`onErrorResponseVerdict`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onErrorResponseVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.servererrors.CoordinatorException-int-)
+1. [`onReadTimeoutVerdict`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onReadTimeoutVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-boolean-int-)
+2. [`onWriteTimeoutVerdict`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onWriteTimeoutVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-com.datastax.oss.driver.api.core.servererrors.WriteType-int-int-int-)
+3. [`onUnavailableVerdict`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onUnavailableVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-int-)
+4. [`onRequestAbortedVerdict`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onRequestAbortedVerdict-com.datastax.oss.driver.api.core.session.Request-java.lang.Throwable-int-)
+5. [`onErrorResponseVerdict`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onErrorResponseVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.servererrors.CoordinatorException-int-)
 
 The following methods were deprecated and will be removed in the next major version:
 
-1. [`onReadTimeout`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onReadTimeout-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-boolean-int-)
-2. [`onWriteTimeout`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onWriteTimeout-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-com.datastax.oss.driver.api.core.servererrors.WriteType-int-int-int-)
-3. [`onUnavailable`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onUnavailable-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-int-)
-4. [`onRequestAborted`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onRequestAborted-com.datastax.oss.driver.api.core.session.Request-java.lang.Throwable-int-)
-5. [`onErrorResponse`](https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onErrorResponse-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.servererrors.CoordinatorException-int-)
+1. [`onReadTimeout`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onReadTimeout-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-boolean-int-)
+2. [`onWriteTimeout`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onWriteTimeout-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-com.datastax.oss.driver.api.core.servererrors.WriteType-int-int-int-)
+3. [`onUnavailable`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onUnavailable-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-int-)
+4. [`onRequestAborted`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onRequestAborted-com.datastax.oss.driver.api.core.session.Request-java.lang.Throwable-int-)
+5. [`onErrorResponse`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onErrorResponse-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.servererrors.CoordinatorException-int-)
 
 Driver 4.10.0 also re-introduced a retry policy whose behavior is equivalent to the
 `DowngradingConsistencyRetryPolicy` from driver 3.x. See this
-[FAQ entry](https://docs.datastax.com/en/developer/java-driver/4.10/faq/#where-is-downgrading-consistency-retry-policy)
+[FAQ entry](https://docs.datastax.com/en/developer/java-driver/4.11/faq/#where-is-downgrading-consistency-retry-policy)
 for more information.
 
-[`RetryVerdict`]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/retry/RetryVerdict.html
+[`RetryVerdict`]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryVerdict.html
 
 #### Enhancements to the `Uuids` utility class
 
@@ -128,9 +128,9 @@ This release also introduces two new methods for random UUID generation:
 2. [Uuids.random(SplittableRandom)]: similar to `Uuids.random()` but uses a 
    `java.util.SplittableRandom` instead.
 
-[Uuids.random()]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/uuid/Uuids.html#random--
-[Uuids.random(Random)]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/uuid/Uuids.html#random-java.util.Random-
-[Uuids.random(SplittableRandom)]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/uuid/Uuids.html#random-java.util.SplittableRandom-
+[Uuids.random()]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/uuid/Uuids.html#random--
+[Uuids.random(Random)]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/uuid/Uuids.html#random-java.util.Random-
+[Uuids.random(SplittableRandom)]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/uuid/Uuids.html#random-java.util.SplittableRandom-
 
 #### System and DSE keyspaces automatically excluded from metadata and token map computation
 
@@ -152,8 +152,8 @@ empty replicas and token ranges for them. If you need the driver to keep computi
 token map for these keyspaces, you now must modify the following configuration option:
 `datastax-java-driver.advanced.metadata.schema.refreshed-keyspaces`.
 
-[Metadata.getKeyspaces()]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
-[TokenMap]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/metadata/TokenMap.html
+[Metadata.getKeyspaces()]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
+[TokenMap]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/metadata/TokenMap.html
 
 #### DSE Graph dependencies are now optional
 
@@ -284,7 +284,7 @@ you can obtain in most web environments by calling `Thread.getContextClassLoader
  
 See the javadocs of [SessionBuilder.withClassLoader] for more information.
 
-[SessionBuilder.withClassLoader]: https://docs.datastax.com/en/drivers/java/4.10/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
+[SessionBuilder.withClassLoader]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
 
 ### 4.1.0
 

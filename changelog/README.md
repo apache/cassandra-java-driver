@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.11.0 (in progress)
+### 4.11.0
 
 - [improvement] JAVA-2930: Allow Micrometer to record histograms for timers
 - [improvement] JAVA-2914: Transform node filter into a more flexible node distance evaluator
