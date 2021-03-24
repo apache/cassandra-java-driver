@@ -131,16 +131,6 @@ There are two categories of driver metrics:
   For example, `pool.open-connections` measures the number of connections open to this particular
   node.
 
-Metric names are path-like, dot-separated strings. The driver prefixes them with the name of the
-session (see `session-name` in the configuration), and in the case of node-level metrics, `nodes`
-followed by a textual representation of the node's address. For example:
-
-```
-s0.connected-nodes => 2
-s0.nodes.127_0_0_1:9042.pool.open-connections => 2
-s0.nodes.127_0_0_2:9042.pool.open-connections => 1
-```  
-
 To find out which metrics are available, see the [reference configuration]. It contains a
 commented-out line for each metric, with detailed explanations on its intended usage.
 
@@ -171,10 +161,20 @@ The `advanced.metrics.id-generator.class` option is used to customize how the dr
 metric identifiers. The driver ships with two built-in implementations:
 
 - `DefaultMetricIdGenerator`: generates identifiers composed solely of (unique) metric names; it
-  does not generate tags. It is mostly suitable for use with metrics libraries that do not support
-  tags, like Dropwizard.
-- `TaggingMetricIdGenerator`: generates identifiers composed of name and tags. It is mostly suitable
-  for use with metrics libraries that support tags, like Micrometer or MicroProfile Metrics.
+  does not generate tags. All metric names start with the name of the session (see `session-name` in
+  the configuration), and in the case of node-level metrics, this is followed by `.nodes.`, followed
+  by a textual representation of the node's address. All names end with the metric distinctive name.
+  See below for examples. This generator is mostly suitable for use with metrics libraries that do
+  not support tags, like Dropwizard.
+
+- `TaggingMetricIdGenerator`: generates identifiers composed of a name and one or two tags.
+  Session-level metric names start with the `session.` prefix followed by the metric distinctive
+  name; node-level metric names start with the `nodes.` prefix followed by the metric distinctive
+  name. Session-level tags will include a `session` tag whose value is the session name (see
+  `session-name` in the configuration); node-level tags will include the same `session` tag, and
+  also a `node` tag whose value is the node's address. See below for examples. This generator is
+  mostly suitable for use with metrics libraries that support tags, like Micrometer or MicroProfile
+  Metrics.
 
 For example, here is how each one of them generates identifiers for the session metric "bytes-sent",
 assuming that the session is named "s0":
