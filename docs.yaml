@@ -1,6 +1,6 @@
 title:    DataStax Java Driver
 summary:  DataStax Java Driver for Apache Cassandra®
-homepage: http://docs.datastax.com/en/developer/java-driver
+homepage: http://docs.datastax.com/en/developer/java-driver/latest
 theme: datastax
 swiftype_drivers: javadrivers
 sections:
