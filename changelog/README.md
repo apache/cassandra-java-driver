@@ -2,6 +2,10 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.12.0 (in progress)
+
+- [bug] JAVA-2934: Handle empty non-final pages in ReactiveResultSetSubscription
+
 ### 4.11.0
 
 - [improvement] JAVA-2930: Allow Micrometer to record histograms for timers
