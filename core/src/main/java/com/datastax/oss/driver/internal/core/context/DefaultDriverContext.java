@@ -97,6 +97,7 @@ import com.datastax.oss.driver.internal.core.util.DependencyCheck;
 import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
+import com.datastax.oss.driver.shaded.guava.common.base.Ticker;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import com.datastax.oss.protocol.internal.ProtocolV3ClientCodecs;
@@ -599,7 +600,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected MetricsFactory buildMetricsFactory() {
-    return new DropwizardMetricsFactory(this);
+    return new DropwizardMetricsFactory(this, Ticker.systemTicker());
   }
 
   protected RequestThrottler buildRequestThrottler() {
