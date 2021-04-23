@@ -521,6 +521,9 @@ public class TypedDriverOption<ValueT> {
   /** The request timeout when repreparing. */
   public static final TypedDriverOption<Duration> REPREPARE_TIMEOUT =
       new TypedDriverOption<>(DefaultDriverOption.REPREPARE_TIMEOUT, GenericType.DURATION);
+  /** Whether the prepared statements cache use weak values. */
+  public static final TypedDriverOption<Boolean> PREPARED_CACHE_WEAK_VALUES =
+      new TypedDriverOption<>(DefaultDriverOption.PREPARED_CACHE_WEAK_VALUES, GenericType.BOOLEAN);
   /** The number of threads in the I/O group. */
   public static final TypedDriverOption<Integer> NETTY_IO_SIZE =
       new TypedDriverOption<>(DefaultDriverOption.NETTY_IO_SIZE, GenericType.INTEGER);

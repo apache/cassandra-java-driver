@@ -2,6 +2,10 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.12.0 (in progress)
+
+- [bug] JAVA-2910: Add a configuration option to support strong values for prepared statements cache
+
 ### 4.11.1
 
 - [bug] JAVA-2936: Support Protocol V6

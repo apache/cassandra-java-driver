@@ -902,6 +902,13 @@ public enum DefaultDriverOption implements DriverOption {
    * <p>Value-type: List of {@link java.time.Duration Duration}
    */
   METRICS_NODE_CQL_MESSAGES_SLO("advanced.metrics.node.cql-messages.slo"),
+
+  /**
+   * Whether the prepared statements cache use weak values.
+   *
+   * <p>Value-type: boolean
+   */
+  PREPARED_CACHE_WEAK_VALUES("advanced.prepared-statements.prepared-cache.weak-values"),
   ;
 
   private final String path;
