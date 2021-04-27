@@ -2,6 +2,9 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.11.1
+- [bug] JAVA-2936: Support Protocol V6
+
 ### 4.11.0
 
 - [improvement] JAVA-2930: Allow Micrometer to record histograms for timers
