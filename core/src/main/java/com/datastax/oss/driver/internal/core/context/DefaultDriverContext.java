@@ -91,6 +91,7 @@ import com.datastax.oss.protocol.internal.FrameCodec;
 import com.datastax.oss.protocol.internal.PrimitiveCodec;
 import com.datastax.oss.protocol.internal.ProtocolV3ClientCodecs;
 import com.datastax.oss.protocol.internal.ProtocolV5ClientCodecs;
+import com.datastax.oss.protocol.internal.ProtocolV6ClientCodecs;
 import com.datastax.oss.protocol.internal.SegmentCodec;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -435,6 +436,7 @@ public class DefaultDriverContext implements InternalDriverContext {
         new ProtocolV3ClientCodecs(),
         new ProtocolV4ClientCodecsForDse(),
         new ProtocolV5ClientCodecs(),
+        new ProtocolV6ClientCodecs(),
         new DseProtocolV1ClientCodecs(),
         new DseProtocolV2ClientCodecs());
   }
