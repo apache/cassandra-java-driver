@@ -3,7 +3,9 @@
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
 ### 4.11.1
+
 - [bug] JAVA-2936: Support Protocol V6
+- [bug] JAVA-2934: Handle empty non-final pages in ReactiveResultSetSubscription
 
 ### 4.11.0
 
