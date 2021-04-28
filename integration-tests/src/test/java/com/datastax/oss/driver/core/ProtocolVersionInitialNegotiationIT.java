@@ -66,13 +66,25 @@ public class ProtocolVersionInitialNegotiationIT {
 
   @CassandraRequirement(
       min = "2.2",
-      max = "4.0",
-      description = "Only C* in [2.2,4.0[ has V4 as its highest version")
+      max = "4.0-rc1",
+      description = "Only C* in [2.2,4.0-rc1[ has V4 as its highest version")
   @Test
   public void should_downgrade_to_v4_oss() {
     Assume.assumeFalse("This test is only for OSS C*", ccm.getDseVersion().isPresent());
     try (CqlSession session = SessionUtils.newSession(ccm)) {
       assertThat(session.getContext().getProtocolVersion().getCode()).isEqualTo(4);
+      session.execute("select * from system.local");
+    }
+  }
+
+  @CassandraRequirement(
+      min = "4.0-rc1",
+      description = "Only C* in [4.0-rc1,*[ has V5 as its highest version")
+  @Test
+  public void should_downgrade_to_v5_oss() {
+    Assume.assumeFalse("This test is only for OSS C*", ccm.getDseVersion().isPresent());
+    try (CqlSession session = SessionUtils.newSession(ccm)) {
+      assertThat(session.getContext().getProtocolVersion().getCode()).isEqualTo(5);
       session.execute("select * from system.local");
     }
   }
@@ -142,8 +154,8 @@ public class ProtocolVersionInitialNegotiationIT {
 
   @CassandraRequirement(
       min = "2.1",
-      max = "4.0",
-      description = "Only C* in [2.1,4.0[ has V5 unsupported or supported as beta")
+      max = "4.0-rc1",
+      description = "Only C* in [2.1,4.0-rc1[ has V5 unsupported or supported as beta")
   @Test
   public void should_fail_if_provided_v5_is_not_supported_oss() {
     Assume.assumeFalse("This test is only for OSS C*", ccm.getDseVersion().isPresent());
