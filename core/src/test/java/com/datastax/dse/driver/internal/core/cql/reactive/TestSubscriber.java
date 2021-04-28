@@ -31,8 +31,17 @@ public class TestSubscriber<T> implements Subscriber<T> {
 
   private final List<T> elements = new ArrayList<>();
   private final CountDownLatch latch = new CountDownLatch(1);
+  private final long demand;
   private Subscription subscription;
   private Throwable error;
+
+  public TestSubscriber() {
+    this.demand = Long.MAX_VALUE;
+  }
+
+  public TestSubscriber(long demand) {
+    this.demand = demand;
+  }
 
   @Override
   public void onSubscribe(Subscription s) {
@@ -40,7 +49,7 @@ public class TestSubscriber<T> implements Subscriber<T> {
       fail("already subscribed");
     }
     subscription = s;
-    s.request(Long.MAX_VALUE);
+    subscription.request(demand);
   }
 
   @Override
@@ -71,5 +80,6 @@ public class TestSubscriber<T> implements Subscriber<T> {
 
   public void awaitTermination() {
     Uninterruptibles.awaitUninterruptibly(latch, 1, TimeUnit.MINUTES);
+    if (latch.getCount() > 0) fail("subscriber not terminated");
   }
 }
