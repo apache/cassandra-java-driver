@@ -20,7 +20,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-parent</artifactId>
-  <version>4.11.1-SNAPSHOT</version>
+  <version>4.11.1</version>
   <packaging>pom</packaging>
   <name>DataStax Java driver for Apache Cassandra(R)</name>
   <description>A driver for Apache Cassandra(R) 2.1+ that works exclusively with the Cassandra Query Language version 3 (CQL3) and Cassandra's native protocol versions 3 and above.</description>
@@ -954,7 +954,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
     <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
     <url>https://github.com/datastax/java-driver</url>
-    <tag>HEAD</tag>
+    <tag>4.11.1</tag>
   </scm>
   <developers>
     <developer>
