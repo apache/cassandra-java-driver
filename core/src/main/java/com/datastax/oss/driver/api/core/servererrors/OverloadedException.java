@@ -34,8 +34,8 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  */
 public class OverloadedException extends QueryExecutionException {
 
-  public OverloadedException(@NonNull Node coordinator) {
-    super(coordinator, String.format("%s is bootstrapping", coordinator), null, false);
+  public OverloadedException(@NonNull Node coordinator, @NonNull String message) {
+    super(coordinator, String.format("%s is overloaded: %s", coordinator, message), null, false);
   }
 
   private OverloadedException(

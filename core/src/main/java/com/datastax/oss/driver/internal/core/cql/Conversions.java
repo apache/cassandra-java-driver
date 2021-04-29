@@ -462,7 +462,7 @@ public class Conversions {
             unavailable.required,
             unavailable.alive);
       case ProtocolConstants.ErrorCode.OVERLOADED:
-        return new OverloadedException(node);
+        return new OverloadedException(node, errorMessage.message);
       case ProtocolConstants.ErrorCode.IS_BOOTSTRAPPING:
         return new BootstrappingException(node);
       case ProtocolConstants.ErrorCode.TRUNCATE_ERROR:
