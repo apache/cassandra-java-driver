@@ -484,9 +484,36 @@ public class DefaultSession implements CqlSession {
               t);
         }
       }
-      context.getNodeStateListener().onSessionReady(DefaultSession.this);
-      schemaListenerNotifier.onSessionReady(DefaultSession.this);
-      context.getRequestTracker().onSessionReady(DefaultSession.this);
+      try {
+        context.getNodeStateListener().onSessionReady(DefaultSession.this);
+      } catch (Throwable t) {
+        Loggers.warnWithException(
+            LOG,
+            "[{}] Error while notifying {} of session ready",
+            logPrefix,
+            context.getNodeStateListener(),
+            t);
+      }
+      try {
+        schemaListenerNotifier.onSessionReady(DefaultSession.this);
+      } catch (Throwable t) {
+        Loggers.warnWithException(
+            LOG,
+            "[{}] Error while notifying {} of session ready",
+            logPrefix,
+            schemaListenerNotifier,
+            t);
+      }
+      try {
+        context.getRequestTracker().onSessionReady(DefaultSession.this);
+      } catch (Throwable t) {
+        Loggers.warnWithException(
+            LOG,
+            "[{}] Error while notifying {} of session ready",
+            logPrefix,
+            context.getRequestTracker(),
+            t);
+      }
     }
 
     private void onNodeStateChanged(NodeStateEvent event) {
