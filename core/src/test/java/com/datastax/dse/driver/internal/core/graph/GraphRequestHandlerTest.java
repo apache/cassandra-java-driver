@@ -137,7 +137,7 @@ public class GraphRequestHandlerTest {
       throws IOException {
     // initialization
     GraphRequestHandlerTestHarness harness = GraphRequestHandlerTestHarness.builder().build();
-    GraphTraversal traversalTest =
+    GraphTraversal<?, ?> traversalTest =
         DseGraph.g.V().has("person", "name", "marko").has("p1", 1L).has("p2", Uuids.random());
     GraphStatement<?> graphStatement = FluentGraphStatement.newInstance(traversalTest);
 
@@ -171,6 +171,7 @@ public class GraphRequestHandlerTest {
       throws IOException {
     // initialization
     GraphRequestHandlerTestHarness harness = GraphRequestHandlerTestHarness.builder().build();
+    @SuppressWarnings("rawtypes")
     List<GraphTraversal> traversalsTest =
         ImmutableList.of(
             // randomly testing some complex data types. Complete suite of data types test is in
@@ -424,7 +425,7 @@ public class GraphRequestHandlerTest {
         Mockito.spy(new GraphRequestAsyncProcessor(harness.getContext(), graphSupportChecker));
     when(p.getGraphBinaryModule()).thenReturn(module);
 
-    GraphStatement graphStatement =
+    GraphStatement<?> graphStatement =
         ScriptGraphStatement.newInstance("mockQuery").setExecutionProfileName("test-graph");
     GraphResultSet grs =
         new GraphRequestSyncProcessor(p)
@@ -487,7 +488,7 @@ public class GraphRequestHandlerTest {
     RequestTracker requestTracker = mock(RequestTracker.class);
     when(harness.getContext().getRequestTracker()).thenReturn(requestTracker);
 
-    GraphStatement graphStatement = ScriptGraphStatement.newInstance("mockQuery");
+    GraphStatement<?> graphStatement = ScriptGraphStatement.newInstance("mockQuery");
 
     node1Behavior.setResponseSuccess(defaultDseFrameOf(singleGraphRow(graphProtocol, module)));
 
@@ -547,6 +548,31 @@ public class GraphRequestHandlerTest {
             anyLong(),
             eq(TimeUnit.NANOSECONDS));
     verifyNoMoreInteractions(harness.getSession().getMetricUpdater());
+  }
+
+  @Test
+  public void should_honor_statement_consistency_level() {
+    // initialization
+    GraphRequestHandlerTestHarness harness = GraphRequestHandlerTestHarness.builder().build();
+    ScriptGraphStatement graphStatement =
+        ScriptGraphStatement.builder("mockScript")
+            .setConsistencyLevel(DefaultConsistencyLevel.THREE)
+            .build();
+
+    GraphBinaryModule module = createGraphBinaryModule(harness.getContext());
+
+    // when
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(graphStatement, harness.getContext());
+
+    Message m =
+        GraphConversions.createMessageFromGraphStatement(
+            graphStatement, GRAPH_BINARY_1_0, executionProfile, harness.getContext(), module);
+
+    // checks
+    assertThat(m).isInstanceOf(Query.class);
+    Query q = ((Query) m);
+    assertThat(q.options.consistency).isEqualTo(DefaultConsistencyLevel.THREE.getProtocolCode());
   }
 
   @DataProvider
