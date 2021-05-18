@@ -179,9 +179,13 @@ public class GraphConversions extends Conversions {
       }
     }
 
+    ConsistencyLevel consistency = statement.getConsistencyLevel();
     int consistencyLevel =
-        DefaultConsistencyLevel.valueOf(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
-            .getProtocolCode();
+        (consistency == null)
+            ? context
+                .getConsistencyLevelRegistry()
+                .nameToCode(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
+            : consistency.getProtocolCode();
 
     long timestamp = statement.getTimestamp();
     if (timestamp == Statement.NO_DEFAULT_TIMESTAMP) {
