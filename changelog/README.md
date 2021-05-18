@@ -4,6 +4,7 @@
 
 ### 4.11.2 (in progress)
 
+- [bug] JAVA-2943: Prevent session leak with wrong keyspace name
 - [bug] JAVA-2938: OverloadedException message is misleading
 
 ### 4.11.1
