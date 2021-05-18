@@ -4,6 +4,7 @@
 
 ### 4.11.2 (in progress)
 
+- [bug] JAVA-2941: Cannot add a single static column with the alter table API
 - [bug] JAVA-2938: OverloadedException message is misleading
 
 ### 4.11.1
