@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSortedSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
@@ -32,12 +31,7 @@ import java.util.SortedSet;
 /** @see MapBasedDriverConfigLoader */
 public class MapBasedDriverExecutionProfile implements DriverExecutionProfile {
 
-  private static final Object NO_VALUE = new Object();
-
   private final String profileName;
-  // Anything that was overridden in a derived profile with `withXxx` methods. Empty for non-derived
-  // profiles
-  private final Map<DriverOption, Object> overrides;
   // The backing map for the current profile
   private final Map<DriverOption, Object> profile;
   // The backing map for the default profile (if the current one is not the default)
@@ -47,7 +41,6 @@ public class MapBasedDriverExecutionProfile implements DriverExecutionProfile {
       Map<String, Map<DriverOption, Object>> optionsMap, String profileName) {
     this(
         profileName,
-        Collections.emptyMap(),
         optionsMap.get(profileName),
         profileName.equals(DriverExecutionProfile.DEFAULT_NAME)
             ? Collections.emptyMap()
@@ -60,11 +53,9 @@ public class MapBasedDriverExecutionProfile implements DriverExecutionProfile {
 
   public MapBasedDriverExecutionProfile(
       String profileName,
-      Map<DriverOption, Object> overrides,
       Map<DriverOption, Object> profile,
       Map<DriverOption, Object> defaultProfile) {
     this.profileName = profileName;
-    this.overrides = overrides;
     this.profile = profile;
     this.defaultProfile = defaultProfile;
   }
@@ -77,11 +68,7 @@ public class MapBasedDriverExecutionProfile implements DriverExecutionProfile {
 
   @Override
   public boolean isDefined(@NonNull DriverOption option) {
-    if (overrides.containsKey(option)) {
-      return overrides.get(option) != NO_VALUE;
-    } else {
-      return profile.containsKey(option) || defaultProfile.containsKey(option);
-    }
+    return profile.containsKey(option) || defaultProfile.containsKey(option);
   }
 
   // Driver options don't encode the type, everything relies on the user putting the right types in
@@ -89,9 +76,8 @@ public class MapBasedDriverExecutionProfile implements DriverExecutionProfile {
   @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
   @NonNull
   private <T> T get(@NonNull DriverOption option) {
-    Object value =
-        overrides.getOrDefault(option, profile.getOrDefault(option, defaultProfile.get(option)));
-    if (value == null || value == NO_VALUE) {
+    Object value = profile.getOrDefault(option, defaultProfile.get(option));
+    if (value == null) {
       throw new IllegalArgumentException("Missing configuration option " + option.getPath());
     }
     return (T) value;
@@ -184,149 +170,16 @@ public class MapBasedDriverExecutionProfile implements DriverExecutionProfile {
 
   @NonNull
   @Override
-  public Object getComparisonKey(@NonNull DriverOption option) {
-    // This method is only used during driver initialization, performance is not crucial
-    String prefix = option.getPath();
-    ImmutableMap.Builder<String, Object> childOptions = ImmutableMap.builder();
-    for (Map.Entry<String, Object> entry : entrySet()) {
-      if (entry.getKey().startsWith(prefix)) {
-        childOptions.put(entry.getKey(), entry.getValue());
-      }
-    }
-    return childOptions.build();
-  }
-
-  @NonNull
-  @Override
   public SortedSet<Map.Entry<String, Object>> entrySet() {
     ImmutableSortedSet.Builder<Map.Entry<String, Object>> builder =
         ImmutableSortedSet.orderedBy(Map.Entry.comparingByKey());
     for (Map<DriverOption, Object> backingMap :
         // builder.add() ignores duplicates, so process higher precedence backing maps first
-        ImmutableList.of(overrides, profile, defaultProfile)) {
+        ImmutableList.of(profile, defaultProfile)) {
       for (Map.Entry<DriverOption, Object> entry : backingMap.entrySet()) {
-        if (entry.getValue() != NO_VALUE) {
-          builder.add(new AbstractMap.SimpleEntry<>(entry.getKey().getPath(), entry.getValue()));
-        }
+        builder.add(new AbstractMap.SimpleEntry<>(entry.getKey().getPath(), entry.getValue()));
       }
     }
     return builder.build();
-  }
-
-  private DriverExecutionProfile with(@NonNull DriverOption option, Object value) {
-    ImmutableMap.Builder<DriverOption, Object> newOverrides = ImmutableMap.builder();
-    for (Map.Entry<DriverOption, Object> override : overrides.entrySet()) {
-      if (!override.getKey().equals(option)) {
-        newOverrides.put(override.getKey(), override.getValue());
-      }
-    }
-    newOverrides.put(option, value);
-    return new MapBasedDriverExecutionProfile(
-        profileName, newOverrides.build(), profile, defaultProfile);
-  }
-
-  @NonNull
-  @Override
-  public DriverExecutionProfile withBoolean(@NonNull DriverOption option, boolean value) {
-    return with(option, value);
-  }
-
-  @NonNull
-  @Override
-  public DriverExecutionProfile withBooleanList(
-      @NonNull DriverOption option, @NonNull List<Boolean> value) {
-    return with(option, value);
-  }
-
-  @NonNull
-  @Override
-  public DriverExecutionProfile withInt(@NonNull DriverOption option, int value) {
-    return with(option, value);
-  }
-
-  @NonNull
-  @Override
-  public DriverExecutionProfile withIntList(
-      @NonNull DriverOption option, @NonNull List<Integer> value) {
-    return with(option, value);
-  }
-
-  @NonNull
-  @Override
-  public DriverExecutionProfile withLong(@NonNull DriverOption option, long value) {
-    return with(option, value);
-  }
-
-  @NonNull
-  @Override
-  public DriverExecutionProfile withLongList(
-      @NonNull DriverOption option, @NonNull List<Long> value) {
-    return with(option, value);
-  }
-
-  @NonNull
-  @Override
-  public DriverExecutionProfile withDouble(@NonNull DriverOption option, double value) {
-    return with(option, value);
-  }
-
-  @NonNull
-  @Override
-  public DriverExecutionProfile withDoubleList(
-      @NonNull DriverOption option, @NonNull List<Double> value) {
-    return with(option, value);
-  }
-
-  @NonNull
-  @Override
-  public DriverExecutionProfile withString(@NonNull DriverOption option, @NonNull String value) {
-    return with(option, value);
-  }
-
-  @NonNull
-  @Override
-  public DriverExecutionProfile withStringList(
-      @NonNull DriverOption option, @NonNull List<String> value) {
-    return with(option, value);
-  }
-
-  @NonNull
-  @Override
-  public DriverExecutionProfile withStringMap(
-      @NonNull DriverOption option, @NonNull Map<String, String> value) {
-    return with(option, value);
-  }
-
-  @NonNull
-  @Override
-  public DriverExecutionProfile withBytes(@NonNull DriverOption option, long value) {
-    return with(option, value);
-  }
-
-  @NonNull
-  @Override
-  public DriverExecutionProfile withBytesList(
-      @NonNull DriverOption option, @NonNull List<Long> value) {
-    return with(option, value);
-  }
-
-  @NonNull
-  @Override
-  public DriverExecutionProfile withDuration(
-      @NonNull DriverOption option, @NonNull Duration value) {
-    return with(option, value);
-  }
-
-  @NonNull
-  @Override
-  public DriverExecutionProfile withDurationList(
-      @NonNull DriverOption option, @NonNull List<Duration> value) {
-    return with(option, value);
-  }
-
-  @NonNull
-  @Override
-  public DriverExecutionProfile without(@NonNull DriverOption option) {
-    return with(option, NO_VALUE);
   }
 }

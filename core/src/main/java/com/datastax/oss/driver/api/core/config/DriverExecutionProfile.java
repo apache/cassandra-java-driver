@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
+import com.datastax.oss.driver.internal.core.config.DerivedExecutionProfile;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Duration;
@@ -182,12 +184,28 @@ public interface DriverExecutionProfile extends OngoingConfigOptions<DriverExecu
   /**
    * Returns a representation of all the child options under a given option.
    *
-   * <p>This is only used to compare configuration sections across profiles, so the actual
-   * implementation does not matter, as long as identical sections (same options with same values,
-   * regardless of order) compare as equal and have the same {@code hashCode()}.
+   * <p>This is used by the driver at initialization time, to compare profiles and determine if it
+   * must create per-profile policies. For example, if two profiles have the same options in the
+   * {@code basic.load-balancing-policy} section, they will share the same policy instance. But if
+   * their options differ, two separate instances will be created.
+   *
+   * <p>The runtime return type does not matter, as long as identical sections (same options with
+   * same values, regardless of order) compare as equal and have the same {@code hashCode()}. The
+   * default implementation builds a map based on the entries from {@link #entrySet()}, it should be
+   * good for most cases.
    */
   @NonNull
-  Object getComparisonKey(@NonNull DriverOption option);
+  default Object getComparisonKey(@NonNull DriverOption option) {
+    // This method is only used during driver initialization, performance is not crucial
+    String prefix = option.getPath();
+    ImmutableMap.Builder<String, Object> childOptions = ImmutableMap.builder();
+    for (Map.Entry<String, Object> entry : entrySet()) {
+      if (entry.getKey().startsWith(prefix)) {
+        childOptions.put(entry.getKey(), entry.getValue());
+      }
+    }
+    return childOptions.build();
+  }
 
   /**
    * Enumerates all the entries in this profile, including those that were inherited from another
@@ -201,4 +219,109 @@ public interface DriverExecutionProfile extends OngoingConfigOptions<DriverExecu
    */
   @NonNull
   SortedSet<Map.Entry<String, Object>> entrySet();
+
+  @NonNull
+  @Override
+  default DriverExecutionProfile withBoolean(@NonNull DriverOption option, boolean value) {
+    return DerivedExecutionProfile.with(this, option, value);
+  }
+
+  @NonNull
+  @Override
+  default DriverExecutionProfile withBooleanList(
+      @NonNull DriverOption option, @NonNull List<Boolean> value) {
+    return DerivedExecutionProfile.with(this, option, value);
+  }
+
+  @NonNull
+  @Override
+  default DriverExecutionProfile withInt(@NonNull DriverOption option, int value) {
+    return DerivedExecutionProfile.with(this, option, value);
+  }
+
+  @NonNull
+  @Override
+  default DriverExecutionProfile withIntList(
+      @NonNull DriverOption option, @NonNull List<Integer> value) {
+    return DerivedExecutionProfile.with(this, option, value);
+  }
+
+  @NonNull
+  @Override
+  default DriverExecutionProfile withLong(@NonNull DriverOption option, long value) {
+    return DerivedExecutionProfile.with(this, option, value);
+  }
+
+  @NonNull
+  @Override
+  default DriverExecutionProfile withLongList(
+      @NonNull DriverOption option, @NonNull List<Long> value) {
+    return DerivedExecutionProfile.with(this, option, value);
+  }
+
+  @NonNull
+  @Override
+  default DriverExecutionProfile withDouble(@NonNull DriverOption option, double value) {
+    return DerivedExecutionProfile.with(this, option, value);
+  }
+
+  @NonNull
+  @Override
+  default DriverExecutionProfile withDoubleList(
+      @NonNull DriverOption option, @NonNull List<Double> value) {
+    return DerivedExecutionProfile.with(this, option, value);
+  }
+
+  @NonNull
+  @Override
+  default DriverExecutionProfile withString(@NonNull DriverOption option, @NonNull String value) {
+    return DerivedExecutionProfile.with(this, option, value);
+  }
+
+  @NonNull
+  @Override
+  default DriverExecutionProfile withStringList(
+      @NonNull DriverOption option, @NonNull List<String> value) {
+    return DerivedExecutionProfile.with(this, option, value);
+  }
+
+  @NonNull
+  @Override
+  default DriverExecutionProfile withStringMap(
+      @NonNull DriverOption option, @NonNull Map<String, String> value) {
+    return DerivedExecutionProfile.with(this, option, value);
+  }
+
+  @NonNull
+  @Override
+  default DriverExecutionProfile withBytes(@NonNull DriverOption option, long value) {
+    return DerivedExecutionProfile.with(this, option, value);
+  }
+
+  @NonNull
+  @Override
+  default DriverExecutionProfile withBytesList(
+      @NonNull DriverOption option, @NonNull List<Long> value) {
+    return DerivedExecutionProfile.with(this, option, value);
+  }
+
+  @NonNull
+  @Override
+  default DriverExecutionProfile withDuration(
+      @NonNull DriverOption option, @NonNull Duration value) {
+    return DerivedExecutionProfile.with(this, option, value);
+  }
+
+  @NonNull
+  @Override
+  default DriverExecutionProfile withDurationList(
+      @NonNull DriverOption option, @NonNull List<Duration> value) {
+    return DerivedExecutionProfile.with(this, option, value);
+  }
+
+  @NonNull
+  @Override
+  default DriverExecutionProfile without(@NonNull DriverOption option) {
+    return DerivedExecutionProfile.without(this, option);
+  }
 }
