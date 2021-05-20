@@ -2,6 +2,8 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+ - [new feature] JAVA-2793: Add composite config loader
+
   ### 4.8.0 (in progress)
   
  - [bug] JAVA-2331: Unregister old metrics when a node gets removed or changes RPC address
