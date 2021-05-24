@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -25,7 +26,9 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.session.Session;
@@ -34,6 +37,7 @@ import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.IsolatedTests;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
+import com.datastax.oss.simulacron.common.stubbing.PrimeDsl;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.Before;
@@ -102,5 +106,29 @@ public class SessionLeakIT {
     CqlSession session = SessionUtils.newSession(SIMULACRON_RULE, configLoader);
     verify(appender, never()).doAppend(any());
     session.close();
+  }
+
+  @Test
+  public void should_never_warn_when_session_init_fails() {
+    SIMULACRON_RULE
+        .cluster()
+        .prime(PrimeDsl.when("USE \"non_existent_keyspace\"").then(PrimeDsl.invalid("irrelevant")));
+    int threshold = 4;
+    // Set the config option explicitly, in case it gets overridden in the test application.conf:
+    DriverConfigLoader configLoader =
+        DriverConfigLoader.programmaticBuilder()
+            .withInt(DefaultDriverOption.SESSION_LEAK_THRESHOLD, threshold)
+            .build();
+    // Go over the threshold, no warnings expected
+    for (int i = 0; i < threshold + 1; i++) {
+      try (Session session =
+          SessionUtils.newSession(
+              SIMULACRON_RULE, CqlIdentifier.fromCql("non_existent_keyspace"), configLoader)) {
+        fail("Session %s should have failed to initialize", session.getName());
+      } catch (InvalidKeyspaceException e) {
+        assertThat(e.getMessage()).isEqualTo("Invalid keyspace non_existent_keyspace");
+      }
+    }
+    verify(appender, never()).doAppend(any());
   }
 }

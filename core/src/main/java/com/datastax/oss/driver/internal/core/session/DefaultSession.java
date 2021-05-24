@@ -384,16 +384,30 @@ public class DefaultSession implements CqlSession {
           .getTopologyMonitor()
           .init()
           .thenCompose(v -> metadataManager.refreshNodes())
-          .thenAccept(v -> afterInitialNodeListRefresh(keyspace))
-          .exceptionally(
-              error -> {
-                initFuture.completeExceptionally(error);
-                RunOrSchedule.on(adminExecutor, this::close);
-                return null;
+          .thenCompose(v -> checkProtocolVersion())
+          .thenCompose(v -> initialSchemaRefresh())
+          .thenCompose(v -> initializePools(keyspace))
+          .whenComplete(
+              (v, error) -> {
+                if (error == null) {
+                  LOG.debug("[{}] Initialization complete, ready", logPrefix);
+                  notifyListeners();
+                  initFuture.complete(DefaultSession.this);
+                } else {
+                  LOG.debug("[{}] Initialization failed, force closing", logPrefix, error);
+                  forceCloseAsync()
+                      .whenComplete(
+                          (v1, error1) -> {
+                            if (error1 != null) {
+                              error.addSuppressed(error1);
+                            }
+                            initFuture.completeExceptionally(error);
+                          });
+                }
               });
     }
 
-    private void afterInitialNodeListRefresh(CqlIdentifier keyspace) {
+    private CompletionStage<Void> checkProtocolVersion() {
       try {
         boolean protocolWasForced =
             context.getConfig().getDefaultProfile().isDefined(DefaultDriverOption.PROTOCOL_VERSION);
@@ -426,48 +440,39 @@ public class DefaultSession implements CqlSession {
                 bestVersion);
           }
         }
-        metadataManager
-            .refreshSchema(null, false, true)
-            .whenComplete(
-                (metadata, error) -> {
-                  if (error != null) {
-                    Loggers.warnWithException(
-                        LOG,
-                        "[{}] Unexpected error while refreshing schema during initialization, "
-                            + "keeping previous version",
-                        logPrefix,
-                        error);
-                  }
-                  afterInitialSchemaRefresh(keyspace);
-                });
+        return CompletableFuture.completedFuture(null);
       } catch (Throwable throwable) {
-        initFuture.completeExceptionally(throwable);
+        return CompletableFutures.failedFuture(throwable);
       }
     }
 
-    private void afterInitialSchemaRefresh(CqlIdentifier keyspace) {
+    private CompletionStage<RefreshSchemaResult> initialSchemaRefresh() {
+      try {
+        return metadataManager
+            .refreshSchema(null, false, true)
+            .exceptionally(
+                error -> {
+                  Loggers.warnWithException(
+                      LOG,
+                      "[{}] Unexpected error while refreshing schema during initialization, "
+                          + "proceeding without schema metadata",
+                      logPrefix,
+                      error);
+                  return null;
+                });
+      } catch (Throwable throwable) {
+        return CompletableFutures.failedFuture(throwable);
+      }
+    }
+
+    private CompletionStage<Void> initializePools(CqlIdentifier keyspace) {
       try {
         nodeStateManager.markInitialized();
         context.getLoadBalancingPolicyWrapper().init();
         context.getConfigLoader().onDriverInit(context);
-        LOG.debug("[{}] Initialization complete, ready", logPrefix);
-        poolManager
-            .init(keyspace)
-            .whenComplete(
-                (v, error) -> {
-                  if (error != null) {
-                    initFuture.completeExceptionally(error);
-                  } else {
-                    notifyListeners();
-                    initFuture.complete(DefaultSession.this);
-                  }
-                });
+        return poolManager.init(keyspace);
       } catch (Throwable throwable) {
-        forceCloseAsync()
-            .whenComplete(
-                (v, error) -> {
-                  initFuture.completeExceptionally(throwable);
-                });
+        return CompletableFutures.failedFuture(throwable);
       }
     }
 
@@ -484,9 +489,36 @@ public class DefaultSession implements CqlSession {
               t);
         }
       }
-      context.getNodeStateListener().onSessionReady(DefaultSession.this);
-      schemaListenerNotifier.onSessionReady(DefaultSession.this);
-      context.getRequestTracker().onSessionReady(DefaultSession.this);
+      try {
+        context.getNodeStateListener().onSessionReady(DefaultSession.this);
+      } catch (Throwable t) {
+        Loggers.warnWithException(
+            LOG,
+            "[{}] Error while notifying {} of session ready",
+            logPrefix,
+            context.getNodeStateListener(),
+            t);
+      }
+      try {
+        schemaListenerNotifier.onSessionReady(DefaultSession.this);
+      } catch (Throwable t) {
+        Loggers.warnWithException(
+            LOG,
+            "[{}] Error while notifying {} of session ready",
+            logPrefix,
+            schemaListenerNotifier,
+            t);
+      }
+      try {
+        context.getRequestTracker().onSessionReady(DefaultSession.this);
+      } catch (Throwable t) {
+        Loggers.warnWithException(
+            LOG,
+            "[{}] Error while notifying {} of session ready",
+            logPrefix,
+            context.getRequestTracker(),
+            t);
+      }
     }
 
     private void onNodeStateChanged(NodeStateEvent event) {
