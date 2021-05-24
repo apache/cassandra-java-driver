@@ -24,12 +24,12 @@ import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
 import com.datastax.oss.driver.api.mapper.result.MapperResultProducer;
 import com.datastax.oss.driver.api.mapper.result.MapperResultProducerService;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.ServiceLoader;
@@ -38,9 +38,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class DefaultMapperContext implements MapperContext {
 
-  private static final List<MapperResultProducer> RESULT_PRODUCERS = getResultProducers();
-
-  private static final ConcurrentMap<GenericType<?>, MapperResultProducer> RESULT_PRODUCER_CACHE =
+  private final ConcurrentMap<GenericType<?>, MapperResultProducer> resultProducerCache =
       new ConcurrentHashMap<>();
 
   private final CqlSession session;
@@ -50,6 +48,7 @@ public class DefaultMapperContext implements MapperContext {
   private final DriverExecutionProfile executionProfile;
   private final ConcurrentMap<Class<? extends NameConverter>, NameConverter> nameConverterCache;
   private final Map<Object, Object> customState;
+  private final ImmutableList<MapperResultProducer> resultProducers;
 
   public DefaultMapperContext(
       @NonNull CqlSession session,
@@ -86,6 +85,8 @@ public class DefaultMapperContext implements MapperContext {
     this.customState = customState;
     this.executionProfileName = executionProfileName;
     this.executionProfile = executionProfile;
+    this.resultProducers =
+        locateResultProducers(((InternalDriverContext) session.getContext()).getClassLoader());
   }
 
   public DefaultMapperContext withDaoParameters(
@@ -154,10 +155,10 @@ public class DefaultMapperContext implements MapperContext {
   @NonNull
   @Override
   public MapperResultProducer getResultProducer(@NonNull GenericType<?> resultToProduce) {
-    return RESULT_PRODUCER_CACHE.computeIfAbsent(
+    return resultProducerCache.computeIfAbsent(
         resultToProduce,
         k -> {
-          for (MapperResultProducer resultProducer : RESULT_PRODUCERS) {
+          for (MapperResultProducer resultProducer : resultProducers) {
             if (resultProducer.canProduce(k)) {
               return resultProducer;
             }
@@ -185,10 +186,11 @@ public class DefaultMapperContext implements MapperContext {
     }
   }
 
-  private static List<MapperResultProducer> getResultProducers() {
+  private static ImmutableList<MapperResultProducer> locateResultProducers(
+      ClassLoader classLoader) {
     ImmutableList.Builder<MapperResultProducer> result = ImmutableList.builder();
     ServiceLoader<MapperResultProducerService> loader =
-        ServiceLoader.load(MapperResultProducerService.class);
+        ServiceLoader.load(MapperResultProducerService.class, classLoader);
     loader.iterator().forEachRemaining(provider -> result.addAll(provider.getProducers()));
     return result.build();
   }
