@@ -41,7 +41,7 @@ public interface MetricIdGenerator {
   @NonNull
   MetricId sessionMetricId(@NonNull SessionMetric metric);
 
-  /** Generates a {@link MetricId} for the given {@link Node and }{@link NodeMetric}. */
+  /** Generates a {@link MetricId} for the given {@link Node} and {@link NodeMetric}. */
   @NonNull
   MetricId nodeMetricId(@NonNull Node node, @NonNull NodeMetric metric);
 }
