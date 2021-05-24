@@ -46,8 +46,8 @@ public class DefaultAlterTable
   private final CqlIdentifier keyspace;
   private final CqlIdentifier tableName;
 
-  private final ImmutableMap<CqlIdentifier, DataType> columnsToAddInOrder;
-  private final ImmutableSet<CqlIdentifier> columnsToAdd;
+  private final ImmutableMap<CqlIdentifier, DataType> allColumnsToAddInOrder;
+  private final ImmutableSet<CqlIdentifier> columnsToAddRegular;
   private final ImmutableSet<CqlIdentifier> columnsToAddStatic;
   private final ImmutableSet<CqlIdentifier> columnsToDrop;
   private final ImmutableMap<CqlIdentifier, CqlIdentifier> columnsToRename;
@@ -79,8 +79,8 @@ public class DefaultAlterTable
       @Nullable CqlIdentifier keyspace,
       @NonNull CqlIdentifier tableName,
       boolean dropCompactStorage,
-      @NonNull ImmutableMap<CqlIdentifier, DataType> columnsToAddInOrder,
-      @NonNull ImmutableSet<CqlIdentifier> columnsToAdd,
+      @NonNull ImmutableMap<CqlIdentifier, DataType> allColumnsToAddInOrder,
+      @NonNull ImmutableSet<CqlIdentifier> columnsToAddRegular,
       @NonNull ImmutableSet<CqlIdentifier> columnsToAddStatic,
       @NonNull ImmutableSet<CqlIdentifier> columnsToDrop,
       @NonNull ImmutableMap<CqlIdentifier, CqlIdentifier> columnsToRename,
@@ -90,8 +90,8 @@ public class DefaultAlterTable
     this.keyspace = keyspace;
     this.tableName = tableName;
     this.dropCompactStorage = dropCompactStorage;
-    this.columnsToAddInOrder = columnsToAddInOrder;
-    this.columnsToAdd = columnsToAdd;
+    this.allColumnsToAddInOrder = allColumnsToAddInOrder;
+    this.columnsToAddRegular = columnsToAddRegular;
     this.columnsToAddStatic = columnsToAddStatic;
     this.columnsToDrop = columnsToDrop;
     this.columnsToRename = columnsToRename;
@@ -108,8 +108,8 @@ public class DefaultAlterTable
         keyspace,
         tableName,
         dropCompactStorage,
-        ImmutableCollections.append(columnsToAddInOrder, columnName, dataType),
-        appendSet(columnsToAdd, columnName),
+        ImmutableCollections.append(allColumnsToAddInOrder, columnName, dataType),
+        appendSet(columnsToAddRegular, columnName),
         columnsToAddStatic,
         columnsToDrop,
         columnsToRename,
@@ -126,8 +126,8 @@ public class DefaultAlterTable
         keyspace,
         tableName,
         dropCompactStorage,
-        ImmutableCollections.append(columnsToAddInOrder, columnName, dataType),
-        columnsToAdd,
+        ImmutableCollections.append(allColumnsToAddInOrder, columnName, dataType),
+        columnsToAddRegular,
         appendSet(columnsToAddStatic, columnName),
         columnsToDrop,
         columnsToRename,
@@ -143,8 +143,8 @@ public class DefaultAlterTable
         keyspace,
         tableName,
         true,
-        columnsToAddInOrder,
-        columnsToAdd,
+        allColumnsToAddInOrder,
+        columnsToAddRegular,
         columnsToAddStatic,
         columnsToDrop,
         columnsToRename,
@@ -166,8 +166,8 @@ public class DefaultAlterTable
         keyspace,
         tableName,
         dropCompactStorage,
-        columnsToAddInOrder,
-        columnsToAdd,
+        allColumnsToAddInOrder,
+        columnsToAddRegular,
         columnsToAddStatic,
         builder.build(),
         columnsToRename,
@@ -184,8 +184,8 @@ public class DefaultAlterTable
         keyspace,
         tableName,
         dropCompactStorage,
-        columnsToAddInOrder,
-        columnsToAdd,
+        allColumnsToAddInOrder,
+        columnsToAddRegular,
         columnsToAddStatic,
         columnsToDrop,
         ImmutableCollections.append(columnsToRename, from, to),
@@ -201,8 +201,8 @@ public class DefaultAlterTable
         keyspace,
         tableName,
         dropCompactStorage,
-        columnsToAddInOrder,
-        columnsToAdd,
+        allColumnsToAddInOrder,
+        columnsToAddRegular,
         columnsToAddStatic,
         columnsToDrop,
         columnsToRename,
@@ -218,8 +218,8 @@ public class DefaultAlterTable
         keyspace,
         tableName,
         dropCompactStorage,
-        columnsToAddInOrder,
-        columnsToAdd,
+        allColumnsToAddInOrder,
+        columnsToAddRegular,
         columnsToAddStatic,
         columnsToDrop,
         columnsToRename,
@@ -242,13 +242,13 @@ public class DefaultAlterTable
           .append(" TYPE ")
           .append(columnToAlterType.asCql(true, true))
           .toString();
-    } else if (!columnsToAdd.isEmpty()) {
+    } else if (!allColumnsToAddInOrder.isEmpty()) {
       builder.append(" ADD ");
-      if (columnsToAdd.size() > 1) {
+      if (allColumnsToAddInOrder.size() > 1) {
         builder.append('(');
       }
       boolean first = true;
-      for (Map.Entry<CqlIdentifier, DataType> column : columnsToAddInOrder.entrySet()) {
+      for (Map.Entry<CqlIdentifier, DataType> column : allColumnsToAddInOrder.entrySet()) {
         if (first) {
           first = false;
         } else {
@@ -263,7 +263,7 @@ public class DefaultAlterTable
           builder.append(" STATIC");
         }
       }
-      if (columnsToAdd.size() > 1) {
+      if (allColumnsToAddInOrder.size() > 1) {
         builder.append(')');
       }
       return builder.toString();
@@ -324,13 +324,13 @@ public class DefaultAlterTable
   }
 
   @NonNull
-  public ImmutableMap<CqlIdentifier, DataType> getColumnsToAddInOrder() {
-    return columnsToAddInOrder;
+  public ImmutableMap<CqlIdentifier, DataType> getAllColumnsToAddInOrder() {
+    return allColumnsToAddInOrder;
   }
 
   @NonNull
   public ImmutableSet<CqlIdentifier> getColumnsToAddRegular() {
-    return columnsToAdd;
+    return columnsToAddRegular;
   }
 
   @NonNull
