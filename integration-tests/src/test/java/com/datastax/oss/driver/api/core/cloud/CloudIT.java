@@ -51,11 +51,13 @@ import java.util.Collections;
 import java.util.List;
 import javax.net.ssl.SSLContext;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category(IsolatedTests.class)
+@Ignore("Disabled because it is causing trouble in Jenkins CI")
 public class CloudIT {
 
   private static final String BUNDLE_URL_PATH = "/certs/bundles/creds.zip";
