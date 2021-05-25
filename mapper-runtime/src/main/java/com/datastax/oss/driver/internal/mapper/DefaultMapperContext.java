@@ -32,11 +32,16 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultMapperContext implements MapperContext {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMapperContext.class);
 
   private final ConcurrentMap<GenericType<?>, MapperResultProducer> resultProducerCache =
       new ConcurrentHashMap<>();
@@ -188,10 +193,20 @@ public class DefaultMapperContext implements MapperContext {
 
   private static ImmutableList<MapperResultProducer> locateResultProducers(
       ClassLoader classLoader) {
-    ImmutableList.Builder<MapperResultProducer> result = ImmutableList.builder();
-    ServiceLoader<MapperResultProducerService> loader =
-        ServiceLoader.load(MapperResultProducerService.class, classLoader);
-    loader.iterator().forEachRemaining(provider -> result.addAll(provider.getProducers()));
-    return result.build();
+    LOGGER.debug(
+        "Locating result producers with CL = {}, MapperResultProducerService CL = {}",
+        classLoader,
+        MapperResultProducerService.class.getClassLoader());
+    ImmutableList.Builder<MapperResultProducer> builder = ImmutableList.builder();
+    try {
+      ServiceLoader<MapperResultProducerService> loader =
+          ServiceLoader.load(MapperResultProducerService.class, classLoader);
+      loader.iterator().forEachRemaining(provider -> builder.addAll(provider.getProducers()));
+    } catch (Exception | ServiceConfigurationError e) {
+      LOGGER.error("Failed to locate result producers", e);
+    }
+    ImmutableList<MapperResultProducer> producers = builder.build();
+    LOGGER.debug("Located {} result producers: {}", producers.size(), producers);
+    return producers;
   }
 }
