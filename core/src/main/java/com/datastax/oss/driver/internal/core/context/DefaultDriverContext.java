@@ -225,6 +225,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final SchemaChangeListener schemaChangeListenerFromBuilder;
   private final RequestTracker requestTrackerFromBuilder;
   private final Map<String, String> localDatacentersFromBuilder;
+  private final Map<String, Predicate<Node>> nodeFiltersFromBuilder;
   private final Map<String, NodeDistanceEvaluator> nodeDistanceEvaluatorsFromBuilder;
   private final ClassLoader classLoader;
   private final InetSocketAddress cloudProxyAddress;
@@ -277,6 +278,9 @@ public class DefaultDriverContext implements InternalDriverContext {
             "sslEngineFactory",
             () -> buildSslEngineFactory(programmaticArguments.getSslEngineFactory()),
             cycleDetector);
+    @SuppressWarnings("deprecation")
+    Map<String, Predicate<Node>> nodeFilters = programmaticArguments.getNodeFilters();
+    this.nodeFiltersFromBuilder = nodeFilters;
     this.nodeDistanceEvaluatorsFromBuilder = programmaticArguments.getNodeDistanceEvaluators();
     this.classLoader = programmaticArguments.getClassLoader();
     this.cloudProxyAddress = programmaticArguments.getCloudProxyAddress();
@@ -907,6 +911,13 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public String getLocalDatacenter(@NonNull String profileName) {
     return localDatacentersFromBuilder.get(profileName);
+  }
+
+  @Nullable
+  @Override
+  @Deprecated
+  public Predicate<Node> getNodeFilter(@NonNull String profileName) {
+    return nodeFiltersFromBuilder.get(profileName);
   }
 
   @Nullable
