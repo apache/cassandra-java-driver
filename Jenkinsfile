@@ -220,8 +220,7 @@ pipeline {
                 'dse-5.1',   // Legacy DataStax Enterprise
                 'dse-6.0',   // Previous DataStax Enterprise
                 'dse-6.7',   // Previous DataStax Enterprise
-                'dse-6.8.0', // Current DataStax Enterprise
-                'dse-6.8',   // Development DataStax Enterprise
+                'dse-6.8',   // Current DataStax Enterprise
                 'ALL'],
       description: '''Apache Cassandra&reg; and DataStax Enterprise server version to use for adhoc <b>BUILD-AND-EXECUTE-TESTS</b> builds
                       <table style="width:100%">
@@ -272,12 +271,8 @@ pipeline {
                           <td>DataStax Enterprise v6.7.x</td>
                         </tr>
                         <tr>
-                          <td><strong>dse-6.8.0</strong></td>
-                          <td>DataStax Enterprise v6.8.0</td>
-                        </tr>
-                        <tr>
                           <td><strong>dse-6.8</strong></td>
-                          <td>DataStax Enterprise v6.8.x (<b>CURRENTLY UNDER DEVELOPMENT</b>)</td>
+                          <td>DataStax Enterprise v6.8.x</td>
                         </tr>
                       </table>''')
     choice(
@@ -403,7 +398,7 @@ pipeline {
             name 'SERVER_VERSION'
             values '3.11',     // Latest stable Apache CassandraⓇ
                    '4.0',      // Development Apache CassandraⓇ
-                   'dse-6.8.0' // Current DataStax Enterprise
+                   'dse-6.8' // Current DataStax Enterprise
           }
         }
 
@@ -521,8 +516,7 @@ pipeline {
                    'dse-5.1',   // Legacy DataStax Enterprise
                    'dse-6.0',   // Previous DataStax Enterprise
                    'dse-6.7',   // Previous DataStax Enterprise
-                   'dse-6.8.0', // Current DataStax Enterprise
-                   'dse-6.8'    // Development DataStax Enterprise
+                   'dse-6.8'    // Current DataStax Enterprise
           }
         }
         when {
