@@ -2,6 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+ - [improvement] JAVA-2905: Prevent new connections from using a protocol version higher than the negotiated one
  - [new feature] JAVA-2793: Add composite config loader
 
   ### 4.8.0 (in progress)
