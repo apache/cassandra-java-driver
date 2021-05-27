@@ -86,27 +86,50 @@ for (Row row : rs) {
 In previous versions of the driver, the synchronous and asynchronous APIs returned the same
 `ResultSet` type. This made asynchronous paging very tricky, because it was very easy to
 accidentally trigger background synchronous queries (which would defeat the whole purpose of async,
-or potentially introduce deadlocks).
+and potentially introduce deadlocks).
 
 To avoid this problem, the driver's asynchronous API now returns a dedicated [AsyncResultSet];
-iteration only yields the current page, and the next page must be explicitly fetched. Here's the
-idiomatic way to process a result set asynchronously:
+iteration only yields the current page, and the next page must be fetched explicitly. To iterate a
+result set in a fully asynchronous manner, you need to compose page futures using the methods of
+[CompletionStage]. Here's an example that prints each row on the command line:
 
 ```java
-CompletionStage<AsyncResultSet> futureRs =
+CompletionStage<AsyncResultSet> resultSetFuture =
     session.executeAsync("SELECT * FROM myTable WHERE id = 1");
-futureRs.whenComplete(this::processRows);
+// The returned stage will complete once all the rows have been printed:
+CompletionStage<Void> printRowsFuture = resultSetFuture.thenCompose(this::printRows);
 
-void processRows(AsyncResultSet rs, Throwable error) {
-  if (error != null) {
-    // The query failed, process the error
+private CompletionStage<Void> printRows(AsyncResultSet resultSet) {
+  for (Row row : resultSet.currentPage()) {
+    System.out.println(row.getFormattedContents());
+  }
+  if (resultSet.hasMorePages()) {
+    return resultSet.fetchNextPage().thenCompose(this::printRows);
   } else {
-    for (Row row : rs.currentPage()) {
-      // Process the row...
-    }
-    if (rs.hasMorePages()) {
-      rs.fetchNextPage().whenComplete(this::processRows);
-    }
+    return CompletableFuture.completedFuture(null);
+  }
+}
+```
+
+If you need to propagate state throughout the iteration, add parameters to the callback. Here's an
+example that counts the number of rows (obviously this is contrived, you would use `SELECT COUNT(*)`
+instead of doing this client-side, but it illustrates the basic principle):
+
+```java
+CompletionStage<AsyncResultSet> resultSetFuture =
+    session.executeAsync("SELECT * FROM myTable WHERE id = 1");
+CompletionStage<Integer> countFuture = resultSetFuture.thenCompose(rs -> countRows(rs, 0));
+
+private CompletionStage<Integer> countRows(AsyncResultSet resultSet, int previousPagesCount) {
+  int count = previousPagesCount;
+  for (Row row : resultSet.currentPage()) {
+    count += 1;
+  }
+  if (resultSet.hasMorePages()) {
+    int finalCount = count; // need a final variable to use in the lambda below
+    return resultSet.fetchNextPage().thenCompose(rs -> countRows(rs, finalCount));
+  } else {
+    return CompletableFuture.completedFuture(count);
   }
 }
 ```
@@ -145,6 +168,31 @@ The paging state can only be reused with the exact same statement (same query st
 parameters). It is an opaque value that is only meant to be collected, stored and re-used. If you
 try to modify its contents or reuse it with a different statement, the results are unpredictable.
 
+If you want additional safety, the driver also provides a "safe" wrapper around the raw value:
+[PagingState]. 
+
+```java
+PagingState pagingState = rs.getExecutionInfo().getSafePagingState();
+```
+
+It works in the exact same manner, except that it will throw an `IllegalStateException` if you try
+to reinject it in the wrong statement. This allows you to detect the error early, without a
+roundtrip to the server.
+
+Note that, if you use a simple statement and one of the bound values requires a [custom
+codec](../custom_codecs), you have to provide a reference to the session when reinjecting the paging
+state:
+
+```java
+CustomType value = ...
+SimpleStatement statement = SimpleStatement.newInstance("query", value);
+// session required here, otherwise you will get a CodecNotFoundException:
+statement = statement.setPagingState(pagingState, session);
+```
+
+This is a small corner case because checking the state requires encoding the values, and a simple
+statement doesn't have a reference to the codec registry. If you don't use custom codecs, or if the
+statement is a bound statement, you can use the regular `setPagingState(pagingState)`.
 
 ### Offset queries
 
@@ -205,10 +253,13 @@ protocol page size and the logical page size to the same value.
 The [driver examples] include two complete web service implementations demonstrating forward-only
 and offset paging.
 
-[ResultSet]:         https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/cql/ResultSet.html
-[AsyncResultSet]:    https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
-[AsyncPagingIterable.hasMorePages]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/AsyncPagingIterable.html#hasMorePages--
-[AsyncPagingIterable.fetchNextPage]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/AsyncPagingIterable.html#fetchNextPage--
-[OffsetPager]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/paging/OffsetPager.html
+[ResultSet]:         https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[AsyncResultSet]:    https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
+[AsyncPagingIterable.hasMorePages]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/AsyncPagingIterable.html#hasMorePages--
+[AsyncPagingIterable.fetchNextPage]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/AsyncPagingIterable.html#fetchNextPage--
+[OffsetPager]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/paging/OffsetPager.html
+[PagingState]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/cql/PagingState.html
+
+[CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
 
 [driver examples]: https://github.com/datastax/java-driver/tree/4.x/examples/src/main/java/com/datastax/oss/driver/examples/paging

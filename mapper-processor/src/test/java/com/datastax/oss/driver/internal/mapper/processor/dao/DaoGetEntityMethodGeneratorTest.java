@@ -27,6 +27,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import java.util.stream.Stream;
 import javax.lang.model.element.Modifier;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -69,7 +70,7 @@ public class DaoGetEntityMethodGeneratorTest extends DaoMethodGeneratorTest {
             .build(),
       },
       {
-        "Invalid return type: GetEntity methods must return a Entity-annotated class, or a PagingIterable or MappedAsyncPagingIterable thereof",
+        "Invalid return type: GetEntity methods must return a Entity-annotated class, or a PagingIterable, a Stream or MappedAsyncPagingIterable thereof",
         MethodSpec.methodBuilder("get")
             .addAnnotation(GetEntity.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -77,7 +78,7 @@ public class DaoGetEntityMethodGeneratorTest extends DaoMethodGeneratorTest {
             .build(),
       },
       {
-        "Invalid return type: GetEntity methods must return a Entity-annotated class, or a PagingIterable or MappedAsyncPagingIterable thereof",
+        "Invalid return type: GetEntity methods must return a Entity-annotated class, or a PagingIterable, a Stream or MappedAsyncPagingIterable thereof",
         MethodSpec.methodBuilder("get")
             .addAnnotation(GetEntity.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -86,7 +87,7 @@ public class DaoGetEntityMethodGeneratorTest extends DaoMethodGeneratorTest {
             .build(),
       },
       {
-        "Invalid return type: GetEntity methods must return PagingIterable if the argument is ResultSet",
+        "Invalid return type: GetEntity methods returning PagingIterable must have an argument of type ResultSet",
         MethodSpec.methodBuilder("get")
             .addAnnotation(GetEntity.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -96,7 +97,16 @@ public class DaoGetEntityMethodGeneratorTest extends DaoMethodGeneratorTest {
             .build(),
       },
       {
-        "Invalid return type: GetEntity methods must return MappedAsyncPagingIterable if the argument is AsyncResultSet",
+        "Invalid return type: GetEntity methods returning Stream must have an argument of type ResultSet",
+        MethodSpec.methodBuilder("get")
+            .addAnnotation(GetEntity.class)
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .addParameter(ParameterSpec.builder(Row.class, "source").build())
+            .returns(ParameterizedTypeName.get(ClassName.get(Stream.class), ENTITY_CLASS_NAME))
+            .build(),
+      },
+      {
+        "Invalid return type: GetEntity methods returning MappedAsyncPagingIterable must have an argument of type AsyncResultSet",
         MethodSpec.methodBuilder("get")
             .addAnnotation(GetEntity.class)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)

@@ -82,8 +82,7 @@ public class PoolManager implements AsyncAutoCloseable {
   // (e.g. DefaultPreparedStatement) which are handled at the protocol level (e.g.
   // CqlPrepareAsyncProcessor). We keep the two separate to avoid introducing a dependency from the
   // session to a particular processor implementation.
-  private ConcurrentMap<ByteBuffer, RepreparePayload> repreparePayloads =
-      new MapMaker().weakValues().makeMap();
+  private final ConcurrentMap<ByteBuffer, RepreparePayload> repreparePayloads;
 
   private final String logPrefix;
   private final EventExecutor adminExecutor;
@@ -95,6 +94,14 @@ public class PoolManager implements AsyncAutoCloseable {
     this.adminExecutor = context.getNettyOptions().adminEventExecutorGroup().next();
     this.config = context.getConfig().getDefaultProfile();
     this.singleThreaded = new SingleThreaded(context);
+
+    if (config.getBoolean(DefaultDriverOption.PREPARED_CACHE_WEAK_VALUES, true)) {
+      LOG.debug("[{}] Prepared statements cache configured to use weak values", logPrefix);
+      this.repreparePayloads = new MapMaker().weakValues().makeMap();
+    } else {
+      LOG.debug("[{}] Prepared statements cache configured to use strong values", logPrefix);
+      this.repreparePayloads = new MapMaker().makeMap();
+    }
   }
 
   public CompletionStage<Void> init(CqlIdentifier keyspace) {

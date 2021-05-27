@@ -137,9 +137,21 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<String> LOAD_BALANCING_LOCAL_DATACENTER =
       new TypedDriverOption<>(
           DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, GenericType.STRING);
-  /** A custom filter to include/exclude nodes. */
+  /**
+   * A custom filter to include/exclude nodes.
+   *
+   * @deprecated Use {@link #LOAD_BALANCING_DISTANCE_EVALUATOR_CLASS} instead.
+   */
+  @Deprecated
   public static final TypedDriverOption<String> LOAD_BALANCING_FILTER_CLASS =
       new TypedDriverOption<>(DefaultDriverOption.LOAD_BALANCING_FILTER_CLASS, GenericType.STRING);
+  /**
+   * The class name of a custom {@link
+   * com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator}.
+   */
+  public static final TypedDriverOption<String> LOAD_BALANCING_DISTANCE_EVALUATOR_CLASS =
+      new TypedDriverOption<>(
+          DefaultDriverOption.LOAD_BALANCING_DISTANCE_EVALUATOR_CLASS, GenericType.STRING);
   /** The timeout to use for internal queries that run as part of the initialization process. */
   public static final TypedDriverOption<Duration> CONNECTION_INIT_QUERY_TIMEOUT =
       new TypedDriverOption<>(
@@ -351,6 +363,15 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<Duration> METRICS_SESSION_CQL_REQUESTS_HIGHEST =
       new TypedDriverOption<>(
           DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_HIGHEST, GenericType.DURATION);
+  /** The shortest latency that we expect to record for requests. */
+  public static final TypedDriverOption<Duration> METRICS_SESSION_CQL_REQUESTS_LOWEST =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_LOWEST, GenericType.DURATION);
+  /** Optional service-level objectives to meet, as a list of latencies to track. */
+  public static final TypedDriverOption<List<Duration>> METRICS_SESSION_CQL_REQUESTS_SLO =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_SLO,
+          GenericType.listOf(GenericType.DURATION));
   /**
    * The number of significant decimal digits to which internal structures will maintain for
    * requests.
@@ -366,6 +387,15 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<Duration> METRICS_SESSION_THROTTLING_HIGHEST =
       new TypedDriverOption<>(
           DefaultDriverOption.METRICS_SESSION_THROTTLING_HIGHEST, GenericType.DURATION);
+  /** The shortest latency that we expect to record for throttling. */
+  public static final TypedDriverOption<Duration> METRICS_SESSION_THROTTLING_LOWEST =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_SESSION_THROTTLING_LOWEST, GenericType.DURATION);
+  /** Optional service-level objectives to meet, as a list of latencies to track. */
+  public static final TypedDriverOption<List<Duration>> METRICS_SESSION_THROTTLING_SLO =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_SESSION_THROTTLING_SLO,
+          GenericType.listOf(GenericType.DURATION));
   /**
    * The number of significant decimal digits to which internal structures will maintain for
    * throttling.
@@ -381,6 +411,15 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<Duration> METRICS_NODE_CQL_MESSAGES_HIGHEST =
       new TypedDriverOption<>(
           DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_HIGHEST, GenericType.DURATION);
+  /** The shortest latency that we expect to record for requests. */
+  public static final TypedDriverOption<Duration> METRICS_NODE_CQL_MESSAGES_LOWEST =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_LOWEST, GenericType.DURATION);
+  /** Optional service-level objectives to meet, as a list of latencies to track. */
+  public static final TypedDriverOption<List<Duration>> METRICS_NODE_CQL_MESSAGES_SLO =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_SLO,
+          GenericType.listOf(GenericType.DURATION));
   /**
    * The number of significant decimal digits to which internal structures will maintain for
    * requests.
@@ -482,6 +521,9 @@ public class TypedDriverOption<ValueT> {
   /** The request timeout when repreparing. */
   public static final TypedDriverOption<Duration> REPREPARE_TIMEOUT =
       new TypedDriverOption<>(DefaultDriverOption.REPREPARE_TIMEOUT, GenericType.DURATION);
+  /** Whether the prepared statements cache use weak values. */
+  public static final TypedDriverOption<Boolean> PREPARED_CACHE_WEAK_VALUES =
+      new TypedDriverOption<>(DefaultDriverOption.PREPARED_CACHE_WEAK_VALUES, GenericType.BOOLEAN);
   /** The number of threads in the I/O group. */
   public static final TypedDriverOption<Integer> NETTY_IO_SIZE =
       new TypedDriverOption<>(DefaultDriverOption.NETTY_IO_SIZE, GenericType.INTEGER);
@@ -609,6 +651,18 @@ public class TypedDriverOption<ValueT> {
           new TypedDriverOption<>(
               DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_HIGHEST,
               GenericType.DURATION);
+  /** The shortest latency that we expect to record for continuous requests. */
+  public static final TypedDriverOption<Duration>
+      CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_LOWEST =
+          new TypedDriverOption<>(
+              DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_LOWEST,
+              GenericType.DURATION);
+  /** Optional service-level objectives to meet, as a list of latencies to track. */
+  public static final TypedDriverOption<List<Duration>>
+      CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_SLO =
+          new TypedDriverOption<>(
+              DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_SLO,
+              GenericType.listOf(GenericType.DURATION));
   /**
    * The number of significant decimal digits to which internal structures will maintain for
    * continuous requests.
@@ -674,6 +728,15 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<Duration> METRICS_SESSION_GRAPH_REQUESTS_HIGHEST =
       new TypedDriverOption<>(
           DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_HIGHEST, GenericType.DURATION);
+  /** The shortest latency that we expect to record for graph requests. */
+  public static final TypedDriverOption<Duration> METRICS_SESSION_GRAPH_REQUESTS_LOWEST =
+      new TypedDriverOption<>(
+          DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_LOWEST, GenericType.DURATION);
+  /** Optional service-level objectives to meet, as a list of latencies to track. */
+  public static final TypedDriverOption<List<Duration>> METRICS_SESSION_GRAPH_REQUESTS_SLO =
+      new TypedDriverOption<>(
+          DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_SLO,
+          GenericType.listOf(GenericType.DURATION));
   /**
    * The number of significant decimal digits to which internal structures will maintain for graph
    * requests.
@@ -689,6 +752,15 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<Duration> METRICS_NODE_GRAPH_MESSAGES_HIGHEST =
       new TypedDriverOption<>(
           DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_HIGHEST, GenericType.DURATION);
+  /** The shortest latency that we expect to record for graph requests. */
+  public static final TypedDriverOption<Duration> METRICS_NODE_GRAPH_MESSAGES_LOWEST =
+      new TypedDriverOption<>(
+          DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_LOWEST, GenericType.DURATION);
+  /** Optional service-level objectives to meet, as a list of latencies to track. */
+  public static final TypedDriverOption<List<Duration>> METRICS_NODE_GRAPH_MESSAGES_SLO =
+      new TypedDriverOption<>(
+          DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_SLO,
+          GenericType.listOf(GenericType.DURATION));
   /**
    * The number of significant decimal digits to which internal structures will maintain for graph
    * requests.
@@ -700,6 +772,35 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<Duration> METRICS_NODE_GRAPH_MESSAGES_INTERVAL =
       new TypedDriverOption<>(
           DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_INTERVAL, GenericType.DURATION);
+
+  /** The time after which the node level metrics will be evicted. */
+  public static final TypedDriverOption<Duration> METRICS_NODE_EXPIRE_AFTER =
+      new TypedDriverOption<>(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER, GenericType.DURATION);
+
+  /** The classname of the desired MetricsFactory implementation. */
+  public static final TypedDriverOption<String> METRICS_FACTORY_CLASS =
+      new TypedDriverOption<>(DefaultDriverOption.METRICS_FACTORY_CLASS, GenericType.STRING);
+
+  /** The classname of the desired {@code MetricIdGenerator} implementation. */
+  public static final TypedDriverOption<String> METRICS_ID_GENERATOR_CLASS =
+      new TypedDriverOption<>(DefaultDriverOption.METRICS_ID_GENERATOR_CLASS, GenericType.STRING);
+
+  /** The value of the prefix to prepend to all metric names. */
+  public static final TypedDriverOption<String> METRICS_ID_GENERATOR_PREFIX =
+      new TypedDriverOption<>(DefaultDriverOption.METRICS_ID_GENERATOR_PREFIX, GenericType.STRING);
+
+  /** The maximum number of nodes from remote DCs to include in query plans. */
+  public static final TypedDriverOption<Integer>
+      LOAD_BALANCING_DC_FAILOVER_MAX_NODES_PER_REMOTE_DC =
+          new TypedDriverOption<>(
+              DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_MAX_NODES_PER_REMOTE_DC,
+              GenericType.INTEGER);
+  /** Whether to consider nodes from remote DCs if the request's consistency level is local. */
+  public static final TypedDriverOption<Boolean>
+      LOAD_BALANCING_DC_FAILOVER_ALLOW_FOR_LOCAL_CONSISTENCY_LEVELS =
+          new TypedDriverOption<>(
+              DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_ALLOW_FOR_LOCAL_CONSISTENCY_LEVELS,
+              GenericType.BOOLEAN);
 
   private static Iterable<TypedDriverOption<?>> introspectBuiltInValues() {
     try {

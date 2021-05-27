@@ -80,6 +80,20 @@ public class ChannelFactory {
    */
   private static final String UNKNOWN_PRODUCT_TYPE = "UNKNOWN";
 
+  // The names of the handlers on the pipeline:
+  public static final String SSL_HANDLER_NAME = "ssl";
+  public static final String INBOUND_TRAFFIC_METER_NAME = "inboundTrafficMeter";
+  public static final String OUTBOUND_TRAFFIC_METER_NAME = "outboundTrafficMeter";
+  public static final String FRAME_TO_BYTES_ENCODER_NAME = "frameToBytesEncoder";
+  public static final String FRAME_TO_SEGMENT_ENCODER_NAME = "frameToSegmentEncoder";
+  public static final String SEGMENT_TO_BYTES_ENCODER_NAME = "segmentToBytesEncoder";
+  public static final String BYTES_TO_FRAME_DECODER_NAME = "bytesToFrameDecoder";
+  public static final String BYTES_TO_SEGMENT_DECODER_NAME = "bytesToSegmentDecoder";
+  public static final String SEGMENT_TO_FRAME_DECODER_NAME = "segmentToFrameDecoder";
+  public static final String HEARTBEAT_HANDLER_NAME = "heartbeat";
+  public static final String INFLIGHT_HANDLER_NAME = "inflight";
+  public static final String INIT_HANDLER_NAME = "init";
+
   private final String logPrefix;
   protected final InternalDriverContext context;
 
@@ -230,7 +244,7 @@ public class ChannelFactory {
               Optional<ProtocolVersion> downgraded =
                   context.getProtocolVersionRegistry().downgrade(currentVersion);
               if (downgraded.isPresent()) {
-                LOG.info(
+                LOG.debug(
                     "[{}] Failed to connect with protocol {}, retrying with {}",
                     logPrefix,
                     currentVersion,
@@ -312,7 +326,7 @@ public class ChannelFactory {
           context
               .getSslHandlerFactory()
               .map(f -> f.newSslHandler(channel, endPoint))
-              .map(h -> pipeline.addLast("ssl", h));
+              .map(h -> pipeline.addLast(SSL_HANDLER_NAME, h));
 
           // Only add meter handlers on the pipeline if metrics are enabled.
           SessionMetricUpdater sessionMetricUpdater =
@@ -320,23 +334,27 @@ public class ChannelFactory {
           if (nodeMetricUpdater.isEnabled(DefaultNodeMetric.BYTES_RECEIVED, null)
               || sessionMetricUpdater.isEnabled(DefaultSessionMetric.BYTES_RECEIVED, null)) {
             pipeline.addLast(
-                "inboundTrafficMeter",
+                INBOUND_TRAFFIC_METER_NAME,
                 new InboundTrafficMeter(nodeMetricUpdater, sessionMetricUpdater));
           }
 
           if (nodeMetricUpdater.isEnabled(DefaultNodeMetric.BYTES_SENT, null)
               || sessionMetricUpdater.isEnabled(DefaultSessionMetric.BYTES_SENT, null)) {
             pipeline.addLast(
-                "outboundTrafficMeter",
+                OUTBOUND_TRAFFIC_METER_NAME,
                 new OutboundTrafficMeter(nodeMetricUpdater, sessionMetricUpdater));
           }
 
           pipeline
-              .addLast("encoder", new FrameEncoder(context.getFrameCodec(), maxFrameLength))
-              .addLast("decoder", new FrameDecoder(context.getFrameCodec(), maxFrameLength))
+              .addLast(
+                  FRAME_TO_BYTES_ENCODER_NAME,
+                  new FrameEncoder(context.getFrameCodec(), maxFrameLength))
+              .addLast(
+                  BYTES_TO_FRAME_DECODER_NAME,
+                  new FrameDecoder(context.getFrameCodec(), maxFrameLength))
               // Note: HeartbeatHandler is inserted here once init completes
-              .addLast("inflight", inFlightHandler)
-              .addLast("init", initHandler);
+              .addLast(INFLIGHT_HANDLER_NAME, inFlightHandler)
+              .addLast(INIT_HANDLER_NAME, initHandler);
 
           context.getNettyOptions().afterChannelInitialized(channel);
         } catch (Throwable t) {

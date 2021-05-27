@@ -58,6 +58,9 @@ import net.jcip.annotations.GuardedBy;
  *   <li>if {@code false}, they are discarded.
  * </ul>
  *
+ * <p>Usage in non-blocking applications: beware that this class is not lock-free. It is implemented
+ * with locks for internal coordination.
+ *
  * @since 4.6.0
  */
 public class SafeInitNodeStateListener implements NodeStateListener {

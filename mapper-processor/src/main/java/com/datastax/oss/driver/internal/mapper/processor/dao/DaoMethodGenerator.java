@@ -20,6 +20,8 @@ import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoRe
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
+import com.datastax.oss.driver.api.mapper.annotations.Delete;
+import com.datastax.oss.driver.api.mapper.annotations.Increment;
 import com.datastax.oss.driver.api.mapper.annotations.StatementAttributes;
 import com.datastax.oss.driver.api.mapper.result.MapperResultProducer;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
@@ -38,6 +40,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
@@ -80,7 +84,6 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Invalid return type: %s methods must return one of %s",
               annotationName,
               validKinds.stream()
@@ -116,7 +119,6 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
               .getMessager()
               .warn(
                   methodElement,
-                  processedType,
                   "Invalid "
                       + valueDescription
                       + " value: "
@@ -133,7 +135,6 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
               .getMessager()
               .warn(
                   methodElement,
-                  processedType,
                   "Invalid "
                       + valueDescription
                       + " value: "
@@ -210,7 +211,6 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
               .getMessager()
               .error(
                   methodElement,
-                  processedType,
                   "Parameter %s is declared in a compiled method "
                       + "and refers to a bind marker "
                       + "and thus must be annotated with @%s",
@@ -231,7 +231,6 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
             .getMessager()
             .warn(
                 methodElement,
-                processedType,
                 "Parameter %s does not refer to a bind marker, " + "@%s annotation will be ignored",
                 parameter.getSimpleName(),
                 CqlName.class.getSimpleName());
@@ -270,5 +269,50 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
             .getKind()
             .wrapWithErrorHandling(createStatementBlock.build(), methodElement, typeParameters));
     return Optional.of(method.build());
+  }
+
+  /**
+   * Reads the "entityClass" parameter from method annotations that define it (such as {@link
+   * Delete} or {@link Increment}), and finds the corresponding entity class element if it exists.
+   */
+  protected TypeElement getEntityClassFromAnnotation(Class<?> annotation) {
+
+    // Note: because entityClass references a class, we can't read it directly through
+    // methodElement.getAnnotation(annotation).
+
+    AnnotationMirror annotationMirror = null;
+    for (AnnotationMirror candidate : methodElement.getAnnotationMirrors()) {
+      if (context.getClassUtils().isSame(candidate.getAnnotationType(), annotation)) {
+        annotationMirror = candidate;
+        break;
+      }
+    }
+    assert annotationMirror != null;
+
+    for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry :
+        annotationMirror.getElementValues().entrySet()) {
+      if (entry.getKey().getSimpleName().contentEquals("entityClass")) {
+        @SuppressWarnings("unchecked")
+        List<? extends AnnotationValue> values =
+            (List<? extends AnnotationValue>) entry.getValue().getValue();
+        if (values.isEmpty()) {
+          return null;
+        }
+        TypeMirror mirror = (TypeMirror) values.get(0).getValue();
+        TypeElement element = EntityUtils.asEntityElement(mirror, typeParameters);
+        if (values.size() > 1) {
+          context
+              .getMessager()
+              .warn(
+                  methodElement,
+                  "Too many entity classes: %s must have at most one 'entityClass' argument "
+                      + "(will use the first one: %s)",
+                  annotation.getSimpleName(),
+                  mirror);
+        }
+        return element;
+      }
+    }
+    return null;
   }
 }

@@ -17,6 +17,7 @@ package com.datastax.oss.driver;
 
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import java.util.Arrays;
+import java.util.Locale;
 
 public class TestDataProviders {
 
@@ -82,5 +83,25 @@ public class TestDataProviders {
   @DataProvider
   public static Object[][] booleans() {
     return fromList(true, false);
+  }
+
+  /** An arbitrary set of locales to use when testing locale-sensitive operations. */
+  @DataProvider
+  public static Object[][] locales() {
+    return new Object[][] {
+      new Object[] {Locale.US},
+      // non-latin alphabets
+      new Object[] {Locale.CHINA},
+      new Object[] {Locale.JAPAN},
+      new Object[] {Locale.KOREA},
+      new Object[] {new Locale("gr") /* greek */},
+      new Object[] {new Locale("ar") /* arabic */},
+      // latin-based alphabets with extended character sets
+      new Object[] {new Locale("vi") /* vietnamese */},
+      // JAVA-2883: Turkish is the most problematic locale as String.toLowerCase("TITLE")
+      // wouldn't return "title" but rather  "tıtle", where 'ı' is the 'LATIN SMALL LETTER
+      // DOTLESS I' character specific to the Turkish language.
+      new Object[] {new Locale("tr") /* turkish*/},
+    };
   }
 }

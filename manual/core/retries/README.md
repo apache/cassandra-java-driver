@@ -7,25 +7,56 @@ What to do when a request failed on a node: retry (same or other node), rethrow,
 * `advanced.retry-policy` in the configuration. Default policy retries at most once, in cases that
   have a high chance of success; you can also write your own.
 * can have per-profile policies. 
-* only kicks in if the query is idempotent.
+* only kicks in if the query is [idempotent](../idempotence).
 
 -----
 
 When a query fails, it sometimes makes sense to retry it: the error might be temporary, or the query
 might work on a different node. The driver uses a *retry policy* to determine when and how to retry.
-It is defined in the [configuration](../configuration/):
-                     
+
+### Built-in retry policies
+
+The driver ships with two retry policies: `DefaultRetryPolicy` –– the default ––  and 
+`ConsistencyDowngradingRetryPolicy`. 
+
+The default retry policy should be preferred in most cases as it only retries when *it is perfectly 
+safe to do so*, and when *the chances of success are high enough* to warrant a retry.
+
+`ConsistencyDowngradingRetryPolicy` is provided for cases where the application can tolerate a 
+temporary degradation of its consistency guarantees. Its general behavior is as follows: if, based 
+on the information the coordinator returns, retrying the operation with the initially requested 
+consistency has a chance to succeed, do it. Otherwise, if based on this information, we know that 
+the initially requested consistency level *cannot be achieved currently*, then:
+
+* For writes, ignore the exception *if we know the write has been persisted on at least one 
+  replica*.
+* For reads, try reading again at a weaker consistency level.
+
+Keep in mind that this may break invariants! For example, if your application relies on immediate 
+write visibility by writing and reading at QUORUM only, downgrading a write to ONE could cause that 
+write to go unnoticed by subsequent reads at QUORUM. Furthermore, this policy doesn't always respect 
+datacenter locality; for example, it may downgrade LOCAL_QUORUM to ONE, and thus could accidentally 
+send a write that was intended for the local datacenter to another datacenter. In summary: **only 
+use this retry policy if you understand the consequences.**
+
+Since `DefaultRetryPolicy` is already the driver's default retry policy, no special configuration
+is required to activate it. To use `ConsistencyDowngradingRetryPolicy` instead, the following 
+option must be declared in the driver [configuration](../configuration/):
+                 
 ```
-datastax-java-driver.advanced.retry-policy {
-  class = DefaultRetryPolicy
-}
+datastax-java-driver.advanced.retry-policy.class = ConsistencyDowngradingRetryPolicy
 ```
 
-The behavior of the default policy will be detailed in the sections below. You can also use your
-own policy by specifying the fully-qualified name of a class that implements [RetryPolicy].
+You can also use your own policy by specifying for the above option the fully-qualified name of a 
+class that implements [RetryPolicy].
 
-The policy has several methods that cover different error cases. Each method returns a decision to
-indicate what to do next:
+### Behavior
+
+The behavior of both policies will be detailed in the sections below. 
+
+The policy has several methods that cover different error cases. Each method returns a 
+[RetryVerdict]. A retry verdict essentially provides the driver with a [RetryDecision] to indicate 
+what to do next. There are four possible retry decisions:
 
 * retry on the same node;
 * retry on the next node in the [query plan](../load_balancing/) for this statement;
@@ -33,7 +64,7 @@ indicate what to do next:
   using the asynchronous API);
 * ignore the exception. That is, mark the request as successful, and return an empty result set.
 
-### onUnavailable
+#### `onUnavailableVerdict`
 
 A request reached the coordinator, but there weren't enough live replicas to achieve the requested
 consistency level. The coordinator replied with an `UNAVAILABLE` error.
@@ -48,7 +79,14 @@ rationale is that the first coordinator might have been network-isolated from al
 (thinking they're down), but still able to communicate with the client; in that case, retrying on
 the same node has almost no chance of success, but moving to the next node might solve the issue.
 
-### onReadTimeout
+`ConsistencyDowngradingRetryPolicy` also triggers a maximum of one retry, but instead of trying the
+next node, it will downgrade the initial consistency level, if possible, and retry *the same node*.
+Note that if it is not possible to downgrade, this policy will rethrow the exception. For example, 
+if the original consistency level was QUORUM, and 2 replicas were required to achieve a quorum, but 
+only one replica is alive, then the query will be retried with consistency ONE. If no replica was 
+alive however, there is no point in downgrading, and the policy will rethrow.
+
+#### `onReadTimeoutVerdict`
 
 A read request reached the coordinator, which initially believed that there were enough live
 replicas to process it. But one or several replicas were too slow to answer within the predefined
@@ -73,7 +111,12 @@ retrieval, not having detected that replica as dead yet. The reasoning is that b
 the timeout, the dead replica will likely have been detected as dead and the retry has a high chance
 of success.
 
-### onWriteTimeout
+`ConsistencyDowngradingRetryPolicy` behaves like the default policy when enough replicas responded.
+If not enough replicas responded however, it will attempt to downgrade the initial consistency 
+level, and retry *the same node*. If it is not possible to downgrade, this policy will rethrow the 
+exception.
+
+#### `onWriteTimeoutVerdict`
 
 This is similar to `onReadTimeout`, but for write operations. The reason reads and writes are
 handled separately is because a read is obviously a non mutating operation, whereas a write is
@@ -91,7 +134,20 @@ small subset of nodes in the local datacenter; a timeout usually means that none
 alive but the coordinator hadn't detected them as dead yet. By the time we get the timeout, the dead
 nodes will likely have been detected as dead, and the retry has a high chance of success.
 
-### onRequestAborted
+`ConsistencyDowngradingRetryPolicy` also triggers a maximum of one retry, but behaves differently:
+
+* For `SIMPLE` and `BATCH` write types: if at least one replica acknowledged the write, the policy 
+  will assume that the write will be eventually replicated, and decide to ignore the error; in other
+  words, it will consider that the write already succeeded, albeit with weaker consistency 
+  guarantees: retrying is therefore useless. If no replica acknowledged the write, the policy will 
+  rethrow the error.
+* For `UNLOGGED_BATCH` write type: since only part of the batch could have been persisted, the
+  policy will attempt to downgrade the consistency level and retry *on the same node*. If 
+  downgrading is not possible, the policy will rethrow. 
+* For `BATCH_LOG` write type: the policy will retry the same node, for the reasons explained above.
+* For other write types: the policy will always rethrow.
+
+#### `onRequestAbortedVerdict`
 
 The request was aborted before we could get a response from the coordinator. This can happen in two
 cases:
@@ -104,10 +160,10 @@ cases:
 This method is only invoked for [idempotent](../idempotence/) statements. Otherwise, the driver
 bypasses the retry policy and always rethrows the error.
 
-The default policy retries on the next node if the connection was closed, and rethrows (assuming a
-driver bug) in all other cases.
+Both the default policy and `ConsistencyDowngradingRetryPolicy` retry on the next node if the 
+connection was closed, and rethrow (assuming a driver bug) in all other cases.
 
-### onErrorResponse
+#### `onErrorResponseVerdict`
 
 The coordinator replied with an error other than `READ_TIMEOUT`, `WRITE_TIMEOUT` or `UNAVAILABLE`.
 Namely, this covers [OverloadedException], [ServerError], [TruncateException],
@@ -116,7 +172,8 @@ Namely, this covers [OverloadedException], [ServerError], [TruncateException],
 This method is only invoked for [idempotent](../idempotence/) statements. Otherwise, the driver
 bypasses the retry policy and always rethrows the error.
 
-The default policy rethrows read and write failures, and retries other errors on the next node.
+Both the default policy and `ConsistencyDowngradingRetryPolicy` rethrow read and write failures, 
+and retry other errors on the next node.
 
 ### Hard-coded rules
 
@@ -174,20 +231,21 @@ configuration).
 Each request uses its declared profile's policy. If it doesn't declare any profile, or if the
 profile doesn't have a dedicated policy, then the default profile's policy is used.
 
-[AllNodesFailedException]:   https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/AllNodesFailedException.html
-[ClosedConnectionException]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/connection/ClosedConnectionException.html
-[DriverTimeoutException]:    https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/DriverTimeoutException.html
-[FunctionFailureException]:  https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/servererrors/FunctionFailureException.html
-[HeartbeatException]:        https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/connection/HeartbeatException.html
-[ProtocolError]:             https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/servererrors/ProtocolError.html
-[OverloadedException]:       https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/servererrors/OverloadedException.html
-[QueryValidationException]:  https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/servererrors/QueryValidationException.html
-[ReadFailureException]:      https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/servererrors/ReadFailureException.html
-[ReadTimeoutException]:      https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/servererrors/ReadTimeoutException.html
-[RetryDecision]:             https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/retry/RetryDecision.html
-[RetryPolicy]:               https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/retry/RetryPolicy.html
-[ServerError]:               https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/servererrors/ServerError.html
-[TruncateException]:         https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/servererrors/TruncateException.html
-[UnavailableException]:      https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/servererrors/UnavailableException.html
-[WriteFailureException]:     https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/servererrors/WriteFailureException.html
-[WriteTimeoutException]:     https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/servererrors/WriteTimeoutException.html
+[AllNodesFailedException]:   https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/AllNodesFailedException.html
+[ClosedConnectionException]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/connection/ClosedConnectionException.html
+[DriverTimeoutException]:    https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/DriverTimeoutException.html
+[FunctionFailureException]:  https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/servererrors/FunctionFailureException.html
+[HeartbeatException]:        https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/connection/HeartbeatException.html
+[ProtocolError]:             https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/servererrors/ProtocolError.html
+[OverloadedException]:       https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/servererrors/OverloadedException.html
+[QueryValidationException]:  https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/servererrors/QueryValidationException.html
+[ReadFailureException]:      https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/servererrors/ReadFailureException.html
+[ReadTimeoutException]:      https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/servererrors/ReadTimeoutException.html
+[RetryDecision]:             https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryDecision.html
+[RetryPolicy]:               https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html
+[RetryVerdict]:              https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryVerdict.html
+[ServerError]:               https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/servererrors/ServerError.html
+[TruncateException]:         https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/servererrors/TruncateException.html
+[UnavailableException]:      https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/servererrors/UnavailableException.html
+[WriteFailureException]:     https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/servererrors/WriteFailureException.html
+[WriteTimeoutException]:     https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/servererrors/WriteTimeoutException.html

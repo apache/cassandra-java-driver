@@ -15,8 +15,10 @@
  */
 package com.datastax.oss.driver.internal.osgi.support;
 
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import java.util.List;
+import java.util.Objects;
 import net.jcip.annotations.GuardedBy;
 import org.ops4j.pax.exam.TestContainer;
 import org.ops4j.pax.exam.TestProbeBuilder;
@@ -30,9 +32,11 @@ public class CcmStagedReactor extends AllConfinedStagedReactor {
 
   public static final CcmBridge CCM_BRIDGE;
 
+  public static final Version DSE_5_0 = Objects.requireNonNull(Version.parse("5.0"));
+
   static {
     CcmBridge.Builder builder = CcmBridge.builder().withNodes(1);
-    if (CcmBridge.DSE_ENABLEMENT) {
+    if (CcmBridge.DSE_ENABLEMENT && CcmBridge.VERSION.compareTo(DSE_5_0) >= 0) {
       builder.withDseWorkloads("graph");
     }
     CCM_BRIDGE = builder.build();

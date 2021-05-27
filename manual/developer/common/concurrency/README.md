@@ -77,12 +77,16 @@ fields, and methods are guaranteed to always run in isolation, eliminating subtl
 
 ### Non-blocking
 
-Whether on the hot or cold path, internal code **never blocks**. If an internal component needs to
-execute a query, it does so asynchronously, and registers callbacks to process the results.
-Examples of this can be found in `ReprepareOnUp` and `DefaultTopologyMonitor` (among others). 
+Whether on the hot or cold path, internal code is almost 100% lock-free. The driver guarantees on
+lock-freedom are [detailed](../../../core/non_blocking) in the core manual.
 
-The only place where the driver blocks are synchronous wrapper methods in the public API, for
-example:
+If an internal component needs to execute a query, it does so asynchronously, and registers 
+callbacks to process the results. Examples of this can be found in `ReprepareOnUp` and 
+`DefaultTopologyMonitor` (among others). 
+
+The only place where the driver blocks is when using the synchronous API (methods declared in 
+[`SyncCqlSession`]), and when calling other synchronous wrapper methods in the public API, for
+example, [`ExecutionInfo.getQueryTrace()`]:
 
 ```java
 public interface ExecutionInfo {
@@ -94,6 +98,11 @@ public interface ExecutionInfo {
   }
 }
 ```
+
+When a public API method is blocking, this is generally clearly stated in its javadocs. 
+
+[`ExecutionInfo.getQueryTrace()`]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getQueryTrace--
+[`SyncCqlSession`]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/cql/SyncCqlSession.html`
 
 `BlockingOperation` is a utility to check that those methods aren't called on I/O threads, which
 could introduce deadlocks.

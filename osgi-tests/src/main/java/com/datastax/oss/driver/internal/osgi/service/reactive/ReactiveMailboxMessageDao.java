@@ -17,11 +17,14 @@ package com.datastax.oss.driver.internal.osgi.service.reactive;
 
 import com.datastax.dse.driver.api.mapper.reactive.MappedReactiveResultSet;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
+import com.datastax.oss.driver.api.mapper.annotations.DefaultNullSavingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.osgi.service.MailboxMessage;
 import com.datastax.oss.driver.internal.osgi.service.MailboxMessageDao;
 
 @Dao
+@DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
 public interface ReactiveMailboxMessageDao extends MailboxMessageDao {
 
   @Select

@@ -15,16 +15,12 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
-import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.internal.core.config.composite.CompositeDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.map.MapBasedDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultProgrammaticDriverConfigLoaderBuilder;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigParseOptions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.File;
 import java.net.URL;
@@ -92,19 +88,7 @@ public interface DriverConfigLoader extends AutoCloseable {
   @NonNull
   static DriverConfigLoader fromClasspath(
       @NonNull String resourceBaseName, @NonNull ClassLoader appClassLoader) {
-    return new DefaultDriverConfigLoader(
-        () -> {
-          ConfigFactory.invalidateCaches();
-          Config config =
-              ConfigFactory.defaultOverrides()
-                  .withFallback(
-                      ConfigFactory.parseResourcesAnySyntax(
-                          resourceBaseName,
-                          ConfigParseOptions.defaults().setClassLoader(appClassLoader)))
-                  .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
-                  .resolve();
-          return config.getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
-        });
+    return DefaultDriverConfigLoader.fromClasspath(resourceBaseName, appClassLoader);
   }
 
   /**
@@ -154,16 +138,7 @@ public interface DriverConfigLoader extends AutoCloseable {
    */
   @NonNull
   static DriverConfigLoader fromFile(@NonNull File file) {
-    return new DefaultDriverConfigLoader(
-        () -> {
-          ConfigFactory.invalidateCaches();
-          Config config =
-              ConfigFactory.defaultOverrides()
-                  .withFallback(ConfigFactory.parseFileAnySyntax(file))
-                  .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
-                  .resolve();
-          return config.getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
-        });
+    return DefaultDriverConfigLoader.fromFile(file);
   }
 
   /**
@@ -188,16 +163,37 @@ public interface DriverConfigLoader extends AutoCloseable {
    */
   @NonNull
   static DriverConfigLoader fromUrl(@NonNull URL url) {
-    return new DefaultDriverConfigLoader(
-        () -> {
-          ConfigFactory.invalidateCaches();
-          Config config =
-              ConfigFactory.defaultOverrides()
-                  .withFallback(ConfigFactory.parseURL(url))
-                  .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
-                  .resolve();
-          return config.getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
-        });
+    return DefaultDriverConfigLoader.fromUrl(url);
+  }
+
+  /**
+   * Builds an instance using the driver's default implementation (based on Typesafe config), except
+   * that application-specific options are parsed from the given string.
+   *
+   * <p>The string must be in HOCON format and contain a {@code datastax-java-driver} section.
+   * Options must be separated by line breaks:
+   *
+   * <pre>
+   * DriverConfigLoader.fromString(
+   *         "datastax-java-driver.basic { session-name = my-app\nrequest.timeout = 1 millisecond }")
+   * </pre>
+   *
+   * <p>More precisely, configuration properties are loaded and merged from the following
+   * (first-listed are higher priority):
+   *
+   * <ul>
+   *   <li>system properties
+   *   <li>the config in {@code contents}
+   *   <li>{@code reference.conf} (all resources on classpath with this name). In particular, this
+   *       will load the {@code reference.conf} included in the core driver JAR, that defines
+   *       default options for all mandatory options.
+   * </ul>
+   *
+   * <p>This loader does not support runtime reloading.
+   */
+  @NonNull
+  static DriverConfigLoader fromString(@NonNull String contents) {
+    return DefaultDriverConfigLoader.fromString(contents);
   }
 
   /**

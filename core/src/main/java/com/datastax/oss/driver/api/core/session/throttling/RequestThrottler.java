@@ -18,7 +18,14 @@ package com.datastax.oss.driver.api.core.session.throttling;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.Closeable;
 
-/** Limits the number of concurrent requests executed by the driver. */
+/**
+ * Limits the number of concurrent requests executed by the driver.
+ *
+ * <p>Usage in non-blocking applications: beware that all built-in implementations of this interface
+ * use locks for internal coordination, and do not qualify as lock-free, with the obvious exception
+ * of {@code PassThroughRequestThrottler}. If your application enforces strict lock-freedom, then
+ * request throttling should not be enabled.
+ */
 public interface RequestThrottler extends Closeable {
 
   /**

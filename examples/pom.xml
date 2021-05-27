@@ -26,7 +26,7 @@
   <parent>
     <artifactId>java-driver-parent</artifactId>
     <groupId>com.scylladb</groupId>
-    <version>4.7.2.1-SNAPSHOT</version>
+    <version>4.11.1.0-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-examples</artifactId>
   <name>Java driver for Scylla and Apache Cassandra(R) - examples.</name>
@@ -139,6 +139,11 @@
       <groupId>at.favre.lib</groupId>
       <artifactId>bcrypt</artifactId>
       <version>0.8.0</version>
+    </dependency>
+    <!-- Reactor (reactive framework) -->
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-core</artifactId>
     </dependency>
   </dependencies>
   <build>

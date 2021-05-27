@@ -40,6 +40,8 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /** Base class for generated implementations of {@link Dao}-annotated interfaces. */
 public class DaoBase {
@@ -174,9 +176,11 @@ public class DaoBase {
   }
 
   protected final MapperContext context;
+  protected final boolean isProtocolVersionV3;
 
   protected DaoBase(MapperContext context) {
     this.context = context;
+    this.isProtocolVersionV3 = isProtocolVersionV3(context);
   }
 
   protected ResultSet execute(Statement<?> statement) {
@@ -238,6 +242,11 @@ public class DaoBase {
     return execute(statement).map(entityHelper::get);
   }
 
+  protected <EntityT> Stream<EntityT> executeAndMapToEntityStream(
+      Statement<?> statement, EntityHelper<EntityT> entityHelper) {
+    return StreamSupport.stream(execute(statement).map(entityHelper::get).spliterator(), false);
+  }
+
   protected CompletableFuture<AsyncResultSet> executeAsync(Statement<?> statement) {
     CompletionStage<AsyncResultSet> stage = context.getSession().executeAsync(statement);
     // We allow DAO interfaces to return CompletableFuture instead of CompletionStage. This method
@@ -282,12 +291,16 @@ public class DaoBase {
   }
 
   protected static void throwIfProtocolVersionV3(MapperContext context) {
-    if (context.getSession().getContext().getProtocolVersion().getCode()
-        <= ProtocolConstants.Version.V3) {
+    if (isProtocolVersionV3(context)) {
       throw new MapperException(
           String.format(
               "You cannot use %s.%s for protocol version V3.",
               NullSavingStrategy.class.getSimpleName(), NullSavingStrategy.DO_NOT_SET.name()));
     }
+  }
+
+  protected static boolean isProtocolVersionV3(MapperContext context) {
+    return context.getSession().getContext().getProtocolVersion().getCode()
+        <= ProtocolConstants.Version.V3;
   }
 }

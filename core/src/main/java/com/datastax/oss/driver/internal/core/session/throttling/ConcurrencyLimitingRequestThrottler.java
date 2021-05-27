@@ -65,7 +65,7 @@ public class ConcurrencyLimitingRequestThrottler implements RequestThrottler {
   private int concurrentRequests;
 
   @GuardedBy("lock")
-  private Deque<Throttled> queue = new ArrayDeque<>();
+  private final Deque<Throttled> queue = new ArrayDeque<>();
 
   @GuardedBy("lock")
   private boolean closed;

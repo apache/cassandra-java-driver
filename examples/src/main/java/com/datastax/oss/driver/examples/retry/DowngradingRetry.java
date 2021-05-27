@@ -39,9 +39,15 @@ import java.util.List;
 /**
  * This example illustrates how to implement a downgrading retry strategy from application code.
  *
- * <p>This was provided as a built-in policy in driver 3 ({@code
- * DowngradingConsistencyRetryPolicy}), but has been removed from driver 4. See the <a
- * href="https://docs.datastax.com/en/developer/java-driver/4.0/faq/#where-is-downgrading-consistency-retry-policy">FAQ</a>.
+ * <p>This strategy is equivalent to the logic implemented by the consistency downgrading retry
+ * policy, but we think that such a logic should be implemented at application level whenever
+ * possible.
+ *
+ * <p>See the <a
+ * href="https://docs.datastax.com/en/developer/java-driver/latest/faq/#where-is-downgrading-consistency-retry-policy">FAQ</a>
+ * and the <a
+ * href="https://docs.datastax.com/en/developer/java-driver/latest/manual/core/retries">manual
+ * section on retries</a>.
  *
  * <p>Preconditions:
  *

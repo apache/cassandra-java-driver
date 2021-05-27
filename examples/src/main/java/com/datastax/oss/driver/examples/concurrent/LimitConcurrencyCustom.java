@@ -21,7 +21,7 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
-import java.util.UUID;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -103,7 +103,7 @@ public class LimitConcurrencyCustom {
       executor.submit(
           () -> {
             try {
-              session.execute(pst.bind().setUuid("id", UUID.randomUUID()).setInt("value", counter));
+              session.execute(pst.bind().setUuid("id", Uuids.random()).setInt("value", counter));
               insertsCounter.incrementAndGet();
             } catch (Throwable t) {
               // On production you should leverage logger and use logger.error() method.

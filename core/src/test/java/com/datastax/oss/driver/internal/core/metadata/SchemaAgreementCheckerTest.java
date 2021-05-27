@@ -35,11 +35,15 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
+import com.tngtech.java.junit.dataprovider.DataProvider;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
+import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import io.netty.channel.EventLoop;
 import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -49,13 +53,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.MockitoAnnotations;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(DataProviderRunner.class)
 public class SchemaAgreementCheckerTest {
 
   private static final UUID VERSION1 = UUID.randomUUID();
   private static final UUID VERSION2 = UUID.randomUUID();
+
+  private static final UUID NODE_2_HOST_ID = UUID.randomUUID();
 
   @Mock private InternalDriverContext context;
   @Mock private DriverConfig config;
@@ -70,10 +76,11 @@ public class SchemaAgreementCheckerTest {
 
   @Before
   public void setup() {
+    MockitoAnnotations.initMocks(this);
     when(context.getMetricsFactory()).thenReturn(metricsFactory);
 
     node1 = TestNodeFactory.newNode(1, context);
-    node2 = TestNodeFactory.newNode(2, context);
+    node2 = TestNodeFactory.newNode(2, NODE_2_HOST_ID, context);
 
     when(defaultConfig.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT))
         .thenReturn(Duration.ofSeconds(1));
@@ -86,7 +93,12 @@ public class SchemaAgreementCheckerTest {
     when(config.getDefaultProfile()).thenReturn(defaultConfig);
     when(context.getConfig()).thenReturn(config);
 
-    Map<UUID, Node> nodes = ImmutableMap.of(node1.getHostId(), node1, node2.getHostId(), node2);
+    Map<UUID, Node> nodes =
+        ImmutableMap.of(
+            Objects.requireNonNull(node1.getHostId()),
+            node1,
+            Objects.requireNonNull(node2.getHostId()),
+            node2);
     when(metadata.getNodes()).thenReturn(nodes);
     when(metadataManager.getMetadata()).thenReturn(metadata);
     when(context.getMetadataManager()).thenReturn(metadataManager);
@@ -124,9 +136,8 @@ public class SchemaAgreementCheckerTest {
     checker.stubQueries(
         new StubbedQuery(
             "SELECT schema_version FROM system.local WHERE key='local'",
-            mockResult(mockRow(null, VERSION1))),
-        new StubbedQuery(
-            "SELECT host_id, schema_version FROM system.peers", mockResult(/*empty*/ )));
+            mockResult(mockLocalRow(VERSION1))),
+        new StubbedQuery("SELECT * FROM system.peers", mockResult(/*empty*/ )));
 
     // When
     CompletionStage<Boolean> future = checker.run();
@@ -142,10 +153,8 @@ public class SchemaAgreementCheckerTest {
     checker.stubQueries(
         new StubbedQuery(
             "SELECT schema_version FROM system.local WHERE key='local'",
-            mockResult(mockRow(null, VERSION1))),
-        new StubbedQuery(
-            "SELECT host_id, schema_version FROM system.peers",
-            mockResult(mockRow(node2.getHostId(), VERSION1))));
+            mockResult(mockLocalRow(VERSION1))),
+        new StubbedQuery("SELECT * FROM system.peers", mockResult(mockValidPeerRow(VERSION1))));
 
     // When
     CompletionStage<Boolean> future = checker.run();
@@ -162,10 +171,8 @@ public class SchemaAgreementCheckerTest {
     checker.stubQueries(
         new StubbedQuery(
             "SELECT schema_version FROM system.local WHERE key='local'",
-            mockResult(mockRow(null, VERSION1))),
-        new StubbedQuery(
-            "SELECT host_id, schema_version FROM system.peers",
-            mockResult(mockRow(node2.getHostId(), VERSION2))));
+            mockResult(mockLocalRow(VERSION1))),
+        new StubbedQuery("SELECT * FROM system.peers", mockResult(mockValidPeerRow(VERSION2))));
 
     // When
     CompletionStage<Boolean> future = checker.run();
@@ -174,17 +181,34 @@ public class SchemaAgreementCheckerTest {
     assertThatStage(future).isSuccess(b -> assertThat(b).isTrue());
   }
 
+  @DataProvider
+  public static Object[][] malformedPeer() {
+    return new Object[][] {
+      // missing host id
+      {mockPeerRow(null, VERSION2, true, true, true, true)},
+      // missing schema version
+      {mockPeerRow(NODE_2_HOST_ID, null, true, true, true, true)},
+      // missing datacenter
+      {mockPeerRow(NODE_2_HOST_ID, VERSION2, false, true, true, true)},
+      // missing rack
+      {mockPeerRow(NODE_2_HOST_ID, VERSION2, true, false, true, true)},
+      // missing RPC address
+      {mockPeerRow(NODE_2_HOST_ID, VERSION2, true, true, false, true)},
+      // missing tokens
+      {mockPeerRow(NODE_2_HOST_ID, VERSION2, true, true, true, false)},
+    };
+  }
+
   @Test
-  public void should_ignore_malformed_rows() {
+  @UseDataProvider("malformedPeer")
+  public void should_ignore_malformed_rows(AdminRow malformedPeer) {
     // Given
     TestSchemaAgreementChecker checker = new TestSchemaAgreementChecker(channel, context);
     checker.stubQueries(
         new StubbedQuery(
             "SELECT schema_version FROM system.local WHERE key='local'",
-            mockResult(mockRow(null, VERSION1))),
-        new StubbedQuery(
-            "SELECT host_id, schema_version FROM system.peers",
-            mockResult(mockRow(null, VERSION2)))); // missing host_id
+            mockResult(mockLocalRow(VERSION1))),
+        new StubbedQuery("SELECT * FROM system.peers", mockResult(malformedPeer)));
 
     // When
     CompletionStage<Boolean> future = checker.run();
@@ -201,18 +225,14 @@ public class SchemaAgreementCheckerTest {
         // First round
         new StubbedQuery(
             "SELECT schema_version FROM system.local WHERE key='local'",
-            mockResult(mockRow(null, VERSION1))),
-        new StubbedQuery(
-            "SELECT host_id, schema_version FROM system.peers",
-            mockResult(mockRow(node2.getHostId(), VERSION2))),
+            mockResult(mockLocalRow(VERSION1))),
+        new StubbedQuery("SELECT * FROM system.peers", mockResult(mockValidPeerRow(VERSION2))),
 
         // Second round
         new StubbedQuery(
             "SELECT schema_version FROM system.local WHERE key='local'",
-            mockResult(mockRow(null, VERSION1))),
-        new StubbedQuery(
-            "SELECT host_id, schema_version FROM system.peers",
-            mockResult(mockRow(node2.getHostId(), VERSION1))));
+            mockResult(mockLocalRow(VERSION1))),
+        new StubbedQuery("SELECT * FROM system.peers", mockResult(mockValidPeerRow(VERSION1))));
 
     // When
     CompletionStage<Boolean> future = checker.run();
@@ -230,10 +250,8 @@ public class SchemaAgreementCheckerTest {
     checker.stubQueries(
         new StubbedQuery(
             "SELECT schema_version FROM system.local WHERE key='local'",
-            mockResult(mockRow(null, VERSION1))),
-        new StubbedQuery(
-            "SELECT host_id, schema_version FROM system.peers",
-            mockResult(mockRow(node2.getHostId(), VERSION1))));
+            mockResult(mockLocalRow(VERSION1))),
+        new StubbedQuery("SELECT * FROM system.peers", mockResult(mockValidPeerRow(VERSION1))));
 
     // When
     CompletionStage<Boolean> future = checker.run();
@@ -274,10 +292,35 @@ public class SchemaAgreementCheckerTest {
     }
   }
 
-  private AdminRow mockRow(UUID hostId, UUID schemaVersion) {
+  private AdminRow mockLocalRow(@SuppressWarnings("SameParameterValue") UUID schemaVersion) {
+    AdminRow row = mock(AdminRow.class);
+    when(row.getUuid("host_id")).thenReturn(node1.getHostId());
+    when(row.getUuid("schema_version")).thenReturn(schemaVersion);
+    return row;
+  }
+
+  private AdminRow mockValidPeerRow(UUID schemaVersion) {
+    return mockPeerRow(node2.getHostId(), schemaVersion, true, true, true, true);
+  }
+
+  private static AdminRow mockPeerRow(
+      UUID hostId,
+      UUID schemaVersion,
+      boolean hasDatacenter,
+      boolean hasRack,
+      boolean hasRpcAddress,
+      boolean hasTokens) {
     AdminRow row = mock(AdminRow.class);
     when(row.getUuid("host_id")).thenReturn(hostId);
+    when(row.isNull("host_id")).thenReturn(hostId == null);
     when(row.getUuid("schema_version")).thenReturn(schemaVersion);
+    when(row.isNull("schema_version")).thenReturn(schemaVersion == null);
+    when(row.isNull("data_center")).thenReturn(!hasDatacenter);
+    when(row.isNull("rack")).thenReturn(!hasRack);
+    when(row.isNull("tokens")).thenReturn(!hasTokens);
+    when(row.isNull("rpc_address")).thenReturn(!hasRpcAddress);
+    when(row.isNull("native_address")).thenReturn(true);
+    when(row.isNull("native_port")).thenReturn(true);
     return row;
   }
 

@@ -38,6 +38,7 @@ import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
+import java.util.stream.Stream;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -117,6 +118,14 @@ public class GetEntityIT extends InventoryITBase {
   }
 
   @Test
+  public void should_get_stream_from_result_set() {
+    CqlSession session = SESSION_RULE.session();
+    ResultSet rs = session.execute("SELECT * FROM product");
+    Stream<Product> products = dao.getAsStream(rs);
+    assertThat(products).containsOnly(FLAMETHROWER, MP3_DOWNLOAD);
+  }
+
+  @Test
   public void should_get_async_iterable_from_async_result_set() {
     CqlSession session = SESSION_RULE.session();
     AsyncResultSet rs =
@@ -140,6 +149,9 @@ public class GetEntityIT extends InventoryITBase {
 
     @GetEntity
     PagingIterable<Product> get(ResultSet resultSet);
+
+    @GetEntity
+    Stream<Product> getAsStream(ResultSet resultSet);
 
     @GetEntity
     MappedAsyncPagingIterable<Product> get(AsyncResultSet resultSet);

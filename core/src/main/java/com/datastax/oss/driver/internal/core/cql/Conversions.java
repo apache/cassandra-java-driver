@@ -44,7 +44,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata;
 import com.datastax.oss.driver.api.core.metadata.token.Partitioner;
-import com.datastax.oss.driver.api.core.metadata.token.Token;
+import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.servererrors.AlreadyExistsException;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
 import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
@@ -63,16 +63,14 @@ import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
 import com.datastax.oss.driver.api.core.session.Request;
-import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
+import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.DefaultProtocolFeature;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.data.ValuesHelper;
 import com.datastax.oss.driver.internal.core.metadata.PartitionerFactory;
-import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
-import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
-import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.primitives.Ints;
@@ -98,6 +96,7 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableList;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -268,7 +267,10 @@ public class Conversions {
       ByteBuffer[] encodedValues = new ByteBuffer[values.size()];
       int i = 0;
       for (Object value : values) {
-        encodedValues[i++] = (value == null) ? null : encode(value, codecRegistry, protocolVersion);
+        encodedValues[i++] =
+            (value == null)
+                ? null
+                : ValuesHelper.encodeToDefaultCqlMapping(value, codecRegistry, protocolVersion);
       }
       return NullAllowingImmutableList.of(encodedValues);
     }
@@ -289,27 +291,11 @@ public class Conversions {
         } else {
           encodedValues.put(
               entry.getKey().asInternal(),
-              encode(entry.getValue(), codecRegistry, protocolVersion));
+              ValuesHelper.encodeToDefaultCqlMapping(
+                  entry.getValue(), codecRegistry, protocolVersion));
         }
       }
       return encodedValues.build();
-    }
-  }
-
-  public static ByteBuffer encode(
-      Object value, CodecRegistry codecRegistry, ProtocolVersion protocolVersion) {
-    if (value instanceof Token) {
-      if (value instanceof Murmur3Token) {
-        return TypeCodecs.BIGINT.encode(((Murmur3Token) value).getValue(), protocolVersion);
-      } else if (value instanceof ByteOrderedToken) {
-        return TypeCodecs.BLOB.encode(((ByteOrderedToken) value).getValue(), protocolVersion);
-      } else if (value instanceof RandomToken) {
-        return TypeCodecs.VARINT.encode(((RandomToken) value).getValue(), protocolVersion);
-      } else {
-        throw new IllegalArgumentException("Unsupported token type " + value.getClass());
-      }
-    } else {
-      return codecRegistry.codecFor(value).encode(value, protocolVersion);
     }
   }
 
@@ -544,5 +530,31 @@ public class Conversions {
       default:
         return new ProtocolError(node, "Unknown error code: " + errorMessage.code);
     }
+  }
+
+  public static boolean resolveIdempotence(Request request, InternalDriverContext context) {
+    Boolean requestIsIdempotent = request.isIdempotent();
+    DriverExecutionProfile executionProfile = resolveExecutionProfile(request, context);
+    return (requestIsIdempotent == null)
+        ? executionProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
+        : requestIsIdempotent;
+  }
+
+  public static Duration resolveRequestTimeout(Request request, InternalDriverContext context) {
+    DriverExecutionProfile executionProfile = resolveExecutionProfile(request, context);
+    return request.getTimeout() != null
+        ? request.getTimeout()
+        : executionProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
+  }
+
+  public static RetryPolicy resolveRetryPolicy(Request request, InternalDriverContext context) {
+    DriverExecutionProfile executionProfile = resolveExecutionProfile(request, context);
+    return context.getRetryPolicy(executionProfile.getName());
+  }
+
+  public static SpeculativeExecutionPolicy resolveSpeculativeExecutionPolicy(
+      Request request, InternalDriverContext context) {
+    DriverExecutionProfile executionProfile = resolveExecutionProfile(request, context);
+    return context.getSpeculativeExecutionPolicy(executionProfile.getName());
   }
 }

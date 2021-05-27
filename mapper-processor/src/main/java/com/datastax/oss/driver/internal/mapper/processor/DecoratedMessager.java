@@ -15,18 +15,19 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor;
 
-import com.datastax.oss.driver.internal.core.util.Reflection;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 /** Wraps {@link Messager} to provide convenience methods. */
 public class DecoratedMessager {
 
   private final Messager messager;
+  private final Set<MessageId> emittedMessages = new HashSet<>();
 
   public DecoratedMessager(Messager messager) {
     this.messager = messager;
@@ -37,135 +38,79 @@ public class DecoratedMessager {
     messager.printMessage(Diagnostic.Kind.WARNING, String.format(template, arguments));
   }
 
-  /** Emits a warning for a type. */
-  public void warn(TypeElement typeElement, String template, Object... arguments) {
-    messager.printMessage(Diagnostic.Kind.WARNING, String.format(template, arguments), typeElement);
+  /** Emits a warning for a specific element. */
+  public void warn(Element element, String template, Object... arguments) {
+    message(Diagnostic.Kind.WARNING, element, template, arguments);
   }
 
-  /** Emits an error for a type. */
-  public void error(TypeElement typeElement, String template, Object... arguments) {
-    messager.printMessage(Diagnostic.Kind.ERROR, String.format(template, arguments), typeElement);
+  /** Emits an error for a specific element. */
+  public void error(Element element, String template, Object... arguments) {
+    message(Diagnostic.Kind.ERROR, element, template, arguments);
   }
 
-  /**
-   * Emits a warning for a program element that might be inherited from another type.
-   *
-   * @param targetElement the element to target.
-   * @param processedType the type that we were processing when we detected the issue.
-   */
-  public void warn(
-      Element targetElement, TypeElement processedType, String template, Object... arguments) {
-    new ElementMessager(targetElement, processedType)
-        .print(Diagnostic.Kind.WARNING, template, arguments);
+  private void message(
+      Diagnostic.Kind level, Element element, String template, Object[] arguments) {
+    if (emittedMessages.add(new MessageId(level, element, template, arguments))) {
+      messager.printMessage(
+          level, formatLocation(element) + String.format(template, arguments), element);
+    }
   }
 
-  /**
-   * Emits an error for a program element that might be inherited from another type.
-   *
-   * @param targetElement the element to target.
-   * @param processedType the type that we were processing when we detected the issue.
-   */
-  public void error(
-      Element targetElement, TypeElement processedType, String template, Object... arguments) {
-    new ElementMessager(targetElement, processedType)
-        .print(Diagnostic.Kind.ERROR, template, arguments);
+  private static String formatLocation(Element element) {
+    switch (element.getKind()) {
+      case CLASS:
+      case INTERFACE:
+        return String.format("[%s] ", element.getSimpleName());
+      case FIELD:
+      case METHOD:
+      case CONSTRUCTOR:
+        return String.format(
+            "[%s.%s] ", element.getEnclosingElement().getSimpleName(), element.getSimpleName());
+      case PARAMETER:
+        Element method = element.getEnclosingElement();
+        Element type = method.getEnclosingElement();
+        return String.format(
+            "[%s.%s, parameter %s] ",
+            type.getSimpleName(), method.getSimpleName(), element.getSimpleName());
+      default:
+        // We don't emit messages for other types of elements in the mapper processor. Handle
+        // gracefully nevertheless:
+        return String.format("[%s] ", element);
+    }
   }
 
-  /**
-   * Abstracts logic to produce better messages if the target element is inherited from a compiled
-   * type.
-   *
-   * <p>Consider the following situation:
-   *
-   * <pre>
-   *   interface BaseDao {
-   *     &#64;Select
-   *     void select();
-   *   }
-   *   &#64;Dao
-   *   interface ConcreteDao extends BaseDao {}
-   * </pre>
-   *
-   * If {@code BaseDao} belongs to a JAR dependency, it is already compiled and the warning or error
-   * message can't reference a file or line number, it doesn't even mention {@code ConcreteDao}.
-   *
-   * <p>The goal of this class is to detect those cases, and issue the message on {@code
-   * ConcreteDao} instead.
-   */
-  private class ElementMessager {
+  private static class MessageId {
 
-    private final Element actualTargetElement;
-    // Additional location information that will get prepended to the message
-    private final String locationInfo;
+    private final Diagnostic.Kind level;
+    private final Element element;
+    private final String template;
+    private final Object[] arguments;
 
-    /**
-     * @param processedType the type that we are currently processing ({@code ConcreteDao} in the
-     *     example above).
-     */
-    ElementMessager(@NonNull Element intendedTargetElement, @NonNull TypeElement processedType) {
+    private MessageId(Diagnostic.Kind level, Element element, String template, Object[] arguments) {
+      this.level = level;
+      this.element = element;
+      this.template = template;
+      this.arguments = arguments;
+    }
 
-      TypeElement declaringType;
-      switch (intendedTargetElement.getKind()) {
-        case CLASS:
-        case INTERFACE:
-          if (processedType.equals(intendedTargetElement)
-              || isSourceFile((TypeElement) intendedTargetElement)) {
-            this.actualTargetElement = intendedTargetElement;
-            this.locationInfo = "";
-          } else {
-            this.actualTargetElement = processedType;
-            this.locationInfo =
-                String.format("[Ancestor %s]", intendedTargetElement.getSimpleName());
-          }
-          break;
-        case FIELD:
-        case METHOD:
-        case CONSTRUCTOR:
-          declaringType = (TypeElement) intendedTargetElement.getEnclosingElement();
-          if (processedType.equals(declaringType) || isSourceFile(declaringType)) {
-            this.actualTargetElement = intendedTargetElement;
-            this.locationInfo = "";
-          } else {
-            this.actualTargetElement = processedType;
-            this.locationInfo =
-                String.format(
-                    "[%s inherited from %s] ",
-                    intendedTargetElement, declaringType.getSimpleName());
-          }
-          break;
-        case PARAMETER:
-          ExecutableElement method =
-              (ExecutableElement) intendedTargetElement.getEnclosingElement();
-          declaringType = (TypeElement) method.getEnclosingElement();
-          if (processedType.equals(declaringType) || isSourceFile(declaringType)) {
-            this.actualTargetElement = intendedTargetElement;
-            this.locationInfo = "";
-          } else {
-            this.actualTargetElement = processedType;
-            this.locationInfo =
-                String.format(
-                    "[Parameter %s of %s inherited from %s] ",
-                    intendedTargetElement.getSimpleName(),
-                    method.getSimpleName(),
-                    declaringType.getSimpleName());
-          }
-          break;
-        default:
-          // We don't emit messages for other types of elements in the mapper processor. Handle
-          // gracefully nevertheless:
-          this.actualTargetElement = intendedTargetElement;
-          this.locationInfo = "";
-          break;
+    @Override
+    public boolean equals(Object other) {
+      if (other == this) {
+        return true;
+      } else if (other instanceof MessageId) {
+        MessageId that = (MessageId) other;
+        return this.level == that.level
+            && Objects.equals(this.element, that.element)
+            && Objects.equals(this.template, that.template)
+            && Arrays.deepEquals(this.arguments, that.arguments);
+      } else {
+        return false;
       }
     }
 
-    void print(Diagnostic.Kind level, String template, Object... arguments) {
-      messager.printMessage(
-          level, String.format(locationInfo + template, arguments), actualTargetElement);
-    }
-
-    private boolean isSourceFile(TypeElement element) {
-      return Reflection.loadClass(null, element.getQualifiedName().toString()) == null;
+    @Override
+    public int hashCode() {
+      return Objects.hash(level, element, template, Arrays.hashCode(arguments));
     }
   }
 }

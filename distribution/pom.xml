@@ -26,7 +26,7 @@
   <parent>
     <groupId>com.scylladb</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.7.2.1-SNAPSHOT</version>
+    <version>4.11.1.0-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-distribution</artifactId>
   <!-- Should be pom but Javadoc generation requires a "classpath-capable" package -->
@@ -152,6 +152,16 @@
                       <groupId>org.xerial.snappy</groupId>
                       <artifactId>snappy-java</artifactId>
                       <version>${snappy.version}</version>
+                    </additionalDependency>
+                    <additionalDependency>
+                      <groupId>org.apache.tinkerpop</groupId>
+                      <artifactId>gremlin-core</artifactId>
+                      <version>${tinkerpop.version}</version>
+                    </additionalDependency>
+                    <additionalDependency>
+                      <groupId>org.apache.tinkerpop</groupId>
+                      <artifactId>tinkergraph-gremlin</artifactId>
+                      <version>${tinkerpop.version}</version>
                     </additionalDependency>
                   </additionalDependencies>
                 </configuration>

@@ -24,6 +24,7 @@ import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -91,6 +92,10 @@ public class MapperImplementationGenerator extends SingleFileCodeGenerator
                 GeneratedNames.mapperBuilder(interfaceElement))
             .addJavadoc(JAVADOC_PARAGRAPH_SEPARATOR)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
+            .addAnnotation(
+                AnnotationSpec.builder(SuppressWarnings.class)
+                    .addMember("value", "\"all\"")
+                    .build())
             .addModifiers(Modifier.PUBLIC)
             .addSuperinterface(ClassName.get(interfaceElement));
 
@@ -108,7 +113,6 @@ public class MapperImplementationGenerator extends SingleFileCodeGenerator
                 .getMessager()
                 .error(
                     methodElement,
-                    interfaceElement,
                     "Unrecognized method signature: no implementation will be generated");
           } else {
             maybeGenerator.flatMap(MethodGenerator::generate).ifPresent(classContents::addMethod);

@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.mapper.processor;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.Delete;
 import com.datastax.oss.driver.api.mapper.annotations.GetEntity;
+import com.datastax.oss.driver.api.mapper.annotations.Increment;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
@@ -28,6 +29,7 @@ import com.datastax.oss.driver.internal.mapper.processor.dao.DaoDeleteMethodGene
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoGetEntityMethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoImplementationGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoImplementationSharedCode;
+import com.datastax.oss.driver.internal.mapper.processor.dao.DaoIncrementMethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoInsertMethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoQueryMethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.dao.DaoQueryProviderMethodGenerator;
@@ -80,8 +82,7 @@ public class DefaultCodeGeneratorFactory implements CodeGeneratorFactory {
       MapperImplementationSharedCode enclosingClass) {
     if (methodElement.getAnnotation(DaoFactory.class) != null) {
       return Optional.of(
-          new MapperDaoFactoryMethodGenerator(
-              methodElement, processedType, enclosingClass, context));
+          new MapperDaoFactoryMethodGenerator(methodElement, enclosingClass, context));
     } else {
       return Optional.empty();
     }
@@ -134,6 +135,10 @@ public class DefaultCodeGeneratorFactory implements CodeGeneratorFactory {
     } else if (methodElement.getAnnotation(QueryProvider.class) != null) {
       return Optional.of(
           new DaoQueryProviderMethodGenerator(
+              methodElement, typeParameters, processedType, enclosingClass, context));
+    } else if (methodElement.getAnnotation(Increment.class) != null) {
+      return Optional.of(
+          new DaoIncrementMethodGenerator(
               methodElement, typeParameters, processedType, enclosingClass, context));
     } else {
       return Optional.empty();

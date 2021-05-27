@@ -19,12 +19,14 @@ import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.Computed;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.mapper.annotations.PropertyStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Transient;
 import com.datastax.oss.driver.internal.mapper.processor.MapperProcessorTest;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
@@ -317,6 +319,79 @@ public class EntityPropertyAnnotationsTest extends MapperProcessorTest {
                     .returns(UUID.class)
                     .addModifiers(Modifier.PUBLIC)
                     .addStatement("return id")
+                    .build())
+            .build(),
+      },
+      {
+        "Mutable @Entity-annotated class must have a no-arg constructor.",
+        TypeSpec.classBuilder(ClassName.get("test", "Product"))
+            .addAnnotation(Entity.class)
+            .addField(
+                FieldSpec.builder(UUID.class, "id", Modifier.PRIVATE)
+                    .addModifiers(Modifier.FINAL)
+                    .addAnnotation(PartitionKey.class)
+                    .build())
+            .addMethod(
+                MethodSpec.constructorBuilder()
+                    .addParameter(ParameterSpec.builder(UUID.class, "id").build())
+                    .addModifiers(Modifier.PUBLIC)
+                    .addStatement("this.id = id")
+                    .build())
+            .addMethod(
+                MethodSpec.methodBuilder("getId")
+                    .returns(UUID.class)
+                    .addModifiers(Modifier.PUBLIC)
+                    .addStatement("return id")
+                    .build())
+            .addMethod(
+                MethodSpec.methodBuilder("setId")
+                    .addParameter(UUID.class, "id")
+                    .addModifiers(Modifier.PUBLIC)
+                    .addStatement("this.id = id")
+                    .build())
+            .build(),
+      },
+      {
+        "Immutable @Entity-annotated class must have an \"all values\" constructor. "
+            + "Expected signature: Product(java.util.UUID id, java.lang.String name, long writetime).",
+        TypeSpec.classBuilder(ClassName.get("test", "Product"))
+            .addAnnotation(Entity.class)
+            .addAnnotation(
+                AnnotationSpec.builder(PropertyStrategy.class)
+                    .addMember("mutable", "false")
+                    .build())
+            .addField(
+                FieldSpec.builder(UUID.class, "id", Modifier.PRIVATE)
+                    .addModifiers(Modifier.FINAL)
+                    .addAnnotation(PartitionKey.class)
+                    .build())
+            .addField(
+                FieldSpec.builder(String.class, "name", Modifier.PRIVATE)
+                    .addModifiers(Modifier.FINAL)
+                    .build())
+            .addField(
+                FieldSpec.builder(String.class, "writetime", Modifier.PRIVATE)
+                    .addModifiers(Modifier.FINAL)
+                    .addAnnotation(
+                        AnnotationSpec.builder(Computed.class).addMember("value", "$S", "").build())
+                    .build())
+            .addMethod(
+                MethodSpec.methodBuilder("getId")
+                    .returns(UUID.class)
+                    .addModifiers(Modifier.PUBLIC)
+                    .addStatement("return id")
+                    .build())
+            .addMethod(
+                MethodSpec.methodBuilder("getName")
+                    .returns(String.class)
+                    .addModifiers(Modifier.PUBLIC)
+                    .addStatement("return name")
+                    .build())
+            .addMethod(
+                MethodSpec.methodBuilder("getWritetime")
+                    .returns(Long.TYPE)
+                    .addModifiers(Modifier.PUBLIC)
+                    .addStatement("return writetime")
                     .build())
             .build(),
       },

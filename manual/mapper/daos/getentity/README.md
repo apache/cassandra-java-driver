@@ -56,7 +56,20 @@ The method can return:
     @GetEntity
     PagingIterable<Product> asProducts(ResultSet resultSet);
     ```
-    
+
+* a [Stream] of an entity class. In that case, the type of the parameter **must** be [ResultSet].
+  Each row in the result set will be converted into an entity instance.
+
+    Note: even if streams are lazily evaluated, results are fetched synchronously; therefore, as the
+    returned stream is traversed, blocking calls may occur, as more results are fetched from the
+    server in the background. For details about the stream's characteristics, see
+    [PagingIterable.spliterator].
+
+    ```java
+    @GetEntity
+    Stream<Product> asProducts(ResultSet resultSet);
+    ```
+
 * a [MappedAsyncPagingIterable] of an entity class. In that case, the type of the parameter **must**
   be [AsyncResultSet]. Each row in the result set will be converted into an entity instance.
   
@@ -69,15 +82,17 @@ If the return type doesn't match the parameter type (for example [PagingIterable
 [AsyncResultSet]), the mapper processor will issue a compile-time error.
 
 
-[@GetEntity]:                https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/mapper/annotations/GetEntity.html
-[AsyncResultSet]:            https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
-[GettableByName]:            https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/data/GettableByName.html
-[MappedAsyncPagingIterable]: https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/MappedAsyncPagingIterable.html
-[PagingIterable]:            https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/PagingIterable.html
-[ResultSet]:                 https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/cql/ResultSet.html
-[Row]:                       https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/cql/Row.html
-[UdtValue]:                  https://docs.datastax.com/en/drivers/java/4.7/com/datastax/oss/driver/api/core/data/UdtValue.html
+[@GetEntity]:                https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/GetEntity.html
+[AsyncResultSet]:            https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
+[GettableByName]:            https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/data/GettableByName.html
+[MappedAsyncPagingIterable]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/MappedAsyncPagingIterable.html
+[PagingIterable]:            https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/PagingIterable.html
+[PagingIterable.spliterator]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/PagingIterable.html#spliterator--
+[ResultSet]:                 https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[Row]:                       https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/cql/Row.html
+[UdtValue]:                  https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/data/UdtValue.html
 
+[Stream]: https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html
 
 
 

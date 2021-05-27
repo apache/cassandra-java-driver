@@ -74,6 +74,7 @@ public class OptionalLocalDcHelper implements LocalDcHelper {
       checkLocalDatacenterCompatibility(localDc, context.getMetadataManager().getContactPoints());
       return Optional.of(localDc);
     } else {
+      LOG.debug("[{}] Local DC not set, DC awareness will be disabled", logPrefix);
       return Optional.empty();
     }
   }
@@ -83,26 +84,28 @@ public class OptionalLocalDcHelper implements LocalDcHelper {
    * configuration, or programmatically.
    *
    * <p>The default implementation logs a warning when a contact point reports a datacenter
-   * different from the local one.
+   * different from the local one, and only for the default profile.
    *
    * @param localDc The local datacenter, as specified in the config, or programmatically.
    * @param contactPoints The contact points provided when creating the session.
    */
   protected void checkLocalDatacenterCompatibility(
       @NonNull String localDc, Set<? extends Node> contactPoints) {
-    Set<Node> badContactPoints = new LinkedHashSet<>();
-    for (Node node : contactPoints) {
-      if (!Objects.equals(localDc, node.getDatacenter())) {
-        badContactPoints.add(node);
+    if (profile.getName().equals(DriverExecutionProfile.DEFAULT_NAME)) {
+      Set<Node> badContactPoints = new LinkedHashSet<>();
+      for (Node node : contactPoints) {
+        if (!Objects.equals(localDc, node.getDatacenter())) {
+          badContactPoints.add(node);
+        }
       }
-    }
-    if (!badContactPoints.isEmpty()) {
-      LOG.warn(
-          "[{}] You specified {} as the local DC, but some contact points are from a different DC: {}; "
-              + "please provide the correct local DC, or check your contact points",
-          logPrefix,
-          localDc,
-          formatNodesAndDcs(badContactPoints));
+      if (!badContactPoints.isEmpty()) {
+        LOG.warn(
+            "[{}] You specified {} as the local DC, but some contact points are from a different DC: {}; "
+                + "please provide the correct local DC, or check your contact points",
+            logPrefix,
+            localDc,
+            formatNodesAndDcs(badContactPoints));
+      }
     }
   }
 

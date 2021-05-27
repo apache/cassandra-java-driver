@@ -26,10 +26,12 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.auth.PlainTextAuthProviderBase;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
+import com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
@@ -38,6 +40,7 @@ import com.datastax.oss.driver.api.core.ssl.ProgrammaticSslEngineFactory;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.internal.core.ContactPoints;
 import com.datastax.oss.driver.internal.core.auth.ProgrammaticPlainTextAuthProvider;
@@ -96,7 +99,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
 
   protected ProgrammaticArguments.Builder programmaticArgumentsBuilder =
       ProgrammaticArguments.builder();
-  private boolean sslConfigured = false;
+  private boolean programmaticSslFactory = false;
+  private boolean programmaticLocalDatacenter = false;
 
   /**
    * Sets the configuration loader to use.
@@ -314,6 +318,27 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #withAuthCredentials(String, String)}.
+   */
+  @Deprecated
+  @NonNull
+  public SelfT withCredentials(@NonNull String username, @NonNull String password) {
+    return withAuthCredentials(username, password);
+  }
+
+  /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #withAuthCredentials(String, String,String)}.
+   */
+  @Deprecated
+  @NonNull
+  public SelfT withCredentials(
+      @NonNull String username, @NonNull String password, @NonNull String authorizationId) {
+    return withAuthCredentials(username, password, authorizationId);
+  }
+
+  /**
    * Registers an SSL engine factory for the session.
    *
    * <p>If the factory is provided programmatically with this method, it overrides the configuration
@@ -323,7 +348,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    */
   @NonNull
   public SelfT withSslEngineFactory(@Nullable SslEngineFactory sslEngineFactory) {
-    this.sslConfigured = true;
+    this.programmaticSslFactory = true;
     this.programmaticArgumentsBuilder.withSslEngineFactory(sslEngineFactory);
     return self;
   }
@@ -361,6 +386,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * if you use a third-party implementation, refer to their documentation.
    */
   public SelfT withLocalDatacenter(@NonNull String profileName, @NonNull String localDatacenter) {
+    this.programmaticLocalDatacenter = true;
     this.programmaticArgumentsBuilder.withLocalDatacenter(profileName, localDatacenter);
     return self;
   }
@@ -368,6 +394,36 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   /** Alias to {@link #withLocalDatacenter(String, String)} for the default profile. */
   public SelfT withLocalDatacenter(@NonNull String localDatacenter) {
     return withLocalDatacenter(DriverExecutionProfile.DEFAULT_NAME, localDatacenter);
+  }
+
+  /**
+   * Adds a custom {@link NodeDistanceEvaluator} for a particular execution profile. This assumes
+   * that you're also using a dedicated load balancing policy for that profile.
+   *
+   * <p>Node distance evaluators are honored by all the driver built-in load balancing policies. If
+   * you use a custom policy implementation however, you'll need to explicitly invoke the evaluator
+   * whenever appropriate.
+   *
+   * <p>If an evaluator is specified programmatically with this method, it overrides the
+   * configuration (that is, the {@code load-balancing-policy.evaluator.class} option will be
+   * ignored).
+   *
+   * @see #withNodeDistanceEvaluator(NodeDistanceEvaluator)
+   */
+  @NonNull
+  public SelfT withNodeDistanceEvaluator(
+      @NonNull String profileName, @NonNull NodeDistanceEvaluator nodeDistanceEvaluator) {
+    this.programmaticArgumentsBuilder.withNodeDistanceEvaluator(profileName, nodeDistanceEvaluator);
+    return self;
+  }
+
+  /**
+   * Alias to {@link #withNodeDistanceEvaluator(String, NodeDistanceEvaluator)} for the default
+   * profile.
+   */
+  @NonNull
+  public SelfT withNodeDistanceEvaluator(@NonNull NodeDistanceEvaluator nodeDistanceEvaluator) {
+    return withNodeDistanceEvaluator(DriverExecutionProfile.DEFAULT_NAME, nodeDistanceEvaluator);
   }
 
   /**
@@ -379,21 +435,60 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * policy will suggest distance IGNORED (meaning the driver won't ever connect to it if all
    * policies agree), and never included in any query plan.
    *
-   * <p>Note that this behavior is implemented in the default load balancing policy. If you use a
-   * custom policy implementation, you'll need to explicitly invoke the filter.
+   * <p>Note that this behavior is implemented in the driver built-in load balancing policies. If
+   * you use a custom policy implementation, you'll need to explicitly invoke the filter.
    *
    * <p>If the filter is specified programmatically with this method, it overrides the configuration
    * (that is, the {@code load-balancing-policy.filter.class} option will be ignored).
    *
+   * <p><strong>This method has been deprecated in favor of {@link
+   * #withNodeDistanceEvaluator(String, NodeDistanceEvaluator)}</strong>. If you were using node
+   * filters, you can easily replace your filters with the following implementation of {@link
+   * NodeDistanceEvaluator}:
+   *
+   * <pre>{@code
+   * public class NodeFilterToDistanceEvaluatorAdapter implements NodeDistanceEvaluator {
+   *
+   *   private final Predicate<Node> nodeFilter;
+   *
+   *   public NodeFilterToDistanceEvaluatorAdapter(Predicate<Node> nodeFilter) {
+   *     this.nodeFilter = nodeFilter;
+   *   }
+   *
+   *   public NodeDistance evaluateDistance(Node node, String localDc) {
+   *     return nodeFilter.test(node) ? null : NodeDistance.IGNORED;
+   *   }
+   * }
+   * }</pre>
+   *
+   * The same can be achieved using a lambda + closure:
+   *
+   * <pre>{@code
+   * Predicate<Node> nodeFilter = ...
+   * NodeDistanceEvaluator evaluator =
+   *   (node, localDc) -> nodeFilter.test(node) ? null : NodeDistance.IGNORED;
+   * }</pre>
+   *
    * @see #withNodeFilter(Predicate)
+   * @deprecated Use {@link #withNodeDistanceEvaluator(String, NodeDistanceEvaluator)} instead.
    */
+  @Deprecated
   @NonNull
   public SelfT withNodeFilter(@NonNull String profileName, @NonNull Predicate<Node> nodeFilter) {
     this.programmaticArgumentsBuilder.withNodeFilter(profileName, nodeFilter);
     return self;
   }
 
-  /** Alias to {@link #withNodeFilter(String, Predicate)} for the default profile. */
+  /**
+   * Alias to {@link #withNodeFilter(String, Predicate)} for the default profile.
+   *
+   * <p><strong>This method has been deprecated in favor of {@link
+   * #withNodeDistanceEvaluator(NodeDistanceEvaluator)}</strong>. See the javadocs of {@link
+   * #withNodeFilter(String, Predicate)} to understand how to migrate your legacy node filters.
+   *
+   * @deprecated Use {@link #withNodeDistanceEvaluator(NodeDistanceEvaluator)} instead.
+   */
+  @Deprecated
   @NonNull
   public SelfT withNodeFilter(@NonNull Predicate<Node> nodeFilter) {
     return withNodeFilter(DriverExecutionProfile.DEFAULT_NAME, nodeFilter);
@@ -478,10 +573,10 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * the provided {@link Path}.
    *
    * <p>To connect to a Cloud database, you must first download the secure database bundle from the
-   * DataStax Constellation console that contains the connection information, then instruct the
-   * driver to read its contents using either this method or one if its variants.
+   * DataStax Astra console that contains the connection information, then instruct the driver to
+   * read its contents using either this method or one if its variants.
    *
-   * <p>For more information, please refer to the DataStax Constellation documentation.
+   * <p>For more information, please refer to the DataStax Astra documentation.
    *
    * @param cloudConfigPath Path to the secure connect bundle zip file.
    * @see #withCloudSecureConnectBundle(URL)
@@ -499,14 +594,26 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
+   * Registers a CodecRegistry to use for the session.
+   *
+   * <p>When both this and {@link #addTypeCodecs(TypeCodec[])} are called, the added type codecs
+   * will be registered on the provided CodecRegistry.
+   */
+  @NonNull
+  public SelfT withCodecRegistry(@Nullable MutableCodecRegistry codecRegistry) {
+    this.programmaticArgumentsBuilder.withCodecRegistry(codecRegistry);
+    return self;
+  }
+
+  /**
    * Configures this SessionBuilder for Cloud deployments by retrieving connection information from
    * the provided {@link URL}.
    *
    * <p>To connect to a Cloud database, you must first download the secure database bundle from the
-   * DataStax Constellation console that contains the connection information, then instruct the
-   * driver to read its contents using either this method or one if its variants.
+   * DataStax Astra console that contains the connection information, then instruct the driver to
+   * read its contents using either this method or one if its variants.
    *
-   * <p>For more information, please refer to the DataStax Constellation documentation.
+   * <p>For more information, please refer to the DataStax Astra documentation.
    *
    * @param cloudConfigUrl URL to the secure connect bundle zip file.
    * @see #withCloudSecureConnectBundle(Path)
@@ -523,10 +630,10 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * the provided {@link InputStream}.
    *
    * <p>To connect to a Cloud database, you must first download the secure database bundle from the
-   * DataStax Constellation console that contains the connection information, then instruct the
-   * driver to read its contents using either this method or one if its variants.
+   * DataStax Astra console that contains the connection information, then instruct the driver to
+   * read its contents using either this method or one if its variants.
    *
-   * <p>For more information, please refer to the DataStax Constellation documentation.
+   * <p>For more information, please refer to the DataStax Astra documentation.
    *
    * <p>Note that the provided stream will be consumed <em>and closed</em> when either {@link
    * #build()} or {@link #buildAsync()} are called; attempting to reuse it afterwards will result in
@@ -553,7 +660,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * monitor tailored for Cloud deployments. This topology monitor assumes that the target cluster
    * should be contacted through the proxy specified here, using SNI routing.
    *
-   * <p>For more information, please refer to the DataStax Constellation documentation.
+   * <p>For more information, please refer to the DataStax Astra documentation.
    *
    * @param cloudProxyAddress The address of the Cloud proxy to use.
    * @see <a href="https://en.wikipedia.org/wiki/Server_Name_Indication">Server Name Indication</a>
@@ -620,7 +727,32 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
+   * The metric registry object for storing driver metrics.
+   *
+   * <p>The argument should be an instance of the base registry type for the metrics framework you
+   * are using (see {@code advanced.metrics.factory.class} in the configuration):
+   *
+   * <ul>
+   *   <li>Dropwizard (the default): {@code com.codahale.metrics.MetricRegistry}
+   *   <li>Micrometer: {@code io.micrometer.core.instrument.MeterRegistry}
+   *   <li>MicroProfile: {@code org.eclipse.microprofile.metrics.MetricRegistry}
+   * </ul>
+   *
+   * Only MicroProfile <em>requires</em> an external instance of its registry to be provided. For
+   * Micrometer, if no Registry object is provided, Micrometer's {@code globalRegistry} will be
+   * used. For Dropwizard, if no Registry object is provided, an instance of {@code MetricRegistry}
+   * will be created and used.
+   */
+  @NonNull
+  public SelfT withMetricRegistry(@Nullable Object metricRegistry) {
+    this.programmaticArgumentsBuilder.withMetricRegistry(metricRegistry);
+    return self;
+  }
+
+  /**
    * Creates the session with the options set by this builder.
+   *
+   * <p>The session initialization will happen asynchronously in a driver internal thread pool.
    *
    * @return a completion stage that completes with the session when it is fully initialized.
    */
@@ -636,6 +768,10 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
   /**
    * Convenience method to call {@link #buildAsync()} and block on the result.
+   *
+   * <p>Usage in non-blocking applications: beware that session initialization is a costly
+   * operation. It should only be triggered from a thread that is allowed to block. If that is not
+   * the case, consider using {@link #buildAsync()} instead.
    *
    * <p>This must not be called on a driver thread.
    */
@@ -670,24 +806,32 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
           defaultConfig.getStringList(DefaultDriverOption.CONTACT_POINTS, Collections.emptyList());
       if (cloudConfigInputStream != null) {
         if (!programmaticContactPoints.isEmpty() || !configContactPoints.isEmpty()) {
-          throw new IllegalStateException(
-              "Can't use withCloudSecureConnectBundle and addContactPoint(s). They are mutually exclusive.");
+          LOG.info(
+              "Both a secure connect bundle and contact points were provided. These are mutually exclusive. The contact points from the secure bundle will have priority.");
+          // clear the contact points provided in the setting file and via addContactPoints
+          configContactPoints = Collections.emptyList();
+          programmaticContactPoints = new HashSet<>();
         }
-        String configuredSSLFactory =
-            defaultConfig.getString(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS, null);
-        if (sslConfigured || configuredSSLFactory != null) {
-          throw new IllegalStateException(
-              "Can't use withCloudSecureConnectBundle and explicitly specify ssl configuration. They are mutually exclusive.");
+
+        if (programmaticSslFactory
+            || defaultConfig.isDefined(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS)) {
+          LOG.info(
+              "Both a secure connect bundle and SSL options were provided. They are mutually exclusive. The SSL options from the secure bundle will have priority.");
         }
         CloudConfig cloudConfig =
             new CloudConfigFactory().createCloudConfig(cloudConfigInputStream.call());
         addContactEndPoints(cloudConfig.getEndPoints());
+
+        boolean localDataCenterDefined =
+            anyProfileHasDatacenterDefined(configLoader.getInitialConfig());
+        if (programmaticLocalDatacenter || localDataCenterDefined) {
+          LOG.info(
+              "Both a secure connect bundle and a local datacenter were provided. They are mutually exclusive. The local datacenter from the secure bundle will have priority.");
+          programmaticArgumentsBuilder.clearDatacenters();
+        }
         withLocalDatacenter(cloudConfig.getLocalDatacenter());
         withSslEngineFactory(cloudConfig.getSslEngineFactory());
         withCloudProxyAddress(cloudConfig.getProxyAddress());
-        if (cloudConfig.getAuthProvider().isPresent()) {
-          withAuthProvider(cloudConfig.getAuthProvider().get());
-        }
         programmaticArguments = programmaticArgumentsBuilder.build();
       }
 
@@ -712,6 +856,15 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       // failed future if anything goes wrong. So wrap any error from that synchronous part.
       return CompletableFutures.failedFuture(t);
     }
+  }
+
+  private boolean anyProfileHasDatacenterDefined(DriverConfig driverConfig) {
+    for (DriverExecutionProfile driverExecutionProfile : driverConfig.getProfiles().values()) {
+      if (driverExecutionProfile.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

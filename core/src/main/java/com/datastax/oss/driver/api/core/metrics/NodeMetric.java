@@ -21,8 +21,9 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 /**
  * A node-level metric exposed through {@link Session#getMetrics()}.
  *
- * <p>All metrics exposed out of the box by the driver are instances of {@link DefaultNodeMetric}
- * (this interface only exists to allow custom metrics in driver extensions).
+ * <p>All metrics exposed out of the box by the driver are instances of {@link DefaultNodeMetric} or
+ * {@link com.datastax.dse.driver.api.core.metrics.DseNodeMetric DseNodeMetric} (this interface only
+ * exists to allow custom metrics in driver extensions).
  *
  * @see SessionMetric
  */

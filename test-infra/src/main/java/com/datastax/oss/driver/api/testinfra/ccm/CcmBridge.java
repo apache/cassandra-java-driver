@@ -32,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -68,7 +69,8 @@ public class CcmBridge implements AutoCloseable {
 
   private final String jvmArgs;
 
-  public static final Version VERSION = Version.parse(System.getProperty("ccm.version", "3.11.0"));
+  public static final Version VERSION =
+      Objects.requireNonNull(Version.parse(System.getProperty("ccm.version", "3.11.0")));
 
   public static final String INSTALL_DIRECTORY = System.getProperty("ccm.directory");
 
@@ -303,7 +305,11 @@ public class CcmBridge implements AutoCloseable {
   }
 
   public void add(int n, String dc) {
-    execute("add", "-i", ipPrefix + n, "-d", dc, "node" + n);
+    if (getDseVersion().isPresent()) {
+      execute("add", "-i", ipPrefix + n, "-d", dc, "node" + n, "--dse");
+    } else {
+      execute("add", "-i", ipPrefix + n, "-d", dc, "node" + n);
+    }
     start(n);
   }
 
@@ -480,6 +486,7 @@ public class CcmBridge implements AutoCloseable {
     /** Enables SSL encryption. */
     public Builder withSsl() {
       cassandraConfiguration.put("client_encryption_options.enabled", "true");
+      cassandraConfiguration.put("client_encryption_options.optional", "false");
       cassandraConfiguration.put(
           "client_encryption_options.keystore", DEFAULT_SERVER_KEYSTORE_FILE.getAbsolutePath());
       cassandraConfiguration.put(
@@ -489,6 +496,7 @@ public class CcmBridge implements AutoCloseable {
 
     public Builder withSslLocalhostCn() {
       cassandraConfiguration.put("client_encryption_options.enabled", "true");
+      cassandraConfiguration.put("client_encryption_options.optional", "false");
       cassandraConfiguration.put(
           "client_encryption_options.keystore",
           DEFAULT_SERVER_LOCALHOST_KEYSTORE_FILE.getAbsolutePath());

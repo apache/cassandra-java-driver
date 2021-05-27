@@ -20,7 +20,7 @@ import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.AUTH_P
 import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE;
 import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.CONNECTION_POOL_REMOTE_SIZE;
 import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.HEARTBEAT_INTERVAL;
-import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.LOAD_BALANCING_FILTER_CLASS;
+import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.LOAD_BALANCING_DISTANCE_EVALUATOR_CLASS;
 import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER;
 import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS;
 import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.PROTOCOL_COMPRESSION;
@@ -50,7 +50,7 @@ class ExecutionProfileMockUtil {
 
     when(profile.getDuration(REQUEST_TIMEOUT)).thenReturn(Duration.ofMillis(100));
     when(profile.getString(LOAD_BALANCING_POLICY_CLASS)).thenReturn("LoadBalancingPolicyImpl");
-    when(profile.isDefined(LOAD_BALANCING_FILTER_CLASS)).thenReturn(true);
+    when(profile.isDefined(LOAD_BALANCING_DISTANCE_EVALUATOR_CLASS)).thenReturn(true);
     when(profile.isDefined(LOAD_BALANCING_LOCAL_DATACENTER)).thenReturn(true);
     when(profile.getString(LOAD_BALANCING_LOCAL_DATACENTER)).thenReturn(DEFAULT_LOCAL_DC);
     when(profile.isDefined(SPECULATIVE_EXECUTION_MAX)).thenReturn(true);

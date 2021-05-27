@@ -303,9 +303,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
         connect(
             nodes,
             null,
-            () -> {
-              initFuture.complete(null);
-            },
+            () -> initFuture.complete(null),
             error -> {
               if (isAuthFailure(error)) {
                 LOG.warn(
@@ -427,13 +425,15 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                       connect(nodes, errors, onSuccess, onFailure);
                     } else {
                       LOG.debug("[{}] New channel opened {}", logPrefix, channel);
-                      // Make sure previous channel gets closed (it may still be open if
-                      // reconnection was forced)
                       DriverChannel previousChannel = ControlConnection.this.channel;
+                      ControlConnection.this.channel = channel;
                       if (previousChannel != null) {
+                        // We were reconnecting: make sure previous channel gets closed (it may
+                        // still be open if reconnection was forced)
+                        LOG.debug(
+                            "[{}] Forcefully closing previous channel {}", logPrefix, channel);
                         previousChannel.forceClose();
                       }
-                      ControlConnection.this.channel = channel;
                       context.getEventBus().fire(ChannelEvent.channelOpened(node));
                       channel
                           .closeFuture()
@@ -505,9 +505,21 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     private void onChannelClosed(DriverChannel channel, Node node) {
       assert adminExecutor.inEventLoop();
       if (!closeWasCalled) {
-        LOG.debug("[{}] Lost channel {}", logPrefix, channel);
         context.getEventBus().fire(ChannelEvent.channelClosed(node));
-        reconnection.start();
+        // If this channel is the current control channel, we must start a
+        // reconnection attempt to get a new control channel.
+        if (channel == ControlConnection.this.channel) {
+          LOG.debug(
+              "[{}] The current control channel {} was closed, scheduling reconnection",
+              logPrefix,
+              channel);
+          reconnection.start();
+        } else {
+          LOG.trace(
+              "[{}] A previous control channel {} was closed, reconnection not required",
+              logPrefix,
+              channel);
+        }
       }
     }
 

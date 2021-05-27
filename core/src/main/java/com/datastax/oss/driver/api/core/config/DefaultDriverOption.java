@@ -97,7 +97,10 @@ public enum DefaultDriverOption implements DriverOption {
    * A custom filter to include/exclude nodes.
    *
    * <p>Value-Type: {@link String}
+   *
+   * @deprecated use {@link #LOAD_BALANCING_DISTANCE_EVALUATOR_CLASS} instead.
    */
+  @Deprecated
   LOAD_BALANCING_FILTER_CLASS("basic.load-balancing-policy.filter.class"),
 
   /**
@@ -808,6 +811,104 @@ public enum DefaultDriverOption implements DriverOption {
    * <p>Value-type: int
    */
   SESSION_LEAK_THRESHOLD("advanced.session-leak.threshold"),
+  /**
+   * The period of inactivity after which the node level metrics will be evicted. The eviction will
+   * happen only if none of the enabled node-level metrics is updated for a given node within this
+   * time window.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_NODE_EXPIRE_AFTER("advanced.metrics.node.expire-after"),
+
+  /**
+   * The classname of the desired MetricsFactory implementation.
+   *
+   * <p>Value-type: {@link String}
+   */
+  METRICS_FACTORY_CLASS("advanced.metrics.factory.class"),
+
+  /**
+   * The maximum number of nodes from remote DCs to include in query plans.
+   *
+   * <p>Value-Type: int
+   */
+  LOAD_BALANCING_DC_FAILOVER_MAX_NODES_PER_REMOTE_DC(
+      "advanced.load-balancing-policy.dc-failover.max-nodes-per-remote-dc"),
+  /**
+   * Whether to consider nodes from remote DCs if the request's consistency level is local.
+   *
+   * <p>Value-Type: boolean
+   */
+  LOAD_BALANCING_DC_FAILOVER_ALLOW_FOR_LOCAL_CONSISTENCY_LEVELS(
+      "advanced.load-balancing-policy.dc-failover.allow-for-local-consistency-levels"),
+
+  /**
+   * The classname of the desired {@code MetricIdGenerator} implementation.
+   *
+   * <p>Value-type: {@link String}
+   */
+  METRICS_ID_GENERATOR_CLASS("advanced.metrics.id-generator.class"),
+
+  /**
+   * The value of the prefix to prepend to all metric names.
+   *
+   * <p>Value-type: {@link String}
+   */
+  METRICS_ID_GENERATOR_PREFIX("advanced.metrics.id-generator.prefix"),
+
+  /**
+   * The class name of a custom {@link
+   * com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator}.
+   *
+   * <p>Value-Type: {@link String}
+   */
+  LOAD_BALANCING_DISTANCE_EVALUATOR_CLASS("basic.load-balancing-policy.evaluator.class"),
+
+  /**
+   * The shortest latency that we expect to record for requests.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_CQL_REQUESTS_LOWEST("advanced.metrics.session.cql-requests.lowest-latency"),
+  /**
+   * Optional service-level objectives to meet, as a list of latencies to track.
+   *
+   * <p>Value-type: List of {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_CQL_REQUESTS_SLO("advanced.metrics.session.cql-requests.slo"),
+
+  /**
+   * The shortest latency that we expect to record for throttling.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_THROTTLING_LOWEST("advanced.metrics.session.throttling.delay.lowest-latency"),
+  /**
+   * Optional service-level objectives to meet, as a list of latencies to track.
+   *
+   * <p>Value-type: List of {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_THROTTLING_SLO("advanced.metrics.session.throttling.delay.slo"),
+
+  /**
+   * The shortest latency that we expect to record for requests.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_NODE_CQL_MESSAGES_LOWEST("advanced.metrics.node.cql-messages.lowest-latency"),
+  /**
+   * Optional service-level objectives to meet, as a list of latencies to track.
+   *
+   * <p>Value-type: List of {@link java.time.Duration Duration}
+   */
+  METRICS_NODE_CQL_MESSAGES_SLO("advanced.metrics.node.cql-messages.slo"),
+
+  /**
+   * Whether the prepared statements cache use weak values.
+   *
+   * <p>Value-type: boolean
+   */
+  PREPARED_CACHE_WEAK_VALUES("advanced.prepared-statements.prepared-cache.weak-values"),
   ;
 
   private final String path;

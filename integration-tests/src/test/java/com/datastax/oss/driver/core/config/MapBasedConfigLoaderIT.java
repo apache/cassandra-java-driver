@@ -149,6 +149,7 @@ public class MapBasedConfigLoaderIT {
     }
 
     @Override
+    @Deprecated
     public RetryDecision onReadTimeout(
         @NonNull Request request,
         @NonNull ConsistencyLevel cl,
@@ -160,6 +161,7 @@ public class MapBasedConfigLoaderIT {
     }
 
     @Override
+    @Deprecated
     public RetryDecision onWriteTimeout(
         @NonNull Request request,
         @NonNull ConsistencyLevel cl,
@@ -171,6 +173,7 @@ public class MapBasedConfigLoaderIT {
     }
 
     @Override
+    @Deprecated
     public RetryDecision onUnavailable(
         @NonNull Request request,
         @NonNull ConsistencyLevel cl,
@@ -181,12 +184,14 @@ public class MapBasedConfigLoaderIT {
     }
 
     @Override
+    @Deprecated
     public RetryDecision onRequestAborted(
         @NonNull Request request, @NonNull Throwable error, int retryCount) {
       return RetryDecision.IGNORE;
     }
 
     @Override
+    @Deprecated
     public RetryDecision onErrorResponse(
         @NonNull Request request, @NonNull CoordinatorException error, int retryCount) {
       return RetryDecision.IGNORE;

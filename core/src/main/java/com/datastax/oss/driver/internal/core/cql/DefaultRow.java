@@ -68,6 +68,16 @@ public class DefaultRow implements Row, Serializable {
     return definitions.get(i).getType();
   }
 
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+    List<Integer> indices = definitions.allIndicesOf(id);
+    if (indices.isEmpty()) {
+      throw new IllegalArgumentException(id + " is not a column in this row");
+    }
+    return indices;
+  }
+
   @Override
   public int firstIndexOf(@NonNull CqlIdentifier id) {
     int indexOf = definitions.firstIndexOf(id);
@@ -81,6 +91,16 @@ public class DefaultRow implements Row, Serializable {
   @Override
   public DataType getType(@NonNull CqlIdentifier id) {
     return definitions.get(firstIndexOf(id)).getType();
+  }
+
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull String name) {
+    List<Integer> indices = definitions.allIndicesOf(name);
+    if (indices.isEmpty()) {
+      throw new IllegalArgumentException(name + " is not a column in this row");
+    }
+    return indices;
   }
 
   @Override

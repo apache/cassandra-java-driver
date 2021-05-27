@@ -28,8 +28,9 @@ import com.datastax.oss.driver.internal.querybuilder.update.AppendAssignment;
 import com.datastax.oss.driver.internal.querybuilder.update.AppendListElementAssignment;
 import com.datastax.oss.driver.internal.querybuilder.update.AppendMapEntryAssignment;
 import com.datastax.oss.driver.internal.querybuilder.update.AppendSetElementAssignment;
-import com.datastax.oss.driver.internal.querybuilder.update.CounterAssignment;
+import com.datastax.oss.driver.internal.querybuilder.update.DecrementAssignment;
 import com.datastax.oss.driver.internal.querybuilder.update.DefaultAssignment;
+import com.datastax.oss.driver.internal.querybuilder.update.IncrementAssignment;
 import com.datastax.oss.driver.internal.querybuilder.update.PrependAssignment;
 import com.datastax.oss.driver.internal.querybuilder.update.PrependListElementAssignment;
 import com.datastax.oss.driver.internal.querybuilder.update.PrependMapEntryAssignment;
@@ -109,10 +110,10 @@ public interface Assignment extends CqlSnippet {
     return setListValue(CqlIdentifier.fromCql(columnName), index, value);
   }
 
-  /** Increments a counter, as in {@code SET c+=?}. */
+  /** Increments a counter, as in {@code SET c=c+?}. */
   @NonNull
   static Assignment increment(@NonNull CqlIdentifier columnId, @NonNull Term amount) {
-    return new CounterAssignment(new ColumnLeftOperand(columnId), "+=", amount);
+    return new IncrementAssignment(columnId, amount);
   }
 
   /**
@@ -124,7 +125,7 @@ public interface Assignment extends CqlSnippet {
     return increment(CqlIdentifier.fromCql(columnName), amount);
   }
 
-  /** Increments a counter by 1, as in {@code SET c+=1} . */
+  /** Increments a counter by 1, as in {@code SET c=c+1} . */
   @NonNull
   static Assignment increment(@NonNull CqlIdentifier columnId) {
     return increment(columnId, QueryBuilder.literal(1));
@@ -136,10 +137,10 @@ public interface Assignment extends CqlSnippet {
     return increment(CqlIdentifier.fromCql(columnName));
   }
 
-  /** Decrements a counter, as in {@code SET c-=?}. */
+  /** Decrements a counter, as in {@code SET c=c-?}. */
   @NonNull
   static Assignment decrement(@NonNull CqlIdentifier columnId, @NonNull Term amount) {
-    return new CounterAssignment(new ColumnLeftOperand(columnId), "-=", amount);
+    return new DecrementAssignment(columnId, amount);
   }
 
   /**
@@ -151,7 +152,7 @@ public interface Assignment extends CqlSnippet {
     return decrement(CqlIdentifier.fromCql(columnName), amount);
   }
 
-  /** Decrements a counter by 1, as in {@code SET c-=1} . */
+  /** Decrements a counter by 1, as in {@code SET c=c-1} . */
   @NonNull
   static Assignment decrement(@NonNull CqlIdentifier columnId) {
     return decrement(columnId, QueryBuilder.literal(1));

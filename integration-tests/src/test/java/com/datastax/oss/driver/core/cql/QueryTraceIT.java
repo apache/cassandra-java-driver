@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
@@ -29,10 +30,8 @@ import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
@@ -46,8 +45,6 @@ public class QueryTraceIT {
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
-  @Rule public ExpectedException thrown = ExpectedException.none();
-
   @Test
   public void should_not_have_tracing_id_when_tracing_disabled() {
     ExecutionInfo executionInfo =
@@ -58,9 +55,11 @@ public class QueryTraceIT {
 
     assertThat(executionInfo.getTracingId()).isNull();
 
-    thrown.expect(IllegalStateException.class);
-    thrown.expectMessage("Tracing was disabled for this request");
-    executionInfo.getQueryTrace();
+    Throwable t = catchThrowable(executionInfo::getQueryTrace);
+
+    assertThat(t)
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("Tracing was disabled for this request");
   }
 
   @Test

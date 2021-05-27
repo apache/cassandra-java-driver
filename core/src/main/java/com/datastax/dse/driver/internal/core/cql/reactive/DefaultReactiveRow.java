@@ -381,6 +381,12 @@ class DefaultReactiveRow implements ReactiveRow {
     return row.getTupleValue(name);
   }
 
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull String name) {
+    return row.allIndicesOf(name);
+  }
+
   @Override
   public int firstIndexOf(@NonNull String name) {
     return row.firstIndexOf(name);
@@ -536,6 +542,12 @@ class DefaultReactiveRow implements ReactiveRow {
   @Override
   public TupleValue getTupleValue(@NonNull CqlIdentifier id) {
     return row.getTupleValue(id);
+  }
+
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+    return row.allIndicesOf(id);
   }
 
   @Override

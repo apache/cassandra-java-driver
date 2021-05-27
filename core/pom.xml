@@ -26,7 +26,7 @@
   <parent>
     <groupId>com.scylladb</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.7.2.1-SNAPSHOT</version>
+    <version>4.11.1.0-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-core</artifactId>
   <packaging>bundle</packaging>
@@ -71,10 +71,6 @@
       <artifactId>jnr-posix</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.javatuples</groupId>
-      <artifactId>javatuples</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.xerial.snappy</groupId>
       <artifactId>snappy-java</artifactId>
       <optional>true</optional>
@@ -103,14 +99,12 @@
     <dependency>
       <groupId>org.apache.tinkerpop</groupId>
       <artifactId>gremlin-core</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.tinkerpop</groupId>
       <artifactId>tinkergraph-gremlin</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.tinkerpop</groupId>
-      <artifactId>gremlin-driver</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -140,6 +134,11 @@
     <dependency>
       <groupId>org.graalvm.nativeimage</groupId>
       <artifactId>svm</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor.tools</groupId>
+      <artifactId>blockhound</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -315,7 +314,7 @@
                   Note: dependencies marked as optional are by default included with optional
                   resolution in the manifest; we only need to manually set the resolution to
                   optional for dependencies declared as non-optional in the pom files.
-                  -->jnr.*;resolution:=optional, com.esri.core.geometry.*;resolution:=optional, org.reactivestreams.*;resolution:=optional, org.apache.tinkerpop.*;resolution:=optional, org.javatuples.*;resolution:=optional, *
+                  -->jnr.*;resolution:=optional, com.esri.core.geometry.*;resolution:=optional, org.reactivestreams.*;resolution:=optional, org.apache.tinkerpop.*;resolution:=optional, org.javatuples.*;resolution:=optional, reactor.blockhound.*;resolution:=optional, *
                 </Import-Package>
                 <Export-Package>com.datastax.oss.driver.*.core.*, com.datastax.dse.driver.*.core.*</Export-Package>
               </instructions>

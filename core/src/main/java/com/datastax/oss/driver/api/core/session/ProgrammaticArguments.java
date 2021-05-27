@@ -16,12 +16,15 @@
 package com.datastax.oss.driver.api.core.session;
 
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
+import com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
+import com.datastax.oss.driver.internal.core.loadbalancing.helper.NodeFilterToDistanceEvaluatorAdapter;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -29,6 +32,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -51,6 +55,7 @@ public class ProgrammaticArguments {
   private final RequestTracker requestTracker;
   private final Map<String, String> localDatacenters;
   private final Map<String, Predicate<Node>> nodeFilters;
+  private final Map<String, NodeDistanceEvaluator> nodeDistanceEvaluators;
   private final ClassLoader classLoader;
   private final AuthProvider authProvider;
   private final SslEngineFactory sslEngineFactory;
@@ -58,6 +63,8 @@ public class ProgrammaticArguments {
   private final UUID startupClientId;
   private final String startupApplicationName;
   private final String startupApplicationVersion;
+  private final MutableCodecRegistry codecRegistry;
+  private final Object metricRegistry;
 
   private ProgrammaticArguments(
       @NonNull List<TypeCodec<?>> typeCodecs,
@@ -66,13 +73,16 @@ public class ProgrammaticArguments {
       @Nullable RequestTracker requestTracker,
       @NonNull Map<String, String> localDatacenters,
       @NonNull Map<String, Predicate<Node>> nodeFilters,
+      @NonNull Map<String, NodeDistanceEvaluator> nodeDistanceEvaluators,
       @Nullable ClassLoader classLoader,
       @Nullable AuthProvider authProvider,
       @Nullable SslEngineFactory sslEngineFactory,
       @Nullable InetSocketAddress cloudProxyAddress,
       @Nullable UUID startupClientId,
       @Nullable String startupApplicationName,
-      @Nullable String startupApplicationVersion) {
+      @Nullable String startupApplicationVersion,
+      @Nullable MutableCodecRegistry codecRegistry,
+      @Nullable Object metricRegistry) {
 
     this.typeCodecs = typeCodecs;
     this.nodeStateListener = nodeStateListener;
@@ -80,6 +90,7 @@ public class ProgrammaticArguments {
     this.requestTracker = requestTracker;
     this.localDatacenters = localDatacenters;
     this.nodeFilters = nodeFilters;
+    this.nodeDistanceEvaluators = nodeDistanceEvaluators;
     this.classLoader = classLoader;
     this.authProvider = authProvider;
     this.sslEngineFactory = sslEngineFactory;
@@ -87,6 +98,8 @@ public class ProgrammaticArguments {
     this.startupClientId = startupClientId;
     this.startupApplicationName = startupApplicationName;
     this.startupApplicationVersion = startupApplicationVersion;
+    this.codecRegistry = codecRegistry;
+    this.metricRegistry = metricRegistry;
   }
 
   @NonNull
@@ -115,8 +128,15 @@ public class ProgrammaticArguments {
   }
 
   @NonNull
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public Map<String, Predicate<Node>> getNodeFilters() {
     return nodeFilters;
+  }
+
+  @NonNull
+  public Map<String, NodeDistanceEvaluator> getNodeDistanceEvaluators() {
+    return nodeDistanceEvaluators;
   }
 
   @Nullable
@@ -154,15 +174,27 @@ public class ProgrammaticArguments {
     return startupApplicationVersion;
   }
 
+  @Nullable
+  public MutableCodecRegistry getCodecRegistry() {
+    return codecRegistry;
+  }
+
+  @Nullable
+  public Object getMetricRegistry() {
+    return metricRegistry;
+  }
+
   public static class Builder {
 
-    private ImmutableList.Builder<TypeCodec<?>> typeCodecsBuilder = ImmutableList.builder();
+    private final ImmutableList.Builder<TypeCodec<?>> typeCodecsBuilder = ImmutableList.builder();
     private NodeStateListener nodeStateListener;
     private SchemaChangeListener schemaChangeListener;
     private RequestTracker requestTracker;
     private ImmutableMap.Builder<String, String> localDatacentersBuilder = ImmutableMap.builder();
-    private ImmutableMap.Builder<String, Predicate<Node>> nodeFiltersBuilder =
+    private final ImmutableMap.Builder<String, Predicate<Node>> nodeFiltersBuilder =
         ImmutableMap.builder();
+    private final ImmutableMap.Builder<String, NodeDistanceEvaluator>
+        nodeDistanceEvaluatorsBuilder = ImmutableMap.builder();
     private ClassLoader classLoader;
     private AuthProvider authProvider;
     private SslEngineFactory sslEngineFactory;
@@ -170,6 +202,8 @@ public class ProgrammaticArguments {
     private UUID startupClientId;
     private String startupApplicationName;
     private String startupApplicationVersion;
+    private MutableCodecRegistry codecRegistry;
+    private Object metricRegistry;
 
     @NonNull
     public Builder addTypeCodecs(@NonNull TypeCodec<?>... typeCodecs) {
@@ -203,6 +237,12 @@ public class ProgrammaticArguments {
     }
 
     @NonNull
+    public Builder clearDatacenters() {
+      this.localDatacentersBuilder = ImmutableMap.builder();
+      return this;
+    }
+
+    @NonNull
     public Builder withLocalDatacenters(Map<String, String> localDatacenters) {
       for (Map.Entry<String, String> entry : localDatacenters.entrySet()) {
         this.localDatacentersBuilder.put(entry.getKey(), entry.getValue());
@@ -211,16 +251,42 @@ public class ProgrammaticArguments {
     }
 
     @NonNull
-    public Builder withNodeFilter(
-        @NonNull String profileName, @NonNull Predicate<Node> nodeFilter) {
-      this.nodeFiltersBuilder.put(profileName, nodeFilter);
+    public Builder withNodeDistanceEvaluator(
+        @NonNull String profileName, @NonNull NodeDistanceEvaluator nodeDistanceEvaluator) {
+      this.nodeDistanceEvaluatorsBuilder.put(profileName, nodeDistanceEvaluator);
       return this;
     }
 
     @NonNull
+    public Builder withNodeDistanceEvaluators(
+        Map<String, NodeDistanceEvaluator> nodeDistanceReporters) {
+      for (Entry<String, NodeDistanceEvaluator> entry : nodeDistanceReporters.entrySet()) {
+        this.nodeDistanceEvaluatorsBuilder.put(entry.getKey(), entry.getValue());
+      }
+      return this;
+    }
+
+    /**
+     * @deprecated Use {@link #withNodeDistanceEvaluator(String, NodeDistanceEvaluator)} instead.
+     */
+    @NonNull
+    @Deprecated
+    public Builder withNodeFilter(
+        @NonNull String profileName, @NonNull Predicate<Node> nodeFilter) {
+      this.nodeFiltersBuilder.put(profileName, nodeFilter);
+      this.nodeDistanceEvaluatorsBuilder.put(
+          profileName, new NodeFilterToDistanceEvaluatorAdapter(nodeFilter));
+      return this;
+    }
+
+    /** @deprecated Use {@link #withNodeDistanceEvaluators(Map)} instead. */
+    @NonNull
+    @Deprecated
     public Builder withNodeFilters(Map<String, Predicate<Node>> nodeFilters) {
       for (Map.Entry<String, Predicate<Node>> entry : nodeFilters.entrySet()) {
         this.nodeFiltersBuilder.put(entry.getKey(), entry.getValue());
+        this.nodeDistanceEvaluatorsBuilder.put(
+            entry.getKey(), new NodeFilterToDistanceEvaluatorAdapter(entry.getValue()));
       }
       return this;
     }
@@ -268,6 +334,18 @@ public class ProgrammaticArguments {
     }
 
     @NonNull
+    public Builder withCodecRegistry(@Nullable MutableCodecRegistry codecRegistry) {
+      this.codecRegistry = codecRegistry;
+      return this;
+    }
+
+    @NonNull
+    public Builder withMetricRegistry(@Nullable Object metricRegistry) {
+      this.metricRegistry = metricRegistry;
+      return this;
+    }
+
+    @NonNull
     public ProgrammaticArguments build() {
       return new ProgrammaticArguments(
           typeCodecsBuilder.build(),
@@ -276,13 +354,16 @@ public class ProgrammaticArguments {
           requestTracker,
           localDatacentersBuilder.build(),
           nodeFiltersBuilder.build(),
+          nodeDistanceEvaluatorsBuilder.build(),
           classLoader,
           authProvider,
           sslEngineFactory,
           cloudProxyAddress,
           startupClientId,
           startupApplicationName,
-          startupApplicationVersion);
+          startupApplicationVersion,
+          codecRegistry,
+          metricRegistry);
     }
   }
 }

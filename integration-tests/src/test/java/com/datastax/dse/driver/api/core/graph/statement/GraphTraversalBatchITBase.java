@@ -151,9 +151,7 @@ public abstract class GraphTraversalBatchITBase {
           "Should have thrown InvalidQueryException because batch does not contain any traversals.");
     } catch (InvalidQueryException e) {
       assertThat(e.getMessage())
-          .contains(
-              "Could not read the traversal from the request sent.",
-              "The batch statement sent does not contain any traversal.");
+          .contains("The batch statement sent does not contain any traversal");
     }
   }
 }

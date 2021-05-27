@@ -158,9 +158,12 @@ class ExecutionProfilesInfoFinder {
           "localDataCenter",
           driverExecutionProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER));
     }
-    options.put(
-        "filterFunction",
-        driverExecutionProfile.isDefined(DefaultDriverOption.LOAD_BALANCING_FILTER_CLASS));
+    @SuppressWarnings("deprecation")
+    boolean hasNodeFiltering =
+        driverExecutionProfile.isDefined(DefaultDriverOption.LOAD_BALANCING_FILTER_CLASS)
+            || driverExecutionProfile.isDefined(
+                DefaultDriverOption.LOAD_BALANCING_DISTANCE_EVALUATOR_CLASS);
+    options.put("filterFunction", hasNodeFiltering);
     ClassSettingDetails loadBalancingDetails =
         PackageUtil.getLoadBalancingDetails(
             driverExecutionProfile.getString(DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS));

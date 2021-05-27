@@ -30,9 +30,12 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigParseOptions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.ScheduledFuture;
+import java.io.File;
+import java.net.URL;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -58,10 +61,73 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
         ConfigFactory.invalidateCaches();
         // The thread's context class loader will be used for application classpath resources,
         // while the driver class loader will be used for reference classpath resources.
-        return ConfigFactory.defaultApplication()
+        return ConfigFactory.defaultOverrides()
+            .withFallback(ConfigFactory.defaultApplication())
             .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+            .resolve()
             .getConfig(DEFAULT_ROOT_PATH);
       };
+
+  @NonNull
+  public static DefaultDriverConfigLoader fromClasspath(
+      @NonNull String resourceBaseName, @NonNull ClassLoader appClassLoader) {
+    return new DefaultDriverConfigLoader(
+        () -> {
+          ConfigFactory.invalidateCaches();
+          Config config =
+              ConfigFactory.defaultOverrides()
+                  .withFallback(
+                      ConfigFactory.parseResourcesAnySyntax(
+                          resourceBaseName,
+                          ConfigParseOptions.defaults().setClassLoader(appClassLoader)))
+                  .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+                  .resolve();
+          return config.getConfig(DEFAULT_ROOT_PATH);
+        });
+  }
+
+  @NonNull
+  public static DriverConfigLoader fromFile(@NonNull File file) {
+    return new DefaultDriverConfigLoader(
+        () -> {
+          ConfigFactory.invalidateCaches();
+          Config config =
+              ConfigFactory.defaultOverrides()
+                  .withFallback(ConfigFactory.parseFileAnySyntax(file))
+                  .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+                  .resolve();
+          return config.getConfig(DEFAULT_ROOT_PATH);
+        });
+  }
+
+  @NonNull
+  public static DriverConfigLoader fromUrl(@NonNull URL url) {
+    return new DefaultDriverConfigLoader(
+        () -> {
+          ConfigFactory.invalidateCaches();
+          Config config =
+              ConfigFactory.defaultOverrides()
+                  .withFallback(ConfigFactory.parseURL(url))
+                  .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+                  .resolve();
+          return config.getConfig(DEFAULT_ROOT_PATH);
+        });
+  }
+
+  @NonNull
+  public static DefaultDriverConfigLoader fromString(@NonNull String contents) {
+    return new DefaultDriverConfigLoader(
+        () -> {
+          ConfigFactory.invalidateCaches();
+          Config config =
+              ConfigFactory.defaultOverrides()
+                  .withFallback(ConfigFactory.parseString(contents))
+                  .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+                  .resolve();
+          return config.getConfig(DEFAULT_ROOT_PATH);
+        },
+        false);
+  }
 
   private final Supplier<Config> configSupplier;
   private final TypesafeDriverConfig driverConfig;
@@ -95,8 +161,10 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
     this(
         () -> {
           ConfigFactory.invalidateCaches();
-          return ConfigFactory.defaultApplication(appClassLoader)
+          return ConfigFactory.defaultOverrides()
+              .withFallback(ConfigFactory.defaultApplication(appClassLoader))
               .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+              .resolve()
               .getConfig(DEFAULT_ROOT_PATH);
         });
   }

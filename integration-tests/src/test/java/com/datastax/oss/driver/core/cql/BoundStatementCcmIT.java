@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
@@ -59,7 +60,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestName;
 import org.junit.rules.TestRule;
@@ -82,8 +82,6 @@ public class BoundStatementCcmIT {
   @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   @Rule public TestName name = new TestName();
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private static final String KEY = "test";
 
@@ -363,6 +361,44 @@ public class BoundStatementCcmIT {
       assertThat(routingKey)
           .isEqualTo(RoutingKey.compose(bs.getBytesUnsafe(2), bs.getBytesUnsafe(1)));
     }
+  }
+
+  @Test
+  public void should_set_all_occurrences_of_variable() {
+    CqlSession session = sessionRule.session();
+    PreparedStatement ps = session.prepare("INSERT INTO test3 (pk1, pk2, v) VALUES (:i, :i, :i)");
+
+    CqlIdentifier id = CqlIdentifier.fromCql("i");
+    ColumnDefinitions variableDefinitions = ps.getVariableDefinitions();
+    assertThat(variableDefinitions.allIndicesOf(id)).containsExactly(0, 1, 2);
+
+    should_set_all_occurrences_of_variable(ps.bind().setInt(id, 12));
+    should_set_all_occurrences_of_variable(ps.boundStatementBuilder().setInt(id, 12).build());
+  }
+
+  private void should_set_all_occurrences_of_variable(BoundStatement bs) {
+    assertThat(bs.getInt(0)).isEqualTo(12);
+    assertThat(bs.getInt(1)).isEqualTo(12);
+    assertThat(bs.getInt(2)).isEqualTo(12);
+
+    // Nothing should be shared internally (this would be a bug if the client later retrieves a
+    // buffer with getBytesUnsafe and modifies it)
+    ByteBuffer bytes0 = bs.getBytesUnsafe(0);
+    ByteBuffer bytes1 = bs.getBytesUnsafe(1);
+    assertThat(bytes0).isNotNull();
+    assertThat(bytes1).isNotNull();
+    // Not the same instance
+    assertThat(bytes0).isNotSameAs(bytes1);
+    // Contents are not shared
+    bytes0.putInt(0, 11);
+    assertThat(bytes1.getInt(0)).isEqualTo(12);
+    bytes0.putInt(0, 12);
+
+    CqlSession session = sessionRule.session();
+    session.execute(bs);
+    Row row = session.execute("SELECT * FROM test3 WHERE pk1 = 12 AND pk2 = 12").one();
+    assertThat(row).isNotNull();
+    assertThat(row.getInt("v")).isEqualTo(12);
   }
 
   private static void verifyUnset(

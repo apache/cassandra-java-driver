@@ -26,7 +26,7 @@
   <parent>
     <groupId>com.scylladb</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.7.2.1-SNAPSHOT</version>
+    <version>4.11.1.0-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-integration-tests</artifactId>
   <packaging>jar</packaging>
@@ -74,6 +74,16 @@
       <groupId>com.scylladb</groupId>
       <artifactId>java-driver-core</artifactId>
       <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.scylladb</groupId>
+      <artifactId>java-driver-metrics-micrometer</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.scylladb</groupId>
+      <artifactId>java-driver-metrics-microprofile</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -127,6 +137,16 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.apache.tinkerpop</groupId>
+      <artifactId>gremlin-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.tinkerpop</groupId>
+      <artifactId>tinkergraph-gremlin</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.directory.server</groupId>
       <artifactId>apacheds-core</artifactId>
       <scope>test</scope>
@@ -174,6 +194,26 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-exec</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.smallrye</groupId>
+      <artifactId>smallrye-metrics</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor.tools</groupId>
+      <artifactId>blockhound-junit-platform</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

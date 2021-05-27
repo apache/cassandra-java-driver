@@ -21,9 +21,9 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import com.datastax.oss.driver.shaded.guava.common.collect.SetMultimap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -64,16 +64,15 @@ public class SimpleReplicationStrategyTest {
     SimpleReplicationStrategy strategy = new SimpleReplicationStrategy(new ReplicationFactor(2));
 
     // When
-    SetMultimap<Token, Node> replicasByToken =
-        strategy.computeReplicasByToken(tokenToPrimary, ring);
+    Map<Token, Set<Node>> replicasByToken = strategy.computeReplicasByToken(tokenToPrimary, ring);
 
     // Then
     assertThat(replicasByToken.keySet().size()).isEqualTo(ring.size());
     // Note: this also asserts the iteration order of the sets (unlike containsEntry(token, set))
     assertThat(replicasByToken.get(TOKEN01)).containsExactly(node1, node2);
     assertThat(replicasByToken.get(TOKEN06)).containsExactly(node2, node1);
-    assertThat(replicasByToken.get(TOKEN14)).containsExactly(node1, node2);
-    assertThat(replicasByToken.get(TOKEN19)).containsExactly(node2, node1);
+    assertThat(replicasByToken.get(TOKEN14)).isSameAs(replicasByToken.get(TOKEN01));
+    assertThat(replicasByToken.get(TOKEN19)).isSameAs(replicasByToken.get(TOKEN06));
   }
 
   /** 4 tokens, 2 nodes owning 2 consecutive tokens each, RF = 2. */
@@ -86,15 +85,14 @@ public class SimpleReplicationStrategyTest {
     SimpleReplicationStrategy strategy = new SimpleReplicationStrategy(new ReplicationFactor(2));
 
     // When
-    SetMultimap<Token, Node> replicasByToken =
-        strategy.computeReplicasByToken(tokenToPrimary, ring);
+    Map<Token, Set<Node>> replicasByToken = strategy.computeReplicasByToken(tokenToPrimary, ring);
 
     // Then
     assertThat(replicasByToken.keySet().size()).isEqualTo(ring.size());
     assertThat(replicasByToken.get(TOKEN01)).containsExactly(node1, node2);
-    assertThat(replicasByToken.get(TOKEN06)).containsExactly(node1, node2);
+    assertThat(replicasByToken.get(TOKEN06)).isSameAs(replicasByToken.get(TOKEN01));
     assertThat(replicasByToken.get(TOKEN14)).containsExactly(node2, node1);
-    assertThat(replicasByToken.get(TOKEN19)).containsExactly(node2, node1);
+    assertThat(replicasByToken.get(TOKEN19)).isSameAs(replicasByToken.get(TOKEN14));
   }
 
   /** 4 tokens, 1 node owns 3 of them, RF = 2. */
@@ -107,8 +105,7 @@ public class SimpleReplicationStrategyTest {
     SimpleReplicationStrategy strategy = new SimpleReplicationStrategy(new ReplicationFactor(2));
 
     // When
-    SetMultimap<Token, Node> replicasByToken =
-        strategy.computeReplicasByToken(tokenToPrimary, ring);
+    Map<Token, Set<Node>> replicasByToken = strategy.computeReplicasByToken(tokenToPrimary, ring);
 
     // Then
     assertThat(replicasByToken.keySet().size()).isEqualTo(ring.size());
@@ -128,15 +125,14 @@ public class SimpleReplicationStrategyTest {
     SimpleReplicationStrategy strategy = new SimpleReplicationStrategy(new ReplicationFactor(6));
 
     // When
-    SetMultimap<Token, Node> replicasByToken =
-        strategy.computeReplicasByToken(tokenToPrimary, ring);
+    Map<Token, Set<Node>> replicasByToken = strategy.computeReplicasByToken(tokenToPrimary, ring);
 
     // Then
     assertThat(replicasByToken.keySet().size()).isEqualTo(ring.size());
     assertThat(replicasByToken.get(TOKEN01)).containsExactly(node1, node2);
     assertThat(replicasByToken.get(TOKEN06)).containsExactly(node2, node1);
-    assertThat(replicasByToken.get(TOKEN14)).containsExactly(node1, node2);
-    assertThat(replicasByToken.get(TOKEN19)).containsExactly(node2, node1);
+    assertThat(replicasByToken.get(TOKEN14)).isSameAs(replicasByToken.get(TOKEN01));
+    assertThat(replicasByToken.get(TOKEN19)).isSameAs(replicasByToken.get(TOKEN06));
   }
 
   @Test
@@ -188,13 +184,12 @@ public class SimpleReplicationStrategyTest {
     SimpleReplicationStrategy strategy = new SimpleReplicationStrategy(new ReplicationFactor(3));
 
     // When
-    SetMultimap<Token, Node> replicasByToken =
-        strategy.computeReplicasByToken(tokenToPrimary, ring);
+    Map<Token, Set<Node>> replicasByToken = strategy.computeReplicasByToken(tokenToPrimary, ring);
 
     // Then
     assertThat(replicasByToken.keySet().size()).isEqualTo(ring.size());
     assertThat(replicasByToken.get(TOKEN01)).containsExactly(node1, node5, node3);
-    assertThat(replicasByToken.get(TOKEN02)).containsExactly(node1, node5, node3);
+    assertThat(replicasByToken.get(TOKEN02)).isSameAs(replicasByToken.get(TOKEN01));
     assertThat(replicasByToken.get(TOKEN03)).containsExactly(node5, node3, node1);
     assertThat(replicasByToken.get(TOKEN04)).containsExactly(node3, node1, node5);
     assertThat(replicasByToken.get(TOKEN05)).containsExactly(node1, node5, node2);
@@ -205,8 +200,8 @@ public class SimpleReplicationStrategyTest {
     assertThat(replicasByToken.get(TOKEN10)).containsExactly(node4, node5, node2);
     assertThat(replicasByToken.get(TOKEN11)).containsExactly(node5, node4, node2);
     assertThat(replicasByToken.get(TOKEN12)).containsExactly(node4, node2, node6);
-    assertThat(replicasByToken.get(TOKEN13)).containsExactly(node4, node2, node6);
-    assertThat(replicasByToken.get(TOKEN14)).containsExactly(node2, node6, node3);
+    assertThat(replicasByToken.get(TOKEN13)).isSameAs(replicasByToken.get(TOKEN12));
+    assertThat(replicasByToken.get(TOKEN14)).isSameAs(replicasByToken.get(TOKEN07));
     assertThat(replicasByToken.get(TOKEN15)).containsExactly(node6, node3, node2);
     assertThat(replicasByToken.get(TOKEN16)).containsExactly(node3, node2, node6);
     assertThat(replicasByToken.get(TOKEN17)).containsExactly(node2, node6, node1);

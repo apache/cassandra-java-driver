@@ -269,7 +269,10 @@ public abstract class ChannelFactoryTestBase {
                     options,
                     heartbeatHandler,
                     productType == null);
-            channel.pipeline().addLast("inflight", inFlightHandler).addLast("init", initHandler);
+            channel
+                .pipeline()
+                .addLast(ChannelFactory.INFLIGHT_HANDLER_NAME, inFlightHandler)
+                .addLast(ChannelFactory.INIT_HANDLER_NAME, initHandler);
           } catch (Throwable t) {
             resultFuture.completeExceptionally(t);
           }

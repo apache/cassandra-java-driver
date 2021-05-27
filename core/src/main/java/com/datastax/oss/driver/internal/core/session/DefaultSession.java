@@ -416,7 +416,7 @@ public class DefaultSession implements CqlSession {
               context
                   .getProtocolVersionRegistry()
                   .highestCommon(metadataManager.getMetadata().getNodes().values());
-          if (!currentVersion.equals(bestVersion)) {
+          if (bestVersion.getCode() < currentVersion.getCode()) {
             LOG.info(
                 "[{}] Negotiated protocol version {} for the initial contact point, "
                     + "but other nodes only support {}, downgrading",
@@ -430,6 +430,13 @@ public class DefaultSession implements CqlSession {
             // of the control queries use any protocol-dependent feature.
             // Keep going as-is, the control connection might switch to the "correct" version later
             // if it reconnects to another node.
+          } else if (bestVersion.getCode() > currentVersion.getCode()) {
+            LOG.info(
+                "[{}] Negotiated protocol version {} for the initial contact point, "
+                    + "but cluster seems to support {}, keeping the negotiated version",
+                logPrefix,
+                currentVersion,
+                bestVersion);
           }
         }
         metadataManager

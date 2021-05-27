@@ -2,6 +2,89 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.11.1
+
+- [bug] JAVA-2910: Add a configuration option to support strong values for prepared statements cache
+- [bug] JAVA-2936: Support Protocol V6
+- [bug] JAVA-2934: Handle empty non-final pages in ReactiveResultSetSubscription
+
+### 4.11.0
+
+- [improvement] JAVA-2930: Allow Micrometer to record histograms for timers
+- [improvement] JAVA-2914: Transform node filter into a more flexible node distance evaluator
+- [improvement] JAVA-2929: Revisit node-level metric eviction
+- [new feature] JAVA-2830: Add mapper support for Java streams
+- [bug] JAVA-2928: Generate counter increment/decrement constructs compatible with legacy C* 
+  versions
+- [new feature] JAVA-2872: Ability to customize metric names and tags
+- [bug] JAVA-2925: Consider protocol version unsupported when server requires USE_BETA flag for it
+- [improvement] JAVA-2704: Remove protocol v5 beta status, add v6-beta
+- [improvement] JAVA-2916: Annotate generated classes with `@SuppressWarnings`
+- [bug] JAVA-2927: Make Dropwizard truly optional
+- [improvement] JAVA-2917: Include GraalVM substitutions for request processors and geo codecs
+- [bug] JAVA-2918: Exclude invalid peers from schema agreement checks
+
+### 4.10.0
+
+- [improvement] JAVA-2907: Switch Tinkerpop to an optional dependency
+- [improvement] JAVA-2904: Upgrade Jackson to 2.12.0 and Tinkerpop to 3.4.9
+- [bug] JAVA-2911: Prevent control connection from scheduling too many reconnections
+- [bug] JAVA-2902: Consider computed values when validating constructors for immutable entities
+- [new feature] JAVA-2899: Re-introduce cross-DC failover in driver 4
+- [new feature] JAVA-2900: Re-introduce consistency downgrading retries
+- [new feature] JAVA-2903: BlockHound integration
+- [improvement] JAVA-2877: Allow skipping validation for individual mapped entities
+- [improvement] JAVA-2871: Allow keyspace exclusions in the metadata, and exclude system keyspaces
+  by default
+- [improvement] JAVA-2449: Use non-cryptographic random number generation in Uuids.random()
+- [improvement] JAVA-2893: Allow duplicate keys in DefaultProgrammaticDriverConfigLoaderBuilder
+- [documentation] JAVA-2894: Clarify usage of Statement.setQueryTimestamp
+- [bug] JAVA-2889: Remove TypeSafe imports from DriverConfigLoader
+- [bug] JAVA-2883: Use root locale explicitly when changing string case
+- [bug] JAVA-2890: Fix off-by-one error in UdtCodec
+- [improvement] JAVA-2905: Prevent new connections from using a protocol version higher than the negotiated one
+- [bug] JAVA-2647: Handle token types in QueryBuilder.literal()
+- [bug] JAVA-2887: Handle composite profiles with more than one key and/or backed by only one profile
+
+### 4.9.0
+
+- [documentation] JAVA-2823: Make Astra more visible in the docs
+- [documentation] JAVA-2869: Advise against using 4.5.x-4.6.0 in the upgrade guide
+- [documentation] JAVA-2868: Cover reconnect-on-init in the manual
+- [improvement] JAVA-2827: Exclude unused Tinkerpop transitive dependencies
+- [improvement] JAVA-2827: Remove dependency to Tinkerpop gremlin-driver
+- [task] JAVA-2859: Upgrade Tinkerpop to 3.4.8
+- [bug] JAVA-2726: Fix Tinkerpop incompatibility with JPMS
+- [bug] JAVA-2842: Remove security vulnerabilities introduced by Tinkerpop
+- [bug] JAVA-2867: Revisit compressor substitutions
+- [improvement] JAVA-2870: Optimize memory usage of token map
+- [improvement] JAVA-2855: Allow selection of the metrics framework via the config
+- [improvement] JAVA-2864: Revisit mapper processor's messaging
+- [new feature] JAVA-2816: Support immutability and fluent accessors in the mapper
+- [new feature] JAVA-2721: Add counter support in the mapper
+- [bug] JAVA-2863: Reintroduce mapper processor dependency to SLF4J
+
+### 4.8.0
+
+- [improvement] JAVA-2811: Add aliases for driver 3 method names
+- [new feature] JAVA-2808: Provide metrics bindings for Micrometer and MicroProfile
+- [new feature] JAVA-2773: Support new protocol v5 message format
+- [improvement] JAVA-2841: Raise timeouts during connection initialization
+- [bug] JAVA-2331: Unregister old metrics when a node gets removed or changes RPC address
+- [improvement] JAVA-2850: Ignore credentials in secure connect bundle [DataStax Astra]
+- [improvement] JAVA-2813: Don't fail when secure bundle is specified together with other options
+- [bug] JAVA-2800: Exclude SLF4J from mapper-processor dependencies
+- [new feature] JAVA-2819: Add DriverConfigLoader.fromString
+- [improvement] JAVA-2431: Set all occurrences when bound variables are used multiple times
+- [improvement] JAVA-2829: Log protocol negotiation messages at DEBUG level
+- [bug] JAVA-2846: Give system properties the highest precedence in DefaultDriverConfigLoader
+- [new feature] JAVA-2691: Provide driver 4 support for extra codecs
+- [improvement] Allow injection of CodecRegistry on session builder
+- [improvement] JAVA-2828: Add safe paging state wrapper
+- [bug] JAVA-2835: Correctly handle unresolved addresses in DefaultEndPoint.equals
+- [bug] JAVA-2838: Avoid ConcurrentModificationException when closing connection
+- [bug] JAVA-2837: make StringCodec strict about unicode in ascii
+
 ### 4.7.2
 
 - [bug] JAVA-2821: Can't connect to DataStax Astra using driver 4.7.x
@@ -458,6 +541,26 @@ changelog](https://docs.datastax.com/en/developer/java-driver-dse/latest/changel
 - [bug] JAVA-1499: Wait for load balancing policy at cluster initialization
 - [new feature] JAVA-1495: Add prepared statements
 
+## 3.10.2
+
+- [bug] JAVA-2860: Avoid NPE if channel initialization crashes.
+
+## 3.10.1
+
+- [bug] JAVA-2857: Fix NPE when built statements without parameters are logged at TRACE level.
+- [bug] JAVA-2843: Successfully parse DSE table schema in OSS driver.
+
+## 3.10.0
+
+- [improvement] JAVA-2676: Don't reschedule flusher after empty runs
+- [new feature] JAVA-2772: Support new protocol v5 message format
+
+## 3.9.0
+
+- [bug] JAVA-2627: Avoid logging error message including stack trace in request handler.
+- [new feature] JAVA-2706: Add now_in_seconds to protocol v5 query messages.
+- [improvement] JAVA-2730: Add support for Cassandra® 4.0 table options
+- [improvement] JAVA-2702: Transient Replication Support for Cassandra® 4.0
 
 ## 3.8.0
 

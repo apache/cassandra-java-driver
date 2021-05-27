@@ -25,6 +25,7 @@ import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParserFactory;
+import com.datastax.oss.driver.internal.core.metadata.schema.queries.KeyspaceFilter;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
 import com.datastax.oss.driver.internal.core.metadata.schema.refresh.SchemaRefresh;
@@ -65,6 +66,7 @@ public class MetadataManager implements AsyncAutoCloseable {
   private volatile DefaultMetadata metadata; // only updated from adminExecutor
   private volatile boolean schemaEnabledInConfig;
   private volatile List<String> refreshedKeyspaces;
+  private volatile KeyspaceFilter keyspaceFilter;
   private volatile Boolean schemaEnabledProgrammatically;
   private volatile boolean tokenMapEnabled;
   private volatile Set<DefaultNode> contactPoints;
@@ -86,6 +88,7 @@ public class MetadataManager implements AsyncAutoCloseable {
     this.refreshedKeyspaces =
         config.getStringList(
             DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList());
+    this.keyspaceFilter = KeyspaceFilter.newInstance(logPrefix, refreshedKeyspaces);
     this.tokenMapEnabled = config.getBoolean(DefaultDriverOption.METADATA_TOKEN_MAP_ENABLED);
 
     context.getEventBus().register(ConfigChangeEvent.class, this::onConfigChanged);
@@ -100,6 +103,7 @@ public class MetadataManager implements AsyncAutoCloseable {
     this.refreshedKeyspaces =
         config.getStringList(
             DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList());
+    this.keyspaceFilter = KeyspaceFilter.newInstance(logPrefix, refreshedKeyspaces);
     this.tokenMapEnabled = config.getBoolean(DefaultDriverOption.METADATA_TOKEN_MAP_ENABLED);
 
     if ((!schemaEnabledBefore
@@ -372,8 +376,7 @@ public class MetadataManager implements AsyncAutoCloseable {
       }
 
       // If this is an event, make sure it's not targeting a keyspace that we're ignoring.
-      boolean isRefreshedKeyspace =
-          keyspace == null || refreshedKeyspaces.isEmpty() || refreshedKeyspaces.contains(keyspace);
+      boolean isRefreshedKeyspace = keyspace == null || keyspaceFilter.includes(keyspace);
 
       if (isRefreshedKeyspace && (evenIfDisabled || isSchemaEnabled())) {
         acceptSchemaRequest(future, flushNow);

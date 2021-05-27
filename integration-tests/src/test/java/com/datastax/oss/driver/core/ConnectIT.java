@@ -19,6 +19,7 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.rows;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.awaitility.Awaitility.await;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
@@ -47,10 +48,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 
 @Category(ParallelizableTests.class)
 public class ConnectIT {
@@ -58,8 +57,6 @@ public class ConnectIT {
   @ClassRule
   public static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(2));
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Before
   public void setup() {
@@ -70,7 +67,7 @@ public class ConnectIT {
             // Absolute minimum for a working schema metadata (we just want to check that it gets
             // loaded at startup).
             when("SELECT * FROM system_schema.keyspaces")
-                .then(rows().row("keyspace_name", "system")));
+                .then(rows().row("keyspace_name", "system").row("keyspace_name", "test")));
   }
 
   @Test
@@ -78,14 +75,14 @@ public class ConnectIT {
     // Given
     SIMULACRON_RULE.cluster().rejectConnections(0, RejectScope.STOP);
 
-    thrown.expect(AllNodesFailedException.class);
-    thrown.expectMessage(
-        "Could not reach any contact point, make sure you've provided valid addresses");
-
     // When
-    SessionUtils.newSession(SIMULACRON_RULE);
+    Throwable t = catchThrowable(() -> SessionUtils.newSession(SIMULACRON_RULE));
 
-    // Then the exception is thrown
+    // Then
+    assertThat(t)
+        .isInstanceOf(AllNodesFailedException.class)
+        .hasMessageContaining(
+            "Could not reach any contact point, make sure you've provided valid addresses");
   }
 
   @Test
@@ -103,7 +100,7 @@ public class ConnectIT {
             .withDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY, Duration.ofMillis(500))
             .build();
     CompletableFuture<? extends Session> sessionFuture =
-        newSessionAsync(SIMULACRON_RULE, loader).toCompletableFuture();
+        newSessionAsync(loader).toCompletableFuture();
     // wait a bit to ensure we have a couple of reconnections, otherwise we might race and allow
     // reconnections before the initial attempt
     TimeUnit.SECONDS.sleep(2);
@@ -116,7 +113,7 @@ public class ConnectIT {
 
     // Then this doesn't throw
     try (Session session = sessionFuture.get(30, TimeUnit.SECONDS)) {
-      assertThat(session.getMetadata().getKeyspaces()).containsKey(CqlIdentifier.fromCql("system"));
+      assertThat(session.getMetadata().getKeyspaces()).containsKey(CqlIdentifier.fromCql("test"));
     }
   }
 
@@ -182,10 +179,9 @@ public class ConnectIT {
   }
 
   @SuppressWarnings("unchecked")
-  private CompletionStage<? extends Session> newSessionAsync(
-      SimulacronRule serverRule, DriverConfigLoader loader) {
+  private CompletionStage<? extends Session> newSessionAsync(DriverConfigLoader loader) {
     return SessionUtils.baseBuilder()
-        .addContactEndPoints(serverRule.getContactPoints())
+        .addContactEndPoints(ConnectIT.SIMULACRON_RULE.getContactPoints())
         .withConfigLoader(loader)
         .buildAsync();
   }

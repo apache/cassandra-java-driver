@@ -27,6 +27,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import net.jcip.annotations.NotThreadSafe;
 
@@ -98,6 +99,16 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
     this.node = template.getNode();
   }
 
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+    List<Integer> indices = variableDefinitions.allIndicesOf(id);
+    if (indices.isEmpty()) {
+      throw new IllegalArgumentException(id + " is not a variable in this bound statement");
+    }
+    return indices;
+  }
+
   @Override
   public int firstIndexOf(@NonNull CqlIdentifier id) {
     int indexOf = variableDefinitions.firstIndexOf(id);
@@ -105,6 +116,16 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
       throw new IllegalArgumentException(id + " is not a variable in this bound statement");
     }
     return indexOf;
+  }
+
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull String name) {
+    List<Integer> indices = variableDefinitions.allIndicesOf(name);
+    if (indices.isEmpty()) {
+      throw new IllegalArgumentException(name + " is not a variable in this bound statement");
+    }
+    return indices;
   }
 
   @Override

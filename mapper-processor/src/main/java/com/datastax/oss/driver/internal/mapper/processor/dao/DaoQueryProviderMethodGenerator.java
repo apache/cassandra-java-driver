@@ -142,7 +142,6 @@ public class DaoQueryProviderMethodGenerator extends DaoMethodGenerator {
                 .getMessager()
                 .error(
                     methodElement,
-                    processedType,
                     "Invalid annotation configuration: the elements in %s.entityHelpers "
                         + "must be %s-annotated classes (offending element: %s)",
                     QueryProvider.class.getSimpleName(),

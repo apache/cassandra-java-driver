@@ -18,9 +18,12 @@ package com.datastax.oss.driver.api.mapper;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
+import com.datastax.oss.driver.api.mapper.annotations.NamingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
+import com.datastax.oss.driver.api.mapper.annotations.SchemaHint;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.HashMap;
@@ -143,10 +146,25 @@ public abstract class MapperBuilder<MapperT> {
   }
 
   /**
-   * When the new instance of a class annotated with {@code @Dao} is created an automatic check for
-   * schema validation is performed. It verifies if all {@code @Dao} entity fields are present in
-   * CQL table. If not the exception is thrown. This check has startup overhead so once your app is
-   * stable you may want to disable it. The schema Validation check is enabled by default.
+   * Whether to validate mapped entities against the database schema.
+   *
+   * <p>If this is enabled, then every time a new DAO gets created, for each entity referenced in
+   * the DAO, the mapper will check that there is a corresponding table or UDT.
+   *
+   * <ul>
+   *   <li>for each entity field, the database table or UDT must contain a column with the
+   *       corresponding name (according to the {@link NamingStrategy}).
+   *   <li>the types must be compatible, according to the {@link CodecRegistry} used by the session.
+   *   <li>additionally, if the target element is a table, the primary key must be properly
+   *       annotated in the entity.
+   * </ul>
+   *
+   * If any of those steps fails, an {@link IllegalArgumentException} is thrown.
+   *
+   * <p>Schema validation is enabled by default; it adds a small startup overhead, so once your
+   * application is stable you may want to disable it.
+   *
+   * @see SchemaHint
    */
   public MapperBuilder<MapperT> withSchemaValidationEnabled(boolean enableSchemaValidation) {
     customState.put(SCHEMA_VALIDATION_ENABLED_SETTING, enableSchemaValidation);

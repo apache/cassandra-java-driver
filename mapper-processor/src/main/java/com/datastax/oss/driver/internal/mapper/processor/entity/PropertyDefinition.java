@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.mapper.processor.entity;
 import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.data.SettableByName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.api.mapper.annotations.PropertyStrategy;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
 import com.squareup.javapoet.CodeBlock;
 
@@ -26,6 +27,12 @@ import com.squareup.javapoet.CodeBlock;
  * and how to extract and set the value of the property on the {@link Entity}.
  */
 public interface PropertyDefinition {
+
+  /**
+   * @return the name of the property, in the JavaBeans sense. In other words this is {@link
+   *     #getGetterName()} minus the "get" prefix and decapitalized.
+   */
+  String getJavaName();
 
   /**
    * @return A Java snippet that produces the corresponding expression in a <code>SELECT</code>
@@ -52,7 +59,8 @@ public interface PropertyDefinition {
 
   /**
    * @return The name of the "set" method associated with this property used to update the value of
-   *     the property on the entity.
+   *     the property on the entity, or {@code null} if the entity was marked as not {@link
+   *     PropertyStrategy#mutable()}.
    */
   String getSetterName();
 

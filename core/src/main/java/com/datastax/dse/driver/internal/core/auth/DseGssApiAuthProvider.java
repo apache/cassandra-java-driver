@@ -150,10 +150,6 @@ import net.jcip.annotations.ThreadSafe;
  *   }
  * }
  * </pre>
- *
- * @see <a
- *     href="http://docs.datastax.com/en/dse/5.1/dse-admin/datastax_enterprise/security/securityTOC.html">Authenticating
- *     a DSE cluster with Kerberos</a>
  */
 @ThreadSafe
 public class DseGssApiAuthProvider extends DseGssApiAuthProviderBase {

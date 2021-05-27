@@ -17,23 +17,23 @@ package com.datastax.oss.driver.internal.core.metadata.token;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSetMultimap;
-import com.datastax.oss.driver.shaded.guava.common.collect.SetMultimap;
-import java.util.Collection;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class EverywhereReplicationStrategy implements ReplicationStrategy {
 
   @Override
-  public SetMultimap<Token, Node> computeReplicasByToken(
+  public Map<Token, Set<Node>> computeReplicasByToken(
       Map<Token, Node> tokenToPrimary, List<Token> ring) {
-    ImmutableSetMultimap.Builder<Token, Node> result = ImmutableSetMultimap.builder();
-    Collection<Node> nodes = tokenToPrimary.values();
+    ImmutableMap.Builder<Token, Set<Node>> result = ImmutableMap.builder();
+    Set<Node> allNodes = ImmutableSet.copyOf(tokenToPrimary.values());
     for (Token token : tokenToPrimary.keySet()) {
-      result = result.putAll(token, nodes);
+      result = result.put(token, allNodes);
     }
     return result.build();
   }

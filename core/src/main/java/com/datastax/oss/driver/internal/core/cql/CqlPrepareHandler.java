@@ -28,6 +28,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
+import com.datastax.oss.driver.api.core.retry.RetryVerdict;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
 import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
 import com.datastax.oss.driver.api.core.servererrors.FunctionFailureException;
@@ -79,17 +80,13 @@ public class CqlPrepareHandler implements Throttled {
 
   private final long startTimeNanos;
   private final String logPrefix;
-  private final PrepareRequest request;
+  private final PrepareRequest initialRequest;
   private final DefaultSession session;
   private final InternalDriverContext context;
-  private final DriverExecutionProfile executionProfile;
   private final Queue<Node> queryPlan;
   protected final CompletableFuture<PreparedStatement> result;
-  private final Message message;
   private final Timer timer;
-  private final Duration timeout;
   private final Timeout scheduledTimeout;
-  private final RetryPolicy retryPolicy;
   private final RequestThrottler throttler;
   private final Boolean prepareOnAllNodes;
   private volatile InitialPrepareCallback initialCallback;
@@ -108,15 +105,14 @@ public class CqlPrepareHandler implements Throttled {
     this.logPrefix = sessionLogPrefix + "|" + this.hashCode();
     LOG.trace("[{}] Creating new handler for prepare request {}", logPrefix, request);
 
-    this.request = request;
+    this.initialRequest = request;
     this.session = session;
     this.context = context;
-    this.executionProfile = Conversions.resolveExecutionProfile(request, context);
+    DriverExecutionProfile executionProfile = Conversions.resolveExecutionProfile(request, context);
     this.queryPlan =
         context
             .getLoadBalancingPolicyWrapper()
             .newQueryPlan(request, executionProfile.getName(), session);
-    this.retryPolicy = context.getRetryPolicy(executionProfile.getName());
 
     this.result = new CompletableFuture<>();
     this.result.exceptionally(
@@ -130,22 +126,9 @@ public class CqlPrepareHandler implements Throttled {
           }
           return null;
         });
-    ProtocolVersion protocolVersion = context.getProtocolVersion();
-    ProtocolVersionRegistry registry = context.getProtocolVersionRegistry();
-    CqlIdentifier keyspace = request.getKeyspace();
-    if (keyspace != null
-        && !registry.supports(protocolVersion, DefaultProtocolFeature.PER_REQUEST_KEYSPACE)) {
-      throw new IllegalArgumentException(
-          "Can't use per-request keyspace with protocol " + protocolVersion);
-    }
-    this.message =
-        new Prepare(request.getQuery(), (keyspace == null) ? null : keyspace.asInternal());
     this.timer = context.getNettyOptions().getTimer();
 
-    this.timeout =
-        request.getTimeout() != null
-            ? request.getTimeout()
-            : executionProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
+    Duration timeout = Conversions.resolveRequestTimeout(request, context);
     this.scheduledTimeout = scheduleTimeout(timeout);
     this.prepareOnAllNodes = executionProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES);
 
@@ -155,6 +138,8 @@ public class CqlPrepareHandler implements Throttled {
 
   @Override
   public void onThrottleReady(boolean wasDelayed) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(initialRequest, context);
     if (wasDelayed) {
       session
           .getMetricUpdater()
@@ -164,7 +149,7 @@ public class CqlPrepareHandler implements Throttled {
               System.nanoTime() - startTimeNanos,
               TimeUnit.NANOSECONDS);
     }
-    sendRequest(null, 0);
+    sendRequest(initialRequest, null, 0);
   }
 
   public CompletableFuture<PreparedStatement> handle() {
@@ -193,7 +178,7 @@ public class CqlPrepareHandler implements Throttled {
     }
   }
 
-  private void sendRequest(Node node, int retryCount) {
+  private void sendRequest(PrepareRequest request, Node node, int retryCount) {
     if (result.isDone()) {
       return;
     }
@@ -210,11 +195,27 @@ public class CqlPrepareHandler implements Throttled {
       setFinalError(AllNodesFailedException.fromErrors(this.errors));
     } else {
       InitialPrepareCallback initialPrepareCallback =
-          new InitialPrepareCallback(node, channel, retryCount);
+          new InitialPrepareCallback(request, node, channel, retryCount);
+
+      Prepare message = toPrepareMessage(request);
+
       channel
           .write(message, false, request.getCustomPayload(), initialPrepareCallback)
           .addListener(initialPrepareCallback);
     }
+  }
+
+  @NonNull
+  private Prepare toPrepareMessage(PrepareRequest request) {
+    ProtocolVersion protocolVersion = context.getProtocolVersion();
+    ProtocolVersionRegistry registry = context.getProtocolVersionRegistry();
+    CqlIdentifier keyspace = request.getKeyspace();
+    if (keyspace != null
+        && !registry.supports(protocolVersion, DefaultProtocolFeature.PER_REQUEST_KEYSPACE)) {
+      throw new IllegalArgumentException(
+          "Can't use per-request keyspace with protocol " + protocolVersion);
+    }
+    return new Prepare(request.getQuery(), (keyspace == null) ? null : keyspace.asInternal());
   }
 
   private void recordError(Node node, Throwable error) {
@@ -231,19 +232,19 @@ public class CqlPrepareHandler implements Throttled {
     errorsSnapshot.add(new AbstractMap.SimpleEntry<>(node, error));
   }
 
-  private void setFinalResult(Prepared prepared) {
+  private void setFinalResult(PrepareRequest request, Prepared response) {
 
     // Whatever happens below, we're done with this stream id
     throttler.signalSuccess(this);
 
     DefaultPreparedStatement preparedStatement =
-        Conversions.toPreparedStatement(prepared, request, context);
+        Conversions.toPreparedStatement(response, request, context);
 
     session
         .getRepreparePayloads()
         .put(preparedStatement.getId(), preparedStatement.getRepreparePayload());
     if (prepareOnAllNodes) {
-      prepareOnOtherNodes()
+      prepareOnOtherNodes(request)
           .thenRun(
               () -> {
                 LOG.trace(
@@ -261,19 +262,19 @@ public class CqlPrepareHandler implements Throttled {
     }
   }
 
-  private CompletionStage<Void> prepareOnOtherNodes() {
+  private CompletionStage<Void> prepareOnOtherNodes(PrepareRequest request) {
     List<CompletionStage<Void>> otherNodesFutures = new ArrayList<>();
     // Only process the rest of the query plan. Any node before that is either the coordinator, or
     // a node that failed (we assume that retrying right now has little chance of success).
     for (Node node : queryPlan) {
-      otherNodesFutures.add(prepareOnOtherNode(node));
+      otherNodesFutures.add(prepareOnOtherNode(request, node));
     }
     return CompletableFutures.allDone(otherNodesFutures);
   }
 
   // Try to reprepare on another node, after the initial query has succeeded. Errors are not
   // blocking, the preparation will be retried later on that node. Simply warn and move on.
-  private CompletionStage<Void> prepareOnOtherNode(Node node) {
+  private CompletionStage<Void> prepareOnOtherNode(PrepareRequest request, Node node) {
     LOG.trace("[{}] Repreparing on {}", logPrefix, node);
     DriverChannel channel = session.getChannel(node, logPrefix);
     if (channel == null) {
@@ -284,9 +285,9 @@ public class CqlPrepareHandler implements Throttled {
           ThrottledAdminRequestHandler.prepare(
               channel,
               false,
-              message,
+              toPrepareMessage(request),
               request.getCustomPayload(),
-              timeout,
+              Conversions.resolveRequestTimeout(request, context),
               throttler,
               session.getMetricUpdater(),
               logPrefix);
@@ -307,6 +308,8 @@ public class CqlPrepareHandler implements Throttled {
 
   @Override
   public void onThrottleFailure(@NonNull RequestThrottlingException error) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(initialRequest, context);
     session
         .getMetricUpdater()
         .incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS, executionProfile.getName());
@@ -326,13 +329,16 @@ public class CqlPrepareHandler implements Throttled {
 
   private class InitialPrepareCallback
       implements ResponseCallback, GenericFutureListener<Future<java.lang.Void>> {
+    private final PrepareRequest request;
     private final Node node;
     private final DriverChannel channel;
     // How many times we've invoked the retry policy and it has returned a "retry" decision (0 for
     // the first attempt of each execution).
     private final int retryCount;
 
-    private InitialPrepareCallback(Node node, DriverChannel channel, int retryCount) {
+    private InitialPrepareCallback(
+        PrepareRequest request, Node node, DriverChannel channel, int retryCount) {
+      this.request = request;
       this.node = node;
       this.channel = channel;
       this.retryCount = retryCount;
@@ -348,7 +354,7 @@ public class CqlPrepareHandler implements Throttled {
             node,
             future.cause().toString());
         recordError(node, future.cause());
-        sendRequest(null, retryCount); // try next host
+        sendRequest(request, null, retryCount); // try next host
       } else {
         if (result.isDone()) {
           // Might happen if the timeout just fired
@@ -369,7 +375,7 @@ public class CqlPrepareHandler implements Throttled {
         Message responseMessage = responseFrame.message;
         if (responseMessage instanceof Prepared) {
           LOG.trace("[{}] Got result, completing", logPrefix);
-          setFinalResult((Prepared) responseMessage);
+          setFinalResult(request, (Prepared) responseMessage);
         } else if (responseMessage instanceof Error) {
           LOG.trace("[{}] Got error response, processing", logPrefix);
           processErrorResponse((Error) responseMessage);
@@ -399,7 +405,7 @@ public class CqlPrepareHandler implements Throttled {
       if (error instanceof BootstrappingException) {
         LOG.trace("[{}] {} is bootstrapping, trying next node", logPrefix, node);
         recordError(node, error);
-        sendRequest(null, retryCount);
+        sendRequest(request, null, retryCount);
       } else if (error instanceof QueryValidationException
           || error instanceof FunctionFailureException
           || error instanceof ProtocolError) {
@@ -408,21 +414,23 @@ public class CqlPrepareHandler implements Throttled {
       } else {
         // Because prepare requests are known to always be idempotent, we call the retry policy
         // directly, without checking the flag.
-        RetryDecision decision = retryPolicy.onErrorResponse(request, error, retryCount);
-        processRetryDecision(decision, error);
+        RetryPolicy retryPolicy = Conversions.resolveRetryPolicy(request, context);
+        RetryVerdict verdict = retryPolicy.onErrorResponseVerdict(request, error, retryCount);
+        processRetryVerdict(verdict, error);
       }
     }
 
-    private void processRetryDecision(RetryDecision decision, Throwable error) {
+    private void processRetryVerdict(RetryVerdict verdict, Throwable error) {
+      RetryDecision decision = verdict.getRetryDecision();
       LOG.trace("[{}] Processing retry decision {}", logPrefix, decision);
       switch (decision) {
         case RETRY_SAME:
           recordError(node, error);
-          sendRequest(node, retryCount + 1);
+          sendRequest(verdict.getRetryRequest(request), node, retryCount + 1);
           break;
         case RETRY_NEXT:
           recordError(node, error);
-          sendRequest(null, retryCount + 1);
+          sendRequest(verdict.getRetryRequest(request), null, retryCount + 1);
           break;
         case RETHROW:
           setFinalError(error);
@@ -442,15 +450,16 @@ public class CqlPrepareHandler implements Throttled {
         return;
       }
       LOG.trace("[{}] Request failure, processing: {}", logPrefix, error.toString());
-      RetryDecision decision;
+      RetryVerdict verdict;
       try {
-        decision = retryPolicy.onRequestAborted(request, error, retryCount);
+        RetryPolicy retryPolicy = Conversions.resolveRetryPolicy(request, context);
+        verdict = retryPolicy.onRequestAbortedVerdict(request, error, retryCount);
       } catch (Throwable cause) {
         setFinalError(
             new IllegalStateException("Unexpected error while invoking the retry policy", cause));
         return;
       }
-      processRetryDecision(decision, error);
+      processRetryVerdict(verdict, error);
     }
 
     public void cancel() {

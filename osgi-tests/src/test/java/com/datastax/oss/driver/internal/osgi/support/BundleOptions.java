@@ -140,11 +140,6 @@ public class BundleOptions {
                 .bundleSymbolicName("org.apache.tinkerpop.gremlin-core")
                 .overwriteManifest(WrappedUrlProvisionOption.OverwriteMode.FULL),
             CoreOptions.wrappedBundle(
-                    mavenBundle("org.apache.tinkerpop", "gremlin-driver").versionAsInProject())
-                .exports("org.apache.tinkerpop.gremlin.driver.*")
-                .bundleSymbolicName("org.apache.tinkerpop.gremlin-driver")
-                .overwriteManifest(WrappedUrlProvisionOption.OverwriteMode.FULL),
-            CoreOptions.wrappedBundle(
                     mavenBundle("org.apache.tinkerpop", "tinkergraph-gremlin").versionAsInProject())
                 .exports("org.apache.tinkerpop.gremlin.tinkergraph.*")
                 .bundleSymbolicName("org.apache.tinkerpop.tinkergraph-gremlin")

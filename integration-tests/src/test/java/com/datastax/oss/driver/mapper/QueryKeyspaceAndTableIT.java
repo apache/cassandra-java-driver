@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -35,10 +36,8 @@ import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
@@ -55,8 +54,6 @@ public class QueryKeyspaceAndTableIT {
   private static final CqlIdentifier FOO_TABLE_ID = CqlIdentifier.fromCql("foo");
   private static final CqlIdentifier OTHER_KEYSPACE =
       CqlIdentifier.fromCql(QueryKeyspaceAndTableIT.class.getSimpleName() + "_alt");
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private static TestMapper mapper;
 
@@ -93,22 +90,25 @@ public class QueryKeyspaceAndTableIT {
 
   @Test
   public void should_fail_to_substitute_keyspaceId_if_dao_has_no_keyspace() {
-    thrown.expect(MapperException.class);
-    thrown.expectMessage(
-        "Cannot substitute ${keyspaceId} in query "
-            + "'SELECT count(*) FROM ${keyspaceId}.${tableId}': "
-            + "the DAO wasn't built with a keyspace");
-    mapper.daoWithKeyspaceAndTableId(null, FOO_TABLE_ID);
+    Throwable t = catchThrowable(() -> mapper.daoWithKeyspaceAndTableId(null, FOO_TABLE_ID));
+    assertThat(t)
+        .isInstanceOf(MapperException.class)
+        .hasMessage(
+            "Cannot substitute ${keyspaceId} in query "
+                + "'SELECT count(*) FROM ${keyspaceId}.${tableId}': "
+                + "the DAO wasn't built with a keyspace");
   }
 
   @Test
   public void should_fail_to_substitute_tableId_if_dao_has_no_table() {
-    thrown.expect(MapperException.class);
-    thrown.expectMessage(
-        "Cannot substitute ${tableId} in query "
-            + "'SELECT count(*) FROM ${keyspaceId}.${tableId}': "
-            + "the DAO wasn't built with a table");
-    mapper.daoWithKeyspaceAndTableId(SESSION_RULE.keyspace(), null);
+    Throwable t =
+        catchThrowable(() -> mapper.daoWithKeyspaceAndTableId(SESSION_RULE.keyspace(), null));
+    assertThat(t)
+        .isInstanceOf(MapperException.class)
+        .hasMessage(
+            "Cannot substitute ${tableId} in query "
+                + "'SELECT count(*) FROM ${keyspaceId}.${tableId}': "
+                + "the DAO wasn't built with a table");
   }
 
   @Test
@@ -125,12 +125,14 @@ public class QueryKeyspaceAndTableIT {
 
   @Test
   public void should_fail_to_substitute_qualifiedTableId_if_dao_has_no_table() {
-    thrown.expect(MapperException.class);
-    thrown.expectMessage(
-        "Cannot substitute ${qualifiedTableId} in query "
-            + "'SELECT count(*) FROM ${qualifiedTableId}': "
-            + "the DAO wasn't built with a table");
-    mapper.daoWithQualifiedTableId(SESSION_RULE.keyspace(), null);
+    Throwable t =
+        catchThrowable(() -> mapper.daoWithQualifiedTableId(SESSION_RULE.keyspace(), null));
+    assertThat(t)
+        .isInstanceOf(MapperException.class)
+        .hasMessage(
+            "Cannot substitute ${qualifiedTableId} in query "
+                + "'SELECT count(*) FROM ${qualifiedTableId}': "
+                + "the DAO wasn't built with a table");
   }
 
   @Dao

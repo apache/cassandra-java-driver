@@ -96,7 +96,7 @@ import net.jcip.annotations.ThreadSafe;
  * </ol>
  *
  * By default, when parsing, timestamp literals that do not include any time zone information will
- * be interpreted using the system's {@linkplain TimeZone#getDefault() default time zone}. This is
+ * be interpreted using the system's {@linkplain ZoneId#systemDefault() default time zone}. This is
  * intended to mimic Apache Cassandra(R)'s own parsing behavior (see {@code
  * org.apache.cassandra.serializers.TimestampSerializer}). The default time zone can be modified
  * using the {@linkplain TimestampCodec#TimestampCodec(ZoneId) one-arg constructor} that takes a

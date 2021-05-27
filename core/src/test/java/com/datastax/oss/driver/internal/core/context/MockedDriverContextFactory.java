@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.ProgrammaticArguments;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
+import java.time.Duration;
 import java.util.Optional;
 
 public class MockedDriverContextFactory {
@@ -45,6 +46,12 @@ public class MockedDriverContextFactory {
               DriverExecutionProfile blankProfile = mock(DriverExecutionProfile.class);
               when(blankProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none"))
                   .thenReturn("none");
+              when(blankProfile.getDuration(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER))
+                  .thenReturn(Duration.ofMinutes(5));
+              when(blankProfile.isDefined(DefaultDriverOption.METRICS_FACTORY_CLASS))
+                  .thenReturn(true);
+              when(blankProfile.getString(DefaultDriverOption.METRICS_FACTORY_CLASS))
+                  .thenReturn("DefaultMetricsFactory");
               return blankProfile;
             });
 
@@ -60,7 +67,7 @@ public class MockedDriverContextFactory {
             .withSchemaChangeListener(mock(SchemaChangeListener.class))
             .withRequestTracker(mock(RequestTracker.class))
             .withLocalDatacenters(Maps.newHashMap())
-            .withNodeFilters(Maps.newHashMap())
+            .withNodeDistanceEvaluators(Maps.newHashMap())
             .build();
     return new DefaultDriverContext(configLoader, args);
   }

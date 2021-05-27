@@ -28,6 +28,8 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
+import com.datastax.oss.driver.api.core.type.codec.ExtraTypeCodecs;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -62,8 +64,7 @@ public class JsonInsertIT {
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
-  private static final JacksonJsonCodec<User> JACKSON_JSON_CODEC =
-      new JacksonJsonCodec<>(User.class);
+  private static final TypeCodec<User> JACKSON_JSON_CODEC = ExtraTypeCodecs.json(User.class);
 
   @BeforeClass
   public static void setup() {

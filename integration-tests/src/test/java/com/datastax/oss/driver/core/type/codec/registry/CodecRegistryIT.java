@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.core.type.codec.registry;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
@@ -34,32 +35,29 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.datastax.oss.driver.api.core.type.reflect.GenericTypeParameter;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.type.codec.IntCodec;
 import com.datastax.oss.driver.internal.core.type.codec.UdtCodec;
+import com.datastax.oss.driver.internal.core.type.codec.extras.OptionalCodec;
 import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Predicate;
 import org.assertj.core.util.Maps;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestName;
 import org.junit.rules.TestRule;
@@ -75,8 +73,6 @@ public class CodecRegistryIT {
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Rule public TestName name = new TestName();
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @BeforeClass
   public static void createSchema() {
@@ -155,10 +151,17 @@ public class CodecRegistryIT {
     PreparedStatement prepared =
         SESSION_RULE.session().prepare("INSERT INTO test (k, v) values (?, ?)");
 
-    thrown.expect(CodecNotFoundException.class);
-
     // float value for int column should not work since no applicable codec.
-    prepared.boundStatementBuilder().setString(0, name.getMethodName()).setFloat(1, 3.14f).build();
+    Throwable t =
+        catchThrowable(
+            () ->
+                prepared
+                    .boundStatementBuilder()
+                    .setString(0, name.getMethodName())
+                    .setFloat(1, 3.14f)
+                    .build());
+
+    assertThat(t).isInstanceOf(CodecNotFoundException.class);
   }
 
   @Test
@@ -184,9 +187,9 @@ public class CodecRegistryIT {
     // should not be able to access int column as float as no codec is registered to handle that.
     Row row = rows.iterator().next();
 
-    thrown.expect(CodecNotFoundException.class);
+    Throwable t = catchThrowable(() -> assertThat(row.getFloat("v")).isEqualTo(3.0f));
 
-    assertThat(row.getFloat("v")).isEqualTo(3.0f);
+    assertThat(t).isInstanceOf(CodecNotFoundException.class);
   }
 
   @Test
@@ -261,33 +264,6 @@ public class CodecRegistryIT {
       Row row = rows.iterator().next();
       assertThat(row.getFloat("v")).isEqualTo(3.0f);
       assertThat(row.getFloat(0)).isEqualTo(3.0f);
-    }
-  }
-
-  private static class OptionalCodec<T> extends MappingCodec<T, Optional<T>> {
-
-    // in cassandra, empty collections are considered null and vise versa.
-    Predicate<T> isAbsent =
-        (i) ->
-            i == null
-                || (i instanceof Collection && ((Collection) i).isEmpty())
-                || (i instanceof Map && ((Map) i).isEmpty());
-
-    OptionalCodec(TypeCodec<T> innerCodec) {
-      super(
-          innerCodec,
-          new GenericType<Optional<T>>() {}.where(
-              new GenericTypeParameter<T>() {}, innerCodec.getJavaType()));
-    }
-
-    @Override
-    protected Optional<T> innerToOuter(T value) {
-      return isAbsent.test(value) ? Optional.empty() : Optional.of(value);
-    }
-
-    @Override
-    protected T outerToInner(Optional<T> value) {
-      return value.orElse(null);
     }
   }
 
