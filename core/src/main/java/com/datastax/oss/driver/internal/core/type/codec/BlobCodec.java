@@ -47,7 +47,7 @@ public class BlobCodec implements TypeCodec<ByteBuffer> {
 
   @Override
   public boolean accepts(@NonNull Class<?> javaClass) {
-    return ByteBuffer.class.equals(javaClass);
+    return ByteBuffer.class.equals(javaClass) || ByteBuffer.class.isAssignableFrom(javaClass);
   }
 
   @Nullable

@@ -265,7 +265,7 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
     LOG.trace("[{}] Looking up codec for object {}", logPrefix, value);
 
     for (TypeCodec<?> primitiveCodec : primitiveCodecs) {
-      if (primitiveCodec.accepts(value)) {
+      if (primitiveCodec.accepts(value.getClass())) {
         LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
         return uncheckedCast(primitiveCodec);
       }
