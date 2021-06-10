@@ -119,7 +119,7 @@ public class HeartbeatIT {
     ProgrammaticDriverConfigLoaderBuilder loader =
         SessionUtils.configLoaderBuilder()
             .withInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE, 0);
-    try (CqlSession session = newSession(loader)) {
+    try (CqlSession ignored = newSession(loader)) {
       AtomicInteger heartbeats = countHeartbeatsOnControlConnection();
       await()
           .pollInterval(500, TimeUnit.MILLISECONDS)
