@@ -112,6 +112,7 @@ public class QueryCounter {
 
   public static class QueryCounterBuilder {
 
+    @SuppressWarnings("UnnecessaryLambda")
     private static final Predicate<QueryLog> DEFAULT_FILTER = (q) -> !q.getQuery().isEmpty();
 
     private final BoundTopic<?, ?> topic;
