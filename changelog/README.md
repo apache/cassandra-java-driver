@@ -4,6 +4,7 @@
 
 ### 4.11.2 (in progress)
 
+- [bug] JAVA-2945: Reinstate InternalDriverContext.getNodeFilter method
 - [bug] JAVA-2947: Release buffer after decoding multi-slice frame
 - [bug] JAVA-2946: Make MapperResultProducerService instances be located with user-provided class loader
 - [bug] JAVA-2942: GraphStatement.setConsistencyLevel() is not effective
