@@ -52,7 +52,7 @@ public class SpeculativeExecutionIT {
   // Note: it looks like shorter delays cause precision issues with Netty timers
   private static final long SPECULATIVE_DELAY = 1000;
 
-  private static String QUERY_STRING = "select * from foo";
+  private static final String QUERY_STRING = "select * from foo";
   private static final SimpleStatement QUERY = SimpleStatement.newInstance(QUERY_STRING);
 
   // Shared across all tests methods.
@@ -60,7 +60,6 @@ public class SpeculativeExecutionIT {
   public static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
-  @SuppressWarnings("deprecation")
   private final QueryCounter counter =
       QueryCounter.builder(SIMULACRON_RULE.cluster())
           .withFilter((l) -> l.getQuery().equals(QUERY_STRING))
