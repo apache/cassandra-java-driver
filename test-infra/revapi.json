@@ -166,6 +166,11 @@
         "old": "missing-class com.datastax.oss.simulacron.server.Server",
         "new": "missing-class com.datastax.oss.simulacron.server.Server",
         "justification": "Dependency was made optional"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method void com.datastax.oss.driver.api.testinfra.ccm.CcmRule::reloadCore(int, java.lang.String, java.lang.String, boolean)",
+        "justification": "Modifying the state of a globally shared CCM instance is dangerous"
       }
     ]
   }
