@@ -314,6 +314,7 @@ public class MetadataManager implements AsyncAutoCloseable {
     private SingleThreaded(InternalDriverContext context, DriverExecutionProfile config) {
       this.schemaRefreshDebouncer =
           new Debouncer<>(
+              logPrefix + "|metadata debouncer",
               adminExecutor,
               this::coalesceSchemaRequests,
               this::startSchemaRequest,

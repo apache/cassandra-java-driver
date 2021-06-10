@@ -103,6 +103,7 @@ public class NodeStateManager implements AsyncAutoCloseable {
       DriverExecutionProfile config = context.getConfig().getDefaultProfile();
       this.topologyEventDebouncer =
           new Debouncer<>(
+              logPrefix + "|topology debouncer",
               adminExecutor,
               this::coalesceTopologyEvents,
               this::flushTopologyEvents,
