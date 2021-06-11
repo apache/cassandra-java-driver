@@ -54,6 +54,8 @@ public class DaoGetEntityMethodGenerator extends DaoMethodGenerator {
     STREAM,
   }
 
+  private final boolean lenient;
+
   public DaoGetEntityMethodGenerator(
       ExecutableElement methodElement,
       Map<Name, TypeElement> typeParameters,
@@ -61,6 +63,7 @@ public class DaoGetEntityMethodGenerator extends DaoMethodGenerator {
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
     super(methodElement, typeParameters, processedType, enclosingClass, context);
+    lenient = methodElement.getAnnotation(GetEntity.class).lenient();
   }
 
   @Override
@@ -170,23 +173,26 @@ public class DaoGetEntityMethodGenerator extends DaoMethodGenerator {
         GeneratedCodePatterns.override(methodElement, typeParameters);
     switch (transformation) {
       case NONE:
-        overridingMethodBuilder.addStatement("return $L.get($L)", helperFieldName, parameterName);
+        overridingMethodBuilder.addStatement(
+            "return $L.get($L, $L)", helperFieldName, parameterName, lenient);
         break;
       case ONE:
         overridingMethodBuilder
             .addStatement("$T row = $L.one()", Row.class, parameterName)
-            .addStatement("return (row == null) ? null : $L.get(row)", helperFieldName);
+            .addStatement(
+                "return (row == null) ? null : $L.get(row, $L)", helperFieldName, lenient);
         break;
       case MAP:
         overridingMethodBuilder.addStatement(
-            "return $L.map($L::get)", parameterName, helperFieldName);
+            "return $L.map(row -> $L.get(row, $L))", parameterName, helperFieldName, lenient);
         break;
       case STREAM:
         overridingMethodBuilder.addStatement(
-            "return $T.stream($L.map($L::get).spliterator(), false)",
+            "return $T.stream($L.map(row -> $L.get(row, $L)).spliterator(), false)",
             StreamSupport.class,
             parameterName,
-            helperFieldName);
+            helperFieldName,
+            lenient);
         break;
     }
     return Optional.of(overridingMethodBuilder.build());

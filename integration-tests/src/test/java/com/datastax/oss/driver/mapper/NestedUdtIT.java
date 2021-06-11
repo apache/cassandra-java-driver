@@ -16,11 +16,17 @@
 package com.datastax.oss.driver.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.data.GettableByName;
+import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
@@ -30,6 +36,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
+import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
@@ -43,6 +50,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -63,21 +71,24 @@ public class NestedUdtIT {
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
-  private static UUID CONTAINER_ID = UUID.randomUUID();
+  private static final UUID CONTAINER_ID = UUID.randomUUID();
+
   private static final Container SAMPLE_CONTAINER =
       new Container(
           CONTAINER_ID,
-          ImmutableList.of(new Type1("a"), new Type1("b")),
+          ImmutableList.of(new Type1("a1", "a2"), new Type1("b1", "b2")),
           ImmutableMap.of(
               "cd",
-              ImmutableList.of(new Type1("c"), new Type1("d")),
+              ImmutableList.of(new Type1("c1", "c2"), new Type1("d1", "d2")),
               "ef",
-              ImmutableList.of(new Type1("e"), new Type1("f"))),
+              ImmutableList.of(new Type1("e1", "e2"), new Type1("f1", "f2"))),
           ImmutableMap.of(
-              new Type1("12"),
-              ImmutableSet.of(ImmutableList.of(new Type2(1)), ImmutableList.of(new Type2(2)))),
+              new Type1("12", "34"),
+              ImmutableSet.of(
+                  ImmutableList.of(new Type2(1, 2)), ImmutableList.of(new Type2(3, 4)))),
           ImmutableMap.of(
-              new Type1("12"), ImmutableMap.of("12", ImmutableSet.of(new Type2(1), new Type2(2)))));
+              new Type1("12", "34"),
+              ImmutableMap.of("12", ImmutableSet.of(new Type2(1, 2), new Type2(3, 4)))));
 
   private static final Container SAMPLE_CONTAINER_NULL_LIST =
       new Container(
@@ -85,14 +96,16 @@ public class NestedUdtIT {
           null,
           ImmutableMap.of(
               "cd",
-              ImmutableList.of(new Type1("c"), new Type1("d")),
+              ImmutableList.of(new Type1("c1", "c2"), new Type1("d1", "d2")),
               "ef",
-              ImmutableList.of(new Type1("e"), new Type1("f"))),
+              ImmutableList.of(new Type1("e1", "e2"), new Type1("f1", "f2"))),
           ImmutableMap.of(
-              new Type1("12"),
-              ImmutableSet.of(ImmutableList.of(new Type2(1)), ImmutableList.of(new Type2(2)))),
+              new Type1("12", "34"),
+              ImmutableSet.of(
+                  ImmutableList.of(new Type2(1, 2)), ImmutableList.of(new Type2(3, 4)))),
           ImmutableMap.of(
-              new Type1("12"), ImmutableMap.of("12", ImmutableSet.of(new Type2(1), new Type2(2)))));
+              new Type1("12", "34"),
+              ImmutableMap.of("12", ImmutableSet.of(new Type2(1, 2), new Type2(3, 4)))));
 
   private static ContainerDao containerDao;
 
@@ -102,17 +115,38 @@ public class NestedUdtIT {
 
     for (String query :
         ImmutableList.of(
-            "CREATE TYPE type1(s text)",
-            "CREATE TYPE type2(i int)",
+            "CREATE TYPE type1(s1 text, s2 text)",
+            "CREATE TYPE type2(i1 int, i2 int)",
+            "CREATE TYPE type1_partial(s1 text)",
+            "CREATE TYPE type2_partial(i1 int)",
             "CREATE TABLE container(id uuid PRIMARY KEY, "
                 + "list frozen<list<type1>>, "
                 + "map1 frozen<map<text, list<type1>>>, "
                 + "map2 frozen<map<type1, set<list<type2>>>>,"
                 + "map3 frozen<map<type1, map<text, set<type2>>>>"
+                + ")",
+            "CREATE TABLE container_partial(id uuid PRIMARY KEY, "
+                + "list frozen<list<type1_partial>>, "
+                + "map1 frozen<map<text, list<type1_partial>>>, "
+                + "map2 frozen<map<type1_partial, set<list<type2_partial>>>>,"
+                + "map3 frozen<map<type1_partial, map<text, set<type2_partial>>>>"
                 + ")")) {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
     }
+
+    UserDefinedType type1Partial =
+        session
+            .getKeyspace()
+            .flatMap(ks -> session.getMetadata().getKeyspace(ks))
+            .flatMap(ks -> ks.getUserDefinedType("type1_partial"))
+            .orElseThrow(AssertionError::new);
+
+    session.execute(
+        SimpleStatement.newInstance(
+            "INSERT INTO container_partial (id, list) VALUES (?, ?)",
+            SAMPLE_CONTAINER.getId(),
+            Lists.newArrayList(type1Partial.newValue("a"), type1Partial.newValue("b"))));
 
     UdtsMapper udtsMapper = new NestedUdtIT_UdtsMapperBuilder(session).build();
     containerDao = udtsMapper.containerDao(SESSION_RULE.keyspace());
@@ -165,6 +199,71 @@ public class NestedUdtIT {
     assertThat(retrievedEntitySecond.list).isEmpty();
   }
 
+  @Test
+  public void should_get_entity_from_complete_row() {
+    CqlSession session = SESSION_RULE.session();
+    containerDao.save(SAMPLE_CONTAINER);
+    ResultSet rs =
+        session.execute(
+            SimpleStatement.newInstance(
+                "SELECT * FROM container WHERE id = ?", SAMPLE_CONTAINER.getId()));
+    Row row = rs.one();
+    assertThat(row).isNotNull();
+    Container actual = containerDao.get(row);
+    assertThat(actual).isEqualTo(SAMPLE_CONTAINER);
+  }
+
+  @Test
+  public void should_not_get_entity_from_partial_row_when_not_lenient() {
+    CqlSession session = SESSION_RULE.session();
+    containerDao.save(SAMPLE_CONTAINER);
+    ResultSet rs =
+        session.execute(
+            SimpleStatement.newInstance(
+                "SELECT id FROM container WHERE id = ?", SAMPLE_CONTAINER.getId()));
+    Row row = rs.one();
+    assertThat(row).isNotNull();
+    Throwable error = catchThrowable(() -> containerDao.get(row));
+    assertThat(error).hasMessage("list is not a column in this row");
+  }
+
+  @Test
+  public void should_get_entity_from_partial_row_when_lenient() {
+    CqlSession session = SESSION_RULE.session();
+    ResultSet rs =
+        session.execute(
+            SimpleStatement.newInstance(
+                "SELECT id, list FROM container_partial WHERE id = ?", SAMPLE_CONTAINER.getId()));
+    Row row = rs.one();
+    assertThat(row).isNotNull();
+    Container actual = containerDao.getLenient(row);
+    assertThat(actual.getId()).isEqualTo(SAMPLE_CONTAINER.getId());
+    assertThat(actual.getList()).containsExactly(new Type1("a", null), new Type1("b", null));
+    assertThat(actual.getMap1()).isNull();
+    assertThat(actual.getMap2()).isNull();
+    assertThat(actual.getMap3()).isNull();
+  }
+
+  @Test
+  public void should_set_entity_on_partial_statement_builder_when_lenient() {
+    CqlSession session = SESSION_RULE.session();
+    PreparedStatement ps =
+        session.prepare("INSERT INTO container_partial (id, list) VALUES (?, ?)");
+    BoundStatementBuilder builder = ps.boundStatementBuilder();
+    containerDao.setLenient(SAMPLE_CONTAINER, builder);
+    assertThat(builder.getUuid(0)).isEqualTo(SAMPLE_CONTAINER.getId());
+    assertThat(builder.getList(1, UdtValue.class)).hasSize(2);
+  }
+
+  @Test
+  public void should_not_set_entity_on_partial_statement_builder_when_not_lenient() {
+    CqlSession session = SESSION_RULE.session();
+    PreparedStatement ps = session.prepare("INSERT INTO container (id, list) VALUES (?, ?)");
+    Throwable error =
+        catchThrowable(() -> containerDao.set(SAMPLE_CONTAINER, ps.boundStatementBuilder()));
+    assertThat(error).hasMessage("map1 is not a variable in this bound statement");
+  }
+
   @Mapper
   public interface UdtsMapper {
     @DaoFactory
@@ -187,7 +286,16 @@ public class NestedUdtIT {
     void saveSetToNull(Container container);
 
     @GetEntity
-    Container get(GettableByName source);
+    Container get(Row source);
+
+    @GetEntity(lenient = true)
+    Container getLenient(Row source);
+
+    @SetEntity
+    void set(Container container, BoundStatementBuilder target);
+
+    @SetEntity(lenient = true)
+    void setLenient(Container container, BoundStatementBuilder target);
   }
 
   @Entity
@@ -278,73 +386,93 @@ public class NestedUdtIT {
 
   @Entity
   public static class Type1 {
-    private String s;
+    private String s1;
+    private String s2;
 
     public Type1() {}
 
-    public Type1(String s) {
-      this.s = s;
+    public Type1(String s1, String s2) {
+      this.s1 = s1;
+      this.s2 = s2;
     }
 
-    public String getS() {
-      return s;
+    public String getS1() {
+      return s1;
     }
 
-    public void setS(String s) {
-      this.s = s;
+    public void setS1(String s1) {
+      this.s1 = s1;
+    }
+
+    public String getS2() {
+      return s2;
+    }
+
+    public void setS2(String s2) {
+      this.s2 = s2;
     }
 
     @Override
-    public boolean equals(Object other) {
-      if (other == this) {
+    public boolean equals(Object o) {
+      if (this == o) {
         return true;
-      } else if (other instanceof Type1) {
-        Type1 that = (Type1) other;
-        return Objects.equals(this.s, that.s);
-      } else {
+      }
+      if (!(o instanceof Type1)) {
         return false;
       }
+      Type1 type1 = (Type1) o;
+      return Objects.equals(s1, type1.s1) && Objects.equals(s2, type1.s2);
     }
 
     @Override
     public int hashCode() {
-      return s == null ? 0 : s.hashCode();
+      return Objects.hash(s1, s2);
     }
   }
 
   @Entity
   public static class Type2 {
-    private int i;
+    private int i1;
+    private int i2;
 
     public Type2() {}
 
-    public Type2(int i) {
-      this.i = i;
+    public Type2(int i1, int i2) {
+      this.i1 = i1;
+      this.i2 = i2;
     }
 
-    public int getI() {
-      return i;
+    public int getI1() {
+      return i1;
     }
 
-    public void setI(int i) {
-      this.i = i;
+    public void setI1(int i1) {
+      this.i1 = i1;
+    }
+
+    public int getI2() {
+      return i2;
+    }
+
+    public void setI2(int i2) {
+      this.i2 = i2;
     }
 
     @Override
-    public boolean equals(Object other) {
-      if (other == this) {
+    public boolean equals(Object o) {
+      if (this == o) {
         return true;
-      } else if (other instanceof Type2) {
-        Type2 that = (Type2) other;
-        return this.i == that.i;
-      } else {
+      }
+      if (!(o instanceof Type2)) {
         return false;
       }
+      Type2 type2 = (Type2) o;
+      return i1 == type2.i1 && i2 == type2.i2;
     }
 
     @Override
     public int hashCode() {
-      return i;
+      return Objects.hash(i1, i2);
     }
   }
 }

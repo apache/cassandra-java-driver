@@ -102,4 +102,18 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface GetEntity {}
+public @interface GetEntity {
+
+  /**
+   * Whether to tolerate missing columns in the source data structure.
+   *
+   * <p>If {@code false} (the default), then the source must contain a matching column for every
+   * property in the entity definition, <em>including computed ones</em>. If such a column is not
+   * found, an {@link IllegalArgumentException} will be thrown.
+   *
+   * <p>If {@code true}, the mapper will operate on a best-effort basis and attempt to read all
+   * entity properties that have a matching column in the source, leaving unmatched properties
+   * untouched. Beware that this may result in a partially-populated entity instance.
+   */
+  boolean lenient() default false;
+}

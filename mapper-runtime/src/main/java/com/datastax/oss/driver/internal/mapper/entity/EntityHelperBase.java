@@ -16,6 +16,13 @@
 package com.datastax.oss.driver.internal.mapper.entity;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.data.AccessibleByName;
+import com.datastax.oss.driver.api.core.data.GettableByName;
+import com.datastax.oss.driver.api.core.data.SettableByName;
+import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.type.DataType;
@@ -30,6 +37,7 @@ import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.core.util.CollectionsUtils;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -74,6 +82,23 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
   @Override
   public CqlIdentifier getTableId() {
     return tableId;
+  }
+
+  @NonNull
+  @Override
+  @Deprecated
+  public <SettableT extends SettableByName<SettableT>> SettableT set(
+      @NonNull EntityT entity,
+      @NonNull SettableT target,
+      @NonNull NullSavingStrategy nullSavingStrategy) {
+    return set(entity, target, nullSavingStrategy, false);
+  }
+
+  @NonNull
+  @Override
+  @Deprecated
+  public EntityT get(@NonNull GettableByName source) {
+    return get(source, false);
   }
 
   public void throwIfKeyspaceMissing() {
@@ -201,6 +226,26 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
 
   public boolean keyspaceNamePresent(
       Map<CqlIdentifier, KeyspaceMetadata> keyspaces, CqlIdentifier keyspaceId) {
-    return keyspaces.keySet().contains(keyspaceId);
+    return keyspaces.containsKey(keyspaceId);
+  }
+
+  public boolean hasProperty(AccessibleByName source, String name) {
+    if (source instanceof Row) {
+      return ((Row) source).getColumnDefinitions().contains(name);
+    } else if (source instanceof UdtValue) {
+      return ((UdtValue) source).getType().contains(name);
+    } else if (source instanceof BoundStatement) {
+      return ((BoundStatement) source)
+          .getPreparedStatement()
+          .getVariableDefinitions()
+          .contains(name);
+    } else if (source instanceof BoundStatementBuilder) {
+      return ((BoundStatementBuilder) source)
+          .getPreparedStatement()
+          .getVariableDefinitions()
+          .contains(name);
+    }
+    // other implementations: assume the property is present
+    return true;
   }
 }

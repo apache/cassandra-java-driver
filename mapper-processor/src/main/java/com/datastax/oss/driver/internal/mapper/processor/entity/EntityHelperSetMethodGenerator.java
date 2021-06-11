@@ -25,6 +25,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import java.util.Optional;
 import javax.lang.model.element.Modifier;
@@ -43,8 +44,6 @@ public class EntityHelperSetMethodGenerator implements MethodGenerator {
   @Override
   public Optional<MethodSpec> generate() {
 
-    // TODO add an ignore mechanism? this fails if a property is missing on the target.
-
     // The method's type variable: <SettableT extends SettableByName<SettableT>>
     TypeVariableName settableT = TypeVariableName.get("SettableT");
     settableT =
@@ -60,10 +59,15 @@ public class EntityHelperSetMethodGenerator implements MethodGenerator {
             .addParameter(ParameterSpec.builder(settableT, "target").build())
             .addParameter(
                 ParameterSpec.builder(NullSavingStrategy.class, "nullSavingStrategy").build())
+            .addParameter(ParameterSpec.builder(TypeName.BOOLEAN, "lenient").build())
             .returns(settableT);
 
     CodeBlock.Builder injectBodyBuilder = CodeBlock.builder();
     for (PropertyDefinition property : entityDefinition.getAllColumns()) {
+
+      injectBodyBuilder.beginControlFlow(
+          "if (!lenient || hasProperty(target, $L))", property.getCqlName());
+
       GeneratedCodePatterns.setValue(
           property.getCqlName(),
           property.getType(),
@@ -71,7 +75,10 @@ public class EntityHelperSetMethodGenerator implements MethodGenerator {
           "target",
           injectBodyBuilder,
           enclosingClass,
+          true,
           true);
+
+      injectBodyBuilder.endControlFlow();
     }
     injectBodyBuilder.add("\n").addStatement("return target");
     return Optional.of(injectBuilder.addCode(injectBodyBuilder.build()).build());

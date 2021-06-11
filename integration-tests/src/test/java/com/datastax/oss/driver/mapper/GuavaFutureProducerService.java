@@ -106,7 +106,7 @@ public class GuavaFutureProducerService implements MapperResultProducerService {
         @NonNull AsyncResultSet resultSet, @Nullable EntityHelper<?> entityHelper) {
       assert entityHelper != null;
       Row row = resultSet.one();
-      return (row == null) ? null : entityHelper.get(row);
+      return (row == null) ? null : entityHelper.get(row, false);
     }
   }
 }

@@ -2,6 +2,10 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.12.0 (in progress)
+
+- [improvement] JAVA-2935: Make GetEntity and SetEntity methods resilient to incomplete data
+
 ### 4.11.2 (in progress)
 
 - [bug] JAVA-2945: Reinstate InternalDriverContext.getNodeFilter method
