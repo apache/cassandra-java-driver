@@ -16,19 +16,22 @@
 package com.datastax.oss.driver.core.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.type.DataTypes;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule.Builder;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.google.common.collect.ImmutableList;
@@ -48,7 +51,16 @@ import org.junit.rules.TestRule;
 
 public class SchemaChangesIT {
 
-  private static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().build();
+  static {
+    Builder builder = CustomCcmRule.builder();
+    if (!CcmBridge.DSE_ENABLEMENT
+        && CcmBridge.VERSION.nextStable().compareTo(Version.V4_0_0) >= 0) {
+      builder.withCassandraConfiguration("enable_materialized_views", true);
+    }
+    CCM_RULE = builder.build();
+  }
+
+  private static final CustomCcmRule CCM_RULE;
 
   // A client that we only use to set up the tests
   private static final SessionRule<CqlSession> ADMIN_SESSION_RULE =
@@ -227,8 +239,9 @@ public class SchemaChangesIT {
   }
 
   @Test
-  @CassandraRequirement(min = "3.0")
   public void should_handle_view_creation() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V3_0_0) >= 0)
+        .isTrue();
     should_handle_creation(
         "CREATE TABLE scores(user text, game text, score int, PRIMARY KEY (user, game))",
         "CREATE MATERIALIZED VIEW highscores "
@@ -257,8 +270,9 @@ public class SchemaChangesIT {
   }
 
   @Test
-  @CassandraRequirement(min = "3.0")
   public void should_handle_view_drop() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V3_0_0) >= 0)
+        .isTrue();
     should_handle_drop(
         ImmutableList.of(
             "CREATE TABLE scores(user text, game text, score int, PRIMARY KEY (user, game))",
@@ -276,8 +290,9 @@ public class SchemaChangesIT {
   }
 
   @Test
-  @CassandraRequirement(min = "3.0")
   public void should_handle_view_update() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V3_0_0) >= 0)
+        .isTrue();
     should_handle_update(
         ImmutableList.of(
             "CREATE TABLE scores(user text, game text, score int, PRIMARY KEY (user, game))",
@@ -298,8 +313,9 @@ public class SchemaChangesIT {
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
   public void should_handle_function_creation() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
+        .isTrue();
     should_handle_creation(
         null,
         "CREATE FUNCTION id(i int) RETURNS NULL ON NULL INPUT RETURNS int "
@@ -321,8 +337,9 @@ public class SchemaChangesIT {
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
   public void should_handle_function_drop() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
+        .isTrue();
     should_handle_drop(
         ImmutableList.of(
             "CREATE FUNCTION id(i int) RETURNS NULL ON NULL INPUT RETURNS int "
@@ -336,8 +353,9 @@ public class SchemaChangesIT {
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
   public void should_handle_function_update() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
+        .isTrue();
     should_handle_update_via_drop_and_recreate(
         ImmutableList.of(
             "CREATE FUNCTION id(i int) RETURNS NULL ON NULL INPUT RETURNS int "
@@ -355,8 +373,9 @@ public class SchemaChangesIT {
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
   public void should_handle_aggregate_creation() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
+        .isTrue();
     should_handle_creation(
         "CREATE FUNCTION plus(i int, j int) RETURNS NULL ON NULL INPUT RETURNS int "
             + "LANGUAGE java AS 'return i+j;'",
@@ -380,8 +399,9 @@ public class SchemaChangesIT {
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
   public void should_handle_aggregate_drop() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
+        .isTrue();
     should_handle_drop(
         ImmutableList.of(
             "CREATE FUNCTION plus(i int, j int) RETURNS NULL ON NULL INPUT RETURNS int "
@@ -396,8 +416,9 @@ public class SchemaChangesIT {
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
   public void should_handle_aggregate_update() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
+        .isTrue();
     should_handle_update_via_drop_and_recreate(
         ImmutableList.of(
             "CREATE FUNCTION plus(i int, j int) RETURNS NULL ON NULL INPUT RETURNS int "
