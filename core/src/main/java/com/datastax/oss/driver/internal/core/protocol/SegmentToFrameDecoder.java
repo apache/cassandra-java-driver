@@ -69,14 +69,19 @@ public class SegmentToFrameDecoder extends MessageToMessageDecoder<Segment<ByteB
   private void decodeSelfContained(Segment<ByteBuf> segment, List<Object> out) {
     ByteBuf payload = segment.payload;
     int frameCount = 0;
-    do {
-      Frame frame = frameCodec.decode(payload);
-      LOG.trace(
-          "[{}] Decoded response frame {} from self-contained segment", logPrefix, frame.streamId);
-      out.add(frame);
-      frameCount += 1;
-    } while (payload.isReadable());
-    payload.release();
+    try {
+      do {
+        Frame frame = frameCodec.decode(payload);
+        LOG.trace(
+            "[{}] Decoded response frame {} from self-contained segment",
+            logPrefix,
+            frame.streamId);
+        out.add(frame);
+        frameCount += 1;
+      } while (payload.isReadable());
+    } finally {
+      payload.release();
+    }
     LOG.trace("[{}] Done processing self-contained segment ({} frames)", logPrefix, frameCount);
   }
 
@@ -89,28 +94,34 @@ public class SegmentToFrameDecoder extends MessageToMessageDecoder<Segment<ByteB
     }
     accumulatedSlices.add(slice);
     accumulatedLength += slice.readableBytes();
+    int accumulatedSlicesSize = accumulatedSlices.size();
     LOG.trace(
         "[{}] Decoded slice {}, {}/{} bytes",
         logPrefix,
-        accumulatedSlices.size(),
+        accumulatedSlicesSize,
         accumulatedLength,
         targetLength);
     assert accumulatedLength <= targetLength;
     if (accumulatedLength == targetLength) {
       // We've received enough data to reassemble the whole message
-      CompositeByteBuf encodedFrame = allocator.compositeBuffer(accumulatedSlices.size());
+      CompositeByteBuf encodedFrame = allocator.compositeBuffer(accumulatedSlicesSize);
       encodedFrame.addComponents(true, accumulatedSlices);
-      Frame frame = frameCodec.decode(encodedFrame);
+      Frame frame;
+      try {
+        frame = frameCodec.decode(encodedFrame);
+      } finally {
+        encodedFrame.release();
+        // Reset our state
+        targetLength = UNKNOWN_LENGTH;
+        accumulatedSlices.clear();
+        accumulatedLength = 0;
+      }
       LOG.trace(
           "[{}] Decoded response frame {} from {} slices",
           logPrefix,
           frame.streamId,
-          accumulatedSlices.size());
+          accumulatedSlicesSize);
       out.add(frame);
-      // Reset our state
-      targetLength = UNKNOWN_LENGTH;
-      accumulatedSlices.clear();
-      accumulatedLength = 0;
     }
   }
 }

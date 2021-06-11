@@ -33,6 +33,7 @@ import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
+import java.util.Objects;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -93,7 +94,7 @@ public class PerProfileLoadBalancingPolicyIT {
     for (Node node : SESSION_RULE.session().getMetadata().getNodes().values()) {
       // if node is in dc2 it should be ignored, otherwise (dc1, dc3) it should be local.
       NodeDistance expectedDistance =
-          node.getDatacenter().equals("dc2") ? NodeDistance.IGNORED : NodeDistance.LOCAL;
+          Objects.equals(node.getDatacenter(), "dc2") ? NodeDistance.IGNORED : NodeDistance.LOCAL;
       assertThat(node.getDistance()).isEqualTo(expectedDistance);
     }
   }
@@ -101,10 +102,12 @@ public class PerProfileLoadBalancingPolicyIT {
   @Test
   public void should_use_policy_from_request_profile() {
     // Since profile1 uses dc3 as localDC, only those nodes should receive these queries.
-    Statement statement = QUERY.setExecutionProfileName("profile1");
+    Statement<?> statement = QUERY.setExecutionProfileName("profile1");
     for (int i = 0; i < 10; i++) {
       ResultSet result = SESSION_RULE.session().execute(statement);
-      assertThat(result.getExecutionInfo().getCoordinator().getDatacenter()).isEqualTo("dc3");
+      Node coordinator = result.getExecutionInfo().getCoordinator();
+      assertThat(coordinator).isNotNull();
+      assertThat(coordinator.getDatacenter()).isEqualTo("dc3");
     }
 
     assertQueryInDc(0, 0);
@@ -115,10 +118,12 @@ public class PerProfileLoadBalancingPolicyIT {
   @Test
   public void should_use_policy_from_config_when_not_configured_in_request_profile() {
     // Since profile2 does not define an lbp config, it should use default which uses dc1.
-    Statement statement = QUERY.setExecutionProfileName("profile2");
+    Statement<?> statement = QUERY.setExecutionProfileName("profile2");
     for (int i = 0; i < 10; i++) {
       ResultSet result = SESSION_RULE.session().execute(statement);
-      assertThat(result.getExecutionInfo().getCoordinator().getDatacenter()).isEqualTo("dc1");
+      Node coordinator = result.getExecutionInfo().getCoordinator();
+      assertThat(coordinator).isNotNull();
+      assertThat(coordinator.getDatacenter()).isEqualTo("dc1");
     }
 
     assertQueryInDc(0, 5);

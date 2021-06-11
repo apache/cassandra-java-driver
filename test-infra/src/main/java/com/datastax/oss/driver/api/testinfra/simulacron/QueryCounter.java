@@ -112,11 +112,12 @@ public class QueryCounter {
 
   public static class QueryCounterBuilder {
 
-    @SuppressWarnings("deprecation")
-    private static Predicate<QueryLog> DEFAULT_FILTER = (q) -> !q.getQuery().isEmpty();
+    @SuppressWarnings("UnnecessaryLambda")
+    private static final Predicate<QueryLog> DEFAULT_FILTER = (q) -> !q.getQuery().isEmpty();
+
+    private final BoundTopic<?, ?> topic;
 
     private Predicate<QueryLog> queryLogFilter = DEFAULT_FILTER;
-    private BoundTopic<?, ?> topic;
     private NotificationMode notificationMode = NotificationMode.BEFORE_PROCESSING;
     private long beforeTimeout = 1;
     private TimeUnit beforeUnit = TimeUnit.SECONDS;

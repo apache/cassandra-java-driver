@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.QueryTrace;
+import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
@@ -86,7 +87,20 @@ public class QueryTraceIT {
     assertThat(queryTrace.getRequestType()).isEqualTo("Execute CQL3 query");
     assertThat(queryTrace.getDurationMicros()).isPositive();
     assertThat(queryTrace.getCoordinatorAddress().getAddress()).isEqualTo(nodeAddress);
-    assertThat(queryTrace.getCoordinatorAddress().getPort()).isEqualTo(expectPorts ? 7000 : 0);
+    if (expectPorts) {
+      Row row =
+          SESSION_RULE
+              .session()
+              .execute(
+                  "SELECT coordinator_port FROM system_traces.sessions WHERE session_id = "
+                      + queryTrace.getTracingId())
+              .one();
+      assertThat(row).isNotNull();
+      int expectedPort = row.getInt(0);
+      assertThat(queryTrace.getCoordinatorAddress().getPort()).isEqualTo(expectedPort);
+    } else {
+      assertThat(queryTrace.getCoordinatorAddress().getPort()).isEqualTo(0);
+    }
     assertThat(queryTrace.getParameters())
         .containsEntry("consistency_level", "LOCAL_ONE")
         .containsEntry("page_size", "5000")
@@ -98,6 +112,20 @@ public class QueryTraceIT {
     InetSocketAddress sourceAddress0 = queryTrace.getEvents().get(0).getSourceAddress();
     assertThat(sourceAddress0).isNotNull();
     assertThat(sourceAddress0.getAddress()).isEqualTo(nodeAddress);
-    assertThat(sourceAddress0.getPort()).isEqualTo(expectPorts ? 7000 : 0);
+    if (expectPorts) {
+      Row row =
+          SESSION_RULE
+              .session()
+              .execute(
+                  "SELECT source_port FROM system_traces.events WHERE session_id = "
+                      + queryTrace.getTracingId()
+                      + " LIMIT 1")
+              .one();
+      assertThat(row).isNotNull();
+      int expectedPort = row.getInt(0);
+      assertThat(sourceAddress0.getPort()).isEqualTo(expectedPort);
+    } else {
+      assertThat(sourceAddress0.getPort()).isEqualTo(0);
+    }
   }
 }

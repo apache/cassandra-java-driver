@@ -82,7 +82,6 @@ public class PerProfileRetryPolicyIT {
   private static String QUERY_STRING = "select * from foo";
   private static final SimpleStatement QUERY = SimpleStatement.newInstance(QUERY_STRING);
 
-  @SuppressWarnings("deprecation")
   private final QueryCounter counter =
       QueryCounter.builder(SIMULACRON_RULE.cluster())
           .withFilter((l) -> l.getQuery().equals(QUERY_STRING))

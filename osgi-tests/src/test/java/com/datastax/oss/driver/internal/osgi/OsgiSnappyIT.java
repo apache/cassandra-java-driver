@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.osgi;
 
 import com.datastax.oss.driver.api.osgi.service.MailboxService;
+import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.internal.osgi.checks.DefaultServiceChecks;
 import com.datastax.oss.driver.internal.osgi.support.BundleOptions;
 import com.datastax.oss.driver.internal.osgi.support.CcmExamReactorFactory;
@@ -30,6 +31,7 @@ import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 
 @RunWith(CcmPaxExam.class)
 @ExamReactorStrategy(CcmExamReactorFactory.class)
+@CassandraRequirement(max = "3.99")
 public class OsgiSnappyIT {
 
   @Inject MailboxService service;
