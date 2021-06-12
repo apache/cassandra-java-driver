@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.mapper;
 
 import static com.datastax.oss.driver.assertions.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assume.assumeFalse;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
@@ -36,8 +37,8 @@ import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import java.time.Duration;
 import java.util.concurrent.CompletionStage;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -73,29 +74,35 @@ public class SelectCustomWhereClauseIT extends InventoryITBase {
     InventoryMapper inventoryMapper =
         new SelectCustomWhereClauseIT_InventoryMapperBuilder(session).build();
     dao = inventoryMapper.productDao(SESSION_RULE.keyspace());
-  }
-
-  @Before
-  public void insertData() {
     dao.save(FLAMETHROWER);
     dao.save(MP3_DOWNLOAD);
   }
 
   @Test
   public void should_select_with_custom_clause() {
-    PagingIterable<Product> products = dao.findByDescription("%mp3%");
-    assertThat(products.one()).isEqualTo(MP3_DOWNLOAD);
-    assertThat(products.iterator()).isExhausted();
+    await()
+        .atMost(Duration.ofMinutes(1))
+        .untilAsserted(
+            () -> {
+              PagingIterable<Product> products = dao.findByDescription("%mp3%");
+              assertThat(products.one()).isEqualTo(MP3_DOWNLOAD);
+              assertThat(products.iterator()).isExhausted();
+            });
   }
 
   @Test
   public void should_select_with_custom_clause_asynchronously() {
-    MappedAsyncPagingIterable<Product> iterable =
-        CompletableFutures.getUninterruptibly(
-            dao.findByDescriptionAsync("%mp3%").toCompletableFuture());
-    assertThat(iterable.one()).isEqualTo(MP3_DOWNLOAD);
-    assertThat(iterable.currentPage().iterator()).isExhausted();
-    assertThat(iterable.hasMorePages()).isFalse();
+    await()
+        .atMost(Duration.ofMinutes(1))
+        .untilAsserted(
+            () -> {
+              MappedAsyncPagingIterable<Product> iterable =
+                  CompletableFutures.getUninterruptibly(
+                      dao.findByDescriptionAsync("%mp3%").toCompletableFuture());
+              assertThat(iterable.one()).isEqualTo(MP3_DOWNLOAD);
+              assertThat(iterable.currentPage().iterator()).isExhausted();
+              assertThat(iterable.hasMorePages()).isFalse();
+            });
   }
 
   @Mapper
