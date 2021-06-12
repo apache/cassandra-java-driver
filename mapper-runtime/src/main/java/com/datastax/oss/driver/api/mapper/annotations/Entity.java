@@ -47,8 +47,9 @@ import java.lang.annotation.Target;
  *       getDescription}) and has no parameters. The name of the property is obtained by removing
  *       the "get" prefix and decapitalizing ({@code description}), and the type of the property is
  *       the return type of the getter.
- *   <li>there <b>must</b> be a matching setter method ({@code setDescription}), with a single
- *       parameter that has the same type as the property (the return type does not matter).
+ *   <li>unless the entity is {@linkplain PropertyStrategy#mutable() immutable}, there <b>must</b>
+ *       be a matching setter method ({@code setDescription}), with a single parameter that has the
+ *       same type as the property (the return type does not matter).
  * </ul>
  *
  * There <i>may</i> also be a matching field ({@code description}) that has the same type as the

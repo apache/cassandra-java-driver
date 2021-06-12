@@ -168,7 +168,9 @@ public class QueryProviderIT {
           boundStatementBuilder = boundStatementBuilder.setInt("day", day);
         }
       }
-      return session.execute(boundStatementBuilder.build()).map(sensorReadingHelper::get);
+      return session
+          .execute(boundStatementBuilder.build())
+          .map(row -> sensorReadingHelper.get(row, false));
     }
   }
 

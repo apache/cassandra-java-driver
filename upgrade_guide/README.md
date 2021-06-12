@@ -15,6 +15,26 @@ involves backwards-incompatible binary changes, users of this library and of the
 * If your application is using MicroProfile Metrics >= 3.0, then you must upgrade to driver 4.12 or
   higher, as previous versions of `java-driver-metrics-microprofile` will not work.
 
+#### Mapper `@GetEntity` and `@SetEntity` methods can now be lenient
+
+Thanks to [JAVA-2935](https://datastax-oss.atlassian.net/browse/JAVA-2935), `@GetEntity` and
+`@SetEntity` methods now have a new `lenient` attribute.
+
+If the attribute is `false` (the default value), then the source row or the target statement must
+contain a matching column for every property in the entity definition, *including computed ones*. If
+such a column is not found, an error will be thrown. This corresponds to the mapper's current
+behavior prior to the introduction of the new attribute.
+
+If the new attribute is explicitly set to `true` however, the mapper will operate on a best-effort
+basis and attempt to read or write all entity properties that have a matching column in the source
+row or in the target statement, *leaving unmatched properties untouched*.
+
+This new, lenient behavior allows to achieve the equivalent of driver 3.x 
+[lenient mapping](https://docs.datastax.com/en/developer/java-driver/3.10/manual/object_mapper/using/#manual-mapping).
+
+Read the manual pages on [@GetEntity](../manual/mapper/daos/getentity) methods and
+[@SetEntity](../manual/mapper/daos/setentity) methods for more details and examples of lenient mode.
+
 ### 4.11.0
 
 #### Native protocol V5 is now production-ready

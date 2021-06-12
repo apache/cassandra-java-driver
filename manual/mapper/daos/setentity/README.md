@@ -21,6 +21,55 @@ boundStatement = boundStatement.set("description", product.getDescription(), Str
 It does not perform a query. Instead, those methods are intended for cases where you will execute
 the query yourself, and just need the conversion logic.
 
+### Lenient mode
+
+By default, the mapper operates in "strict" mode: the target statement must contain a matching
+column for every property in the entity definition, *except computed ones*. If such a column is not
+found, an error will be thrown.
+
+Starting with driver 4.12.0, the `@SetEntity` annotation has a new `lenient` attribute. If this
+attribute is explicitly set to `true`, the mapper will operate in "lenient" mode: all entity
+properties that have a matching column in the target statement will be set. However, *unmatched
+properties will be left untouched*.
+
+As an example to illustrate how lenient mode works, assume that we have the following entity and
+DAO:
+
+```java
+@Entity class Product {
+
+  @PartitionKey int id;
+  String description;
+  float price;
+  // other members omitted
+}
+
+interface ProductDao {
+
+  @SetEntity(lenient = true)
+  BoundStatement setLenient(Product product, BoundStatement stmt);
+
+}
+```
+
+Then the following code would be possible:
+
+```java
+Product product = new Product(1, "scented candle", 12.99);
+// stmt does not contain the price column
+BoundStatement stmt = session.prepare("INSERT INTO product (id, description) VALUES (?, ?)").bind();
+stmt = productDao.setLenient(product, stmt);
+```
+
+Since no `price` column was found in the target statement, `product.price` wasn't read (if the
+statement is executed, the resulting row in the database will have a price of zero). Without lenient
+mode, the code above would throw an error instead.
+
+Lenient mode allows to achieve the equivalent of driver 3.x [manual mapping
+feature](https://docs.datastax.com/en/developer/java-driver/3.10/manual/object_mapper/using/#manual-mapping).
+
+**Beware that lenient mode may result in incomplete rows being inserted in the database.**
+
 ### Parameters
 
 The method must have two parameters: one is the entity instance, the other must be a subtype of

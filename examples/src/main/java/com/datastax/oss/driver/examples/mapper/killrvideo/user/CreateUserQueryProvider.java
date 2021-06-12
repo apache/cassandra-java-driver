@@ -116,14 +116,14 @@ class CreateUserQueryProvider {
     UserCredentials credentials =
         new UserCredentials(Objects.requireNonNull(email), passwordHash, userId);
     BoundStatementBuilder insertCredentials = preparedInsertCredentials.boundStatementBuilder();
-    credentialsHelper.set(credentials, insertCredentials, NullSavingStrategy.DO_NOT_SET);
+    credentialsHelper.set(credentials, insertCredentials, NullSavingStrategy.DO_NOT_SET, false);
     ResultSet resultSet = session.execute(insertCredentials.build());
     return resultSet.wasApplied();
   }
 
   private void insertUser(User user) {
     BoundStatementBuilder insertUser = preparedInsertUser.boundStatementBuilder();
-    userHelper.set(user, insertUser, NullSavingStrategy.DO_NOT_SET);
+    userHelper.set(user, insertUser, NullSavingStrategy.DO_NOT_SET, false);
     session.execute(insertUser.build());
   }
 }

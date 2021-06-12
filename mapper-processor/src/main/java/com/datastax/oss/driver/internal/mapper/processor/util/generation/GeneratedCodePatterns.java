@@ -186,7 +186,8 @@ public class GeneratedCodePatterns {
           "boundStatementBuilder",
           methodBuilder,
           enclosingClass,
-          useNullSavingStrategy);
+          useNullSavingStrategy,
+          false);
     }
   }
 
@@ -214,7 +215,8 @@ public class GeneratedCodePatterns {
       String targetName,
       CodeBlock.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass) {
-    setValue(cqlName, type, valueExtractor, targetName, methodBuilder, enclosingClass, false);
+    setValue(
+        cqlName, type, valueExtractor, targetName, methodBuilder, enclosingClass, false, false);
   }
 
   public static void setValue(
@@ -224,8 +226,8 @@ public class GeneratedCodePatterns {
       String targetName,
       CodeBlock.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass,
-      boolean useNullSavingStrategy) {
-    methodBuilder.add("\n");
+      boolean useNullSavingStrategy,
+      boolean useLeniency) {
 
     if (type instanceof PropertyType.Simple) {
       TypeName typeName = ((PropertyType.Simple) type).typeName;
@@ -293,12 +295,13 @@ public class GeneratedCodePatterns {
           // driver doesn't have the ability to send partial UDT, unset values values will be
           // serialized to null - set NullSavingStrategy.DO_NOT_SET explicitly
           .addStatement(
-              "$L.set($L, $L,  $T.$L)",
+              "$L.set($L, $L,  $T.$L, $L)",
               childHelper,
               valueName,
               udtValueName,
               NullSavingStrategy.class,
-              NullSavingStrategy.DO_NOT_SET)
+              NullSavingStrategy.DO_NOT_SET,
+              useLeniency ? "lenient" : false)
           .addStatement("$1L = $1L.setUdtValue($2L, $3L)", targetName, cqlName, udtValueName);
       if (useNullSavingStrategy) {
         methodBuilder.nextControlFlow(
@@ -331,7 +334,8 @@ public class GeneratedCodePatterns {
           currentCqlType,
           udtTypesBuilder,
           conversionCodeBuilder,
-          enclosingClass);
+          enclosingClass,
+          useLeniency);
 
       methodBuilder
           .add(udtTypesBuilder.build())
@@ -439,7 +443,8 @@ public class GeneratedCodePatterns {
         targetName,
         methodBuilder,
         enclosingClass,
-        useNullSavingStrategy);
+        useNullSavingStrategy,
+        false);
   }
 
   /**
@@ -455,6 +460,7 @@ public class GeneratedCodePatterns {
    *     variables that extract the required {@link UserDefinedType} instances from the target
    *     container.
    * @param conversionBuilder the code block to generate the conversion code into.
+   * @param useLeniency whether the 'lenient' boolean variable is in scope.
    */
   private static void convertEntitiesIntoUdts(
       String mappedObjectName,
@@ -463,7 +469,8 @@ public class GeneratedCodePatterns {
       CodeBlock currentCqlType,
       CodeBlock.Builder udtTypesBuilder,
       CodeBlock.Builder conversionBuilder,
-      BindableHandlingSharedCode enclosingClass) {
+      BindableHandlingSharedCode enclosingClass,
+      boolean useLeniency) {
 
     if (type instanceof PropertyType.SingleEntity) {
       ClassName entityClass = ((PropertyType.SingleEntity) type).entityName;
@@ -480,12 +487,13 @@ public class GeneratedCodePatterns {
           // driver doesn't have the ability to send partial UDT, unset values values will be
           // serialized to null - set NullSavingStrategy.DO_NOT_SET explicitly
           .addStatement(
-              "$L.set($L, $L, $T.$L)",
+              "$L.set($L, $L, $T.$L, $L)",
               entityHelperName,
               mappedObjectName,
               rawObjectName,
               NullSavingStrategy.class,
-              NullSavingStrategy.DO_NOT_SET);
+              NullSavingStrategy.DO_NOT_SET,
+              useLeniency ? "lenient" : false);
     } else if (type instanceof PropertyType.EntityList) {
       TypeName rawCollectionType = type.asRawTypeName();
       conversionBuilder.addStatement(
@@ -506,7 +514,8 @@ public class GeneratedCodePatterns {
           CodeBlock.of("(($T) $L).getElementType()", ListType.class, currentCqlType),
           udtTypesBuilder,
           conversionBuilder,
-          enclosingClass);
+          enclosingClass,
+          useLeniency);
       conversionBuilder.addStatement("$L.add($L)", rawObjectName, rawElementName).endControlFlow();
     } else if (type instanceof PropertyType.EntitySet) {
       TypeName rawCollectionType = type.asRawTypeName();
@@ -528,7 +537,8 @@ public class GeneratedCodePatterns {
           CodeBlock.of("(($T) $L).getElementType()", SetType.class, currentCqlType),
           udtTypesBuilder,
           conversionBuilder,
-          enclosingClass);
+          enclosingClass,
+          useLeniency);
       conversionBuilder.addStatement("$L.add($L)", rawObjectName, rawElementName).endControlFlow();
     } else if (type instanceof PropertyType.EntityMap) {
       TypeName rawCollectionType = type.asRawTypeName();
@@ -562,7 +572,8 @@ public class GeneratedCodePatterns {
             CodeBlock.of("(($T) $L).getKeyType()", MapType.class, currentCqlType),
             udtTypesBuilder,
             conversionBuilder,
-            enclosingClass);
+            enclosingClass,
+            useLeniency);
       }
       String mappedValueName = CodeBlock.of("$L.getValue()", mappedEntryName).toString();
       String rawValueName;
@@ -577,7 +588,8 @@ public class GeneratedCodePatterns {
             CodeBlock.of("(($T) $L).getValueType()", MapType.class, currentCqlType),
             udtTypesBuilder,
             conversionBuilder,
-            enclosingClass);
+            enclosingClass,
+            useLeniency);
       }
       conversionBuilder
           .addStatement("$L.put($L, $L)", rawObjectName, rawKeyName, rawValueName)

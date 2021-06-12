@@ -35,6 +35,7 @@ import javax.lang.model.type.TypeMirror;
 public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
 
   private final NullSavingStrategyValidation nullSavingStrategyValidation;
+  private final boolean lenient;
 
   public DaoSetEntityMethodGenerator(
       ExecutableElement methodElement,
@@ -44,6 +45,7 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
       ProcessorContext context) {
     super(methodElement, typeParameters, processedType, enclosingClass, context);
     nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
+    lenient = methodElement.getAnnotation(SetEntity.class).lenient();
   }
 
   @Override
@@ -130,13 +132,14 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
     return Optional.of(
         GeneratedCodePatterns.override(methodElement, typeParameters)
             .addStatement(
-                "$1L$2L.set($3L, $4L, $5T.$6L)",
+                "$1L$2L.set($3L, $4L, $5T.$6L, $7L)",
                 isVoid ? "" : "return ",
                 helperFieldName,
                 entityParameterName,
                 targetParameterName,
                 NullSavingStrategy.class,
-                nullSavingStrategy)
+                nullSavingStrategy,
+                lenient)
             .build());
   }
 }
