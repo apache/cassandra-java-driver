@@ -20,6 +20,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.AbstractMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.MetricId;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -75,7 +76,7 @@ public abstract class MicroProfileMetricUpdater<MetricT> extends AbstractMetricU
   public void updateTimer(
       MetricT metric, @Nullable String profileName, long duration, TimeUnit unit) {
     if (isEnabled(metric, profileName)) {
-      getOrCreateTimerFor(metric).update(duration, unit);
+      getOrCreateTimerFor(metric).update(Duration.ofNanos(unit.toNanos(duration)));
     }
   }
 

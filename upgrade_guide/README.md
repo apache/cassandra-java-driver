@@ -1,5 +1,20 @@
 ## Upgrade guide
 
+### 4.12.0
+
+#### MicroProfile Metrics upgraded to 3.0
+
+The MicroProfile Metrics library has been upgraded from version 2.4 to 3.0. Since this upgrade
+involves backwards-incompatible binary changes, users of this library and of the
+`java-driver-metrics-microprofile` module are required to take the appropriate action:
+
+* If your application is still using MicroProfile Metrics < 3.0, you can still upgrade the core
+  driver to 4.12, but you now must keep `java-driver-metrics-microprofile` in version 4.11 or lower,
+  as newer versions will not work.
+    
+* If your application is using MicroProfile Metrics >= 3.0, then you must upgrade to driver 4.12 or
+  higher, as previous versions of `java-driver-metrics-microprofile` will not work.
+
 ### 4.11.0
 
 #### Native protocol V5 is now production-ready

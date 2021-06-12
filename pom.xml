@@ -416,12 +416,12 @@
       <dependency>
         <groupId>org.eclipse.microprofile.metrics</groupId>
         <artifactId>microprofile-metrics-api</artifactId>
-        <version>2.3.3</version>
+        <version>3.0</version>
       </dependency>
       <dependency>
         <groupId>io.smallrye</groupId>
         <artifactId>smallrye-metrics</artifactId>
-        <version>2.4.6</version>
+        <version>3.0.3</version>
       </dependency>
       <dependency>
         <groupId>io.projectreactor</groupId>
