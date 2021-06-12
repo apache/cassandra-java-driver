@@ -2,6 +2,19 @@
 
 ### 4.12.0
 
+#### MicroProfile Metrics upgraded to 3.0
+
+The MicroProfile Metrics library has been upgraded from version 2.4 to 3.0. Since this upgrade
+involves backwards-incompatible binary changes, users of this library and of the
+`java-driver-metrics-microprofile` module are required to take the appropriate action:
+
+* If your application is still using MicroProfile Metrics < 3.0, you can still upgrade the core
+  driver to 4.12, but you now must keep `java-driver-metrics-microprofile` in version 4.11 or lower,
+  as newer versions will not work.
+    
+* If your application is using MicroProfile Metrics >= 3.0, then you must upgrade to driver 4.12 or
+  higher, as previous versions of `java-driver-metrics-microprofile` will not work.
+
 #### Mapper `@GetEntity` and `@SetEntity` methods can now be lenient
 
 Thanks to [JAVA-2935](https://datastax-oss.atlassian.net/browse/JAVA-2935), `@GetEntity` and
@@ -16,10 +29,11 @@ If the new attribute is explicitly set to `true` however, the mapper will operat
 basis and attempt to read or write all entity properties that have a matching column in the source
 row or in the target statement, *leaving unmatched properties untouched*.
 
-This new, lenient behavior allows to achieve the equivalent of driver 3.x [manual mapping feature](https://docs.datastax.com/en/developer/java-driver/3.10/manual/object_mapper/using/#manual-mapping).
+This new, lenient behavior allows to achieve the equivalent of driver 3.x 
+[lenient mapping](https://docs.datastax.com/en/developer/java-driver/3.10/manual/object_mapper/using/#manual-mapping).
 
 Read the manual pages on [@GetEntity](../manual/mapper/daos/getentity) methods and
-[@SetEntity](../manual/mapper/daos/setentity) methods more details and examples of lenient mode.
+[@SetEntity](../manual/mapper/daos/setentity) methods for more details and examples of lenient mode.
 
 ### 4.11.0
 

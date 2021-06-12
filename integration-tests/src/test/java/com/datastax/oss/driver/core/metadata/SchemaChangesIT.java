@@ -16,23 +16,23 @@
 package com.datastax.oss.driver.core.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
-import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.type.DataTypes;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
-import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
+import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
-import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import java.time.Duration;
@@ -42,22 +42,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import org.assertj.core.api.Assertions;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@Category(ParallelizableTests.class)
 public class SchemaChangesIT {
 
-  private CcmRule ccmRule = CcmRule.getInstance();
+  static {
+    CustomCcmRule.Builder builder = CustomCcmRule.builder();
+    if (!CcmBridge.DSE_ENABLEMENT
+        && CcmBridge.VERSION.nextStable().compareTo(Version.V4_0_0) >= 0) {
+      builder.withCassandraConfiguration("enable_materialized_views", true);
+    }
+    CCM_RULE = builder.build();
+  }
+
+  private static final CustomCcmRule CCM_RULE;
 
   // A client that we only use to set up the tests
-  private SessionRule<CqlSession> adminSessionRule =
-      SessionRule.builder(ccmRule)
+  private static final SessionRule<CqlSession> ADMIN_SESSION_RULE =
+      SessionRule.builder(CCM_RULE)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
@@ -65,15 +71,16 @@ public class SchemaChangesIT {
                   .build())
           .build();
 
-  @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(adminSessionRule);
+  @ClassRule
+  public static TestRule chain = RuleChain.outerRule(CCM_RULE).around(ADMIN_SESSION_RULE);
 
   @Before
   public void setup() {
     // Always drop and re-create the keyspace to start from a clean state
-    adminSessionRule
+    ADMIN_SESSION_RULE
         .session()
-        .execute(String.format("DROP KEYSPACE %s", adminSessionRule.keyspace()));
-    SessionUtils.createKeyspace(adminSessionRule.session(), adminSessionRule.keyspace());
+        .execute(String.format("DROP KEYSPACE %s", ADMIN_SESSION_RULE.keyspace()));
+    SessionUtils.createKeyspace(ADMIN_SESSION_RULE.session(), ADMIN_SESSION_RULE.keyspace());
   }
 
   @Test
@@ -87,9 +94,9 @@ public class SchemaChangesIT {
             newKeyspaceId),
         metadata -> metadata.getKeyspace(newKeyspaceId),
         keyspace -> {
-          Assertions.assertThat(keyspace.getName()).isEqualTo(newKeyspaceId);
-          Assertions.assertThat(keyspace.isDurableWrites()).isTrue();
-          Assertions.assertThat(keyspace.getReplication())
+          assertThat(keyspace.getName()).isEqualTo(newKeyspaceId);
+          assertThat(keyspace.isDurableWrites()).isTrue();
+          assertThat(keyspace.getReplication())
               .hasSize(2)
               .containsEntry("class", "org.apache.cassandra.locator.SimpleStrategy")
               .containsEntry("replication_factor", "1");
@@ -128,7 +135,7 @@ public class SchemaChangesIT {
                 + "AND durable_writes = 'false'",
             newKeyspaceId.asCql(true)),
         metadata -> metadata.getKeyspace(newKeyspaceId),
-        newKeyspace -> Assertions.assertThat(newKeyspace.isDurableWrites()).isFalse(),
+        newKeyspace -> assertThat(newKeyspace.isDurableWrites()).isFalse(),
         (listener, oldKeyspace, newKeyspace) ->
             verify(listener).onKeyspaceUpdated(newKeyspace, oldKeyspace),
         newKeyspaceId);
@@ -141,22 +148,20 @@ public class SchemaChangesIT {
         "CREATE TABLE foo(k int primary key)",
         metadata ->
             metadata
-                .getKeyspace(adminSessionRule.keyspace())
+                .getKeyspace(ADMIN_SESSION_RULE.keyspace())
                 .orElseThrow(IllegalStateException::new)
                 .getTable(CqlIdentifier.fromInternal("foo")),
         table -> {
-          Assertions.assertThat(table.getKeyspace()).isEqualTo(adminSessionRule.keyspace());
-          Assertions.assertThat(table.getName().asInternal()).isEqualTo("foo");
-          Assertions.assertThat(table.getColumns())
-              .containsOnlyKeys(CqlIdentifier.fromInternal("k"));
-          Assertions.assertThat(table.getColumn(CqlIdentifier.fromInternal("k")))
+          assertThat(table.getKeyspace()).isEqualTo(ADMIN_SESSION_RULE.keyspace());
+          assertThat(table.getName().asInternal()).isEqualTo("foo");
+          assertThat(table.getColumns()).containsOnlyKeys(CqlIdentifier.fromInternal("k"));
+          assertThat(table.getColumn(CqlIdentifier.fromInternal("k")))
               .hasValueSatisfying(
                   k -> {
-                    Assertions.assertThat(k.getType()).isEqualTo(DataTypes.INT);
-                    Assertions.<ColumnMetadata>assertThat(table.getPartitionKey())
-                        .containsExactly(k);
+                    assertThat(k.getType()).isEqualTo(DataTypes.INT);
+                    assertThat(table.getPartitionKey()).containsExactly(k);
                   });
-          Assertions.assertThat(table.getClusteringColumns()).isEmpty();
+          assertThat(table.getClusteringColumns()).isEmpty();
         },
         (listener, table) -> verify(listener).onTableCreated(table));
   }
@@ -168,7 +173,7 @@ public class SchemaChangesIT {
         "DROP TABLE foo",
         metadata ->
             metadata
-                .getKeyspace(adminSessionRule.keyspace())
+                .getKeyspace(ADMIN_SESSION_RULE.keyspace())
                 .flatMap(ks -> ks.getTable(CqlIdentifier.fromInternal("foo"))),
         (listener, oldTable) -> verify(listener).onTableDropped(oldTable));
   }
@@ -180,10 +185,9 @@ public class SchemaChangesIT {
         "ALTER TABLE foo ADD v int",
         metadata ->
             metadata
-                .getKeyspace(adminSessionRule.keyspace())
+                .getKeyspace(ADMIN_SESSION_RULE.keyspace())
                 .flatMap(ks -> ks.getTable(CqlIdentifier.fromInternal("foo"))),
-        newTable ->
-            Assertions.assertThat(newTable.getColumn(CqlIdentifier.fromInternal("v"))).isPresent(),
+        newTable -> assertThat(newTable.getColumn(CqlIdentifier.fromInternal("v"))).isPresent(),
         (listener, oldTable, newTable) -> verify(listener).onTableUpdated(newTable, oldTable));
   }
 
@@ -194,14 +198,13 @@ public class SchemaChangesIT {
         "CREATE TYPE t(i int)",
         metadata ->
             metadata
-                .getKeyspace(adminSessionRule.keyspace())
+                .getKeyspace(ADMIN_SESSION_RULE.keyspace())
                 .flatMap(ks -> ks.getUserDefinedType(CqlIdentifier.fromInternal("t"))),
         type -> {
-          Assertions.assertThat(type.getKeyspace()).isEqualTo(adminSessionRule.keyspace());
-          Assertions.assertThat(type.getName().asInternal()).isEqualTo("t");
-          Assertions.assertThat(type.getFieldNames())
-              .containsExactly(CqlIdentifier.fromInternal("i"));
-          Assertions.assertThat(type.getFieldTypes()).containsExactly(DataTypes.INT);
+          assertThat(type.getKeyspace()).isEqualTo(ADMIN_SESSION_RULE.keyspace());
+          assertThat(type.getName().asInternal()).isEqualTo("t");
+          assertThat(type.getFieldNames()).containsExactly(CqlIdentifier.fromInternal("i"));
+          assertThat(type.getFieldTypes()).containsExactly(DataTypes.INT);
         },
         (listener, type) -> verify(listener).onUserDefinedTypeCreated(type));
   }
@@ -213,7 +216,7 @@ public class SchemaChangesIT {
         "DROP TYPE t",
         metadata ->
             metadata
-                .getKeyspace(adminSessionRule.keyspace())
+                .getKeyspace(ADMIN_SESSION_RULE.keyspace())
                 .flatMap(ks -> ks.getUserDefinedType(CqlIdentifier.fromInternal("t"))),
         (listener, oldType) -> verify(listener).onUserDefinedTypeDropped(oldType));
   }
@@ -225,18 +228,19 @@ public class SchemaChangesIT {
         "ALTER TYPE t ADD j int",
         metadata ->
             metadata
-                .getKeyspace(adminSessionRule.keyspace())
+                .getKeyspace(ADMIN_SESSION_RULE.keyspace())
                 .flatMap(ks -> ks.getUserDefinedType(CqlIdentifier.fromInternal("t"))),
         newType ->
-            Assertions.assertThat(newType.getFieldNames())
+            assertThat(newType.getFieldNames())
                 .containsExactly(CqlIdentifier.fromInternal("i"), CqlIdentifier.fromInternal("j")),
         (listener, oldType, newType) ->
             verify(listener).onUserDefinedTypeUpdated(newType, oldType));
   }
 
   @Test
-  @CassandraRequirement(min = "3.0")
   public void should_handle_view_creation() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V3_0_0) >= 0)
+        .isTrue();
     should_handle_creation(
         "CREATE TABLE scores(user text, game text, score int, PRIMARY KEY (user, game))",
         "CREATE MATERIALIZED VIEW highscores "
@@ -246,16 +250,16 @@ public class SchemaChangesIT {
             + "WITH CLUSTERING ORDER BY (score DESC, user DESC)",
         metadata ->
             metadata
-                .getKeyspace(adminSessionRule.keyspace())
+                .getKeyspace(ADMIN_SESSION_RULE.keyspace())
                 .flatMap(ks -> ks.getView(CqlIdentifier.fromInternal("highscores"))),
         view -> {
-          Assertions.assertThat(view.getKeyspace()).isEqualTo(adminSessionRule.keyspace());
-          Assertions.assertThat(view.getName().asInternal()).isEqualTo("highscores");
-          Assertions.assertThat(view.getBaseTable().asInternal()).isEqualTo("scores");
-          Assertions.assertThat(view.includesAllColumns()).isFalse();
-          Assertions.assertThat(view.getWhereClause())
+          assertThat(view.getKeyspace()).isEqualTo(ADMIN_SESSION_RULE.keyspace());
+          assertThat(view.getName().asInternal()).isEqualTo("highscores");
+          assertThat(view.getBaseTable().asInternal()).isEqualTo("scores");
+          assertThat(view.includesAllColumns()).isFalse();
+          assertThat(view.getWhereClause())
               .hasValue("game IS NOT NULL AND score IS NOT NULL AND user IS NOT NULL");
-          Assertions.assertThat(view.getColumns())
+          assertThat(view.getColumns())
               .containsOnlyKeys(
                   CqlIdentifier.fromInternal("game"),
                   CqlIdentifier.fromInternal("score"),
@@ -265,8 +269,9 @@ public class SchemaChangesIT {
   }
 
   @Test
-  @CassandraRequirement(min = "3.0")
   public void should_handle_view_drop() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V3_0_0) >= 0)
+        .isTrue();
     should_handle_drop(
         ImmutableList.of(
             "CREATE TABLE scores(user text, game text, score int, PRIMARY KEY (user, game))",
@@ -278,14 +283,15 @@ public class SchemaChangesIT {
         "DROP MATERIALIZED VIEW highscores",
         metadata ->
             metadata
-                .getKeyspace(adminSessionRule.keyspace())
+                .getKeyspace(ADMIN_SESSION_RULE.keyspace())
                 .flatMap(ks -> ks.getView(CqlIdentifier.fromInternal("highscores"))),
         (listener, oldView) -> verify(listener).onViewDropped(oldView));
   }
 
   @Test
-  @CassandraRequirement(min = "3.0")
   public void should_handle_view_update() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V3_0_0) >= 0)
+        .isTrue();
     should_handle_update(
         ImmutableList.of(
             "CREATE TABLE scores(user text, game text, score int, PRIMARY KEY (user, game))",
@@ -297,41 +303,42 @@ public class SchemaChangesIT {
         "ALTER MATERIALIZED VIEW highscores WITH comment = 'The best score for each game'",
         metadata ->
             metadata
-                .getKeyspace(adminSessionRule.keyspace())
+                .getKeyspace(ADMIN_SESSION_RULE.keyspace())
                 .flatMap(ks -> ks.getView(CqlIdentifier.fromInternal("highscores"))),
         newView ->
-            Assertions.assertThat(newView.getOptions().get(CqlIdentifier.fromInternal("comment")))
+            assertThat(newView.getOptions().get(CqlIdentifier.fromInternal("comment")))
                 .isEqualTo("The best score for each game"),
         (listener, oldView, newView) -> verify(listener).onViewUpdated(newView, oldView));
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
   public void should_handle_function_creation() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
+        .isTrue();
     should_handle_creation(
         null,
         "CREATE FUNCTION id(i int) RETURNS NULL ON NULL INPUT RETURNS int "
             + "LANGUAGE java AS 'return i;'",
         metadata ->
             metadata
-                .getKeyspace(adminSessionRule.keyspace())
+                .getKeyspace(ADMIN_SESSION_RULE.keyspace())
                 .flatMap(ks -> ks.getFunction(CqlIdentifier.fromInternal("id"), DataTypes.INT)),
         function -> {
-          Assertions.assertThat(function.getKeyspace()).isEqualTo(adminSessionRule.keyspace());
-          Assertions.assertThat(function.getSignature().getName().asInternal()).isEqualTo("id");
-          Assertions.assertThat(function.getSignature().getParameterTypes())
-              .containsExactly(DataTypes.INT);
-          Assertions.assertThat(function.getReturnType()).isEqualTo(DataTypes.INT);
-          Assertions.assertThat(function.getLanguage()).isEqualTo("java");
-          Assertions.assertThat(function.isCalledOnNullInput()).isFalse();
-          Assertions.assertThat(function.getBody()).isEqualTo("return i;");
+          assertThat(function.getKeyspace()).isEqualTo(ADMIN_SESSION_RULE.keyspace());
+          assertThat(function.getSignature().getName().asInternal()).isEqualTo("id");
+          assertThat(function.getSignature().getParameterTypes()).containsExactly(DataTypes.INT);
+          assertThat(function.getReturnType()).isEqualTo(DataTypes.INT);
+          assertThat(function.getLanguage()).isEqualTo("java");
+          assertThat(function.isCalledOnNullInput()).isFalse();
+          assertThat(function.getBody()).isEqualTo("return i;");
         },
         (listener, function) -> verify(listener).onFunctionCreated(function));
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
   public void should_handle_function_drop() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
+        .isTrue();
     should_handle_drop(
         ImmutableList.of(
             "CREATE FUNCTION id(i int) RETURNS NULL ON NULL INPUT RETURNS int "
@@ -339,14 +346,15 @@ public class SchemaChangesIT {
         "DROP FUNCTION id",
         metadata ->
             metadata
-                .getKeyspace(adminSessionRule.keyspace())
+                .getKeyspace(ADMIN_SESSION_RULE.keyspace())
                 .flatMap(ks -> ks.getFunction(CqlIdentifier.fromInternal("id"), DataTypes.INT)),
         (listener, oldFunction) -> verify(listener).onFunctionDropped(oldFunction));
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
   public void should_handle_function_update() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
+        .isTrue();
     should_handle_update_via_drop_and_recreate(
         ImmutableList.of(
             "CREATE FUNCTION id(i int) RETURNS NULL ON NULL INPUT RETURNS int "
@@ -356,43 +364,43 @@ public class SchemaChangesIT {
             + "LANGUAGE java AS 'return j;'",
         metadata ->
             metadata
-                .getKeyspace(adminSessionRule.keyspace())
+                .getKeyspace(ADMIN_SESSION_RULE.keyspace())
                 .flatMap(ks -> ks.getFunction(CqlIdentifier.fromInternal("id"), DataTypes.INT)),
-        newFunction -> Assertions.assertThat(newFunction.getBody()).isEqualTo("return j;"),
+        newFunction -> assertThat(newFunction.getBody()).isEqualTo("return j;"),
         (listener, oldFunction, newFunction) ->
             verify(listener).onFunctionUpdated(newFunction, oldFunction));
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
   public void should_handle_aggregate_creation() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
+        .isTrue();
     should_handle_creation(
         "CREATE FUNCTION plus(i int, j int) RETURNS NULL ON NULL INPUT RETURNS int "
             + "LANGUAGE java AS 'return i+j;'",
         "CREATE AGGREGATE sum(int) SFUNC plus STYPE int INITCOND 0",
         metadata ->
             metadata
-                .getKeyspace(adminSessionRule.keyspace())
+                .getKeyspace(ADMIN_SESSION_RULE.keyspace())
                 .flatMap(ks -> ks.getAggregate(CqlIdentifier.fromInternal("sum"), DataTypes.INT)),
         aggregate -> {
-          Assertions.assertThat(aggregate.getKeyspace()).isEqualTo(adminSessionRule.keyspace());
-          Assertions.assertThat(aggregate.getSignature().getName().asInternal()).isEqualTo("sum");
-          Assertions.assertThat(aggregate.getSignature().getParameterTypes())
-              .containsExactly(DataTypes.INT);
-          Assertions.assertThat(aggregate.getStateType()).isEqualTo(DataTypes.INT);
-          Assertions.assertThat(aggregate.getStateFuncSignature().getName().asInternal())
-              .isEqualTo("plus");
-          Assertions.assertThat(aggregate.getStateFuncSignature().getParameterTypes())
+          assertThat(aggregate.getKeyspace()).isEqualTo(ADMIN_SESSION_RULE.keyspace());
+          assertThat(aggregate.getSignature().getName().asInternal()).isEqualTo("sum");
+          assertThat(aggregate.getSignature().getParameterTypes()).containsExactly(DataTypes.INT);
+          assertThat(aggregate.getStateType()).isEqualTo(DataTypes.INT);
+          assertThat(aggregate.getStateFuncSignature().getName().asInternal()).isEqualTo("plus");
+          assertThat(aggregate.getStateFuncSignature().getParameterTypes())
               .containsExactly(DataTypes.INT, DataTypes.INT);
-          Assertions.assertThat(aggregate.getFinalFuncSignature()).isEmpty();
-          Assertions.assertThat(aggregate.getInitCond()).hasValue(0);
+          assertThat(aggregate.getFinalFuncSignature()).isEmpty();
+          assertThat(aggregate.getInitCond()).hasValue(0);
         },
         (listener, aggregate) -> verify(listener).onAggregateCreated(aggregate));
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
   public void should_handle_aggregate_drop() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
+        .isTrue();
     should_handle_drop(
         ImmutableList.of(
             "CREATE FUNCTION plus(i int, j int) RETURNS NULL ON NULL INPUT RETURNS int "
@@ -401,14 +409,15 @@ public class SchemaChangesIT {
         "DROP AGGREGATE sum",
         metadata ->
             metadata
-                .getKeyspace(adminSessionRule.keyspace())
+                .getKeyspace(ADMIN_SESSION_RULE.keyspace())
                 .flatMap(ks -> ks.getAggregate(CqlIdentifier.fromInternal("sum"), DataTypes.INT)),
         (listener, oldAggregate) -> verify(listener).onAggregateDropped(oldAggregate));
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
   public void should_handle_aggregate_update() {
+    assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
+        .isTrue();
     should_handle_update_via_drop_and_recreate(
         ImmutableList.of(
             "CREATE FUNCTION plus(i int, j int) RETURNS NULL ON NULL INPUT RETURNS int "
@@ -418,9 +427,9 @@ public class SchemaChangesIT {
         "CREATE AGGREGATE sum(int) SFUNC plus STYPE int INITCOND 1",
         metadata ->
             metadata
-                .getKeyspace(adminSessionRule.keyspace())
+                .getKeyspace(ADMIN_SESSION_RULE.keyspace())
                 .flatMap(ks -> ks.getAggregate(CqlIdentifier.fromInternal("sum"), DataTypes.INT)),
-        newAggregate -> Assertions.assertThat(newAggregate.getInitCond()).hasValue(1),
+        newAggregate -> assertThat(newAggregate.getInitCond()).hasValue(1),
         (listener, oldAggregate, newAggregate) ->
             verify(listener).onAggregateUpdated(newAggregate, oldAggregate));
   }
@@ -434,7 +443,7 @@ public class SchemaChangesIT {
       CqlIdentifier... keyspaces) {
 
     if (beforeStatement != null) {
-      adminSessionRule.session().execute(beforeStatement);
+      ADMIN_SESSION_RULE.session().execute(beforeStatement);
     }
 
     SchemaChangeListener listener1 = mock(SchemaChangeListener.class);
@@ -456,9 +465,9 @@ public class SchemaChangesIT {
 
     try (CqlSession session1 =
             SessionUtils.newSession(
-                ccmRule, adminSessionRule.keyspace(), null, listener1, null, loader);
+                CCM_RULE, ADMIN_SESSION_RULE.keyspace(), null, listener1, null, loader);
         CqlSession session2 =
-            SessionUtils.newSession(ccmRule, null, null, listener2, null, loader)) {
+            SessionUtils.newSession(CCM_RULE, null, null, listener2, null, loader)) {
 
       session1.execute(createStatement);
 
@@ -489,7 +498,7 @@ public class SchemaChangesIT {
       CqlIdentifier... keyspaces) {
 
     for (String statement : beforeStatements) {
-      adminSessionRule.session().execute(statement);
+      ADMIN_SESSION_RULE.session().execute(statement);
     }
 
     SchemaChangeListener listener1 = mock(SchemaChangeListener.class);
@@ -507,9 +516,9 @@ public class SchemaChangesIT {
 
     try (CqlSession session1 =
             SessionUtils.newSession(
-                ccmRule, adminSessionRule.keyspace(), null, listener1, null, loader);
+                CCM_RULE, ADMIN_SESSION_RULE.keyspace(), null, listener1, null, loader);
         CqlSession session2 =
-            SessionUtils.newSession(ccmRule, null, null, listener2, null, loader)) {
+            SessionUtils.newSession(CCM_RULE, null, null, listener2, null, loader)) {
 
       T oldElement = extract.apply(session1.getMetadata()).orElseThrow(AssertionError::new);
       assertThat(oldElement).isNotNull();
@@ -539,7 +548,7 @@ public class SchemaChangesIT {
       CqlIdentifier... keyspaces) {
 
     for (String statement : beforeStatements) {
-      adminSessionRule.session().execute(statement);
+      ADMIN_SESSION_RULE.session().execute(statement);
     }
 
     SchemaChangeListener listener1 = mock(SchemaChangeListener.class);
@@ -556,9 +565,9 @@ public class SchemaChangesIT {
 
     try (CqlSession session1 =
             SessionUtils.newSession(
-                ccmRule, adminSessionRule.keyspace(), null, listener1, null, loader);
+                CCM_RULE, ADMIN_SESSION_RULE.keyspace(), null, listener1, null, loader);
         CqlSession session2 =
-            SessionUtils.newSession(ccmRule, null, null, listener2, null, loader)) {
+            SessionUtils.newSession(CCM_RULE, null, null, listener2, null, loader)) {
 
       T oldElement = extract.apply(session1.getMetadata()).orElseThrow(AssertionError::new);
       assertThat(oldElement).isNotNull();
@@ -593,7 +602,7 @@ public class SchemaChangesIT {
       CqlIdentifier... keyspaces) {
 
     for (String statement : beforeStatements) {
-      adminSessionRule.session().execute(statement);
+      ADMIN_SESSION_RULE.session().execute(statement);
     }
 
     SchemaChangeListener listener1 = mock(SchemaChangeListener.class);
@@ -609,9 +618,9 @@ public class SchemaChangesIT {
             .build();
     try (CqlSession session1 =
             SessionUtils.newSession(
-                ccmRule, adminSessionRule.keyspace(), null, listener1, null, loader);
+                CCM_RULE, ADMIN_SESSION_RULE.keyspace(), null, listener1, null, loader);
         CqlSession session2 =
-            SessionUtils.newSession(ccmRule, null, null, listener2, null, loader)) {
+            SessionUtils.newSession(CCM_RULE, null, null, listener2, null, loader)) {
 
       T oldElement = extract.apply(session1.getMetadata()).orElseThrow(AssertionError::new);
       assertThat(oldElement).isNotNull();

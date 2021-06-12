@@ -44,6 +44,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Map;
 import org.junit.Test;
@@ -83,7 +84,7 @@ public abstract class CoreGraphDataTypeITBase {
             .put("Text", "test")
             .put("Time", LocalTime.now(ZoneId.systemDefault()))
             .put("Timeuuid", Uuids.timeBased())
-            .put("Timestamp", Instant.now())
+            .put("Timestamp", Instant.now().truncatedTo(ChronoUnit.MILLIS))
             .put("Uuid", java.util.UUID.randomUUID())
             .put("Varint", BigInteger.valueOf(3234))
             .put("Blob", ByteBuffer.wrap(new byte[] {1, 2, 3}))

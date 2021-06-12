@@ -73,7 +73,8 @@ public class SegmentToFrameDecoderTest {
         encodeFrame(new AuthResponse(Bytes.fromHexString("0x" + Strings.repeat("aa", 1011))));
     int sliceLength = 100;
     do {
-      ByteBuf payload = encodedFrame.readSlice(Math.min(sliceLength, encodedFrame.readableBytes()));
+      ByteBuf payload =
+          encodedFrame.readRetainedSlice(Math.min(sliceLength, encodedFrame.readableBytes()));
       channel.writeInbound(new Segment<>(payload, false));
     } while (encodedFrame.isReadable());
 

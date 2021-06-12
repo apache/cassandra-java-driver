@@ -44,7 +44,7 @@ public class HeartbeatDisabledIT {
         SessionUtils.configLoaderBuilder()
             .withDuration(DefaultDriverOption.HEARTBEAT_INTERVAL, Duration.ofSeconds(0))
             .build();
-    try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE, loader)) {
+    try (CqlSession ignored = SessionUtils.newSession(SIMULACRON_RULE, loader)) {
       AtomicInteger heartbeats = registerHeartbeatListener();
       SECONDS.sleep(35);
 

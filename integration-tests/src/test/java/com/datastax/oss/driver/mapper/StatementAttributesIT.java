@@ -38,6 +38,7 @@ import com.datastax.oss.driver.api.mapper.annotations.StatementAttributes;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Execute;
 import com.datastax.oss.simulacron.common.cluster.ClusterQueryLogReport;
@@ -56,9 +57,11 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
+@Category(ParallelizableTests.class)
 public class StatementAttributesIT {
 
   private static final SimulacronRule SIMULACRON_RULE =

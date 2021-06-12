@@ -254,6 +254,7 @@
               <reuseForks>false</reuseForks>
               <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-isolated.xml</summaryFile>
               <skipITs>${skipIsolatedITs}</skipITs>
+              <argLine>${blockhound.argline}</argLine>
             </configuration>
           </execution>
           <execution>
@@ -316,4 +317,16 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>jdk 13+</id>
+      <activation>
+        <jdk>[13,)</jdk>
+      </activation>
+      <properties>
+        <!-- for DriverBlockHoundIntegrationIT when using JDK 13+, see https://github.com/reactor/BlockHound/issues/33 -->
+        <blockhound.argline>-XX:+AllowRedefinitionToAddDeleteMethods</blockhound.argline>
+      </properties>
+    </profile>
+  </profiles>
 </project>

@@ -5,10 +5,12 @@
 ### 4.12.0 (in progress)
 
 - [improvement] JAVA-2935: Make GetEntity and SetEntity methods resilient to incomplete data
+- [improvement] JAVA-2944: Upgrade MicroProfile Metrics to 3.0
 
 ### 4.11.2 (in progress)
 
 - [bug] JAVA-2945: Reinstate InternalDriverContext.getNodeFilter method
+- [bug] JAVA-2947: Release buffer after decoding multi-slice frame
 - [bug] JAVA-2946: Make MapperResultProducerService instances be located with user-provided class loader
 - [bug] JAVA-2942: GraphStatement.setConsistencyLevel() is not effective
 - [bug] JAVA-2941: Cannot add a single static column with the alter table API

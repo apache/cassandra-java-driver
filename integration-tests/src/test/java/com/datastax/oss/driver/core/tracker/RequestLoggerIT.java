@@ -40,6 +40,7 @@ import com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingP
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogger;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.codec.ConsistencyLevel;
@@ -52,6 +53,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
@@ -64,6 +66,7 @@ import org.mockito.verification.Timeout;
 import org.slf4j.LoggerFactory;
 
 @RunWith(MockitoJUnitRunner.class)
+@Category(ParallelizableTests.class)
 public class RequestLoggerIT {
   private static final Pattern LOG_PREFIX_PER_REQUEST = Pattern.compile("\\[s\\d*\\|\\d*]");
 
@@ -80,7 +83,8 @@ public class RequestLoggerIT {
 
   private static final String QUERY = "SELECT release_version FROM system.local";
 
-  private SimulacronRule simulacronRule = new SimulacronRule(ClusterSpec.builder().withNodes(3));
+  private final SimulacronRule simulacronRule =
+      new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
   private final DriverConfigLoader requestLoader =
       SessionUtils.configLoaderBuilder()
