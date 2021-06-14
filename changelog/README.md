@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.11.2 (in progress)
+### 4.11.2
 
 - [bug] JAVA-2932: Make DefaultDriverConfigLoader.close() resilient to terminated executors
 - [bug] JAVA-2945: Reinstate InternalDriverContext.getNodeFilter method
