@@ -47,7 +47,7 @@ import java.util.concurrent.TimeoutException;
 @SuppressWarnings("FunctionalInterfaceClash") // does not matter for test code
 public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
 
-  private final BlockingQueue<CapturedTask> capturedTasks = new ArrayBlockingQueue<>(100);
+  private final BlockingQueue<CapturedTask<?>> capturedTasks = new ArrayBlockingQueue<>(100);
 
   public ScheduledTaskCapturingEventLoop(EventLoopGroup parent) {
     super(parent);

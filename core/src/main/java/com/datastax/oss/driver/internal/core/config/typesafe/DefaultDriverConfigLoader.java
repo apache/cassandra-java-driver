@@ -39,6 +39,7 @@ import java.net.URL;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import net.jcip.annotations.ThreadSafe;
@@ -235,8 +236,14 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
   @Override
   public void close() {
     SingleThreaded singleThreaded = this.singleThreaded;
-    if (singleThreaded != null) {
-      RunOrSchedule.on(singleThreaded.adminExecutor, singleThreaded::close);
+    if (singleThreaded != null && !singleThreaded.adminExecutor.terminationFuture().isDone()) {
+      try {
+        RunOrSchedule.on(singleThreaded.adminExecutor, singleThreaded::close);
+      } catch (RejectedExecutionException e) {
+        // Checking the future is racy, there is still a tiny window that could get us here.
+        // We can safely ignore this error because, if the execution is rejected, the periodic
+        // reload task, if any, has been already cancelled.
+      }
     }
   }
 
