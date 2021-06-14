@@ -132,4 +132,4 @@ It is mutually exclusive with column conditions: if you previously specified col
 the statement, they will be ignored; conversely, adding a column condition cancels a previous IF
 EXISTS clause.
 
-[Condition]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/querybuilder/condition/Condition.html
+[Condition]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/querybuilder/condition/Condition.html

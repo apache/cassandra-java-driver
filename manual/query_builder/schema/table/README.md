@@ -107,6 +107,6 @@ dropTable("cyclist_name").ifExists();
 // DROP TABLE IF EXISTS cyclist_name
 ```
 
-[SchemaBuilder]:          https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
-[CreateTableWithOptions]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/querybuilder/schema/CreateTableWithOptions.html
-[AlterTableWithOptions]:  https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/querybuilder/schema/AlterTableWithOptions.html
+[SchemaBuilder]:          https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
+[CreateTableWithOptions]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/querybuilder/schema/CreateTableWithOptions.html
+[AlterTableWithOptions]:  https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/querybuilder/schema/AlterTableWithOptions.html

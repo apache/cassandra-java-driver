@@ -135,6 +135,6 @@ If you want to see the details of mixed cluster negotiation, enable `DEBUG` leve
 [protocol spec]: https://github.com/datastax/native-protocol/tree/1.x/src/main/resources
 [driver3]: https://docs.datastax.com/en/developer/java-driver/3.10/manual/native_protocol/
 
-[ExecutionInfo.getWarnings]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getWarnings--
-[Request.getCustomPayload]:  https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/session/Request.html#getCustomPayload--
-[AttachmentPoint.getProtocolVersion]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/detach/AttachmentPoint.html#getProtocolVersion--
+[ExecutionInfo.getWarnings]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getWarnings--
+[Request.getCustomPayload]:  https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/session/Request.html#getCustomPayload--
+[AttachmentPoint.getProtocolVersion]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/detach/AttachmentPoint.html#getProtocolVersion--

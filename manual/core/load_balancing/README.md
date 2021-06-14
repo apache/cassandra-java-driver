@@ -426,12 +426,12 @@ Then it uses the "closest" distance for any given node. For example:
 * policy1 changes its suggestion to IGNORED. node1 is set to REMOTE;
 * policy1 changes its suggestion to REMOTE. node1 stays at REMOTE.
 
-[DriverContext]:        https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/context/DriverContext.html
-[LoadBalancingPolicy]:  https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/loadbalancing/LoadBalancingPolicy.html
+[DriverContext]:        https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/context/DriverContext.html
+[LoadBalancingPolicy]:  https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/loadbalancing/LoadBalancingPolicy.html
 [BasicLoadBalancingPolicy]: https://github.com/datastax/java-driver/blob/4.x/core/src/main/java/com/datastax/oss/driver/internal/core/loadbalancing/BasicLoadBalancingPolicy.java
-[getRoutingKeyspace()]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKeyspace--
-[getRoutingToken()]:    https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/session/Request.html#getRoutingToken--
-[getRoutingKey()]:      https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKey--
-[NodeDistanceEvaluator]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/loadbalancing/NodeDistanceEvaluator.html
+[getRoutingKeyspace()]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKeyspace--
+[getRoutingToken()]:    https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/session/Request.html#getRoutingToken--
+[getRoutingKey()]:      https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKey--
+[NodeDistanceEvaluator]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/loadbalancing/NodeDistanceEvaluator.html
 [`nodetool status`]: https://docs.datastax.com/en/dse/6.7/dse-dev/datastax_enterprise/tools/nodetool/toolsStatus.html 
 [cqlsh]: https://docs.datastax.com/en/dse/6.7/cql/cql/cql_using/startCqlshStandalone.html

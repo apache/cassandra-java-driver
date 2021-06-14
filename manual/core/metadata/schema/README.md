@@ -307,16 +307,16 @@ unavailable for the excluded keyspaces.
 If you issue schema-altering requests from the driver (e.g. `session.execute("CREATE TABLE ..")`),
 take a look at the [Performance](../../performance/#schema-updates) page for a few tips.
 
-[Metadata#getKeyspaces]:             https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
-[SchemaChangeListener]:              https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListener.html
-[SchemaChangeListenerBase]:          https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListenerBase.html
-[Session#setSchemaMetadataEnabled]:  https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/session/Session.html#setSchemaMetadataEnabled-java.lang.Boolean-
-[Session#checkSchemaAgreementAsync]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/session/Session.html#checkSchemaAgreementAsync--
-[SessionBuilder#withSchemaChangeListener]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withSchemaChangeListener-com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener-
-[ExecutionInfo#isSchemaInAgreement]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#isSchemaInAgreement--
-[com.datastax.dse.driver.api.core.metadata.schema]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/dse/driver/api/core/metadata/schema/package-frame.html
-[DseFunctionMetadata]:  https://docs.datastax.com/en/drivers/java/4.11/com/datastax/dse/driver/api/core/metadata/schema/DseFunctionMetadata.html
-[DseAggregateMetadata]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/dse/driver/api/core/metadata/schema/DseAggregateMetadata.html
+[Metadata#getKeyspaces]:             https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
+[SchemaChangeListener]:              https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListener.html
+[SchemaChangeListenerBase]:          https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListenerBase.html
+[Session#setSchemaMetadataEnabled]:  https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/session/Session.html#setSchemaMetadataEnabled-java.lang.Boolean-
+[Session#checkSchemaAgreementAsync]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/session/Session.html#checkSchemaAgreementAsync--
+[SessionBuilder#withSchemaChangeListener]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withSchemaChangeListener-com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener-
+[ExecutionInfo#isSchemaInAgreement]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#isSchemaInAgreement--
+[com.datastax.dse.driver.api.core.metadata.schema]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/dse/driver/api/core/metadata/schema/package-frame.html
+[DseFunctionMetadata]:  https://docs.datastax.com/en/drivers/java/4.12/com/datastax/dse/driver/api/core/metadata/schema/DseFunctionMetadata.html
+[DseAggregateMetadata]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/dse/driver/api/core/metadata/schema/DseAggregateMetadata.html
 
 [JAVA-750]: https://datastax-oss.atlassian.net/browse/JAVA-750
 [java.util.regex.Pattern]: https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html

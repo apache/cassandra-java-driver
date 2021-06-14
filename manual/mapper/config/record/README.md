@@ -27,7 +27,7 @@ You need to build with Java 14, and pass the `--enable-preview` flag to both the
 runtime JVM. See [pom.xml] in the example.
 
 
-[@PropertyStrategy]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/PropertyStrategy.html
+[@PropertyStrategy]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/mapper/annotations/PropertyStrategy.html
 
 [DataStax-Examples/object-mapper-jvm/record]: https://github.com/DataStax-Examples/object-mapper-jvm/tree/master/record
 [pom.xml]: https://github.com/DataStax-Examples/object-mapper-jvm/blob/master/record/pom.xml

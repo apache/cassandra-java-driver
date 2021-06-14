@@ -250,4 +250,4 @@ profiles have the same configuration).
 Each request uses its declared profile's policy. If it doesn't declare any profile, or if the
 profile doesn't have a dedicated policy, then the default profile's policy is used.
 
-[SpeculativeExecutionPolicy]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/specex/SpeculativeExecutionPolicy.html
+[SpeculativeExecutionPolicy]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/specex/SpeculativeExecutionPolicy.html

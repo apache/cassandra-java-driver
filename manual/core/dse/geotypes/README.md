@@ -166,9 +166,9 @@ All geospatial types interoperate with three standard formats:
 
 [ESRI]: https://github.com/Esri/geometry-api-java
 
-[LineString]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/dse/driver/api/core/data/geometry/LineString.html
-[Point]:      https://docs.datastax.com/en/drivers/java/4.11/com/datastax/dse/driver/api/core/data/geometry/Point.html
-[Polygon]:    https://docs.datastax.com/en/drivers/java/4.11/com/datastax/dse/driver/api/core/data/geometry/Polygon.html
+[LineString]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/dse/driver/api/core/data/geometry/LineString.html
+[Point]:      https://docs.datastax.com/en/drivers/java/4.12/com/datastax/dse/driver/api/core/data/geometry/Point.html
+[Polygon]:    https://docs.datastax.com/en/drivers/java/4.12/com/datastax/dse/driver/api/core/data/geometry/Polygon.html
 
 [Well-known text]: https://en.wikipedia.org/wiki/Well-known_text
 [Well-known binary]: https://en.wikipedia.org/wiki/Well-known_text#Well-known_binary

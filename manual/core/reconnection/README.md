@@ -84,7 +84,7 @@ Note that the session is not accessible until it is fully ready: the `CqlSession
 call &mdash; or the future returned by `buildAsync()` &mdash; will not complete until the connection
 was established.
 
-[ConstantReconnectionPolicy]:    https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/internal/core/connection/ConstantReconnectionPolicy.html
-[DriverContext]:                 https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/context/DriverContext.html
-[ExponentialReconnectionPolicy]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/internal/core/connection/ExponentialReconnectionPolicy.html
-[ReconnectionPolicy]:            https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/connection/ReconnectionPolicy.html
+[ConstantReconnectionPolicy]:    https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/internal/core/connection/ConstantReconnectionPolicy.html
+[DriverContext]:                 https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/context/DriverContext.html
+[ExponentialReconnectionPolicy]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/internal/core/connection/ExponentialReconnectionPolicy.html
+[ReconnectionPolicy]:            https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/connection/ReconnectionPolicy.html

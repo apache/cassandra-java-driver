@@ -75,12 +75,12 @@ If a table was specified when creating the DAO, then the generated query targets
 Otherwise, it uses the default table name for the entity (which is determined by the name of the
 entity class and the naming convention).
 
-[@Increment]:        https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/Increment.html
-[ReactiveResultSet]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/dse/driver/api/core/cql/reactive/ReactiveResultSet.html
-[default keyspace]:  https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
-[@ClusteringColumn]:      https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
-[@PartitionKey]:          https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
-[@CqlName]:             https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/CqlName.html
+[@Increment]:        https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/mapper/annotations/Increment.html
+[ReactiveResultSet]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/dse/driver/api/core/cql/reactive/ReactiveResultSet.html
+[default keyspace]:  https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
+[@ClusteringColumn]:      https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
+[@PartitionKey]:          https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
+[@CqlName]:             https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/mapper/annotations/CqlName.html
 
 [CompletionStage]:   https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
 [CompletableFuture]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html

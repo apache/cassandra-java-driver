@@ -106,4 +106,4 @@ before compilation:
 [build.gradle]: https://github.com/DataStax-Examples/object-mapper-jvm/blob/master/kotlin/build.gradle
 [UserDao.kt]: https://github.com/DataStax-Examples/object-mapper-jvm/blob/master/kotlin/src/main/kotlin/com/datastax/examples/mapper/killrvideo/user/UserDao.kt
 
-[@PropertyStrategy]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/PropertyStrategy.html
+[@PropertyStrategy]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/mapper/annotations/PropertyStrategy.html

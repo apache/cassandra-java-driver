@@ -137,11 +137,11 @@ Here is the full implementation:
      the desired [PagingIterable<SensorReading>][PagingIterable].
 
 
-[@QueryProvider]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/QueryProvider.html
-[providerClass]:  https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/QueryProvider.html#providerClass--
-[entityHelpers]:  https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/QueryProvider.html#entityHelpers--
-[providerMethod]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/QueryProvider.html#providerMethod--
-[MapperContext]:  https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/MapperContext.html
-[EntityHelper]:   https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/EntityHelper.html
-[ResultSet]:      https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/cql/ResultSet.html
-[PagingIterable]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/PagingIterable.html
+[@QueryProvider]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/mapper/annotations/QueryProvider.html
+[providerClass]:  https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/mapper/annotations/QueryProvider.html#providerClass--
+[entityHelpers]:  https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/mapper/annotations/QueryProvider.html#entityHelpers--
+[providerMethod]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/mapper/annotations/QueryProvider.html#providerMethod--
+[MapperContext]:  https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/mapper/MapperContext.html
+[EntityHelper]:   https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/mapper/EntityHelper.html
+[ResultSet]:      https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[PagingIterable]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/PagingIterable.html

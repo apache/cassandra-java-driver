@@ -93,10 +93,10 @@ public interface UserDao extends InventoryDao {
 }
 ```
 
-[@DefaultNullSavingStrategy]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/DefaultNullSavingStrategy.html
-[BoundStatement]:             https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/cql/BoundStatement.html
-[MapperException]:            https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/MapperException.html
-[DO_NOT_SET]:                 https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/entity/saving/NullSavingStrategy.html#DO_NOT_SET
-[SET_TO_NULL]:                https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/entity/saving/NullSavingStrategy.html#SET_TO_NULL
+[@DefaultNullSavingStrategy]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/mapper/annotations/DefaultNullSavingStrategy.html
+[BoundStatement]:             https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/cql/BoundStatement.html
+[MapperException]:            https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/mapper/MapperException.html
+[DO_NOT_SET]:                 https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/mapper/entity/saving/NullSavingStrategy.html#DO_NOT_SET
+[SET_TO_NULL]:                https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/mapper/entity/saving/NullSavingStrategy.html#SET_TO_NULL
       
 [CASSANDRA-7304]: https://issues.apache.org/jira/browse/CASSANDRA-7304

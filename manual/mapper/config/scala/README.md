@@ -54,4 +54,4 @@ mapper builder.
 [DataStax-Examples/object-mapper-jvm/scala]: https://github.com/DataStax-Examples/object-mapper-jvm/tree/master/scala
 [build.sbt]: https://github.com/DataStax-Examples/object-mapper-jvm/blob/master/scala/build.sbt
 
-[@PropertyStrategy]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/PropertyStrategy.html
+[@PropertyStrategy]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/mapper/annotations/PropertyStrategy.html

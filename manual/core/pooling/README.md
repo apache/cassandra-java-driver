@@ -170,5 +170,5 @@ you experience the issue, here's what to look out for:
 Try adding more connections per node. Thanks to the driver's hot-reload mechanism, you can do that
 at runtime and see the effects immediately.
 
-[CqlSession]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/CqlSession.html
+[CqlSession]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/CqlSession.html
 [CASSANDRA-8086]: https://issues.apache.org/jira/browse/CASSANDRA-8086

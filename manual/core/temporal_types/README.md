@@ -146,7 +146,7 @@ System.out.println(dateTime.minus(CqlDuration.from("1h15s15ns")));
 // prints "2018-10-03T22:59:44.999999985-07:00[America/Los_Angeles]"
 ```
 
-[CqlDuration]:                       https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/data/CqlDuration.html
-[TypeCodecs.ZONED_TIMESTAMP_SYSTEM]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#ZONED_TIMESTAMP_SYSTEM
-[TypeCodecs.ZONED_TIMESTAMP_UTC]:    https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#ZONED_TIMESTAMP_UTC
-[TypeCodecs.zonedTimestampAt()]:     https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#zonedTimestampAt-java.time.ZoneId-
+[CqlDuration]:                       https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/data/CqlDuration.html
+[TypeCodecs.ZONED_TIMESTAMP_SYSTEM]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#ZONED_TIMESTAMP_SYSTEM
+[TypeCodecs.ZONED_TIMESTAMP_UTC]:    https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#ZONED_TIMESTAMP_UTC
+[TypeCodecs.zonedTimestampAt()]:     https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#zonedTimestampAt-java.time.ZoneId-
