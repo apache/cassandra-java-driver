@@ -21,9 +21,9 @@ Thanks to [JAVA-2935](https://datastax-oss.atlassian.net/browse/JAVA-2935), `@Ge
 `@SetEntity` methods now have a new `lenient` attribute.
 
 If the attribute is `false` (the default value), then the source row or the target statement must
-contain a matching column for every property in the entity definition, *including computed ones*. If
-such a column is not found, an error will be thrown. This corresponds to the mapper's current
-behavior prior to the introduction of the new attribute.
+contain a matching column for every property in the entity definition. If such a column is not
+found, an error will be thrown. This corresponds to the mapper's current behavior prior to the
+introduction of the new attribute.
 
 If the new attribute is explicitly set to `true` however, the mapper will operate on a best-effort
 basis and attempt to read or write all entity properties that have a matching column in the source
