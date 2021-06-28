@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
+import static com.datastax.oss.driver.internal.core.util.Dependency.JACKSON;
+
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.internal.core.InsightsClientLifecycleListener;
 import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
@@ -82,7 +84,7 @@ import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
 import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogFormatter;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
-import com.datastax.oss.driver.internal.core.util.DependencyCheck;
+import com.datastax.oss.driver.internal.core.util.DefaultDependencyChecker;
 import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
@@ -655,7 +657,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected List<LifecycleListener> buildLifecycleListeners() {
-    if (DependencyCheck.JACKSON.isPresent()) {
+    if (DefaultDependencyChecker.isPresent(JACKSON)) {
       return Collections.singletonList(new InsightsClientLifecycleListener(this, initStackTrace));
     } else {
       if (config.getDefaultProfile().getBoolean(DseDriverOption.MONITOR_REPORTING_ENABLED)) {
