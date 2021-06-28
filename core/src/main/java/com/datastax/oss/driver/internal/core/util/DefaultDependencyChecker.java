@@ -15,10 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.util;
 
-import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
-import com.datastax.oss.driver.shaded.guava.common.cache.CacheLoader;
-import com.datastax.oss.driver.shaded.guava.common.cache.LoadingCache;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,24 +28,7 @@ public class DefaultDependencyChecker {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultDependencyChecker.class);
 
-  private static LoadingCache<Dependency, Boolean> CACHE =
-      CacheBuilder.newBuilder()
-          .build(
-              new CacheLoader<Dependency, Boolean>() {
-                @Override
-                public Boolean load(Dependency dependency) throws Exception {
-
-                  for (String classNameToTest : dependency.classes()) {
-                    // Always use the driver class loader, assuming that the driver classes and
-                    // the dependency classes are either being loaded by the same class loader,
-                    // or – as in OSGi deployments – by two distinct, but compatible class loaders.
-                    if (Reflection.loadClass(null, classNameToTest) == null) {
-                      return false;
-                    }
-                  }
-                  return true;
-                }
-              });
+  private static ConcurrentHashMap<Dependency, Boolean> CACHE = new ConcurrentHashMap<>();
 
   /**
    * Return true iff we can find all classes for the dependency on the classpath, false otherwise
@@ -58,9 +38,21 @@ public class DefaultDependencyChecker {
    */
   public static boolean isPresent(Dependency dependency) {
     try {
-      return CACHE.get(dependency);
-    } catch (ExecutionException ee) {
-      LOG.warn("Unexpected exception when checking for dependency " + dependency, ee);
+      return CACHE.computeIfAbsent(
+          dependency,
+          (dep) -> {
+            for (String classNameToTest : dependency.classes()) {
+              // Always use the driver class loader, assuming that the driver classes and
+              // the dependency classes are either being loaded by the same class loader,
+              // or – as in OSGi deployments – by two distinct, but compatible class loaders.
+              if (Reflection.loadClass(null, classNameToTest) == null) {
+                return false;
+              }
+            }
+            return true;
+          });
+    } catch (Exception e) {
+      LOG.warn("Unexpected exception when checking for dependency " + dependency, e);
       return false;
     }
   }
