@@ -15,10 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.util;
 
-import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
-import com.datastax.oss.driver.shaded.guava.common.cache.CacheLoader;
-import com.datastax.oss.driver.shaded.guava.common.cache.LoadingCache;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A dependency checker implementation which should be safe to use for build-time checks when
@@ -29,28 +26,7 @@ import java.util.concurrent.ExecutionException;
  */
 public class GraalDependencyChecker {
 
-  private static LoadingCache<Dependency, Boolean> CACHE =
-      CacheBuilder.newBuilder()
-          .build(
-              new CacheLoader<Dependency, Boolean>() {
-                @Override
-                public Boolean load(Dependency dependency) throws Exception {
-
-                  for (String classNameToTest : dependency.classes()) {
-                    // Note that this lands in a pretty similar spot to
-                    // Reflection.loadClass() with a null class loader
-                    // arg.  Major difference here is that we avoid the
-                    // more complex exception handling/logging ops in
-                    // that code.
-                    try {
-                      Class.forName(classNameToTest);
-                    } catch (Exception e) {
-                      return false;
-                    }
-                  }
-                  return true;
-                }
-              });
+  private static ConcurrentHashMap<Dependency, Boolean> CACHE = new ConcurrentHashMap<>();
 
   /**
    * Return true iff we can find all classes for the dependency on the classpath, false otherwise
@@ -60,8 +36,24 @@ public class GraalDependencyChecker {
    */
   public static boolean isPresent(Dependency dependency) {
     try {
-      return CACHE.get(dependency);
-    } catch (ExecutionException ee) {
+      return CACHE.computeIfAbsent(
+          dependency,
+          (dep) -> {
+            for (String classNameToTest : dependency.classes()) {
+              // Note that this lands in a pretty similar spot to
+              // Reflection.loadClass() with a null class loader
+              // arg.  Major difference here is that we avoid the
+              // more complex exception handling/logging ops in
+              // that code.
+              try {
+                Class.forName(classNameToTest);
+              } catch (Exception e) {
+                return false;
+              }
+            }
+            return true;
+          });
+    } catch (Exception e) {
       return false;
     }
   }
