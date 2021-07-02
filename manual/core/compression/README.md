@@ -27,7 +27,6 @@ datastax-java-driver {
 
 Compression must be set before opening a session, it cannot be changed at runtime.
 
-
 Two algorithms are supported out of the box: [LZ4](https://github.com/jpountz/lz4-java) and
 [Snappy](http://google.github.io/snappy/). The LZ4 implementation is a good first choice; it offers
 fallback implementations in case native libraries fail to load and
@@ -78,6 +77,8 @@ Dependency:
   <version>1.1.2.6</version>
 </dependency>
 ```
+
+**Important: Snappy is not supported when building a [GraalVM native image](../graalvm).**
 
 Always double-check the exact Snappy version needed; you can find it in the driver's [parent POM].
 

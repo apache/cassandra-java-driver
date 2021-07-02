@@ -6,6 +6,8 @@
 * explanations about [driver dependencies](#driver-dependencies) and when they can be manually
   excluded.
 
+Note: guidelines to build a GraalVM native image can be found [here](../graalvm).
+
 -----
 
 ### Which artifact(s) should I use?
