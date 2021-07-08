@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.11.3
+### 4.11.3 (in progress)
 
 - [bug] JAVA-2950: Remove reference to Reflection class from DependencyCheck
 
