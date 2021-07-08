@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class GraalDependencyChecker {
 
-  private static ConcurrentHashMap<Dependency, Boolean> CACHE = new ConcurrentHashMap<>();
+  private static final ConcurrentHashMap<Dependency, Boolean> CACHE = new ConcurrentHashMap<>();
 
   /**
    * Return true iff we can find all classes for the dependency on the classpath, false otherwise
@@ -47,7 +47,7 @@ public class GraalDependencyChecker {
               // that code.
               try {
                 Class.forName(classNameToTest);
-              } catch (Exception e) {
+              } catch (LinkageError | Exception e) {
                 return false;
               }
             }
