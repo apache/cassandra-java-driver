@@ -101,6 +101,7 @@ public class DefaultDaoReturnTypeParser implements DaoReturnTypeParser {
               .put(
                   MappedAsyncPagingIterable.class,
                   DefaultDaoReturnTypeKind.FUTURE_OF_ASYNC_PAGING_ITERABLE)
+              .put(Stream.class, DefaultDaoReturnTypeKind.FUTURE_OF_STREAM)
               .build();
 
   protected final ProcessorContext context;
