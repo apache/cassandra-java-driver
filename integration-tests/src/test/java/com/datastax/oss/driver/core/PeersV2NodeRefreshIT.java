@@ -45,8 +45,12 @@ public class PeersV2NodeRefreshIT {
 
   @AfterClass
   public static void tearDown() {
-    cluster.stop();
-    peersV2Server.close();
+    if (cluster != null) {
+      cluster.stop();
+    }
+    if (peersV2Server != null) {
+      peersV2Server.close();
+    }
   }
 
   @Test
