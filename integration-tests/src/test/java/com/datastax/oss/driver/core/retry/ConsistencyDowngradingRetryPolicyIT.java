@@ -284,7 +284,7 @@ public class ConsistencyDowngradingRetryPolicyIT {
     oneCounter.assertTotalCount(0);
 
     // expect 2 messages: RETRY_SAME, then RETHROW
-    verify(appender, timeout(500).times(2)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(2000).times(2)).doAppend(loggingEventCaptor.capture());
     List<ILoggingEvent> loggedEvents = loggingEventCaptor.getAllValues();
     assertThat(loggedEvents).hasSize(2);
     assertThat(loggedEvents.get(0).getFormattedMessage())
