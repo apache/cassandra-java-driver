@@ -75,7 +75,6 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
       String setterName = property.getSetterName();
       String propertyValueName = enclosingClass.getNameIndex().uniqueField("propertyValue");
       propertyValueNames.add(propertyValueName);
-      getBuilder.addCode("\n");
       if (type instanceof PropertyType.Simple) {
         TypeName typeName = ((PropertyType.Simple) type).typeName;
         String primitiveAccessor = GeneratedCodePatterns.PRIMITIVE_ACCESSORS.get(typeName);

@@ -225,7 +225,6 @@ public class GeneratedCodePatterns {
       CodeBlock.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass,
       boolean useNullSavingStrategy) {
-    methodBuilder.add("\n");
 
     if (type instanceof PropertyType.Simple) {
       TypeName typeName = ((PropertyType.Simple) type).typeName;

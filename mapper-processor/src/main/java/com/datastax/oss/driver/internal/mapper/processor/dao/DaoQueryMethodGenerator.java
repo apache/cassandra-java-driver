@@ -125,9 +125,8 @@ public class DaoQueryMethodGenerator extends DaoMethodGenerator {
       GeneratedCodePatterns.bindParameters(
           parameters, createStatementBlock, enclosingClass, context, true);
 
-      createStatementBlock
-          .add("\n")
-          .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
+      createStatementBlock.addStatement(
+          "$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
       return crudMethod(createStatementBlock, returnType, helperFieldName);
     } else {

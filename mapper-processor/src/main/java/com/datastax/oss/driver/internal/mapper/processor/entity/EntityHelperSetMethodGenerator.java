@@ -73,7 +73,7 @@ public class EntityHelperSetMethodGenerator implements MethodGenerator {
           enclosingClass,
           true);
     }
-    injectBodyBuilder.add("\n").addStatement("return target");
+    injectBodyBuilder.addStatement("return target");
     return Optional.of(injectBuilder.addCode(injectBodyBuilder.build()).build());
   }
 }
