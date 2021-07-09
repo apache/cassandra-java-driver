@@ -2,6 +2,10 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.11.3 (in progress)
+
+- [bug] JAVA-2950: Remove reference to Reflection class from DependencyCheck
+
 ### 4.11.2
 
 - [bug] JAVA-2932: Make DefaultDriverConfigLoader.close() resilient to terminated executors

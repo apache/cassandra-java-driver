@@ -15,8 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.protocol;
 
+import static com.datastax.oss.driver.internal.core.util.Dependency.LZ4;
+
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.internal.core.util.DependencyCheck;
+import com.datastax.oss.driver.internal.core.util.DefaultDependencyChecker;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import io.netty.buffer.ByteBuf;
 import java.nio.ByteBuffer;
@@ -41,7 +43,7 @@ public class Lz4Compressor extends ByteBufCompressor {
 
   @VisibleForTesting
   Lz4Compressor(String sessionName) {
-    if (DependencyCheck.LZ4.isPresent()) {
+    if (DefaultDependencyChecker.isPresent(LZ4)) {
       LZ4Factory lz4Factory = LZ4Factory.fastestInstance();
       LOG.info("[{}] Using {}", sessionName, lz4Factory.toString());
       this.compressor = lz4Factory.fastCompressor();

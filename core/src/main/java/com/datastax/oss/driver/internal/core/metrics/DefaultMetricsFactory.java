@@ -15,10 +15,12 @@
  */
 package com.datastax.oss.driver.internal.core.metrics;
 
+import static com.datastax.oss.driver.internal.core.util.Dependency.DROPWIZARD;
+
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.Metrics;
-import com.datastax.oss.driver.internal.core.util.DependencyCheck;
+import com.datastax.oss.driver.internal.core.util.DefaultDependencyChecker;
 import java.util.Optional;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -33,7 +35,7 @@ public class DefaultMetricsFactory implements MetricsFactory {
 
   @SuppressWarnings("unused")
   public DefaultMetricsFactory(DriverContext context) {
-    if (DependencyCheck.DROPWIZARD.isPresent()) {
+    if (DefaultDependencyChecker.isPresent(DROPWIZARD)) {
       this.delegate = new DropwizardMetricsFactory(context);
     } else {
       this.delegate = new NoopMetricsFactory(context);
