@@ -19,7 +19,6 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.api.core.config.DriverExecutionProfile.DEFAULT_NAME;
 import static org.mockito.BDDMockito.given;
 
-import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -41,7 +40,6 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
   @Before
   @Override
   public void setup() {
-    given(context.getRequestTracker()).willReturn(new MultiplexingRequestTracker());
     super.setup();
     given(metadataManager.getContactPoints()).willReturn(ImmutableSet.of(node1));
     policy =

@@ -7,7 +7,7 @@ Callback that gets invoked for every request: success or error, globally and for
 * `advanced.request-tracker` in the configuration; defaults to none, also available: request logger,
   or write your own.
 * or programmatically:
-  [CqlSession.builder().withRequestTracker()][SessionBuilder.withRequestTracker].
+  [CqlSession.builder().addRequestTracker()][SessionBuilder.addRequestTracker].
 
 -----
 
@@ -16,28 +16,34 @@ every application request. The driver comes with an optional implementation that
 
 ### Configuration
 
-The tracker is enabled in the [configuration](../configuration/). The default implementation does
-nothing:
+Request trackers can be declared in the [configuration](../configuration/) as follows:
 
 ```
 datastax-java-driver.advanced.request-tracker {
-  class = NoopRequestTracker
+  classes = [com.example.app.MyTracker1,com.example.app.MyTracker2]
 }
 ```
 
-To use a different tracker, specify the name of a class that implements [RequestTracker]. One such
-class is the built-in request logger (see the next section), you can also create your own
-implementation.
+By default, no tracker is registered. To register your own trackers, specify the name of a class
+that implements [RequestTracker]. One such class is the built-in request logger (see the next
+section), but you can also create your own implementation.
+
+Also, trackers registered via configuration will be instantiated with reflection; they must have a
+public constructor taking a `DriverContext` argument.
 
 Sometimes you have a tracker instance already in your code, and need to pass it programmatically
 instead of referencing a class. The session builder has a method for that:
 
 ```java
-RequestTracker myTracker = ...;
-CqlSession session = CqlSession.builder().withRequestTracker(myTracker).build();
+RequestTracker myTracker1 = ...;
+RequestTracker myTracker2 = ...;
+CqlSession session = CqlSession.builder()
+        .addRequestTracker(myTracker1)
+        .addRequestTracker(myTracker2)
+        .build();
 ```
 
-When you provide the tracker in this manner, the configuration will be ignored.
+The two registration methods (programmatic and via the configuration) can be used simultaneously.
 
 ### Request logger
 
@@ -46,7 +52,7 @@ requests as "slow" above a given threshold, limit the line size for large querie
 
 ```
 datastax-java-driver.advanced.request-tracker {
-  class = RequestLogger
+  classes = [RequestLogger]
 
   logs {
     # Whether to log successful requests.
@@ -118,4 +124,4 @@ com.datastax.oss.driver.api.core.servererrors.InvalidQueryException: Undefined c
 ```
 
 [RequestTracker]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/tracker/RequestTracker.html
-[SessionBuilder.withRequestTracker]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withRequestTracker-com.datastax.oss.driver.api.core.tracker.RequestTracker-
+[SessionBuilder.addRequestTracker]: https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addRequestTracker-com.datastax.oss.driver.api.core.tracker.RequestTracker-

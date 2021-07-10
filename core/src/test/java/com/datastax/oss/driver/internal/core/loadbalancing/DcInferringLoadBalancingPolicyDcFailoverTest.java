@@ -17,17 +17,14 @@ package com.datastax.oss.driver.internal.core.loadbalancing;
 
 import static com.datastax.oss.driver.api.core.config.DriverExecutionProfile.DEFAULT_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -35,13 +32,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class DcInferringLoadBalancingPolicyDcFailoverTest
     extends BasicLoadBalancingPolicyDcFailoverTest {
-
-  @Override
-  @Before
-  public void setup() {
-    given(context.getRequestTracker()).willReturn(new MultiplexingRequestTracker());
-    super.setup();
-  }
 
   @Override
   protected DcInferringLoadBalancingPolicy createAndInitPolicy() {

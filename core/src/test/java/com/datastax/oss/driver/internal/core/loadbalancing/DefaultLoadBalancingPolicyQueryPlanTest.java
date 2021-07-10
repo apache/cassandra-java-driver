@@ -25,7 +25,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 
-import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -59,7 +58,6 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends BasicLoadBalancingP
   @Before
   @Override
   public void setup() {
-    given(context.getRequestTracker()).willReturn(new MultiplexingRequestTracker());
     nanoTime = T1;
     diceRoll = 4;
     given(node4.getDatacenter()).willReturn("dc1");

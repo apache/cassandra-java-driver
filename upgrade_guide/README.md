@@ -1,5 +1,68 @@
 ## Upgrade guide
 
+### 4.13.0
+
+#### Registration of multiple listeners and trackers
+
+[JAVA-2951](https://datastax-oss.atlassian.net/browse/JAVA-2951) introduced the ability to register
+more than one instance of the following interfaces:
+
+* [RequestTracker](https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/tracker/RequestTracker.html)
+* [NodeStateListener](https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/metadata/NodeStateListener.html)
+* [SchemaChangeListener](https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListener.html)
+
+Multiple components can now be registered both programmatically and through the configuration. _If
+both approaches are used, components will add up and will all be registered_ (whereas previously,
+the programmatic approach would take precedence over the configuration one).
+
+When using the programmatic approach to register multiple components, you should use the new
+`SessionBuilder` methods `addRequestTracker`, `addNodeStateListener` and  `addSchemaChangeListener`:
+
+```java
+CqlSessionBuilder builder = CqlSession.builder();
+builder
+    .addRequestTracker(tracker1)
+    .addRequestTracker(tracker2);
+builder
+    .addNodeStateListener(nodeStateListener1)
+    .addNodeStateListener(nodeStateListener2);
+builder
+    .addSchemaChangeListener(schemaChangeListener1)
+    .addSchemaChangeListener(schemaChangeListener2);
+```
+
+To support registration of multiple components through the configuration, the following
+configuration options were deprecated because they only allow one component to be declared:
+
+* `advanced.request-tracker.class`
+* `advanced.node-state-listener.class`
+* `advanced.schema-change-listener.class`
+
+They are still honored, but the driver will log a warning if they are used. They should now be
+replaced with the following ones, that accept a list of classes to instantiate, instead of just
+one:
+
+* `advanced.request-tracker.classes`
+* `advanced.node-state-listener.classes`
+* `advanced.schema-change-listener.classes`
+
+Example:
+
+```hocon
+datastax-java-driver {
+  advanced {
+    # RequestLogger is a driver built-in tracker
+    request-tracker.classes = [RequestLogger,com.example.app.MyRequestTracker]
+    node-state-listener.classes = [com.example.app.MyNodeStateListener1,com.example.app.MyNodeStateListener2]
+    schema-change-listener.classes = [com.example.app.MySchemaChangeListener]
+  }
+}
+```
+
+When more than one component of the same type is registered, the driver will distribute received
+signals to all components in sequence, by order of their registration, starting with the
+programmatically-provided ones. If a component throws an error, the error is intercepted and logged.
+
 ### 4.12.0
 
 #### MicroProfile Metrics upgraded to 3.0
