@@ -4,6 +4,8 @@
 
 ### 4.13.0 (in progress)
 
+- [improvement] JAVA-2953: Promote ProgrammaticPlainTextAuthProvider to the public API and add
+  credentials hot-reload
 - [improvement] JAVA-2951: Accept multiple node state listeners, schema change listeners and request trackers
 
 Merged from 4.12.x:
