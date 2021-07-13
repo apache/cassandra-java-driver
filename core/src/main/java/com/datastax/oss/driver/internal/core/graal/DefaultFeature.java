@@ -15,13 +15,15 @@
  */
 package com.datastax.oss.driver.internal.core.graal;
 
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
+import com.typesafe.config.ConfigFactory;
 import java.util.Optional;
 import org.graalvm.nativeimage.hosted.Feature;
+import org.graalvm.nativeimage.hosted.RuntimeClassInitialization;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 
 /**
@@ -43,22 +45,35 @@ final class DefaultFeature implements Feature {
     }
   }
 
-  private void registerForRuntimeReflection(Class<?> clz) {
+  private Config buildConfig() {
 
-    RuntimeReflection.register(clz);
+    /* Copied from DefaultDriverConfigLoader, including the DEFAULT_ROOT_PATH value there as the literal
+    "datastax-java-driver" below.  Can't reference the class directly here since that will introduce
+    a requirement to specify it as a build-time dependency (as well as the slf4j logger it creates
+    via static init */
+    return ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.defaultApplication())
+        .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+        .resolve()
+        .getConfig("datastax-java-driver");
   }
 
   @Override
   public void beforeAnalysis(Feature.BeforeAnalysisAccess access) {
 
-    Config config = DefaultDriverConfigLoader.DEFAULT_CONFIG_SUPPLIER.get();
+    /* Make the Typesafe classes we need to do our work available at build-time */
+    RuntimeClassInitialization.initializeAtBuildTime("com.typesafe.config.impl");
+
+    Config config = buildConfig();
     DefaultDriverOption option = DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS;
 
     tryString(config, option)
         .ifPresent(
             (clzName) -> {
               try {
-                registerForRuntimeReflection(Class.forName(clzName));
+                Class<?> clz = Class.forName(clzName);
+                RuntimeReflection.register(clz);
+                RuntimeReflection.registerForReflectiveInstantiation(clz);
               } catch (Exception e) {
 
                 // TODO: Log something here?
