@@ -104,15 +104,15 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
     PreparedStatement pstmt = statement.getPreparedStatement();
     String query = pstmt.getQuery();
     ColumnDefinitions variables = pstmt.getVariableDefinitions();
-    String queryKeySpace = variables.get(0).getKeyspace().asInternal();
-    String queryTable = variables.get(0).getTable().asInternal();
-
     // Look up the hosts for the partition key. Skip statements that do not have
     // bind variables.
     if (variables.size() == 0) return null;
-    LOG.debug("getQueryPlan: keyspace = " + queryKeySpace + ", query = " + query);
     int key = getKey(statement);
     if (key < 0) return null;
+    String queryKeySpace = variables.get(0).getKeyspace().asInternal();
+    String queryTable = variables.get(0).getTable().asInternal();
+
+    LOG.debug("getQueryPlan: keyspace = " + queryKeySpace + ", query = " + query);
 
     Optional<DefaultPartitionMetadata> partitionMetadata =
         session.getMetadata().getDefaultPartitionMetadata();
