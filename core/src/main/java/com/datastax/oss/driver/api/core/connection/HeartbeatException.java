@@ -28,8 +28,8 @@ import java.net.SocketAddress;
  *
  * <p>Heartbeat queries are sent automatically on idle connections, to ensure that they are still
  * alive. If a heartbeat query fails, the connection is closed, and all pending queries are aborted.
- * The exception will be passed to {@link RetryPolicy#onRequestAborted(Request, Throwable, int)},
- * which decides what to do next (the default policy retries the query on the next node).
+ * The exception will be passed to {@link RetryPolicy#onRequestAbortedVerdict(Request, Throwable,
+ * int)}, which decides what to do next (the default policy retries the query on the next node).
  */
 public class HeartbeatException extends DriverException {
 
