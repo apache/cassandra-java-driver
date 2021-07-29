@@ -226,7 +226,7 @@ public class SchemaIT {
       assertThat(tm).isNotNull();
       assertThat(tm.getName().toString()).isEqualTo("sstable_tasks");
       assertThat(tm.isVirtual()).isTrue();
-      assertThat(tm.getColumns().size()).isEqualTo(7);
+      assertThat(tm.getColumns().size()).isGreaterThanOrEqualTo(7);
       assertThat(tm.getIndexes().size()).isEqualTo(0);
       assertThat(tm.getPartitionKey().size()).isEqualTo(1);
       assertThat(tm.getPartitionKey().get(0).getName().toString()).isEqualTo("keyspace_name");
