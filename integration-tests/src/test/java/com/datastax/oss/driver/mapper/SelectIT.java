@@ -18,6 +18,7 @@ package com.datastax.oss.driver.mapper;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
@@ -101,8 +102,18 @@ public class SelectIT extends InventoryITBase {
   }
 
   @Test
+  public void should_select_all_async() {
+    assertThat(CompletableFutures.getUninterruptibly(dao.allAsync()).currentPage()).hasSize(2);
+  }
+
+  @Test
   public void should_select_all_stream() {
     assertThat(dao.stream()).hasSize(2);
+  }
+
+  @Test
+  public void should_select_all_stream_async() {
+    assertThat(CompletableFutures.getUninterruptibly(dao.streamAsync())).hasSize(2);
   }
 
   @Test
@@ -212,7 +223,13 @@ public class SelectIT extends InventoryITBase {
     PagingIterable<Product> all();
 
     @Select
+    CompletionStage<MappedAsyncPagingIterable<Product>> allAsync();
+
+    @Select
     Stream<Product> stream();
+
+    @Select
+    CompletionStage<Stream<Product>> streamAsync();
 
     @Select
     Optional<Product> findOptionalById(UUID productId);
