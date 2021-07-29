@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.util;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.util.Locale;
+import java.util.Objects;
 
 public class Strings {
 
@@ -253,6 +254,21 @@ public class Strings {
       if ((c < '0' && (i != 0 || c != '-')) || c > '9') return false;
     }
     return true;
+  }
+
+  /**
+   * Checks whether the given text is not null and not empty.
+   *
+   * @param text The text to check.
+   * @param name The name of the argument.
+   * @return The text (for method chaining).
+   */
+  public static String requireNotEmpty(String text, String name) {
+    Objects.requireNonNull(text, name + " cannot be null");
+    if (text.isEmpty()) {
+      throw new IllegalArgumentException(name + " cannot be empty");
+    }
+    return text;
   }
 
   private Strings() {}

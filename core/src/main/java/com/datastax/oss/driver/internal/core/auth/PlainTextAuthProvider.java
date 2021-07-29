@@ -46,7 +46,11 @@ import net.jcip.annotations.ThreadSafe;
  * }
  * </pre>
  *
- * See {@code reference.conf} (in the manual or core driver JAR) for more details.
+ * The authentication provider cannot be changed at runtime; however, the credentials can be changed
+ * at runtime: the new ones will be used for new connection attempts once the configuration gets
+ * {@linkplain com.datastax.oss.driver.api.core.config.DriverConfigLoader#reload() reloaded}.
+ *
+ * <p>See {@code reference.conf} (in the manual or core driver JAR) for more details.
  */
 @ThreadSafe
 public class PlainTextAuthProvider extends PlainTextAuthProviderBase {
