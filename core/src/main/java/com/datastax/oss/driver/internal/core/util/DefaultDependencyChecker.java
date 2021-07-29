@@ -28,7 +28,7 @@ public class DefaultDependencyChecker {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultDependencyChecker.class);
 
-  private static ConcurrentHashMap<Dependency, Boolean> CACHE = new ConcurrentHashMap<>();
+  private static final ConcurrentHashMap<Dependency, Boolean> CACHE = new ConcurrentHashMap<>();
 
   /**
    * Return true iff we can find all classes for the dependency on the classpath, false otherwise
