@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
+import java.util.Collections;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -44,27 +45,43 @@ public class DriverConfigValidationIT {
     should_fail_to_init_with_invalid_policy(DefaultDriverOption.AUTH_PROVIDER_CLASS);
     should_fail_to_init_with_invalid_policy(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS);
     should_fail_to_init_with_invalid_policy(DefaultDriverOption.TIMESTAMP_GENERATOR_CLASS);
-    should_fail_to_init_with_invalid_policy(DefaultDriverOption.REQUEST_TRACKER_CLASS);
     should_fail_to_init_with_invalid_policy(DefaultDriverOption.REQUEST_THROTTLER_CLASS);
-    should_fail_to_init_with_invalid_policy(DefaultDriverOption.METADATA_NODE_STATE_LISTENER_CLASS);
-    should_fail_to_init_with_invalid_policy(
-        DefaultDriverOption.METADATA_SCHEMA_CHANGE_LISTENER_CLASS);
     should_fail_to_init_with_invalid_policy(DefaultDriverOption.ADDRESS_TRANSLATOR_CLASS);
+  }
+
+  @Test
+  public void should_fail_to_init_with_invalid_components() {
+    should_fail_to_init_with_invalid_components(DefaultDriverOption.REQUEST_TRACKER_CLASSES);
+    should_fail_to_init_with_invalid_components(
+        DefaultDriverOption.METADATA_NODE_STATE_LISTENER_CLASSES);
+    should_fail_to_init_with_invalid_components(
+        DefaultDriverOption.METADATA_SCHEMA_CHANGE_LISTENER_CLASSES);
   }
 
   private void should_fail_to_init_with_invalid_policy(DefaultDriverOption option) {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder().withString(option, "AClassThatDoesNotExist").build();
+    assertConfigError(option, loader);
+  }
+
+  private void should_fail_to_init_with_invalid_components(DefaultDriverOption option) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withStringList(option, Collections.singletonList("AClassThatDoesNotExist"))
+            .build();
+    assertConfigError(option, loader);
+  }
+
+  private void assertConfigError(DefaultDriverOption option, DriverConfigLoader loader) {
     assertThatThrownBy(() -> SessionUtils.newSession(SIMULACRON_RULE, loader))
         .satisfies(
-            error -> {
-              assertThat(error)
-                  .isInstanceOf(IllegalArgumentException.class)
-                  .hasMessageContaining(
-                      "Can't find class AClassThatDoesNotExist "
-                          + "(specified by "
-                          + option.getPath()
-                          + ")");
-            });
+            error ->
+                assertThat(error)
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining(
+                        "Can't find class AClassThatDoesNotExist "
+                            + "(specified by "
+                            + option.getPath()
+                            + ")"));
   }
 }

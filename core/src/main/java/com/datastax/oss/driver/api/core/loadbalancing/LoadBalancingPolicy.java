@@ -19,9 +19,11 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.UUID;
 
@@ -29,12 +31,28 @@ import java.util.UUID;
 public interface LoadBalancingPolicy extends AutoCloseable {
 
   /**
+   * Returns an optional {@link RequestTracker} to be registered with the session. Registering a
+   * request tracker allows load-balancing policies to track node latencies in order to pick the
+   * fastest ones.
+   *
+   * <p>This method is invoked only once during session configuration, and before any other methods
+   * in this interface. Note that at this point, the driver hasn't connected to any node yet.
+   *
+   * @since 4.13.0
+   */
+  @NonNull
+  default Optional<RequestTracker> getRequestTracker() {
+    return Optional.empty();
+  }
+
+  /**
    * Initializes this policy with the nodes discovered during driver initialization.
    *
    * <p>This method is guaranteed to be called exactly once per instance, and before any other
-   * method in this class. At this point, the driver has successfully connected to one of the
-   * contact points, and performed a first refresh of topology information (by default, the contents
-   * of {@code system.peers}), to discover other nodes in the cluster.
+   * method in this interface except {@link #getRequestTracker()}. At this point, the driver has
+   * successfully connected to one of the contact points, and performed a first refresh of topology
+   * information (by default, the contents of {@code system.peers}), to discover other nodes in the
+   * cluster.
    *
    * <p>This method must call {@link DistanceReporter#setDistance(Node, NodeDistance)
    * distanceReporter.setDistance} for each provided node (otherwise that node will stay at distance
@@ -50,7 +68,7 @@ public interface LoadBalancingPolicy extends AutoCloseable {
    * @param nodes all the nodes that are known to exist in the cluster (regardless of their state)
    *     at the time of invocation.
    * @param distanceReporter an object that will be used by the policy to signal distance changes.
-   *     Implementations will typically store a this in a field, since new nodes may get {@link
+   *     Implementations will typically store this in a field, since new nodes may get {@link
    *     #onAdd(Node) added} later and will need to have their distance set (or the policy might
    *     change distances dynamically over time).
    */

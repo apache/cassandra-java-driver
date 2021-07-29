@@ -254,9 +254,21 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<Duration> TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL =
       new TypedDriverOption<>(
           DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL, GenericType.DURATION);
-  /** The class of a session-wide component that tracks the outcome of requests. */
+
+  /**
+   * The class of a session-wide component that tracks the outcome of requests.
+   *
+   * @deprecated Use {@link #REQUEST_TRACKER_CLASSES} instead.
+   */
+  @Deprecated
   public static final TypedDriverOption<String> REQUEST_TRACKER_CLASS =
       new TypedDriverOption<>(DefaultDriverOption.REQUEST_TRACKER_CLASS, GenericType.STRING);
+
+  /** The classes of session-wide components that track the outcome of requests. */
+  public static final TypedDriverOption<List<String>> REQUEST_TRACKER_CLASSES =
+      new TypedDriverOption<>(
+          DefaultDriverOption.REQUEST_TRACKER_CLASSES, GenericType.listOf(String.class));
+
   /** Whether to log successful requests. */
   public static final TypedDriverOption<Boolean> REQUEST_LOGGER_SUCCESS_ENABLED =
       new TypedDriverOption<>(
@@ -312,14 +324,39 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<Duration> REQUEST_THROTTLER_DRAIN_INTERVAL =
       new TypedDriverOption<>(
           DefaultDriverOption.REQUEST_THROTTLER_DRAIN_INTERVAL, GenericType.DURATION);
-  /** The class of a session-wide component that listens for node state changes. */
+
+  /**
+   * The class of a session-wide component that listens for node state changes.
+   *
+   * @deprecated Use {@link #METADATA_NODE_STATE_LISTENER_CLASSES} instead.
+   */
+  @Deprecated
   public static final TypedDriverOption<String> METADATA_NODE_STATE_LISTENER_CLASS =
       new TypedDriverOption<>(
           DefaultDriverOption.METADATA_NODE_STATE_LISTENER_CLASS, GenericType.STRING);
-  /** The class of a session-wide component that listens for schema changes. */
+
+  /**
+   * The class of a session-wide component that listens for schema changes.
+   *
+   * @deprecated Use {@link #METADATA_SCHEMA_CHANGE_LISTENER_CLASSES} instead.
+   */
+  @Deprecated
   public static final TypedDriverOption<String> METADATA_SCHEMA_CHANGE_LISTENER_CLASS =
       new TypedDriverOption<>(
           DefaultDriverOption.METADATA_SCHEMA_CHANGE_LISTENER_CLASS, GenericType.STRING);
+
+  /** The classes of session-wide components that listen for node state changes. */
+  public static final TypedDriverOption<List<String>> METADATA_NODE_STATE_LISTENER_CLASSES =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METADATA_NODE_STATE_LISTENER_CLASSES,
+          GenericType.listOf(String.class));
+
+  /** The classes of session-wide components that listen for schema changes. */
+  public static final TypedDriverOption<List<String>> METADATA_SCHEMA_CHANGE_LISTENER_CLASSES =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METADATA_SCHEMA_CHANGE_LISTENER_CLASSES,
+          GenericType.listOf(String.class));
+
   /**
    * The class of the address translator to use to convert the addresses sent by Cassandra nodes
    * into ones that the driver uses to connect.

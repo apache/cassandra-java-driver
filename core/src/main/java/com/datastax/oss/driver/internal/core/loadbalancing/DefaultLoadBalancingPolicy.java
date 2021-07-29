@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.core.loadbalancing;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
-import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
@@ -105,11 +104,13 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
         profile.getBoolean(DefaultDriverOption.LOAD_BALANCING_POLICY_SLOW_AVOIDANCE, true);
   }
 
+  @NonNull
   @Override
-  public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
-    super.init(nodes, distanceReporter);
+  public Optional<RequestTracker> getRequestTracker() {
     if (avoidSlowReplicas) {
-      ((MultiplexingRequestTracker) context.getRequestTracker()).register(this);
+      return Optional.of(this);
+    } else {
+      return Optional.empty();
     }
   }
 

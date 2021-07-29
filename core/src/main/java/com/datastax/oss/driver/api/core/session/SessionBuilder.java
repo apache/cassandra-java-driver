@@ -220,8 +220,11 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   /**
    * Registers a node state listener to use with the session.
    *
-   * <p>If the listener is specified programmatically with this method, it overrides the
-   * configuration (that is, the {@code metadata.node-state-listener.class} option will be ignored).
+   * <p>Listeners can be registered in two ways: either programmatically with this method, or via
+   * the configuration using the {@code advanced.metadata.node-state-listener.classes} option.
+   *
+   * <p>This method unregisters any previously-registered listener. If you intend to register more
+   * than one listener, use {@link #addNodeStateListener(NodeStateListener)} instead.
    */
   @NonNull
   public SelfT withNodeStateListener(@Nullable NodeStateListener nodeStateListener) {
@@ -230,11 +233,31 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
+   * Registers a node state listener to use with the session, without removing previously-registered
+   * listeners.
+   *
+   * <p>Listeners can be registered in two ways: either programmatically with this method, or via
+   * the configuration using the {@code advanced.metadata.node-state-listener.classes} option.
+   *
+   * <p>Unlike {@link #withNodeStateListener(NodeStateListener)}, this method adds the new listener
+   * to the list of already-registered listeners, thus allowing applications to register multiple
+   * listeners. When multiple listeners are registered, they are notified in sequence every time a
+   * new listener event is triggered.
+   */
+  @NonNull
+  public SelfT addNodeStateListener(@NonNull NodeStateListener nodeStateListener) {
+    programmaticArgumentsBuilder.addNodeStateListener(nodeStateListener);
+    return self;
+  }
+
+  /**
    * Registers a schema change listener to use with the session.
    *
-   * <p>If the listener is specified programmatically with this method, it overrides the
-   * configuration (that is, the {@code metadata.schema-change-listener.class} option will be
-   * ignored).
+   * <p>Listeners can be registered in two ways: either programmatically with this method, or via
+   * the configuration using the {@code advanced.metadata.schema-change-listener.classes} option.
+   *
+   * <p>This method unregisters any previously-registered listener. If you intend to register more
+   * than one listener, use {@link #addSchemaChangeListener(SchemaChangeListener)} instead.
    */
   @NonNull
   public SelfT withSchemaChangeListener(@Nullable SchemaChangeListener schemaChangeListener) {
@@ -243,14 +266,53 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
+   * Registers a schema change listener to use with the session, without removing
+   * previously-registered listeners.
+   *
+   * <p>Listeners can be registered in two ways: either programmatically with this method, or via
+   * the configuration using the {@code advanced.metadata.schema-change-listener.classes} option.
+   *
+   * <p>Unlike {@link #withSchemaChangeListener(SchemaChangeListener)}, this method adds the new
+   * listener to the list of already-registered listeners, thus allowing applications to register
+   * multiple listeners. When multiple listeners are registered, they are notified in sequence every
+   * time a new listener event is triggered.
+   */
+  @NonNull
+  public SelfT addSchemaChangeListener(@NonNull SchemaChangeListener schemaChangeListener) {
+    programmaticArgumentsBuilder.addSchemaChangeListener(schemaChangeListener);
+    return self;
+  }
+
+  /**
    * Registers a request tracker to use with the session.
    *
-   * <p>If the tracker is specified programmatically with this method, it overrides the
-   * configuration (that is, the {@code request.tracker.class} option will be ignored).
+   * <p>Trackers can be registered in two ways: either programmatically with this method, or via the
+   * configuration using the {@code advanced.request-tracker.classes} option.
+   *
+   * <p>This method unregisters any previously-registered tracker. If you intend to register more
+   * than one tracker, use {@link #addRequestTracker(RequestTracker)} instead.
    */
   @NonNull
   public SelfT withRequestTracker(@Nullable RequestTracker requestTracker) {
     this.programmaticArgumentsBuilder.withRequestTracker(requestTracker);
+    return self;
+  }
+
+  /**
+   * Registers a request tracker to use with the session, without removing previously-registered
+   * trackers.
+   *
+   * <p>Trackers can be registered in two ways: either programmatically with this method, or via the
+   * configuration using the {@code advanced.request-tracker.classes} option.
+   *
+   * <p>Unlike {@link #withRequestTracker(RequestTracker)}, this method adds the new tracker to the
+   * list of already-registered trackers, thus allowing applications to register multiple trackers.
+   * When multiple trackers are registered, they are notified in sequence every time a new tracker
+   * event is triggered.
+   */
+  @NonNull
+  public SelfT addRequestTracker(@NonNull RequestTracker requestTracker) {
+    programmaticArgumentsBuilder.addRequestTracker(requestTracker);
     return self;
   }
 

@@ -25,6 +25,9 @@ import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
 import com.datastax.oss.driver.internal.core.loadbalancing.helper.NodeFilterToDistanceEvaluatorAdapter;
+import com.datastax.oss.driver.internal.core.metadata.MultiplexingNodeStateListener;
+import com.datastax.oss.driver.internal.core.metadata.schema.MultiplexingSchemaChangeListener;
+import com.datastax.oss.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -33,6 +36,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -218,14 +222,73 @@ public class ProgrammaticArguments {
     }
 
     @NonNull
+    public Builder addNodeStateListener(@NonNull NodeStateListener nodeStateListener) {
+      Objects.requireNonNull(nodeStateListener, "nodeStateListener cannot be null");
+      if (this.nodeStateListener == null) {
+        this.nodeStateListener = nodeStateListener;
+      } else {
+        NodeStateListener previousListener = this.nodeStateListener;
+        if (previousListener instanceof MultiplexingNodeStateListener) {
+          ((MultiplexingNodeStateListener) previousListener).register(nodeStateListener);
+        } else {
+          MultiplexingNodeStateListener multiplexingNodeStateListener =
+              new MultiplexingNodeStateListener();
+          multiplexingNodeStateListener.register(previousListener);
+          multiplexingNodeStateListener.register(nodeStateListener);
+          this.nodeStateListener = multiplexingNodeStateListener;
+        }
+      }
+      return this;
+    }
+
+    @NonNull
     public Builder withSchemaChangeListener(@Nullable SchemaChangeListener schemaChangeListener) {
       this.schemaChangeListener = schemaChangeListener;
       return this;
     }
 
     @NonNull
+    public Builder addSchemaChangeListener(@NonNull SchemaChangeListener schemaChangeListener) {
+      Objects.requireNonNull(schemaChangeListener, "schemaChangeListener cannot be null");
+      if (this.schemaChangeListener == null) {
+        this.schemaChangeListener = schemaChangeListener;
+      } else {
+        SchemaChangeListener previousListener = this.schemaChangeListener;
+        if (previousListener instanceof MultiplexingSchemaChangeListener) {
+          ((MultiplexingSchemaChangeListener) previousListener).register(schemaChangeListener);
+        } else {
+          MultiplexingSchemaChangeListener multiplexingSchemaChangeListener =
+              new MultiplexingSchemaChangeListener();
+          multiplexingSchemaChangeListener.register(previousListener);
+          multiplexingSchemaChangeListener.register(schemaChangeListener);
+          this.schemaChangeListener = multiplexingSchemaChangeListener;
+        }
+      }
+      return this;
+    }
+
+    @NonNull
     public Builder withRequestTracker(@Nullable RequestTracker requestTracker) {
       this.requestTracker = requestTracker;
+      return this;
+    }
+
+    @NonNull
+    public Builder addRequestTracker(@NonNull RequestTracker requestTracker) {
+      Objects.requireNonNull(requestTracker, "requestTracker cannot be null");
+      if (this.requestTracker == null) {
+        this.requestTracker = requestTracker;
+      } else {
+        RequestTracker previousTracker = this.requestTracker;
+        if (previousTracker instanceof MultiplexingRequestTracker) {
+          ((MultiplexingRequestTracker) previousTracker).register(requestTracker);
+        } else {
+          MultiplexingRequestTracker multiplexingRequestTracker = new MultiplexingRequestTracker();
+          multiplexingRequestTracker.register(previousTracker);
+          multiplexingRequestTracker.register(requestTracker);
+          this.requestTracker = multiplexingRequestTracker;
+        }
+      }
       return this;
     }
 
