@@ -2,6 +2,13 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.12.1 (in progress)
+
+Merged from 4.11.x:
+
+- [bug] JAVA-2949: Provide mapper support for CompletionStage<Stream<T>>
+- [bug] JAVA-2950: Remove reference to Reflection class from DependencyCheck
+
 ### 4.12.0
 
 - [improvement] JAVA-2935: Make GetEntity and SetEntity methods resilient to incomplete data
@@ -17,6 +24,11 @@ Merged from 4.11.x:
 - [bug] JAVA-2941: Cannot add a single static column with the alter table API
 - [bug] JAVA-2943: Prevent session leak with wrong keyspace name
 - [bug] JAVA-2938: OverloadedException message is misleading
+
+### 4.11.3 (in progress)
+
+- [bug] JAVA-2949: Provide mapper support for CompletionStage<Stream<T>>
+- [bug] JAVA-2950: Remove reference to Reflection class from DependencyCheck
 
 ### 4.11.2
 

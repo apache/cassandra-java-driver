@@ -226,7 +226,8 @@ public class SchemaIT {
       assertThat(tm).isNotNull();
       assertThat(tm.getName().toString()).isEqualTo("sstable_tasks");
       assertThat(tm.isVirtual()).isTrue();
-      assertThat(tm.getColumns().size()).isEqualTo(7);
+      // DSE 6.8+ reports 7 columns, Cassandra 4+ reports 8 columns
+      assertThat(tm.getColumns().size()).isGreaterThanOrEqualTo(7);
       assertThat(tm.getIndexes().size()).isEqualTo(0);
       assertThat(tm.getPartitionKey().size()).isEqualTo(1);
       assertThat(tm.getPartitionKey().get(0).getName().toString()).isEqualTo("keyspace_name");
@@ -235,11 +236,24 @@ public class SchemaIT {
       assertThat(tm.getOptions().size()).isEqualTo(0);
       assertThat(tm.getKeyspace()).isEqualTo(kmd.getName());
       assertThat(tm.describe(true))
-          .isEqualTo(
+          .isIn(
+              // DSE 6.8+
               "/* VIRTUAL TABLE system_views.sstable_tasks (\n"
                   + "    keyspace_name text,\n"
                   + "    table_name text,\n"
                   + "    task_id uuid,\n"
+                  + "    kind text,\n"
+                  + "    progress bigint,\n"
+                  + "    total bigint,\n"
+                  + "    unit text,\n"
+                  + "    PRIMARY KEY (keyspace_name, table_name, task_id)\n"
+                  + "); */",
+              // Cassandra 4.0
+              "/* VIRTUAL TABLE system_views.sstable_tasks (\n"
+                  + "    keyspace_name text,\n"
+                  + "    table_name text,\n"
+                  + "    task_id uuid,\n"
+                  + "    completion_ratio double,\n"
                   + "    kind text,\n"
                   + "    progress bigint,\n"
                   + "    total bigint,\n"

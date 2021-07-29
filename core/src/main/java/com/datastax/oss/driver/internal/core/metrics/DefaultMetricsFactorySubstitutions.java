@@ -15,8 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.metrics;
 
+import static com.datastax.oss.driver.internal.core.util.Dependency.DROPWIZARD;
+
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.internal.core.util.DependencyCheck;
+import com.datastax.oss.driver.internal.core.util.GraalDependencyChecker;
 import com.oracle.svm.core.annotate.Alias;
 import com.oracle.svm.core.annotate.Delete;
 import com.oracle.svm.core.annotate.Substitute;
@@ -49,7 +51,7 @@ public class DefaultMetricsFactorySubstitutions {
   public static class DropwizardMissing implements BooleanSupplier {
     @Override
     public boolean getAsBoolean() {
-      return !DependencyCheck.DROPWIZARD.isPresent();
+      return !GraalDependencyChecker.isPresent(DROPWIZARD);
     }
   }
 }

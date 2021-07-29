@@ -16,7 +16,8 @@
 package com.datastax.oss.driver.internal.core.protocol;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.internal.core.util.DependencyCheck;
+import com.datastax.oss.driver.internal.core.util.DefaultDependencyChecker;
+import com.datastax.oss.driver.internal.core.util.Dependency;
 import io.netty.buffer.ByteBuf;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -34,7 +35,7 @@ import org.xerial.snappy.Snappy;
 public class SnappyCompressor extends ByteBufCompressor {
 
   public SnappyCompressor(@SuppressWarnings("unused") DriverContext context) {
-    if (!DependencyCheck.SNAPPY.isPresent()) {
+    if (!DefaultDependencyChecker.isPresent(Dependency.SNAPPY)) {
       throw new IllegalStateException(
           "Could not find the Snappy library on the classpath "
               + "(the driver declares it as an optional dependency, "

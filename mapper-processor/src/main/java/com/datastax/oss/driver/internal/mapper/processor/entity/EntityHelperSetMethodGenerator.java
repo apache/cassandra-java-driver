@@ -80,7 +80,7 @@ public class EntityHelperSetMethodGenerator implements MethodGenerator {
 
       injectBodyBuilder.endControlFlow();
     }
-    injectBodyBuilder.add("\n").addStatement("return target");
+    injectBodyBuilder.addStatement("return target");
     return Optional.of(injectBuilder.addCode(injectBodyBuilder.build()).build());
   }
 }

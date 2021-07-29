@@ -15,9 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core.protocol;
 
+import static com.datastax.oss.driver.internal.core.util.Dependency.LZ4;
+
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.internal.core.util.DependencyCheck;
+import com.datastax.oss.driver.internal.core.util.GraalDependencyChecker;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.oracle.svm.core.annotate.Delete;
 import com.oracle.svm.core.annotate.Substitute;
@@ -91,7 +93,7 @@ public class CompressorSubstitutions {
   public static class Lz4Present implements BooleanSupplier {
     @Override
     public boolean getAsBoolean() {
-      return DependencyCheck.LZ4.isPresent();
+      return GraalDependencyChecker.isPresent(LZ4);
     }
   }
 

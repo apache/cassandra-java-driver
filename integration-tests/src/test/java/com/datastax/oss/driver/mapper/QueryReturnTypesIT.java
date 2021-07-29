@@ -47,6 +47,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -239,6 +240,13 @@ public class QueryReturnTypesIT {
     assertThat(iterable.hasMorePages()).isFalse();
   }
 
+  @Test
+  public void should_execute_query_and_map_to_stream_async()
+      throws ExecutionException, InterruptedException {
+    CompletableFuture<Stream<TestEntity>> stream = dao.findByIdAsStreamAsync(1);
+    assertThat(stream.get()).hasSize(10);
+  }
+
   @Dao
   @DefaultNullSavingStrategy(NullSavingStrategy.SET_TO_NULL)
   public interface TestDao {
@@ -300,6 +308,9 @@ public class QueryReturnTypesIT {
 
     @Query("SELECT * FROM ${qualifiedTableId} WHERE id = :id")
     CompletableFuture<MappedAsyncPagingIterable<TestEntity>> findByIdAsync(int id);
+
+    @Query("SELECT * FROM ${qualifiedTableId} WHERE id = :id")
+    CompletableFuture<Stream<TestEntity>> findByIdAsStreamAsync(int id);
   }
 
   @Entity

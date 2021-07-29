@@ -135,6 +135,11 @@ In all cases, the method can return:
     @Select(customWhereClause = "description LIKE :searchString")
     CompletionStage<MappedAsyncPagingIterable<Product>> findByDescriptionAsync(String searchString);
     ```
+
+    For streams, even if the initial query is executed asynchronously, traversing the returned
+    stream may block the traversing thread. Blocking calls can indeed be required as more results
+    are fetched from the server in the background. For this reason, _the usage of
+    `CompletionStage<Stream<T>>` cannot be considered as a fully asynchronous execution method_.
   
 * a [MappedReactiveResultSet] of the entity class.
 

@@ -240,7 +240,9 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
   public void prepared_statement_paging_should_be_resilient_to_schema_change() {
     CqlSession session = sessionRule.session();
     // Create table and prepare select * query against it.
-    session.execute("CREATE TABLE test_prep (k text PRIMARY KEY, v int)");
+    session.execute(
+        SimpleStatement.newInstance("CREATE TABLE test_prep (k text PRIMARY KEY, v int)")
+            .setExecutionProfile(SessionUtils.slowProfile(session)));
     for (int i = 0; i < 100; i++) {
       session.execute(String.format("INSERT INTO test_prep (k, v) VALUES ('foo', %d)", i));
     }
@@ -267,7 +269,9 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
     CqlSession schemaChangeSession =
         SessionUtils.newSession(
             ccmRule, session.getKeyspace().orElseThrow(IllegalStateException::new));
-    schemaChangeSession.execute("ALTER TABLE test_prep DROP v;");
+    schemaChangeSession.execute(
+        SimpleStatement.newInstance("ALTER TABLE test_prep DROP v;")
+            .setExecutionProfile(SessionUtils.slowProfile(schemaChangeSession)));
     while (it.hasNext()) {
       // Each row should have a value for k, v should still be present, but null since column was
       // dropped.
