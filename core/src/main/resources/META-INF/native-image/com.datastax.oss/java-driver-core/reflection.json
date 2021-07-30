@@ -1,0 +1,154 @@
+[
+  {
+    "name": "com.datastax.oss.driver.internal.core.loadbalancing.DefaultLoadBalancingPolicy",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext", "java.lang.String" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.loadbalancing.DcInferringLoadBalancingPolicy",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext", "java.lang.String" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.loadbalancing.BasicLoadBalancingPolicy",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext", "java.lang.String" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.connection.ExponentialReconnectionPolicy",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.connection.ConstantReconnectionPolicy",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.retry.DefaultRetryPolicy",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext", "java.lang.String" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.retry.ConsistencyDowngradingRetryPolicy",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext", "java.lang.String" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.specex.NoSpeculativeExecutionPolicy",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext", "java.lang.String" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.specex.ConstantSpeculativeExecutionPolicy",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext", "java.lang.String" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.time.AtomicTimestampGenerator",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.time.ThreadLocalTimestampGenerator",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.time.ServerSideTimestampGenerator",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.tracker.RequestLogger",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.session.throttling.PassThroughRequestThrottler",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.session.throttling.RateLimitingRequestThrottler",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.session.throttling.ConcurrencyLimitingRequestThrottler",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.metadata.NoopNodeStateListener",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.metadata.schema.NoopSchemaChangeListener",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.addresstranslation.PassThroughAddressTranslator",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.addresstranslation.Ec2MultiRegionAddressTranslator",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.dse.driver.internal.core.auth.DseGssApiAuthProvider",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.ssl.DefaultSslEngineFactory",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.metrics.DefaultMetricsFactory",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.metrics.NoopMetricsFactory",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.metrics.DropwizardMetricsFactory",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.metrics.DefaultMetricIdGenerator",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "com.datastax.oss.driver.internal.core.metrics.TaggingMetricIdGenerator",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  },
+  {
+    "name": "io.netty.channel.socket.nio.NioSocketChannel",
+    "methods": [ { "name": "<init>", "parameterTypes": [] } ]
+  },
+  {
+    "name": "io.netty.buffer.AbstractByteBufAllocator",
+    "methods": [ { "name": "toLeakAwareBuffer", "parameterTypes": ["io.netty.buffer.ByteBuf" ] } ]
+  },
+  {
+    "name": "io.netty.util.ReferenceCountUtil",
+    "methods": [ { "name": "touch", "parameterTypes": ["java.lang.Object", "java.lang.Object" ] } ]
+  },
+  {
+    "name" : "io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueProducerIndexField",
+    "fields": [ {"name": "producerIndex", "allowUnsafeAccess": true} ]
+  },
+  {
+    "name" : "io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueProducerLimitField",
+    "fields": [ {"name": "producerLimit", "allowUnsafeAccess": true} ]
+  },
+  {
+    "name" : "io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueConsumerIndexField",
+    "fields": [ {"name": "consumerIndex", "allowUnsafeAccess": true} ]
+  },
+  {
+    "name" : "io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueProducerFields",
+    "fields": [ {"name": "producerIndex", "allowUnsafeAccess": true} ]
+  },
+  {
+    "name" : "io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueColdProducerFields",
+    "fields": [ {"name": "producerLimit", "allowUnsafeAccess": true} ]
+  },
+  {
+    "name" : "io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueConsumerFields",
+    "fields": [ {"name": "consumerIndex", "allowUnsafeAccess": true} ]
+  }
+]

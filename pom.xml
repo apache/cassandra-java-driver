@@ -664,6 +664,7 @@ limitations under the License.]]></inlineHeader>
             <include>**/pom.xml</include>
           </includes>
           <excludes>
+            <exclude>src/**/native-image.properties</exclude>
             <exclude>**/src/main/config/ide/**</exclude>
           </excludes>
           <mapping>

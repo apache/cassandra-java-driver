@@ -148,6 +148,10 @@
                 </includes>
               </artifactSet>
               <relocations>
+                <!--
+                Check if relocations declared here must also be declared below to operate on
+                GraalVM's reflection.json file. Currently this is required for Netty only.
+                -->
                 <relocation>
                   <pattern>io.netty</pattern>
                   <shadedPattern>com.datastax.oss.driver.shaded.netty</shadedPattern>
@@ -174,7 +178,9 @@
                 <filter>
                   <artifact>com.datastax.oss:*</artifact>
                   <excludes>
-                    <exclude>META-INF/**</exclude>
+                    <!-- Don't exclude META-INF/services and META-INF/native-image -->
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                    <exclude>META-INF/maven/**</exclude>
                   </excludes>
                 </filter>
                 <filter>
@@ -252,6 +258,31 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <!-- Apply shading to classes declared in GraalVM reflection.json config file -->
+      <plugin>
+        <groupId>com.google.code.maven-replacer-plugin</groupId>
+        <artifactId>replacer</artifactId>
+        <version>1.5.3</version>
+        <executions>
+          <execution>
+            <id>shade-graalvm-files</id>
+            <phase>package</phase>
+            <goals>
+              <goal>replace</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <ignoreMissingFile>false</ignoreMissingFile>
+          <filesToInclude>${project.build.directory}/classes/META-INF/native-image/com.datastax.oss/java-driver-core/reflection.json,${project.build.directory}/shaded-sources/META-INF/native-image/com.datastax.oss/java-driver-core/reflection.json</filesToInclude>
+          <replacements>
+            <replacement>
+              <token>io.netty</token>
+              <value>com.datastax.oss.driver.shaded.netty</value>
+            </replacement>
+          </replacements>
+        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
