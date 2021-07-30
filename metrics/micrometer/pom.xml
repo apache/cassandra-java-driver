@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.11.3-SNAPSHOT</version>
+    <version>4.11.3</version>
     <relativePath>../../</relativePath>
   </parent>
   <artifactId>java-driver-metrics-micrometer</artifactId>
