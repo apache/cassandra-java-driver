@@ -2,19 +2,20 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.13.0 (in progress)
+### 4.13.0
 
 - [improvement] JAVA-2940: Add GraalVM native image build configurations
 - [improvement] JAVA-2953: Promote ProgrammaticPlainTextAuthProvider to the public API and add
   credentials hot-reload
-- [improvement] JAVA-2951: Accept multiple node state listeners, schema change listeners and request trackers
+- [improvement] JAVA-2951: Accept multiple node state listeners, schema change listeners and request
+  trackers
 
 Merged from 4.12.x:
 
 - [bug] JAVA-2949: Provide mapper support for CompletionStage<Stream<T>>
 - [bug] JAVA-2950: Remove reference to Reflection class from DependencyCheck
 
-### 4.12.1 (in progress)
+### 4.12.1
 
 Merged from 4.11.x:
 
@@ -37,7 +38,7 @@ Merged from 4.11.x:
 - [bug] JAVA-2943: Prevent session leak with wrong keyspace name
 - [bug] JAVA-2938: OverloadedException message is misleading
 
-### 4.11.3 (in progress)
+### 4.11.3
 
 - [bug] JAVA-2949: Provide mapper support for CompletionStage<Stream<T>>
 - [bug] JAVA-2950: Remove reference to Reflection class from DependencyCheck
