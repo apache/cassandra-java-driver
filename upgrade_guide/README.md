@@ -2,6 +2,17 @@
 
 ### 4.13.0
 
+#### Enhanced support for GraalVM native images 
+
+[JAVA-2940](https://datastax-oss.atlassian.net/browse/JAVA-2940) introduced an enhanced support for
+building GraalVM native images. 
+
+If you were building a native image for your application, please verify your native image builder
+configuration. Most of the extra configuration required until now is likely to not be necessary
+anymore.
+
+Refer to this [manual page](../manual/core/graalvm) for details.
+
 #### Registration of multiple listeners and trackers
 
 [JAVA-2951](https://datastax-oss.atlassian.net/browse/JAVA-2951) introduced the ability to register
