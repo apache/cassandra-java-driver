@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.11.3 (in progress)
+### 4.11.3
 
 - [bug] JAVA-2949: Provide mapper support for CompletionStage<Stream<T>>
 - [bug] JAVA-2950: Remove reference to Reflection class from DependencyCheck
