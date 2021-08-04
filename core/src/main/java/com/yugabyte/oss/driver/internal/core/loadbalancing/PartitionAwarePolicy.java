@@ -332,6 +332,12 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
       case ProtocolConstants.DataType.UUID:
       case ProtocolConstants.DataType.TIMEUUID:
       case ProtocolConstants.DataType.DATE:
+      /*
+       * Decimal Type is supported column type for partitioned keys, However One-hop
+       * query fetch for Decimal Type is not supported as hash-code cannot be computed
+       * for Decimal types.
+      */
+      case ProtocolConstants.DataType.DECIMAL:
       case ProtocolConstants.DataType.TIME:
         channel.write(value);
         break;
@@ -428,7 +434,6 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
         }
       case ProtocolConstants.DataType.COUNTER:
       case ProtocolConstants.DataType.CUSTOM:
-      case ProtocolConstants.DataType.DECIMAL:
       case ProtocolConstants.DataType.TUPLE:
       case ProtocolConstants.DataType.VARINT:
         throw new UnsupportedOperationException(
