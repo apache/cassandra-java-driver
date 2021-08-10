@@ -16,6 +16,7 @@
 package com.datastax.dse.driver.api.core.cql.continuous;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import com.codahale.metrics.Timer;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
@@ -30,6 +31,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.tngtech.java.junit.dataprovider.DataProvider;
+import java.time.Duration;
 import java.util.UUID;
 
 public abstract class ContinuousPagingITBase {
@@ -111,15 +113,33 @@ public abstract class ContinuousPagingITBase {
         .as("assert metrics.getNodeMetric(node, DefaultNodeMetric.CQL_MESSAGES) present")
         .isPresent();
     Timer messages = (Timer) metrics.getNodeMetric(node, DefaultNodeMetric.CQL_MESSAGES).get();
-    assertThat(messages.getCount()).as("assert messages.getCount() >= 0").isGreaterThan(0);
-    assertThat(messages.getMeanRate()).as("assert messages.getMeanRate() >= 0").isGreaterThan(0);
+    await()
+        .atMost(Duration.ofSeconds(5))
+        .untilAsserted(
+            () -> {
+              assertThat(messages.getCount())
+                  .as("assert messages.getCount() >= 0")
+                  .isGreaterThan(0);
+              assertThat(messages.getMeanRate())
+                  .as("assert messages.getMeanRate() >= 0")
+                  .isGreaterThan(0);
+            });
     assertThat(metrics.getSessionMetric(DseSessionMetric.CONTINUOUS_CQL_REQUESTS))
         .as("assert metrics.getSessionMetric(DseSessionMetric.CONTINUOUS_CQL_REQUESTS) present")
         .isPresent();
     Timer requests =
         (Timer) metrics.getSessionMetric(DseSessionMetric.CONTINUOUS_CQL_REQUESTS).get();
-    assertThat(requests.getCount()).as("assert requests.getCount() >= 0").isGreaterThan(0);
-    assertThat(requests.getMeanRate()).as("assert requests.getMeanRate() >= 0").isGreaterThan(0);
+    await()
+        .atMost(Duration.ofSeconds(5))
+        .untilAsserted(
+            () -> {
+              assertThat(requests.getCount())
+                  .as("assert requests.getCount() >= 0")
+                  .isGreaterThan(0);
+              assertThat(requests.getMeanRate())
+                  .as("assert requests.getMeanRate() >= 0")
+                  .isGreaterThan(0);
+            });
   }
 
   public static class Options {
