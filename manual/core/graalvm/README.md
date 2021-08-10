@@ -1,9 +1,9 @@
-## Using the driver in GraalVM native images
+## GraalVM native images
 
 ### Quick overview
 
-* [GraalVM Native images](https://www.graalvm.org/reference-manual/native-image/) using the driver 
-  can be built with no additional configuration starting with driver 4.13.0.
+* [GraalVM native images](https://www.graalvm.org/reference-manual/native-image/) can be built with 
+  no additional configuration starting with driver 4.13.0.
 * But extra configurations are required in a few cases:
   * When using [reactive programming](../reactive);
   * When using [Jackson](../integration#Jackson);
@@ -132,7 +132,7 @@ following configurations must be added:
 
 ### Using the Jackson JSON library
 
-[Jackson](https://github.com/FasterXML/jackson) is used in [a few places](../integration#Jackson) in 
+[Jackson](https://github.com/FasterXML/jackson) is used in [a few places](../integration#jackson) in 
 the driver, but is an optional dependency; if you intend to use Jackson, the following 
 configurations must be added:
 
@@ -223,7 +223,7 @@ configuration is required:
 
 ### Native calls
 
-The driver performs a few [native calls](../integration#Native-libraries) using 
+The driver performs a few [native calls](../integration#native-libraries) using 
 [JNR](https://github.com/jnr).
 
 Starting with driver 4.7.0, native calls are also possible in a GraalVM native image, without any

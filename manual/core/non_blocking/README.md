@@ -29,7 +29,7 @@ primitives such as atomic variables and CAS (compare-and-swap) instructions.
 
 A further distinction is generally established between "lock-free" and "wait-free" algorithms: the 
 former ones allow progress of the overall system, while the latter ones allow each thread to make 
-progress at any time. This distinction is however rather theoretical and is outside of the scope of 
+progress at any time. This distinction is however rather theoretical and is outside the scope of 
 this document.
 
 [lock-free]: https://www.baeldung.com/lock-free-programming
