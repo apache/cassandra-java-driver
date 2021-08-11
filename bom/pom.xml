@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.yugabyte</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.6.0-yb-8</version>
+    <version>4.6.0-yb-8-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-bom</artifactId>
   <packaging>pom</packaging>
@@ -31,32 +31,32 @@
       <dependency>
         <groupId>com.yugabyte</groupId>
         <artifactId>java-driver-core</artifactId>
-        <version>4.6.0-yb-8</version>
+        <version>4.6.0-yb-8-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>com.yugabyte</groupId>
         <artifactId>java-driver-core-shaded</artifactId>
-        <version>4.6.0-yb-8</version>
+        <version>4.6.0-yb-8-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>com.yugabyte</groupId>
         <artifactId>java-driver-mapper-processor</artifactId>
-        <version>4.6.0-yb-8</version>
+        <version>4.6.0-yb-8-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>com.yugabyte</groupId>
         <artifactId>java-driver-mapper-runtime</artifactId>
-        <version>4.6.0-yb-8</version>
+        <version>4.6.0-yb-8-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>com.yugabyte</groupId>
         <artifactId>java-driver-query-builder</artifactId>
-        <version>4.6.0-yb-8</version>
+        <version>4.6.0-yb-8-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>com.yugabyte</groupId>
         <artifactId>java-driver-test-infra</artifactId>
-        <version>4.6.0-yb-8</version>
+        <version>4.6.0-yb-8-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>com.yugabyte</groupId>
