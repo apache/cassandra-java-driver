@@ -7,14 +7,13 @@ driver is configured in an application and that you will need to obtain a *secur
 ### Prerequisites
 
 1. [Download][Download Maven] and [install][Install Maven] Maven.
-2. Create an Astra database on [GCP][Create an Astra database - GCP] or
-   [AWS][Create an Astra database - AWS]; alternatively, have a team member provide access to their
-   Astra database (instructions for [GCP][Access an Astra database - GCP] and
-   [AWS][Access an Astra database - AWS]) to obtain database connection details.
+2. Create an Astra database on [AWS/Azure/GCP][Create an Astra database - AWS/Azure/GCP];
+   alternatively, have a team member provide access to their
+   Astra database (instructions for [AWS/Azure/GCP][Access an Astra database - AWS/Azure/GCP] to
+   obtain database connection details.
 3. Download the secure connect bundle (instructions for 
-   [GCP][Download the secure connect bundle - GCP] and 
-   [AWS][Download the secure connect bundle - AWS]), that contains connection information such as
-   contact points and certificates.
+   [AWS/Azure/GCP][Download the secure connect bundle - AWS/Azure/GCP], that contains connection
+   information such as contact points and certificates.
 
 ### Procedure
 
@@ -125,11 +124,8 @@ public class Main {
 
 [Download Maven]: https://maven.apache.org/download.cgi
 [Install Maven]: https://maven.apache.org/install.html
-[Create an Astra database - GCP]: https://docs.datastax.com/en/astra/gcp/doc/dscloud/astra/dscloudGettingStarted.html#dscloudCreateCluster
-[Create an Astra database - AWS]: https://docs.datastax.com/en/astra/aws/doc/dscloud/astra/dscloudGettingStarted.html#dscloudCreateCluster
-[Access an Astra database - GCP]: https://docs.datastax.com/en/astra/gcp/doc/dscloud/astra/dscloudShareClusterDetails.html
-[Access an Astra database - AWS]: https://docs.datastax.com/en/astra/aws/doc/dscloud/astra/dscloudShareClusterDetails.html
-[Download the secure connect bundle - GCP]: https://docs.datastax.com/en/astra/gcp/doc/dscloud/astra/dscloudObtainingCredentials.html
-[Download the secure connect bundle - AWS]: https://docs.datastax.com/en/astra/aws/doc/dscloud/astra/dscloudObtainingCredentials.html
+[Create an Astra database - AWS/Azure/GCP]: https://docs.datastax.com/en/astra/docs/creating-your-astra-database.html
+[Access an Astra database - AWS/Azure/GCP]: https://docs.datastax.com/en/astra/docs/obtaining-database-credentials.html#_sharing_your_secure_connect_bundle
+[Download the secure connect bundle - AWS/Azure/GCP]: https://docs.datastax.com/en/astra/docs/obtaining-database-credentials.html
 [minimal project structure]: ../core/integration/#minimal-project-structure
 [driver documentation]: ../core/configuration/
