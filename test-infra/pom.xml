@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.yugabyte</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.6.0-yb-8</version>
+    <version>4.6.0-yb-9-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-test-infra</artifactId>
   <packaging>bundle</packaging>
