@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.ProgrammaticArguments;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
+import java.time.Duration;
 import java.util.Optional;
 
 public class MockedDriverContextFactory {
@@ -45,6 +46,8 @@ public class MockedDriverContextFactory {
               DriverExecutionProfile blankProfile = mock(DriverExecutionProfile.class);
               when(blankProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none"))
                   .thenReturn("none");
+              when(blankProfile.getDuration(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER))
+                  .thenReturn(Duration.ofMinutes(5));
               return blankProfile;
             });
 
