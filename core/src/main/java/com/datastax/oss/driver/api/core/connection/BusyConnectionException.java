@@ -25,7 +25,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * requests.
  *
  * <p>This might happen under heavy load. The driver will automatically try the next node in the
- * query plan. Therefore the only way that the client can observe this exception is as part of a
+ * query plan. Therefore, the only way that the client can observe this exception is as part of a
  * {@link AllNodesFailedException}.
  */
 public class BusyConnectionException extends DriverException {
