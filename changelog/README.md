@@ -2,6 +2,10 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.14.0 (in progress)
+
+- [improvement] JAVA-2959: Don't throw NoNodeAvailableException when all connections busy
+
 ### 4.13.0
 
 - [improvement] JAVA-2940: Add GraalVM native image build configurations

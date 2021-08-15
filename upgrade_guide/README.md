@@ -1,5 +1,14 @@
 ## Upgrade guide
 
+### 4.14.0
+
+#### AllNodesFailedException instead of NoNodeAvailableException in certain cases
+
+[JAVA-2959](https://datastax-oss.atlassian.net/browse/JAVA-2959) changed the behavior for when a
+request cannot be executed because all nodes tried were busy. Previously you would get back a
+`NoNodeAvailableException` but you will now get back an `AllNodesFailedException` where the
+`getAllErrors` map contains a `NodeUnavailableException` for that node.
+
 ### 4.13.0
 
 #### Enhanced support for GraalVM native images 

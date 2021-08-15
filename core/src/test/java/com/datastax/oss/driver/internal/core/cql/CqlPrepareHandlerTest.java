@@ -25,6 +25,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.NodeUnavailableException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
@@ -47,6 +49,7 @@ import com.datastax.oss.protocol.internal.response.result.RawType;
 import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import org.junit.Before;
@@ -224,6 +227,39 @@ public class CqlPrepareHandlerTest {
                 assertThat(error).isInstanceOf(OverloadedException.class);
                 node2Behavior.verifyNoWrite();
                 node3Behavior.verifyNoWrite();
+              });
+    }
+  }
+
+  @Test
+  public void should_fail_if_nodes_unavailable() {
+    RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
+    try (RequestHandlerTestHarness harness =
+        harnessBuilder.withEmptyPool(node1).withEmptyPool(node2).build()) {
+      CompletionStage<PreparedStatement> prepareFuture =
+          new CqlPrepareHandler(PREPARE_REQUEST, harness.getSession(), harness.getContext(), "test")
+              .handle();
+      assertThatStage(prepareFuture)
+          .isFailed(
+              error -> {
+                assertThat(error).isInstanceOf(AllNodesFailedException.class);
+                Map<Node, List<Throwable>> allErrors =
+                    ((AllNodesFailedException) error).getAllErrors();
+                assertThat(allErrors).hasSize(2);
+                assertThat(allErrors)
+                    .hasEntrySatisfying(
+                        node1,
+                        nodeErrors ->
+                            assertThat(nodeErrors)
+                                .singleElement()
+                                .isInstanceOf(NodeUnavailableException.class));
+                assertThat(allErrors)
+                    .hasEntrySatisfying(
+                        node2,
+                        nodeErrors ->
+                            assertThat(nodeErrors)
+                                .singleElement()
+                                .isInstanceOf(NodeUnavailableException.class));
               });
     }
   }
