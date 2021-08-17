@@ -45,7 +45,8 @@ public class ReadTimeoutException extends QueryConsistencyException {
     this(
         coordinator,
         String.format(
-            "Cassandra timeout during read query at consistency %s (%s)",
+            "Cassandra timeout during read query at consistency %s (%s). "
+                + "In case this was generated during read repair, the consistency level is not representative of the actual consistency.",
             consistencyLevel, formatDetails(received, blockFor, dataPresent)),
         consistencyLevel,
         received,
