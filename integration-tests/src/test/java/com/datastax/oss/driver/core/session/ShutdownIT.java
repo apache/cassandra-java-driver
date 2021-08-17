@@ -120,7 +120,7 @@ public class ShutdownIT {
     }
     TimeUnit.MILLISECONDS.sleep(100);
     session.forceCloseAsync();
-    assertThat(gotSessionClosedError.await(1, TimeUnit.SECONDS))
+    assertThat(gotSessionClosedError.await(10, TimeUnit.SECONDS))
         .as("Expected to get the 'Session is closed' error shortly after shutting down")
         .isTrue();
     requestExecutor.shutdownNow();
