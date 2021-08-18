@@ -4,9 +4,8 @@
 for the development version and that some features described here might
 not yet have been released. You can find the documentation for the latest
 version through the [Java driver
-docs](http://docs.datastax.com/en/developer/java-driver/latest/index.html) or via the release tags,
-[e.g.
-3.11.0](https://github.com/datastax/java-driver/tree/3.11.0).*
+docs](http://docs.datastax.com/en/developer/java-driver/3.11/index.html) or via the release tags,
+[e.g. 3.11.0](https://github.com/datastax/java-driver/tree/3.11.0).*
 
 A modern, [feature-rich](manual/) and highly tunable Java client
 library for Apache Cassandra (2.1+) and using exclusively Cassandra's binary protocol 
@@ -55,7 +54,6 @@ The driver contains the following modules:
 - API: https://docs.datastax.com/en/drivers/java/3.11
 - GITHUB REPOSITORY: https://github.com/datastax/java-driver
 - [changelog](changelog/)
-- [binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-3.11.0.tar.gz)
 
 ## Getting the driver
 
@@ -102,7 +100,7 @@ is available for download.
 ## Compatibility
 
 The Java client driver 3.11.0 ([branch 3.x](https://github.com/datastax/java-driver/tree/3.x)) is compatible with Apache
-Cassandra 2.1, 2.2 and 3.0+ (see [this page](http://docs.datastax.com/en/developer/java-driver/latest/manual/native_protocol/) for
+Cassandra 2.1, 2.2 and 3.0+ (see [this page](http://docs.datastax.com/en/developer/java-driver/3.11/manual/native_protocol/) for
 the most up-to-date compatibility information).
 
 UDT and tuple support is available only when using Apache Cassandra 2.1 or higher (see [CQL improvements in Cassandra 2.1](http://www.datastax.com/dev/blog/cql-in-2-1)).
