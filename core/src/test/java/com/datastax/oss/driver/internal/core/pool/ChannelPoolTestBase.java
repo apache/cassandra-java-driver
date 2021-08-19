@@ -50,7 +50,7 @@ import org.mockito.verification.VerificationWithTimeout;
 abstract class ChannelPoolTestBase {
 
   /** How long we wait when verifying mocks for async invocations */
-  protected static final VerificationWithTimeout VERIFY_TIMEOUT = timeout(500);
+  protected static final VerificationWithTimeout VERIFY_TIMEOUT = timeout(2000);
 
   @Mock protected InternalDriverContext context;
   @Mock private DriverConfig config;
