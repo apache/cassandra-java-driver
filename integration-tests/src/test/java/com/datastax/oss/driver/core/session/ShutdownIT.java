@@ -118,7 +118,7 @@ public class ShutdownIT {
             }
           });
     }
-    TimeUnit.MILLISECONDS.sleep(100);
+    TimeUnit.MILLISECONDS.sleep(1000);
     session.forceCloseAsync();
     assertThat(gotSessionClosedError.await(10, TimeUnit.SECONDS))
         .as("Expected to get the 'Session is closed' error shortly after shutting down")
