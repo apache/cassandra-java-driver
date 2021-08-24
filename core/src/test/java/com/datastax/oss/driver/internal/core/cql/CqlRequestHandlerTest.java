@@ -21,9 +21,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.NoNodeAvailableException;
+import com.datastax.oss.driver.api.core.NodeUnavailableException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
@@ -32,6 +34,7 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
 import com.datastax.oss.driver.internal.core.util.concurrent.CapturingTimer.CapturedTimeout;
 import com.datastax.oss.protocol.internal.request.Prepare;
@@ -43,6 +46,8 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -102,6 +107,43 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
 
       assertThatStage(resultSetFuture)
           .isFailed(error -> assertThat(error).isInstanceOf(NoNodeAvailableException.class));
+    }
+  }
+
+  @Test
+  public void should_fail_if_nodes_unavailable() {
+    RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
+    try (RequestHandlerTestHarness harness =
+        harnessBuilder.withEmptyPool(node1).withEmptyPool(node2).build()) {
+      CompletionStage<AsyncResultSet> resultSetFuture =
+          new CqlRequestHandler(
+                  UNDEFINED_IDEMPOTENCE_STATEMENT,
+                  harness.getSession(),
+                  harness.getContext(),
+                  "test")
+              .handle();
+      assertThatStage(resultSetFuture)
+          .isFailed(
+              error -> {
+                assertThat(error).isInstanceOf(AllNodesFailedException.class);
+                Map<Node, List<Throwable>> allErrors =
+                    ((AllNodesFailedException) error).getAllErrors();
+                assertThat(allErrors).hasSize(2);
+                assertThat(allErrors)
+                    .hasEntrySatisfying(
+                        node1,
+                        nodeErrors ->
+                            assertThat(nodeErrors)
+                                .singleElement()
+                                .isInstanceOf(NodeUnavailableException.class));
+                assertThat(allErrors)
+                    .hasEntrySatisfying(
+                        node2,
+                        nodeErrors ->
+                            assertThat(nodeErrors)
+                                .singleElement()
+                                .isInstanceOf(NodeUnavailableException.class));
+              });
     }
   }
 

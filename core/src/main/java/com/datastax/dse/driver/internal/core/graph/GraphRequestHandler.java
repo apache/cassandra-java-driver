@@ -24,6 +24,7 @@ import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
+import com.datastax.oss.driver.api.core.NodeUnavailableException;
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -253,6 +254,8 @@ public class GraphRequestHandler implements Throttled {
         channel = session.getChannel(node, logPrefix);
         if (channel != null) {
           break;
+        } else {
+          recordError(node, new NodeUnavailableException(node));
         }
       }
     }
