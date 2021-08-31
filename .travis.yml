@@ -15,8 +15,8 @@ before_install:
   # Require JDK8 for compiling
   - jdk_switcher use openjdk8
   - ./install-snapshots.sh
-install: mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
-script: mvn test -Djacoco.skip=true -Dmaven.test.failure.ignore=true -Dmaven.javadoc.skip=true -B -V
+install: mvn -T 1C install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+script: mvn -T 1C test -Djacoco.skip=true -Dmaven.test.failure.ignore=true -Dmaven.javadoc.skip=true -B -V
 cache:
   directories:
     - $HOME/.m2

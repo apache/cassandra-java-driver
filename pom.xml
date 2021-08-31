@@ -467,6 +467,11 @@
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>${surefire.version}</version>
+        <configuration>
+        	<parallel>classes</parallel>
+        	<useUnlimitedThreads>true</useUnlimitedThreads>
+        </configuration>
+
         </plugin>
         <plugin>
           <artifactId>maven-failsafe-plugin</artifactId>
@@ -714,6 +719,9 @@ limitations under the License.]]></inlineHeader>
             </property>
           </properties>
           <skip>${skipUnitTests}</skip>
+        	<parallel>classes</parallel>
+        	<useUnlimitedThreads>true</useUnlimitedThreads>
+
         </configuration>
       </plugin>
       <plugin>
