@@ -473,7 +473,7 @@ don't use any of the above features, you can safely exclude the dependency:
 
 #### Esri
 
-Our [geospatial types](../dse/geotypes/) implementation is based on the [Esri Geometry
+The geospatial types implementation is based on the [Esri Geometry
 API](https://github.com/Esri/geometry-api-java).
 
 Esri is declared as a required dependency, but the driver can operate normally without it. If you
@@ -495,9 +495,7 @@ don't use geospatial types anywhere in your application, you can exclude the dep
 
 #### TinkerPop
 
-[Apache TinkerPop™](http://tinkerpop.apache.org/) is used in our [graph API](../dse/graph/),
-introduced in the OSS driver in version 4.4.0 (it was previously a feature only available in the
-now-retired DSE driver).
+[Apache TinkerPop™](http://tinkerpop.apache.org/) is used in the graph API.
 
 For driver versions ranging from 4.4.0 to 4.9.0 inclusive, TinkerPop is declared as a required
 dependency, but the driver can operate normally without it. If you don't use the graph API at all,
@@ -533,24 +531,6 @@ need to explicitly include the dependencies below in your application_:
   <version>${tinkerpop.version}</version>
 </dependency>
 ```
-
-If you do use graph, it is important to keep the precise TinkerPop version that the driver depends
-on: unlike the driver, TinkerPop does not follow semantic versioning, so even a patch version change
-(e.g. 3.3.0 vs 3.3.3) could introduce incompatibilities.
-
-Here are the recommended TinkerPop versions for each driver version:
-
-<table>
-<tr><th>Driver version</th><th>TinkerPop version</th></tr>
-<tr><td>4.11.0</td><td>3.4.10</td></tr>
-<tr><td>4.10.0</td><td>3.4.9</td></tr>
-<tr><td>4.9.0</td><td>3.4.8</td></tr>
-<tr><td>4.8.0</td><td>3.4.5</td></tr>
-<tr><td>4.7.0</td><td>3.4.5</td></tr>
-<tr><td>4.6.0</td><td>3.4.5</td></tr>
-<tr><td>4.5.0</td><td>3.4.5</td></tr>
-<tr><td>4.4.0</td><td>3.3.3</td></tr>
-</table>
 
 #### Reactive Streams
 
