@@ -50,6 +50,7 @@ import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArraySet;
 import net.jcip.annotations.ThreadSafe;
+import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,15 +89,17 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
       LOG.debug("newQueryPlan: Number of Nodes = " + partitionAwareNodesInObjectArray.length);
     }
 
-    return (partitionAwareNodesInObjectArray != null)
-        ? new QueryPlan(partitionAwareNodesInObjectArray)
+    // it so happens that the partition aware nodes could be non-empty, but the state of the nodes could be down.
+    // In such cases @{code partitionAwareNodesInObjectArray} would be empty. If so, fallback to the
+    // inherited load-balancing logic
+    return !ArrayUtils.isEmpty(partitionAwareNodesInObjectArray) ? new QueryPlan(partitionAwareNodesInObjectArray)
         : super.newQueryPlan(request, session);
   }
 
   /**
    * Gets the query plan for a {@code BoundStatement}.
    *
-   * @param loggedKeyspace the logged keyspace of the statement
+   * @param session db session
    * @param statement the statement
    * @return the query plan, or null when no plan can be determined
    */
@@ -132,7 +135,7 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
   /**
    * Gets the query plan for a {@code BatchStatement}.
    *
-   * @param loggedKeyspace the logged keyspace of the statement
+   * @param session db session
    * @param batch the batch statement
    * @return the query plan, or null when no plan can be determined
    */
@@ -166,7 +169,6 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
     /**
      * Creates a new {@code UpHostIterator}.
      *
-     * @param loggedKeyspace the logged keyspace of the statement
      * @param statement the statement
      * @param hosts the hosts that host the statement's partition key
      */
