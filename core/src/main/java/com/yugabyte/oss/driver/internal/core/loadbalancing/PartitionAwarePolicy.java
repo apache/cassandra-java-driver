@@ -90,7 +90,7 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
     }
 
     // it so happens that the partition aware nodes could be non-empty, but the state of the nodes could be down.
-    // In such cases @{code partitionAwareNodesInObjectArray} would be empty. If so, fallback to the
+    // In such cases {@code Object[] partitionAwareNodesInObjectArray} would be empty. If so, fallback to the
     // inherited load-balancing logic
     return !ArrayUtils.isEmpty(partitionAwareNodesInObjectArray) ? new QueryPlan(partitionAwareNodesInObjectArray)
         : super.newQueryPlan(request, session);
