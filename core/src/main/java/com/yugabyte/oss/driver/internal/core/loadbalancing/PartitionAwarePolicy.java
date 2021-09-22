@@ -12,22 +12,6 @@
 //
 package com.yugabyte.oss.driver.internal.core.loadbalancing;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.WritableByteChannel;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Queue;
-import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArraySet;
-
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
@@ -52,7 +36,19 @@ import com.yugabyte.oss.driver.api.core.DefaultPartitionMetadata;
 import com.yugabyte.oss.driver.api.core.TableSplitMetadata;
 import com.yugabyte.oss.driver.api.core.utils.Jenkins;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import groovy.transform.Synchronized;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArraySet;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
@@ -66,27 +62,6 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
   public PartitionAwarePolicy(@NonNull DriverContext context, @NonNull String profileName) {
     super(context, profileName);
   }
-
-//  /**
-//   * Creates a new node filter to use with this policy.
-//   *
-//   * <p>This method is called only once, during {@linkplain LoadBalancingPolicy#init(Map,
-//   * LoadBalancingPolicy.DistanceReporter) initialization}, and only after local datacenter
-//   * discovery has been attempted.
-//   *
-//   * @param localDc The local datacenter that was just discovered, or null if none found.
-//   * @param nodes All the nodes that were known to exist in the cluster (regardless of their state)
-//   *     when the load balancing policy was initialized. This argument is provided in case
-//   *     implementors need to inspect the cluster topology to create the node filter.
-//   * @return the node filter to use.
-//   */
-//  @NonNull
-//  @Override
-//  protected Predicate<Node> createNodeFilter(
-//          @Nullable String localDc, @NonNull Map<UUID, Node> nodes) {
-//    return new PartitionAwareNodeFilterHelper(context, profile, logPrefix)
-//            .createNodeFilter(localDc, nodes);
-//  }
 
   @Override
   public void init(Map<UUID, Node> nodes, DistanceReporter distanceReporter) {
@@ -104,21 +79,20 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
     }
 
     // Creating an object[] from iterator
-//    Object[] partitionAwareNodesInObjectArray = null;
-    LinkedHashSet<Node> tempNodes = null;
+    Object[] partitionAwareNodesInObjectArray = null;
     if (partitionAwareNodes != null) {
-      tempNodes = new LinkedHashSet<>();
+      CopyOnWriteArraySet<Node> tempNodes = new CopyOnWriteArraySet<>();
       while (partitionAwareNodes.hasNext()) {
         tempNodes.add(partitionAwareNodes.next());
       }
-//      partitionAwareNodesInObjectArray = tempNodes.toArray();
-      LOG.debug("newQueryPlan: Number of Nodes = " + tempNodes.size());
+      partitionAwareNodesInObjectArray = tempNodes.toArray();
+      LOG.debug("newQueryPlan: Number of Nodes = " + partitionAwareNodesInObjectArray.length);
     }
 
     // it so happens that the partition aware nodes could be non-empty, but the state of the nodes could be down.
     // In such cases {@code Object[] partitionAwareNodesInObjectArray} would be empty. If so, fallback to the
     // inherited load-balancing logic
-    return (tempNodes != null && !tempNodes.isEmpty()) ? new QueryPlan(tempNodes.toArray())
+    return !ArrayUtils.isEmpty(partitionAwareNodesInObjectArray) ? new QueryPlan(partitionAwareNodesInObjectArray)
         : super.newQueryPlan(request, session);
   }
 
@@ -155,7 +129,7 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
       return null;
     }
 
-    return new UpHostIterator(statement, new ArrayList<>(tableSplitMetadata.getHosts(key)));
+    return new UpHostIterator(statement, tableSplitMetadata.getHosts(key));
   }
 
   /**
@@ -215,7 +189,7 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
     private ConsistencyLevel getConsistencyLevel() {
       return statement.getConsistencyLevel() != null
           ? statement.getConsistencyLevel()
-          : ConsistencyLevel.YB_STRONG;
+          : ConsistencyLevel.YB_CONSISTENT_PREFIX;
     }
 
     @Override
@@ -229,8 +203,9 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
         // is in the
         // head of the host list.
 
-        if (nextHost.getState() != NodeState.DOWN
-            && (nextHost.getDistance() == NodeDistance.LOCAL)) {
+        if (nextHost.getState() == NodeState.UP
+            && (nextHost.getDistance() == NodeDistance.LOCAL
+                || getConsistencyLevel().isYBStrong())) {
           return true;
         }
       }
