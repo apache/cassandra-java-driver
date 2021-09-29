@@ -17,7 +17,9 @@ package com.datastax.driver.core;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
+import static com.datastax.driver.core.ScassandraCluster.SELECT_LOCAL;
 import static com.datastax.driver.core.ScassandraCluster.SELECT_PEERS;
+import static com.datastax.driver.core.ScassandraCluster.SELECT_PEERS_V2;
 import static com.datastax.driver.core.ScassandraCluster.datacenter;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 import static com.google.common.collect.Lists.newArrayList;
@@ -42,9 +44,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.log4j.Level;
+import org.scassandra.http.client.PrimingClient;
 import org.scassandra.http.client.PrimingRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -557,6 +561,79 @@ public class ControlConnectionTest extends CCMTestsSupport {
     } finally {
       cluster.close();
       sCluster.stop();
+    }
+  }
+
+  /**
+   * Cassandra 4.0 supports native_address and native_port columns in peers_v2. We want to validate
+   * our ability to build correct metadata when drawing data from these tables.
+   */
+  @Test(groups = "short")
+  @CCMConfig(createCcm = false)
+  public void should_extract_peer_info_for_cassandra_40() throws UnknownHostException {
+
+    ScassandraCluster scassandras =
+        ScassandraCluster.builder().withNodes(2).withPeersV2(true).build();
+    scassandras.init();
+
+    Cluster cluster = null;
+    try {
+
+      scassandras.node(1).primingClient().clearAllPrimes();
+
+      final InetAddress mockAddress = InetAddress.getByName("4.3.2.1");
+      final int mockPort = 2409;
+      Map<String, ?> peersV2Rows =
+          ImmutableMap.<String, Object>builder()
+              .put("native_address", mockAddress)
+              .put("native_port", mockPort)
+              .put("host_id", UUID.randomUUID())
+              .put("data_center", datacenter(1))
+              .put("rack", "rack1")
+              .put("tokens", ImmutableSet.of(Long.toString(scassandras.getTokensForDC(1).get(1))))
+              .build();
+      Map<String, ?> localRows =
+          ImmutableMap.<String, Object>builder()
+              .put("cluster_name", this.getClass().getName())
+              .put("host_id", UUID.randomUUID())
+              .build();
+      PrimingClient primingClient = scassandras.node(1).primingClient();
+      primingClient.prime(
+          PrimingRequest.queryBuilder()
+              .withQuery("SELECT * FROM system.peers_v2")
+              .withThen(then().withColumnTypes(SELECT_PEERS_V2).withRows(peersV2Rows).build())
+              .build());
+      primingClient.prime(
+          PrimingRequest.queryBuilder()
+              .withQuery("SELECT * FROM system.local WHERE key='local'")
+              .withThen(then().withColumnTypes(SELECT_LOCAL).withRows(localRows).build())
+              .build());
+
+      cluster =
+          Cluster.builder()
+              .addContactPoints(scassandras.address(1).getAddress())
+              .withPort(scassandras.getBinaryPort())
+              .withNettyOptions(nonQuietClusterCloseOptions)
+              .build();
+      cluster.init();
+
+      Host mockHost = null;
+      for (Host host : cluster.getMetadata().allHosts()) {
+
+        TranslatedAddressEndPoint endPoint = (TranslatedAddressEndPoint) host.getEndPoint();
+        InetSocketAddress endPointAddr = endPoint.resolve();
+        if (endPointAddr.getAddress().equals(mockAddress) && endPointAddr.getPort() == mockPort) {
+          mockHost = host;
+          break;
+        }
+      }
+      assertThat(mockHost).isNotNull();
+    } finally {
+      if (cluster != null) {
+
+        cluster.close();
+      }
+      scassandras.stop();
     }
   }
 
