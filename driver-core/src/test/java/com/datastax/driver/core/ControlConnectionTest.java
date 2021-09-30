@@ -32,6 +32,7 @@ import com.datastax.driver.core.policies.Policies;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -581,12 +582,12 @@ public class ControlConnectionTest extends CCMTestsSupport {
 
       scassandras.node(1).primingClient().clearAllPrimes();
 
-      final InetAddress mockAddress = InetAddress.getByName("4.3.2.1");
-      final int mockPort = 2409;
+      final InetSocketAddress mockAddress =
+          new InetSocketAddress(InetAddress.getByName("4.3.2.1"), 2409);
       Map<String, ?> peersV2Rows =
           ImmutableMap.<String, Object>builder()
-              .put("native_address", mockAddress)
-              .put("native_port", mockPort)
+              .put("native_address", mockAddress.getAddress())
+              .put("native_port", mockAddress.getPort())
               .put("host_id", UUID.randomUUID())
               .put("data_center", datacenter(1))
               .put("rack", "rack1")
@@ -617,22 +618,17 @@ public class ControlConnectionTest extends CCMTestsSupport {
               .build();
       cluster.init();
 
-      Host mockHost = null;
-      for (Host host : cluster.getMetadata().allHosts()) {
-
-        TranslatedAddressEndPoint endPoint = (TranslatedAddressEndPoint) host.getEndPoint();
-        InetSocketAddress endPointAddr = endPoint.resolve();
-        if (endPointAddr.getAddress().equals(mockAddress) && endPointAddr.getPort() == mockPort) {
-          mockHost = host;
-          break;
-        }
-      }
-      assertThat(mockHost).isNotNull();
+      Collection<EndPoint> hostEndPoints =
+          Collections2.transform(
+              cluster.getMetadata().allHosts(),
+              new Function<Host, EndPoint>() {
+                public EndPoint apply(Host host) {
+                  return host.getEndPoint();
+                }
+              });
+      assertThat(hostEndPoints).contains(new TranslatedAddressEndPoint(mockAddress));
     } finally {
-      if (cluster != null) {
-
-        cluster.close();
-      }
+      if (cluster != null) cluster.close();
       scassandras.stop();
     }
   }
