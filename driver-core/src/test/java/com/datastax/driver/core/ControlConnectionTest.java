@@ -19,6 +19,7 @@ import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static com.datastax.driver.core.ScassandraCluster.SELECT_LOCAL;
 import static com.datastax.driver.core.ScassandraCluster.SELECT_PEERS;
+import static com.datastax.driver.core.ScassandraCluster.SELECT_PEERS_DSE68;
 import static com.datastax.driver.core.ScassandraCluster.SELECT_PEERS_V2;
 import static com.datastax.driver.core.ScassandraCluster.datacenter;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
@@ -44,6 +45,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -51,6 +53,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.log4j.Level;
 import org.scassandra.http.client.PrimingClient;
 import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.DataProvider;
@@ -566,49 +569,123 @@ public class ControlConnectionTest extends CCMTestsSupport {
   }
 
   /**
-   * Cassandra 4.0 supports native_address and native_port columns in peers_v2. We want to validate
-   * our ability to build correct metadata when drawing data from these tables.
+   * Cassandra 4.0 supports native_address and native_port columns in system.peers_v2. We want to
+   * validate our ability to build correct metadata when drawing data from these tables.
    */
   @Test(groups = "short")
   @CCMConfig(createCcm = false)
-  public void should_extract_peer_info_for_cassandra_40() throws UnknownHostException {
+  public void should_extract_hosts_using_native_address_port_from_peersv2()
+      throws UnknownHostException {
+
+    final InetSocketAddress mockAddress =
+        new InetSocketAddress(InetAddress.getByName("4.3.2.1"), 2409);
+    ImmutableMap<String, Object> peersV2Row =
+        basePeerRow()
+            .put("native_address", mockAddress.getAddress())
+            .put("native_port", mockAddress.getPort())
+            .build();
+    runPeerTest(mockAddress, this.basePeerRow().build(), ImmutableMap.of(), peersV2Row);
+  }
+
+  /** DSE 6.8 includes native_transport_address and native_transport_port in system.peers. */
+  @Test(groups = "short")
+  @CCMConfig(createCcm = false)
+  public void should_extract_hosts_using_native_transport_address_port_from_peers()
+      throws UnknownHostException {
+
+    final InetSocketAddress mockAddress =
+        new InetSocketAddress(InetAddress.getByName("4.3.2.1"), 2409);
+    ImmutableMap<String, Object> peersRow =
+        basePeerRow()
+            .put("native_transport_address", mockAddress.getAddress())
+            .put("native_transport_port", mockAddress.getPort())
+            .build();
+    runPeerTest(mockAddress, this.basePeerRow().build(), peersRow, ImmutableMap.of(), true);
+  }
+
+  /**
+   * The default case.  If we can't get native_address/port out of system.peers_v2 or
+   * native_transport_address/port out of system.peers the fall back to rpc_address + a default port
+   */
+  @Test(groups = "short")
+  @CCMConfig(createCcm = false)
+  public void should_extract_hosts_using_rpc_address_from_peers()
+          throws UnknownHostException {
+
+    final InetAddress mockAddress = InetAddress.getByName("4.3.2.1");
+    ImmutableMap<String, Object> peersRow =
+            basePeerRow()
+                    .put("rpc_address", mockAddress)
+                    /* DefaultEndPointFactory isn't happy if we don't have both a value for
+                     * both peer and rpc_address */
+                    .put("peer", InetAddress.getByName("1.2.3.4"))
+                    .build();
+    final InetSocketAddress expectedSocketAddress =
+            new InetSocketAddress(mockAddress, -1);
+    runPeerTest(expectedSocketAddress, this.basePeerRow().build(), peersRow, ImmutableMap.of());
+  }
+
+  private void runPeerTest(
+          InetSocketAddress mockAddress,
+          ImmutableMap<String, Object> localRow,
+          ImmutableMap<String, Object> peersRow,
+          ImmutableMap<String, Object> peersV2Row) {
+
+    runPeerTest(mockAddress, localRow, peersRow, peersV2Row, false);
+  }
+
+  private void runPeerTest(
+      InetSocketAddress mockAddress,
+      ImmutableMap<String, Object> localRow,
+      ImmutableMap<String, Object> peersRow,
+      ImmutableMap<String, Object> peersV2Row,
+      boolean isDse68) {
 
     ScassandraCluster scassandras =
-        ScassandraCluster.builder().withNodes(2).withPeersV2(true).build();
+        ScassandraCluster.builder().withNodes(2).withPeersV2(!peersV2Row.isEmpty()).build();
     scassandras.init();
+
+    if (mockAddress.getPort() == -1) {
+      mockAddress = new InetSocketAddress(mockAddress.getAddress(), scassandras.getBinaryPort());
+    }
 
     Cluster cluster = null;
     try {
 
       scassandras.node(1).primingClient().clearAllPrimes();
 
-      final InetSocketAddress mockAddress =
-          new InetSocketAddress(InetAddress.getByName("4.3.2.1"), 2409);
-      Map<String, ?> peersV2Rows =
-          ImmutableMap.<String, Object>builder()
-              .put("native_address", mockAddress.getAddress())
-              .put("native_port", mockAddress.getPort())
-              .put("host_id", UUID.randomUUID())
-              .put("data_center", datacenter(1))
-              .put("rack", "rack1")
-              .put("tokens", ImmutableSet.of(Long.toString(scassandras.getTokensForDC(1).get(1))))
-              .build();
-      Map<String, ?> localRows =
-          ImmutableMap.<String, Object>builder()
-              .put("cluster_name", this.getClass().getName())
-              .put("host_id", UUID.randomUUID())
-              .build();
       PrimingClient primingClient = scassandras.node(1).primingClient();
-      primingClient.prime(
-          PrimingRequest.queryBuilder()
-              .withQuery("SELECT * FROM system.peers_v2")
-              .withThen(then().withColumnTypes(SELECT_PEERS_V2).withRows(peersV2Rows).build())
-              .build());
-      primingClient.prime(
-          PrimingRequest.queryBuilder()
-              .withQuery("SELECT * FROM system.local WHERE key='local'")
-              .withThen(then().withColumnTypes(SELECT_LOCAL).withRows(localRows).build())
-              .build());
+      if (!localRow.isEmpty()) {
+
+        primingClient.prime(
+            PrimingRequest.queryBuilder()
+                .withQuery("SELECT * FROM system.local WHERE key='local'")
+                .withThen(then().withColumnTypes(SELECT_LOCAL).withRows(localRow).build())
+                .build());
+      }
+      if (!peersRow.isEmpty()) {
+
+        primingClient.prime(
+            PrimingRequest.queryBuilder()
+                .withQuery("SELECT * FROM system.peers")
+                .withThen(then().withColumnTypes(isDse68 ? SELECT_PEERS_DSE68 : SELECT_PEERS).withRows(peersRow).build())
+                .build());
+      }
+      if (!peersV2Row.isEmpty()) {
+
+        primingClient.prime(
+            PrimingRequest.queryBuilder()
+                .withQuery("SELECT * FROM system.peers_v2")
+                .withThen(then().withColumnTypes(SELECT_PEERS_V2).withRows(peersV2Row).build())
+                .build());
+      } else {
+
+        /* Must return an error code in this case in order to trigger the drivers downgrade to system.peers */
+        primingClient.prime(
+            PrimingRequest.queryBuilder()
+                .withQuery("SELECT * FROM system.peers_v2")
+                .withThen(then().withResult(Result.invalid).build()));
+      }
 
       cluster =
           Cluster.builder()
@@ -631,6 +708,18 @@ public class ControlConnectionTest extends CCMTestsSupport {
       if (cluster != null) cluster.close();
       scassandras.stop();
     }
+  }
+
+  /** Create a builder containing the minimum material needed by a peer row used by the driver */
+  private ImmutableMap.Builder<String, Object> basePeerRow() {
+
+    return ImmutableMap.<String, Object>builder()
+        /* Required to support Metadata.addIfAbsent(Host) which is used by host loading code */
+        .put("host_id", UUID.randomUUID())
+        /* Elements below required to pass peer row validation */
+        .put("data_center", datacenter(1))
+        .put("rack", "rack1")
+        .put("tokens", ImmutableSet.of(Long.toString(new Random().nextLong())));
   }
 
   static class QueryPlanCountingPolicy extends DelegatingLoadBalancingPolicy {
