@@ -621,18 +621,18 @@ public class ScassandraCluster {
 
   /* system.peers was re-worked for DSE 6.8 */
   public static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_PEERS_DSE68 = {
-          column("peer", INET),
-          column("rpc_address", INET),
-          column("data_center", TEXT),
-          column("rack", TEXT),
-          column("release_version", TEXT),
-          column("tokens", set(TEXT)),
-          column("host_id", UUID),
-          column("graph", BOOLEAN),
-          column("schema_version", UUID),
-          column("native_transport_address", INET),
-          column("native_transport_port", INT),
-          column("native_transport_port_ssl", INT)
+    column("peer", INET),
+    column("rpc_address", INET),
+    column("data_center", TEXT),
+    column("rack", TEXT),
+    column("release_version", TEXT),
+    column("tokens", set(TEXT)),
+    column("host_id", UUID),
+    column("graph", BOOLEAN),
+    column("schema_version", UUID),
+    column("native_transport_address", INET),
+    column("native_transport_port", INT),
+    column("native_transport_port_ssl", INT)
   };
 
   public static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_PEERS_V2 = {

@@ -33,6 +33,7 @@ import com.datastax.driver.core.policies.Policies;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableMap;
@@ -41,6 +42,7 @@ import com.google.common.collect.Maps;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -577,14 +579,16 @@ public class ControlConnectionTest extends CCMTestsSupport {
   public void should_extract_hosts_using_native_address_port_from_peersv2()
       throws UnknownHostException {
 
-    final InetSocketAddress mockAddress =
-        new InetSocketAddress(InetAddress.getByName("4.3.2.1"), 2409);
-    ImmutableMap<String, Object> peersV2Row =
-        basePeerRow()
-            .put("native_address", mockAddress.getAddress())
-            .put("native_port", mockAddress.getPort())
+    InetAddress expectedAddress = InetAddress.getByName("4.3.2.1");
+    int expectedPort = 2409;
+    PeerRowState state =
+        PeerRowState.builder()
+            .peersV2("native_address", expectedAddress)
+            .peersV2("native_port", expectedPort)
+            .expectedAddress(expectedAddress)
+            .expectedPort(expectedPort)
             .build();
-    runPeerTest(mockAddress, this.basePeerRow().build(), ImmutableMap.of(), peersV2Row);
+    runPeerTest(state);
   }
 
   /** DSE 6.8 includes native_transport_address and native_transport_port in system.peers. */
@@ -593,61 +597,43 @@ public class ControlConnectionTest extends CCMTestsSupport {
   public void should_extract_hosts_using_native_transport_address_port_from_peers()
       throws UnknownHostException {
 
-    final InetSocketAddress mockAddress =
-        new InetSocketAddress(InetAddress.getByName("4.3.2.1"), 2409);
-    ImmutableMap<String, Object> peersRow =
-        basePeerRow()
-            .put("native_transport_address", mockAddress.getAddress())
-            .put("native_transport_port", mockAddress.getPort())
+    InetAddress expectedAddress = InetAddress.getByName("4.3.2.1");
+    int expectedPort = 2409;
+    PeerRowState state =
+        PeerRowState.builder()
+            .peers("native_transport_address", expectedAddress)
+            .peers("native_transport_port", expectedPort)
+            .expectedAddress(expectedAddress)
+            .expectedPort(expectedPort)
             .build();
-    runPeerTest(mockAddress, this.basePeerRow().build(), peersRow, ImmutableMap.of(), true);
+    runPeerTest(state);
   }
 
   /**
-   * The default case.  If we can't get native_address/port out of system.peers_v2 or
+   * The default case. If we can't get native_address/port out of system.peers_v2 or
    * native_transport_address/port out of system.peers the fall back to rpc_address + a default port
    */
   @Test(groups = "short")
   @CCMConfig(createCcm = false)
-  public void should_extract_hosts_using_rpc_address_from_peers()
-          throws UnknownHostException {
+  public void should_extract_hosts_using_rpc_address_from_peers() throws UnknownHostException {
 
-    final InetAddress mockAddress = InetAddress.getByName("4.3.2.1");
-    ImmutableMap<String, Object> peersRow =
-            basePeerRow()
-                    .put("rpc_address", mockAddress)
-                    /* DefaultEndPointFactory isn't happy if we don't have both a value for
-                     * both peer and rpc_address */
-                    .put("peer", InetAddress.getByName("1.2.3.4"))
-                    .build();
-    final InetSocketAddress expectedSocketAddress =
-            new InetSocketAddress(mockAddress, -1);
-    runPeerTest(expectedSocketAddress, this.basePeerRow().build(), peersRow, ImmutableMap.of());
+    InetAddress expectedAddress = InetAddress.getByName("4.3.2.1");
+    PeerRowState state =
+        PeerRowState.builder()
+            .peers("rpc_address", expectedAddress)
+            /* DefaultEndPointFactory isn't happy if we don't have both a value for
+             * both peer and rpc_address */
+            .peers("peer", InetAddress.getByName("1.2.3.4"))
+            .expectedAddress(expectedAddress)
+            .build();
+    runPeerTest(state);
   }
 
-  private void runPeerTest(
-          InetSocketAddress mockAddress,
-          ImmutableMap<String, Object> localRow,
-          ImmutableMap<String, Object> peersRow,
-          ImmutableMap<String, Object> peersV2Row) {
-
-    runPeerTest(mockAddress, localRow, peersRow, peersV2Row, false);
-  }
-
-  private void runPeerTest(
-      InetSocketAddress mockAddress,
-      ImmutableMap<String, Object> localRow,
-      ImmutableMap<String, Object> peersRow,
-      ImmutableMap<String, Object> peersV2Row,
-      boolean isDse68) {
+  private void runPeerTest(PeerRowState state) {
 
     ScassandraCluster scassandras =
-        ScassandraCluster.builder().withNodes(2).withPeersV2(!peersV2Row.isEmpty()).build();
+        ScassandraCluster.builder().withNodes(2).withPeersV2(state.usePeersV2()).build();
     scassandras.init();
-
-    if (mockAddress.getPort() == -1) {
-      mockAddress = new InetSocketAddress(mockAddress.getAddress(), scassandras.getBinaryPort());
-    }
 
     Cluster cluster = null;
     try {
@@ -655,28 +641,34 @@ public class ControlConnectionTest extends CCMTestsSupport {
       scassandras.node(1).primingClient().clearAllPrimes();
 
       PrimingClient primingClient = scassandras.node(1).primingClient();
-      if (!localRow.isEmpty()) {
 
-        primingClient.prime(
-            PrimingRequest.queryBuilder()
-                .withQuery("SELECT * FROM system.local WHERE key='local'")
-                .withThen(then().withColumnTypes(SELECT_LOCAL).withRows(localRow).build())
-                .build());
-      }
-      if (!peersRow.isEmpty()) {
+      /* Note that we always prime system.local; ControlConnection.refreshNodeAndTokenMap() gets angry
+       * if this is empty */
+      primingClient.prime(
+          PrimingRequest.queryBuilder()
+              .withQuery("SELECT * FROM system.local WHERE key='local'")
+              .withThen(then().withColumnTypes(SELECT_LOCAL).withRows(state.getLocalRow()).build())
+              .build());
+
+      if (state.shouldPrimePeers()) {
 
         primingClient.prime(
             PrimingRequest.queryBuilder()
                 .withQuery("SELECT * FROM system.peers")
-                .withThen(then().withColumnTypes(isDse68 ? SELECT_PEERS_DSE68 : SELECT_PEERS).withRows(peersRow).build())
+                .withThen(
+                    then()
+                        .withColumnTypes(state.isDse68() ? SELECT_PEERS_DSE68 : SELECT_PEERS)
+                        .withRows(state.getPeersRow())
+                        .build())
                 .build());
       }
-      if (!peersV2Row.isEmpty()) {
+      if (state.shouldPrimePeersV2()) {
 
         primingClient.prime(
             PrimingRequest.queryBuilder()
                 .withQuery("SELECT * FROM system.peers_v2")
-                .withThen(then().withColumnTypes(SELECT_PEERS_V2).withRows(peersV2Row).build())
+                .withThen(
+                    then().withColumnTypes(SELECT_PEERS_V2).withRows(state.getPeersV2Row()).build())
                 .build());
       } else {
 
@@ -703,23 +695,144 @@ public class ControlConnectionTest extends CCMTestsSupport {
                   return host.getEndPoint();
                 }
               });
-      assertThat(hostEndPoints).contains(new TranslatedAddressEndPoint(mockAddress));
+      assertThat(hostEndPoints).contains(state.getExpectedEndPoint(scassandras));
     } finally {
       if (cluster != null) cluster.close();
       scassandras.stop();
     }
   }
 
-  /** Create a builder containing the minimum material needed by a peer row used by the driver */
-  private ImmutableMap.Builder<String, Object> basePeerRow() {
+  static class PeerRowState {
 
-    return ImmutableMap.<String, Object>builder()
-        /* Required to support Metadata.addIfAbsent(Host) which is used by host loading code */
-        .put("host_id", UUID.randomUUID())
-        /* Elements below required to pass peer row validation */
-        .put("data_center", datacenter(1))
-        .put("rack", "rack1")
-        .put("tokens", ImmutableSet.of(Long.toString(new Random().nextLong())));
+    public static final int PEERS_FLAG = 0;
+    public static final int PEERS_V2_FLAG = 1;
+
+    private final ImmutableMap<String, Object> peers;
+    private final ImmutableMap<String, Object> peersV2;
+    private final ImmutableMap<String, Object> local;
+
+    private final InetAddress expectedAddress;
+    private final Optional<Integer> expectedPort;
+
+    private final BitSet shouldPrime;
+
+    private PeerRowState(
+        ImmutableMap<String, Object> peers,
+        ImmutableMap<String, Object> peersV2,
+        ImmutableMap<String, Object> local,
+        InetAddress expectedAddress,
+        Optional<Integer> expectedPort,
+        BitSet shouldPrime) {
+      this.peers = peers;
+      this.peersV2 = peersV2;
+      this.local = local;
+
+      this.expectedAddress = expectedAddress;
+      this.expectedPort = expectedPort;
+
+      this.shouldPrime = shouldPrime;
+    }
+
+    public static Builder builder() {
+      return new Builder();
+    }
+
+    public boolean usePeersV2() {
+      return !this.peersV2.isEmpty();
+    }
+
+    public boolean isDse68() {
+      return this.peers.containsKey("native_transport_address")
+          || this.peers.containsKey("native_transport_port")
+          || this.peers.containsKey("native_transport_port_ssl");
+    }
+
+    public boolean shouldPrimePeers() {
+      return this.shouldPrime.get(PEERS_FLAG);
+    }
+
+    public boolean shouldPrimePeersV2() {
+      return this.shouldPrime.get(PEERS_V2_FLAG);
+    }
+
+    public ImmutableMap<String, Object> getPeersRow() {
+      return this.peers;
+    }
+
+    public ImmutableMap<String, Object> getPeersV2Row() {
+      return this.peersV2;
+    }
+
+    public ImmutableMap<String, Object> getLocalRow() {
+      return this.local;
+    }
+
+    public EndPoint getExpectedEndPoint(ScassandraCluster cluster) {
+
+      return new TranslatedAddressEndPoint(
+          new InetSocketAddress(
+              this.expectedAddress, this.expectedPort.or(cluster.getBinaryPort())));
+    }
+
+    static class Builder {
+
+      private ImmutableMap.Builder<String, Object> peers = this.basePeerRow();
+      private ImmutableMap.Builder<String, Object> peersV2 = this.basePeerRow();
+      private ImmutableMap.Builder<String, Object> local = this.basePeerRow();
+
+      private InetAddress expectedAddress;
+      private Optional<Integer> expectedPort = Optional.absent();
+
+      private BitSet shouldPrime = new BitSet(3);
+
+      public PeerRowState build() {
+        return new PeerRowState(
+            this.peers.build(),
+            this.peersV2.build(),
+            this.local.build(),
+            this.expectedAddress,
+            this.expectedPort,
+            this.shouldPrime);
+      }
+
+      public Builder peers(String name, Object val) {
+        this.peers.put(name, val);
+        this.shouldPrime.set(PeerRowState.PEERS_FLAG);
+        return this;
+      }
+
+      public Builder peersV2(String name, Object val) {
+        this.peersV2.put(name, val);
+        this.shouldPrime.set(PeerRowState.PEERS_V2_FLAG);
+        return this;
+      }
+
+      public Builder local(String name, Object val) {
+        this.local.put(name, val);
+        return this;
+      }
+
+      public Builder expectedAddress(InetAddress address) {
+        this.expectedAddress = address;
+        return this;
+      }
+
+      public Builder expectedPort(int port) {
+        this.expectedPort = Optional.of(port);
+        return this;
+      }
+
+      private ImmutableMap.Builder<String, Object> basePeerRow() {
+
+        return ImmutableMap.<String, Object>builder()
+            /* Required to support Metadata.addIfAbsent(Host) which is used by host loading code */
+            .put("host_id", UUID.randomUUID())
+            /* Elements below required to pass peer row validation */
+            .put("data_center", datacenter(1))
+            .put("rack", "rack1")
+            .put("tokens", ImmutableSet.of(Long.toString(new Random().nextLong())));
+      }
+    }
   }
 
   static class QueryPlanCountingPolicy extends DelegatingLoadBalancingPolicy {
