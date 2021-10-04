@@ -616,7 +616,7 @@ public class ScassandraCluster {
     column("listen_address", INET),
     column("host_id", UUID),
     column("graph", BOOLEAN),
-    column("schema_version", UUID),
+    column("schema_version", UUID)
   };
 
   /* system.peers was re-worked for DSE 6.8 */

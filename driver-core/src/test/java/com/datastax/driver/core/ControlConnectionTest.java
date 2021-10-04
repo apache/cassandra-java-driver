@@ -53,6 +53,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.log4j.Level;
+import org.junit.Ignore;
 import org.scassandra.http.client.PrimingClient;
 import org.scassandra.http.client.PrimingRequest;
 import org.scassandra.http.client.Result;
@@ -610,6 +611,29 @@ public class ControlConnectionTest extends CCMTestsSupport {
   }
 
   /**
+   * If both native_transport_port and native_transport_port_ssl are present we expect the SSL
+   * version to win. Note that we don't make this conditional on SSL actually being configured.
+   */
+  @Test(groups = "short")
+  @CCMConfig(createCcm = false)
+  @Ignore("Requires SSL support in scassandra")
+  public void should_extract_hosts_using_native_transport_address_port_ssl_from_peers()
+      throws UnknownHostException {
+
+    InetAddress expectedAddress = InetAddress.getByName("4.3.2.1");
+    int expectedPort = 2409;
+    PeerRowState state =
+        PeerRowState.builder()
+            .peers("native_transport_address", expectedAddress)
+            .peers("native_transport_port", expectedPort - 100)
+            .peers("native_transport_port_ssl", expectedPort)
+            .expectedAddress(expectedAddress)
+            .expectedPort(expectedPort)
+            .build();
+    runPeerTest(state);
+  }
+
+  /**
    * The default case. If we can't get native_address/port out of system.peers_v2 or
    * native_transport_address/port out of system.peers the fall back to rpc_address + a default port
    */
@@ -672,7 +696,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
                 .build());
       } else {
 
-        /* Must return an error code in this case in order to trigger the drivers downgrade to system.peers */
+        /* Must return an error code in this case in order to trigger the driver's downgrade to system.peers */
         primingClient.prime(
             PrimingRequest.queryBuilder()
                 .withQuery("SELECT * FROM system.peers_v2")
@@ -685,7 +709,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
               .withPort(scassandras.getBinaryPort())
               .withNettyOptions(nonQuietClusterCloseOptions)
               .build();
-      cluster.init();
+      cluster.connect();
 
       Collection<EndPoint> hostEndPoints =
           Collections2.transform(
@@ -768,7 +792,6 @@ public class ControlConnectionTest extends CCMTestsSupport {
     }
 
     public EndPoint getExpectedEndPoint(ScassandraCluster cluster) {
-
       return new TranslatedAddressEndPoint(
           new InetSocketAddress(
               this.expectedAddress, this.expectedPort.or(cluster.getBinaryPort())));
@@ -823,7 +846,6 @@ public class ControlConnectionTest extends CCMTestsSupport {
       }
 
       private ImmutableMap.Builder<String, Object> basePeerRow() {
-
         return ImmutableMap.<String, Object>builder()
             /* Required to support Metadata.addIfAbsent(Host) which is used by host loading code */
             .put("host_id", UUID.randomUUID())
