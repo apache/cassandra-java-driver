@@ -645,7 +645,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
     PeerRowState state =
         PeerRowState.builder()
             .peers("rpc_address", expectedAddress)
-            /* DefaultEndPointFactory isn't happy if we don't have both a value for
+            /* DefaultEndPointFactory isn't happy if we don't have a value for
              * both peer and rpc_address */
             .peers("peer", InetAddress.getByName("1.2.3.4"))
             .expectedAddress(expectedAddress)
