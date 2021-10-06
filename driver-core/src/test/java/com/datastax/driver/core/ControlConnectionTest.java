@@ -42,7 +42,6 @@ import com.google.common.collect.Maps;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -611,8 +610,9 @@ public class ControlConnectionTest extends CCMTestsSupport {
   }
 
   /**
-   * If both native_transport_port and native_transport_port_ssl are present we expect the SSL
-   * version to win. Note that we don't make this conditional on SSL actually being configured.
+   * If both native_transport_port and native_transport_port_ssl are present we expect the latter to
+   * be selected if the Cluster is created with SSL support (i.e. if {@link
+   * Cluster.Builder#withSSL()} is used).
    */
   @Test(groups = "short")
   @CCMConfig(createCcm = false)
@@ -728,9 +728,6 @@ public class ControlConnectionTest extends CCMTestsSupport {
 
   static class PeerRowState {
 
-    public static final int PEERS_FLAG = 0;
-    public static final int PEERS_V2_FLAG = 1;
-
     private final ImmutableMap<String, Object> peers;
     private final ImmutableMap<String, Object> peersV2;
     private final ImmutableMap<String, Object> local;
@@ -738,7 +735,8 @@ public class ControlConnectionTest extends CCMTestsSupport {
     private final InetAddress expectedAddress;
     private final Optional<Integer> expectedPort;
 
-    private final BitSet shouldPrime;
+    private final boolean shouldPrimePeers;
+    private final boolean shouldPrimePeersV2;
 
     private PeerRowState(
         ImmutableMap<String, Object> peers,
@@ -746,7 +744,8 @@ public class ControlConnectionTest extends CCMTestsSupport {
         ImmutableMap<String, Object> local,
         InetAddress expectedAddress,
         Optional<Integer> expectedPort,
-        BitSet shouldPrime) {
+        boolean shouldPrimePeers,
+        boolean shouldPrimePeersV2) {
       this.peers = peers;
       this.peersV2 = peersV2;
       this.local = local;
@@ -754,7 +753,8 @@ public class ControlConnectionTest extends CCMTestsSupport {
       this.expectedAddress = expectedAddress;
       this.expectedPort = expectedPort;
 
-      this.shouldPrime = shouldPrime;
+      this.shouldPrimePeers = shouldPrimePeers;
+      this.shouldPrimePeersV2 = shouldPrimePeersV2;
     }
 
     public static Builder builder() {
@@ -772,11 +772,11 @@ public class ControlConnectionTest extends CCMTestsSupport {
     }
 
     public boolean shouldPrimePeers() {
-      return this.shouldPrime.get(PEERS_FLAG);
+      return this.shouldPrimePeers;
     }
 
     public boolean shouldPrimePeersV2() {
-      return this.shouldPrime.get(PEERS_V2_FLAG);
+      return this.shouldPrimePeersV2;
     }
 
     public ImmutableMap<String, Object> getPeersRow() {
@@ -806,7 +806,8 @@ public class ControlConnectionTest extends CCMTestsSupport {
       private InetAddress expectedAddress;
       private Optional<Integer> expectedPort = Optional.absent();
 
-      private BitSet shouldPrime = new BitSet(3);
+      private boolean shouldPrimePeers = false;
+      private boolean shouldPrimePeersV2 = false;
 
       public PeerRowState build() {
         return new PeerRowState(
@@ -815,18 +816,19 @@ public class ControlConnectionTest extends CCMTestsSupport {
             this.local.build(),
             this.expectedAddress,
             this.expectedPort,
-            this.shouldPrime);
+            this.shouldPrimePeers,
+            this.shouldPrimePeersV2);
       }
 
       public Builder peers(String name, Object val) {
         this.peers.put(name, val);
-        this.shouldPrime.set(PeerRowState.PEERS_FLAG);
+        this.shouldPrimePeers = true;
         return this;
       }
 
       public Builder peersV2(String name, Object val) {
         this.peersV2.put(name, val);
-        this.shouldPrime.set(PeerRowState.PEERS_V2_FLAG);
+        this.shouldPrimePeersV2 = true;
         return this;
       }
 
