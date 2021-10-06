@@ -24,9 +24,11 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy implements RequestTracker {
+public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
+    implements RequestTracker {
 
-  private static final Logger LOG = LoggerFactory.getLogger(YugabyteDefaultLoadBalancingPolicy.class);
+  private static final Logger LOG =
+      LoggerFactory.getLogger(YugabyteDefaultLoadBalancingPolicy.class);
 
   private volatile DistanceReporter distanceReporter;
   private volatile Predicate<Node> filter;
@@ -63,7 +65,10 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
       // DCs.
       if (currentNodes.length == 0) {
 
-        LOG.trace("[{}] No nodes available in Local DC {}, falling back on to liveNodes", logPrefix, localDc);
+        LOG.trace(
+            "[{}] No nodes available in Local DC {}, falling back on to liveNodes",
+            logPrefix,
+            localDc);
         currentNodes = liveNodes.toArray();
       }
 
@@ -74,7 +79,8 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
     LOG.trace("[{}] Round-robing the {} avaiable nodes", logPrefix, currentNodes.length);
 
     // Round-robin the remaining nodes
-    ArrayUtils.rotate(currentNodes, 0, currentNodes.length, roundRobinAmount.getAndUpdate(INCREMENT));
+    ArrayUtils.rotate(
+        currentNodes, 0, currentNodes.length, roundRobinAmount.getAndUpdate(INCREMENT));
 
     return new QueryPlan(currentNodes);
   }
@@ -90,14 +96,23 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
   }
 
   @Override
-  public void onNodeSuccess(@NonNull Request request, long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile, @NonNull Node node, @NonNull String logPrefix) {
+  public void onNodeSuccess(
+      @NonNull Request request,
+      long latencyNanos,
+      @NonNull DriverExecutionProfile executionProfile,
+      @NonNull Node node,
+      @NonNull String logPrefix) {
     updateResponseTimes(node);
   }
 
   @Override
-  public void onNodeError(@NonNull Request request, @NonNull Throwable error, long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile, @NonNull Node node, @NonNull String logPrefix) {
+  public void onNodeError(
+      @NonNull Request request,
+      @NonNull Throwable error,
+      long latencyNanos,
+      @NonNull DriverExecutionProfile executionProfile,
+      @NonNull Node node,
+      @NonNull String logPrefix) {
     updateResponseTimes(node);
   }
 
@@ -127,7 +142,10 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
         // other DC's as live for routing the YCQL operations.
         if (node.getState() == NodeState.UP || node.getState() == NodeState.UNKNOWN) {
           liveNodes.add(node);
-          LOG.debug("[{}] Adding {} as it belongs to the {} DC in Multi-DC/Region Setup", logPrefix, node,
+          LOG.debug(
+              "[{}] Adding {} as it belongs to the {} DC in Multi-DC/Region Setup",
+              logPrefix,
+              node,
               node.getDatacenter());
           distanceReporter.setDistance(node, NodeDistance.REMOTE);
         } else {
@@ -151,24 +169,26 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
   }
 
   protected void updateResponseTimes(@NonNull Node node) {
-    responseTimes.compute(node, (n, array) -> {
-      // The array stores at most two timestamps, since we don't need more;
-      // the first one is always the least recent one, and hence the one to inspect.
-      long now = nanoTime();
-      if (array == null) {
-        array = new AtomicLongArray(1);
-        array.set(0, now);
-      } else if (array.length() == 1) {
-        long previous = array.get(0);
-        array = new AtomicLongArray(2);
-        array.set(0, previous);
-        array.set(1, now);
-      } else {
-        array.set(0, array.get(1));
-        array.set(1, now);
-      }
-      return array;
-    });
+    responseTimes.compute(
+        node,
+        (n, array) -> {
+          // The array stores at most two timestamps, since we don't need more;
+          // the first one is always the least recent one, and hence the one to inspect.
+          long now = nanoTime();
+          if (array == null) {
+            array = new AtomicLongArray(1);
+            array.set(0, now);
+          } else if (array.length() == 1) {
+            long previous = array.get(0);
+            array = new AtomicLongArray(2);
+            array.set(0, previous);
+            array.set(1, now);
+          } else {
+            array.set(0, array.get(1));
+            array.set(1, now);
+          }
+          return array;
+        });
   }
 
   protected long nanoTime() {

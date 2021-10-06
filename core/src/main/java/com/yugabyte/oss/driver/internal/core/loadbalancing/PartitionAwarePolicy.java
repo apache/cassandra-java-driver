@@ -12,21 +12,6 @@
 //
 package com.yugabyte.oss.driver.internal.core.loadbalancing;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.WritableByteChannel;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Queue;
-import java.util.UUID;
-
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
@@ -44,20 +29,34 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.MapType;
 import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
-import com.datastax.oss.driver.internal.core.loadbalancing.DefaultLoadBalancingPolicy;
 import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.yugabyte.oss.driver.api.core.DefaultPartitionMetadata;
 import com.yugabyte.oss.driver.api.core.TableSplitMetadata;
 import com.yugabyte.oss.driver.api.core.utils.Jenkins;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.UUID;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ThreadSafe
-public class PartitionAwarePolicy extends YugabyteDefaultLoadBalancingPolicy implements RequestTracker {
+public class PartitionAwarePolicy extends YugabyteDefaultLoadBalancingPolicy
+    implements RequestTracker {
 
   private static final Logger LOG = LoggerFactory.getLogger(PartitionAwarePolicy.class);
 
@@ -89,9 +88,11 @@ public class PartitionAwarePolicy extends YugabyteDefaultLoadBalancingPolicy imp
       LOG.debug("newQueryPlan: Number of Nodes = " + partitionAwareNodes.size());
     }
 
-    // It so happens that the partition aware nodes could be non-empty, but the state of the nodes could be down.
+    // It so happens that the partition aware nodes could be non-empty, but the state of the nodes
+    // could be down.
     // In such cases fallback to the inherited load-balancing logic
-    return !CollectionUtils.isEmpty(partitionAwareNodes) ? new QueryPlan(partitionAwareNodes.toArray())
+    return !CollectionUtils.isEmpty(partitionAwareNodes)
+        ? new QueryPlan(partitionAwareNodes.toArray())
         : super.newQueryPlan(request, session);
   }
 
@@ -189,7 +190,7 @@ public class PartitionAwarePolicy extends YugabyteDefaultLoadBalancingPolicy imp
     private ConsistencyLevel getConsistencyLevel() {
       return statement.getConsistencyLevel() != null
           ? statement.getConsistencyLevel()
-          : ConsistencyLevel.YB_CONSISTENT_PREFIX;
+          : ConsistencyLevel.YB_STRONG;
     }
 
     @Override
