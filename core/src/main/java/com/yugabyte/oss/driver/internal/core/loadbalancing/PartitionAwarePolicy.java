@@ -57,7 +57,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ThreadSafe
-public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements RequestTracker {
+public class PartitionAwarePolicy extends YugabyteDefaultLoadBalancingPolicy implements RequestTracker {
 
   private static final Logger LOG = LoggerFactory.getLogger(PartitionAwarePolicy.class);
 
