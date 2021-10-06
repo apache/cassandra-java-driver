@@ -12,6 +12,21 @@
 //
 package com.yugabyte.oss.driver.internal.core.loadbalancing;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.UUID;
+
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
@@ -36,20 +51,8 @@ import com.yugabyte.oss.driver.api.core.DefaultPartitionMetadata;
 import com.yugabyte.oss.driver.api.core.TableSplitMetadata;
 import com.yugabyte.oss.driver.api.core.utils.Jenkins;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.WritableByteChannel;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Queue;
-import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArraySet;
 import net.jcip.annotations.ThreadSafe;
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,33 +73,32 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
   @Override
   public Queue<Node> newQueryPlan(Request request, Session session) {
 
-    Iterator<Node> partitionAwareNodes = null;
+    Iterator<Node> partitionAwareNodeIterator = null;
     if (request instanceof BoundStatement) {
-      partitionAwareNodes = getQueryPlan(session, (BoundStatement) request);
+      partitionAwareNodeIterator = getQueryPlan(session, (BoundStatement) request);
     } else if (request instanceof BatchStatement) {
-      partitionAwareNodes = getQueryPlan(session, (BatchStatement) request);
+      partitionAwareNodeIterator = getQueryPlan(session, (BatchStatement) request);
     }
 
-    // Creating an object[] from iterator
-    Object[] partitionAwareNodesInObjectArray = null;
-    if (partitionAwareNodes != null) {
-      CopyOnWriteArraySet<Node> tempNodes = new CopyOnWriteArraySet<>();
-      while (partitionAwareNodes.hasNext()) {
-        tempNodes.add(partitionAwareNodes.next());
+    LinkedHashSet<Node> partitionAwareNodes = null;
+    if (partitionAwareNodeIterator != null) {
+      partitionAwareNodes = new LinkedHashSet<>();
+      while (partitionAwareNodeIterator.hasNext()) {
+        partitionAwareNodes.add(partitionAwareNodeIterator.next());
       }
-      partitionAwareNodesInObjectArray = tempNodes.toArray();
-      LOG.debug("newQueryPlan: Number of Nodes = " + partitionAwareNodesInObjectArray.length);
+      LOG.debug("newQueryPlan: Number of Nodes = " + partitionAwareNodes.size());
     }
 
-    return (partitionAwareNodesInObjectArray != null)
-        ? new QueryPlan(partitionAwareNodesInObjectArray)
+    // It so happens that the partition aware nodes could be non-empty, but the state of the nodes could be down.
+    // In such cases fallback to the inherited load-balancing logic
+    return !CollectionUtils.isEmpty(partitionAwareNodes) ? new QueryPlan(partitionAwareNodes.toArray())
         : super.newQueryPlan(request, session);
   }
 
   /**
    * Gets the query plan for a {@code BoundStatement}.
    *
-   * @param loggedKeyspace the logged keyspace of the statement
+   * @param session db session
    * @param statement the statement
    * @return the query plan, or null when no plan can be determined
    */
@@ -126,13 +128,14 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
       return null;
     }
 
-    return new UpHostIterator(statement, tableSplitMetadata.getHosts(key));
+    // This needs to manipulate the local copy of the hosts instead of the actual reference
+    return new UpHostIterator(statement, new ArrayList(tableSplitMetadata.getHosts(key)));
   }
 
   /**
    * Gets the query plan for a {@code BatchStatement}.
    *
-   * @param loggedKeyspace the logged keyspace of the statement
+   * @param session db session
    * @param batch the batch statement
    * @return the query plan, or null when no plan can be determined
    */
@@ -166,20 +169,19 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
     /**
      * Creates a new {@code UpHostIterator}.
      *
-     * @param loggedKeyspace the logged keyspace of the statement
      * @param statement the statement
      * @param hosts the hosts that host the statement's partition key
      */
     public UpHostIterator(BoundStatement statement, List<Node> hosts) {
       this.statement = statement;
       this.iterator = hosts.iterator();
-      //    this.hosts = hosts;
 
       // When the CQL consistency level is set to YB consistent prefix (Cassandra
       // ONE),
       // the reads would end up going only to the leader if the list of hosts are not
       // shuffled.
       if (getConsistencyLevel() == ConsistencyLevel.YB_CONSISTENT_PREFIX) {
+        // this is to be performed in the local copy
         Collections.shuffle(hosts);
       }
     }
