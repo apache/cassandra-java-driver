@@ -17,7 +17,10 @@ package com.datastax.driver.core;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
+import static com.datastax.driver.core.ScassandraCluster.SELECT_LOCAL;
 import static com.datastax.driver.core.ScassandraCluster.SELECT_PEERS;
+import static com.datastax.driver.core.ScassandraCluster.SELECT_PEERS_DSE68;
+import static com.datastax.driver.core.ScassandraCluster.SELECT_PEERS_V2;
 import static com.datastax.driver.core.ScassandraCluster.datacenter;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 import static com.google.common.collect.Lists.newArrayList;
@@ -30,6 +33,8 @@ import com.datastax.driver.core.policies.Policies;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -41,11 +46,16 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.log4j.Level;
+import org.junit.Ignore;
+import org.scassandra.http.client.PrimingClient;
 import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.DataProvider;
@@ -557,6 +567,295 @@ public class ControlConnectionTest extends CCMTestsSupport {
     } finally {
       cluster.close();
       sCluster.stop();
+    }
+  }
+
+  /**
+   * Cassandra 4.0 supports native_address and native_port columns in system.peers_v2. We want to
+   * validate our ability to build correct metadata when drawing data from these tables.
+   */
+  @Test(groups = "short")
+  @CCMConfig(createCcm = false)
+  public void should_extract_hosts_using_native_address_port_from_peersv2()
+      throws UnknownHostException {
+
+    InetAddress expectedAddress = InetAddress.getByName("4.3.2.1");
+    int expectedPort = 2409;
+    PeerRowState state =
+        PeerRowState.builder()
+            .peersV2("native_address", expectedAddress)
+            .peersV2("native_port", expectedPort)
+            .expectedAddress(expectedAddress)
+            .expectedPort(expectedPort)
+            .build();
+    runPeerTest(state);
+  }
+
+  /** DSE 6.8 includes native_transport_address and native_transport_port in system.peers. */
+  @Test(groups = "short")
+  @CCMConfig(createCcm = false)
+  public void should_extract_hosts_using_native_transport_address_port_from_peers()
+      throws UnknownHostException {
+
+    InetAddress expectedAddress = InetAddress.getByName("4.3.2.1");
+    int expectedPort = 2409;
+    PeerRowState state =
+        PeerRowState.builder()
+            .peers("native_transport_address", expectedAddress)
+            .peers("native_transport_port", expectedPort)
+            .expectedAddress(expectedAddress)
+            .expectedPort(expectedPort)
+            .build();
+    runPeerTest(state);
+  }
+
+  /**
+   * If both native_transport_port and native_transport_port_ssl are present we expect the latter to
+   * be selected if the Cluster is created with SSL support (i.e. if {@link
+   * Cluster.Builder#withSSL()} is used).
+   */
+  @Test(groups = "short")
+  @CCMConfig(createCcm = false)
+  @Ignore("Requires SSL support in scassandra")
+  public void should_extract_hosts_using_native_transport_address_port_ssl_from_peers()
+      throws UnknownHostException {
+
+    InetAddress expectedAddress = InetAddress.getByName("4.3.2.1");
+    int expectedPort = 2409;
+    PeerRowState state =
+        PeerRowState.builder()
+            .peers("native_transport_address", expectedAddress)
+            .peers("native_transport_port", expectedPort - 100)
+            .peers("native_transport_port_ssl", expectedPort)
+            .expectedAddress(expectedAddress)
+            .expectedPort(expectedPort)
+            .build();
+    runPeerTest(state);
+  }
+
+  /**
+   * The default case. If we can't get native_address/port out of system.peers_v2 or
+   * native_transport_address/port out of system.peers the fall back to rpc_address + a default port
+   */
+  @Test(groups = "short")
+  @CCMConfig(createCcm = false)
+  public void should_extract_hosts_using_rpc_address_from_peers() throws UnknownHostException {
+
+    InetAddress expectedAddress = InetAddress.getByName("4.3.2.1");
+    PeerRowState state =
+        PeerRowState.builder()
+            .peers("rpc_address", expectedAddress)
+            /* DefaultEndPointFactory isn't happy if we don't have a value for
+             * both peer and rpc_address */
+            .peers("peer", InetAddress.getByName("1.2.3.4"))
+            .expectedAddress(expectedAddress)
+            .build();
+    runPeerTest(state);
+  }
+
+  private void runPeerTest(PeerRowState state) {
+
+    ScassandraCluster scassandras =
+        ScassandraCluster.builder().withNodes(2).withPeersV2(state.usePeersV2()).build();
+    scassandras.init();
+
+    Cluster cluster = null;
+    try {
+
+      scassandras.node(1).primingClient().clearAllPrimes();
+
+      PrimingClient primingClient = scassandras.node(1).primingClient();
+
+      /* Note that we always prime system.local; ControlConnection.refreshNodeAndTokenMap() gets angry
+       * if this is empty */
+      primingClient.prime(
+          PrimingRequest.queryBuilder()
+              .withQuery("SELECT * FROM system.local WHERE key='local'")
+              .withThen(then().withColumnTypes(SELECT_LOCAL).withRows(state.getLocalRow()).build())
+              .build());
+
+      if (state.shouldPrimePeers()) {
+
+        primingClient.prime(
+            PrimingRequest.queryBuilder()
+                .withQuery("SELECT * FROM system.peers")
+                .withThen(
+                    then()
+                        .withColumnTypes(state.isDse68() ? SELECT_PEERS_DSE68 : SELECT_PEERS)
+                        .withRows(state.getPeersRow())
+                        .build())
+                .build());
+      }
+      if (state.shouldPrimePeersV2()) {
+
+        primingClient.prime(
+            PrimingRequest.queryBuilder()
+                .withQuery("SELECT * FROM system.peers_v2")
+                .withThen(
+                    then().withColumnTypes(SELECT_PEERS_V2).withRows(state.getPeersV2Row()).build())
+                .build());
+      } else {
+
+        /* Must return an error code in this case in order to trigger the driver's downgrade to system.peers */
+        primingClient.prime(
+            PrimingRequest.queryBuilder()
+                .withQuery("SELECT * FROM system.peers_v2")
+                .withThen(then().withResult(Result.invalid).build()));
+      }
+
+      cluster =
+          Cluster.builder()
+              .addContactPoints(scassandras.address(1).getAddress())
+              .withPort(scassandras.getBinaryPort())
+              .withNettyOptions(nonQuietClusterCloseOptions)
+              .build();
+      cluster.connect();
+
+      Collection<EndPoint> hostEndPoints =
+          Collections2.transform(
+              cluster.getMetadata().allHosts(),
+              new Function<Host, EndPoint>() {
+                public EndPoint apply(Host host) {
+                  return host.getEndPoint();
+                }
+              });
+      assertThat(hostEndPoints).contains(state.getExpectedEndPoint(scassandras));
+    } finally {
+      if (cluster != null) cluster.close();
+      scassandras.stop();
+    }
+  }
+
+  static class PeerRowState {
+
+    private final ImmutableMap<String, Object> peers;
+    private final ImmutableMap<String, Object> peersV2;
+    private final ImmutableMap<String, Object> local;
+
+    private final InetAddress expectedAddress;
+    private final Optional<Integer> expectedPort;
+
+    private final boolean shouldPrimePeers;
+    private final boolean shouldPrimePeersV2;
+
+    private PeerRowState(
+        ImmutableMap<String, Object> peers,
+        ImmutableMap<String, Object> peersV2,
+        ImmutableMap<String, Object> local,
+        InetAddress expectedAddress,
+        Optional<Integer> expectedPort,
+        boolean shouldPrimePeers,
+        boolean shouldPrimePeersV2) {
+      this.peers = peers;
+      this.peersV2 = peersV2;
+      this.local = local;
+
+      this.expectedAddress = expectedAddress;
+      this.expectedPort = expectedPort;
+
+      this.shouldPrimePeers = shouldPrimePeers;
+      this.shouldPrimePeersV2 = shouldPrimePeersV2;
+    }
+
+    public static Builder builder() {
+      return new Builder();
+    }
+
+    public boolean usePeersV2() {
+      return !this.peersV2.isEmpty();
+    }
+
+    public boolean isDse68() {
+      return this.peers.containsKey("native_transport_address")
+          || this.peers.containsKey("native_transport_port")
+          || this.peers.containsKey("native_transport_port_ssl");
+    }
+
+    public boolean shouldPrimePeers() {
+      return this.shouldPrimePeers;
+    }
+
+    public boolean shouldPrimePeersV2() {
+      return this.shouldPrimePeersV2;
+    }
+
+    public ImmutableMap<String, Object> getPeersRow() {
+      return this.peers;
+    }
+
+    public ImmutableMap<String, Object> getPeersV2Row() {
+      return this.peersV2;
+    }
+
+    public ImmutableMap<String, Object> getLocalRow() {
+      return this.local;
+    }
+
+    public EndPoint getExpectedEndPoint(ScassandraCluster cluster) {
+      return new TranslatedAddressEndPoint(
+          new InetSocketAddress(
+              this.expectedAddress, this.expectedPort.or(cluster.getBinaryPort())));
+    }
+
+    static class Builder {
+
+      private ImmutableMap.Builder<String, Object> peers = this.basePeerRow();
+      private ImmutableMap.Builder<String, Object> peersV2 = this.basePeerRow();
+      private ImmutableMap.Builder<String, Object> local = this.basePeerRow();
+
+      private InetAddress expectedAddress;
+      private Optional<Integer> expectedPort = Optional.absent();
+
+      private boolean shouldPrimePeers = false;
+      private boolean shouldPrimePeersV2 = false;
+
+      public PeerRowState build() {
+        return new PeerRowState(
+            this.peers.build(),
+            this.peersV2.build(),
+            this.local.build(),
+            this.expectedAddress,
+            this.expectedPort,
+            this.shouldPrimePeers,
+            this.shouldPrimePeersV2);
+      }
+
+      public Builder peers(String name, Object val) {
+        this.peers.put(name, val);
+        this.shouldPrimePeers = true;
+        return this;
+      }
+
+      public Builder peersV2(String name, Object val) {
+        this.peersV2.put(name, val);
+        this.shouldPrimePeersV2 = true;
+        return this;
+      }
+
+      public Builder local(String name, Object val) {
+        this.local.put(name, val);
+        return this;
+      }
+
+      public Builder expectedAddress(InetAddress address) {
+        this.expectedAddress = address;
+        return this;
+      }
+
+      public Builder expectedPort(int port) {
+        this.expectedPort = Optional.of(port);
+        return this;
+      }
+
+      private ImmutableMap.Builder<String, Object> basePeerRow() {
+        return ImmutableMap.<String, Object>builder()
+            /* Required to support Metadata.addIfAbsent(Host) which is used by host loading code */
+            .put("host_id", UUID.randomUUID())
+            /* Elements below required to pass peer row validation */
+            .put("data_center", datacenter(1))
+            .put("rack", "rack1")
+            .put("tokens", ImmutableSet.of(Long.toString(new Random().nextLong())));
+      }
     }
   }
 

@@ -611,6 +611,17 @@ class ControlConnection implements Connection.Owner {
       InetAddress nativeAddress = row.getInet("native_address");
       int nativePort = row.getInt("native_port");
       broadcastRpcAddress = new InetSocketAddress(nativeAddress, nativePort);
+    } else if (row.getColumnDefinitions().contains("native_transport_address")) {
+      // DSE 6.8 introduced native_transport_address and native_transport_port for the
+      // listen address.  Also included is native_transport_port_ssl (in case users
+      // want to setup a different port for SSL and non-SSL conns).
+      InetAddress nativeAddress = row.getInet("native_transport_address");
+      int nativePort = row.getInt("native_transport_port");
+      if (cluster.getCluster().getConfiguration().getProtocolOptions().getSSLOptions() != null
+          && !row.isNull("native_transport_port_ssl")) {
+        nativePort = row.getInt("native_transport_port_ssl");
+      }
+      broadcastRpcAddress = new InetSocketAddress(nativeAddress, nativePort);
     } else if (row.getColumnDefinitions().contains("rpc_address")) {
       InetAddress rpcAddress = row.getInet("rpc_address");
       broadcastRpcAddress = new InetSocketAddress(rpcAddress, cluster.connectionFactory.getPort());
@@ -831,6 +842,14 @@ class ControlConnection implements Connection.Owner {
         InetAddress nativeAddress = row.getInet("native_address");
         int nativePort = row.getInt("native_port");
         broadcastRpcAddress = new InetSocketAddress(nativeAddress, nativePort);
+      } else if (row.getColumnDefinitions().contains("native_transport_address")) {
+        InetAddress nativeAddress = row.getInet("native_transport_address");
+        int nativePort = row.getInt("native_transport_port");
+        if (cluster.getCluster().getConfiguration().getProtocolOptions().getSSLOptions() != null
+            && !row.isNull("native_transport_port_ssl")) {
+          nativePort = row.getInt("native_transport_port_ssl");
+        }
+        broadcastRpcAddress = new InetSocketAddress(nativeAddress, nativePort);
       } else {
         InetAddress rpcAddress = row.getInet("rpc_address");
         broadcastRpcAddress =
@@ -956,7 +975,11 @@ class ControlConnection implements Connection.Owner {
               && !peerRow.isNull("native_port");
     } else {
       isValid &=
-          peerRow.getColumnDefinitions().contains("rpc_address") && !peerRow.isNull("rpc_address");
+          (peerRow.getColumnDefinitions().contains("rpc_address") && !peerRow.isNull("rpc_address"))
+              || (peerRow.getColumnDefinitions().contains("native_transport_address")
+                  && peerRow.getColumnDefinitions().contains("native_transport_port")
+                  && !peerRow.isNull("native_transport_address")
+                  && !peerRow.isNull("native_transport_port"));
     }
 
     if (EXTENDED_PEER_CHECK) {
@@ -984,6 +1007,9 @@ class ControlConnection implements Connection.Owner {
       formatMissingOrNullColumn(peerRow, "native_address", sb);
       formatMissingOrNullColumn(peerRow, "native_port", sb);
     } else {
+      formatMissingOrNullColumn(peerRow, "native_transport_address", sb);
+      formatMissingOrNullColumn(peerRow, "native_transport_port", sb);
+      formatMissingOrNullColumn(peerRow, "native_transport_port_ssl", sb);
       formatMissingOrNullColumn(peerRow, "rpc_address", sb);
     }
     if (EXTENDED_PEER_CHECK) {

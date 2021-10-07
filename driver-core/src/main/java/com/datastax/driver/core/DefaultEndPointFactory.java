@@ -49,6 +49,16 @@ public class DefaultEndPointFactory implements EndPointFactory {
       InetSocketAddress translateAddress =
           cluster.manager.translateAddress(new InetSocketAddress(nativeAddress, nativePort));
       return new TranslatedAddressEndPoint(translateAddress);
+    } else if (peersRow.getColumnDefinitions().contains("native_transport_address")) {
+      InetAddress nativeAddress = peersRow.getInet("native_transport_address");
+      int nativePort = peersRow.getInt("native_transport_port");
+      if (cluster.getConfiguration().getProtocolOptions().getSSLOptions() != null
+          && !peersRow.isNull("native_transport_port_ssl")) {
+        nativePort = peersRow.getInt("native_transport_port_ssl");
+      }
+      InetSocketAddress translateAddress =
+          cluster.manager.translateAddress(new InetSocketAddress(nativeAddress, nativePort));
+      return new TranslatedAddressEndPoint(translateAddress);
     } else {
       InetAddress broadcastAddress = peersRow.getInet("peer");
       InetAddress rpcAddress = peersRow.getInet("rpc_address");

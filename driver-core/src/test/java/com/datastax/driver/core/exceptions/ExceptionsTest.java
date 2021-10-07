@@ -283,7 +283,7 @@ public class ExceptionsTest extends CCMTestsSupport {
   public void should_create_proper_read_timeout_exception() {
     ReadTimeoutException e = new ReadTimeoutException(endPoint1, LOCAL_QUORUM, 2, 3, true);
     assertThat(e.getMessage())
-        .isEqualTo(
+        .contains(
             "Cassandra timeout during read query at consistency LOCAL_QUORUM (3 responses were required but only 2 replica responded)");
     assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_QUORUM);
     assertThat(e.getReceivedAcknowledgements()).isEqualTo(2);
@@ -292,7 +292,7 @@ public class ExceptionsTest extends CCMTestsSupport {
     assertThat(e.getEndPoint()).isEqualTo(endPoint1);
     e = e.copy(endPoint2);
     assertThat(e.getMessage())
-        .isEqualTo(
+        .contains(
             "Cassandra timeout during read query at consistency LOCAL_QUORUM (3 responses were required but only 2 replica responded)");
     assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_QUORUM);
     assertThat(e.getReceivedAcknowledgements()).isEqualTo(2);
