@@ -79,6 +79,10 @@
       <artifactId>reactive-streams</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.esri.geometry</groupId>
+      <artifactId>esri-geometry-api</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.tinkerpop</groupId>
       <artifactId>gremlin-core</artifactId>
     </dependency>
