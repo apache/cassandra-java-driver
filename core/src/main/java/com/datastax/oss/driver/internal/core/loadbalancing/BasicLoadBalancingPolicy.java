@@ -323,10 +323,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
           @Override
           protected Object[] computeNodes() {
             Object[] dcs = liveNodes.dcs().toArray();
-            if (dcs.length <= 1) {
-              return EMPTY_NODES;
-            }
-            Object[] remoteNodes = new Object[(dcs.length - 1) * maxNodesPerRemoteDc];
+            Object[] remoteNodes = new Object[dcs.length * maxNodesPerRemoteDc];
             int remoteNodesLength = 0;
             for (Object dc : dcs) {
               if (!dc.equals(localDc)) {
