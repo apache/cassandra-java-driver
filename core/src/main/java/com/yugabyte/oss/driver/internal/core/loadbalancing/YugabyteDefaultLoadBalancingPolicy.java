@@ -64,7 +64,7 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
     filter = createNodeFilter(localDc, nodes);
 
     for (Node node : nodes.values()) {
-      isLiveNode(node);
+      addToLiveNodeLists(node);
     }
   }
 
@@ -107,12 +107,12 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
 
   @Override
   public void onUp(@NonNull Node node) {
-    isLiveNode(node);
+    addToLiveNodeLists(node);
   }
 
   @Override
   public void onAdd(@NonNull Node node) {
-    isLiveNode(node);
+    addToLiveNodeLists(node);
   }
 
   @Override
@@ -150,7 +150,7 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
     updateResponseTimes(node);
   }
 
-  private void isLiveNode(@NonNull Node node) {
+  private void addToLiveNodeLists(@NonNull Node node) {
 
     // For YCQL, when localDC is provided, use the DefaultNodeFilterHelper to find
     // out the local nodes and also maintain list of all the live nodes in every DC.
@@ -233,10 +233,9 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
 
       Statement<?> ycqlStatement = (Statement<?>) request;
 
-      statementConsistencyLevel =
-          ycqlStatement.getConsistencyLevel() != null
-              ? ycqlStatement.getConsistencyLevel()
-              : ConsistencyLevel.YB_STRONG;
+      if (ycqlStatement.getConsistencyLevel() != null) {
+        statementConsistencyLevel = ycqlStatement.getConsistencyLevel();
+      }
     }
 
     return statementConsistencyLevel;
