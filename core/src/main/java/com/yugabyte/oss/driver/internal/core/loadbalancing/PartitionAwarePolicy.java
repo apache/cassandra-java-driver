@@ -29,7 +29,6 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.MapType;
 import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
-import com.datastax.oss.driver.internal.core.loadbalancing.DefaultLoadBalancingPolicy;
 import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.yugabyte.oss.driver.api.core.DefaultPartitionMetadata;
@@ -56,7 +55,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ThreadSafe
-public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements RequestTracker {
+public class PartitionAwarePolicy extends YugabyteDefaultLoadBalancingPolicy
+    implements RequestTracker {
 
   private static final Logger LOG = LoggerFactory.getLogger(PartitionAwarePolicy.class);
 
@@ -129,8 +129,13 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
       return null;
     }
 
+    // Get all the applicable nodes for LoadBalancing from the base class
+    Iterator<Node> nodesFromBasePolicy =
+        super.newQueryPlan((Request) statement, session).iterator();
+
     // This needs to manipulate the local copy of the hosts instead of the actual reference
-    return new UpHostIterator(statement, new ArrayList(tableSplitMetadata.getHosts(key)));
+    return new UpHostIterator(
+        statement, new ArrayList(tableSplitMetadata.getHosts(key)), nodesFromBasePolicy);
   }
 
   /**
@@ -162,10 +167,9 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
 
     private final BoundStatement statement;
     private final Iterator<Node> iterator;
+    private final Iterator<Node> childIterator;
+    private final List<Node> hosts;
     private Node nextHost;
-
-    //  private Iterator<Node> childIterator;
-    //  private final List<Node> hosts;
 
     /**
      * Creates a new {@code UpHostIterator}.
@@ -173,9 +177,12 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
      * @param statement the statement
      * @param hosts the hosts that host the statement's partition key
      */
-    public UpHostIterator(BoundStatement statement, List<Node> hosts) {
+    public UpHostIterator(
+        BoundStatement statement, List<Node> hosts, Iterator<Node> nodesFromBasePolicy) {
       this.statement = statement;
+      this.hosts = hosts;
       this.iterator = hosts.iterator();
+      this.childIterator = nodesFromBasePolicy;
 
       // When the CQL consistency level is set to YB consistent prefix (Cassandra
       // ONE),
@@ -190,7 +197,7 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
     private ConsistencyLevel getConsistencyLevel() {
       return statement.getConsistencyLevel() != null
           ? statement.getConsistencyLevel()
-          : ConsistencyLevel.YB_CONSISTENT_PREFIX;
+          : ConsistencyLevel.YB_STRONG;
     }
 
     @Override
@@ -211,17 +218,15 @@ public class PartitionAwarePolicy extends DefaultLoadBalancingPolicy implements 
         }
       }
 
-      //      if (childIterator == null)
-      //          childIterator = super.newQueryPlan(request, session);
-      //
-      //      while (childIterator.hasNext()) {
-      //        nextHost = childIterator.next();
-      //        // Skip host if it is a local host that we have already returned earlier.
-      //        if (!hosts.contains(nextHost)
-      //            || !(nextHost.getDistance() == NodeDistance.LOCAL
-      //                || statement.getConsistencyLevel() == ConsistencyLevel.YB_STRONG)) return
-      // true;
-      //      }
+      if (childIterator != null) {
+        while (childIterator.hasNext()) {
+          nextHost = childIterator.next();
+          // Skip host if it is a local host that we have already returned earlier.
+          if (!hosts.contains(nextHost)
+              || !(nextHost.getDistance() == NodeDistance.LOCAL
+                  || statement.getConsistencyLevel() == ConsistencyLevel.YB_STRONG)) return true;
+        }
+      }
 
       return false;
     }
