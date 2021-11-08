@@ -75,7 +75,7 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
     Object[] currentNodes = null;
 
     ConsistencyLevel requestConsistencyLevel = findConsistencyLevelForRequest(request);
-    
+
     // LocalDC: Requests will routed to local DC only for CL.ONE or CL.YB_CONSISTENT_PREFIX
     if (!StringUtils.isBlank(localDc)
         && requestConsistencyLevel == ConsistencyLevel.YB_CONSISTENT_PREFIX) {
@@ -202,26 +202,26 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
       }
     }
   }
-  
+
   private boolean handleNodeDownEvent(Node node) {
-	  boolean handleSuccess = false;
-	  
-	  if (liveNodesInAllDC.contains(node)) {
-		  liveNodesInAllDC.remove(node);
-		  handleSuccess = true;
-	  }
-	  
-	  if (liveNodesInLocalDc.contains(node)) {
-		  liveNodesInLocalDc.remove(node);
-		  handleSuccess = true;
-	  }
-	  
-	  if (liveNodes.contains(node)) {
-		  liveNodes.remove(node);
-		  handleSuccess = true;
-	  }
-	  
-	  return handleSuccess;
+    boolean handleSuccess = false;
+
+    if (liveNodesInAllDC.contains(node)) {
+      liveNodesInAllDC.remove(node);
+      handleSuccess = true;
+    }
+
+    if (liveNodesInLocalDc.contains(node)) {
+      liveNodesInLocalDc.remove(node);
+      handleSuccess = true;
+    }
+
+    if (liveNodes.contains(node)) {
+      liveNodes.remove(node);
+      handleSuccess = true;
+    }
+
+    return handleSuccess;
   }
 
   private ConsistencyLevel findConsistencyLevelForRequest(Request request) {

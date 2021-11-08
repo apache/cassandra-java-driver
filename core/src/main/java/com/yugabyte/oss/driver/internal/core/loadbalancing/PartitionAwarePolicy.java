@@ -129,8 +129,13 @@ public class PartitionAwarePolicy extends YugabyteDefaultLoadBalancingPolicy
       return null;
     }
 
+    // Get all the applicable nodes for LoadBalancing from the base class
+    Iterator<Node> nodesFromBasePolicy =
+        super.newQueryPlan((Request) statement, session).iterator();
+
     // This needs to manipulate the local copy of the hosts instead of the actual reference
-    return new UpHostIterator(statement, new ArrayList(tableSplitMetadata.getHosts(key)));
+    return new UpHostIterator(
+        statement, new ArrayList(tableSplitMetadata.getHosts(key)), nodesFromBasePolicy);
   }
 
   /**
@@ -162,10 +167,9 @@ public class PartitionAwarePolicy extends YugabyteDefaultLoadBalancingPolicy
 
     private final BoundStatement statement;
     private final Iterator<Node> iterator;
+    private final Iterator<Node> childIterator;
+    private final List<Node> hosts;
     private Node nextHost;
-
-    //  private Iterator<Node> childIterator;
-    //  private final List<Node> hosts;
 
     /**
      * Creates a new {@code UpHostIterator}.
@@ -173,9 +177,12 @@ public class PartitionAwarePolicy extends YugabyteDefaultLoadBalancingPolicy
      * @param statement the statement
      * @param hosts the hosts that host the statement's partition key
      */
-    public UpHostIterator(BoundStatement statement, List<Node> hosts) {
+    public UpHostIterator(
+        BoundStatement statement, List<Node> hosts, Iterator<Node> nodesFromBasePolicy) {
       this.statement = statement;
+      this.hosts = hosts;
       this.iterator = hosts.iterator();
+      this.childIterator = nodesFromBasePolicy;
 
       // When the CQL consistency level is set to YB consistent prefix (Cassandra
       // ONE),
@@ -211,17 +218,15 @@ public class PartitionAwarePolicy extends YugabyteDefaultLoadBalancingPolicy
         }
       }
 
-      //      if (childIterator == null)
-      //          childIterator = super.newQueryPlan(request, session);
-      //
-      //      while (childIterator.hasNext()) {
-      //        nextHost = childIterator.next();
-      //        // Skip host if it is a local host that we have already returned earlier.
-      //        if (!hosts.contains(nextHost)
-      //            || !(nextHost.getDistance() == NodeDistance.LOCAL
-      //                || statement.getConsistencyLevel() == ConsistencyLevel.YB_STRONG)) return
-      // true;
-      //      }
+      if (childIterator != null) {
+        while (childIterator.hasNext()) {
+          nextHost = childIterator.next();
+          // Skip host if it is a local host that we have already returned earlier.
+          if (!hosts.contains(nextHost)
+              || !(nextHost.getDistance() == NodeDistance.LOCAL
+                  || statement.getConsistencyLevel() == ConsistencyLevel.YB_STRONG)) return true;
+        }
+      }
 
       return false;
     }
