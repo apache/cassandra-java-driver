@@ -2,6 +2,58 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.13.0
+
+- [improvement] JAVA-2940: Add GraalVM native image build configurations
+- [improvement] JAVA-2953: Promote ProgrammaticPlainTextAuthProvider to the public API and add
+  credentials hot-reload
+- [improvement] JAVA-2951: Accept multiple node state listeners, schema change listeners and request
+  trackers
+
+Merged from 4.12.x:
+
+- [bug] JAVA-2949: Provide mapper support for CompletionStage<Stream<T>>
+- [bug] JAVA-2950: Remove reference to Reflection class from DependencyCheck
+
+### 4.12.1
+
+Merged from 4.11.x:
+
+- [bug] JAVA-2949: Provide mapper support for CompletionStage<Stream<T>>
+- [bug] JAVA-2950: Remove reference to Reflection class from DependencyCheck
+
+### 4.12.0
+
+- [improvement] JAVA-2935: Make GetEntity and SetEntity methods resilient to incomplete data
+- [improvement] JAVA-2944: Upgrade MicroProfile Metrics to 3.0
+
+Merged from 4.11.x:
+
+- [bug] JAVA-2932: Make DefaultDriverConfigLoader.close() resilient to terminated executors
+- [bug] JAVA-2945: Reinstate InternalDriverContext.getNodeFilter method
+- [bug] JAVA-2947: Release buffer after decoding multi-slice frame
+- [bug] JAVA-2946: Make MapperResultProducerService instances be located with user-provided class loader
+- [bug] JAVA-2942: GraphStatement.setConsistencyLevel() is not effective
+- [bug] JAVA-2941: Cannot add a single static column with the alter table API
+- [bug] JAVA-2943: Prevent session leak with wrong keyspace name
+- [bug] JAVA-2938: OverloadedException message is misleading
+
+### 4.11.3
+
+- [bug] JAVA-2949: Provide mapper support for CompletionStage<Stream<T>>
+- [bug] JAVA-2950: Remove reference to Reflection class from DependencyCheck
+
+### 4.11.2
+
+- [bug] JAVA-2932: Make DefaultDriverConfigLoader.close() resilient to terminated executors
+- [bug] JAVA-2945: Reinstate InternalDriverContext.getNodeFilter method
+- [bug] JAVA-2947: Release buffer after decoding multi-slice frame
+- [bug] JAVA-2946: Make MapperResultProducerService instances be located with user-provided class loader
+- [bug] JAVA-2942: GraphStatement.setConsistencyLevel() is not effective
+- [bug] JAVA-2941: Cannot add a single static column with the alter table API
+- [bug] JAVA-2943: Prevent session leak with wrong keyspace name
+- [bug] JAVA-2938: OverloadedException message is misleading
+
 ### 4.11.1
 
 - [bug] JAVA-2910: Add a configuration option to support strong values for prepared statements cache
@@ -541,28 +593,28 @@ changelog](https://docs.datastax.com/en/developer/java-driver-dse/latest/changel
 - [bug] JAVA-1499: Wait for load balancing policy at cluster initialization
 - [new feature] JAVA-1495: Add prepared statements
 
-## 3.10.2
+### 3.10.2
 
 - [bug] JAVA-2860: Avoid NPE if channel initialization crashes.
 
-## 3.10.1
+### 3.10.1
 
 - [bug] JAVA-2857: Fix NPE when built statements without parameters are logged at TRACE level.
 - [bug] JAVA-2843: Successfully parse DSE table schema in OSS driver.
 
-## 3.10.0
+### 3.10.0
 
 - [improvement] JAVA-2676: Don't reschedule flusher after empty runs
 - [new feature] JAVA-2772: Support new protocol v5 message format
 
-## 3.9.0
+### 3.9.0
 
 - [bug] JAVA-2627: Avoid logging error message including stack trace in request handler.
 - [new feature] JAVA-2706: Add now_in_seconds to protocol v5 query messages.
 - [improvement] JAVA-2730: Add support for Cassandra® 4.0 table options
 - [improvement] JAVA-2702: Transient Replication Support for Cassandra® 4.0
 
-## 3.8.0
+### 3.8.0
 
 - [new feature] JAVA-2356: Support for DataStax Cloud API.
 - [improvement] JAVA-2483: Allow to provide secure bundle via URL.

@@ -68,7 +68,9 @@ public class UpdateIT extends InventoryITBase {
       session.execute(
           SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
     }
-    session.execute("CREATE TABLE only_p_k(id uuid PRIMARY KEY)");
+    session.execute(
+        SimpleStatement.newInstance("CREATE TABLE only_p_k(id uuid PRIMARY KEY)")
+            .setExecutionProfile(SESSION_RULE.slowProfile()));
 
     inventoryMapper = new UpdateIT_InventoryMapperBuilder(session).build();
     dao = inventoryMapper.productDao(SESSION_RULE.keyspace());
@@ -158,6 +160,7 @@ public class UpdateIT extends InventoryITBase {
                     "SELECT WRITETIME(description) FROM product WHERE id = ?",
                     FLAMETHROWER.getId()))
             .one();
+    assertThat(row).isNotNull();
     long writeTime = row.getLong(0);
     assertThat(writeTime).isEqualTo(timestamp);
   }
@@ -176,6 +179,7 @@ public class UpdateIT extends InventoryITBase {
                     "SELECT WRITETIME(description) FROM product WHERE id = ?",
                     FLAMETHROWER.getId()))
             .one();
+    assertThat(row).isNotNull();
     long writeTime = row.getLong(0);
     assertThat(writeTime).isEqualTo(1000L);
   }
@@ -194,8 +198,9 @@ public class UpdateIT extends InventoryITBase {
                 SimpleStatement.newInstance(
                     "SELECT TTL(description) FROM product WHERE id = ?", FLAMETHROWER.getId()))
             .one();
+    assertThat(row).isNotNull();
     int writeTime = row.getInt(0);
-    assertThat(writeTime).isEqualTo(ttl);
+    assertThat(writeTime).isBetween(ttl - 10, ttl);
   }
 
   @Test
@@ -211,8 +216,9 @@ public class UpdateIT extends InventoryITBase {
                 SimpleStatement.newInstance(
                     "SELECT TTL(description) FROM product WHERE id = ?", FLAMETHROWER.getId()))
             .one();
+    assertThat(row).isNotNull();
     int writeTime = row.getInt(0);
-    assertThat(writeTime).isEqualTo(1000);
+    assertThat(writeTime).isBetween(990, 1000);
   }
 
   @Test
@@ -231,6 +237,7 @@ public class UpdateIT extends InventoryITBase {
                     "SELECT WRITETIME(description) FROM product WHERE id = ?",
                     FLAMETHROWER.getId()))
             .one();
+    assertThat(row).isNotNull();
     long writeTime = row.getLong(0);
     assertThat(writeTime).isEqualTo(timestamp);
   }

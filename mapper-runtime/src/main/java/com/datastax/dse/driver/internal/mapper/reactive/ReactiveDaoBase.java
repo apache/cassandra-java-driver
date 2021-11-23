@@ -35,6 +35,6 @@ public class ReactiveDaoBase extends DaoBase {
   protected <EntityT> MappedReactiveResultSet<EntityT> executeReactiveAndMap(
       Statement<?> statement, EntityHelper<EntityT> entityHelper) {
     ReactiveResultSet source = executeReactive(statement);
-    return new DefaultMappedReactiveResultSet<>(source, entityHelper::get);
+    return new DefaultMappedReactiveResultSet<>(source, row -> entityHelper.get(row, false));
   }
 }

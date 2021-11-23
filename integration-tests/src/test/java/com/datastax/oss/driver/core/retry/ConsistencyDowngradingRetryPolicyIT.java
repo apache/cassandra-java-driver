@@ -60,6 +60,7 @@ import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.QueryCounter;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.retry.ConsistencyDowngradingRetryPolicy;
 import com.datastax.oss.driver.internal.core.retry.ConsistencyDowngradingRetryVerdict;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
@@ -83,12 +84,14 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 import org.slf4j.helpers.MessageFormatter;
 
 @RunWith(DataProviderRunner.class)
+@Category(ParallelizableTests.class)
 public class ConsistencyDowngradingRetryPolicyIT {
 
   @ClassRule
@@ -130,7 +133,6 @@ public class ConsistencyDowngradingRetryPolicyIT {
           .setConsistencyLevel(DefaultConsistencyLevel.LOCAL_SERIAL)
           .build();
 
-  @SuppressWarnings("deprecation")
   private final QueryCounter localQuorumCounter =
       QueryCounter.builder(SIMULACRON_RULE.cluster())
           .withFilter(
@@ -139,7 +141,6 @@ public class ConsistencyDowngradingRetryPolicyIT {
                       && l.getConsistency().equals(ConsistencyLevel.LOCAL_QUORUM))
           .build();
 
-  @SuppressWarnings("deprecation")
   private final QueryCounter oneCounter =
       QueryCounter.builder(SIMULACRON_RULE.cluster())
           .withFilter(
@@ -147,7 +148,6 @@ public class ConsistencyDowngradingRetryPolicyIT {
                   l.getQuery().equals(QUERY_STR) && l.getConsistency().equals(ConsistencyLevel.ONE))
           .build();
 
-  @SuppressWarnings("deprecation")
   private final QueryCounter localSerialCounter =
       QueryCounter.builder(SIMULACRON_RULE.cluster())
           .withFilter(
@@ -284,7 +284,7 @@ public class ConsistencyDowngradingRetryPolicyIT {
     oneCounter.assertTotalCount(0);
 
     // expect 2 messages: RETRY_SAME, then RETHROW
-    verify(appender, timeout(500).times(2)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(2000).times(2)).doAppend(loggingEventCaptor.capture());
     List<ILoggingEvent> loggedEvents = loggingEventCaptor.getAllValues();
     assertThat(loggedEvents).hasSize(2);
     assertThat(loggedEvents.get(0).getFormattedMessage())

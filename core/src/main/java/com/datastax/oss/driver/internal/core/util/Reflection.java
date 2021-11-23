@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ListMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.MultimapBuilder;
@@ -29,6 +30,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -106,6 +108,36 @@ public class Reflection {
       Class<ComponentT> expectedSuperType,
       String... defaultPackages) {
     return buildFromConfig(context, null, classNameOption, expectedSuperType, defaultPackages);
+  }
+
+  /**
+   * Tries to create a list of instances, given an option defined in the driver configuration.
+   *
+   * <p>For example:
+   *
+   * <pre>
+   * my-policy.classes = [my.package.MyPolicyImpl1,my.package.MyPolicyImpl2]
+   * </pre>
+   *
+   * Each class will be instantiated via reflection, and must have a constructor that takes a {@link
+   * DriverContext} argument.
+   *
+   * @param context the driver context.
+   * @param classNamesOption the option that indicates the class list. It will be looked up in the
+   *     default profile of the configuration stored in the context.
+   * @param expectedSuperType a super-type that the classes are expected to implement/extend.
+   * @param defaultPackages the default packages to prepend to the class names if they are not
+   *     qualified. They will be tried in order, the first one that matches an existing class will
+   *     be used.
+   * @return the list of new instances, or an empty list if {@code classNamesOption} is not defined
+   *     in the configuration.
+   */
+  public static <ComponentT> ImmutableList<ComponentT> buildFromConfigList(
+      InternalDriverContext context,
+      DriverOption classNamesOption,
+      Class<ComponentT> expectedSuperType,
+      String... defaultPackages) {
+    return buildFromConfigList(context, null, classNamesOption, expectedSuperType, defaultPackages);
   }
 
   /**
@@ -199,6 +231,57 @@ public class Reflection {
     }
 
     String className = config.getString(classNameOption);
+    return Optional.of(
+        resolveClass(
+            context, profileName, expectedSuperType, configPath, className, defaultPackages));
+  }
+
+  /**
+   * @param profileName if null, this is a global policy, use the default profile and look for a
+   *     one-arg constructor. If not null, this is a per-profile policy, look for a two-arg
+   *     constructor.
+   */
+  public static <ComponentT> ImmutableList<ComponentT> buildFromConfigList(
+      InternalDriverContext context,
+      String profileName,
+      DriverOption classNamesOption,
+      Class<ComponentT> expectedSuperType,
+      String... defaultPackages) {
+
+    DriverExecutionProfile config =
+        (profileName == null)
+            ? context.getConfig().getDefaultProfile()
+            : context.getConfig().getProfile(profileName);
+
+    String configPath = classNamesOption.getPath();
+    LOG.debug(
+        "Creating a list of {} from config option {}",
+        expectedSuperType.getSimpleName(),
+        configPath);
+
+    if (!config.isDefined(classNamesOption)) {
+      LOG.debug("Option is not defined, skipping");
+      return ImmutableList.of();
+    }
+
+    List<String> classNames = config.getStringList(classNamesOption);
+    ImmutableList.Builder<ComponentT> components = ImmutableList.builder();
+    for (String className : classNames) {
+      components.add(
+          resolveClass(
+              context, profileName, expectedSuperType, configPath, className, defaultPackages));
+    }
+    return components.build();
+  }
+
+  @NonNull
+  private static <ComponentT> ComponentT resolveClass(
+      InternalDriverContext context,
+      String profileName,
+      Class<ComponentT> expectedSuperType,
+      String configPath,
+      String className,
+      String[] defaultPackages) {
     Class<?> clazz = null;
     if (className.contains(".")) {
       LOG.debug("Building from fully-qualified name {}", className);
@@ -245,7 +328,7 @@ public class Reflection {
           (profileName == null)
               ? constructor.newInstance(context)
               : constructor.newInstance(context, profileName);
-      return Optional.of(instance);
+      return instance;
     } catch (Exception e) {
       // ITE just wraps an exception thrown by the constructor, get rid of it:
       Throwable cause = (e instanceof InvocationTargetException) ? e.getCause() : e;

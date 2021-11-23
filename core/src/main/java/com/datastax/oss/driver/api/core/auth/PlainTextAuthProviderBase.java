@@ -36,7 +36,8 @@ import org.slf4j.LoggerFactory;
  * Common infrastructure for plain text auth providers.
  *
  * <p>This can be reused to write an implementation that retrieves the credentials from another
- * source than the configuration.
+ * source than the configuration. The driver offers one built-in implementation: {@link
+ * ProgrammaticPlainTextAuthProvider}.
  */
 @ThreadSafe
 public abstract class PlainTextAuthProviderBase implements AuthProvider {
@@ -58,6 +59,9 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
    * Retrieves the credentials from the underlying source.
    *
    * <p>This is invoked every time the driver opens a new connection.
+   *
+   * @param endPoint The endpoint being contacted.
+   * @param serverAuthenticator The authenticator class sent by the endpoint.
    */
   @NonNull
   protected abstract Credentials getCredentials(

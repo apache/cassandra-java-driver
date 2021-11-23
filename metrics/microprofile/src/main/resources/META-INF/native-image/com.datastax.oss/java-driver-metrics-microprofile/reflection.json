@@ -1,0 +1,6 @@
+[
+  {
+    "name": "com.datastax.oss.driver.internal.metrics.microprofile.MicroProfileMetricsFactory",
+    "methods": [ { "name": "<init>", "parameterTypes": [ "com.datastax.oss.driver.api.core.context.DriverContext" ] } ]
+  }
+]

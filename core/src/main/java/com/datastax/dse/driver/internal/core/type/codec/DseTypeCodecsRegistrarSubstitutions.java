@@ -15,9 +15,11 @@
  */
 package com.datastax.dse.driver.internal.core.type.codec;
 
+import static com.datastax.oss.driver.internal.core.util.Dependency.ESRI;
+
 import com.datastax.dse.driver.api.core.type.codec.DseTypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
-import com.datastax.oss.driver.internal.core.util.DependencyCheck;
+import com.datastax.oss.driver.internal.core.util.GraalDependencyChecker;
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
 import java.util.function.BooleanSupplier;
@@ -37,7 +39,7 @@ public class DseTypeCodecsRegistrarSubstitutions {
   public static class EsriMissing implements BooleanSupplier {
     @Override
     public boolean getAsBoolean() {
-      return !DependencyCheck.ESRI.isPresent();
+      return !GraalDependencyChecker.isPresent(ESRI);
     }
   }
 }

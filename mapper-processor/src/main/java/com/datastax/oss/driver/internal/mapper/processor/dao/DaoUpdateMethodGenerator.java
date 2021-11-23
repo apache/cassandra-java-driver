@@ -152,7 +152,7 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
       // We generated an update by primary key (see maybeAddWhereClause), all entity properties are
       // present as placeholders.
       createStatementBlock.addStatement(
-          "$1L.set($2L, boundStatementBuilder, $3T.$4L)",
+          "$1L.set($2L, boundStatementBuilder, $3T.$4L, false)",
           helperFieldName,
           entityParameterName,
           NullSavingStrategy.class,
@@ -171,7 +171,8 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
             "boundStatementBuilder",
             createStatementBlock,
             enclosingClass,
-            true);
+            true,
+            false);
       }
     }
 
@@ -187,9 +188,8 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
       }
     }
 
-    createStatementBlock
-        .add("\n")
-        .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
+    createStatementBlock.addStatement(
+        "$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
     return crudMethod(createStatementBlock, returnType, helperFieldName);
   }

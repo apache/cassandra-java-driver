@@ -15,8 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core.session;
 
+import static com.datastax.oss.driver.internal.core.util.Dependency.REACTIVE_STREAMS;
+import static com.datastax.oss.driver.internal.core.util.Dependency.TINKERPOP;
+
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
-import com.datastax.oss.driver.internal.core.util.DependencyCheck;
+import com.datastax.oss.driver.internal.core.util.GraalDependencyChecker;
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
 import java.util.ArrayList;
@@ -67,22 +70,24 @@ public class BuiltInRequestProcessorsSubstitutions {
   public static class GraphMissingReactiveMissing implements BooleanSupplier {
     @Override
     public boolean getAsBoolean() {
-      return !DependencyCheck.TINKERPOP.isPresent()
-          && !DependencyCheck.REACTIVE_STREAMS.isPresent();
+      return !GraalDependencyChecker.isPresent(TINKERPOP)
+          && !GraalDependencyChecker.isPresent(REACTIVE_STREAMS);
     }
   }
 
   public static class GraphMissingReactivePresent implements BooleanSupplier {
     @Override
     public boolean getAsBoolean() {
-      return !DependencyCheck.TINKERPOP.isPresent() && DependencyCheck.REACTIVE_STREAMS.isPresent();
+      return !GraalDependencyChecker.isPresent(TINKERPOP)
+          && GraalDependencyChecker.isPresent(REACTIVE_STREAMS);
     }
   }
 
   public static class GraphPresentReactiveMissing implements BooleanSupplier {
     @Override
     public boolean getAsBoolean() {
-      return DependencyCheck.TINKERPOP.isPresent() && !DependencyCheck.REACTIVE_STREAMS.isPresent();
+      return GraalDependencyChecker.isPresent(TINKERPOP)
+          && !GraalDependencyChecker.isPresent(REACTIVE_STREAMS);
     }
   }
 }

@@ -5,7 +5,7 @@
 *If you're reading this on github.com, please note that this is the readme for the development 
 version and that some features described here might not yet have been released. You can find the
 documentation for latest version through [DataStax Docs] or via the release tags, e.g. 
-[4.11.0](https://github.com/datastax/java-driver/tree/4.11.0).*
+[4.13.0](https://github.com/datastax/java-driver/tree/4.13.0).*
 
 A modern, feature-rich and highly tunable Java client library for Scylla and [Apache Cassandra®] \(2.1+),
 using exclusively Cassandra's binary protocol and Cassandra Query Language (CQL) v3.
@@ -69,7 +69,7 @@ See the [upgrade guide](upgrade_guide/) for details.
 * [Changelog]
 * [FAQ]
 
-[API docs]: https://docs.datastax.com/en/drivers/java/4.11
+[API docs]: https://docs.datastax.com/en/drivers/java/4.13
 [JIRA]: https://datastax-oss.atlassian.net/browse/JAVA
 [Mailing list]: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
 [Scylla University]: https://university.scylladb.com 

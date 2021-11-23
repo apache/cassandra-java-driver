@@ -1,5 +1,114 @@
 ## Upgrade guide
 
+### 4.13.0
+
+#### Enhanced support for GraalVM native images 
+
+[JAVA-2940](https://datastax-oss.atlassian.net/browse/JAVA-2940) introduced an enhanced support for
+building GraalVM native images. 
+
+If you were building a native image for your application, please verify your native image builder
+configuration. Most of the extra configuration required until now is likely to not be necessary
+anymore.
+
+Refer to this [manual page](../manual/core/graalvm) for details.
+
+#### Registration of multiple listeners and trackers
+
+[JAVA-2951](https://datastax-oss.atlassian.net/browse/JAVA-2951) introduced the ability to register
+more than one instance of the following interfaces:
+
+* [RequestTracker](https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/tracker/RequestTracker.html)
+* [NodeStateListener](https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/metadata/NodeStateListener.html)
+* [SchemaChangeListener](https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListener.html)
+
+Multiple components can now be registered both programmatically and through the configuration. _If
+both approaches are used, components will add up and will all be registered_ (whereas previously,
+the programmatic approach would take precedence over the configuration one).
+
+When using the programmatic approach to register multiple components, you should use the new
+`SessionBuilder` methods `addRequestTracker`, `addNodeStateListener` and  `addSchemaChangeListener`:
+
+```java
+CqlSessionBuilder builder = CqlSession.builder();
+builder
+    .addRequestTracker(tracker1)
+    .addRequestTracker(tracker2);
+builder
+    .addNodeStateListener(nodeStateListener1)
+    .addNodeStateListener(nodeStateListener2);
+builder
+    .addSchemaChangeListener(schemaChangeListener1)
+    .addSchemaChangeListener(schemaChangeListener2);
+```
+
+To support registration of multiple components through the configuration, the following
+configuration options were deprecated because they only allow one component to be declared:
+
+* `advanced.request-tracker.class`
+* `advanced.node-state-listener.class`
+* `advanced.schema-change-listener.class`
+
+They are still honored, but the driver will log a warning if they are used. They should now be
+replaced with the following ones, that accept a list of classes to instantiate, instead of just
+one:
+
+* `advanced.request-tracker.classes`
+* `advanced.node-state-listener.classes`
+* `advanced.schema-change-listener.classes`
+
+Example:
+
+```hocon
+datastax-java-driver {
+  advanced {
+    # RequestLogger is a driver built-in tracker
+    request-tracker.classes = [RequestLogger,com.example.app.MyRequestTracker]
+    node-state-listener.classes = [com.example.app.MyNodeStateListener1,com.example.app.MyNodeStateListener2]
+    schema-change-listener.classes = [com.example.app.MySchemaChangeListener]
+  }
+}
+```
+
+When more than one component of the same type is registered, the driver will distribute received
+signals to all components in sequence, by order of their registration, starting with the
+programmatically-provided ones. If a component throws an error, the error is intercepted and logged.
+
+### 4.12.0
+
+#### MicroProfile Metrics upgraded to 3.0
+
+The MicroProfile Metrics library has been upgraded from version 2.4 to 3.0. Since this upgrade
+involves backwards-incompatible binary changes, users of this library and of the
+`java-driver-metrics-microprofile` module are required to take the appropriate action:
+
+* If your application is still using MicroProfile Metrics < 3.0, you can still upgrade the core
+  driver to 4.12, but you now must keep `java-driver-metrics-microprofile` in version 4.11 or lower,
+  as newer versions will not work.
+    
+* If your application is using MicroProfile Metrics >= 3.0, then you must upgrade to driver 4.12 or
+  higher, as previous versions of `java-driver-metrics-microprofile` will not work.
+
+#### Mapper `@GetEntity` and `@SetEntity` methods can now be lenient
+
+Thanks to [JAVA-2935](https://datastax-oss.atlassian.net/browse/JAVA-2935), `@GetEntity` and
+`@SetEntity` methods now have a new `lenient` attribute.
+
+If the attribute is `false` (the default value), then the source row or the target statement must
+contain a matching column for every property in the entity definition. If such a column is not
+found, an error will be thrown. This corresponds to the mapper's current behavior prior to the
+introduction of the new attribute.
+
+If the new attribute is explicitly set to `true` however, the mapper will operate on a best-effort
+basis and attempt to read or write all entity properties that have a matching column in the source
+row or in the target statement, *leaving unmatched properties untouched*.
+
+This new, lenient behavior allows to achieve the equivalent of driver 3.x 
+[lenient mapping](https://docs.datastax.com/en/developer/java-driver/3.10/manual/object_mapper/using/#manual-mapping).
+
+Read the manual pages on [@GetEntity](../manual/mapper/daos/getentity) methods and
+[@SetEntity](../manual/mapper/daos/setentity) methods for more details and examples of lenient mode.
+
 ### 4.11.0
 
 #### Native protocol V5 is now production-ready

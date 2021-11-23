@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class CustomCcmRule extends BaseCcmRule {
 
-  private static AtomicReference<CustomCcmRule> current = new AtomicReference<>();
+  private static final AtomicReference<CustomCcmRule> CURRENT = new AtomicReference<>();
 
   CustomCcmRule(CcmBridge ccmBridge) {
     super(ccmBridge);
@@ -36,9 +36,9 @@ public class CustomCcmRule extends BaseCcmRule {
 
   @Override
   protected void before() {
-    if (current.get() == null && current.compareAndSet(null, this)) {
+    if (CURRENT.get() == null && CURRENT.compareAndSet(null, this)) {
       super.before();
-    } else if (current.get() != this) {
+    } else if (CURRENT.get() != this) {
       throw new IllegalStateException(
           "Attempting to use a Ccm rule while another is in use.  This is disallowed");
     }
@@ -47,7 +47,7 @@ public class CustomCcmRule extends BaseCcmRule {
   @Override
   protected void after() {
     super.after();
-    current.compareAndSet(this, null);
+    CURRENT.compareAndSet(this, null);
   }
 
   public CcmBridge getCcmBridge() {

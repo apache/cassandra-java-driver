@@ -135,6 +135,11 @@ In all cases, the method can return:
     @Select(customWhereClause = "description LIKE :searchString")
     CompletionStage<MappedAsyncPagingIterable<Product>> findByDescriptionAsync(String searchString);
     ```
+
+    For streams, even if the initial query is executed asynchronously, traversing the returned
+    stream may block the traversing thread. Blocking calls can indeed be required as more results
+    are fetched from the server in the background. For this reason, _the usage of
+    `CompletionStage<Stream<T>>` cannot be considered as a fully asynchronous execution method_.
   
 * a [MappedReactiveResultSet] of the entity class.
 
@@ -155,20 +160,20 @@ If a table was specified when creating the DAO, then the generated query targets
 Otherwise, it uses the default table name for the entity (which is determined by the name of the
 entity class and the [naming strategy](../../entities/#naming-strategy)).
 
-[default keyspace]:          https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
-[@ClusteringColumn]:         https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
-[@PartitionKey]:             https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
-[@Select]:                   https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/Select.html
-[allowFiltering()]:          https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/Select.html#allowFiltering--
-[customWhereClause()]:       https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/Select.html#customWhereClause--
-[groupBy()]:                 https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/Select.html#groupBy--
-[limit()]:                   https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/Select.html#limit--
-[orderBy()]:                 https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/Select.html#orderBy--
-[perPartitionLimit()]:       https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/mapper/annotations/Select.html#perPartitionLimit--
-[MappedAsyncPagingIterable]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/MappedAsyncPagingIterable.html
-[PagingIterable]:            https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/PagingIterable.html
-[PagingIterable.spliterator]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/PagingIterable.html#spliterator--
-[MappedReactiveResultSet]:   https://docs.datastax.com/en/drivers/java/4.11/com/datastax/dse/driver/api/mapper/reactive/MappedReactiveResultSet.html
+[default keyspace]:          https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
+[@ClusteringColumn]:         https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
+[@PartitionKey]:             https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
+[@Select]:                   https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/annotations/Select.html
+[allowFiltering()]:          https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/annotations/Select.html#allowFiltering--
+[customWhereClause()]:       https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/annotations/Select.html#customWhereClause--
+[groupBy()]:                 https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/annotations/Select.html#groupBy--
+[limit()]:                   https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/annotations/Select.html#limit--
+[orderBy()]:                 https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/annotations/Select.html#orderBy--
+[perPartitionLimit()]:       https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/annotations/Select.html#perPartitionLimit--
+[MappedAsyncPagingIterable]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/MappedAsyncPagingIterable.html
+[PagingIterable]:            https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/PagingIterable.html
+[PagingIterable.spliterator]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/PagingIterable.html#spliterator--
+[MappedReactiveResultSet]:   https://docs.datastax.com/en/drivers/java/4.13/com/datastax/dse/driver/api/mapper/reactive/MappedReactiveResultSet.html
 
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
 [CompletableFuture]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html

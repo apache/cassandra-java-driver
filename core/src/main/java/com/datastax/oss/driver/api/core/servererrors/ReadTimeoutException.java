@@ -27,10 +27,10 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 /**
  * A server-side timeout during a read query.
  *
- * <p>This exception is processed by {@link RetryPolicy#onReadTimeout(Request, ConsistencyLevel,
- * int, int, boolean, int)}, which will decide if it is rethrown directly to the client or if the
- * request should be retried. If all other tried nodes also fail, this exception will appear in the
- * {@link AllNodesFailedException} thrown to the client.
+ * <p>This exception is processed by {@link RetryPolicy#onReadTimeoutVerdict(Request,
+ * ConsistencyLevel, int, int, boolean, int)}, which will decide if it is rethrown directly to the
+ * client or if the request should be retried. If all other tried nodes also fail, this exception
+ * will appear in the {@link AllNodesFailedException} thrown to the client.
  */
 public class ReadTimeoutException extends QueryConsistencyException {
 

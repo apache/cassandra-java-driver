@@ -17,25 +17,15 @@ package com.datastax.oss.driver.internal.core.loadbalancing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.mockito.BDDMockito.given;
 
-import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 // TODO fix unnecessary stubbing of config option in parent class (and stop using "silent" runner)
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class DefaultLoadBalancingPolicyDistanceTest extends BasicLoadBalancingPolicyDistanceTest {
-
-  @Override
-  @Before
-  public void setup() {
-    given(context.getRequestTracker()).willReturn(new MultiplexingRequestTracker());
-    super.setup();
-  }
 
   @Override
   public void should_report_LOCAL_when_dc_agnostic() {

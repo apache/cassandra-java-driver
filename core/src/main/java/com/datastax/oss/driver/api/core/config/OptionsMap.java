@@ -280,10 +280,7 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD, Duration.ofSeconds(1));
     map.put(TypedDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL, Duration.ofSeconds(10));
     map.put(TypedDriverOption.TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK, false);
-    map.put(TypedDriverOption.REQUEST_TRACKER_CLASS, "NoopRequestTracker");
     map.put(TypedDriverOption.REQUEST_THROTTLER_CLASS, "PassThroughRequestThrottler");
-    map.put(TypedDriverOption.METADATA_NODE_STATE_LISTENER_CLASS, "NoopNodeStateListener");
-    map.put(TypedDriverOption.METADATA_SCHEMA_CHANGE_LISTENER_CLASS, "NoopSchemaChangeListener");
     map.put(TypedDriverOption.ADDRESS_TRANSLATOR_CLASS, "PassThroughAddressTranslator");
     map.put(TypedDriverOption.RESOLVE_CONTACT_POINTS, true);
     map.put(TypedDriverOption.PROTOCOL_MAX_FRAME_LENGTH, 256L * 1024 * 1024);

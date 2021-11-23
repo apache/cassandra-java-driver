@@ -279,7 +279,9 @@ public class PreparedStatementIT {
     Throwable t = catchThrowable(() -> session.execute(ps.bind()));
 
     // Then
-    assertThat(t).isInstanceOf(InvalidQueryException.class).hasMessage("Undefined column name d");
+    assertThat(t)
+        .isInstanceOf(InvalidQueryException.class)
+        .hasMessageContaining("Undefined column name d");
   }
 
   @Test

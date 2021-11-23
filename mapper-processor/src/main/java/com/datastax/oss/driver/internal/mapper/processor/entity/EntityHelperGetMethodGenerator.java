@@ -55,6 +55,7 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
             .addModifiers(Modifier.PUBLIC)
             .addParameter(
                 ParameterSpec.builder(ClassName.get(GettableByName.class), "source").build())
+            .addParameter(ParameterSpec.builder(TypeName.BOOLEAN, "lenient").build())
             .returns(entityDefinition.getClassName());
 
     TypeName returnType = entityDefinition.getClassName();
@@ -75,20 +76,57 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
       String setterName = property.getSetterName();
       String propertyValueName = enclosingClass.getNameIndex().uniqueField("propertyValue");
       propertyValueNames.add(propertyValueName);
-      getBuilder.addCode("\n");
+
       if (type instanceof PropertyType.Simple) {
         TypeName typeName = ((PropertyType.Simple) type).typeName;
         String primitiveAccessor = GeneratedCodePatterns.PRIMITIVE_ACCESSORS.get(typeName);
         if (primitiveAccessor != null) {
           // Primitive type: use dedicated getter, since it is optimized to avoid boxing
           //     int propertyValue1 = source.getInt("length");
-          getBuilder.addStatement(
-              "$T $L = source.get$L($L)", typeName, propertyValueName, primitiveAccessor, cqlName);
+          if (mutable) {
+            getBuilder
+                .beginControlFlow("if (!lenient || hasProperty(source, $L))", cqlName)
+                .addStatement(
+                    "$T $L = source.get$L($L)",
+                    typeName,
+                    propertyValueName,
+                    primitiveAccessor,
+                    cqlName)
+                .addStatement("$L.$L($L)", resultName, setterName, propertyValueName)
+                .endControlFlow();
+          } else {
+            getBuilder.addStatement(
+                "$T $L = !lenient || hasProperty(source, $L) ? source.get$L($L) : $L",
+                typeName,
+                propertyValueName,
+                cqlName,
+                primitiveAccessor,
+                cqlName,
+                typeName.equals(TypeName.BOOLEAN) ? false : 0);
+          }
         } else if (typeName instanceof ClassName) {
           // Unparameterized class: use the generic, class-based getter:
           //     UUID propertyValue1 = source.get("id", UUID.class);
-          getBuilder.addStatement(
-              "$T $L = source.get($L, $T.class)", typeName, propertyValueName, cqlName, typeName);
+          if (mutable) {
+            getBuilder
+                .beginControlFlow("if (!lenient || hasProperty(source, $L))", cqlName)
+                .addStatement(
+                    "$T $L = source.get($L, $T.class)",
+                    typeName,
+                    propertyValueName,
+                    cqlName,
+                    typeName)
+                .addStatement("$L.$L($L)", resultName, setterName, propertyValueName)
+                .endControlFlow();
+          } else {
+            getBuilder.addStatement(
+                "$T $L = !lenient || hasProperty(source, $L) ? source.get($L, $T.class) : null",
+                typeName,
+                propertyValueName,
+                cqlName,
+                cqlName,
+                typeName);
+          }
         } else {
           // Parameterized type: create a constant and use the GenericType-based getter:
           //     private static final GenericType<List<String>> GENERIC_TYPE =
@@ -97,37 +135,56 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
           // Note that lists, sets and maps of unparameterized classes also fall under that
           // category. Their getter creates a GenericType under the hood, so there's no performance
           // advantage in calling them instead of the generic get().
-          getBuilder.addStatement(
-              "$T $L = source.get($L, $L)",
-              typeName,
-              propertyValueName,
-              cqlName,
-              enclosingClass.addGenericTypeConstant(typeName));
+          if (mutable) {
+            getBuilder
+                .beginControlFlow("if (!lenient || hasProperty(source, $L))", cqlName)
+                .addStatement(
+                    "$T $L = source.get($L, $L)",
+                    typeName,
+                    propertyValueName,
+                    cqlName,
+                    enclosingClass.addGenericTypeConstant(typeName))
+                .addStatement("$L.$L($L)", resultName, setterName, propertyValueName)
+                .endControlFlow();
+          } else {
+            getBuilder.addStatement(
+                "$T $L = !lenient || hasProperty(source, $L) ? source.get($L, $L) : null",
+                typeName,
+                propertyValueName,
+                cqlName,
+                cqlName,
+                enclosingClass.addGenericTypeConstant(typeName));
+          }
         }
       } else if (type instanceof PropertyType.SingleEntity) {
         ClassName entityClass = ((PropertyType.SingleEntity) type).entityName;
         // Other entity class: the CQL column is a mapped UDT:
         //     Dimensions propertyValue1;
         //     UdtValue udtValue1 = source.getUdtValue("dimensions");
-        //     if (udtValue1 == null) {
-        //       propertyValue1 = null;
-        //     } else {
-        //       propertyValue1 = dimensionsHelper.get(udtValue1);
-        //     }
-        getBuilder.addStatement("$T $L", entityClass, propertyValueName);
-
+        //     propertyValue1 = udtValue1 == null ? null : dimensionsHelper.get(udtValue1);
         String udtValueName = enclosingClass.getNameIndex().uniqueField("udtValue");
+        if (mutable) {
+          getBuilder.beginControlFlow("if (!lenient || hasProperty(source, $L))", cqlName);
+          getBuilder.addStatement("$T $L", entityClass, propertyValueName);
+        } else {
+          getBuilder.addStatement("$T $L = null", entityClass, propertyValueName);
+          getBuilder.beginControlFlow("if (!lenient || hasProperty(source, $L))", cqlName);
+        }
         getBuilder.addStatement(
             "$T $L = source.getUdtValue($L)", UdtValue.class, udtValueName, cqlName);
 
-        getBuilder
-            .beginControlFlow("if ($L == null)", udtValueName)
-            .addStatement("$L = null", propertyValueName)
-            .nextControlFlow("else");
-
         // Get underlying udt object and set it on return type
         String childHelper = enclosingClass.addEntityHelperField(entityClass);
-        getBuilder.addStatement("$L = $L.get($L)", propertyValueName, childHelper, udtValueName);
+        getBuilder.addStatement(
+            "$L = $L == null ? null : $L.get($L, lenient)",
+            propertyValueName,
+            udtValueName,
+            childHelper,
+            udtValueName);
+
+        if (mutable) {
+          getBuilder.addStatement("$L.$L($L)", resultName, setterName, propertyValueName);
+        }
         getBuilder.endControlFlow();
       } else {
         // Collection of other entity class(es): the CQL column is a collection of mapped UDTs
@@ -140,7 +197,13 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
         //       traverse rawCollection1 and convert all UdtValue into entity classes, recursing
         //       into nested collections if necessary
         //     }
-        getBuilder.addStatement("$T $L", type.asTypeName(), propertyValueName);
+        if (mutable) {
+          getBuilder.beginControlFlow("if (!lenient || hasProperty(source, $L))", cqlName);
+          getBuilder.addStatement("$T $L", type.asTypeName(), propertyValueName);
+        } else {
+          getBuilder.addStatement("$T $L = null", type.asTypeName(), propertyValueName);
+          getBuilder.beginControlFlow("if (!lenient || hasProperty(source, $L))", cqlName);
+        }
 
         String rawCollectionName = enclosingClass.getNameIndex().uniqueField("rawCollection");
         TypeName rawCollectionType = type.asRawTypeName();
@@ -157,10 +220,11 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
             .nextControlFlow("else");
         convertUdtsIntoEntities(rawCollectionName, propertyValueName, type, getBuilder);
         getBuilder.endControlFlow();
-      }
 
-      if (mutable) {
-        getBuilder.addStatement("$L.$L($L)", resultName, setterName, propertyValueName);
+        if (mutable) {
+          getBuilder.addStatement("$L.$L($L)", resultName, setterName, propertyValueName);
+        }
+        getBuilder.endControlFlow();
       }
     }
 
@@ -197,7 +261,8 @@ public class EntityHelperGetMethodGenerator implements MethodGenerator {
     if (type instanceof PropertyType.SingleEntity) {
       ClassName entityClass = ((PropertyType.SingleEntity) type).entityName;
       String entityHelperName = enclosingClass.addEntityHelperField(entityClass);
-      getBuilder.addStatement("$L = $L.get($L)", mappedObjectName, entityHelperName, rawObjectName);
+      getBuilder.addStatement(
+          "$L = $L.get($L, lenient)", mappedObjectName, entityHelperName, rawObjectName);
     } else if (type instanceof PropertyType.EntityList) {
       getBuilder.addStatement(
           "$L = $T.newArrayListWithExpectedSize($L.size())",

@@ -49,7 +49,20 @@ public interface EntityHelper<EntityT> {
   /**
    * Sets the properties of an entity instance into a target data structure.
    *
-   * <p>For example:
+   * @deprecated Use {@link #set(Object, SettableByName, NullSavingStrategy, boolean)} instead.
+   */
+  @NonNull
+  @Deprecated
+  <SettableT extends SettableByName<SettableT>> SettableT set(
+      @NonNull EntityT entity,
+      @NonNull SettableT target,
+      @NonNull NullSavingStrategy nullSavingStrategy);
+
+  /**
+   * Sets the properties of an entity instance into a target data structure.
+   *
+   * <p>The generated code will attempt to write all entity properties in the target data structure.
+   * For example:
    *
    * <pre>{@code
    * target = target.set("id", entity.getId(), UUID.class);
@@ -59,25 +72,50 @@ public interface EntityHelper<EntityT> {
    *
    * The column names are inferred from the naming strategy for this entity.
    *
+   * <p>The target will typically be one of the built-in driver subtypes: {@link BoundStatement},
+   * {@link BoundStatementBuilder} or {@link UdtValue}. Note that the default {@link BoundStatement}
+   * implementation is immutable, therefore this argument won't be modified in-place: you need to
+   * use the return value to get the resulting structure.
+   *
+   * <p>If {@code lenient} is {@code true}, the mapper will operate on a best-effort basis and
+   * attempt to write all entity properties that have a matching column in the target, leaving
+   * unmatched properties untouched. Beware that this may result in a partially-populated target.
+   *
+   * <p>If {@code lenient} is {@code false}, then the target must contain a matching column for
+   * every property in the entity definition, <em>except computed ones</em>. If such a column is not
+   * found, an {@link IllegalArgumentException} will be thrown.
+   *
    * @param entity the entity that the values will be read from.
-   * @param target the data structure to fill. This will typically be one of the built-in driver
-   *     subtypes: {@link BoundStatement}, {@link BoundStatementBuilder} or {@link UdtValue}. Note
-   *     that the default {@link BoundStatement} implementation is immutable, therefore this
-   *     argument won't be modified in-place: you need to use the return value to get the resulting
-   *     structure.
+   * @param target the data structure to fill.
+   * @param lenient whether to tolerate incomplete targets.
    * @return the data structure resulting from the assignments. This is useful for immutable target
    *     implementations (see above), otherwise it will be the same as {@code target}.
+   * @throws IllegalArgumentException if lenient is false and the target does not contain matching
+   *     columns for every entity property.
    */
   @NonNull
-  <SettableT extends SettableByName<SettableT>> SettableT set(
+  default <SettableT extends SettableByName<SettableT>> SettableT set(
       @NonNull EntityT entity,
       @NonNull SettableT target,
-      @NonNull NullSavingStrategy nullSavingStrategy);
+      @NonNull NullSavingStrategy nullSavingStrategy,
+      boolean lenient) {
+    return set(entity, target, nullSavingStrategy);
+  }
 
   /**
    * Gets values from a data structure to fill an entity instance.
    *
-   * <p>For example:
+   * @deprecated Use {@link #get(GettableByName, boolean)} instead.
+   */
+  @NonNull
+  @Deprecated
+  EntityT get(@NonNull GettableByName source);
+
+  /**
+   * Gets values from a data structure to fill an entity instance.
+   *
+   * <p>The generated code will attempt to read all entity properties from the source data
+   * structure. For example:
    *
    * <pre>{@code
    * User returnValue = new User();
@@ -88,14 +126,29 @@ public interface EntityHelper<EntityT> {
    *
    * The column names are inferred from the naming strategy for this entity.
    *
-   * @param source the data structure to read from. This will typically be one of the built-in
-   *     driver subtypes: {@link Row} or {@link UdtValue} ({@link BoundStatement} and {@link
-   *     BoundStatementBuilder} are also possible, although it's less likely that data would be read
-   *     back from them in this manner).
+   * <p>The source will typically be one of the built-in driver subtypes: {@link Row} or {@link
+   * UdtValue} ({@link BoundStatement} and {@link BoundStatementBuilder} are also possible, although
+   * it's less likely that data would be read back from them in this manner).
+   *
+   * <p>If {@code lenient} is {@code true}, the mapper will operate on a best-effort basis and
+   * attempt to read all entity properties that have a matching column in the source, leaving
+   * unmatched properties untouched. Beware that this may result in a partially-populated entity
+   * instance.
+   *
+   * <p>If {@code lenient} is {@code false}, then the source must contain a matching column for
+   * every property in the entity definition, <em>including computed ones</em>. If such a column is
+   * not found, an {@link IllegalArgumentException} will be thrown.
+   *
+   * @param source the data structure to read from.
+   * @param lenient whether to tolerate incomplete sources.
    * @return the resulting entity.
+   * @throws IllegalArgumentException if lenient is false and the source does not contain matching
+   *     columns for every entity property.
    */
   @NonNull
-  EntityT get(@NonNull GettableByName source);
+  default EntityT get(@NonNull GettableByName source, boolean lenient) {
+    return get(source);
+  }
 
   /**
    * Builds an insert query for this entity.

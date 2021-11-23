@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  * <pre>
  * datastax-java-driver {
  *   advanced.request-tracker {
- *     class = RequestLogger
+ *     classes = [RequestLogger]
  *     logs {
  *       success { enabled = true }
  *       slow { enabled = true, threshold = 1 second }
@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory;
  * See {@code reference.conf} (in the manual or core driver JAR) for more details.
  *
  * <p>Note that if a tracker is specified programmatically with {@link
- * SessionBuilder#withRequestTracker(RequestTracker)}, the configuration is ignored.
+ * SessionBuilder#addRequestTracker(RequestTracker)}, the configuration is ignored.
  */
 @ThreadSafe
 public class RequestLogger implements RequestTracker {

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -52,8 +53,7 @@ public class SetEntityIT extends InventoryITBase {
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   private static ProductDao dao;
-
-  private static InventoryMapper inventoryMapper;
+  private static UserDefinedType dimensions2d;
 
   @BeforeClass
   public static void setup() {
@@ -64,8 +64,14 @@ public class SetEntityIT extends InventoryITBase {
           SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
     }
 
-    inventoryMapper = new SetEntityIT_InventoryMapperBuilder(session).build();
+    InventoryMapper inventoryMapper = new SetEntityIT_InventoryMapperBuilder(session).build();
     dao = inventoryMapper.productDao(SESSION_RULE.keyspace());
+    dimensions2d =
+        session
+            .getKeyspace()
+            .flatMap(ks -> session.getMetadata().getKeyspace(ks))
+            .flatMap(ks -> ks.getUserDefinedType("dimensions2d"))
+            .orElseThrow(AssertionError::new);
   }
 
   @Test
@@ -144,10 +150,74 @@ public class SetEntityIT extends InventoryITBase {
     assertThat(udtValue.getInt("height")).isEqualTo(dimensions.getHeight());
   }
 
+  @Test
+  public void should_set_entity_on_partial_statement_when_lenient() {
+    CqlSession session = SESSION_RULE.session();
+    PreparedStatement ps = session.prepare("INSERT INTO product (id, description) VALUES (?, ?)");
+    BoundStatement bound = dao.setLenient(FLAMETHROWER, ps.bind());
+    assertThat(bound.getUuid(0)).isEqualTo(FLAMETHROWER.getId());
+    assertThat(bound.getString(1)).isEqualTo(FLAMETHROWER.getDescription());
+  }
+
+  @Test
+  public void should_set_entity_on_partial_statement_builder_when_lenient() {
+    CqlSession session = SESSION_RULE.session();
+    PreparedStatement ps = session.prepare("INSERT INTO product (id, description) VALUES (?, ?)");
+    BoundStatementBuilder builder = ps.boundStatementBuilder();
+    dao.setLenient(FLAMETHROWER, builder);
+    assertThat(builder.getUuid(0)).isEqualTo(FLAMETHROWER.getId());
+    assertThat(builder.getString(1)).isEqualTo(FLAMETHROWER.getDescription());
+  }
+
+  @Test
+  @SuppressWarnings("ResultOfMethodCallIgnored")
+  public void should_set_entity_on_partial_udt_when_lenient() {
+    CqlSession session = SESSION_RULE.session();
+    PreparedStatement ps = session.prepare("INSERT INTO product2d (id, dimensions) VALUES (?, ?)");
+    BoundStatementBuilder builder = ps.boundStatementBuilder();
+    builder.setUuid(0, FLAMETHROWER.getId());
+    UdtValue dimensionsUdt = dimensions2d.newValue();
+    Dimensions dimensions = new Dimensions(12, 34, 56);
+    dao.setLenient(dimensions, dimensionsUdt);
+    builder.setUdtValue(1, dimensionsUdt);
+    assertThat(dimensionsUdt.getInt("width")).isEqualTo(34);
+    assertThat(dimensionsUdt.getInt("height")).isEqualTo(56);
+  }
+
+  @Test
+  public void should_not_set_entity_on_partial_statement_when_not_lenient() {
+    CqlSession session = SESSION_RULE.session();
+    PreparedStatement ps = session.prepare("INSERT INTO product (id, description) VALUES (?, ?)");
+    Throwable error = catchThrowable(() -> dao.set(FLAMETHROWER, ps.bind()));
+    assertThat(error).hasMessage("dimensions is not a variable in this bound statement");
+  }
+
+  @Test
+  public void should_not_set_entity_on_partial_statement_builder_when_not_lenient() {
+    CqlSession session = SESSION_RULE.session();
+    PreparedStatement ps = session.prepare("INSERT INTO product (id, description) VALUES (?, ?)");
+    Throwable error = catchThrowable(() -> dao.set(ps.boundStatementBuilder(), FLAMETHROWER));
+    assertThat(error).hasMessage("dimensions is not a variable in this bound statement");
+  }
+
+  @Test
+  @SuppressWarnings("ResultOfMethodCallIgnored")
+  public void should_not_set_entity_on_partial_udt_when_not_lenient() {
+    CqlSession session = SESSION_RULE.session();
+    PreparedStatement ps = session.prepare("INSERT INTO product2d (id, dimensions) VALUES (?, ?)");
+    BoundStatementBuilder builder = ps.boundStatementBuilder();
+    builder.setUuid(0, FLAMETHROWER.getId());
+    UdtValue dimensionsUdt = dimensions2d.newValue();
+    Dimensions dimensions = new Dimensions(12, 34, 56);
+    Throwable error = catchThrowable(() -> dao.set(dimensions, dimensionsUdt));
+    assertThat(error).hasMessage("length is not a field in this UDT");
+  }
+
   private static void assertMatches(GettableByName data, Product entity) {
     assertThat(data.getUuid("id")).isEqualTo(entity.getId());
     assertThat(data.getString("description")).isEqualTo(entity.getDescription());
     UdtValue udtValue = data.getUdtValue("dimensions");
+    assertThat(udtValue).isNotNull();
     assertThat(udtValue.getType().getName().asInternal()).isEqualTo("dimensions");
     assertThat(udtValue.getInt("length")).isEqualTo(entity.getDimensions().getLength());
     assertThat(udtValue.getInt("width")).isEqualTo(entity.getDimensions().getWidth());
@@ -177,5 +247,14 @@ public class SetEntityIT extends InventoryITBase {
 
     @SetEntity
     void set(Dimensions dimensions, UdtValue udtValue);
+
+    @SetEntity(lenient = true)
+    BoundStatement setLenient(Product product, BoundStatement boundStatement);
+
+    @SetEntity(lenient = true)
+    void setLenient(Product product, BoundStatementBuilder builder);
+
+    @SetEntity(lenient = true)
+    void setLenient(Dimensions dimensions, UdtValue udtValue);
   }
 }

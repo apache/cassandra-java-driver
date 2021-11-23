@@ -26,7 +26,7 @@
   <parent>
     <groupId>com.scylladb</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.11.1.1-SNAPSHOT</version>
+    <version>4.13.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-integration-tests</artifactId>
   <packaging>jar</packaging>
@@ -259,6 +259,7 @@
               <reuseForks>false</reuseForks>
               <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-isolated.xml</summaryFile>
               <skipITs>${skipIsolatedITs}</skipITs>
+              <argLine>${blockhound.argline}</argLine>
             </configuration>
           </execution>
           <execution>
@@ -321,4 +322,16 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>jdk 13+</id>
+      <activation>
+        <jdk>[13,)</jdk>
+      </activation>
+      <properties>
+        <!-- for DriverBlockHoundIntegrationIT when using JDK 13+, see https://github.com/reactor/BlockHound/issues/33 -->
+        <blockhound.argline>-XX:+AllowRedefinitionToAddDeleteMethods</blockhound.argline>
+      </properties>
+    </profile>
+  </profiles>
 </project>

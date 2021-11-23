@@ -41,6 +41,12 @@ public class AlterTableTest {
   }
 
   @Test
+  public void should_generate_alter_table_with_add_single_column_static() {
+    assertThat(alterTable("foo", "bar").addStaticColumn("x", DataTypes.TEXT))
+        .hasCql("ALTER TABLE foo.bar ADD x text STATIC");
+  }
+
+  @Test
   public void should_generate_alter_table_with_add_three_columns() {
     assertThat(
             alterTable("foo", "bar")

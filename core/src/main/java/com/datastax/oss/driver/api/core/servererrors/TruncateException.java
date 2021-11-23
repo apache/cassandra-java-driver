@@ -27,7 +27,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 /**
  * An error during a truncation operation.
  *
- * <p>This exception is processed by {@link RetryPolicy#onErrorResponse(Request,
+ * <p>This exception is processed by {@link RetryPolicy#onErrorResponseVerdict(Request,
  * CoordinatorException, int)}, which will decide if it is rethrown directly to the client or if the
  * request should be retried. If all other tried nodes also fail, this exception will appear in the
  * {@link AllNodesFailedException} thrown to the client.

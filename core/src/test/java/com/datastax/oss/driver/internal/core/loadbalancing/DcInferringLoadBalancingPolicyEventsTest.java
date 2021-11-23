@@ -17,23 +17,13 @@ package com.datastax.oss.driver.internal.core.loadbalancing;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.api.core.config.DriverExecutionProfile.DEFAULT_NAME;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.reset;
 
-import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.UUID;
-import org.junit.Before;
 
 public class DcInferringLoadBalancingPolicyEventsTest extends BasicLoadBalancingPolicyEventsTest {
-
-  @Override
-  @Before
-  public void setup() {
-    given(context.getRequestTracker()).willReturn(new MultiplexingRequestTracker());
-    super.setup();
-  }
 
   @Override
   @NonNull

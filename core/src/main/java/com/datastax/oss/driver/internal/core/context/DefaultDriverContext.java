@@ -15,9 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
+import static com.datastax.oss.driver.internal.core.util.Dependency.JACKSON;
+
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.internal.core.InsightsClientLifecycleListener;
-import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.dse.driver.internal.core.type.codec.DseTypeCodecsRegistrar;
 import com.datastax.dse.protocol.internal.DseProtocolV1ClientCodecs;
 import com.datastax.dse.protocol.internal.DseProtocolV2ClientCodecs;
@@ -57,7 +58,11 @@ import com.datastax.oss.driver.internal.core.metadata.CloudTopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.DefaultTopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
+import com.datastax.oss.driver.internal.core.metadata.MultiplexingNodeStateListener;
+import com.datastax.oss.driver.internal.core.metadata.NoopNodeStateListener;
 import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
+import com.datastax.oss.driver.internal.core.metadata.schema.MultiplexingSchemaChangeListener;
+import com.datastax.oss.driver.internal.core.metadata.schema.NoopSchemaChangeListener;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.DefaultSchemaParserFactory;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParserFactory;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.DefaultSchemaQueriesFactory;
@@ -79,10 +84,11 @@ import com.datastax.oss.driver.internal.core.session.RequestProcessor;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
 import com.datastax.oss.driver.internal.core.ssl.JdkSslHandlerFactory;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
+import com.datastax.oss.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogFormatter;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
-import com.datastax.oss.driver.internal.core.util.DependencyCheck;
+import com.datastax.oss.driver.internal.core.util.DefaultDependencyChecker;
 import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
@@ -97,6 +103,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.buffer.ByteBuf;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -225,6 +232,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final SchemaChangeListener schemaChangeListenerFromBuilder;
   private final RequestTracker requestTrackerFromBuilder;
   private final Map<String, String> localDatacentersFromBuilder;
+  private final Map<String, Predicate<Node>> nodeFiltersFromBuilder;
   private final Map<String, NodeDistanceEvaluator> nodeDistanceEvaluatorsFromBuilder;
   private final ClassLoader classLoader;
   private final InetSocketAddress cloudProxyAddress;
@@ -277,6 +285,9 @@ public class DefaultDriverContext implements InternalDriverContext {
             "sslEngineFactory",
             () -> buildSslEngineFactory(programmaticArguments.getSslEngineFactory()),
             cycleDetector);
+    @SuppressWarnings("deprecation")
+    Map<String, Predicate<Node>> nodeFilters = programmaticArguments.getNodeFilters();
+    this.nodeFiltersFromBuilder = nodeFilters;
     this.nodeDistanceEvaluatorsFromBuilder = programmaticArguments.getNodeDistanceEvaluators();
     this.classLoader = programmaticArguments.getClassLoader();
     this.cloudProxyAddress = programmaticArguments.getCloudProxyAddress();
@@ -579,63 +590,120 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   protected NodeStateListener buildNodeStateListener(
       NodeStateListener nodeStateListenerFromBuilder) {
-    return (nodeStateListenerFromBuilder != null)
-        ? nodeStateListenerFromBuilder
-        : Reflection.buildFromConfig(
-                this,
-                DefaultDriverOption.METADATA_NODE_STATE_LISTENER_CLASS,
-                NodeStateListener.class,
-                "com.datastax.oss.driver.internal.core.metadata")
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        String.format(
-                            "Missing node state listener, check your configuration (%s)",
-                            DefaultDriverOption.METADATA_NODE_STATE_LISTENER_CLASS)));
+    List<NodeStateListener> listeners = new ArrayList<>();
+    if (nodeStateListenerFromBuilder != null) {
+      listeners.add(nodeStateListenerFromBuilder);
+    }
+    DefaultDriverOption newOption = DefaultDriverOption.METADATA_NODE_STATE_LISTENER_CLASSES;
+    @SuppressWarnings("deprecation")
+    DefaultDriverOption legacyOption = DefaultDriverOption.METADATA_NODE_STATE_LISTENER_CLASS;
+    DriverExecutionProfile profile = config.getDefaultProfile();
+    if (profile.isDefined(newOption)) {
+      listeners.addAll(
+          Reflection.buildFromConfigList(
+              this,
+              newOption,
+              NodeStateListener.class,
+              "com.datastax.oss.driver.internal.core.metadata"));
+    }
+    if (profile.isDefined(legacyOption)) {
+      LOG.warn(
+          "Option {} has been deprecated and will be removed in a future release; please use option {} instead.",
+          legacyOption,
+          newOption);
+      Reflection.buildFromConfig(
+              this,
+              legacyOption,
+              NodeStateListener.class,
+              "com.datastax.oss.driver.internal.core.metadata")
+          .ifPresent(listeners::add);
+    }
+    if (listeners.isEmpty()) {
+      return new NoopNodeStateListener(this);
+    } else if (listeners.size() == 1) {
+      return listeners.get(0);
+    } else {
+      return new MultiplexingNodeStateListener(listeners);
+    }
   }
 
   protected SchemaChangeListener buildSchemaChangeListener(
       SchemaChangeListener schemaChangeListenerFromBuilder) {
-    return (schemaChangeListenerFromBuilder != null)
-        ? schemaChangeListenerFromBuilder
-        : Reflection.buildFromConfig(
-                this,
-                DefaultDriverOption.METADATA_SCHEMA_CHANGE_LISTENER_CLASS,
-                SchemaChangeListener.class,
-                "com.datastax.oss.driver.internal.core.metadata.schema")
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        String.format(
-                            "Missing schema change listener, check your configuration (%s)",
-                            DefaultDriverOption.METADATA_SCHEMA_CHANGE_LISTENER_CLASS)));
+    List<SchemaChangeListener> listeners = new ArrayList<>();
+    if (schemaChangeListenerFromBuilder != null) {
+      listeners.add(schemaChangeListenerFromBuilder);
+    }
+    DefaultDriverOption newOption = DefaultDriverOption.METADATA_SCHEMA_CHANGE_LISTENER_CLASSES;
+    @SuppressWarnings("deprecation")
+    DefaultDriverOption legacyOption = DefaultDriverOption.METADATA_SCHEMA_CHANGE_LISTENER_CLASS;
+    DriverExecutionProfile profile = config.getDefaultProfile();
+    if (profile.isDefined(newOption)) {
+      listeners.addAll(
+          Reflection.buildFromConfigList(
+              this,
+              newOption,
+              SchemaChangeListener.class,
+              "com.datastax.oss.driver.internal.core.metadata.schema"));
+    }
+    if (profile.isDefined(legacyOption)) {
+      LOG.warn(
+          "Option {} has been deprecated and will be removed in a future release; please use option {} instead.",
+          legacyOption,
+          newOption);
+      Reflection.buildFromConfig(
+              this,
+              legacyOption,
+              SchemaChangeListener.class,
+              "com.datastax.oss.driver.internal.core.metadata.schema")
+          .ifPresent(listeners::add);
+    }
+    if (listeners.isEmpty()) {
+      return new NoopSchemaChangeListener(this);
+    } else if (listeners.size() == 1) {
+      return listeners.get(0);
+    } else {
+      return new MultiplexingSchemaChangeListener(listeners);
+    }
   }
 
   protected RequestTracker buildRequestTracker(RequestTracker requestTrackerFromBuilder) {
-    RequestTracker requestTrackerFromConfig =
-        (requestTrackerFromBuilder != null)
-            ? requestTrackerFromBuilder
-            : Reflection.buildFromConfig(
-                    this,
-                    DefaultDriverOption.REQUEST_TRACKER_CLASS,
-                    RequestTracker.class,
-                    "com.datastax.oss.driver.internal.core.tracker")
-                .orElseThrow(
-                    () ->
-                        new IllegalArgumentException(
-                            String.format(
-                                "Missing request tracker, check your configuration (%s)",
-                                DefaultDriverOption.REQUEST_TRACKER_CLASS)));
-
-    // The default LBP needs to add its own tracker
-    if (requestTrackerFromConfig instanceof MultiplexingRequestTracker) {
-      return requestTrackerFromConfig;
+    List<RequestTracker> trackers = new ArrayList<>();
+    if (requestTrackerFromBuilder != null) {
+      trackers.add(requestTrackerFromBuilder);
+    }
+    for (LoadBalancingPolicy lbp : this.getLoadBalancingPolicies().values()) {
+      lbp.getRequestTracker().ifPresent(trackers::add);
+    }
+    DefaultDriverOption newOption = DefaultDriverOption.REQUEST_TRACKER_CLASSES;
+    @SuppressWarnings("deprecation")
+    DefaultDriverOption legacyOption = DefaultDriverOption.REQUEST_TRACKER_CLASS;
+    DriverExecutionProfile profile = config.getDefaultProfile();
+    if (profile.isDefined(newOption)) {
+      trackers.addAll(
+          Reflection.buildFromConfigList(
+              this,
+              newOption,
+              RequestTracker.class,
+              "com.datastax.oss.driver.internal.core.tracker"));
+    }
+    if (profile.isDefined(legacyOption)) {
+      LOG.warn(
+          "Option {} has been deprecated and will be removed in a future release; please use option {} instead.",
+          legacyOption,
+          newOption);
+      Reflection.buildFromConfig(
+              this,
+              legacyOption,
+              RequestTracker.class,
+              "com.datastax.oss.driver.internal.core.tracker")
+          .ifPresent(trackers::add);
+    }
+    if (trackers.isEmpty()) {
+      return new NoopRequestTracker(this);
+    } else if (trackers.size() == 1) {
+      return trackers.get(0);
     } else {
-      MultiplexingRequestTracker multiplexingRequestTracker = new MultiplexingRequestTracker();
-      if (!(requestTrackerFromConfig instanceof NoopRequestTracker)) {
-        multiplexingRequestTracker.register(requestTrackerFromConfig);
-      }
-      return multiplexingRequestTracker;
+      return new MultiplexingRequestTracker(trackers);
     }
   }
 
@@ -651,7 +719,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected List<LifecycleListener> buildLifecycleListeners() {
-    if (DependencyCheck.JACKSON.isPresent()) {
+    if (DefaultDependencyChecker.isPresent(JACKSON)) {
       return Collections.singletonList(new InsightsClientLifecycleListener(this, initStackTrace));
     } else {
       if (config.getDefaultProfile().getBoolean(DseDriverOption.MONITOR_REPORTING_ENABLED)) {
@@ -907,6 +975,13 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public String getLocalDatacenter(@NonNull String profileName) {
     return localDatacentersFromBuilder.get(profileName);
+  }
+
+  @Nullable
+  @Override
+  @Deprecated
+  public Predicate<Node> getNodeFilter(@NonNull String profileName) {
+    return nodeFiltersFromBuilder.get(profileName);
   }
 
   @Nullable

@@ -475,6 +475,26 @@ public enum DefaultDaoReturnTypeKind implements DaoReturnTypeKind {
       return innerBlock;
     }
   },
+
+  FUTURE_OF_STREAM {
+    @Override
+    public void addExecuteStatement(
+        CodeBlock.Builder methodBuilder,
+        String helperFieldName,
+        ExecutableElement methodElement,
+        Map<Name, TypeElement> typeParameters) {
+      methodBuilder.addStatement(
+          "return executeAsyncAndMapToEntityStream(boundStatement, $L)", helperFieldName);
+    }
+
+    @Override
+    public CodeBlock wrapWithErrorHandling(
+        CodeBlock innerBlock,
+        ExecutableElement methodElement,
+        Map<Name, TypeElement> typeParameters) {
+      return wrapWithErrorHandling(innerBlock, FAILED_FUTURE);
+    }
+  },
   ;
 
   @Override

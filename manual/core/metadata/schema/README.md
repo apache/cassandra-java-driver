@@ -6,7 +6,7 @@
 
 * immutable (must invoke again to observe changes).
 * getting notifications:
-  [CqlSession.builder().withSchemaChangeListener][SessionBuilder#withSchemaChangeListener].
+  [CqlSession.builder().addSchemaChangeListener][SessionBuilder#addSchemaChangeListener].
 * enabling/disabling: `advanced.metadata.schema.enabled` in the configuration, or
   [session.setSchemaMetadataEnabled()][Session#setSchemaMetadataEnabled].
 * filtering: `advanced.metadata.schema.refreshed-keyspaces` in the configuration.
@@ -70,7 +70,7 @@ All other types (keyspaces, tables, etc.) are identical to their OSS counterpart
 ### Notifications
 
 If you need to follow schema changes, you don't need to poll the metadata manually; instead,
-you can register a listener to get notified when changes occur:
+you can register one or more listeners to get notified when changes occur:
 
 ```java
 SchemaChangeListener listener =
@@ -81,7 +81,7 @@ SchemaChangeListener listener =
       }
     };
 CqlSession session = CqlSession.builder()
-    .withSchemaChangeListener(listener)
+    .addSchemaChangeListener(listener)
     .build();
 
 session.execute("CREATE TABLE test.foo (k int PRIMARY KEY)");
@@ -90,6 +90,20 @@ session.execute("CREATE TABLE test.foo (k int PRIMARY KEY)");
 See [SchemaChangeListener] for the list of available methods. [SchemaChangeListenerBase] is a
 convenience implementation with empty methods, for when you only need to override a few of them.
 
+It is also possible to register one or more listeners via the configuration:
+
+```hocon
+datastax-java-driver {
+  advanced {
+    schema-change-listener.classes = [com.example.app.MySchemaChangeListener1,com.example.app.MySchemaChangeListener2]
+  }
+}
+```
+
+Listeners registered via configuration will be instantiated with reflection; they must have a public
+constructor taking a `DriverContext` argument.
+
+The two registration methods (programmatic and via the configuration) can be used simultaneously.
 
 ### Configuration
 
@@ -307,16 +321,16 @@ unavailable for the excluded keyspaces.
 If you issue schema-altering requests from the driver (e.g. `session.execute("CREATE TABLE ..")`),
 take a look at the [Performance](../../performance/#schema-updates) page for a few tips.
 
-[Metadata#getKeyspaces]:             https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
-[SchemaChangeListener]:              https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListener.html
-[SchemaChangeListenerBase]:          https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListenerBase.html
-[Session#setSchemaMetadataEnabled]:  https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/session/Session.html#setSchemaMetadataEnabled-java.lang.Boolean-
-[Session#checkSchemaAgreementAsync]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/session/Session.html#checkSchemaAgreementAsync--
-[SessionBuilder#withSchemaChangeListener]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withSchemaChangeListener-com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener-
-[ExecutionInfo#isSchemaInAgreement]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#isSchemaInAgreement--
-[com.datastax.dse.driver.api.core.metadata.schema]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/dse/driver/api/core/metadata/schema/package-frame.html
-[DseFunctionMetadata]:  https://docs.datastax.com/en/drivers/java/4.11/com/datastax/dse/driver/api/core/metadata/schema/DseFunctionMetadata.html
-[DseAggregateMetadata]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/dse/driver/api/core/metadata/schema/DseAggregateMetadata.html
+[Metadata#getKeyspaces]:             https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
+[SchemaChangeListener]:              https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListener.html
+[SchemaChangeListenerBase]:          https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListenerBase.html
+[Session#setSchemaMetadataEnabled]:  https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/Session.html#setSchemaMetadataEnabled-java.lang.Boolean-
+[Session#checkSchemaAgreementAsync]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/Session.html#checkSchemaAgreementAsync--
+[SessionBuilder#addSchemaChangeListener]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addSchemaChangeListener-com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener-
+[ExecutionInfo#isSchemaInAgreement]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#isSchemaInAgreement--
+[com.datastax.dse.driver.api.core.metadata.schema]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/dse/driver/api/core/metadata/schema/package-frame.html
+[DseFunctionMetadata]:  https://docs.datastax.com/en/drivers/java/4.13/com/datastax/dse/driver/api/core/metadata/schema/DseFunctionMetadata.html
+[DseAggregateMetadata]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/dse/driver/api/core/metadata/schema/DseAggregateMetadata.html
 
 [JAVA-750]: https://datastax-oss.atlassian.net/browse/JAVA-750
 [java.util.regex.Pattern]: https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html

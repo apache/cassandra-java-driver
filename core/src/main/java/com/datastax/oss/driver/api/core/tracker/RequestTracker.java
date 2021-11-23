@@ -27,9 +27,9 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 /**
  * Tracks request execution for a session.
  *
- * <p>There is exactly one tracker per {@link Session}. It can be provided either via the
- * configuration (see {@code reference.conf} in the manual or core driver JAR), or programmatically
- * via {@link SessionBuilder#withRequestTracker(RequestTracker)}.
+ * <p>Implementations of this interface can be registered either via the configuration (see {@code
+ * reference.conf} in the manual or core driver JAR), or programmatically via {@link
+ * SessionBuilder#addRequestTracker(RequestTracker)}.
  */
 public interface RequestTracker extends AutoCloseable {
 

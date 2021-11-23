@@ -159,7 +159,7 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
             Insert.class, Insert::nullSavingStrategy, methodElement, enclosingClass);
 
     createStatementBlock.addStatement(
-        "$1L.set($2L, boundStatementBuilder, $3T.$4L)",
+        "$1L.set($2L, boundStatementBuilder, $3T.$4L, false)",
         helperFieldName,
         entityParameterName,
         NullSavingStrategy.class,
@@ -176,9 +176,8 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
       }
     }
 
-    createStatementBlock
-        .add("\n")
-        .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
+    createStatementBlock.addStatement(
+        "$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
     return crudMethod(createStatementBlock, returnType, helperFieldName);
   }

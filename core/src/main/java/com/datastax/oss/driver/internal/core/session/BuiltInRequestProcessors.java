@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.session;
 
+import static com.datastax.oss.driver.internal.core.util.Dependency.REACTIVE_STREAMS;
+import static com.datastax.oss.driver.internal.core.util.Dependency.TINKERPOP;
+
 import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousCqlRequestAsyncProcessor;
 import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousCqlRequestSyncProcessor;
 import com.datastax.dse.driver.internal.core.cql.continuous.reactive.ContinuousCqlRequestReactiveProcessor;
@@ -28,7 +31,7 @@ import com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestAsyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
-import com.datastax.oss.driver.internal.core.util.DependencyCheck;
+import com.datastax.oss.driver.internal.core.util.DefaultDependencyChecker;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -41,18 +44,19 @@ public class BuiltInRequestProcessors {
   public static List<RequestProcessor<?, ?>> createDefaultProcessors(DefaultDriverContext context) {
     List<RequestProcessor<?, ?>> processors = new ArrayList<>();
     addBasicProcessors(processors);
-    if (DependencyCheck.TINKERPOP.isPresent()) {
+    if (DefaultDependencyChecker.isPresent(TINKERPOP)) {
       addGraphProcessors(context, processors);
     } else {
       LOG.debug("Tinkerpop was not found on the classpath: graph extensions will not be available");
     }
-    if (DependencyCheck.REACTIVE_STREAMS.isPresent()) {
+    if (DefaultDependencyChecker.isPresent(REACTIVE_STREAMS)) {
       addReactiveProcessors(processors);
     } else {
       LOG.debug(
           "Reactive Streams was not found on the classpath: reactive extensions will not be available");
     }
-    if (DependencyCheck.REACTIVE_STREAMS.isPresent() && DependencyCheck.TINKERPOP.isPresent()) {
+    if (DefaultDependencyChecker.isPresent(REACTIVE_STREAMS)
+        && DefaultDependencyChecker.isPresent(TINKERPOP)) {
       addGraphReactiveProcessors(context, processors);
     }
     return processors;

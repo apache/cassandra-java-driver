@@ -43,6 +43,7 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -183,7 +184,10 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
             .getDefaultProfile()
             .withInt(DseDriverOption.CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES, 1)
             .withInt(DseDriverOption.CONTINUOUS_PAGING_PAGE_SIZE, 1)
-            .withInt(DefaultDriverOption.REQUEST_TIMEOUT, 120000000);
+            .withDuration(
+                DseDriverOption.CONTINUOUS_PAGING_TIMEOUT_FIRST_PAGE, Duration.ofSeconds(30))
+            .withDuration(
+                DseDriverOption.CONTINUOUS_PAGING_TIMEOUT_OTHER_PAGES, Duration.ofSeconds(30));
     ContinuousResultSet result = session.executeContinuously(simple.setExecutionProfile(profile));
     Iterator<Row> it = result.iterator();
     // First row should have a non-null values.
@@ -193,11 +197,7 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
     // Make schema change to add b, its metadata should NOT be present in subsequent rows.
     CqlSession schemaChangeSession =
         SessionUtils.newSession(
-            ccmRule,
-            session.getKeyspace().orElseThrow(IllegalStateException::new),
-            SessionUtils.configLoaderBuilder()
-                .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
-                .build());
+            ccmRule, session.getKeyspace().orElseThrow(IllegalStateException::new));
     SimpleStatement statement =
         SimpleStatement.newInstance("ALTER TABLE test_prepare add b int")
             .setExecutionProfile(sessionRule.slowProfile());
@@ -240,7 +240,9 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
   public void prepared_statement_paging_should_be_resilient_to_schema_change() {
     CqlSession session = sessionRule.session();
     // Create table and prepare select * query against it.
-    session.execute("CREATE TABLE test_prep (k text PRIMARY KEY, v int)");
+    session.execute(
+        SimpleStatement.newInstance("CREATE TABLE test_prep (k text PRIMARY KEY, v int)")
+            .setExecutionProfile(SessionUtils.slowProfile(session)));
     for (int i = 0; i < 100; i++) {
       session.execute(String.format("INSERT INTO test_prep (k, v) VALUES ('foo', %d)", i));
     }
@@ -251,7 +253,11 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
             .getConfig()
             .getDefaultProfile()
             .withInt(DseDriverOption.CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES, 1)
-            .withInt(DseDriverOption.CONTINUOUS_PAGING_PAGE_SIZE, 1);
+            .withInt(DseDriverOption.CONTINUOUS_PAGING_PAGE_SIZE, 1)
+            .withDuration(
+                DseDriverOption.CONTINUOUS_PAGING_TIMEOUT_FIRST_PAGE, Duration.ofSeconds(30))
+            .withDuration(
+                DseDriverOption.CONTINUOUS_PAGING_TIMEOUT_OTHER_PAGES, Duration.ofSeconds(30));
     ContinuousResultSet result =
         session.executeContinuously(prepared.bind("foo").setExecutionProfile(profile));
     Iterator<Row> it = result.iterator();
@@ -262,12 +268,10 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
     // Make schema change to drop v, its metadata should be present, values will be null.
     CqlSession schemaChangeSession =
         SessionUtils.newSession(
-            ccmRule,
-            session.getKeyspace().orElseThrow(IllegalStateException::new),
-            SessionUtils.configLoaderBuilder()
-                .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
-                .build());
-    schemaChangeSession.execute("ALTER TABLE test_prep DROP v;");
+            ccmRule, session.getKeyspace().orElseThrow(IllegalStateException::new));
+    schemaChangeSession.execute(
+        SimpleStatement.newInstance("ALTER TABLE test_prep DROP v;")
+            .setExecutionProfile(SessionUtils.slowProfile(schemaChangeSession)));
     while (it.hasNext()) {
       // Each row should have a value for k, v should still be present, but null since column was
       // dropped.
@@ -276,7 +280,7 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
       if (ccmRule
               .getDseVersion()
               .orElseThrow(IllegalStateException::new)
-              .compareTo(Version.parse("6.0.0"))
+              .compareTo(Objects.requireNonNull(Version.parse("6.0.0")))
           >= 0) {
         // DSE 6 only, v should be null here since dropped.
         // Not reliable for 5.1 since we may have gotten page queued before schema changed.

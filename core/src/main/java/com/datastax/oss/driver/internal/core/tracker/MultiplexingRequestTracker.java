@@ -13,36 +13,65 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.dse.driver.internal.core.tracker;
+package com.datastax.oss.driver.internal.core.tracker;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Combines multiple request trackers into a single one.
  *
- * <p>The default context always wraps any user-provided tracker into this, in case other internal
- * components need to add their own trackers later (see InternalDriverContext.buildRequestTracker).
- *
- * <p>We also use it to catch and log any unexpected exception thrown by a tracker.
+ * <p>Any exception thrown by a child tracker is caught and logged.
  */
+@ThreadSafe
 public class MultiplexingRequestTracker implements RequestTracker {
 
   private static final Logger LOG = LoggerFactory.getLogger(MultiplexingRequestTracker.class);
 
   private final List<RequestTracker> trackers = new CopyOnWriteArrayList<>();
 
-  public void register(RequestTracker tracker) {
-    trackers.add(tracker);
+  public MultiplexingRequestTracker() {}
+
+  public MultiplexingRequestTracker(RequestTracker... trackers) {
+    this(Arrays.asList(trackers));
+  }
+
+  public MultiplexingRequestTracker(Collection<RequestTracker> trackers) {
+    addTrackers(trackers);
+  }
+
+  private void addTrackers(Collection<RequestTracker> source) {
+    for (RequestTracker tracker : source) {
+      addTracker(tracker);
+    }
+  }
+
+  private void addTracker(RequestTracker toAdd) {
+    Objects.requireNonNull(toAdd, "tracker cannot be null");
+    if (toAdd instanceof MultiplexingRequestTracker) {
+      addTrackers(((MultiplexingRequestTracker) toAdd).trackers);
+    } else {
+      trackers.add(toAdd);
+    }
+  }
+
+  public void register(@NonNull RequestTracker tracker) {
+    addTracker(tracker);
   }
 
   @Override
@@ -52,13 +81,10 @@ public class MultiplexingRequestTracker implements RequestTracker {
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
       @NonNull String logPrefix) {
-    for (RequestTracker tracker : trackers) {
-      try {
-        tracker.onSuccess(request, latencyNanos, executionProfile, node, logPrefix);
-      } catch (Throwable t) {
-        LOG.error("[{}] Unexpected error while invoking request tracker", logPrefix, t);
-      }
-    }
+    invokeTrackers(
+        tracker -> tracker.onSuccess(request, latencyNanos, executionProfile, node, logPrefix),
+        logPrefix,
+        "onSuccess");
   }
 
   @Override
@@ -69,13 +95,10 @@ public class MultiplexingRequestTracker implements RequestTracker {
       @NonNull DriverExecutionProfile executionProfile,
       @Nullable Node node,
       @NonNull String logPrefix) {
-    for (RequestTracker tracker : trackers) {
-      try {
-        tracker.onError(request, error, latencyNanos, executionProfile, node, logPrefix);
-      } catch (Throwable t) {
-        LOG.error("[{}] Unexpected error while invoking request tracker", logPrefix, t);
-      }
-    }
+    invokeTrackers(
+        tracker -> tracker.onError(request, error, latencyNanos, executionProfile, node, logPrefix),
+        logPrefix,
+        "onError");
   }
 
   @Override
@@ -85,13 +108,10 @@ public class MultiplexingRequestTracker implements RequestTracker {
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
       @NonNull String logPrefix) {
-    for (RequestTracker tracker : trackers) {
-      try {
-        tracker.onNodeSuccess(request, latencyNanos, executionProfile, node, logPrefix);
-      } catch (Throwable t) {
-        LOG.error("[{}] Unexpected error while invoking request tracker", logPrefix, t);
-      }
-    }
+    invokeTrackers(
+        tracker -> tracker.onNodeSuccess(request, latencyNanos, executionProfile, node, logPrefix),
+        logPrefix,
+        "onNodeSuccess");
   }
 
   @Override
@@ -102,42 +122,44 @@ public class MultiplexingRequestTracker implements RequestTracker {
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
       @NonNull String logPrefix) {
-    for (RequestTracker tracker : trackers) {
-      try {
-        tracker.onNodeError(request, error, latencyNanos, executionProfile, node, logPrefix);
-      } catch (Throwable t) {
-        LOG.error("[{}] Unexpected error while invoking request tracker", logPrefix, t);
-      }
-    }
+    invokeTrackers(
+        tracker ->
+            tracker.onNodeError(request, error, latencyNanos, executionProfile, node, logPrefix),
+        logPrefix,
+        "onNodeError");
   }
 
   @Override
   public void onSessionReady(@NonNull Session session) {
-    for (RequestTracker tracker : trackers) {
-      try {
-        tracker.onSessionReady(session);
-      } catch (Throwable t) {
-        LOG.error("[{}] Unexpected error while invoking request tracker", session.getName(), t);
-      }
-    }
+    invokeTrackers(tracker -> tracker.onSessionReady(session), session.getName(), "onSessionReady");
   }
 
   @Override
   public void close() throws Exception {
-    Exception toThrow = null;
     for (RequestTracker tracker : trackers) {
       try {
         tracker.close();
       } catch (Exception e) {
-        if (toThrow == null) {
-          toThrow = e;
-        } else {
-          toThrow.addSuppressed(e);
-        }
+        Loggers.warnWithException(
+            LOG, "Unexpected error while closing request tracker {}.", tracker, e);
       }
     }
-    if (toThrow != null) {
-      throw toThrow;
+  }
+
+  private void invokeTrackers(
+      @NonNull Consumer<RequestTracker> action, String logPrefix, String event) {
+    for (RequestTracker tracker : trackers) {
+      try {
+        action.accept(tracker);
+      } catch (Exception e) {
+        Loggers.warnWithException(
+            LOG,
+            "[{}] Unexpected error while notifying request tracker {} of an {} event.",
+            logPrefix,
+            tracker,
+            event,
+            e);
+      }
     }
   }
 }

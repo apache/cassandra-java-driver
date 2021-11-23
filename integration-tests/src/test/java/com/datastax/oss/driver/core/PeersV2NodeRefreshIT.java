@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
@@ -31,10 +30,8 @@ import java.util.concurrent.ExecutionException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 /** Test for JAVA-2654. */
-@Category(ParallelizableTests.class)
 public class PeersV2NodeRefreshIT {
 
   private static Server peersV2Server;
@@ -48,8 +45,12 @@ public class PeersV2NodeRefreshIT {
 
   @AfterClass
   public static void tearDown() {
-    cluster.stop();
-    peersV2Server.close();
+    if (cluster != null) {
+      cluster.stop();
+    }
+    if (peersV2Server != null) {
+      peersV2Server.close();
+    }
   }
 
   @Test

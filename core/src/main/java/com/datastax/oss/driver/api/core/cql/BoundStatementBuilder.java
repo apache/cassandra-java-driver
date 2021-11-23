@@ -99,6 +99,12 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
     this.node = template.getNode();
   }
 
+  /** The prepared statement that was used to create this statement. */
+  @NonNull
+  public PreparedStatement getPreparedStatement() {
+    return preparedStatement;
+  }
+
   @NonNull
   @Override
   public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {

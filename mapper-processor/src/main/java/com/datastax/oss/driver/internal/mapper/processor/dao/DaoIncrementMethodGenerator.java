@@ -217,9 +217,8 @@ public class DaoIncrementMethodGenerator extends DaoMethodGenerator {
         context,
         false);
 
-    updateStatementBlock
-        .add("\n")
-        .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
+    updateStatementBlock.addStatement(
+        "$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
     return crudMethod(updateStatementBlock, returnType, helperFieldName);
   }

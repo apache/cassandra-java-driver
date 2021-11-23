@@ -296,7 +296,10 @@ public enum DefaultDriverOption implements DriverOption {
    * The class of a session-wide component that tracks the outcome of requests.
    *
    * <p>Value-type: {@link String}
+   *
+   * @deprecated Use {@link #REQUEST_TRACKER_CLASSES} instead.
    */
+  @Deprecated
   REQUEST_TRACKER_CLASS("advanced.request-tracker.class"),
   /**
    * Whether to log successful requests.
@@ -388,14 +391,20 @@ public enum DefaultDriverOption implements DriverOption {
    * The class of a session-wide component that listens for node state changes.
    *
    * <p>Value-type: {@link String}
+   *
+   * @deprecated Use {@link #METADATA_NODE_STATE_LISTENER_CLASSES} instead.
    */
+  @Deprecated
   METADATA_NODE_STATE_LISTENER_CLASS("advanced.node-state-listener.class"),
 
   /**
    * The class of a session-wide component that listens for schema changes.
    *
    * <p>Value-type: {@link String}
+   *
+   * @deprecated Use {@link #METADATA_SCHEMA_CHANGE_LISTENER_CLASSES} instead.
    */
+  @Deprecated
   METADATA_SCHEMA_CHANGE_LISTENER_CLASS("advanced.schema-change-listener.class"),
 
   /**
@@ -909,6 +918,27 @@ public enum DefaultDriverOption implements DriverOption {
    * <p>Value-type: boolean
    */
   PREPARED_CACHE_WEAK_VALUES("advanced.prepared-statements.prepared-cache.weak-values"),
+
+  /**
+   * The classes of session-wide components that track the outcome of requests.
+   *
+   * <p>Value-type: List of {@link String}
+   */
+  REQUEST_TRACKER_CLASSES("advanced.request-tracker.classes"),
+
+  /**
+   * The classes of session-wide components that listen for node state changes.
+   *
+   * <p>Value-type: List of {@link String}
+   */
+  METADATA_NODE_STATE_LISTENER_CLASSES("advanced.node-state-listener.classes"),
+
+  /**
+   * The classes of session-wide components that listen for schema changes.
+   *
+   * <p>Value-type: List of {@link String}
+   */
+  METADATA_SCHEMA_CHANGE_LISTENER_CLASSES("advanced.schema-change-listener.classes"),
   ;
 
   private final String path;

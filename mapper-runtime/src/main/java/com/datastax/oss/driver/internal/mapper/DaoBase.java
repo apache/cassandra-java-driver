@@ -35,6 +35,7 @@ import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.cql.ResultSets;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import java.time.Duration;
 import java.util.Optional;
@@ -224,12 +225,12 @@ public class DaoBase {
 
   private <EntityT> EntityT asEntity(Row row, EntityHelper<EntityT> entityHelper) {
     return (row == null
-            // Special case for INSERT IF NOT EXISTS. If the row did not exists, the query returns
+            // Special case for INSERT IF NOT EXISTS. If the row did not exist, the query returns
             // only [applied], we want to return null to indicate there was no previous entity
             || (row.getColumnDefinitions().size() == 1
                 && row.getColumnDefinitions().get(0).getName().equals(APPLIED)))
         ? null
-        : entityHelper.get(row);
+        : entityHelper.get(row, false);
   }
 
   protected <EntityT> Optional<EntityT> executeAndMapToOptionalEntity(
@@ -239,12 +240,13 @@ public class DaoBase {
 
   protected <EntityT> PagingIterable<EntityT> executeAndMapToEntityIterable(
       Statement<?> statement, EntityHelper<EntityT> entityHelper) {
-    return execute(statement).map(entityHelper::get);
+    return execute(statement).map(row -> entityHelper.get(row, false));
   }
 
   protected <EntityT> Stream<EntityT> executeAndMapToEntityStream(
       Statement<?> statement, EntityHelper<EntityT> entityHelper) {
-    return StreamSupport.stream(execute(statement).map(entityHelper::get).spliterator(), false);
+    return StreamSupport.stream(
+        execute(statement).map(row -> entityHelper.get(row, false)).spliterator(), false);
   }
 
   protected CompletableFuture<AsyncResultSet> executeAsync(Statement<?> statement) {
@@ -287,7 +289,14 @@ public class DaoBase {
   protected <EntityT>
       CompletableFuture<MappedAsyncPagingIterable<EntityT>> executeAsyncAndMapToEntityIterable(
           Statement<?> statement, EntityHelper<EntityT> entityHelper) {
-    return executeAsync(statement).thenApply(rs -> rs.map(entityHelper::get));
+    return executeAsync(statement).thenApply(rs -> rs.map(row -> entityHelper.get(row, false)));
+  }
+
+  protected <EntityT> CompletableFuture<Stream<EntityT>> executeAsyncAndMapToEntityStream(
+      Statement<?> statement, EntityHelper<EntityT> entityHelper) {
+    return executeAsync(statement)
+        .thenApply(ResultSets::newInstance)
+        .thenApply(rs -> StreamSupport.stream(rs.map(entityHelper::get).spliterator(), false));
   }
 
   protected static void throwIfProtocolVersionV3(MapperContext context) {

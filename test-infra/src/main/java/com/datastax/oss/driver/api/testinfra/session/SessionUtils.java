@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.internal.core.loadbalancing.helper.NodeFilterToDistanceEvaluatorAdapter;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
@@ -130,34 +131,34 @@ public class SessionUtils {
     return newSession(cassandraResourceRule, keyspace, null, null, null, loader);
   }
 
-  private static SessionBuilder builder(
+  private static <SessionT extends Session> SessionBuilder<?, SessionT> builder(
       CassandraResourceRule cassandraResource,
       CqlIdentifier keyspace,
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
       Predicate<Node> nodeFilter) {
-    SessionBuilder builder =
-        baseBuilder()
-            .addContactEndPoints(cassandraResource.getContactPoints())
-            .withKeyspace(keyspace)
-            .withNodeStateListener(nodeStateListener)
-            .withSchemaChangeListener(schemaChangeListener);
+    SessionBuilder<?, SessionT> builder = baseBuilder();
+    builder
+        .addContactEndPoints(cassandraResource.getContactPoints())
+        .withKeyspace(keyspace)
+        .withNodeStateListener(nodeStateListener)
+        .withSchemaChangeListener(schemaChangeListener);
     if (nodeFilter != null) {
-      builder = builder.withNodeFilter(nodeFilter);
+      builder.withNodeDistanceEvaluator(new NodeFilterToDistanceEvaluatorAdapter(nodeFilter));
     }
     return builder;
   }
 
-  @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
+  @SuppressWarnings({"TypeParameterUnusedInFormals"})
   public static <SessionT extends Session> SessionT newSession(
       CassandraResourceRule cassandraResource,
       CqlIdentifier keyspace,
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
       Predicate<Node> nodeFilter) {
-    SessionBuilder builder =
+    SessionBuilder<?, SessionT> builder =
         builder(cassandraResource, keyspace, nodeStateListener, schemaChangeListener, nodeFilter);
-    return (SessionT) builder.build();
+    return builder.build();
   }
 
   @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
@@ -168,7 +169,7 @@ public class SessionUtils {
       SchemaChangeListener schemaChangeListener,
       Predicate<Node> nodeFilter,
       DriverConfigLoader loader) {
-    SessionBuilder builder =
+    SessionBuilder<?, SessionT> builder =
         builder(cassandraResource, keyspace, nodeStateListener, schemaChangeListener, nodeFilter);
     return (SessionT) builder.withConfigLoader(loader).build();
   }

@@ -95,7 +95,7 @@ class CreateVideoQueryProvider {
   private static <T> BoundStatement bind(
       PreparedStatement preparedStatement, T entity, EntityHelper<T> entityHelper) {
     BoundStatementBuilder boundStatement = preparedStatement.boundStatementBuilder();
-    entityHelper.set(entity, boundStatement, NullSavingStrategy.DO_NOT_SET);
+    entityHelper.set(entity, boundStatement, NullSavingStrategy.DO_NOT_SET, false);
     return boundStatement.build();
   }
 

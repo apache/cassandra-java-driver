@@ -97,10 +97,6 @@ public class CcmRule extends BaseCcmRule {
     return super.apply(base, description);
   }
 
-  public void reloadCore(int node, String keyspace, String table, boolean reindex) {
-    ccmBridge.reloadCore(node, keyspace, table, reindex);
-  }
-
   public static CcmRule getInstance() {
     return INSTANCE;
   }
