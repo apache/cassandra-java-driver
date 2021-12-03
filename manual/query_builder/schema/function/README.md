@@ -62,7 +62,7 @@ createFunction("cycling", "log")
 Note that when providing a function body, the `as` method does not implicitly quote your function
 body.  If you would like to have the API handle this for you, use `asQuoted`.  This will surround
 your function body in single quotes if the body itself does not contain a single quote, otherwise it
-will surround your function body in two dollar signs (`$$`) mimicking a postgres-style string
+will surround your function body in two dollar signs mimicking a postgres-style string
 literal, i.e.:
 
 ```java
