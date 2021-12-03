@@ -59,7 +59,7 @@ public class CustomLoadBalancingPolicy extends DefaultLoadBalancingPolicy {
 
 And assuming that you declared the above class in your application.conf file as follows:
 
-```hocon
+```
 datastax-java-driver.basic{
   load-balancing-policy.class = com.example.app.CustomLoadBalancingPolicy
 }

@@ -59,7 +59,7 @@ one:
 
 Example:
 
-```hocon
+```
 datastax-java-driver {
   advanced {
     # RequestLogger is a driver built-in tracker

@@ -92,7 +92,7 @@ convenience implementation with empty methods, for when you only need to overrid
 
 It is also possible to register one or more listeners via the configuration:
 
-```hocon
+```
 datastax-java-driver {
   advanced {
     schema-change-listener.classes = [com.example.app.MySchemaChangeListener1,com.example.app.MySchemaChangeListener2]
