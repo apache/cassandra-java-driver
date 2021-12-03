@@ -11,6 +11,8 @@
 .flattened-pom.xml
 
 .documenter_local_last_run
-/docs
+docs/_build
+docs/_source
+docs/poetry.lock
 target/
 dependency-reduced-pom.xml
