@@ -329,3 +329,45 @@ for (ColumnDefinitions.Definition definition : row.getColumnDefinitions()) {
 [SessionBuilder.withLocalDatacenter()]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withLocalDatacenter-java.lang.String-
 
 [CASSANDRA-10145]: https://issues.apache.org/jira/browse/CASSANDRA-10145
+
+```eval_rst
+.. toctree::
+   :hidden:
+   :glob:
+   
+   address_resolution/*
+   async/*
+   authentication/*
+   bom/*
+   compression/*
+   configuration/*
+   control_connection/*
+   custom_codecs/*
+   detachable_types/*
+   graalvm/*
+   idempotence/*
+   integration/*
+   load_balancing/*
+   logging/*
+   metadata/*
+   metrics/*
+   native_protocol/*
+   non_blocking/*
+   paging/*
+   performance/*
+   pooling/*
+   query_timestamps/*
+   reactive/*
+   reconnection/*
+   request_tracker/*
+   retries/*
+   shaded_jar/*
+   speculative_execution/*
+   ssl/*
+   statements/*
+   temporal_types/*
+   throttling/*
+   tracing/*
+   tuples/*
+   udts/*
+```

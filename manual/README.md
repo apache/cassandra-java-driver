@@ -1,4 +1,4 @@
-## Manual
+ ## Manual
 
 Driver modules:
 
@@ -14,3 +14,17 @@ Common topics:
 * [API conventions](api_conventions/)
 * [Case sensitivity](case_sensitivity/)
 * [OSGi](osgi/)
+
+```eval_rst
+.. toctree::
+   :hidden:
+   :glob:
+   
+   api_conventions/*
+   case_sensitivity/*
+   core/*
+   developer/*
+   mapper/*
+   osgi/*
+   query_builder/*
+```

@@ -17,3 +17,15 @@ from lowest to highest level:
 * [Administrative tasks](admin/): everything else (cluster state and metadata).
 
 If you're reading this on GitHub, the `.nav` file in each directory contains a suggested order.
+
+```eval_rst
+.. toctree::
+   :hidden:
+   :glob:
+   
+   admin/*
+   common/*
+   native_protocol/*
+   netty_pipeline/*
+   request_execution/*
+```

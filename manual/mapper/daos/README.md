@@ -153,3 +153,22 @@ To control how the hierarchy is scanned, annotate interfaces with [@HierarchySca
 [@DefaultNullSavingStrategy]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/annotations/DefaultNullSavingStrategy.html
 [@HierarchyScanStrategy]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/annotations/HierarchyScanStrategy.html
 [Entity Inheritance]: ../entities/#inheritance
+
+```eval_rst
+.. toctree::
+   :hidden:
+   :glob:
+   
+   custom_types/*
+   delete/*
+   getentity/*
+   increment/*
+   insert/*
+   null_saving/*
+   query/*
+   queryprovider/*
+   select/*
+   setentity/*
+   statement_attributes/*
+   update/*
+```

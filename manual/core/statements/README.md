@@ -63,3 +63,14 @@ can create execution profiles to capture common combinations of those options).
 [StatementBuilder]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/StatementBuilder.html
 [execute]:          https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/Session.html#execute-com.datastax.oss.driver.api.core.cql.Statement-
 [executeAsync]:     https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/Session.html#executeAsync-com.datastax.oss.driver.api.core.cql.Statement-
+
+```eval_rst
+.. toctree::
+   :hidden:
+   :glob:
+   
+   batch/*
+   per_query_keyspace/*
+   prepared/*
+   simple/*
+```

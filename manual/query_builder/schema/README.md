@@ -45,3 +45,17 @@ element type:
 * [aggregate](aggregate/)
 
 [SchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
+
+```eval_rst
+.. toctree::
+   :hidden:
+   :glob:
+   
+   aggregate/*
+   function/*
+   index/*
+   keyspace/*
+   materialized_view/*
+   table/*
+   type/*
+```

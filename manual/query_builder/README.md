@@ -217,3 +217,20 @@ For a complete tour of the API, browse the child pages in this manual:
 [CqlIdentifier]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/CqlIdentifier.html
 [DseQueryBuilder]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/dse/driver/api/querybuilder/DseQueryBuilder.html
 [DseSchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/dse/driver/api/querybuilder/DseSchemaBuilder.html
+
+```eval_rst
+.. toctree::
+   :hidden:
+   :glob:
+   
+   condition/*
+   delete/*
+   idempotence/*
+   insert/*
+   relation/*
+   schema/*
+   select/*
+   term/*
+   truncate/*
+   update/*
+```

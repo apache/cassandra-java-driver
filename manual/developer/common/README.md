@@ -7,3 +7,13 @@ This covers utilities or concept that are shared throughout the codebase:
 * we explain the two major approaches to deal with [concurrency](concurrency/) in the driver.
 * the [event bus](event_bus/) is used to decouple some of the internal components through
   asynchronous messaging.
+  
+```eval_rst
+.. toctree::
+   :hidden:
+   :glob:
+   
+   concurrency/*
+   context/*
+   event_bus/*
+```

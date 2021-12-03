@@ -113,3 +113,14 @@ You will find the generated files in `build/generated/sources/annotationProcesso
 * <a name="lombok"></a>[Lombok](lombok/)
 * [Java 14 records](record/)
 * [Scala](scala/)
+
+```eval_rst
+.. toctree::
+   :hidden:
+   :glob:
+   
+   kotlin/*
+   lombok/*
+   record/*
+   scala/*
+```

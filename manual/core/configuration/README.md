@@ -536,3 +536,11 @@ config.getDefaultProfile().getInt(MyCustomOption.AWESOMENESS_FACTOR);
 [reference.conf]: reference/
 [HOCON]: https://github.com/typesafehub/config/blob/master/HOCON.md
 [API conventions]: ../../api_conventions
+
+```eval_rst
+.. toctree::
+   :hidden:
+   :glob:
+   
+   reference/*
+```
