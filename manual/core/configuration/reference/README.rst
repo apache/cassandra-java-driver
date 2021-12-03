@@ -12,5 +12,5 @@ See the `configuration page <../>`_ for more explanations.
 
    <style>span.comment { color: grey; font-style: italic; } </style>
 
-.. include:: core/src/main/resources/reference.conf
+.. include:: ../../../../../../core/src/main/resources/reference.conf
    :code: properties
