@@ -30,7 +30,8 @@ public class DefaultPointTest {
 
   private final String wkt = "POINT (1.1 2.2)";
 
-  private final String json = "{\"type\":\"Point\",\"coordinates\":[1.1,2.2]}";
+  /* A JSON representation that was explicitly tested for in ESRI < 2.x impls */
+  private final String legacyJson = "{\"type\":\"Point\",\"coordinates\":[1.1,2.2]}";
 
   @Test
   public void should_parse_valid_well_known_text() {
@@ -76,13 +77,17 @@ public class DefaultPointTest {
   }
 
   @Test
-  public void should_parse_valid_geo_json() {
-    assertThat(Point.fromGeoJson(json)).isEqualTo(point);
+  public void should_create_and_parse_geo_json() {
+
+    String geoJsonStr = point.asGeoJson();
+    assertThat(JSONUtils.isValidJsonMap(geoJsonStr)).isTrue();
+    Point newPoint = Point.fromGeoJson(geoJsonStr);
+    assertThat(newPoint).isEqualTo(point);
   }
 
   @Test
-  public void should_convert_to_geo_json() {
-    assertThat(point.asGeoJson()).isEqualTo(json);
+  public void should_parse_legacy_geo_json() {
+    assertThat(Point.fromGeoJson(legacyJson)).isEqualTo(point);
   }
 
   @Test

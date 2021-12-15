@@ -34,7 +34,8 @@ public class DefaultLineStringTest {
 
   private final String wkt = "LINESTRING (30 10, 10 30, 40 40)";
 
-  private final String json =
+  /* A JSON representation that was explicitly tested for in ESRI < 2.x impls */
+  private final String legacyJson =
       "{\"type\":\"LineString\",\"coordinates\":[[30.0,10.0],[10.0,30.0],[40.0,40.0]]}";
 
   @Test
@@ -94,13 +95,17 @@ public class DefaultLineStringTest {
   }
 
   @Test
-  public void should_parse_valid_geo_json() {
-    assertThat(LineString.fromGeoJson(json)).isEqualTo(lineString);
+  public void should_create_and_parse_geo_json() {
+
+    String geoJsonStr = lineString.asGeoJson();
+    assertThat(JSONUtils.isValidJsonMap(geoJsonStr)).isTrue();
+    LineString newLineString = LineString.fromGeoJson(geoJsonStr);
+    assertThat(newLineString).isEqualTo(lineString);
   }
 
   @Test
-  public void should_convert_to_geo_json() {
-    assertThat(lineString.asGeoJson()).isEqualTo(json);
+  public void should_parse_legacy_geo_json() {
+    assertThat(LineString.fromGeoJson(legacyJson)).isEqualTo(lineString);
   }
 
   @Test

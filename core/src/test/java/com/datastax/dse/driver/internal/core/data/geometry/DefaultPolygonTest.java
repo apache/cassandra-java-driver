@@ -37,7 +37,8 @@ public class DefaultPolygonTest {
 
   private String wkt = "POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))";
 
-  private String json =
+  /* A JSON representation that was explicitly tested for in ESRI < 2.x impls */
+  private String legacyJson =
       "{\"type\":\"Polygon\",\"coordinates\":[[[30.0,10.0],[10.0,20.0],[20.0,40.0],[40.0,40.0],[30.0,10.0]]]}";
 
   @Test
@@ -102,13 +103,17 @@ public class DefaultPolygonTest {
   }
 
   @Test
-  public void should_parse_valid_geo_json() {
-    assertThat(Polygon.fromGeoJson(json)).isEqualTo(polygon);
+  public void should_create_and_parse_geo_json() {
+
+    String geoJsonStr = polygon.asGeoJson();
+    assertThat(JSONUtils.isValidJsonMap(geoJsonStr)).isTrue();
+    Polygon newPolygon = Polygon.fromGeoJson(geoJsonStr);
+    assertThat(newPolygon).isEqualTo(polygon);
   }
 
   @Test
-  public void should_convert_to_geo_json() {
-    assertThat(polygon.asGeoJson()).isEqualTo(json);
+  public void should_parse_legacy_geo_json() {
+    assertThat(Polygon.fromGeoJson(legacyJson)).isEqualTo(polygon);
   }
 
   @Test
