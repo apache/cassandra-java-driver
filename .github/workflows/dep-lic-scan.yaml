@@ -1,8 +1,14 @@
-name: Dependency and License Scan (4.x)
+name: Dependency and License Scan
 on:
   push:
     branches:
-      - 4.x
+      - '4.x'
+      - '3.x'
+    paths-ignore:
+      - 'manual/**'
+      - 'faq/**'
+      - 'upgrade_guide/**'
+      - 'changelog/**'
 jobs:
   scan-repo:
     runs-on: ubuntu-latest
