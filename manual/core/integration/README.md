@@ -479,8 +479,9 @@ don't use any of the above features, you can safely exclude the dependency:
 Our [geospatial types](../dse/geotypes/) implementation is based on the [Esri Geometry
 API](https://github.com/Esri/geometry-api-java).
 
-Esri is declared as a required dependency, but the driver can operate normally without it. If you
-don't use geospatial types anywhere in your application, you can exclude the dependency:
+For driver versions >= 4.4.0 and < 4.14.0 Esri is declared as a required dependency,
+although the driver can operate normally without it. If you don't use geospatial types
+anywhere in your application you can exclude the dependency:
 
 ```xml
 <dependency>
@@ -493,6 +494,18 @@ don't use geospatial types anywhere in your application, you can exclude the dep
      <artifactId>*</artifactId>
    </exclusion>
   </exclusions>
+</dependency>
+```
+
+Starting with driver 4.14.0 Esri has been changed to an optional dependency.  You no longer have to
+explicitly exclude the dependency if it's not used, but if you do wish to make use of the Esri
+library you must now explicitly specify it as a dependency :
+
+```xml
+<dependency>
+  <groupId>com.esri.geometry</groupId>
+  <artifactId>esri-geometry-api</artifactId>
+  <version>${esri.version}</version>
 </dependency>
 ```
 
