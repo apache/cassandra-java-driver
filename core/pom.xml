@@ -186,6 +186,11 @@
       <artifactId>wiremock</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-handler-proxy</artifactId>
+      <version>4.1.72.Final</version>
+    </dependency>
   </dependencies>
   <build>
     <resources>

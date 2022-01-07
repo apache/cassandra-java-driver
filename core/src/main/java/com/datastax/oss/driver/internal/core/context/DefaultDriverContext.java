@@ -469,7 +469,12 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected NettyOptions buildNettyOptions() {
-    return new DefaultNettyOptions(this);
+    String socksProxyHost = String.valueOf(DefaultDriverOption.SOCKS_PROXY_HOST);
+    int socksProxyPort = Integer.parseInt(String.valueOf(DefaultDriverOption.SOCKS_PROXY_PORT));
+    if (socksProxyHost.isEmpty() || socksProxyHost == null) {
+      return new DefaultNettyOptions(this);
+    }
+    return new SocksProxyNettyOptions(this, socksProxyHost, socksProxyPort);
   }
 
   protected Optional<SslHandlerFactory> buildSslHandlerFactory() {
