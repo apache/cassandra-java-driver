@@ -29,7 +29,6 @@ import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import java.time.Duration;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 public class MockedDriverContextFactory {
 
@@ -53,16 +52,6 @@ public class MockedDriverContextFactory {
                   .thenReturn(true);
               when(blankProfile.getString(DefaultDriverOption.METRICS_FACTORY_CLASS))
                   .thenReturn("DefaultMetricsFactory");
-              when(blankProfile.isDefined(DefaultDriverOption.SOCKS_PROXY_HOST))
-                  .thenReturn(true);
-              when(blankProfile.isDefined(DefaultDriverOption.SOCKS_PROXY_PORT))
-                  .thenReturn(true);
-              when(blankProfile.getString(DefaultDriverOption.SOCKS_PROXY_HOST))
-                  .thenReturn("none");
-              when(blankProfile.getInt(DefaultDriverOption.SOCKS_PROXY_PORT))
-                  .thenReturn(0);
-              when(blankProfile.getString(DefaultDriverOption.NETTY_IO_SHUTDOWN_UNIT))
-                  .thenReturn(TimeUnit.SECONDS.toString());
               return blankProfile;
             });
 

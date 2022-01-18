@@ -39,7 +39,7 @@ import org.junit.runner.RunWith;
 @RunWith(DataProviderRunner.class)
 public class DefaultDriverContextTest {
 
-  private DefaultDriverContext buildMockedContext(Optional<String> compressionOption) {
+  private DefaultDriverContext buildMockedContextWithCompressionOptions(Optional<String> compressionOption) {
 
     DriverExecutionProfile defaultProfile = mock(DriverExecutionProfile.class);
     when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none"))
@@ -47,9 +47,34 @@ public class DefaultDriverContextTest {
     return MockedDriverContextFactory.defaultDriverContext(Optional.of(defaultProfile));
   }
 
+  private DefaultDriverContext buildMockedContextWithCompressorAndNettyOptions(
+          Optional<String> compressionOption, String socksProxyHost, int socksProxyPort) {
+    DriverExecutionProfile defaultProfile = mock(DriverExecutionProfile.class);
+    when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none"))
+            .thenReturn(compressionOption.orElse("none"));
+    when(defaultProfile.isDefined(DefaultDriverOption.SOCKS_PROXY_HOST))
+            .thenReturn(true);
+    when(defaultProfile.isDefined(DefaultDriverOption.SOCKS_PROXY_PORT))
+            .thenReturn(true);
+    when(defaultProfile.getString(DefaultDriverOption.SOCKS_PROXY_HOST))
+            .thenReturn(socksProxyHost);
+    when(defaultProfile.getInt(DefaultDriverOption.SOCKS_PROXY_PORT))
+            .thenReturn(socksProxyPort);
+    when(defaultProfile.getString(DefaultDriverOption.NETTY_IO_SHUTDOWN_UNIT))
+            .thenReturn(TimeUnit.SECONDS.toString());
+    when(defaultProfile.getString(DefaultDriverOption.NETTY_ADMIN_SHUTDOWN_UNIT))
+            .thenReturn(TimeUnit.SECONDS.toString());
+    when(defaultProfile.getDuration(DefaultDriverOption.NETTY_TIMER_TICK_DURATION))
+            .thenReturn(Duration.ofSeconds(1));
+    when(defaultProfile.getInt(DefaultDriverOption.NETTY_TIMER_TICKS_PER_WHEEL))
+            .thenReturn(2048);
+
+    return MockedDriverContextFactory.defaultDriverContext(Optional.of(defaultProfile));
+  }
+
   private void doCreateCompressorTest(Optional<String> configVal, Class<?> expectedClz) {
 
-    DefaultDriverContext ctx = buildMockedContext(configVal);
+    DefaultDriverContext ctx = buildMockedContextWithCompressionOptions(configVal);
     Compressor<ByteBuf> compressor = ctx.getCompressor();
     assertThat(compressor).isNotNull();
     assertThat(compressor).isInstanceOf(expectedClz);
@@ -83,32 +108,21 @@ public class DefaultDriverContextTest {
   }
 
   @Test
-  @DataProvider({"none", "snappy"})
+  @DataProvider({"none", "snappy", "lz4"})
   public void should_create_default_netty_options_regardless_of_compressor(String name) {
-    DriverExecutionProfile defaultProfile = mock(DriverExecutionProfile.class);
-    when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none"))
-            .thenReturn(Optional.of(name).orElse("none"));
-    when(defaultProfile.isDefined(DefaultDriverOption.SOCKS_PROXY_HOST))
-            .thenReturn(true);
-    when(defaultProfile.isDefined(DefaultDriverOption.SOCKS_PROXY_PORT))
-            .thenReturn(true);
-    when(defaultProfile.getString(DefaultDriverOption.SOCKS_PROXY_HOST))
-            .thenReturn("none");
-    when(defaultProfile.getInt(DefaultDriverOption.SOCKS_PROXY_PORT))
-            .thenReturn(0);
-    when(defaultProfile.getString(DefaultDriverOption.NETTY_IO_SHUTDOWN_UNIT))
-            .thenReturn(TimeUnit.SECONDS.toString());
-    when(defaultProfile.getString(DefaultDriverOption.NETTY_ADMIN_SHUTDOWN_UNIT))
-            .thenReturn(TimeUnit.SECONDS.toString());
-    when(defaultProfile.getDuration(DefaultDriverOption.NETTY_TIMER_TICK_DURATION))
-            .thenReturn(Duration.ofSeconds(1));
-    when(defaultProfile.getInt(DefaultDriverOption.NETTY_TIMER_TICKS_PER_WHEEL))
-            .thenReturn(2048);
-    DefaultDriverContext ctx = MockedDriverContextFactory.defaultDriverContext(Optional.of(defaultProfile));
-
-    // ctx.buildNettyOptions();
-    //
+    DefaultDriverContext ctx = buildMockedContextWithCompressorAndNettyOptions(
+            Optional.of(name), "none", 0);
     NettyOptions nettyOptions = ctx.getNettyOptions();
     assertThat(nettyOptions).isInstanceOf(DefaultNettyOptions.class);
+    assertThat(nettyOptions).isNotInstanceOf(SocksProxyNettyOptions.class);
+  }
+
+  @Test
+  @DataProvider({"none", "snappy", "lz4"})
+  public void should_create_socks_proxy_netty_options_if_host_and_port_config_provided(String name) {
+    DefaultDriverContext ctx = buildMockedContextWithCompressorAndNettyOptions(
+            Optional.of(name), "someproxyurl.com", 1080);
+    NettyOptions nettyOptions = ctx.getNettyOptions();
+    assertThat(nettyOptions).isInstanceOf(SocksProxyNettyOptions.class);
   }
 }
