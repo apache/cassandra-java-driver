@@ -28,7 +28,11 @@ import com.datastax.oss.protocol.internal.NoopCompressor;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import io.netty.buffer.ByteBuf;
+
+import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -76,5 +80,35 @@ public class DefaultDriverContextTest {
   public void should_create_noop_compressor_if_defined_as_none(String name) {
 
     doCreateCompressorTest(Optional.of(name), NoopCompressor.class);
+  }
+
+  @Test
+  @DataProvider({"none", "snappy"})
+  public void should_create_default_netty_options_regardless_of_compressor(String name) {
+    DriverExecutionProfile defaultProfile = mock(DriverExecutionProfile.class);
+    when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none"))
+            .thenReturn(Optional.of(name).orElse("none"));
+    when(defaultProfile.isDefined(DefaultDriverOption.SOCKS_PROXY_HOST))
+            .thenReturn(true);
+    when(defaultProfile.isDefined(DefaultDriverOption.SOCKS_PROXY_PORT))
+            .thenReturn(true);
+    when(defaultProfile.getString(DefaultDriverOption.SOCKS_PROXY_HOST))
+            .thenReturn("none");
+    when(defaultProfile.getInt(DefaultDriverOption.SOCKS_PROXY_PORT))
+            .thenReturn(0);
+    when(defaultProfile.getString(DefaultDriverOption.NETTY_IO_SHUTDOWN_UNIT))
+            .thenReturn(TimeUnit.SECONDS.toString());
+    when(defaultProfile.getString(DefaultDriverOption.NETTY_ADMIN_SHUTDOWN_UNIT))
+            .thenReturn(TimeUnit.SECONDS.toString());
+    when(defaultProfile.getDuration(DefaultDriverOption.NETTY_TIMER_TICK_DURATION))
+            .thenReturn(Duration.ofSeconds(1));
+    when(defaultProfile.getInt(DefaultDriverOption.NETTY_TIMER_TICKS_PER_WHEEL))
+            .thenReturn(2048);
+    DefaultDriverContext ctx = MockedDriverContextFactory.defaultDriverContext(Optional.of(defaultProfile));
+
+    // ctx.buildNettyOptions();
+    //
+    NettyOptions nettyOptions = ctx.getNettyOptions();
+    assertThat(nettyOptions).isInstanceOf(DefaultNettyOptions.class);
   }
 }

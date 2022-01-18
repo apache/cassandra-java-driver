@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.context;
 
 import static com.datastax.oss.driver.internal.core.util.Dependency.JACKSON;
+import static java.util.Objects.isNull;
 
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.internal.core.InsightsClientLifecycleListener;
@@ -469,12 +470,17 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected NettyOptions buildNettyOptions() {
-    String socksProxyHost = String.valueOf(DefaultDriverOption.SOCKS_PROXY_HOST);
-    int socksProxyPort = Integer.parseInt(String.valueOf(DefaultDriverOption.SOCKS_PROXY_PORT));
-    if (socksProxyHost.isEmpty() || socksProxyHost == null) {
-      return new DefaultNettyOptions(this);
+    DriverExecutionProfile defaultProfile = getConfig().getDefaultProfile();
+    String socksProxyHost = defaultProfile.isDefined(DefaultDriverOption.SOCKS_PROXY_HOST)
+            ? defaultProfile.getString(DefaultDriverOption.SOCKS_PROXY_HOST)
+            : "none";
+    int socksProxyPort = defaultProfile.isDefined(DefaultDriverOption.SOCKS_PROXY_PORT)
+            ? defaultProfile.getInt(DefaultDriverOption.SOCKS_PROXY_PORT)
+            : 0;
+    if (!socksProxyHost.equals("none") && !socksProxyHost.isEmpty() && socksProxyPort > 0) {
+      return new SocksProxyNettyOptions(this, socksProxyHost, socksProxyPort);
     }
-    return new SocksProxyNettyOptions(this, socksProxyHost, socksProxyPort);
+    return new DefaultNettyOptions(this);
   }
 
   protected Optional<SslHandlerFactory> buildSslHandlerFactory() {

@@ -239,6 +239,12 @@ public class TypedDriverOption<ValueT> {
   /** The truststore password. */
   public static final TypedDriverOption<String> SSL_TRUSTSTORE_PASSWORD =
       new TypedDriverOption<>(DefaultDriverOption.SSL_TRUSTSTORE_PASSWORD, GenericType.STRING);
+  /** Host which runs as a SOCKS5 proxy, through which Cassandra traffic should be routed.. */
+  public static final TypedDriverOption<String> SOCKS_PROXY_HOST =
+          new TypedDriverOption<>(DefaultDriverOption.SOCKS_PROXY_HOST, GenericType.STRING);
+  /** Port on which the SOCKS5 proxy is running. */
+  public static final TypedDriverOption<Integer> SOCKS_PROXY_PORT =
+          new TypedDriverOption<>(DefaultDriverOption.SOCKS_PROXY_PORT, GenericType.INTEGER);
   /** The class of the generator that assigns a microsecond timestamp to each request. */
   public static final TypedDriverOption<String> TIMESTAMP_GENERATOR_CLASS =
       new TypedDriverOption<>(DefaultDriverOption.TIMESTAMP_GENERATOR_CLASS, GenericType.STRING);
