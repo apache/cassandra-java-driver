@@ -509,9 +509,9 @@ library you must now explicitly specify it as a dependency :
 </dependency>
 ```
 
-The dependency specification above will introduce a dependency on version 1.2.1 of the Esri
-library.  While this release is older now we still recommend it's use in order to maximize
-compatibility with DSE.
+In the dependency specification above you should use any 1.2.x version of Esri (we recommend
+1.2.1).  These versions are older than the current 2.x versions of the library but they are
+guaranteed to be fully compatible with DSE.
 
 #### TinkerPop
 
