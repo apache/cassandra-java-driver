@@ -509,6 +509,10 @@ library you must now explicitly specify it as a dependency :
 </dependency>
 ```
 
+The dependency specification above will introduce a dependency on version 1.2.1 of the Esri
+library.  While this release is older now we still recommend it's use in order to maximize
+compatibility with DSE.
+
 #### TinkerPop
 
 [Apache TinkerPop™](http://tinkerpop.apache.org/) is used in our [graph API](../dse/graph/),
