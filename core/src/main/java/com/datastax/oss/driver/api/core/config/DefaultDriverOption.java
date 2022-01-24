@@ -266,19 +266,6 @@ public enum DefaultDriverOption implements DriverOption {
    */
   SSL_TRUSTSTORE_PASSWORD("advanced.ssl-engine-factory.truststore-password"),
   /**
-   * Socks5 Proxy Host to route Cassandra traffic through
-   *
-   * <p>Value-type: {@link String}
-   */
-  SOCKS_PROXY_HOST("socks.proxyHost"),
-  /**
-   * Port which the Socks5 Proxy runs on
-   *
-   * <p>Value-type: int
-   */
-  SOCKS_PROXY_PORT("socks.proxyPort"),
-
-  /**
    * The class of the generator that assigns a microsecond timestamp to each request.
    *
    * <p>Value-type: {@link int}
@@ -951,6 +938,18 @@ public enum DefaultDriverOption implements DriverOption {
    * <p>Value-type: List of {@link String}
    */
   METADATA_SCHEMA_CHANGE_LISTENER_CLASSES("advanced.schema-change-listener.classes"),
+  /**
+   * Socks5 Proxy Host to route Cassandra traffic through
+   *
+   * <p>Value-type: {@link String}
+   */
+  SOCKS_PROXY_HOST("socks.proxyHost"),
+  /**
+   * Port which the Socks5 Proxy runs on
+   *
+   * <p>Value-type: int
+   */
+  SOCKS_PROXY_PORT("socks.proxyPort"),
   ;
 
   private final String path;
