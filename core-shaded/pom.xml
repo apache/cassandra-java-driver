@@ -312,7 +312,7 @@
                   <!--
                   1) Don't import packages shaded in the driver bundle. Note that shaded-guava lives
                   in its own bundle, so we must explicitly *not* mention it here.
-                  -->!com.datastax.oss.driver.shaded.netty.*, !com.datastax.oss.driver.shaded.json.*, !com.datastax.oss.driver.shaded.codehaus.jackson.*, !com.datastax.oss.driver.shaded.fasterxml.jackson.*,
+                  -->!com.datastax.oss.driver.shaded.netty.*, !com.datastax.oss.driver.shaded.fasterxml.jackson.*,
                   <!--
                   2) Don't include the packages below because they contain annotations only and are
                   not required at runtime.
@@ -338,7 +338,7 @@
                 1) The driver's packages (API and internal);
                 2) All shaded packages, except Guava which resides in a separate bundle.
                 -->
-                <Export-Package>com.datastax.oss.driver.api.core.*, com.datastax.oss.driver.internal.core.*, com.datastax.dse.driver.api.core.*, com.datastax.dse.driver.internal.core.*, com.datastax.oss.driver.shaded.netty.*, com.datastax.oss.driver.shaded.json.*, com.datastax.oss.driver.shaded.codehaus.jackson.*, com.datastax.oss.driver.shaded.fasterxml.jackson.*,</Export-Package>
+                <Export-Package>com.datastax.oss.driver.api.core.*, com.datastax.oss.driver.internal.core.*, com.datastax.dse.driver.api.core.*, com.datastax.dse.driver.internal.core.*, com.datastax.oss.driver.shaded.netty.*, com.datastax.oss.driver.shaded.fasterxml.jackson.*,</Export-Package>
               </instructions>
               <rebuildBundle>true</rebuildBundle>
             </configuration>
