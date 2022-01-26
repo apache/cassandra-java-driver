@@ -9,6 +9,26 @@ request cannot be executed because all nodes tried were busy. Previously you wou
 `NoNodeAvailableException` but you will now get back an `AllNodesFailedException` where the
 `getAllErrors` map contains a `NodeUnavailableException` for that node.
 
+#### Esri Geometry dependency now optional
+
+Previous versions of the Java driver defined a mandatory dependency on the Esri geometry library.
+This library offered support for primitive geometric types supported by DSE.  As of driver 4.14.0
+this dependency is now optional.
+
+If you do not use DSE (or if you do but do not use the support for geometric types within DSE) you
+should experience no disruption.  If you are using geometric types with DSE you'll now need to
+explicitly declare a dependency on the Esri library:
+
+```xml
+<dependency>
+  <groupId>com.esri.geometry</groupId>
+  <artifactId>esri-geometry-api</artifactId>
+  <version>${esri.version}</version>
+</dependency>
+```
+
+See the [integration](../manual/core/integration/#esri) section in the manual for more details.
+
 ### 4.13.0
 
 #### Enhanced support for GraalVM native images 
