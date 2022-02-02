@@ -23,8 +23,8 @@ public class CASWriteUnknownException extends QueryConsistencyException {
         super(
                 endPoint,
                 String.format(
-                        "Cassandra timeout during read query at consistency %s (%s)",
-                        consistency, formatDetails(received, required)),
+                        "CAS operation result is unknown - proposal was not accepted by a quorum. (%d / %d)",
+                        received, required),
                 consistency,
                 received,
                 required);
@@ -38,14 +38,6 @@ public class CASWriteUnknownException extends QueryConsistencyException {
             int received,
             int required) {
         super(endPoint, msg, cause, consistency, received, required);
-    }
-
-    /** TODO **/
-    private static String formatDetails(int received, int required) {
-        if (received < required)
-            return String.format(
-                    "%d responses were required but only %d replica responded", required, received);
-        else return "timeout while waiting for repair of inconsistent replica";
     }
 
     @Override
