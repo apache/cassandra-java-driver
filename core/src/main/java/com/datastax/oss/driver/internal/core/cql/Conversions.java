@@ -513,10 +513,10 @@ public class Conversions {
       case ProtocolConstants.ErrorCode.CAS_WRITE_UNKNOWN:
         CASWriteUnknown casFailure = (CASWriteUnknown) errorMessage;
         return new CASWriteUnknownException(
-                node,
-                context.getConsistencyLevelRegistry().codeToLevel(casFailure.consistencyLevel),
-                casFailure.received,
-                casFailure.blockFor);
+            node,
+            context.getConsistencyLevelRegistry().codeToLevel(casFailure.consistencyLevel),
+            casFailure.received,
+            casFailure.blockFor);
       case ProtocolConstants.ErrorCode.SYNTAX_ERROR:
         return new SyntaxError(node, errorMessage.message);
       case ProtocolConstants.ErrorCode.UNAUTHORIZED:
