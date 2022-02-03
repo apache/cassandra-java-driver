@@ -95,6 +95,10 @@ public class ProtocolUtils {
         return "FUNCTION_FAILURE";
       case ProtocolConstants.ErrorCode.WRITE_FAILURE:
         return "WRITE_FAILURE";
+      case ProtocolConstants.ErrorCode.CDC_WRITE_FAILURE:
+        return "CDC_WRITE_FAILURE";
+      case ProtocolConstants.ErrorCode.CAS_WRITE_UNKNOWN:
+        return "CAS_WRITE_UNKNOWN";
       case ProtocolConstants.ErrorCode.SYNTAX_ERROR:
         return "SYNTAX_ERROR";
       case ProtocolConstants.ErrorCode.UNAUTHORIZED:
