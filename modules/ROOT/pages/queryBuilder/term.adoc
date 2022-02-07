@@ -1,0 +1,123 @@
+= Terms
+
+A term is an expression that does not involve the value of a column.
+It is used:
+
+* as an argument to some selectors, for example the indices of xref:queryBuilder/select.adoc#sub-element[sub-element] selectors;
+* as the right operand of xref:queryBuilder/relation.adoc[relations].
+
+To create a term, call one of the factory methods in https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html[QueryBuilder]:
+
+== Literals
+
+`literal()` takes a Java object and inlines it as a CQL literal:
+
+[source,java]
+----
+selectFrom("user").all().whereColumn("id").isEqualTo(literal(1));
+// SELECT * FROM user WHERE id=1
+----
+
+The argument is converted according to the driver's xref:core/index.adoc#cql-to-java-type-mapping[default type mappings].
+If there is no default mapping, you will get a `CodecNotFoundException`.
+
+If you use xref:core/customCodecs.adoc[custom codecs], you might need to inline a custom Java type.
+You can pass a https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html[CodecRegistry] as the second argument (most likely, this will be the registry of your session):
+
+[source,java]
+----
+MyCustomId myCustomId = ...;
+CodecRegistry registry = session.getContext().getCodecRegistry();
+selectFrom("user").all().whereColumn("id").isEqualTo(literal(myCustomId, registry));
+----
+
+Alternatively, you can pass a codec directly:
+
+[source,java]
+----
+TypeCodec<MyCustomId> codec = ...;
+selectFrom("user").all().whereColumn("id").isEqualTo(literal(myCustomId, codec));
+----
+
+== Function calls
+
+`function()` invokes a built-in or user-defined function.
+It takes a function name (optionally qualified with a keyspace), and a list of terms that will be passed as arguments:
+
+[source,java]
+----
+selectFrom("sensor_data")
+    .all()
+    .whereColumn("id").isEqualTo(bindMarker())
+    .whereColumn("date").isEqualTo(function("system", "currentDate"));
+// SELECT * FROM sensor_data WHERE id=? AND date=system.currentdate()
+----
+
+== Arithmetic operations
+
+Terms can be combined with arithmetic operations.
+
+|===
+| CQL Operator | Selector name
+
+| `a+b`
+| `add`
+
+| `a-b`
+| `subtract`
+
+| `-a`
+| `negate`
+
+| `a*b`
+| `multiply`
+
+| `a/b`
+| `divide`
+
+| `a%b`
+| `remainder`
+|===
+
+[source,java]
+----
+selectFrom("sensor_data")
+    .all()
+    .whereColumn("id").isEqualTo(bindMarker())
+    .whereColumn("unix_timestamp").isGreaterThan(
+        subtract(function("toUnixTimestamp", function("now")),
+        literal(3600)));
+// SELECT * FROM sensor_data WHERE id=? AND unix_timestamp>tounixtimestamp(now())-3600
+----
+
+Operations can be nested, and will get parenthesized according to the usual precedence rules.
+
+== Type hints
+
+`typeHint` forces a term to a particular CQL type.
+For instance, it could be used to ensure that an expression uses floating-point division:
+
+[source,java]
+----
+selectFrom("test")
+    .all()
+    .whereColumn("k").isEqualTo(literal(1))
+    .whereColumn("c").isGreaterThan(divide(
+            typeHint(literal(1), DataTypes.DOUBLE),
+            literal(3)));
+// SELECT * FROM test WHERE k=1 AND c>(double)1/3
+----
+
+== Raw CQL snippets
+
+Finally, it is possible to provide a raw CQL snippet with `raw()`;
+it will get appended to the query as-is, without any syntax checking or escaping:
+
+[source,java]
+----
+selectFrom("sensor_data").all().whereColumn("id").isEqualTo(raw("  1 /*some random comment*/"));
+// SELECT * FROM sensor_data WHERE id=  1 /*some random comment*/
+----
+
+This should be used with caution, as it's possible to generate invalid CQL that will fail at execution time;
+on the other hand, it can be used as a workaround to handle new CQL features that are not yet covered by the query builder.

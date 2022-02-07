@@ -1,0 +1,30 @@
+= Core driver
+
+The core module handles cluster connectivity and request execution.
+It is published under the following coordinates:
+
+[source,xml]
+----
+<dependency>
+  <groupId>com.datastax.oss</groupId>
+  <artifactId>java-driver-core</artifactId>
+  <version>${driver.version}</version>
+</dependency>
+----
+
+(For more details on setting up your build tool, see the xref:core/integration.adoc[integration] page.)
+
+Driver modules:
+
+* link:core/[Core]: the main entry point, deals with connectivity and query execution.
+* link:query_builder/[Query builder]: a fluent API to create CQL queries programmatically.
+* link:mapper/[Mapper]: generates the boilerplate to execute queries and convert the results into application-level objects.
+* link:developer/[Developer docs]: explains the codebase and internal extension points for advanced customization.
+
+Common topics:
+
+* link:api_conventions/[API conventions]
+* link:case_sensitivity/[Case sensitivity]
+* link:osgi/[OSGi]
+* link:cloud/[Cloud]
+

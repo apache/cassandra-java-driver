@@ -1,0 +1,68 @@
+= Graph
+
+The driver provides full support for DSE graph, the distributed graph database available in DataStax Enterprise.
+The https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/CqlSession.html[CqlSession] interface extends https://docs.datastax.com/en/drivers/java/4.13/com/datastax/dse/driver/api/core/graph/GraphSession.html[GraphSession], which adds specialized methods to execute requests expressed in the https://docs.datastax.com/en/dse/6.0/dse-dev/datastax_enterprise/graph/dseGraphAbout.html#dseGraphAbout%5F%5Fwhat-is-cql[Gremlin] graph traversal language.
+
+_This manual only covers driver usage;
+for more information about server-side configuration and data modeling, refer to the https://docs.datastax.com/en/dse/6.0/dse-dev/datastax_enterprise/graph/graphTOC.html[DSE developer guide]._
+
+NOTE: graph capabilities require the http://tinkerpop.apache.org/[Apache TinkerPop™] library to be present on the classpath.
+The driver has a non-optional dependency on that library, but if your application does not use graph at all, it is possible to exclude it to minimize the number of runtime dependencies (see the xref:core/integration.adoc#driver-dependencies[Integration>Driver dependencies] section for more details).
+If the library cannot be found at runtime, graph queries won't be available and a warning will be logged, but the driver will otherwise operate normally (this is also valid for OSGi deployments).
+
+If you do use graph, it is important to keep the precise TinkerPop version that the driver depends on: unlike the driver, TinkerPop does not follow semantic versioning, so even a patch version change (e.g.
+3.3.0 vs 3.3.3) could introduce incompatibilities.
+So do not declare an explicit dependency in your application, let the driver pull it transitively.
+
+== Overview
+
+There are 3 ways to execute graph requests:
+
+. Passing a Gremlin script directly in a plain Java string.
+We'll refer to this as the xref:core/dse/graphScript.adoc[script API]:
++
+[source,java]
+----
+ CqlSession session = CqlSession.builder().build();
+
+ String script = "g.V().has('name', name)";
+ ScriptGraphStatement statement =
+     ScriptGraphStatement.builder(script)
+         .withQueryParam("name", "marko")
+         .build();
+
+ GraphResultSet result = session.execute(statement);
+ for (GraphNode node : result) {
+   System.out.println(node.asVertex());
+ }
+----
+
+. Building a traversal with the xref:core/dse/graphFluent.adoc[TinkerPop fluent API], and lxref:core/dse/graphFluentExplicit.adoc[executing it explicitly] with the session:
++
+[source,java]
+----
+ import static com.datastax.dse.driver.api.core.graph.DseGraph.g;
+
+ GraphTraversal<Vertex, Vertex> traversal = g.V().has("name", "marko");
+ FluentGraphStatement statement = FluentGraphStatement.newInstance(traversal);
+
+ GraphResultSet result = session.execute(statement);
+ for (GraphNode node : result) {
+   System.out.println(node.asVertex());
+ }
+----
+
+. Building a connected traversal with the fluent API, and xref:core/dse/graphFluentImplicit.adoc[executing it implicitly] by invoking a terminal step:
++
+[source,java]
+----
+ GraphTraversalSource g = DseGraph.g
+     .withRemote(DseGraph.remoteConnectionBuilder(session).build());
+
+ List<Vertex> vertices = g.V().has("name", "marko").toList();
+----
+
+All executions modes rely on the same set of xref:core/dse/graphOptions.adoc[configuration options].
+
+The script and explicit fluent API return driver-specific xref:core/dse/graphResults.adoc[result sets].
+The implicit fluent API returns Apache TinkerPop™ types directly.

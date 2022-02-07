@@ -1,0 +1,93 @@
+== Null saving strategy
+
+The null saving strategy controls how null entity properties are handled when writing to the database.
+It can be configured either for each method, or globally at the DAO level.
+
+Two strategies are available:
+
+* generated code looks approximately like this:
++
+[source,java]
+----
+  if (entity.getDescription() != null) {
+    boundStatement = boundStatement.setString("description", entity.getDescription());
+  }
+----
++
+This avoids inserting tombstones for null properties.
+On the other hand, if the query is an   update and the column previously had another value, it won't be overwritten.
++
+Note that unset values (https://issues.apache.org/jira/browse/CASSANDRA-7304[CASSANDRA-7304]) are only supported with link:../../../core/native_protocol/[native   protocol] v4 (Cassandra 2.2) or above . If you try to use this   strategy with a lower Cassandra version, the mapper will throw an https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/MapperException.html[MapperException] when you try   to access the corresponding DAO.
+
+* looks approximately like this:
++
+[source,java]
+----
+  // Called even if entity.getDescription() == null
+  boundStatement = boundStatement.setString("description", entity.getDescription());
+----
+
+=== Method level
+
+Specify `nullSavingStrategy` on the method annotation:
+
+[source,java]
+----
+import static com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy.SET_TO_NULL;
+
+@Update(nullSavingStrategy = SET_TO_NULL)
+void update(Product product);
+----
+
+This applies to link:../insert/[@Insert], link:../query/[@Query], link:../setentity/[@SetEntity] and link:../update/[@Update] (other method types don't need it since they don't write data).
+
+=== DAO level
+
+Annotate your link:../../daos/[DAO] interface with https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/annotations/DefaultNullSavingStrategy.html[@DefaultNullSavingStrategy].
+Any method that does not explicitly define its strategy inherits the DAO-level one:
+
+[source,java]
+----
+@Dao
+@DefaultNullSavingStrategy(SET_TO_NULL)
+public interface ProductDao {
+
+  @Insert
+  void insert(Product product); // inherits SET_TO_NULL
+
+  @Update(nullSavingStrategy = DO_NOT_SET)
+  void update(Product product); // uses DO_NOT_SET
+}
+----
+
+If you don't define a DAO-level default, any method that does not declare its own value defaults to https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/entity/saving/NullSavingStrategy.html#DO_NOT_SET[DO_NOT_SET]:
+
+[source,java]
+----
+@Dao
+public interface ProductDao {
+
+  @Insert
+  void insert(Product product); // defaults to DO_NOT_SET
+}
+----
+
+Note that you can use inheritance to set a common default for all your DAOs:
+
+[source,java]
+----
+@DefaultNullSavingStrategy(SET_TO_NULL)
+public interface InventoryDao {}
+
+@Dao
+public interface ProductDao extends InventoryDao {
+  @Insert
+  void insert(Product product); // inherits SET_TO_NULL
+}
+
+@Dao
+public interface UserDao extends InventoryDao {
+  @Insert
+  void insert(User user); // inherits SET_TO_NULL
+}
+----

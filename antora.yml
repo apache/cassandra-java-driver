@@ -1,0 +1,10 @@
+name: java-driver
+title: 'DataStax Java driver for Cassandra®'
+version: '4.13'
+display_version: 'Latest'
+nav:
+- modules/ROOT/nav.adoc
+asciidoc:
+  attributes:
+    company: 'DataStax'
+    product: 'Java driver for Cassandra'

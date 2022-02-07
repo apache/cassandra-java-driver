@@ -1,0 +1,12 @@
+
+# macos cruft
+.DS_Store
+# edit related
+*~
+*.bak
+# Dependency directories
+node_modules/
+jspm_packages/
+# npm build related
+build/
+node_modules/

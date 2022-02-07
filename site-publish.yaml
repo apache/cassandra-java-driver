@@ -1,0 +1,17 @@
+site:
+  title: 'DataStax Java driver for Apache Cassandra®'
+  url: 'https://docs.datastax.com/en/developer/java-driver'
+  start_page: java-driver::index.adoc
+ 
+content:
+  edit_url: 'https://github.com/<gh-org>/<repo-name>/blob/main/{path}'
+  sources:
+  - url: .
+    branches: HEAD
+
+ui:
+  bundle:
+    url: https://github.com/riptano/antora-ui-docs/raw/main/releases/download/v0.6/ui-bundle.zip
+    snapshot: true
+  supplemental_files: ./supplemental-ui
+  output_dir: assets-java-driver

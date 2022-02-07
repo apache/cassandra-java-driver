@@ -1,0 +1,18 @@
+{
+  "name": "java-driver-docs",
+  "scripts": {
+    "build:prod": "npm run build:publish",
+    "build:prodlint": "npm run build:oaslinter && npm run build:prod",
+    "build:dev": "npm run build:local",
+    "build:publish": "$(npm bin)/antora --fetch --clean site-publish.yaml",
+    "build:local": "$(npm bin)/antora --stacktrace --clean site-local.yaml"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/datastax/java-driver-docs.git"
+  },
+  "dependencies": {
+    "@antora/cli": "^3.0.1",
+    "@antora/site-generator-default": "^3.0.1"
+  }
+}
