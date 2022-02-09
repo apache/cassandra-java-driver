@@ -19,7 +19,7 @@ import com.datastax.driver.core.EndPoint;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-/** An attempt was made to write to a commitlog segment which doesn't support CDC mutations * */
+/** An error occurred when trying to write a CDC mutation to the commitlog * */
 public class CDCWriteException extends QueryExecutionException implements CoordinatorException {
 
   private static final long serialVersionUID = 0;
