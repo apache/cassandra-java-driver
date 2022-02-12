@@ -55,8 +55,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntUnaryOperator;
-import java.util.stream.Collectors;
-
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -326,10 +324,11 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
           @Override
           protected Object[] computeNodes() {
             Set<String> dcs = liveNodes.dcs();
-            Object[] remoteNodes = dcs.stream()
-                            .filter(Predicates.not(Predicates.equalTo(localDc)))
-                            .flatMap(dc -> liveNodes.dc(dc).stream().limit(maxNodesPerRemoteDc))
-                            .toArray();
+            Object[] remoteNodes =
+                dcs.stream()
+                    .filter(Predicates.not(Predicates.equalTo(localDc)))
+                    .flatMap(dc -> liveNodes.dc(dc).stream().limit(maxNodesPerRemoteDc))
+                    .toArray();
 
             int remoteNodesLength = remoteNodes.length;
             if (remoteNodesLength == 0) {
