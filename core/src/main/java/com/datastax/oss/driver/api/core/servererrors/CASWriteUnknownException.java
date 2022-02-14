@@ -25,7 +25,7 @@ import com.datastax.oss.driver.api.core.session.Request;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
- * The result of a CAS operation is in an unknown state
+ * The result of a CAS operation is in an unknown state.
  *
  * <p>This exception is processed by {@link RetryPolicy#onErrorResponseVerdict(Request,
  * CoordinatorException, int)} , which will decide if it is rethrown directly to the client or if
