@@ -323,9 +323,8 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
 
           @Override
           protected Object[] computeNodes() {
-            Set<String> dcs = liveNodes.dcs();
             Object[] remoteNodes =
-                dcs.stream()
+                liveNodes.dcs().stream()
                     .filter(Predicates.not(Predicates.equalTo(localDc)))
                     .flatMap(dc -> liveNodes.dc(dc).stream().limit(maxNodesPerRemoteDc))
                     .toArray();
