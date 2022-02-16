@@ -24,6 +24,8 @@ import com.datastax.driver.core.Responses.Result.Rows.Metadata;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.BootstrappingException;
+import com.datastax.driver.core.exceptions.CASWriteUnknownException;
+import com.datastax.driver.core.exceptions.CDCWriteException;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.FunctionExecutionException;
@@ -119,6 +121,12 @@ class Responses {
                           clt, received, blockFor, failures, failuresMap, dataPresent != 0);
                 }
                 break;
+              case CAS_WRITE_UNKNOWN:
+                clt = CBUtil.readConsistencyLevel(body);
+                received = body.readInt();
+                blockFor = body.readInt();
+                infos = new CASWriteUnknownException(clt, received, blockFor);
+                break;
               case UNPREPARED:
                 infos = MD5Digest.wrap(CBUtil.readBytes(body));
                 break;
@@ -173,6 +181,10 @@ class Responses {
           return ((ReadFailureException) infos).copy(endPoint);
         case FUNCTION_FAILURE:
           return new FunctionExecutionException(endPoint, message);
+        case CDC_WRITE_FAILURE:
+          return new CDCWriteException(endPoint, message);
+        case CAS_WRITE_UNKNOWN:
+          return ((CASWriteUnknownException) infos).copy(endPoint);
         case SYNTAX_ERROR:
           return new SyntaxError(endPoint, message);
         case UNAUTHORIZED:
