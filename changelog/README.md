@@ -6,8 +6,8 @@
 -->
 
 ## 3.11.1
-- [bug] JAVA-2967: Support native transport peer information for DSE 6.8
-- [bug] JAVA-2976: Support missing protocol v5 error codes CAS_WRITE_UNKNOWN, CDC_WRITE_FAILURE
+- [bug] JAVA-2967: Support native transport peer information for DSE 6.8.
+- [bug] JAVA-2976: Support missing protocol v5 error codes CAS_WRITE_UNKNOWN, CDC_WRITE_FAILURE.
 
 
 ## 3.11.0
