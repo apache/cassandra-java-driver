@@ -139,5 +139,5 @@ BoundStatement bs =
 
 [cql_doc]: https://docs.datastax.com/en/cql/3.3/cql/cql_reference/tupleType.html
 
-[TupleType]:  https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/TupleType.html
-[TupleValue]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/data/TupleValue.html
+[TupleType]:  https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/TupleType.html
+[TupleValue]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/TupleValue.html

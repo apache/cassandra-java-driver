@@ -236,8 +236,8 @@ flag:
 With this configuration, if a DAO method declares a non built-in return type, it will be surfaced as
 a compiler error.
 
-[EntityHelper]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/entity/EntityHelper.html
-[GenericType]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
-[MapperContext]:  https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/MapperContext.html
-[MapperResultProducer]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/result/MapperResultProducer.html
-[MapperResultProducerService]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/result/MapperResultProducerService.html
+[EntityHelper]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/entity/EntityHelper.html
+[GenericType]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
+[MapperContext]:  https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/MapperContext.html
+[MapperResultProducer]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/result/MapperResultProducer.html
+[MapperResultProducerService]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/result/MapperResultProducerService.html

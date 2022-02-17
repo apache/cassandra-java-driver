@@ -562,6 +562,7 @@ Here are the recommended TinkerPop versions for each driver version:
 
 <table>
 <tr><th>Driver version</th><th>TinkerPop version</th></tr>
+<tr><td>4.14.0</td><td>3.4.10</td></tr>
 <tr><td>4.13.0</td><td>3.4.10</td></tr>
 <tr><td>4.12.0</td><td>3.4.10</td></tr>
 <tr><td>4.11.0</td><td>3.4.10</td></tr>
@@ -662,6 +663,6 @@ The remaining core driver dependencies are the only ones that are truly mandator
 [guava]: https://github.com/google/guava/issues/2721
 [annotation processing]: https://docs.oracle.com/javase/8/docs/technotes/tools/windows/javac.html#sthref65
 
-[Session.getMetrics]:             https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/Session.html#getMetrics--
-[SessionBuilder.addContactPoint]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoint-java.net.InetSocketAddress-
-[Uuids]:                          https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/uuid/Uuids.html
+[Session.getMetrics]:             https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/Session.html#getMetrics--
+[SessionBuilder.addContactPoint]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoint-java.net.InetSocketAddress-
+[Uuids]:                          https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/uuid/Uuids.html

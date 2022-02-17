@@ -112,8 +112,8 @@ BoundStatement bind(Product product, BoundStatement statement);
 If you use a void method with [BoundStatement], the mapper processor will issue a compile-time
 warning.
 
-[@SetEntity]:            https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/annotations/SetEntity.html
-[BoundStatement]:        https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/BoundStatement.html
-[BoundStatementBuilder]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/BoundStatementBuilder.html
-[SettableByName]:        https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/data/SettableByName.html
-[UdtValue]:              https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/data/UdtValue.html
+[@SetEntity]:            https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/SetEntity.html
+[BoundStatement]:        https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/BoundStatement.html
+[BoundStatementBuilder]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/BoundStatementBuilder.html
+[SettableByName]:        https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/SettableByName.html
+[UdtValue]:              https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/UdtValue.html

@@ -330,10 +330,10 @@ With Cassandra 4 and [native protocol](../../native_protocol/) v5, this issue is
 new version with the response; the driver updates its local cache transparently, and the client can
 observe the new columns in the result set.
 
-[BoundStatement]:  https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/BoundStatement.html
-[Session.prepare]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/CqlSession.html#prepare-com.datastax.oss.driver.api.core.cql.SimpleStatement-
+[BoundStatement]:  https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/BoundStatement.html
+[Session.prepare]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/CqlSession.html#prepare-com.datastax.oss.driver.api.core.cql.SimpleStatement-
 [CASSANDRA-10786]: https://issues.apache.org/jira/browse/CASSANDRA-10786
 [CASSANDRA-10813]: https://issues.apache.org/jira/browse/CASSANDRA-10813
 [guava eviction]: https://github.com/google/guava/wiki/CachesExplained#reference-based-eviction
-[PreparedStatement.bind]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/PreparedStatement.html#bind-java.lang.Object...-
-[PreparedStatement.boundStatementBuilder]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/PreparedStatement.html#boundStatementBuilder-java.lang.Object...-
+[PreparedStatement.bind]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/PreparedStatement.html#bind-java.lang.Object...-
+[PreparedStatement.boundStatementBuilder]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/PreparedStatement.html#boundStatementBuilder-java.lang.Object...-

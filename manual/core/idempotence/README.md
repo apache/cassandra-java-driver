@@ -60,5 +60,5 @@ assert bs.isIdempotent();
 The query builder tries to infer idempotence automatically; refer to
 [its manual](../../query_builder/idempotence/) for more details.
 
-[Statement.setIdempotent]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/Statement.html#setIdempotent-java.lang.Boolean-
-[StatementBuilder.setIdempotence]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/StatementBuilder.html#setIdempotence-java.lang.Boolean-
+[Statement.setIdempotent]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/Statement.html#setIdempotent-java.lang.Boolean-
+[StatementBuilder.setIdempotence]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/StatementBuilder.html#setIdempotence-java.lang.Boolean-

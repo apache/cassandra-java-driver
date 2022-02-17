@@ -113,9 +113,9 @@ for (TraceEvent event : trace.getEvents()) {
 If you call `getQueryTrace()` for a statement that didn't have tracing enabled, an exception is
 thrown.
 
-[ExecutionInfo]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html
-[QueryTrace]:    https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/QueryTrace.html
-[Statement.setTracing()]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/Statement.html#setTracing-boolean-
-[StatementBuilder.setTracing()]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/StatementBuilder.html#setTracing--
-[ExecutionInfo.getTracingId()]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getTracingId--
-[ExecutionInfo.getQueryTrace()]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getQueryTrace--
+[ExecutionInfo]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html
+[QueryTrace]:    https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/QueryTrace.html
+[Statement.setTracing()]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/Statement.html#setTracing-boolean-
+[StatementBuilder.setTracing()]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/StatementBuilder.html#setTracing--
+[ExecutionInfo.getTracingId()]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getTracingId--
+[ExecutionInfo.getQueryTrace()]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getQueryTrace--

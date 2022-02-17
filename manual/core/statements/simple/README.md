@@ -182,6 +182,6 @@ session.execute(
 Or you could also use [prepared statements](../prepared/), which don't have this limitation since
 parameter types are known in advance. 
 
-[SimpleStatement]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/SimpleStatement.html
-[SimpleStatement.newInstance()]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/SimpleStatement.html#newInstance-java.lang.String-
-[SimpleStatement.builder()]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/SimpleStatement.html#builder-java.lang.String-
+[SimpleStatement]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/SimpleStatement.html
+[SimpleStatement.newInstance()]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/SimpleStatement.html#newInstance-java.lang.String-
+[SimpleStatement.builder()]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/SimpleStatement.html#builder-java.lang.String-

@@ -251,5 +251,5 @@ update("foo")
 Conditions are a common feature used by UPDATE and DELETE, so they have a
 [dedicated page](../condition) in this manual.
 
-[QueryBuilder]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html
-[Assignment]:   https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/querybuilder/update/Assignment.html
+[QueryBuilder]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html
+[Assignment]:   https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/update/Assignment.html

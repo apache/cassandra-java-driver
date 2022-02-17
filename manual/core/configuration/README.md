@@ -520,16 +520,16 @@ config.getDefaultProfile().getString(MyCustomOption.ADMIN_EMAIL);
 config.getDefaultProfile().getInt(MyCustomOption.AWESOMENESS_FACTOR);
 ```
 
-[DriverConfig]:                           https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/config/DriverConfig.html
-[DriverExecutionProfile]:                 https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/config/DriverExecutionProfile.html
-[DriverContext]:                          https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/context/DriverContext.html
-[DriverOption]:                           https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/config/DriverOption.html
-[DefaultDriverOption]:                    https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/config/DefaultDriverOption.html
-[DriverConfigLoader]:                     https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html
-[DriverConfigLoader.fromClasspath]:       https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromClasspath-java.lang.String-
-[DriverConfigLoader.fromFile]:            https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromFile-java.io.File-
-[DriverConfigLoader.fromUrl]:             https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromUrl-java.net.URL-
-[DriverConfigLoader.programmaticBuilder]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#programmaticBuilder--
+[DriverConfig]:                           https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverConfig.html
+[DriverExecutionProfile]:                 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverExecutionProfile.html
+[DriverContext]:                          https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/context/DriverContext.html
+[DriverOption]:                           https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverOption.html
+[DefaultDriverOption]:                    https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DefaultDriverOption.html
+[DriverConfigLoader]:                     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html
+[DriverConfigLoader.fromClasspath]:       https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromClasspath-java.lang.String-
+[DriverConfigLoader.fromFile]:            https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromFile-java.io.File-
+[DriverConfigLoader.fromUrl]:             https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromUrl-java.net.URL-
+[DriverConfigLoader.programmaticBuilder]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#programmaticBuilder--
 
 [Typesafe Config]: https://github.com/typesafehub/config
 [config standard behavior]: https://github.com/typesafehub/config#standard-behavior
