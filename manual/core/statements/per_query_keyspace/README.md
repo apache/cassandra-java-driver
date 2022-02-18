@@ -124,6 +124,6 @@ SimpleStatement statement =
 At some point in the future, when Cassandra 4 becomes prevalent and using a per-query keyspace is
 the norm, we'll probably deprecate `setRoutingKeyspace()`.
 
-[token-aware routing]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKey--
+[token-aware routing]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKey--
 
 [CASSANDRA-10145]: https://issues.apache.org/jira/browse/CASSANDRA-10145

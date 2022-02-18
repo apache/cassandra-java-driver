@@ -23,4 +23,4 @@ There are a few options to fine tune the control connection behavior in the
 `advanced.control-connection` and `advanced.metadata` sections; see the [metadata](../metadata/)
 pages and the [reference configuration](../configuration/reference/) for all the details.
 
-[Node.getOpenConnections]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/metadata/Node.html#getOpenConnections--
+[Node.getOpenConnections]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/Node.html#getOpenConnections--

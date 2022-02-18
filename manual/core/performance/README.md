@@ -345,8 +345,8 @@ possible to reuse the same event loop group for I/O, admin tasks, and even your 
 (the driver's internal code is fully asynchronous so it will never block any thread). The timer is
 the only one that will have to stay on a separate thread.
 
-[AccessibleByName]:                    https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/data/AccessibleByName.html
-[CqlIdentifier]:                       https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/CqlIdentifier.html
-[CqlSession.prepare(SimpleStatement)]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/CqlSession.html#prepare-com.datastax.oss.driver.api.core.cql.SimpleStatement-
-[GenericType]:                         https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
-[Statement.setNode()]:                 https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/Statement.html#setNode-com.datastax.oss.driver.api.core.metadata.Node-
+[AccessibleByName]:                    https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/AccessibleByName.html
+[CqlIdentifier]:                       https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/CqlIdentifier.html
+[CqlSession.prepare(SimpleStatement)]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/CqlSession.html#prepare-com.datastax.oss.driver.api.core.cql.SimpleStatement-
+[GenericType]:                         https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
+[Statement.setNode()]:                 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/Statement.html#setNode-com.datastax.oss.driver.api.core.metadata.Node-
