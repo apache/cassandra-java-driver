@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.ssl.DefaultSslEngineFactory;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class DefaultSslEngineFactoryHostnameValidationIT {
@@ -37,6 +38,7 @@ public class DefaultSslEngineFactoryHostnameValidationIT {
    * to 127.0.0.1.
    */
   @Test
+  @Ignore("@IntegrationTestDisabledCassandra3Failure @IntegrationTestDisabledSSL")
   public void should_connect_if_hostname_validation_enabled_and_hostname_matches() {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()

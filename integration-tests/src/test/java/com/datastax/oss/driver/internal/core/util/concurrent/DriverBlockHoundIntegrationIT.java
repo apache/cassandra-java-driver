@@ -30,6 +30,7 @@ import java.util.UUID;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -98,6 +99,7 @@ public class DriverBlockHoundIntegrationIT {
   }
 
   @Test
+  @Ignore("@IntegrationTestDisabledCassandra3Failure")
   public void should_not_detect_blocking_call_on_asynchronous_execution_prepared() {
     try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE)) {
       Flux<ReactiveRow> rows =

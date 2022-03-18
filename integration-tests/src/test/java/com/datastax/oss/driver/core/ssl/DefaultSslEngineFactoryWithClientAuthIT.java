@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.ssl.DefaultSslEngineFactory;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class DefaultSslEngineFactoryWithClientAuthIT {
@@ -32,6 +33,7 @@ public class DefaultSslEngineFactoryWithClientAuthIT {
   public static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().withSslAuth().build();
 
   @Test
+  @Ignore("@IntegrationTestDisabledCassandra3Failure @IntegrationTestDisabledSSL")
   public void should_connect_with_ssl_using_client_auth() {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()

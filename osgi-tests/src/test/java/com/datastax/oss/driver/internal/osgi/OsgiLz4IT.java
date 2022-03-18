@@ -21,6 +21,7 @@ import com.datastax.oss.driver.internal.osgi.support.BundleOptions;
 import com.datastax.oss.driver.internal.osgi.support.CcmExamReactorFactory;
 import com.datastax.oss.driver.internal.osgi.support.CcmPaxExam;
 import javax.inject.Inject;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
@@ -29,6 +30,7 @@ import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 
 @RunWith(CcmPaxExam.class)
+@Ignore("@IntegrationTestDisabledCassandra3Failure @IntegrationTestDisabledPaxExam")
 @ExamReactorStrategy(CcmExamReactorFactory.class)
 public class OsgiLz4IT {
 

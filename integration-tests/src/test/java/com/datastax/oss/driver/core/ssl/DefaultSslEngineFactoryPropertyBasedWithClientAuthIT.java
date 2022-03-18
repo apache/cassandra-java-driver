@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
 import com.datastax.oss.driver.internal.core.ssl.DefaultSslEngineFactory;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -34,6 +35,7 @@ public class DefaultSslEngineFactoryPropertyBasedWithClientAuthIT {
   public static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().withSslAuth().build();
 
   @Test
+  @Ignore("@IntegrationTestDisabledCassandra3Failure @IntegrationTestDisabledSSL")
   public void should_connect_with_ssl_using_client_auth() {
     System.setProperty(
         "javax.net.ssl.keyStore", CcmBridge.DEFAULT_CLIENT_KEYSTORE_FILE.getAbsolutePath());

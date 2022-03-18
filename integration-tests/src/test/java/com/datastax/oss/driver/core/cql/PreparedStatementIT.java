@@ -49,6 +49,7 @@ import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 import junit.framework.TestCase;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -425,6 +426,7 @@ public class PreparedStatementIT {
    * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-15252">CASSANDRA-15252</a>
    */
   @Test
+  @Ignore("@IntegrationTestDisabledCassandra3Failure")
   public void should_fail_fast_if_id_changes_on_reprepare() {
     try (CqlSession session = SessionUtils.newSession(ccmRule)) {
       PreparedStatement preparedStatement =
