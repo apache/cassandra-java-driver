@@ -66,7 +66,7 @@
     <reactive-streams.version>1.0.2</reactive-streams.version>
     <json.version>20210307</json.version>
     <jackson.version>2.12.2</jackson.version>
-    <jackson-databind.version>2.12.2</jackson-databind.version>
+    <jackson-databind.version>2.13.2.1</jackson-databind.version>
     <legacy-jackson.version>1.9.12</legacy-jackson.version>
     <!-- optional dependencies -->
     <snappy.version>1.1.7.3</snappy.version>
