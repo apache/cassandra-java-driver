@@ -118,6 +118,20 @@ public interface PreparedStatement {
   ColumnDefinitions getResultSetDefinitions();
 
   /**
+   * Informs if this is an LWT query.
+   *
+   * <p>Not guaranteed to return true for LWT queries (but guaranteed to return false for non-LWT
+   * ones). It can happen for several reasons, for example: using Cassandra instead of Scylla, using
+   * too old Scylla version, future changes in driver allowing channels to be created without
+   * sending OPTIONS request.
+   *
+   * <p>More information about LWT:
+   *
+   * @see <a href="https://docs.scylladb.com/using-scylla/lwt/">Docs about LWT</a>
+   */
+  boolean isLWT();
+
+  /**
    * Updates {@link #getResultMetadataId()} and {@link #getResultSetDefinitions()} atomically.
    *
    * <p>This is for internal use by the driver. Calling this manually with incorrect information can

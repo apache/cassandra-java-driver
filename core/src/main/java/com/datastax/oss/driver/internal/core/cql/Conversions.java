@@ -402,7 +402,8 @@ public class Conversions {
         request.getSerialConsistencyLevelForBoundStatements(),
         request.areBoundStatementsTracing(),
         context.getCodecRegistry(),
-        context.getProtocolVersion());
+        context.getProtocolVersion(),
+        false);
   }
 
   public static ColumnDefinitions toColumnDefinitions(

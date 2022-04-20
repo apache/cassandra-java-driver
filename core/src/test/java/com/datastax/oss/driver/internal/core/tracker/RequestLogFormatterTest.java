@@ -291,6 +291,7 @@ public class RequestLogFormatterTest {
         null,
         false,
         context.getCodecRegistry(),
-        context.getProtocolVersion());
+        context.getProtocolVersion(),
+        false);
   }
 }

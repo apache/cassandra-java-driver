@@ -66,6 +66,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
   private final ConsistencyLevel serialConsistencyLevelForBoundStatements;
   private final Duration timeoutForBoundStatements;
   private final Partitioner partitioner;
+  private final boolean isLWT;
 
   public DefaultPreparedStatement(
       ByteBuffer id,
@@ -91,7 +92,8 @@ public class DefaultPreparedStatement implements PreparedStatement {
       ConsistencyLevel serialConsistencyLevelForBoundStatements,
       boolean areBoundStatementsTracing,
       CodecRegistry codecRegistry,
-      ProtocolVersion protocolVersion) {
+      ProtocolVersion protocolVersion,
+      boolean isLWT) {
     this.id = id;
     this.partitionKeyIndices = partitionKeyIndices;
     // It's important that we keep a reference to this object, so that it only gets evicted from
@@ -117,6 +119,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
 
     this.codecRegistry = codecRegistry;
     this.protocolVersion = protocolVersion;
+    this.isLWT = isLWT;
   }
 
   @NonNull
@@ -157,6 +160,11 @@ public class DefaultPreparedStatement implements PreparedStatement {
   @Override
   public ColumnDefinitions getResultSetDefinitions() {
     return resultMetadata.resultSetDefinitions;
+  }
+
+  @Override
+  public boolean isLWT() {
+    return isLWT;
   }
 
   @Override
