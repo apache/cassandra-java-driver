@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.ThrottledAdminRequestHandler;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
+import com.datastax.oss.driver.internal.core.protocol.LwtInfo;
 import com.datastax.oss.driver.internal.core.protocol.ShardingInfo;
 import com.datastax.oss.driver.internal.core.protocol.ShardingInfo.ConnectionShardingInfo;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
@@ -60,6 +61,7 @@ public class DriverChannel {
       AttributeKey.newInstance("options");
   static final AttributeKey<ConnectionShardingInfo> SHARDING_INFO_KEY =
       AttributeKey.newInstance("sharding_info");
+  static final AttributeKey<LwtInfo> LWT_INFO_KEY = AttributeKey.newInstance("lwt_info");
 
   @SuppressWarnings("RedundantStringConstructorCall")
   static final Object GRACEFUL_CLOSE_MESSAGE = new String("GRACEFUL_CLOSE_MESSAGE");
@@ -152,6 +154,10 @@ public class DriverChannel {
     return channel.hasAttr(SHARDING_INFO_KEY)
         ? channel.attr(SHARDING_INFO_KEY).get().shardingInfo
         : null;
+  }
+
+  public LwtInfo getLwtInfo() {
+    return channel.attr(LWT_INFO_KEY).get();
   }
 
   /**
