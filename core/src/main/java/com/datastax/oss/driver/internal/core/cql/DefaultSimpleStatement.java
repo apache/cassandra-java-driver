@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2022 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
@@ -739,6 +745,11 @@ public class DefaultSimpleStatement implements SimpleStatement {
         timeout,
         node,
         newNowInSeconds);
+  }
+
+  @Override
+  public boolean isLWT() {
+    return false;
   }
 
   public static Map<CqlIdentifier, Object> wrapKeys(Map<String, Object> namedValues) {

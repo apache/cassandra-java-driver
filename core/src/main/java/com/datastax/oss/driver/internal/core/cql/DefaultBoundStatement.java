@@ -770,4 +770,9 @@ public class DefaultBoundStatement implements BoundStatement {
         node,
         newNowInSeconds);
   }
+
+  @Override
+  public boolean isLWT() {
+    return this.getPreparedStatement().isLWT();
+  }
 }

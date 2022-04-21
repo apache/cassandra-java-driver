@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2022 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
@@ -515,6 +521,20 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   default SelfT setNowInSeconds(int nowInSeconds) {
     return (SelfT) this;
   }
+
+  /**
+   * Informs if this is a prepared LWT query.
+   *
+   * <p>Not guaranteed to return true for prepared LWT queries (but guaranteed to return false for
+   * non-LWT ones). It can happen for several reasons, for example: using Cassandra instead of
+   * Scylla, using too old Scylla version, future changes in driver allowing channels to be created
+   * without sending OPTIONS request.
+   *
+   * <p>More information about LWT:
+   *
+   * @see <a href="https://docs.scylladb.com/using-scylla/lwt/">Docs about LWT</a>
+   */
+  boolean isLWT();
 
   /**
    * Calculates the approximate size in bytes that the statement will have when encoded.
