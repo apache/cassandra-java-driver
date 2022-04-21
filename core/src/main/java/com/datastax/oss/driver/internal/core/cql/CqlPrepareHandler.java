@@ -232,13 +232,13 @@ public class CqlPrepareHandler implements Throttled {
     errorsSnapshot.add(new AbstractMap.SimpleEntry<>(node, error));
   }
 
-  private void setFinalResult(PrepareRequest request, Prepared response) {
+  private void setFinalResult(PrepareRequest request, Prepared response, DriverChannel channel) {
 
     // Whatever happens below, we're done with this stream id
     throttler.signalSuccess(this);
 
     DefaultPreparedStatement preparedStatement =
-        Conversions.toPreparedStatement(response, request, context);
+        Conversions.toPreparedStatement(response, request, context, channel.getLwtInfo());
 
     session
         .getRepreparePayloads()
@@ -375,7 +375,7 @@ public class CqlPrepareHandler implements Throttled {
         Message responseMessage = responseFrame.message;
         if (responseMessage instanceof Prepared) {
           LOG.trace("[{}] Got result, completing", logPrefix);
-          setFinalResult(request, (Prepared) responseMessage);
+          setFinalResult(request, (Prepared) responseMessage, channel);
         } else if (responseMessage instanceof Error) {
           LOG.trace("[{}] Got error response, processing", logPrefix);
           processErrorResponse((Error) responseMessage);

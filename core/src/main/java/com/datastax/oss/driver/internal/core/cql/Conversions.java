@@ -71,6 +71,7 @@ import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.data.ValuesHelper;
 import com.datastax.oss.driver.internal.core.metadata.PartitionerFactory;
+import com.datastax.oss.driver.internal.core.protocol.LwtInfo;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.primitives.Ints;
@@ -363,7 +364,7 @@ public class Conversions {
   }
 
   public static DefaultPreparedStatement toPreparedStatement(
-      Prepared response, PrepareRequest request, InternalDriverContext context) {
+      Prepared response, PrepareRequest request, InternalDriverContext context, LwtInfo lwtInfo) {
     ColumnDefinitions variableDefinitions =
         toColumnDefinitions(response.variablesMetadata, context);
 
@@ -403,7 +404,7 @@ public class Conversions {
         request.areBoundStatementsTracing(),
         context.getCodecRegistry(),
         context.getProtocolVersion(),
-        false);
+        lwtInfo != null && lwtInfo.isLwt(response.variablesMetadata.flags));
   }
 
   public static ColumnDefinitions toColumnDefinitions(
