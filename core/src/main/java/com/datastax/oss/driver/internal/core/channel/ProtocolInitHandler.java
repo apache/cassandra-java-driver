@@ -21,6 +21,8 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
+import static com.datastax.oss.driver.internal.core.channel.DriverChannel.LWT_INFO_KEY;
+
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
@@ -36,6 +38,7 @@ import com.datastax.oss.driver.internal.core.DefaultProtocolFeature;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.protocol.BytesToSegmentDecoder;
 import com.datastax.oss.driver.internal.core.protocol.FrameToSegmentEncoder;
+import com.datastax.oss.driver.internal.core.protocol.LwtInfo;
 import com.datastax.oss.driver.internal.core.protocol.SegmentToBytesEncoder;
 import com.datastax.oss.driver.internal.core.protocol.SegmentToFrameDecoder;
 import com.datastax.oss.driver.internal.core.protocol.ShardingInfo;
@@ -61,7 +64,9 @@ import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
@@ -88,6 +93,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
   private String logPrefix;
   private ChannelHandlerContext ctx;
   private final boolean querySupportedOptions;
+  private LwtInfo lwtInfo;
 
   /**
    * @param querySupportedOptions whether to send OPTIONS as the first message, to request which
@@ -181,7 +187,11 @@ class ProtocolInitHandler extends ConnectInitHandler {
         case OPTIONS:
           return request = Options.INSTANCE;
         case STARTUP:
-          return request = new Startup(context.getStartupOptions());
+          Map<String, String> startupOptions = new HashMap<>(context.getStartupOptions());
+          if (lwtInfo != null) {
+            lwtInfo.addOption(startupOptions);
+          }
+          return request = new Startup(startupOptions);
         case GET_CLUSTER_NAME:
           return request = CLUSTER_NAME_QUERY;
         case SET_KEYSPACE:
@@ -212,9 +222,13 @@ class ProtocolInitHandler extends ConnectInitHandler {
         if (step == Step.OPTIONS && response instanceof Supported) {
           channel.attr(DriverChannel.OPTIONS_KEY).set(((Supported) response).options);
           Supported res = (Supported) response;
-          ConnectionShardingInfo info = ShardingInfo.parseShardingInfo(res.options);
-          if (info != null) {
-            channel.attr(DriverChannel.SHARDING_INFO_KEY).set(info);
+          ConnectionShardingInfo shardingInfo = ShardingInfo.parseShardingInfo(res.options);
+          if (shardingInfo != null) {
+            channel.attr(DriverChannel.SHARDING_INFO_KEY).set(shardingInfo);
+          }
+          lwtInfo = LwtInfo.parseLwtInfo(res.options);
+          if (lwtInfo != null) {
+            channel.attr(LWT_INFO_KEY).set(lwtInfo);
           }
           step = Step.STARTUP;
           send();
