@@ -38,6 +38,7 @@ import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.Iterator;
 import java.util.List;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -339,6 +340,7 @@ public class BatchStatementIT {
   }
 
   @Test(expected = IllegalStateException.class)
+  @Ignore("@IntegrationTestDisabledCassandra4Failure")
   public void should_not_allow_unset_value_when_protocol_less_than_v4() {
     //    CREATE TABLE test (k0 text, k1 int, v int, PRIMARY KEY (k0, k1))
     DriverConfigLoader loader =

@@ -57,6 +57,7 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -127,6 +128,7 @@ public class BoundStatementCcmIT {
   }
 
   @Test(expected = IllegalStateException.class)
+  @Ignore("@IntegrationTestDisabledCassandra4Failure")
   public void should_not_allow_unset_value_when_protocol_less_than_v4() {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
