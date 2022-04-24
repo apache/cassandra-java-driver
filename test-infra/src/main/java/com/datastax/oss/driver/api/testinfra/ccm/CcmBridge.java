@@ -249,7 +249,8 @@ public class CcmBridge implements AutoCloseable {
       for (Map.Entry<String, Object> conf : cassandraConfiguration.entrySet()) {
         execute("updateconf", String.format("%s:%s", conf.getKey(), conf.getValue()));
       }
-      if (getCassandraVersion().compareTo(Version.V2_2_0) >= 0) {
+      if (getCassandraVersion().compareTo(Version.V2_2_0) >= 0 && !SCYLLA_ENABLEMENT) {
+        // @IntegrationTestDisabledScyllaJVMArgs @IntegrationTestDisabledScyllaUDF
         execute("updateconf", "enable_user_defined_functions:true");
       }
       if (DSE_ENABLEMENT) {

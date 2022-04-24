@@ -28,8 +28,12 @@ public class DefaultCcmBridgeBuilderCustomizer {
       builder.withCassandraConfiguration("enable_sasi_indexes", true);
     }
     if (CcmBridge.VERSION.nextStable().compareTo(Version.V3_0_0) >= 0) {
-      builder.withJvmArgs("-Dcassandra.superuser_setup_delay_ms=0");
-      builder.withJvmArgs("-Dcassandra.skip_wait_for_gossip_to_settle=0");
+      if (!CcmBridge.SCYLLA_ENABLEMENT) {
+        // @IntegrationTestDisabledScyllaJVMArgs
+        // FIXME: Add Scylla equivalents of those configuration options
+        builder.withJvmArgs("-Dcassandra.superuser_setup_delay_ms=0");
+        builder.withJvmArgs("-Dcassandra.skip_wait_for_gossip_to_settle=0");
+      }
       builder.withCassandraConfiguration("num_tokens", "1");
       builder.withCassandraConfiguration("initial_token", "0");
     }
