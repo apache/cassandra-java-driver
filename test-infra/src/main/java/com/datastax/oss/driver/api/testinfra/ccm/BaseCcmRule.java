@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
+import com.datastax.oss.driver.api.testinfra.ScyllaSkip;
 import java.util.Optional;
 import org.junit.AssumptionViolatedException;
 import org.junit.runner.Description;
@@ -75,6 +76,22 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
 
   @Override
   public Statement apply(Statement base, Description description) {
+    // Scylla-specific annotations
+    ScyllaSkip scyllaSkip = description.getAnnotation(ScyllaSkip.class);
+    if (scyllaSkip != null) {
+      if (CcmBridge.SCYLLA_ENABLEMENT) {
+        return new Statement() {
+
+          @Override
+          public void evaluate() {
+            throw new AssumptionViolatedException(
+                String.format(
+                    "Test skipped when running with Scylla.  Description: %s", description));
+          }
+        };
+      }
+    }
+
     // If test is annotated with CassandraRequirement or DseRequirement, ensure configured CCM
     // cluster meets those requirements.
     CassandraRequirement cassandraRequirement =
