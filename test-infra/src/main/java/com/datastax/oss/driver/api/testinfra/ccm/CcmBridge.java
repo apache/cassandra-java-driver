@@ -60,6 +60,8 @@ public class CcmBridge implements AutoCloseable {
 
   public static final Boolean DSE_ENABLEMENT = Boolean.getBoolean("ccm.dse");
 
+  public static final Boolean SCYLLA_ENABLEMENT = Boolean.getBoolean("ccm.scylla");
+
   public static final String CLUSTER_NAME = "ccm_1";
 
   public static final String DEFAULT_CLIENT_TRUSTSTORE_PASSWORD = "fakePasswordForTests";
@@ -111,6 +113,8 @@ public class CcmBridge implements AutoCloseable {
   static {
     if (DSE_ENABLEMENT) {
       LOG.info("CCM Bridge configured with DSE version {}", VERSION);
+    } else if (SCYLLA_ENABLEMENT) {
+      LOG.info("CCM Bridge configured with Scylla version {}", VERSION);
     } else {
       LOG.info("CCM Bridge configured with Apache Cassandra version {}", VERSION);
     }
@@ -177,9 +181,7 @@ public class CcmBridge implements AutoCloseable {
   }
 
   public Version getCassandraVersion() {
-    if (!DSE_ENABLEMENT) {
-      return VERSION;
-    } else {
+    if (DSE_ENABLEMENT) {
       Version stableVersion = VERSION.nextStable();
       if (stableVersion.compareTo(V6_0_0) >= 0) {
         return V4_0_0;
@@ -190,10 +192,18 @@ public class CcmBridge implements AutoCloseable {
       } else {
         return V2_1_19;
       }
+    } else if (SCYLLA_ENABLEMENT) {
+      return V4_0_0;
+    } else {
+      // Regular Cassandra
+      return VERSION;
     }
   }
 
   private String getCcmVersionString(Version version) {
+    if (SCYLLA_ENABLEMENT) {
+      return "release:" + version.toString();
+    }
     // for 4.0 pre-releases, the CCM version string needs to be "4.0-alpha1" or "4.0-alpha2"
     // Version.toString() always adds a patch value, even if it's not specified when parsing.
     if (version.getMajor() == 4
@@ -223,6 +233,9 @@ public class CcmBridge implements AutoCloseable {
       }
       if (DSE_ENABLEMENT) {
         createOptions.add("--dse");
+      }
+      if (SCYLLA_ENABLEMENT) {
+        createOptions.add("--scylla");
       }
       execute(
           "create",
