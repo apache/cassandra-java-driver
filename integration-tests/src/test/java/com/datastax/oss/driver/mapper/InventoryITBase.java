@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.List;
@@ -97,7 +98,9 @@ public abstract class InventoryITBase {
   }
 
   protected static boolean supportsSASI(CcmRule ccmRule) {
-    return ccmRule.getCassandraVersion().compareTo(MINIMUM_SASI_VERSION) >= 0;
+    return ccmRule.getCassandraVersion().compareTo(MINIMUM_SASI_VERSION) >= 0
+        && !CcmBridge
+            .SCYLLA_ENABLEMENT /* @IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaUnsupportedFunctionality @IntegrationTestDisabledScyllaUnsupportedIndex */;
   }
 
   @Entity
