@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+/*
+ * Copyright (C) 2022 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
