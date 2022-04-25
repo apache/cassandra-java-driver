@@ -31,6 +31,7 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
+import com.datastax.oss.driver.api.testinfra.ScyllaSkip;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -117,6 +118,9 @@ public class ExecutionInfoWarningsIT {
 
   @Test
   @CassandraRequirement(min = "3.0")
+  @ScyllaSkip(
+      description =
+          "@IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaDifferentText")
   public void should_execute_query_and_log_server_side_warnings() {
     final String query = "SELECT count(*) FROM test;";
     Statement<?> st = SimpleStatement.builder(query).build();
@@ -141,6 +145,9 @@ public class ExecutionInfoWarningsIT {
 
   @Test
   @CassandraRequirement(min = "3.0")
+  @ScyllaSkip(
+      description =
+          "@IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaDifferentText")
   public void should_execute_query_and_not_log_server_side_warnings() {
     final String query = "SELECT count(*) FROM test;";
     Statement<?> st =
@@ -159,6 +166,9 @@ public class ExecutionInfoWarningsIT {
 
   @Test
   @CassandraRequirement(min = "2.2")
+  @ScyllaSkip(
+      description =
+          "@IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaDifferentText")
   public void should_expose_warnings_on_execution_info() {
     // the default batch size warn threshold is 5 * 1024 bytes, but after CASSANDRA-10876 there must
     // be multiple mutations in a batch to trigger this warning so the batch includes 2 different

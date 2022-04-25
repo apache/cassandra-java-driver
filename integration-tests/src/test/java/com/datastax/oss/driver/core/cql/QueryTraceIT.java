@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.cql.QueryTrace;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -80,7 +81,9 @@ public class QueryTraceIT {
     InetAddress nodeAddress = ((InetSocketAddress) contactPoint.resolve()).getAddress();
     boolean expectPorts =
         CCM_RULE.getCassandraVersion().nextStable().compareTo(Version.V4_0_0) >= 0
-            && !CCM_RULE.getDseVersion().isPresent();
+            && !CCM_RULE.getDseVersion().isPresent()
+            && !CcmBridge
+                .SCYLLA_ENABLEMENT /* @IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaDifferentText */;
 
     QueryTrace queryTrace = executionInfo.getQueryTrace();
     assertThat(queryTrace.getTracingId()).isEqualTo(executionInfo.getTracingId());

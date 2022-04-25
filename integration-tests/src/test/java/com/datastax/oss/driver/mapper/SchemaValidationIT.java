@@ -20,6 +20,7 @@ import static com.datastax.oss.driver.internal.core.util.LoggerTest.setupTestLog
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
@@ -44,6 +45,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -192,6 +194,8 @@ public class SchemaValidationIT extends InventoryITBase {
 
   @Test
   public void should_throw_general_driver_exception_when_schema_validation_check_is_disabled() {
+    assumeThat(CcmBridge.SCYLLA_ENABLEMENT).isFalse(); // @IntegrationTestDisabledScyllaFailure
+    // @IntegrationTestDisabledScyllaDifferentText
     assertThatThrownBy(
             () -> mapperDisabledValidation.productDaoValidationDisabled(sessionRule.keyspace()))
         .isInstanceOf(InvalidQueryException.class)

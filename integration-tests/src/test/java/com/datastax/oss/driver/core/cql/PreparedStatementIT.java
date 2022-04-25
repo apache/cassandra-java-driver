@@ -272,6 +272,9 @@ public class PreparedStatementIT {
 
   @Test
   @CassandraRequirement(min = "4.0")
+  @ScyllaSkip(
+      description =
+          "@IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaDifferentText")
   public void should_fail_to_reprepare_if_query_becomes_invalid() {
     // Given
     CqlSession session = sessionRule.session();

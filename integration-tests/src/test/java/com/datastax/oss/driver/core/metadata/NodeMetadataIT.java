@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
+import com.datastax.oss.driver.api.testinfra.ScyllaSkip;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -45,6 +46,9 @@ public class NodeMetadataIT {
   @Rule public CcmRule ccmRule = CcmRule.getInstance();
 
   @Test
+  @ScyllaSkip(
+      description =
+          "@IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaDifferentText")
   public void should_expose_node_metadata() {
     try (CqlSession session = SessionUtils.newSession(ccmRule)) {
 
