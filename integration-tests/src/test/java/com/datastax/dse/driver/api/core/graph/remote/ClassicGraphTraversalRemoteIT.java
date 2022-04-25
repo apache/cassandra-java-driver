@@ -26,7 +26,6 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
-import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -71,8 +70,7 @@ public class ClassicGraphTraversalRemoteIT extends GraphTraversalRemoteITBase {
 
   @Override
   protected GraphTraversalSource graphTraversalSource() {
-    return AnonymousTraversalSource.traversal()
-        .withRemote(DseGraph.remoteConnectionBuilder(session()).build());
+    return traversal().withRemote(DseGraph.remoteConnectionBuilder(session()).build());
   }
 
   @Override
