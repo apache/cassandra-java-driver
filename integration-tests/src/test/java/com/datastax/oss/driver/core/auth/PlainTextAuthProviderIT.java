@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.auth.ProgrammaticPlainTextAuthProvider;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
+import com.datastax.oss.driver.api.testinfra.ScyllaSkip;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
@@ -32,6 +33,8 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+@ScyllaSkip(
+    description = "@IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaJVMArgs")
 public class PlainTextAuthProviderIT {
 
   @ClassRule
