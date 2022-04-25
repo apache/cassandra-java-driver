@@ -315,6 +315,8 @@ public class SchemaChangesIT {
   public void should_handle_function_creation() {
     assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
         .isTrue();
+    assumeThat(CcmBridge.SCYLLA_ENABLEMENT)
+        .isFalse(); // @IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaUDF
     should_handle_creation(
         null,
         "CREATE FUNCTION id(i int) RETURNS NULL ON NULL INPUT RETURNS int "
@@ -339,6 +341,8 @@ public class SchemaChangesIT {
   public void should_handle_function_drop() {
     assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
         .isTrue();
+    assumeThat(CcmBridge.SCYLLA_ENABLEMENT)
+        .isFalse(); // @IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaUDF
     should_handle_drop(
         ImmutableList.of(
             "CREATE FUNCTION id(i int) RETURNS NULL ON NULL INPUT RETURNS int "
@@ -355,6 +359,8 @@ public class SchemaChangesIT {
   public void should_handle_function_update() {
     assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
         .isTrue();
+    assumeThat(CcmBridge.SCYLLA_ENABLEMENT)
+        .isFalse(); // @IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaUDF
     should_handle_update_via_drop_and_recreate(
         ImmutableList.of(
             "CREATE FUNCTION id(i int) RETURNS NULL ON NULL INPUT RETURNS int "
@@ -375,6 +381,8 @@ public class SchemaChangesIT {
   public void should_handle_aggregate_creation() {
     assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
         .isTrue();
+    assumeThat(CcmBridge.SCYLLA_ENABLEMENT)
+        .isFalse(); // @IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaUDF
     should_handle_creation(
         "CREATE FUNCTION plus(i int, j int) RETURNS NULL ON NULL INPUT RETURNS int "
             + "LANGUAGE java AS 'return i+j;'",
@@ -401,6 +409,8 @@ public class SchemaChangesIT {
   public void should_handle_aggregate_drop() {
     assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
         .isTrue();
+    assumeThat(CcmBridge.SCYLLA_ENABLEMENT)
+        .isFalse(); // @IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaUDF
     should_handle_drop(
         ImmutableList.of(
             "CREATE FUNCTION plus(i int, j int) RETURNS NULL ON NULL INPUT RETURNS int "
@@ -418,6 +428,8 @@ public class SchemaChangesIT {
   public void should_handle_aggregate_update() {
     assumeThat(CCM_RULE.getCcmBridge().getCassandraVersion().compareTo(Version.V2_2_0) >= 0)
         .isTrue();
+    assumeThat(CcmBridge.SCYLLA_ENABLEMENT)
+        .isFalse(); // @IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaUDF
     should_handle_update_via_drop_and_recreate(
         ImmutableList.of(
             "CREATE FUNCTION plus(i int, j int) RETURNS NULL ON NULL INPUT RETURNS int "
