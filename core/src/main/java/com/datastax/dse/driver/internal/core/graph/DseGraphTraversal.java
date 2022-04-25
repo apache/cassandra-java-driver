@@ -34,16 +34,6 @@ class DseGraphTraversal<S, E> extends AbstractRemoteTraversal<S, E> {
   }
 
   @Override
-  @SuppressWarnings("deprecation")
-  public org.apache.tinkerpop.gremlin.process.remote.traversal.RemoteTraversalSideEffects
-      getSideEffects() {
-    // This was deprecated as part of TINKERPOP-2265
-    // and is no longer being promoted as a feature.
-    // return null but do not throw "NotSupportedException"
-    return null;
-  }
-
-  @Override
   public boolean hasNext() {
     return graphNodeIterator.hasNext();
   }
