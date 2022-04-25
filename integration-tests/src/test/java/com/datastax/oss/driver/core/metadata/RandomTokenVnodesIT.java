@@ -18,6 +18,7 @@ package com.datastax.oss.driver.core.metadata;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
+import com.datastax.oss.driver.api.testinfra.ScyllaSkip;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -32,6 +33,9 @@ import org.junit.rules.TestRule;
     max = "4.0-beta4",
     // TODO Re-enable when CASSANDRA-16364 is fixed
     description = "TODO Re-enable when CASSANDRA-16364 is fixed")
+@ScyllaSkip(
+    description =
+        "@IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaUnsupportedFunctionality")
 public class RandomTokenVnodesIT extends TokenITBase {
 
   private static final CustomCcmRule CCM_RULE =
