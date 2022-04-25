@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.core.cql.reactive;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 import com.datastax.dse.driver.api.core.cql.reactive.ReactiveResultSet;
 import com.datastax.dse.driver.api.core.cql.reactive.ReactiveRow;
@@ -29,6 +30,7 @@ import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -169,6 +171,8 @@ public class DefaultReactiveResultSetIT {
 
   @Test
   public void should_write_cas() {
+    assumeThat(CcmBridge.SCYLLA_ENABLEMENT).isFalse(); // @IntegrationTestDisabledScyllaFailure
+
     SimpleStatement statement =
         SimpleStatement.builder(
                 "INSERT INTO test_reactive_write (pk, cc, v) VALUES (?, ?, ?) IF NOT EXISTS")
@@ -227,6 +231,8 @@ public class DefaultReactiveResultSetIT {
 
   @Test
   public void should_write_batch_cas() {
+    assumeThat(CcmBridge.SCYLLA_ENABLEMENT).isFalse(); // @IntegrationTestDisabledScyllaFailure
+
     BatchStatement batch = createCASBatch();
     CqlSession session = sessionRule.session();
     // execute batch for the first time: all inserts should succeed and the server should return

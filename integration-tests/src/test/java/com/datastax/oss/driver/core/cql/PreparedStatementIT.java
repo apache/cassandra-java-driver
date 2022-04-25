@@ -35,6 +35,7 @@ import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
+import com.datastax.oss.driver.api.testinfra.ScyllaSkip;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -147,6 +148,7 @@ public class PreparedStatementIT {
 
   @Test
   @CassandraRequirement(min = "4.0")
+  @ScyllaSkip(description = "@IntegrationTestDisabledScyllaFailure")
   public void should_update_metadata_when_schema_changed_across_executions() {
     // Given
     CqlSession session = sessionRule.session();
@@ -176,6 +178,7 @@ public class PreparedStatementIT {
 
   @Test
   @CassandraRequirement(min = "4.0")
+  @ScyllaSkip(description = "@IntegrationTestDisabledScyllaFailure")
   public void should_update_metadata_when_schema_changed_across_pages() {
     // Given
     CqlSession session = sessionRule.session();
@@ -221,6 +224,7 @@ public class PreparedStatementIT {
 
   @Test
   @CassandraRequirement(min = "4.0")
+  @ScyllaSkip(description = "@IntegrationTestDisabledScyllaFailure")
   public void should_update_metadata_when_schema_changed_across_sessions() {
     // Given
     CqlSession session1 = sessionRule.session();
@@ -287,12 +291,14 @@ public class PreparedStatementIT {
 
   @Test
   @CassandraRequirement(min = "4.0")
+  @ScyllaSkip(description = "@IntegrationTestDisabledScyllaFailure")
   public void should_not_store_metadata_for_conditional_updates() {
     should_not_store_metadata_for_conditional_updates(sessionRule.session());
   }
 
   @Test
   @CassandraRequirement(min = "2.2")
+  @ScyllaSkip(description = "@IntegrationTestDisabledScyllaFailure")
   public void should_not_store_metadata_for_conditional_updates_in_legacy_protocol() {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
@@ -304,6 +310,7 @@ public class PreparedStatementIT {
     }
   }
 
+  @ScyllaSkip(description = "@IntegrationTestDisabledScyllaFailure")
   private void should_not_store_metadata_for_conditional_updates(CqlSession session) {
     // Given
     PreparedStatement ps =

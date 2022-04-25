@@ -37,6 +37,7 @@ import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
+import com.datastax.oss.driver.api.testinfra.ScyllaSkip;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -270,6 +271,7 @@ public class BoundStatementCcmIT {
   }
 
   @Test
+  @ScyllaSkip(description = "@IntegrationTestDisabledScyllaFailure")
   public void should_propagate_attributes_when_preparing_a_simple_statement() {
     CqlSession session = sessionRule.session();
 

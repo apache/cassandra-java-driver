@@ -31,6 +31,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
+import com.datastax.oss.driver.api.testinfra.ScyllaSkip;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -47,6 +48,8 @@ import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 @CassandraRequirement(min = "3.11.0", description = "UDT fields in IF clause")
+@ScyllaSkip(
+    description = "@IntegrationTestDisabledScyllaFailure") // Test hangs in setup() in productDao()
 public class UpdateCustomIfClauseIT extends InventoryITBase {
 
   private static final CcmRule CCM_RULE = CcmRule.getInstance();

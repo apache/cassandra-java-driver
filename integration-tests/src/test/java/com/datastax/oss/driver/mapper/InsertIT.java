@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -33,6 +34,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -219,6 +221,7 @@ public class InsertIT extends InventoryITBase {
 
   @Test
   public void should_insert_entity_if_not_exists() {
+    assumeThat(CcmBridge.SCYLLA_ENABLEMENT).isFalse(); // @IntegrationTestDisabledScyllaFailure
     assertThat(dao.saveIfNotExists(FLAMETHROWER)).isNull();
 
     Product otherProduct =
@@ -237,6 +240,7 @@ public class InsertIT extends InventoryITBase {
 
   @Test
   public void should_insert_entity_if_not_exists_asynchronously() {
+    assumeThat(CcmBridge.SCYLLA_ENABLEMENT).isFalse(); // @IntegrationTestDisabledScyllaFailure
     assertThat(CompletableFutures.getUninterruptibly(dao.saveAsyncIfNotExists(FLAMETHROWER)))
         .isNull();
 
@@ -263,6 +267,7 @@ public class InsertIT extends InventoryITBase {
 
   @Test
   public void should_insert_entity_if_not_exists_returning_optional() {
+    assumeThat(CcmBridge.SCYLLA_ENABLEMENT).isFalse(); // @IntegrationTestDisabledScyllaFailure
     assertThat(dao.saveIfNotExistsOptional(FLAMETHROWER)).isEmpty();
 
     Product otherProduct =
@@ -272,6 +277,7 @@ public class InsertIT extends InventoryITBase {
 
   @Test
   public void should_insert_entity_if_not_exists_returning_optional_asynchronously() {
+    assumeThat(CcmBridge.SCYLLA_ENABLEMENT).isFalse(); // @IntegrationTestDisabledScyllaFailure
     assertThat(
             CompletableFutures.getUninterruptibly(dao.saveAsyncIfNotExistsOptional(FLAMETHROWER)))
         .isEmpty();
