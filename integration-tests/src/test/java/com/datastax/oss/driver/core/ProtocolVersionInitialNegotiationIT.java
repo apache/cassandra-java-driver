@@ -28,6 +28,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
+import com.datastax.oss.driver.api.testinfra.ScyllaSkip;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -81,6 +82,9 @@ public class ProtocolVersionInitialNegotiationIT {
       min = "4.0-rc1",
       description = "Only C* in [4.0-rc1,*[ has V5 as its highest version")
   @Test
+  @ScyllaSkip(
+      description =
+          "@IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaUnsupportedFunctionality @IntegrationTestDisabledScyllaProtocolV5")
   public void should_downgrade_to_v5_oss() {
     Assume.assumeFalse("This test is only for OSS C*", ccm.getDseVersion().isPresent());
     try (CqlSession session = SessionUtils.newSession(ccm)) {
@@ -237,6 +241,9 @@ public class ProtocolVersionInitialNegotiationIT {
   /** Note that this test will need to be updated as new protocol versions are introduced. */
   @CassandraRequirement(min = "4.0", description = "Only C* in [4.0,*[ has V5 supported")
   @Test
+  @ScyllaSkip(
+      description =
+          "@IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaUnsupportedFunctionality @IntegrationTestDisabledScyllaProtocolV5")
   public void should_not_downgrade_if_server_supports_latest_version_oss() {
     Assume.assumeFalse("This test is only for OSS C*", ccm.getDseVersion().isPresent());
     try (CqlSession session = SessionUtils.newSession(ccm)) {
@@ -311,6 +318,9 @@ public class ProtocolVersionInitialNegotiationIT {
 
   @CassandraRequirement(min = "4.0", description = "Only C* in [4.0,*[ has V5 supported")
   @Test
+  @ScyllaSkip(
+      description =
+          "@IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaUnsupportedFunctionality @IntegrationTestDisabledScyllaProtocolV5")
   public void should_use_explicitly_provided_v5_oss() {
     Assume.assumeFalse("This test is only for OSS C*", ccm.getDseVersion().isPresent());
     DriverConfigLoader loader =
@@ -325,6 +335,9 @@ public class ProtocolVersionInitialNegotiationIT {
 
   @DseRequirement(min = "7.0", description = "Only DSE in [7.0,*[ has V5 supported")
   @Test
+  @ScyllaSkip(
+      description =
+          "@IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaUnsupportedFunctionality @IntegrationTestDisabledScyllaProtocolV5")
   public void should_use_explicitly_provided_v5_dse() {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
