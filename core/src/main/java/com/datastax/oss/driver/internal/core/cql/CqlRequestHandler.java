@@ -90,9 +90,11 @@ import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -195,13 +197,45 @@ public class CqlRequestHandler implements Throttled {
           System.nanoTime() - startTimeNanos,
           TimeUnit.NANOSECONDS);
     }
-    Queue<Node> queryPlan =
-        this.initialStatement.getNode() != null
-            ? new SimpleQueryPlan(this.initialStatement.getNode())
-            : context
-                .getLoadBalancingPolicyWrapper()
-                .newQueryPlan(initialStatement, executionProfile.getName(), session);
+    Queue<Node> queryPlan;
+    if (this.initialStatement.getNode() != null) {
+      queryPlan = new SimpleQueryPlan(this.initialStatement.getNode());
+    } else if (this.initialStatement.isLWT()) {
+      queryPlan =
+          getReplicas(
+              session.getKeyspace().orElse(null),
+              this.initialStatement,
+              context
+                  .getLoadBalancingPolicyWrapper()
+                  .newQueryPlan(initialStatement, executionProfile.getName(), session));
+    } else {
+      queryPlan =
+          context
+              .getLoadBalancingPolicyWrapper()
+              .newQueryPlan(initialStatement, executionProfile.getName(), session);
+    }
+
     sendRequest(initialStatement, null, queryPlan, 0, 0, true);
+  }
+
+  private Queue<Node> getReplicas(
+      CqlIdentifier loggedKeyspace, Statement<?> statement, Queue<Node> fallback) {
+    Token routingToken = getRoutingToken(statement);
+    CqlIdentifier keyspace = statement.getKeyspace();
+    if (keyspace == null) {
+      keyspace = statement.getRoutingKeyspace();
+      if (keyspace == null) {
+        keyspace = loggedKeyspace;
+      }
+    }
+
+    TokenMap tokenMap = context.getMetadataManager().getMetadata().getTokenMap().orElse(null);
+    if (routingToken == null || keyspace == null || tokenMap == null) {
+      return fallback;
+    }
+
+    Set<Node> replicas = tokenMap.getReplicas(keyspace, routingToken);
+    return new ConcurrentLinkedQueue<>(replicas);
   }
 
   public CompletionStage<AsyncResultSet> handle() {
