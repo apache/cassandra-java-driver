@@ -53,12 +53,12 @@
     When upgrading TinkerPop please upgrade the version matrix in
     manual/core/integration/README.md
     -->
-    <tinkerpop.version>3.4.10</tinkerpop.version>
+    <tinkerpop.version>3.5.3</tinkerpop.version>
     <slf4j.version>1.7.26</slf4j.version>
     <reactive-streams.version>1.0.3</reactive-streams.version>
     <json.version>20210307</json.version>
-    <jackson.version>2.12.2</jackson.version>
-    <jackson-databind.version>2.12.2</jackson-databind.version>
+    <jackson.version>2.13.2</jackson.version>
+    <jackson-databind.version>2.13.2.2</jackson-databind.version>
     <legacy-jackson.version>1.9.12</legacy-jackson.version>
     <!-- optional dependencies -->
     <snappy.version>1.1.7.3</snappy.version>
@@ -81,7 +81,7 @@
     <awaitility.version>4.0.3</awaitility.version>
     <apacheds.version>2.0.0-M19</apacheds.version>
     <surefire.version>2.22.2</surefire.version>
-    <graalapi.version>21.0.0.2</graalapi.version>
+    <graalapi.version>22.0.0.2</graalapi.version>
     <skipTests>false</skipTests>
     <skipUnitTests>${skipTests}</skipUnitTests>
   </properties>
