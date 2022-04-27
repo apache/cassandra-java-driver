@@ -24,10 +24,7 @@ package com.datastax.oss.driver.api.testinfra.ccm;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.Version;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
-import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
-import com.datastax.oss.driver.api.testinfra.ScyllaSkip;
+import com.datastax.oss.driver.api.testinfra.*;
 import java.util.Optional;
 import org.junit.AssumptionViolatedException;
 import org.junit.runner.Description;
@@ -93,6 +90,21 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
             throw new AssumptionViolatedException(
                 String.format(
                     "Test skipped when running with Scylla.  Description: %s", description));
+          }
+        };
+      }
+    }
+
+    CassandraSkip cassandraSkip = description.getAnnotation(CassandraSkip.class);
+    if (cassandraSkip != null) {
+      if (!CcmBridge.SCYLLA_ENABLEMENT) {
+        return new Statement() {
+
+          @Override
+          public void evaluate() {
+            throw new AssumptionViolatedException(
+                String.format(
+                    "Test skipped when running with Cassandra.  Description: %s", description));
           }
         };
       }

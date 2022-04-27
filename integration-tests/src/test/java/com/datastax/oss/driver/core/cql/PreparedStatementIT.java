@@ -41,6 +41,7 @@ import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
+import com.datastax.oss.driver.api.testinfra.CassandraSkip;
 import com.datastax.oss.driver.api.testinfra.ScyllaSkip;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -472,6 +473,34 @@ public class PreparedStatementIT {
         "UPDATE prepared_statement_test SET b = 1 WHERE a = ?");
     should_infer_routing_information_when_partition_key_is_bound(
         "DELETE FROM prepared_statement_test WHERE a = ?");
+  }
+
+  @Test
+  @CassandraSkip // Functionality only available in Scylla
+  public void scylla_should_recognize_prepared_lwt_query() {
+    CqlSession session = sessionRule.session();
+    PreparedStatement statementNonLWT =
+        session.prepare("UPDATE prepared_statement_test SET b = 3 WHERE a = 1");
+    PreparedStatement statementLWT =
+        session.prepare("UPDATE prepared_statement_test SET b = 3 WHERE a = 1 IF b = 5");
+
+    assertThat(statementNonLWT.isLWT()).isFalse();
+    assertThat(statementLWT.isLWT()).isTrue();
+  }
+
+  @Test
+  @ScyllaSkip // Scylla behaves differently - see `scylla_should_recognize_prepared_lwt_query` test
+  // This test is just to check that no crashes or other weird behaviour occur when this feature is
+  // not supported.
+  public void cassandra_should_not_recognize_prepared_lwt_query() {
+    CqlSession session = sessionRule.session();
+    PreparedStatement statementNonLWT =
+        session.prepare("UPDATE prepared_statement_test SET b = 3 WHERE a = 1");
+    PreparedStatement statementLWT =
+        session.prepare("UPDATE prepared_statement_test SET b = 3 WHERE a = 1 IF b = 5");
+
+    assertThat(statementNonLWT.isLWT()).isFalse();
+    assertThat(statementLWT.isLWT()).isFalse();
   }
 
   private void should_infer_routing_information_when_partition_key_is_bound(String queryString) {
