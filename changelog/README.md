@@ -2,6 +2,12 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.14.1
+
+- [improvement] JAVA-3013: Upgrade dependencies to address CVEs and other security issues, 4.14.1 edition
+- [improvement] JAVA-3003: Update jnr-posix to address CVE-2014-4043
+- [improvement] JAVA-2977: Update Netty to resolve higher-priority CVEs
+
 ### 4.14.0
 
 - [bug] JAVA-2976: Support missing protocol v5 error codes CAS_WRITE_UNKNOWN, CDC_WRITE_FAILURE
