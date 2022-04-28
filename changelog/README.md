@@ -5,6 +5,11 @@
   3.x versions get published.
 -->
 
+## 3.11.2
+- [improvement] JAVA-3008: Upgrade Netty to 4.1.75, 3.x edition
+- [improvement] JAVA-2984: Upgrade Jackson to resolve high-priority CVEs
+
+
 ## 3.11.1
 - [bug] JAVA-2967: Support native transport peer information for DSE 6.8.
 - [bug] JAVA-2976: Support missing protocol v5 error codes CAS_WRITE_UNKNOWN, CDC_WRITE_FAILURE.
