@@ -6,14 +6,24 @@ from datetime import date
 import yaml
 import re
 from docutils import nodes
-from sphinx.util import logging
 from recommonmark.transform import AutoStructify
 from recommonmark.parser import CommonMarkParser, splitext, urlparse
 from sphinx_scylladb_theme.utils import multiversion_regex_builder
 
+
 # -- General configuration ------------------------------------------------
 
-# Add any Sphinx extension'¡' module names here, as strings. They can be
+# Build documentation for the following tags and branches
+TAGS = []
+BRANCHES = ['scylla-3.7.2.x', 'scylla-3.10.2.x', 'scylla-3.11.0.x', 'scylla-3.11.2.x']
+# Set the latest version.
+LATEST_VERSION = 'scylla-3.11.2.x'
+# Set which versions are not released yet.
+UNSTABLE_VERSIONS = []
+# Set which versions are deprecated
+DEPRECATED_VERSIONS = ['']
+
+# Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
@@ -21,6 +31,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.githubpages',
     'sphinx.ext.extlinks',
+    'sphinx_sitemap',
     'sphinx.ext.autosectionlabel',
     'sphinx_scylladb_theme',
     'sphinx_multiversion',
@@ -113,23 +124,24 @@ redirects_file = "_utils/redirections.yaml"
 
 # -- Options for multiversion extension ----------------------------------
 
-# Whitelist pattern for tags (set to None to ignore all tags)
-TAGS = []
+# Whitelist pattern for tags
 smv_tag_whitelist = multiversion_regex_builder(TAGS)
-# Whitelist pattern for branches (set to None to ignore all branches)
-BRANCHES = ['scylla-3.x', 'scylla-3.7.2.x', 'scylla-3.10.2.x']
+# Whitelist pattern for branches
 smv_branch_whitelist = multiversion_regex_builder(BRANCHES)
 # Defines which version is considered to be the latest stable version.
 # Must be listed in smv_tag_whitelist or smv_branch_whitelist.
-smv_latest_version = 'scylla-3.10.2.x'
+smv_latest_version = LATEST_VERSION
 smv_rename_latest_version = 'stable'
 # Whitelist pattern for remotes (set to None to use local branches only)
-smv_remote_whitelist = r"^origin$"
+smv_remote_whitelist = r'^origin$'
 # Pattern for released versions
 smv_released_pattern = r'^tags/.*$'
 # Format for versioned output directories inside the build directory
 smv_outputdir_format = '{ref.name}'
 
+# -- Options for sitemap extension ---------------------------------------
+
+sitemap_url_scheme = 'stable/{link}'
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -148,7 +160,8 @@ html_theme_options = {
     'github_repository': 'scylladb/java-driver',
     'github_issues_repository': 'scylladb/java-driver',
     'hide_edit_this_page_button': 'false',
-    'hide_sidebar_index': 'false',
+    'versions_unstable': UNSTABLE_VERSIONS,
+    'versions_deprecated': DEPRECATED_VERSIONS,
     'hide_version_dropdown': ['scylla-3.x'],
 }
 
