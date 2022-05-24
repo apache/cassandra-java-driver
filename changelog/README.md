@@ -639,10 +639,9 @@ changelog](https://docs.datastax.com/en/developer/java-driver-dse/latest/changel
 - [bug] JAVA-2174: Metadata.needsQuote should accept empty strings.
 - [bug] JAVA-2193: Fix flaky tests in WarningsTest.
 
-
 ### 3.7.0
 
-- [improvement] JAVA-2025: Include exception message in Abstract\*Codec.accepts(null).
+- [improvement] JAVA-2025: Include exception message in Abstract*Codec.accepts(null).
 - [improvement] JAVA-1980: Use covariant return types in RemoteEndpointAwareJdkSSLOptions.Builder methods.
 - [documentation] JAVA-2062: Document frozen collection preference with Mapper.
 - [bug] JAVA-2071: Fix NPE in ArrayBackedRow.toString().
@@ -671,13 +670,13 @@ changelog](https://docs.datastax.com/en/developer/java-driver-dse/latest/changel
 - [bug] JAVA-1924: StatementWrapper setters should return the wrapping statement.
 - [new feature] JAVA-1532: Add Codec support for Java 8's LocalDateTime and ZoneId.
 - [improvement] JAVA-1786: Use Google code formatter.
-- [bug] JAVA-1871: Change LOCAL\_SERIAL.isDCLocal() to return true.
+- [bug] JAVA-1871: Change LOCAL_SERIAL.isDCLocal() to return true.
 - [documentation] JAVA-1902: Clarify unavailable & request error in DefaultRetryPolicy javadoc.
 - [new feature] JAVA-1903: Add WhiteListPolicy.ofHosts.
 - [bug] JAVA-1928: Fix GuavaCompatibility for Guava 26.
 - [bug] JAVA-1935: Add null check in QueryConsistencyException.getHost.
 - [improvement] JAVA-1771: Send driver name and version in STARTUP message.
-- [improvement] JAVA-1388: Add dynamic port discovery for system.peers\_v2.
+- [improvement] JAVA-1388: Add dynamic port discovery for system.peers_v2.
 - [documentation] JAVA-1810: Note which setters are not propagated to PreparedStatement.
 - [bug] JAVA-1944: Surface Read and WriteFailureException to RetryPolicy.
 - [bug] JAVA-1211: Fix NPE in cluster close when cluster init fails.
@@ -1252,7 +1251,7 @@ Merged from 2.2 branch:
 - [bug] JAVA-817: TimeCodec does not format values correctly.
 - [bug] JAVA-818: TypeCodec.getDataTypeFor() does not handle LocalDate instances.
 - [improvement] JAVA-836: Make ResultSet#fetchMoreResult return a
-  ListenableFuture<ResultSet>.
+  ``ListenableFuture<ResultSet>``.
 - [improvement] JAVA-843: Disable frozen checks in mapper.
 - [improvement] JAVA-721: Allow user to register custom type codecs.
 - [improvement] JAVA-722: Support custom type codecs in mapper.
@@ -1274,7 +1273,7 @@ Merged from 2.2 branch:
 - [bug] JAVA-817: TimeCodec does not format values correctly.
 - [bug] JAVA-818: TypeCodec.getDataTypeFor() does not handle LocalDate instances.
 - [improvement] JAVA-836: Make ResultSet#fetchMoreResult return a
-  ListenableFuture<ResultSet>.
+  ``ListenableFuture<ResultSet>``.
 - [improvement] JAVA-843: Disable frozen checks in mapper.
 - [improvement] JAVA-721: Allow user to register custom type codecs.
 - [improvement] JAVA-722: Support custom type codecs in mapper.
@@ -1575,7 +1574,7 @@ Merged from 2.0 branch:
 - [bug] JAVA-595: Fix cluster name mismatch check at startup.
 - [bug] JAVA-620: Fix guava dependency when using OSGI.
 - [bug] JAVA-678: Fix handling of DROP events when ks name is case-sensitive.
-- [improvement] JAVA-631: Use List<?> instead of List<Object> in QueryBuilder API.
+- [improvement] JAVA-631: Use ``List<?>`` instead of ``List<Object>`` in QueryBuilder API.
 - [improvement] JAVA-654: Exclude Netty POM from META-INF in shaded JAR.
 - [bug] JAVA-655: Quote single quotes contained in table comments in asCQLQuery method.
 - [bug] JAVA-684: Empty TokenRange returned in a one token cluster.
@@ -1826,7 +1825,7 @@ Merged from 2.0.10_fixes branch:
 - [bug] JAVA-595: Fix cluster name mismatch check at startup.
 - [bug] JAVA-620: Fix guava dependency when using OSGI.
 - [bug] JAVA-678: Fix handling of DROP events when ks name is case-sensitive.
-- [improvement] JAVA-631: Use List<?> instead of List<Object> in QueryBuilder API.
+- [improvement] JAVA-631: Use ``List<?>`` instead of ``List<Object>`` in QueryBuilder API.
 - [improvement] JAVA-654: Exclude Netty POM from META-INF in shaded JAR.
 - [bug] JAVA-655: Quote single quotes contained in table comments in asCQLQuery method.
 - [bug] JAVA-684: Empty TokenRange returned in a one token cluster.

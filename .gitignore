@@ -6,6 +6,10 @@
 *.iml
 .classpath
 .project
+docs/_build
+docs/_source
+html
+latex
 
 .java-version
 .flattened-pom.xml
