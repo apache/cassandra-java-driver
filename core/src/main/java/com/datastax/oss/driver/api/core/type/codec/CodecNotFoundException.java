@@ -67,7 +67,6 @@ public class CodecNotFoundException extends DriverException {
   @NonNull
   @Override
   public DriverException copy() {
-    return new CodecNotFoundException(
-        getMessage(), getCause(), getCqlType(), getJavaType());
+    return new CodecNotFoundException(getMessage(), getCause(), getCqlType(), getJavaType());
   }
 }

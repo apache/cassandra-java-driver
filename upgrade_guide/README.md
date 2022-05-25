@@ -1,5 +1,38 @@
 ## Upgrade guide
 
+### 4.14.2
+
+#### CodecNotFoundException extends DriverException
+
+[JAVA-2995](https://datastax-oss.atlassian.net/browse/JAVA-2959) 
+
+`CodecNotFoundException` was extending only `RuntimeException`. This is a discrepancy 
+as all other exceptions extend `DriverException` which in turn extends `RuntimeException`.
+
+This was causing integrators with Spring Data to do workarounds 
+to react on all exceptions correctly.
+
+If your code was using this logic, it will be not compilable from this version:
+
+```java
+try {
+      doSomethingWithDriver();
+    } catch(DriverException e) {
+    } catch(CodecNotFoundException e) { 
+    }
+```
+
+You need to either use this to react on `CodecNotFoundException` first if you want, or you just 
+catch it under `DriverException` in one catch block.
+
+```java
+try {
+      doSomethingWithDriver();
+    } catch(CodecNotFoundException e) {
+    } catch(DriverException e) { 
+    }
+```
+
 ### 4.14.0
 
 #### AllNodesFailedException instead of NoNodeAvailableException in certain cases
