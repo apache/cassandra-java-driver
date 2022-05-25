@@ -1,36 +1,43 @@
 ## Upgrade guide
 
-### 4.14.2
+### 4.15.0
 
-#### CodecNotFoundException extends DriverException
+#### CodecNotFoundException now extends DriverException
 
-[JAVA-2995](https://datastax-oss.atlassian.net/browse/JAVA-2959) 
+Before [JAVA-2995](https://datastax-oss.atlassian.net/browse/JAVA-2959), `CodecNotFoundException`
+was extending `RuntimeException`. This is a discrepancy as all other exceptions extend
+`DriverException`, which in turn extends `RuntimeException`.
 
-`CodecNotFoundException` was extending only `RuntimeException`. This is a discrepancy 
-as all other exceptions extend `DriverException` which in turn extends `RuntimeException`.
+This was causing integrators to do workarounds in order to react on all exceptions correctly.
 
-This was causing integrators with Spring Data to do workarounds 
-to react on all exceptions correctly.
-
-If your code was using this logic, it will be not compilable from this version:
+The change introduced by JAVA-2995 shouldn't be a problem for most users. But if your code was using
+a logic such as below, it won't compile anymore:
 
 ```java
 try {
-      doSomethingWithDriver();
-    } catch(DriverException e) {
-    } catch(CodecNotFoundException e) { 
-    }
+  doSomethingWithDriver();
+} catch(DriverException e) {
+} catch(CodecNotFoundException e) { 
+}
 ```
 
-You need to either use this to react on `CodecNotFoundException` first if you want, or you just 
-catch it under `DriverException` in one catch block.
+You need to either reverse the catch order and catch `CodecNotFoundException` first:
 
 ```java
 try {
-      doSomethingWithDriver();
-    } catch(CodecNotFoundException e) {
-    } catch(DriverException e) { 
-    }
+  doSomethingWithDriver();
+} catch(CodecNotFoundException e) { 
+} catch(DriverException e) {
+}
+```
+
+Or catch only `DriverException`:
+
+```java
+try {
+  doSomethingWithDriver();
+} catch(DriverException e) { 
+}
 ```
 
 ### 4.14.0
