@@ -1,5 +1,11 @@
 # Contributing guidelines
 
+## Reaching out
+
+If you are aiming to implement something to be reviewed and merged it is strongly recommended to
+reach out through [ScyllaDB Users slack](https://scylladb-users.slack.com). You can look at 
+[github issues](https://github.com/scylladb/java-driver/issues) to get a rough idea what needs to be implemented.
+
 ## Code formatting
 
 ### Java
@@ -255,10 +261,12 @@ process, which can be either one of:
   
     For an example of a Simulacron-based test, see `NodeTargetingIT`.
 * [CCM](https://github.com/pcmanus/ccm): launches actual Cassandra nodes locally. The `ccm`
-  executable must be in the path.
+  executable must be in the path. [Scylla CCM](https://github.com/scylladb/scylla-ccm) is a drop-in alternative that can also launch Scylla nodes.
   
     You can pass a `-Dccm.version` system property to the build to target a particular Cassandra
-    version (it defaults to 3.11.0). `-Dccm.directory` allows you to point to a local installation
+    version (it defaults to 3.11.0). With `-Dccm.scylla=true` Scylla CCM will target a particular Scylla version.
+    
+   Setting `-Dccm.directory` allows you to point to a local installation
     -- this can be a checkout of the Cassandra codebase, as long as it's built. See `CcmBridge` in
     the driver codebase for more details.
     
@@ -314,6 +322,24 @@ To isolate an integration test, annotate it with `@Category(IsolatedTests.class)
 **must** be `CustomCcmRule`.  
 
 For an example, see `HeapCompressionIT`.
+
+##### Disabled tests
+
+This is a special non-disjoint category. We use several different tags to further categorize failing tests
+that needed disabling and are yet to be fixed:
+- `@IntegrationTestDisabledCassandra3Failure` - general regression when running with Cassandra 3.11
+- `@IntegrationTestDisabledCassandra4Failure` - general regression when running with Cassandra 4
+- `@IntegrationTestDisabledPaxExam` - disabling test using PaxExam functionality
+- `@IntegrationTestDisabledScyllaFailure` - general regression when running with Scylla
+- `@IntegrationTestDisabledScyllaJVMArgs` - disabling test, when running with Scylla, that uses Cassandra's JVM arguments
+- `@IntegrationTestDisabledScyllaUDF` - disabling test, when running with Scylla, that uses Cassandra's UDF implementation
+- `@IntegrationTestDisabledScyllaUnsupportedFunctionality` - disabling test, when running with Scylla, that uses functionality unsupported by Scylla (for example SASI indexes or Cassandra's CDC)
+- `@IntegrationTestDisabledScyllaUnsupportedIndex` - disabling test, when running with Scylla, that uses Cassandra's indexes unsupported by Scylla
+- `@IntegrationTestDisabledSSL` - a disabled test that also happens to test SSL functionality
+- `@IntegrationTestDisabledScyllaProtocolV5` - a disabled test that relies on Protocol V5
+- `@IntegrationTestDisabledScyllaDifferentText` - a disabled test that expects a Cassandra-specific text (such as tracing message)
+- `@IntegrationTestDisabledCCMFailure` - a disabled test that fails at CCM stage (mostly adding new nodes to the cluster)
+
 
 #### About test rules
 
@@ -376,6 +402,13 @@ for each commit if you enable the pre-commit hook -- see below).
 
 This currently takes about 9 minutes. We don't have a hard limit, but ideally it should stay within
 30 minutes to 1 hour.
+
+As mentioned earlier you can choose a particular cluster version to run them against:
+* `mvn clean verify -Dccm.version=3.11.12 -e` (Cassandra 3.11.12)
+
+* `mvn clean verify -Dccm.version=4.0.3 -e` (Cassandra 4.0.3)
+
+* `mvn clean verify -Dccm.version=4.5.3 -Dccm.scylla=true` (Scylla OSS 4.5.3)
 
 You can skip test categories individually with `-DskipParallelizableITs`, `-DskipSerialITs` and
 `-DskipIsolatedITs` (`-DskipITs` still works to skip them all at once).
