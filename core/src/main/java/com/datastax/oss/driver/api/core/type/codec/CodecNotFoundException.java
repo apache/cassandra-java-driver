@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.type.codec;
 
+import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
@@ -22,7 +23,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 /** Thrown when a suitable {@link TypeCodec} cannot be found by the {@link CodecRegistry}. */
-public class CodecNotFoundException extends RuntimeException {
+public class CodecNotFoundException extends DriverException {
 
   private final DataType cqlType;
 
@@ -48,7 +49,7 @@ public class CodecNotFoundException extends RuntimeException {
 
   private CodecNotFoundException(
       String msg, Throwable cause, DataType cqlType, GenericType<?> javaType) {
-    super(msg, cause);
+    super(msg, null, cause, true);
     this.cqlType = cqlType;
     this.javaType = javaType;
   }
@@ -61,5 +62,12 @@ public class CodecNotFoundException extends RuntimeException {
   @Nullable
   public GenericType<?> getJavaType() {
     return javaType;
+  }
+
+  @NonNull
+  @Override
+  public DriverException copy() {
+    return new CodecNotFoundException(
+        getMessage(), getCause(), getCqlType(), getJavaType());
   }
 }
