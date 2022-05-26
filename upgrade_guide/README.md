@@ -4,7 +4,7 @@
 
 #### CodecNotFoundException now extends DriverException
 
-Before [JAVA-2995](https://datastax-oss.atlassian.net/browse/JAVA-2959), `CodecNotFoundException`
+Before [JAVA-2995](https://datastax-oss.atlassian.net/browse/JAVA-2995), `CodecNotFoundException`
 was extending `RuntimeException`. This is a discrepancy as all other exceptions extend
 `DriverException`, which in turn extends `RuntimeException`.
 
