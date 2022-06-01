@@ -5536,6 +5536,1284 @@
         "old": "missing-class org.apache.tinkerpop.gremlin.structure.VertexProperty",
         "new": "missing-class org.apache.tinkerpop.gremlin.structure.VertexProperty",
         "justification": "JAVA-2907: switched Tinkerpop dependency to optional"
+      },
+      {
+        "code": "java.class.nonFinalClassInheritsFromNewClass",
+        "old": "class com.fasterxml.jackson.core.JsonGenerationException",
+        "new": "class com.fasterxml.jackson.core.JsonGenerationException",
+        "superClass": "com.fasterxml.jackson.core.exc.StreamWriteException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.serialVersionUIDChanged",
+        "old": "field com.fasterxml.jackson.core.JsonLocation.serialVersionUID",
+        "new": "field com.fasterxml.jackson.core.JsonLocation.serialVersionUID",
+        "oldSerialVersionUID": "1",
+        "newSerialVersionUID": "2",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method java.lang.StringBuilder com.fasterxml.jackson.core.JsonLocation::_appendSourceDesc(java.lang.StringBuilder)",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.visibilityReduced",
+        "old": "method void com.fasterxml.jackson.core.exc.StreamReadException::<init>(com.fasterxml.jackson.core.JsonParser, java.lang.String)",
+        "new": "method void com.fasterxml.jackson.core.exc.StreamReadException::<init>(com.fasterxml.jackson.core.JsonParser, java.lang.String)",
+        "oldVisibility": "public",
+        "newVisibility": "protected",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.visibilityReduced",
+        "old": "method void com.fasterxml.jackson.core.exc.StreamReadException::<init>(com.fasterxml.jackson.core.JsonParser, java.lang.String, com.fasterxml.jackson.core.JsonLocation)",
+        "new": "method void com.fasterxml.jackson.core.exc.StreamReadException::<init>(com.fasterxml.jackson.core.JsonParser, java.lang.String, com.fasterxml.jackson.core.JsonLocation)",
+        "oldVisibility": "public",
+        "newVisibility": "protected",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.visibilityReduced",
+        "old": "method void com.fasterxml.jackson.core.exc.StreamReadException::<init>(com.fasterxml.jackson.core.JsonParser, java.lang.String, java.lang.Throwable)",
+        "new": "method void com.fasterxml.jackson.core.exc.StreamReadException::<init>(com.fasterxml.jackson.core.JsonParser, java.lang.String, java.lang.Throwable)",
+        "oldVisibility": "public",
+        "newVisibility": "protected",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.nowFinal",
+        "old": "field com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer._intern",
+        "new": "field com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer._intern",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method void com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer::reportTooManyCollisions(int)",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.abstractMethodAdded",
+        "new": "method java.util.List<com.fasterxml.jackson.databind.introspect.AnnotatedAndMetadata<com.fasterxml.jackson.databind.introspect.AnnotatedConstructor, com.fasterxml.jackson.annotation.JsonCreator.Mode>> com.fasterxml.jackson.databind.BeanDescription::getConstructorsWithMode()",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.abstractMethodAdded",
+        "new": "method java.util.List<com.fasterxml.jackson.databind.introspect.AnnotatedAndMetadata<com.fasterxml.jackson.databind.introspect.AnnotatedMethod, com.fasterxml.jackson.annotation.JsonCreator.Mode>> com.fasterxml.jackson.databind.BeanDescription::getFactoryMethodsWithMode()",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter com.fasterxml.jackson.databind.DeserializationConfig com.fasterxml.jackson.databind.DeserializationConfig::_withMapperFeatures(===int===)",
+        "new": "parameter com.fasterxml.jackson.databind.DeserializationConfig com.fasterxml.jackson.databind.DeserializationConfig::_withMapperFeatures(===long===)",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.finalMethodAddedToNonFinalClass",
+        "new": "method com.fasterxml.jackson.databind.util.TokenBuffer com.fasterxml.jackson.databind.DeserializationContext::bufferForInputBuffering()",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method T com.fasterxml.jackson.databind.JsonDeserializer<T>::deserialize(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.DeserializationContext) throws java.io.IOException, com.fasterxml.jackson.core.JsonProcessingException",
+        "new": "method T com.fasterxml.jackson.databind.JsonDeserializer<T>::deserialize(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.DeserializationContext) throws java.io.IOException, com.fasterxml.jackson.core.JacksonException",
+        "exception": "com.fasterxml.jackson.core.JacksonException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method T com.fasterxml.jackson.databind.JsonDeserializer<T>::deserialize(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.DeserializationContext) throws java.io.IOException, com.fasterxml.jackson.core.JsonProcessingException",
+        "new": "method T com.fasterxml.jackson.databind.JsonDeserializer<T>::deserialize(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.DeserializationContext) throws java.io.IOException, com.fasterxml.jackson.core.JacksonException",
+        "exception": "com.fasterxml.jackson.core.JsonProcessingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method T com.fasterxml.jackson.databind.JsonDeserializer<T>::deserialize(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.DeserializationContext, T) throws java.io.IOException",
+        "new": "method T com.fasterxml.jackson.databind.JsonDeserializer<T>::deserialize(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.DeserializationContext, T) throws java.io.IOException, com.fasterxml.jackson.core.JacksonException",
+        "exception": "com.fasterxml.jackson.core.JacksonException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method java.lang.Object com.fasterxml.jackson.databind.JsonDeserializer<T>::deserializeWithType(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.DeserializationContext, com.fasterxml.jackson.databind.jsontype.TypeDeserializer) throws java.io.IOException",
+        "new": "method java.lang.Object com.fasterxml.jackson.databind.JsonDeserializer<T>::deserializeWithType(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.DeserializationContext, com.fasterxml.jackson.databind.jsontype.TypeDeserializer) throws java.io.IOException, com.fasterxml.jackson.core.JacksonException",
+        "exception": "com.fasterxml.jackson.core.JacksonException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method java.lang.Object com.fasterxml.jackson.databind.JsonDeserializer<T>::deserializeWithType(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.DeserializationContext, com.fasterxml.jackson.databind.jsontype.TypeDeserializer, T) throws java.io.IOException",
+        "new": "method java.lang.Object com.fasterxml.jackson.databind.JsonDeserializer<T>::deserializeWithType(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.DeserializationContext, com.fasterxml.jackson.databind.jsontype.TypeDeserializer, T) throws java.io.IOException, com.fasterxml.jackson.core.JacksonException",
+        "exception": "com.fasterxml.jackson.core.JacksonException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.class.nonFinalClassInheritsFromNewClass",
+        "old": "class com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "class com.fasterxml.jackson.databind.JsonMappingException",
+        "superClass": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method com.fasterxml.jackson.databind.JsonDeserializer<java.lang.Object> com.fasterxml.jackson.databind.ObjectMapper::_findRootDeserializer(com.fasterxml.jackson.databind.DeserializationContext, com.fasterxml.jackson.databind.JavaType) throws com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method com.fasterxml.jackson.databind.JsonDeserializer<java.lang.Object> com.fasterxml.jackson.databind.ObjectMapper::_findRootDeserializer(com.fasterxml.jackson.databind.DeserializationContext, com.fasterxml.jackson.databind.JavaType) throws com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method com.fasterxml.jackson.databind.JsonDeserializer<java.lang.Object> com.fasterxml.jackson.databind.ObjectMapper::_findRootDeserializer(com.fasterxml.jackson.databind.DeserializationContext, com.fasterxml.jackson.databind.JavaType) throws com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method com.fasterxml.jackson.databind.JsonDeserializer<java.lang.Object> com.fasterxml.jackson.databind.ObjectMapper::_findRootDeserializer(com.fasterxml.jackson.databind.DeserializationContext, com.fasterxml.jackson.databind.JavaType) throws com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method com.fasterxml.jackson.core.JsonToken com.fasterxml.jackson.databind.ObjectMapper::_initForReading(com.fasterxml.jackson.core.JsonParser) throws java.io.IOException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T extends com.fasterxml.jackson.core.TreeNode> T com.fasterxml.jackson.databind.ObjectMapper::readTree(com.fasterxml.jackson.core.JsonParser) throws java.io.IOException, com.fasterxml.jackson.core.JsonProcessingException",
+        "new": "method <T extends com.fasterxml.jackson.core.TreeNode> T com.fasterxml.jackson.databind.ObjectMapper::readTree(com.fasterxml.jackson.core.JsonParser) throws java.io.IOException",
+        "exception": "com.fasterxml.jackson.core.JsonProcessingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method com.fasterxml.jackson.databind.JsonNode com.fasterxml.jackson.databind.ObjectMapper::readTree(java.io.File) throws java.io.IOException, com.fasterxml.jackson.core.JsonProcessingException",
+        "new": "method com.fasterxml.jackson.databind.JsonNode com.fasterxml.jackson.databind.ObjectMapper::readTree(java.io.File) throws java.io.IOException",
+        "exception": "com.fasterxml.jackson.core.JsonProcessingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], int, int, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(byte[], java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.ResolvedType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.ResolvedType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.ResolvedType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.ResolvedType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.ResolvedType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.ResolvedType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.ResolvedType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.ResolvedType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(com.fasterxml.jackson.core.JsonParser, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.File, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.InputStream, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.io.Reader, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonParseException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method <T> T com.fasterxml.jackson.databind.ObjectMapper::readValue(java.net.URL, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamReadException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> com.fasterxml.jackson.databind.MappingIterator<T> com.fasterxml.jackson.databind.ObjectMapper::readValues(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.ResolvedType) throws java.io.IOException, com.fasterxml.jackson.core.JsonProcessingException",
+        "new": "method <T> com.fasterxml.jackson.databind.MappingIterator<T> com.fasterxml.jackson.databind.ObjectMapper::readValues(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.ResolvedType) throws java.io.IOException",
+        "exception": "com.fasterxml.jackson.core.JsonProcessingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> com.fasterxml.jackson.databind.MappingIterator<T> com.fasterxml.jackson.databind.ObjectMapper::readValues(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonProcessingException",
+        "new": "method <T> com.fasterxml.jackson.databind.MappingIterator<T> com.fasterxml.jackson.databind.ObjectMapper::readValues(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.type.TypeReference<T>) throws java.io.IOException",
+        "exception": "com.fasterxml.jackson.core.JsonProcessingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> com.fasterxml.jackson.databind.MappingIterator<T> com.fasterxml.jackson.databind.ObjectMapper::readValues(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException, com.fasterxml.jackson.core.JsonProcessingException",
+        "new": "method <T> com.fasterxml.jackson.databind.MappingIterator<T> com.fasterxml.jackson.databind.ObjectMapper::readValues(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.JavaType) throws java.io.IOException",
+        "exception": "com.fasterxml.jackson.core.JsonProcessingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method <T> com.fasterxml.jackson.databind.MappingIterator<T> com.fasterxml.jackson.databind.ObjectMapper::readValues(com.fasterxml.jackson.core.JsonParser, java.lang.Class<T>) throws java.io.IOException, com.fasterxml.jackson.core.JsonProcessingException",
+        "new": "method <T> com.fasterxml.jackson.databind.MappingIterator<T> com.fasterxml.jackson.databind.ObjectMapper::readValues(com.fasterxml.jackson.core.JsonParser, java.lang.Class<T>) throws java.io.IOException",
+        "exception": "com.fasterxml.jackson.core.JsonProcessingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeTree(com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.core.TreeNode) throws java.io.IOException, com.fasterxml.jackson.core.JsonProcessingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeTree(com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.core.TreeNode) throws java.io.IOException",
+        "exception": "com.fasterxml.jackson.core.JsonProcessingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeTree(com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.JsonNode) throws java.io.IOException, com.fasterxml.jackson.core.JsonProcessingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeTree(com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.JsonNode) throws java.io.IOException",
+        "exception": "com.fasterxml.jackson.core.JsonProcessingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(com.fasterxml.jackson.core.JsonGenerator, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(com.fasterxml.jackson.core.JsonGenerator, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamWriteException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(com.fasterxml.jackson.core.JsonGenerator, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(com.fasterxml.jackson.core.JsonGenerator, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(com.fasterxml.jackson.core.JsonGenerator, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(com.fasterxml.jackson.core.JsonGenerator, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonGenerationException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(com.fasterxml.jackson.core.JsonGenerator, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(com.fasterxml.jackson.core.JsonGenerator, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.File, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.File, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamWriteException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.File, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.File, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.File, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.File, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonGenerationException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.File, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.File, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.OutputStream, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.OutputStream, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamWriteException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.OutputStream, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.OutputStream, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.OutputStream, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.OutputStream, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonGenerationException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.OutputStream, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.OutputStream, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.Writer, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.Writer, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamWriteException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.Writer, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.Writer, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.Writer, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.Writer, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonGenerationException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.Writer, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectMapper::writeValue(java.io.Writer, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method com.fasterxml.jackson.databind.JsonDeserializer<java.lang.Object> com.fasterxml.jackson.databind.ObjectReader::_findRootDeserializer(com.fasterxml.jackson.databind.DeserializationContext) throws com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method com.fasterxml.jackson.databind.JsonDeserializer<java.lang.Object> com.fasterxml.jackson.databind.ObjectReader::_findRootDeserializer(com.fasterxml.jackson.databind.DeserializationContext) throws com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method com.fasterxml.jackson.databind.JsonDeserializer<java.lang.Object> com.fasterxml.jackson.databind.ObjectReader::_findRootDeserializer(com.fasterxml.jackson.databind.DeserializationContext) throws com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method com.fasterxml.jackson.databind.JsonDeserializer<java.lang.Object> com.fasterxml.jackson.databind.ObjectReader::_findRootDeserializer(com.fasterxml.jackson.databind.DeserializationContext) throws com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method com.fasterxml.jackson.databind.JsonDeserializer<java.lang.Object> com.fasterxml.jackson.databind.ObjectReader::_findTreeDeserializer(com.fasterxml.jackson.databind.DeserializationContext) throws com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method com.fasterxml.jackson.databind.JsonDeserializer<java.lang.Object> com.fasterxml.jackson.databind.ObjectReader::_findTreeDeserializer(com.fasterxml.jackson.databind.DeserializationContext) throws com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method com.fasterxml.jackson.databind.JsonDeserializer<java.lang.Object> com.fasterxml.jackson.databind.ObjectReader::_findTreeDeserializer(com.fasterxml.jackson.databind.DeserializationContext) throws com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method com.fasterxml.jackson.databind.JsonDeserializer<java.lang.Object> com.fasterxml.jackson.databind.ObjectReader::_findTreeDeserializer(com.fasterxml.jackson.databind.DeserializationContext) throws com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectReader::_reportUndetectableSource(java.lang.Object) throws com.fasterxml.jackson.core.JsonParseException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectReader::_reportUndetectableSource(java.lang.Object) throws com.fasterxml.jackson.core.exc.StreamReadException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamReadException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectReader::_reportUndetectableSource(java.lang.Object) throws com.fasterxml.jackson.core.JsonParseException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectReader::_reportUndetectableSource(java.lang.Object) throws com.fasterxml.jackson.core.exc.StreamReadException",
+        "exception": "com.fasterxml.jackson.core.JsonParseException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectReader::_reportUnkownFormat(com.fasterxml.jackson.databind.deser.DataFormatReaders, com.fasterxml.jackson.databind.deser.DataFormatReaders.Match) throws com.fasterxml.jackson.core.JsonProcessingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectReader::_reportUnkownFormat(com.fasterxml.jackson.databind.deser.DataFormatReaders, com.fasterxml.jackson.databind.deser.DataFormatReaders.Match) throws java.io.IOException",
+        "exception": "java.io.IOException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectReader::_reportUnkownFormat(com.fasterxml.jackson.databind.deser.DataFormatReaders, com.fasterxml.jackson.databind.deser.DataFormatReaders.Match) throws com.fasterxml.jackson.core.JsonProcessingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectReader::_reportUnkownFormat(com.fasterxml.jackson.databind.deser.DataFormatReaders, com.fasterxml.jackson.databind.deser.DataFormatReaders.Match) throws java.io.IOException",
+        "exception": "com.fasterxml.jackson.core.JsonProcessingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.DataOutput, java.lang.Object) throws java.io.IOException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.DataOutput, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamWriteException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.DataOutput, java.lang.Object) throws java.io.IOException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.DataOutput, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.File, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.File, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamWriteException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.File, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.File, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.File, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.File, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonGenerationException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.File, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.File, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.OutputStream, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.OutputStream, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamWriteException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.OutputStream, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.OutputStream, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.OutputStream, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.OutputStream, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonGenerationException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.OutputStream, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.OutputStream, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.Writer, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.Writer, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.exc.StreamWriteException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.Writer, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.Writer, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.Writer, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.Writer, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.core.JsonGenerationException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.Writer, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException, com.fasterxml.jackson.databind.JsonMappingException",
+        "new": "method void com.fasterxml.jackson.databind.ObjectWriter::writeValue(java.io.Writer, java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.exc.StreamWriteException, com.fasterxml.jackson.databind.DatabindException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.serialVersionUIDUnchanged",
+        "old": "field com.fasterxml.jackson.databind.SerializationConfig.serialVersionUID",
+        "new": "field com.fasterxml.jackson.databind.SerializationConfig.serialVersionUID",
+        "serialVersionUID": "1",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter com.fasterxml.jackson.databind.SerializationConfig com.fasterxml.jackson.databind.SerializationConfig::_withMapperFeatures(===int===)",
+        "new": "parameter com.fasterxml.jackson.databind.SerializationConfig com.fasterxml.jackson.databind.SerializationConfig::_withMapperFeatures(===long===)",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.fasterxml.jackson.databind.SerializationFeature.EAGER_SERIALIZER_FETCH",
+        "new": "field com.fasterxml.jackson.databind.SerializationFeature.EAGER_SERIALIZER_FETCH",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.fasterxml.jackson.databind.SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS",
+        "new": "field com.fasterxml.jackson.databind.SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.fasterxml.jackson.databind.SerializationFeature.USE_EQUALITY_FOR_OBJECT_ID",
+        "new": "field com.fasterxml.jackson.databind.SerializationFeature.USE_EQUALITY_FOR_OBJECT_ID",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_BIGDECIMAL_AS_PLAIN",
+        "new": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_BIGDECIMAL_AS_PLAIN",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_CHAR_ARRAYS_AS_JSON_ARRAYS",
+        "new": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_CHAR_ARRAYS_AS_JSON_ARRAYS",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS",
+        "new": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS",
+        "new": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_EMPTY_JSON_ARRAYS",
+        "new": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_EMPTY_JSON_ARRAYS",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_ENUMS_USING_INDEX",
+        "new": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_ENUMS_USING_INDEX",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_ENUMS_USING_TO_STRING",
+        "new": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_ENUMS_USING_TO_STRING",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_ENUM_KEYS_USING_INDEX",
+        "new": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_ENUM_KEYS_USING_INDEX",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_NULL_MAP_VALUES",
+        "new": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_NULL_MAP_VALUES",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED",
+        "new": "field com.fasterxml.jackson.databind.SerializationFeature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.finalMethodAddedToNonFinalClass",
+        "new": "method com.fasterxml.jackson.databind.util.TokenBuffer com.fasterxml.jackson.databind.SerializerProvider::bufferForValueConversion()",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method java.lang.Class<?> com.fasterxml.jackson.databind.SerializerProvider::getSerializationView()",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.typeChanged",
+        "old": "field com.fasterxml.jackson.databind.cfg.MapperConfig<T extends com.fasterxml.jackson.databind.cfg.MapperConfig<T>>._mapperFeatures",
+        "new": "field com.fasterxml.jackson.databind.cfg.MapperConfig<T extends com.fasterxml.jackson.databind.cfg.MapperConfig<T>>._mapperFeatures",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.field.serialVersionUIDUnchanged",
+        "old": "field com.fasterxml.jackson.databind.cfg.MapperConfig<T extends com.fasterxml.jackson.databind.cfg.MapperConfig<T>>.serialVersionUID",
+        "new": "field com.fasterxml.jackson.databind.cfg.MapperConfig<T extends com.fasterxml.jackson.databind.cfg.MapperConfig<T>>.serialVersionUID",
+        "serialVersionUID": "2",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter void com.fasterxml.jackson.databind.cfg.MapperConfig<T extends com.fasterxml.jackson.databind.cfg.MapperConfig<T>>::<init>(com.fasterxml.jackson.databind.cfg.BaseSettings, ===int===)",
+        "new": "parameter void com.fasterxml.jackson.databind.cfg.MapperConfig<T extends com.fasterxml.jackson.databind.cfg.MapperConfig<T>>::<init>(com.fasterxml.jackson.databind.cfg.BaseSettings, ===long===)",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter void com.fasterxml.jackson.databind.cfg.MapperConfig<T extends com.fasterxml.jackson.databind.cfg.MapperConfig<T>>::<init>(com.fasterxml.jackson.databind.cfg.MapperConfig<T>, ===int===)",
+        "new": "parameter void com.fasterxml.jackson.databind.cfg.MapperConfig<T extends com.fasterxml.jackson.databind.cfg.MapperConfig<T>>::<init>(com.fasterxml.jackson.databind.cfg.MapperConfig<T>, ===long===)",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.deser.BeanDeserializerBuilder::_fixAccess(java.util.Collection<com.fasterxml.jackson.databind.deser.SettableBeanProperty>)",
+        "new": "method void com.fasterxml.jackson.databind.deser.BeanDeserializerBuilder::_fixAccess(java.util.Collection<com.fasterxml.jackson.databind.deser.SettableBeanProperty>) throws com.fasterxml.jackson.databind.JsonMappingException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.deser.BeanDeserializerBuilder::addBackReferenceProperty(java.lang.String, com.fasterxml.jackson.databind.deser.SettableBeanProperty)",
+        "new": "method void com.fasterxml.jackson.databind.deser.BeanDeserializerBuilder::addBackReferenceProperty(java.lang.String, com.fasterxml.jackson.databind.deser.SettableBeanProperty) throws com.fasterxml.jackson.databind.JsonMappingException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method void com.fasterxml.jackson.databind.deser.BeanDeserializerBuilder::addInjectable(com.fasterxml.jackson.databind.PropertyName, com.fasterxml.jackson.databind.JavaType, com.fasterxml.jackson.databind.util.Annotations, com.fasterxml.jackson.databind.introspect.AnnotatedMember, java.lang.Object)",
+        "new": "method void com.fasterxml.jackson.databind.deser.BeanDeserializerBuilder::addInjectable(com.fasterxml.jackson.databind.PropertyName, com.fasterxml.jackson.databind.JavaType, com.fasterxml.jackson.databind.util.Annotations, com.fasterxml.jackson.databind.introspect.AnnotatedMember, java.lang.Object) throws com.fasterxml.jackson.databind.JsonMappingException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedAdded",
+        "old": "method com.fasterxml.jackson.databind.JsonDeserializer<?> com.fasterxml.jackson.databind.deser.BeanDeserializerBuilder::build()",
+        "new": "method com.fasterxml.jackson.databind.JsonDeserializer<?> com.fasterxml.jackson.databind.deser.BeanDeserializerBuilder::build() throws com.fasterxml.jackson.databind.JsonMappingException",
+        "exception": "com.fasterxml.jackson.databind.JsonMappingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.class.nonFinalClassInheritsFromNewClass",
+        "old": "class com.fasterxml.jackson.databind.deser.UnresolvedForwardReference",
+        "new": "class com.fasterxml.jackson.databind.deser.UnresolvedForwardReference",
+        "superClass": "com.fasterxml.jackson.databind.DatabindException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.deser.impl.PropertyValue::assign(java.lang.Object) throws java.io.IOException, com.fasterxml.jackson.core.JsonProcessingException",
+        "new": "method void com.fasterxml.jackson.databind.deser.impl.PropertyValue::assign(java.lang.Object) throws java.io.IOException",
+        "exception": "com.fasterxml.jackson.core.JsonProcessingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.node.BinaryNode::serialize(com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.SerializerProvider) throws java.io.IOException, com.fasterxml.jackson.core.JsonProcessingException",
+        "new": "method void com.fasterxml.jackson.databind.node.BinaryNode::serialize(com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.SerializerProvider) throws java.io.IOException",
+        "exception": "com.fasterxml.jackson.core.JsonProcessingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.node.BaseJsonNode::serialize(com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.SerializerProvider) throws java.io.IOException, com.fasterxml.jackson.core.JsonProcessingException @ com.fasterxml.jackson.databind.node.NumericNode",
+        "new": "method void com.fasterxml.jackson.databind.node.BaseJsonNode::serialize(com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.SerializerProvider) throws java.io.IOException @ com.fasterxml.jackson.databind.node.NumericNode",
+        "exception": "com.fasterxml.jackson.core.JsonProcessingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.node.BaseJsonNode::serialize(com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.SerializerProvider) throws java.io.IOException, com.fasterxml.jackson.core.JsonProcessingException @ com.fasterxml.jackson.databind.node.ValueNode",
+        "new": "method void com.fasterxml.jackson.databind.node.BaseJsonNode::serialize(com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.SerializerProvider) throws java.io.IOException @ com.fasterxml.jackson.databind.node.ValueNode",
+        "exception": "com.fasterxml.jackson.core.JsonProcessingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.ser.std.BeanSerializerBase::serializeFieldsFiltered(java.lang.Object, com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.SerializerProvider) throws java.io.IOException, com.fasterxml.jackson.core.JsonGenerationException",
+        "new": "method void com.fasterxml.jackson.databind.ser.std.BeanSerializerBase::serializeFieldsFiltered(java.lang.Object, com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.SerializerProvider) throws java.io.IOException",
+        "exception": "com.fasterxml.jackson.core.JsonGenerationException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.method.exception.checkedRemoved",
+        "old": "method void com.fasterxml.jackson.databind.type.TypeBase::serialize(com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.SerializerProvider) throws java.io.IOException, com.fasterxml.jackson.core.JsonProcessingException",
+        "new": "method void com.fasterxml.jackson.databind.type.TypeBase::serialize(com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.SerializerProvider) throws java.io.IOException",
+        "exception": "com.fasterxml.jackson.core.JsonProcessingException",
+        "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
       }
     ]
   }

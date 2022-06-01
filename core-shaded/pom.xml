@@ -26,7 +26,7 @@
   <parent>
     <groupId>com.scylladb</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.13.0.1-SNAPSHOT</version>
+    <version>4.14.1.0-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-core-shaded</artifactId>
   <name>Java driver for Scylla and Apache Cassandra(R) - core with shaded deps</name>
@@ -94,6 +94,11 @@
       <artifactId>HdrHistogram</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.esri.geometry</groupId>
+      <artifactId>esri-geometry-api</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>org.apache.tinkerpop</groupId>
       <artifactId>gremlin-core</artifactId>
       <optional>true</optional>
@@ -146,9 +151,6 @@
                   -->
                   <include>com.scylladb:java-driver-core</include>
                   <include>io.netty:*</include>
-                  <include>com.esri.geometry:*</include>
-                  <include>org.json:*</include>
-                  <include>org.codehaus.jackson:*</include>
                   <include>com.fasterxml.jackson.core:*</include>
                 </includes>
               </artifactSet>
@@ -160,18 +162,6 @@
                 <relocation>
                   <pattern>io.netty</pattern>
                   <shadedPattern>com.datastax.oss.driver.shaded.netty</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>com.esri</pattern>
-                  <shadedPattern>com.datastax.oss.driver.shaded.esri</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.json</pattern>
-                  <shadedPattern>com.datastax.oss.driver.shaded.json</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.codehaus.jackson</pattern>
-                  <shadedPattern>com.datastax.oss.driver.shaded.codehaus.jackson</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>com.fasterxml.jackson</pattern>
@@ -190,24 +180,6 @@
                 </filter>
                 <filter>
                   <artifact>io.netty:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/**</exclude>
-                  </excludes>
-                </filter>
-                <filter>
-                  <artifact>com.esri.geometry:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/**</exclude>
-                  </excludes>
-                </filter>
-                <filter>
-                  <artifact>org.json:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/**</exclude>
-                  </excludes>
-                </filter>
-                <filter>
-                  <artifact>org.codehaus.jackson:*</artifact>
                   <excludes>
                     <exclude>META-INF/**</exclude>
                   </excludes>
@@ -311,6 +283,11 @@
                   <artifactId>jctools-core</artifactId>
                   <version>2.1.2</version>
                 </additionalDependency>
+                <additionalDependency>
+                  <groupId>com.esri.geometry</groupId>
+                  <artifactId>esri-geometry-api</artifactId>
+                  <version>1.2.1</version>
+                </additionalDependency>
               </additionalDependencies>
             </configuration>
           </execution>
@@ -340,7 +317,7 @@
                   <!--
                   1) Don't import packages shaded in the driver bundle. Note that shaded-guava lives
                   in its own bundle, so we must explicitly *not* mention it here.
-                  -->!com.datastax.oss.driver.shaded.netty.*, !com.datastax.oss.driver.shaded.esri.*, !com.datastax.oss.driver.shaded.json.*, !com.datastax.oss.driver.shaded.codehaus.jackson.*, !com.datastax.oss.driver.shaded.fasterxml.jackson.*,
+                  -->!com.datastax.oss.driver.shaded.netty.*, !com.datastax.oss.driver.shaded.fasterxml.jackson.*,
                   <!--
                   2) Don't include the packages below because they contain annotations only and are
                   not required at runtime.
@@ -359,14 +336,14 @@
                   <!--
                   5) Don't import packages imported by shaded classes, if they are not used by the
                   driver bundle.
-                  -->!com.google.protobuf.*, !com.jcraft.jzlib.*, !com.ning.compress.*, !lzma.sdk.*, !net.jpountz.xxhash.*, !org.bouncycastle.*, !org.conscrypt.*, !org.apache.commons.logging.*, !org.apache.log4j.*, !org.apache.logging.log4j.*, !org.eclipse.jetty.*, !org.jboss.marshalling.*, !sun.misc.*, !sun.security.*, !com.barchart.udt.*, !com.fasterxml.aalto.*, !com.sun.nio.sctp.*, !gnu.io.*, !org.xml.sax.*, !org.w3c.dom.*, *
+                  -->!com.google.protobuf.*, !com.jcraft.jzlib.*, !com.ning.compress.*, !lzma.sdk.*, !net.jpountz.xxhash.*, !org.bouncycastle.*, !org.conscrypt.*, !org.apache.commons.logging.*, !org.apache.log4j.*, !org.apache.logging.log4j.*, !org.eclipse.jetty.*, !org.jboss.marshalling.*, !sun.misc.*, !sun.security.*, !com.barchart.udt.*, !com.fasterxml.aalto.*, !com.sun.nio.sctp.*, !gnu.io.*, !org.xml.sax.*, !org.w3c.dom.*, !com.aayushatharva.brotli4j.*, !com.github.luben.zstd.*, *
                 </Import-Package>
                 <!--
                 Export:
                 1) The driver's packages (API and internal);
                 2) All shaded packages, except Guava which resides in a separate bundle.
                 -->
-                <Export-Package>com.datastax.oss.driver.api.core.*, com.datastax.oss.driver.internal.core.*, com.datastax.dse.driver.api.core.*, com.datastax.dse.driver.internal.core.*, com.datastax.oss.driver.shaded.netty.*, com.datastax.oss.driver.shaded.esri.*, com.datastax.oss.driver.shaded.json.*, com.datastax.oss.driver.shaded.codehaus.jackson.*, com.datastax.oss.driver.shaded.fasterxml.jackson.*,</Export-Package>
+                <Export-Package>com.datastax.oss.driver.api.core.*, com.datastax.oss.driver.internal.core.*, com.datastax.dse.driver.api.core.*, com.datastax.dse.driver.internal.core.*, com.datastax.oss.driver.shaded.netty.*, com.datastax.oss.driver.shaded.fasterxml.jackson.*,</Export-Package>
               </instructions>
               <rebuildBundle>true</rebuildBundle>
             </configuration>

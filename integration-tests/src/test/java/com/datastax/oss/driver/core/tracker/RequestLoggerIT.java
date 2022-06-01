@@ -214,7 +214,7 @@ public class RequestLoggerIT {
     sessionRuleRequest.session().execute(QUERY);
 
     // Then
-    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(5000)).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
         .contains("Success", "[0 values]", QUERY)
         .matches(WITH_PER_REQUEST_PREFIX);
@@ -229,7 +229,7 @@ public class RequestLoggerIT {
     sessionRuleDefaults.session().execute(QUERY);
 
     // Then
-    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(5000)).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
         .contains("Success", "[0 values]", QUERY)
         .matches(WITH_PER_REQUEST_PREFIX);
@@ -249,7 +249,7 @@ public class RequestLoggerIT {
     }
 
     // Then
-    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(5000)).doAppend(loggingEventCaptor.capture());
     ILoggingEvent log = loggingEventCaptor.getValue();
     assertThat(log.getFormattedMessage())
         .contains("Error", "[0 values]", QUERY)
@@ -272,7 +272,7 @@ public class RequestLoggerIT {
     }
 
     // Then
-    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(5000)).doAppend(loggingEventCaptor.capture());
     ILoggingEvent log = loggingEventCaptor.getValue();
     assertThat(log.getFormattedMessage())
         .contains("Error", "[0 values]", QUERY, ServerError.class.getName())
@@ -295,7 +295,7 @@ public class RequestLoggerIT {
     }
 
     // Then
-    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(5000)).doAppend(loggingEventCaptor.capture());
     ILoggingEvent log = loggingEventCaptor.getValue();
     assertThat(log.getFormattedMessage())
         .contains("Error", "[0 values]", QUERY, ServerError.class.getName())
@@ -314,7 +314,7 @@ public class RequestLoggerIT {
         .execute(SimpleStatement.builder(QUERY).setExecutionProfileName("low-threshold").build());
 
     // Then
-    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(5000)).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
         .contains("Slow", "[0 values]", QUERY)
         .matches(WITH_PER_REQUEST_PREFIX);
@@ -359,7 +359,7 @@ public class RequestLoggerIT {
         .execute(SimpleStatement.builder(QUERY).setExecutionProfileName("sorting-lbp").build());
 
     // Then
-    verify(appender, new Timeout(500, VerificationModeFactory.times(3)))
+    verify(appender, new Timeout(5000, VerificationModeFactory.times(3)))
         .doAppend(loggingEventCaptor.capture());
     List<ILoggingEvent> events = loggingEventCaptor.getAllValues();
     assertThat(events.get(0).getFormattedMessage())
@@ -392,7 +392,7 @@ public class RequestLoggerIT {
     sessionRuleNode.session().execute(QUERY);
 
     // Then
-    verify(appender, new Timeout(500, VerificationModeFactory.times(2)))
+    verify(appender, new Timeout(5000, VerificationModeFactory.times(2)))
         .doAppend(loggingEventCaptor.capture());
     List<ILoggingEvent> events = loggingEventCaptor.getAllValues();
     assertThat(events.get(0).getFormattedMessage())

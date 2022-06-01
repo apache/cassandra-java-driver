@@ -201,5 +201,5 @@ This should be used with caution, as it's possible to generate invalid CQL that 
 execution time; on the other hand, it can be used as a workaround to handle new CQL features that
 are not yet covered by the query builder.
 
-[QueryBuilder]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html
-[Relation]:     https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/querybuilder/relation/Relation.html
+[QueryBuilder]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html
+[Relation]:     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/relation/Relation.html

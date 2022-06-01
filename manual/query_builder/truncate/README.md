@@ -17,4 +17,4 @@ Truncate truncate2 = truncate(CqlIdentifier.fromCql("mytable"));
 Note that, at this stage, the query is ready to build. After creating a TRUNCATE query it does not
 take any values.
 
-[QueryBuilder]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html
+[QueryBuilder]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html

@@ -314,19 +314,19 @@ for (ColumnDefinitions.Definition definition : row.getColumnDefinitions()) {
 }
 ```
 
-[CqlSession]:                           https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/CqlSession.html
-[CqlSession#builder()]:                 https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/CqlSession.html#builder--
-[ResultSet]:                            https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/ResultSet.html
-[Row]:                                  https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/Row.html
-[CqlIdentifier]:                        https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/CqlIdentifier.html
-[AccessibleByName]:                     https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/data/AccessibleByName.html
-[GenericType]:                          https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
-[CqlDuration]:                          https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/data/CqlDuration.html
-[TupleValue]:                           https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/data/TupleValue.html
-[UdtValue]:                             https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/data/UdtValue.html
-[SessionBuilder.addContactPoint()]:     https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoint-java.net.InetSocketAddress-
-[SessionBuilder.addContactPoints()]:    https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoints-java.util.Collection-
-[SessionBuilder.withLocalDatacenter()]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withLocalDatacenter-java.lang.String-
+[CqlSession]:                           https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/CqlSession.html
+[CqlSession#builder()]:                 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/CqlSession.html#builder--
+[ResultSet]:                            https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[Row]:                                  https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/Row.html
+[CqlIdentifier]:                        https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/CqlIdentifier.html
+[AccessibleByName]:                     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/AccessibleByName.html
+[GenericType]:                          https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
+[CqlDuration]:                          https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/CqlDuration.html
+[TupleValue]:                           https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/TupleValue.html
+[UdtValue]:                             https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/UdtValue.html
+[SessionBuilder.addContactPoint()]:     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoint-java.net.InetSocketAddress-
+[SessionBuilder.addContactPoints()]:    https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoints-java.util.Collection-
+[SessionBuilder.withLocalDatacenter()]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withLocalDatacenter-java.lang.String-
 
 [CASSANDRA-10145]: https://issues.apache.org/jira/browse/CASSANDRA-10145
 

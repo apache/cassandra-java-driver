@@ -148,10 +148,10 @@ In this case, any annotations declared in `Dao1` would be chosen over `Dao2`.
 
 To control how the hierarchy is scanned, annotate interfaces with [@HierarchyScanStrategy].
 
-[@Dao]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/annotations/Dao.html
-[@DaoFactory]:   https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/annotations/DaoFactory.html
-[@DefaultNullSavingStrategy]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/annotations/DefaultNullSavingStrategy.html
-[@HierarchyScanStrategy]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/mapper/annotations/HierarchyScanStrategy.html
+[@Dao]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Dao.html
+[@DaoFactory]:   https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/DaoFactory.html
+[@DefaultNullSavingStrategy]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/DefaultNullSavingStrategy.html
+[@HierarchyScanStrategy]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/HierarchyScanStrategy.html
 [Entity Inheritance]: ../entities/#inheritance
 
 ```eval_rst

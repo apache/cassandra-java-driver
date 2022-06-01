@@ -2,6 +2,20 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.14.1
+
+- [improvement] JAVA-3013: Upgrade dependencies to address CVEs and other security issues, 4.14.1 edition
+- [improvement] JAVA-3003: Update jnr-posix to address CVE-2014-4043
+- [improvement] JAVA-2977: Update Netty to resolve higher-priority CVEs
+
+### 4.14.0
+
+- [bug] JAVA-2976: Support missing protocol v5 error codes CAS_WRITE_UNKNOWN, CDC_WRITE_FAILURE
+- [bug] JAVA-2987: BasicLoadBalancingPolicy remote computation assumes local DC is up and live
+- [bug] JAVA-2992: Include options into DefaultTableMetadata equals and hash methods
+- [improvement] JAVA-2982: Switch Esri geometry lib to an optional dependency
+- [improvement] JAVA-2959: Don't throw NoNodeAvailableException when all connections busy
+
 ### 4.13.0
 
 - [improvement] JAVA-2940: Add GraalVM native image build configurations
@@ -592,6 +606,17 @@ changelog](https://docs.datastax.com/en/developer/java-driver-dse/latest/changel
 - [new feature] JAVA-1501: Reprepare on the fly when we get an UNPREPARED response
 - [bug] JAVA-1499: Wait for load balancing policy at cluster initialization
 - [new feature] JAVA-1495: Add prepared statements
+
+## 3.11.1
+- [bug] JAVA-2967: Support native transport peer information for DSE 6.8.
+- [bug] JAVA-2976: Support missing protocol v5 error codes CAS_WRITE_UNKNOWN, CDC_WRITE_FAILURE.
+
+## 3.11.0
+
+- [improvement] JAVA-2705: Remove protocol v5 beta status, add v6-beta.
+- [bug] JAVA-2923: Detect and use Guava's new HostAndPort.getHost method.
+- [bug] JAVA-2922: Switch to modern framing format inside a channel handler.
+- [bug] JAVA-2924: Consider protocol version unsupported when server requires USE_BETA flag for it.
 
 ### 3.10.2
 

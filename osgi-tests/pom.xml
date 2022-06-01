@@ -26,7 +26,7 @@
   <parent>
     <groupId>com.scylladb</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.13.0.1-SNAPSHOT</version>
+    <version>4.14.1.0-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-osgi-tests</artifactId>
   <packaging>jar</packaging>
@@ -82,6 +82,10 @@
     <dependency>
       <groupId>org.reactivestreams</groupId>
       <artifactId>reactive-streams</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.esri.geometry</groupId>
+      <artifactId>esri-geometry-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.tinkerpop</groupId>

@@ -49,6 +49,7 @@ import com.datastax.oss.driver.internal.core.util.collection.CompositeQueryPlan;
 import com.datastax.oss.driver.internal.core.util.collection.LazyQueryPlan;
 import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
 import com.datastax.oss.driver.internal.core.util.collection.SimpleQueryPlan;
+import com.datastax.oss.driver.shaded.guava.common.base.Predicates;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
@@ -332,30 +333,18 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
 
           @Override
           protected Object[] computeNodes() {
-            Object[] dcs = liveNodes.dcs().toArray();
-            if (dcs.length <= 1) {
-              return EMPTY_NODES;
-            }
-            Object[] remoteNodes = new Object[(dcs.length - 1) * maxNodesPerRemoteDc];
-            int remoteNodesLength = 0;
-            for (Object dc : dcs) {
-              if (!dc.equals(localDc)) {
-                Object[] remoteNodesInDc = liveNodes.dc((String) dc).toArray();
-                for (int i = 0; i < maxNodesPerRemoteDc && i < remoteNodesInDc.length; i++) {
-                  remoteNodes[remoteNodesLength++] = remoteNodesInDc[i];
-                }
-              }
-            }
+            Object[] remoteNodes =
+                liveNodes.dcs().stream()
+                    .filter(Predicates.not(Predicates.equalTo(localDc)))
+                    .flatMap(dc -> liveNodes.dc(dc).stream().limit(maxNodesPerRemoteDc))
+                    .toArray();
+
+            int remoteNodesLength = remoteNodes.length;
             if (remoteNodesLength == 0) {
               return EMPTY_NODES;
             }
             shuffleHead(remoteNodes, remoteNodesLength);
-            if (remoteNodes.length == remoteNodesLength) {
-              return remoteNodes;
-            }
-            Object[] trimmedRemoteNodes = new Object[remoteNodesLength];
-            System.arraycopy(remoteNodes, 0, trimmedRemoteNodes, 0, remoteNodesLength);
-            return trimmedRemoteNodes;
+            return remoteNodes;
           }
         };
 

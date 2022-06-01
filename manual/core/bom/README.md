@@ -13,7 +13,7 @@ To import the driver's BOM, add the following section in your application's own 
       <dependency>
         <groupId>com.scylladb</groupId>
         <artifactId>java-driver-bom</artifactId>
-        <version>4.13.0</version>
+        <version>4.14.1</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -65,7 +65,7 @@ good idea to extract a property to keep it in sync with the BOM:
 ```xml
 <project>
   <properties>
-    <java-driver.version>4.13.0</java-driver.version>
+    <java-driver.version>4.14.1</java-driver.version>
   </properties>
   <dependencyManagement>
     <dependencies>

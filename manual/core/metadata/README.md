@@ -56,9 +56,9 @@ new keyspace in the schema metadata before the token metadata was updated.
 Schema and node state events are debounced. This allows you to control how often the metadata gets
 refreshed. See the [Performance](../performance/#debouncing) page for more details.
 
-[Session#getMetadata]:                          https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/Session.html#getMetadata--
-[Metadata]:                                     https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/metadata/Metadata.html
-[Node]:                                         https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/metadata/Node.html
+[Session#getMetadata]:                          https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/Session.html#getMetadata--
+[Metadata]:                                     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/Metadata.html
+[Node]:                                         https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/Node.html
 
 ```eval_rst
 .. toctree::

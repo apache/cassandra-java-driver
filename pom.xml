@@ -25,7 +25,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.scylladb</groupId>
   <artifactId>java-driver-parent</artifactId>
-  <version>4.13.0.1-SNAPSHOT</version>
+  <version>4.14.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Java Driver for Scylla and Apache Cassandra</name>
   <description>A driver for Scylla and Apache Cassandra(R) 2.1+ that works exclusively with the Cassandra Query Language version 3 (CQL3) and Cassandra's native protocol versions 3 and above.</description>
@@ -52,18 +52,18 @@
     <config.version>1.4.1</config.version>
     <hdrhistogram.version>2.1.12</hdrhistogram.version>
     <metrics.version>4.1.18</metrics.version>
-    <netty.version>4.1.60.Final</netty.version>
+    <netty.version>4.1.75.Final</netty.version>
     <esri.version>1.2.1</esri.version>
     <!--
     When upgrading TinkerPop please upgrade the version matrix in
     manual/core/integration/README.md
     -->
-    <tinkerpop.version>3.4.10</tinkerpop.version>
+    <tinkerpop.version>3.5.3</tinkerpop.version>
     <slf4j.version>1.7.26</slf4j.version>
     <reactive-streams.version>1.0.3</reactive-streams.version>
     <json.version>20210307</json.version>
-    <jackson.version>2.12.2</jackson.version>
-    <jackson-databind.version>2.12.2</jackson-databind.version>
+    <jackson.version>2.13.2</jackson.version>
+    <jackson-databind.version>2.13.2.2</jackson-databind.version>
     <legacy-jackson.version>1.9.12</legacy-jackson.version>
     <!-- optional dependencies -->
     <snappy.version>1.1.7.3</snappy.version>
@@ -86,7 +86,7 @@
     <awaitility.version>4.0.3</awaitility.version>
     <apacheds.version>2.0.0-M19</apacheds.version>
     <surefire.version>2.22.2</surefire.version>
-    <graalapi.version>21.0.0.2</graalapi.version>
+    <graalapi.version>22.0.0.2</graalapi.version>
     <skipTests>false</skipTests>
     <skipUnitTests>${skipTests}</skipUnitTests>
   </properties>
@@ -137,7 +137,7 @@
       <dependency>
         <groupId>com.github.jnr</groupId>
         <artifactId>jnr-posix</artifactId>
-        <version>3.1.5</version>
+        <version>3.1.15</version>
       </dependency>
       <dependency>
         <groupId>io.dropwizard.metrics</groupId>
@@ -524,7 +524,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-deploy-plugin</artifactId>
-          <version>2.7</version>
+          <version>2.8.2</version>
           <executions>
             <execution>
               <id>default-deploy</id>

@@ -92,4 +92,4 @@ dropFunction("log").ifExists();
 // DROP FUNCTION IF EXISTS log
 ```
 
-[SchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
+[SchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html

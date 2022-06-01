@@ -123,5 +123,5 @@ all FROM users WHERE user_id=? [v0=42]
 com.datastax.oss.driver.api.core.servererrors.InvalidQueryException: Undefined column name all
 ```
 
-[RequestTracker]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/tracker/RequestTracker.html
-[SessionBuilder.addRequestTracker]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addRequestTracker-com.datastax.oss.driver.api.core.tracker.RequestTracker-
+[RequestTracker]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/tracker/RequestTracker.html
+[SessionBuilder.addRequestTracker]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addRequestTracker-com.datastax.oss.driver.api.core.tracker.RequestTracker-

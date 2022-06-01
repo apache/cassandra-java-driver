@@ -59,10 +59,10 @@ the [configuration](../configuration/). Namely, these are: idempotent flag, quer
 consistency levels and page size. We recommended the configuration approach whenever possible (you
 can create execution profiles to capture common combinations of those options).
 
-[Statement]:        https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/Statement.html
-[StatementBuilder]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/StatementBuilder.html
-[execute]:          https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/Session.html#execute-com.datastax.oss.driver.api.core.cql.Statement-
-[executeAsync]:     https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/Session.html#executeAsync-com.datastax.oss.driver.api.core.cql.Statement-
+[Statement]:        https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/Statement.html
+[StatementBuilder]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/StatementBuilder.html
+[execute]:          https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/Session.html#execute-com.datastax.oss.driver.api.core.cql.Statement-
+[executeAsync]:     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/Session.html#executeAsync-com.datastax.oss.driver.api.core.cql.Statement-
 
 ```eval_rst
 .. toctree::

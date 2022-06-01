@@ -40,7 +40,14 @@ import org.junit.rules.TestRule;
 public class RandomTokenIT extends TokenITBase {
 
   private static final CustomCcmRule CCM_RULE =
-      CustomCcmRule.builder().withNodes(3).withCreateOption("-p RandomPartitioner").build();
+      CustomCcmRule.builder()
+          .withNodes(3)
+          .withCreateOption("-p RandomPartitioner")
+          .withCassandraConfiguration("range_request_timeout_in_ms", 45_000)
+          .withCassandraConfiguration("read_request_timeout_in_ms", 45_000)
+          .withCassandraConfiguration("write_request_timeout_in_ms", 45_000)
+          .withCassandraConfiguration("request_timeout_in_ms", 45_000)
+          .build();
 
   private static final SessionRule<CqlSession> SESSION_RULE =
       SessionRule.builder(CCM_RULE)

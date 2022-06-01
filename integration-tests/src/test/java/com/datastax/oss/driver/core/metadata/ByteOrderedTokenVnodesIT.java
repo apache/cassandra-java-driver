@@ -40,6 +40,10 @@ public class ByteOrderedTokenVnodesIT extends TokenITBase {
           .withNodes(3)
           .withCreateOption("-p ByteOrderedPartitioner")
           .withCreateOption("--vnodes")
+          .withCassandraConfiguration("range_request_timeout_in_ms", 45_000)
+          .withCassandraConfiguration("read_request_timeout_in_ms", 45_000)
+          .withCassandraConfiguration("write_request_timeout_in_ms", 45_000)
+          .withCassandraConfiguration("request_timeout_in_ms", 45_000)
           .build();
 
   private static final SessionRule<CqlSession> SESSION_RULE =

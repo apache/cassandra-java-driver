@@ -155,7 +155,6 @@ public class ChannelPool implements AsyncAutoCloseable {
    *     request path, and we want to avoid complex check-then-act semantics; therefore this might
    *     race and return a channel that is already closed, or {@code null}. In those cases, it is up
    *     to the caller to fail fast and move to the next node.
-   *     <p>There is no need to return the channel.
    */
   public DriverChannel next() {
     return next(null);

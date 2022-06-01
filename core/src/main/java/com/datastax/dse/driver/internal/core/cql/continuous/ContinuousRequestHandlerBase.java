@@ -24,6 +24,7 @@ import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
+import com.datastax.oss.driver.api.core.NodeUnavailableException;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -348,6 +349,8 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
         channel = session.getChannel(node, logPrefix);
         if (channel != null) {
           break;
+        } else {
+          recordError(node, new NodeUnavailableException(node));
         }
       }
     }
@@ -453,6 +456,10 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       // chosenCallback should always be complete by the time tests call this
       throw new AssertionError("Expected callback to be chosen at this point");
     }
+  }
+
+  private void recordError(@NonNull Node node, @NonNull Throwable error) {
+    errors.add(new AbstractMap.SimpleEntry<>(node, error));
   }
 
   /**
@@ -1432,10 +1439,6 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     }
 
     // ERROR HANDLING
-
-    private void recordError(@NonNull Node node, @NonNull Throwable error) {
-      errors.add(new AbstractMap.SimpleEntry<>(node, error));
-    }
 
     private void trackNodeError(@NonNull Node node, @NonNull Throwable error) {
       if (nodeErrorReported.compareAndSet(false, true)) {
