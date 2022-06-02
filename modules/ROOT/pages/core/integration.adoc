@@ -447,9 +447,9 @@ anywhere in your application you can exclude the dependency:
 </dependency>
 ----
 
-Starting with driver 4.14.0 Esri has been changed to an optional dependency.  You no longer have to
-explicitly exclude the dependency if it's not used, but if you do wish to make use of the Esri
-library you must now explicitly specify it as a dependency :
+Starting with driver 4.14.0, Esri has been changed to an optional dependency.  If the dependency is not used, you 
+no longer have to explicitly exclude the dependency. If you want to use the Esri
+library, explicitly specify it as a dependency:
 
 [source,xml]
 ----
