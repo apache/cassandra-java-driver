@@ -460,8 +460,8 @@ library you must now explicitly specify it as a dependency :
 </dependency>
 ----
 
-In the dependency specification above you should use any 1.2.x version of Esri (we recommend
-1.2.1).  These versions are older than the current 2.x versions of the library but they are
+In the dependency specification above, use any 1.2.x version of Esri. DataStax recommends
+1.2.1. These versions are older than the current 2.x versions of the library, but they are
 guaranteed to be fully compatible with DSE.
 
 === TinkerPop
