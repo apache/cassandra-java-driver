@@ -23,6 +23,8 @@ package com.datastax.oss.driver.api.testinfra.ccm;
 
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import com.datastax.oss.driver.shaded.guava.common.io.Resources;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -116,14 +118,37 @@ public class CcmBridge implements AutoCloseable {
   private static final Version V3_0_15 = Version.parse("3.0.15");
   private static final Version V2_1_19 = Version.parse("2.1.19");
 
+  private static final Map<String, String> ENVIRONMENT_MAP;
+
   static {
+    Map<String, String> envMap = Maps.newHashMap(new ProcessBuilder().environment());
     if (DSE_ENABLEMENT) {
       LOG.info("CCM Bridge configured with DSE version {}", VERSION);
     } else if (SCYLLA_ENABLEMENT) {
       LOG.info("CCM Bridge configured with Scylla version {}", VERSION);
+      if (String.valueOf(VERSION.getMajor()).matches("\\d{4}")) {
+        envMap.put("SCYLLA_PRODUCT", "enterprise");
+      }
     } else {
       LOG.info("CCM Bridge configured with Apache Cassandra version {}", VERSION);
     }
+
+    // If ccm.path is set, override the PATH variable with it.
+    String ccmPath = System.getProperty("ccm.path");
+    if (ccmPath != null) {
+      String existingPath = envMap.get("PATH");
+      if (existingPath == null) {
+        existingPath = "";
+      }
+      envMap.put("PATH", ccmPath + File.pathSeparator + existingPath);
+    }
+
+    // If ccm.java.home is set, override the JAVA_HOME variable with it.
+    String ccmJavaHome = System.getProperty("ccm.java.home");
+    if (ccmJavaHome != null) {
+      envMap.put("JAVA_HOME", ccmJavaHome);
+    }
+    ENVIRONMENT_MAP = ImmutableMap.copyOf(envMap);
   }
 
   private final int[] nodes;
@@ -398,7 +423,7 @@ public class CcmBridge implements AutoCloseable {
       executor.setStreamHandler(streamHandler);
       executor.setWatchdog(watchDog);
 
-      int retValue = executor.execute(cli);
+      int retValue = executor.execute(cli, ENVIRONMENT_MAP);
       if (retValue != 0) {
         LOG.error("Non-zero exit code ({}) returned from executing ccm command: {}", retValue, cli);
       }
