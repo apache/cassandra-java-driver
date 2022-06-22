@@ -69,6 +69,14 @@ public class VersionTest {
   }
 
   @Test
+  public void should_parse_scylla_release_candidates() {
+    assertThat(Version.parse("4.3.rc5"))
+        .hasMajorMinorPatch(4, 3, 0)
+        .hasToString("4.3.0-rc5")
+        .hasPreReleaseLabels("rc5");
+  }
+
+  @Test
   public void should_order_versions() {
     // by component
     assertOrder("1.2.0", "2.0.0", -1);

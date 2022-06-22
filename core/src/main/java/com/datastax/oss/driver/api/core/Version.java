@@ -42,7 +42,7 @@ public class Version implements Comparable<Version>, Serializable {
   private static final long serialVersionUID = 1;
 
   private static final String VERSION_REGEXP =
-      "(\\d+)\\.(\\d+)(\\.\\d+)?(\\.\\d+)?([~\\-]\\w[.\\w]*(?:-\\w[.\\w]*)*)?(\\+[.\\w]+)?";
+      "(\\d+)\\.(\\d+)(\\.(?:rc)?\\d+)?(\\.\\d+)?([~\\-]\\w[.\\w]*(?:-\\w[.\\w]*)*)?(\\+[.\\w]+)?";
 
   private static final Pattern pattern = Pattern.compile(VERSION_REGEXP);
 
@@ -100,8 +100,9 @@ public class Version implements Comparable<Version>, Serializable {
       int minor = Integer.parseInt(matcher.group(2));
 
       String pa = matcher.group(3);
+      boolean isRC = pa != null && pa.startsWith(".rc"); // Detect Scylla naming convention: X.Y.rcZ
       int patch =
-          pa == null || pa.isEmpty()
+          pa == null || pa.isEmpty() || isRC
               ? 0
               : Integer.parseInt(
                   pa.substring(1)); // dropping the initial '.' since it's included this time
@@ -115,10 +116,12 @@ public class Version implements Comparable<Version>, Serializable {
 
       String pr = matcher.group(5);
       String[] preReleases =
-          pr == null || pr.isEmpty()
-              ? null
-              : pr.substring(1)
-                  .split("-"); // drop initial '-' or '~' then split on the remaining ones
+          isRC
+              ? new String[] {pa.substring(1)}
+              : pr == null || pr.isEmpty()
+                  ? null
+                  : pr.substring(1)
+                      .split("-"); // drop initial '-' or '~' then split on the remaining ones
 
       String bl = matcher.group(6);
       String build = bl == null || bl.isEmpty() ? null : bl.substring(1); // drop the initial '+'
