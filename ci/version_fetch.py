@@ -32,9 +32,10 @@ SCYLLA_ENTERPRISE_RC_VERSION_REGEX = re.compile(r'(\d{4})\.(\d+)\.rc(\d+)')
 CASSANDRA_ENDPOINT = 'https://dlcdn.apache.org/cassandra/'
 
 CASSANDRA3_REGEX = re.compile(r'a href="(3)\.(\d+)\.(\d+)/"')
+CASSANDRA4_REGEX = re.compile(r'a href="(4)\.(\d+)\.(\d+)/"')
 
 COMMAND_LINE_ARGUMENT = re.compile(
-    r'((?:(scylla-oss-stable):(\d+))|(?:(scylla-enterprise-stable):(\d+))|(?:(cassandra3-stable):(\d+))|(?:(scylla-oss-rc))|(?:(scylla-enterprise-rc)))')
+    r'((?:(scylla-oss-stable):(\d+))|(?:(scylla-enterprise-stable):(\d+))|(?:(cassandra3-stable):(\d+))|(?:(cassandra4-stable):(\d+))|(?:(scylla-oss-rc))|(?:(scylla-enterprise-rc)))')
 
 
 def fetch_last_scylla_oss_minor_versions(count):
@@ -177,13 +178,34 @@ def fetch_last_cassandra3_minor_versions(count):
     data = [f'{e[0]}.{e[1]}.{e[2]}' for e in data]
     return data
 
+def fetch_last_cassandra4_minor_versions(count):
+    # Download folder listing for Cassandra download site
+    data = requests.get(CASSANDRA_ENDPOINT).text
+
+    # Parse only those version numbers which match '4.NUM.NUM'
+    # into tuple (4, NUM, NUM)
+    data = CASSANDRA4_REGEX.finditer(data)
+    data = map(lambda e: e.groups(), data)
+    data = map(lambda e: tuple(map(int, e)), data)
+
+    # Group by (major, minor) and select latest patch version
+    data = sorted(data)
+    data = groupby(data, key=lambda e: (e[0], e[1]))
+    data = ((e[0][0], e[0][1], max(e[1])[2])
+            for e in data)
+
+    # Return the latest ones
+    data = list(data)[-count:]
+    data = [f'{e[0]}.{e[1]}.{e[2]}' for e in data]
+    return data
+
 
 if __name__ == '__main__':
     names = set()
 
     for arg in sys.argv[1:]:
         if not COMMAND_LINE_ARGUMENT.fullmatch(arg):
-            print("Usage:", sys.argv[0], "[scylla-oss-stable:COUNT] [scylla-oss-rc] [scylla-enterprise-stable:COUNT] [scylla-enterprise-rc] [cassandra3-stable:COUNT]...", file=sys.stderr)
+            print("Usage:", sys.argv[0], "[scylla-oss-stable:COUNT] [scylla-oss-rc] [scylla-enterprise-stable:COUNT] [scylla-enterprise-rc] [cassandra3-stable:COUNT] [cassandra4-stable:COUNT]...", file=sys.stderr)
             sys.exit(1)
 
         groups = COMMAND_LINE_ARGUMENT.match(arg).groups()
@@ -198,6 +220,9 @@ if __name__ == '__main__':
         elif mode_name == 'cassandra3-stable':
             names.update(
                 fetch_last_cassandra3_minor_versions(int(groups[1])))
+        elif mode_name == 'cassandra4-stable':
+            names.update(
+                fetch_last_cassandra4_minor_versions(int(groups[1])))
         elif mode_name == 'scylla-oss-rc':
             names.update(fetch_all_scylla_oss_rc_versions())
         elif mode_name == 'scylla-enterprise-rc':
