@@ -34,6 +34,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A nexus to send requests to a Cassandra cluster.
@@ -138,6 +139,18 @@ public interface Session extends AsyncAutoCloseable {
   default Metadata refreshSchema() {
     BlockingOperation.checkNotDriverThread();
     return CompletableFutures.getUninterruptibly(refreshSchemaAsync());
+  }
+
+  /**
+   * Convenience method to call {@link #refreshSchemaAsync()} and block for the result.
+   * This method is bounded by the specified timeout.
+   *
+   * <p>This must not be called on a driver thread.
+   */
+  @NonNull
+  default Metadata refreshSchemaWithTimeout(long timeout, TimeUnit unit) {
+    BlockingOperation.checkNotDriverThread();
+    return CompletableFutures.getUninterruptiblyWithTimeout(refreshSchemaAsync(), timeout, unit);
   }
 
   /**

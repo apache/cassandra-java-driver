@@ -26,6 +26,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -141,6 +143,33 @@ public class CompletableFutures {
       while (true) {
         try {
           return stage.toCompletableFuture().get();
+        } catch (InterruptedException e) {
+          interrupted = true;
+        } catch (ExecutionException e) {
+          Throwable cause = e.getCause();
+          if (cause instanceof DriverException) {
+            throw ((DriverException) cause).copy();
+          }
+          Throwables.throwIfUnchecked(cause);
+          throw new DriverExecutionException(cause);
+        }
+      }
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
+  public static <T> T getUninterruptiblyWithTimeout(
+      CompletionStage<T> stage, long timeout, TimeUnit unit) {
+    boolean interrupted = false;
+    try {
+      while (true) {
+        try {
+          return stage.toCompletableFuture().get(timeout, unit);
+        } catch (TimeoutException e) {
+          throw new DriverExecutionException(e);
         } catch (InterruptedException e) {
           interrupted = true;
         } catch (ExecutionException e) {
