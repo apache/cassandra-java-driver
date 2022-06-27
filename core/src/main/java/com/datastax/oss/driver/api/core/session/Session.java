@@ -142,8 +142,8 @@ public interface Session extends AsyncAutoCloseable {
   }
 
   /**
-   * Convenience method to call {@link #refreshSchemaAsync()} and block for the result.
-   * This method is bounded by the specified timeout.
+   * Convenience method to call {@link #refreshSchemaAsync()} and block for the result. This method
+   * is bounded by the specified timeout.
    *
    * <p>This must not be called on a driver thread.
    */
