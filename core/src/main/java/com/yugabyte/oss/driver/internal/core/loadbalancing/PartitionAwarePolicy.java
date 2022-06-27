@@ -346,6 +346,7 @@ public class PartitionAwarePolicy extends YugabyteDefaultLoadBalancingPolicy
          * for Decimal types.
          */
       case ProtocolConstants.DataType.DECIMAL:
+      case ProtocolConstants.DataType.VARINT:
       case ProtocolConstants.DataType.TIME:
         channel.write(value);
         break;
@@ -443,7 +444,6 @@ public class PartitionAwarePolicy extends YugabyteDefaultLoadBalancingPolicy
       case ProtocolConstants.DataType.COUNTER:
       case ProtocolConstants.DataType.CUSTOM:
       case ProtocolConstants.DataType.TUPLE:
-      case ProtocolConstants.DataType.VARINT:
         throw new UnsupportedOperationException(
             "Datatype with Hex Code: " + typeCode + " not supported in a partition key column");
     }
