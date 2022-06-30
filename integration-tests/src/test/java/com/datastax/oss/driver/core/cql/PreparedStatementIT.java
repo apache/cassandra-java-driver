@@ -42,6 +42,7 @@ import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.CassandraSkip;
+import com.datastax.oss.driver.api.testinfra.ScyllaRequirement;
 import com.datastax.oss.driver.api.testinfra.ScyllaSkip;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -477,6 +478,10 @@ public class PreparedStatementIT {
 
   @Test
   @CassandraSkip // Functionality only available in Scylla
+  @ScyllaRequirement(
+      minEnterprise = "2021.0.0",
+      minOSS = "4.3.rc0",
+      description = "Requires LWT_ADD_METADATA_MARK extension")
   public void scylla_should_recognize_prepared_lwt_query() {
     CqlSession session = sessionRule.session();
     PreparedStatement statementNonLWT =

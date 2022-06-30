@@ -20,6 +20,8 @@ import static com.datastax.oss.driver.internal.osgi.support.CcmStagedReactor.CCM
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
+import com.datastax.oss.driver.api.testinfra.ScyllaRequirement;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import java.util.Objects;
 import java.util.Optional;
 import org.junit.AssumptionViolatedException;
@@ -83,6 +85,53 @@ public class CcmPaxExam extends PaxExam {
         }
       }
     }
+    ScyllaRequirement scyllaRequirement = description.getAnnotation(ScyllaRequirement.class);
+    if (scyllaRequirement != null) {
+      Optional<Version> scyllaVersionOption = CCM_BRIDGE.getScyllaVersion();
+      if (!scyllaVersionOption.isPresent()) {
+        notifier.fireTestAssumptionFailed(
+            new Failure(
+                description,
+                new AssumptionViolatedException("Test Requires Scylla but it is not configured.")));
+        return;
+      }
+      Version scyllaVersion = scyllaVersionOption.get();
+      if (CcmBridge.SCYLLA_ENTERPRISE) {
+        if (!scyllaRequirement.minEnterprise().isEmpty()) {
+          Version minVersion =
+              Objects.requireNonNull(Version.parse(scyllaRequirement.minEnterprise()));
+          if (minVersion.compareTo(scyllaVersion) > 0) {
+            fireRequirementsNotMet(
+                notifier, description, scyllaRequirement.minEnterprise(), false, false);
+            return;
+          }
+        }
+        if (!scyllaRequirement.maxEnterprise().isEmpty()) {
+          Version maxVersion =
+              Objects.requireNonNull(Version.parse(scyllaRequirement.maxEnterprise()));
+          if (maxVersion.compareTo(scyllaVersion) <= 0) {
+            fireRequirementsNotMet(
+                notifier, description, scyllaRequirement.maxEnterprise(), true, false);
+            return;
+          }
+        }
+      } else {
+        if (!scyllaRequirement.minOSS().isEmpty()) {
+          Version minVersion = Objects.requireNonNull(Version.parse(scyllaRequirement.minOSS()));
+          if (minVersion.compareTo(scyllaVersion) > 0) {
+            fireRequirementsNotMet(notifier, description, scyllaRequirement.minOSS(), false, false);
+            return;
+          }
+        }
+        if (!scyllaRequirement.maxOSS().isEmpty()) {
+          Version maxVersion = Objects.requireNonNull(Version.parse(scyllaRequirement.maxOSS()));
+          if (maxVersion.compareTo(CcmBridge.VERSION) <= 0) {
+            fireRequirementsNotMet(notifier, description, scyllaRequirement.maxOSS(), true, false);
+            return;
+          }
+        }
+      }
+    }
     super.run(notifier);
   }
 
@@ -97,9 +146,13 @@ public class CcmPaxExam extends PaxExam {
             String.format(
                 "Test requires %s %s %s but %s is configured.  Description: %s",
                 lessThan ? "less than" : "at least",
-                dse ? "DSE" : "C*",
+                dse ? "DSE" : (CcmBridge.SCYLLA_ENABLEMENT ? "SCYLLA" : "C*"),
                 requirement,
-                dse ? CCM_BRIDGE.getDseVersion().orElse(null) : CCM_BRIDGE.getCassandraVersion(),
+                dse
+                    ? CCM_BRIDGE.getDseVersion().orElse(null)
+                    : (CcmBridge.SCYLLA_ENABLEMENT
+                        ? CCM_BRIDGE.getScyllaVersion().orElse(null)
+                        : CCM_BRIDGE.getCassandraVersion()),
                 description));
     notifier.fireTestAssumptionFailed(new Failure(description, e));
   }

@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.testinfra.*;
+import java.util.Objects;
 import java.util.Optional;
 import org.junit.AssumptionViolatedException;
 import org.junit.runner.Description;
@@ -69,9 +70,13 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
             String.format(
                 "Test requires %s %s %s but %s is configured.  Description: %s",
                 lessThan ? "less than" : "at least",
-                dse ? "DSE" : "C*",
+                dse ? "DSE" : (CcmBridge.SCYLLA_ENABLEMENT ? "SCYLLA" : "C*"),
                 requirement,
-                dse ? ccmBridge.getDseVersion().orElse(null) : ccmBridge.getCassandraVersion(),
+                dse
+                    ? ccmBridge.getDseVersion().orElse(null)
+                    : (CcmBridge.SCYLLA_ENABLEMENT
+                        ? ccmBridge.getScyllaVersion().orElse(null)
+                        : ccmBridge.getCassandraVersion()),
                 description));
       }
     };
@@ -163,6 +168,51 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
         }
       }
     }
+
+    ScyllaRequirement scyllaRequirement = description.getAnnotation(ScyllaRequirement.class);
+    if (scyllaRequirement != null) {
+      Optional<Version> scyllaVersionOption = ccmBridge.getScyllaVersion();
+      if (!scyllaVersionOption.isPresent()) {
+        return new Statement() {
+          @Override
+          public void evaluate() {
+            throw new AssumptionViolatedException(
+                "Test has Scylla version requirement, but CCMBridge is not configured for Scylla.");
+          }
+        };
+      }
+      Version scyllaVersion = scyllaVersionOption.get();
+      if (CcmBridge.SCYLLA_ENTERPRISE) {
+        if (!scyllaRequirement.minEnterprise().isEmpty()) {
+          Version minVersion =
+              Objects.requireNonNull(Version.parse(scyllaRequirement.minEnterprise()));
+          if (minVersion.compareTo(scyllaVersion) > 0) {
+            return buildErrorStatement(minVersion, scyllaRequirement.description(), false, false);
+          }
+        }
+        if (!scyllaRequirement.maxEnterprise().isEmpty()) {
+          Version maxVersion =
+              Objects.requireNonNull(Version.parse(scyllaRequirement.maxEnterprise()));
+          if (maxVersion.compareTo(scyllaVersion) <= 0) {
+            return buildErrorStatement(maxVersion, scyllaRequirement.description(), true, false);
+          }
+        }
+      } else {
+        if (!scyllaRequirement.minOSS().isEmpty()) {
+          Version minVersion = Objects.requireNonNull(Version.parse(scyllaRequirement.minOSS()));
+          if (minVersion.compareTo(scyllaVersion) > 0) {
+            return buildErrorStatement(minVersion, scyllaRequirement.description(), false, false);
+          }
+        }
+        if (!scyllaRequirement.maxOSS().isEmpty()) {
+          Version maxVersion = Objects.requireNonNull(Version.parse(scyllaRequirement.maxOSS()));
+          if (maxVersion.compareTo(CcmBridge.VERSION) <= 0) {
+            return buildErrorStatement(maxVersion, scyllaRequirement.description(), true, false);
+          }
+        }
+      }
+    }
+
     return super.apply(base, description);
   }
 

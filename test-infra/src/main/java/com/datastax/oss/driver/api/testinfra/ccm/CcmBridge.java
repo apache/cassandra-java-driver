@@ -70,6 +70,9 @@ public class CcmBridge implements AutoCloseable {
 
   public static final Boolean SCYLLA_ENABLEMENT = Boolean.getBoolean("ccm.scylla");
 
+  public static final Boolean SCYLLA_ENTERPRISE =
+      String.valueOf(VERSION.getMajor()).matches("\\d{4}");
+
   public static final String CLUSTER_NAME = "ccm_1";
 
   public static final String DEFAULT_CLIENT_TRUSTSTORE_PASSWORD = "fakePasswordForTests";
@@ -126,7 +129,7 @@ public class CcmBridge implements AutoCloseable {
       LOG.info("CCM Bridge configured with DSE version {}", VERSION);
     } else if (SCYLLA_ENABLEMENT) {
       LOG.info("CCM Bridge configured with Scylla version {}", VERSION);
-      if (String.valueOf(VERSION.getMajor()).matches("\\d{4}")) {
+      if (SCYLLA_ENTERPRISE) {
         envMap.put("SCYLLA_PRODUCT", "enterprise");
       }
     } else {
@@ -205,6 +208,14 @@ public class CcmBridge implements AutoCloseable {
   // Copied from Netty's PlatformDependent to avoid the dependency on Netty
   private static boolean isWindows() {
     return System.getProperty("os.name", "").toLowerCase(Locale.US).contains("win");
+  }
+
+  public Optional<Version> getScyllaVersion() {
+    return SCYLLA_ENABLEMENT ? Optional.of(VERSION) : Optional.empty();
+  }
+
+  public Optional<String> getScyllaUnparsedVersion() {
+    return SCYLLA_ENABLEMENT ? Optional.of(System.getProperty("ccm.version")) : Optional.empty();
   }
 
   public Optional<Version> getDseVersion() {

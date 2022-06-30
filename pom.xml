@@ -104,7 +104,7 @@
         <version>${netty.version}</version>
       </dependency>
       <dependency>
-        <!-- Only for integration tests, use the shaded JAR for production code -->
+        <!-- Only for integration tests, use the shaded JAR for production code. -->
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>25.1-jre</version>
