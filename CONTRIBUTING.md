@@ -352,7 +352,7 @@ public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
 Only use this for:
 
-* CCM tests that use `@CassandraRequirement` or `@DseRequirement` restrictions at the method level
+* CCM tests that use `@CassandraRequirement` or `@DseRequirement` or `@ScyllaRequirement` restrictions at the method level
   (ex: `BatchStatementIT`).
 * tests where you *really* need to restart from a clean state for every method.
 
