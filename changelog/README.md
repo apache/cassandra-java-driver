@@ -2,6 +2,10 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.14.2 (in progress)
+
+- [bug] JAVA-3002 JAVA-3005: Refresh entire node list when a new node is added
+
 ### 4.14.1
 
 - [improvement] JAVA-3013: Upgrade dependencies to address CVEs and other security issues, 4.14.1 edition
