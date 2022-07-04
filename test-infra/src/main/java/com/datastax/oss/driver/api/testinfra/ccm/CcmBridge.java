@@ -244,7 +244,17 @@ public class CcmBridge implements AutoCloseable {
 
   private String getCcmVersionString(Version version) {
     if (SCYLLA_ENABLEMENT) {
-      return "release:" + version.toString();
+      // It seems that Scylla versions like 5.0-rc2 cannot be passed to CCM create options as
+      // 5.0.0-rc2,
+      // so we remove patch number from here.
+      // Likewise, 2022.1.0-rc8 will be returned as 2022.1.rc8
+      String versionString = version.toString();
+      if (String.valueOf(version.getMajor()).matches("\\d{4}")) {
+        versionString = versionString.replace(".0-", ".");
+      } else {
+        versionString = versionString.replace(".0-", "-");
+      }
+      return "release:" + versionString;
     }
     // for 4.0 pre-releases, the CCM version string needs to be "4.0-alpha1" or "4.0-alpha2"
     // Version.toString() always adds a patch value, even if it's not specified when parsing.
