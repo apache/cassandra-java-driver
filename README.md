@@ -1,4 +1,4 @@
-# Datastax Java Driver for Apache Cassandra®
+# DataStax Java Driver for Apache Cassandra®
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.datastax.oss/java-driver-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.datastax.oss/java-driver-core)
 
