@@ -38,8 +38,10 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 
+@Ignore("@IntegrationTestDisabledFlaky")
 @Category(ParallelizableTests.class)
 public class MicrometerMetricsIT extends MetricsITBase {
 
