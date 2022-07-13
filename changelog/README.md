@@ -2,15 +2,19 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.14.2 (in progress)
+### 4.15.0 (in progress)
 
-- [bug] JAVA-3002 JAVA-3005: Refresh entire node list when a new node is added
+- [bug] JAVA-3021: Update table SchemaBuilder page to replace withPrimaryKey with withPartitionKey
+- [bug] JAVA-3005: Node list refresh behavior in 4.x is different from 3.x
+- [bug] JAVA-3002: spring-boot app keeps connecting to IP of replaced node
+- [improvement] JAVA-3023 Upgrade Netty to 4.1.77
+- [improvement] JAVA-2995: CodecNotFoundException doesn't extend DriverException
 
 ### 4.14.1
 
 - [improvement] JAVA-3013: Upgrade dependencies to address CVEs and other security issues, 4.14.1 edition
-- [improvement] JAVA-3003: Update jnr-posix to address CVE-2014-4043
 - [improvement] JAVA-2977: Update Netty to resolve higher-priority CVEs
+- [improvement] JAVA-3003: Update jnr-posix to address CVE-2014-4043
 
 ### 4.14.0
 
