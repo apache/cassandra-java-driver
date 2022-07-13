@@ -147,7 +147,7 @@ public class NodeStateManagerTest {
   }
 
   @Test
-  public void should_add_node_if_up_event_and_not_in_metadata() {
+  public void should_refresh_node_list_if_up_event_and_not_in_metadata() {
     // Given
     new NodeStateManager(context);
 
@@ -157,7 +157,7 @@ public class NodeStateManagerTest {
 
     // Then
     verify(eventBus, never()).fire(any(NodeStateEvent.class));
-    verify(metadataManager).addNode(NEW_ADDRESS);
+    verify(metadataManager).refreshNodes();
   }
 
   @Test

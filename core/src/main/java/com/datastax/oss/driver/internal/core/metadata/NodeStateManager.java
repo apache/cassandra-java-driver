@@ -185,10 +185,10 @@ public class NodeStateManager implements AsyncAutoCloseable {
             }
           } else {
             LOG.debug(
-                "[{}] Received UP event for unknown node {}, adding it",
+                "[{}] Received UP event for unknown node {}, refreshing node list",
                 logPrefix,
                 event.broadcastRpcAddress);
-            metadataManager.addNode(event.broadcastRpcAddress);
+            metadataManager.refreshNodes();
           }
           break;
         case SUGGEST_DOWN:
