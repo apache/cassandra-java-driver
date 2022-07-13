@@ -31,12 +31,12 @@ CreateTable create = createTable("cycling", "cyclist_name").withPartitionKey("id
 A table with only one column is not so typical however.  At this point you may provide partition,
 clustering, regular and static columns using any of the following API methods:
 
-* `withPrimaryKey(name, dataType)`
+* `withPartitionKey(name, dataType)`
 * `withClusteringColumn(name, dataType)`
 * `withColumn(name, dataType)`
 * `withStaticColumn(name, dataType)`
 
-Primary key precedence is driven by the order of `withPrimaryKey` and `withClusteringKey`
+Primary key precedence is driven by the order of `withPartitionKey` and `withClusteringKey`
 invocations, for example:
 
 
