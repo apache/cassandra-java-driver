@@ -34,7 +34,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.yugabyte</groupId>
   <artifactId>java-driver-parent</artifactId>
-  <version>4.6.0-yb-12-SNAPSHOT</version>
+  <version>4.6.0-yb-13-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Java Driver for YugaByteDB</name>
   <description>Java Driver for YugaByteDB; derived from DataStax Java Driver for Apache Cassandra.</description>
