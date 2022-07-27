@@ -2,6 +2,8 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+ - [bug] JAVA-2911: Prevent control connection from scheduling too many reconnections
+
  - [improvement] JAVA-2905: Prevent new connections from using a protocol version higher than the negotiated one
  - [new feature] JAVA-2793: Add composite config loader
 
