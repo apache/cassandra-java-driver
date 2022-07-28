@@ -374,6 +374,7 @@ public class BoundStatementCcmIT {
   }
 
   @Test
+  @ScyllaSkip /* Skipping due to https://github.com/scylladb/scylla/issues/10956. */
   public void should_set_all_occurrences_of_variable() {
     CqlSession session = sessionRule.session();
     PreparedStatement ps = session.prepare("INSERT INTO test3 (pk1, pk2, v) VALUES (:i, :i, :i)");
