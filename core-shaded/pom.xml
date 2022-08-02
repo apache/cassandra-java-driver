@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.14.1-SNAPSHOT</version>
+    <version>4.15.0-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-core-shaded</artifactId>
   <name>DataStax Java driver for Apache Cassandra(R) - core with shaded deps</name>
@@ -331,7 +331,7 @@
                   <!--
                   5) Don't import packages imported by shaded classes, if they are not used by the
                   driver bundle.
-                  -->!com.google.protobuf.*, !com.jcraft.jzlib.*, !com.ning.compress.*, !lzma.sdk.*, !net.jpountz.xxhash.*, !org.bouncycastle.*, !org.conscrypt.*, !org.apache.commons.logging.*, !org.apache.log4j.*, !org.apache.logging.log4j.*, !org.eclipse.jetty.*, !org.jboss.marshalling.*, !sun.misc.*, !sun.security.*, !com.barchart.udt.*, !com.fasterxml.aalto.*, !com.sun.nio.sctp.*, !gnu.io.*, !org.xml.sax.*, !org.w3c.dom.*, *
+                  -->!com.google.protobuf.*, !com.jcraft.jzlib.*, !com.ning.compress.*, !lzma.sdk.*, !net.jpountz.xxhash.*, !org.bouncycastle.*, !org.conscrypt.*, !org.apache.commons.logging.*, !org.apache.log4j.*, !org.apache.logging.log4j.*, !org.eclipse.jetty.*, !org.jboss.marshalling.*, !sun.misc.*, !sun.security.*, !com.barchart.udt.*, !com.fasterxml.aalto.*, !com.sun.nio.sctp.*, !gnu.io.*, !org.xml.sax.*, !org.w3c.dom.*, !com.aayushatharva.brotli4j.*, !com.github.luben.zstd.*, *
                 </Import-Package>
                 <!--
                 Export:
