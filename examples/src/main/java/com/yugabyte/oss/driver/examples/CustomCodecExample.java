@@ -26,8 +26,13 @@ public class CustomCodecExample {
             session.execute(createKeyspace);
             System.out.println("Created keyspace ybdemo");
 
+            //Drop table
+            String dropTable = "drop table if exists ybdemo.customcodectest;";
+            session.execute(dropTable);
+            System.out.println("Dropped table customcodectest");
+
             // Create table 'employee', if it does not exist.
-            String createTable = "create table ybdemo.customcodectest(id int Primary key, doublelist list<double>, longlist list<bigint>);";
+            String createTable = "create table  ybdemo.customcodectest(id int Primary key, doublelist list<double>, longlist list<bigint>);";
             session.execute(createTable);
             System.out.println("Created table customcodectest");
 
@@ -42,7 +47,7 @@ public class CustomCodecExample {
             List<Row> rows = selectResult.all();
             double[] doublelist = rows.get(0).get("doublelist",double[].class);
             long[] longlist = rows.get(0).get("longlist",long[].class);
-            
+
             System.out.println("Double list returned:");
             for(int i = 0; i<doublelist.length;i++)
                 System.out.print(doublelist[i] + ",");
