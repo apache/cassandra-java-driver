@@ -34,9 +34,9 @@ import com.datastax.oss.driver.internal.core.servererrors.DefaultWriteTypeRegist
 import com.datastax.oss.driver.internal.core.session.throttling.PassThroughRequestThrottler;
 import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
 import com.datastax.oss.protocol.internal.Frame;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.channel.EventLoop;
 import java.time.Duration;
-import javax.annotation.Nullable;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 
