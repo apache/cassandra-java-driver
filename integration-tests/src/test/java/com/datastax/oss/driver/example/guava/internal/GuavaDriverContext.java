@@ -33,7 +33,8 @@ import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
  */
 public class GuavaDriverContext extends DefaultDriverContext {
 
-  public GuavaDriverContext(DriverConfigLoader configLoader, ProgrammaticArguments programmaticArguments) {
+  public GuavaDriverContext(
+      DriverConfigLoader configLoader, ProgrammaticArguments programmaticArguments) {
     super(configLoader, programmaticArguments);
   }
 
