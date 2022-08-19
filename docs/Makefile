@@ -95,6 +95,12 @@ preview: setup
 multiversionpreview: multiversion
 	$(POETRY) run python -m http.server 5500 --directory $(BUILDDIR)/dirhtml
 
+.PHONY: redirects
+redirects: setup
+	$(POETRY) run redirects-cli fromfile --yaml-file _utils/redirects.yaml --output-dir $(BUILDDIR)/dirhtml
+	@echo
+	@echo "Build finished. The HTML pages are in $(BUILDDIR)/dirhtml."
+
 # Test commands
 .PHONY: test
 test: setup

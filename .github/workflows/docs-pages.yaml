@@ -33,6 +33,8 @@ jobs:
           java-version: 1.8
       - name: Set up env
         run: make -C docs setupenv
+      - name: Build redirects
+        run: make -C docs redirects
       - name: Build docs
         run: make -C docs multiversion
       - name: Deploy docs to GitHub Pages
