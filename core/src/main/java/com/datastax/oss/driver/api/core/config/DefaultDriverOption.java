@@ -943,13 +943,13 @@ public enum DefaultDriverOption implements DriverOption {
    *
    * <p>Value-type: {@link String}
    */
-  SOCKS_PROXY_HOST("socks.proxyHost"),
+  SOCKS_PROXY_HOST("socks.proxy-host"),
   /**
    * Port which the Socks5 Proxy runs on
    *
    * <p>Value-type: int
    */
-  SOCKS_PROXY_PORT("socks.proxyPort"),
+  SOCKS_PROXY_PORT("socks.proxy-port"),
   ;
 
   private final String path;
