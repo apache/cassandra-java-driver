@@ -225,4 +225,12 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    */
   @NonNull
   Select usingTimeout(@NonNull BindMarker timeout);
+
+  /**
+   * Adds an BYPASS CACHE clause to this query.
+   *
+   * <p>This method is idempotent, calling it multiple times will only add a single clause.
+   */
+  @NonNull
+  Select bypassCache();
 }

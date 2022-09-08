@@ -57,6 +57,7 @@ public class DefaultSelect implements SelectFrom, Select {
   private final Object limit;
   private final Object perPartitionLimit;
   private final boolean allowsFiltering;
+  private final boolean bypassCache;
   private final Object timeout;
 
   public DefaultSelect(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
@@ -71,6 +72,7 @@ public class DefaultSelect implements SelectFrom, Select {
         ImmutableMap.of(),
         null,
         null,
+        false,
         false,
         null);
   }
@@ -94,6 +96,7 @@ public class DefaultSelect implements SelectFrom, Select {
       @Nullable Object limit,
       @Nullable Object perPartitionLimit,
       boolean allowsFiltering,
+      boolean bypassCache,
       @Nullable Object timeout) {
     this.groupByClauses = groupByClauses;
     this.orderings = orderings;
@@ -111,6 +114,7 @@ public class DefaultSelect implements SelectFrom, Select {
     this.limit = limit;
     this.perPartitionLimit = perPartitionLimit;
     this.allowsFiltering = allowsFiltering;
+    this.bypassCache = bypassCache;
     Preconditions.checkArgument(
         timeout == null || timeout instanceof CqlDuration || timeout instanceof BindMarker,
         "TIMEOUT value must be a BindMarker or a CqlDuration");
@@ -132,6 +136,7 @@ public class DefaultSelect implements SelectFrom, Select {
         limit,
         perPartitionLimit,
         allowsFiltering,
+        bypassCache,
         timeout);
   }
 
@@ -150,6 +155,7 @@ public class DefaultSelect implements SelectFrom, Select {
         limit,
         perPartitionLimit,
         allowsFiltering,
+        bypassCache,
         timeout);
   }
 
@@ -210,6 +216,7 @@ public class DefaultSelect implements SelectFrom, Select {
         limit,
         perPartitionLimit,
         allowsFiltering,
+        bypassCache,
         timeout);
   }
 
@@ -239,6 +246,7 @@ public class DefaultSelect implements SelectFrom, Select {
         limit,
         perPartitionLimit,
         allowsFiltering,
+        bypassCache,
         timeout);
   }
 
@@ -268,6 +276,7 @@ public class DefaultSelect implements SelectFrom, Select {
         limit,
         perPartitionLimit,
         allowsFiltering,
+        bypassCache,
         timeout);
   }
 
@@ -297,6 +306,7 @@ public class DefaultSelect implements SelectFrom, Select {
         limit,
         perPartitionLimit,
         allowsFiltering,
+        bypassCache,
         timeout);
   }
 
@@ -316,6 +326,7 @@ public class DefaultSelect implements SelectFrom, Select {
         limit,
         perPartitionLimit,
         allowsFiltering,
+        bypassCache,
         timeout);
   }
 
@@ -334,6 +345,7 @@ public class DefaultSelect implements SelectFrom, Select {
         bindMarker,
         perPartitionLimit,
         allowsFiltering,
+        bypassCache,
         timeout);
   }
 
@@ -354,6 +366,7 @@ public class DefaultSelect implements SelectFrom, Select {
         limit,
         perPartitionLimit,
         allowsFiltering,
+        bypassCache,
         timeout);
   }
 
@@ -372,6 +385,7 @@ public class DefaultSelect implements SelectFrom, Select {
         limit,
         bindMarker,
         allowsFiltering,
+        bypassCache,
         timeout);
   }
 
@@ -390,8 +404,29 @@ public class DefaultSelect implements SelectFrom, Select {
         limit,
         perPartitionLimit,
         true,
+        bypassCache,
         timeout);
   }
+
+  @NonNull
+  @Override
+  public Select bypassCache() {
+    return new DefaultSelect(
+        keyspace,
+        table,
+        isJson,
+        isDistinct,
+        selectors,
+        relations,
+        groupByClauses,
+        orderings,
+        limit,
+        perPartitionLimit,
+        allowsFiltering,
+        true,
+        timeout);
+  }
+
   @NonNull
   @Override
   public Select usingTimeout(@NonNull final CqlDuration timeout) {
@@ -407,6 +442,7 @@ public class DefaultSelect implements SelectFrom, Select {
         limit,
         perPartitionLimit,
         allowsFiltering,
+        bypassCache,
         timeout);
   }
 
@@ -425,6 +461,7 @@ public class DefaultSelect implements SelectFrom, Select {
         limit,
         perPartitionLimit,
         allowsFiltering,
+        bypassCache,
         timeout);
   }
 
@@ -480,6 +517,10 @@ public class DefaultSelect implements SelectFrom, Select {
 
     if (allowsFiltering) {
       builder.append(" ALLOW FILTERING");
+    }
+
+    if (bypassCache) {
+      builder.append(" BYPASS CACHE");
     }
 
     if (timeout != null) {
@@ -573,6 +614,10 @@ public class DefaultSelect implements SelectFrom, Select {
 
   public boolean allowsFiltering() {
     return allowsFiltering;
+  }
+
+  public boolean bypassesCache() {
+    return bypassCache;
   }
 
   @Nullable
