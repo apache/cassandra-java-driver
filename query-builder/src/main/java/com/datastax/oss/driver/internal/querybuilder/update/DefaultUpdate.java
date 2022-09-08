@@ -13,11 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2022 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.querybuilder.update;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
+import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
 import com.datastax.oss.driver.api.querybuilder.condition.Condition;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
@@ -41,6 +48,7 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
   private final CqlIdentifier table;
   private final Object timestamp;
   private final Object ttlInSeconds;
+  private final Object timeout;
   private final ImmutableList<Assignment> assignments;
   private final ImmutableList<Relation> relations;
   private final boolean ifExists;
@@ -50,6 +58,7 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
     this(
         keyspace,
         table,
+        null,
         null,
         null,
         ImmutableList.of(),
@@ -63,6 +72,7 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
       @NonNull CqlIdentifier table,
       @Nullable Object timestamp,
       @Nullable Object ttlInSeconds,
+      @Nullable Object timeout,
       @NonNull ImmutableList<Assignment> assignments,
       @NonNull ImmutableList<Relation> relations,
       boolean ifExists,
@@ -75,11 +85,14 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
             || ttlInSeconds instanceof Integer
             || ttlInSeconds instanceof BindMarker,
         "TTL value must be a BindMarker or an Integer");
-
+    Preconditions.checkArgument(
+        timeout == null || timeout instanceof CqlDuration || timeout instanceof BindMarker,
+        "TIMEOUT value must be a BindMarker or a CqlDuration");
     this.keyspace = keyspace;
     this.table = table;
     this.timestamp = timestamp;
     this.ttlInSeconds = ttlInSeconds;
+    this.timeout = timeout;
     this.assignments = assignments;
     this.relations = relations;
     this.ifExists = ifExists;
@@ -90,28 +103,90 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
   @Override
   public UpdateStart usingTimestamp(long newTimestamp) {
     return new DefaultUpdate(
-        keyspace, table, newTimestamp, ttlInSeconds, assignments, relations, ifExists, conditions);
+        keyspace,
+        table,
+        newTimestamp,
+        ttlInSeconds,
+        timeout,
+        assignments,
+        relations,
+        ifExists,
+        conditions);
   }
 
   @NonNull
   @Override
   public UpdateStart usingTimestamp(@NonNull BindMarker newTimestamp) {
     return new DefaultUpdate(
-        keyspace, table, newTimestamp, ttlInSeconds, assignments, relations, ifExists, conditions);
+        keyspace,
+        table,
+        newTimestamp,
+        ttlInSeconds,
+        timeout,
+        assignments,
+        relations,
+        ifExists,
+        conditions);
   }
 
   @NonNull
   @Override
   public UpdateStart usingTtl(int ttlInSeconds) {
     return new DefaultUpdate(
-        keyspace, table, timestamp, ttlInSeconds, assignments, relations, ifExists, conditions);
+        keyspace,
+        table,
+        timestamp,
+        ttlInSeconds,
+        timeout,
+        assignments,
+        relations,
+        ifExists,
+        conditions);
   }
 
   @NonNull
   @Override
   public UpdateStart usingTtl(@NonNull BindMarker ttlInSeconds) {
     return new DefaultUpdate(
-        keyspace, table, timestamp, ttlInSeconds, assignments, relations, ifExists, conditions);
+        keyspace,
+        table,
+        timestamp,
+        ttlInSeconds,
+        timeout,
+        assignments,
+        relations,
+        ifExists,
+        conditions);
+  }
+
+  @NonNull
+  @Override
+  public UpdateStart usingTimeout(@NonNull CqlDuration timeout) {
+    return new DefaultUpdate(
+        keyspace,
+        table,
+        timestamp,
+        ttlInSeconds,
+        timeout,
+        assignments,
+        relations,
+        ifExists,
+        conditions);
+  }
+
+  @NonNull
+  @Override
+  public UpdateStart usingTimeout(@NonNull BindMarker timeout) {
+    return new DefaultUpdate(
+        keyspace,
+        table,
+        timestamp,
+        ttlInSeconds,
+        timeout,
+        assignments,
+        relations,
+        ifExists,
+        conditions);
   }
 
   @NonNull
@@ -129,7 +204,15 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
   @NonNull
   public UpdateWithAssignments withAssignments(@NonNull ImmutableList<Assignment> newAssignments) {
     return new DefaultUpdate(
-        keyspace, table, timestamp, ttlInSeconds, newAssignments, relations, ifExists, conditions);
+        keyspace,
+        table,
+        timestamp,
+        ttlInSeconds,
+        timeout,
+        newAssignments,
+        relations,
+        ifExists,
+        conditions);
   }
 
   @NonNull
@@ -147,14 +230,30 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
   @NonNull
   public Update withRelations(@NonNull ImmutableList<Relation> newRelations) {
     return new DefaultUpdate(
-        keyspace, table, timestamp, ttlInSeconds, assignments, newRelations, ifExists, conditions);
+        keyspace,
+        table,
+        timestamp,
+        ttlInSeconds,
+        timeout,
+        assignments,
+        newRelations,
+        ifExists,
+        conditions);
   }
 
   @NonNull
   @Override
   public Update ifExists() {
     return new DefaultUpdate(
-        keyspace, table, timestamp, ttlInSeconds, assignments, relations, true, conditions);
+        keyspace,
+        table,
+        timestamp,
+        ttlInSeconds,
+        timeout,
+        assignments,
+        relations,
+        true,
+        conditions);
   }
 
   @NonNull
@@ -172,7 +271,15 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
   @NonNull
   public Update withConditions(@NonNull ImmutableList<Condition> newConditions) {
     return new DefaultUpdate(
-        keyspace, table, timestamp, ttlInSeconds, assignments, relations, false, newConditions);
+        keyspace,
+        table,
+        timestamp,
+        ttlInSeconds,
+        timeout,
+        assignments,
+        relations,
+        false,
+        newConditions);
   }
 
   @NonNull
@@ -181,8 +288,10 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
     StringBuilder builder = new StringBuilder("UPDATE ");
     CqlHelper.qualify(keyspace, table, builder);
 
+    boolean hasUsing = false;
     if (timestamp != null) {
       builder.append(" USING TIMESTAMP ");
+      hasUsing = true;
       if (timestamp instanceof BindMarker) {
         ((BindMarker) timestamp).appendTo(builder);
       } else {
@@ -192,11 +301,22 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
 
     if (ttlInSeconds != null) {
       // choose the correct keyword based on whether or not we have a timestamp
-      builder.append((timestamp != null) ? " AND " : " USING ").append("TTL ");
+      builder.append(hasUsing ? " AND " : " USING ").append("TTL ");
+      hasUsing = true;
       if (ttlInSeconds instanceof BindMarker) {
         ((BindMarker) ttlInSeconds).appendTo(builder);
       } else {
         builder.append(ttlInSeconds);
+      }
+    }
+
+    if (timeout != null) {
+      builder.append(hasUsing ? " AND " : " USING ").append("TIMEOUT ");
+      hasUsing = true;
+      if (timeout instanceof BindMarker) {
+        ((BindMarker) timeout).appendTo(builder);
+      } else {
+        ((CqlDuration) timeout).appendTo(builder);
       }
     }
 
@@ -276,6 +396,11 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
   @Nullable
   public Object getTtl() {
     return ttlInSeconds;
+  }
+
+  @Nullable
+  public Object getTimeout() {
+    return timeout;
   }
 
   @NonNull

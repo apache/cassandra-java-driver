@@ -13,11 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2022 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.querybuilder.select;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
+import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
@@ -50,6 +57,7 @@ public class DefaultSelect implements SelectFrom, Select {
   private final Object limit;
   private final Object perPartitionLimit;
   private final boolean allowsFiltering;
+  private final Object timeout;
 
   public DefaultSelect(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
     this(
@@ -63,7 +71,8 @@ public class DefaultSelect implements SelectFrom, Select {
         ImmutableMap.of(),
         null,
         null,
-        false);
+        false,
+        null);
   }
 
   /**
@@ -84,7 +93,8 @@ public class DefaultSelect implements SelectFrom, Select {
       @NonNull ImmutableMap<CqlIdentifier, ClusteringOrder> orderings,
       @Nullable Object limit,
       @Nullable Object perPartitionLimit,
-      boolean allowsFiltering) {
+      boolean allowsFiltering,
+      @Nullable Object timeout) {
     this.groupByClauses = groupByClauses;
     this.orderings = orderings;
     Preconditions.checkArgument(
@@ -101,6 +111,10 @@ public class DefaultSelect implements SelectFrom, Select {
     this.limit = limit;
     this.perPartitionLimit = perPartitionLimit;
     this.allowsFiltering = allowsFiltering;
+    Preconditions.checkArgument(
+        timeout == null || timeout instanceof CqlDuration || timeout instanceof BindMarker,
+        "TIMEOUT value must be a BindMarker or a CqlDuration");
+    this.timeout = timeout;
   }
 
   @NonNull
@@ -117,7 +131,8 @@ public class DefaultSelect implements SelectFrom, Select {
         orderings,
         limit,
         perPartitionLimit,
-        allowsFiltering);
+        allowsFiltering,
+        timeout);
   }
 
   @NonNull
@@ -134,7 +149,8 @@ public class DefaultSelect implements SelectFrom, Select {
         orderings,
         limit,
         perPartitionLimit,
-        allowsFiltering);
+        allowsFiltering,
+        timeout);
   }
 
   @NonNull
@@ -193,7 +209,8 @@ public class DefaultSelect implements SelectFrom, Select {
         orderings,
         limit,
         perPartitionLimit,
-        allowsFiltering);
+        allowsFiltering,
+        timeout);
   }
 
   @NonNull
@@ -221,7 +238,8 @@ public class DefaultSelect implements SelectFrom, Select {
         orderings,
         limit,
         perPartitionLimit,
-        allowsFiltering);
+        allowsFiltering,
+        timeout);
   }
 
   @NonNull
@@ -249,7 +267,8 @@ public class DefaultSelect implements SelectFrom, Select {
         orderings,
         limit,
         perPartitionLimit,
-        allowsFiltering);
+        allowsFiltering,
+        timeout);
   }
 
   @NonNull
@@ -277,7 +296,8 @@ public class DefaultSelect implements SelectFrom, Select {
         newOrderings,
         limit,
         perPartitionLimit,
-        allowsFiltering);
+        allowsFiltering,
+        timeout);
   }
 
   @NonNull
@@ -295,7 +315,8 @@ public class DefaultSelect implements SelectFrom, Select {
         orderings,
         limit,
         perPartitionLimit,
-        allowsFiltering);
+        allowsFiltering,
+        timeout);
   }
 
   @NonNull
@@ -312,7 +333,8 @@ public class DefaultSelect implements SelectFrom, Select {
         orderings,
         bindMarker,
         perPartitionLimit,
-        allowsFiltering);
+        allowsFiltering,
+        timeout);
   }
 
   @NonNull
@@ -331,7 +353,8 @@ public class DefaultSelect implements SelectFrom, Select {
         orderings,
         limit,
         perPartitionLimit,
-        allowsFiltering);
+        allowsFiltering,
+        timeout);
   }
 
   @NonNull
@@ -348,7 +371,8 @@ public class DefaultSelect implements SelectFrom, Select {
         orderings,
         limit,
         bindMarker,
-        allowsFiltering);
+        allowsFiltering,
+        timeout);
   }
 
   @NonNull
@@ -365,7 +389,43 @@ public class DefaultSelect implements SelectFrom, Select {
         orderings,
         limit,
         perPartitionLimit,
-        true);
+        true,
+        timeout);
+  }
+  @NonNull
+  @Override
+  public Select usingTimeout(@NonNull final CqlDuration timeout) {
+    return new DefaultSelect(
+        keyspace,
+        table,
+        isJson,
+        isDistinct,
+        selectors,
+        relations,
+        groupByClauses,
+        orderings,
+        limit,
+        perPartitionLimit,
+        allowsFiltering,
+        timeout);
+  }
+
+  @NonNull
+  @Override
+  public Select usingTimeout(@NonNull BindMarker timeout) {
+    return new DefaultSelect(
+        keyspace,
+        table,
+        isJson,
+        isDistinct,
+        selectors,
+        relations,
+        groupByClauses,
+        orderings,
+        limit,
+        perPartitionLimit,
+        allowsFiltering,
+        timeout);
   }
 
   @NonNull
@@ -420,6 +480,15 @@ public class DefaultSelect implements SelectFrom, Select {
 
     if (allowsFiltering) {
       builder.append(" ALLOW FILTERING");
+    }
+
+    if (timeout != null) {
+      builder.append(" USING TIMEOUT ");
+      if (timeout instanceof BindMarker) {
+        ((BindMarker) timeout).appendTo(builder);
+      } else {
+        ((CqlDuration) timeout).appendTo(builder);
+      }
     }
 
     return builder.toString();
@@ -504,6 +573,11 @@ public class DefaultSelect implements SelectFrom, Select {
 
   public boolean allowsFiltering() {
     return allowsFiltering;
+  }
+
+  @Nullable
+  public Object getTimeout() {
+    return timeout;
   }
 
   @Override

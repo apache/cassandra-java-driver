@@ -13,11 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2022 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.querybuilder.insert;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
+import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
@@ -50,10 +57,11 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
   private final ImmutableMap<CqlIdentifier, Term> assignments;
   private final Object timestamp;
   private final Object ttlInSeconds;
+  private final Object timeout;
   private final boolean ifNotExists;
 
   public DefaultInsert(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
-    this(keyspace, table, null, null, ImmutableMap.of(), null, null, false);
+    this(keyspace, table, null, null, ImmutableMap.of(), null, null, null, false);
   }
 
   public DefaultInsert(
@@ -64,6 +72,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
       @NonNull ImmutableMap<CqlIdentifier, Term> assignments,
       @Nullable Object timestamp,
       @Nullable Object ttlInSeconds,
+      @Nullable Object timeout,
       boolean ifNotExists) {
     // Note: the public API guarantees this, but check in case someone is calling the internal API
     // directly.
@@ -84,6 +93,10 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
     this.assignments = assignments;
     this.timestamp = timestamp;
     this.ttlInSeconds = ttlInSeconds;
+    Preconditions.checkArgument(
+        timeout == null || timeout instanceof CqlDuration || timeout instanceof BindMarker,
+        "TIMEOUT value must be a BindMarker or a CqlDuration");
+    this.timeout = timeout;
     this.ifNotExists = ifNotExists;
   }
 
@@ -98,6 +111,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ImmutableMap.of(),
         timestamp,
         ttlInSeconds,
+        timeout,
         ifNotExists);
   }
 
@@ -112,6 +126,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ImmutableMap.of(),
         timestamp,
         ttlInSeconds,
+        timeout,
         ifNotExists);
   }
 
@@ -126,6 +141,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ImmutableMap.of(),
         timestamp,
         ttlInSeconds,
+        timeout,
         ifNotExists);
   }
 
@@ -140,6 +156,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ImmutableMap.of(),
         timestamp,
         ttlInSeconds,
+        timeout,
         ifNotExists);
   }
 
@@ -154,6 +171,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ImmutableMap.of(),
         timestamp,
         ttlInSeconds,
+        timeout,
         ifNotExists);
   }
 
@@ -168,6 +186,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ImmutableCollections.append(assignments, columnId, value),
         timestamp,
         ttlInSeconds,
+        timeout,
         ifNotExists);
   }
 
@@ -182,6 +201,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ImmutableCollections.concat(assignments, newAssignments),
         timestamp,
         ttlInSeconds,
+        timeout,
         ifNotExists);
   }
 
@@ -189,7 +209,15 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
   @Override
   public Insert ifNotExists() {
     return new DefaultInsert(
-        keyspace, table, json, missingJsonBehavior, assignments, timestamp, ttlInSeconds, true);
+        keyspace,
+        table,
+        json,
+        missingJsonBehavior,
+        assignments,
+        timestamp,
+        ttlInSeconds,
+        timeout,
+        true);
   }
 
   @NonNull
@@ -203,6 +231,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         assignments,
         timestamp,
         ttlInSeconds,
+        timeout,
         ifNotExists);
   }
 
@@ -217,6 +246,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         assignments,
         timestamp,
         ttlInSeconds,
+        timeout,
         ifNotExists);
   }
 
@@ -231,6 +261,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         assignments,
         timestamp,
         ttlInSeconds,
+        timeout,
         ifNotExists);
   }
 
@@ -245,6 +276,37 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         assignments,
         timestamp,
         ttlInSeconds,
+        timeout,
+        ifNotExists);
+  }
+
+  @NonNull
+  @Override
+  public Insert usingTimeout(@NonNull CqlDuration timeout) {
+    return new DefaultInsert(
+        keyspace,
+        table,
+        json,
+        missingJsonBehavior,
+        assignments,
+        timestamp,
+        ttlInSeconds,
+        timeout,
+        ifNotExists);
+  }
+
+  @NonNull
+  @Override
+  public Insert usingTimeout(@NonNull BindMarker timeout) {
+    return new DefaultInsert(
+        keyspace,
+        table,
+        json,
+        missingJsonBehavior,
+        assignments,
+        timestamp,
+        ttlInSeconds,
+        timeout,
         ifNotExists);
   }
 
@@ -269,8 +331,10 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
     if (ifNotExists) {
       builder.append(" IF NOT EXISTS");
     }
+    boolean hasUsing = false;
     if (timestamp != null) {
       builder.append(" USING TIMESTAMP ");
+      hasUsing = true;
       if (timestamp instanceof BindMarker) {
         ((BindMarker) timestamp).appendTo(builder);
       } else {
@@ -278,11 +342,21 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
       }
     }
     if (ttlInSeconds != null) {
-      builder.append((timestamp != null) ? " AND " : " USING ").append("TTL ");
+      builder.append(hasUsing ? " AND " : " USING ").append("TTL ");
+      hasUsing = true;
       if (ttlInSeconds instanceof BindMarker) {
         ((BindMarker) ttlInSeconds).appendTo(builder);
       } else {
         builder.append(ttlInSeconds);
+      }
+    }
+    if (timeout != null) {
+      builder.append(hasUsing ? " AND " : " USING ").append("TIMEOUT ");
+      hasUsing = true;
+      if (timeout instanceof BindMarker) {
+        ((BindMarker) timeout).appendTo(builder);
+      } else {
+        ((CqlDuration) timeout).appendTo(builder);
       }
     }
     return builder.toString();
@@ -367,6 +441,10 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
 
   public boolean isIfNotExists() {
     return ifNotExists;
+  }
+
+  public Object getTimeout() {
+    return timeout;
   }
 
   @Override

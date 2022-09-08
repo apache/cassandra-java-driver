@@ -13,9 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2022 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.api.querybuilder.select;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
@@ -193,4 +200,29 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    */
   @NonNull
   Select allowFiltering();
+
+  /**
+   * Adds a {@code USING TIMEOUT} clause to this statement with a literal value. Setting a value of
+   * {@code null} will remove the {@code USING TIMEOUT} clause on this statement.
+   *
+   * <p>If this method or {@link #usingTimeout(BindMarker) } is called multiple times, the value
+   * from the last invocation is used.
+   *
+   * @param timeout A timeout value controlling server-side query timeout.
+   */
+  @NonNull
+  Select usingTimeout(@NonNull CqlDuration timeout);
+
+  /**
+   * Adds a {@code USING TIMEOUT} clause to this statement with a bind marker. Setting a value of
+   * {@code null} will remove the {@code USING TIMEOUT} clause on this statement.
+   *
+   * <p>If this method or {@link #usingTimeout(CqlDuration) } is called multiple times, the value
+   * from the last invocation is used.
+   *
+   * @param timeout A bind marker understood as {@link CqlDuration} controlling server-side query
+   *     timeout.
+   */
+  @NonNull
+  Select usingTimeout(@NonNull BindMarker timeout);
 }
