@@ -18,14 +18,14 @@ import json
 from itertools import groupby, islice
 import sys
 
-DOCKER_HUB_TAGS_ENDPOINT = 'https://registry.hub.docker.com/v1/repositories/%s/tags'
-DOCKER_HUB_SCYLLA_ORG = 'scylladb/'
+DOCKER_HUB_TAGS_ENDPOINT = 'https://hub.docker.com/v2/namespaces/%s/repositories/%s/tags?page_size=1000'
+DOCKER_HUB_SCYLLA_NAMESPACE = 'scylladb'
 
-SCYLLA_OSS = DOCKER_HUB_SCYLLA_ORG + 'scylla'
+SCYLLA_OSS = (DOCKER_HUB_SCYLLA_NAMESPACE, 'scylla')
 SCYLLA_OSS_RELEASED_VERSION_REGEX = re.compile(r'(\d+)\.(\d+)\.(\d+)')
 SCYLLA_OSS_RC_VERSION_REGEX = re.compile(r'(\d+)\.(\d+)\.rc(\d+)')
 
-SCYLLA_ENTERPRISE = DOCKER_HUB_SCYLLA_ORG + 'scylla-enterprise'
+SCYLLA_ENTERPRISE = (DOCKER_HUB_SCYLLA_NAMESPACE, 'scylla-enterprise')
 SCYLLA_ENTERPRISE_RELEASED_VERSION_REGEX = re.compile(r'(\d{4})\.(\d+)\.(\d+)')
 SCYLLA_ENTERPRISE_RC_VERSION_REGEX = re.compile(r'(\d{4})\.(\d+)\.rc(\d+)')
 
@@ -38,10 +38,30 @@ COMMAND_LINE_ARGUMENT = re.compile(
     r'((?:(scylla-oss-stable):(\d+))|(?:(scylla-enterprise-stable):(\d+))|(?:(cassandra3-stable):(\d+))|(?:(cassandra4-stable):(\d+))|(?:(scylla-oss-rc))|(?:(scylla-enterprise-rc)))')
 
 
+def fetch_docker_hub_tags(namespace, repository):
+    tags = []
+
+    # Fetch all pages of tags for a given repository
+    current_page_endpoint = DOCKER_HUB_TAGS_ENDPOINT % (namespace, repository)
+    while True:
+        # Fetch a page
+        tags_data = requests.get(current_page_endpoint).json()
+
+        # Extract all tags from the response
+        tags.extend(map(lambda e: e['name'], tags_data['results']))
+
+        # Move to the next page if it's needed
+        if tags_data['next'] is not None:
+            current_page_endpoint = tags_data['next']
+        else:
+            break
+
+    return tags
+
+
 def fetch_last_scylla_oss_minor_versions(count):
     # Download Docker tags for repository
-    tags_data = requests.get(DOCKER_HUB_TAGS_ENDPOINT % (SCYLLA_OSS)).json()
-    tags_data = map(lambda e: e['name'], tags_data)
+    tags_data = fetch_docker_hub_tags(*SCYLLA_OSS)
 
     # Parse only those tags which match 'NUM.NUM.NUM'
     # into tuple (NUM, NUM, NUM)
@@ -64,8 +84,7 @@ def fetch_last_scylla_oss_minor_versions(count):
 
 def fetch_all_scylla_oss_rc_versions():
     # Download Docker tags for repository
-    tags_data = requests.get(DOCKER_HUB_TAGS_ENDPOINT % (SCYLLA_OSS)).json()
-    tags_data = list(map(lambda e: e['name'], tags_data))
+    tags_data = fetch_docker_hub_tags(*SCYLLA_OSS)
 
     # Parse only those tags which match 'NUM.NUM.rcNUM'
     # into tuple (NUM, NUM, NUM)
@@ -98,9 +117,7 @@ def fetch_all_scylla_oss_rc_versions():
 
 def fetch_last_scylla_enterprise_minor_versions(count):
     # Download Docker tags for repository
-    tags_data = requests.get(DOCKER_HUB_TAGS_ENDPOINT %
-                             (SCYLLA_ENTERPRISE)).json()
-    tags_data = map(lambda e: e['name'], tags_data)
+    tags_data = fetch_docker_hub_tags(*SCYLLA_ENTERPRISE)
 
     # Parse only those tags which match 'YEAR.NUM.NUM'
     # into tuple (YEAR, NUM, NUM)
@@ -124,9 +141,7 @@ def fetch_last_scylla_enterprise_minor_versions(count):
 
 def fetch_all_scylla_enterprise_rc_versions():
     # Download Docker tags for repository
-    tags_data = requests.get(DOCKER_HUB_TAGS_ENDPOINT %
-                             (SCYLLA_ENTERPRISE)).json()
-    tags_data = list(map(lambda e: e['name'], tags_data))
+    tags_data = fetch_docker_hub_tags(*SCYLLA_ENTERPRISE)
 
     # Parse only those tags which match 'YEAR.NUM.rcNUM'
     # into tuple (YEAR, NUM, NUM)
