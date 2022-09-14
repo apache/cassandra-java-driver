@@ -2,8 +2,10 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.15.0 (in progress)
+### 4.15.0
 
+- [improvement] JAVA-3041: Update Guava session sample code to use ProgrammaticArguments
+- [improvement] JAVA-3022: Implement AddressTranslator for AWS PrivateLink
 - [bug] JAVA-3021: Update table SchemaBuilder page to replace withPrimaryKey with withPartitionKey
 - [bug] JAVA-3005: Node list refresh behavior in 4.x is different from 3.x
 - [bug] JAVA-3002: spring-boot app keeps connecting to IP of replaced node
