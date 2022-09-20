@@ -5,6 +5,10 @@
   3.x versions get published.
 -->
 
+## 3.11.3
+- [improvement] JAVA-3023: Upgrade Netty to 4.1.77, 3.x edition
+
+
 ## 3.11.2
 - [improvement] JAVA-3008: Upgrade Netty to 4.1.75, 3.x edition
 - [improvement] JAVA-2984: Upgrade Jackson to resolve high-priority CVEs
