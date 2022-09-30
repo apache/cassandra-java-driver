@@ -6956,6 +6956,139 @@
         "old": "method java.lang.Throwable java.lang.Throwable::fillInStackTrace() @ com.fasterxml.jackson.databind.deser.UnresolvedForwardReference",
         "new": "method com.fasterxml.jackson.databind.deser.UnresolvedForwardReference com.fasterxml.jackson.databind.deser.UnresolvedForwardReference::fillInStackTrace()",
         "justification": "Upgrade jackson-databind to 2.13.4.1 to address CVEs, API change cause: https://github.com/FasterXML/jackson-databind/issues/3419"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>::setNowInSeconds(int) @ com.datastax.oss.driver.api.core.cql.BatchStatement",
+        "new": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>::setNowInSeconds(int) @ com.datastax.oss.driver.api.core.cql.BatchStatement",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>::setNowInSeconds(int) @ com.datastax.oss.driver.api.core.cql.BatchableStatement<SelfT extends com.datastax.oss.driver.api.core.cql.BatchableStatement<SelfT>>",
+        "new": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>::setNowInSeconds(int) @ com.datastax.oss.driver.api.core.cql.BatchStatement",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>::setNowInSeconds(int) @ com.datastax.oss.driver.api.core.cql.BatchableStatement<SelfT extends com.datastax.oss.driver.api.core.cql.BatchableStatement<SelfT>>",
+        "new": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>::setNowInSeconds(int) @ com.datastax.oss.driver.api.core.cql.BatchableStatement<SelfT extends com.datastax.oss.driver.api.core.cql.BatchableStatement<SelfT>>",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>::setNowInSeconds(int) @ com.datastax.oss.driver.api.core.cql.BoundStatement",
+        "new": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>::setNowInSeconds(int) @ com.datastax.oss.driver.api.core.cql.BoundStatement",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>::setNowInSeconds(int) @ com.datastax.oss.driver.api.core.cql.SimpleStatement",
+        "new": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>::setNowInSeconds(int) @ com.datastax.oss.driver.api.core.cql.SimpleStatement",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>::setNowInSeconds(int)",
+        "new": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>::setNowInSeconds(int)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method com.datastax.oss.driver.api.core.cql.BatchStatement com.datastax.oss.driver.api.core.cql.BatchStatement::add(com.datastax.oss.driver.api.core.cql.BatchableStatement<?>)",
+        "new": "method com.datastax.oss.driver.api.core.cql.BatchStatement com.datastax.oss.driver.api.core.cql.BatchStatement::add(com.datastax.oss.driver.api.core.cql.BatchableStatement<?>)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method com.datastax.oss.driver.api.core.cql.BatchStatement com.datastax.oss.driver.api.core.cql.BatchStatement::addAll(com.datastax.oss.driver.api.core.cql.BatchableStatement<?>[])",
+        "new": "method com.datastax.oss.driver.api.core.cql.BatchStatement com.datastax.oss.driver.api.core.cql.BatchStatement::addAll(com.datastax.oss.driver.api.core.cql.BatchableStatement<?>[])",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method com.datastax.oss.driver.api.core.cql.BatchStatement com.datastax.oss.driver.api.core.cql.BatchStatement::addAll(java.lang.Iterable<? extends com.datastax.oss.driver.api.core.cql.BatchableStatement<?>>)",
+        "new": "method com.datastax.oss.driver.api.core.cql.BatchStatement com.datastax.oss.driver.api.core.cql.BatchStatement::addAll(java.lang.Iterable<? extends com.datastax.oss.driver.api.core.cql.BatchableStatement<?>>)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method com.datastax.oss.driver.api.core.cql.BatchStatement com.datastax.oss.driver.api.core.cql.BatchStatement::clear()",
+        "new": "method com.datastax.oss.driver.api.core.cql.BatchStatement com.datastax.oss.driver.api.core.cql.BatchStatement::clear()",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method com.datastax.oss.driver.api.core.cql.BatchStatement com.datastax.oss.driver.api.core.cql.BatchStatement::setBatchType(com.datastax.oss.driver.api.core.cql.BatchType)",
+        "new": "method com.datastax.oss.driver.api.core.cql.BatchStatement com.datastax.oss.driver.api.core.cql.BatchStatement::setBatchType(com.datastax.oss.driver.api.core.cql.BatchType)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method com.datastax.oss.driver.api.core.cql.BatchStatement com.datastax.oss.driver.api.core.cql.BatchStatement::setKeyspace(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "new": "method com.datastax.oss.driver.api.core.cql.BatchStatement com.datastax.oss.driver.api.core.cql.BatchStatement::setKeyspace(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "JAVA-2161: Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method com.datastax.oss.driver.api.core.cql.BatchStatement com.datastax.oss.driver.api.core.cql.BatchStatement::setKeyspace(java.lang.String)",
+        "new": "method com.datastax.oss.driver.api.core.cql.BatchStatement com.datastax.oss.driver.api.core.cql.BatchStatement::setKeyspace(java.lang.String)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "JAVA-2161: Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method com.datastax.oss.driver.api.core.cql.SimpleStatement com.datastax.oss.driver.api.core.cql.SimpleStatement::setQuery(java.lang.String)",
+        "new": "method com.datastax.oss.driver.api.core.cql.SimpleStatement com.datastax.oss.driver.api.core.cql.SimpleStatement::setQuery(java.lang.String)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method com.datastax.oss.driver.api.core.cql.SimpleStatement com.datastax.oss.driver.api.core.cql.SimpleStatement::setKeyspace(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "new": "method com.datastax.oss.driver.api.core.cql.SimpleStatement com.datastax.oss.driver.api.core.cql.SimpleStatement::setKeyspace(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method com.datastax.oss.driver.api.core.cql.SimpleStatement com.datastax.oss.driver.api.core.cql.SimpleStatement::setKeyspace(java.lang.String)",
+        "new": "method com.datastax.oss.driver.api.core.cql.SimpleStatement com.datastax.oss.driver.api.core.cql.SimpleStatement::setKeyspace(java.lang.String)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method com.datastax.oss.driver.api.core.cql.SimpleStatement com.datastax.oss.driver.api.core.cql.SimpleStatement::setPositionalValues(java.util.List<java.lang.Object>)",
+        "new": "method com.datastax.oss.driver.api.core.cql.SimpleStatement com.datastax.oss.driver.api.core.cql.SimpleStatement::setPositionalValues(java.util.List<java.lang.Object>)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method com.datastax.oss.driver.api.core.cql.SimpleStatement com.datastax.oss.driver.api.core.cql.SimpleStatement::setNamedValuesWithIds(java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, java.lang.Object>)",
+        "new": "method com.datastax.oss.driver.api.core.cql.SimpleStatement com.datastax.oss.driver.api.core.cql.SimpleStatement::setNamedValuesWithIds(java.util.Map<com.datastax.oss.driver.api.core.CqlIdentifier, java.lang.Object>)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.annotation.added",
+        "old": "method com.datastax.oss.driver.api.core.cql.SimpleStatement com.datastax.oss.driver.api.core.cql.SimpleStatement::setNamedValues(java.util.Map<java.lang.String, java.lang.Object>)",
+        "new": "method com.datastax.oss.driver.api.core.cql.SimpleStatement com.datastax.oss.driver.api.core.cql.SimpleStatement::setNamedValues(java.util.Map<java.lang.String, java.lang.Object>)",
+        "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
+        "justification": "Annotate mutating methods with @CheckReturnValue"
       }
     ]
   }
