@@ -453,7 +453,7 @@ dependency:
 
 [Jackson](https://github.com/FasterXML/jackson) is used:
 
-* when connecting to [Datastax Astra](../../cloud/);
+* when connecting to [DataStax Astra](../../cloud/);
 * when Insights monitoring is enabled;
 * when [Json codecs](../custom_codecs) are being used. 
  

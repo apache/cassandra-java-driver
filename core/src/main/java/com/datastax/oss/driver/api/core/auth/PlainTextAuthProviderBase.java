@@ -100,7 +100,7 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
      * Builds an instance for username/password authentication, and proxy authentication with the
      * given authorizationId.
      *
-     * <p>This feature is only available with Datastax Enterprise. If the target server is Apache
+     * <p>This feature is only available with DataStax Enterprise. If the target server is Apache
      * Cassandra, the authorizationId will be ignored.
      */
     public Credentials(
