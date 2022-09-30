@@ -28,6 +28,7 @@ import com.datastax.oss.driver.internal.core.util.Sizes;
 import com.datastax.oss.protocol.internal.PrimitiveSizes;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableList;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
+import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
@@ -197,6 +198,7 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    * @see #setNamedValuesWithIds(Map)
    */
   @NonNull
+  @CheckReturnValue
   SimpleStatement setQuery(@NonNull String newQuery);
 
   /**
@@ -209,6 +211,7 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    * @see Request#getKeyspace()
    */
   @NonNull
+  @CheckReturnValue
   SimpleStatement setKeyspace(@Nullable CqlIdentifier newKeyspace);
 
   /**
@@ -216,6 +219,7 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    * setKeyspace(CqlIdentifier.fromCql(newKeyspaceName))}.
    */
   @NonNull
+  @CheckReturnValue
   default SimpleStatement setKeyspace(@NonNull String newKeyspaceName) {
     return setKeyspace(CqlIdentifier.fromCql(newKeyspaceName));
   }
@@ -236,6 +240,7 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    * @see #setQuery(String)
    */
   @NonNull
+  @CheckReturnValue
   SimpleStatement setPositionalValues(@NonNull List<Object> newPositionalValues);
 
   @NonNull
@@ -256,6 +261,7 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    * @see #setQuery(String)
    */
   @NonNull
+  @CheckReturnValue
   SimpleStatement setNamedValuesWithIds(@NonNull Map<CqlIdentifier, Object> newNamedValues);
 
   /**
@@ -263,6 +269,7 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    * converted on the fly with {@link CqlIdentifier#fromCql(String)}.
    */
   @NonNull
+  @CheckReturnValue
   default SimpleStatement setNamedValues(@NonNull Map<String, Object> newNamedValues) {
     return setNamedValuesWithIds(DefaultSimpleStatement.wrapKeys(newNamedValues));
   }
