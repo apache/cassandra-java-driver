@@ -24,12 +24,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
@@ -228,8 +223,14 @@ public class CloudConfigFactory {
       connection.setSSLSocketFactory(sslContext.getSocketFactory());
       connection.setRequestMethod("GET");
       connection.setRequestProperty("host", "localhost");
-      return new BufferedReader(
-          new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
+      try {
+        return new BufferedReader(
+            new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
+      } catch (IOException ioe) {
+        throw new IllegalStateException(
+            "Unable to read data from cloud metadata service. Please make sure your cluster is not parked or terminated",
+            ioe);
+      }
     } catch (ConnectException e) {
       throw new IllegalStateException(
           "Unable to connect to cloud metadata service. Please make sure your cluster is not parked or terminated",
@@ -237,6 +238,10 @@ public class CloudConfigFactory {
     } catch (UnknownHostException e) {
       throw new IllegalStateException(
           "Unable to resolve host for cloud metadata service. Please make sure your cluster is not terminated",
+          e);
+    } catch (FileNotFoundException e) {
+      throw new IllegalStateException(
+          "Metadata service request path not found. Please make sure the metadata service url is correct",
           e);
     }
   }

@@ -35,8 +35,7 @@ import com.github.tomakehurst.wiremock.http.StubRequestHandler;
 import com.github.tomakehurst.wiremock.jetty9.JettyHttpServer;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.base.Joiner;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -134,7 +133,19 @@ public class CloudConfigFactoryTest {
     URL configFile = new URL("http", "localhost", wireMockRule.port(), BUNDLE_PATH);
     CloudConfigFactory cloudConfigFactory = new CloudConfigFactory();
     Throwable t = catchThrowable(() -> cloudConfigFactory.createCloudConfig(configFile));
-    assertThat(t).isInstanceOf(FileNotFoundException.class).hasMessageContaining("metadata");
+    assertThat(t).isInstanceOf(IllegalStateException.class).hasMessageContaining("metadata");
+  }
+
+  @Test
+  public void should_throw_when_stream_io_error_fetch_metadata() throws Exception {
+    // given
+    mockHttpSecureBundle(secureBundle());
+    stubFor(any(urlPathEqualTo("/metadata")).willReturn(aResponse().withStatus(401)));
+    // when
+    URL configFile = new URL("http", "localhost", wireMockRule.port(), BUNDLE_PATH);
+    CloudConfigFactory cloudConfigFactory = new CloudConfigFactory();
+    Throwable t = catchThrowable(() -> cloudConfigFactory.createCloudConfig(configFile));
+    assertThat(t).isInstanceOf(IllegalStateException.class).hasMessageContaining("metadata");
   }
 
   @Test
