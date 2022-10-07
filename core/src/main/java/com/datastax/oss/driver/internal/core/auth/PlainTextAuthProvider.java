@@ -39,7 +39,7 @@ import net.jcip.annotations.ThreadSafe;
  *     username = cassandra
  *     password = cassandra
  *
- *     // If connecting to Datastax Enterprise, this additional option allows proxy authentication
+ *     // If connecting to DataStax Enterprise, this additional option allows proxy authentication
  *     // (login as another user or role)
  *     authorization-id = userOrRole
  *   }

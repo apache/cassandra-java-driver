@@ -70,13 +70,13 @@ SimpleStatement statement = select.build();
 SimpleStatementBuilder builder = select.builder();
 ```
 
-#### Datastax Enterprise
+#### DataStax Enterprise
 
 The driver provides two additional entry points for DSE-specific queries: [DseQueryBuilder] and
 [DseSchemaBuilder]. They extend their respective non-DSE counterparts, so anything that is available
 on the default query builder can also be done with the DSE query builder.
 
-We recommend that you use those classes if you are targeting Datastax Enterprise; they will be
+We recommend that you use those classes if you are targeting DataStax Enterprise; they will be
 enriched in the future if DSE adds custom CQL syntax.
 
 Currently, the only difference is the support for the `DETERMINISTIC` and `MONOTONIC` keywords when
