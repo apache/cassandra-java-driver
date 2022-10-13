@@ -21,7 +21,6 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.internal.core.util.GraalDependencyChecker;
 import com.datastax.oss.protocol.internal.Compressor;
-import com.oracle.svm.core.annotate.Delete;
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
 import io.netty.buffer.ByteBuf;
@@ -83,11 +82,9 @@ public class CompressorSubstitutions {
   }
 
   @TargetClass(value = Lz4Compressor.class, onlyWith = Lz4Missing.class)
-  @Delete
   public static final class DeleteLz4Compressor {}
 
   @TargetClass(value = SnappyCompressor.class)
-  @Delete
   public static final class DeleteSnappyCompressor {}
 
   public static class Lz4Present implements BooleanSupplier {
