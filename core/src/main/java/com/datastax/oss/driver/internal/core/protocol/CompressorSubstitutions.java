@@ -81,12 +81,6 @@ public class CompressorSubstitutions {
     }
   }
 
-  @TargetClass(value = Lz4Compressor.class, onlyWith = Lz4Missing.class)
-  public static final class DeleteLz4Compressor {}
-
-  @TargetClass(value = SnappyCompressor.class)
-  public static final class DeleteSnappyCompressor {}
-
   public static class Lz4Present implements BooleanSupplier {
     @Override
     public boolean getAsBoolean() {
