@@ -314,6 +314,27 @@ public interface GettableById extends GettableByIndex, AccessibleById {
   }
 
   /**
+   * Returns the value for the first occurrence of {@code id} as a Java primitive long using the given {@code codec}.
+   *
+   * <p>By default, this works with CQL types {@code bigint} and {@code counter}.
+   *
+   * <p>Note that, due to its signature, this method cannot return {@code null}. If the CQL value is
+   * {@code NULL}, it will return {@code 0}. If this doesn't work for you, either call {@link
+   * #isNull(CqlIdentifier)} before calling this method, or use {@code get(id, codec)} instead.
+   *
+   * <p>If an identifier appears multiple times, this can only be used to access the first value.
+   * For the other ones, use positional getters.
+   *
+   * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
+   * this method that takes a string argument.
+   *
+   * @throws IllegalArgumentException if the id is invalid.
+   */
+  default long getLong(@NonNull CqlIdentifier id, TypeCodec<Long> codec) {
+    return getLong(firstIndexOf(id), codec);
+  }
+
+  /**
    * Returns the value for the first occurrence of {@code id} as a Java primitive short.
    *
    * <p>By default, this works with CQL type {@code smallint}.

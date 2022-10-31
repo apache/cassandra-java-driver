@@ -286,6 +286,21 @@ public interface GettableByIndex extends AccessibleByIndex {
   default long getLong(int i) {
     DataType cqlType = getType(i);
     TypeCodec<Long> codec = codecRegistry().codecFor(cqlType, Long.class);
+    return getLong(i, codec);
+  }
+
+  /**
+   * Returns the {@code i}th value as a Java primitive long using the provided {@code codec}.
+   *
+   * <p>By default, this works with CQL types {@code bigint} and {@code counter}.
+   *
+   * <p>Note that, due to its signature, this method cannot return {@code null}. If the CQL value is
+   * {@code NULL}, it will return {@code 0}. If this doesn't work for you, either call {@link
+   * #isNull(int)} before calling this method, or use {@code get(i, codec)} instead.
+   *
+   * @throws IndexOutOfBoundsException if the index is invalid.
+   */
+  default long getLong(int i, TypeCodec<Long> codec) {
     if (codec instanceof PrimitiveLongCodec) {
       return ((PrimitiveLongCodec) codec).decodePrimitive(getBytesUnsafe(i), protocolVersion());
     } else {

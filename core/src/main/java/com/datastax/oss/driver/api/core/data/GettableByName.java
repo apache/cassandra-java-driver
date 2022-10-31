@@ -311,6 +311,28 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
   }
 
   /**
+   * Returns the value for the first occurrence of {@code name} as a Java primitive
+   * long using the provided {@code codec}.
+   *
+   * <p>By default, this works with CQL types {@code bigint} and {@code counter}.
+   *
+   * <p>Note that, due to its signature, this method cannot return {@code null}. If the CQL value is
+   * {@code NULL}, it will return {@code 0}. If this doesn't work for you, either call {@link
+   * #isNull(String)} before calling this method, or use {@code get(name, codec)} instead.
+   *
+   * <p>If an identifier appears multiple times, this can only be used to access the first value.
+   * For the other ones, use positional getters.
+   *
+   * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
+   * AccessibleByName}.
+   *
+   * @throws IllegalArgumentException if the name is invalid.
+   */
+  default long getLong(@NonNull String name, TypeCodec<Long> codec) {
+    return getLong(firstIndexOf(name), codec);
+  }
+
+  /**
    * Returns the value for the first occurrence of {@code name} as a Java primitive short.
    *
    * <p>By default, this works with CQL type {@code smallint}.
