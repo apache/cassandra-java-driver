@@ -197,6 +197,29 @@ public interface GettableById extends GettableByIndex, AccessibleById {
   }
 
   /**
+   * Returns the value for the first occurrence of {@code id} as a Java primitive boolean
+   * using the provided {@code codec}.
+   *
+   * <p>By default, this works with CQL type {@code boolean}.
+   *
+   * <p>Note that, due to its signature, this method cannot return {@code null}. If the CQL value is
+   * {@code NULL}, it will return {@code false}. If this doesn't work for you, either call {@link
+   * #isNull(CqlIdentifier)} before calling this method, or use {@code get(id, Boolean.class)}
+   * instead.
+   *
+   * <p>If an identifier appears multiple times, this can only be used to access the first value.
+   * For the other ones, use positional getters.
+   *
+   * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
+   * this method that takes a string argument.
+   *
+   * @throws IllegalArgumentException if the id is invalid.
+   */
+  default boolean getBoolean(@NonNull CqlIdentifier id, TypeCodec<Boolean> codec) {
+    return getBoolean(firstIndexOf(id), codec);
+  }
+
+  /**
    * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
    *     {@link #getBoolean(CqlIdentifier)}.
    */

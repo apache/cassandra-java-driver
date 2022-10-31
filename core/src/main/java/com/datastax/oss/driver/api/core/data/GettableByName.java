@@ -197,6 +197,28 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
   }
 
   /**
+   * Returns the value for the first occurrence of {@code name} as a Java primitive boolean
+   * using the provided {@code codec}.
+   *
+   * <p>By default, this works with CQL type {@code boolean}.
+   *
+   * <p>Note that, due to its signature, this method cannot return {@code null}. If the CQL value is
+   * {@code NULL}, it will return {@code false}. If this doesn't work for you, either call {@link
+   * #isNull(String)} before calling this method, or use {@code get(name, Boolean.class)} instead.
+   *
+   * <p>If an identifier appears multiple times, this can only be used to access the first value.
+   * For the other ones, use positional getters.
+   *
+   * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
+   * AccessibleByName}.
+   *
+   * @throws IllegalArgumentException if the name is invalid.
+   */
+  default boolean getBoolean(@NonNull String name, TypeCodec<Boolean> codec) {
+    return getBoolean(firstIndexOf(name), codec);
+  }
+
+  /**
    * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
    *     {@link #getBoolean(String)}.
    */
