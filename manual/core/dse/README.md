@@ -1,6 +1,6 @@
 ## DSE-specific features
 
-Some driver features only work with Datastax Enterprise:
+Some driver features only work with DataStax Enterprise:
 
 * [Graph](graph/);
 * [Geospatial types](geotypes/);

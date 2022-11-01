@@ -51,7 +51,7 @@ but in general it represents the proximity to the client, and `LOCAL` nodes will
 coordinators. They also influence pooling options.
 
 [Node#getExtras()] contains additional free-form properties. This is intended for future evolution
-or custom driver extensions. In particular, if the driver is connected to Datastax Enterprise, the
+or custom driver extensions. In particular, if the driver is connected to DataStax Enterprise, the
 map will contain additional information under the keys defined in [DseNodeProperties]:
 
 ```java

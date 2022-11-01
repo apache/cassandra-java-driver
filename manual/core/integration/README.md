@@ -453,7 +453,7 @@ dependency:
 
 [Jackson](https://github.com/FasterXML/jackson) is used:
 
-* when connecting to [Datastax Astra](../../cloud/);
+* when connecting to [DataStax Astra](../../cloud/);
 * when Insights monitoring is enabled;
 * when [Json codecs](../custom_codecs) are being used. 
  
@@ -562,6 +562,7 @@ Here are the recommended TinkerPop versions for each driver version:
 
 <table>
 <tr><th>Driver version</th><th>TinkerPop version</th></tr>
+<tr><td>4.15.0</td><td>3.5.3</td></tr>
 <tr><td>4.14.1</td><td>3.5.3</td></tr>
 <tr><td>4.14.0</td><td>3.4.10</td></tr>
 <tr><td>4.13.0</td><td>3.4.10</td></tr>
