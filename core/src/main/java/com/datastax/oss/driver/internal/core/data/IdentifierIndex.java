@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.internal.core.util.Strings;
 import com.datastax.oss.driver.shaded.guava.common.collect.LinkedListMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ListMultimap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import net.jcip.annotations.Immutable;
@@ -68,8 +69,8 @@ public class IdentifierIndex {
    * AccessibleByName}, or -1 if it's not in the list.
    */
   public int firstIndexOf(String name) {
-    List<Integer> indices = allIndicesOf(name);
-    return indices.isEmpty() ? -1 : indices.get(0);
+    Iterator<Integer> indices = allIndicesOf(name).iterator();
+    return indices.hasNext() ? -1 : indices.next();
   }
 
   /** Returns all occurrences of a given identifier. */
@@ -79,7 +80,7 @@ public class IdentifierIndex {
 
   /** Returns the first occurrence of a given identifier, or -1 if it's not in the list. */
   public int firstIndexOf(CqlIdentifier id) {
-    List<Integer> indices = allIndicesOf(id);
-    return indices.isEmpty() ? -1 : indices.get(0);
+    Iterator<Integer> indices = allIndicesOf(id).iterator();
+    return indices.hasNext() ? -1 : indices.next();
   }
 }
