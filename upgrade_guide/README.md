@@ -372,7 +372,7 @@ least 4.6.1.
 
 ### 4.4.0
 
-Datastax Enterprise support is now available directly in the main driver. There is no longer a
+DataStax Enterprise support is now available directly in the main driver. There is no longer a
 separate DSE driver.
 
 #### For Apache Cassandra® users
@@ -388,7 +388,7 @@ Apart from that, the only visible change is that DSE-specific features are now e
   lean, you can exclude some dependencies when you don't use the corresponding DSE features; see the 
   [Integration>Driver dependencies](../manual/core/integration/#driver-dependencies) section.
 
-#### For Datastax Enterprise users
+#### For DataStax Enterprise users
 
 Adjust your Maven coordinates to use the unified artifact:
 
@@ -514,7 +514,7 @@ We have dropped support for legacy protocol versions v1 and v2. As a result, the
 compatible with:
 
 * **Apache Cassandra®: 2.1 and above**;
-* **Datastax Enterprise: 4.7 and above**.
+* **DataStax Enterprise: 4.7 and above**.
 
 #### Packages
 

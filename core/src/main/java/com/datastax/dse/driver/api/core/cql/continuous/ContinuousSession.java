@@ -30,8 +30,8 @@ import java.util.concurrent.CompletionStage;
 /**
  * A session that has the ability to execute continuous paging queries.
  *
- * <p>Continuous paging is a new method of streaming bulk amounts of records from Datastax
- * Enterprise (DSE) to the Datastax Java Driver, available since DSE 5.1. It is mainly intended to
+ * <p>Continuous paging is a new method of streaming bulk amounts of records from DataStax
+ * Enterprise (DSE) to the DataStax Java Driver, available since DSE 5.1. It is mainly intended to
  * be leveraged by <a
  * href="https://docs.datastax.com/en/dse/5.1/dse-dev/datastax_enterprise/analytics/analyticsTOC.html">DSE
  * Analytics</a> and Apache Spark™, or by any similar analytics tool that needs to read large
@@ -76,7 +76,7 @@ public interface ContinuousSession extends Session {
    *
    * <p>See {@link ContinuousSession} for more explanations about continuous paging.
    *
-   * <p>This feature is only available with Datastax Enterprise. Executing continuous queries
+   * <p>This feature is only available with DataStax Enterprise. Executing continuous queries
    * against an Apache Cassandra&copy; cluster will result in a runtime error.
    *
    * @param statement the query to execute.
@@ -99,7 +99,7 @@ public interface ContinuousSession extends Session {
    *
    * <p>See {@link ContinuousSession} for more explanations about continuous paging.
    *
-   * <p>This feature is only available with Datastax Enterprise. Executing continuous queries
+   * <p>This feature is only available with DataStax Enterprise. Executing continuous queries
    * against an Apache Cassandra&copy; cluster will result in a runtime error.
    *
    * @param statement the query to execute.

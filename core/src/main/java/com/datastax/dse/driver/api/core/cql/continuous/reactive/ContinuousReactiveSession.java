@@ -51,7 +51,7 @@ public interface ContinuousReactiveSession extends Session {
    *
    * <p>See {@link ContinuousSession} for more explanations about continuous paging.
    *
-   * <p>This feature is only available with Datastax Enterprise. Executing continuous queries
+   * <p>This feature is only available with DataStax Enterprise. Executing continuous queries
    * against an Apache Cassandra&reg; cluster will result in a runtime error.
    *
    * @param query the query to execute.
@@ -68,7 +68,7 @@ public interface ContinuousReactiveSession extends Session {
    *
    * <p>See {@link ContinuousSession} for more explanations about continuous paging.
    *
-   * <p>This feature is only available with Datastax Enterprise. Executing continuous queries
+   * <p>This feature is only available with DataStax Enterprise. Executing continuous queries
    * against an Apache Cassandra&reg; cluster will result in a runtime error.
    *
    * @param statement the statement to execute.

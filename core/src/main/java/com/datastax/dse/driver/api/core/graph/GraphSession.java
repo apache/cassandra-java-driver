@@ -49,7 +49,7 @@ public interface GraphSession extends Session {
    *       configuration and schema.
    * </ul>
    *
-   * <p>This feature is only available with Datastax Enterprise. Executing graph queries against an
+   * <p>This feature is only available with DataStax Enterprise. Executing graph queries against an
    * Apache Cassandra&reg; cluster will result in a runtime error.
    *
    * @see GraphResultSet
@@ -67,7 +67,7 @@ public interface GraphSession extends Session {
    * Executes a graph statement asynchronously (the call returns as soon as the statement was sent,
    * generally before the result is available).
    *
-   * <p>This feature is only available with Datastax Enterprise. Executing graph queries against an
+   * <p>This feature is only available with DataStax Enterprise. Executing graph queries against an
    * Apache Cassandra&reg; cluster will result in a runtime error.
    *
    * @see #execute(GraphStatement)
