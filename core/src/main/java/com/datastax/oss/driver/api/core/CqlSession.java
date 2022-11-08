@@ -32,7 +32,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  *
  * <ul>
  *   <li>CQL requests: synchronous, asynchronous or reactive mode;
- *   <li>requests specific to Datastax Enterprise: graph and continuous paging.
+ *   <li>requests specific to DataStax Enterprise: graph and continuous paging.
  * </ul>
  *
  * Client applications can use this interface even if they don't need all the features. In
