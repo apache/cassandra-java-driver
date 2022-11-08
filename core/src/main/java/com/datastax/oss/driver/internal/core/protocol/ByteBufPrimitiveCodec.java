@@ -114,9 +114,9 @@ public class ByteBufPrimitiveCodec implements PrimitiveCodec<ByteBuf> {
   public ByteBuffer readBytes(ByteBuf source) {
     int length = readInt(source);
     if (length < 0) return null;
-    ByteBuf slice = source.readSlice(length);
-    byte[] bytes = new byte[slice.readableBytes()];
-    slice.readBytes(bytes);
+    if (source.readableBytes() < length) throw new IndexOutOfBoundsException();
+    byte[] bytes = new byte[length];
+    source.readBytes(bytes);
     return ByteBuffer.wrap(bytes);
   }
 
