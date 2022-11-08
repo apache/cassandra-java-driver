@@ -115,7 +115,9 @@ public class ByteBufPrimitiveCodec implements PrimitiveCodec<ByteBuf> {
     int length = readInt(source);
     if (length < 0) return null;
     ByteBuf slice = source.readSlice(length);
-    return ByteBuffer.wrap(readRawBytes(slice));
+    byte[] bytes = new byte[slice.readableBytes()];
+    slice.readBytes(bytes);
+    return ByteBuffer.wrap(bytes);
   }
 
   @Override
@@ -218,22 +220,6 @@ public class ByteBufPrimitiveCodec implements PrimitiveCodec<ByteBuf> {
   public void writeShortBytes(byte[] bytes, ByteBuf dest) {
     writeUnsignedShort(bytes.length, dest);
     dest.writeBytes(bytes);
-  }
-
-  // Reads *all* readable bytes from a buffer and return them.
-  // If the buffer is backed by an array, this will return the underlying array directly, without
-  // copy.
-  private static byte[] readRawBytes(ByteBuf buffer) {
-    if (buffer.hasArray() && buffer.readableBytes() == buffer.array().length) {
-      // Move the readerIndex just so we consistently consume the input
-      buffer.readerIndex(buffer.writerIndex());
-      return buffer.array();
-    }
-
-    // Otherwise, just read the bytes in a new array
-    byte[] bytes = new byte[buffer.readableBytes()];
-    buffer.readBytes(bytes);
-    return bytes;
   }
 
   private static String readString(ByteBuf source, int length) {
