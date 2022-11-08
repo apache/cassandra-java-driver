@@ -50,6 +50,8 @@ public class TypesafeDriverConfig implements DriverConfig {
 
   private final Map<DriverOption, Object> defaultOverrides = new ConcurrentHashMap<>();
 
+  private final TypesafeDriverExecutionProfile.Base defaultProfile;
+
   public TypesafeDriverConfig(Config config) {
     this.lastLoadedConfig = config;
     Map<String, Config> profileConfigs = extractProfiles(config);
@@ -62,6 +64,7 @@ public class TypesafeDriverConfig implements DriverConfig {
           new TypesafeDriverExecutionProfile.Base(entry.getKey(), entry.getValue()));
     }
     this.profiles = builder.build();
+    this.defaultProfile = profiles.get(DriverExecutionProfile.DEFAULT_NAME);
   }
 
   /** @return whether the configuration changed */
@@ -134,6 +137,11 @@ public class TypesafeDriverConfig implements DriverConfig {
       }
     }
     return result.build();
+  }
+
+  @Override
+  public DriverExecutionProfile getDefaultProfile() {
+    return defaultProfile;
   }
 
   @NonNull
