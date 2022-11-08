@@ -139,11 +139,12 @@ public class TypesafeDriverConfig implements DriverConfig {
   @NonNull
   @Override
   public DriverExecutionProfile getProfile(@NonNull String profileName) {
+    TypesafeDriverExecutionProfile.Base profile = profiles.get(profileName);
     Preconditions.checkArgument(
-        profiles.containsKey(profileName),
+        profile != null,
         "Unknown profile '%s'. Check your configuration.",
         profileName);
-    return profiles.get(profileName);
+    return profile;
   }
 
   @NonNull
