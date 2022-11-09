@@ -161,6 +161,7 @@ def fetch_all_scylla_enterprise_rc_versions():
     stable_tags_data = map(lambda e: SCYLLA_ENTERPRISE_RELEASED_VERSION_REGEX.match(
         e).groups(), stable_tags_data)
     stable_tags_data = map(lambda e: tuple(map(int, e[0:2])), stable_tags_data)
+    stable_tags_data = set(stable_tags_data)
 
     # Group by (major, minor) and select latest RC version
     rc_tags_data = sorted(rc_tags_data)
