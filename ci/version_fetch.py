@@ -23,11 +23,12 @@ DOCKER_HUB_SCYLLA_NAMESPACE = 'scylladb'
 
 SCYLLA_OSS = (DOCKER_HUB_SCYLLA_NAMESPACE, 'scylla')
 SCYLLA_OSS_RELEASED_VERSION_REGEX = re.compile(r'(\d+)\.(\d+)\.(\d+)')
-SCYLLA_OSS_RC_VERSION_REGEX = re.compile(r'(\d+)\.(\d+)\.rc(\d+)')
+SCYLLA_OSS_RC_VERSION_REGEX = re.compile(r'(\d+)\.(\d+)\.(?:0-)?rc(\d+)')
 
 SCYLLA_ENTERPRISE = (DOCKER_HUB_SCYLLA_NAMESPACE, 'scylla-enterprise')
 SCYLLA_ENTERPRISE_RELEASED_VERSION_REGEX = re.compile(r'(\d{4})\.(\d+)\.(\d+)')
-SCYLLA_ENTERPRISE_RC_VERSION_REGEX = re.compile(r'(\d{4})\.(\d+)\.rc(\d+)')
+SCYLLA_ENTERPRISE_RC_VERSION_REGEX = re.compile(
+    r'(\d{4})\.(\d+)\.(?:0-)?rc(\d+)')
 
 CASSANDRA_ENDPOINT = 'https://dlcdn.apache.org/cassandra/'
 
@@ -86,7 +87,7 @@ def fetch_all_scylla_oss_rc_versions():
     # Download Docker tags for repository
     tags_data = fetch_docker_hub_tags(*SCYLLA_OSS)
 
-    # Parse only those tags which match 'NUM.NUM.rcNUM'
+    # Parse only those tags which match 'NUM.NUM.rcNUM' or 'NUM.NUM.0-rcNUM'
     # into tuple (NUM, NUM, NUM)
     rc_tags_data = filter(SCYLLA_OSS_RC_VERSION_REGEX.fullmatch, tags_data)
     rc_tags_data = map(lambda e: SCYLLA_OSS_RC_VERSION_REGEX.match(
@@ -111,7 +112,9 @@ def fetch_all_scylla_oss_rc_versions():
     # Filter out those RCs that are obsoleted by released stable version
     rc_tags_data = filter(lambda e: (
         e[0], e[1]) not in stable_tags_data, rc_tags_data)
-    rc_tags_data = [f'{e[0]}.{e[1]}.rc{e[2]}' for e in rc_tags_data]
+    rc_tags_data = [
+        f'{e[0]}.{e[1]}.0-rc{e[2]}' if (e[0], e[1]) >= (5, 1) else
+        f'{e[0]}.{e[1]}.rc{e[2]}' for e in rc_tags_data]
     return rc_tags_data
 
 
@@ -143,7 +146,7 @@ def fetch_all_scylla_enterprise_rc_versions():
     # Download Docker tags for repository
     tags_data = fetch_docker_hub_tags(*SCYLLA_ENTERPRISE)
 
-    # Parse only those tags which match 'YEAR.NUM.rcNUM'
+    # Parse only those tags which match 'YEAR.NUM.rcNUM' or 'YEAR.NUM.0-rcNUM'
     # into tuple (YEAR, NUM, NUM)
     rc_tags_data = filter(
         SCYLLA_ENTERPRISE_RC_VERSION_REGEX.fullmatch, tags_data)
@@ -168,7 +171,8 @@ def fetch_all_scylla_enterprise_rc_versions():
     # Filter out those RCs that are obsoleted by released stable version
     rc_tags_data = filter(lambda e: (
         e[0], e[1]) not in stable_tags_data, rc_tags_data)
-    rc_tags_data = [f'{e[0]}.{e[1]}.rc{e[2]}' for e in rc_tags_data]
+    rc_tags_data = [f'{e[0]}.{e[1]}.0-rc{e[2]}' if (e[0], e[1]) >=
+                    (2022, 2) else f'{e[0]}.{e[1]}.rc{e[2]}' for e in rc_tags_data]
     return rc_tags_data
 
 
