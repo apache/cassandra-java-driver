@@ -20,9 +20,7 @@ import com.datastax.oss.driver.api.core.data.AccessibleByName;
 import com.datastax.oss.driver.api.core.data.GettableById;
 import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.internal.core.util.Strings;
-import com.datastax.oss.driver.shaded.guava.common.collect.ArrayListMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableListMultimap;
-import com.datastax.oss.driver.shaded.guava.common.collect.LinkedListMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ListMultimap;
 import java.util.Iterator;
 import java.util.List;
@@ -44,8 +42,10 @@ public class IdentifierIndex {
 
   public IdentifierIndex(List<CqlIdentifier> ids) {
     ImmutableListMultimap.Builder<CqlIdentifier, Integer> byId = ImmutableListMultimap.builder();
-    ImmutableListMultimap.Builder<String, Integer> byCaseSensitiveName = ImmutableListMultimap.builder();
-    ImmutableListMultimap.Builder<String, Integer> byCaseInsensitiveName = ImmutableListMultimap.builder();
+    ImmutableListMultimap.Builder<String, Integer> byCaseSensitiveName =
+        ImmutableListMultimap.builder();
+    ImmutableListMultimap.Builder<String, Integer> byCaseInsensitiveName =
+        ImmutableListMultimap.builder();
 
     int i = 0;
     for (CqlIdentifier id : ids) {
