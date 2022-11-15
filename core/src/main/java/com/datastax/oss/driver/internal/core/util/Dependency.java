@@ -15,7 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.util;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A set of driver optional dependencies and a common mechanism to test the presence of such
@@ -48,10 +50,10 @@ public enum Dependency {
   ;
 
   @SuppressWarnings("ImmutableEnumChecker")
-  private final ImmutableList<String> clzs;
+  private final List<String> clzs;
 
   Dependency(String... classNames) {
-    clzs = ImmutableList.copyOf(classNames);
+    clzs = Collections.unmodifiableList(Arrays.asList(classNames));
   }
 
   public Iterable<String> classes() {
